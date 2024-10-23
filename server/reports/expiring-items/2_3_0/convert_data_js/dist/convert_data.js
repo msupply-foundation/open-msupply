@@ -49,9 +49,32 @@ var require_utils = __commonJS({
       });
       return newNode;
     };
+    var getNestedValue = (node, key) => {
+      key = key + "";
+      return key.split(".").reduce((value, part) => value && value[part], node);
+    };
+    var sortNodes = (nodes, sort, dir) => {
+      if (!!sort) {
+        nodes.sort((a, b) => {
+          const valueA = getNestedValue(a, sort);
+          const valueB = getNestedValue(b, sort);
+          if (valueA === valueB) {
+            return 0;
+          }
+          if (dir === "asc") {
+            return valueA > valueB ? 1 : -1;
+          } else {
+            return valueA < valueB ? 1 : -1;
+          }
+        });
+      }
+      return nodes;
+    };
     module2.exports = {
       cleanUpObject,
-      cleanUpNodes
+      cleanUpNodes,
+      getNestedValue,
+      sortNodes
     };
   }
 });
@@ -85,7 +108,7 @@ var require_utils2 = __commonJS({
         line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat);
       });
       let cleanNodes = (0, import_utils2.cleanUpNodes)(nodes);
-      let sortedNodes = sortNodes(cleanNodes, sort, dir);
+      let sortedNodes = (0, import_utils2.sortNodes)(cleanNodes, sort, dir);
       return sortedNodes;
     };
     var calculateDaysUntilExpired = (expiryDateString) => {
@@ -135,36 +158,14 @@ var require_utils2 = __commonJS({
       }
       return rounded;
     };
-    function getNestedValue(node, key) {
-      key = key + "";
-      return key.split(".").reduce((value, part) => value && value[part], node);
-    }
-    var sortNodes = (nodes, sort, dir) => {
-      sort = sort ?? "expiryDate";
-      dir = dir ?? "desc";
-      console.log("sort inside sort function", sort, dir);
-      nodes.sort((a, b) => {
-        const valueA = getNestedValue(a, sort);
-        const valueB = getNestedValue(b, sort);
-        if (valueA === valueB) {
-          return 0;
-        }
-        if (dir === "asc") {
-          return valueA > valueB ? 1 : -1;
-        } else {
-          return valueA < valueB ? 1 : -1;
-        }
-      });
-      return nodes;
-    };
     module2.exports = {
       calculateExpectedUsage,
       processStockLines: processStockLines2,
       calculateDaysUntilExpired,
       calculateStockAtRisk,
       roundDaysToInteger,
-      sortNodes,
-      getNestedValue
+      sortNodes: import_utils2.sortNodes,
+      getNestedValue: import_utils2.getNestedValue
     };
   }
 });
@@ -173,11 +174,11 @@ var require_utils2 = __commonJS({
 var import_utils = __toESM(require_utils2());
 function convert_data() {
   let res = JSON.parse(Host.inputString());
-  console.log("convert data sort", res?.arguments?.sort, res?.arguments?.dir);
   res.data.stockLines.nodes = (0, import_utils.processStockLines)(
     res.data.stockLines.nodes,
-    res?.arguments?.sort ?? void 0,
-    res?.arguments?.dir ?? void 0
+    // assign default sort values
+    res?.arguments?.sort ?? "SOH",
+    res?.arguments?.dir ?? "desc"
   );
   Host.outputString(JSON.stringify(res));
 }

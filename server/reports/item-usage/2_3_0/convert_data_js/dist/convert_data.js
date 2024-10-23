@@ -49,9 +49,32 @@ var require_utils = __commonJS({
       });
       return newNode;
     };
+    var getNestedValue = (node, key) => {
+      key = key + "";
+      return key.split(".").reduce((value, part) => value && value[part], node);
+    };
+    var sortNodes = (nodes, sort, dir) => {
+      if (!!sort) {
+        nodes.sort((a, b) => {
+          const valueA = getNestedValue(a, sort);
+          const valueB = getNestedValue(b, sort);
+          if (valueA === valueB) {
+            return 0;
+          }
+          if (dir === "asc") {
+            return valueA > valueB ? 1 : -1;
+          } else {
+            return valueA < valueB ? 1 : -1;
+          }
+        });
+      }
+      return nodes;
+    };
     module2.exports = {
       cleanUpObject,
-      cleanUpNodes
+      cleanUpNodes,
+      getNestedValue,
+      sortNodes
     };
   }
 });
@@ -92,7 +115,7 @@ var require_utils2 = __commonJS({
         item.MOS = calculateStatValue(item?.stats?.availableMonthsOfStockOnHand);
       });
       let cleanNodes = (0, import_utils2.cleanUpNodes)(data.items.nodes);
-      let sortedNodes = sortNodes(cleanNodes, sort, dir);
+      let sortedNodes = (0, import_utils2.sortNodes)(cleanNodes, sort, dir);
       return sortedNodes;
     };
     var calculateQuantity = (queryResult, id) => {
@@ -110,33 +133,12 @@ var require_utils2 = __commonJS({
       }
       return returnValue;
     };
-    function getNestedValue(node, key) {
-      key = key + "";
-      return key.split(".").reduce((value, part) => value && value[part], node);
-    }
-    var sortNodes = (nodes, sort, dir) => {
-      sort = sort ?? "expiryDate";
-      dir = dir ?? "desc";
-      nodes.sort((a, b) => {
-        const valueA = getNestedValue(a, sort);
-        const valueB = getNestedValue(b, sort);
-        if (valueA === valueB) {
-          return 0;
-        }
-        if (dir === "asc") {
-          return valueA > valueB ? 1 : -1;
-        } else {
-          return valueA < valueB ? 1 : -1;
-        }
-      });
-      return nodes;
-    };
     module2.exports = {
       calculateQuantity,
       calculateStatValue,
       processItemLines: processItemLines2,
       cleanUpNodes: import_utils2.cleanUpNodes,
-      sortNodes
+      sortNodes: import_utils2.sortNodes
     };
   }
 });
@@ -148,8 +150,9 @@ function convert_data() {
   console.log("arguments", res?.arguments?.sort, res?.arguments?.dir);
   res.data.items.nodes = (0, import_utils.processItemLines)(
     res.data,
-    res?.arguments?.sort ?? void 0,
-    res?.arguments?.dir ?? void 0
+    // assign default sort values
+    res?.arguments?.sort ?? "SOH",
+    res?.arguments?.dir ?? "desc"
   );
   Host.outputString(JSON.stringify(res));
 }
