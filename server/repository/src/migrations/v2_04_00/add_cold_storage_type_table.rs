@@ -11,7 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                CREATE TABLE IF NOT EXISTS cold_storage_type (
+                CREATE TABLE cold_storage_type (
                     id TEXT NOT NULL PRIMARY KEY,
                     name TEXT NOT NULL,
                     min_temperature REAL,

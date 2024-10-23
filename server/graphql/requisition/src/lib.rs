@@ -4,7 +4,10 @@ mod requisition_queries;
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use graphql_types::types::RequisitionNodeType;
-use program_settings::{get_program_requisition_settings, ProgramRequisitionSettingNode};
+use program_settings::{
+    get_customer_program_requisition_settings, get_supplier_program_requisition_settings,
+    CustomerProgramRequisitionSettingNode, SupplierProgramRequisitionSettingNode,
+};
 
 use self::mutations::{request_requisition, response_requisition};
 use self::requisition_queries::*;
@@ -43,12 +46,20 @@ impl RequisitionQueries {
         get_requisition_by_number(ctx, &store_id, requisition_number, r#type)
     }
 
-    pub async fn program_requisition_settings(
+    pub async fn supplier_program_requisition_settings(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-    ) -> Result<Vec<ProgramRequisitionSettingNode>> {
-        get_program_requisition_settings(ctx, &store_id)
+    ) -> Result<Vec<SupplierProgramRequisitionSettingNode>> {
+        get_supplier_program_requisition_settings(ctx, &store_id)
+    }
+
+    pub async fn customer_program_requisition_settings(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Vec<CustomerProgramRequisitionSettingNode>> {
+        get_customer_program_requisition_settings(ctx, &store_id)
     }
 }
 
@@ -111,6 +122,24 @@ impl RequisitionMutations {
         input: request_requisition::add_from_master_list::AddFromMasterListInput,
     ) -> Result<request_requisition::add_from_master_list::AddFromMasterListResponse> {
         request_requisition::add_from_master_list::add_from_master_list(ctx, &store_id, input)
+    }
+
+    async fn insert_response_requisition(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: response_requisition::insert::InsertInput,
+    ) -> Result<response_requisition::insert::InsertResponse> {
+        response_requisition::insert::insert(ctx, &store_id, input)
+    }
+
+    async fn insert_program_response_requisition(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: response_requisition::insert_program::InsertProgramResponseRequisitionInput,
+    ) -> Result<response_requisition::insert_program::InsertResponse> {
+        response_requisition::insert_program::insert_program(ctx, &store_id, input)
     }
 
     async fn update_response_requisition(

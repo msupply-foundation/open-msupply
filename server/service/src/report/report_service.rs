@@ -1,9 +1,15 @@
+use base64::prelude::*;
 use chrono::{DateTime, Utc};
+use extism::{
+    convert::{encoding, Json},
+    host_fn, FromBytes, Manifest, PluginBuilder, UserData, Wasm, WasmMetadata, PTR,
+};
 use repository::{
-    EqualFilter, PaginationOption, Report, ReportFilter, ReportRepository, ReportRowRepository,
-    ReportSort, ReportType, RepositoryError,
+    raw_query, EqualFilter, JsonRawRow, PaginationOption, Report, ReportFilter, ReportRepository,
+    ReportRowRepository, ReportSort, ReportType, RepositoryError, StorageConnection,
 };
 use scraper::{ElementRef, Html, Selector};
+use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
 
@@ -65,6 +71,7 @@ pub struct ResolvedReportDefinition {
     pub templates: HashMap<String, TeraTemplate>,
     pub queries: Vec<ResolvedReportQuery>,
     pub resources: HashMap<String, serde_json::Value>,
+    pub convert_data: Option<String>,
 }
 
 pub struct GeneratedReport {
@@ -110,6 +117,7 @@ pub trait ReportServiceTrait: Sync + Send {
     /// Converts a HTML report to a file for the target PrintFormat and returns file id
     fn generate_html_report(
         &self,
+        connection: StorageConnection,
         base_dir: &Option<String>,
         report: &ResolvedReportDefinition,
         report_data: serde_json::Value,
@@ -119,6 +127,7 @@ pub trait ReportServiceTrait: Sync + Send {
         current_language: Option<String>,
     ) -> Result<String, ReportError> {
         let document = generate_report(
+            connection,
             report,
             report_data,
             arguments,
@@ -404,10 +413,77 @@ fn resolve_report_definition(
         templates,
         queries,
         resources,
+        convert_data: fully_loaded_report.index.convert_data,
     })
 }
 
+#[derive(Serialize, Debug, Deserialize, FromBytes)]
+#[encoding(Json)]
+struct WasmSqlQuery {
+    statement: String,
+    parameters: Vec<serde_json::Value>,
+}
+
+#[derive(Serialize, Debug, Deserialize, FromBytes)]
+#[encoding(Json)]
+struct WasmSqlResult {
+    rows: Vec<serde_json::Value>,
+}
+
+host_fn!(sql(user_data: StorageConnection; key: Json<WasmSqlQuery>) -> Json<WasmSqlResult> {
+    Ok(wasm_sql(user_data, key))
+});
+
+fn wasm_sql(
+    user_data: UserData<StorageConnection>,
+    Json(WasmSqlQuery {
+        statement,
+        parameters,
+    }): Json<WasmSqlQuery>,
+) -> Json<WasmSqlResult> {
+    let _ = parameters; // Explicitly ignore parameters
+    let con_mut = user_data.get().unwrap();
+    let con = con_mut.lock().unwrap();
+    let results = raw_query(&con, statement);
+    Json(WasmSqlResult {
+        rows: results
+            .into_iter()
+            .map(|JsonRawRow { json_row }| {
+                serde_json::from_str::<serde_json::Value>(&json_row).unwrap()
+            })
+            .collect(),
+    })
+}
+
+fn transform_data(
+    connection: StorageConnection,
+    data: serde_json::Value,
+    convert_data: Option<String>,
+) -> serde_json::Value {
+    let Some(convert_data) = convert_data else {
+        return data;
+    };
+
+    let manifest = Manifest::new([Wasm::Data {
+        data: BASE64_STANDARD.decode(convert_data).unwrap(),
+        meta: WasmMetadata {
+            name: Some("commander".to_string()),
+            hash: None,
+        },
+    }]);
+    let mut plugin = PluginBuilder::new(manifest)
+        .with_wasi(true)
+        .with_function("sql", [PTR], [PTR], UserData::new(connection), sql)
+        .build()
+        .unwrap();
+
+    plugin
+        .call::<serde_json::Value, serde_json::Value>("convert_data", data)
+        .unwrap()
+}
+
 fn generate_report(
+    connection: StorageConnection,
     report: &ResolvedReportDefinition,
     report_data: serde_json::Value,
     arguments: Option<serde_json::Value>,
@@ -415,11 +491,16 @@ fn generate_report(
     current_language: Option<String>,
 ) -> Result<GeneratedReport, ReportError> {
     let mut context = tera::Context::new();
+
+    let report_data = transform_data(connection, report_data, report.convert_data.clone());
+
     context.insert("data", &report_data);
     context.insert("res", &report.resources);
+
     if let Some(arguments) = arguments {
         context.insert("arguments", &arguments);
     }
+
     let mut tera = tera::Tera::default();
 
     tera.register_function(
@@ -667,6 +748,8 @@ mod report_service_test {
                 header: None,
                 footer: Some("footer.html".to_string()),
                 query: vec!["query".to_string()],
+                convert_data: None,
+                custom_wasm_function: None,
             },
             entries: HashMap::from([
                 (
@@ -696,6 +779,8 @@ mod report_service_test {
                 header: None,
                 footer: Some("footer.html".to_string()),
                 query: vec![],
+                convert_data: None,
+                custom_wasm_function: None,
             },
             entries: HashMap::from([(
                 "footer.html".to_string(),
@@ -749,6 +834,7 @@ mod report_service_test {
         let resolved_def = service.resolve_report(&context, "report_1").unwrap();
 
         let doc = generate_report(
+            connection,
             &resolved_def,
             serde_json::json!({
                 "test": "Hello"
@@ -895,7 +981,7 @@ mod report_generation_test {
             output: ReportOutputType::Html,
         };
 
-        let (_, _, connection_manager, _) =
+        let (_, connection, connection_manager, _) =
             setup_all("test_report_translations", MockDataInserts::none()).await;
 
         let translation_service =
@@ -912,11 +998,13 @@ mod report_generation_test {
             queries: Vec::new(),
             templates,
             resources: HashMap::new(),
+            convert_data: None,
         };
 
         let report_data = json!(null);
 
         let generated_report = generate_report(
+            connection,
             &report,
             report_data.clone(),
             None,
@@ -928,9 +1016,13 @@ mod report_generation_test {
         assert!(generated_report.document.contains("some text"));
         assert!(generated_report.document.contains("Name"));
 
-        // test generation in other languages
+        let (_, connection, _, _) =
+            setup_all("test_report_translations", MockDataInserts::none()).await;
+
+        // // test generation in other languages
 
         let generated_report = generate_report(
+            connection,
             &report,
             report_data,
             None,
