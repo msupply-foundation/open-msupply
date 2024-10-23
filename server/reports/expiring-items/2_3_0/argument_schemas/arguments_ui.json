@@ -61,7 +61,7 @@
       "options": {
         "show": [
           ["item.name", "item"],
-          ["code", "code"],
+          ["item.code", "code"],
           ["expiryDate", "expiry date"]
         ]
       }

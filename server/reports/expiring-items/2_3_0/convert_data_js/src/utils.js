@@ -1,6 +1,6 @@
 import { cleanUpNodes } from "../../../../utils";
 
-const processStockLines = (nodes, sortBy) => {
+const processStockLines = (nodes, sort, dir) => {
   nodes.forEach((line) => {
     if (Object.keys(line).length == 0) {
       return;
@@ -25,7 +25,7 @@ const processStockLines = (nodes, sortBy) => {
     line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat);
   });
   let cleanNodes = cleanUpNodes(nodes);
-  let sortedNodes = sortNodes(cleanNodes, sortBy);
+  let sortedNodes = sortNodes(cleanNodes, sort, dir);
   return sortedNodes;
 };
 
@@ -89,14 +89,15 @@ const roundDaysToInteger = (daysUntilExpired) => {
 };
 
 function getNestedValue(node, key) {
+  key = key + "";
   return key.split(".").reduce((value, part) => value && value[part], node);
 }
 
-const sortNodes = (nodes, sortBy) => {
-  let { sort, dir } = sortBy ?? {};
-
+const sortNodes = (nodes, sort, dir) => {
+  // assign default values
   sort = sort ?? "expiryDate";
   dir = dir ?? "desc";
+
   nodes.sort((a, b) => {
     const valueA = getNestedValue(a, sort);
     const valueB = getNestedValue(b, sort);

@@ -4,7 +4,8 @@ function convert_data() {
   let res = JSON.parse(Host.inputString());
   res.data.stockLines.nodes = processStockLines(
     res.data.stockLines.nodes,
-    res?.arguments?.sortBy ?? undefined
+    res?.arguments?.sort ?? undefined,
+    res?.arguments?.dir ?? undefined
   );
   Host.outputString(JSON.stringify(res));
 }
