@@ -109,6 +109,9 @@ pub use self::demographic::*;
 pub mod reason_option;
 pub use self::reason_option::*;
 
+pub mod cold_storage_type;
+pub use self::cold_storage_type::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]
