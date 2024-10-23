@@ -17,6 +17,7 @@ export const usePrescription = {
     rows: Line.usePrescriptionRows,
     delete: Line.usePrescriptionDeleteLines,
     deleteSelected: Line.usePrescriptionDeleteSelectedLines,
+    deleteAll: Line.usePrescriptionDeleteAllLines,
     save: Line.usePrescriptionSaveLines,
   },
   utils: {

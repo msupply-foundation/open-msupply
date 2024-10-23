@@ -3,7 +3,7 @@ use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 use chrono::NaiveDate;
 use repository::{
     ActivityLogType, RepositoryError, RnRForm, RnRFormLineRow, RnRFormLineRowRepository,
-    RnRFormLowStock, RnRFormStatus,
+    RnRFormLowStock, RnRFormRow, RnRFormRowRepository, RnRFormStatus,
 };
 
 use super::{get_period_length, query::get_rnr_form, validate::check_rnr_form_exists};
@@ -15,11 +15,13 @@ pub struct UpdateRnRFormLine {
     pub quantity_consumed: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
     pub adjustments: Option<f64>,
+    pub losses: Option<f64>,
     pub stock_out_duration: i32,
     pub adjusted_quantity_consumed: f64,
     pub average_monthly_consumption: f64,
     pub initial_balance: f64,
     pub final_balance: f64,
+    pub minimum_quantity: f64,
     pub maximum_quantity: f64,
     pub calculated_requested_quantity: f64,
     pub entered_requested_quantity: Option<f64>,
@@ -32,6 +34,8 @@ pub struct UpdateRnRFormLine {
 pub struct UpdateRnRForm {
     pub id: String,
     pub lines: Vec<UpdateRnRFormLine>,
+    pub their_reference: Option<String>,
+    pub comment: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -66,10 +70,13 @@ pub fn update_rnr_form(
     let rnr_form = ctx
         .connection
         .transaction_sync(|connection| {
-            let line_data = validate(ctx, store_id, &input)?;
-            let rnr_form_lines = generate(line_data);
+            let (rnr_form, line_data) = validate(ctx, store_id, &input)?;
+            let (updated_form, rnr_form_lines) = generate(input, rnr_form, line_data);
 
+            let rnr_form_repo = RnRFormRowRepository::new(connection);
             let rnr_form_line_repo = RnRFormLineRowRepository::new(connection);
+
+            rnr_form_repo.upsert_one(&updated_form)?;
 
             for line in rnr_form_lines {
                 rnr_form_line_repo.upsert_one(&line)?;
@@ -78,12 +85,12 @@ pub fn update_rnr_form(
             activity_log_entry(
                 ctx,
                 ActivityLogType::RnrFormUpdated,
-                Some(input.id.clone()),
+                Some(updated_form.id.clone()),
                 None,
                 None,
             )?;
 
-            get_rnr_form(ctx, store_id, input.id)
+            get_rnr_form(ctx, store_id, updated_form.id)
                 .map_err(UpdateRnRFormError::DatabaseError)?
                 .ok_or(UpdateRnRFormError::UpdatedRnRFormDoesNotExist)
         })
@@ -96,7 +103,7 @@ fn validate(
     ctx: &ServiceContext,
     store_id: &str,
     input: &UpdateRnRForm,
-) -> Result<Vec<(UpdateRnRFormLine, RnRFormLineRow)>, UpdateRnRFormError> {
+) -> Result<(RnRFormRow, Vec<(UpdateRnRFormLine, RnRFormLineRow)>), UpdateRnRFormError> {
     let connection = &ctx.connection;
 
     let rnr_form = check_rnr_form_exists(connection, &input.id)?
@@ -111,7 +118,7 @@ fn validate(
     };
 
     let days_in_period = get_period_length(&rnr_form.period_row);
-    let rnr_form_id = rnr_form.rnr_form_row.id;
+    let rnr_form_id = rnr_form.rnr_form_row.id.clone();
 
     let rnr_form_line_repo = RnRFormLineRowRepository::new(connection);
     let line_data = input
@@ -136,6 +143,7 @@ fn validate(
                 quantity_received,
                 quantity_consumed,
                 adjustments,
+                losses,
                 final_balance,
                 calculated_requested_quantity,
                 entered_requested_quantity,
@@ -149,8 +157,9 @@ fn validate(
             let quantity_consumed =
                 quantity_consumed.unwrap_or(rnr_form_line.snapshot_quantity_consumed);
             let adjustments = adjustments.unwrap_or(rnr_form_line.snapshot_adjustments);
+            let losses = losses.unwrap_or(0.0);
 
-            if initial_balance + quantity_received - quantity_consumed + adjustments
+            if initial_balance + quantity_received - quantity_consumed + adjustments - losses
                 != final_balance
             {
                 return Err(UpdateRnRFormError::LineError {
@@ -186,11 +195,21 @@ fn validate(
         })
         .collect::<Result<Vec<(UpdateRnRFormLine, RnRFormLineRow)>, UpdateRnRFormError>>()?;
 
-    Ok(line_data)
+    Ok((rnr_form.rnr_form_row, line_data))
 }
 
-fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormLineRow> {
-    line_data
+fn generate(
+    input: UpdateRnRForm,
+    rnr_form: RnRFormRow,
+    line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>,
+) -> (RnRFormRow, Vec<RnRFormLineRow>) {
+    let updated_rnr_form = RnRFormRow {
+        their_reference: input.their_reference.or(rnr_form.their_reference),
+        comment: input.comment.or(rnr_form.comment),
+        ..rnr_form
+    };
+
+    let update_lines = line_data
         .into_iter()
         .map(
             |(
@@ -211,6 +230,8 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                     calculated_requested_quantity,
                     entered_requested_quantity,
                     low_stock,
+                    losses,
+                    minimum_quantity,
                 },
                 RnRFormLineRow {
                     id,
@@ -236,6 +257,8 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                     comment: _,
                     confirmed: _,
                     low_stock: _,
+                    entered_losses: _,
+                    minimum_quantity: _,
                 },
             )| {
                 RnRFormLineRow {
@@ -243,12 +266,14 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                     entered_quantity_received: quantity_received,
                     entered_quantity_consumed: quantity_consumed,
                     entered_adjustments: adjustments,
+                    entered_losses: losses,
                     average_monthly_consumption,
                     stock_out_duration,
                     adjusted_quantity_consumed,
                     initial_balance, // TODO; snapshot and entered?
                     final_balance,
                     maximum_quantity,
+                    minimum_quantity,
                     calculated_requested_quantity,
                     entered_requested_quantity,
                     low_stock,
@@ -266,7 +291,9 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                 }
             },
         )
-        .collect()
+        .collect();
+
+    (updated_rnr_form, update_lines)
 }
 
 impl From<RepositoryError> for UpdateRnRFormError {
