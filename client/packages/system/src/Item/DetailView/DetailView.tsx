@@ -44,7 +44,7 @@ export const ItemDetailView: FC = () => {
       value: t('label.master-lists'),
     },
     {
-      Component: <ItemVariantsTab itemId={data.id} />,
+      Component: <ItemVariantsTab itemVariants={data.variants} />,
       value: t('label.variants'),
     },
   ];
