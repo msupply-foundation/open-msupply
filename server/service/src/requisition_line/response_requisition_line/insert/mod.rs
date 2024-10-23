@@ -23,7 +23,6 @@ pub enum InsertResponseRequisitionLineError {
     RequisitionLineAlreadyExists,
     ItemAlreadyExistInRequisition,
     ItemDoesNotExist,
-    // TODO  ItemIsNotVisibleInThisStore,
     CannotAddItemToProgramRequisition,
     RequisitionDoesNotExist,
     NotThisStoreRequisition,
