@@ -147,7 +147,6 @@ var require_utils2 = __commonJS({
 var import_utils = __toESM(require_utils2());
 function convert_data() {
   const res = JSON.parse(Host.inputString());
-  console.log("arguments", res?.arguments?.sort, res?.arguments?.dir);
   res.data.items.nodes = (0, import_utils.processItemLines)(
     res.data,
     // assign default sort values

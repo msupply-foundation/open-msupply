@@ -1,10 +1,9 @@
-import { processItemLines } from "./utils";
+import { processStockLines } from "./utils";
 
 function convert_data() {
   const res = JSON.parse(Host.inputString());
-  console.log("arguments", res?.arguments?.sort, res?.arguments?.dir);
-  res.data.items.nodes = processItemLines(
-    res.data,
+  res.data.stockLines.nodes = processStockLines(
+    res.data.stockLines.nodes,
     // assign default sort values
     res?.arguments?.sort ?? "item.name",
     res?.arguments?.dir ?? "desc"

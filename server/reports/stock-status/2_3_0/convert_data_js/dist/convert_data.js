@@ -83,62 +83,13 @@ var require_utils = __commonJS({
 var require_utils2 = __commonJS({
   "src/utils.js"(exports2, module2) {
     var import_utils2 = __toESM(require_utils());
-    var processItemLines2 = (data, sort, dir) => {
-      data.items.nodes.forEach((item) => {
-        if (Object.keys(item).length == 0) {
-          return;
-        }
-        item.monthConsumption = calculateQuantity(
-          data.thisMonthConsumption,
-          item.id
-        );
-        item.lastMonthConsumption = calculateQuantity(
-          data.lastMonthConsumption,
-          item.id
-        );
-        item.twoMonthsAgoConsumption = calculateQuantity(
-          data.twoMonthsAgoConsumption,
-          item.id
-        );
-        item.expiringInSixMonths = calculateQuantity(
-          data.expiringInSixMonths,
-          item.id
-        );
-        item.expiringInTwelveMonths = calculateQuantity(
-          data.expiringInTwelveMonths,
-          item.id
-        );
-        item.stockOnOrder = calculateQuantity(data.stockOnOrder, item.id);
-        item.AMC12 = calculateQuantity(data.AMCTwelve, item.id);
-        item.AMC24 = calculateQuantity(data.AMCTwentyFour, item.id);
-        item.SOH = calculateStatValue(item?.stats?.availableStockOnHand);
-        item.MOS = calculateStatValue(item?.stats?.availableMonthsOfStockOnHand);
-      });
-      let cleanNodes = (0, import_utils2.cleanUpNodes)(data.items.nodes);
+    var processItemLines2 = (nodes, sort, dir) => {
+      let cleanNodes = (0, import_utils2.cleanUpNodes)(nodes);
       let sortedNodes = (0, import_utils2.sortNodes)(cleanNodes, sort, dir);
       return sortedNodes;
     };
-    var calculateQuantity = (queryResult, id) => {
-      let quantity = 0;
-      if (!!queryResult && !!id) {
-        const node = queryResult.find((element) => element.item_id == id);
-        quantity = node?.quantity ? node.quantity : 0;
-      }
-      return quantity;
-    };
-    var calculateStatValue = (value) => {
-      let returnValue = 0;
-      if (!!value) {
-        returnValue = Math.round(value * 10) / 10;
-      }
-      return returnValue;
-    };
     module2.exports = {
-      calculateQuantity,
-      calculateStatValue,
-      processItemLines: processItemLines2,
-      cleanUpNodes: import_utils2.cleanUpNodes,
-      sortNodes: import_utils2.sortNodes
+      processItemLines: processItemLines2
     };
   }
 });
@@ -147,11 +98,10 @@ var require_utils2 = __commonJS({
 var import_utils = __toESM(require_utils2());
 function convert_data() {
   const res = JSON.parse(Host.inputString());
-  console.log("arguments", res?.arguments?.sort, res?.arguments?.dir);
   res.data.items.nodes = (0, import_utils.processItemLines)(
-    res.data,
+    res.data.items.nodes,
     // assign default sort values
-    res?.arguments?.sort ?? "SOH",
+    res?.arguments?.sort ?? "name",
     res?.arguments?.dir ?? "desc"
   );
   Host.outputString(JSON.stringify(res));

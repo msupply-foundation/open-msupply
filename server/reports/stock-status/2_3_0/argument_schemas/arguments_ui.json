@@ -40,6 +40,22 @@
       "options": {
         "readonly": true
       }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/sort",
+      "label": "Sort by:",
+      "options": {
+        "show": [
+          ["name", "item"],
+          ["code", "code"]
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/dir",
+      "label": "Sort direction"
     }
   ]
 }
