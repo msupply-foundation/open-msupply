@@ -11,7 +11,7 @@ import {
 import { getNameOptionRenderer } from '@openmsupply-client/system';
 
 import { SupplierProgramSettingsFragment } from '../api';
-import { NewRequisitionType } from './types';
+import { NewRequisitionType } from '../../types';
 
 export interface NewProgramRequisition {
   type: NewRequisitionType.Program;
