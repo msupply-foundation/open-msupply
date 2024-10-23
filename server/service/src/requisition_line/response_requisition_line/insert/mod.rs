@@ -86,7 +86,7 @@ mod test {
 
     fn new_response_requisition_line() -> RequisitionLineRow {
         RequisitionLineRow {
-            id: "new requisiiton line id".to_string(),
+            id: "new requisition line id".to_string(),
             requisition_id: new_response_requisition().id,
             item_link_id: mock_item_a().id,
             ..Default::default()
