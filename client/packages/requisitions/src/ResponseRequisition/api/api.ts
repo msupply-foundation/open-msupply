@@ -271,4 +271,8 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
       (await sdk.supplyRequestedQuantity({ storeId, responseId })) || {};
     return result;
   },
+  programSettings: async () => {
+    const result = await sdk.customerProgramSettings({ storeId });
+    return result.customerProgramRequisitionSettings;
+  },
 });

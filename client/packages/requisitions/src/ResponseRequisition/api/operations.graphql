@@ -335,3 +335,27 @@ query responseRequisitionStats($storeId: String!, $requisitionLineId: String!) {
     }
   }
 }
+
+fragment CustomerProgramSettings on CustomerProgramRequisitionSettingNode {
+  programName
+  programId
+  customerAndOrderTypes {
+    customer {
+      ...NameRow
+    }
+    orderTypes {
+      id
+      name
+      availablePeriods {
+        id
+        name
+      }
+    }
+  }
+}
+
+query customerProgramSettings($storeId: String!) {
+  customerProgramRequisitionSettings(storeId: $storeId) {
+    ...CustomerProgramSettings
+  }
+}

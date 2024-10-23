@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type UpdateResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -82,6 +83,15 @@ export type ResponseRequisitionStatsQueryVariables = Types.Exact<{
 
 
 export type ResponseRequisitionStatsQuery = { __typename: 'Queries', responseRequisitionStats: { __typename: 'RequisitionLineStatsError', error: { __typename: 'RecordNotFound', description: string } } | { __typename: 'ResponseRequisitionStatsNode', requestStoreStats: { __typename: 'RequestStoreStatsNode', averageMonthlyConsumption: number, stockOnHand: number, maxMonthsOfStock: number, suggestedQuantity: number }, responseStoreStats: { __typename: 'ResponseStoreStatsNode', incomingStock: number, otherRequestedQuantity: number, requestedQuantity: number, stockOnHand: number, stockOnOrder: number } } };
+
+export type CustomerProgramSettingsFragment = { __typename: 'CustomerProgramRequisitionSettingNode', programName: string, programId: string, customerAndOrderTypes: Array<{ __typename: 'CustomerAndOrderTypeNode', customer: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> };
+
+export type CustomerProgramSettingsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type CustomerProgramSettingsQuery = { __typename: 'Queries', customerProgramRequisitionSettings: Array<{ __typename: 'CustomerProgramRequisitionSettingNode', programName: string, programId: string, customerAndOrderTypes: Array<{ __typename: 'CustomerAndOrderTypeNode', customer: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> }> };
 
 export const ResponseLineFragmentDoc = gql`
     fragment ResponseLine on RequisitionLineNode {
@@ -213,6 +223,25 @@ export const ResponseRowFragmentDoc = gql`
   }
 }
     `;
+export const CustomerProgramSettingsFragmentDoc = gql`
+    fragment CustomerProgramSettings on CustomerProgramRequisitionSettingNode {
+  programName
+  programId
+  customerAndOrderTypes {
+    customer {
+      ...NameRow
+    }
+    orderTypes {
+      id
+      name
+      availablePeriods {
+        id
+        name
+      }
+    }
+  }
+}
+    ${NameRowFragmentDoc}`;
 export const UpdateResponseDocument = gql`
     mutation updateResponse($storeId: String!, $input: UpdateResponseRequisitionInput!) {
   updateResponseRequisition(input: $input, storeId: $storeId) {
@@ -410,6 +439,13 @@ export const ResponseRequisitionStatsDocument = gql`
   }
 }
     `;
+export const CustomerProgramSettingsDocument = gql`
+    query customerProgramSettings($storeId: String!) {
+  customerProgramRequisitionSettings(storeId: $storeId) {
+    ...CustomerProgramSettings
+  }
+}
+    ${CustomerProgramSettingsFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -444,6 +480,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     responseRequisitionStats(variables: ResponseRequisitionStatsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ResponseRequisitionStatsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ResponseRequisitionStatsQuery>(ResponseRequisitionStatsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'responseRequisitionStats', 'query', variables);
+    },
+    customerProgramSettings(variables: CustomerProgramSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CustomerProgramSettingsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CustomerProgramSettingsQuery>(CustomerProgramSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'customerProgramSettings', 'query', variables);
     }
   };
 }
