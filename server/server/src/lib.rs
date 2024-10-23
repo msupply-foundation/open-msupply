@@ -142,7 +142,7 @@ pub async fn start_server(
 
     // SET LOG CALLBACK FOR WASM FUNCTIONS
     info!("Setting wasm function log callback..");
-    let _ = set_log_callback(|log| println!("log {:?}", log), "info");
+    let _ = set_log_callback(|log| info!("log {:?}", log), "info");
 
     // SET HARDWARE UUID
     info!("Setting hardware uuid..");
