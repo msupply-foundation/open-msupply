@@ -57,21 +57,19 @@
     {
       "type": "Control",
       "scope": "#/properties/sort",
-      "label": "Sort report by column",
+      "label": "Sort by:",
       "options": {
-        "inputAlignment": "end",
-        "paddingRight": 25,
-        "autocomplete": true
+        "show": [
+          ["item.name", "item"],
+          ["code", "code"],
+          ["expiryDate", "expiry date"]
+        ]
       }
     },
     {
       "type": "Control",
       "scope": "#/properties/dir",
-      "label": "Sort direction",
-      "options": {
-        "inputAlignment": "end",
-        "paddingRight": 25
-      }
+      "label": "Sort direction"
     }
   ]
 }

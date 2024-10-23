@@ -12,15 +12,10 @@
           "description": "Item Code or Name",
           "type": "string"
         },
-
         "sort": {
           "description": "sort by",
           "type": "string",
-          "oneOf": [
-            { "const": "item.name", "title": "item name" },
-            { "const": "code", "title": "code" },
-            { "const": "expiryDate", "title": "expiry date" }
-          ]
+          "enum": ["item.name", "code", "expiryDate"]
         },
         "dir": {
           "description": "sort by dir",
