@@ -22,6 +22,16 @@
         "monthsUnderstock": {
           "description": "Months Understock",
           "type": "number"
+        },
+        "sort": {
+          "description": "sort by",
+          "type": "string",
+          "enum": ["name", "code"]
+        },
+        "dir": {
+          "description": "sort by dir",
+          "type": "string",
+          "enum": ["asc", "desc"]
         }
       }
     }

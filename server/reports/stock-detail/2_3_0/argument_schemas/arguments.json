@@ -18,6 +18,24 @@
         "monthsUnderstock": {
           "description": "Months Understock",
           "type": "number"
+        },
+        "sort": {
+          "description": "sort by",
+          "type": "string",
+          "enum": [
+            "item.name",
+            "item.code",
+            "expiryDate",
+            "location.code",
+            "item.unitName",
+            "packSize",
+            "totalNumberOfPacks"
+          ]
+        },
+        "dir": {
+          "description": "sort by dir",
+          "type": "string",
+          "enum": ["asc", "desc"]
         }
       }
     }

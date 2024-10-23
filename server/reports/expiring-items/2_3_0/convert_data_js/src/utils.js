@@ -1,6 +1,6 @@
-import { cleanUpNodes } from "../../../../utils";
+import { cleanUpNodes, sortNodes, getNestedValue } from "../../../../utils";
 
-const processStockLines = (nodes) => {
+const processStockLines = (nodes, sort, dir) => {
   nodes.forEach((line) => {
     if (Object.keys(line).length == 0) {
       return;
@@ -25,7 +25,8 @@ const processStockLines = (nodes) => {
     line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat);
   });
   let cleanNodes = cleanUpNodes(nodes);
-  return cleanNodes;
+  let sortedNodes = sortNodes(cleanNodes, sort, dir);
+  return sortedNodes;
 };
 
 const calculateDaysUntilExpired = (expiryDateString) => {
@@ -93,4 +94,6 @@ module.exports = {
   calculateDaysUntilExpired,
   calculateStockAtRisk,
   roundDaysToInteger,
+  sortNodes,
+  getNestedValue,
 };

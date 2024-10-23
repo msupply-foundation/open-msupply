@@ -4,6 +4,8 @@ import {
   roundDaysToInteger,
   calculateExpectedUsage,
   calculateStockAtRisk,
+  sortNodes,
+  getNestedValue,
 } from "./utils";
 import inputData from "../input.json" assert { type: "json" };
 import outputData from "../output.json" assert { type: "json" };
@@ -18,7 +20,11 @@ describe("test process stock lines", () => {
   // calculateStockAtRisk.mockImplementation(() => 10);
   // roundDaysToInteger.mockImplementation(() => 10);
   it("end to end", () => {
-    const result = processStockLines(inputData.stockLines.nodes);
+    const result = processStockLines(
+      inputData.stockLines.nodes,
+      "expiryDate",
+      "desc"
+    );
     expect(result).toEqual(outputData.stockLines.nodes);
   });
   afterAll(() => {

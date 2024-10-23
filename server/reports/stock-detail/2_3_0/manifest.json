@@ -1,15 +1,16 @@
 {
-    "is_custom": false,
-    "version": "2.3.0",
-    "code": "stock-detail",
-    "context": "REPORT",
-    "sub_context": "StockAndItems",
-    "name": "Stock Detail",
-    "queries": {
-        "gql": "query.graphql"
-    },
-    "arguments": {
-        "schema": "argument_schemas/arguments.json",
-        "ui": "argument_schemas/arguments_ui.json"
-    }
-}   
+  "is_custom": false,
+  "version": "2.3.0",
+  "code": "stock-detail",
+  "context": "REPORT",
+  "sub_context": "StockAndItems",
+  "name": "Stock Detail",
+  "queries": {
+    "gql": "query.graphql"
+  },
+  "arguments": {
+    "schema": "argument_schemas/arguments.json",
+    "ui": "argument_schemas/arguments_ui.json"
+  },
+  "convert_data": "convert_data_js"
+}
