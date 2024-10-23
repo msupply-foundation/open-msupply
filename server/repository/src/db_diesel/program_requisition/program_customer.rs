@@ -2,11 +2,9 @@ use diesel::prelude::*;
 
 use crate::{
     db_diesel::{
-        master_list_name_join::master_list_name_join::dsl as master_list_name_join_dsl,
-        master_list_row::master_list::dsl as master_list_dsl,
-        name_link_row::name_link::dsl as name_link_dsl, name_row::name::dsl as name_dsl,
-        name_store_join::name_store_join::dsl as name_store_join_dsl,
-        program_row::program::dsl as program_dsl, store_row::store::dsl as store_dsl,
+        master_list_name_join::master_list_name_join, master_list_row::master_list,
+        name_link_row::name_link, name_row::name, name_store_join::name_store_join,
+        program_row::program, store_row::store,
     },
     diesel_macros::apply_equal_filter,
     name_oms_fields, name_oms_fields_alias,
@@ -56,32 +54,27 @@ impl<'a> ProgramCustomerRepository<'a> {
         let mut query =
             NameRepository::create_filtered_query(store_id.to_string(), Some(name_filter))
                 .inner_join(
-                    master_list_name_join_dsl::master_list_name_join
-                        .on(master_list_name_join_dsl::name_link_id.eq(name_link_dsl::id)),
+                    master_list_name_join::table
+                        .on(master_list_name_join::name_link_id.eq(name_link::id)),
                 )
                 .inner_join(
-                    master_list_dsl::master_list
-                        .on(master_list_dsl::id.eq(master_list_name_join_dsl::master_list_id)),
+                    master_list::table
+                        .on(master_list::id.eq(master_list_name_join::master_list_id)),
                 )
                 .inner_join(
-                    program_dsl::program
-                        .on(program_dsl::master_list_id.eq(master_list_dsl::id.nullable())),
+                    program::table.on(program::master_list_id.eq(master_list::id.nullable())),
                 );
 
-        apply_equal_filter!(query, program_id_filter, program_dsl::id);
+        apply_equal_filter!(query, program_id_filter, program::id);
 
         let query = query.select((
             // Same as NameRepository
-            name_dsl::name::all_columns(),
+            name::table::all_columns(),
             name_oms_fields_alias.fields((name_oms_fields::id, name_oms_fields::properties)),
-            name_link_dsl::name_link::all_columns()
-                .nullable()
-                .assume_not_null(),
-            name_store_join_dsl::name_store_join::all_columns().nullable(),
-            store_dsl::store::all_columns().nullable(),
-            program_dsl::program::all_columns()
-                .nullable()
-                .assume_not_null(),
+            name_link::table::all_columns().nullable().assume_not_null(),
+            name_store_join::table::all_columns().nullable(),
+            store::table::all_columns().nullable(),
+            program::table::all_columns().nullable().assume_not_null(),
         ));
         let result = query.load::<ProgramCustomerJoin>(self.connection.lock().connection())?;
 
