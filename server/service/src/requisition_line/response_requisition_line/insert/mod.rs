@@ -151,7 +151,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertResponseRequisitionLine| {
                     r.requisition_id = new_response_requisition().id;
-                    r.id = "new requisition line id".to_string();
+                    r.id = "test".to_string();
                     r.item_id = mock_item_a().id;
                 }),
             ),
