@@ -20,10 +20,11 @@ describe("test process stock lines", () => {
   // calculateStockAtRisk.mockImplementation(() => 10);
   // roundDaysToInteger.mockImplementation(() => 10);
   it("end to end", () => {
-    const result = processStockLines(inputData.stockLines.nodes, {
-      sort: "expiryDate",
-      dir: "desc",
-    });
+    const result = processStockLines(
+      inputData.stockLines.nodes,
+      "expiryDate",
+      "desc"
+    );
     expect(result).toEqual(outputData.stockLines.nodes);
   });
   afterAll(() => {
@@ -118,7 +119,8 @@ describe("sorts nodes on sortBy", () => {
           { expiryDate: 2 },
           { expiryDate: 5 },
         ],
-        { dir: "asc" }
+        undefined,
+        "asc"
       )
     ).toEqual([
       { expiryDate: 1 },
@@ -129,10 +131,11 @@ describe("sorts nodes on sortBy", () => {
   });
   it("returns sorting on other value", () => {
     expect(
-      sortNodes([{ batch: 1 }, { batch: 3 }, { batch: 2 }, { batch: 5 }], {
-        sort: "batch",
-        dir: "desc",
-      })
+      sortNodes(
+        [{ batch: 1 }, { batch: 3 }, { batch: 2 }, { batch: 5 }],
+        "batch",
+        "desc"
+      )
     ).toEqual([{ batch: 5 }, { batch: 3 }, { batch: 2 }, { batch: 1 }]);
   });
   it("returns sorting on nested value item.name", () => {
@@ -164,7 +167,8 @@ describe("sorts nodes on sortBy", () => {
             },
           },
         ],
-        { sort: "item.name", dir: "asc" }
+        "item.name",
+        "asc"
       )
     ).toEqual([
       {
@@ -196,9 +200,7 @@ describe("sorts nodes on sortBy", () => {
   });
   it("returns sorting on sort when no dir is provided and defaults to desc", () => {
     expect(
-      sortNodes([{ code: 1 }, { code: 3 }, { code: 2 }, { code: 5 }], {
-        sort: "code",
-      })
+      sortNodes([{ code: 1 }, { code: 3 }, { code: 2 }, { code: 5 }], "code")
     ).toEqual([{ code: 5 }, { code: 3 }, { code: 2 }, { code: 1 }]);
   });
 });

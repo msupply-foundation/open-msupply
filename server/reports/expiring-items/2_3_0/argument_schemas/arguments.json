@@ -15,7 +15,7 @@
         "sort": {
           "description": "sort by",
           "type": "string",
-          "enum": ["item.name", "code", "expiryDate"]
+          "enum": ["item.name", "item.code", "expiryDate"]
         },
         "dir": {
           "description": "sort by dir",

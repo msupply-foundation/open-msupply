@@ -60,7 +60,7 @@ var require_utils = __commonJS({
 var require_utils2 = __commonJS({
   "src/utils.js"(exports2, module2) {
     var import_utils2 = __toESM(require_utils());
-    var processStockLines2 = (nodes, sortBy) => {
+    var processStockLines2 = (nodes, sort, dir) => {
       nodes.forEach((line) => {
         if (Object.keys(line).length == 0) {
           return;
@@ -85,7 +85,7 @@ var require_utils2 = __commonJS({
         line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat);
       });
       let cleanNodes = (0, import_utils2.cleanUpNodes)(nodes);
-      let sortedNodes = sortNodes(cleanNodes, sortBy);
+      let sortedNodes = sortNodes(cleanNodes, sort, dir);
       return sortedNodes;
     };
     var calculateDaysUntilExpired = (expiryDateString) => {
@@ -136,12 +136,13 @@ var require_utils2 = __commonJS({
       return rounded;
     };
     function getNestedValue(node, key) {
+      key = key + "";
       return key.split(".").reduce((value, part) => value && value[part], node);
     }
-    var sortNodes = (nodes, sortBy) => {
-      let { sort, dir } = sortBy ?? {};
+    var sortNodes = (nodes, sort, dir) => {
       sort = sort ?? "expiryDate";
       dir = dir ?? "desc";
+      console.log("sort inside sort function", sort, dir);
       nodes.sort((a, b) => {
         const valueA = getNestedValue(a, sort);
         const valueB = getNestedValue(b, sort);
@@ -172,9 +173,11 @@ var require_utils2 = __commonJS({
 var import_utils = __toESM(require_utils2());
 function convert_data() {
   let res = JSON.parse(Host.inputString());
+  console.log("convert data sort", res?.arguments?.sort, res?.arguments?.dir);
   res.data.stockLines.nodes = (0, import_utils.processStockLines)(
     res.data.stockLines.nodes,
-    res?.arguments?.sortBy ?? void 0
+    res?.arguments?.sort ?? void 0,
+    res?.arguments?.dir ?? void 0
   );
   Host.outputString(JSON.stringify(res));
 }
