@@ -41,7 +41,11 @@
         "show": [
           ["item.name", "item"],
           ["item.code", "code"],
-          ["expiryDate", "expiry date"]
+          ["expiryDate", "expiry date"],
+          ["location.code", "location code"],
+          ["item.unitName", "unit name"],
+          ["packSize", "pack size"],
+          ["totalNumberOfPacks", "total number of packs"]
         ]
       }
     },

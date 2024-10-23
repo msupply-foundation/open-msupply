@@ -18,7 +18,20 @@
         "sort": {
           "description": "sort by",
           "type": "string",
-          "enum": ["name", "code", "SOH", "MOS"]
+          "enum": [
+            "name",
+            "code",
+            "SOH",
+            "MOS",
+            "monthConsumption",
+            "lastMonthConsumption",
+            "twoMonthsAgoConsumption",
+            "expiringInSixMonths",
+            "expiringInTwelveMonths",
+            "stockOnOrder",
+            "AMC12",
+            "AMC24"
+          ]
         },
         "dir": {
           "description": "sort by dir",
