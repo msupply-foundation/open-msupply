@@ -74,6 +74,7 @@ pub enum ChangelogTableName {
     Barcode,
     Clinician,
     ClinicianStoreJoin,
+    ColdStorageType,
     Name,
     NameStoreJoin,
     Document,
@@ -167,6 +168,7 @@ impl ChangelogTableName {
             ChangelogTableName::VaccineCourseItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourseDose => ChangeLogSyncStyle::Central,
             ChangelogTableName::Vaccination => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::ColdStorageType => ChangeLogSyncStyle::Legacy,
         }
     }
 }

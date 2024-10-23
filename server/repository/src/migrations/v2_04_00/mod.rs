@@ -1,5 +1,6 @@
 use super::{version::Version, Migration, MigrationFragment};
 
+mod add_cold_storage_type_table;
 mod add_expected_lifespan_to_assets;
 mod add_manual_requisition_line_fields;
 mod add_reason_option_table;
@@ -24,6 +25,7 @@ impl Migration for V2_04_00 {
             Box::new(add_manual_requisition_line_fields::Migrate),
             Box::new(add_unserviceable_status_to_asset_status_enum::Migrate),
             Box::new(add_expected_lifespan_to_assets::Migrate),
+            Box::new(add_cold_storage_type_table::Migrate),
         ]
     }
 }
