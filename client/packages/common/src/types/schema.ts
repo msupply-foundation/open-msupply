@@ -2542,6 +2542,7 @@ export type InsertLocationErrorInterface = {
 
 export type InsertLocationInput = {
   code: Scalars['String']['input'];
+  coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3410,6 +3411,7 @@ export type ItemNode = {
   strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']['output']>;
+  variants: Array<ItemVariantNode>;
   venCategory: VenCategoryType;
   volumePerOuterPack: Scalars['Float']['output'];
   volumePerPack: Scalars['Float']['output'];
@@ -3488,6 +3490,17 @@ export type ItemStatsNode = {
   availableStockOnHand: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
   totalConsumption: Scalars['Float']['output'];
+};
+
+export type ItemVariantNode = {
+  __typename: 'ItemVariantNode';
+  coldStorageTypeId?: Maybe<Scalars['String']['output']>;
+  dosesPerUnit?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  manufacturerId?: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  packagingVariants: Array<PackagingVariantNode>;
 };
 
 export type ItemsResponse = ItemConnector;
@@ -4811,6 +4824,15 @@ export type PackVariantMutationsInsertPackVariantArgs = {
 export type PackVariantMutationsUpdatePackVariantArgs = {
   input: UpdatePackVariantInput;
   storeId: Scalars['String']['input'];
+};
+
+export type PackagingVariantNode = {
+  __typename: 'PackagingVariantNode';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  packSize?: Maybe<Scalars['Float']['output']>;
+  packagingLevel: Scalars['Int']['output'];
+  volumePerUnit?: Maybe<Scalars['Float']['output']>;
 };
 
 /**

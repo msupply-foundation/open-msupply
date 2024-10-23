@@ -1,4 +1,4 @@
-use super::{ItemStatsNode, StockLineConnector};
+use super::{ItemStatsNode, ItemVariantNode, StockLineConnector};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::{
@@ -11,7 +11,9 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{Item, ItemRow, ItemType, VENCategory};
+use repository::{
+    item_variant::item_variant_row::ItemVariantRow, Item, ItemRow, ItemType, VENCategory,
+};
 use serde_json::json;
 use service::ListResult;
 
@@ -131,6 +133,19 @@ impl ItemNode {
             )?;
 
         Ok(result)
+    }
+
+    // TODO: maybe do this in a loader!
+    pub async fn variants(&self) -> Vec<ItemVariantNode> {
+        ItemVariantNode::from_vec(vec![ItemVariantRow {
+            id: "id".to_string(),
+            name: "Variant 1".to_string(),
+            item_link_id: self.row().id.clone(),
+            cold_storage_type_id: None,
+            doses_per_unit: None,
+            manufacturer_link_id: None,
+            deleted_datetime: None,
+        }])
     }
 
     // Mock
