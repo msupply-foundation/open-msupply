@@ -43,6 +43,14 @@ export type InsertResponseMutationVariables = Types.Exact<{
 
 export type InsertResponseMutation = { __typename: 'Mutations', insertResponseRequisition: { __typename: 'InsertResponseRequisitionError', error: { __typename: 'OtherPartyNotACustomer', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
 
+export type InsertProgramResponseMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertProgramResponseRequisitionInput;
+}>;
+
+
+export type InsertProgramResponseMutation = { __typename: 'Mutations', insertProgramResponseRequisition: { __typename: 'InsertProgramResponseRequisitionError' } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
+
 export type UpdateResponseLineMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpdateResponseRequisitionLineInput;
@@ -266,6 +274,17 @@ export const InsertResponseDocument = gql`
   }
 }
     `;
+export const InsertProgramResponseDocument = gql`
+    mutation insertProgramResponse($storeId: String!, $input: InsertProgramResponseRequisitionInput!) {
+  insertProgramResponseRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+      requisitionNumber
+    }
+  }
+}
+    `;
 export const UpdateResponseLineDocument = gql`
     mutation updateResponseLine($storeId: String!, $input: UpdateResponseRequisitionLineInput!) {
   updateResponseRequisitionLine(input: $input, storeId: $storeId) {
@@ -410,6 +429,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertResponse(variables: InsertResponseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertResponseMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertResponseMutation>(InsertResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertResponse', 'mutation', variables);
+    },
+    insertProgramResponse(variables: InsertProgramResponseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertProgramResponseMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertProgramResponseMutation>(InsertProgramResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertProgramResponse', 'mutation', variables);
     },
     updateResponseLine(variables: UpdateResponseLineMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateResponseLineMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateResponseLineMutation>(UpdateResponseLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateResponseLine', 'mutation', variables);

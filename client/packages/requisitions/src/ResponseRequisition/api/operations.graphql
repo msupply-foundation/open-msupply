@@ -199,6 +199,19 @@ mutation insertResponse(
   }
 }
 
+mutation insertProgramResponse(
+  $storeId: String!
+  $input: InsertProgramResponseRequisitionInput!
+) {
+  insertProgramResponseRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+      requisitionNumber
+    }
+  }
+}
+
 mutation updateResponseLine(
   $storeId: String!
   $input: UpdateResponseRequisitionLineInput!
