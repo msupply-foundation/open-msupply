@@ -23,7 +23,7 @@ pub fn validate(
     if (check_line_exists(connection, &input.id)?).is_some() {
         return Err(LineAlreadyExists);
     }
-    let mut batch =
+    let batch =
         check_batch_exists(store_id, &input.stock_line_id, connection)?.ok_or(StockLineNotFound)?;
 
     let item = batch.item_row.clone();
@@ -64,25 +64,21 @@ pub fn validate(
         LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
     })?;
 
+    let mut available_packs = batch.stock_line_row.available_number_of_packs;
     if let Some(backdated_date) = invoice_backdated_date(&invoice) {
-        batch.stock_line_row.available_number_of_packs =
-            get_historical_stock_line_available_quantity(
-                connection,
-                &batch.stock_line_row,
-                None,
-                &backdated_date,
-            )?
+        available_packs = get_historical_stock_line_available_quantity(
+            connection,
+            &batch.stock_line_row,
+            None,
+            &backdated_date,
+        )?
     }
 
-    if is_reduction_below_zero(input, &batch) {
+    if available_packs < input.number_of_packs {
         return Err(InsertStockOutLineError::ReductionBelowZero {
             stock_line_id: batch.stock_line_row.id.clone(),
         });
     }
 
     Ok((item, invoice, batch))
-}
-
-fn is_reduction_below_zero(input: &InsertStockOutLine, batch: &StockLine) -> bool {
-    batch.stock_line_row.available_number_of_packs < input.number_of_packs
 }

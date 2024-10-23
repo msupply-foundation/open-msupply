@@ -11,14 +11,15 @@ pub mod mutations;
 pub use mutations::*;
 pub mod types;
 use repository::{
-    demographic_projection::DemographicProjectionFilter, DemographicIndicatorFilter,
-    PaginationOption,
+    demographic::DemographicFilter, demographic_projection::DemographicProjectionFilter,
+    DemographicIndicatorFilter, PaginationOption,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 use types::{
-    DemographicIndicatorConnector, DemographicIndicatorSortInput, DemographicProjectionConnector,
+    DemographicConnector, DemographicFilterInput, DemographicIndicatorConnector,
+    DemographicIndicatorSortInput, DemographicProjectionConnector,
     DemographicProjectionFilterInput, DemographicProjectionNode, DemographicProjectionSortInput,
-    DemographicProjectionsResponse,
+    DemographicProjectionsResponse, DemographicSortInput, DemographicsResponse,
 };
 use types::{DemographicIndicatorFilterInput, DemographicIndicatorsResponse};
 
@@ -33,6 +34,41 @@ pub enum DemographicProjectionResponse {
 
 #[Object]
 impl DemographicIndicatorQueries {
+    pub async fn demographics(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        page: Option<PaginationInput>,
+        filter: Option<DemographicFilterInput>,
+        sort: Option<Vec<DemographicSortInput>>,
+    ) -> Result<DemographicsResponse> {
+        let user = validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::QueryDemographic,
+                store_id: Some(store_id.clone()),
+            },
+        )?;
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.context(store_id, user.user_id)?;
+
+        let demographics = service_provider
+            .demographic_service
+            .get_demographics(
+                &service_context.connection,
+                page.map(PaginationOption::from),
+                filter.map(DemographicFilter::from),
+                // Currently only one sort option is supported, use the first from the list.
+                sort.and_then(|mut sort_list| sort_list.pop())
+                    .map(|sort| sort.to_domain()),
+            )
+            .map_err(StandardGraphqlError::from_list_error)?;
+
+        Ok(DemographicsResponse::Response(
+            DemographicConnector::from_domain(demographics),
+        ))
+    }
+
     pub async fn demographic_indicators(
         &self,
         ctx: &Context<'_>,
@@ -101,6 +137,7 @@ impl DemographicIndicatorQueries {
             DemographicProjectionConnector::from_domain(assets),
         ))
     }
+
     pub async fn demographic_projection_by_base_year(
         &self,
         ctx: &Context<'_>,

@@ -7,6 +7,7 @@ pub fn mock_location_1() -> LocationRow {
         name: "name_location_1".to_owned(),
         on_hold: false,
         store_id: "store_a".to_string(),
+        cold_storage_type_id: None,
     }
 }
 
@@ -17,6 +18,7 @@ pub fn mock_location_on_hold() -> LocationRow {
         name: "name_location_on_hold".to_owned(),
         on_hold: true,
         store_id: "store_a".to_string(),
+        cold_storage_type_id: None,
     }
 }
 
@@ -28,6 +30,7 @@ pub fn mock_location_2() -> LocationRow {
         name: "name_LocAtIOn_2".to_owned(),
         on_hold: false,
         store_id: "store_a".to_string(),
+        cold_storage_type_id: None,
     }
 }
 
@@ -38,6 +41,7 @@ pub fn mock_location_3() -> LocationRow {
         name: "name_location_3".to_owned(),
         on_hold: false,
         store_id: "store_a".to_string(),
+        cold_storage_type_id: None,
     }
 }
 
@@ -49,6 +53,7 @@ pub fn mock_location_in_another_store() -> LocationRow {
         name: "store_b_location_name".to_owned(),
         on_hold: false,
         store_id: "store_b".to_string(),
+        cold_storage_type_id: None,
     }
 }
 

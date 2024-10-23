@@ -1,8 +1,7 @@
 #[cfg(test)]
 mod query {
     use repository::mock::{
-        mock_demographic_indicator_a, mock_immunisation_program_a, mock_item_a, mock_item_b,
-        MockDataInserts,
+        mock_demographic_a, mock_immunisation_program_a, mock_item_a, mock_item_b, MockDataInserts,
     };
     use repository::test_db::setup_all;
     use repository::vaccine_course::vaccine_course_dose::{
@@ -36,7 +35,7 @@ mod query {
             program_id: mock_immunisation_program_a().id.clone(),
             vaccine_items: vec![],
             doses: vec![],
-            demographic_indicator_id: None,
+            demographic_id: None,
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
@@ -98,7 +97,7 @@ mod query {
             name: Some("new_name".to_owned()),
             vaccine_items: vec![item1.clone(), item2.clone()],
             doses: vec![dose1.clone(), dose2.clone()],
-            demographic_indicator_id: Some(mock_demographic_indicator_a().id),
+            demographic_id: Some(mock_demographic_a().id),
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
@@ -106,10 +105,7 @@ mod query {
 
         let result = service.update_vaccine_course(&context, update).unwrap();
         assert_eq!(result.name, "new_name");
-        assert_eq!(
-            result.demographic_indicator_id,
-            Some(mock_demographic_indicator_a().id)
-        );
+        assert_eq!(result.demographic_id, Some(mock_demographic_a().id));
 
         // Check there are two items for the vaccine_course
         let item_repo = VaccineCourseItemRepository::new(&context.connection);
@@ -134,7 +130,7 @@ mod query {
             name: Some("new_name".to_owned()),
             vaccine_items: vec![item2],
             doses: vec![dose2],
-            demographic_indicator_id: Some(mock_demographic_indicator_a().id),
+            demographic_id: Some(mock_demographic_a().id),
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
@@ -155,7 +151,7 @@ mod query {
             name: Some("new_name".to_owned()),
             vaccine_items: vec![item1.clone()],
             doses: vec![dose1.clone()],
-            demographic_indicator_id: Some(mock_demographic_indicator_a().id),
+            demographic_id: Some(mock_demographic_a().id),
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
@@ -184,7 +180,7 @@ mod query {
             name: Some("new_name".to_owned()),
             vaccine_items: vec![item1.clone()],
             doses: vec![dose1.clone()],
-            demographic_indicator_id: Some(mock_demographic_indicator_a().id),
+            demographic_id: Some(mock_demographic_a().id),
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
@@ -202,7 +198,7 @@ mod query {
             name: Some("new_name".to_owned()),
             vaccine_items: vec![],
             doses: vec![],
-            demographic_indicator_id: Some(mock_demographic_indicator_a().id),
+            demographic_id: Some(mock_demographic_a().id),
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
@@ -227,7 +223,7 @@ mod query {
             program_id: mock_immunisation_program_a().id.clone(),
             vaccine_items: vec![],
             doses: vec![],
-            demographic_indicator_id: None,
+            demographic_id: None,
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
@@ -246,7 +242,7 @@ mod query {
             name: Some("new_name".to_owned()),
             vaccine_items: vec![],
             doses: vec![],
-            demographic_indicator_id: Some(mock_demographic_indicator_a().id),
+            demographic_id: Some(mock_demographic_a().id),
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
