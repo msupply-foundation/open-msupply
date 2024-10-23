@@ -85,7 +85,7 @@ var require_utils2 = __commonJS({
         line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat);
       });
       let cleanNodes = (0, import_utils2.cleanUpNodes)(nodes);
-      sortedNodes = sortNodes(cleanNodes, sortBy);
+      let sortedNodes = sortNodes(cleanNodes, sortBy);
       return sortedNodes;
     };
     var calculateDaysUntilExpired = (expiryDateString) => {
@@ -139,7 +139,7 @@ var require_utils2 = __commonJS({
       return key.split(".").reduce((value, part) => value && value[part], node);
     }
     var sortNodes = (nodes, sortBy) => {
-      let { sort, dir } = sortBy;
+      let { sort, dir } = sortBy ?? {};
       sort = sort ?? "expiryDate";
       dir = dir ?? "desc";
       nodes.sort((a, b) => {
@@ -161,7 +161,9 @@ var require_utils2 = __commonJS({
       processStockLines: processStockLines2,
       calculateDaysUntilExpired,
       calculateStockAtRisk,
-      roundDaysToInteger
+      roundDaysToInteger,
+      sortNodes,
+      getNestedValue
     };
   }
 });
@@ -170,14 +172,9 @@ var require_utils2 = __commonJS({
 var import_utils = __toESM(require_utils2());
 function convert_data() {
   let res = JSON.parse(Host.inputString());
-  console.log(
-    "#### sort by: ",
-    res.arguments.sortBy.sort,
-    res.arguments.sortBy.dir
-  );
   res.data.stockLines.nodes = (0, import_utils.processStockLines)(
     res.data.stockLines.nodes,
-    res.arguments.sortBy
+    res?.arguments?.sortBy ?? void 0
   );
   Host.outputString(JSON.stringify(res));
 }

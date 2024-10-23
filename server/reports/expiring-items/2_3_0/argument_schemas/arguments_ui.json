@@ -56,8 +56,22 @@
     },
     {
       "type": "Control",
-      "scope": "#/properties/sortBy",
-      "label": "Sort report by column"
+      "scope": "#/properties/sort",
+      "label": "Sort report by column",
+      "options": {
+        "inputAlignment": "end",
+        "paddingRight": 25,
+        "autocomplete": true
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/dir",
+      "label": "Sort direction",
+      "options": {
+        "inputAlignment": "end",
+        "paddingRight": 25
+      }
     }
   ]
 }
