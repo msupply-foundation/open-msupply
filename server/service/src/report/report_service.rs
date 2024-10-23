@@ -471,6 +471,8 @@ fn transform_data(
         return data;
     };
 
+    println!("arguments {:?}", arguments);
+
     // add arguments in to data passed to wasm function if arguments are passed
     let input_data = WasmData { data, arguments };
     let input_data_serialised = serde_json::to_value(input_data).unwrap();
