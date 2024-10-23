@@ -62,7 +62,10 @@
         "show": [
           ["item.name", "item"],
           ["item.code", "code"],
-          ["expiryDate", "expiry date"]
+          ["expiryDate", "expiry date"],
+          ["daysUntilExpired", "days until expired"],
+          ["stockAtRisk", "stock at risk"],
+          ["expectedUsage", "expected usage"]
         ]
       }
     },
