@@ -3,7 +3,7 @@ use super::{
     validate::{check_dose_min_ages_are_in_order, check_vaccine_course_name_exists_for_program},
 };
 use crate::{
-    activity_log::activity_log_entry, demographic::validate::check_demographic_indicator_exists,
+    activity_log::activity_log_entry, demographic::validate::check_demographic_exists,
     service_provider::ServiceContext, vaccine_course::validate::check_vaccine_course_exists,
     SingleRecordError,
 };
@@ -25,7 +25,7 @@ pub enum UpdateVaccineCourseError {
     VaccineCourseDoesNotExist,
     DoseMinAgesAreNotInOrder,
     CreatedRecordNotFound,
-    DemographicIndicatorDoesNotExist,
+    DemographicDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
@@ -77,7 +77,7 @@ pub struct UpdateVaccineCourse {
     pub name: Option<String>,
     pub vaccine_items: Vec<VaccineCourseItemInput>,
     pub doses: Vec<VaccineCourseDoseInput>,
-    pub demographic_indicator_id: Option<String>,
+    pub demographic_id: Option<String>,
     pub coverage_rate: f64,
     pub is_active: bool,
     pub wastage_rate: f64,
@@ -152,9 +152,9 @@ pub fn validate(
         None => return Err(UpdateVaccineCourseError::VaccineCourseDoesNotExist),
     };
 
-    if let Some(demographic_indicator_id) = &input.demographic_indicator_id {
-        if check_demographic_indicator_exists(demographic_indicator_id, connection)?.is_none() {
-            return Err(UpdateVaccineCourseError::DemographicIndicatorDoesNotExist);
+    if let Some(demographic_id) = &input.demographic_id {
+        if check_demographic_exists(demographic_id, connection)?.is_none() {
+            return Err(UpdateVaccineCourseError::DemographicDoesNotExist);
         }
     }
 
@@ -196,7 +196,7 @@ fn generate(
         name,
         vaccine_items,
         doses,
-        demographic_indicator_id,
+        demographic_id,
         coverage_rate,
         is_active,
         wastage_rate,
@@ -206,7 +206,7 @@ fn generate(
         id: id.clone(),
         name: name.unwrap_or(old_row.name),
         program_id: old_row.program_id,
-        demographic_indicator_id: demographic_indicator_id.or(old_row.demographic_indicator_id),
+        demographic_id: demographic_id.or(old_row.demographic_id),
         coverage_rate,
         is_active,
         wastage_rate,

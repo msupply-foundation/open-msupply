@@ -2,8 +2,8 @@ use repository::{
     demographic_projection::{DemographicProjectionFilter, DemographicProjectionRepository},
     DemographicIndicatorFilter, DemographicIndicatorRepository, DemographicIndicatorRow,
     DemographicIndicatorRowRepository, DemographicProjectionRow,
-    DemographicProjectionRowRepository, EqualFilter, RepositoryError, StorageConnection,
-    StringFilter,
+    DemographicProjectionRowRepository, DemographicRow, DemographicRowRepository, EqualFilter,
+    RepositoryError, StorageConnection, StringFilter,
 };
 
 pub fn check_demographic_indicator_exists(
@@ -11,6 +11,20 @@ pub fn check_demographic_indicator_exists(
     connection: &StorageConnection,
 ) -> Result<Option<DemographicIndicatorRow>, RepositoryError> {
     DemographicIndicatorRowRepository::new(connection).find_one_by_id(id)
+}
+
+pub fn check_demographic_exists(
+    id: &str,
+    connection: &StorageConnection,
+) -> Result<Option<DemographicRow>, RepositoryError> {
+    DemographicRowRepository::new(connection).find_one_by_id(id)
+}
+
+pub fn find_demographic_by_name(
+    name: &str,
+    connection: &StorageConnection,
+) -> Result<Option<DemographicRow>, RepositoryError> {
+    DemographicRowRepository::new(connection).find_one_by_name(name)
 }
 
 pub fn check_demographic_projection_exists(

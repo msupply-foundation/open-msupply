@@ -65,7 +65,7 @@ pub fn inventory_adjustment_reasons(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryInventoryAdjustmentReasons,
+            resource: Resource::QueryReasonOptions,
             store_id: None,
         },
     )?;

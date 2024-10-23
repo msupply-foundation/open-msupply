@@ -3,7 +3,7 @@ use async_graphql::*;
 use dataloader::DataLoader;
 use graphql_core::{
     loader::{
-        DemographicIndicatorLoader, VaccineCourseDoseByVaccineCourseIdLoader,
+        DemographicLoader, VaccineCourseDoseByVaccineCourseIdLoader,
         VaccineCourseItemByVaccineCourseIdLoader,
     },
     ContextExt,
@@ -11,7 +11,7 @@ use graphql_core::{
 
 use repository::vaccine_course::vaccine_course_row::VaccineCourseRow;
 
-use super::{DemographicIndicatorNode, VaccineCourseDoseNode, VaccineCourseItemNode};
+use super::{DemographicNode, VaccineCourseDoseNode, VaccineCourseItemNode};
 
 #[derive(PartialEq, Debug)]
 pub struct VaccineCourseNode {
@@ -32,8 +32,8 @@ impl VaccineCourseNode {
         &self.row().program_id
     }
 
-    pub async fn demographic_indicator_id(&self) -> Option<String> {
-        self.row().demographic_indicator_id.clone()
+    pub async fn demographic_id(&self) -> Option<String> {
+        self.row().demographic_id.clone()
     }
 
     pub async fn coverage_rate(&self) -> f64 {
@@ -48,19 +48,16 @@ impl VaccineCourseNode {
         self.row().wastage_rate
     }
 
-    pub async fn demographic_indicator(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Option<DemographicIndicatorNode>> {
-        let demographic_indicator_id = match &self.row().demographic_indicator_id {
+    pub async fn demographic(&self, ctx: &Context<'_>) -> Result<Option<DemographicNode>> {
+        let demographic_id = match &self.row().demographic_id {
             Some(id) => id,
             None => return Ok(None),
         };
-        let loader = ctx.get_loader::<DataLoader<DemographicIndicatorLoader>>();
+        let loader = ctx.get_loader::<DataLoader<DemographicLoader>>();
         Ok(loader
-            .load_one(demographic_indicator_id.to_string())
+            .load_one(demographic_id.to_string())
             .await?
-            .map(DemographicIndicatorNode::from_domain))
+            .map(DemographicNode::from_domain))
     }
 
     pub async fn vaccine_course_items(

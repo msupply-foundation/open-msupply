@@ -9,8 +9,10 @@ import {
   PrinterIcon,
   PrintFormat,
   ReportContext,
+  useDetailPanel,
   useParams,
   useTranslation,
+  FullScreenButton,
 } from '@openmsupply-client/common';
 import {
   ReportRowFragment,
@@ -21,12 +23,13 @@ import { useRnRForm } from '../api';
 import { JsonData } from '@openmsupply-client/programs';
 
 export const AppBarButtonsComponent = () => {
+  const t = useTranslation();
+  const { OpenButton } = useDetailPanel();
   const { id = '' } = useParams();
   const {
     query: { data },
   } = useRnRForm({ rnrFormId: id });
   const { print, isPrinting } = usePrintReport();
-  const t = useTranslation();
 
   const printReport =
     (format: PrintFormat) =>
@@ -43,6 +46,7 @@ export const AppBarButtonsComponent = () => {
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        <FullScreenButton />
         <ReportSelector
           context={ReportContext.Requisition}
           subContext="R&R"
@@ -71,6 +75,7 @@ export const AppBarButtonsComponent = () => {
             {t('button.export')}
           </LoadingButton>
         </ReportSelector>
+        {OpenButton}
       </Grid>
     </AppBarButtonsPortal>
   );

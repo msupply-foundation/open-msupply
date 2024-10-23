@@ -74,6 +74,7 @@ pub enum ChangelogTableName {
     Barcode,
     Clinician,
     ClinicianStoreJoin,
+    ColdStorageType,
     Name,
     NameStoreJoin,
     Document,
@@ -101,7 +102,7 @@ pub enum ChangelogTableName {
     NameOmsFields,
     RnrForm,
     RnrFormLine,
-    DemographicIndicator,
+    Demographic,
     VaccineCourse,
     VaccineCourseItem,
     VaccineCourseDose,
@@ -162,11 +163,12 @@ impl ChangelogTableName {
             ChangelogTableName::NameOmsFields => ChangeLogSyncStyle::Central,
             ChangelogTableName::RnrForm => ChangeLogSyncStyle::Remote,
             ChangelogTableName::RnrFormLine => ChangeLogSyncStyle::Remote,
-            ChangelogTableName::DemographicIndicator => ChangeLogSyncStyle::Central,
+            ChangelogTableName::Demographic => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourse => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourseItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourseDose => ChangeLogSyncStyle::Central,
             ChangelogTableName::Vaccination => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::ColdStorageType => ChangeLogSyncStyle::Legacy,
         }
     }
 }

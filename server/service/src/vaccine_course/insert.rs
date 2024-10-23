@@ -38,7 +38,7 @@ pub struct InsertVaccineCourse {
     pub program_id: String,
     pub vaccine_items: Vec<VaccineCourseItemInput>,
     pub doses: Vec<VaccineCourseDoseInput>,
-    pub demographic_indicator_id: Option<String>,
+    pub demographic_id: Option<String>,
     pub coverage_rate: f64,
     pub is_active: bool,
     pub wastage_rate: f64,
@@ -117,7 +117,7 @@ pub fn generate(
         program_id,
         vaccine_items: _, // Updated in main function
         doses: _,         // Updated in main function
-        demographic_indicator_id,
+        demographic_id,
         coverage_rate,
         is_active,
         wastage_rate,
@@ -127,7 +127,7 @@ pub fn generate(
         id,
         name,
         program_id,
-        demographic_indicator_id,
+        demographic_id,
         coverage_rate,
         is_active,
         wastage_rate,
