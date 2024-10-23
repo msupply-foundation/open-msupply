@@ -4,8 +4,9 @@ function convert_data() {
   let res = JSON.parse(Host.inputString());
   res.data.stockLines.nodes = processStockLines(
     res.data.stockLines.nodes,
-    res?.arguments?.sort ?? undefined,
-    res?.arguments?.dir ?? undefined
+    // assign default sort values
+    res?.arguments?.sort ?? "SOH",
+    res?.arguments?.dir ?? "desc"
   );
   Host.outputString(JSON.stringify(res));
 }
