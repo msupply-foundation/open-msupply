@@ -17,7 +17,7 @@ import {
   NewProgramRequisition,
   ProgramRequisitionOptions,
 } from './ProgramRequisitionOptions';
-import { NewRequisitionType } from './types';
+import { NewRequisitionType } from '../../types';
 
 interface NewGeneralRequisition {
   type: NewRequisitionType.General;
