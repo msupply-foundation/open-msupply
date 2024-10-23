@@ -1142,6 +1142,20 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
+export type CustomerAndOrderTypeNode = {
+  __typename: 'CustomerAndOrderTypeNode';
+  customer: NameNode;
+  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
+};
+
+export type CustomerProgramRequisitionSettingNode = {
+  __typename: 'CustomerProgramRequisitionSettingNode';
+  customerAndOrderTypes: Array<CustomerAndOrderTypeNode>;
+  masterList: MasterListNode;
+  programId: Scalars['String']['output'];
+  programName: Scalars['String']['output'];
+};
+
 export type CustomerReturnInput = {
   customerId: Scalars['String']['input'];
   customerReturnLines: Array<CustomerReturnLineInput>;
@@ -2834,6 +2848,24 @@ export type InsertRequestRequisitionResponseWithId = {
   response: InsertRequestRequisitionResponse;
 };
 
+export type InsertResponseRequisitionError = {
+  __typename: 'InsertResponseRequisitionError';
+  error: InsertResponseRequisitionErrorInterface;
+};
+
+export type InsertResponseRequisitionErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertResponseRequisitionInput = {
+  id: Scalars['String']['input'];
+  maxMonthsOfStock: Scalars['Float']['input'];
+  minMonthsOfStock: Scalars['Float']['input'];
+  otherPartyId: Scalars['String']['input'];
+};
+
+export type InsertResponseRequisitionResponse = InsertResponseRequisitionError | RequisitionNode;
+
 export type InsertRnRFormInput = {
   id: Scalars['String']['input'];
   periodId: Scalars['String']['input'];
@@ -3806,6 +3838,7 @@ export type Mutations = {
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
+  insertResponseRequisition: InsertResponseRequisitionResponse;
   insertRnrForm: InsertRnRFormResponse;
   insertStockLine: InsertStockLineLineResponse;
   insertStocktake: InsertStocktakeResponse;
@@ -4203,6 +4236,12 @@ export type MutationsInsertRequestRequisitionArgs = {
 
 export type MutationsInsertRequestRequisitionLineArgs = {
   input: InsertRequestRequisitionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertResponseRequisitionArgs = {
+  input: InsertResponseRequisitionInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4702,7 +4741,7 @@ export type NumberNode = {
   number: Scalars['Int']['output'];
 };
 
-export type OtherPartyNotACustomer = InsertCustomerReturnErrorInterface & InsertErrorInterface & UpdateCustomerReturnErrorInterface & UpdateNameErrorInterface & {
+export type OtherPartyNotACustomer = InsertCustomerReturnErrorInterface & InsertErrorInterface & InsertResponseRequisitionErrorInterface & UpdateCustomerReturnErrorInterface & UpdateNameErrorInterface & {
   __typename: 'OtherPartyNotACustomer';
   description: Scalars['String']['output'];
 };
@@ -4712,7 +4751,7 @@ export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & Inser
   description: Scalars['String']['output'];
 };
 
-export type OtherPartyNotVisible = InsertCustomerReturnErrorInterface & InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & InsertSupplierReturnErrorInterface & UpdateCustomerReturnErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateReturnOtherPartyErrorInterface & {
+export type OtherPartyNotVisible = InsertCustomerReturnErrorInterface & InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & InsertResponseRequisitionErrorInterface & InsertSupplierReturnErrorInterface & UpdateCustomerReturnErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateReturnOtherPartyErrorInterface & {
   __typename: 'OtherPartyNotVisible';
   description: Scalars['String']['output'];
 };
@@ -5163,15 +5202,6 @@ export type ProgramRequisitionOrderTypeNode = {
   name: Scalars['String']['output'];
 };
 
-export type ProgramRequisitionSettingNode = {
-  __typename: 'ProgramRequisitionSettingNode';
-  masterList: MasterListNode;
-  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
-  programId: Scalars['String']['output'];
-  programName: Scalars['String']['output'];
-  suppliers: Array<NameNode>;
-};
-
 export enum ProgramSortFieldInput {
   Name = 'name'
 }
@@ -5237,6 +5267,7 @@ export type Queries = {
   clinicians: CliniciansResponse;
   contactTraces: ContactTraceResponse;
   currencies: CurrenciesResponse;
+  customerProgramRequisitionSettings: Array<CustomerProgramRequisitionSettingNode>;
   databaseSettings: DatabaseSettingsNode;
   demographicIndicators: DemographicIndicatorsResponse;
   demographicProjectionByBaseYear: DemographicProjectionResponse;
@@ -5317,7 +5348,6 @@ export type Queries = {
   plugins: Array<PluginNode>;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
-  programRequisitionSettings: Array<ProgramRequisitionSettingNode>;
   programs: ProgramsResponse;
   rAndRForm: RnRFormResponse;
   rAndRForms: RnRFormsResponse;
@@ -5352,6 +5382,7 @@ export type Queries = {
   store: StoreResponse;
   storePreferences: StorePreferenceNode;
   stores: StoresResponse;
+  supplierProgramRequisitionSettings: Array<SupplierProgramRequisitionSettingNode>;
   syncSettings?: Maybe<SyncSettingsNode>;
   /** Query omSupply "temperature_breach" entries */
   temperatureBreaches: TemperatureBreachesResponse;
@@ -5497,6 +5528,11 @@ export type QueriesContactTracesArgs = {
 export type QueriesCurrenciesArgs = {
   filter?: InputMaybe<CurrencyFilterInput>;
   sort?: InputMaybe<Array<CurrencySortInput>>;
+};
+
+
+export type QueriesCustomerProgramRequisitionSettingsArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -5788,11 +5824,6 @@ export type QueriesProgramEventsArgs = {
 };
 
 
-export type QueriesProgramRequisitionSettingsArgs = {
-  storeId: Scalars['String']['input'];
-};
-
-
 export type QueriesProgramsArgs = {
   filter?: InputMaybe<ProgramFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -5968,6 +5999,11 @@ export type QueriesStoresArgs = {
   filter?: InputMaybe<StoreFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<StoreSortInput>>;
+};
+
+
+export type QueriesSupplierProgramRequisitionSettingsArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -7007,6 +7043,15 @@ export type SuggestedQuantityCalculationNode = {
   minimumStockOnHand: Scalars['Int']['output'];
   stockOnHand: Scalars['Int']['output'];
   suggestedQuantity: Scalars['Int']['output'];
+};
+
+export type SupplierProgramRequisitionSettingNode = {
+  __typename: 'SupplierProgramRequisitionSettingNode';
+  masterList: MasterListNode;
+  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
+  programId: Scalars['String']['output'];
+  programName: Scalars['String']['output'];
+  suppliers: Array<NameNode>;
 };
 
 export type SupplierReturnInput = {
