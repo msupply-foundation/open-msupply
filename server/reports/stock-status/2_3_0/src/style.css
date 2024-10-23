@@ -22,11 +22,31 @@
   text-align: left;
   margin-top: 10;
   margin-bottom: 15;
+  border-collapse: separate;
 }
 
 .container table td {
-  padding: 5px;
+  padding: 10px;
   vertical-align: top;
+  border-top: 1px solid rgb(164, 163, 163);
+}
+
+.container table tr:last-child td {
+  border-bottom: none;
+}
+
+.container>table>thead {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  background-color: #f1f1f1;
+}
+
+.container,
+body,
+.container>table {
+  margin-top: 0px;
+  padding-top: 0px;
 }
 
 .container table tr.heading td {
@@ -52,6 +72,7 @@
 .container table td.status span.out-of-stock {
   background-color: rgba(245, 5, 1, 0.3);
   padding: 3px 10px;
+  white-space: nowrap;
 }
 
 .container table td.status span.understocked::before,
@@ -69,6 +90,7 @@
 .container table td.status span.overstocked {
   background-color: rgba(248, 154, 1, 0.3);
   padding: 3px 10px;
+  white-space: nowrap;
 }
 
 .container table td.status span.well-stocked::before {
@@ -84,6 +106,7 @@
 .container table td.status span.well-stocked {
   background-color: rgba(51, 169, 1, 0.3);
   padding: 3px 10px;
+  white-space: nowrap;
 }
 
 .container table td.status span.no-consumption::before {
@@ -99,4 +122,5 @@
 .container table td.status span.no-consumption {
   background-color: rgba(143, 144, 166, 0.3);
   padding: 3px 10px;
+  white-space: nowrap;
 }

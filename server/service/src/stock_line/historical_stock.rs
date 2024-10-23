@@ -33,7 +33,7 @@ pub fn get_historical_stock_lines_available_quantity(
             Utc::now().naive_utc(),
         ));
 
-    let mut stock_movements = StockMovementRepository::new(&connection).query(Some(filter))?;
+    let mut stock_movements = StockMovementRepository::new(connection).query(Some(filter))?;
 
     stock_movements.sort_by(|a, b| b.datetime.cmp(&a.datetime));
 

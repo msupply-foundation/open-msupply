@@ -48,6 +48,7 @@ pub mod print;
 pub mod processors;
 pub mod program;
 pub mod programs;
+pub mod reason_option;
 pub mod repack;
 pub mod report;
 pub mod requisition;

@@ -1,4 +1,5 @@
 use repository::{
+    reason_option_row::{ReasonOptionRow, ReasonOptionType},
     InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowDelete, InventoryAdjustmentType,
     ReturnReasonRow, StorageConnection, SyncBufferRow,
 };
@@ -14,6 +15,8 @@ pub enum LegacyOptionsType {
     NegativeInventoryAdjustment,
     #[serde(rename = "returnReason")]
     ReturnReason,
+    #[serde(rename = "requisitionLineVariance")]
+    RequisitionLineVariance,
 }
 
 #[allow(non_snake_case)]
@@ -74,6 +77,14 @@ impl SyncTranslation for ReasonTranslation {
                 is_active: data.is_active,
                 reason: data.reason,
             }),
+            LegacyOptionsType::RequisitionLineVariance => {
+                PullTranslateResult::upsert(ReasonOptionRow {
+                    id: data.id.to_string(),
+                    is_active: data.is_active,
+                    reason: data.reason,
+                    r#type: ReasonOptionType::RequisitionLineVariance,
+                })
+            }
         };
 
         Ok(result)
