@@ -1,3 +1,4 @@
+import { useInsertProgramResponse } from './useInsertProgramResponse';
 import { useInsertResponse } from './useInsertResponse';
 import { useResponse } from './useResponse';
 import { useResponseFields } from './useResponseFields';
@@ -12,4 +13,5 @@ export const Document = {
   useResponsesAll,
   useUpdateResponse,
   useInsertResponse,
+  useInsertProgramResponse,
 };

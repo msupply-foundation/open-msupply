@@ -9,6 +9,7 @@ export const useResponse = {
     listAll: Document.useResponsesAll,
 
     insert: Document.useInsertResponse,
+    insertProgram: Document.useInsertProgramResponse,
     update: Document.useUpdateResponse,
 
     fields: Document.useResponseFields,

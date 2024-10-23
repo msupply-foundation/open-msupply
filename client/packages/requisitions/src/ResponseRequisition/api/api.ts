@@ -7,6 +7,7 @@ import {
   UpdateResponseRequisitionInput,
   UpdateResponseRequisitionStatusInput,
   UpdateResponseRequisitionLineInput,
+  InsertProgramResponseRequisitionInput,
 } from '@openmsupply-client/common';
 import {
   ResponseFragment,
@@ -173,6 +174,26 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     if (insertResponseRequisition?.__typename === 'RequisitionNode') {
       return insertResponseRequisition;
+    }
+
+    throw new Error('Unable to create requisition');
+  },
+  insertProgram: async (
+    input: InsertProgramResponseRequisitionInput
+  ): Promise<{
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+  }> => {
+    const result = await sdk.insertProgramResponse({
+      storeId,
+      input,
+    });
+
+    const { insertProgramResponseRequisition } = result || {};
+
+    if (insertProgramResponseRequisition?.__typename === 'RequisitionNode') {
+      return insertProgramResponseRequisition;
     }
 
     throw new Error('Unable to create requisition');
