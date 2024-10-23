@@ -31,7 +31,15 @@
           ["name", "name"],
           ["code", "code"],
           ["SOH", "stock on hand"],
-          ["MOS", "months cover"]
+          ["MOS", "months cover"],
+          ["monthConsumption", "month consumption`"],
+          ["lastMonthConsumption", "last months consumption"],
+          ["twoMonthsAgoConsumption", "two months ago consumption"],
+          ["expiringInSixMonths", "expiring in 6 months"],
+          ["expiringInTwelveMonths", "expiring in 12 months"],
+          ["stockOnOrder", "stock on order"],
+          ["AMC12", "AMC12"],
+          ["AMC24", "AMC24"]
         ]
       }
     },

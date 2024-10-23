@@ -22,7 +22,15 @@
         "sort": {
           "description": "sort by",
           "type": "string",
-          "enum": ["item.name", "item.code", "expiryDate"]
+          "enum": [
+            "item.name",
+            "item.code",
+            "expiryDate",
+            "location.code",
+            "item.unitName",
+            "packSize",
+            "totalNumberOfPacks"
+          ]
         },
         "dir": {
           "description": "sort by dir",
