@@ -9,6 +9,7 @@ import {
 import { useResponse } from '../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { RelatedDocumentsSection } from './RelatedDocumentsSection';
+import { ProgramInfoSection } from './ProgramInfoSection';
 
 export const SidePanel: FC = () => {
   const { success } = useNotification();
@@ -31,6 +32,7 @@ export const SidePanel: FC = () => {
         />
       }
     >
+      <ProgramInfoSection />
       <AdditionalInfoSection />
       <RelatedDocumentsSection />
     </DetailPanelPortal>
