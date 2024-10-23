@@ -93,8 +93,8 @@ describe("test round days to integer", () => {
   });
 });
 
-describe("sorts nodes as expected", () => {
-  it("returns sorted by expiryDate and asc if no sort provided", () => {
+describe("sorts nodes on sortBy", () => {
+  it("returns sorted by expiryDate and desc if no sort provided", () => {
     expect(
       sortNodes([
         { expiryDate: 1 },
@@ -109,8 +109,97 @@ describe("sorts nodes as expected", () => {
       { expiryDate: 1 },
     ]);
   });
-  it("returns sorting on nested value", () => {
-    expect(true).toBe(false);
+  it("returns sorting on asc", () => {
+    expect(
+      sortNodes(
+        [
+          { expiryDate: 1 },
+          { expiryDate: 3 },
+          { expiryDate: 2 },
+          { expiryDate: 5 },
+        ],
+        { dir: "asc" }
+      )
+    ).toEqual([
+      { expiryDate: 1 },
+      { expiryDate: 2 },
+      { expiryDate: 3 },
+      { expiryDate: 5 },
+    ]);
+  });
+  it("returns sorting on other value", () => {
+    expect(
+      sortNodes([{ batch: 1 }, { batch: 3 }, { batch: 2 }, { batch: 5 }], {
+        sort: "batch",
+        dir: "desc",
+      })
+    ).toEqual([{ batch: 5 }, { batch: 3 }, { batch: 2 }, { batch: 1 }]);
+  });
+  it("returns sorting on nested value item.name", () => {
+    expect(
+      sortNodes(
+        [
+          {
+            expiryDate: 1,
+            item: {
+              name: "a",
+            },
+          },
+          {
+            expiryDate: 3,
+            item: {
+              name: "d",
+            },
+          },
+          {
+            expiryDate: 2,
+            item: {
+              name: "b",
+            },
+          },
+          {
+            expiryDate: 5,
+            item: {
+              name: "c",
+            },
+          },
+        ],
+        { sort: "item.name", dir: "asc" }
+      )
+    ).toEqual([
+      {
+        expiryDate: 1,
+        item: {
+          name: "a",
+        },
+      },
+
+      {
+        expiryDate: 2,
+        item: {
+          name: "b",
+        },
+      },
+      {
+        expiryDate: 5,
+        item: {
+          name: "c",
+        },
+      },
+      {
+        expiryDate: 3,
+        item: {
+          name: "d",
+        },
+      },
+    ]);
+  });
+  it("returns sorting on sort when no dir is provided and defaults to desc", () => {
+    expect(
+      sortNodes([{ code: 1 }, { code: 3 }, { code: 2 }, { code: 5 }], {
+        sort: "code",
+      })
+    ).toEqual([{ code: 5 }, { code: 3 }, { code: 2 }, { code: 1 }]);
   });
 });
 
