@@ -12,49 +12,50 @@ import {
   useTranslation,
   PlusCircleIcon,
 } from '@openmsupply-client/common';
-import {
-  ItemPackagingVariantsTable,
-  PackagingVariant,
-} from './ItemPackagingVariantsTable';
+import { ItemPackagingVariantsTable } from './ItemPackagingVariantsTable';
+import { ItemVariantFragment, PackagingVariantFragment } from '../../../api';
 
-type Variant = {
-  id: string;
-  name: string;
-  manufacturerId?: string;
-  coldStorageTypeId?: string;
-  packagingVariants: PackagingVariant[];
-};
-
-const packVariants = [
-  { id: '1', level: 'Primary', name: 'Primary', packSize: 1, volumePerUnit: 1 },
+const packVariants: PackagingVariantFragment[] = [
   {
-    id: '2',
-    level: 'Secondary',
-    name: 'Secondary',
-    packSize: 1,
-    volumePerUnit: 3,
-  },
-  {
-    id: '3',
-    level: 'Tertiary',
-    name: 'Tertiary',
+    __typename: 'PackagingVariantNode',
+    id: '1',
+    packagingLevel: 1,
+    name: 'Primary',
     packSize: 1,
     volumePerUnit: 1,
   },
+  {
+    __typename: 'PackagingVariantNode',
+    id: '2',
+    packagingLevel: 2,
+    name: 'Secondary',
+    packSize: 2,
+    volumePerUnit: 2,
+  },
+  {
+    __typename: 'PackagingVariantNode',
+    id: '3',
+    packagingLevel: 3,
+    name: 'Tertiary',
+    packSize: 3,
+    volumePerUnit: 3,
+  },
 ];
 
-export const ItemVariantsTab = ({ itemId }: { itemId?: string }) => {
+export const ItemVariantsTab = ({
+  itemVariants,
+}: {
+  itemVariants: ItemVariantFragment[];
+}) => {
   const t = useTranslation();
-  const [variants, setVariants] = useState<Variant[]>([]);
+  const [variants, setVariants] = useState<ItemVariantFragment[]>(itemVariants);
 
-  const setVariant = (variant: Variant) => {
+  const setVariant = (variant: ItemVariantFragment) => {
     const idx = variants.findIndex(v => v.id === variant.id);
 
     if (idx !== -1) {
       variants[idx] = variant;
       setVariants([...variants]);
-    } else {
-      setVariants([...variants, variant]);
     }
   };
 
@@ -64,11 +65,15 @@ export const ItemVariantsTab = ({ itemId }: { itemId?: string }) => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           onClick={() => {
-            setVariant({
-              id: Date.now().toString(),
-              name: '',
-              packagingVariants: [...packVariants],
-            });
+            setVariants([
+              ...variants,
+              {
+                __typename: 'ItemVariantNode',
+                id: Date.now().toString(),
+                name: '',
+                packagingVariants: [...packVariants],
+              },
+            ]);
           }}
           label={t('label.add-variant')}
         />
@@ -78,6 +83,7 @@ export const ItemVariantsTab = ({ itemId }: { itemId?: string }) => {
           <ItemVariant variant={v} setVariant={setVariant} index={idx} />
         ))}
       </Box>
+      {/* // TODO footer */}
     </>
   );
 };
@@ -87,9 +93,9 @@ const ItemVariant = ({
   index,
   setVariant,
 }: {
-  variant: Variant;
+  variant: ItemVariantFragment;
   index: number;
-  setVariant: (variant: Variant) => void;
+  setVariant: (variant: ItemVariantFragment) => void;
 }) => {
   const t = useTranslation();
 
