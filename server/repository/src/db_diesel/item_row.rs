@@ -5,20 +5,8 @@ use super::{
     ItemLinkRow, ItemLinkRowRepository, RepositoryError, StorageConnection,
 };
 
-use diesel::{prelude::*, sql_query, sql_types::Text};
+use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
-
-#[derive(QueryableByName, Debug, PartialEq)]
-pub struct JsonRawRow {
-    #[diesel(sql_type = Text)]
-    pub json_row: String,
-}
-
-pub fn raw_query(connection: &StorageConnection, query: String) -> Vec<JsonRawRow> {
-    sql_query(&query)
-        .get_results::<JsonRawRow>(connection.lock().connection())
-        .unwrap()
-}
 
 table! {
     item (id) {

@@ -9,6 +9,8 @@ fragment RnRForm on RnRFormNode {
   supplierName
   supplierId
   status
+  theirReference
+  comment
 }
 
 fragment RnRFormLine on RnRFormLineNode {
@@ -19,9 +21,11 @@ fragment RnRFormLine on RnRFormLineNode {
   quantityReceived
   quantityConsumed
   adjustedQuantityConsumed
+  losses
   adjustments
   stockOutDuration
   finalBalance
+  minimumQuantity
   maximumQuantity
   expiryDate
   calculatedRequestedQuantity
@@ -123,7 +127,7 @@ mutation createRnRForm($storeId: String!, $input: InsertRnRFormInput!) {
   }
 }
 
-mutation updateRnRFormLines($storeId: String!, $input: UpdateRnRFormInput!) {
+mutation updateRnRForm($storeId: String!, $input: UpdateRnRFormInput!) {
   updateRnrForm(storeId: $storeId, input: $input) {
     __typename
     ... on RnRFormNode {
