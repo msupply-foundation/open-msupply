@@ -47,6 +47,7 @@ pub struct InsertLocationInput {
     pub code: String,
     pub name: Option<String>,
     pub on_hold: Option<bool>,
+    pub cold_storage_type_id: Option<String>,
 }
 
 impl From<InsertLocationInput> for InsertLocation {
@@ -56,6 +57,7 @@ impl From<InsertLocationInput> for InsertLocation {
             code,
             name,
             on_hold,
+            cold_storage_type_id,
         }: InsertLocationInput,
     ) -> Self {
         InsertLocation {
@@ -63,6 +65,7 @@ impl From<InsertLocationInput> for InsertLocation {
             code,
             name,
             on_hold,
+            cold_storage_type_id,
         }
     }
 }
@@ -285,12 +288,7 @@ mod test {
         // Record Already Exists
         let test_service = TestService(Box::new(|_| {
             Ok(Location {
-                location_row: LocationRow {
-                    id: "id".to_owned(),
-                    name: "name".to_owned(),
-                    code: "code".to_owned(),
-                    on_hold: true,
-                    store_id: "store_a".to_owned(),
+                location_row: LocationRow {id:"id".to_owned(),name:"name".to_owned(),code:"code".to_owned(),on_hold:true,store_id:"store_a".to_owned(), cold_storage_type_id: None 
                 },
             })
         }));
