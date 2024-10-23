@@ -4,4 +4,4 @@ target/
 
 # Dependency directories
 **/node_modules/
-# **/dist/
+/**/dist/
