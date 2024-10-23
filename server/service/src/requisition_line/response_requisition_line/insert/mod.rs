@@ -269,7 +269,7 @@ mod test {
                 u.supply_quantity = 20.0;
                 u.requested_quantity = 10.0;
                 u.initial_stock_on_hand_units = 10.0;
-                u.available_stock_on_hand = test_item_stats::item_2_soh();
+                u.available_stock_on_hand = 10.0;
                 u.average_monthly_consumption = test_item_stats::item2_amc_3_months();
                 u.comment = Some("comment".to_string());
                 u
