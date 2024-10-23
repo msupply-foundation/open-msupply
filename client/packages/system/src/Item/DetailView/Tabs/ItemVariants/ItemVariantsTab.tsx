@@ -198,7 +198,7 @@ const ItemVariant = ({
           />
         </Box>
         <Box flex={1}>
-          <Box display="flex" justifyContent="space-between">
+          <Box display="flex" justifyContent="space-between" alignItems="end">
             <Typography fontWeight="bold">{t('title.packaging')}</Typography>
             <FlatButton
               label={t('label.edit')}
