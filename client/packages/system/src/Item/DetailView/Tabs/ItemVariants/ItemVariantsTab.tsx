@@ -146,7 +146,7 @@ const ItemVariant = ({
           />
 
           <InputWithLabelRow
-            label={t('label.cold-storage-type')}
+            label={t('label.storage-temperature')}
             labelWidth="200"
             Input={
               // TODO: temp range dropdown
