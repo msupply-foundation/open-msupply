@@ -2,7 +2,6 @@ use super::{
     cold_storage_type_row::cold_storage_type::dsl as cold_storage_type_dsl, StorageConnection,
 };
 use crate::{repository_error::RepositoryError, Upsert};
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
 
@@ -35,30 +34,14 @@ impl<'a> ColdStorageTypeRowRepository<'a> {
         ColdStorageTypeRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &ColdStorageTypeRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &ColdStorageTypeRow) -> Result<(), RepositoryError> {
         diesel::insert_into(cold_storage_type_dsl::cold_storage_type)
             .values(row)
             .on_conflict(cold_storage_type_dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: &ColdStorageTypeRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::ColdStorageType,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: None,
-            name_link_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ColdStorageTypeRow>, RepositoryError> {
@@ -80,8 +63,8 @@ impl<'a> ColdStorageTypeRowRepository<'a> {
 
 impl Upsert for ColdStorageTypeRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = ColdStorageTypeRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+        ColdStorageTypeRowRepository::new(con).upsert_one(self)?;
+        Ok(None)
     }
 
     // Test only
