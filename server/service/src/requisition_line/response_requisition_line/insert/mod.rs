@@ -94,7 +94,7 @@ mod test {
 
     fn new_request_requisition() -> RequisitionRow {
         RequisitionRow {
-            id: "draft_request_requisition".to_string(),
+            id: "new_request_requisition".to_string(),
             store_id: mock_store_a().id,
             name_link_id: mock_name_b().id,
             r#type: RequisitionType::Request,
