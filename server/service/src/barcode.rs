@@ -5,7 +5,7 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use crate::{item::check_item_exists, service_provider::ServiceContext};
+use crate::{item::item::check_item_exists, service_provider::ServiceContext};
 
 use super::{get_default_pagination, i64_to_u32, ListError, ListResult};
 
