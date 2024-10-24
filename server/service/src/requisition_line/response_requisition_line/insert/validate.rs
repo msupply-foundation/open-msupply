@@ -28,7 +28,7 @@ pub fn validate(
         return Err(OutError::NotThisStoreRequisition);
     }
 
-    if requisition_row.status != RequisitionStatus::New {
+    if requisition_row.status == RequisitionStatus::Finalised {
         return Err(OutError::CannotEditRequisition);
     }
 

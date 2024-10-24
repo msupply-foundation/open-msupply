@@ -27,6 +27,7 @@ pub fn generate(
 
     new_requisition_line.id = id;
     new_requisition_line.initial_stock_on_hand_units = their_stock_on_hand.unwrap_or(0.0);
+    new_requisition_line.available_stock_on_hand = their_stock_on_hand.unwrap_or(0.0);
     new_requisition_line.supply_quantity = supply_quantity.unwrap_or(0.0);
     new_requisition_line.requested_quantity = requested_quantity.unwrap_or(0.0);
     new_requisition_line.comment = comment.or(new_requisition_line.comment);
