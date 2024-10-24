@@ -4,6 +4,12 @@ fragment LocationRow on LocationNode {
   name
   onHold
   code
+  coldStorageType {
+    id
+    name
+    maxTemperature
+    minTemperature
+  }
 }
 
 query locations(
@@ -25,16 +31,7 @@ query locations(
       totalCount
       nodes {
         __typename
-        id
-        name
-        onHold
-        code
-        coldStorageType {
-          id
-          name
-          maxTemperature
-          minTemperature
-        }
+        ...LocationRow
       }
     }
   }

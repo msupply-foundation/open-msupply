@@ -3,7 +3,7 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type LocationRowFragment = { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string };
+export type LocationRowFragment = { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null };
 
 export type LocationsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -22,7 +22,7 @@ export type InsertLocationMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertLocationMutation = { __typename: 'Mutations', insertLocation: { __typename: 'InsertLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string, field: Types.UniqueValueKey } } | { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } };
+export type InsertLocationMutation = { __typename: 'Mutations', insertLocation: { __typename: 'InsertLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string, field: Types.UniqueValueKey } } | { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null } };
 
 export type UpdateLocationMutationVariables = Types.Exact<{
   input: Types.UpdateLocationInput;
@@ -30,7 +30,7 @@ export type UpdateLocationMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateLocationMutation = { __typename: 'Mutations', updateLocation: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | { __typename: 'UpdateLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordBelongsToAnotherStore', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'UniqueValueViolation', description: string, field: Types.UniqueValueKey } } };
+export type UpdateLocationMutation = { __typename: 'Mutations', updateLocation: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null } | { __typename: 'UpdateLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordBelongsToAnotherStore', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'UniqueValueViolation', description: string, field: Types.UniqueValueKey } } };
 
 export type DeleteLocationMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -47,6 +47,12 @@ export const LocationRowFragmentDoc = gql`
   name
   onHold
   code
+  coldStorageType {
+    id
+    name
+    maxTemperature
+    minTemperature
+  }
 }
     `;
 export const LocationsDocument = gql`
@@ -63,21 +69,12 @@ export const LocationsDocument = gql`
       totalCount
       nodes {
         __typename
-        id
-        name
-        onHold
-        code
-        coldStorageType {
-          id
-          name
-          maxTemperature
-          minTemperature
-        }
+        ...LocationRow
       }
     }
   }
 }
-    `;
+    ${LocationRowFragmentDoc}`;
 export const InsertLocationDocument = gql`
     mutation insertLocation($input: InsertLocationInput!, $storeId: String!) {
   insertLocation(input: $input, storeId: $storeId) {

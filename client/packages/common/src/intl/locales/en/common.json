@@ -568,6 +568,7 @@
   "label.cold-consecutive": "Cold Consecutive",
   "label.cold-cumulative": "Cold Cumulative",
   "label.cold-storage-location": "Cold storage location",
+  "label.cold-storage-type": "Cold storage type",
   "label.collapse": "Collapse",
   "label.collapse-all": "Collapse all",
   "label.color": "Colour",
