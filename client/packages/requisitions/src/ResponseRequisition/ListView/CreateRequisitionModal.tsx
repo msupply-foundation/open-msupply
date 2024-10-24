@@ -82,7 +82,7 @@ export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
   return (
     <Modal
       height={height}
-      width={500}
+      width={700}
       slideAnimation={false}
       title={t('label.new-requisition')}
     >
