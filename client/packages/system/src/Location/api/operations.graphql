@@ -29,6 +29,12 @@ query locations(
         name
         onHold
         code
+        coldStorageType {
+          id
+          name
+          maxTemperature
+          minTemperature
+        }
       }
     }
   }
