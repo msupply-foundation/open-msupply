@@ -37,7 +37,20 @@ const LocationListComponent: FC = () => {
   const pagination = { page, first, offset };
   const t = useTranslation();
   const columns = useColumns<LocationRowFragment>(
-    ['code', 'name', 'selection'],
+    [
+      'code',
+      'name',
+      {
+        key: 'coldStorageType',
+        label: 'label.cold-storage-type',
+        accessor: ({ rowData: { coldStorageType } }) =>
+          coldStorageType
+            ? `${coldStorageType.name} (${coldStorageType.minTemperature}°C - ${coldStorageType.maxTemperature}°C)`
+            : null,
+        width: 200,
+      },
+      'selection',
+    ],
     {
       onChangeSortBy: updateSortQuery,
       sortBy,
@@ -47,6 +60,8 @@ const LocationListComponent: FC = () => {
   const { isOpen, entity, mode, onClose, onOpen } =
     useEditModal<LocationRowFragment>();
   const locations = data?.nodes ?? [];
+
+  console.log('Data', data);
 
   return (
     <>
