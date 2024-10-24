@@ -103,188 +103,153 @@ fn map_delete_lines(
     Ok(result.vec_or_none())
 }
 
-// #[cfg(test)]
-// mod test {
-//     use async_graphql::EmptyMutation;
-//     use graphql_core::{
-//         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
-//     };
-//     use repository::{mock::MockDataInserts, RepositoryError, StorageConnectionManager};
-//     use serde_json::json;
-//     use service::{
-//         requisition::{
-//             response_requisition::{BatchResponseRequisition, BatchResponseRequisitionResult},
-//             RequisitionServiceTrait,
-//         },
-//         requisition_line::response_requisition_line::{
-//             DeleteResponseRequisitionLine, DeleteResponseRequisitionLineError,
-//         },
-//         service_provider::{ServiceContext, ServiceProvider},
-//         InputWithResult,
-//     };
-//     use util::inline_init;
+#[cfg(test)]
+mod test {
+    use async_graphql::EmptyMutation;
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
+    use repository::{mock::MockDataInserts, RepositoryError, StorageConnectionManager};
+    use serde_json::json;
+    use service::{
+        requisition::{
+            response_requisition::{BatchResponseRequisition, BatchResponseRequisitionResult},
+            RequisitionServiceTrait,
+        },
+        requisition_line::response_requisition_line::{
+            DeleteResponseRequisitionLine, DeleteResponseRequisitionLineError,
+        },
+        service_provider::{ServiceContext, ServiceProvider},
+        InputWithResult,
+    };
+    use util::inline_init;
 
-//     use crate::BatchMutations;
+    use crate::BatchMutations;
 
-//     type ServiceInput = BatchResponseRequisition;
-//     type ServiceResult = BatchResponseRequisitionResult;
+    type ServiceInput = BatchResponseRequisition;
+    type ServiceResult = BatchResponseRequisitionResult;
 
-//     type Method = dyn Fn(ServiceInput) -> Result<ServiceResult, RepositoryError> + Sync + Send;
+    type Method = dyn Fn(ServiceInput) -> Result<ServiceResult, RepositoryError> + Sync + Send;
 
-//     pub struct TestService(pub Box<Method>);
+    pub struct TestService(pub Box<Method>);
 
-//     impl RequisitionServiceTrait for TestService {
-//         fn batch_response_requisition(
-//             &self,
-//             _: &ServiceContext,
-//             input: ServiceInput,
-//         ) -> Result<ServiceResult, RepositoryError> {
-//             self.0(input)
-//         }
-//     }
+    impl RequisitionServiceTrait for TestService {
+        fn batch_response_requisition(
+            &self,
+            _: &ServiceContext,
+            input: ServiceInput,
+        ) -> Result<ServiceResult, RepositoryError> {
+            self.0(input)
+        }
+    }
 
-//     fn service_provider(
-//         test_service: TestService,
-//         connection_manager: &StorageConnectionManager,
-//     ) -> ServiceProvider {
-//         let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-//         service_provider.requisition_service = Box::new(test_service);
-//         service_provider
-//     }
+    fn service_provider(
+        test_service: TestService,
+        connection_manager: &StorageConnectionManager,
+    ) -> ServiceProvider {
+        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        service_provider.requisition_service = Box::new(test_service);
+        service_provider
+    }
 
-//     #[actix_rt::test]
-//     async fn test_graphql_batch_request_requisition() {
-//         let (_, _, connection_manager, settings) = setup_graphql_test(
-//             EmptyMutation,
-//             BatchMutations,
-//             "test_graphql_batch_request_requisition",
-//             MockDataInserts::all(),
-//         )
-//         .await;
+    #[actix_rt::test]
+    async fn test_graphql_batch_request_requisition() {
+        let (_, _, connection_manager, settings) = setup_graphql_test(
+            EmptyMutation,
+            BatchMutations,
+            "test_graphql_batch_request_requisition",
+            MockDataInserts::all(),
+        )
+        .await;
 
-//         let mutation = r#"
-//         mutation mut($input: BatchResponseRequisitionInput!, $storeId: String!) {
-//             batchResponseRequisition(input: $input, storeId: $storeId) {
-//               deleteResponseRequisitionLines {
-//                 response {
-//                   ... on DeleteResponseRequisitionLineError {
-//                     error {
-//                       __typename
-//                     }
-//                   }
-//                 }
-//                 id
-//               }
-//             }
-//           }
+        let mutation = r#"
+        mutation mut($input: BatchResponseRequisitionInput!, $storeId: String!) {
+            batchResponseRequisition(input: $input, storeId: $storeId) {
+              deleteResponseRequisitionLines {
+                response {
+                  ... on DeleteResponseRequisitionLineError {
+                    error {
+                      __typename
+                    }
+                  }
+                }
+                id
+              }
+            }
+          }
 
-//         "#;
+        "#;
 
-//         let expected = json!({
-//             "batchResponseRequisition": {
-//               "deleteResponseRequisitionLines": [
-//                 {
-//                   "id": "id4",
-//                   "response": {
-//                     "error": {
-//                       "__typename": "RecordNotFound"
-//                     }
-//                   }
-//                 }
-//               ]
-//           }
-//         });
+        let expected = json!({
+            "batchResponseRequisition": {
+              "deleteResponseRequisitionLines": [
+                {
+                  "id": "id4",
+                  "response": {
+                    "error": {
+                      "__typename": "RecordNotFound"
+                    }
+                  }
+                }
+              ]
+          }
+        });
 
-//         let variables = Some(json!({
-//             "storeId": "n/a",
-//             "input": {}
-//         }
-//         ));
+        let variables = Some(json!({
+            "storeId": "n/a",
+            "input": {}
+        }
+        ));
 
-//         // Structured Errors
-//         let test_service = TestService(Box::new(|_| {
-//             Ok(ServiceResult {
-//                 delete_line: vec![InputWithResult {
-//                     input: inline_init(|input: &mut DeleteResponseRequisitionLine| {
-//                         input.id = "id4".to_string()
-//                     }),
-//                     result: Err(DeleteResponseRequisitionLineError::RequisitionLineDoesNotExist {}),
-//                 }],
-//             })
-//         }));
+        // Structured Errors
+        let test_service = TestService(Box::new(|_| {
+            Ok(ServiceResult {
+                delete_line: vec![InputWithResult {
+                    input: inline_init(|input: &mut DeleteResponseRequisitionLine| {
+                        input.id = "id4".to_string()
+                    }),
+                    result: Err(DeleteResponseRequisitionLineError::RequisitionLineDoesNotExist {}),
+                }],
+            })
+        }));
 
-//         assert_graphql_query!(
-//             &settings,
-//             mutation,
-//             &variables,
-//             &expected,
-//             Some(service_provider(test_service, &connection_manager))
-//         );
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &variables,
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         // Standard Error
-//         let test_service = TestService(Box::new(|_| {
-//             Ok(ServiceResult {
-//                 delete_line: vec![InputWithResult {
-//                     input: {
-//                         DeleteResponseRequisitionLine {
-//                             id: "id2".to_string(),
-//                         }
-//                     },
-//                     result: Err(DeleteResponseRequisitionLineError::RequisitionDoesNotExist {}),
-//                 }],
-//             })
-//         }));
+        // Success
 
-//         let expected_message = "Bad user input";
-//         let expected_extensions = json!({
-//             "input":
-//                 format!(
-//                     "{:#?}",
-//                     inline_init(|input: &mut DeleteResponseRequisitionLine| {
-//                         input.id = "id6".to_string()
-//                     })
-//                 )
-//         });
+        let expected = json!({
+            "batchResponseRequisition": {
+              "deleteResponseRequisitionLines": [
+                {
+                  "id": "id3",
+                  "response": {}
+                }
+              ],
+            }
+          }
+        );
 
-//         // assert_standard_graphql_error!(
-//         //     &settings,
-//         //     &mutation,
-//         //     &variables,
-//         //     &expected_message,
-//         //     Some(expected_extensions),
-//         //     Some(service_provider(test_service, &connection_manager))
-//         // );
+        let test_service = TestService(Box::new(|_| {
+            Ok(ServiceResult {
+                delete_line: vec![InputWithResult {
+                    input: inline_init(|input: &mut DeleteResponseRequisitionLine| {
+                        input.id = "id3".to_string()
+                    }),
+                    result: Ok("id3".to_string()),
+                }],
+            })
+        }));
 
-//         // Success
-
-//         let expected = json!({
-//             "batchRequestRequisition": {
-//               "deleteRequestRequisitionLines": [
-//                 {
-//                   "id": "id3",
-//                 }
-//               ],
-//             }
-//           }
-//         );
-
-//         let test_service = TestService(Box::new(|_| {
-//             Ok(ServiceResult {
-//                 delete_line: vec![InputWithResult {
-//                     input: inline_init(|input: &mut DeleteResponseRequisitionLine| {
-//                         input.id = "id3".to_string()
-//                     }),
-//                     result: Ok("id3".to_string()),
-//                 }],
-//             })
-//         }));
-
-//         assert_graphql_query!(
-//             &settings,
-//             mutation,
-//             &variables,
-//             &expected,
-//             Some(service_provider(test_service, &connection_manager))
-//         );
-//     }
-// }
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &variables,
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+    }
+}
