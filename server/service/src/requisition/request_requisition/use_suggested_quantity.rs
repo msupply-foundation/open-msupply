@@ -66,12 +66,12 @@ fn validate(
         return Err(OutError::NotThisStoreRequisition);
     }
 
-    if requisition_row.status != RequisitionStatus::Draft {
-        return Err(OutError::CannotEditRequisition);
-    }
-
     if requisition_row.r#type != RequisitionType::Request {
         return Err(OutError::NotARequestRequisition);
+    }
+
+    if requisition_row.status != RequisitionStatus::Draft {
+        return Err(OutError::CannotEditRequisition);
     }
     Ok(())
 }
@@ -110,7 +110,7 @@ mod test {
     use repository::{
         mock::{
             mock_draft_request_requisition_for_update_test,
-            mock_full_draft_response_requisition_for_update_test,
+            mock_full_new_response_requisition_for_update_test,
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
             mock_store_a, mock_store_b, MockDataInserts,
         },
@@ -165,7 +165,7 @@ mod test {
             service.use_suggested_quantity(
                 &context,
                 UseSuggestedQuantity {
-                    request_requisition_id: mock_full_draft_response_requisition_for_update_test()
+                    request_requisition_id: mock_full_new_response_requisition_for_update_test()
                         .requisition
                         .id,
                 },

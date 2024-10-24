@@ -81,7 +81,7 @@ impl From<RepositoryError> for DeleteResponseRequisitionLineError {
 mod test {
     use repository::{
         mock::{
-            mock_full_draft_response_requisition_for_update_test,
+            mock_full_new_response_requisition_for_update_test,
             mock_request_draft_requisition_calculation_test, mock_store_a, mock_store_b,
             MockDataInserts,
         },
@@ -140,7 +140,7 @@ mod test {
             service.delete_response_requisition_line(
                 &context,
                 DeleteResponseRequisitionLine {
-                    id: mock_full_draft_response_requisition_for_update_test().lines[0]
+                    id: mock_full_new_response_requisition_for_update_test().lines[0]
                         .id
                         .clone(),
                 },
@@ -163,7 +163,7 @@ mod test {
             .unwrap();
         let service = service_provider.requisition_line_service;
 
-        let test_line = mock_full_draft_response_requisition_for_update_test().lines[0].clone();
+        let test_line = mock_full_new_response_requisition_for_update_test().lines[0].clone();
 
         service
             .delete_response_requisition_line(
