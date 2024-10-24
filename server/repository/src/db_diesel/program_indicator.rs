@@ -18,7 +18,7 @@ pub struct ProgramIndicatorRepository<'a> {
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct ProgramIndicatorFilter {
     pub id: Option<EqualFilter<String>>,
-    pub program_id: Option<StringFilter>,
+    pub program_id: Option<EqualFilter<String>>,
     pub code: Option<StringFilter>,
 }
 
