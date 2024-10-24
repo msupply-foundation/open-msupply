@@ -4,8 +4,9 @@ use repository::{
 };
 
 use crate::{
-    requisition::common::check_requisition_row_exists,
-    requisition_line::common::check_requisition_line_exists, service_provider::ServiceContext,
+    requisition::common::{check_approval_status, check_requisition_row_exists},
+    requisition_line::common::check_requisition_line_exists,
+    service_provider::ServiceContext,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -20,6 +21,7 @@ pub enum DeleteResponseRequisitionLineError {
     NotThisStoreRequisition,
     NotAResponseRequisition,
     RequisitionDoesNotExist,
+    CannotEditRequisition,
     DatabaseError(RepositoryError),
 }
 
@@ -53,6 +55,10 @@ fn validate(
     let requisition_row =
         check_requisition_row_exists(connection, &requisition_line_row.requisition_id)?
             .ok_or(OutError::RequisitionDoesNotExist)?;
+
+    if check_approval_status(&requisition_row) {
+        return Err(OutError::CannotEditRequisition);
+    }
 
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
