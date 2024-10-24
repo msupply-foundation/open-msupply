@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Autocomplete,
   AutocompleteProps,
@@ -45,14 +45,16 @@ const useProgramRequisitionOptions = (
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [period, setPeriod] = useState<Period | null>(null);
 
-  useEffect(() => {
+  const handleSetProgram = (value: ProgramSetting | null) => {
+    setProgram(value);
     setOrderType(null);
     setCustomer(null);
-  }, [program]);
-
-  useEffect(() => {
     setPeriod(null);
-  }, [orderType]);
+  };
+  const handleSetOrderType = (value: OrderType | null) => {
+    setOrderType(value);
+    setPeriod(null);
+  };
 
   const allOptions: {
     programs: Common<ProgramSetting>;
@@ -63,7 +65,7 @@ const useProgramRequisitionOptions = (
     programs: {
       options: programSettings,
       value: program,
-      set: setProgram,
+      set: handleSetProgram,
       label: t('label.program'),
       disabled: false,
     },
@@ -73,7 +75,7 @@ const useProgramRequisitionOptions = (
           .filter(c => c.customer.id === customer?.id)
           .flatMap(c => c.orderTypes) || [],
       value: orderType,
-      set: setOrderType,
+      set: handleSetOrderType,
       disabled: program === null || customer === null,
       labelNoOptions: t('messages.not-configured'),
       label: t('label.order-type'),
