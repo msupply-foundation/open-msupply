@@ -5,18 +5,15 @@ use repository::{
 
 use crate::{item::check_item_exists, service_provider::ServiceContext};
 
-use super::validate::check_item_variant_exists;
-
 #[derive(PartialEq, Debug)]
 
-pub enum InsertItemVariantError {
-    ItemVariantAlreadyExists,
+pub enum UpsertItemVariantError {
     CreatedRecordNotFound,
     ItemDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
-pub struct InsertItemVariant {
+pub struct UpsertItemVariant {
     pub id: String,
     pub item_id: String,
     pub cold_storage_type_id: Option<String>,
@@ -25,10 +22,10 @@ pub struct InsertItemVariant {
     pub manufacturer_link_id: Option<String>,
 }
 
-pub fn insert_item_variant(
+pub fn upsert_item_variant(
     ctx: &ServiceContext,
-    input: InsertItemVariant,
-) -> Result<ItemVariantRow, InsertItemVariantError> {
+    input: UpsertItemVariant,
+) -> Result<ItemVariantRow, UpsertItemVariantError> {
     let item_variant = ctx
         .connection
         .transaction_sync(|connection| {
@@ -38,27 +35,27 @@ pub fn insert_item_variant(
             repo.upsert_one(&new_item_variant)?;
 
             repo.find_one_by_id(&new_item_variant.id)?
-                .ok_or(InsertItemVariantError::CreatedRecordNotFound)
+                .ok_or(UpsertItemVariantError::CreatedRecordNotFound)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(item_variant)
 }
 
-impl From<RepositoryError> for InsertItemVariantError {
+impl From<RepositoryError> for UpsertItemVariantError {
     fn from(error: RepositoryError) -> Self {
-        InsertItemVariantError::DatabaseError(error)
+        UpsertItemVariantError::DatabaseError(error)
     }
 }
 
 pub fn generate(
-    InsertItemVariant {
+    UpsertItemVariant {
         id,
         name,
         item_id,
         cold_storage_type_id,
         doses_per_unit,
         manufacturer_link_id,
-    }: InsertItemVariant,
+    }: UpsertItemVariant,
 ) -> ItemVariantRow {
     ItemVariantRow {
         id,
@@ -73,15 +70,11 @@ pub fn generate(
 
 fn validate(
     connection: &StorageConnection,
-    input: &InsertItemVariant,
+    input: &UpsertItemVariant,
     store_id: &str,
-) -> Result<(), InsertItemVariantError> {
-    if check_item_variant_exists(connection, &input.id)?.is_some() {
-        return Err(InsertItemVariantError::ItemVariantAlreadyExists);
-    }
-
+) -> Result<(), UpsertItemVariantError> {
     if !check_item_exists(connection, store_id.to_string(), &input.item_id)? {
-        return Err(InsertItemVariantError::ItemDoesNotExist);
+        return Err(UpsertItemVariantError::ItemDoesNotExist);
     }
 
     Ok(())
