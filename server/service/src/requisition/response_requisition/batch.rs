@@ -60,9 +60,7 @@ pub fn batch_response_requisition(
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_full_draft_response_requisition_for_update_test, mock_store_a, MockDataInserts,
-        },
+        mock::{mock_full_new_response_requisition_for_update_test, mock_store_a, MockDataInserts},
         test_db::setup_all,
         RequisitionLineRowRepository,
     };
@@ -85,7 +83,7 @@ mod test {
             .unwrap();
         let service = service_provider.requisition_service;
 
-        let line_id = mock_full_draft_response_requisition_for_update_test().lines[0]
+        let line_id = mock_full_new_response_requisition_for_update_test().lines[0]
             .id
             .clone();
 
@@ -100,7 +98,7 @@ mod test {
             RequisitionLineRowRepository::new(&connection)
                 .find_one_by_id(&line_id)
                 .unwrap(),
-            Some(mock_full_draft_response_requisition_for_update_test().lines[0].clone())
+            Some(mock_full_new_response_requisition_for_update_test().lines[0].clone())
         );
 
         // Test delete
