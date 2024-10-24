@@ -897,6 +897,7 @@ export type CentralServerMutationNode = {
   assetCatalogue: AssetCatalogueMutations;
   demographic: DemographicMutations;
   general: CentralGeneralMutations;
+  itemVariant: ItemVariantMutations;
   logReason: AssetLogReasonMutations;
   packVariant: PackVariantMutations;
   vaccineCourse: VaccineCourseMutations;
@@ -1314,6 +1315,12 @@ export type DeleteInboundShipmentServiceLineResponseWithId = {
   id: Scalars['String']['output'];
   response: DeleteInboundShipmentServiceLineResponse;
 };
+
+export type DeleteItemVariantInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteItemVariantResponse = DeleteResponse;
 
 export type DeleteLocationError = {
   __typename: 'DeleteLocationError';
@@ -3442,6 +3449,24 @@ export type ItemStatsNode = {
   totalConsumption: Scalars['Float']['output'];
 };
 
+export type ItemVariantMutations = {
+  __typename: 'ItemVariantMutations';
+  deleteItemVariant: DeleteItemVariantResponse;
+  upsertItemVariant: UpsertPackVariantResponse;
+};
+
+
+export type ItemVariantMutationsDeleteItemVariantArgs = {
+  input: DeleteItemVariantInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type ItemVariantMutationsUpsertItemVariantArgs = {
+  input: UpsertItemVariantInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type ItemVariantNode = {
   __typename: 'ItemVariantNode';
   coldStorageTypeId?: Maybe<Scalars['String']['output']>;
@@ -4760,6 +4785,14 @@ export type PackVariantMutationsInsertPackVariantArgs = {
 export type PackVariantMutationsUpdatePackVariantArgs = {
   input: UpdatePackVariantInput;
   storeId: Scalars['String']['input'];
+};
+
+export type PackagingVariantInput = {
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  packSize?: InputMaybe<Scalars['Float']['input']>;
+  packagingLevel: Scalars['Int']['input'];
+  volumePerUnit?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type PackagingVariantNode = {
@@ -8194,6 +8227,16 @@ export type UpdateVaccineCourseInput = {
 
 export type UpdateVaccineCourseResponse = UpdateVaccineCourseError | VaccineCourseNode;
 
+export type UpsertItemVariantInput = {
+  coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
+  dosesPerUnit?: InputMaybe<Scalars['Int']['input']>;
+  id: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  packagingVariants: Array<PackagingVariantInput>;
+};
+
 export type UpsertLogLevelInput = {
   level: LogLevelEnum;
 };
@@ -8202,6 +8245,8 @@ export type UpsertLogLevelResponse = {
   __typename: 'UpsertLogLevelResponse';
   level: LogLevelEnum;
 };
+
+export type UpsertPackVariantResponse = ItemVariantNode;
 
 export type UpsertVaccineCourseDoseInput = {
   customAgeLabel?: InputMaybe<Scalars['String']['input']>;

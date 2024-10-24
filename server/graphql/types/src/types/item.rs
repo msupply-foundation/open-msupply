@@ -141,8 +141,8 @@ impl ItemNode {
             id: "id".to_string(),
             name: "Variant 1".to_string(),
             item_link_id: self.row().id.clone(),
-            cold_storage_type_id: None,
-            doses_per_unit: None,
+            cold_storage_type_id: Some("+5".to_string()),
+            doses_per_unit: Some(1.0),
             manufacturer_link_id: None,
             deleted_datetime: None,
         }])
