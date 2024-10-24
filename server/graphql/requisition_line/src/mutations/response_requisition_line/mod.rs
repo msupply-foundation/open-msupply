@@ -1,5 +1,5 @@
 mod update;
 pub use update::*;
 
-mod delete;
+pub mod delete;
 pub use delete::*;
