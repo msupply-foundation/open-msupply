@@ -10,12 +10,12 @@ import {
 } from '@openmsupply-client/common';
 
 export const ProgramInfoSection = () => {
+  const t = useTranslation();
   const { orderType, programName, period } = useResponse.document.fields([
     'orderType',
     'programName',
     'period',
   ]);
-  const t = useTranslation();
 
   return programName ? (
     <DetailPanelSection title={t('heading.program-info')}>
