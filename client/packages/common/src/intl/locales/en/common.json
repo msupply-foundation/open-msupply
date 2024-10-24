@@ -1150,7 +1150,7 @@
   "messages.confirm-changing-from-new": "Note: changing from 'New' will remove any lines with zero quantity.",
   "messages.confirm-delete-assets_one": "This will permanently remove this asset.",
   "messages.confirm-delete-assets_other": "This will permanently remove the {{count}} selected assets.",
-  "messages.confirm-delete-customer-return": "This will permanently Customer Return #{{number}}",
+  "messages.confirm-delete-customer-return": "This will permanently delete Customer Return #{{number}}",
   "messages.confirm-delete-document": "This will remove this document.",
   "messages.confirm-delete-generic": "This will permanently remove data",
   "messages.confirm-delete-immunisation-programs_one": "This will permanently remove this Immunization Program.",
