@@ -1,19 +1,25 @@
 pub mod item;
+pub mod item_variant;
+pub mod packaging_variant;
 pub use item::*;
 use item_variant::{
-    delete_item_variant, get_item_variants, insert_item_variant, update_item_variant,
-    DeleteItemVariant, DeleteItemVariantError, InsertItemVariant, InsertItemVariantError,
-    UpdateItemVariant, UpdateItemVariantError,
+    delete_item_variant, get_item_variants, upsert_item_variant, DeleteItemVariant,
+    DeleteItemVariantError, UpsertItemVariant, UpsertItemVariantError,
+};
+use packaging_variant::{
+    delete_packaging_variant, get_packaging_variants, upsert_packaging_variant,
+    DeletePackagingVariant, DeletePackagingVariantError, UpsertPackagingVariant,
+    UpsertPackagingVariantError,
 };
 use repository::{
     item_variant::{
         item_variant::{ItemVariantFilter, ItemVariantSort},
         item_variant_row::ItemVariantRow,
+        packaging_variant::{PackagingVariantFilter, PackagingVariantSort},
+        packaging_variant_row::PackagingVariantRow,
     },
     PaginationOption,
 };
-pub mod item_variant;
-pub mod packaging_variant;
 
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 
@@ -28,20 +34,12 @@ pub trait ItemServiceTrait: Sync + Send {
         get_item_variants(&ctx.connection, pagination, filter, sort)
     }
 
-    fn insert_item_variant(
+    fn upsert_item_variant(
         &self,
         ctx: &ServiceContext,
-        input: InsertItemVariant,
-    ) -> Result<ItemVariantRow, InsertItemVariantError> {
-        insert_item_variant(ctx, input)
-    }
-
-    fn update_item_variant(
-        &self,
-        ctx: &ServiceContext,
-        input: UpdateItemVariant,
-    ) -> Result<ItemVariantRow, UpdateItemVariantError> {
-        update_item_variant(ctx, input)
+        input: UpsertItemVariant,
+    ) -> Result<ItemVariantRow, UpsertItemVariantError> {
+        upsert_item_variant(ctx, input)
     }
 
     fn delete_item_variant(
@@ -51,28 +49,23 @@ pub trait ItemServiceTrait: Sync + Send {
     ) -> Result<String, DeleteItemVariantError> {
         delete_item_variant(ctx, input)
     }
-    /*
+
     fn get_packaging_variants(
         &self,
         ctx: &ServiceContext,
-    ) -> Result<Vec<ItemPackagingVariant>, RepositoryError> {
-        get_packaging_variants(ctx)
+        pagination: Option<PaginationOption>,
+        filter: Option<PackagingVariantFilter>,
+        sort: Option<PackagingVariantSort>,
+    ) -> Result<ListResult<PackagingVariantRow>, ListError> {
+        get_packaging_variants(&ctx.connection, pagination, filter, sort)
     }
 
-    fn insert_packaging_variant(
+    fn upsert_packaging_variant(
         &self,
         ctx: &ServiceContext,
-        input: InsertPackagingVariant,
-    ) -> Result<PackagingVariantRow, InsertPackagingVariantError> {
-        insert_packaging_variant(ctx, input)
-    }
-
-    fn update_packaging_variant(
-        &self,
-        ctx: &ServiceContext,
-        input: UpdatePackagingVariant,
-    ) -> Result<PackVariantRow, UpdatePackVariantError> {
-        update_packaging_variant(ctx, input)
+        input: UpsertPackagingVariant,
+    ) -> Result<PackagingVariantRow, UpsertPackagingVariantError> {
+        upsert_packaging_variant(ctx, input)
     }
 
     fn delete_packaging_variant(
@@ -82,7 +75,6 @@ pub trait ItemServiceTrait: Sync + Send {
     ) -> Result<String, DeletePackagingVariantError> {
         delete_packaging_variant(ctx, input)
     }
-     */
 }
 
 pub struct ItemService {}

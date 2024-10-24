@@ -5,18 +5,14 @@ use repository::{
 
 use crate::{item::item_variant::check_item_variant_exists, service_provider::ServiceContext};
 
-use super::validate::check_packaging_variant_exists;
-
 #[derive(PartialEq, Debug)]
-
-pub enum InsertPackagingVariantError {
-    PackagingVariantAlreadyExists,
+pub enum UpsertPackagingVariantError {
     CreatedRecordNotFound,
-    ItemDoesNotExist,
+    ItemVariantDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
-pub struct InsertPackagingVariant {
+pub struct UpsertPackagingVariant {
     pub id: String,
     pub item_variant_id: String,
     pub name: String,
@@ -25,10 +21,10 @@ pub struct InsertPackagingVariant {
     pub volume_per_unit: Option<f64>,
 }
 
-pub fn insert_packaging_variant(
+pub fn upsert_packaging_variant(
     ctx: &ServiceContext,
-    input: InsertPackagingVariant,
-) -> Result<PackagingVariantRow, InsertPackagingVariantError> {
+    input: UpsertPackagingVariant,
+) -> Result<PackagingVariantRow, UpsertPackagingVariantError> {
     let packaging_variant = ctx
         .connection
         .transaction_sync(|connection| {
@@ -38,27 +34,27 @@ pub fn insert_packaging_variant(
             repo.upsert_one(&new_packaging_variant)?;
 
             repo.find_one_by_id(&new_packaging_variant.id)?
-                .ok_or(InsertPackagingVariantError::CreatedRecordNotFound)
+                .ok_or(UpsertPackagingVariantError::CreatedRecordNotFound)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(packaging_variant)
 }
 
-impl From<RepositoryError> for InsertPackagingVariantError {
+impl From<RepositoryError> for UpsertPackagingVariantError {
     fn from(error: RepositoryError) -> Self {
-        InsertPackagingVariantError::DatabaseError(error)
+        UpsertPackagingVariantError::DatabaseError(error)
     }
 }
 
 pub fn generate(
-    InsertPackagingVariant {
+    UpsertPackagingVariant {
         id,
         name,
         item_variant_id,
         packaging_level,
         pack_size,
         volume_per_unit,
-    }: InsertPackagingVariant,
+    }: UpsertPackagingVariant,
 ) -> PackagingVariantRow {
     PackagingVariantRow {
         id,
@@ -73,15 +69,11 @@ pub fn generate(
 
 fn validate(
     connection: &StorageConnection,
-    input: &InsertPackagingVariant,
-) -> Result<(), InsertPackagingVariantError> {
-    if check_packaging_variant_exists(connection, &input.id)?.is_some() {
-        return Err(InsertPackagingVariantError::PackagingVariantAlreadyExists);
-    }
-
+    input: &UpsertPackagingVariant,
+) -> Result<(), UpsertPackagingVariantError> {
     let item_variant = check_item_variant_exists(connection, &input.item_variant_id)?;
     if item_variant.is_none() {
-        return Err(InsertPackagingVariantError::ItemDoesNotExist);
+        return Err(UpsertPackagingVariantError::ItemVariantDoesNotExist);
     }
 
     Ok(())
