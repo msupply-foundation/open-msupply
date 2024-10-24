@@ -68,15 +68,18 @@ const useProgramRequisitionOptions = (
       disabled: false,
     },
     orderTypes: {
-      options: program?.customerAndOrderTypes.flatMap(c => c.orderTypes) || [],
+      options:
+        program?.customerAndOrderTypes
+          .filter(c => c.customer.id === customer?.id)
+          .flatMap(c => c.orderTypes) || [],
       value: orderType,
       set: setOrderType,
-      disabled: program === null,
+      disabled: program === null || customer === null,
       labelNoOptions: t('messages.not-configured'),
       label: t('label.order-type'),
     },
     customers: {
-      options: program?.customerAndOrderTypes.flatMap(c => c.customer) || [],
+      options: program?.customerAndOrderTypes.map(c => c.customer) || [],
       value: customer,
       set: setCustomer,
       disabled: program === null,
@@ -132,7 +135,7 @@ const LabelAndOptions = <T,>({
       <Grid item>
         {noOptionsDisplay || (
           <Autocomplete
-            width="300"
+            width="450"
             renderOption={renderOption}
             getOptionDisabled={getOptionDisabled}
             autoFocus={autoFocus}
