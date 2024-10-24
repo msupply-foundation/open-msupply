@@ -45,7 +45,7 @@ export const ItemVariantsTab = ({
       </AppBarButtonsPortal>
       <Box flex={1} marginX={2}>
         {itemVariants.map(v => (
-          <ItemVariant variant={v} onOpen={onOpen} />
+          <ItemVariant key={v.id} variant={v} onOpen={onOpen} />
         ))}
       </Box>
     </>
@@ -107,9 +107,8 @@ const ItemVariant = ({
             label={t('label.manufacturer')}
             labelWidth="200"
             Input={
-              // TODO ManufacturerSearch
               <BasicTextInput
-                value={variant.manufacturerId}
+                value={variant.manufacturer?.name ?? ''}
                 disabled
                 fullWidth
               />

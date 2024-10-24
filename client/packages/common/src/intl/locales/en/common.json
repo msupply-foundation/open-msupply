@@ -1319,6 +1319,7 @@
   "messages.internal-order-created-on": "Internal order created on {{date}}",
   "messages.invalid-file": "Invalid file",
   "messages.inventory-adjustment-saved": "Inventory adjustment saved 🥳",
+  "messages.item-variant-saved": "Item variant saved successfully",
   "messages.last-temperature": "Last temperature reading: {{temperature}} °C",
   "messages.loading-report": "Loading report...",
   "messages.location": "Location:",

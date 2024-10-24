@@ -3472,8 +3472,9 @@ export type ItemVariantNode = {
   coldStorageTypeId?: Maybe<Scalars['String']['output']>;
   dosesPerUnit?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
-  itemId: Scalars['String']['output'];
+  manufacturer?: Maybe<NameNode>;
   manufacturerId?: Maybe<Scalars['String']['output']>;
+  manufacturerName?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   packagingVariants: Array<PackagingVariantNode>;
 };

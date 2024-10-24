@@ -10,9 +10,13 @@ import {
   useTranslation,
   useDialog,
   useKeyboardHeightAdjustment,
+  QueryParamsProvider,
+  createQueryParamsStore,
+  useNotification,
 } from '@openmsupply-client/common';
 import { ItemPackagingVariantsTable } from './ItemPackagingVariantsTable';
 import { ItemVariantFragment, useItemVariant } from '../../../api';
+import { ManufacturerSearchInput } from '@openmsupply-client/system';
 
 export const ItemVariantModal = ({
   itemId,
@@ -26,6 +30,7 @@ export const ItemVariantModal = ({
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen: true, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(500);
+  const { success } = useNotification();
 
   const { draft, isComplete, updateDraft, save } = useItemVariant({
     itemId,
@@ -40,14 +45,22 @@ export const ItemVariantModal = ({
         <DialogButton
           disabled={!isComplete}
           variant="ok"
-          onClick={() => save(draft)}
+          onClick={() => {
+            save(draft);
+            success(t('messages.item-variant-saved'))();
+            onClose();
+          }}
         />
       }
       height={height}
       width={1000}
       slideAnimation={false}
     >
-      <ItemVariantForm updateVariant={updateDraft} variant={draft} />
+      <QueryParamsProvider
+        createStore={createQueryParamsStore({ initialSortBy: { key: 'name' } })}
+      >
+        <ItemVariantForm updateVariant={updateDraft} variant={draft} />
+      </QueryParamsProvider>
     </Modal>
   );
 };
@@ -60,8 +73,6 @@ const ItemVariantForm = ({
   updateVariant: (patch: Partial<ItemVariantFragment>) => void;
 }) => {
   const t = useTranslation();
-
-  console.log('render');
 
   return (
     <Box justifyContent="center" display="flex" gap={3} alignItems={'center'}>
@@ -100,16 +111,17 @@ const ItemVariantForm = ({
           label={t('label.manufacturer')}
           labelWidth="200"
           Input={
-            // TODO ManufacturerSearch
-            <BasicTextInput
-              value={variant.manufacturerId}
-              onChange={event => {
-                updateVariant({
-                  manufacturerId: event.target.value,
-                });
-              }}
-              fullWidth
-            />
+            <Box width="100%">
+              <ManufacturerSearchInput
+                value={variant.manufacturer ?? null}
+                onChange={manufacturer =>
+                  updateVariant({
+                    manufacturer,
+                    manufacturerId: manufacturer?.id ?? '',
+                  })
+                }
+              />
+            </Box>
           }
         />
 
