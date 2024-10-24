@@ -36,6 +36,15 @@ impl RequisitionLineMutations {
         delete(ctx, &store_id, input)
     }
 
+    async fn insert_response_requisition_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: response_requisition_line::InsertInput,
+    ) -> Result<response_requisition_line::InsertResponse> {
+        response_requisition_line::insert(ctx, &store_id, input)
+    }
+
     async fn update_response_requisition_line(
         &self,
         ctx: &Context<'_>,

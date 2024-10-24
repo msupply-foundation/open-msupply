@@ -60,6 +60,27 @@ fragment ItemRowWithStats on ItemNode {
   }
 }
 
+fragment PackagingVariant on PackagingVariantNode {
+  __typename
+  id
+  name
+  packagingLevel
+  packSize
+  volumePerUnit
+}
+
+fragment ItemVariant on ItemVariantNode {
+  __typename
+  id
+  name
+  dosesPerUnit
+  manufacturerId
+  coldStorageTypeId
+  packagingVariants {
+    ...PackagingVariant
+  }
+}
+
 fragment Item on ItemNode {
   __typename
   id
@@ -95,6 +116,9 @@ fragment Item on ItemNode {
     availableStockOnHand
     availableMonthsOfStockOnHand
     totalConsumption
+  }
+  variants {
+    ...ItemVariant
   }
 }
 
