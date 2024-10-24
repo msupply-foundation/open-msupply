@@ -61,8 +61,6 @@ const LocationListComponent: FC = () => {
     useEditModal<LocationRowFragment>();
   const locations = data?.nodes ?? [];
 
-  console.log('Data', data);
-
   return (
     <>
       {isOpen && (
