@@ -4,22 +4,22 @@ use crate::sync::test::TestSyncIncomingRecord;
 
 const TABLE_NAME: &str = "program_indicator";
 
-const PROGRAM_INDICATOR_1: (&str, &str) = (
-    "PROGRAM_INDICATOR_1",
+const PROGRAM_INDICATOR_A: (&str, &str) = (
+    "program_indicator_a",
     r#"{
-        "ID": "PROGRAM_INDICATOR_1",
-        "code": "Program Indicator 1",
-        "program_ID": "87027C44835B48E6989376F42A58F7EA",
+        "ID": "program_indicator_a",
+        "code": "Program Indicator a",
+        "program_ID": "program_a",
         "is_active": true
     }"#,
 );
 
-const PROGRAM_INDICATOR_2: (&str, &str) = (
-    "PROGRAM_INDICATOR_2",
+const PROGRAM_INDICATOR_B: (&str, &str) = (
+    "program_indicator_b",
     r#"{
-        "ID": "PROGRAM_INDICATOR_2",
-        "code": "Program Indicator 2",
-        "program_ID": "87027C44835B48E6989376F42A58F7EA",
+        "ID": "program_indicator_b",
+        "code": "Program Indicator b",
+        "program_ID": "program_a",
         "is_active": true
     }"#,
 );
@@ -28,21 +28,21 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
-            PROGRAM_INDICATOR_1,
+            PROGRAM_INDICATOR_A,
             ProgramIndicatorRow {
-                id: PROGRAM_INDICATOR_1.0.to_owned(),
-                code: "Program Indicator 1".to_owned(),
-                program_id: "87027C44835B48E6989376F42A58F7EA".to_owned(),
+                id: PROGRAM_INDICATOR_A.0.to_owned(),
+                code: "Program Indicator a".to_owned(),
+                program_id: "program_a".to_owned(),
                 is_active: true,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
-            PROGRAM_INDICATOR_2,
+            PROGRAM_INDICATOR_B,
             ProgramIndicatorRow {
-                id: PROGRAM_INDICATOR_2.0.to_owned(),
-                code: "Program Indicator 2".to_owned(),
-                program_id: "87027C44835B48E6989376F42A58F7EA".to_owned(),
+                id: PROGRAM_INDICATOR_B.0.to_owned(),
+                code: "Program Indicator b".to_owned(),
+                program_id: "program_a".to_owned(),
                 is_active: true,
             },
         ),
