@@ -32,6 +32,7 @@ pub(crate) mod name_tag_join;
 pub(crate) mod pack_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
+pub(crate) mod program_indicator;
 pub(crate) mod program_requisition_settings;
 pub(crate) mod property;
 pub(crate) mod reason;
@@ -83,6 +84,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         period_schedule::boxed(),
         period::boxed(),
         program_requisition_settings::boxed(),
+        program_indicator::boxed(),
         report::boxed(),
         reason::boxed(),
         store_preference::boxed(),
