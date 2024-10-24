@@ -56,16 +56,16 @@ fn validate(
         check_requisition_row_exists(connection, &requisition_line_row.requisition_id)?
             .ok_or(OutError::RequisitionDoesNotExist)?;
 
-    if check_approval_status(&requisition_row) {
-        return Err(OutError::CannotEditRequisition);
-    }
-
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
     }
 
     if requisition_row.r#type != RequisitionType::Response {
         return Err(OutError::NotAResponseRequisition);
+    }
+
+    if check_approval_status(&requisition_row) {
+        return Err(OutError::CannotEditRequisition);
     }
 
     Ok(())
