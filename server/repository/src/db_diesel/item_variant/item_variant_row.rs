@@ -1,5 +1,3 @@
-use super::item_variant_row::item_variant::dsl as item_variant_dsl;
-
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
     StorageConnection, Upsert,
@@ -14,7 +12,7 @@ table! {
         name -> Text,
         item_link_id -> Text,
         cold_storage_type_id -> Nullable<Text>,
-        doses_per_unit -> Nullable<Double>,
+        doses_per_unit -> Nullable<Integer>,
         manufacturer_link_id -> Nullable<Text>,
         deleted_datetime -> Nullable<Timestamp>,
     }
@@ -29,7 +27,7 @@ pub struct ItemVariantRow {
     pub name: String,
     pub item_link_id: String,
     pub cold_storage_type_id: Option<String>,
-    pub doses_per_unit: Option<f64>,
+    pub doses_per_unit: Option<i32>,
     pub manufacturer_link_id: Option<String>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
 }
@@ -44,9 +42,9 @@ impl<'a> ItemVariantRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &ItemVariantRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(item_variant_dsl::item_variant)
+        diesel::insert_into(item_variant::table)
             .values(row)
-            .on_conflict(item_variant_dsl::id)
+            .on_conflict(item_variant::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -73,8 +71,8 @@ impl<'a> ItemVariantRowRepository<'a> {
         &self,
         item_variant_id: &str,
     ) -> Result<Option<ItemVariantRow>, RepositoryError> {
-        let result = item_variant_dsl::item_variant
-            .filter(item_variant_dsl::id.eq(item_variant_id))
+        let result = item_variant::table
+            .filter(item_variant::id.eq(item_variant_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -84,11 +82,20 @@ impl<'a> ItemVariantRowRepository<'a> {
         &self,
         item_variant_name: &str,
     ) -> Result<Option<ItemVariantRow>, RepositoryError> {
-        let result = item_variant_dsl::item_variant
-            .filter(item_variant_dsl::name.eq(item_variant_name))
+        let result = item_variant::table
+            .filter(item_variant::name.eq(item_variant_name))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn mark_deleted(&self, item_variant_id: &str) -> Result<i64, RepositoryError> {
+        diesel::update(item_variant::table.filter(item_variant::id.eq(item_variant_id)))
+            .set(item_variant::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+            .execute(self.connection.lock().connection())?;
+
+        // Upsert row action as this is a soft delete, not actual delete
+        self.insert_changelog(item_variant_id.to_owned(), RowActionType::Upsert)
     }
 }
 
