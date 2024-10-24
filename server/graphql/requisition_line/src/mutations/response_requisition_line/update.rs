@@ -18,6 +18,8 @@ use service::{
 pub struct UpdateInput {
     pub id: String,
     pub supply_quantity: Option<f64>,
+    pub requested_quantity: Option<f64>,
+    pub their_stock_on_hand: Option<f64>,
     pub comment: Option<String>,
 }
 
@@ -74,12 +76,16 @@ impl UpdateInput {
         let UpdateInput {
             id,
             supply_quantity,
+            requested_quantity,
+            their_stock_on_hand,
             comment,
         } = self;
 
         ServiceInput {
             id,
             supply_quantity,
+            requested_quantity,
+            their_stock_on_hand,
             comment,
         }
     }
@@ -323,6 +329,8 @@ mod test {
                 ServiceInput {
                     id: "update line id input".to_string(),
                     supply_quantity: Some(1.0),
+                    requested_quantity: None,
+                    their_stock_on_hand: None,
                     comment: Some("comment".to_string()),
                 }
             );
@@ -337,6 +345,8 @@ mod test {
           "input": {
             "id": "update line id input",
             "supplyQuantity": 1,
+            "requestedQuantity": null,
+            "theirStockOnHand": null,
             "comment": "comment"
           },
           "storeId": "store_a"
