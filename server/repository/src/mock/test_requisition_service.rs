@@ -209,7 +209,7 @@ pub fn mock_full_draft_response_requisition_for_update_test() -> FullMockRequisi
             r.name_link_id = "name_a".to_string();
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionType::Response;
-            r.status = RequisitionStatus::Draft;
+            r.status = RequisitionStatus::New;
             r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)

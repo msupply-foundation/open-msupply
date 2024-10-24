@@ -101,7 +101,7 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
         get_response_requisition_line_stats(ctx, requisition_line_id)
     }
 
-    fn delete_requisition_line(
+    fn delete_response_requisition_line(
         &self,
         ctx: &ServiceContext,
         input: DeleteResponseRequisitionLine,

@@ -1,6 +1,6 @@
 use repository::{
-    requisition_row::{RequisitionStatus, RequisitionType},
-    RepositoryError, RequisitionLineRowRepository, StorageConnection,
+    requisition_row::RequisitionType, RepositoryError, RequisitionLineRowRepository,
+    StorageConnection,
 };
 
 use crate::{
@@ -58,7 +58,7 @@ fn validate(
         return Err(OutError::NotThisStoreRequisition);
     }
 
-    if requisition_row.r#type != RequisitionType::Request {
+    if requisition_row.r#type != RequisitionType::Response {
         return Err(OutError::NotAResponseRequisition);
     }
 
@@ -68,5 +68,111 @@ fn validate(
 impl From<RepositoryError> for DeleteResponseRequisitionLineError {
     fn from(error: RepositoryError) -> Self {
         DeleteResponseRequisitionLineError::DatabaseError(error)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::{
+            mock_full_draft_response_requisition_for_update_test,
+            mock_request_draft_requisition_calculation_test, mock_store_a, mock_store_b,
+            MockDataInserts,
+        },
+        test_db::setup_all,
+        RequisitionLineRowRepository,
+    };
+
+    use crate::{
+        requisition_line::response_requisition_line::{
+            DeleteResponseRequisitionLine, DeleteResponseRequisitionLineError as ServiceError,
+        },
+        service_provider::ServiceProvider,
+    };
+
+    #[actix_rt::test]
+    async fn delete_response_requisition_line_errors() {
+        let (_, _, connection_manager, _) = setup_all(
+            "delete_response_requisition_line_errors",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.requisition_line_service;
+
+        // RequisitionLineDoesNotExist
+        assert_eq!(
+            service.delete_response_requisition_line(
+                &context,
+                DeleteResponseRequisitionLine {
+                    id: "invalid".to_owned(),
+                },
+            ),
+            Err(ServiceError::RequisitionLineDoesNotExist)
+        );
+
+        // NotAResponseRequisition
+        assert_eq!(
+            service.delete_response_requisition_line(
+                &context,
+                DeleteResponseRequisitionLine {
+                    id: mock_request_draft_requisition_calculation_test().lines[0]
+                        .id
+                        .clone(),
+                },
+            ),
+            Err(ServiceError::NotAResponseRequisition)
+        );
+
+        // NotThisStoreRequisition
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.delete_response_requisition_line(
+                &context,
+                DeleteResponseRequisitionLine {
+                    id: mock_full_draft_response_requisition_for_update_test().lines[0]
+                        .id
+                        .clone(),
+                },
+            ),
+            Err(ServiceError::NotThisStoreRequisition)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn delete_response_requisition_line_success() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "delete_response_requisition_line_success",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.requisition_line_service;
+
+        let test_line = mock_full_draft_response_requisition_for_update_test().lines[0].clone();
+
+        service
+            .delete_response_requisition_line(
+                &context,
+                DeleteResponseRequisitionLine {
+                    id: test_line.id.clone(),
+                },
+            )
+            .unwrap();
+
+        assert_eq!(
+            RequisitionLineRowRepository::new(&connection)
+                .find_one_by_id(&test_line.id)
+                .unwrap(),
+            None
+        );
     }
 }
