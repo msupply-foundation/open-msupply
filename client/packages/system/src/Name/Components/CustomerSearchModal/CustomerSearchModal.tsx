@@ -1,42 +1,48 @@
 import React, { FC } from 'react';
 import {
+  AutocompleteList,
+  AutocompleteListProps,
   createQueryParamsStore,
   ListSearch,
   QueryParamsProvider,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useName, NameRowFragment } from '../../api';
-import { filterByNameAndCode, NameSearchModalProps } from '../../utils';
+import { filterByNameAndCode, NameSearchProps } from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
 
-const CustomerSearchComponent: FC<NameSearchModalProps> = ({
-  open,
-  onClose,
-  onChange,
-}) => {
+const CustomerSearchComponent: FC<NameSearchProps> = props => {
   const { data, isLoading } = useName.document.customers();
   const t = useTranslation();
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
+  const listProps: AutocompleteListProps<NameRowFragment> = {
+    loading: isLoading,
+    filterOptions: filterByNameAndCode,
+    getOptionLabel: option => option.name,
+    renderOption: NameOptionRenderer,
+    onChange: (_, name) => {
+      if (name && !(name instanceof Array)) props.onChange(name);
+    },
+    options: data?.nodes ?? [],
+    getOptionDisabled: option => option.isOnHold,
+  };
+
+  if ('isList' in props) return <AutocompleteList {...listProps} />;
+
+  let { open, onClose } = props;
+
   return (
     <ListSearch
-      loading={isLoading}
       open={open}
-      options={data?.nodes ?? []}
       onClose={onClose}
       title={t('customers')}
-      renderOption={NameOptionRenderer}
-      getOptionLabel={(option: NameRowFragment) => option.name}
-      filterOptions={filterByNameAndCode}
-      onChange={(_, name: NameRowFragment | NameRowFragment[] | null) => {
-        if (name && !(name instanceof Array)) onChange(name);
-      }}
-      getOptionDisabled={option => option.isOnHold}
+      {...listProps}
     />
   );
 };
 
-export const CustomerSearchModal: FC<NameSearchModalProps> = props => (
+export const CustomerSearchModal: FC<NameSearchProps> = props => (
   <QueryParamsProvider
     createStore={createQueryParamsStore<NameRowFragment>({
       initialSortBy: { key: 'name' },
