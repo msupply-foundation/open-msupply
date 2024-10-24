@@ -14,7 +14,7 @@ export type LocationsQueryVariables = Types.Exact<{
 }>;
 
 
-export type LocationsQuery = { __typename: 'Queries', locations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string }> } };
+export type LocationsQuery = { __typename: 'Queries', locations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null }> } };
 
 export type InsertLocationMutationVariables = Types.Exact<{
   input: Types.InsertLocationInput;
@@ -67,6 +67,12 @@ export const LocationsDocument = gql`
         name
         onHold
         code
+        coldStorageType {
+          id
+          name
+          maxTemperature
+          minTemperature
+        }
       }
     }
   }

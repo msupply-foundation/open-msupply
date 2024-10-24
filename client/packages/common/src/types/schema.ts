@@ -965,6 +965,14 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
+export type ColdStorageTypeNode = {
+  __typename: 'ColdStorageTypeNode';
+  id: Scalars['String']['output'];
+  maxTemperature: Scalars['Float']['output'];
+  minTemperature: Scalars['Float']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type ConfigureNamePropertiesResponse = Success;
 
 export type ConfigureNamePropertyInput = {
@@ -2542,6 +2550,7 @@ export type InsertLocationErrorInterface = {
 
 export type InsertLocationInput = {
   code: Scalars['String']['input'];
+  coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3615,6 +3624,7 @@ export type LocationIsOnHold = InsertOutboundShipmentLineErrorInterface & Insert
 export type LocationNode = {
   __typename: 'LocationNode';
   code: Scalars['String']['output'];
+  coldStorageType?: Maybe<ColdStorageTypeNode>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   onHold: Scalars['Boolean']['output'];
@@ -6315,14 +6325,19 @@ export type RequisitionLineConnector = {
 
 export type RequisitionLineNode = {
   __typename: 'RequisitionLineNode';
+  additionInUnits: Scalars['Float']['output'];
   /** Quantity already issued in outbound shipments */
   alreadyIssued: Scalars['Float']['output'];
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Float']['output'];
   comment?: Maybe<Scalars['String']['output']>;
+  daysOutOfStock: Scalars['Float']['output'];
+  expiringUnits: Scalars['Float']['output'];
   id: Scalars['String']['output'];
   /** InboundShipment lines linked to requisitions line */
   inboundShipmentLines: InvoiceLineConnector;
+  incomingUnits: Scalars['Float']['output'];
+  initialStockOnHandUnits: Scalars['Float']['output'];
   item: ItemNode;
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
@@ -6332,8 +6347,11 @@ export type RequisitionLineNode = {
    */
   itemStats: ItemStatsNode;
   linkedRequisitionLine?: Maybe<RequisitionLineNode>;
+  lossInUnits: Scalars['Float']['output'];
+  optionId?: Maybe<Scalars['String']['output']>;
   /** OutboundShipment lines linked to requisitions line */
   outboundShipmentLines: InvoiceLineConnector;
+  outgoingUnits: Scalars['Float']['output'];
   /**
    * Quantity remaining to supply
    * supplyQuantity minus all (including unallocated) linked invoice lines numberOfPacks * packSize
