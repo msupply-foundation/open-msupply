@@ -191,6 +191,23 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to update requisition');
   },
+  deleteLine: async (responseLineId: string) => {
+    const ids = [{ id: responseLineId }];
+    const result = await sdk.deleteResponseLines({ ids, storeId });
+
+    if (result.batchResponseRequisition.deleteResponseRequisitionLines) {
+      const failedLines =
+        result.batchResponseRequisition.deleteResponseRequisitionLines.filter(
+          line =>
+            line.response.__typename === 'DeleteResponseRequisitionLineError'
+        );
+      if (failedLines.length === 0) {
+        return result.batchResponseRequisition.deleteResponseRequisitionLines;
+      }
+    }
+
+    throw new Error('Could not delete requisition lines!');
+  },
   deleteLines: async (responseLines: ResponseLineFragment[]) => {
     const ids = responseLines.map(responseParser.toDeleteLine);
     const result = await sdk.deleteResponseLines({ ids, storeId });
