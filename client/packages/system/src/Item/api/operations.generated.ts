@@ -123,6 +123,14 @@ export type GetHistoricalStockLinesQueryVariables = Types.Exact<{
 
 export type GetHistoricalStockLinesQuery = { __typename: 'Queries', historicalStockLines: { __typename: 'StockLineConnector', nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null, doses: number } }> } };
 
+export type UpsertItemVariantMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpsertItemVariantInput;
+}>;
+
+
+export type UpsertItemVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', itemVariant: { __typename: 'ItemVariantMutations', upsertItemVariant: { __typename: 'ItemVariantNode', id: string, name: string, dosesPerUnit?: number | null, manufacturerId?: string | null, coldStorageTypeId?: string | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }> } } } };
+
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
   __typename
@@ -471,6 +479,20 @@ export const GetHistoricalStockLinesDocument = gql`
   }
 }
     ${StockLineFragmentDoc}`;
+export const UpsertItemVariantDocument = gql`
+    mutation upsertItemVariant($storeId: String!, $input: UpsertItemVariantInput!) {
+  centralServer {
+    itemVariant {
+      upsertItemVariant(storeId: $storeId, input: $input) {
+        __typename
+        ... on ItemVariantNode {
+          ...ItemVariant
+        }
+      }
+    }
+  }
+}
+    ${ItemVariantFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -508,6 +530,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     getHistoricalStockLines(variables: GetHistoricalStockLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GetHistoricalStockLinesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetHistoricalStockLinesQuery>(GetHistoricalStockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'getHistoricalStockLines', 'query', variables);
+    },
+    upsertItemVariant(variables: UpsertItemVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpsertItemVariantMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpsertItemVariantMutation>(UpsertItemVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertItemVariant', 'mutation', variables);
     }
   };
 }
