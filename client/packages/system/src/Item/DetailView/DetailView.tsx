@@ -8,6 +8,7 @@ import {
   Box,
   useBreadcrumbs,
   DetailTabs,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { useItem } from '../api';
 import { Toolbar } from './Toolbar';
@@ -16,12 +17,14 @@ import { MasterListsTab } from './Tabs/MasterLists';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { usePackVariant } from '../context';
 import { PackVariantsTab } from './Tabs/PackVariants';
+import { ItemVariantsTab } from './Tabs/ItemVariants';
 
 export const ItemDetailView: FC = () => {
   const { data, isLoading } = useItem();
   const navigate = useNavigate();
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const isCentralServer = useIsCentralServerApi();
 
   React.useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.name ?? '' });
@@ -44,11 +47,16 @@ export const ItemDetailView: FC = () => {
     },
   ];
 
-  Environment.FEATURE_PACK_VARIANTS &&
+  isCentralServer &&
     tabs.push({
-      Component: <PackVariantsTab itemId={data.id} />,
-      value: t('label.pack-variants'),
-    });
+      Component: <ItemVariantsTab itemVariants={data.variants} />,
+      value: t('label.variants'),
+    }),
+    Environment.FEATURE_PACK_VARIANTS &&
+      tabs.push({
+        Component: <PackVariantsTab itemId={data.id} />,
+        value: t('label.pack-variants'),
+      });
 
   return !!data ? (
     <Box style={{ width: '100%' }}>

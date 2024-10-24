@@ -112,6 +112,8 @@ fn generate(
         u.requested_quantity = updated_requested_quantity.unwrap_or(u.requested_quantity);
         u.initial_stock_on_hand_units =
             updated_their_stock_on_hand.unwrap_or(u.initial_stock_on_hand_units);
+        u.available_stock_on_hand =
+            updated_their_stock_on_hand.unwrap_or(u.available_stock_on_hand);
         u.comment = updated_comment.or(u.comment);
         u
     });
@@ -261,6 +263,7 @@ mod test {
                 u.comment = Some("comment".to_string());
                 u.requested_quantity = 99.0;
                 u.initial_stock_on_hand_units = 99.0;
+                u.available_stock_on_hand = 99.0;
                 u
             })
         );
