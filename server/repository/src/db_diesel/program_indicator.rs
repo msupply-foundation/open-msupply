@@ -89,7 +89,7 @@ impl ProgramIndicatorFilter {
         self
     }
 
-    pub fn program_id(mut self, filter: StringFilter) -> Self {
+    pub fn program_id(mut self, filter: EqualFilter<String>) -> Self {
         self.program_id = Some(filter);
         self
     }
