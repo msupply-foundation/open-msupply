@@ -98,6 +98,12 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
                 CannotEditRequisition {},
             ))
         }
+        ServiceError::CannotDeleteLineFromTransferredRequisition => {
+            return Ok(DeleteErrorInterface::CannotEditRequisition(
+                CannotEditRequisition {},
+            ))
+        }
+
         // Standard Graphql Errors
         ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
         ServiceError::NotAResponseRequisition => BadUserInput(formatted_error),
