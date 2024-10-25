@@ -9,11 +9,7 @@ import {
   TooltipTextCell,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from './../api';
-import {
-  PackVariantQuantityCell,
-  usePackVariant,
-  useIsPackVariantsEnabled,
-} from '@openmsupply-client/system';
+import { PackSizeQuantityCell } from 'packages/system/src';
 
 export const useResponseColumns = () => {
   const {
@@ -21,7 +17,6 @@ export const useResponseColumns = () => {
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columnDefinitions: ColumnDescription<ResponseLineFragment>[] = [
     getCommentPopoverColumn(),
@@ -43,17 +38,11 @@ export const useResponseColumns = () => {
     ],
     {
       key: 'packUnit',
-      label: isPackVariantsEnabled ? 'label.pack' : 'label.unit',
+      label: 'label.unit',
       sortable: false,
       accessor: ({ rowData }) => {
         // eslint-disable-next-line react-hooks/rules-of-hooks
-        const { variantsControl } = usePackVariant(
-          rowData.item.id,
-          rowData.item.unitName ?? null
-        );
-
-        if (variantsControl) return variantsControl.activeVariant.longName;
-        else return rowData.item.unitName;
+        return rowData.item.unitName;
       },
       width: 130,
     },
@@ -63,8 +52,8 @@ export const useResponseColumns = () => {
         label: 'label.our-soh',
         description: 'description.our-soh',
         sortable: false,
-        Cell: PackVariantQuantityCell({
-          getItemId: row => row.itemId,
+        Cell: PackSizeQuantityCell({
+          getPackSize: _row => 1, // Default to units here, the result is not in pack size
           getQuantity: row => row.itemStats.availableStockOnHand,
         }),
       },
@@ -77,8 +66,8 @@ export const useResponseColumns = () => {
       align: ColumnAlign.Right,
       getSortValue: rowData =>
         rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand ?? '',
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
+      Cell: PackSizeQuantityCell({
+        getPackSize: _row => 1, // Default to units here, the result is not in pack size
         getQuantity: row =>
           row?.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0,
       }),
@@ -87,8 +76,8 @@ export const useResponseColumns = () => {
       'requestedQuantity',
       {
         getSortValue: rowData => rowData.requestedQuantity,
-        Cell: PackVariantQuantityCell({
-          getItemId: row => row.itemId,
+        Cell: PackSizeQuantityCell({
+          getPackSize: _row => 1, // Default to units here, the result is not in pack size
           getQuantity: row => row.requestedQuantity ?? 0,
         }),
         width: 150,
@@ -101,8 +90,8 @@ export const useResponseColumns = () => {
       key: 'approvedQuantity',
       label: 'label.approved-quantity',
       sortable: false,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
+      Cell: PackSizeQuantityCell({
+        getPackSize: _row => 1, // Default to units here, the result is not in pack size
         getQuantity: row => row.approvedQuantity,
       }),
     });
@@ -117,8 +106,8 @@ export const useResponseColumns = () => {
     'supplyQuantity',
     {
       getSortValue: rowData => rowData.supplyQuantity,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
+      Cell: PackSizeQuantityCell({
+        getPackSize: _row => 1, // Default to units here, the result is not in pack size
         getQuantity: row => row.supplyQuantity,
       }),
     },
@@ -130,8 +119,8 @@ export const useResponseColumns = () => {
     key: 'alreadyIssued',
     align: ColumnAlign.Right,
     getSortValue: rowData => rowData.alreadyIssued,
-    Cell: PackVariantQuantityCell({
-      getItemId: row => row.itemId,
+    Cell: PackSizeQuantityCell({
+      getPackSize: _row => 1, // Default to units here, the result is not in pack size
       getQuantity: row => row.alreadyIssued,
     }),
     width: 100,
@@ -143,8 +132,8 @@ export const useResponseColumns = () => {
     key: 'remainingToSupply',
     align: ColumnAlign.Right,
     getSortValue: rowData => rowData.remainingQuantityToSupply,
-    Cell: PackVariantQuantityCell({
-      getItemId: row => row.itemId,
+    Cell: PackSizeQuantityCell({
+      getPackSize: _row => 1, // Default to units here, the result is not in pack size
       getQuantity: row => row.remainingQuantityToSupply,
     }),
   });

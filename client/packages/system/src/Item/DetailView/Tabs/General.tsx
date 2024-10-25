@@ -10,14 +10,10 @@ import {
   NumericTextDisplay,
 } from '@openmsupply-client/common';
 import { useItem } from '../../api';
-import { VariantControl } from '../../context';
-import { PackVariantSelect } from '../../Components';
 
-interface GeneralTabProps {
-  variantControl?: VariantControl;
-}
+interface GeneralTabProps {}
 
-export const GeneralTab: FC<GeneralTabProps> = ({ variantControl }) => {
+export const GeneralTab: FC<GeneralTabProps> = ({}) => {
   const t = useTranslation();
   const { data, isLoading } = useItem();
   const isDisabled = true;
@@ -41,22 +37,12 @@ export const GeneralTab: FC<GeneralTabProps> = ({ variantControl }) => {
             label={t('label.code')}
             inputProps={{ value: data?.code, disabled: isDisabled }}
           />
-          {variantControl ? (
-            <DetailInputWithLabelRow
-              Input={
-                <PackVariantSelect
-                  variantControl={variantControl}
-                  sx={{ width: '185px' }}
-                />
-              }
-              label={t('label.unit')}
-            />
-          ) : (
-            <DetailInputWithLabelRow
-              label={t('label.unit')}
-              inputProps={{ value: data?.unitName, disabled: isDisabled }}
-            />
-          )}
+
+          <DetailInputWithLabelRow
+            label={t('label.unit')}
+            inputProps={{ value: data?.unitName, disabled: isDisabled }}
+          />
+
           <DetailInputWithLabelRow
             label={t('label.strength')}
             inputProps={{ value: data?.strength, disabled: isDisabled }}

@@ -28,7 +28,6 @@ pub(crate) mod name_property;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
-pub(crate) mod pack_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod program_indicator;
@@ -80,7 +79,6 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
     test_records.append(&mut barcode::test_pull_upsert_records());
     // Open mSupply Central
-    test_records.append(&mut pack_variant::test_pull_upsert_records());
     test_records.append(&mut name_oms_fields::test_pull_upsert_records());
     test_records.append(&mut asset_class::test_pull_upsert_records());
     test_records.append(&mut asset_category::test_pull_upsert_records());

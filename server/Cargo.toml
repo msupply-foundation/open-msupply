@@ -81,7 +81,6 @@ members = [
   "graphql/invoice",
   "graphql/invoice_line",
   "graphql/location",
-  "graphql/pack_variant",
   "graphql/plugin",
   "graphql/programs",
   "graphql/repack",

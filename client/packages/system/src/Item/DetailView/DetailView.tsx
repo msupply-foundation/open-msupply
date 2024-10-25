@@ -14,9 +14,7 @@ import { useItem } from '../api';
 import { Toolbar } from './Toolbar';
 import { GeneralTab } from './Tabs/General';
 import { MasterListsTab } from './Tabs/MasterLists';
-import { AppRoute, Environment } from '@openmsupply-client/config';
-import { usePackVariant } from '../context';
-import { PackVariantsTab } from './Tabs/PackVariants';
+import { AppRoute } from '@openmsupply-client/config';
 import { ItemVariantsTab } from './Tabs/ItemVariants';
 
 export const ItemDetailView: FC = () => {
@@ -30,15 +28,11 @@ export const ItemDetailView: FC = () => {
     setCustomBreadcrumbs({ 1: data?.name ?? '' });
   }, [data, setCustomBreadcrumbs]);
 
-  const { variantsControl, numberOfPacksFromQuantity } = usePackVariant(
-    data?.id ?? '',
-    data?.name ?? null
-  );
   if (isLoading || !data) return <DetailFormSkeleton />;
 
   const tabs = [
     {
-      Component: <GeneralTab variantControl={variantsControl} />,
+      Component: <GeneralTab />,
       value: t('label.general'),
     },
     {
@@ -51,16 +45,15 @@ export const ItemDetailView: FC = () => {
     tabs.push({
       Component: <ItemVariantsTab itemVariants={data.variants} />,
       value: t('label.variants'),
-    }),
-    Environment.FEATURE_PACK_VARIANTS &&
-      tabs.push({
-        Component: <PackVariantsTab itemId={data.id} />,
-        value: t('label.pack-variants'),
-      });
+    });
 
   return !!data ? (
     <Box style={{ width: '100%' }}>
-      <Toolbar numberOfPacksFromQuantity={numberOfPacksFromQuantity} />
+      <Toolbar
+        numberOfPacksFromQuantity={(totalQuantity: number) =>
+          totalQuantity / -99999
+        }
+      />
       <DetailTabs tabs={tabs} />
     </Box>
   ) : (

@@ -13,10 +13,9 @@ import {
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import {
-  PackVariantQuantityCell,
-  PackVariantSelectCell,
-  usePackVariant,
-} from '@openmsupply-client/system';
+  PackSizeQuantityCell,
+  PackSizeUnitNameCell,
+} from 'packages/system/src';
 
 const useStockOnHand: ColumnDataAccessor<RequestLineFragment, string> = ({
   rowData,
@@ -25,9 +24,6 @@ const useStockOnHand: ColumnDataAccessor<RequestLineFragment, string> = ({
   const formatNumber = useFormatNumber();
   const { itemStats } = rowData;
   const { availableStockOnHand, availableMonthsOfStockOnHand } = itemStats;
-  const { numberOfPacksFromQuantity } = usePackVariant(rowData.itemId, null);
-
-  const packQuantity = numberOfPacksFromQuantity(availableStockOnHand);
 
   const monthsString = availableMonthsOfStockOnHand
     ? `(${formatNumber.round(availableMonthsOfStockOnHand, 1)} ${t(
@@ -37,7 +33,7 @@ const useStockOnHand: ColumnDataAccessor<RequestLineFragment, string> = ({
         }
       )})`
     : '';
-  return `${packQuantity} ${monthsString}`;
+  return `${availableStockOnHand} ${monthsString}`;
 };
 
 export const useRequestColumns = () => {
@@ -71,8 +67,7 @@ export const useRequestColumns = () => {
       key: 'packUnit',
       label: 'label.unit',
       align: ColumnAlign.Right,
-      Cell: PackVariantSelectCell({
-        getItemId: r => r.itemId,
+      Cell: PackSizeUnitNameCell({
         getUnitName: r => r.item.unitName || null,
       }),
     },
@@ -98,8 +93,8 @@ export const useRequestColumns = () => {
       {
         width: 150,
         align: ColumnAlign.Right,
-        Cell: PackVariantQuantityCell({
-          getItemId: r => r.itemId,
+        Cell: PackSizeQuantityCell({
+          getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
           getQuantity: r => r.itemStats.averageMonthlyConsumption,
         }),
         getSortValue: rowData => rowData.itemStats.averageMonthlyConsumption,
@@ -110,8 +105,8 @@ export const useRequestColumns = () => {
       label: 'label.target-stock',
       align: ColumnAlign.Right,
       width: 150,
-      Cell: PackVariantQuantityCell({
-        getItemId: r => r.itemId,
+      Cell: PackSizeQuantityCell({
+        getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
         getQuantity: r =>
           r.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
       }),
@@ -124,8 +119,8 @@ export const useRequestColumns = () => {
       description: 'description.forecast-quantity',
       align: ColumnAlign.Right,
       width: 200,
-      Cell: PackVariantQuantityCell({
-        getItemId: r => r.itemId,
+      Cell: PackSizeQuantityCell({
+        getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
         getQuantity: r => r.suggestedQuantity,
       }),
       getSortValue: rowData => rowData.suggestedQuantity,
@@ -135,8 +130,8 @@ export const useRequestColumns = () => {
       label: 'label.requested',
       align: ColumnAlign.Right,
       width: 150,
-      Cell: PackVariantQuantityCell({
-        getItemId: r => r.itemId,
+      Cell: PackSizeQuantityCell({
+        getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
         getQuantity: r => r.requestedQuantity,
       }),
       getSortValue: rowData => rowData.requestedQuantity,
@@ -148,8 +143,8 @@ export const useRequestColumns = () => {
       key: 'approvedNumPacks',
       label: 'label.approved-packs',
       align: ColumnAlign.Right,
-      Cell: PackVariantQuantityCell({
-        getItemId: r => r.itemId,
+      Cell: PackSizeQuantityCell({
+        getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
         getQuantity: r => r.linkedRequisitionLine?.approvedQuantity ?? 0,
       }),
       sortable: false,

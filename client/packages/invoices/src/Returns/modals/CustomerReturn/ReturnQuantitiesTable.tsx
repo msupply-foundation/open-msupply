@@ -10,13 +10,9 @@ import {
   getExpiryDateInputColumn,
   useColumns,
 } from '@openmsupply-client/common';
-import {
-  PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
-  PackVariantEntryCell,
-  useIsPackVariantsEnabled,
-} from '@openmsupply-client/system';
 import React from 'react';
 import { GenerateCustomerReturnLineFragment } from '../../api';
+import { PackSizeEntryCell } from 'packages/system/src';
 
 export const QuantityReturnedTableComponent = ({
   lines,
@@ -29,7 +25,6 @@ export const QuantityReturnedTableComponent = ({
   ) => void;
   isDisabled: boolean;
 }) => {
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
   const columns = useColumns<GenerateCustomerReturnLineFragment>(
     [
       'itemCode',
@@ -64,12 +59,7 @@ export const QuantityReturnedTableComponent = ({
         Cell: PackUnitEntryCell,
         setter: updateLine,
         getIsDisabled: () => isDisabled,
-        ...(isPackVariantsEnabled
-          ? {
-              label: 'label.unit-variant-and-pack-size',
-              minWidth: PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
-            }
-          : { label: 'label.pack-size' }),
+        label: 'label.pack-size',
       }),
       ...(lines.some(l => l.numberOfPacksIssued !== null) // if any line has a value, show the column
         ? ([
@@ -115,10 +105,7 @@ export const QuantityReturnedTable = React.memo(QuantityReturnedTableComponent);
 // Input cells can't be defined inline, otherwise they lose focus on re-render
 const PackUnitEntryCell =
   // eslint-disable-next-line new-cap
-  PackVariantEntryCell<GenerateCustomerReturnLineFragment>({
-    getItemId: r => r.item.id,
-    getUnitName: r => r.item.unitName || null,
-  });
+  PackSizeEntryCell<GenerateCustomerReturnLineFragment>({});
 
 const NumberOfPacksReturnedInputCell: React.FC<
   CellProps<GenerateCustomerReturnLineFragment>

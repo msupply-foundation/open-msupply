@@ -24,7 +24,6 @@ graphql_invoice = { path = "invoice" }
 graphql_invoice_line = { path = "invoice_line" }
 graphql_vaccine_course = { path = "vaccine_course" }
 graphql_location = { path = "location" }
-graphql_pack_variant = { path = "pack_variant" }
 graphql_programs = { path = "programs" }
 graphql_reports = { path = "reports" }
 graphql_requisition = { path = "requisition" }
