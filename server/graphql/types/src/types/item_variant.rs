@@ -16,15 +16,11 @@ impl ItemVariantNode {
         &self.item_variant.id
     }
 
-    pub async fn item_id(&self) -> &String {
-        &self.item_variant.item_link_id // TODO join to item for item_id
-    }
-
     pub async fn name(&self) -> &String {
         &self.item_variant.name
     }
 
-    pub async fn doses_per_unit(&self) -> &Option<f64> {
+    pub async fn doses_per_unit(&self) -> &Option<i32> {
         &self.item_variant.doses_per_unit
     }
 
