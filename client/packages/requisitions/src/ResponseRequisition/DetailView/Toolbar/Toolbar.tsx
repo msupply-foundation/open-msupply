@@ -129,7 +129,7 @@ export const Toolbar: FC = () => {
           }}
           debounceTime={0}
         />
-        <ToolbarDropDown isDisabled={isDisabled} />
+        <ToolbarDropDown isDisabled={isDisabled || !!theirReference} />
       </Grid>
     </AppBarContentPortal>
   );
