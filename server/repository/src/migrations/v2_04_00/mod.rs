@@ -7,6 +7,7 @@ mod add_manual_requisition_line_fields;
 mod add_reason_option_table;
 mod add_unserviceable_status_to_asset_status_enum;
 mod item_variant;
+mod program_indicator_create_table;
 
 use crate::StorageConnection;
 
@@ -29,6 +30,7 @@ impl Migration for V2_04_00 {
             Box::new(add_expected_lifespan_to_assets::Migrate),
             Box::new(add_cold_storage_type_table::Migrate),
             Box::new(item_variant::Migrate),
+            Box::new(program_indicator_create_table::Migrate),
             Box::new(add_item_variant_id_to_stock_line_and_invoice_line::Migrate),
         ]
     }
