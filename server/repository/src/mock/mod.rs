@@ -162,7 +162,7 @@ use super::{
     StoreRowRepository, UnitRow, UnitRowRepository,
 };
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct MockData {
     pub user_accounts: Vec<UserAccountRow>,
     pub user_store_joins: Vec<UserStoreJoinRow>,

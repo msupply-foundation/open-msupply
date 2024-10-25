@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod query {
     use repository::mock::mock_store_a;
-    use repository::{ EqualFilter};
+    use repository::EqualFilter;
     use repository::{
         location::{Location, LocationFilter, LocationRepository},
         mock::MockDataInserts,
@@ -52,7 +52,7 @@ mod query {
                     id: "new_id".to_owned(),
                     code: locations_in_store[0].location_row.code.clone(),
                     name: None,
-                    on_hold: None                    ,
+                    on_hold: None,
                     cold_storage_type_id: None
                 },
             ),
@@ -80,7 +80,7 @@ mod query {
                 name: "new_code".to_owned(),
                 on_hold: false,
                 store_id: "store_a".to_owned(),
-                cold_storage_type_id: None
+                cold_storage_type_id: None,
             },
         };
 
@@ -92,7 +92,7 @@ mod query {
                     code: "new_code".to_owned(),
                     name: None,
                     on_hold: None,
-                    cold_storage_type_id: None,
+                    cold_storage_type_id: None
                 },
             ),
             Ok(result_location.clone())
@@ -118,7 +118,7 @@ mod query {
                     code: "store_b_location_code".to_owned(),
                     name: Some("new_location_name".to_owned()),
                     on_hold: Some(true),
-                    cold_storage_type_id: None,
+                    cold_storage_type_id: None
                 },
             ),
             Ok(Location {
@@ -128,7 +128,7 @@ mod query {
                     code: "store_b_location_code".to_owned(),
                     on_hold: true,
                     store_id: "store_a".to_owned(),
-                    cold_storage_type_id: None,
+                    cold_storage_type_id: None
                 }
             })
         );

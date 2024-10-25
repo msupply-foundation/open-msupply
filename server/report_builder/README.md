@@ -282,7 +282,13 @@ Optional fields in the manifest json are marked as '// optional'
     // optional
     // location of ui schema file json relative to the version dir
     "ui": "argument_schemas/arguments_ui.json"
-  }
+  },
+  // optional
+  // path to custom wasm data conversion function. Having a path to a custom function allows users to generate a function from a language other than JS
+  "custom_wasm_function": "path to cusom wasm function",
+  // optional
+  // name of dir within the version dir of the report which includes js wasm function constructors.
+  "convert_data": "convert_data_js"
 }
 ```
 
@@ -307,6 +313,16 @@ cargo run
 ```
 
 from the open-msupply/server dir.
+
+### Wasm functions
+
+Report generations includes the ability to use custom wasm functions to further extend and customise data.
+OMS includes building of JS wasm functions by adding a "convert_data" dir in the version dir.
+See [the extism-js docs](https://github.com/extism/js-pdk) for more details on how to build wasm functions with js within OMS.
+
+Alternatively wasm functions can be built externally using any compatible language using extism-PDK ([see wasm docs for more details](https://webassembly.org/getting-started/developers-guide/)), and added as a custom wasm function.
+
+> Note custom wasm data functions will be used if both custom functions and JS wasm function builder files are both specified
 
 ## Standard reports versioning
 
