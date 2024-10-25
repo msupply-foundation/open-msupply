@@ -24,7 +24,7 @@ impl ItemVariantNode {
         &self.item_variant.name
     }
 
-    pub async fn doses_per_unit(&self) -> &Option<f64> {
+    pub async fn doses_per_unit(&self) -> &Option<i32> {
         &self.item_variant.doses_per_unit
     }
 
