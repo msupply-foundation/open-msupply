@@ -5,10 +5,11 @@ mod tests {
         test_omsupply_central_remote_records,
     };
 
-    #[actix_rt::test]
-    async fn integration_sync_omsupply_central_sync_pack_variant() {
-        test_omsupply_central_records("pack_variant", &PackVariantTester).await;
-    }
+    // DISABLED: pack_variant has been removed, however keeping it here as a reference for OMS Central Integration tests
+    // #[actix_rt::test]
+    // async fn integration_sync_omsupply_central_sync_pack_variant() {
+    //     test_omsupply_central_records("pack_variant", &PackVariantTester).await;
+    // }
 
     #[actix_rt::test]
     async fn integration_sync_omsupply_central_sync_asset() {
