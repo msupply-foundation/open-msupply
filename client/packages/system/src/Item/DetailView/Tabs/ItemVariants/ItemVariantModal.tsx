@@ -86,7 +86,7 @@ const ItemVariantForm = ({
   const t = useTranslation();
 
   return (
-    <Box justifyContent="center" display="flex" gap={3} alignItems={'center'}>
+    <Box justifyContent="center" display="flex" gap={3}>
       <Box display="flex" flexDirection="column" gap={1} flex={1}>
         <InputWithLabelRow
           label={t('label.name')}
