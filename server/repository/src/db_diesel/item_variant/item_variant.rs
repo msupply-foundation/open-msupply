@@ -73,9 +73,6 @@ impl<'a> ItemVariantRepository<'a> {
     ) -> Result<Vec<ItemVariantRow>, RepositoryError> {
         let mut query = create_filtered_query(filter);
 
-        // Exclude any deleted items
-        query = query.filter(item_variant::deleted_datetime.is_null());
-
         if let Some(sort) = sort {
             match sort.key {
                 ItemVariantSortField::Name => {
@@ -110,6 +107,8 @@ type BoxedItemVariantQuery = IntoBoxed<'static, item_variant::table, DBType>;
 
 fn create_filtered_query(filter: Option<ItemVariantFilter>) -> BoxedItemVariantQuery {
     let mut query = item_variant::table.into_boxed();
+    // Exclude any deleted items
+    query = query.filter(item_variant::deleted_datetime.is_null());
 
     if let Some(f) = filter {
         let ItemVariantFilter { id, name } = f;

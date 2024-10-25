@@ -1,5 +1,6 @@
 mod delete;
 mod query;
+mod test;
 mod upsert;
 pub use delete::{delete_packaging_variant, DeletePackagingVariant, DeletePackagingVariantError};
 pub use query::get_packaging_variants;

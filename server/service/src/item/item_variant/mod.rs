@@ -1,5 +1,6 @@
 mod delete;
 mod query;
+mod test;
 mod upsert;
 mod validate;
 pub use delete::{delete_item_variant, DeleteItemVariant, DeleteItemVariantError};
