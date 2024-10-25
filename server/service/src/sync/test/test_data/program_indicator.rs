@@ -18,7 +18,7 @@ const PROGRAM_INDICATOR_B: (&str, &str) = (
     "program_indicator_b",
     r#"{
         "ID": "program_indicator_b",
-        "code": "Program Indicator b",
+        "code": "",
         "program_ID": "program_a",
         "is_active": true
     }"#,
@@ -31,7 +31,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             PROGRAM_INDICATOR_A,
             ProgramIndicatorRow {
                 id: PROGRAM_INDICATOR_A.0.to_owned(),
-                code: "Program Indicator a".to_owned(),
+                code: Some("Program Indicator a".to_owned()),
                 program_id: "program_a".to_owned(),
                 is_active: true,
             },
@@ -41,7 +41,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             PROGRAM_INDICATOR_B,
             ProgramIndicatorRow {
                 id: PROGRAM_INDICATOR_B.0.to_owned(),
-                code: "Program Indicator b".to_owned(),
+                code: None,
                 program_id: "program_a".to_owned(),
                 is_active: true,
             },

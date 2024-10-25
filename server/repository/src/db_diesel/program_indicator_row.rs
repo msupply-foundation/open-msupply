@@ -8,7 +8,7 @@ table! {
     program_indicator (id) {
         id -> Text,
         program_id -> Text,
-        code -> Text,
+        code -> Nullable<Text>,
         is_active -> Bool,
     }
 }
@@ -18,7 +18,7 @@ table! {
 pub struct ProgramIndicatorRow {
     pub id: String,
     pub program_id: String,
-    pub code: String,
+    pub code: Option<String>,
     pub is_active: bool,
 }
 

@@ -1,3 +1,4 @@
+use crate::sync::sync_serde::empty_str_as_option_string;
 use anyhow::anyhow;
 use repository::{ProgramIndicatorRow, StorageConnection, SyncBufferRow};
 
@@ -9,10 +10,11 @@ use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
-pub struct LegacyListMasterRow {
+pub struct LegacyProgramIndicator {
     #[serde(rename = "ID")]
     id: String,
-    code: String,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    code: Option<String>,
     #[serde(rename = "program_ID")]
     program_id: String,
     is_active: bool,
@@ -37,12 +39,12 @@ impl SyncTranslation for ProgramIndicatorTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
+        let data = serde_json::from_str::<LegacyProgramIndicator>(&sync_record.data)?;
 
         let result = ProgramIndicatorRow {
             id: data.id,
-            program_id: data.program_id,
             code: data.code,
+            program_id: data.program_id,
             is_active: data.is_active,
         };
         Ok(PullTranslateResult::upsert(result))
