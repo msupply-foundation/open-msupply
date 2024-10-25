@@ -331,7 +331,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             inventory_adjustment_reason_id: None,
             return_reason_id: None,
             foreign_currency_price_before_tax: Some(0.0),
-            item_variant_id: None,
+            item_variant_id: Some("item_variant_id".to_string()), // might be mad that it doesn't exist
         },
     )
 }

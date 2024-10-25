@@ -43,10 +43,7 @@ pub struct LegacyStockLineRow {
     pub supplier_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string", rename = "barcodeID")]
     pub barcode_id: Option<String>,
-    #[serde(
-        deserialize_with = "empty_str_as_option_string",
-        rename = "om_item_variant_id"
-    )]
+    #[serde(rename = "om_item_variant_id")]
     pub item_variant_id: Option<String>,
 }
 // Needs to be added to all_translators()
