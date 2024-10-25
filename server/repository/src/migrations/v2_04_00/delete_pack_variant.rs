@@ -1,4 +1,3 @@
-use crate::migrations::types::{DATETIME, DOUBLE};
 use crate::migrations::*;
 
 pub(crate) struct Migrate;
@@ -15,5 +14,6 @@ impl MigrationFragment for Migrate {
             DROP TABLE IF EXISTS pack_variant;
             "#
         )?;
+        Ok(())
     }
 }
