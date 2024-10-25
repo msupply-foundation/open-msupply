@@ -51,7 +51,7 @@ export const ItemPackagingVariantsTable = ({
     },
     {
       key: 'volumePerUnit',
-      Cell: update ? NumberInputCell : TooltipTextCell,
+      Cell: update ? VolumeInputCell : TooltipTextCell,
       label: 'label.volume-per-unit',
       setter: updatePackaging,
     },
@@ -68,3 +68,8 @@ export const ItemPackagingVariantsTable = ({
     </TableProvider>
   );
 };
+
+// Input cells can't be defined inline, otherwise they lose focus on re-render
+const VolumeInputCell = (props: CellProps<PackagingVariantFragment>) => (
+  <NumberInputCell decimalLimit={2} {...props} />
+);
