@@ -6,21 +6,54 @@ import {
   TooltipTextCell,
   TableProvider,
   createTableStore,
+  NumberInputCell,
+  TextInputCell,
 } from '@openmsupply-client/common';
 import { PackagingVariantFragment } from '../../../api';
 
 export const ItemPackagingVariantsTable = ({
   data,
+  update,
 }: {
   data: PackagingVariantFragment[];
+  update?: (packagingVariants: PackagingVariantFragment[]) => void;
 }) => {
+  const updatePackaging = (
+    packagingVariant?: Partial<PackagingVariantFragment>
+  ) => {
+    if (!packagingVariant || !update) return;
+
+    const idx = data.findIndex(v => v.id === packagingVariant.id);
+
+    if (idx !== -1) {
+      const newPackagingVariants = [...data];
+      newPackagingVariants[idx] = packagingVariant as PackagingVariantFragment; // TODO: remove `as` when column typing is improved!
+      update(newPackagingVariants);
+    }
+  };
   const columns = useColumns<PackagingVariantFragment>([
-    { key: 'name', Cell: TooltipTextCell, label: 'label.level' },
-    { key: 'packSize', Cell: TooltipTextCell, label: 'label.pack-size' },
+    {
+      key: 'packagingLevel',
+      Cell: TooltipTextCell,
+      label: 'label.level',
+    },
+    {
+      key: 'name',
+      Cell: update ? TextInputCell : TooltipTextCell,
+      label: 'label.name',
+      setter: updatePackaging,
+    },
+    {
+      key: 'packSize',
+      Cell: update ? NumberInputCell : TooltipTextCell,
+      label: 'label.pack-size',
+      setter: updatePackaging,
+    },
     {
       key: 'volumePerUnit',
-      Cell: TooltipTextCell,
+      Cell: update ? NumberInputCell : TooltipTextCell,
       label: 'label.volume-per-unit',
+      setter: updatePackaging,
     },
   ]);
 
