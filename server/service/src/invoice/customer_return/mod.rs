@@ -22,4 +22,5 @@ pub struct CustomerReturnLineInput {
     pub number_of_packs: f64,
     pub reason_id: Option<String>,
     pub note: Option<String>,
+    pub item_variant_id: Option<String>,
 }
