@@ -72,11 +72,11 @@ mod query {
 
         // Update the name
         let _packaging_variant = service
-            .upsert_item_variant(
+            .upsert_packaging_variant(
                 &context,
-                UpsertItemVariant {
-                    id: test_item_variant_id.to_string(),
-                    item_id: "item_a".to_string(),
+                UpsertPackagingVariant {
+                    id: test_packaging_variant_id.to_string(),
+                    item_variant_id: test_item_variant_id.to_string(),
                     name: "updated_name".to_string(),
                     ..Default::default()
                 },
