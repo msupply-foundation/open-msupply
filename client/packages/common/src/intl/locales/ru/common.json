@@ -511,7 +511,7 @@
   "label.class": "Класс",
   "label.clear-filter": "Очистить фильтр",
   "label.clear-selection": "Очистить выбор",
-  "label.click-to-sort": "Нажмите, чтобы отсортировать по ",
+  "label.click-to-sort": "Нажмите, чтобы отсортировать по: ",
   "label.client": "Клиент",
   "label.clinician": "Врач-клиницист",
   "label.code": "Код",
