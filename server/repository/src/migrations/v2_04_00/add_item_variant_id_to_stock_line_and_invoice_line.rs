@@ -12,7 +12,7 @@ impl MigrationFragment for Migrate {
             connection,
             r#"
             ALTER TABLE stock_line ADD COLUMN item_variant_id TEXT REFERENCES item_variant(id);
-            ALTER TABLE invoice_line_id ADD COLUMN item_variant_id TEXT REFERENCES item_variant(id);
+            ALTER TABLE invoice_line ADD COLUMN item_variant_id TEXT REFERENCES item_variant(id);
             "#
         )?;
 
