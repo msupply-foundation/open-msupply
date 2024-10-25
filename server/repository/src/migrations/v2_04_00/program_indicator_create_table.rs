@@ -15,7 +15,7 @@ impl MigrationFragment for Migrate {
                 id TEXT PRIMARY KEY NOT NULL,
                 program_id TEXT NOT NULL REFERENCES program(id),
                 code TEXT,
-                is_active NOT NULL DEFAULT TRUE           
+                is_active BOOLEAN NOT NULL DEFAULT TRUE           
             );
             "#
         )?;
