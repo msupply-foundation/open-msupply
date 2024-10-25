@@ -1,11 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   FnUtils,
   isEmpty,
   useMutation,
   useTranslation,
 } from '@openmsupply-client/common';
-import { ItemVariantFragment } from '../../operations.generated';
+import {
+  ItemVariantFragment,
+  PackagingVariantFragment,
+} from '../../operations.generated';
 import { useItemApi, useItemGraphQL } from '../useItemApi';
 
 export function useItemVariant({
@@ -56,17 +59,20 @@ export function useItemVariant({
     }
   );
 
-  const draftRef = useRef(draft);
-
-  useEffect(() => {
-    draftRef.current = draft;
-  }, [draft]);
+  const updatePackagingVariant = (update: Partial<PackagingVariantFragment>) =>
+    setDraft(currentDraft => ({
+      ...currentDraft,
+      packagingVariants: currentDraft.packagingVariants.map(pv =>
+        pv.id === update.id ? { ...pv, ...update } : pv
+      ),
+    }));
 
   return {
     draft,
     isComplete: getIsComplete(draft),
     updateDraft: (update: Partial<ItemVariantFragment>) =>
-      setDraft({ ...draftRef.current, ...update }),
+      setDraft(currentDraft => ({ ...currentDraft, ...update })),
+    updatePackagingVariant,
     save: mutateAsync,
   };
 }
