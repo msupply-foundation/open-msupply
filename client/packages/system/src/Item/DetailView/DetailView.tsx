@@ -50,9 +50,7 @@ export const ItemDetailView: FC = () => {
   return !!data ? (
     <Box style={{ width: '100%' }}>
       <Toolbar
-        numberOfPacksFromQuantity={(totalQuantity: number) =>
-          totalQuantity / -99999
-        }
+        numberOfPacksFromQuantity={(totalQuantity: number) => totalQuantity}
       />
       <DetailTabs tabs={tabs} />
     </Box>

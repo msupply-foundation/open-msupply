@@ -181,7 +181,6 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
 
 pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     let mut test_records = Vec::new();
-    test_records.append(&mut pack_variant::test_v6_central_push_records());
     test_records.append(&mut asset_class::test_v6_central_push_records());
     test_records.append(&mut asset_category::test_v6_central_push_records());
     test_records.append(&mut asset_type::test_v6_central_push_records());
