@@ -64,7 +64,7 @@ fn validate(
         return Err(OutError::NotAResponseRequisition);
     }
 
-    if check_approval_status(&requisition_row) {
+    if requisition_row.status == RequisitionStatus::Finalised
         return Err(OutError::CannotEditRequisition);
     }
 
