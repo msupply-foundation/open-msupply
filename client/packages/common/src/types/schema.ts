@@ -8042,7 +8042,9 @@ export type UpdateResponseRequisitionLineErrorInterface = {
 export type UpdateResponseRequisitionLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
   supplyQuantity?: InputMaybe<Scalars['Float']['input']>;
+  theirStockOnHand?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdateResponseRequisitionLineResponse = RequisitionLineNode | UpdateResponseRequisitionLineError;

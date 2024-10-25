@@ -10,7 +10,7 @@ import {
 } from '@openmsupply-client/common';
 import { getNameOptionRenderer } from '@openmsupply-client/system';
 
-import { SupplierProgramSettingsFragment } from '../api';
+import { CustomerProgramSettingsFragment } from '../api';
 import { NewRequisitionType } from '../../types';
 
 export interface NewProgramRequisition {
@@ -30,24 +30,25 @@ type Common<T> = Pick<
 };
 
 const useProgramRequisitionOptions = (
-  programSettings: SupplierProgramSettingsFragment[]
+  programSettings: CustomerProgramSettingsFragment[]
 ) => {
-  type ProgramSetting = SupplierProgramSettingsFragment;
-  // [number] gets type of array
-  type OrderType = SupplierProgramSettingsFragment['orderTypes'][number];
-  type Supplier = SupplierProgramSettingsFragment['suppliers'][number];
+  const t = useTranslation();
+  type ProgramSetting = CustomerProgramSettingsFragment;
+  type CustomerAndOrderTypes =
+    CustomerProgramSettingsFragment['customerAndOrderTypes'][number];
+  type OrderType = CustomerAndOrderTypes['orderTypes'][number];
+  type Customer = CustomerAndOrderTypes['customer'];
   type Period = OrderType['availablePeriods'][number];
 
   const [program, setProgram] = useState<ProgramSetting | null>(null);
   const [orderType, setOrderType] = useState<OrderType | null>(null);
-  const [supplier, setSupplier] = useState<Supplier | null>(null);
+  const [customer, setCustomer] = useState<Customer | null>(null);
   const [period, setPeriod] = useState<Period | null>(null);
-  const t = useTranslation();
 
   const handleSetProgram = (value: ProgramSetting | null) => {
     setProgram(value);
     setOrderType(null);
-    setSupplier(null);
+    setCustomer(null);
     setPeriod(null);
   };
   const handleSetOrderType = (value: OrderType | null) => {
@@ -58,7 +59,7 @@ const useProgramRequisitionOptions = (
   const allOptions: {
     programs: Common<ProgramSetting>;
     orderTypes: Common<OrderType>;
-    suppliers: Common<Supplier>;
+    customers: Common<Customer>;
     periods: Common<Period>;
   } = {
     programs: {
@@ -69,22 +70,25 @@ const useProgramRequisitionOptions = (
       disabled: false,
     },
     orderTypes: {
-      options: program?.orderTypes || [],
+      options:
+        program?.customerAndOrderTypes
+          .filter(c => c.customer.id === customer?.id)
+          .flatMap(c => c.orderTypes) || [],
       value: orderType,
       set: handleSetOrderType,
-      disabled: program === null,
+      disabled: program === null || customer === null,
       labelNoOptions: t('messages.not-configured'),
       label: t('label.order-type'),
     },
-    suppliers: {
-      options: program?.suppliers || [],
-      value: supplier,
-      set: setSupplier,
+    customers: {
+      options: program?.customerAndOrderTypes.map(c => c.customer) || [],
+      value: customer,
+      set: setCustomer,
       disabled: program === null,
       labelNoOptions: t('messages.not-configured'),
-      label: t('label.supplier-name'),
+      label: t('label.customer-name'),
       renderOption: getNameOptionRenderer(t('label.on-hold')),
-      getOptionDisabled: (supplier: Supplier) => supplier.isOnHold,
+      getOptionDisabled: (customer: Customer) => customer.isOnHold,
     },
     periods: {
       options: orderType?.availablePeriods || [],
@@ -99,10 +103,10 @@ const useProgramRequisitionOptions = (
   return {
     ...allOptions,
     createOptions:
-      !!program && !!orderType && !!supplier && !!period
+      !!program && !!orderType && !!customer && !!period
         ? {
             programOrderTypeId: orderType.id,
-            otherPartyId: supplier.id,
+            otherPartyId: customer.id,
             periodId: period.id,
           }
         : null,
@@ -133,7 +137,7 @@ const LabelAndOptions = <T,>({
       <Grid item>
         {noOptionsDisplay || (
           <Autocomplete
-            width="300"
+            width="450"
             renderOption={renderOption}
             getOptionDisabled={getOptionDisabled}
             autoFocus={autoFocus}
@@ -154,9 +158,9 @@ export const ProgramRequisitionOptions = ({
   onCreate,
 }: {
   onCreate: (props: NewProgramRequisition) => void;
-  programSettings: SupplierProgramSettingsFragment[];
+  programSettings: CustomerProgramSettingsFragment[];
 }) => {
-  const { programs, orderTypes, suppliers, periods, createOptions } =
+  const { programs, orderTypes, customers, periods, createOptions } =
     useProgramRequisitionOptions(programSettings);
   const t = useTranslation();
 
@@ -170,7 +174,7 @@ export const ProgramRequisitionOptions = ({
       alignItems="center"
     >
       <LabelAndOptions {...programs} optionKey="programName" autoFocus={true} />
-      <LabelAndOptions {...suppliers} optionKey="name" />
+      <LabelAndOptions {...customers} optionKey="name" />
       <LabelAndOptions {...orderTypes} optionKey="name" />
       <LabelAndOptions {...periods} optionKey="name" />
       <Grid item>

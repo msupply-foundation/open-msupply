@@ -19,8 +19,8 @@ import {
 import { useRequest } from '../api';
 import { requestsToCsv } from '../../utils';
 import { CreateRequisitionModal } from './CreateRequisitionModal';
-import { NewRequisitionType } from './types';
 import { AppRoute } from '@openmsupply-client/config';
+import { NewRequisitionType } from '../../types';
 
 export const AppBarButtons: FC<{
   modalController: ToggleState;
