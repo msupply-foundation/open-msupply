@@ -81,6 +81,11 @@ pub struct LegacyTransLineRow {
     pub inventory_adjustment_reason_id: Option<String>,
     #[serde(rename = "foreign_currency_price")]
     pub foreign_currency_price_before_tax: Option<f64>,
+    #[serde(
+        deserialize_with = "empty_str_as_option_string",
+        rename = "om_item_variant_id"
+    )]
+    pub item_variant_id: Option<String>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -135,6 +140,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             total_after_tax,
             inventory_adjustment_reason_id,
             foreign_currency_price_before_tax,
+            item_variant_id,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
         let inventory_adjustment_reason_id =
             inventory_adjustment_reason_id.and_then(|inventory_adjustment_reason_id| {
@@ -267,6 +273,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             inventory_adjustment_reason_id,
             return_reason_id: None, // TODO
             foreign_currency_price_before_tax,
+            item_variant_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -318,6 +325,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     inventory_adjustment_reason_id,
                     return_reason_id: _, // TODO
                     foreign_currency_price_before_tax,
+                    item_variant_id,
                 },
             item_row,
             ..
@@ -344,6 +352,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             total_after_tax: Some(total_after_tax),
             inventory_adjustment_reason_id,
             foreign_currency_price_before_tax,
+            item_variant_id,
         };
         Ok(PushTranslateResult::upsert(
             changelog,

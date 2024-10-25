@@ -32,6 +32,7 @@ pub struct UpdateInput {
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax: Option<TaxInput>,
+    pub item_variant_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -97,6 +98,7 @@ impl UpdateInput {
             number_of_packs,
             total_before_tax,
             tax,
+            item_variant_id,
         } = self;
 
         ServiceInput {
@@ -112,6 +114,7 @@ impl UpdateInput {
             cost_price_per_pack,
             number_of_packs,
             total_before_tax,
+            item_variant_id,
             tax_percentage: tax.map(|tax| ShipmentTaxUpdate {
                 percentage: tax.percentage,
             }),
@@ -478,9 +481,7 @@ mod test {
                     expiry_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
                     number_of_packs: Some(1.0),
                     r#type: StockInType::InboundShipment,
-                    total_before_tax: None,
-                    tax_percentage: None,
-                    note: None,
+                    ..Default::default()
                 }
             );
             Ok(InvoiceLine {
