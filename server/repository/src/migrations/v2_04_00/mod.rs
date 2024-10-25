@@ -12,7 +12,7 @@ mod program_indicator_create_table;
 use crate::StorageConnection;
 
 pub(crate) struct V2_04_00;
-s
+
 impl Migration for V2_04_00 {
     fn version(&self) -> Version {
         Version::from_str("2.4.0")
