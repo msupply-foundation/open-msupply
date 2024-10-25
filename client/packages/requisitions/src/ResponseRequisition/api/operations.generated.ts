@@ -51,6 +51,14 @@ export type UpdateResponseLineMutationVariables = Types.Exact<{
 
 export type UpdateResponseLineMutation = { __typename: 'Mutations', updateResponseRequisitionLine: { __typename: 'RequisitionLineNode', id: string } | { __typename: 'UpdateResponseRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } };
 
+export type DeleteResponseLinesMutationVariables = Types.Exact<{
+  ids?: Types.InputMaybe<Array<Types.DeleteResponseRequisitionLineInput> | Types.DeleteResponseRequisitionLineInput>;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type DeleteResponseLinesMutation = { __typename: 'Mutations', batchResponseRequisition: { __typename: 'BatchResponseRequisitionResponse', deleteResponseRequisitionLines?: Array<{ __typename: 'DeleteResponseRequisitionLineResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteResponseRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null } };
+
 export type CreateOutboundFromResponseMutationVariables = Types.Exact<{
   responseId: Types.Scalars['String']['input'];
   storeId: Types.Scalars['String']['input'];
@@ -295,6 +303,37 @@ export const UpdateResponseLineDocument = gql`
   }
 }
     `;
+export const DeleteResponseLinesDocument = gql`
+    mutation deleteResponseLines($ids: [DeleteResponseRequisitionLineInput!], $storeId: String!) {
+  batchResponseRequisition(
+    input: {deleteResponseRequisitionLines: $ids}
+    storeId: $storeId
+  ) {
+    deleteResponseRequisitionLines {
+      id
+      response {
+        ... on DeleteResponseRequisitionLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditRequisition {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+    `;
 export const CreateOutboundFromResponseDocument = gql`
     mutation createOutboundFromResponse($responseId: String!, $storeId: String!) {
   createRequisitionShipment(
@@ -413,6 +452,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updateResponseLine(variables: UpdateResponseLineMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateResponseLineMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateResponseLineMutation>(UpdateResponseLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateResponseLine', 'mutation', variables);
+    },
+    deleteResponseLines(variables: DeleteResponseLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteResponseLinesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteResponseLinesMutation>(DeleteResponseLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteResponseLines', 'mutation', variables);
     },
     createOutboundFromResponse(variables: CreateOutboundFromResponseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CreateOutboundFromResponseMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreateOutboundFromResponseMutation>(CreateOutboundFromResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'createOutboundFromResponse', 'mutation', variables);

@@ -53,4 +53,13 @@ impl RequisitionLineMutations {
     ) -> Result<response_requisition_line::UpdateResponse> {
         response_requisition_line::update(ctx, &store_id, input)
     }
+
+    async fn delete_response_requisition_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: response_requisition_line::DeleteInput,
+    ) -> Result<response_requisition_line::DeleteResponse> {
+        response_requisition_line::delete(ctx, &store_id, input)
+    }
 }

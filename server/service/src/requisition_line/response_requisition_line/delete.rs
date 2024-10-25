@@ -1,33 +1,35 @@
-use crate::{
-    requisition::common::check_requisition_row_exists,
-    requisition_line::common::check_requisition_line_exists, service_provider::ServiceContext,
-};
 use repository::{
-    requisition_row::{RequisitionStatus, RequisitionType},
-    RepositoryError, RequisitionLineRowRepository, StorageConnection,
+    requisition_row::RequisitionType, RepositoryError, RequisitionLineRowRepository,
+    StorageConnection,
+};
+
+use crate::{
+    requisition::common::{check_approval_status, check_requisition_row_exists},
+    requisition_line::common::check_requisition_line_exists,
+    service_provider::ServiceContext,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
-pub struct DeleteRequestRequisitionLine {
+pub struct DeleteResponseRequisitionLine {
     pub id: String,
 }
 
 #[derive(Debug, PartialEq)]
 
-pub enum DeleteRequestRequisitionLineError {
+pub enum DeleteResponseRequisitionLineError {
     RequisitionLineDoesNotExist,
     NotThisStoreRequisition,
-    CannotEditRequisition,
-    NotARequestRequisition,
+    NotAResponseRequisition,
     RequisitionDoesNotExist,
+    CannotEditRequisition,
     DatabaseError(RepositoryError),
 }
 
-type OutError = DeleteRequestRequisitionLineError;
+type OutError = DeleteResponseRequisitionLineError;
 
-pub fn delete_request_requisition_line(
+pub fn delete_response_requisition_line(
     ctx: &ServiceContext,
-    input: DeleteRequestRequisitionLine,
+    input: DeleteResponseRequisitionLine,
 ) -> Result<String, OutError> {
     ctx.connection
         .transaction_sync(|connection| {
@@ -44,7 +46,7 @@ pub fn delete_request_requisition_line(
 fn validate(
     connection: &StorageConnection,
     store_id: &str,
-    input: &DeleteRequestRequisitionLine,
+    input: &DeleteResponseRequisitionLine,
 ) -> Result<(), OutError> {
     let requisition_line_row = check_requisition_line_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionLineDoesNotExist)?
@@ -58,20 +60,20 @@ fn validate(
         return Err(OutError::NotThisStoreRequisition);
     }
 
-    if requisition_row.r#type != RequisitionType::Request {
-        return Err(OutError::NotARequestRequisition);
+    if requisition_row.r#type != RequisitionType::Response {
+        return Err(OutError::NotAResponseRequisition);
     }
 
-    if requisition_row.status != RequisitionStatus::Draft {
+    if check_approval_status(&requisition_row) {
         return Err(OutError::CannotEditRequisition);
     }
 
     Ok(())
 }
 
-impl From<RepositoryError> for DeleteRequestRequisitionLineError {
+impl From<RepositoryError> for DeleteResponseRequisitionLineError {
     fn from(error: RepositoryError) -> Self {
-        DeleteRequestRequisitionLineError::DatabaseError(error)
+        DeleteResponseRequisitionLineError::DatabaseError(error)
     }
 }
 
@@ -80,24 +82,24 @@ mod test {
     use repository::{
         mock::{
             mock_full_new_response_requisition_for_update_test,
-            mock_request_draft_requisition_calculation_test, mock_sent_request_requisition_line,
-            mock_store_a, mock_store_b, MockDataInserts,
+            mock_request_draft_requisition_calculation_test, mock_store_a, mock_store_b,
+            MockDataInserts,
         },
         test_db::setup_all,
         RequisitionLineRowRepository,
     };
 
     use crate::{
-        requisition_line::request_requisition_line::{
-            DeleteRequestRequisitionLine, DeleteRequestRequisitionLineError as ServiceError,
+        requisition_line::response_requisition_line::{
+            DeleteResponseRequisitionLine, DeleteResponseRequisitionLineError as ServiceError,
         },
         service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
-    async fn delete_request_requisition_line_errors() {
+    async fn delete_response_requisition_line_errors() {
         let (_, _, connection_manager, _) = setup_all(
-            "delete_request_requisition_line_errors",
+            "delete_response_requisition_line_errors",
             MockDataInserts::all(),
         )
         .await;
@@ -110,46 +112,35 @@ mod test {
 
         // RequisitionLineDoesNotExist
         assert_eq!(
-            service.delete_request_requisition_line(
+            service.delete_response_requisition_line(
                 &context,
-                DeleteRequestRequisitionLine {
+                DeleteResponseRequisitionLine {
                     id: "invalid".to_owned(),
                 },
             ),
             Err(ServiceError::RequisitionLineDoesNotExist)
         );
 
-        // CannotEditRequisition
+        // NotAResponseRequisition
         assert_eq!(
-            service.delete_request_requisition_line(
+            service.delete_response_requisition_line(
                 &context,
-                DeleteRequestRequisitionLine {
-                    id: mock_sent_request_requisition_line().id,
-                },
-            ),
-            Err(ServiceError::CannotEditRequisition)
-        );
-
-        // NotARequestRequisition
-        assert_eq!(
-            service.delete_request_requisition_line(
-                &context,
-                DeleteRequestRequisitionLine {
-                    id: mock_full_new_response_requisition_for_update_test().lines[0]
+                DeleteResponseRequisitionLine {
+                    id: mock_request_draft_requisition_calculation_test().lines[0]
                         .id
                         .clone(),
                 },
             ),
-            Err(ServiceError::NotARequestRequisition)
+            Err(ServiceError::NotAResponseRequisition)
         );
 
         // NotThisStoreRequisition
         context.store_id = mock_store_b().id;
         assert_eq!(
-            service.delete_request_requisition_line(
+            service.delete_response_requisition_line(
                 &context,
-                DeleteRequestRequisitionLine {
-                    id: mock_request_draft_requisition_calculation_test().lines[0]
+                DeleteResponseRequisitionLine {
+                    id: mock_full_new_response_requisition_for_update_test().lines[0]
                         .id
                         .clone(),
                 },
@@ -159,9 +150,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn delete_request_requisition_line_success() {
+    async fn delete_response_requisition_line_success() {
         let (_, connection, connection_manager, _) = setup_all(
-            "delete_request_requisition_line_success",
+            "delete_response_requisition_line_success",
             MockDataInserts::all(),
         )
         .await;
@@ -172,12 +163,12 @@ mod test {
             .unwrap();
         let service = service_provider.requisition_line_service;
 
-        let test_line = mock_request_draft_requisition_calculation_test().lines[0].clone();
+        let test_line = mock_full_new_response_requisition_for_update_test().lines[0].clone();
 
         service
-            .delete_request_requisition_line(
+            .delete_response_requisition_line(
                 &context,
-                DeleteRequestRequisitionLine {
+                DeleteResponseRequisitionLine {
                     id: test_line.id.clone(),
                 },
             )

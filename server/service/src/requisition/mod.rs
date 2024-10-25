@@ -30,6 +30,9 @@ use repository::{
     requisition_row::RequisitionType, Invoice, PaginationOption, RepositoryError, Requisition,
     RequisitionFilter, RequisitionLine, RequisitionSort,
 };
+use response_requisition::{
+    batch_response_requisition, BatchResponseRequisition, BatchResponseRequisitionResult,
+};
 
 pub mod common;
 pub mod program_settings;
@@ -171,6 +174,14 @@ pub trait RequisitionServiceTrait: Sync + Send {
         input: BatchRequestRequisition,
     ) -> Result<BatchRequestRequisitionResult, RepositoryError> {
         batch_request_requisition(ctx, input)
+    }
+
+    fn batch_response_requisition(
+        &self,
+        ctx: &ServiceContext,
+        input: BatchResponseRequisition,
+    ) -> Result<BatchResponseRequisitionResult, RepositoryError> {
+        batch_response_requisition(ctx, input)
     }
 
     fn get_supplier_program_requisition_settings(
