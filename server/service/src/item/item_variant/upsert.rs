@@ -6,13 +6,13 @@ use repository::{
 use crate::{item::check_item_exists, service_provider::ServiceContext};
 
 #[derive(PartialEq, Debug)]
-
 pub enum UpsertItemVariantError {
     CreatedRecordNotFound,
     ItemDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
+#[derive(Default)]
 pub struct UpsertItemVariant {
     pub id: String,
     pub item_id: String,

@@ -1,8 +1,8 @@
 use super::packaging_variant_row::{packaging_variant, PackagingVariantRow};
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
+    DBType, EqualFilter, Pagination, Sort, StorageConnection,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -15,7 +15,7 @@ pub type PackagingVariantSort = Sort<PackagingVariantSortField>;
 #[derive(Clone, Default)]
 pub struct PackagingVariantFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<StringFilter>,
+    pub item_variant_id: Option<EqualFilter<String>>,
 }
 
 impl PackagingVariantFilter {
@@ -28,8 +28,8 @@ impl PackagingVariantFilter {
         self
     }
 
-    pub fn name(mut self, filter: StringFilter) -> Self {
-        self.name = Some(filter);
+    pub fn item_variant_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.item_variant_id = Some(filter);
         self
     }
 }
@@ -112,10 +112,13 @@ fn create_filtered_query(filter: Option<PackagingVariantFilter>) -> BoxedPackagi
     query = query.filter(packaging_variant::deleted_datetime.is_null());
 
     if let Some(f) = filter {
-        let PackagingVariantFilter { id, name } = f;
+        let PackagingVariantFilter {
+            id,
+            item_variant_id,
+        } = f;
 
         apply_equal_filter!(query, id, packaging_variant::id);
-        apply_string_filter!(query, name, packaging_variant::name);
+        apply_equal_filter!(query, item_variant_id, packaging_variant::item_variant_id);
     }
     query
 }
@@ -129,7 +132,7 @@ mod tests {
             packaging_variant_row::{PackagingVariantRow, PackagingVariantRowRepository},
         },
         mock::{mock_item_a, MockDataInserts},
-        test_db, EqualFilter, StringFilter,
+        test_db, EqualFilter,
     };
 
     use super::PackagingVariantFilter;
@@ -182,9 +185,12 @@ mod tests {
         assert_eq!(packaging_variant.id, packaging_variant_id);
         assert_eq!(packaging_variant.name, name);
 
-        // Query by name
+        // Query by item_variant_id
         let packaging_variant = PackagingVariantRepository::new(&storage_connection)
-            .query_one(PackagingVariantFilter::new().name(StringFilter::equal_to(&name)))
+            .query_one(
+                PackagingVariantFilter::new()
+                    .item_variant_id(EqualFilter::equal_to(&item_variant_id)),
+            )
             .unwrap()
             .unwrap();
         assert_eq!(packaging_variant.id, packaging_variant_id);
