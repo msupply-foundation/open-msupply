@@ -17,6 +17,8 @@ use util::inline_edit;
 pub struct UpdateResponseRequisitionLine {
     pub id: String,
     pub supply_quantity: Option<f64>,
+    pub requested_quantity: Option<f64>,
+    pub their_stock_on_hand: Option<f64>,
     pub comment: Option<String>,
 }
 
@@ -101,10 +103,17 @@ fn generate(
         id: _,
         supply_quantity: updated_supply_quantity,
         comment: updated_comment,
+        requested_quantity: updated_requested_quantity,
+        their_stock_on_hand: updated_their_stock_on_hand,
     }: UpdateResponseRequisitionLine,
 ) -> (Option<RequisitionRow>, RequisitionLineRow) {
     let requisition_line_row = inline_edit(&existing, |mut u| {
         u.supply_quantity = updated_supply_quantity.unwrap_or(u.supply_quantity);
+        u.requested_quantity = updated_requested_quantity.unwrap_or(u.requested_quantity);
+        u.initial_stock_on_hand_units =
+            updated_their_stock_on_hand.unwrap_or(u.initial_stock_on_hand_units);
+        u.available_stock_on_hand =
+            updated_their_stock_on_hand.unwrap_or(u.available_stock_on_hand);
         u.comment = updated_comment.or(u.comment);
         u
     });
@@ -236,6 +245,8 @@ mod test {
                     id: test_line.id.clone(),
                     supply_quantity: Some(99.0),
                     comment: Some("comment".to_string()),
+                    requested_quantity: Some(99.0),
+                    their_stock_on_hand: Some(99.0),
                 },
             )
             .unwrap();
@@ -250,6 +261,9 @@ mod test {
             inline_edit(&test_line, |mut u| {
                 u.supply_quantity = 99.0;
                 u.comment = Some("comment".to_string());
+                u.requested_quantity = 99.0;
+                u.initial_stock_on_hand_units = 99.0;
+                u.available_stock_on_hand = 99.0;
                 u
             })
         );

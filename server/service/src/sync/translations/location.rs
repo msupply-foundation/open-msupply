@@ -77,7 +77,7 @@ impl SyncTranslation for LocationTranslation {
             code,
             on_hold,
             store_id,
-            cold_storage_type_id: _,
+            cold_storage_type_id: _, // TODO: Translate cold_storage_type_id id from `location_type_id`
         } = LocationRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
