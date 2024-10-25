@@ -15,6 +15,7 @@ import {
   ObjUtils,
   useAuthContext,
   useIsCentralServerApi,
+  LocationNode,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
@@ -98,7 +99,7 @@ export const EquipmentDetailView = () => {
 
   const locations =
     locationData?.nodes.map(location => ({
-      label: location.code,
+      label: formatLocationLabel(location as LocationNode),
       value: location.id,
     })) || [];
 
@@ -162,4 +163,11 @@ export const EquipmentDetailView = () => {
       )}
     </React.Suspense>
   );
+};
+
+// Displays location with temperature range if present, e.g. "ABC (0°C - 10°C)".
+// If not present, just displays the code alone
+export const formatLocationLabel = (location: LocationNode) => {
+  const { code, coldStorageType } = location;
+  return `${code}${coldStorageType ? ` (${coldStorageType.minTemperature}°C - ${coldStorageType.maxTemperature}°C)` : ''}`;
 };

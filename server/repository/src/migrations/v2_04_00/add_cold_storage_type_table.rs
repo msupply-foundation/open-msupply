@@ -14,8 +14,8 @@ impl MigrationFragment for Migrate {
                 CREATE TABLE cold_storage_type (
                     id TEXT NOT NULL PRIMARY KEY,
                     name TEXT NOT NULL,
-                    min_temperature REAL,
-                    max_temperature REAL
+                    min_temperature {DOUBLE},
+                    max_temperature {DOUBLE}
                 );
             "#
         )?;
