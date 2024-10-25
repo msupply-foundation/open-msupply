@@ -249,16 +249,20 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
     // Then look for data conversion with js functions
     if let Some(convert_data) = &args.convert_data {
         if index.convert_data.is_none() {
-            let js = &format!("{}/convert_data.js", convert_data);
+            let wasm: &String = &format!("{}/dist/plugin.wasm", convert_data);
 
-            let ts = &format!("{}/convert_data.d.ts", convert_data);
+            let mut chars = convert_data.chars();
+            chars.next();
+            chars.next();
 
-            let wasm = &format!("{}/convert_data.wasm", convert_data);
+            let dir = chars.as_str();
 
-            Command::new("extism-js")
-                .args([&js, "-i", &ts, "-o", &wasm])
-                .output()
-                .unwrap();
+            Command::new("npm")
+                .arg("run")
+                .arg("build")
+                .current_dir(dir)
+                .status()
+                .expect(&format!("failed to build wasm plugin function at: {}", dir));
 
             let encoded = BASE64_STANDARD.encode(fs::read(wasm).unwrap());
 
