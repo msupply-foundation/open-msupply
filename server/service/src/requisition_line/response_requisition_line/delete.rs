@@ -1,12 +1,11 @@
 use repository::{
     requisition_row::RequisitionType, RepositoryError, RequisitionLineRowRepository,
-    StorageConnection,
+    RequisitionStatus, StorageConnection,
 };
 
 use crate::{
-    requisition::common::{check_approval_status, check_requisition_row_exists},
-    requisition_line::common::check_requisition_line_exists,
-    service_provider::ServiceContext,
+    requisition::common::check_requisition_row_exists,
+    requisition_line::common::check_requisition_line_exists, service_provider::ServiceContext,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -23,6 +22,7 @@ pub enum DeleteResponseRequisitionLineError {
     RequisitionDoesNotExist,
     CannotEditRequisition,
     DatabaseError(RepositoryError),
+    CannotDeleteLineFromTransferredRequisition,
 }
 
 type OutError = DeleteResponseRequisitionLineError;
@@ -64,8 +64,12 @@ fn validate(
         return Err(OutError::NotAResponseRequisition);
     }
 
-    if requisition_row.status == RequisitionStatus::Finalised
+    if requisition_row.status == RequisitionStatus::Finalised {
         return Err(OutError::CannotEditRequisition);
+    }
+
+    if requisition_row.linked_requisition_id != None {
+        return Err(OutError::CannotDeleteLineFromTransferredRequisition);
     }
 
     Ok(())
