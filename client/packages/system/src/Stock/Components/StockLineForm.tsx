@@ -21,12 +21,8 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
-import {
-  PackVariantInput,
-  usePackVariant,
-  useIsPackVariantsEnabled,
-} from '../..';
 import { StyledInputRow } from './StyledInputRow';
+import { PackSizeNumberInput } from '../../Item';
 
 interface StockLineFormProps {
   draft: StockLineRowFragment;
@@ -53,12 +49,6 @@ export const StockLineForm: FC<StockLineFormProps> = ({
     : t('message.no-supplier');
   const location = draft?.location ?? null;
 
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
-  const { asPackVariant } = usePackVariant(
-    draft.itemId,
-    draft.item.unitName ?? null
-  );
-  const packUnit = asPackVariant(draft.packSize);
   const scanBarcode = async () => {
     try {
       const result = await startScan();
@@ -180,11 +170,9 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         >
           {packEditable ? (
             <StyledInputRow
-              label={
-                isPackVariantsEnabled ? t('label.pack') : t('label.pack-size')
-              }
+              label={t('label.pack-size')}
               Input={
-                <PackVariantInput
+                <PackSizeNumberInput
                   isDisabled={!packEditable}
                   packSize={draft.packSize}
                   itemId={draft.itemId}
@@ -195,10 +183,8 @@ export const StockLineForm: FC<StockLineFormProps> = ({
             />
           ) : (
             <TextWithLabelRow
-              label={
-                isPackVariantsEnabled ? t('label.pack') : t('label.pack-size')
-              }
-              text={String(isPackVariantsEnabled ? packUnit : draft.packSize)}
+              label={t('label.pack-size')}
+              text={String(draft.packSize)}
               textProps={{ textAlign: 'end' }}
             />
           )}

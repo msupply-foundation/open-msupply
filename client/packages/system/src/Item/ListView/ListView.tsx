@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { useItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
-import { PackVariantQuantityCell, PackVariantSelectCell } from '../Components';
+import { PackSizeQuantityCell, PackSizeUnitNameCell } from '../Components';
 
 const ItemListComponent: FC = () => {
   const {
@@ -44,9 +44,8 @@ const ItemListComponent: FC = () => {
         key: 'packUnit',
         label: 'label.unit',
         align: ColumnAlign.Right,
-        Cell: PackVariantSelectCell({
-          getItemId: r => r.id,
-          getUnitName: r => r.unitName || null,
+        Cell: PackSizeUnitNameCell({
+          getUnitName: r => r.unitName ?? null,
         }),
         width: 130,
         sortable: false,
@@ -54,8 +53,8 @@ const ItemListComponent: FC = () => {
       [
         'stockOnHand',
         {
-          Cell: PackVariantQuantityCell({
-            getItemId: r => r.id,
+          Cell: PackSizeQuantityCell({
+            getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
             getQuantity: r => r.stats.availableStockOnHand,
           }),
           label: 'label.soh',
@@ -67,8 +66,8 @@ const ItemListComponent: FC = () => {
       [
         'monthlyConsumption',
         {
-          Cell: PackVariantQuantityCell({
-            getItemId: r => r.id,
+          Cell: PackSizeQuantityCell({
+            getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
             getQuantity: r => r.stats.averageMonthlyConsumption,
           }),
           align: ColumnAlign.Right,
@@ -77,8 +76,8 @@ const ItemListComponent: FC = () => {
         },
       ],
       {
-        Cell: PackVariantQuantityCell({
-          getItemId: r => r.id,
+        Cell: PackSizeQuantityCell({
+          getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
           getQuantity: r => r.stats.availableMonthsOfStockOnHand ?? 0,
         }),
         align: ColumnAlign.Right,

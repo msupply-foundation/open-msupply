@@ -8,25 +8,20 @@ import {
   useFormatNumber,
   NumUtils,
 } from '@openmsupply-client/common';
-import { usePackVariant } from '../../context';
 
 // Adjust quantity to reflect selected pack variant
-export const PackVariantQuantityCell =
+export const PackSizeQuantityCell =
   <T extends RecordWithId>({
-    getItemId,
+    getPackSize,
     getQuantity,
   }: {
-    getItemId: (row: T) => string;
+    getPackSize: (row: T) => number;
     getQuantity: (row: T) => number;
   }) =>
   ({ isError, rowData }: CellProps<T>): ReactElement => {
-    const { numberOfPacksFromQuantity } = usePackVariant(
-      getItemId(rowData),
-      null
-    );
     const formatNumber = useFormatNumber();
     const quantity = getQuantity(rowData);
-    const packQuantity = numberOfPacksFromQuantity(quantity);
+    const packQuantity = quantity / getPackSize(rowData);
     const roundedPackQuantity = formatNumber.round(packQuantity, 2);
 
     return (

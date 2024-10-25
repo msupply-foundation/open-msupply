@@ -10,10 +10,6 @@ import {
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
-import {
-  getPackVariantCell,
-  useIsPackVariantsEnabled,
-} from '@openmsupply-client/system';
 
 export const usePrescriptionLineEditColumns = ({
   onChange,
@@ -22,8 +18,6 @@ export const usePrescriptionLineEditColumns = ({
   onChange: (key: string, value: number, packSize: number) => void;
   unit: string;
 }) => {
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
-
   const columns: ColumnDescription<DraftStockOutLine>[] = [
     [
       'batch',
@@ -72,21 +66,7 @@ export const usePrescriptionLineEditColumns = ({
     },
   ];
 
-  columns.push(
-    isPackVariantsEnabled
-      ? {
-          key: 'packUnit',
-          label: 'label.pack',
-          sortable: false,
-          Cell: getPackVariantCell({
-            getItemId: row => row?.item?.id,
-            getPackSizes: row => [row.packSize ?? 1],
-            getUnitName: row => row?.item.unitName ?? null,
-          }),
-          width: 130,
-        }
-      : ['packSize', { width: 90 }]
-  );
+  columns.push(['packSize', { width: 90 }]);
 
   columns.push(
     [
