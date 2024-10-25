@@ -1349,6 +1349,7 @@
   "messages.no-data-available": "No data available",
   "messages.no-data-found": "No data found",
   "messages.no-documents-uploaded": "No documents have been uploaded",
+  "messages.no-item-variants": "No item variants configured",
   "messages.no-items-with-stock": "No items with stock available",
   "messages.no-ledger": "This stock line has no stock movements to display",
   "messages.no-lines": "Cannot change the status because there are no lines or because there are only placeholder lines",
