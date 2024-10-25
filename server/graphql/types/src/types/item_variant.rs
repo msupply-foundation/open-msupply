@@ -2,6 +2,10 @@ use async_graphql::*;
 use repository::item_variant::{
     item_variant_row::ItemVariantRow, packaging_variant_row::PackagingVariantRow,
 };
+use repository::name::Name;
+use repository::NameRow;
+
+use super::NameNode;
 pub struct PackagingVariantNode {
     pub packaging_variant: PackagingVariantRow,
 }
@@ -33,6 +37,21 @@ impl ItemVariantNode {
     }
 
     // tODO full node for cold_storage_type / manufacturer?
+    pub async fn manufacturer(&self) -> Option<NameNode> {
+        self.item_variant.manufacturer_link_id.clone().map(|id| {
+            NameNode::from_domain(Name {
+                name_row: NameRow {
+                    id,
+                    name: "Some manufacturer".to_string(),
+                    code: "MANUFACTURER".to_string(),
+                    ..Default::default()
+                },
+                name_store_join_row: None,
+                store_row: None,
+                properties: None,
+            })
+        })
+    }
 
     pub async fn packaging_variants(&self) -> Vec<PackagingVariantNode> {
         PackagingVariantNode::from_vec(vec![
