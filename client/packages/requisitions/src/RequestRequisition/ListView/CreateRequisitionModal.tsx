@@ -76,7 +76,7 @@ export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
       height={700}
       width={700}
       slideAnimation={false}
-      title={t('label.new-requisition')}
+      title={t('label.new-internal-order')}
     >
       <InnerComponent />
     </Modal>
