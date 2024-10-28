@@ -1,4 +1,6 @@
 use async_graphql::*;
+use dataloader::DataLoader;
+use graphql_core::{loader::PackagingVariantRowLoader, ContextExt};
 use repository::item_variant::{
     item_variant_row::ItemVariantRow, packaging_variant_row::PackagingVariantRow,
 };
@@ -29,7 +31,7 @@ impl ItemVariantNode {
     }
 
     pub async fn manufacturer_id(&self) -> &Option<String> {
-        &self.item_variant.manufacturer_link_id // TODO join to name for manufacturer_id
+        &self.item_variant.manufacturer_link_id // TODO join to name for manufacturer_id https://github.com/msupply-foundation/open-msupply/issues/5241
     }
 
     pub async fn cold_storage_type_id(&self) -> &Option<String> {
@@ -53,36 +55,14 @@ impl ItemVariantNode {
         })
     }
 
-    pub async fn packaging_variants(&self) -> Vec<PackagingVariantNode> {
-        PackagingVariantNode::from_vec(vec![
-            PackagingVariantRow {
-                id: "1".to_string(),
-                item_variant_id: self.item_variant.id.clone(),
-                name: "Primary".to_string(),
-                packaging_level: 1,
-                pack_size: Some(1.0),
-                volume_per_unit: Some(1.0),
-                deleted_datetime: None,
-            },
-            PackagingVariantRow {
-                id: "2".to_string(),
-                item_variant_id: self.item_variant.id.clone(),
-                name: "Secondary".to_string(),
-                packaging_level: 2,
-                pack_size: Some(2.0),
-                volume_per_unit: Some(2.0),
-                deleted_datetime: None,
-            },
-            PackagingVariantRow {
-                id: "3".to_string(),
-                item_variant_id: self.item_variant.id.clone(),
-                name: "Tertiary".to_string(),
-                packaging_level: 3,
-                pack_size: Some(3.0),
-                volume_per_unit: Some(3.0),
-                deleted_datetime: None,
-            },
-        ])
+    pub async fn packaging_variants(&self, ctx: &Context<'_>) -> Result<Vec<PackagingVariantNode>> {
+        let loader = ctx.get_loader::<DataLoader<PackagingVariantRowLoader>>();
+        let result = loader
+            .load_one(self.item_variant.id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(PackagingVariantNode::from_vec(result))
     }
 }
 
