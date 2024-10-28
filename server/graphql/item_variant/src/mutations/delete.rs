@@ -1,8 +1,5 @@
 use async_graphql::*;
-use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
-};
+use graphql_core::standard_graphql_error::validate_auth;
 use graphql_types::types::DeleteResponse;
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -28,9 +25,6 @@ pub fn delete_item_variant(
             store_id: Some(store_id.to_string()),
         },
     )?;
-
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
 
     Ok(DeleteItemVariantResponse::Response(DeleteResponse(
         input.id,
