@@ -42,7 +42,7 @@ const LocationListComponent: FC = () => {
       'name',
       {
         key: 'coldStorageType',
-        label: 'label.cold-storage-type',
+        label: 'label.storage-type',
         accessor: ({ rowData: { coldStorageType } }) =>
           coldStorageType
             ? `${coldStorageType.name} (${coldStorageType.minTemperature}°C - ${coldStorageType.maxTemperature}°C)`

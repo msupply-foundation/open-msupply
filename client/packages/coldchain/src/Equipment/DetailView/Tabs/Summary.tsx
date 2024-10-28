@@ -12,7 +12,6 @@ import {
   ArrayUtils,
   Box,
   Formatter,
-  LocationNode,
   UNDEFINED_STRING_VALUE,
   useAuthContext,
   useIsCentralServerApi,
@@ -114,7 +113,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   if (!draft) return null;
 
   const defaultLocations = draft.locations.nodes.map(location => ({
-    label: formatLocationLabel(location as LocationNode),
+    label: formatLocationLabel(location),
     value: location.id,
   }));
 
