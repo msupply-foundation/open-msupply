@@ -114,6 +114,9 @@ fragment Response on RequisitionNode {
     startDate
     endDate
   }
+  linkedRequisition {
+    id
+  }
   orderType
 }
 query responseByNumber($storeId: String!, $requisitionNumber: Int!) {
