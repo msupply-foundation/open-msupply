@@ -58,8 +58,8 @@ impl RequisitionLineMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: response_requisition_line::DeleteInput,
-    ) -> Result<response_requisition_line::DeleteResponse> {
-        response_requisition_line::delete(ctx, &store_id, input)
+        input: response_requisition_line::delete::DeleteInput,
+    ) -> Result<response_requisition_line::delete::DeleteResponse> {
+        response_requisition_line::delete::delete(ctx, &store_id, input)
     }
 }
