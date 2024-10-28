@@ -151,11 +151,11 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_batch_request_requisition() {
+    async fn test_graphql_batch_response_requisition() {
         let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             BatchMutations,
-            "test_graphql_batch_request_requisition",
+            "test_graphql_batch_response_requisition",
             MockDataInserts::all(),
         )
         .await;
