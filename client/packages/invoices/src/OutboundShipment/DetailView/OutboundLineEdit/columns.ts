@@ -79,9 +79,8 @@ export const useOutboundLineEditColumns = ({
     });
   }
 
-  columnDefinitions.push(['packSize', { width: 90 }]);
-
   columnDefinitions.push(
+    ['packSize', { width: 90 }],
     {
       Cell: NumberCell,
       label: 'label.in-store',
@@ -144,19 +143,13 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
         accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
-  ];
-
-  columns.push(
     [
       'itemUnit',
       {
         accessor: ({ rowData }) => rowData.item.unitName,
       },
     ],
-    'packSize'
-  );
-
-  columns.push(
+    'packSize',
     'numberOfPacks',
     [
       'unitQuantity',
@@ -169,7 +162,8 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
       {
         accessor: ({ rowData }) => rowData.sellPricePerPack / rowData.packSize,
       },
-    ]
-  );
+    ],
+  ];
+
   return useColumns(columns);
 };

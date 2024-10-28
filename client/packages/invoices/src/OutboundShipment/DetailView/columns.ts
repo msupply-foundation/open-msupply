@@ -143,9 +143,6 @@ export const useOutboundColumns = ({
         width: 100,
       },
     ],
-  ];
-
-  columns.push(
     [
       'itemUnit',
       {
@@ -175,9 +172,7 @@ export const useOutboundColumns = ({
             { path: ['packSize'], default: '' },
           ]),
       },
-    ]
-  );
-  columns.push(
+    ],
     [
       'numberOfPacks',
       {
@@ -286,8 +281,8 @@ export const useOutboundColumns = ({
       },
     },
     expansionColumn,
-    GenericColumnKey.Selection
-  );
+    GenericColumnKey.Selection,
+  ];
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
 };
