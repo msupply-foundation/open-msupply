@@ -68,7 +68,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     )
 }
 
-pub fn map_response(from: Result<RequisitionLine, ServiceError>) -> Result<InsertResponse> {
+fn map_response(from: Result<RequisitionLine, ServiceError>) -> Result<InsertResponse> {
     let result = match from {
         Ok(requisition_line) => {
             InsertResponse::Response(RequisitionLineNode::from_domain(requisition_line))
