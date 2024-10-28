@@ -23,9 +23,6 @@ interface UseSupplierColumnOptions {
 const expansionColumn = getRowExpandColumn<
   SupplierReturnLineFragment | SupplierReturnItem
 >();
-// const notePopoverColumn = getNotePopoverColumn<
-//   StockOutLineFragment | StockOutItem
-// >();
 
 const getUnitQuantity = (row: SupplierReturnLineFragment) =>
   row.packSize * row.numberOfPacks;
@@ -42,27 +39,6 @@ export const useSupplierReturnColumns = ({
   const columns: ColumnDescription<
     SupplierReturnLineFragment | SupplierReturnItem
   >[] = [
-    //   [
-    //     notePopoverColumn,
-    //     {
-    //       accessor: ({ rowData }) => {
-    //         if ('lines' in rowData) {
-    //           const { lines } = rowData;
-    //           const noteSections = lines
-    //             .map(({ batch, note }) => ({
-    //               header: batch ?? '',
-    //               body: note ?? '',
-    //             }))
-    //             .filter(({ body }) => !!body);
-    //           return noteSections.length ? noteSections : null;
-    //         } else {
-    //           return rowData.batch && rowData.note
-    //             ? { header: rowData.batch, body: rowData.note }
-    //             : null;
-    //         }
-    //       },
-    //     },
-    //   ],
     [
       'itemCode',
       {
@@ -94,21 +70,6 @@ export const useSupplierReturnColumns = ({
           ]),
       },
     ],
-    //   [
-    //     'itemUnit',
-    //     {
-    //       getSortValue: row =>
-    //         getColumnPropertyAsString(row, [
-    //           { path: ['lines', 'item', 'unitName'] },
-    //           { path: ['item', 'unitName'], default: '' },
-    //         ]),
-    //       accessor: ({ rowData }) =>
-    //         getColumnProperty(rowData, [
-    //           { path: ['lines', 'item', 'unitName'] },
-    //           { path: ['item', 'unitName'], default: '' },
-    //         ]),
-    //     },
-    //   ],
     [
       'batch',
       {
@@ -127,24 +88,6 @@ export const useSupplierReturnColumns = ({
           getColumnProperty(rowData, [{ path: ['expiryDate'] }]),
       },
     ],
-    //   [
-    //     'location',
-    //     {
-    //       getSortValue: row =>
-    //         getColumnPropertyAsString(row, [
-    //           { path: ['lines', 'location', 'code'] },
-    //           { path: ['location', 'code'], default: '' },
-    //         ]),
-    //       accessor: ({ rowData }) =>
-    //         getColumnProperty(rowData, [
-    //           { path: ['lines', 'location', 'code'] },
-    //           { path: ['location', 'code'], default: '' },
-    //         ]),
-    //     },
-    //   ],
-  ];
-
-  columns.push(
     [
       'itemUnit',
       {
@@ -166,7 +109,7 @@ export const useSupplierReturnColumns = ({
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;
-            return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '') ?? '';
+            return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
           } else {
             return row.packSize ?? '';
           }
@@ -180,10 +123,7 @@ export const useSupplierReturnColumns = ({
           }
         },
       },
-    ]
-  );
-
-  columns.push(
+    ],
     [
       'numberOfPacks',
       {
@@ -294,8 +234,8 @@ export const useSupplierReturnColumns = ({
       },
     },
     expansionColumn,
-    GenericColumnKey.Selection
-  );
+    GenericColumnKey.Selection,
+  ];
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
 };

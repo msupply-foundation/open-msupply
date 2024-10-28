@@ -29,8 +29,6 @@ export const QuantityReturnedTableComponent = ({
     [
       'itemCode',
       'itemName',
-      // 'itemUnit', // not implemented for now
-      // 'location',
       [
         'batch',
         {
