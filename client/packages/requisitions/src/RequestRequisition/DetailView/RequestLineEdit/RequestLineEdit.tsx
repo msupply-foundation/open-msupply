@@ -128,14 +128,8 @@ export const RequestLineEdit = ({
               <Box display="flex" height={289} />
             ) : (
               <>
-                <ConsumptionHistory
-                  id={draft?.id || ''}
-                  numberOfPacksFromQuantity={(quantity: number) => quantity}
-                />
-                <StockEvolution
-                  id={draft?.id || ''}
-                  numberOfPacksFromQuantity={(quantity: number) => quantity}
-                />
+                <ConsumptionHistory id={draft?.id || ''} />
+                <StockEvolution id={draft?.id || ''} />
               </>
             )}
           </Box>

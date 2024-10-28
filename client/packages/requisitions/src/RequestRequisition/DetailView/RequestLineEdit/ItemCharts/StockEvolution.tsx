@@ -18,13 +18,9 @@ import { useRequest } from '../../../api/hooks';
 
 export interface StockEvolutionProps {
   id: string;
-  numberOfPacksFromQuantity: (totalQuantity: number) => number;
 }
 
-export const StockEvolution: React.FC<StockEvolutionProps> = ({
-  id,
-  numberOfPacksFromQuantity,
-}) => {
+export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
   const t = useTranslation();
   const theme = useTheme();
   const { dayMonthShort } = useFormatDateTime();
@@ -45,12 +41,8 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({
   };
   if (!data || !data.stockEvolution) return null;
 
-  const stockEvolution = data.stockEvolution.nodes.map(entry => ({
-    ...entry,
-    stockOnHand: numberOfPacksFromQuantity(entry.stockOnHand),
-    minimumStockOnHand: numberOfPacksFromQuantity(entry.minimumStockOnHand),
-    maximumStockOnHand: numberOfPacksFromQuantity(entry.maximumStockOnHand),
-  }));
+  const stockEvolution = data.stockEvolution.nodes;
+
   const tooltipLabelFormatter = (date: string) => dateFormatter(date);
 
   return isLoading ? (

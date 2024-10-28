@@ -39,12 +39,10 @@ const getLabelLocaleKey = ({
 
 export interface ConsumptionHistoryProps {
   id: string;
-  numberOfPacksFromQuantity: (totalQuantity: number) => number;
 }
 
 export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
   id,
-  numberOfPacksFromQuantity,
 }) => {
   const t = useTranslation();
   const theme = useTheme();
@@ -69,13 +67,7 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
   };
   if (!data || !data.consumptionHistory) return null;
 
-  const consumptionHistory = data.consumptionHistory.nodes.map(entry => ({
-    ...entry,
-    averageMonthlyConsumption: numberOfPacksFromQuantity(
-      entry.averageMonthlyConsumption
-    ),
-    consumption: numberOfPacksFromQuantity(entry.consumption),
-  }));
+  const consumptionHistory = data.consumptionHistory.nodes;
 
   const tooltipLabelFormatter = (date: string) => dateFormatter(date);
 

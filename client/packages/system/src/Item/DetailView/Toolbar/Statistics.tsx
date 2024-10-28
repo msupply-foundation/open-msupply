@@ -1,14 +1,10 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { useTranslation } from '@common/intl';
 import { Grid, StatsPanel } from '@openmsupply-client/common';
 import { useFormatNumber } from '@common/intl';
 import { useItemFields } from '../../api';
 
-interface Statistics {
-  numberOfPacksFromQuantity: (totalQuantity: number) => number;
-}
-
-export const Statistics: FC<Statistics> = ({ numberOfPacksFromQuantity }) => {
+export const Statistics = () => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
   const { stats } = useItemFields();
@@ -28,9 +24,7 @@ export const Statistics: FC<Statistics> = ({ numberOfPacksFromQuantity }) => {
         stats={[
           {
             label: t('label.units'),
-            value: formatNumber.round(
-              numberOfPacksFromQuantity(stats.availableStockOnHand)
-            ),
+            value: formatNumber.round(stats.availableStockOnHand),
           },
         ]}
         title={t('title.stock-on-hand')}
@@ -41,10 +35,7 @@ export const Statistics: FC<Statistics> = ({ numberOfPacksFromQuantity }) => {
         stats={[
           {
             label: t('label.units'),
-            value: formatNumber.round(
-              numberOfPacksFromQuantity(stats.averageMonthlyConsumption),
-              2
-            ),
+            value: formatNumber.round(stats.averageMonthlyConsumption, 2),
           },
         ]}
         title={t('title.amc')}
@@ -56,9 +47,7 @@ export const Statistics: FC<Statistics> = ({ numberOfPacksFromQuantity }) => {
           {
             label: t('text.months'),
             value: formatNumber.round(
-              numberOfPacksFromQuantity(
-                stats?.availableMonthsOfStockOnHand ?? 0
-              ),
+              stats?.availableMonthsOfStockOnHand ?? 0,
               2
             ),
           },
