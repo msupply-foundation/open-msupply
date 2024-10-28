@@ -6,7 +6,6 @@ import {
   ArrayUtils,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../types';
-import { DraftItem } from '../..';
 
 // Helper to sort the pack sizes by value.
 const sortPackSizes = (a: PackSizeOption, b: PackSizeOption) => {
@@ -57,10 +56,7 @@ const createAnyOption = (t: ReturnType<typeof useTranslation>) => () => ({
   label: t('label.any'),
 });
 
-export const usePackSizeController = (
-  _item: DraftItem | null,
-  lines: DraftStockOutLine[]
-) => {
+export const usePackSizeController = (lines: DraftStockOutLine[]) => {
   const t = useTranslation();
 
   // The selected pack size for auto allocation. The initial value

@@ -26,7 +26,6 @@ import {
   LocationRowFragment,
   PackSizeEntryCell,
 } from '@openmsupply-client/system';
-import { InboundLineFragment } from '../../../api';
 
 interface TableProps {
   lines: DraftInboundLine[];
@@ -83,9 +82,11 @@ const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
 // if number of packs is changed and tab is pressed (in quick succession)
 const PackUnitEntryCell = PackSizeEntryCell<DraftInboundLine>({});
 
-export const QuantityTableComponent: FC<
-  TableProps & { item: InboundLineFragment['item'] | null }
-> = ({ item: _, lines, updateDraftLine, isDisabled = false }) => {
+export const QuantityTableComponent: FC<TableProps> = ({
+  lines,
+  updateDraftLine,
+  isDisabled = false,
+}) => {
   const theme = useTheme();
 
   const columns = useColumns<DraftInboundLine>(
@@ -131,15 +132,12 @@ export const QuantityTableComponent: FC<
 
 export const QuantityTable = React.memo(QuantityTableComponent);
 
-export const PricingTableComponent: FC<
-  TableProps & { item: InboundLineFragment['item'] | null }
-> = ({
+export const PricingTableComponent: FC<TableProps> = ({
   lines,
   updateDraftLine,
   isDisabled = false,
   currency,
   isExternalSupplier,
-  item: _,
 }) => {
   const { store } = useAuthContext();
 
@@ -158,7 +156,7 @@ export const PricingTableComponent: FC<
 
   columnDefinitions.push(
     getColumnLookupWithOverrides('packSize', {
-      ...{ label: 'label.pack-size' },
+      label: 'label.pack-size',
     }),
     [
       'numberOfPacks',
