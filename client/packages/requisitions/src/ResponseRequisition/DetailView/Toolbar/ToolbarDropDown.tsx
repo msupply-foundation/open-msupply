@@ -9,9 +9,13 @@ import { useResponse } from '../../api';
 
 interface ToolbarDropDownProps {
   isDisabled: boolean;
+  hasLinkedRequisition: boolean;
 }
 
-export const ToolbarDropDown = ({ isDisabled }: ToolbarDropDownProps) => {
+export const ToolbarDropDown = ({
+  isDisabled,
+  hasLinkedRequisition,
+}: ToolbarDropDownProps) => {
   const t = useTranslation();
   const onDelete = useResponse.line.delete();
 
@@ -20,9 +24,9 @@ export const ToolbarDropDown = ({ isDisabled }: ToolbarDropDownProps) => {
       <DropdownMenuItem
         IconComponent={DeleteIcon}
         onClick={onDelete}
-        disabled={isDisabled}
+        disabled={isDisabled || hasLinkedRequisition}
       >
-        {t('button.delete-lines', { ns: 'distribution' })}
+        {t('button.delete-lines')}
       </DropdownMenuItem>
     </DropdownMenu>
   );
