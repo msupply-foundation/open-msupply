@@ -15,7 +15,6 @@ import {
   ObjUtils,
   useAuthContext,
   useIsCentralServerApi,
-  LocationNode,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
@@ -25,7 +24,11 @@ import { Summary } from './Tabs';
 import { useAssets } from '../api';
 import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
-import { ActivityLogList, useLocation } from '@openmsupply-client/system';
+import {
+  ActivityLogList,
+  LocationRowFragment,
+  useLocation,
+} from '@openmsupply-client/system';
 import { DraftAsset } from '../types';
 import { Details } from './Tabs/Details';
 
@@ -99,7 +102,7 @@ export const EquipmentDetailView = () => {
 
   const locations =
     locationData?.nodes.map(location => ({
-      label: formatLocationLabel(location as LocationNode),
+      label: formatLocationLabel(location),
       value: location.id,
     })) || [];
 
@@ -165,9 +168,9 @@ export const EquipmentDetailView = () => {
   );
 };
 
-// Displays location with temperature range if present, e.g. "ABC (0°C - 10°C)".
+// Displays location with storage name if present, e.g. "ABC (Cold store)".
 // If not present, just displays the code alone
-export const formatLocationLabel = (location: LocationNode) => {
+export const formatLocationLabel = (location: LocationRowFragment) => {
   const { code, coldStorageType } = location;
-  return `${code}${coldStorageType ? ` (${coldStorageType.minTemperature}°C - ${coldStorageType.maxTemperature}°C)` : ''}`;
+  return `${code}${coldStorageType ? ` (${coldStorageType.name})` : ''}`;
 };
