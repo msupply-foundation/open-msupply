@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { useItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
-import { PackSizeQuantityCell, PackSizeUnitNameCell } from '../Components';
+import { PackQuantityCell, PackSizeUnitNameCell } from '../Components';
 
 const ItemListComponent: FC = () => {
   const {
@@ -53,7 +53,7 @@ const ItemListComponent: FC = () => {
       [
         'stockOnHand',
         {
-          Cell: PackSizeQuantityCell({
+          Cell: PackQuantityCell({
             getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
             getQuantity: r => r.stats.availableStockOnHand,
           }),
@@ -66,7 +66,7 @@ const ItemListComponent: FC = () => {
       [
         'monthlyConsumption',
         {
-          Cell: PackSizeQuantityCell({
+          Cell: PackQuantityCell({
             getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
             getQuantity: r => r.stats.averageMonthlyConsumption,
           }),
@@ -76,7 +76,7 @@ const ItemListComponent: FC = () => {
         },
       ],
       {
-        Cell: PackSizeQuantityCell({
+        Cell: PackQuantityCell({
           getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
           getQuantity: r => r.stats.availableMonthsOfStockOnHand ?? 0,
         }),

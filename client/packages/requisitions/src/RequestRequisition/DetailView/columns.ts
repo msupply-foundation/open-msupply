@@ -13,9 +13,9 @@ import {
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import {
-  PackSizeQuantityCell,
+  PackQuantityCell,
   PackSizeUnitNameCell,
-} from 'packages/system/src';
+} from '@openmsupply-client/system';
 
 const useStockOnHand: ColumnDataAccessor<RequestLineFragment, string> = ({
   rowData,
@@ -93,10 +93,8 @@ export const useRequestColumns = () => {
       {
         width: 150,
         align: ColumnAlign.Right,
-        Cell: PackSizeQuantityCell({
-          getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
-          getQuantity: r => r.itemStats.averageMonthlyConsumption,
-        }),
+        Cell: PackQuantityCell,
+        accessor: ({ rowData }) => rowData.itemStats.averageMonthlyConsumption,
         getSortValue: rowData => rowData.itemStats.averageMonthlyConsumption,
       },
     ],
@@ -105,11 +103,9 @@ export const useRequestColumns = () => {
       label: 'label.target-stock',
       align: ColumnAlign.Right,
       width: 150,
-      Cell: PackSizeQuantityCell({
-        getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
-        getQuantity: r =>
-          r.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) =>
+        rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
       getSortValue: rowData =>
         rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
     },
@@ -119,10 +115,7 @@ export const useRequestColumns = () => {
       description: 'description.forecast-quantity',
       align: ColumnAlign.Right,
       width: 200,
-      Cell: PackSizeQuantityCell({
-        getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
-        getQuantity: r => r.suggestedQuantity,
-      }),
+      Cell: PackQuantityCell,
       getSortValue: rowData => rowData.suggestedQuantity,
     },
     {
@@ -130,10 +123,7 @@ export const useRequestColumns = () => {
       label: 'label.requested',
       align: ColumnAlign.Right,
       width: 150,
-      Cell: PackSizeQuantityCell({
-        getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
-        getQuantity: r => r.requestedQuantity,
-      }),
+      Cell: PackQuantityCell,
       getSortValue: rowData => rowData.requestedQuantity,
     },
   ];
@@ -143,10 +133,9 @@ export const useRequestColumns = () => {
       key: 'approvedNumPacks',
       label: 'label.approved-packs',
       align: ColumnAlign.Right,
-      Cell: PackSizeQuantityCell({
-        getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
-        getQuantity: r => r.linkedRequisitionLine?.approvedQuantity ?? 0,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) =>
+        rowData.linkedRequisitionLine?.approvedQuantity ?? 0,
       sortable: false,
     });
     columnDefinitions.push({
