@@ -36,6 +36,7 @@ pub fn generate(
         location,
         expiry_date,
         barcode,
+        item_variant_id,
     }: AddNewStockLine,
 ) -> Result<GenerateResult, RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
@@ -98,6 +99,7 @@ pub fn generate(
         total_before_tax: None,
         tax_percentage: None,
         barcode,
+        item_variant_id,
     };
 
     let update_inventory_adjustment_reason = UpdateInventoryAdjustmentReason {

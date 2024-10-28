@@ -47,5 +47,6 @@ pub fn generate(
         number_of_packs: 0.0,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        item_variant_id: None,
     })
 }

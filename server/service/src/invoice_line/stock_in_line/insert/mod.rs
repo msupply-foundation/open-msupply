@@ -42,6 +42,7 @@ pub struct InsertStockInLine {
     pub stock_line_id: Option<String>,
     pub barcode: Option<String>,
     pub stock_on_hold: bool,
+    pub item_variant_id: Option<String>,
 }
 
 type OutError = InsertStockInLineError;

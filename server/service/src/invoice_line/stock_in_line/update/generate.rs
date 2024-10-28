@@ -113,6 +113,7 @@ fn generate_line(
         total_before_tax,
         tax_percentage,
         r#type: _,
+        item_variant_id,
     }: UpdateStockInLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -140,6 +141,7 @@ fn generate_line(
         currency_id,
         currency_rate,
     )?;
+    update_line.item_variant_id = item_variant_id.or(update_line.item_variant_id);
 
     if let Some(item) = new_item_option {
         update_line.item_link_id = item.id;

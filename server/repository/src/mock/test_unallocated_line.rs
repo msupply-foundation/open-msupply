@@ -53,10 +53,7 @@ pub fn mock_unallocated_line() -> InvoiceLineRow {
         tax_percentage: None,
         r#type: InvoiceLineType::UnallocatedStock,
         number_of_packs: 1.0,
-        note: None,
-        inventory_adjustment_reason_id: None,
-        return_reason_id: None,
-        foreign_currency_price_before_tax: None,
+        ..Default::default()
     }
 }
 
@@ -96,10 +93,7 @@ pub fn mock_unallocated_line2() -> InvoiceLineRow {
         tax_percentage: None,
         r#type: InvoiceLineType::UnallocatedStock,
         number_of_packs: 1.0,
-        note: None,
-        inventory_adjustment_reason_id: None,
-        return_reason_id: None,
-        foreign_currency_price_before_tax: None,
+        ..Default::default()
     }
 }
 
