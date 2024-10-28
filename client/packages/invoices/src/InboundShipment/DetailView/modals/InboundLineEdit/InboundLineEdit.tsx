@@ -197,7 +197,6 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
             />
             <Divider margin={5} />
             <TabLayout
-              item={currentItem}
               draftLines={draftLines}
               addDraftLine={addDraftLine}
               updateDraftLine={updateDraftLine}
