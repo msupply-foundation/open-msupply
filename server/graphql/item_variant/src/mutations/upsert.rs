@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::standard_graphql_error::validate_auth;
 use graphql_types::types::ItemVariantNode;
 use repository::item_variant::item_variant_row::ItemVariantRow;
 use service::auth::{Resource, ResourceAccessRequest};
@@ -42,9 +42,6 @@ pub fn upsert_item_variant(
             store_id: Some(store_id.to_string()),
         },
     )?;
-
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
 
     Ok(UpsertItemVariantResponse::Response(
         ItemVariantNode::from_domain(ItemVariantRow {
