@@ -1210,7 +1210,7 @@ export type CustomerReturnLineNode = {
   stockLineId?: Maybe<Scalars['String']['output']>;
 };
 
-export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & DeleteVaccineCourseErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpdateVaccineCourseErrorInterface & {
+export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & DeleteVaccineCourseErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpdateVaccineCourseErrorInterface & UpsertItemVariantErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -3086,7 +3086,7 @@ export type InsertVaccineCourseInput = {
 
 export type InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode;
 
-export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpsertItemVariantErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -3589,6 +3589,11 @@ export type ItemVariantNode = {
   manufacturerId?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   packagingVariants: Array<PackagingVariantNode>;
+};
+
+
+export type ItemVariantNodeManufacturerArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type ItemsResponse = ItemConnector;
@@ -8397,6 +8402,15 @@ export type UpdateVaccineCourseInput = {
 
 export type UpdateVaccineCourseResponse = UpdateVaccineCourseError | VaccineCourseNode;
 
+export type UpsertItemVariantError = {
+  __typename: 'UpsertItemVariantError';
+  error: UpsertItemVariantErrorInterface;
+};
+
+export type UpsertItemVariantErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type UpsertItemVariantInput = {
   coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
   dosesPerUnit?: InputMaybe<Scalars['Int']['input']>;
@@ -8416,7 +8430,7 @@ export type UpsertLogLevelResponse = {
   level: LogLevelEnum;
 };
 
-export type UpsertPackVariantResponse = ItemVariantNode;
+export type UpsertPackVariantResponse = ItemVariantNode | UpsertItemVariantError;
 
 export type UpsertVaccineCourseDoseInput = {
   customAgeLabel?: InputMaybe<Scalars['String']['input']>;

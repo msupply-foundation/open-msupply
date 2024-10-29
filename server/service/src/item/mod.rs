@@ -4,7 +4,7 @@ pub mod packaging_variant;
 pub use item::*;
 use item_variant::{
     delete_item_variant, get_item_variants, upsert_item_variant, DeleteItemVariant,
-    DeleteItemVariantError, UpsertItemVariant, UpsertItemVariantError,
+    DeleteItemVariantError, UpsertItemVariantError, UpsertItemVariantWithPackaging,
 };
 use packaging_variant::{
     delete_packaging_variant, get_packaging_variants, upsert_packaging_variant,
@@ -37,7 +37,7 @@ pub trait ItemServiceTrait: Sync + Send {
     fn upsert_item_variant(
         &self,
         ctx: &ServiceContext,
-        input: UpsertItemVariant,
+        input: UpsertItemVariantWithPackaging,
     ) -> Result<ItemVariantRow, UpsertItemVariantError> {
         upsert_item_variant(ctx, input)
     }

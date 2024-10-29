@@ -130,7 +130,7 @@ export type UpsertItemVariantMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpsertItemVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', itemVariant: { __typename: 'ItemVariantMutations', upsertItemVariant: { __typename: 'ItemVariantNode', id: string, name: string, dosesPerUnit?: number | null, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }> } } } };
+export type UpsertItemVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', itemVariant: { __typename: 'ItemVariantMutations', upsertItemVariant: { __typename: 'ItemVariantNode', id: string, name: string, dosesPerUnit?: number | null, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }> } | { __typename: 'UpsertItemVariantError' } } } };
 
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
@@ -219,7 +219,7 @@ export const ItemVariantFragmentDoc = gql`
   name
   dosesPerUnit
   manufacturerId
-  manufacturer {
+  manufacturer(storeId: $storeId) {
     ...NameRow
   }
   coldStorageTypeId

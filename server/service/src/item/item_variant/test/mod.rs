@@ -6,7 +6,7 @@ mod query {
     use repository::{EqualFilter, StringFilter};
     use util::uuid::uuid;
 
-    use crate::item::item_variant::{DeleteItemVariant, UpsertItemVariant};
+    use crate::item::item_variant::{DeleteItemVariant, UpsertItemVariantWithPackaging};
     use crate::service_provider::ServiceProvider;
 
     #[actix_rt::test]
@@ -27,7 +27,7 @@ mod query {
         let _item_a_variant_a = service
             .upsert_item_variant(
                 &context,
-                UpsertItemVariant {
+                UpsertItemVariantWithPackaging {
                     id: test_item_a_variant_id.to_string(),
                     item_id: mock_item_a().id,
                     name: "item_a_variant_a".to_string(),
@@ -40,7 +40,7 @@ mod query {
         let _item_a_variant_b = service
             .upsert_item_variant(
                 &context,
-                UpsertItemVariant {
+                UpsertItemVariantWithPackaging {
                     id: uuid(),
                     item_id: mock_item_a().id,
                     name: "item_a_variant_b".to_string(),
@@ -53,7 +53,7 @@ mod query {
         let _item_b_variant_a = service
             .upsert_item_variant(
                 &context,
-                UpsertItemVariant {
+                UpsertItemVariantWithPackaging {
                     id: uuid(),
                     item_id: mock_item_b().id,
                     name: "item_b_variant_a".to_string(),
@@ -79,7 +79,7 @@ mod query {
         let _item_variant = service
             .upsert_item_variant(
                 &context,
-                UpsertItemVariant {
+                UpsertItemVariantWithPackaging {
                     id: test_item_a_variant_id.to_string(),
                     item_id: mock_item_a().id,
                     name: "updated_name".to_string(),
