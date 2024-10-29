@@ -137,14 +137,16 @@ export const useResponseColumns = () => {
       sortable: false,
       description: 'description.available-stock',
       Cell: PackQuantityCell,
-      accessor: ({ rowData }) =>
-        !!linkedRequisition
+      accessor: ({ rowData }) => {
+        const stockOnHand = linkedRequisition
           ? (rowData.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0)
-          : rowData.availableStockOnHand +
-            rowData.incomingUnits +
-            rowData.additionInUnits -
-            rowData.lossInUnits -
-            rowData.outgoingUnits,
+          : rowData.availableStockOnHand;
+
+        const incomingStock = rowData.incomingUnits + rowData.additionInUnits;
+        const outgoingStock = rowData.lossInUnits + rowData.outgoingUnits;
+
+        return stockOnHand + incomingStock - outgoingStock;
+      },
     },
     {
       key: 'expiringUnits',
@@ -185,13 +187,13 @@ export const useResponseColumns = () => {
       sortable: false,
       Cell: PackQuantityCell,
       accessor: ({ rowData }) => {
-        const availableStock = linkedRequisition
+        const stockOnHand = linkedRequisition
           ? (rowData.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0)
-          : rowData.availableStockOnHand +
-            rowData.incomingUnits +
-            rowData.additionInUnits -
-            rowData.lossInUnits -
-            rowData.outgoingUnits;
+          : rowData.availableStockOnHand;
+        const incomingStock = rowData.incomingUnits + rowData.additionInUnits;
+        const outgoingStock = rowData.lossInUnits + rowData.outgoingUnits;
+
+        const available = stockOnHand + incomingStock - outgoingStock;
 
         const averageMonthlyConsumption = linkedRequisition
           ? (rowData.linkedRequisitionLine?.itemStats
@@ -199,7 +201,7 @@ export const useResponseColumns = () => {
           : rowData.averageMonthlyConsumption;
 
         return averageMonthlyConsumption !== 0
-          ? availableStock / averageMonthlyConsumption
+          ? available / averageMonthlyConsumption
           : 0;
       },
     },
