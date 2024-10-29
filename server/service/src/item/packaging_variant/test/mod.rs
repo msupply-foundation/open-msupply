@@ -5,7 +5,7 @@ mod query {
     use repository::test_db::setup_all;
     use repository::EqualFilter;
 
-    use crate::item::item_variant::UpsertItemVariant;
+    use crate::item::item_variant::UpsertItemVariantWithPackaging;
     use crate::item::packaging_variant::{DeletePackagingVariant, UpsertPackagingVariant};
     use crate::service_provider::ServiceProvider;
 
@@ -28,7 +28,7 @@ mod query {
         let item_variant = service
             .upsert_item_variant(
                 &context,
-                UpsertItemVariant {
+                UpsertItemVariantWithPackaging {
                     id: test_item_variant_id.to_string(),
                     item_id: mock_item_a().id,
                     name: "item_variant_a".to_string(),

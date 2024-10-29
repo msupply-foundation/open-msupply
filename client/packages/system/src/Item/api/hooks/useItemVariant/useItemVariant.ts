@@ -28,24 +28,24 @@ export function useItemVariant({
       __typename: 'ItemVariantNode',
       id: FnUtils.generateUUID(),
       name: '',
-      manufacturerId: '',
-      coldStorageTypeId: '',
+      manufacturerId: null,
+      coldStorageTypeId: null,
       packagingVariants: [
         {
           __typename: 'PackagingVariantNode',
-          id: '1',
+          id: FnUtils.generateUUID(),
           packagingLevel: 1,
           name: t('label.primary'),
         },
         {
           __typename: 'PackagingVariantNode',
-          id: '2',
+          id: FnUtils.generateUUID(),
           packagingLevel: 2,
           name: t('label.secondary'),
         },
         {
           __typename: 'PackagingVariantNode',
-          id: '3',
+          id: FnUtils.generateUUID(),
           packagingLevel: 3,
           name: t('label.tertiary'),
         },
@@ -80,11 +80,12 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
     const apiResult = await api.upsertItemVariant({
       storeId,
       input: {
-        id: FnUtils.generateUUID(),
+        id: input.id,
         itemId,
         name: input.name,
         manufacturerId: input.manufacturerId,
         coldStorageTypeId: input.coldStorageTypeId,
+        dosesPerUnit: input.dosesPerUnit,
         packagingVariants: input.packagingVariants.map(pv => ({
           id: pv.id,
           name: pv.name,

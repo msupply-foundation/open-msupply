@@ -12,7 +12,7 @@ pub enum UpsertPackagingVariantError {
     DatabaseError(RepositoryError),
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct UpsertPackagingVariant {
     pub id: String,
     pub item_variant_id: String,
