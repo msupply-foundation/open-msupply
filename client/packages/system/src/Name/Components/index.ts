@@ -7,3 +7,4 @@ export * from './InternalSupplierSearchInput';
 export * from './InternalSupplierSearchModal';
 export { getNameOptionRenderer } from './NameOptionRenderer';
 export * from './NameRenderer';
+export * from './ManufacturerSearchInput';

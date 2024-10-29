@@ -66,7 +66,7 @@ export const isRequestDisabled = (request: RequestRowFragment): boolean => {
   return request.status !== RequisitionNodeStatus.Draft;
 };
 
-export const isResponseDisabled = (response: RequestRowFragment): boolean => {
+export const isResponseDisabled = (response: ResponseRowFragment): boolean => {
   return (
     response.status !== RequisitionNodeStatus.New ||
     response.approvalStatus === RequisitionNodeApprovalStatus.Pending ||

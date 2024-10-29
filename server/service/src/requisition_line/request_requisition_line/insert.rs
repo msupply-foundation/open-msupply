@@ -1,5 +1,5 @@
 use crate::{
-    item::check_item_exists,
+    item::item::check_item_exists,
     requisition::{
         common::check_requisition_row_exists, request_requisition::generate_requisition_lines,
     },
@@ -85,12 +85,12 @@ fn validate(
         return Err(OutError::NotThisStoreRequisition);
     }
 
-    if requisition_row.status != RequisitionStatus::Draft {
-        return Err(OutError::CannotEditRequisition);
-    }
-
     if requisition_row.r#type != RequisitionType::Request {
         return Err(OutError::NotARequestRequisition);
+    }
+
+    if requisition_row.status != RequisitionStatus::Draft {
+        return Err(OutError::CannotEditRequisition);
     }
 
     if (check_item_exists_in_requisition(connection, &input.requisition_id, &input.item_id)?)
@@ -141,7 +141,7 @@ mod test {
     use repository::{
         mock::{
             mock_draft_request_requisition_for_update_test,
-            mock_full_draft_response_requisition_for_update_test, mock_item_c,
+            mock_full_new_response_requisition_for_update_test, mock_item_c,
             mock_request_draft_requisition, mock_request_draft_requisition_calculation_test,
             mock_request_program_requisition, mock_sent_request_requisition, mock_store_a,
             mock_store_b, test_item_stats, MockDataInserts,
@@ -227,7 +227,7 @@ mod test {
             service.insert_request_requisition_line(
                 &context,
                 inline_init(|r: &mut InsertRequestRequisitionLine| {
-                    r.requisition_id = mock_full_draft_response_requisition_for_update_test()
+                    r.requisition_id = mock_full_new_response_requisition_for_update_test()
                         .requisition
                         .id;
                 }),
