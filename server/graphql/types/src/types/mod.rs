@@ -4,6 +4,9 @@ pub use self::name::*;
 pub mod item;
 pub use self::item::*;
 
+pub mod item_variant;
+pub use self::item_variant::*;
+
 pub mod item_stats;
 pub use self::item_stats::*;
 
