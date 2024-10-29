@@ -19,7 +19,7 @@ pub struct UpdateInput {
     pub id: String,
     pub supply_quantity: Option<f64>,
     pub requested_quantity: Option<f64>,
-    pub initial_stock_on_hand: Option<f64>,
+    pub stock_on_hand: Option<f64>,
     pub comment: Option<String>,
 }
 
@@ -77,7 +77,7 @@ impl UpdateInput {
             id,
             supply_quantity,
             requested_quantity,
-            initial_stock_on_hand,
+            stock_on_hand,
             comment,
         } = self;
 
@@ -85,7 +85,7 @@ impl UpdateInput {
             id,
             supply_quantity,
             requested_quantity,
-            initial_stock_on_hand,
+            stock_on_hand: stock_on_hand,
             comment,
         }
     }
@@ -330,7 +330,7 @@ mod test {
                     id: "update line id input".to_string(),
                     supply_quantity: Some(1.0),
                     requested_quantity: None,
-                    initial_stock_on_hand: None,
+                    stock_on_hand: None,
                     comment: Some("comment".to_string()),
                 }
             );
