@@ -10,7 +10,7 @@ import {
 } from '@openmsupply-client/common';
 import { getNameOptionRenderer } from '@openmsupply-client/system';
 
-import { ProgramSettingsFragment } from '../api';
+import { SupplierProgramSettingsFragment } from '../api';
 import { NewRequisitionType } from './types';
 
 export interface NewProgramRequisition {
@@ -30,12 +30,12 @@ type Common<T> = Pick<
 };
 
 const useProgramRequisitionOptions = (
-  programSettings: ProgramSettingsFragment[]
+  programSettings: SupplierProgramSettingsFragment[]
 ) => {
-  type ProgramSetting = ProgramSettingsFragment;
+  type ProgramSetting = SupplierProgramSettingsFragment;
   // [number] gets type of array
-  type OrderType = ProgramSettingsFragment['orderTypes'][number];
-  type Supplier = ProgramSettingsFragment['suppliers'][number];
+  type OrderType = SupplierProgramSettingsFragment['orderTypes'][number];
+  type Supplier = SupplierProgramSettingsFragment['suppliers'][number];
   type Period = OrderType['availablePeriods'][number];
 
   const [program, setProgram] = useState<ProgramSetting | null>(null);
@@ -152,7 +152,7 @@ export const ProgramRequisitionOptions = ({
   onCreate,
 }: {
   onCreate: (props: NewProgramRequisition) => void;
-  programSettings: ProgramSettingsFragment[];
+  programSettings: SupplierProgramSettingsFragment[];
 }) => {
   const { programs, orderTypes, suppliers, periods, createOptions } =
     useProgramRequisitionOptions(programSettings);

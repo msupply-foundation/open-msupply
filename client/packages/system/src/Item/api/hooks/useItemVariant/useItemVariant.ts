@@ -1,11 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   FnUtils,
   isEmpty,
   useMutation,
   useTranslation,
 } from '@openmsupply-client/common';
-import { ItemVariantFragment } from '../../operations.generated';
+import {
+  ItemVariantFragment,
+  PackagingVariantFragment,
+} from '../../operations.generated';
 import { useItemApi, useItemGraphQL } from '../useItemApi';
 
 export function useItemVariant({
@@ -33,40 +36,37 @@ export function useItemVariant({
           id: '1',
           packagingLevel: 1,
           name: t('label.primary'),
-          packSize: 1,
-          volumePerUnit: 1,
         },
         {
           __typename: 'PackagingVariantNode',
           id: '2',
           packagingLevel: 2,
           name: t('label.secondary'),
-          packSize: 2,
-          volumePerUnit: 2,
         },
         {
           __typename: 'PackagingVariantNode',
           id: '3',
           packagingLevel: 3,
           name: t('label.tertiary'),
-          packSize: 3,
-          volumePerUnit: 3,
         },
       ],
     }
   );
 
-  const draftRef = useRef(draft);
-
-  useEffect(() => {
-    draftRef.current = draft;
-  }, [draft]);
+  const updatePackagingVariant = (update: Partial<PackagingVariantFragment>) =>
+    setDraft(currentDraft => ({
+      ...currentDraft,
+      packagingVariants: currentDraft.packagingVariants.map(pv =>
+        pv.id === update.id ? { ...pv, ...update } : pv
+      ),
+    }));
 
   return {
     draft,
     isComplete: getIsComplete(draft),
     updateDraft: (update: Partial<ItemVariantFragment>) =>
-      setDraft({ ...draftRef.current, ...update }),
+      setDraft(currentDraft => ({ ...currentDraft, ...update })),
+    updatePackagingVariant,
     save: mutateAsync,
   };
 }

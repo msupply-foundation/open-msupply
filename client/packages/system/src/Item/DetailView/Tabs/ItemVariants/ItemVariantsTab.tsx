@@ -6,6 +6,7 @@ import {
   ButtonWithIcon,
   FlatButton,
   InputWithLabelRow,
+  NothingHere,
   NumericTextInput,
   Typography,
 } from '@common/components';
@@ -44,9 +45,13 @@ export const ItemVariantsTab = ({
         />
       </AppBarButtonsPortal>
       <Box flex={1} marginX={2}>
-        {itemVariants.map(v => (
-          <ItemVariant key={v.id} variant={v} onOpen={onOpen} />
-        ))}
+        {itemVariants.length === 0 ? (
+          <NothingHere body={t('messages.no-item-variants')} />
+        ) : (
+          itemVariants.map(v => (
+            <ItemVariant key={v.id} variant={v} onOpen={onOpen} />
+          ))
+        )}
       </Box>
     </>
   );

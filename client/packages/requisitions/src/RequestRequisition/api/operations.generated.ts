@@ -113,14 +113,14 @@ export type DeleteRequestMutationVariables = Types.Exact<{
 
 export type DeleteRequestMutation = { __typename: 'Mutations', batchRequestRequisition: { __typename: 'BatchRequestRequisitionResponse', deleteRequestRequisitions?: Array<{ __typename: 'DeleteRequestRequisitionResponseWithId', id: string, response: { __typename: 'DeleteRequestRequisitionError', error: { __typename: 'CannotDeleteRequisitionWithLines', description: string } | { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
-export type ProgramSettingsFragment = { __typename: 'ProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> };
+export type SupplierProgramSettingsFragment = { __typename: 'SupplierProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> };
 
-export type ProgramSettingsQueryVariables = Types.Exact<{
+export type SupplierProgramSettingsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type ProgramSettingsQuery = { __typename: 'Queries', programRequisitionSettings: Array<{ __typename: 'ProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> };
+export type SupplierProgramSettingsQuery = { __typename: 'Queries', supplierProgramRequisitionSettings: Array<{ __typename: 'SupplierProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> };
 
 export const RequestRowFragmentDoc = gql`
     fragment RequestRow on RequisitionNode {
@@ -265,8 +265,8 @@ export const ConsumptionHistoryFragmentDoc = gql`
   isHistoric
 }
     `;
-export const ProgramSettingsFragmentDoc = gql`
-    fragment ProgramSettings on ProgramRequisitionSettingNode {
+export const SupplierProgramSettingsFragmentDoc = gql`
+    fragment SupplierProgramSettings on SupplierProgramRequisitionSettingNode {
   programName
   programId
   suppliers {
@@ -611,13 +611,13 @@ export const DeleteRequestDocument = gql`
   }
 }
     `;
-export const ProgramSettingsDocument = gql`
-    query programSettings($storeId: String!) {
-  programRequisitionSettings(storeId: $storeId) {
-    ...ProgramSettings
+export const SupplierProgramSettingsDocument = gql`
+    query supplierProgramSettings($storeId: String!) {
+  supplierProgramRequisitionSettings(storeId: $storeId) {
+    ...SupplierProgramSettings
   }
 }
-    ${ProgramSettingsFragmentDoc}`;
+    ${SupplierProgramSettingsFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -662,8 +662,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     deleteRequest(variables: DeleteRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteRequestMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestMutation>(DeleteRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequest', 'mutation', variables);
     },
-    programSettings(variables: ProgramSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramSettingsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ProgramSettingsQuery>(ProgramSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programSettings', 'query', variables);
+    supplierProgramSettings(variables: SupplierProgramSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SupplierProgramSettingsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<SupplierProgramSettingsQuery>(SupplierProgramSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'supplierProgramSettings', 'query', variables);
     }
   };
 }

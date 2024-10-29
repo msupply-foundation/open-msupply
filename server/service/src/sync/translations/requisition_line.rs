@@ -44,6 +44,34 @@ pub struct LegacyRequisitionLineRow {
 
     #[serde(rename = "itemName")]
     pub item_name: String,
+
+    #[serde(rename = "Cust_prev_stock_balance")]
+    pub initial_stock_on_hand_units: f64,
+
+    #[serde(rename = "Cust_stock_received")]
+    pub incoming_units: f64,
+
+    #[serde(rename = "Cust_stock_issued")]
+    pub outgoing_units: f64,
+
+    #[serde(rename = "stockLosses")]
+    pub loss_in_units: f64,
+
+    #[serde(rename = "stockAdditions")]
+    pub addition_in_units: f64,
+
+    #[serde(rename = "stockExpiring")]
+    pub expiring_units: f64,
+
+    #[serde(rename = "days_out_or_new_demand")]
+    pub days_out_of_stock: f64,
+
+    #[serde(rename = "optionID")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub option_id: Option<String>,
+
+    #[serde(rename = "Cust_loss_adjust")]
+    pub stock_adjustment_in_units: f64,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -89,6 +117,14 @@ impl SyncTranslation for RequisitionLineTranslation {
             approved_quantity: data.approved_quantity,
             approval_comment: data.approval_comment,
             item_name: data.item_name,
+            initial_stock_on_hand_units: data.initial_stock_on_hand_units,
+            incoming_units: data.incoming_units,
+            outgoing_units: data.outgoing_units,
+            loss_in_units: data.loss_in_units,
+            addition_in_units: data.addition_in_units,
+            expiring_units: data.expiring_units,
+            days_out_of_stock: data.days_out_of_stock,
+            option_id: data.option_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -124,6 +160,14 @@ impl SyncTranslation for RequisitionLineTranslation {
             approved_quantity,
             approval_comment,
             item_name,
+            initial_stock_on_hand_units,
+            incoming_units,
+            outgoing_units,
+            loss_in_units,
+            addition_in_units,
+            expiring_units,
+            days_out_of_stock,
+            option_id,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -153,6 +197,15 @@ impl SyncTranslation for RequisitionLineTranslation {
             approved_quantity,
             approval_comment,
             item_name,
+            initial_stock_on_hand_units,
+            incoming_units,
+            outgoing_units,
+            loss_in_units,
+            addition_in_units,
+            expiring_units,
+            days_out_of_stock,
+            option_id,
+            stock_adjustment_in_units: addition_in_units - loss_in_units,
         };
 
         Ok(PushTranslateResult::upsert(
@@ -193,6 +246,7 @@ mod tests {
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();

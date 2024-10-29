@@ -228,6 +228,39 @@ impl RequisitionLineNode {
 
         Ok(result_option.map(RequisitionLineNode::from_domain))
     }
+
+    // Manual requisition fields
+    pub async fn initial_stock_on_hand_units(&self) -> &f64 {
+        &self.row().initial_stock_on_hand_units
+    }
+
+    pub async fn incoming_units(&self) -> &f64 {
+        &self.row().incoming_units
+    }
+
+    pub async fn outgoing_units(&self) -> &f64 {
+        &self.row().outgoing_units
+    }
+
+    pub async fn loss_in_units(&self) -> &f64 {
+        &self.row().loss_in_units
+    }
+
+    pub async fn addition_in_units(&self) -> &f64 {
+        &self.row().addition_in_units
+    }
+
+    pub async fn expiring_units(&self) -> &f64 {
+        &self.row().expiring_units
+    }
+
+    pub async fn days_out_of_stock(&self) -> &f64 {
+        &self.row().days_out_of_stock
+    }
+
+    pub async fn option_id(&self) -> &Option<String> {
+        &self.row().option_id
+    }
 }
 
 impl RequisitionLineNode {

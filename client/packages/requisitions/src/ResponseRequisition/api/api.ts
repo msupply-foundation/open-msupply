@@ -148,6 +148,35 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
       throw new Error('Unable to load chart data');
     },
   },
+  insert: async ({
+    id,
+    otherPartyId,
+  }: {
+    id: string;
+    otherPartyId: string;
+  }): Promise<{
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+  }> => {
+    const result = await sdk.insertResponse({
+      storeId,
+      input: {
+        id,
+        otherPartyId,
+        maxMonthsOfStock: 1,
+        minMonthsOfStock: 0,
+      },
+    });
+
+    const { insertResponseRequisition } = result || {};
+
+    if (insertResponseRequisition?.__typename === 'RequisitionNode') {
+      return insertResponseRequisition;
+    }
+
+    throw new Error('Unable to create requisition');
+  },
   update: async (
     patch: Partial<ResponseFragment> & { id: string }
   ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {

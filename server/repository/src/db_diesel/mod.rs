@@ -78,6 +78,8 @@ pub mod program_enrolment;
 mod program_enrolment_row;
 pub mod program_event;
 mod program_event_row;
+pub mod program_indicator;
+mod program_indicator_row;
 mod program_requisition;
 pub mod property;
 pub mod property_row;
@@ -197,6 +199,8 @@ pub use program_enrolment::*;
 pub use program_enrolment_row::*;
 pub use program_event::*;
 pub use program_event_row::*;
+pub use program_indicator::*;
+pub use program_indicator_row::*;
 pub use program_requisition::*;
 pub use property_row::*;
 pub use reason_option::*;
@@ -251,6 +255,8 @@ use diesel::{
     prelude::*,
     r2d2::{ConnectionManager, Pool, PooledConnection},
     result::{DatabaseErrorKind as DieselDatabaseErrorKind, Error as DieselError},
+    sql_query,
+    sql_types::Text,
 };
 
 #[cfg(not(feature = "postgres"))]
@@ -322,4 +328,16 @@ fn get_connection(
         msg: "Failed to open Connection".to_string(),
         extra: format!("{:?}", error),
     })
+}
+
+#[derive(QueryableByName, Debug, PartialEq)]
+pub struct JsonRawRow {
+    #[diesel(sql_type = Text)]
+    pub json_row: String,
+}
+
+pub fn raw_query(connection: &StorageConnection, query: String) -> Vec<JsonRawRow> {
+    sql_query(&query)
+        .get_results::<JsonRawRow>(connection.lock().connection())
+        .unwrap()
 }

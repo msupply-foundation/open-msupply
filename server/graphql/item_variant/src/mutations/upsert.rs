@@ -64,7 +64,6 @@ pub fn upsert_item_variant(
             store_id: Some(store_id.to_string()),
         },
     )?;
-
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
