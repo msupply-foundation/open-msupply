@@ -1187,6 +1187,7 @@ export type CustomerReturnLineInput = {
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
+  itemVariantId?: InputMaybe<Scalars['String']['input']>;
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacksReturned: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
@@ -2522,6 +2523,7 @@ export type InsertInboundShipmentLineInput = {
   id: Scalars['String']['input'];
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
+  itemVariantId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
@@ -2970,6 +2972,7 @@ export type InsertStockLineInput = {
   id: Scalars['String']['input'];
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemId: Scalars['String']['input'];
+  itemVariantId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
   numberOfPacks: Scalars['Float']['input'];
   onHold: Scalars['Boolean']['input'];
@@ -3580,11 +3583,10 @@ export type ItemVariantMutationsUpsertItemVariantArgs = {
 export type ItemVariantNode = {
   __typename: 'ItemVariantNode';
   coldStorageTypeId?: Maybe<Scalars['String']['output']>;
-  dosesPerUnit?: Maybe<Scalars['Float']['output']>;
+  dosesPerUnit?: Maybe<Scalars['Int']['output']>;
   id: Scalars['String']['output'];
   manufacturer?: Maybe<NameNode>;
   manufacturerId?: Maybe<Scalars['String']['output']>;
-  manufacturerName?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   packagingVariants: Array<PackagingVariantNode>;
 };
@@ -7696,6 +7698,7 @@ export type UpdateInboundShipmentLineInput = {
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
+  itemVariantId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
