@@ -14,7 +14,6 @@ import {
 import { useRequest } from '../api';
 import {
   PackQuantityCell,
-  PackSizeUnitNameCell,
 } from '@openmsupply-client/system';
 
 const useStockOnHand: ColumnDataAccessor<RequestLineFragment, string> = ({
@@ -67,9 +66,7 @@ export const useRequestColumns = () => {
       key: 'packUnit',
       label: 'label.unit',
       align: ColumnAlign.Right,
-      Cell: PackSizeUnitNameCell({
-        getUnitName: r => r.item.unitName || null,
-      }),
+      accessor: ({ rowData }) => rowData.item.unitName,
     },
     {
       key: 'defaultPackSize',

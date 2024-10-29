@@ -26,7 +26,6 @@ export const PackSizeNumberInput = ({
   // This is shared between input with drop down and without drop down
   const packSizeNumberInput = (
     <NumericTextInput
-      //   focusOnRender={shouldFocusInput} TODO: How should this be set?
       value={packSize}
       onChange={newValue => {
         setPackSize(newValue || 1);

@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { useItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
-import { PackQuantityCell, PackSizeUnitNameCell } from '../Components';
+import { PackQuantityCell } from '../Components';
 
 const ItemListComponent: FC = () => {
   const {
@@ -44,19 +44,15 @@ const ItemListComponent: FC = () => {
         key: 'packUnit',
         label: 'label.unit',
         align: ColumnAlign.Right,
-        Cell: PackSizeUnitNameCell({
-          getUnitName: r => r.unitName ?? null,
-        }),
+        accessor: ({ rowData }) => rowData.unitName,
         width: 130,
         sortable: false,
       },
       [
         'stockOnHand',
         {
-          Cell: PackQuantityCell({
-            getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
-            getQuantity: r => r.stats.availableStockOnHand,
-          }),
+          Cell: PackQuantityCell,
+          accessor: ({rowData}) => rowData.stats.availableStockOnHand,
           label: 'label.soh',
           description: 'description.soh',
           sortable: false,
@@ -66,20 +62,17 @@ const ItemListComponent: FC = () => {
       [
         'monthlyConsumption',
         {
-          Cell: PackQuantityCell({
-            getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
-            getQuantity: r => r.stats.averageMonthlyConsumption,
-          }),
+          Cell: PackQuantityCell,
+          accessor: ({rowData}) => rowData.stats.averageMonthlyConsumption,
+  
           align: ColumnAlign.Right,
           sortable: false,
           width: 100,
         },
       ],
       {
-        Cell: PackQuantityCell({
-          getPackSize: _ => 1, // No pack variants, so we default to pack size of 1
-          getQuantity: r => r.stats.availableMonthsOfStockOnHand ?? 0,
-        }),
+        Cell: PackQuantityCell,
+        accessor: ({rowData}) => rowData.stats.availableMonthsOfStockOnHand ?? 0,
         align: ColumnAlign.Right,
         description: 'description.months-of-stock',
         key: 'availableMonthsOfStockOnHand',
