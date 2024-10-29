@@ -70,12 +70,12 @@ fn validate(
         return Err(OutError::NotThisStoreRequisition);
     }
 
-    if requisition_row.status != RequisitionStatus::Draft {
-        return Err(OutError::CannotEditRequisition);
-    }
-
     if requisition_row.r#type != RequisitionType::Request {
         return Err(OutError::NotARequestRequisition);
+    }
+
+    if requisition_row.status != RequisitionStatus::Draft {
+        return Err(OutError::CannotEditRequisition);
     }
 
     check_master_list_for_store(connection, store_id, &input.master_list_id)?
@@ -146,7 +146,7 @@ mod test {
         mock::{
             common::FullMockMasterList,
             mock_draft_request_requisition_for_update_test,
-            mock_full_draft_response_requisition_for_update_test, mock_item_a, mock_item_b,
+            mock_full_new_response_requisition_for_update_test, mock_item_a, mock_item_b,
             mock_item_c, mock_item_d, mock_name_store_a,
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
             mock_store_a, mock_store_b, mock_test_not_store_a_master_list,
@@ -206,7 +206,7 @@ mod test {
             service.add_from_master_list(
                 &context,
                 AddFromMasterList {
-                    request_requisition_id: mock_full_draft_response_requisition_for_update_test()
+                    request_requisition_id: mock_full_new_response_requisition_for_update_test()
                         .requisition
                         .id,
                     master_list_id: "n/a".to_owned()
