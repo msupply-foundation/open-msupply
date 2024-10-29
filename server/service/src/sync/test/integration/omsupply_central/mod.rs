@@ -1,5 +1,4 @@
 mod asset;
-mod pack_variant;
 mod test;
 
 use std::time::Duration;
