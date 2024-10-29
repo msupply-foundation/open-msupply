@@ -172,6 +172,33 @@ query responses(
   }
 }
 
+mutation insertResponse(
+  $storeId: String!
+  $input: InsertResponseRequisitionInput!
+) {
+  insertResponseRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+      requisitionNumber
+    }
+    ... on InsertResponseRequisitionError {
+      __typename
+      error {
+        description
+        ... on OtherPartyNotACustomer {
+          __typename
+          description
+        }
+        ... on OtherPartyNotVisible {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
 mutation updateResponseLine(
   $storeId: String!
   $input: UpdateResponseRequisitionLineInput!

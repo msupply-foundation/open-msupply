@@ -3844,6 +3844,7 @@ dependencies = [
  "graphql_inventory_adjustment",
  "graphql_invoice",
  "graphql_invoice_line",
+ "graphql_item_variant",
  "graphql_location",
  "graphql_pack_variant",
  "graphql_plugin",
@@ -4115,6 +4116,25 @@ dependencies = [
  "serde_json",
  "service",
  "strum",
+ "util",
+]
+
+[[package]]
+name = "graphql_item_variant"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde",
+ "serde_json",
+ "service",
  "util",
 ]
 

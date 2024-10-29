@@ -35,6 +35,14 @@ export type ResponsesQueryVariables = Types.Exact<{
 
 export type ResponsesQuery = { __typename: 'Queries', requisitions: { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, period?: { __typename: 'PeriodNode', name: string, startDate: string, endDate: string } | null, shipments: { __typename: 'InvoiceConnector', totalCount: number } }> } };
 
+export type InsertResponseMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertResponseRequisitionInput;
+}>;
+
+
+export type InsertResponseMutation = { __typename: 'Mutations', insertResponseRequisition: { __typename: 'InsertResponseRequisitionError', error: { __typename: 'OtherPartyNotACustomer', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
+
 export type UpdateResponseLineMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpdateResponseRequisitionLineInput;
@@ -233,6 +241,31 @@ export const ResponsesDocument = gql`
   }
 }
     ${ResponseRowFragmentDoc}`;
+export const InsertResponseDocument = gql`
+    mutation insertResponse($storeId: String!, $input: InsertResponseRequisitionInput!) {
+  insertResponseRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+      requisitionNumber
+    }
+    ... on InsertResponseRequisitionError {
+      __typename
+      error {
+        description
+        ... on OtherPartyNotACustomer {
+          __typename
+          description
+        }
+        ... on OtherPartyNotVisible {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+    `;
 export const UpdateResponseLineDocument = gql`
     mutation updateResponseLine($storeId: String!, $input: UpdateResponseRequisitionLineInput!) {
   updateResponseRequisitionLine(input: $input, storeId: $storeId) {
@@ -374,6 +407,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     responses(variables: ResponsesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ResponsesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ResponsesQuery>(ResponsesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'responses', 'query', variables);
+    },
+    insertResponse(variables: InsertResponseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertResponseMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertResponseMutation>(InsertResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertResponse', 'mutation', variables);
     },
     updateResponseLine(variables: UpdateResponseLineMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateResponseLineMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateResponseLineMutation>(UpdateResponseLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateResponseLine', 'mutation', variables);

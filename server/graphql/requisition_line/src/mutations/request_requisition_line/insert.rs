@@ -14,6 +14,8 @@ use service::{
     },
 };
 
+use crate::mutations::errors::RequisitionLineWithItemIdExists;
+
 #[derive(InputObject)]
 #[graphql(name = "InsertRequestRequisitionLineInput")]
 pub struct InsertInput {
@@ -131,14 +133,6 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 
     Err(graphql_error.extend())
 }
-pub struct RequisitionLineWithItemIdExists;
-#[Object]
-impl RequisitionLineWithItemIdExists {
-    pub async fn description(&self) -> &str {
-        "Requisition line already exists for this item"
-    }
-}
-
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;

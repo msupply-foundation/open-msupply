@@ -6,13 +6,14 @@ use crate::{
     RequisitionRow,
 };
 
-use super::MockData;
+use super::{mock_name_b, mock_store_a, MockData};
 
 pub fn mock_test_requisition_repository() -> MockData {
     let mut result = MockData::default();
     result.requisitions.push(mock_request_draft_requisition());
     result.requisitions.push(mock_request_draft_requisition2());
     result.requisitions.push(mock_request_draft_requisition3());
+    result.requisitions.push(new_response_requisition());
     result
 }
 
@@ -77,4 +78,15 @@ pub fn mock_program_request_draft_requisition() -> RequisitionRow {
         r.order_type = Some("order_type_a".to_string());
         r.period_id = Some("period_a".to_string());
     })
+}
+
+pub fn new_response_requisition() -> RequisitionRow {
+    RequisitionRow {
+        id: "new response requisition id".to_string(),
+        store_id: mock_store_a().id,
+        name_link_id: mock_name_b().id,
+        r#type: RequisitionType::Response,
+        status: RequisitionStatus::New,
+        ..Default::default()
+    }
 }
