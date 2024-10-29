@@ -4654,6 +4654,8 @@ export type NameFilterInput = {
   isCustomer?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by donor property */
   isDonor?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by manufacturer property */
+  isManufacturer?: InputMaybe<Scalars['Boolean']['input']>;
   /** Is this name a store */
   isStore?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by supplier property */
