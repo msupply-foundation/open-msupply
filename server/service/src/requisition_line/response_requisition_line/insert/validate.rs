@@ -1,7 +1,7 @@
-use repository::{RequisitionRow, RequisitionStatus, RequisitionType, StorageConnection};
+use repository::{ItemRow, RequisitionRow, RequisitionStatus, RequisitionType, StorageConnection};
 
 use crate::{
-    item::check_item_exists,
+    item::check_item_exists_return_item,
     requisition::common::check_requisition_row_exists,
     requisition_line::common::{check_item_exists_in_requisition, check_requisition_line_exists},
 };
@@ -12,7 +12,7 @@ pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &InsertResponseRequisitionLine,
-) -> Result<RequisitionRow, OutError> {
+) -> Result<(RequisitionRow, ItemRow), OutError> {
     if (check_requisition_line_exists(connection, &input.id)?).is_some() {
         return Err(OutError::RequisitionLineAlreadyExists);
     }
@@ -42,9 +42,8 @@ pub fn validate(
         return Err(OutError::ItemAlreadyExistInRequisition);
     }
 
-    if !check_item_exists(connection, store_id.to_string(), &input.item_id)? {
-        return Err(OutError::ItemDoesNotExist);
-    }
+    let item = check_item_exists_return_item(connection, store_id.to_string(), &input.item_id)?
+        .ok_or(OutError::ItemDoesNotExist)?;
 
-    Ok(requisition_row)
+    Ok((requisition_row, item.item_row))
 }
