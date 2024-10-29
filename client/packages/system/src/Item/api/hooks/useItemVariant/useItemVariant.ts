@@ -28,8 +28,8 @@ export function useItemVariant({
       __typename: 'ItemVariantNode',
       id: FnUtils.generateUUID(),
       name: '',
-      manufacturerId: '',
-      coldStorageTypeId: '',
+      manufacturerId: null,
+      coldStorageTypeId: null,
       packagingVariants: [
         {
           __typename: 'PackagingVariantNode',
@@ -75,6 +75,8 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
   const { api, storeId, queryClient } = useItemGraphQL();
   const { keys } = useItemApi();
   const t = useTranslation();
+
+  console.log('itemId', itemId);
 
   const mutationFn = async (input: ItemVariantFragment) => {
     const apiResult = await api.upsertItemVariant({

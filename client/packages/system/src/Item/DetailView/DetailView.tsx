@@ -49,7 +49,9 @@ export const ItemDetailView: FC = () => {
 
   isCentralServer &&
     tabs.push({
-      Component: <ItemVariantsTab itemVariants={data.variants} />,
+      Component: (
+        <ItemVariantsTab itemId={data.id} itemVariants={data.variants} />
+      ),
       value: t('label.variants'),
     }),
     Environment.FEATURE_PACK_VARIANTS &&
