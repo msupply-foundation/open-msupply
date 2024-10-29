@@ -29,7 +29,6 @@ pub(crate) mod name_property;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
-pub(crate) mod pack_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod program_indicator;
@@ -114,7 +113,6 @@ pub(crate) fn all_translators() -> SyncTranslators {
         sensor::boxed(),
         temperature_breach::boxed(),
         temperature_log::boxed(),
-        pack_variant::boxed(),
         // Special translations
         name_oms_fields::boxed(),
         special::name_to_name_store_join::boxed(),

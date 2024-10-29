@@ -7,6 +7,7 @@ import {
   UpdateResponseRequisitionInput,
   UpdateResponseRequisitionStatusInput,
   UpdateResponseRequisitionLineInput,
+  InsertProgramResponseRequisitionInput,
 } from '@openmsupply-client/common';
 import {
   ResponseFragment,
@@ -177,6 +178,26 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to create requisition');
   },
+  insertProgram: async (
+    input: InsertProgramResponseRequisitionInput
+  ): Promise<{
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+  }> => {
+    const result = await sdk.insertProgramResponse({
+      storeId,
+      input,
+    });
+
+    const { insertProgramResponseRequisition } = result || {};
+
+    if (insertProgramResponseRequisition?.__typename === 'RequisitionNode') {
+      return insertProgramResponseRequisition;
+    }
+
+    throw new Error('Unable to create requisition');
+  },
   update: async (
     patch: Partial<ResponseFragment> & { id: string }
   ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
@@ -191,22 +212,20 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to update requisition');
   },
-  deleteLines: async (_: ResponseLineFragment[]) => {
-    // NOT YET IMPLEMENTED IN SERVER API
+  deleteLines: async (responseLines: ResponseLineFragment[]) => {
+    const ids = responseLines.map(responseParser.toDeleteLine);
+    const result = await sdk.deleteResponseLines({ ids, storeId });
 
-    // const ids = responseLines.map(responseParser.toDeleteLine);
-    // const result = await sdk.deleteRequestLines({ ids, storeId });
-
-    // if (result.batchRequestRequisition.deleteRequestRequisitionLines) {
-    //   const failedLines =
-    //     result.batchRequestRequisition.deleteRequestRequisitionLines.filter(
-    //       line =>
-    //         line.response.__typename === 'DeleteRequestRequisitionLineError'
-    //     );
-    //   if (failedLines.length === 0) {
-    //     return result.batchRequestRequisition.deleteRequestRequisitionLines;
-    //   }
-    // }
+    if (result.batchResponseRequisition.deleteResponseRequisitionLines) {
+      const failedLines =
+        result.batchResponseRequisition.deleteResponseRequisitionLines.filter(
+          line =>
+            line.response.__typename === 'DeleteResponseRequisitionLineError'
+        );
+      if (failedLines.length === 0) {
+        return result.batchResponseRequisition.deleteResponseRequisitionLines;
+      }
+    }
 
     throw new Error('Could not delete requisition lines!');
   },
@@ -249,5 +268,9 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     const result =
       (await sdk.supplyRequestedQuantity({ storeId, responseId })) || {};
     return result;
+  },
+  programSettings: async () => {
+    const result = await sdk.customerProgramSettings({ storeId });
+    return result.customerProgramRequisitionSettings;
   },
 });

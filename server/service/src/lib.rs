@@ -40,7 +40,6 @@ pub mod master_list;
 pub mod name;
 pub mod name_property;
 pub mod number;
-pub mod pack_variant;
 pub mod permission;
 pub mod plugin;
 pub mod plugin_data;

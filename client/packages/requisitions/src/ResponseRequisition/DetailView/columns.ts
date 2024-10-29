@@ -9,11 +9,7 @@ import {
   TooltipTextCell,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from './../api';
-import {
-  PackVariantQuantityCell,
-  usePackVariant,
-  useIsPackVariantsEnabled,
-} from '@openmsupply-client/system';
+import { PackQuantityCell } from '@openmsupply-client/system';
 
 export const useResponseColumns = () => {
   const {
@@ -21,7 +17,6 @@ export const useResponseColumns = () => {
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columnDefinitions: ColumnDescription<ResponseLineFragment>[] = [
     getCommentPopoverColumn(),
@@ -43,17 +38,11 @@ export const useResponseColumns = () => {
     ],
     {
       key: 'packUnit',
-      label: isPackVariantsEnabled ? 'label.pack' : 'label.unit',
+      label: 'label.unit',
       sortable: false,
       accessor: ({ rowData }) => {
         // eslint-disable-next-line react-hooks/rules-of-hooks
-        const { variantsControl } = usePackVariant(
-          rowData.item.id,
-          rowData.item.unitName ?? null
-        );
-
-        if (variantsControl) return variantsControl.activeVariant.longName;
-        else return rowData.item.unitName;
+        return rowData.item.unitName;
       },
       width: 130,
     },
@@ -63,10 +52,8 @@ export const useResponseColumns = () => {
         label: 'label.our-soh',
         description: 'description.our-soh',
         sortable: false,
-        Cell: PackVariantQuantityCell({
-          getItemId: row => row.itemId,
-          getQuantity: row => row.itemStats.availableStockOnHand,
-        }),
+        Cell: PackQuantityCell,
+        accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
       },
     ],
     {
@@ -77,20 +64,16 @@ export const useResponseColumns = () => {
       align: ColumnAlign.Right,
       getSortValue: rowData =>
         rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand ?? '',
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row =>
-          row?.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) =>
+        rowData.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0,
     },
     [
       'requestedQuantity',
       {
         getSortValue: rowData => rowData.requestedQuantity,
-        Cell: PackVariantQuantityCell({
-          getItemId: row => row.itemId,
-          getQuantity: row => row.requestedQuantity ?? 0,
-        }),
+        Cell: PackQuantityCell,
+        accessor: ({rowData}) => rowData.requestedQuantity,
         width: 150,
       },
     ],
@@ -101,10 +84,8 @@ export const useResponseColumns = () => {
       key: 'approvedQuantity',
       label: 'label.approved-quantity',
       sortable: false,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row => row.approvedQuantity,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({rowData}) => rowData.approvedQuantity,
     });
     columnDefinitions.push({
       key: 'approvalComment',
@@ -117,10 +98,8 @@ export const useResponseColumns = () => {
     'supplyQuantity',
     {
       getSortValue: rowData => rowData.supplyQuantity,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row => row.supplyQuantity,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({rowData}) => rowData.requestedQuantity,
     },
   ]);
 
@@ -130,10 +109,8 @@ export const useResponseColumns = () => {
     key: 'alreadyIssued',
     align: ColumnAlign.Right,
     getSortValue: rowData => rowData.alreadyIssued,
-    Cell: PackVariantQuantityCell({
-      getItemId: row => row.itemId,
-      getQuantity: row => row.alreadyIssued,
-    }),
+    Cell: PackQuantityCell,
+    accessor: ({rowData}) => rowData.alreadyIssued,
     width: 100,
   });
 
@@ -143,10 +120,8 @@ export const useResponseColumns = () => {
     key: 'remainingToSupply',
     align: ColumnAlign.Right,
     getSortValue: rowData => rowData.remainingQuantityToSupply,
-    Cell: PackVariantQuantityCell({
-      getItemId: row => row.itemId,
-      getQuantity: row => row.remainingQuantityToSupply,
-    }),
+    Cell: PackQuantityCell,
+    accessor: ({rowData}) => rowData.remainingQuantityToSupply,
   });
   columnDefinitions.push(GenericColumnKey.Selection);
 

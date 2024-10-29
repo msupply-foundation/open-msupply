@@ -9,6 +9,7 @@ export const useResponse = {
     listAll: Document.useResponsesAll,
 
     insert: Document.useInsertResponse,
+    insertProgram: Document.useInsertProgramResponse,
     update: Document.useUpdateResponse,
 
     fields: Document.useResponseFields,
@@ -16,7 +17,6 @@ export const useResponse = {
   line: {
     list: Lines.useResponseLines,
     stats: Lines.useResponseLineStatsData,
-
     delete: Lines.useDeleteResponseLines,
     save: Lines.useSaveResponseLines,
   },
@@ -28,5 +28,6 @@ export const useResponse = {
     preferences: Utils.useRequisitionPreferences,
     supplyRequested: Utils.useSupplyRequestedQuantity,
     isDisabledByAuthorisation: Utils.useIsDisabledByAuthorisation,
+    programSettings: Utils.useProgramSettings,
   },
 };

@@ -6,6 +6,7 @@ mod add_item_variant_id_to_stock_line_and_invoice_line;
 mod add_manual_requisition_line_fields;
 mod add_reason_option_table;
 mod add_unserviceable_status_to_asset_status_enum;
+mod delete_pack_variant;
 mod item_variant;
 mod program_indicator_create_table;
 
@@ -24,6 +25,7 @@ impl Migration for V2_04_00 {
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
+            Box::new(delete_pack_variant::Migrate),
             Box::new(add_reason_option_table::Migrate),
             Box::new(add_manual_requisition_line_fields::Migrate),
             Box::new(add_unserviceable_status_to_asset_status_enum::Migrate),
