@@ -14,9 +14,6 @@ import { useFormatNumber, useTranslation } from '@common/intl';
 import {
   StockItemSearchInputWithStats,
   ItemRowWithStatsFragment,
-  VariantControl,
-  PackVariantSelect,
-  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
 import { DraftRequestLine } from './hooks';
@@ -27,9 +24,6 @@ interface RequestLineEditFormProps {
   onChangeItem: (item: ItemRowWithStatsFragment) => void;
   update: (patch: Partial<DraftRequestLine>) => void;
   draftLine: DraftRequestLine | null;
-  variantsControl?: VariantControl;
-  numberOfPacksFromQuantity: (totalQuantity: number) => number;
-  numberOfPacksToTotalQuantity: (numPacks: number) => number;
 }
 
 const InfoRow = ({ label, value }: { label: string; value: string }) => {
@@ -111,9 +105,6 @@ export const RequestLineEditForm = ({
   onChangeItem,
   update,
   draftLine,
-  variantsControl,
-  numberOfPacksFromQuantity,
-  numberOfPacksToTotalQuantity,
 }: RequestLineEditFormProps) => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
@@ -123,10 +114,7 @@ export const RequestLineEditForm = ({
     ({ item }) => item.id === currentItem?.id
   )?.itemName;
 
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
-
-  const isPacksEnabled =
-    !isPackVariantsEnabled && !!currentItem?.defaultPackSize;
+  const isPacksEnabled = !!currentItem?.defaultPackSize;
   const [isPacks, setIsPacks] = useState(isPacksEnabled);
 
   return (
@@ -162,30 +150,14 @@ export const RequestLineEditForm = ({
       Left={
         <>
           {currentItem && currentItem?.unitName ? (
-            variantsControl ? (
-              <Grid paddingTop={2}>
-                <InputWithLabelRow
-                  Input={
-                    <PackVariantSelect
-                      sx={{ minWidth: 110 }}
-                      variantControl={variantsControl}
-                    />
-                  }
-                  label={t('label.unit')}
-                />
-              </Grid>
-            ) : (
-              <InfoRow label={t('label.unit')} value={currentItem?.unitName} />
-            )
+            <InfoRow label={t('label.unit')} value={currentItem?.unitName} />
           ) : null}
 
           {!!draftLine?.itemStats.averageMonthlyConsumption ? (
             <InfoRow
               label={t('label.amc/amd')}
               value={formatNumber.round(
-                numberOfPacksFromQuantity(
-                  draftLine?.itemStats.averageMonthlyConsumption
-                ),
+                draftLine?.itemStats.averageMonthlyConsumption,
                 2
               )}
             />
@@ -194,9 +166,7 @@ export const RequestLineEditForm = ({
             <InfoRow
               label={t('label.soh')}
               value={formatNumber.round(
-                numberOfPacksFromQuantity(
-                  draftLine?.itemStats.availableStockOnHand
-                ),
+                draftLine?.itemStats.availableStockOnHand,
                 2
               )}
             />
@@ -229,9 +199,7 @@ export const RequestLineEditForm = ({
               Input={
                 <NumericTextInput
                   width={100}
-                  value={numberOfPacksFromQuantity(
-                    draftLine?.suggestedQuantity ?? 0
-                  )}
+                  value={draftLine?.suggestedQuantity ?? 0}
                   disabled
                 />
               }
@@ -242,12 +210,12 @@ export const RequestLineEditForm = ({
               Input={
                 <NumericTextInput
                   autoFocus
-                  value={numberOfPacksFromQuantity(requestedQuantity)}
+                  value={requestedQuantity}
                   disabled={isPacks}
                   width={100}
                   onChange={q =>
                     update({
-                      requestedQuantity: q && numberOfPacksToTotalQuantity(q),
+                      requestedQuantity: q,
                     })
                   }
                 />

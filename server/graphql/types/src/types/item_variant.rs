@@ -1,11 +1,11 @@
+use super::NameNode;
 use async_graphql::*;
+use dataloader::DataLoader;
+use graphql_core::loader::{NameByIdLoader, NameByIdLoaderInput};
+use graphql_core::{loader::PackagingVariantRowLoader, ContextExt};
 use repository::item_variant::{
     item_variant_row::ItemVariantRow, packaging_variant_row::PackagingVariantRow,
 };
-use repository::name::Name;
-use repository::NameRow;
-
-use super::NameNode;
 pub struct PackagingVariantNode {
     pub packaging_variant: PackagingVariantRow,
 }
@@ -29,60 +29,39 @@ impl ItemVariantNode {
     }
 
     pub async fn manufacturer_id(&self) -> &Option<String> {
-        &self.item_variant.manufacturer_link_id // TODO join to name for manufacturer_id
+        &self.item_variant.manufacturer_link_id // TODO join to name for manufacturer_id https://github.com/msupply-foundation/open-msupply/issues/5241
     }
 
     pub async fn cold_storage_type_id(&self) -> &Option<String> {
         &self.item_variant.cold_storage_type_id
     }
 
-    // tODO full node for cold_storage_type / manufacturer?
-    pub async fn manufacturer(&self) -> Option<NameNode> {
-        self.item_variant.manufacturer_link_id.clone().map(|id| {
-            NameNode::from_domain(Name {
-                name_row: NameRow {
-                    id,
-                    name: "Some manufacturer".to_string(),
-                    code: "MANUFACTURER".to_string(),
-                    ..Default::default()
-                },
-                name_store_join_row: None,
-                store_row: None,
-                properties: None,
-            })
-        })
+    pub async fn manufacturer(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<NameNode>> {
+        let manufacturer_link_id = match &self.item_variant.manufacturer_link_id {
+            Some(manufacturer_link_id) => manufacturer_link_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+        let result = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, manufacturer_link_id))
+            .await?;
+
+        Ok(result.map(|manufacturer| NameNode::from_domain(manufacturer)))
     }
 
-    pub async fn packaging_variants(&self) -> Vec<PackagingVariantNode> {
-        PackagingVariantNode::from_vec(vec![
-            PackagingVariantRow {
-                id: "1".to_string(),
-                item_variant_id: self.item_variant.id.clone(),
-                name: "Primary".to_string(),
-                packaging_level: 1,
-                pack_size: Some(1.0),
-                volume_per_unit: Some(1.0),
-                deleted_datetime: None,
-            },
-            PackagingVariantRow {
-                id: "2".to_string(),
-                item_variant_id: self.item_variant.id.clone(),
-                name: "Secondary".to_string(),
-                packaging_level: 2,
-                pack_size: Some(2.0),
-                volume_per_unit: Some(2.0),
-                deleted_datetime: None,
-            },
-            PackagingVariantRow {
-                id: "3".to_string(),
-                item_variant_id: self.item_variant.id.clone(),
-                name: "Tertiary".to_string(),
-                packaging_level: 3,
-                pack_size: Some(3.0),
-                volume_per_unit: Some(3.0),
-                deleted_datetime: None,
-            },
-        ])
+    pub async fn packaging_variants(&self, ctx: &Context<'_>) -> Result<Vec<PackagingVariantNode>> {
+        let loader = ctx.get_loader::<DataLoader<PackagingVariantRowLoader>>();
+        let result = loader
+            .load_one(self.item_variant.id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(PackagingVariantNode::from_vec(result))
     }
 }
 
