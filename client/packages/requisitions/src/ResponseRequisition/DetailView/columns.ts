@@ -21,6 +21,10 @@ export const useResponseColumns = () => {
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
+  const { programName, linkedRequisition } = useResponse.document.fields([
+    'programName',
+    'linkedRequisition',
+  ]);
   const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columnDefinitions: ColumnDescription<ResponseLineFragment>[] = [
@@ -69,18 +73,182 @@ export const useResponseColumns = () => {
         }),
       },
     ],
-    {
+  ];
+
+  if (!programName) {
+    columnDefinitions.push({
       key: 'customerStockOnHand',
       label: 'label.customer-soh',
       description: 'description.customer-soh',
       width: 100,
       align: ColumnAlign.Right,
       getSortValue: rowData =>
-        rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand ?? '',
+        linkedRequisition
+          ? (rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand ??
+            0)
+          : rowData.availableStockOnHand,
       Cell: PackVariantQuantityCell({
         getItemId: row => row.itemId,
         getQuantity: row =>
-          row?.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0,
+          linkedRequisition
+            ? (row.linkedRequisitionLine?.itemStats?.availableStockOnHand ?? 0)
+            : row.availableStockOnHand,
+      }),
+    });
+  }
+  columnDefinitions.push(
+    // TODO: Global pref to show/hide the next columns
+    {
+      key: 'initialStockOnHand',
+      label: 'label.initial-stock-on-hand',
+      width: 100,
+      align: ColumnAlign.Right,
+      sortable: false,
+      description: 'description.initial-stock-on-hand',
+      Cell: PackVariantQuantityCell({
+        getItemId: row => row.itemId,
+        getQuantity: row => row.initialStockOnHandUnits,
+      }),
+    },
+    {
+      key: 'incomingStock',
+      label: 'label.incoming',
+      width: 100,
+      align: ColumnAlign.Right,
+      sortable: false,
+      Cell: PackVariantQuantityCell({
+        getItemId: row => row.itemId,
+        getQuantity: row => row.incomingUnits,
+      }),
+    },
+    {
+      key: 'outgoingUnits',
+      label: 'label.outgoing',
+      width: 100,
+      align: ColumnAlign.Right,
+      sortable: false,
+      Cell: PackVariantQuantityCell({
+        getItemId: row => row.itemId,
+        getQuantity: row => row.outgoingUnits,
+      }),
+    },
+    {
+      key: 'losses',
+      label: 'label.losses',
+      width: 100,
+      align: ColumnAlign.Right,
+      sortable: false,
+      Cell: PackVariantQuantityCell({
+        getItemId: row => row.itemId,
+        getQuantity: row => row.lossInUnits,
+      }),
+    },
+    {
+      key: 'additions',
+      label: 'label.additions',
+      width: 100,
+      align: ColumnAlign.Right,
+      sortable: false,
+      Cell: PackVariantQuantityCell({
+        getItemId: row => row.itemId,
+        getQuantity: row => row.additionInUnits,
+      }),
+    },
+    {
+      key: 'availableUnits',
+      label: 'label.available',
+      width: 100,
+      align: ColumnAlign.Right,
+      sortable: false,
+      description: 'description.available-stock',
+      Cell: PackVariantQuantityCell({
+        getItemId: row => row.itemId,
+        getQuantity: row =>
+          (linkedRequisition
+            ? row.itemStats.availableStockOnHand
+            : row.availableStockOnHand) +
+          row.incomingUnits +
+          row.additionInUnits -
+          row.lossInUnits -
+          row.outgoingUnits,
+      }),
+    },
+    {
+      key: 'expiringUnits',
+      label: 'label.short-expiry',
+      width: 100,
+      align: ColumnAlign.Right,
+      sortable: false,
+      Cell: PackVariantQuantityCell({
+        getItemId: row => row.itemId,
+        getQuantity: row => row.expiringUnits,
+      }),
+    },
+    {
+      key: 'daysOutOfStock',
+      label: 'label.days-out-of-stock',
+      width: 100,
+      align: ColumnAlign.Right,
+      sortable: false,
+      Cell: PackVariantQuantityCell({
+        getItemId: row => row.itemId,
+        getQuantity: row => row.daysOutOfStock,
+      }),
+    },
+    {
+      key: 'amc',
+      label: 'label.amc',
+      width: 100,
+      align: ColumnAlign.Right,
+      sortable: false,
+      Cell: PackVariantQuantityCell({
+        getItemId: row => row.itemId,
+        getQuantity: row =>
+          linkedRequisition
+            ? (row.linkedRequisitionLine?.itemStats.averageMonthlyConsumption ??
+              0)
+            : row.averageMonthlyConsumption,
+      }),
+    },
+    {
+      key: 'mos',
+      label: 'label.months-of-stock',
+      width: 100,
+      align: ColumnAlign.Right,
+      sortable: false,
+      Cell: PackVariantQuantityCell({
+        getItemId: row => row.itemId,
+        getQuantity: row =>
+          (() => {
+            const availableStock = linkedRequisition
+              ? (row.linkedRequisitionLine?.itemStats?.availableStockOnHand ??
+                0)
+              : row.availableStockOnHand +
+                row.incomingUnits +
+                row.additionInUnits -
+                row.lossInUnits -
+                row.outgoingUnits;
+
+            const averageMonthlyConsumption = linkedRequisition
+              ? (row.linkedRequisitionLine?.itemStats
+                  .averageMonthlyConsumption ?? 0)
+              : row.averageMonthlyConsumption;
+
+            return averageMonthlyConsumption !== 0
+              ? availableStock / averageMonthlyConsumption
+              : 0;
+          })(),
+      }),
+    },
+    {
+      key: 'suggestedQuantity',
+      label: 'label.suggested-quantity',
+      width: 150,
+      align: ColumnAlign.Right,
+      sortable: false,
+      Cell: PackVariantQuantityCell({
+        getItemId: row => row.itemId,
+        getQuantity: row => row.suggestedQuantity,
       }),
     },
     [
@@ -93,8 +261,8 @@ export const useResponseColumns = () => {
         }),
         width: 150,
       },
-    ],
-  ];
+    ]
+  );
 
   if (isRemoteAuthorisation) {
     columnDefinitions.push({
@@ -123,6 +291,14 @@ export const useResponseColumns = () => {
       }),
     },
   ]);
+
+  // TODO: Global pref to show/hide column
+  columnDefinitions.push({
+    key: 'reason',
+    label: 'label.reason',
+    sortable: false,
+    accessor: ({ rowData }) => rowData.reason?.reason,
+  });
 
   columnDefinitions.push({
     label: 'label.already-issued',
