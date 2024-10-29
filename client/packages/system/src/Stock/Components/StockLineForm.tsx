@@ -25,6 +25,7 @@ import {
   PackVariantInput,
   usePackVariant,
   useIsPackVariantsEnabled,
+  ItemVariantSearchInput,
 } from '../..';
 import { StyledInputRow } from './StyledInputRow';
 
@@ -260,6 +261,17 @@ export const StockLineForm: FC<StockLineFormProps> = ({
             label={t('label.supplier')}
             text={String(supplierName)}
             textProps={{ textAlign: 'end' }}
+          />
+          <StyledInputRow
+            label={t('label.item-variant')}
+            Input={
+              <ItemVariantSearchInput
+                itemId={draft.itemId}
+                selectedId={draft.itemVariantId ?? null}
+                width={160}
+                onChange={id => onUpdate({ itemVariantId: id })}
+              />
+            }
           />
         </Grid>
       </Grid>

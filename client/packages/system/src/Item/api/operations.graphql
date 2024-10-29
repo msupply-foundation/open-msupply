@@ -266,6 +266,29 @@ query itemById($storeId: String!, $itemId: String!) {
   }
 }
 
+fragment ItemVariantOption on ItemVariantNode {
+  __typename
+  id
+  label: name
+}
+
+query itemVariants($storeId: String!, $itemId: String!) {
+  items(
+    storeId: $storeId
+    filter: { id: { equalTo: $itemId }, isActive: true }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        __typename
+        variants {
+          ...ItemVariantOption
+        }
+      }
+    }
+  }
+}
+
 fragment Variant on VariantNode {
   __typename
   id
