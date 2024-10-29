@@ -2,6 +2,7 @@ use crate::loader::*;
 use actix_web::web::Data;
 use anymap::{any::Any, Map};
 use async_graphql::dataloader::DataLoader;
+use item_variant::ItemVariantRowLoader;
 use repository::StorageConnectionManager;
 use service::service_provider::ServiceProvider;
 
@@ -399,6 +400,19 @@ pub async fn get_loaders(
     loaders.insert(DataLoader::new(
         ColdStorageTypeLoader {
             connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+
+    loaders.insert(DataLoader::new(
+        ItemVariantRowLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        PackagingVariantRowLoader {
+            service_provider: service_provider.clone(),
         },
         async_std::task::spawn,
     ));

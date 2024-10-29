@@ -9,11 +9,7 @@ import {
   TooltipTextCell,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from './../api';
-import {
-  PackVariantQuantityCell,
-  usePackVariant,
-  useIsPackVariantsEnabled,
-} from '@openmsupply-client/system';
+import { PackQuantityCell } from '@openmsupply-client/system';
 
 export const useResponseColumns = () => {
   const {
@@ -25,7 +21,6 @@ export const useResponseColumns = () => {
     'programName',
     'linkedRequisition',
   ]);
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columnDefinitions: ColumnDescription<ResponseLineFragment>[] = [
     getCommentPopoverColumn(),
@@ -47,17 +42,11 @@ export const useResponseColumns = () => {
     ],
     {
       key: 'packUnit',
-      label: isPackVariantsEnabled ? 'label.pack' : 'label.unit',
+      label: 'label.unit',
       sortable: false,
       accessor: ({ rowData }) => {
         // eslint-disable-next-line react-hooks/rules-of-hooks
-        const { variantsControl } = usePackVariant(
-          rowData.item.id,
-          rowData.item.unitName ?? null
-        );
-
-        if (variantsControl) return variantsControl.activeVariant.longName;
-        else return rowData.item.unitName;
+        return rowData.item.unitName;
       },
       width: 130,
     },
@@ -67,10 +56,8 @@ export const useResponseColumns = () => {
         label: 'label.our-soh',
         description: 'description.our-soh',
         sortable: false,
-        Cell: PackVariantQuantityCell({
-          getItemId: row => row.itemId,
-          getQuantity: row => row.itemStats.availableStockOnHand,
-        }),
+        Cell: PackQuantityCell,
+        accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
       },
     ],
   ];
@@ -82,18 +69,16 @@ export const useResponseColumns = () => {
       description: 'description.customer-soh',
       width: 100,
       align: ColumnAlign.Right,
+      Cell: PackQuantityCell,
       getSortValue: rowData =>
         linkedRequisition
           ? (rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand ??
             0)
           : rowData.availableStockOnHand,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row =>
-          linkedRequisition
-            ? (row.linkedRequisitionLine?.itemStats?.availableStockOnHand ?? 0)
-            : row.availableStockOnHand,
-      }),
+      accessor: ({ rowData }) =>
+        linkedRequisition
+          ? rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand
+          : rowData.availableStockOnHand,
     });
   }
   columnDefinitions.push(
@@ -105,10 +90,8 @@ export const useResponseColumns = () => {
       align: ColumnAlign.Right,
       sortable: false,
       description: 'description.initial-stock-on-hand',
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row => row.initialStockOnHandUnits,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) => rowData.initialStockOnHandUnits,
     },
     {
       key: 'incomingStock',
@@ -116,10 +99,8 @@ export const useResponseColumns = () => {
       width: 100,
       align: ColumnAlign.Right,
       sortable: false,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row => row.incomingUnits,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) => rowData.incomingUnits,
     },
     {
       key: 'outgoingUnits',
@@ -127,10 +108,8 @@ export const useResponseColumns = () => {
       width: 100,
       align: ColumnAlign.Right,
       sortable: false,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row => row.outgoingUnits,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) => rowData.outgoingUnits,
     },
     {
       key: 'losses',
@@ -138,10 +117,8 @@ export const useResponseColumns = () => {
       width: 100,
       align: ColumnAlign.Right,
       sortable: false,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row => row.lossInUnits,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) => rowData.lossInUnits,
     },
     {
       key: 'additions',
@@ -149,10 +126,8 @@ export const useResponseColumns = () => {
       width: 100,
       align: ColumnAlign.Right,
       sortable: false,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row => row.additionInUnits,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) => rowData.additionInUnits,
     },
     {
       key: 'availableUnits',
@@ -161,17 +136,20 @@ export const useResponseColumns = () => {
       align: ColumnAlign.Right,
       sortable: false,
       description: 'description.available-stock',
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row =>
-          (linkedRequisition
-            ? row.itemStats.availableStockOnHand
-            : row.availableStockOnHand) +
-          row.incomingUnits +
-          row.additionInUnits -
-          row.lossInUnits -
-          row.outgoingUnits,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) => {
+        const availableStock = !!linkedRequisition
+          ? (rowData.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0)
+          : rowData.availableStockOnHand +
+            rowData.incomingUnits +
+            rowData.additionInUnits -
+            rowData.lossInUnits -
+            rowData.outgoingUnits;
+
+        console.log('Available stock: ', rowData.incomingUnits);
+
+        return availableStock;
+      },
     },
     {
       key: 'expiringUnits',
@@ -179,10 +157,8 @@ export const useResponseColumns = () => {
       width: 100,
       align: ColumnAlign.Right,
       sortable: false,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row => row.expiringUnits,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) => rowData.expiringUnits,
     },
     {
       key: 'daysOutOfStock',
@@ -190,10 +166,8 @@ export const useResponseColumns = () => {
       width: 100,
       align: ColumnAlign.Right,
       sortable: false,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row => row.daysOutOfStock,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) => rowData.daysOutOfStock,
     },
     {
       key: 'amc',
@@ -201,14 +175,12 @@ export const useResponseColumns = () => {
       width: 100,
       align: ColumnAlign.Right,
       sortable: false,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row =>
-          linkedRequisition
-            ? (row.linkedRequisitionLine?.itemStats.averageMonthlyConsumption ??
-              0)
-            : row.averageMonthlyConsumption,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) =>
+        linkedRequisition
+          ? (rowData.linkedRequisitionLine?.itemStats
+              .averageMonthlyConsumption ?? 0)
+          : rowData.averageMonthlyConsumption,
     },
     {
       key: 'mos',
@@ -216,29 +188,25 @@ export const useResponseColumns = () => {
       width: 100,
       align: ColumnAlign.Right,
       sortable: false,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row =>
-          (() => {
-            const availableStock = linkedRequisition
-              ? (row.linkedRequisitionLine?.itemStats?.availableStockOnHand ??
-                0)
-              : row.availableStockOnHand +
-                row.incomingUnits +
-                row.additionInUnits -
-                row.lossInUnits -
-                row.outgoingUnits;
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) => {
+        const availableStock = linkedRequisition
+          ? (rowData.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0)
+          : rowData.availableStockOnHand +
+            rowData.incomingUnits +
+            rowData.additionInUnits -
+            rowData.lossInUnits -
+            rowData.outgoingUnits;
 
-            const averageMonthlyConsumption = linkedRequisition
-              ? (row.linkedRequisitionLine?.itemStats
-                  .averageMonthlyConsumption ?? 0)
-              : row.averageMonthlyConsumption;
+        const averageMonthlyConsumption = linkedRequisition
+          ? (rowData.linkedRequisitionLine?.itemStats
+              .averageMonthlyConsumption ?? 0)
+          : rowData.averageMonthlyConsumption;
 
-            return averageMonthlyConsumption !== 0
-              ? availableStock / averageMonthlyConsumption
-              : 0;
-          })(),
-      }),
+        return averageMonthlyConsumption !== 0
+          ? availableStock / averageMonthlyConsumption
+          : 0;
+      },
     },
     {
       key: 'suggestedQuantity',
@@ -246,19 +214,15 @@ export const useResponseColumns = () => {
       width: 150,
       align: ColumnAlign.Right,
       sortable: false,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row => row.suggestedQuantity,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) => rowData.suggestedQuantity,
     },
     [
       'requestedQuantity',
       {
         getSortValue: rowData => rowData.requestedQuantity,
-        Cell: PackVariantQuantityCell({
-          getItemId: row => row.itemId,
-          getQuantity: row => row.requestedQuantity ?? 0,
-        }),
+        Cell: PackQuantityCell,
+        accessor: ({ rowData }) => rowData.requestedQuantity,
         width: 150,
       },
     ]
@@ -269,10 +233,8 @@ export const useResponseColumns = () => {
       key: 'approvedQuantity',
       label: 'label.approved-quantity',
       sortable: false,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row => row.approvedQuantity,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) => rowData.approvedQuantity,
     });
     columnDefinitions.push({
       key: 'approvalComment',
@@ -285,10 +247,8 @@ export const useResponseColumns = () => {
     'supplyQuantity',
     {
       getSortValue: rowData => rowData.supplyQuantity,
-      Cell: PackVariantQuantityCell({
-        getItemId: row => row.itemId,
-        getQuantity: row => row.supplyQuantity,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) => rowData.requestedQuantity,
     },
   ]);
 
@@ -306,10 +266,8 @@ export const useResponseColumns = () => {
     key: 'alreadyIssued',
     align: ColumnAlign.Right,
     getSortValue: rowData => rowData.alreadyIssued,
-    Cell: PackVariantQuantityCell({
-      getItemId: row => row.itemId,
-      getQuantity: row => row.alreadyIssued,
-    }),
+    Cell: PackQuantityCell,
+    accessor: ({ rowData }) => rowData.alreadyIssued,
     width: 100,
   });
 
@@ -319,10 +277,8 @@ export const useResponseColumns = () => {
     key: 'remainingToSupply',
     align: ColumnAlign.Right,
     getSortValue: rowData => rowData.remainingQuantityToSupply,
-    Cell: PackVariantQuantityCell({
-      getItemId: row => row.itemId,
-      getQuantity: row => row.remainingQuantityToSupply,
-    }),
+    Cell: PackQuantityCell,
+    accessor: ({ rowData }) => rowData.remainingQuantityToSupply,
   });
   columnDefinitions.push(GenericColumnKey.Selection);
 

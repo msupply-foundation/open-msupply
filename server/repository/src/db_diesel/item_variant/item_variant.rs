@@ -16,6 +16,7 @@ pub type ItemVariantSort = Sort<ItemVariantSortField>;
 pub struct ItemVariantFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
+    pub item_id: Option<EqualFilter<String>>,
 }
 
 impl ItemVariantFilter {
@@ -30,6 +31,11 @@ impl ItemVariantFilter {
 
     pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
+        self
+    }
+
+    pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.item_id = Some(filter);
         self
     }
 }
@@ -111,9 +117,10 @@ fn create_filtered_query(filter: Option<ItemVariantFilter>) -> BoxedItemVariantQ
     query = query.filter(item_variant::deleted_datetime.is_null());
 
     if let Some(f) = filter {
-        let ItemVariantFilter { id, name } = f;
+        let ItemVariantFilter { id, name, item_id } = f;
 
         apply_equal_filter!(query, id, item_variant::id);
+        apply_equal_filter!(query, item_id, item_variant::item_link_id); // TODO: item_link_id, look up item_id? If item is merged, should variant be merged with it?
         apply_string_filter!(query, name, item_variant::name);
     }
     query

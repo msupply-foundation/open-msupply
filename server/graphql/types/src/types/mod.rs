@@ -79,9 +79,6 @@ pub use self::property::*;
 pub mod program;
 pub use self::program::*;
 
-pub mod pack_variant;
-pub use self::pack_variant::*;
-
 pub mod supplier_return_line;
 pub use self::supplier_return_line::*;
 

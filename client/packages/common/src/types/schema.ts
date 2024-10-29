@@ -802,16 +802,6 @@ export type CanOnlyChangeToPickedWhenNoUnallocatedLines = UpdatePrescriptionErro
   invoiceLines: InvoiceLineConnector;
 };
 
-export type CannotAddPackSizeOfZero = InsertPackVariantErrorInterface & {
-  __typename: 'CannotAddPackSizeOfZero';
-  description: Scalars['String']['output'];
-};
-
-export type CannotAddWithNoAbbreviationAndName = InsertPackVariantErrorInterface & UpdatePackVariantErrorInterface & {
-  __typename: 'CannotAddWithNoAbbreviationAndName';
-  description: Scalars['String']['output'];
-};
-
 export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & {
   __typename: 'CannotChangeStatusOfInvoiceOnHold';
   description: Scalars['String']['output'];
@@ -909,7 +899,6 @@ export type CentralServerMutationNode = {
   general: CentralGeneralMutations;
   itemVariant: ItemVariantMutations;
   logReason: AssetLogReasonMutations;
-  packVariant: PackVariantMutations;
   vaccineCourse: VaccineCourseMutations;
 };
 
@@ -1210,7 +1199,7 @@ export type CustomerReturnLineNode = {
   stockLineId?: Maybe<Scalars['String']['output']>;
 };
 
-export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & DeleteVaccineCourseErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpdateVaccineCourseErrorInterface & {
+export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & DeleteVaccineCourseErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpdateVaccineCourseErrorInterface & UpsertItemVariantErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -1445,12 +1434,6 @@ export type DeleteOutboundShipmentUnallocatedLineResponseWithId = {
   id: Scalars['String']['output'];
   response: DeleteOutboundShipmentUnallocatedLineResponse;
 };
-
-export type DeletePackVariantInput = {
-  id: Scalars['String']['input'];
-};
-
-export type DeletePackVariantResponse = DeleteResponse;
 
 export type DeletePrescriptionError = {
   __typename: 'DeletePrescriptionError';
@@ -2698,25 +2681,6 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
   response: InsertOutboundShipmentUnallocatedLineResponse;
 };
 
-export type InsertPackVariantError = {
-  __typename: 'InsertPackVariantError';
-  error: InsertPackVariantErrorInterface;
-};
-
-export type InsertPackVariantErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type InsertPackVariantInput = {
-  id: Scalars['String']['input'];
-  itemId: Scalars['String']['input'];
-  longName: Scalars['String']['input'];
-  packSize: Scalars['Float']['input'];
-  shortName: Scalars['String']['input'];
-};
-
-export type InsertPackVariantResponse = InsertPackVariantError | VariantNode;
-
 export type InsertPatientInput = {
   address1?: InputMaybe<Scalars['String']['input']>;
   code: Scalars['String']['input'];
@@ -3094,7 +3058,7 @@ export type InsertVaccineCourseInput = {
 
 export type InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode;
 
-export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpsertItemVariantErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -3518,19 +3482,6 @@ export enum ItemNodeType {
   Stock = 'STOCK'
 }
 
-export type ItemPackVariantConnector = {
-  __typename: 'ItemPackVariantConnector';
-  nodes: Array<ItemPackVariantNode>;
-  totalCount: Scalars['Int']['output'];
-};
-
-export type ItemPackVariantNode = {
-  __typename: 'ItemPackVariantNode';
-  itemId: Scalars['String']['output'];
-  mostUsedPackVariantId: Scalars['String']['output'];
-  packVariants: Array<VariantNode>;
-};
-
 export type ItemPriceInput = {
   itemId: Scalars['String']['input'];
   nameId?: InputMaybe<Scalars['String']['input']>;
@@ -3597,6 +3548,11 @@ export type ItemVariantNode = {
   manufacturerId?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   packagingVariants: Array<PackagingVariantNode>;
+};
+
+
+export type ItemVariantNodeManufacturerArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type ItemsResponse = ItemConnector;
@@ -4919,31 +4875,6 @@ export type OutboundInvoiceCounts = {
   notShipped: Scalars['Int']['output'];
 };
 
-export type PackVariantMutations = {
-  __typename: 'PackVariantMutations';
-  deletePackVariant: DeletePackVariantResponse;
-  insertPackVariant: InsertPackVariantResponse;
-  updatePackVariant: UpdatePackVariantResponse;
-};
-
-
-export type PackVariantMutationsDeletePackVariantArgs = {
-  input: DeletePackVariantInput;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type PackVariantMutationsInsertPackVariantArgs = {
-  input: InsertPackVariantInput;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type PackVariantMutationsUpdatePackVariantArgs = {
-  input: UpdatePackVariantInput;
-  storeId: Scalars['String']['input'];
-};
-
 export type PackagingVariantInput = {
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
@@ -5513,7 +5444,6 @@ export type Queries = {
   /** Query omSupply "name" entries */
   names: NamesResponse;
   numberOfRecordsInPushQueue: Scalars['Int']['output'];
-  packVariants: ItemPackVariantConnector;
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
@@ -5945,11 +5875,6 @@ export type QueriesNamesArgs = {
   filter?: InputMaybe<NameFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<NameSortInput>>;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type QueriesPackVariantsArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -7932,23 +7857,6 @@ export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
   response: UpdateOutboundShipmentUnallocatedLineResponse;
 };
 
-export type UpdatePackVariantError = {
-  __typename: 'UpdatePackVariantError';
-  error: UpdatePackVariantErrorInterface;
-};
-
-export type UpdatePackVariantErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type UpdatePackVariantInput = {
-  id: Scalars['String']['input'];
-  longName: Scalars['String']['input'];
-  shortName: Scalars['String']['input'];
-};
-
-export type UpdatePackVariantResponse = UpdatePackVariantError | VariantNode;
-
 /**
  * All fields in the input object will be used to update the patient record.
  * This means that the caller also has to provide the fields that are not going to change.
@@ -8416,6 +8324,15 @@ export type UpdateVaccineCourseInput = {
 
 export type UpdateVaccineCourseResponse = UpdateVaccineCourseError | VaccineCourseNode;
 
+export type UpsertItemVariantError = {
+  __typename: 'UpsertItemVariantError';
+  error: UpsertItemVariantErrorInterface;
+};
+
+export type UpsertItemVariantErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type UpsertItemVariantInput = {
   coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
   dosesPerUnit?: InputMaybe<Scalars['Int']['input']>;
@@ -8435,7 +8352,7 @@ export type UpsertLogLevelResponse = {
   level: LogLevelEnum;
 };
 
-export type UpsertPackVariantResponse = ItemVariantNode;
+export type UpsertPackVariantResponse = ItemVariantNode | UpsertItemVariantError;
 
 export type UpsertVaccineCourseDoseInput = {
   customAgeLabel?: InputMaybe<Scalars['String']['input']>;
@@ -8710,21 +8627,6 @@ export type VaccineCourseSortInput = {
 };
 
 export type VaccineCoursesResponse = VaccineCourseConnector;
-
-export type VariantNode = {
-  __typename: 'VariantNode';
-  id: Scalars['String']['output'];
-  isActive: Scalars['Boolean']['output'];
-  itemId: Scalars['String']['output'];
-  longName: Scalars['String']['output'];
-  packSize: Scalars['Float']['output'];
-  shortName: Scalars['String']['output'];
-};
-
-export type VariantWithPackSizeAlreadyExists = InsertPackVariantErrorInterface & {
-  __typename: 'VariantWithPackSizeAlreadyExists';
-  description: Scalars['String']['output'];
-};
 
 export enum VenCategoryType {
   E = 'E',
