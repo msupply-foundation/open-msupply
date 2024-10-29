@@ -22,6 +22,7 @@ use crate::{
     },
     invoice::{InvoiceService, InvoiceServiceTrait},
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
+    item::ItemServiceTrait,
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     label_printer_settings_service::LabelPrinterSettingsServiceTrait,
     localisations::Localisations,
@@ -92,6 +93,7 @@ pub struct ServiceProvider {
     // Dashboard:
     pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
+    pub item_service: Box<dyn ItemServiceTrait>,
     pub item_count_service: Box<dyn ItemCountServiceTrait>,
     pub requisition_count_service: Box<dyn RequisitionCountServiceTrait>,
     // Stock stats
@@ -197,6 +199,7 @@ impl ServiceProvider {
             stocktake_line_service: Box::new(StocktakeLineService {}),
             requisition_service: Box::new(RequisitionService {}),
             requisition_line_service: Box::new(RequisitionLineService {}),
+            item_service: Box::new(crate::item::ItemService {}),
             item_stats_service: Box::new(ItemStatsService {}),
             clinician_service: Box::new(ClinicianService {}),
             general_service: Box::new(GeneralService {}),

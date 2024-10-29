@@ -49,6 +49,7 @@ pub fn generate_batch(
         number_of_packs,
         location_id,
         note,
+        item_variant_id,
         ..
     }: InvoiceLineRow,
     StockLineInput {
@@ -105,6 +106,7 @@ pub fn generate_batch(
         supplier_link_id,
         on_hold,
         barcode_id,
+        item_variant_id,
     };
 
     Ok(stock_line_row)
