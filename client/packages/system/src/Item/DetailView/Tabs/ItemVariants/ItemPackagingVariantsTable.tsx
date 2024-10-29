@@ -40,7 +40,7 @@ export const ItemPackagingVariantsTable = ({
     },
     {
       key: 'packSize',
-      Cell: update ? NumberInputCell : TooltipTextCell,
+      Cell: update ? PackSizeInputCell : TooltipTextCell,
       label: 'label.pack-size',
       setter: updatePackaging,
     },
@@ -66,5 +66,10 @@ export const ItemPackagingVariantsTable = ({
 
 // Input cells can't be defined inline, otherwise they lose focus on re-render
 const VolumeInputCell = (props: CellProps<PackagingVariantFragment>) => (
-  <NumberInputCell decimalLimit={100} {...props} />
+  <NumberInputCell decimalLimit={10} {...props} />
+);
+
+// Input cells can't be defined inline, otherwise they lose focus on re-render
+const PackSizeInputCell = (props: CellProps<PackagingVariantFragment>) => (
+  <NumberInputCell decimalLimit={10} {...props} />
 );
