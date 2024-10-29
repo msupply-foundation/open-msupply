@@ -8,7 +8,6 @@ interface ItemVariantSearchInputProps {
   onChange: (variantId: string | null) => void;
   disabled?: boolean;
   width?: number | string;
-  autoFocus?: boolean;
 }
 
 export const ItemVariantSearchInput = ({
@@ -16,7 +15,6 @@ export const ItemVariantSearchInput = ({
   width,
   onChange,
   disabled,
-  autoFocus = false,
   itemId,
 }: ItemVariantSearchInputProps) => {
   const t = useTranslation();
@@ -28,7 +26,6 @@ export const ItemVariantSearchInput = ({
 
   return (
     <Autocomplete
-      autoFocus={autoFocus}
       disabled={disabled}
       width={`${width}px`}
       popperMinWidth={Number(width)}

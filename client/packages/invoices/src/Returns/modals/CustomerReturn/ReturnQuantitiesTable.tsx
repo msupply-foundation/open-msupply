@@ -11,6 +11,7 @@ import {
   useColumns,
 } from '@openmsupply-client/common';
 import {
+  ItemVariantInputCell,
   PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
   PackVariantEntryCell,
   useIsPackVariantsEnabled,
@@ -36,6 +37,16 @@ export const QuantityReturnedTableComponent = ({
       'itemName',
       // 'itemUnit', // not implemented for now
       // 'location',
+      {
+        key: 'itemVariantId',
+        label: 'label.item-variant',
+        width: 170,
+        setter: updateLine,
+        Cell: props => (
+          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+        ),
+        getIsDisabled: () => isDisabled,
+      },
       [
         'batch',
         {

@@ -1,5 +1,5 @@
 use crate::{
-    check_location_exists,
+    check_item_variant_exists, check_location_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         stock_in_line::{check_batch, check_pack_size},
@@ -50,6 +50,17 @@ pub fn validate(
     }
     if !check_location_exists(connection, store_id, &input.location)? {
         return Err(LocationDoesNotExist);
+    }
+    // TODO
+    match &input.item_variant_id {
+        Some(NullableUpdate {
+            value: Some(item_variant_id),
+        }) => {
+            if !check_item_variant_exists(connection, item_variant_id)? {
+                return Err(ItemVariantDoesNotExist);
+            }
+        }
+        _ => {}
     }
 
     if !check_line_belongs_to_invoice(line_row, &invoice) {
