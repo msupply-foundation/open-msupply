@@ -66,5 +66,5 @@ export const ItemPackagingVariantsTable = ({
 
 // Input cells can't be defined inline, otherwise they lose focus on re-render
 const VolumeInputCell = (props: CellProps<PackagingVariantFragment>) => (
-  <NumberInputCell decimalLimit={2} {...props} />
+  <NumberInputCell decimalLimit={100} {...props} />
 );
