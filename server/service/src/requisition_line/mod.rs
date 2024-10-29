@@ -16,8 +16,9 @@ use self::{
         ResponseRequisitionStatsError,
     },
     response_requisition_line::{
-        update_response_requisition_line, UpdateResponseRequisitionLine,
-        UpdateResponseRequisitionLineError,
+        insert_response_requisition_line, update_response_requisition_line,
+        InsertResponseRequisitionLine, InsertResponseRequisitionLineError,
+        UpdateResponseRequisitionLine, UpdateResponseRequisitionLineError,
     },
 };
 
@@ -64,6 +65,14 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
         input: DeleteRequestRequisitionLine,
     ) -> Result<String, DeleteRequestRequisitionLineError> {
         delete_request_requisition_line(ctx, input)
+    }
+
+    fn insert_response_requisition_line(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertResponseRequisitionLine,
+    ) -> Result<RequisitionLine, InsertResponseRequisitionLineError> {
+        insert_response_requisition_line(ctx, input)
     }
 
     fn update_response_requisition_line(
