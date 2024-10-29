@@ -5,10 +5,7 @@ import {
   CellProps,
   ColumnDescription,
 } from '@openmsupply-client/common';
-import {
-  getPackVariantCell,
-  useIsPackVariantsEnabled,
-} from '@openmsupply-client/system';
+
 import React from 'react';
 import { GenerateSupplierReturnLineFragment } from '../../api';
 
@@ -23,59 +20,36 @@ export const QuantityToReturnTableComponent = ({
   ) => void;
   isDisabled: boolean;
 }) => {
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
-
   const columnDescriptions: ColumnDescription<GenerateSupplierReturnLineFragment>[] =
     [
       'itemCode',
       'itemName',
-      // 'location',
       'batch',
       'expiryDate',
-    ];
-
-  if (isPackVariantsEnabled) {
-    columnDescriptions.push({
-      key: 'packUnit',
-      label: 'label.pack',
-      sortable: false,
-      // eslint-disable-next-line new-cap
-      Cell: getPackVariantCell({
-        getItemId: row => row.item.id,
-        getPackSizes: row => [row.packSize],
-        getUnitName: row => row.item.unitName || null,
-      }),
-    });
-  } else {
-    columnDescriptions.push(
       [
         'itemUnit',
         {
           accessor: ({ rowData }) => rowData.item.unitName ?? '',
         },
       ],
-      'packSize'
-    );
-  }
-
-  columnDescriptions.push(
-    [
-      'availableNumberOfPacks',
-      {
-        description: 'description.pack-quantity',
-      },
-    ],
-    [
-      'numberOfPacksToReturn',
-      {
-        description: 'description.pack-quantity',
-        width: 100,
-        setter: updateLine,
-        getIsDisabled: () => isDisabled,
-        Cell: NumberOfPacksToReturnReturnInputCell,
-      },
-    ]
-  );
+      'packSize',
+      [
+        'availableNumberOfPacks',
+        {
+          description: 'description.pack-quantity',
+        },
+      ],
+      [
+        'numberOfPacksToReturn',
+        {
+          description: 'description.pack-quantity',
+          width: 100,
+          setter: updateLine,
+          getIsDisabled: () => isDisabled,
+          Cell: NumberOfPacksToReturnReturnInputCell,
+        },
+      ],
+    ];
 
   const columns = useColumns<GenerateSupplierReturnLineFragment>(
     columnDescriptions,

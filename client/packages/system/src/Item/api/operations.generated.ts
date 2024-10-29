@@ -90,41 +90,6 @@ export type ItemVariantsQueryVariables = Types.Exact<{
 
 export type ItemVariantsQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', nodes: Array<{ __typename: 'ItemNode', variants: Array<{ __typename: 'ItemVariantNode', id: string, label: string }> }> } };
 
-export type VariantFragment = { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string };
-
-export type PackVariantFragment = { __typename: 'ItemPackVariantNode', itemId: string, mostUsedPackVariantId: string, packVariants: Array<{ __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string }> };
-
-export type PackVariantsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-}>;
-
-
-export type PackVariantsQuery = { __typename: 'Queries', packVariants: { __typename: 'ItemPackVariantConnector', totalCount: number, nodes: Array<{ __typename: 'ItemPackVariantNode', itemId: string, mostUsedPackVariantId: string, packVariants: Array<{ __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string }> }> } };
-
-export type InsertPackVariantMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  input: Types.InsertPackVariantInput;
-}>;
-
-
-export type InsertPackVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', packVariant: { __typename: 'PackVariantMutations', insertPackVariant: { __typename: 'InsertPackVariantError', error: { __typename: 'CannotAddPackSizeOfZero', description: string } | { __typename: 'CannotAddWithNoAbbreviationAndName', description: string } | { __typename: 'VariantWithPackSizeAlreadyExists', description: string } } | { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } } } };
-
-export type UpdatePackVariantMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  input: Types.UpdatePackVariantInput;
-}>;
-
-
-export type UpdatePackVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', packVariant: { __typename: 'PackVariantMutations', updatePackVariant: { __typename: 'UpdatePackVariantError', error: { __typename: 'CannotAddWithNoAbbreviationAndName', description: string } } | { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } } } };
-
-export type DeletePackVariantMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  input: Types.DeletePackVariantInput;
-}>;
-
-
-export type DeletePackVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', packVariant: { __typename: 'PackVariantMutations', deletePackVariant: { __typename: 'DeleteResponse', id: string } } } };
-
 export type GetHistoricalStockLinesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   itemId: Types.Scalars['String']['input'];
@@ -140,7 +105,7 @@ export type UpsertItemVariantMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpsertItemVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', itemVariant: { __typename: 'ItemVariantMutations', upsertItemVariant: { __typename: 'ItemVariantNode', id: string, name: string, dosesPerUnit?: number | null, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }> } } } };
+export type UpsertItemVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', itemVariant: { __typename: 'ItemVariantMutations', upsertItemVariant: { __typename: 'ItemVariantNode', id: string, name: string, dosesPerUnit?: number | null, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }> } | { __typename: 'UpsertItemVariantError' } } } };
 
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
@@ -229,7 +194,7 @@ export const ItemVariantFragmentDoc = gql`
   name
   dosesPerUnit
   manufacturerId
-  manufacturer {
+  manufacturer(storeId: $storeId) {
     ...NameRow
   }
   coldStorageTypeId
@@ -307,25 +272,6 @@ export const ItemVariantOptionFragmentDoc = gql`
   label: name
 }
     `;
-export const VariantFragmentDoc = gql`
-    fragment Variant on VariantNode {
-  __typename
-  id
-  itemId
-  longName
-  packSize
-  shortName
-}
-    `;
-export const PackVariantFragmentDoc = gql`
-    fragment PackVariant on ItemPackVariantNode {
-  itemId
-  mostUsedPackVariantId
-  packVariants {
-    ...Variant
-  }
-}
-    ${VariantFragmentDoc}`;
 export const ItemsWithStockLinesDocument = gql`
     query itemsWithStockLines($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput, $storeId: String!) {
   items(
@@ -440,71 +386,6 @@ export const ItemVariantsDocument = gql`
   }
 }
     ${ItemVariantOptionFragmentDoc}`;
-export const PackVariantsDocument = gql`
-    query packVariants($storeId: String!) {
-  packVariants(storeId: $storeId) {
-    __typename
-    nodes {
-      ...PackVariant
-    }
-    totalCount
-  }
-}
-    ${PackVariantFragmentDoc}`;
-export const InsertPackVariantDocument = gql`
-    mutation insertPackVariant($storeId: String!, $input: InsertPackVariantInput!) {
-  centralServer {
-    packVariant {
-      insertPackVariant(storeId: $storeId, input: $input) {
-        __typename
-        ... on VariantNode {
-          ...Variant
-        }
-        ... on InsertPackVariantError {
-          error {
-            __typename
-            description
-          }
-        }
-      }
-    }
-  }
-}
-    ${VariantFragmentDoc}`;
-export const UpdatePackVariantDocument = gql`
-    mutation updatePackVariant($storeId: String!, $input: UpdatePackVariantInput!) {
-  centralServer {
-    packVariant {
-      updatePackVariant(storeId: $storeId, input: $input) {
-        __typename
-        ... on VariantNode {
-          ...Variant
-        }
-        ... on UpdatePackVariantError {
-          error {
-            __typename
-            description
-          }
-        }
-      }
-    }
-  }
-}
-    ${VariantFragmentDoc}`;
-export const DeletePackVariantDocument = gql`
-    mutation deletePackVariant($storeId: String!, $input: DeletePackVariantInput!) {
-  centralServer {
-    packVariant {
-      deletePackVariant(storeId: $storeId, input: $input) {
-        ... on DeleteResponse {
-          __typename
-          id
-        }
-      }
-    }
-  }
-}
-    `;
 export const GetHistoricalStockLinesDocument = gql`
     query getHistoricalStockLines($storeId: String!, $itemId: String!, $datetime: DateTime) {
   historicalStockLines(storeId: $storeId, itemId: $itemId, datetime: $datetime) {
@@ -555,18 +436,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     itemVariants(variables: ItemVariantsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemVariantsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemVariantsQuery>(ItemVariantsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemVariants', 'query', variables);
-    },
-    packVariants(variables: PackVariantsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PackVariantsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PackVariantsQuery>(PackVariantsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'packVariants', 'query', variables);
-    },
-    insertPackVariant(variables: InsertPackVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertPackVariantMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertPackVariantMutation>(InsertPackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPackVariant', 'mutation', variables);
-    },
-    updatePackVariant(variables: UpdatePackVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdatePackVariantMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdatePackVariantMutation>(UpdatePackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updatePackVariant', 'mutation', variables);
-    },
-    deletePackVariant(variables: DeletePackVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeletePackVariantMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeletePackVariantMutation>(DeletePackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePackVariant', 'mutation', variables);
     },
     getHistoricalStockLines(variables: GetHistoricalStockLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GetHistoricalStockLinesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetHistoricalStockLinesQuery>(GetHistoricalStockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'getHistoricalStockLines', 'query', variables);

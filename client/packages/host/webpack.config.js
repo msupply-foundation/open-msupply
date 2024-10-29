@@ -143,7 +143,7 @@ module.exports = env => {
     plugins: [
       new ReactRefreshWebpackPlugin(),
       new webpack.DefinePlugin({
-        FEATURE_PACK_VARIANTS: env.FEATURE_PACK_VARIANTS,
+        FEATURE_EXAMPLE: env.FEATURE_EXAMPLE,
         API_HOST: JSON.stringify(env.API_HOST),
         LOCAL_PLUGINS: JSON.stringify(localPlugins()),
         LANG_VERSION: Date.now(),

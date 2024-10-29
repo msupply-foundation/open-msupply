@@ -3,17 +3,15 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::{
     loader::{
-        ItemStatsLoaderInput, ItemsStatsForItemLoader, ItemsStockOnHandLoader,
-        ItemsStockOnHandLoaderInput, StockLineByItemAndStoreIdLoader,
+        ItemStatsLoaderInput, ItemVariantRowLoader, ItemsStatsForItemLoader,
+        ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, StockLineByItemAndStoreIdLoader,
         StockLineByItemAndStoreIdLoaderInput,
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{
-    item_variant::item_variant_row::ItemVariantRow, Item, ItemRow, ItemType, VENCategory,
-};
+use repository::{Item, ItemRow, ItemType, VENCategory};
 use serde_json::json;
 use service::ListResult;
 
@@ -135,20 +133,15 @@ impl ItemNode {
         Ok(result)
     }
 
-    // TODO: maybe do this in a loader!
-    pub async fn variants(&self) -> Vec<ItemVariantNode> {
-        ItemVariantNode::from_vec(vec![ItemVariantRow {
-            id: "id".to_string(),
-            name: "Variant 1".to_string(),
-            item_link_id: self.row().id.clone(),
-            cold_storage_type_id: Some("+5".to_string()),
-            doses_per_unit: Some(1),
-            manufacturer_link_id: Some("manufacturer_id".to_string()),
-            deleted_datetime: None,
-        }])
-    }
+    pub async fn variants(&self, ctx: &Context<'_>) -> Result<Vec<ItemVariantNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemVariantRowLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
 
-    // Mock
+        Ok(ItemVariantNode::from_vec(result))
+    }
 
     pub async fn msupply_universal_code(&self) -> String {
         self.legacy_string("universalcodes_code")

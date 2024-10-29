@@ -24,6 +24,7 @@ import {
   StoreSearchInput,
 } from '@openmsupply-client/system';
 import { DraftAsset } from '../../types';
+import { formatLocationLabel } from '../DetailView';
 interface SummaryProps {
   draft?: DraftAsset;
   onChange: (patch: Partial<DraftAsset>) => void;
@@ -112,7 +113,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   if (!draft) return null;
 
   const defaultLocations = draft.locations.nodes.map(location => ({
-    label: location.code,
+    label: formatLocationLabel(location),
     value: location.id,
   }));
 

@@ -23,8 +23,10 @@ import { ItemVariantFragment } from '../../../api';
 import { ItemVariantModal } from './ItemVariantModal';
 
 export const ItemVariantsTab = ({
+  itemId,
   itemVariants,
 }: {
+  itemId: string;
   itemVariants: ItemVariantFragment[];
 }) => {
   const t = useTranslation();
@@ -35,7 +37,7 @@ export const ItemVariantsTab = ({
   return (
     <>
       {isOpen && (
-        <ItemVariantModal onClose={onClose} itemId="id" variant={entity} />
+        <ItemVariantModal onClose={onClose} itemId={itemId} variant={entity} />
       )}
       <AppBarButtonsPortal>
         <ButtonWithIcon

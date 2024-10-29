@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Autocomplete,
   AutocompleteProps,
@@ -11,7 +11,7 @@ import {
 import { getNameOptionRenderer } from '@openmsupply-client/system';
 
 import { SupplierProgramSettingsFragment } from '../api';
-import { NewRequisitionType } from './types';
+import { NewRequisitionType } from '../../types';
 
 export interface NewProgramRequisition {
   type: NewRequisitionType.Program;
@@ -44,14 +44,16 @@ const useProgramRequisitionOptions = (
   const [period, setPeriod] = useState<Period | null>(null);
   const t = useTranslation();
 
-  useEffect(() => {
+  const handleSetProgram = (value: ProgramSetting | null) => {
+    setProgram(value);
     setOrderType(null);
     setSupplier(null);
-  }, [program]);
-
-  useEffect(() => {
     setPeriod(null);
-  }, [orderType]);
+  };
+  const handleSetOrderType = (value: OrderType | null) => {
+    setOrderType(value);
+    setPeriod(null);
+  };
 
   const allOptions: {
     programs: Common<ProgramSetting>;
@@ -62,14 +64,14 @@ const useProgramRequisitionOptions = (
     programs: {
       options: programSettings,
       value: program,
-      set: setProgram,
+      set: handleSetProgram,
       label: t('label.program'),
       disabled: false,
     },
     orderTypes: {
       options: program?.orderTypes || [],
       value: orderType,
-      set: setOrderType,
+      set: handleSetOrderType,
       disabled: program === null,
       labelNoOptions: t('messages.not-configured'),
       label: t('label.order-type'),

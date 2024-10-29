@@ -10,15 +10,11 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { DraftResponseLine } from './hooks';
-import { VariantControl } from '@openmsupply-client/system';
 
 interface ResponseLineEditFormProps {
   disabled: boolean;
   update: (patch: Partial<DraftResponseLine>) => void;
   draftLine: DraftResponseLine;
-  variantsControl?: VariantControl;
-  numberOfPacksFromQuantity: (totalQuantity: number) => number;
-  numberOfPacksToTotalQuantity: (numPacks: number) => number;
 }
 
 const InfoRow = ({ label, value }: { label: string; value: string }) => {
@@ -84,9 +80,6 @@ export const ResponseLineEditForm = ({
   disabled,
   update,
   draftLine,
-  variantsControl,
-  numberOfPacksFromQuantity,
-  numberOfPacksToTotalQuantity,
 }: ResponseLineEditFormProps) => {
   const t = useTranslation();
   const supplyQuantity = draftLine.supplyQuantity ?? 0;
@@ -106,12 +99,7 @@ export const ResponseLineEditForm = ({
             </Box>
           </Tooltip>
           <InfoRow label={t('label.code')} value={item.code} />
-          {variantsControl ? (
-            <InfoRow
-              label={t('label.pack')}
-              value={variantsControl.activeVariant.longName}
-            />
-          ) : item.unitName ? (
+          {item.unitName ? (
             <InfoRow label={t('label.unit')} value={item.unitName} />
           ) : null}
         </>
@@ -125,7 +113,7 @@ export const ResponseLineEditForm = ({
             Input={
               <NumericTextInput
                 width={150}
-                value={numberOfPacksFromQuantity(draftLine.requestedQuantity)}
+                value={draftLine.requestedQuantity}
                 disabled
               />
             }
@@ -138,11 +126,11 @@ export const ResponseLineEditForm = ({
               <NumericTextInput
                 disabled={disabled}
                 autoFocus
-                value={numberOfPacksFromQuantity(supplyQuantity)}
+                value={supplyQuantity}
                 width={150}
                 onChange={q =>
                   update({
-                    supplyQuantity: q && numberOfPacksToTotalQuantity(q),
+                    supplyQuantity: q,
                   })
                 }
               />

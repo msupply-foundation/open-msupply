@@ -24,7 +24,11 @@ import { Summary } from './Tabs';
 import { useAssets } from '../api';
 import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
-import { ActivityLogList, useLocation } from '@openmsupply-client/system';
+import {
+  ActivityLogList,
+  LocationRowFragment,
+  useLocation,
+} from '@openmsupply-client/system';
 import { DraftAsset } from '../types';
 import { Details } from './Tabs/Details';
 
@@ -98,7 +102,7 @@ export const EquipmentDetailView = () => {
 
   const locations =
     locationData?.nodes.map(location => ({
-      label: location.code,
+      label: formatLocationLabel(location),
       value: location.id,
     })) || [];
 
@@ -162,4 +166,11 @@ export const EquipmentDetailView = () => {
       )}
     </React.Suspense>
   );
+};
+
+// Displays location with storage name if present, e.g. "ABC (Cold store)".
+// If not present, just displays the code alone
+export const formatLocationLabel = (location: LocationRowFragment) => {
+  const { code, coldStorageType } = location;
+  return `${code}${coldStorageType ? ` (${coldStorageType.name})` : ''}`;
 };

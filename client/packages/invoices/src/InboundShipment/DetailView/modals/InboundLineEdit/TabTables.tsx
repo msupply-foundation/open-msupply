@@ -25,11 +25,8 @@ import {
   getLocationInputColumn,
   ItemVariantInputCell,
   LocationRowFragment,
-  PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
-  PackVariantEntryCell,
-  usePackVariant,
+  PackSizeEntryCell,
 } from '@openmsupply-client/system';
-import { InboundLineFragment } from '../../../api';
 
 interface TableProps {
   lines: DraftInboundLine[];
@@ -84,15 +81,13 @@ const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
 // If this is not extracted to it's own component and used directly in Cell:
 // cell will be re rendered anytime rowData changes, which causes it to loose focus
 // if number of packs is changed and tab is pressed (in quick succession)
-const PackUnitEntryCell = PackVariantEntryCell<DraftInboundLine>({
-  getItemId: r => r.item.id,
-  getUnitName: r => r.item.unitName || null,
-});
+const PackUnitEntryCell = PackSizeEntryCell<DraftInboundLine>({});
 
-export const QuantityTableComponent: FC<
-  TableProps & { item: InboundLineFragment['item'] | null }
-> = ({ item, lines, updateDraftLine, isDisabled = false }) => {
-  const { packVariantExists } = usePackVariant(item?.id || '', null);
+export const QuantityTableComponent: FC<TableProps> = ({
+  lines,
+  updateDraftLine,
+  isDisabled = false,
+}) => {
   const theme = useTheme();
 
   const columns = useColumns<DraftInboundLine>(
@@ -121,12 +116,7 @@ export const QuantityTableComponent: FC<
       getColumnLookupWithOverrides('packSize', {
         Cell: PackUnitEntryCell,
         setter: updateDraftLine,
-        ...(packVariantExists
-          ? {
-              label: 'label.unit-variant-and-pack-size',
-              minWidth: PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
-            }
-          : { label: 'label.pack-size' }),
+        label: 'label.pack-size',
       }),
       [
         'unitQuantity',
@@ -153,17 +143,13 @@ export const QuantityTableComponent: FC<
 
 export const QuantityTable = React.memo(QuantityTableComponent);
 
-export const PricingTableComponent: FC<
-  TableProps & { item: InboundLineFragment['item'] | null }
-> = ({
+export const PricingTableComponent: FC<TableProps> = ({
   lines,
   updateDraftLine,
   isDisabled = false,
   currency,
   isExternalSupplier,
-  item,
 }) => {
-  const { packVariantExists } = usePackVariant(item?.id || '', null);
   const { store } = useAuthContext();
 
   const CurrencyCell = useCurrencyCell<DraftInboundLine>(
@@ -181,12 +167,7 @@ export const PricingTableComponent: FC<
 
   columnDefinitions.push(
     getColumnLookupWithOverrides('packSize', {
-      ...(packVariantExists
-        ? {
-            label: 'label.unit-variant-and-pack-size',
-            minWidth: PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
-          }
-        : { label: 'label.pack-size' }),
+      label: 'label.pack-size',
     }),
     [
       'numberOfPacks',
