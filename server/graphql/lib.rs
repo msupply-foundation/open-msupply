@@ -35,7 +35,6 @@ use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
 use graphql_item_variant::ItemVariantMutations;
 use graphql_location::{LocationMutations, LocationQueries};
-use graphql_pack_variant::{PackVariantMutations, PackVariantQueries};
 use graphql_plugin::{PluginMutations, PluginQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
@@ -66,9 +65,6 @@ pub type InitialisationSchema = async_graphql::Schema<
 pub struct CentralServerMutationNode;
 #[Object]
 impl CentralServerMutationNode {
-    async fn pack_variant(&self) -> PackVariantMutations {
-        PackVariantMutations
-    }
     async fn item_variant(&self) -> ItemVariantMutations {
         ItemVariantMutations
     }
@@ -119,7 +115,6 @@ pub struct Queries(
     pub ProgramsQueries,
     pub FormSchemaQueries,
     pub ClinicianQueries,
-    pub PackVariantQueries,
     pub PluginQueries,
     pub AssetCatalogueQueries,
     pub AssetQueries,
@@ -147,7 +142,6 @@ impl Queries {
             ProgramsQueries,
             FormSchemaQueries,
             ClinicianQueries,
-            PackVariantQueries,
             PluginQueries,
             AssetCatalogueQueries,
             AssetQueries,

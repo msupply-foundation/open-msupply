@@ -14,10 +14,6 @@ import {
   CurrencyCell,
   ColumnDescription,
 } from '@openmsupply-client/common';
-import {
-  getPackVariantCell,
-  useIsPackVariantsEnabled,
-} from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
@@ -47,8 +43,6 @@ export const useOutboundColumns = ({
   onChangeSortBy,
 }: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
-
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
     [
@@ -149,64 +143,36 @@ export const useOutboundColumns = ({
         width: 100,
       },
     ],
-  ];
-
-  if (isPackVariantsEnabled) {
-    columns.push({
-      key: 'packUnit',
-      label: 'label.pack',
-      sortable: false,
-      Cell: getPackVariantCell({
-        getItemId: row => {
-          if ('lines' in row) return '';
-          else return row?.item?.id;
-        },
-        getPackSizes: row => {
-          if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
-          else return [row.packSize ?? 1];
-        },
-        getUnitName: row => {
-          if ('lines' in row) return row.lines[0]?.item?.unitName ?? null;
-          else return row?.item?.unitName ?? null;
-        },
-      }),
-      width: 130,
-    });
-  } else {
-    columns.push(
-      [
-        'itemUnit',
-        {
-          getSortValue: row =>
-            getColumnPropertyAsString(row, [
-              { path: ['lines', 'item', 'unitName'] },
-              { path: ['item', 'unitName'], default: '' },
-            ]),
-          accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [
-              { path: ['lines', 'item', 'unitName'] },
-              { path: ['item', 'unitName'], default: '' },
-            ]),
-        },
-      ],
-      [
-        'packSize',
-        {
-          getSortValue: row =>
-            getColumnPropertyAsString(row, [
-              { path: ['lines', 'packSize'] },
-              { path: ['packSize'], default: '' },
-            ]),
-          accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [
-              { path: ['lines', 'packSize'] },
-              { path: ['packSize'], default: '' },
-            ]),
-        },
-      ]
-    );
-  }
-  columns.push(
+    [
+      'itemUnit',
+      {
+        getSortValue: row =>
+          getColumnPropertyAsString(row, [
+            { path: ['lines', 'item', 'unitName'] },
+            { path: ['item', 'unitName'], default: '' },
+          ]),
+        accessor: ({ rowData }) =>
+          getColumnProperty(rowData, [
+            { path: ['lines', 'item', 'unitName'] },
+            { path: ['item', 'unitName'], default: '' },
+          ]),
+      },
+    ],
+    [
+      'packSize',
+      {
+        getSortValue: row =>
+          getColumnPropertyAsString(row, [
+            { path: ['lines', 'packSize'] },
+            { path: ['packSize'], default: '' },
+          ]),
+        accessor: ({ rowData }) =>
+          getColumnProperty(rowData, [
+            { path: ['lines', 'packSize'] },
+            { path: ['packSize'], default: '' },
+          ]),
+      },
+    ],
     [
       'numberOfPacks',
       {
@@ -315,8 +281,8 @@ export const useOutboundColumns = ({
       },
     },
     expansionColumn,
-    GenericColumnKey.Selection
-  );
+    GenericColumnKey.Selection,
+  ];
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
 };
