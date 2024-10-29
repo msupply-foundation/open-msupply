@@ -114,6 +114,9 @@ fragment Response on RequisitionNode {
     startDate
     endDate
   }
+  linkedRequisition {
+    id
+  }
   orderType
 }
 query responseByNumber($storeId: String!, $requisitionNumber: Int!) {
@@ -224,6 +227,39 @@ mutation updateResponseLine(
         ... on RecordNotFound {
           __typename
           description
+        }
+      }
+    }
+  }
+}
+
+mutation deleteResponseLines(
+  $ids: [DeleteResponseRequisitionLineInput!]
+  $storeId: String!
+) {
+  batchResponseRequisition(
+    input: { deleteResponseRequisitionLines: $ids }
+    storeId: $storeId
+  ) {
+    deleteResponseRequisitionLines {
+      id
+      response {
+        ... on DeleteResponseRequisitionLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditRequisition {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
         }
       }
     }

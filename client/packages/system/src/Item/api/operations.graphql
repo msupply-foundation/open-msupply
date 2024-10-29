@@ -75,6 +75,9 @@ fragment ItemVariant on ItemVariantNode {
   name
   dosesPerUnit
   manufacturerId
+  manufacturer {
+    ...NameRow
+  }
   coldStorageTypeId
   packagingVariants {
     ...PackagingVariant
@@ -276,6 +279,19 @@ query getHistoricalStockLines(
     ... on StockLineConnector {
       nodes {
         ...StockLine
+      }
+    }
+  }
+}
+
+mutation upsertItemVariant($storeId: String!, $input: UpsertItemVariantInput!) {
+  centralServer {
+    itemVariant {
+      upsertItemVariant(storeId: $storeId, input: $input) {
+        __typename
+        ... on ItemVariantNode {
+          ...ItemVariant
+        }
       }
     }
   }
