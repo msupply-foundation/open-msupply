@@ -2941,13 +2941,21 @@ export type InsertResponseRequisitionLineErrorInterface = {
 };
 
 export type InsertResponseRequisitionLineInput = {
+  additionInUnits?: InputMaybe<Scalars['Float']['input']>;
+  averageMonthlyConsumption?: InputMaybe<Scalars['Float']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  daysOutOfStock?: InputMaybe<Scalars['Float']['input']>;
+  expiringUnits?: InputMaybe<Scalars['Float']['input']>;
   id: Scalars['String']['input'];
+  incomingUnits?: InputMaybe<Scalars['Float']['input']>;
   itemId: Scalars['String']['input'];
+  lossInUnits?: InputMaybe<Scalars['Float']['input']>;
+  optionId?: InputMaybe<Scalars['String']['input']>;
+  outgoingUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
   requisitionId: Scalars['String']['input'];
+  stockOnHand?: InputMaybe<Scalars['Float']['input']>;
   supplyQuantity?: InputMaybe<Scalars['Float']['input']>;
-  theirStockOnHand?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertResponseRequisitionLineResponse = InsertResponseRequisitionLineError | RequisitionLineNode;
@@ -6460,6 +6468,8 @@ export type RequisitionLineNode = {
   alreadyIssued: Scalars['Float']['output'];
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Float']['output'];
+  availableStockOnHand: Scalars['Float']['output'];
+  averageMonthlyConsumption: Scalars['Float']['output'];
   comment?: Maybe<Scalars['String']['output']>;
   daysOutOfStock: Scalars['Float']['output'];
   expiringUnits: Scalars['Float']['output'];
@@ -6482,6 +6492,7 @@ export type RequisitionLineNode = {
   /** OutboundShipment lines linked to requisitions line */
   outboundShipmentLines: InvoiceLineConnector;
   outgoingUnits: Scalars['Float']['output'];
+  reason?: Maybe<ReasonOptionNode>;
   /**
    * Quantity remaining to supply
    * supplyQuantity minus all (including unallocated) linked invoice lines numberOfPacks * packSize
@@ -8131,11 +8142,19 @@ export type UpdateResponseRequisitionLineErrorInterface = {
 };
 
 export type UpdateResponseRequisitionLineInput = {
+  additionInUnits?: InputMaybe<Scalars['Float']['input']>;
+  averageMonthlyConsumption?: InputMaybe<Scalars['Float']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  daysOutOfStock?: InputMaybe<Scalars['Float']['input']>;
+  expiringUnits?: InputMaybe<Scalars['Float']['input']>;
   id: Scalars['String']['input'];
+  incomingUnits?: InputMaybe<Scalars['Float']['input']>;
+  lossInUnits?: InputMaybe<Scalars['Float']['input']>;
+  optionId?: InputMaybe<Scalars['String']['input']>;
+  outgoingUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
+  stockOnHand?: InputMaybe<Scalars['Float']['input']>;
   supplyQuantity?: InputMaybe<Scalars['Float']['input']>;
-  theirStockOnHand?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdateResponseRequisitionLineResponse = RequisitionLineNode | UpdateResponseRequisitionLineError;
