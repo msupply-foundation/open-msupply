@@ -1,13 +1,11 @@
+use super::NameNode;
 use async_graphql::*;
 use dataloader::DataLoader;
+use graphql_core::loader::{NameByIdLoader, NameByIdLoaderInput};
 use graphql_core::{loader::PackagingVariantRowLoader, ContextExt};
 use repository::item_variant::{
     item_variant_row::ItemVariantRow, packaging_variant_row::PackagingVariantRow,
 };
-use repository::name::Name;
-use repository::NameRow;
-
-use super::NameNode;
 pub struct PackagingVariantNode {
     pub packaging_variant: PackagingVariantRow,
 }
@@ -38,21 +36,22 @@ impl ItemVariantNode {
         &self.item_variant.cold_storage_type_id
     }
 
-    // tODO full node for cold_storage_type / manufacturer?
-    pub async fn manufacturer(&self) -> Option<NameNode> {
-        self.item_variant.manufacturer_link_id.clone().map(|id| {
-            NameNode::from_domain(Name {
-                name_row: NameRow {
-                    id,
-                    name: "Some manufacturer".to_string(),
-                    code: "MANUFACTURER".to_string(),
-                    ..Default::default()
-                },
-                name_store_join_row: None,
-                store_row: None,
-                properties: None,
-            })
-        })
+    pub async fn manufacturer(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<NameNode>> {
+        let manufacturer_link_id = match &self.item_variant.manufacturer_link_id {
+            Some(manufacturer_link_id) => manufacturer_link_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+        let result = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, manufacturer_link_id))
+            .await?;
+
+        Ok(result.map(|manufacturer| NameNode::from_domain(manufacturer)))
     }
 
     pub async fn packaging_variants(&self, ctx: &Context<'_>) -> Result<Vec<PackagingVariantNode>> {
