@@ -4,7 +4,6 @@ import {
   ModalTabs,
   useDialog,
   useTranslation,
-  useWindowDimensions,
 } from '@openmsupply-client/common';
 
 import {
@@ -40,8 +39,6 @@ export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
   const { data: programSettings, isLoading } =
     useRequest.utils.programSettings();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
-  const { height: windowHeight } = useWindowDimensions();
-  const height = windowHeight * 0.8;
 
   // const { data, isLoading } = useName.document.internalSuppliers();
   const t = useTranslation();
@@ -76,10 +73,10 @@ export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
 
   return (
     <Modal
-      height={height}
-      width={500}
+      height={700}
+      width={700}
       slideAnimation={false}
-      title={t('label.new-requisition')}
+      title={t('label.new-internal-order')}
     >
       <InnerComponent />
     </Modal>

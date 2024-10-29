@@ -5,7 +5,6 @@ import {
   ModalTabs,
   useDialog,
   useTranslation,
-  useWindowDimensions,
 } from '@openmsupply-client/common';
 import {
   CustomerSearchModal,
@@ -31,7 +30,6 @@ interface CreateRequisitionModalProps {
     newRequisition: NewGeneralRequisition | NewProgramRequisition
   ) => void;
 }
-
 export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
   isOpen,
   onClose,
@@ -41,8 +39,6 @@ export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
   const { data: programSettings, isLoading } =
     useResponse.utils.programSettings();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
-  const { height: windowHeight } = useWindowDimensions();
-  const height = windowHeight * 0.8;
 
   const InnerComponent = () => {
     if (isLoading) return <BasicSpinner />;
@@ -81,8 +77,8 @@ export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
 
   return (
     <Modal
-      height={height}
-      width={500}
+      height={700}
+      width={700}
       slideAnimation={false}
       title={t('label.new-requisition')}
     >

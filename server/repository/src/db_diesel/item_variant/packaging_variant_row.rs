@@ -1,5 +1,3 @@
-use super::packaging_variant_row::packaging_variant::dsl as packaging_variant_dsl;
-
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
     StorageConnection, Upsert,
@@ -44,9 +42,9 @@ impl<'a> PackagingVariantRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &PackagingVariantRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(packaging_variant_dsl::packaging_variant)
+        diesel::insert_into(packaging_variant::table)
             .values(row)
-            .on_conflict(packaging_variant_dsl::id)
+            .on_conflict(packaging_variant::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -73,11 +71,22 @@ impl<'a> PackagingVariantRowRepository<'a> {
         &self,
         packaging_variant_id: &str,
     ) -> Result<Option<PackagingVariantRow>, RepositoryError> {
-        let result = packaging_variant_dsl::packaging_variant
-            .filter(packaging_variant_dsl::id.eq(packaging_variant_id))
+        let result = packaging_variant::table
+            .filter(packaging_variant::id.eq(packaging_variant_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn mark_deleted(&self, packaging_variant_id: &str) -> Result<i64, RepositoryError> {
+        diesel::update(
+            packaging_variant::table.filter(packaging_variant::id.eq(packaging_variant_id)),
+        )
+        .set(packaging_variant::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+        .execute(self.connection.lock().connection())?;
+
+        // Upsert row action as this is a soft delete, not actual delete
+        self.insert_changelog(packaging_variant_id.to_owned(), RowActionType::Upsert)
     }
 }
 

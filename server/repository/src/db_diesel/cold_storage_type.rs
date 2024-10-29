@@ -14,7 +14,7 @@ use crate::{EqualFilter, Pagination, Sort};
 
 #[derive(PartialEq, Debug, Clone, serde::Serialize)]
 pub struct ColdStorageType {
-    pub temperature_range_row: ColdStorageTypeRow,
+    pub cold_storage_type_row: ColdStorageTypeRow,
 }
 
 #[derive(Clone, PartialEq, Debug, Default)]
@@ -100,9 +100,9 @@ impl<'a> ColdStorageTypeRepository<'a> {
 
 type BoxedColdStorageTypeQuery = cold_storage_type::BoxedQuery<'static, DBType>;
 
-fn to_domain(temperature_range_row: ColdStorageTypeRow) -> ColdStorageType {
+fn to_domain(cold_storage_type_row: ColdStorageTypeRow) -> ColdStorageType {
     ColdStorageType {
-        temperature_range_row,
+        cold_storage_type_row,
     }
 }
 

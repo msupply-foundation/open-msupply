@@ -4,9 +4,6 @@ import {
   Box,
   InputWithLabelRow,
   Grid,
-  DropdownMenu,
-  DropdownMenuItem,
-  DeleteIcon,
   useTranslation,
   SearchBar,
   Typography,
@@ -16,22 +13,29 @@ import {
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
-import { useResponse } from '../api';
-import { getApprovalStatusKey } from '../../utils';
+import { useResponse } from '../../api';
+import { getApprovalStatusKey } from '../../../utils';
+import { ToolbarDropDown } from './ToolbarDropDown';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
   const isDisabled = useResponse.utils.isDisabled();
   const { itemFilter, setItemFilter } = useResponse.line.list();
 
-  const { approvalStatus, otherParty, theirReference, shipments, update } =
-    useResponse.document.fields([
-      'approvalStatus',
-      'otherParty',
-      'theirReference',
-      'shipments',
-    ]);
-  const { onDelete } = useResponse.line.delete();
+  const {
+    approvalStatus,
+    otherParty,
+    theirReference,
+    shipments,
+    update,
+    linkedRequisition,
+  } = useResponse.document.fields([
+    'approvalStatus',
+    'otherParty',
+    'theirReference',
+    'shipments',
+    'linkedRequisition',
+  ]);
   const noLinkedShipments = (shipments?.totalCount ?? 0) === 0;
   const showInfo = noLinkedShipments && !isDisabled;
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
@@ -103,16 +107,10 @@ export const Toolbar: FC = () => {
           }}
           debounceTime={0}
         />
-
-        <DropdownMenu label={t('label.actions')}>
-          <DropdownMenuItem
-            IconComponent={DeleteIcon}
-            onClick={onDelete}
-            disabled={isDisabled}
-          >
-            {t('button.delete-lines', { ns: 'distribution' })}
-          </DropdownMenuItem>
-        </DropdownMenu>
+        <ToolbarDropDown
+          isDisabled={isDisabled}
+          hasLinkedRequisition={!!linkedRequisition}
+        />
       </Grid>
     </AppBarContentPortal>
   );
