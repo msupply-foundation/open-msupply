@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type UpdateResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -43,6 +44,14 @@ export type InsertResponseMutationVariables = Types.Exact<{
 
 export type InsertResponseMutation = { __typename: 'Mutations', insertResponseRequisition: { __typename: 'InsertResponseRequisitionError', error: { __typename: 'OtherPartyNotACustomer', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
 
+export type InsertProgramResponseMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertProgramResponseRequisitionInput;
+}>;
+
+
+export type InsertProgramResponseMutation = { __typename: 'Mutations', insertProgramResponseRequisition: { __typename: 'InsertProgramResponseRequisitionError' } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
+
 export type UpdateResponseLineMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpdateResponseRequisitionLineInput;
@@ -82,6 +91,15 @@ export type ResponseRequisitionStatsQueryVariables = Types.Exact<{
 
 
 export type ResponseRequisitionStatsQuery = { __typename: 'Queries', responseRequisitionStats: { __typename: 'RequisitionLineStatsError', error: { __typename: 'RecordNotFound', description: string } } | { __typename: 'ResponseRequisitionStatsNode', requestStoreStats: { __typename: 'RequestStoreStatsNode', averageMonthlyConsumption: number, stockOnHand: number, maxMonthsOfStock: number, suggestedQuantity: number }, responseStoreStats: { __typename: 'ResponseStoreStatsNode', incomingStock: number, otherRequestedQuantity: number, requestedQuantity: number, stockOnHand: number, stockOnOrder: number } } };
+
+export type CustomerProgramSettingsFragment = { __typename: 'CustomerProgramRequisitionSettingNode', programName: string, programId: string, customerAndOrderTypes: Array<{ __typename: 'CustomerAndOrderTypeNode', customer: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> };
+
+export type CustomerProgramSettingsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type CustomerProgramSettingsQuery = { __typename: 'Queries', customerProgramRequisitionSettings: Array<{ __typename: 'CustomerProgramRequisitionSettingNode', programName: string, programId: string, customerAndOrderTypes: Array<{ __typename: 'CustomerAndOrderTypeNode', customer: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> }> };
 
 export const ResponseLineFragmentDoc = gql`
     fragment ResponseLine on RequisitionLineNode {
@@ -216,6 +234,25 @@ export const ResponseRowFragmentDoc = gql`
   }
 }
     `;
+export const CustomerProgramSettingsFragmentDoc = gql`
+    fragment CustomerProgramSettings on CustomerProgramRequisitionSettingNode {
+  programName
+  programId
+  customerAndOrderTypes {
+    customer {
+      ...NameRow
+    }
+    orderTypes {
+      id
+      name
+      availablePeriods {
+        id
+        name
+      }
+    }
+  }
+}
+    ${NameRowFragmentDoc}`;
 export const UpdateResponseDocument = gql`
     mutation updateResponse($storeId: String!, $input: UpdateResponseRequisitionInput!) {
   updateResponseRequisition(input: $input, storeId: $storeId) {
@@ -273,6 +310,17 @@ export const InsertResponseDocument = gql`
           description
         }
       }
+    }
+  }
+}
+    `;
+export const InsertProgramResponseDocument = gql`
+    mutation insertProgramResponse($storeId: String!, $input: InsertProgramResponseRequisitionInput!) {
+  insertProgramResponseRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+      requisitionNumber
     }
   }
 }
@@ -433,6 +481,13 @@ export const ResponseRequisitionStatsDocument = gql`
   }
 }
     `;
+export const CustomerProgramSettingsDocument = gql`
+    query customerProgramSettings($storeId: String!) {
+  customerProgramRequisitionSettings(storeId: $storeId) {
+    ...CustomerProgramSettings
+  }
+}
+    ${CustomerProgramSettingsFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -453,6 +508,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     insertResponse(variables: InsertResponseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertResponseMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertResponseMutation>(InsertResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertResponse', 'mutation', variables);
     },
+    insertProgramResponse(variables: InsertProgramResponseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertProgramResponseMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertProgramResponseMutation>(InsertProgramResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertProgramResponse', 'mutation', variables);
+    },
     updateResponseLine(variables: UpdateResponseLineMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateResponseLineMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateResponseLineMutation>(UpdateResponseLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateResponseLine', 'mutation', variables);
     },
@@ -467,6 +525,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     responseRequisitionStats(variables: ResponseRequisitionStatsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ResponseRequisitionStatsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ResponseRequisitionStatsQuery>(ResponseRequisitionStatsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'responseRequisitionStats', 'query', variables);
+    },
+    customerProgramSettings(variables: CustomerProgramSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CustomerProgramSettingsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CustomerProgramSettingsQuery>(CustomerProgramSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'customerProgramSettings', 'query', variables);
     }
   };
 }

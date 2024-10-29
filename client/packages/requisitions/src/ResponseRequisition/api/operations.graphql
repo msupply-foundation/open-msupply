@@ -202,6 +202,19 @@ mutation insertResponse(
   }
 }
 
+mutation insertProgramResponse(
+  $storeId: String!
+  $input: InsertProgramResponseRequisitionInput!
+) {
+  insertProgramResponseRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+      requisitionNumber
+    }
+  }
+}
+
 mutation updateResponseLine(
   $storeId: String!
   $input: UpdateResponseRequisitionLineInput!
@@ -356,5 +369,29 @@ query responseRequisitionStats($storeId: String!, $requisitionLineId: String!) {
         description
       }
     }
+  }
+}
+
+fragment CustomerProgramSettings on CustomerProgramRequisitionSettingNode {
+  programName
+  programId
+  customerAndOrderTypes {
+    customer {
+      ...NameRow
+    }
+    orderTypes {
+      id
+      name
+      availablePeriods {
+        id
+        name
+      }
+    }
+  }
+}
+
+query customerProgramSettings($storeId: String!) {
+  customerProgramRequisitionSettings(storeId: $storeId) {
+    ...CustomerProgramSettings
   }
 }

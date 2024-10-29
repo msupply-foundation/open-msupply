@@ -1,22 +1,22 @@
 import React, { FC } from 'react';
 import {
   BasicSpinner,
+  Box,
   ModalTabs,
   useDialog,
   useTranslation,
 } from '@openmsupply-client/common';
-
 import {
-  InternalSupplierSearchModal,
+  CustomerSearchModal,
   NameRowFragment,
 } from '@openmsupply-client/system';
 
-import { useRequest } from '../api';
+import { useResponse } from '../api';
+import { NewRequisitionType } from '../../types';
 import {
   NewProgramRequisition,
   ProgramRequisitionOptions,
 } from './ProgramRequisitionOptions';
-import { NewRequisitionType } from '../../types';
 
 interface NewGeneralRequisition {
   type: NewRequisitionType.General;
@@ -30,19 +30,15 @@ interface CreateRequisitionModalProps {
     newRequisition: NewGeneralRequisition | NewProgramRequisition
   ) => void;
 }
-
 export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
   isOpen,
   onClose,
   onCreate,
 }) => {
-  const { data: programSettings, isLoading } =
-    useRequest.utils.programSettings();
-  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
-
-  // const { data, isLoading } = useName.document.internalSuppliers();
   const t = useTranslation();
-  // const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
+  const { data: programSettings, isLoading } =
+    useResponse.utils.programSettings();
+  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
 
   const InnerComponent = () => {
     if (isLoading) return <BasicSpinner />;
@@ -61,14 +57,22 @@ export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
               value: t('label.requisition-program'),
             },
             {
-              Component: <GeneralRequisitionOptions onCreate={onCreate} />,
+              Component: (
+                <GeneralRequisition
+                  onCreate={onCreate}
+                  open={isOpen}
+                  onClose={onClose}
+                />
+              ),
               value: t('label.requisition-general'),
             },
           ]}
         />
       );
 
-    return <GeneralRequisitionOptions onCreate={onCreate} />;
+    return (
+      <GeneralRequisition onCreate={onCreate} open={isOpen} onClose={onClose} />
+    );
   };
 
   return (
@@ -76,20 +80,28 @@ export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
       height={700}
       width={700}
       slideAnimation={false}
-      title={t('label.new-internal-order')}
+      title={t('label.new-requisition')}
     >
       <InnerComponent />
     </Modal>
   );
 };
 
-const GeneralRequisitionOptions = ({
+const GeneralRequisition = ({
   onCreate,
+  open,
+  onClose,
 }: {
   onCreate: (props: NewGeneralRequisition) => void;
+  open: boolean;
+  onClose: () => void;
 }) => (
-  <InternalSupplierSearchModal
-    isList={true}
-    onChange={name => onCreate({ type: NewRequisitionType.General, name })}
-  />
+  <Box paddingTop={2}>
+    <CustomerSearchModal
+      onChange={name => onCreate({ type: NewRequisitionType.General, name })}
+      open={open}
+      onClose={onClose}
+      isList={true}
+    />
+  </Box>
 );
