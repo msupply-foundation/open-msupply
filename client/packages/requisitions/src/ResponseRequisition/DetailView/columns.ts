@@ -137,19 +137,14 @@ export const useResponseColumns = () => {
       sortable: false,
       description: 'description.available-stock',
       Cell: PackQuantityCell,
-      accessor: ({ rowData }) => {
-        const availableStock = !!linkedRequisition
+      accessor: ({ rowData }) =>
+        !!linkedRequisition
           ? (rowData.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0)
           : rowData.availableStockOnHand +
             rowData.incomingUnits +
             rowData.additionInUnits -
             rowData.lossInUnits -
-            rowData.outgoingUnits;
-
-        console.log('Available stock: ', rowData.incomingUnits);
-
-        return availableStock;
-      },
+            rowData.outgoingUnits,
     },
     {
       key: 'expiringUnits',
