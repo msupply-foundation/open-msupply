@@ -4,7 +4,10 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::DeleteResponse;
-use service::auth::{Resource, ResourceAccessRequest};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    item::item_variant::{DeleteItemVariant, DeleteItemVariantError},
+};
 
 #[derive(InputObject)]
 pub struct DeleteItemVariantInput {
@@ -32,36 +35,34 @@ pub fn delete_item_variant(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    Ok(DeleteItemVariantResponse::Response(DeleteResponse(
-        input.id,
-    )))
+    let result = service_provider
+        .item_service
+        .delete_item_variant(&service_context, input.to_domain());
+
+    map_response(result)
 }
 
-// impl DeleteItemVariantInput {
-//     pub fn to_domain(self) -> ServiceInput {
-//         let DeleteItemVariantInput { id } = self;
+impl DeleteItemVariantInput {
+    pub fn to_domain(self) -> DeleteItemVariant {
+        let DeleteItemVariantInput { id } = self;
 
-//         ServiceInput { id }
-//     }
-// }
+        DeleteItemVariant { id }
+    }
+}
 
-// fn map_response(from: Result<String, ServiceError>) -> Result<DeleteItemVariantResponse> {
-//     match from {
-//         Ok(result) => Ok(DeleteItemVariantResponse::Response(DeleteResponse(result))),
-//         Err(error) => {
-//             use ServiceError::*;
-//             let formatted_error = format!("{:#?}", error);
+fn map_response(from: Result<String, DeleteItemVariantError>) -> Result<DeleteItemVariantResponse> {
+    match from {
+        Ok(result) => Ok(DeleteItemVariantResponse::Response(DeleteResponse(result))),
+        Err(error) => {
+            let formatted_error = format!("{:#?}", error);
 
-//             let graphql_error = match error {
-//                 CouldNotDeleteItemVariant | ItemVariantDoesNotExist => {
-//                     StandardGraphqlError::BadUserInput(formatted_error)
-//                 }
-//                 ServiceError::DatabaseError(_) => {
-//                     StandardGraphqlError::InternalError(formatted_error)
-//                 }
-//             };
+            let graphql_error = match error {
+                DeleteItemVariantError::DatabaseError(_) => {
+                    StandardGraphqlError::InternalError(formatted_error)
+                }
+            };
 
-//             Err(graphql_error.extend())
-//         }
-//     }
-// }
+            Err(graphql_error.extend())
+        }
+    }
+}
