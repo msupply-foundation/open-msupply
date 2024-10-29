@@ -75,7 +75,7 @@ fragment ItemVariant on ItemVariantNode {
   name
   dosesPerUnit
   manufacturerId
-  manufacturer {
+  manufacturer(storeId: $storeId) {
     ...NameRow
   }
   coldStorageTypeId
