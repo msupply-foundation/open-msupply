@@ -4,6 +4,9 @@ pub use self::update::*;
 mod insert;
 pub use self::insert::*;
 
+mod delete;
+pub use self::delete::*;
+
 mod supply_requested_quantity;
 pub use supply_requested_quantity::*;
 
