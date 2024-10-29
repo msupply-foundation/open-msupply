@@ -53,6 +53,12 @@ fragment Asset on AssetNode {
       code
       name
       onHold
+      coldStorageType {
+        id
+        name
+        maxTemperature
+        minTemperature
+      }
     }
     totalCount
   }

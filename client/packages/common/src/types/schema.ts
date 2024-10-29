@@ -966,6 +966,14 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
+export type ColdStorageTypeNode = {
+  __typename: 'ColdStorageTypeNode';
+  id: Scalars['String']['output'];
+  maxTemperature: Scalars['Float']['output'];
+  minTemperature: Scalars['Float']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type ConfigureNamePropertiesResponse = Success;
 
 export type ConfigureNamePropertyInput = {
@@ -3675,6 +3683,7 @@ export type LocationIsOnHold = InsertOutboundShipmentLineErrorInterface & Insert
 export type LocationNode = {
   __typename: 'LocationNode';
   code: Scalars['String']['output'];
+  coldStorageType?: Maybe<ColdStorageTypeNode>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   onHold: Scalars['Boolean']['output'];
