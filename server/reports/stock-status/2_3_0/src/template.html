@@ -21,11 +21,11 @@
     </thead>
     <tbody>
       {% for item in data.items.nodes %}
-      {% set SOH = item.stats.availableStockOnHand | default(value=0) | round(
-      precision=1) %}
-      {% set AMC = item.stats.averageMonthlyConsumption | default(value=0) |
-      round(precision=1) %}
-      {% set MOS = item.stats.availableMonthsOfStockOnHand | default(value=0) | round( precision=1) %}
+        {% set SOH = item.stats.availableStockOnHand | default(value=0) | round(
+        precision=1) %}
+        {% set AMC = item.stats.averageMonthlyConsumption | default(value=0) |
+        round(precision=1) %}
+        {% set MOS = item.stats.availableMonthsOfStockOnHand | default(value=0) | round( precision=1) %}
 
       <tr>
         <td>{{item.code}}</td>

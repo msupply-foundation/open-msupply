@@ -55,6 +55,15 @@ export const gapsNameProperties: {
       remoteEditable: true,
     },
     {
+      id: 'c5e363fc-40c9-4m1c-b29a-76d74534b077',
+      propertyId: 'packaging_level',
+      key: 'packaging_level',
+      name: 'Packaging Level',
+      valueType: PropertyNodeValueType.String,
+      allowedValues: 'Primary (1),Secondary (2),Tertiary (3)',
+      remoteEditable: true,
+    },
+    {
       id: '7716cecc-7d62-4f1b-93fa-a55a275079b4',
       propertyId: 'population_served',
       key: 'population_served',

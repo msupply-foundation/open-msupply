@@ -151,8 +151,9 @@ fn generate_stock_in_out_or_update(
             item_id: stock_line_row.item_link_id,
             stock_on_hold: stock_line_row.on_hold,
             note: stock_line_row.note,
-            // Default
+            item_variant_id: stock_line_row.item_variant_id,
             barcode: stock_line_row.barcode_id,
+            // Default
             total_before_tax: None,
             tax_percentage: None,
         })
@@ -325,6 +326,7 @@ fn generate_new_stock_line(
         barcode: None,
         total_before_tax: None,
         tax_percentage: None,
+        item_variant_id: None,
     });
 
     // If new stock line has a location, create location movement

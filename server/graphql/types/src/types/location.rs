@@ -1,7 +1,10 @@
+use crate::types::ColdStorageTypeNode;
+
 use super::StockLineConnector;
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
+use graphql_core::loader::ColdStorageTypeLoader;
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{loader::StockLineByLocationIdLoader, ContextExt};
 use repository::StringFilter;
@@ -85,6 +88,22 @@ impl LocationNode {
         Ok(StockLineConnector::from_vec(
             result_option.unwrap_or(vec![]),
         ))
+    }
+
+    pub async fn cold_storage_type(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<ColdStorageTypeNode>> {
+        let cold_storage_type_id = match &self.row().cold_storage_type_id {
+            Some(cold_storage_type_id) => cold_storage_type_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<ColdStorageTypeLoader>>();
+        Ok(loader
+            .load_one(cold_storage_type_id.clone())
+            .await?
+            .map(ColdStorageTypeNode::from_domain))
     }
 }
 

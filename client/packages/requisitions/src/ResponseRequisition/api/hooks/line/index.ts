@@ -7,5 +7,5 @@ export const Lines = {
   useDeleteResponseLines,
   useResponseLines,
   useSaveResponseLines,
-  useResponseLineStatsData
+  useResponseLineStatsData,
 };

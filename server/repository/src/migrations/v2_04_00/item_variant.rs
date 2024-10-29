@@ -18,7 +18,7 @@ impl MigrationFragment for Migrate {
                 name TEXT NOT NULL,
                 item_link_id TEXT NOT NULL REFERENCES item_link(id),
                 cold_storage_type_id TEXT REFERENCES cold_storage_type(id),
-                doses_per_unit {DOUBLE},
+                doses_per_unit INTEGER,
                 manufacturer_link_id TEXT REFERENCES name_link(id),
                 deleted_datetime {DATETIME}
             );
