@@ -8,6 +8,7 @@ import {
   createTableStore,
   NumberInputCell,
   TextInputCell,
+  CellProps,
 } from '@openmsupply-client/common';
 import { PackagingVariantFragment } from '../../../api';
 
@@ -16,20 +17,14 @@ export const ItemPackagingVariantsTable = ({
   update,
 }: {
   data: PackagingVariantFragment[];
-  update?: (packagingVariants: PackagingVariantFragment[]) => void;
+  update?: (packagingVariant: Partial<PackagingVariantFragment>) => void;
 }) => {
   const updatePackaging = (
     packagingVariant?: Partial<PackagingVariantFragment>
   ) => {
     if (!packagingVariant || !update) return;
 
-    const idx = data.findIndex(v => v.id === packagingVariant.id);
-
-    if (idx !== -1) {
-      const newPackagingVariants = [...data];
-      newPackagingVariants[idx] = packagingVariant as PackagingVariantFragment; // TODO: remove `as` when column typing is improved!
-      update(newPackagingVariants);
-    }
+    update(packagingVariant);
   };
   const columns = useColumns<PackagingVariantFragment>([
     {
@@ -51,7 +46,7 @@ export const ItemPackagingVariantsTable = ({
     },
     {
       key: 'volumePerUnit',
-      Cell: update ? NumberInputCell : TooltipTextCell,
+      Cell: update ? VolumeInputCell : TooltipTextCell,
       label: 'label.volume-per-unit',
       setter: updatePackaging,
     },
@@ -68,3 +63,8 @@ export const ItemPackagingVariantsTable = ({
     </TableProvider>
   );
 };
+
+// Input cells can't be defined inline, otherwise they lose focus on re-render
+const VolumeInputCell = (props: CellProps<PackagingVariantFragment>) => (
+  <NumberInputCell decimalLimit={2} {...props} />
+);

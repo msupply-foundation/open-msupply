@@ -13,34 +13,34 @@ use crate::{
 use crate::{EqualFilter, Pagination, Sort};
 
 #[derive(PartialEq, Debug, Clone, serde::Serialize)]
-pub struct TemperatureRange {
-    pub temperature_range_row: ColdStorageTypeRow,
+pub struct ColdStorageType {
+    pub cold_storage_type_row: ColdStorageTypeRow,
 }
 
 #[derive(Clone, PartialEq, Debug, Default)]
-pub struct TemperatureRangeFilter {
+pub struct ColdStorageTypeFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
-pub enum TemperatureRangeSortField {
+pub enum ColdStorageTypeSortField {
     Id,
     Name,
 }
 
-pub type TemperatureRangeSort = Sort<TemperatureRangeSortField>;
+pub type ColdStorageTypeSort = Sort<ColdStorageTypeSortField>;
 
-pub struct TemperatureRangeRepository<'a> {
+pub struct ColdStorageTypeRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> TemperatureRangeRepository<'a> {
+impl<'a> ColdStorageTypeRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        TemperatureRangeRepository { connection }
+        ColdStorageTypeRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<TemperatureRangeFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<ColdStorageTypeFilter>) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter);
         Ok(query
             .count()
@@ -49,24 +49,24 @@ impl<'a> TemperatureRangeRepository<'a> {
 
     pub fn query_by_filter(
         &self,
-        filter: TemperatureRangeFilter,
-    ) -> Result<Vec<TemperatureRange>, RepositoryError> {
+        filter: ColdStorageTypeFilter,
+    ) -> Result<Vec<ColdStorageType>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
         &self,
         pagination: Pagination,
-        filter: Option<TemperatureRangeFilter>,
-        sort: Option<TemperatureRangeSort>,
-    ) -> Result<Vec<TemperatureRange>, RepositoryError> {
+        filter: Option<ColdStorageTypeFilter>,
+        sort: Option<ColdStorageTypeSort>,
+    ) -> Result<Vec<ColdStorageType>, RepositoryError> {
         let mut query = Self::create_filtered_query(filter);
         if let Some(sort) = sort {
             match sort.key {
-                TemperatureRangeSortField::Id => {
+                ColdStorageTypeSortField::Id => {
                     apply_sort_no_case!(query, sort, cold_storage_type_dsl::id)
                 }
-                TemperatureRangeSortField::Name => {
+                ColdStorageTypeSortField::Name => {
                     apply_sort!(query, sort, cold_storage_type_dsl::name)
                 }
             }
@@ -83,12 +83,12 @@ impl<'a> TemperatureRangeRepository<'a> {
     }
 
     pub fn create_filtered_query(
-        filter: Option<TemperatureRangeFilter>,
-    ) -> BoxedTemperatureRangeQuery {
+        filter: Option<ColdStorageTypeFilter>,
+    ) -> BoxedColdStorageTypeQuery {
         let mut query = cold_storage_type_dsl::cold_storage_type.into_boxed();
 
         if let Some(f) = filter {
-            let TemperatureRangeFilter { id, name } = f;
+            let ColdStorageTypeFilter { id, name } = f;
 
             apply_equal_filter!(query, id, cold_storage_type_dsl::id);
             apply_equal_filter!(query, name, cold_storage_type_dsl::name);
@@ -98,16 +98,16 @@ impl<'a> TemperatureRangeRepository<'a> {
     }
 }
 
-type BoxedTemperatureRangeQuery = cold_storage_type::BoxedQuery<'static, DBType>;
+type BoxedColdStorageTypeQuery = cold_storage_type::BoxedQuery<'static, DBType>;
 
-fn to_domain(temperature_range_row: ColdStorageTypeRow) -> TemperatureRange {
-    TemperatureRange {
-        temperature_range_row,
+fn to_domain(cold_storage_type_row: ColdStorageTypeRow) -> ColdStorageType {
+    ColdStorageType {
+        cold_storage_type_row,
     }
 }
 
-impl TemperatureRangeFilter {
-    pub fn new() -> TemperatureRangeFilter {
+impl ColdStorageTypeFilter {
+    pub fn new() -> ColdStorageTypeFilter {
         Self::default()
     }
 

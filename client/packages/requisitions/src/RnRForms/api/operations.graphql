@@ -21,9 +21,11 @@ fragment RnRFormLine on RnRFormLineNode {
   quantityReceived
   quantityConsumed
   adjustedQuantityConsumed
+  losses
   adjustments
   stockOutDuration
   finalBalance
+  minimumQuantity
   maximumQuantity
   expiryDate
   calculatedRequestedQuantity

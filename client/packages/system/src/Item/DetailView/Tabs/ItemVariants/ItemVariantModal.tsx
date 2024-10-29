@@ -15,7 +15,11 @@ import {
   useNotification,
 } from '@openmsupply-client/common';
 import { ItemPackagingVariantsTable } from './ItemPackagingVariantsTable';
-import { ItemVariantFragment, useItemVariant } from '../../../api';
+import {
+  ItemVariantFragment,
+  PackagingVariantFragment,
+  useItemVariant,
+} from '../../../api';
 import { ManufacturerSearchInput } from '@openmsupply-client/system';
 
 export const ItemVariantModal = ({
@@ -32,10 +36,11 @@ export const ItemVariantModal = ({
   const height = useKeyboardHeightAdjustment(500);
   const { success } = useNotification();
 
-  const { draft, isComplete, updateDraft, save } = useItemVariant({
-    itemId,
-    variant,
-  });
+  const { draft, isComplete, updateDraft, updatePackagingVariant, save } =
+    useItemVariant({
+      itemId,
+      variant,
+    });
 
   return (
     <Modal
@@ -59,7 +64,11 @@ export const ItemVariantModal = ({
       <QueryParamsProvider
         createStore={createQueryParamsStore({ initialSortBy: { key: 'name' } })}
       >
-        <ItemVariantForm updateVariant={updateDraft} variant={draft} />
+        <ItemVariantForm
+          updateVariant={updateDraft}
+          updatePackagingVariant={updatePackagingVariant}
+          variant={draft}
+        />
       </QueryParamsProvider>
     </Modal>
   );
@@ -68,14 +77,16 @@ export const ItemVariantModal = ({
 const ItemVariantForm = ({
   variant,
   updateVariant,
+  updatePackagingVariant,
 }: {
   variant: ItemVariantFragment;
   updateVariant: (patch: Partial<ItemVariantFragment>) => void;
+  updatePackagingVariant: (patch: Partial<PackagingVariantFragment>) => void;
 }) => {
   const t = useTranslation();
 
   return (
-    <Box justifyContent="center" display="flex" gap={3} alignItems={'center'}>
+    <Box justifyContent="center" display="flex" gap={3}>
       <Box display="flex" flexDirection="column" gap={1} flex={1}>
         <InputWithLabelRow
           label={t('label.name')}
@@ -145,7 +156,7 @@ const ItemVariantForm = ({
         <Typography fontWeight="bold">{t('title.packaging')}</Typography>
         <ItemPackagingVariantsTable
           data={variant.packagingVariants}
-          update={v => updateVariant({ packagingVariants: v })}
+          update={v => updatePackagingVariant(v)}
         />
       </Box>
     </Box>
