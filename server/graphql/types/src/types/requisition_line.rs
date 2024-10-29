@@ -279,6 +279,10 @@ impl RequisitionLineNode {
 
         Ok(result.map(ReasonOptionNode::from_domain))
     }
+
+    pub async fn available_stock_on_hand(&self) -> &f64 {
+        &self.row().available_stock_on_hand
+    }
 }
 
 impl RequisitionLineNode {
