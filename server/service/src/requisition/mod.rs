@@ -31,7 +31,8 @@ use repository::{
     RequisitionFilter, RequisitionLine, RequisitionSort,
 };
 use response_requisition::{
-    batch_response_requisition, BatchResponseRequisition, BatchResponseRequisitionResult,
+    batch_response_requisition, delete_response_requisition, BatchResponseRequisition,
+    BatchResponseRequisitionResult, DeleteResponseRequisition, DeleteResponseRequisitionError,
 };
 
 pub mod common;
@@ -150,6 +151,14 @@ pub trait RequisitionServiceTrait: Sync + Send {
         input: UpdateResponseRequisition,
     ) -> Result<Requisition, UpdateResponseRequisitionError> {
         update_response_requisition(ctx, input)
+    }
+
+    fn delete_response_requisition(
+        &self,
+        ctx: &ServiceContext,
+        input: DeleteResponseRequisition,
+    ) -> Result<String, DeleteResponseRequisitionError> {
+        delete_response_requisition(ctx, input)
     }
 
     fn supply_requested_quantity(

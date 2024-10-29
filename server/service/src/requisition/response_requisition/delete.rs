@@ -23,10 +23,10 @@ pub struct DeleteResponseRequisition {
 pub enum DeleteResponseRequisitionError {
     RequisitionDoesNotExist,
     NotThisStoreRequisition,
-    CannotDeleteFinalisedRequisition,
+    FinalisedRequisition,
     NotAResponseRequisition,
-    CannotDeleteTransferRequisition,
-    CannotDeleteRequisitionWithShipment,
+    TransferRequisition,
+    RequisitionWithShipment,
     LineDeleteError {
         line_id: String,
         error: DeleteResponseRequisitionLineError,
@@ -77,31 +77,31 @@ fn validate(
     store_id: &str,
     input: &DeleteResponseRequisition,
 ) -> Result<(), OutError> {
-    // check if exists
+    // check if RequisitionDoesNotExist
     let requisition_row = check_requisition_row_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
-    // check if this store
+    // check if NotThisStoreRequisition
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
     }
 
-    // check if correct type
+    // check if NotAResponseRequisition
     if requisition_row.r#type != RequisitionType::Response {
         return Err(OutError::NotAResponseRequisition);
     }
 
-    // check status not finalised
-    if requisition_row.status != RequisitionStatus::Finalised {
-        return Err(OutError::CannotDeleteFinalisedRequisition);
+    // check if FinalisedRequisition
+    if requisition_row.status == RequisitionStatus::Finalised {
+        return Err(OutError::FinalisedRequisition);
     }
 
-    // check not transfer requisition
+    // check if TransferRequisition
     if requisition_row.linked_requisition_id.is_some() {
-        return Err(OutError::CannotDeleteTransferRequisition);
+        return Err(OutError::TransferRequisition);
     }
 
-    // check no shipment
+    // check if RequisitionWithShipment
     let filter = InvoiceFilter {
         requisition_id: Some(EqualFilter::equal_to(&requisition_row.id)),
         ..Default::default()
@@ -110,7 +110,7 @@ fn validate(
         .query_one(filter)?
         .is_some()
     {
-        return Err(OutError::CannotDeleteRequisitionWithShipment);
+        return Err(OutError::RequisitionWithShipment);
     }
 
     Ok(())
@@ -119,5 +119,166 @@ fn validate(
 impl From<RepositoryError> for DeleteResponseRequisitionError {
     fn from(error: RepositoryError) -> Self {
         DeleteResponseRequisitionError::DatabaseError(error)
+    }
+}
+
+#[cfg(test)]
+mod test_delete {
+
+    use chrono::NaiveDateTime;
+    use repository::{
+        mock::{
+            mock_new_response_requisition, mock_request_draft_requisition,
+            mock_sent_request_requisition, mock_store_a, mock_store_b, MockDataInserts,
+        },
+        test_db::setup_all,
+        InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, RequisitionRow,
+        RequisitionRowRepository, RequisitionStatus, RequisitionType,
+    };
+
+    use crate::{
+        requisition::response_requisition::{
+            DeleteResponseRequisition, DeleteResponseRequisitionError as ServiceError,
+        },
+        service_provider::ServiceProvider,
+    };
+
+    #[actix_rt::test]
+    async fn delete_response_requisition_errors() {
+        let (_, connection, connection_manager, _) =
+            setup_all("delete_response_requisition_errors", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.requisition_service;
+        let requisition_repo = RequisitionRowRepository::new(&connection);
+        let invoice_repo = InvoiceRowRepository::new(&connection);
+
+        // RequisitionDoesNotExist
+        assert_eq!(
+            service.delete_response_requisition(
+                &context,
+                DeleteResponseRequisition {
+                    id: "invalid".to_owned(),
+                },
+            ),
+            Err(ServiceError::RequisitionDoesNotExist)
+        );
+
+        // NotAResponseRequisition,
+        assert_eq!(
+            service.delete_response_requisition(
+                &context,
+                DeleteResponseRequisition {
+                    id: mock_sent_request_requisition().id,
+                },
+            ),
+            Err(ServiceError::NotAResponseRequisition)
+        );
+
+        // FinalisedRequisition,
+        assert_eq!(
+            service.delete_response_requisition(
+                &context,
+                DeleteResponseRequisition {
+                    id: mock_request_draft_requisition().id,
+                },
+            ),
+            Err(ServiceError::NotAResponseRequisition)
+        );
+
+        // TransferRequisition,
+        let transfer_requisition = RequisitionRow {
+            id: "transfer_requisition".to_string(),
+            requisition_number: 3,
+            name_link_id: "name_a".to_string(),
+            store_id: mock_store_a().id,
+            r#type: RequisitionType::Response,
+            status: RequisitionStatus::New,
+            linked_requisition_id: Some(mock_sent_request_requisition().id),
+            ..Default::default()
+        };
+        requisition_repo.upsert_one(&transfer_requisition).unwrap();
+        assert_eq!(
+            service.delete_response_requisition(
+                &context,
+                DeleteResponseRequisition {
+                    id: "transfer_requisition".to_string(),
+                },
+            ),
+            Err(ServiceError::TransferRequisition)
+        );
+
+        // RequisitionWithShipment
+        let invoice = InvoiceRow {
+            id: "invoice_id".to_string(),
+            name_link_id: "name_a".to_string(),
+            store_id: mock_store_a().id,
+            invoice_number: 3,
+            r#type: InvoiceType::OutboundShipment,
+            status: InvoiceStatus::New,
+            on_hold: false,
+            created_datetime: NaiveDateTime::parse_from_str(
+                "2021-01-02T00:00:00",
+                "%Y-%m-%dT%H:%M:%S",
+            )
+            .unwrap(),
+            currency_rate: 1.0,
+            requisition_id: Some(mock_new_response_requisition().id),
+            ..Default::default()
+        };
+        invoice_repo.upsert_one(&invoice).unwrap();
+        assert_eq!(
+            service.delete_response_requisition(
+                &context,
+                DeleteResponseRequisition {
+                    id: mock_new_response_requisition().id,
+                },
+            ),
+            Err(ServiceError::RequisitionWithShipment)
+        );
+
+        // NotThisStoreRequisition
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.delete_response_requisition(
+                &context,
+                DeleteResponseRequisition {
+                    id: mock_new_response_requisition().id,
+                },
+            ),
+            Err(ServiceError::NotThisStoreRequisition)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn delete_response_requisition_success() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "delete_response_requisition_success",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.requisition_service;
+
+        let result = service.delete_response_requisition(
+            &context,
+            DeleteResponseRequisition {
+                id: mock_new_response_requisition().id,
+            },
+        );
+
+        assert_eq!(
+            RequisitionRowRepository::new(&connection)
+                .find_one_by_id(&result.unwrap())
+                .unwrap(),
+            None
+        )
     }
 }
