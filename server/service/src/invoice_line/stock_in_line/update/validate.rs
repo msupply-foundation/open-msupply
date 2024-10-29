@@ -8,6 +8,7 @@ use crate::{
             check_number_of_packs,
         },
     },
+    NullableUpdate,
 };
 use repository::{InvoiceLine, InvoiceRow, ItemRow, StorageConnection};
 
