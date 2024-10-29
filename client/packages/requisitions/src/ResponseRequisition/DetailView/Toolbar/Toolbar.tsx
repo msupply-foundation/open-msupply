@@ -31,6 +31,7 @@ export const Toolbar: FC = () => {
     programName,
     period,
     orderType,
+    linkedRequisition,
   } = useResponse.document.fields([
     'approvalStatus',
     'otherParty',
@@ -39,6 +40,7 @@ export const Toolbar: FC = () => {
     'programName',
     'period',
     'orderType',
+    'linkedRequisition',
   ]);
   const noLinkedShipments = (shipments?.totalCount ?? 0) === 0;
   const showInfo = noLinkedShipments && !isDisabled;
@@ -129,7 +131,10 @@ export const Toolbar: FC = () => {
           }}
           debounceTime={0}
         />
-        <ToolbarDropDown isDisabled={isDisabled || !!theirReference} />
+        <ToolbarDropDown
+          isDisabled={isDisabled}
+          hasLinkedRequisition={!!linkedRequisition}
+        />
       </Grid>
     </AppBarContentPortal>
   );
