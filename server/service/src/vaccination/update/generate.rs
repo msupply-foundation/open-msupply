@@ -86,6 +86,7 @@ pub fn generate(
                     id: uuid(),
                     stock_line_id: Some(stock_line_row.id),
                     item_id: stock_line_row.item_link_id,
+                    item_variant_id: stock_line_row.item_variant_id,
                     expiry_date: stock_line_row.expiry_date,
                     batch: stock_line_row.batch,
                     pack_size: stock_line_row.pack_size,

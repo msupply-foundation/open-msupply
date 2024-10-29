@@ -3,7 +3,7 @@ use repository::{
     StorageConnection, StorageConnectionManager,
 };
 
-use super::{get_default_pagination, i64_to_u32, ListError, ListResult};
+use crate::{get_default_pagination, i64_to_u32, ListError, ListResult};
 
 pub const MAX_LIMIT: u32 = 5000;
 pub const MIN_LIMIT: u32 = 1;

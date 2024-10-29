@@ -13,3 +13,4 @@ export * from './useItemStockOnHand';
 export * from './usePackVariants';
 export * from './useItemApi';
 export * from './useVaccineItem';
+export * from './useItemVariant';
