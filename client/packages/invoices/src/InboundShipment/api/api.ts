@@ -104,6 +104,7 @@ const inboundParsers = {
       numberOfPacks: line.numberOfPacks,
       invoiceId: line.invoiceId,
       location: setNullableInput('id', line.location),
+      itemVariantId: line.itemVariantId,
     };
   },
   toUpdateLine: (line: DraftInboundLine): UpdateInboundShipmentLineInput => ({
@@ -118,6 +119,9 @@ const inboundParsers = {
     packSize: line.packSize,
     numberOfPacks: line.numberOfPacks,
     location: setNullableInput('id', line.location),
+    itemVariantId: setNullableInput('itemVariantId', {
+      itemVariantId: line.itemVariantId,
+    }),
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };

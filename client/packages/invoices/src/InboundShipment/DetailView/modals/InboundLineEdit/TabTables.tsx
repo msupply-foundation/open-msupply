@@ -23,6 +23,7 @@ import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
   getLocationInputColumn,
+  ItemVariantInputCell,
   LocationRowFragment,
   PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
   PackVariantEntryCell,
@@ -98,6 +99,16 @@ export const QuantityTableComponent: FC<
     [
       getBatchColumn(updateDraftLine, theme),
       getExpiryColumn(updateDraftLine, theme),
+
+      {
+        key: 'itemVariantId',
+        label: 'label.item-variant',
+        width: 170,
+        Cell: props => (
+          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+        ),
+        setter: updateDraftLine,
+      },
       [
         'numberOfPacks',
         {
