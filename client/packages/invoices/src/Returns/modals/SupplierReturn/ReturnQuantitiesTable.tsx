@@ -24,39 +24,32 @@ export const QuantityToReturnTableComponent = ({
     [
       'itemCode',
       'itemName',
-      // 'location',
       'batch',
       'expiryDate',
+      [
+        'itemUnit',
+        {
+          accessor: ({ rowData }) => rowData.item.unitName ?? '',
+        },
+      ],
+      'packSize',
+      [
+        'availableNumberOfPacks',
+        {
+          description: 'description.pack-quantity',
+        },
+      ],
+      [
+        'numberOfPacksToReturn',
+        {
+          description: 'description.pack-quantity',
+          width: 100,
+          setter: updateLine,
+          getIsDisabled: () => isDisabled,
+          Cell: NumberOfPacksToReturnReturnInputCell,
+        },
+      ],
     ];
-
-  columnDescriptions.push(
-    [
-      'itemUnit',
-      {
-        accessor: ({ rowData }) => rowData.item.unitName ?? '',
-      },
-    ],
-    'packSize'
-  );
-
-  columnDescriptions.push(
-    [
-      'availableNumberOfPacks',
-      {
-        description: 'description.pack-quantity',
-      },
-    ],
-    [
-      'numberOfPacksToReturn',
-      {
-        description: 'description.pack-quantity',
-        width: 100,
-        setter: updateLine,
-        getIsDisabled: () => isDisabled,
-        Cell: NumberOfPacksToReturnReturnInputCell,
-      },
-    ]
-  );
 
   const columns = useColumns<GenerateSupplierReturnLineFragment>(
     columnDescriptions,

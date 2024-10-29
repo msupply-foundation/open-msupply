@@ -10,15 +10,10 @@ import {
   TooltipTextCell,
   useColumnUtils,
   CurrencyCell,
-  ColumnDescription,
 } from '@openmsupply-client/common';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 import { isInboundPlaceholderRow } from '../../../utils';
-
-type InboundShipmentColumnDescription = ColumnDescription<
-  InboundLineFragment | InboundItem
->;
 
 const getUnitQuantity = (row: InboundLineFragment) =>
   row.packSize * row.numberOfPacks;
@@ -133,38 +128,36 @@ export const useInboundShipmentColumns = () => {
         },
       ],
 
-      ...([
-        [
-          'itemUnit',
-          {
-            getSortValue: row =>
-              getColumnPropertyAsString(row, [
-                { path: ['lines', 'item', 'unitName'] },
-                { path: ['item', 'unitName'], default: '' },
-              ]),
-            accessor: ({ rowData }) =>
-              getColumnProperty(rowData, [
-                { path: ['lines', 'item', 'unitName'] },
-                { path: ['item', 'unitName'], default: '' },
-              ]),
-          },
-        ],
-        [
-          'packSize',
-          {
-            accessor: ({ rowData }) =>
-              getColumnProperty(rowData, [
-                { path: ['lines', 'packSize'] },
-                { path: ['packSize'], default: '' },
-              ]),
-            getSortValue: row =>
-              getColumnPropertyAsString(row, [
-                { path: ['lines', 'packSize'] },
-                { path: ['packSize'], default: '' },
-              ]),
-          },
-        ],
-      ] as InboundShipmentColumnDescription[]),
+      [
+        'itemUnit',
+        {
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'item', 'unitName'] },
+              { path: ['item', 'unitName'], default: '' },
+            ]),
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'item', 'unitName'] },
+              { path: ['item', 'unitName'], default: '' },
+            ]),
+        },
+      ],
+      [
+        'packSize',
+        {
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'packSize'] },
+              { path: ['packSize'], default: '' },
+            ]),
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'packSize'] },
+              { path: ['packSize'], default: '' },
+            ]),
+        },
+      ],
       [
         'numberOfPacks',
         {
@@ -250,7 +243,7 @@ export const useExpansionColumns = (): Column<InboundLineFragment>[] => {
         accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
-    ...['packSize' as ColumnDescription<InboundLineFragment>],
+    'packSize',
     'numberOfPacks',
     [
       'costPricePerPack',

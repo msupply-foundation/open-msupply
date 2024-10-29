@@ -64,11 +64,7 @@ export const usePrescriptionLineEditColumns = ({
       width: 85,
       accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
     },
-  ];
-
-  columns.push(['packSize', { width: 90 }]);
-
-  columns.push(
+    ['packSize', { width: 90 }],
     [
       'unitQuantity',
       {
@@ -87,8 +83,8 @@ export const usePrescriptionLineEditColumns = ({
         setter: ({ packSize, id, numberOfPacks }) =>
           onChange(id, numberOfPacks ?? 0, packSize ?? 1),
       },
-    ]
-  );
+    ],
+  ];
 
   return useColumns(columns, {}, [onChange]);
 };

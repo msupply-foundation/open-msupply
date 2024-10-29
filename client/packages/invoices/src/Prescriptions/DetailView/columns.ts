@@ -132,9 +132,6 @@ export const usePrescriptionColumn = ({
           ]),
       },
     ],
-  ];
-
-  columns.push(
     [
       'itemUnit',
       {
@@ -164,10 +161,7 @@ export const usePrescriptionColumn = ({
             { path: ['packSize'] },
           ]),
       },
-    ]
-  );
-
-  columns.push(
+    ],
     [
       'unitQuantity',
       {
@@ -294,8 +288,8 @@ export const usePrescriptionColumn = ({
       },
     },
     expansionColumn,
-    GenericColumnKey.Selection
-  );
+    GenericColumnKey.Selection,
+  ];
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
 };

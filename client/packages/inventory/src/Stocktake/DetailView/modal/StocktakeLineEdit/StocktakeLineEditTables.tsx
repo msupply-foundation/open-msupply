@@ -30,7 +30,6 @@ import {
   useStocktakeLineErrorContext,
   UseStocktakeLineErrors,
 } from '../../../context';
-import { StocktakeLineFragment } from '../../../api';
 
 interface StocktakeLineEditTableProps {
   isDisabled?: boolean;
@@ -153,9 +152,11 @@ const PackUnitEntryCell = PackSizeEntryCell<DraftStocktakeLine>({
   getIsDisabled: r => !!r?.stockLine,
 });
 
-export const BatchTable: FC<
-  StocktakeLineEditTableProps & { item: StocktakeLineFragment['item'] | null }
-> = ({ item: _, batches, update, isDisabled = false }) => {
+export const BatchTable: FC<StocktakeLineEditTableProps> = ({
+  batches,
+  update,
+  isDisabled = false,
+}) => {
   const t = useTranslation();
   const theme = useTheme();
   useDisableStocktakeRows(batches);

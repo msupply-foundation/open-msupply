@@ -12,7 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import React from 'react';
 import { GenerateCustomerReturnLineFragment } from '../../api';
-import { PackSizeEntryCell } from 'packages/system/src';
+import { PackSizeEntryCell } from '@openmsupply-client/system';
 
 export const QuantityReturnedTableComponent = ({
   lines,
@@ -29,8 +29,6 @@ export const QuantityReturnedTableComponent = ({
     [
       'itemCode',
       'itemName',
-      // 'itemUnit', // not implemented for now
-      // 'location',
       [
         'batch',
         {

@@ -129,9 +129,6 @@ export const useStocktakeColumns = ({
           { path: ['location', 'code'] },
         ]),
     },
-  ];
-
-  columns.push(
     [
       'itemUnit',
       {
@@ -151,10 +148,7 @@ export const useStocktakeColumns = ({
             { path: ['packSize'] },
           ]),
       },
-    ]
-  );
-
-  columns.push(
+    ],
     {
       key: 'snapshotNumPacks',
       label: 'label.snapshot-num-of-packs',
@@ -251,8 +245,8 @@ export const useStocktakeColumns = ({
         ]),
     },
     expandColumn,
-    GenericColumnKey.Selection
-  );
+    GenericColumnKey.Selection,
+  ];
 
   return useColumns(columns, { sortBy, onChangeSortBy }, [
     sortBy,
@@ -272,7 +266,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
         accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
-    ...['packSize' as ColumnDescription<StocktakeLineFragment>],
+    'packSize',
     {
       key: 'snapshotNumPacks',
       width: 150,

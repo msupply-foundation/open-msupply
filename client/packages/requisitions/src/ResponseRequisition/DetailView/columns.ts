@@ -9,7 +9,7 @@ import {
   TooltipTextCell,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from './../api';
-import { PackSizeQuantityCell } from 'packages/system/src';
+import { PackQuantityCell } from '@openmsupply-client/system';
 
 export const useResponseColumns = () => {
   const {
@@ -52,10 +52,8 @@ export const useResponseColumns = () => {
         label: 'label.our-soh',
         description: 'description.our-soh',
         sortable: false,
-        Cell: PackSizeQuantityCell({
-          getPackSize: _row => 1, // Default to units here, the result is not in pack size
-          getQuantity: row => row.itemStats.availableStockOnHand,
-        }),
+        Cell: PackSizeQuantityCell,
+        accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
       },
     ],
     {
@@ -66,11 +64,9 @@ export const useResponseColumns = () => {
       align: ColumnAlign.Right,
       getSortValue: rowData =>
         rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand ?? '',
-      Cell: PackSizeQuantityCell({
-        getPackSize: _row => 1, // Default to units here, the result is not in pack size
-        getQuantity: row =>
-          row?.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0,
-      }),
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) =>
+        rowData.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0,
     },
     [
       'requestedQuantity',

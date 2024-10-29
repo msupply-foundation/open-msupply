@@ -1,6 +1,5 @@
 import {
   useColumns,
-  //   getNotePopoverColumn,
   GenericColumnKey,
   SortBy,
   Column,
@@ -23,10 +22,6 @@ const expansionColumn = getRowExpandColumn<
   CustomerReturnLineFragment | CustomerReturnItem
 >();
 
-// const notePopoverColumn = getNotePopoverColumn<
-//   StockOutLineFragment | StockOutItem
-// >();
-
 const getUnitQuantity = (row: CustomerReturnLineFragment) =>
   row.packSize * row.numberOfPacks;
 
@@ -41,27 +36,6 @@ export const useCustomerReturnColumns = ({
   const columns: ColumnDescription<
     CustomerReturnLineFragment | CustomerReturnItem
   >[] = [
-    //   [
-    //     notePopoverColumn,
-    //     {
-    //       accessor: ({ rowData }) => {
-    //         if ('lines' in rowData) {
-    //           const { lines } = rowData;
-    //           const noteSections = lines
-    //             .map(({ batch, note }) => ({
-    //               header: batch ?? '',
-    //               body: note ?? '',
-    //             }))
-    //             .filter(({ body }) => !!body);
-    //           return noteSections.length ? noteSections : null;
-    //         } else {
-    //           return rowData.batch && rowData.note
-    //             ? { header: rowData.batch, body: rowData.note }
-    //             : null;
-    //         }
-    //       },
-    //     },
-    //   ],
     [
       'itemCode',
       {
@@ -93,21 +67,6 @@ export const useCustomerReturnColumns = ({
           ]),
       },
     ],
-    //   [
-    //     'itemUnit',
-    //     {
-    //       getSortValue: row =>
-    //         getColumnPropertyAsString(row, [
-    //           { path: ['lines', 'item', 'unitName'] },
-    //           { path: ['item', 'unitName'], default: '' },
-    //         ]),
-    //       accessor: ({ rowData }) =>
-    //         getColumnProperty(rowData, [
-    //           { path: ['lines', 'item', 'unitName'] },
-    //           { path: ['item', 'unitName'], default: '' },
-    //         ]),
-    //     },
-    //   ],
     [
       'batch',
       {
@@ -138,9 +97,6 @@ export const useCustomerReturnColumns = ({
           ]),
       },
     ],
-  ];
-
-  columns.push(
     [
       'itemUnit',
       {
@@ -162,7 +118,7 @@ export const useCustomerReturnColumns = ({
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;
-            return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '') ?? '';
+            return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
           } else {
             return row.packSize ?? '';
           }
@@ -176,10 +132,7 @@ export const useCustomerReturnColumns = ({
           }
         },
       },
-    ]
-  );
-
-  columns.push(
+    ],
     [
       'numberOfPacks',
       {
@@ -224,8 +177,8 @@ export const useCustomerReturnColumns = ({
       },
     ],
     expansionColumn,
-    GenericColumnKey.Selection
-  );
+    GenericColumnKey.Selection,
+  ];
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
 };
