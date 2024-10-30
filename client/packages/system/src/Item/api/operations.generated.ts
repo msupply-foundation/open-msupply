@@ -97,6 +97,14 @@ export type UpsertItemVariantMutationVariables = Types.Exact<{
 
 export type UpsertItemVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', itemVariant: { __typename: 'ItemVariantMutations', upsertItemVariant: { __typename: 'ItemVariantNode', id: string, name: string, dosesPerUnit?: number | null, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }> } | { __typename: 'UpsertItemVariantError' } } } };
 
+export type DeleteItemVariantMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.DeleteItemVariantInput;
+}>;
+
+
+export type DeleteItemVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', itemVariant: { __typename: 'ItemVariantMutations', deleteItemVariant: { __typename: 'DeleteResponse', id: string } } } };
+
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
   __typename
@@ -379,6 +387,21 @@ export const UpsertItemVariantDocument = gql`
   }
 }
     ${ItemVariantFragmentDoc}`;
+export const DeleteItemVariantDocument = gql`
+    mutation deleteItemVariant($storeId: String!, $input: DeleteItemVariantInput!) {
+  centralServer {
+    itemVariant {
+      deleteItemVariant(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -407,6 +430,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     upsertItemVariant(variables: UpsertItemVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpsertItemVariantMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpsertItemVariantMutation>(UpsertItemVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertItemVariant', 'mutation', variables);
+    },
+    deleteItemVariant(variables: DeleteItemVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteItemVariantMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteItemVariantMutation>(DeleteItemVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteItemVariant', 'mutation', variables);
     }
   };
 }
