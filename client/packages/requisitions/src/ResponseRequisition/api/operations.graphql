@@ -10,6 +10,40 @@ mutation updateResponse(
   }
 }
 
+# mutation deleteRequest(
+#   $storeId: String!
+#   $input: BatchRequestRequisitionInput!
+# ) {
+#   batchRequestRequisition(storeId: $storeId, input: $input) {
+#     deleteRequestRequisitions {
+#       id
+#       response {
+#         ... on DeleteRequestRequisitionError {
+#           __typename
+#           error {
+#             description
+#             ... on RecordNotFound {
+#               __typename
+#               description
+#             }
+#             ... on CannotDeleteRequisitionWithLines {
+#               __typename
+#               description
+#             }
+#             ... on CannotEditRequisition {
+#               __typename
+#               description
+#             }
+#           }
+#         }
+#         ... on DeleteResponse {
+#           id
+#         }
+#       }
+#     }
+#   }
+# }
+
 fragment ResponseLine on RequisitionLineNode {
   id
   itemId
