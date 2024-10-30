@@ -52,7 +52,6 @@ pub fn validate(
     if !check_location_exists(connection, store_id, &input.location)? {
         return Err(LocationDoesNotExist);
     }
-    // TODO
     match &input.item_variant_id {
         Some(NullableUpdate {
             value: Some(item_variant_id),
