@@ -3,7 +3,7 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
-use crate::{item::item_variant::check_item_variant_exists, service_provider::ServiceContext};
+use crate::{check_item_variant_exists, service_provider::ServiceContext};
 
 #[derive(PartialEq, Debug)]
 pub enum UpsertPackagingVariantError {
@@ -72,8 +72,7 @@ fn validate(
     connection: &StorageConnection,
     input: &UpsertPackagingVariant,
 ) -> Result<(), UpsertPackagingVariantError> {
-    let item_variant = check_item_variant_exists(connection, &input.item_variant_id)?;
-    if item_variant.is_none() {
+    if !check_item_variant_exists(connection, &input.item_variant_id)? {
         return Err(UpsertPackagingVariantError::ItemVariantDoesNotExist);
     }
 
