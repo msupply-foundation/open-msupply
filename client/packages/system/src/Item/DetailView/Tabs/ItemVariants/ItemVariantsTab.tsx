@@ -19,7 +19,7 @@ import {
   useEditModal,
 } from '@openmsupply-client/common';
 import { ItemPackagingVariantsTable } from './ItemPackagingVariantsTable';
-import { ItemVariantFragment } from '../../../api';
+import { ItemVariantFragment, useDeleteItemVariant } from '../../../api';
 import { ItemVariantModal } from './ItemVariantModal';
 
 export const ItemVariantsTab = ({
@@ -51,7 +51,12 @@ export const ItemVariantsTab = ({
           <NothingHere body={t('messages.no-item-variants')} />
         ) : (
           itemVariants.map(v => (
-            <ItemVariant key={v.id} variant={v} onOpen={onOpen} />
+            <ItemVariant
+              key={v.id}
+              variant={v}
+              onOpen={onOpen}
+              itemId={itemId}
+            />
           ))
         )}
       </Box>
@@ -61,12 +66,15 @@ export const ItemVariantsTab = ({
 
 const ItemVariant = ({
   variant,
+  itemId,
   onOpen,
 }: {
+  itemId: string;
   variant: ItemVariantFragment;
   onOpen: (variant?: ItemVariantFragment) => void;
 }) => {
   const t = useTranslation();
+  const confirmAndDelete = useDeleteItemVariant({ itemId });
 
   return (
     <Box maxWidth="1000px" margin="25px auto 75px">
@@ -83,7 +91,7 @@ const ItemVariant = ({
           />
           <FlatButton
             label={t('label.delete')}
-            onClick={() => {}}
+            onClick={() => confirmAndDelete(variant.id)}
             startIcon={<DeleteIcon />}
             color="primary"
           />
