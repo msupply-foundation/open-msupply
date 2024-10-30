@@ -4,6 +4,8 @@ import { useResponseFields } from './useResponseFields';
 import { useResponses } from './useResponses';
 import { useResponsesAll } from './useResponsesAll';
 import { useUpdateResponse } from './useUpdateResponse';
+import { useDeleteResponses } from './useDeleteResponses';
+import { useDeleteSelectedResponseRequisitions } from './useDeleteSelectedResponseRequisitions';
 
 export const Document = {
   useResponse,
@@ -11,5 +13,7 @@ export const Document = {
   useResponses,
   useResponsesAll,
   useUpdateResponse,
+  useDeleteResponses,
+  useDeleteSelectedResponseRequisitions,
   useInsertResponse,
 };

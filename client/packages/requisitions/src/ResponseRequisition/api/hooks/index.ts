@@ -10,7 +10,8 @@ export const useResponse = {
 
     insert: Document.useInsertResponse,
     update: Document.useUpdateResponse,
-
+    delete: Document.useDeleteResponses,
+    deleteSelected: Document.useDeleteSelectedResponseRequisitions,
     fields: Document.useResponseFields,
   },
   line: {

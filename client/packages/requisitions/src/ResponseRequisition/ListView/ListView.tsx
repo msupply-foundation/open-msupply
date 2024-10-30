@@ -133,6 +133,8 @@ export const ResponseRequisitionListView: FC = () => {
   }
   columnDefinitions.push(['comment', { minWidth: 400, Cell: TooltipTextCell }]);
 
+  columnDefinitions.push('selection');
+
   const columns = useColumns<ResponseRowFragment>(
     columnDefinitions,
     { onChangeSortBy: updateSortQuery, sortBy },
