@@ -32,7 +32,7 @@ pub struct UpdateStockInLine {
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<ShipmentTaxUpdate>,
     pub r#type: StockInType,
-    pub item_variant_id: Option<String>,
+    pub item_variant_id: Option<NullableUpdate<String>>,
 }
 
 type OutError = UpdateStockInLineError;
@@ -87,6 +87,7 @@ pub enum UpdateStockInLineError {
     NotThisStoreInvoice,
     CannotEditFinalised,
     LocationDoesNotExist,
+    ItemVariantDoesNotExist,
     ItemNotFound,
     PackSizeBelowOne,
     NumberOfPacksBelowZero,
@@ -196,6 +197,20 @@ mod test {
                 }),
             ),
             Err(ServiceError::LocationDoesNotExist)
+        );
+
+        // ItemVariantDoesNotExist
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                inline_init(|r: &mut UpdateStockInLine| {
+                    r.id = mock_customer_return_a_invoice_line_a().id;
+                    r.item_variant_id = Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    });
+                }),
+            ),
+            Err(ServiceError::ItemVariantDoesNotExist)
         );
 
         // PackSizeBelowOne

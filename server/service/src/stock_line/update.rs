@@ -10,7 +10,7 @@ use util::uuid::uuid;
 use crate::{
     activity_log::activity_log_entry,
     barcode::{self, BarcodeInput},
-    check_location_exists,
+    check_item_variant_exists, check_location_exists,
     common_stock::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
     NullableUpdate, SingleRecordError,
@@ -28,6 +28,7 @@ pub struct UpdateStockLine {
     pub on_hold: Option<bool>,
     pub batch: Option<String>,
     pub barcode: Option<String>,
+    pub item_variant_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -36,6 +37,7 @@ pub enum UpdateStockLineError {
     StockDoesNotBelongToStore,
     StockDoesNotExist,
     LocationDoesNotExist,
+    ItemVariantDoesNotExist,
     UpdatedStockNotFound,
     StockMovementNotFound,
 }
@@ -97,6 +99,17 @@ fn validate(
         return Err(LocationDoesNotExist);
     }
 
+    match &input.item_variant_id {
+        Some(NullableUpdate {
+            value: Some(item_variant_id),
+        }) => {
+            if !check_item_variant_exists(connection, item_variant_id)? {
+                return Err(ItemVariantDoesNotExist);
+            }
+        }
+        _ => {}
+    }
+
     Ok(stock_line)
 }
 
@@ -119,6 +132,7 @@ fn generate(
         batch,
         on_hold,
         barcode,
+        item_variant_id,
     }: UpdateStockLine,
 ) -> Result<GenerateResult, UpdateStockLineError> {
     let mut existing = existing_line.stock_line_row;
@@ -166,6 +180,9 @@ fn generate(
     existing.expiry_date = expiry_date.or(existing.expiry_date);
     existing.on_hold = on_hold.unwrap_or(existing.on_hold);
     existing.barcode_id = barcode_id;
+    existing.item_variant_id = item_variant_id
+        .map(|v| v.value)
+        .unwrap_or(existing.item_variant_id);
 
     Ok(GenerateResult {
         new_stock_line: existing,

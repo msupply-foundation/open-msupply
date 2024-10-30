@@ -275,6 +275,29 @@ query itemById($storeId: String!, $itemId: String!) {
   }
 }
 
+fragment ItemVariantOption on ItemVariantNode {
+  __typename
+  id
+  label: name
+}
+
+query itemVariants($storeId: String!, $itemId: String!) {
+  items(
+    storeId: $storeId
+    filter: { id: { equalTo: $itemId }, isActive: true }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        __typename
+        variants {
+          ...ItemVariantOption
+        }
+      }
+    }
+  }
+}
+
 query getHistoricalStockLines(
   $storeId: String!
   $itemId: String!
@@ -300,6 +323,20 @@ mutation upsertItemVariant($storeId: String!, $input: UpsertItemVariantInput!) {
         __typename
         ... on ItemVariantNode {
           ...ItemVariant
+        }
+      }
+    }
+  }
+}
+
+mutation deleteItemVariant($storeId: String!, $input: DeleteItemVariantInput!) {
+  centralServer {
+    itemVariant {
+      deleteItemVariant(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          __typename
+          id
         }
       }
     }
