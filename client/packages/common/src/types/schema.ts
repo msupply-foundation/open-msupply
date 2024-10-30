@@ -763,11 +763,13 @@ export type BatchRequestRequisitionResponse = {
 export type BatchResponseRequisitionInput = {
   continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
   deleteResponseRequisitionLines?: InputMaybe<Array<DeleteResponseRequisitionLineInput>>;
+  deleteResponseRequisitions?: InputMaybe<Array<DeleteResponseRequisitionInput>>;
 };
 
 export type BatchResponseRequisitionResponse = {
   __typename: 'BatchResponseRequisitionResponse';
   deleteResponseRequisitionLines?: Maybe<Array<DeleteResponseRequisitionLineResponseWithId>>;
+  deleteResponseRequisitions?: Maybe<Array<DeleteResponseRequisitionResponseWithId>>;
 };
 
 export type BatchStocktakeInput = {
@@ -1521,6 +1523,19 @@ export type DeleteResponse = {
   id: Scalars['String']['output'];
 };
 
+export type DeleteResponseRequisitionError = {
+  __typename: 'DeleteResponseRequisitionError';
+  error: DeleteResponseRequisitionErrorInterface;
+};
+
+export type DeleteResponseRequisitionErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeleteResponseRequisitionInput = {
+  id: Scalars['String']['input'];
+};
+
 export type DeleteResponseRequisitionLineError = {
   __typename: 'DeleteResponseRequisitionLineError';
   error: DeleteResponseRequisitionLineErrorInterface;
@@ -1540,6 +1555,14 @@ export type DeleteResponseRequisitionLineResponseWithId = {
   __typename: 'DeleteResponseRequisitionLineResponseWithId';
   id: Scalars['String']['output'];
   response: DeleteResponseRequisitionLineResponse;
+};
+
+export type DeleteResponseRequisitionResponse = DeleteResponse | DeleteResponseRequisitionError;
+
+export type DeleteResponseRequisitionResponseWithId = {
+  __typename: 'DeleteResponseRequisitionResponseWithId';
+  id: Scalars['String']['output'];
+  response: DeleteResponseRequisitionResponse;
 };
 
 export type DeleteStocktakeError = {
@@ -2141,6 +2164,11 @@ export type FinaliseRnRFormInput = {
 };
 
 export type FinaliseRnRFormResponse = RnRFormNode;
+
+export type FinalisedRequisition = DeleteResponseRequisitionErrorInterface & {
+  __typename: 'FinalisedRequisition';
+  description: Scalars['String']['output'];
+};
 
 export enum ForeignKey {
   InvoiceId = 'invoiceId',
@@ -3882,6 +3910,7 @@ export type Mutations = {
   deletePrescriptionLine: DeletePrescriptionLineResponse;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
+  deleteResponseRequisition: DeleteResponseRequisitionResponse;
   deleteResponseRequisitionLine: DeleteResponseRequisitionLineResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
@@ -4146,6 +4175,12 @@ export type MutationsDeleteRequestRequisitionArgs = {
 
 export type MutationsDeleteRequestRequisitionLineArgs = {
   input: DeleteRequestRequisitionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsDeleteResponseRequisitionArgs = {
+  input: DeleteResponseRequisitionInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6231,7 +6266,7 @@ export type RecordBelongsToAnotherStore = DeleteAssetErrorInterface & DeleteAsse
   description: Scalars['String']['output'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCustomerReturnErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteSupplierReturnErrorInterface & DeleteVaccineCourseErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateNamePropertiesErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateReturnOtherPartyErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCustomerReturnErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteSupplierReturnErrorInterface & DeleteVaccineCourseErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateNamePropertiesErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateReturnOtherPartyErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String']['output'];
 };
@@ -6588,6 +6623,11 @@ export type RequisitionSortInput = {
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: RequisitionSortFieldInput;
+};
+
+export type RequisitionWithShipment = DeleteResponseRequisitionErrorInterface & {
+  __typename: 'RequisitionWithShipment';
+  description: Scalars['String']['output'];
 };
 
 export type RequisitionsResponse = RequisitionConnector;
@@ -7435,6 +7475,11 @@ export type TemperatureNotificationsResponse = TemperatureNotificationConnector;
 
 export type TokenExpired = RefreshTokenErrorInterface & {
   __typename: 'TokenExpired';
+  description: Scalars['String']['output'];
+};
+
+export type TransferRequisition = DeleteResponseRequisitionErrorInterface & {
+  __typename: 'TransferRequisition';
   description: Scalars['String']['output'];
 };
 
