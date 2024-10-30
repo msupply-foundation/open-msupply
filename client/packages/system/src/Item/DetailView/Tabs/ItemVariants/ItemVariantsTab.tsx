@@ -102,9 +102,8 @@ const ItemVariant = ({
             label={t('label.temperature')}
             labelWidth="200"
             Input={
-              // TODO: temp range dropdown
               <BasicTextInput
-                value={variant.coldStorageTypeId}
+                value={variant.coldStorageType?.name ?? ''}
                 disabled
                 fullWidth
               />
