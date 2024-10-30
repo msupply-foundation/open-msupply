@@ -1,62 +1,74 @@
-use repository::item_variant::item_variant_row::ItemVariantRow;
+use repository::item_variant::packaging_variant_row::PackagingVariantRow;
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
-const TABLE_NAME: &str = "item_variant";
+const TABLE_NAME: &str = "packaging_variant";
 
-const ITEM_VARIANT1: (&str, &str) = (
-    "5fb99f9c-03f4-47f2-965b-c9ecd083c675",
+const PACKAGING_VARIANT_1: (&str, &str) = (
+    "de8fa974-7762-454b-a58d-c2eb67527b50",
     r#"{
-        "id": "5fb99f9c-03f4-47f2-965b-c9ecd083c675",
-        "name": "Item Variant 1",
+        "id":"de8fa974-7762-454b-a58d-c2eb67527b50",
+        "item_variant_id": "5fb99f9c-03f4-47f2-965b-c9ecd083c675",
+        "name": "Item Variant 1 - Packaging Variant 1",
         "item_link_id": "8F252B5884B74888AAB73A0D42C09E7A",
-        "cold_storage_type_id": null,
-        "doses_per_unit": null,
-        "manufacturer_link_id": null
+        "packaging_level": 1,
+        "pack_size": null,
+        "volume_per_unit": null,
+        "deleted_datetime": null
     }"#,
 );
 
-fn item_variant1() -> ItemVariantRow {
-    ItemVariantRow {
-        id: ITEM_VARIANT1.0.to_string(),
-        name: "Item Variant 1".to_string(),
-        item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(), // ITEM_1.0
-        cold_storage_type_id: None,
-        doses_per_unit: None,
-        manufacturer_link_id: None,
+fn packaging_variant1() -> PackagingVariantRow {
+    PackagingVariantRow {
+        id: PACKAGING_VARIANT_1.0.to_string(),
+        name: "Item Variant 1 - Packaging Variant 1".to_string(),
+        item_variant_id: "5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string(), // ITEM_VARIANT_1.0
+        packaging_level: 1,
+        pack_size: None,
+        volume_per_unit: None,
         deleted_datetime: None,
     }
 }
 
-const ITEM_VARIANT2: (&str, &str) = (
-    "a9a986cd-a6dc-4e96-811c-4bc225a4f2d8",
+const PACKAGING_VARIANT_2: (&str, &str) = (
+    "e02f540d-19bf-44c9-ab46-f5e8069f32db",
     r#"{
-        "id": "a9a986cd-a6dc-4e96-811c-4bc225a4f2d8",
-        "name": "Item Variant 2",
+        "id":"e02f540d-19bf-44c9-ab46-f5e8069f32db",
+        "item_variant_id": "5fb99f9c-03f4-47f2-965b-c9ecd083c675",
+        "name": "Item Variant 1 - Packaging Variant 2",
         "item_link_id": "8F252B5884B74888AAB73A0D42C09E7A",
-        "cold_storage_type_id": null,
-        "doses_per_unit": 10,
-        "manufacturer_link_id": "1FB32324AF8049248D929CFB35F255BA"
+        "packaging_level": 2,
+        "pack_size": 10,
+        "volume_per_unit": 0.001,
+        "deleted_datetime": null
     }"#,
 );
 
-fn item_variant2() -> ItemVariantRow {
-    ItemVariantRow {
-        id: ITEM_VARIANT2.0.to_string(),
-        name: "Item Variant 2".to_string(),
-        item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(), // ITEM_1.0
-        cold_storage_type_id: None, //TODO: Add cold storage type when sync is implemented
-        doses_per_unit: Some(10),
-        manufacturer_link_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()), // NAME_1.0 (currently marked as manufacturer)
+fn packaging_variant2() -> PackagingVariantRow {
+    PackagingVariantRow {
+        id: PACKAGING_VARIANT_2.0.to_string(),
+        name: "Item Variant 1 - Packaging Variant 2".to_string(),
+        item_variant_id: "5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string(), // ITEM_VARIANT_1.0
+        packaging_level: 2,
+        pack_size: Some(10.0),
+        volume_per_unit: Some(0.001),
         deleted_datetime: None,
     }
 }
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, ITEM_VARIANT1, item_variant1()),
-        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, ITEM_VARIANT2, item_variant2()),
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
+            PACKAGING_VARIANT_1,
+            packaging_variant1(),
+        ),
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
+            PACKAGING_VARIANT_2,
+            packaging_variant2(),
+        ),
     ]
 }
 
@@ -64,13 +76,13 @@ pub(crate) fn test_v6_central_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![
         TestSyncOutgoingRecord {
             table_name: TABLE_NAME.to_string(),
-            record_id: ITEM_VARIANT1.0.to_string(),
-            push_data: json!(item_variant1()),
+            record_id: PACKAGING_VARIANT_1.0.to_string(),
+            push_data: json!(packaging_variant1()),
         },
         TestSyncOutgoingRecord {
             table_name: TABLE_NAME.to_string(),
-            record_id: ITEM_VARIANT2.0.to_string(),
-            push_data: json!(item_variant2()),
+            record_id: PACKAGING_VARIANT_2.0.to_string(),
+            push_data: json!(packaging_variant2()),
         },
     ]
 }
