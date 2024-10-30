@@ -141,7 +141,9 @@ fn generate_line(
         currency_id,
         currency_rate,
     )?;
-    update_line.item_variant_id = item_variant_id.or(update_line.item_variant_id);
+    update_line.item_variant_id = item_variant_id
+        .map(|v| v.value)
+        .unwrap_or(update_line.item_variant_id);
 
     if let Some(item) = new_item_option {
         update_line.item_link_id = item.id;
