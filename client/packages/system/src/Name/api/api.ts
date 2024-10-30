@@ -80,6 +80,21 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.names;
     },
+    manufacturers: async ({ sortBy }: ListParams) => {
+      const key = nameParsers.toSort(sortBy?.key ?? '');
+
+      const result = await sdk.names({
+        key,
+        desc: !!sortBy?.isDesc,
+        storeId,
+        filter: {
+          isManufacturer: true,
+        },
+        first: 1000,
+      });
+
+      return result?.names;
+    },
     customers: async ({ sortBy }: ListParams) => {
       const key = nameParsers.toSort(sortBy?.key ?? '');
 
