@@ -124,6 +124,7 @@ fn generate(
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
         foreign_currency_price_before_tax: None,
+        item_variant_id: None,
     };
 
     Ok(new_line)
@@ -343,19 +344,7 @@ mod test_insert {
                 item_link_id: item.id.clone(),
                 item_name: item.name.clone(),
                 item_code: item.code.clone(),
-                total_before_tax: 0.0,
-                total_after_tax: 0.0,
-                tax_percentage: None,
-                note: None,
-                location_id: None,
-                batch: None,
-                expiry_date: None,
-                sell_price_per_pack: 0.0,
-                cost_price_per_pack: 0.0,
-                stock_line_id: None,
-                inventory_adjustment_reason_id: None,
-                return_reason_id: None,
-                foreign_currency_price_before_tax: None,
+                ..Default::default()
             }
         )
     }

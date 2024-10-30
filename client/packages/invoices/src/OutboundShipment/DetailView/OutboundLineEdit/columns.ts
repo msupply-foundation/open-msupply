@@ -14,10 +14,6 @@ import {
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
-import {
-  getPackVariantCell,
-  useIsPackVariantsEnabled,
-} from '@openmsupply-client/system';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 
 export const useOutboundLineEditColumns = ({
@@ -32,7 +28,6 @@ export const useOutboundLineEditColumns = ({
   isExternalSupplier: boolean;
 }) => {
   const { store } = useAuthContext();
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const ForeignCurrencyCell = useCurrencyCell<DraftStockOutLine>(
     currency?.code as Currencies
@@ -84,23 +79,8 @@ export const useOutboundLineEditColumns = ({
     });
   }
 
-  if (isPackVariantsEnabled) {
-    columnDefinitions.push({
-      key: 'packUnit',
-      label: 'label.pack',
-      sortable: false,
-      width: 90,
-      Cell: getPackVariantCell({
-        getItemId: row => row?.item.id,
-        getPackSizes: row => [row.packSize ?? 1],
-        getUnitName: row => row?.item.unitName ?? null,
-      }),
-    });
-  } else {
-    columnDefinitions.push(['packSize', { width: 90 }]);
-  }
-
   columnDefinitions.push(
+    ['packSize', { width: 90 }],
     {
       Cell: NumberCell,
       label: 'label.in-store',
@@ -154,8 +134,6 @@ export const useOutboundLineEditColumns = ({
 };
 
 export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
-
   const columns: ColumnDescription<StockOutLineFragment>[] = [
     'batch',
     'expiryDate',
@@ -165,33 +143,13 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
         accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
-  ];
-
-  if (isPackVariantsEnabled) {
-    columns.push({
-      key: 'packUnit',
-      label: 'label.pack',
-      sortable: false,
-      width: 90,
-      Cell: getPackVariantCell({
-        getItemId: row => row?.item.id,
-        getPackSizes: row => [row.packSize ?? 1],
-        getUnitName: row => row?.item.unitName ?? null,
-      }),
-    });
-  } else {
-    columns.push(
-      [
-        'itemUnit',
-        {
-          accessor: ({ rowData }) => rowData.item.unitName,
-        },
-      ],
-      'packSize'
-    );
-  }
-
-  columns.push(
+    [
+      'itemUnit',
+      {
+        accessor: ({ rowData }) => rowData.item.unitName,
+      },
+    ],
+    'packSize',
     'numberOfPacks',
     [
       'unitQuantity',
@@ -204,7 +162,8 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
       {
         accessor: ({ rowData }) => rowData.sellPricePerPack / rowData.packSize,
       },
-    ]
-  );
+    ],
+  ];
+
   return useColumns(columns);
 };

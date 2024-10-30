@@ -75,6 +75,9 @@ fragment ItemVariant on ItemVariantNode {
   name
   dosesPerUnit
   manufacturerId
+  manufacturer(storeId: $storeId) {
+    ...NameRow
+  }
   coldStorageTypeId
   packagingVariants {
     ...PackagingVariant
@@ -263,78 +266,23 @@ query itemById($storeId: String!, $itemId: String!) {
   }
 }
 
-fragment Variant on VariantNode {
+fragment ItemVariantOption on ItemVariantNode {
   __typename
   id
-  itemId
-  longName
-  packSize
-  shortName
+  label: name
 }
 
-fragment PackVariant on ItemPackVariantNode {
-  itemId
-  mostUsedPackVariantId
-  packVariants {
-    ...Variant
-  }
-}
-
-query packVariants($storeId: String!) {
-  packVariants(storeId: $storeId) {
-    __typename
-    nodes {
-      ...PackVariant
-    }
-    totalCount
-  }
-}
-
-mutation insertPackVariant($storeId: String!, $input: InsertPackVariantInput!) {
-  centralServer {
-    packVariant {
-      insertPackVariant(storeId: $storeId, input: $input) {
+query itemVariants($storeId: String!, $itemId: String!) {
+  items(
+    storeId: $storeId
+    filter: { id: { equalTo: $itemId }, isActive: true }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
         __typename
-        ... on VariantNode {
-          ...Variant
-        }
-        ... on InsertPackVariantError {
-          error {
-            __typename
-            description
-          }
-        }
-      }
-    }
-  }
-}
-
-mutation updatePackVariant($storeId: String!, $input: UpdatePackVariantInput!) {
-  centralServer {
-    packVariant {
-      updatePackVariant(storeId: $storeId, input: $input) {
-        __typename
-        ... on VariantNode {
-          ...Variant
-        }
-        ... on UpdatePackVariantError {
-          error {
-            __typename
-            description
-          }
-        }
-      }
-    }
-  }
-}
-
-mutation deletePackVariant($storeId: String!, $input: DeletePackVariantInput!) {
-  centralServer {
-    packVariant {
-      deletePackVariant(storeId: $storeId, input: $input) {
-        ... on DeleteResponse {
-          __typename
-          id
+        variants {
+          ...ItemVariantOption
         }
       }
     }
@@ -354,6 +302,33 @@ query getHistoricalStockLines(
     ... on StockLineConnector {
       nodes {
         ...StockLine
+      }
+    }
+  }
+}
+
+mutation upsertItemVariant($storeId: String!, $input: UpsertItemVariantInput!) {
+  centralServer {
+    itemVariant {
+      upsertItemVariant(storeId: $storeId, input: $input) {
+        __typename
+        ... on ItemVariantNode {
+          ...ItemVariant
+        }
+      }
+    }
+  }
+}
+
+mutation deleteItemVariant($storeId: String!, $input: DeleteItemVariantInput!) {
+  centralServer {
+    itemVariant {
+      deleteItemVariant(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          __typename
+          id
+        }
       }
     }
   }

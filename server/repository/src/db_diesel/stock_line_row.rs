@@ -27,6 +27,7 @@ table! {
         note -> Nullable<Text>,
         supplier_link_id -> Nullable<Text>,
         barcode_id -> Nullable<Text>,
+        item_variant_id -> Nullable<Text>,
     }
 }
 
@@ -57,6 +58,7 @@ pub struct StockLineRow {
     pub note: Option<String>,
     pub supplier_link_id: Option<String>,
     pub barcode_id: Option<String>,
+    pub item_variant_id: Option<String>,
 }
 
 pub struct StockLineRowRepository<'a> {

@@ -47,6 +47,7 @@ pub struct NameFilter {
     pub code: Option<StringFilter>,
     pub is_customer: Option<bool>,
     pub is_supplier: Option<bool>,
+    pub is_manufacturer: Option<bool>,
     pub is_donor: Option<bool>,
     pub is_store: Option<bool>,
     pub store_code: Option<StringFilter>,
@@ -187,6 +188,7 @@ impl<'a> NameRepository<'a> {
                 code,
                 is_customer,
                 is_supplier,
+                is_manufacturer,
                 is_donor,
                 is_store,
                 store_code,
@@ -227,6 +229,9 @@ impl<'a> NameRepository<'a> {
             }
             if let Some(is_supplier) = is_supplier {
                 query = query.filter(name_store_join_dsl::name_is_supplier.eq(is_supplier));
+            }
+            if let Some(is_manufacturer) = is_manufacturer {
+                query = query.filter(name_dsl::is_manufacturer.eq(is_manufacturer));
             }
 
             query = match is_donor {

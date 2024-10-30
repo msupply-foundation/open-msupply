@@ -28,18 +28,12 @@ export const Toolbar: FC = () => {
     theirReference,
     shipments,
     update,
-    programName,
-    period,
-    orderType,
     linkedRequisition,
   } = useResponse.document.fields([
     'approvalStatus',
     'otherParty',
     'theirReference',
     'shipments',
-    'programName',
-    'period',
-    'orderType',
     'linkedRequisition',
   ]);
   const noLinkedShipments = (shipments?.totalCount ?? 0) === 0;
@@ -95,24 +89,6 @@ export const Toolbar: FC = () => {
                       {t(getApprovalStatusKey(approvalStatus))}
                     </Typography>
                   }
-                />
-              )}
-              {orderType && (
-                <InputWithLabelRow
-                  label={t('label.order-type')}
-                  Input={<Typography>{orderType ?? ''}</Typography>}
-                />
-              )}
-              {programName && (
-                <InputWithLabelRow
-                  label={t('label.program')}
-                  Input={<Typography>{programName ?? ''}</Typography>}
-                />
-              )}
-              {period && (
-                <InputWithLabelRow
-                  label={t('label.period')}
-                  Input={<Typography>{period?.name ?? ''}</Typography>}
                 />
               )}
             </Box>
