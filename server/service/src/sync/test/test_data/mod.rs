@@ -29,6 +29,7 @@ pub(crate) mod name_property;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
+pub(crate) mod packaging_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod program_indicator;
@@ -98,6 +99,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut vaccine_course_item::test_pull_upsert_records());
     test_records.append(&mut program_indicator::test_pull_upsert_records());
     test_records.append(&mut item_variant::test_pull_upsert_records());
+    test_records.append(&mut packaging_variant::test_pull_upsert_records());
 
     test_records
 }
@@ -193,6 +195,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut vaccine_course_item::test_v6_records());
     test_records.append(&mut name_oms_fields::test_v6_central_push_records());
     test_records.append(&mut item_variant::test_v6_central_push_records());
+    test_records.append(&mut packaging_variant::test_v6_central_push_records());
     test_records.append(&mut property::test_v6_central_push_records());
 
     // Remote
