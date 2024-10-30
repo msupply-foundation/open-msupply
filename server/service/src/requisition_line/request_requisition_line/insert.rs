@@ -1,5 +1,5 @@
 use crate::{
-    item::check_item_exists,
+    item::item::check_item_exists,
     requisition::{
         common::check_requisition_row_exists, request_requisition::generate_requisition_lines,
     },

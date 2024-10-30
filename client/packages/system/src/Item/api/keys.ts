@@ -1,0 +1,1 @@
+export const ITEM_VARIANTS = 'ITEM_VARIANTS';

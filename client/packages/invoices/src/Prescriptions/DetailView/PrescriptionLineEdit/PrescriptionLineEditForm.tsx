@@ -18,8 +18,6 @@ import {
 import {
   StockItemSearchInput,
   ItemRowFragment,
-  usePackVariant,
-  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { usePrescription } from '../../api';
 import { DraftItem } from '../../..';
@@ -76,12 +74,6 @@ export const PrescriptionLineEditForm: React.FC<
   const [issueQuantity, setIssueQuantity] = useState(0);
   const { format } = useFormatNumber();
   const { items } = usePrescription.line.rows();
-
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
-  const { activePackVariant } = usePackVariant(
-    item?.id ?? '',
-    item?.unitName ?? null
-  );
 
   const onChangePackSize = (newPackSize: number) => {
     const packSize = newPackSize === -1 ? 1 : newPackSize;
@@ -225,7 +217,7 @@ export const PrescriptionLineEditForm: React.FC<
               <BasicTextInput
                 disabled
                 sx={{ width: 150 }}
-                value={activePackVariant}
+                value={item?.unitName}
               />
             </Grid>
           </ModalRow>
@@ -268,24 +260,22 @@ export const PrescriptionLineEditForm: React.FC<
 
             {packSizeController.options.length ? (
               <>
-                {!isPackVariantsEnabled && (
-                  <Grid
-                    item
-                    alignItems="center"
-                    display="flex"
-                    justifyContent="flex-start"
-                    style={{ minWidth: 125 }}
-                  >
-                    <InputLabel sx={{ fontSize: '12px' }}>
-                      {packSizeController.selected?.value === -1
-                        ? `${t('label.unit-plural', {
-                            unit: activePackVariant,
-                            count: issueQuantity,
-                          })} ${t('label.in-packs-of')}`
-                        : t('label.in-packs-of')}
-                    </InputLabel>
-                  </Grid>
-                )}
+                <Grid
+                  item
+                  alignItems="center"
+                  display="flex"
+                  justifyContent="flex-start"
+                  style={{ minWidth: 125 }}
+                >
+                  <InputLabel sx={{ fontSize: '12px' }}>
+                    {packSizeController.selected?.value === -1
+                      ? `${t('label.unit-plural', {
+                          unit: item?.unitName,
+                          count: issueQuantity,
+                        })} ${t('label.in-packs-of')}`
+                      : t('label.in-packs-of')}
+                  </InputLabel>
+                </Grid>
                 <Box marginLeft={1} />
                 <Select
                   sx={{ width: 110 }}
@@ -296,22 +286,21 @@ export const PrescriptionLineEditForm: React.FC<
                     onChangePackSize(Number(value));
                   }}
                 />
-                {!isPackVariantsEnabled &&
-                  packSizeController.selected?.value !== -1 && (
-                    <Grid
-                      item
-                      alignItems="center"
-                      display="flex"
-                      justifyContent="flex-start"
-                    >
-                      <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
-                        {t('label.unit-plural', {
-                          count: packSizeController.selected?.value,
-                          unit: activePackVariant,
-                        })}
-                      </InputLabel>
-                    </Grid>
-                  )}
+                {packSizeController.selected?.value !== -1 && (
+                  <Grid
+                    item
+                    alignItems="center"
+                    display="flex"
+                    justifyContent="flex-start"
+                  >
+                    <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
+                      {t('label.unit-plural', {
+                        count: packSizeController.selected?.value,
+                        unit: item?.unitName,
+                      })}
+                    </InputLabel>
+                  </Grid>
+                )}
                 <Box marginLeft="auto" />
               </>
             ) : null}
