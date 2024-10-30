@@ -148,7 +148,10 @@ mod test {
     use serde_json::json;
     use service::{
         requisition::{
-            response_requisition::{BatchResponseRequisition, BatchResponseRequisitionResult},
+            response_requisition::{
+                BatchResponseRequisition, BatchResponseRequisitionResult,
+                DeleteResponseRequisition, DeleteResponseRequisitionError,
+            },
             RequisitionServiceTrait,
         },
         requisition_line::response_requisition_line::{
@@ -200,6 +203,16 @@ mod test {
         let mutation = r#"
         mutation mut($input: BatchResponseRequisitionInput!, $storeId: String!) {
             batchResponseRequisition(input: $input, storeId: $storeId) {
+              deleteResponseRequisitions {
+                id
+                response {
+                  ... on DeleteResponseRequisitionError {
+                    error {
+                      __typename
+                    }
+                  }
+                }
+              }
               deleteResponseRequisitionLines {
                 response {
                   ... on DeleteResponseRequisitionLineError {
@@ -217,6 +230,16 @@ mod test {
 
         let expected = json!({
             "batchResponseRequisition": {
+              "deleteResponseRequisitions": [
+                {
+                  "id": "id7",
+                  "response": {
+                    "error": {
+                      "__typename": "RecordNotFound"
+                    }
+                  }
+                }
+              ],
               "deleteResponseRequisitionLines": [
                 {
                   "id": "id4",
@@ -245,7 +268,12 @@ mod test {
                     }),
                     result: Err(DeleteResponseRequisitionLineError::RequisitionLineDoesNotExist {}),
                 }],
-                delete_requisition: Vec::new(),
+                delete_requisition: vec![InputWithResult {
+                    input: inline_init(|input: &mut DeleteResponseRequisition| {
+                        input.id = "id7".to_string()
+                    }),
+                    result: Err(DeleteResponseRequisitionError::RequisitionDoesNotExist {}),
+                }],
             })
         }));
 
