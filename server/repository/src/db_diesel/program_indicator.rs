@@ -1,9 +1,9 @@
 use super::{
-    program_indicator_row::program_indicator, DBType, ProgramIndicatorRow, StorageConnection,
+    program_indicator_row::program_indicator, DBType, ProgramIndicatorRow, Sort, StorageConnection,
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_string_filter},
+    diesel_macros::{apply_equal_filter, apply_sort, apply_string_filter},
     repository_error::RepositoryError,
 };
 
@@ -22,6 +22,15 @@ pub struct ProgramIndicatorFilter {
     pub code: Option<StringFilter>,
 }
 
+pub enum ProgramIndicatorSortField {
+    ProgramId,
+    Code,
+}
+
+pub type ProgramIndicator = ProgramIndicatorRow;
+
+pub type ProgramIndicatorSort = Sort<ProgramIndicatorSortField>;
+
 impl<'a> ProgramIndicatorRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         ProgramIndicatorRepository { connection }
@@ -39,8 +48,8 @@ impl<'a> ProgramIndicatorRepository<'a> {
     pub fn query_by_filter(
         &self,
         filter: ProgramIndicatorFilter,
-    ) -> Result<Vec<ProgramIndicatorRow>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter))
+    ) -> Result<Vec<ProgramIndicator>, RepositoryError> {
+        self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn create_filtered_query(
@@ -63,8 +72,22 @@ impl<'a> ProgramIndicatorRepository<'a> {
         &self,
         pagination: Pagination,
         filter: Option<ProgramIndicatorFilter>,
-    ) -> Result<Vec<ProgramIndicatorRow>, RepositoryError> {
-        let query = Self::create_filtered_query(filter);
+        sort: Option<ProgramIndicatorSort>,
+    ) -> Result<Vec<ProgramIndicator>, RepositoryError> {
+        let mut query = Self::create_filtered_query(filter);
+
+        if let Some(sort) = sort {
+            match sort.key {
+                ProgramIndicatorSortField::ProgramId => {
+                    apply_sort!(query, sort, program_indicator::program_id)
+                }
+                ProgramIndicatorSortField::Code => {
+                    apply_sort!(query, sort, program_indicator::code)
+                }
+            }
+        } else {
+            query = query.order(program_indicator::program_id)
+        }
 
         // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
@@ -72,7 +95,7 @@ impl<'a> ProgramIndicatorRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<ProgramIndicatorRow>(self.connection.lock().connection())?;
+            .load::<ProgramIndicator>(self.connection.lock().connection())?;
 
         Ok(result)
     }
