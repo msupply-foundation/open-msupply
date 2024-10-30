@@ -23,6 +23,7 @@ import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
   getLocationInputColumn,
+  ItemVariantInputCell,
   LocationRowFragment,
   PackSizeEntryCell,
 } from '@openmsupply-client/system';
@@ -93,6 +94,16 @@ export const QuantityTableComponent: FC<TableProps> = ({
     [
       getBatchColumn(updateDraftLine, theme),
       getExpiryColumn(updateDraftLine, theme),
+
+      {
+        key: 'itemVariantId',
+        label: 'label.item-variant',
+        width: 170,
+        Cell: props => (
+          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+        ),
+        setter: updateDraftLine,
+      },
       [
         'numberOfPacks',
         {
