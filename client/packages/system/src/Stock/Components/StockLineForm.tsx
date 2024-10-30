@@ -159,6 +159,17 @@ export const StockLineForm: FC<StockLineFormProps> = ({
               />
             }
           />
+          <StyledInputRow
+            label={t('label.item-variant')}
+            Input={
+              <ItemVariantSearchInput
+                itemId={draft.itemId}
+                selectedId={draft.itemVariantId ?? null}
+                width={160}
+                onChange={id => onUpdate({ itemVariantId: id })}
+              />
+            }
+          />
           {plugins}
         </Grid>
         <Grid
@@ -248,20 +259,8 @@ export const StockLineForm: FC<StockLineFormProps> = ({
             text={String(supplierName)}
             textProps={{ textAlign: 'end' }}
           />
-          <StyledInputRow
-            label={t('label.item-variant')}
-            Input={
-              <ItemVariantSearchInput
-                itemId={draft.itemId}
-                selectedId={draft.itemVariantId ?? null}
-                width={160}
-                onChange={id => onUpdate({ itemVariantId: id })}
-              />
-            }
-          />
         </Grid>
       </Grid>
-      {/* {footerProps && <Footer {...footerProps} />} */}
     </DetailContainer>
   );
 };
