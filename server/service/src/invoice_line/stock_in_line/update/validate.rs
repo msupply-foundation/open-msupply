@@ -61,7 +61,7 @@ pub fn validate(
                 return Err(ItemVariantDoesNotExist);
             }
         }
-        _ => {}
+        _ => {} //  We don't need to check item_variant if it's not being updated, or if it's being updated to None
     }
 
     if !check_line_belongs_to_invoice(line_row, &invoice) {
