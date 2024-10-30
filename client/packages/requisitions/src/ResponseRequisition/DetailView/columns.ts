@@ -17,10 +17,7 @@ export const useResponseColumns = () => {
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
-  const { programName, linkedRequisition } = useResponse.document.fields([
-    'programName',
-    'linkedRequisition',
-  ]);
+  const { programName } = useResponse.document.fields(['programName']);
 
   const columnDefinitions: ColumnDescription<ResponseLineFragment>[] = [
     getCommentPopoverColumn(),
@@ -70,15 +67,8 @@ export const useResponseColumns = () => {
       width: 100,
       align: ColumnAlign.Right,
       Cell: PackQuantityCell,
-      getSortValue: rowData =>
-        linkedRequisition
-          ? (rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand ??
-            0)
-          : rowData.availableStockOnHand,
-      accessor: ({ rowData }) =>
-        linkedRequisition
-          ? rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand
-          : rowData.availableStockOnHand,
+      getSortValue: rowData => rowData.availableStockOnHand,
+      accessor: ({ rowData }) => rowData.availableStockOnHand,
     });
   }
   columnDefinitions.push(
@@ -138,9 +128,7 @@ export const useResponseColumns = () => {
       description: 'description.available-stock',
       Cell: PackQuantityCell,
       accessor: ({ rowData }) => {
-        const stockOnHand = linkedRequisition
-          ? (rowData.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0)
-          : rowData.availableStockOnHand;
+        const stockOnHand = rowData.availableStockOnHand;
 
         const incomingStock = rowData.incomingUnits + rowData.additionInUnits;
         const outgoingStock = rowData.lossInUnits + rowData.outgoingUnits;
@@ -173,11 +161,7 @@ export const useResponseColumns = () => {
       align: ColumnAlign.Right,
       sortable: false,
       Cell: PackQuantityCell,
-      accessor: ({ rowData }) =>
-        linkedRequisition
-          ? (rowData.linkedRequisitionLine?.itemStats
-              .averageMonthlyConsumption ?? 0)
-          : rowData.averageMonthlyConsumption,
+      accessor: ({ rowData }) => rowData.averageMonthlyConsumption,
     },
     {
       key: 'mos',
@@ -187,18 +171,13 @@ export const useResponseColumns = () => {
       sortable: false,
       Cell: PackQuantityCell,
       accessor: ({ rowData }) => {
-        const stockOnHand = linkedRequisition
-          ? (rowData.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0)
-          : rowData.availableStockOnHand;
+        const stockOnHand = rowData.availableStockOnHand;
         const incomingStock = rowData.incomingUnits + rowData.additionInUnits;
         const outgoingStock = rowData.lossInUnits + rowData.outgoingUnits;
 
         const available = stockOnHand + incomingStock - outgoingStock;
 
-        const averageMonthlyConsumption = linkedRequisition
-          ? (rowData.linkedRequisitionLine?.itemStats
-              .averageMonthlyConsumption ?? 0)
-          : rowData.averageMonthlyConsumption;
+        const averageMonthlyConsumption = rowData.averageMonthlyConsumption;
 
         return averageMonthlyConsumption !== 0
           ? available / averageMonthlyConsumption
