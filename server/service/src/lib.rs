@@ -17,6 +17,7 @@ pub mod barcode;
 pub mod catalogue;
 pub mod clinician;
 pub mod cold_chain;
+pub mod cold_storage_type;
 mod common_stock;
 pub mod currency;
 pub mod cursor_controller;

@@ -965,6 +965,17 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
+export type ColdStorageTypeConnector = {
+  __typename: 'ColdStorageTypeConnector';
+  nodes: Array<ColdStorageTypeNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ColdStorageTypeFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type ColdStorageTypeNode = {
   __typename: 'ColdStorageTypeNode';
   id: Scalars['String']['output'];
@@ -972,6 +983,23 @@ export type ColdStorageTypeNode = {
   minTemperature: Scalars['Float']['output'];
   name: Scalars['String']['output'];
 };
+
+export enum ColdStorageTypeSortFieldInput {
+  Id = 'id',
+  Name = 'name'
+}
+
+export type ColdStorageTypeSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: ColdStorageTypeSortFieldInput;
+};
+
+export type ColdStorageTypesResponse = ColdStorageTypeConnector;
 
 export type ConfigureNamePropertiesResponse = Success;
 
@@ -3533,6 +3561,7 @@ export type ItemVariantMutationsUpsertItemVariantArgs = {
 
 export type ItemVariantNode = {
   __typename: 'ItemVariantNode';
+  coldStorageType?: Maybe<ColdStorageTypeNode>;
   coldStorageTypeId?: Maybe<Scalars['String']['output']>;
   dosesPerUnit?: Maybe<Scalars['Int']['output']>;
   id: Scalars['String']['output'];
@@ -5361,6 +5390,8 @@ export type Queries = {
   barcodeByGtin: BarcodeResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   clinicians: CliniciansResponse;
+  /** Query omSupply "cold_storage_type" entries */
+  coldStorageTypes: ColdStorageTypesResponse;
   contactTraces: ContactTraceResponse;
   currencies: CurrenciesResponse;
   customerProgramRequisitionSettings: Array<CustomerProgramRequisitionSettingNode>;
@@ -5608,6 +5639,14 @@ export type QueriesCliniciansArgs = {
   filter?: InputMaybe<ClinicianFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ClinicianSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesColdStorageTypesArgs = {
+  filter?: InputMaybe<ColdStorageTypeFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ColdStorageTypeSortInput>>;
   storeId: Scalars['String']['input'];
 };
 

@@ -60,6 +60,12 @@ fragment ItemRowWithStats on ItemNode {
   }
 }
 
+fragment ColdStorageType on ColdStorageTypeNode {
+  __typename
+  id
+  name
+}
+
 fragment PackagingVariant on PackagingVariantNode {
   __typename
   id
@@ -79,6 +85,9 @@ fragment ItemVariant on ItemVariantNode {
     ...NameRow
   }
   coldStorageTypeId
+  coldStorageType {
+    ...ColdStorageType
+  }
   packagingVariants {
     ...PackagingVariant
   }
@@ -292,6 +301,16 @@ mutation upsertItemVariant($storeId: String!, $input: UpsertItemVariantInput!) {
         ... on ItemVariantNode {
           ...ItemVariant
         }
+      }
+    }
+  }
+}
+
+query coldStorageTypes($storeId: String!) {
+  coldStorageTypes(storeId: $storeId) {
+    ... on ColdStorageTypeConnector {
+      nodes {
+        ...ColdStorageType
       }
     }
   }
