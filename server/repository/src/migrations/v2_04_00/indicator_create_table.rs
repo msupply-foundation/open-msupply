@@ -11,7 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-            CREATE TABLE indicator_row (
+            CREATE TABLE indicator (
                 id TEXT PRIMARY KEY NOT NULL,
                 program_indicator_id TEXT NOT NULL REFERENCES program_indicator(id),
                 index INTEGER NOT NULL,
