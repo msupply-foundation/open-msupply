@@ -28,10 +28,13 @@ export const useConfirmOnLeaving = (isUnsaved?: boolean) => {
   );
 
   useBeforeUnload(
-    useCallback(event => {
-      // Cancel the event
-      event.preventDefault();
-    }, []),
+    useCallback(
+      event => {
+        // Cancel the refresh
+        if (isUnsaved) event.preventDefault();
+      },
+      [isUnsaved]
+    ),
     { capture: true }
   );
 
