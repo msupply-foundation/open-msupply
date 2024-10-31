@@ -6197,6 +6197,8 @@ export type RequisitionLineNode = {
   alreadyIssued: Scalars['Float']['output'];
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Float']['output'];
+  availableStockOnHand: Scalars['Float']['output'];
+  averageMonthlyConsumption: Scalars['Float']['output'];
   comment?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   /** InboundShipment lines linked to requisitions line */

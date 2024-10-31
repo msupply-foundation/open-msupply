@@ -18,6 +18,8 @@ fragment ResponseLine on RequisitionLineNode {
   remainingQuantityToSupply
   alreadyIssued
   comment
+  averageMonthlyConsumption
+  availableStockOnHand
 
   itemStats {
     __typename
@@ -33,11 +35,6 @@ fragment ResponseLine on RequisitionLineNode {
   }
   approvedQuantity
   approvalComment
-  linkedRequisitionLine {
-    itemStats {
-      availableStockOnHand
-    }
-  }
 }
 
 fragment Response on RequisitionNode {
