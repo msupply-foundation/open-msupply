@@ -14,7 +14,7 @@ impl MigrationFragment for Migrate {
             CREATE TABLE indicator (
                 id TEXT PRIMARY KEY NOT NULL,
                 program_indicator_id TEXT NOT NULL REFERENCES program_indicator(id),
-                index INTEGER NOT NULL,
+                index BIGINT NOT NULL,
                 description TEXT NOT NULL,
                 code TEXT NOT NULL,
                 is_required BOOLEAN NOT NULL,
