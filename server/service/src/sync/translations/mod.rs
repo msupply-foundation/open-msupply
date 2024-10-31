@@ -18,6 +18,7 @@ pub(crate) mod form_schema;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
+pub(crate) mod item_variant;
 pub(crate) mod location;
 pub(crate) mod location_movement;
 pub(crate) mod master_list;
@@ -29,6 +30,7 @@ pub(crate) mod name_property;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
+pub(crate) mod packaging_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod program_indicator;
@@ -141,6 +143,9 @@ pub(crate) fn all_translators() -> SyncTranslators {
         demographic::boxed(),
         // Vaccination
         vaccination::boxed(),
+        // Item Variant
+        item_variant::boxed(),
+        packaging_variant::boxed(),
     ]
 }
 
