@@ -7,6 +7,8 @@ mod add_manual_requisition_line_fields;
 mod add_reason_option_table;
 mod add_unserviceable_status_to_asset_status_enum;
 mod delete_pack_variant;
+mod indicator_column_create_table;
+mod indicator_row_create_table;
 mod item_variant;
 mod program_indicator_create_table;
 
@@ -34,6 +36,8 @@ impl Migration for V2_04_00 {
             Box::new(item_variant::Migrate),
             Box::new(program_indicator_create_table::Migrate),
             Box::new(add_item_variant_id_to_stock_line_and_invoice_line::Migrate),
+            Box::new(indicator_row_create_table::Migrate),
+            Box::new(indicator_column_create_table::Migrate),
         ]
     }
 }
