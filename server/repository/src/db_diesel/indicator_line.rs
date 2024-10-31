@@ -29,7 +29,6 @@ impl<'a> IndicatorRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<IndicatorFilter>) -> Result<i64, RepositoryError> {
-        // TODO (beyond M1), check that store_id matches current store
         let query = Self::create_filtered_query(filter);
 
         Ok(query
