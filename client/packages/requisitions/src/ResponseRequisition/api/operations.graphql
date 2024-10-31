@@ -35,11 +35,6 @@ fragment ResponseLine on RequisitionLineNode {
   }
   approvedQuantity
   approvalComment
-  linkedRequisitionLine {
-    itemStats {
-      availableStockOnHand
-    }
-  }
 }
 
 fragment Response on RequisitionNode {
