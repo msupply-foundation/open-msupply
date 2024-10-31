@@ -17,6 +17,8 @@ impl MigrationFragment for Migrate {
                 'index' BIGINT NOT NULL,
                 description TEXT NOT NULL,
                 code TEXT NOT NULL,
+                value_type TEXT NOT NULL,
+                default_value TEXT NOT NULL,
                 is_required BOOLEAN NOT NULL,
                 is_active BOOLEAN NOT NULL  
             );
