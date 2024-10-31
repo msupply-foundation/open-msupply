@@ -10,6 +10,7 @@ pub(crate) mod asset_type;
 pub(crate) mod barcode;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
+pub(crate) mod cold_storage_type;
 pub(crate) mod currency;
 pub(crate) mod demographic;
 pub(crate) mod document;
@@ -93,6 +94,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         document_registry::boxed(),
         property::boxed(),
         name_property::boxed(),
+        cold_storage_type::boxed(),
         // Remote
         location::boxed(),
         location_movement::boxed(),
