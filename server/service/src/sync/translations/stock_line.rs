@@ -1,8 +1,8 @@
 use crate::sync::{
     sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
     translations::{
-        barcode::BarcodeTranslation, item::ItemTranslation, location::LocationTranslation,
-        name::NameTranslation, store::StoreTranslation,
+        barcode::BarcodeTranslation, item::ItemTranslation, item_variant::ItemVariantTranslation,
+        location::LocationTranslation, name::NameTranslation, store::StoreTranslation,
     },
 };
 use chrono::NaiveDate;
@@ -61,6 +61,7 @@ impl SyncTranslation for StockLineTranslation {
     fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             ItemTranslation.table_name(),
+            ItemVariantTranslation.table_name(),
             NameTranslation.table_name(),
             StoreTranslation.table_name(),
             LocationTranslation.table_name(),
