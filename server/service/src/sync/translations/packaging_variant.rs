@@ -3,13 +3,13 @@ use repository::item_variant::packaging_variant_row::{
 };
 use repository::{ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow};
 
-use crate::sync::translations::item::ItemTranslation;
+use crate::sync::translations::item_variant::ItemVariantTranslation;
 
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
-// Needs to be added to  ()
+// Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(PackagingVariantTranslation)
@@ -23,7 +23,7 @@ impl SyncTranslation for PackagingVariantTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![ItemTranslation.table_name()]
+        vec![ItemVariantTranslation.table_name()]
     }
 
     fn try_translate_from_upsert_sync_record(
