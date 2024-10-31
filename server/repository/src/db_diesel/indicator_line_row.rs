@@ -11,6 +11,8 @@ table! {
         index -> BigInt,
         description->Text,
         code -> Text,
+        value_type -> Text,
+        default_value -> Text,
         is_required -> Bool,
         is_active -> Bool,
     }
@@ -24,6 +26,8 @@ pub struct IndicatorLineRow {
     pub index: i64,
     pub description: String,
     pub code: String,
+    pub value_type: String,
+    pub default_value: String,
     pub is_required: bool,
     pub is_active: bool,
 }

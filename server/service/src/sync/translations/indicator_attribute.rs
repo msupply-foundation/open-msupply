@@ -7,10 +7,11 @@ use crate::sync::translations::program_indicator::ProgramIndicatorTranslation;
 
 use super::{PullTranslateResult, SyncTranslation};
 
-#[derive(Deserialize)]
-
+#[derive(Deserialize, PartialEq)]
 enum Axis {
+    #[serde(rename = "column")]
     Column,
+    #[serde(rename = "row")]
     Row,
 }
 
@@ -79,6 +80,8 @@ impl SyncTranslation for IndicatorAttribute {
                 index,
                 description,
                 code,
+                value_type,
+                default_value,
                 is_required,
                 is_active,
             }),
