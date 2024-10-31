@@ -18,6 +18,8 @@ fragment ResponseLine on RequisitionLineNode {
   remainingQuantityToSupply
   alreadyIssued
   comment
+  averageMonthlyConsumption
+  availableStockOnHand
 
   itemStats {
     __typename
