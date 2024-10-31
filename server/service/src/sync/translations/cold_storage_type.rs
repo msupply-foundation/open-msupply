@@ -17,12 +17,12 @@ pub struct LegacyLocationTypeRow {
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
-    Box::new(LocationTypeTranslation)
+    Box::new(ColdStorageTypeTranslation)
 }
 
 /// Translates between the legacy LocationTypeRow and the new ColdStorageTypeRow
-pub(super) struct LocationTypeTranslation;
-impl SyncTranslation for LocationTypeTranslation {
+pub(super) struct ColdStorageTypeTranslation;
+impl SyncTranslation for ColdStorageTypeTranslation {
     fn table_name(&self) -> &str {
         "Location_type"
     }
@@ -53,7 +53,6 @@ impl SyncTranslation for LocationTypeTranslation {
             min_temperature: temperature_min,
             max_temperature: temperature_max,
         };
-        println!("Resulting row {:?}", result);
 
         Ok(PullTranslateResult::upsert(result))
     }
@@ -65,12 +64,12 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
-    async fn test_location_type_translation() {
-        use crate::sync::test::test_data::location_type as test_data;
-        let translator = LocationTypeTranslation {};
+    async fn cold_storage_type_translation() {
+        use crate::sync::test::test_data::cold_storage_type as test_data;
+        let translator = ColdStorageTypeTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_location_type_translation", MockDataInserts::none()).await;
+            setup_all("cold_storage_type_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

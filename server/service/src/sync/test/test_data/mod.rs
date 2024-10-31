@@ -12,6 +12,7 @@ pub(crate) mod asset_log_reason;
 pub(crate) mod asset_property;
 pub(crate) mod asset_type;
 pub(crate) mod barcode;
+pub(crate) mod cold_storage_type;
 pub(crate) mod currency;
 pub(crate) mod demographic;
 pub(crate) mod invoice;
@@ -20,7 +21,6 @@ pub(crate) mod item;
 pub(crate) mod item_variant;
 pub(crate) mod location;
 pub(crate) mod location_movement;
-pub(crate) mod location_type;
 pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
@@ -77,7 +77,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut unit::test_pull_upsert_records());
     test_records.append(&mut reason::test_pull_upsert_records());
     test_records.append(&mut store_preference::test_pull_upsert_records());
-    test_records.append(&mut location_type::test_pull_upsert_records());
+    test_records.append(&mut cold_storage_type::test_pull_upsert_records());
     // Central but site specific
     test_records.append(&mut name_store_join::test_pull_upsert_records());
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
