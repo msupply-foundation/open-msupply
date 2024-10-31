@@ -1,8 +1,8 @@
 use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository};
 use repository::{ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow};
 
+use crate::sync::translations::cold_storage_type::ColdStorageTypeTranslation;
 use crate::sync::translations::item::ItemTranslation;
-use crate::sync::translations::location_type::LocationTypeTranslation;
 use crate::sync::translations::name::NameTranslation;
 
 use super::{
@@ -26,7 +26,7 @@ impl SyncTranslation for ItemVariantTranslation {
         vec![
             ItemTranslation.table_name(),
             NameTranslation.table_name(),
-            LocationTypeTranslation.table_name(),
+            ColdStorageTypeTranslation.table_name(),
         ]
     }
 
