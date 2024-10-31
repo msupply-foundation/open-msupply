@@ -75,12 +75,10 @@ export const useResponseColumns = () => {
       description: 'description.customer-soh',
       width: 100,
       align: ColumnAlign.Right,
-      getSortValue: rowData =>
-        rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand ?? '',
+      getSortValue: rowData => rowData?.availableStockOnHand ?? '',
       Cell: PackVariantQuantityCell({
         getItemId: row => row.itemId,
-        getQuantity: row =>
-          row?.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0,
+        getQuantity: row => row?.availableStockOnHand ?? 0,
       }),
     },
     [
