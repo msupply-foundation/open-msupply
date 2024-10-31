@@ -15,6 +15,7 @@ pub(crate) mod demographic;
 pub(crate) mod document;
 pub(crate) mod document_registry;
 pub(crate) mod form_schema;
+pub(crate) mod indicator_attribute;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
@@ -141,6 +142,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         demographic::boxed(),
         // Vaccination
         vaccination::boxed(),
+        indicator_attribute::boxed(),
     ]
 }
 
