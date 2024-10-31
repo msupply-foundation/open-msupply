@@ -1,5 +1,8 @@
 import { useContext, useEffect, useRef } from 'react';
-import { UNSAFE_NavigationContext as NavigationContext } from 'react-router-dom';
+import {
+  UNSAFE_NavigationContext as NavigationContext,
+  useBlocker,
+} from 'react-router-dom';
 import { useTranslation } from '@common/intl';
 import { useToggle } from '../useToggle';
 
@@ -30,6 +33,24 @@ export const useConfirmOnLeaving = (isUnsaved?: boolean) => {
       onOk();
     }
   };
+
+  let blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      !!isUnsaved && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  // TODO: the blocker hook should only be called once, wrapping in useCallback should do it?
+  // TODO: the .proceed() should navigate us, but it doesn't, you have to click 'back' again. possibly due to the hook being called multiple times?
+  // TODO: replace the confirm with a nice modal - requires a bit of refactoring here
+  // console.log('blocker', blocker.state);
+  if (blocker.state === 'blocked') {
+    if (confirm('time to leave?')) {
+      blocker.proceed();
+      // console.log(blocker.location.pathname);
+    } else {
+      blocker.reset();
+    }
+  }
 
   useEffect(() => {
     // note that multiple calls to addEventListener don't result in multiple event listeners being added
