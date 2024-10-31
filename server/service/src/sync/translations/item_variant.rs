@@ -2,7 +2,6 @@ use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowR
 use repository::{ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow};
 
 use crate::sync::translations::item::ItemTranslation;
-use crate::sync::translations::location::LocationTranslation;
 use crate::sync::translations::location_type::LocationTypeTranslation;
 use crate::sync::translations::name::NameTranslation;
 
