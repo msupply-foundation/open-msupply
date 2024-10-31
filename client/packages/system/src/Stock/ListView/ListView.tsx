@@ -107,7 +107,7 @@ const StockListComponent: FC = () => {
     [
       'expiryDate',
       {
-        accessor: ({ rowData }) => DateUtils.getDateOrNull(rowData.expiryDate),
+        accessor: ({ rowData }) => DateUtils.getNaiveDate(rowData.expiryDate),
         width: 110,
       },
     ],
