@@ -21,6 +21,7 @@ pub(crate) mod item;
 pub(crate) mod item_variant;
 pub(crate) mod location;
 pub(crate) mod location_movement;
+pub(crate) mod location_type;
 pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
@@ -93,6 +94,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         document_registry::boxed(),
         property::boxed(),
         name_property::boxed(),
+        location_type::boxed(), // Note: Translates to cold_storage_type
         // Remote
         location::boxed(),
         location_movement::boxed(),
