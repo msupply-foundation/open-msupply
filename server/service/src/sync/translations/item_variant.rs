@@ -2,6 +2,7 @@ use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowR
 use repository::{ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow};
 
 use crate::sync::translations::item::ItemTranslation;
+use crate::sync::translations::name::NameTranslation;
 
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
@@ -21,7 +22,7 @@ impl SyncTranslation for ItemVariantTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![ItemTranslation.table_name()]
+        vec![ItemTranslation.table_name(), NameTranslation.table_name()]
     }
 
     fn try_translate_from_upsert_sync_record(
