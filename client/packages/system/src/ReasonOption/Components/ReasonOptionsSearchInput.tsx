@@ -13,7 +13,7 @@ import { reasonOptions } from '../api';
 interface ReasonOptionsSearchInputProps {
   value?: ReasonOptionNode | null;
   width?: number | string;
-  onChange: (inventoryAdjustmentReason: ReasonOptionNode | null) => void;
+  onChange: (reasonOption: ReasonOptionNode | null) => void;
   autoFocus?: boolean;
   type: ReasonOptionNodeType;
   isError?: boolean;
