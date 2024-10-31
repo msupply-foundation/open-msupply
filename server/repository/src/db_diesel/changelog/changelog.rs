@@ -109,6 +109,7 @@ pub enum ChangelogTableName {
     Vaccination,
     ItemVariant,
     PackagingVariant,
+    BundledItem,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -173,6 +174,7 @@ impl ChangelogTableName {
             ChangelogTableName::ColdStorageType => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::ItemVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::PackagingVariant => ChangeLogSyncStyle::Central,
+            ChangelogTableName::BundledItem => ChangeLogSyncStyle::Central,
         }
     }
 }
