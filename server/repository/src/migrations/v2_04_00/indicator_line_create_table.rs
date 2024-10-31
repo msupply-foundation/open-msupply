@@ -3,7 +3,7 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "indicator_row_create_table"
+        "indicator_line_create_table"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
@@ -11,7 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-            CREATE TABLE indicator (
+            CREATE TABLE indicator_line (
                 id TEXT PRIMARY KEY NOT NULL,
                 program_indicator_id TEXT NOT NULL REFERENCES program_indicator(id),
                 index BIGINT NOT NULL,
