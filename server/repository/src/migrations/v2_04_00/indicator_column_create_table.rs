@@ -14,11 +14,11 @@ impl MigrationFragment for Migrate {
             CREATE TABLE indicator_column (
                 id TEXT PRIMARY KEY NOT NULL,
                 program_indicator_id TEXT NOT NULL REFERENCES program_indicator(id),
-                index BIGINT NOT NULL,
+                'index' BIGINT NOT NULL,
                 header TEXT NOT NULL,
                 value_type TEXT NOT NULL,
                 default_value TEXT NOT NULL,
-                is_active BOOLEAN NOT NULL,       
+                is_active BOOLEAN NOT NULL       
             );
             "#
         )?;
