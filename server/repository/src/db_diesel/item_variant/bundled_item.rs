@@ -81,12 +81,8 @@ impl<'a> BundledItemRepository<'a> {
 
         let result = final_query.load::<BundledItemRow>(self.connection.lock().connection())?;
 
-        Ok(result.into_iter().map(to_domain).collect())
+        Ok(result)
     }
-}
-
-fn to_domain(bundled_item_row: BundledItemRow) -> BundledItemRow {
-    bundled_item_row
 }
 
 type BoxedBundledItemQuery = IntoBoxed<'static, bundled_item::table, DBType>;
