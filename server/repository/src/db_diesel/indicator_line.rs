@@ -12,23 +12,23 @@ use crate::{EqualFilter, Pagination, StringFilter};
 
 use diesel::prelude::*;
 
-pub struct IndicatorRepository<'a> {
+pub struct IndicatorLineRepository<'a> {
     connection: &'a StorageConnection,
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
-pub struct IndicatorFilter {
+pub struct IndicatorLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub program_indicator_id: Option<EqualFilter<String>>,
     pub code: Option<StringFilter>,
 }
 
-impl<'a> IndicatorRepository<'a> {
+impl<'a> IndicatorLineRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        IndicatorRepository { connection }
+        IndicatorLineRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<IndicatorFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<IndicatorLineFilter>) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter);
 
         Ok(query
@@ -38,12 +38,12 @@ impl<'a> IndicatorRepository<'a> {
 
     pub fn query_by_filter(
         &self,
-        filter: IndicatorFilter,
+        filter: IndicatorLineFilter,
     ) -> Result<Vec<IndicatorLineRow>, RepositoryError> {
         self.query(Pagination::new(), Some(filter))
     }
 
-    pub fn create_filtered_query(filter: Option<IndicatorFilter>) -> BoxedIndicatorQuery {
+    pub fn create_filtered_query(filter: Option<IndicatorLineFilter>) -> BoxedIndicatorQuery {
         let mut query = indicator_line::table.into_boxed();
         // Filter out inactive program_indicators by default
         query = query.filter(indicator_line::is_active.eq(true));
@@ -64,7 +64,7 @@ impl<'a> IndicatorRepository<'a> {
     pub fn query(
         &self,
         pagination: Pagination,
-        filter: Option<IndicatorFilter>,
+        filter: Option<IndicatorLineFilter>,
     ) -> Result<Vec<IndicatorLineRow>, RepositoryError> {
         let query = Self::create_filtered_query(filter);
 
@@ -81,8 +81,8 @@ impl<'a> IndicatorRepository<'a> {
 }
 type BoxedIndicatorQuery = indicator_line::BoxedQuery<'static, DBType>;
 
-impl IndicatorFilter {
-    pub fn new() -> IndicatorFilter {
+impl IndicatorLineFilter {
+    pub fn new() -> IndicatorLineFilter {
         Self::default()
     }
 
