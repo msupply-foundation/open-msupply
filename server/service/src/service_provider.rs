@@ -40,6 +40,7 @@ use crate::{
         patient::{PatientService, PatientServiceTrait},
         program_enrolment::{ProgramEnrolmentService, ProgramEnrolmentServiceTrait},
         program_event::{ProgramEventService, ProgramEventServiceTrait},
+        program_indicator::{ProgramIndicatorService, ProgramIndicatorServiceTrait},
     },
     repack::{RepackService, RepackServiceTrait},
     report::report_service::{ReportService, ReportServiceTrait},
@@ -113,6 +114,7 @@ pub struct ServiceProvider {
     pub encounter_service: Box<dyn EncounterServiceTrait>,
     pub program_event_service: Box<dyn ProgramEventServiceTrait>,
     pub contact_trace_service: Box<dyn ContactTraceServiceTrait>,
+    pub program_indicator_service: Box<dyn ProgramIndicatorServiceTrait>,
 
     // Settings
     pub settings: Box<dyn SettingsServiceTrait>,
@@ -210,6 +212,7 @@ impl ServiceProvider {
             form_schema_service: Box::new(FormSchemaService {}),
             patient_service: Box::new(PatientService {}),
             program_enrolment_service: Box::new(ProgramEnrolmentService {}),
+            program_indicator_service: Box::new(ProgramIndicatorService {}),
             program_event_service: Box::new(ProgramEventService {}),
             encounter_service: Box::new(EncounterService {}),
             contact_trace_service: Box::new(ContactTraceService {}),
