@@ -144,12 +144,11 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
           <ColdStorageTypeInput
             value={draft.coldStorageType ?? null}
             label={t('label.temperature')}
-            onChange={coldStorageType => {
-              console.log('coldStorageType', coldStorageType);
+            onChange={coldStorageType =>
               onUpdate({
                 coldStorageType: coldStorageType as ColdStorageTypeNode,
-              });
-            }}
+              })
+            }
           />
           <Grid alignSelf="center">
             <ToggleButton
