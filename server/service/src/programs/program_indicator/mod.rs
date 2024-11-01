@@ -1,7 +1,7 @@
 use query::program_indicator;
 use query::program_indicators;
+use query::ProgramIndicator;
 use repository::Pagination;
-use repository::ProgramIndicator;
 use repository::ProgramIndicatorFilter;
 use repository::ProgramIndicatorSort;
 use repository::RepositoryError;
@@ -10,7 +10,7 @@ use crate::service_provider::ServiceContext;
 
 // use self::query::program_enrolment;
 // use self::query::program_enrolments;
-mod query;
+pub mod query;
 
 pub trait ProgramIndicatorServiceTrait: Sync + Send {
     fn program_indicator(

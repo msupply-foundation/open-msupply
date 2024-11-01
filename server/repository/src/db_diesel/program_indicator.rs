@@ -26,8 +26,6 @@ pub enum ProgramIndicatorSortField {
     Code,
 }
 
-pub type ProgramIndicator = ProgramIndicatorRow;
-
 pub type ProgramIndicatorSort = Sort<ProgramIndicatorSortField>;
 
 impl<'a> ProgramIndicatorRepository<'a> {
@@ -47,7 +45,7 @@ impl<'a> ProgramIndicatorRepository<'a> {
     pub fn query_by_filter(
         &self,
         filter: ProgramIndicatorFilter,
-    ) -> Result<Vec<ProgramIndicator>, RepositoryError> {
+    ) -> Result<Vec<ProgramIndicatorRow>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
@@ -71,7 +69,7 @@ impl<'a> ProgramIndicatorRepository<'a> {
         pagination: Pagination,
         filter: Option<ProgramIndicatorFilter>,
         sort: Option<ProgramIndicatorSort>,
-    ) -> Result<Vec<ProgramIndicator>, RepositoryError> {
+    ) -> Result<Vec<ProgramIndicatorRow>, RepositoryError> {
         let mut query = Self::create_filtered_query(filter);
 
         if let Some(sort) = sort {
@@ -93,7 +91,7 @@ impl<'a> ProgramIndicatorRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<ProgramIndicator>(self.connection.lock().connection())?;
+            .load::<ProgramIndicatorRow>(self.connection.lock().connection())?;
 
         Ok(result)
     }
