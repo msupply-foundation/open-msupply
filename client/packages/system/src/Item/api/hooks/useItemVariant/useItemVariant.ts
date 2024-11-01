@@ -101,6 +101,11 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
       if (result.__typename === 'ItemVariantNode') {
         return result;
       }
+      if (result.__typename === 'UpsertItemVariantError') {
+        if (result.error.__typename === 'UniqueValueViolation') {
+          throw new Error(t('error.duplicate-item-variant-name'));
+        }
+      }
     }
     throw new Error(t('error.failed-to-save-item-variant'));
   };

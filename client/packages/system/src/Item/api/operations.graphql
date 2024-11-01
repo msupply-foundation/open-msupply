@@ -324,6 +324,17 @@ mutation upsertItemVariant($storeId: String!, $input: UpsertItemVariantInput!) {
         ... on ItemVariantNode {
           ...ItemVariant
         }
+        ... on UpsertItemVariantError {
+          __typename
+          error {
+            __typename
+            description
+            ... on UniqueValueViolation {
+              description
+              field
+            }
+          }
+        }
       }
     }
   }
