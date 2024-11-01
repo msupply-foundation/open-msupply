@@ -16,6 +16,7 @@ pub enum UpdateLocationError {
     DatabaseError(RepositoryError),
 }
 
+#[derive(Default)]
 pub struct UpdateLocation {
     pub id: String,
     pub code: Option<String>,
