@@ -3,6 +3,21 @@ use super::StorageConnection;
 use crate::{repository_error::RepositoryError, Upsert};
 
 use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum ValueType {
+    #[serde(rename = "var")]
+    Var,
+    #[serde(rename = "number")]
+    #[default]
+    Number,
+    #[serde(rename = "string")]
+    String,
+}
 
 table! {
     indicator_line (id) {
@@ -11,7 +26,7 @@ table! {
         index -> BigInt,
         description->Text,
         code -> Text,
-        value_type -> Text,
+        value_type -> crate::ValueTypeMapping,
         default_value -> Text,
         is_required -> Bool,
         is_active -> Bool,
@@ -26,7 +41,7 @@ pub struct IndicatorLineRow {
     pub index: i64,
     pub description: String,
     pub code: String,
-    pub value_type: String,
+    pub value_type: ValueType,
     pub default_value: String,
     pub is_required: bool,
     pub is_active: bool,
