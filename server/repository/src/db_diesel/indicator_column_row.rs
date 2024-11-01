@@ -1,6 +1,6 @@
-use super::{StorageConnection, ValueType};
+use super::{IndicatorValueType, StorageConnection};
 
-use crate::{repository_error::RepositoryError, Upsert};
+use crate::{repository_error::RepositoryError, DBType, Upsert};
 
 use diesel::prelude::*;
 
@@ -10,7 +10,7 @@ table! {
         program_indicator_id -> Text,
         column_number -> BigInt,
         header ->Text,
-        value_type -> Nullable<crate::ValueTypeMapping>,
+        value_type -> Nullable<crate::IndicatorValueTypeMapping>,
         default_value -> Text,
         is_active -> Bool,
     }
@@ -23,7 +23,7 @@ pub struct IndicatorColumnRow {
     pub program_indicator_id: String,
     pub column_number: i64,
     pub header: String,
-    pub value_type: Option<ValueType>,
+    pub value_type: Option<IndicatorValueType>,
     pub default_value: String,
     pub is_active: bool,
 }
@@ -38,12 +38,17 @@ impl<'a> IndicatorColumnRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &IndicatorColumnRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(indicator_column::table)
+        let query = diesel::insert_into(indicator_column::table)
             .values(row)
             .on_conflict(indicator_column::id)
             .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+            .set(row);
+
+        // Debug diesel query
+        println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
+
+        query.execute(self.connection.lock().connection())?;
+
         Ok(())
     }
 

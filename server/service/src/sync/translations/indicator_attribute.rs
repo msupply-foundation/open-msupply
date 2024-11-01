@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use repository::{
-    IndicatorColumnRow, IndicatorLineRow, StorageConnection, SyncBufferRow, ValueType,
+    IndicatorColumnRow, IndicatorLineRow, IndicatorValueType, StorageConnection, SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -26,11 +26,11 @@ enum LegacyValueType {
     #[serde(rename = "var")]
     Var,
 }
-impl Into<Option<ValueType>> for LegacyValueType {
-    fn into(self) -> Option<ValueType> {
+impl Into<Option<IndicatorValueType>> for LegacyValueType {
+    fn into(self) -> Option<IndicatorValueType> {
         match self {
-            LegacyValueType::Number => Some(ValueType::Number),
-            LegacyValueType::String => Some(ValueType::String),
+            LegacyValueType::Number => Some(IndicatorValueType::Number),
+            LegacyValueType::String => Some(IndicatorValueType::String),
             LegacyValueType::Var => None,
         }
     }

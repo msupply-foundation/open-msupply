@@ -9,12 +9,12 @@ use serde::{Deserialize, Serialize};
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum ValueType {
+pub enum IndicatorValueType {
+    #[serde(rename = "string")]
+    String,
     #[serde(rename = "number")]
     #[default]
     Number,
-    #[serde(rename = "string")]
-    String,
 }
 
 table! {
@@ -24,7 +24,7 @@ table! {
         line_number -> BigInt,
         description->Text,
         code -> Text,
-        value_type -> Nullable<crate::ValueTypeMapping>,
+        value_type -> Nullable<crate::IndicatorValueTypeMapping>,
         default_value -> Text,
         is_required -> Bool,
         is_active -> Bool,
@@ -39,7 +39,7 @@ pub struct IndicatorLineRow {
     pub line_number: i64,
     pub description: String,
     pub code: String,
-    pub value_type: Option<ValueType>,
+    pub value_type: Option<IndicatorValueType>,
     pub default_value: String,
     pub is_required: bool,
     pub is_active: bool,
