@@ -45,13 +45,13 @@ pub struct IndicatorLineRow {
     pub is_active: bool,
 }
 
-pub struct IndicatorRowRepository<'a> {
+pub struct IndicatorLineRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> IndicatorRowRepository<'a> {
+impl<'a> IndicatorLineRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        IndicatorRowRepository { connection }
+        IndicatorLineRowRepository { connection }
     }
 
     pub fn upsert_one(&self, row: &IndicatorLineRow) -> Result<(), RepositoryError> {
@@ -78,14 +78,14 @@ impl<'a> IndicatorRowRepository<'a> {
 
 impl Upsert for IndicatorLineRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        IndicatorRowRepository::new(con).upsert_one(self)?;
+        IndicatorLineRowRepository::new(con).upsert_one(self)?;
         Ok(None) // Table not in Changelog
     }
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            IndicatorRowRepository::new(con).find_one_by_id(&self.id),
+            IndicatorLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

@@ -136,7 +136,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             "indicator_ID": "program_indicator_a",
             "description": "Some column B",
             "code": "icb",
-            "index": 0,
+            "index": 1,
             "is_required": false,
             "value_type": "string",
             "axis": "column",
@@ -150,7 +150,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         IndicatorColumnRow {
             id: INDICATOR_COLUMN_B.0.to_owned(),
             program_indicator_id: "program_indicator_a".to_owned(),
-            column_number: 0,
+            column_number: 1,
             header: "Some column B".to_owned(),
             value_type: Some(IndicatorValueType::String),
             default_value: "test default value".to_owned(),
