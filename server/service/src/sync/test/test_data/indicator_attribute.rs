@@ -1,4 +1,4 @@
-use repository::{IndicatorColumnRow, IndicatorLineRow, ValueType};
+use repository::{IndicatorColumnRow, IndicatorLineRow, IndicatorValueType};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -62,7 +62,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             program_indicator_id: "program_indicator_a".to_owned(),
             line_number: 1,
             description: "Some line B".to_owned(),
-            value_type: Some(ValueType::String),
+            value_type: Some(IndicatorValueType::String),
             default_value: "".to_owned(),
             is_required: false,
             is_active: true,
@@ -93,7 +93,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             program_indicator_id: "program_indicator_a".to_owned(),
             line_number: 2,
             description: "Some line C".to_owned(),
-            value_type: Some(ValueType::Number),
+            value_type: Some(IndicatorValueType::Number),
             default_value: "0".to_owned(),
             is_required: false,
             is_active: true,
@@ -152,7 +152,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             program_indicator_id: "program_indicator_a".to_owned(),
             column_number: 0,
             header: "Some column B".to_owned(),
-            value_type: Some(ValueType::String),
+            value_type: Some(IndicatorValueType::String),
             default_value: "test default value".to_owned(),
             is_active: true,
         },
