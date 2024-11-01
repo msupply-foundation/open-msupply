@@ -9,7 +9,6 @@ import {
   FnUtils,
   ToggleButton,
   InlineSpinner,
-  ColdStorageTypeNode,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocation } from '../../api';
 import { ColdStorageTypeInput } from 'packages/system/src/Item/Components/ColdStorageTypeInput';
@@ -144,11 +143,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
           <ColdStorageTypeInput
             value={draft.coldStorageType ?? null}
             label={t('label.temperature')}
-            onChange={coldStorageType =>
-              onUpdate({
-                coldStorageType: coldStorageType as ColdStorageTypeNode,
-              })
-            }
+            onChange={coldStorageType => onUpdate({ coldStorageType })}
           />
           <Grid alignSelf="center">
             <ToggleButton
