@@ -1,4 +1,4 @@
-use super::StorageConnection;
+use super::{StorageConnection, ValueType};
 
 use crate::{repository_error::RepositoryError, Upsert};
 
@@ -10,7 +10,7 @@ table! {
         program_indicator_id -> Text,
         index -> BigInt,
         header ->Text,
-        value_type -> Text,
+        value_type -> crate::ValueTypeMapping,
         default_value -> Text,
         is_active -> Bool,
     }
@@ -23,7 +23,7 @@ pub struct IndicatorColumnRow {
     pub program_indicator_id: String,
     pub index: i64,
     pub header: String,
-    pub value_type: String,
+    pub value_type: ValueType,
     pub default_value: String,
     pub is_active: bool,
 }

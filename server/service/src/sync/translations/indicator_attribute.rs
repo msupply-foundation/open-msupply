@@ -1,5 +1,7 @@
 use anyhow::anyhow;
-use repository::{IndicatorColumnRow, IndicatorLineRow, StorageConnection, SyncBufferRow};
+use repository::{
+    IndicatorColumnRow, IndicatorLineRow, StorageConnection, SyncBufferRow, ValueType,
+};
 
 use serde::Deserialize;
 
@@ -8,11 +10,30 @@ use crate::sync::translations::program_indicator::ProgramIndicatorTranslation;
 use super::{PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, PartialEq)]
-enum Axis {
+enum LegacyAxis {
     #[serde(rename = "column")]
     Column,
     #[serde(rename = "row")]
     Row,
+}
+
+#[derive(Deserialize, PartialEq)]
+enum LegacyValueType {
+    #[serde(rename = "number")]
+    Number,
+    #[serde(rename = "string")]
+    String,
+    #[serde(rename = "var")]
+    Var,
+}
+impl Into<ValueType> for LegacyValueType {
+    fn into(self) -> ValueType {
+        match self {
+            LegacyValueType::Number => ValueType::Number,
+            LegacyValueType::String => ValueType::String,
+            LegacyValueType::Var => ValueType::Var,
+        }
+    }
 }
 
 #[allow(non_snake_case)]
@@ -26,8 +47,8 @@ pub struct LegacyIndicatorAttribute {
     code: String,
     index: i64,
     is_required: bool,
-    value_type: String,
-    axis: Axis,
+    value_type: LegacyValueType,
+    axis: LegacyAxis,
     is_active: bool,
     default_value: String,
 }
@@ -65,22 +86,22 @@ impl SyncTranslation for IndicatorAttribute {
             default_value,
         } = serde_json::from_str::<LegacyIndicatorAttribute>(&sync_record.data)?;
         Ok(match axis {
-            Axis::Column => PullTranslateResult::upsert(IndicatorColumnRow {
+            LegacyAxis::Column => PullTranslateResult::upsert(IndicatorColumnRow {
                 id,
                 program_indicator_id,
                 index,
                 header: description,
-                value_type,
+                value_type: value_type.into(),
                 default_value,
                 is_active,
             }),
-            Axis::Row => PullTranslateResult::upsert(IndicatorLineRow {
+            LegacyAxis::Row => PullTranslateResult::upsert(IndicatorLineRow {
                 id,
                 program_indicator_id,
                 index,
                 description,
                 code,
-                value_type,
+                value_type: value_type.into(),
                 default_value,
                 is_required,
                 is_active,
