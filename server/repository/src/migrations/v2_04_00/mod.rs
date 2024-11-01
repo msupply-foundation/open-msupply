@@ -8,7 +8,6 @@ mod add_reason_option_table;
 mod add_unserviceable_status_to_asset_status_enum;
 mod delete_pack_variant;
 mod indicator_line_column_create_tables;
-mod indicator_line_create_table;
 mod item_variant;
 mod program_indicator_create_table;
 
