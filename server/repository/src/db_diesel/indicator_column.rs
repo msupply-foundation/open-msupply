@@ -9,22 +9,22 @@ use crate::{EqualFilter, Pagination};
 
 use diesel::prelude::*;
 
-pub struct IndicatorRepository<'a> {
+pub struct IndicatorColumnRepository<'a> {
     connection: &'a StorageConnection,
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
-pub struct IndicatorFilter {
+pub struct IndicatorColumnFilter {
     pub id: Option<EqualFilter<String>>,
     pub program_indicator_id: Option<EqualFilter<String>>,
 }
 
-impl<'a> IndicatorRepository<'a> {
+impl<'a> IndicatorColumnRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        IndicatorRepository { connection }
+        IndicatorColumnRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<IndicatorFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<IndicatorColumnFilter>) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter);
 
         Ok(query
@@ -34,12 +34,12 @@ impl<'a> IndicatorRepository<'a> {
 
     pub fn query_by_filter(
         &self,
-        filter: IndicatorFilter,
+        filter: IndicatorColumnFilter,
     ) -> Result<Vec<IndicatorColumnRow>, RepositoryError> {
         self.query(Pagination::new(), Some(filter))
     }
 
-    pub fn create_filtered_query(filter: Option<IndicatorFilter>) -> BoxedIndicatorQuery {
+    pub fn create_filtered_query(filter: Option<IndicatorColumnFilter>) -> BoxedIndicatorQuery {
         let mut query = indicator_column::table.into_boxed();
         // Filter out inactive program_indicators by default
         query = query.filter(indicator_column::is_active.eq(true));
@@ -59,7 +59,7 @@ impl<'a> IndicatorRepository<'a> {
     pub fn query(
         &self,
         pagination: Pagination,
-        filter: Option<IndicatorFilter>,
+        filter: Option<IndicatorColumnFilter>,
     ) -> Result<Vec<IndicatorColumnRow>, RepositoryError> {
         let query = Self::create_filtered_query(filter);
 
@@ -76,8 +76,8 @@ impl<'a> IndicatorRepository<'a> {
 }
 type BoxedIndicatorQuery = indicator_column::BoxedQuery<'static, DBType>;
 
-impl IndicatorFilter {
-    pub fn new() -> IndicatorFilter {
+impl IndicatorColumnFilter {
+    pub fn new() -> IndicatorColumnFilter {
         Self::default()
     }
 
