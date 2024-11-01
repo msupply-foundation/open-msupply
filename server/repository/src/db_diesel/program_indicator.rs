@@ -19,7 +19,6 @@ pub struct ProgramIndicatorRepository<'a> {
 pub struct ProgramIndicatorFilter {
     pub id: Option<EqualFilter<String>>,
     pub program_id: Option<EqualFilter<String>>,
-    pub code: Option<StringFilter>,
 }
 
 pub enum ProgramIndicatorSortField {
@@ -62,7 +61,6 @@ impl<'a> ProgramIndicatorRepository<'a> {
         if let Some(f) = filter {
             apply_equal_filter!(query, f.id, program_indicator::id);
             apply_equal_filter!(query, f.program_id, program_indicator::program_id);
-            apply_string_filter!(query, f.code, program_indicator::code);
         }
 
         query
