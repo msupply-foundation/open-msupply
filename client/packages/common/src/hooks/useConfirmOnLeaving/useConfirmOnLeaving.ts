@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect } from 'react';
-import { BlockerFunction, useBeforeUnload, useBlocker } from 'react-router-dom';
+import { useBeforeUnload, useBlocker } from 'react-router-dom';
 import { useTranslation } from '@common/intl';
-import { ConfirmationModalContext } from '@openmsupply-client/common'; // '@common/components';
+import { ConfirmationModalContext } from '@openmsupply-client/common';
 
 /** useConfirmOnLeaving is a hook that will prompt the user if they try to navigate away from,
  *  or refresh the page, when there are unsaved changes.
@@ -23,18 +23,10 @@ export const useConfirmOnLeaving = (isUnsaved?: boolean) => {
     setOpen(true);
   }, [setMessage, setTitle, setOpen]);
 
-  const shouldBlock = useCallback<BlockerFunction>(
-    ({ currentLocation, nextLocation }) => {
-      if (!!isUnsaved && currentLocation.pathname !== nextLocation.pathname) {
-        showConfirmation();
-        return true;
-      }
-      return false;
-    },
-    [isUnsaved, showConfirmation]
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      !!isUnsaved && currentLocation.pathname !== nextLocation.pathname
   );
-
-  const blocker = useBlocker(shouldBlock);
 
   // handle page refresh events
   useBeforeUnload(
@@ -48,18 +40,11 @@ export const useConfirmOnLeaving = (isUnsaved?: boolean) => {
     { capture: true }
   );
 
-  // Reset the blocker if the dirty state changes
   useEffect(() => {
-    if (blocker.state === 'blocked' && !isUnsaved) {
-      blocker.reset();
+    if (blocker.state === 'blocked') {
+      setOnConfirm(blocker.proceed);
+      showConfirmation();
     }
-  }, [blocker, isUnsaved]);
-
-  // update the onConfirm function when the blocker changes
-  useEffect(() => {
-    setOnConfirm(() => {
-      blocker?.proceed?.();
-    });
   }, [blocker]);
 
   return { showConfirmation: customConfirm };
