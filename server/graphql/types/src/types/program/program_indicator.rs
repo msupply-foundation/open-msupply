@@ -34,15 +34,17 @@ impl ProgramIndicatorSortInput {
 
 #[derive(InputObject, Clone)]
 pub struct ProgramIndicatorFilterInput {
-    pub code: Option<StringFilterInput>,
     pub program_id: Option<EqualFilterStringInput>,
+    // TODO add fields
+    // pub period_id: Option<EqualFilterStringInput>,
+    // pub customer_id: Option<EqualFilterStringInput>,
+    // pub supplier_id: Option<EqualFilterStringInput>,
 }
 
 impl From<ProgramIndicatorFilterInput> for ProgramIndicatorFilter {
     fn from(f: ProgramIndicatorFilterInput) -> Self {
         ProgramIndicatorFilter {
             id: None,
-            code: f.code.map(StringFilter::from),
             program_id: f.program_id.map(EqualFilter::from),
         }
     }
