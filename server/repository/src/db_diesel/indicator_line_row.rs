@@ -10,8 +10,6 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ValueType {
-    #[serde(rename = "var")]
-    Var,
     #[serde(rename = "number")]
     #[default]
     Number,
@@ -23,10 +21,10 @@ table! {
     indicator_line (id) {
         id -> Text,
         program_indicator_id -> Text,
-        index -> BigInt,
+        line_number -> BigInt,
         description->Text,
         code -> Text,
-        value_type -> crate::ValueTypeMapping,
+        value_type -> Nullable<crate::ValueTypeMapping>,
         default_value -> Text,
         is_required -> Bool,
         is_active -> Bool,
@@ -38,10 +36,10 @@ table! {
 pub struct IndicatorLineRow {
     pub id: String,
     pub program_indicator_id: String,
-    pub index: i64,
+    pub line_number: i64,
     pub description: String,
     pub code: String,
-    pub value_type: ValueType,
+    pub value_type: Option<ValueType>,
     pub default_value: String,
     pub is_required: bool,
     pub is_active: bool,
