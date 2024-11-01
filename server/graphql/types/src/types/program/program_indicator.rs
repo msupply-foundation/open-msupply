@@ -1,9 +1,10 @@
 use async_graphql::{Enum, InputObject, Object, SimpleObject, Union};
-use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
+use graphql_core::generic_filters::{EqualFilterStringInput};
 use repository::{
-    EqualFilter, ProgramIndicator, ProgramIndicatorFilter, ProgramIndicatorSort,
-    ProgramIndicatorSortField, StringFilter,
+    EqualFilter, ProgramIndicatorFilter, ProgramIndicatorSort, ProgramIndicatorSortField,
+    
 };
+use service::programs::program_indicator::query::{ProgramIndicator, IndicatorLine}
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -75,9 +76,11 @@ impl ProgramIndicatorNode {
         &self.program_indicator.program_id
     }
 
-    pub async fn code(&self) -> &Option<String> {
+    pub async fn code(&self) -> &str {
         &self.program_indicator.code
     }
 
-    // Loaders to be added here for columns and rows
+    pub async fn line(&self) -> &Vec<IndicatorLine>    {
+        &self.program_indicator.value
+    }   
 }
