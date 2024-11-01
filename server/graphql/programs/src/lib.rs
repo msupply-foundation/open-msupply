@@ -19,6 +19,10 @@ use graphql_types::types::program_enrolment::ProgramEnrolmentSortInput;
 use graphql_types::types::program_enrolment::ProgramEventFilterInput;
 use graphql_types::types::program_event::ProgramEventResponse;
 use graphql_types::types::program_event::ProgramEventSortInput;
+use graphql_types::types::program_indicator::ProgramIndicatorFilterInput;
+use graphql_types::types::program_indicator::ProgramIndicatorNode;
+use graphql_types::types::program_indicator::ProgramIndicatorResponse;
+use graphql_types::types::program_indicator::ProgramIndicatorSortInput;
 use graphql_types::types::vaccination::VaccinationNode;
 use mutations::allocate_number::allocate_program_number;
 use mutations::allocate_number::AllocateProgramNumberInput;
@@ -307,6 +311,24 @@ impl ProgramsQueries {
     ) -> Result<VaccinationCardResponse> {
         vaccination_card(ctx, store_id, program_enrolment_id)
     }
+    // pub async fn program_indicator(
+    //     &self,
+    //     ctx: &Context<'_>,
+    //     store_id: String,
+    //     program_indicator_id: String,
+    // ) -> Result<Option<ProgramIndicatorNode>> {
+    //     program_indicator(ctx, store_id, program_indicator_id)
+    // }
+
+    // pub async fn program_indicators(
+    //     &self,
+    //     ctx: &Context<'_>,
+    //     store_id: String,
+    //     sort: Option<ProgramIndicatorSortInput>,
+    //     filter: Option<ProgramIndicatorFilterInput>,
+    // ) -> Result<ProgramIndicatorResponse> {
+    //     program_indicators(ctx, store_id, sort, filter)
+    // }
 }
 
 #[derive(Default, Clone)]
