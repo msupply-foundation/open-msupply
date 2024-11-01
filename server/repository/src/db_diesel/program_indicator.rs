@@ -3,11 +3,11 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort, apply_string_filter},
+    diesel_macros::{apply_equal_filter, apply_sort},
     repository_error::RepositoryError,
 };
 
-use crate::{EqualFilter, Pagination, StringFilter};
+use crate::{EqualFilter, Pagination};
 
 use diesel::prelude::*;
 
@@ -112,11 +112,6 @@ impl ProgramIndicatorFilter {
 
     pub fn program_id(mut self, filter: EqualFilter<String>) -> Self {
         self.program_id = Some(filter);
-        self
-    }
-
-    pub fn code(mut self, filter: StringFilter) -> Self {
-        self.code = Some(filter);
         self
     }
 }
