@@ -26,12 +26,12 @@ enum LegacyValueType {
     #[serde(rename = "var")]
     Var,
 }
-impl Into<ValueType> for LegacyValueType {
-    fn into(self) -> ValueType {
+impl Into<Option<ValueType>> for LegacyValueType {
+    fn into(self) -> Option<ValueType> {
         match self {
-            LegacyValueType::Number => ValueType::Number,
-            LegacyValueType::String => ValueType::String,
-            LegacyValueType::Var => ValueType::Var,
+            LegacyValueType::Number => Some(ValueType::Number),
+            LegacyValueType::String => Some(ValueType::String),
+            LegacyValueType::Var => None,
         }
     }
 }
@@ -89,7 +89,7 @@ impl SyncTranslation for IndicatorAttribute {
             LegacyAxis::Column => PullTranslateResult::upsert(IndicatorColumnRow {
                 id,
                 program_indicator_id,
-                index,
+                column_number: index,
                 header: description,
                 value_type: value_type.into(),
                 default_value,
@@ -98,7 +98,7 @@ impl SyncTranslation for IndicatorAttribute {
             LegacyAxis::Row => PullTranslateResult::upsert(IndicatorLineRow {
                 id,
                 program_indicator_id,
-                index,
+                line_number: index,
                 description,
                 code,
                 value_type: value_type.into(),

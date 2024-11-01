@@ -8,9 +8,9 @@ table! {
     indicator_column (id) {
         id -> Text,
         program_indicator_id -> Text,
-        index -> BigInt,
+        column_number -> BigInt,
         header ->Text,
-        value_type -> crate::ValueTypeMapping,
+        value_type -> Nullable<crate::ValueTypeMapping>,
         default_value -> Text,
         is_active -> Bool,
     }
@@ -21,9 +21,9 @@ table! {
 pub struct IndicatorColumnRow {
     pub id: String,
     pub program_indicator_id: String,
-    pub index: i64,
+    pub column_number: i64,
     pub header: String,
-    pub value_type: ValueType,
+    pub value_type: Option<ValueType>,
     pub default_value: String,
     pub is_active: bool,
 }
