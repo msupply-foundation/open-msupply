@@ -18,6 +18,7 @@ mod full_master_list;
 mod invoice;
 mod invoice_line;
 mod item;
+mod item_variant;
 mod location;
 mod name;
 mod name_store_join;
@@ -78,6 +79,7 @@ pub use full_master_list::*;
 pub use invoice::*;
 pub use invoice_line::*;
 pub use item::*;
+pub use item_variant::*;
 pub use location::*;
 pub use name::*;
 pub use name_store_join::*;
@@ -123,6 +125,7 @@ use crate::{
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
+    item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
     vaccine_course::{
         vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
@@ -175,6 +178,7 @@ pub struct MockData {
     pub units: Vec<UnitRow>,
     pub currencies: Vec<CurrencyRow>,
     pub items: Vec<ItemRow>,
+    pub item_variants: Vec<ItemVariantRow>,
     pub locations: Vec<LocationRow>,
     pub sensors: Vec<SensorRow>,
     pub temperature_breaches: Vec<TemperatureBreachRow>,
@@ -254,6 +258,7 @@ pub struct MockDataInserts {
     pub units: bool,
     pub currencies: bool,
     pub items: bool,
+    pub item_variants: bool,
     pub locations: bool,
     pub sensors: bool,
     pub temperature_breaches: bool,
@@ -319,6 +324,7 @@ impl MockDataInserts {
             units: true,
             currencies: true,
             items: true,
+            item_variants: true,
             locations: true,
             sensors: true,
             temperature_breaches: true,
@@ -439,6 +445,13 @@ impl MockDataInserts {
     pub fn items(mut self) -> Self {
         self.units = true;
         self.items = true;
+        self
+    }
+
+    pub fn item_variants(mut self) -> Self {
+        self.units = true;
+        self.items = true;
+        self.item_variants = true;
         self
     }
 
@@ -910,6 +923,13 @@ pub fn insert_mock_data(
             }
         }
 
+        if inserts.item_variants {
+            let repo = ItemVariantRowRepository::new(connection);
+            for row in &mock_data.item_variants {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
         if inserts.locations {
             let repo = LocationRowRepository::new(connection);
             for row in &mock_data.locations {
@@ -1255,6 +1275,7 @@ impl MockData {
             mut stores,
             mut units,
             mut items,
+            mut item_variants,
             mut locations,
             mut sensors,
             mut temperature_breaches,
@@ -1319,6 +1340,7 @@ impl MockData {
         self.stores.append(&mut stores);
         self.units.append(&mut units);
         self.items.append(&mut items);
+        self.item_variants.append(&mut item_variants);
         self.locations.append(&mut locations);
         self.sensors.append(&mut sensors);
         self.temperature_logs.append(&mut temperature_logs);
