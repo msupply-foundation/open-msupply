@@ -320,15 +320,15 @@ impl ProgramsQueries {
     //     program_indicator(ctx, store_id, program_indicator_id)
     // }
 
-    // pub async fn program_indicators(
-    //     &self,
-    //     ctx: &Context<'_>,
-    //     store_id: String,
-    //     sort: Option<ProgramIndicatorSortInput>,
-    //     filter: Option<ProgramIndicatorFilterInput>,
-    // ) -> Result<ProgramIndicatorResponse> {
-    //     program_indicators(ctx, store_id, sort, filter)
-    // }
+    pub async fn program_indicators(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        sort: Option<ProgramIndicatorSortInput>,
+        filter: Option<ProgramIndicatorFilterInput>,
+    ) -> Result<ProgramIndicatorResponse> {
+        program_indicators(ctx, store_id, sort, filter)
+    }
 }
 
 #[derive(Default, Clone)]
