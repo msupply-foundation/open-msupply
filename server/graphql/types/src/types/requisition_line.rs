@@ -283,6 +283,10 @@ impl RequisitionLineNode {
     pub async fn available_stock_on_hand(&self) -> &f64 {
         &self.row().available_stock_on_hand
     }
+
+    pub async fn requisition_number(&self) -> &i64 {
+        &self.requisition_row().requisition_number
+    }
 }
 
 impl RequisitionLineNode {
