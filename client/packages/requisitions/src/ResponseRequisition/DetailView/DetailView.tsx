@@ -19,15 +19,13 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
 import { useResponse, ResponseLineFragment } from '../api';
-import { ResponseLineEdit } from './ResponseLineEdit';
 
 export const DetailView: FC = () => {
-  const isDisabled = useResponse.utils.isDisabled();
-  const { onOpen, onClose, entity, isOpen } =
-    useEditModal<ResponseLineFragment>();
-  const { data, isLoading } = useResponse.document.get();
-  const navigate = useNavigate();
   const t = useTranslation();
+  const { data, isLoading } = useResponse.document.get();
+  const isDisabled = useResponse.utils.isDisabled();
+  const { onOpen } = useEditModal<ResponseLineFragment>();
+  const navigate = useNavigate();
 
   const onRowClick = useCallback(
     (line: ResponseLineFragment) => {
@@ -40,7 +38,15 @@ export const DetailView: FC = () => {
 
   const tabs = [
     {
-      Component: <ContentArea onRowClick={!isDisabled ? onRowClick : null} />,
+      Component: (
+        <ContentArea
+          onAddItem={() => onOpen(null)}
+          onRowClick={!isDisabled ? onRowClick : null}
+          disableAddLine={
+            isDisabled || !!data?.linkedRequisition || !!data?.programName
+          }
+        />
+      ),
       value: 'Details',
     },
     {
@@ -56,15 +62,17 @@ export const DetailView: FC = () => {
         initialSortBy: { key: 'itemName' },
       })}
     >
-      <AppBarButtons />
+      <AppBarButtons
+        isDisabled={isDisabled}
+        hasLinkedRequisition={!!data.linkedRequisition}
+        isProgram={!!data.programName}
+        onAddItem={() => onOpen(null)}
+      />
       <Toolbar />
       <DetailTabs tabs={tabs} />
 
       <Footer />
       <SidePanel />
-      {entity && (
-        <ResponseLineEdit isOpen={isOpen} onClose={onClose} line={entity} />
-      )}
     </TableProvider>
   ) : (
     <AlertModal
