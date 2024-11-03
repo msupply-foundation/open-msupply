@@ -45,7 +45,7 @@ impl<'a> IndicatorColumnRowRepository<'a> {
             .set(row);
 
         // Debug diesel query
-        println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
+        // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         query.execute(self.connection.lock().connection())?;
 
