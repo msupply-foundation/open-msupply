@@ -1,10 +1,9 @@
 use async_graphql::{Enum, InputObject, Object, SimpleObject, Union};
-use graphql_core::generic_filters::{EqualFilterStringInput};
+use graphql_core::generic_filters::EqualFilterStringInput;
 use repository::{
     EqualFilter, ProgramIndicatorFilter, ProgramIndicatorSort, ProgramIndicatorSortField,
-    
 };
-use service::programs::program_indicator::query::{ProgramIndicator, IndicatorLine}
+use service::programs::program_indicator::query::{IndicatorLine, ProgramIndicator};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -80,7 +79,37 @@ impl ProgramIndicatorNode {
         &self.program_indicator.code
     }
 
-    pub async fn line(&self) -> &Vec<IndicatorLine>    {
-        &self.program_indicator.value
-    }   
+    pub async fn lines(&self) -> Vec<IndicatorLineNode> {
+        self.program_indicator
+            .lines
+            .clone()
+            .into_iter()
+            .map(IndicatorLineNode::from_domain)
+            .collect()
+    }
+}
+
+impl IndicatorLineNode {
+    pub fn from_domain(line: IndicatorLine) -> IndicatorLineNode {
+        IndicatorLineNode { line }
+    }
+}
+
+pub struct IndicatorLineNode {
+    pub line: IndicatorLine,
+}
+
+#[Object]
+impl IndicatorLineNode {
+    pub async fn code(&self) -> &str {
+        &self.line.code
+    }
+
+    pub async fn name(&self) -> &str {
+        &self.line.name
+    }
+
+    pub async fn value(&self) -> &str {
+        &self.line.value
+    }
 }

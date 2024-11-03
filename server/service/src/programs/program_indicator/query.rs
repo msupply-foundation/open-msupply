@@ -5,22 +5,22 @@ use repository::{
 
 use crate::service_provider::ServiceContext;
 
-enum valueType {
-    Text,
-    Number,
-    None,
+// TODO add actual value types
+#[derive(Clone)]
+pub enum ValueType {
+    Text(String),
+    Number(f64),
+    // TODO add value type of nested value
+    // MultiColumn
 }
 
-pub struct IndicatorColumn {
-    name: String,
-    code: String,
-    r#type: valueType,
-}
+#[derive(Clone)]
 pub struct IndicatorLine {
-    name: String,
-    code: String,
-    r#type: valueType,
-    value: Vec<IndicatorColumn>,
+    pub name: String,
+    pub code: String,
+    // pub r#type: ValueType,
+    pub value: String,
+    // later value could become a column
 }
 
 pub struct ProgramIndicator {
@@ -28,8 +28,7 @@ pub struct ProgramIndicator {
     pub program_id: String,
     pub name: String,
     pub code: String,
-    pub r#type: String,
-    pub value: Vec<IndicatorLine>,
+    pub lines: Vec<IndicatorLine>,
 }
 
 pub fn program_indicator(
@@ -52,6 +51,10 @@ pub fn program_indicators(
 ) -> Result<Vec<ProgramIndicator>, RepositoryError> {
     let _indicators =
         ProgramIndicatorRepository::new(&ctx.connection).query(pagination, filter, sort)?;
+
+    // grab all values, columns, and rows
+
+    // let indicator_rows = IndicatorRowRe
 
     // some logic here
     Ok(Vec::new())
