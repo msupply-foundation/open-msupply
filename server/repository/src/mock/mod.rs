@@ -15,6 +15,8 @@ mod encounter;
 mod form_schema;
 mod full_invoice;
 mod full_master_list;
+mod indicator_column;
+mod indicator_line;
 mod invoice;
 mod invoice_line;
 mod item;
@@ -75,6 +77,8 @@ pub use encounter::*;
 pub use form_schema::*;
 pub use full_invoice::*;
 pub use full_master_list::*;
+pub use indicator_column::*;
+pub use indicator_line::*;
 pub use invoice::*;
 pub use invoice_line::*;
 pub use item::*;
@@ -132,7 +136,8 @@ use crate::{
     ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
     ContextRowRepository, CurrencyRow, DemographicRow, Document, DocumentRegistryRow,
     DocumentRegistryRowRepository, DocumentRepository, EncounterRow, EncounterRowRepository,
-    FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow,
+    FormSchema, FormSchemaRowRepository, IndicatorColumnRow, IndicatorColumnRowRepository,
+    IndicatorLineRow, IndicatorLineRowRepository, InventoryAdjustmentReasonRow,
     InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
     ItemLinkRowRepository, ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow,
     LocationRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
@@ -226,6 +231,8 @@ pub struct MockData {
     pub encounters: Vec<EncounterRow>,
     pub program_enrolments: Vec<ProgramEnrolmentRow>,
     pub program_indicators: Vec<ProgramIndicatorRow>,
+    pub indicator_lines: Vec<IndicatorLineRow>,
+    pub indicator_columns: Vec<IndicatorColumnRow>,
 }
 
 impl MockData {
@@ -302,6 +309,8 @@ pub struct MockDataInserts {
     pub encounters: bool,
     pub program_enrolments: bool,
     pub program_indicators: bool,
+    pub indicator_lines: bool,
+    pub indicator_columns: bool,
 }
 
 impl MockDataInserts {
@@ -367,6 +376,8 @@ impl MockDataInserts {
             encounters: true,
             program_enrolments: true,
             program_indicators: true,
+            indicator_lines: true,
+            indicator_columns: true,
         }
     }
 
@@ -754,6 +765,8 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             encounters: mock_encounters(),
             program_enrolments: mock_program_enrolments(),
             program_indicators: mock_program_indicators(),
+            indicator_lines: mock_indicator_lines(),
+            indicator_columns: mock_indicator_columns(),
             ..Default::default()
         },
     );
@@ -1233,9 +1246,22 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
         if inserts.program_indicators {
             let repo = ProgramIndicatorRowRepository::new(connection);
             for row in &mock_data.program_indicators {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+        if inserts.indicator_lines {
+            let repo = IndicatorLineRowRepository::new(connection);
+            for row in &mock_data.indicator_lines {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+        if inserts.indicator_columns {
+            let repo = IndicatorColumnRowRepository::new(connection);
+            for row in &mock_data.indicator_columns {
                 repo.upsert_one(row).unwrap();
             }
         }
@@ -1308,6 +1334,8 @@ impl MockData {
             mut encounters,
             mut program_enrolments,
             mut program_indicators,
+            mut indicator_lines,
+            mut indicator_columns,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1373,6 +1401,8 @@ impl MockData {
         self.encounters.append(&mut encounters);
         self.program_enrolments.append(&mut program_enrolments);
         self.program_indicators.append(&mut program_indicators);
+        self.indicator_lines.append(&mut indicator_lines);
+        self.indicator_columns.append(&mut indicator_columns);
         self
     }
 }
