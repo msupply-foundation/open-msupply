@@ -45,7 +45,7 @@ pub struct LegacyIndicatorAttribute {
     program_indicator_id: String,
     description: String,
     code: String,
-    index: i64,
+    index: i32,
     is_required: bool,
     value_type: LegacyValueType,
     axis: LegacyAxis,

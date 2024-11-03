@@ -8,7 +8,7 @@ table! {
     indicator_column (id) {
         id -> Text,
         program_indicator_id -> Text,
-        column_number -> BigInt,
+        column_number -> Integer,
         header ->Text,
         value_type -> Nullable<crate::IndicatorValueTypeMapping>,
         default_value -> Text,
@@ -21,7 +21,7 @@ table! {
 pub struct IndicatorColumnRow {
     pub id: String,
     pub program_indicator_id: String,
-    pub column_number: i64,
+    pub column_number: i32,
     pub header: String,
     pub value_type: Option<IndicatorValueType>,
     pub default_value: String,
