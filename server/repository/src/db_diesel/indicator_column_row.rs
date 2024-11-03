@@ -1,6 +1,6 @@
 use super::{IndicatorValueType, StorageConnection};
 
-use crate::{repository_error::RepositoryError, DBType, Upsert};
+use crate::{repository_error::RepositoryError, Upsert};
 
 use diesel::prelude::*;
 
