@@ -18,6 +18,7 @@ interface ReasonOptionsSearchInputProps {
   type: ReasonOptionNodeType;
   isError?: boolean;
   isDisabled?: boolean;
+  onBlur?: () => void;
 }
 
 export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
@@ -28,6 +29,7 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
   type,
   isError,
   isDisabled,
+  onBlur,
 }) => {
   const { data, isLoading } = reasonOptions.document.listAllActive();
 
@@ -80,6 +82,7 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
             sx={{ minWidth: width }}
             error={isError}
             required={isRequired && !isDisabled}
+            onBlur={onBlur}
           />
         )}
         options={defaultOptionMapper(reasons, 'reason')}
