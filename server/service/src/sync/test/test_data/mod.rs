@@ -14,6 +14,7 @@ pub(crate) mod asset_type;
 pub(crate) mod barcode;
 pub(crate) mod currency;
 pub(crate) mod demographic;
+pub(crate) mod indicator_attribute;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
@@ -96,6 +97,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut vaccine_course_dose::test_pull_upsert_records());
     test_records.append(&mut vaccine_course_item::test_pull_upsert_records());
     test_records.append(&mut program_indicator::test_pull_upsert_records());
+    test_records.append(&mut indicator_attribute::test_pull_upsert_records());
 
     test_records
 }
