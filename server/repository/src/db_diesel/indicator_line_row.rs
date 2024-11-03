@@ -21,7 +21,7 @@ table! {
     indicator_line (id) {
         id -> Text,
         program_indicator_id -> Text,
-        line_number -> BigInt,
+        line_number -> Integer,
         description->Text,
         code -> Text,
         value_type -> Nullable<crate::IndicatorValueTypeMapping>,
@@ -36,7 +36,7 @@ table! {
 pub struct IndicatorLineRow {
     pub id: String,
     pub program_indicator_id: String,
-    pub line_number: i64,
+    pub line_number: i32,
     pub description: String,
     pub code: String,
     pub value_type: Option<IndicatorValueType>,
