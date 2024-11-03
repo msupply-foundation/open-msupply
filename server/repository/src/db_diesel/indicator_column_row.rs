@@ -62,6 +62,16 @@ impl<'a> IndicatorColumnRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_indicator_ids(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<IndicatorColumnRow>, RepositoryError> {
+        let result = indicator_column::table
+            .filter(indicator_column::program_indicator_id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
 }
 
 impl Upsert for IndicatorColumnRow {

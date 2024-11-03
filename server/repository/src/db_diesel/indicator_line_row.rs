@@ -74,6 +74,16 @@ impl<'a> IndicatorLineRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_indicator_ids(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<IndicatorLineRow>, RepositoryError> {
+        let result = indicator_line::table
+            .filter(indicator_line::program_indicator_id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
 }
 
 impl Upsert for IndicatorLineRow {
