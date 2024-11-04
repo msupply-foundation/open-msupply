@@ -96,6 +96,7 @@ export const useDraftCustomerReturnLines = ({
         packSize,
         batch,
         expiryDate,
+        itemVariantId,
       }) => {
         return {
           id,
@@ -106,6 +107,7 @@ export const useDraftCustomerReturnLines = ({
           reasonId,
           note,
           numberOfPacksReturned,
+          itemVariantId,
         };
       }
     );

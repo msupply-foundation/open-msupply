@@ -18,8 +18,7 @@ export const ManufacturerSearchInput = ({
   value,
   disabled = false,
 }: NameSearchInputProps) => {
-  // TODO: currently using supplier list, should be manufacturers!
-  const { data, isLoading } = useName.document.suppliers();
+  const { data, isLoading } = useName.document.manufacturers();
   const [buffer, setBuffer] = useBufferState(value);
   const t = useTranslation();
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));

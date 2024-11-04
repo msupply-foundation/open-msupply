@@ -965,6 +965,17 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
+export type ColdStorageTypeConnector = {
+  __typename: 'ColdStorageTypeConnector';
+  nodes: Array<ColdStorageTypeNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ColdStorageTypeFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type ColdStorageTypeNode = {
   __typename: 'ColdStorageTypeNode';
   id: Scalars['String']['output'];
@@ -972,6 +983,23 @@ export type ColdStorageTypeNode = {
   minTemperature: Scalars['Float']['output'];
   name: Scalars['String']['output'];
 };
+
+export enum ColdStorageTypeSortFieldInput {
+  Id = 'id',
+  Name = 'name'
+}
+
+export type ColdStorageTypeSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: ColdStorageTypeSortFieldInput;
+};
+
+export type ColdStorageTypesResponse = ColdStorageTypeConnector;
 
 export type ConfigureNamePropertiesResponse = Success;
 
@@ -1191,6 +1219,7 @@ export type CustomerReturnLineNode = {
   item: ItemNode;
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  itemVariantId?: Maybe<Scalars['String']['output']>;
   note?: Maybe<Scalars['String']['output']>;
   numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
   numberOfPacksReturned: Scalars['Float']['output'];
@@ -3190,6 +3219,7 @@ export type InvoiceLineNode = {
   itemCode: Scalars['String']['output'];
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  itemVariantId?: Maybe<Scalars['String']['output']>;
   location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
   locationName?: Maybe<Scalars['String']['output']>;
@@ -3529,6 +3559,7 @@ export type ItemVariantMutationsUpsertItemVariantArgs = {
 
 export type ItemVariantNode = {
   __typename: 'ItemVariantNode';
+  coldStorageType?: Maybe<ColdStorageTypeNode>;
   coldStorageTypeId?: Maybe<Scalars['String']['output']>;
   dosesPerUnit?: Maybe<Scalars['Int']['output']>;
   id: Scalars['String']['output'];
@@ -4650,6 +4681,8 @@ export type NameFilterInput = {
   isCustomer?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by donor property */
   isDonor?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by manufacturer property */
+  isManufacturer?: InputMaybe<Scalars['Boolean']['input']>;
   /** Is this name a store */
   isStore?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by supplier property */
@@ -5357,6 +5390,8 @@ export type Queries = {
   barcodeByGtin: BarcodeResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   clinicians: CliniciansResponse;
+  /** Query omSupply "cold_storage_type" entries */
+  coldStorageTypes: ColdStorageTypesResponse;
   contactTraces: ContactTraceResponse;
   currencies: CurrenciesResponse;
   customerProgramRequisitionSettings: Array<CustomerProgramRequisitionSettingNode>;
@@ -5604,6 +5639,14 @@ export type QueriesCliniciansArgs = {
   filter?: InputMaybe<ClinicianFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ClinicianSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesColdStorageTypesArgs = {
+  filter?: InputMaybe<ColdStorageTypeFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ColdStorageTypeSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -6852,6 +6895,7 @@ export type StockLineNode = {
   item: ItemNode;
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  itemVariantId?: Maybe<Scalars['String']['output']>;
   location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
   locationName?: Maybe<Scalars['String']['output']>;
@@ -7623,7 +7667,7 @@ export type UpdateInboundShipmentLineInput = {
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
-  itemVariantId?: InputMaybe<Scalars['String']['input']>;
+  itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
@@ -7697,6 +7741,7 @@ export type UpdateLocationErrorInterface = {
 
 export type UpdateLocationInput = {
   code?: InputMaybe<Scalars['String']['input']>;
+  coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
@@ -8136,6 +8181,7 @@ export type UpdateStockLineInput = {
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;

@@ -12,11 +12,14 @@ pub(crate) mod asset_log_reason;
 pub(crate) mod asset_property;
 pub(crate) mod asset_type;
 pub(crate) mod barcode;
+pub(crate) mod cold_storage_type;
 pub(crate) mod currency;
 pub(crate) mod demographic;
+pub(crate) mod indicator_attribute;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
+pub(crate) mod item_variant;
 pub(crate) mod location;
 pub(crate) mod location_movement;
 pub(crate) mod master_list;
@@ -28,6 +31,7 @@ pub(crate) mod name_property;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
+pub(crate) mod packaging_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod program_indicator;
@@ -74,6 +78,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut unit::test_pull_upsert_records());
     test_records.append(&mut reason::test_pull_upsert_records());
     test_records.append(&mut store_preference::test_pull_upsert_records());
+    test_records.append(&mut cold_storage_type::test_pull_upsert_records());
     // Central but site specific
     test_records.append(&mut name_store_join::test_pull_upsert_records());
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
@@ -96,6 +101,9 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut vaccine_course_dose::test_pull_upsert_records());
     test_records.append(&mut vaccine_course_item::test_pull_upsert_records());
     test_records.append(&mut program_indicator::test_pull_upsert_records());
+    test_records.append(&mut indicator_attribute::test_pull_upsert_records());
+    test_records.append(&mut item_variant::test_pull_upsert_records());
+    test_records.append(&mut packaging_variant::test_pull_upsert_records());
 
     test_records
 }
@@ -181,24 +189,30 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
 
 pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     let mut test_records = Vec::new();
+
+    // Central
     test_records.append(&mut asset_class::test_v6_central_push_records());
     test_records.append(&mut asset_category::test_v6_central_push_records());
     test_records.append(&mut asset_type::test_v6_central_push_records());
     test_records.append(&mut asset_catalogue_item::test_v6_central_push_records());
+    test_records.append(&mut vaccine_course::test_v6_records());
+    test_records.append(&mut vaccine_course_item::test_v6_records());
+    test_records.append(&mut name_oms_fields::test_v6_central_push_records());
+    test_records.append(&mut item_variant::test_v6_central_push_records());
+    test_records.append(&mut packaging_variant::test_v6_central_push_records());
+    test_records.append(&mut property::test_v6_central_push_records());
+
+    // Remote
     test_records.append(&mut asset::test_v6_records());
     test_records.append(&mut asset_log::test_v6_records());
     test_records.append(&mut asset_log_reason::test_v6_records());
     test_records.append(&mut sync_file_reference::test_v6_records());
     test_records.append(&mut asset_property::test_v6_central_push_records());
-    test_records.append(&mut name_oms_fields::test_v6_central_push_records());
-    test_records.append(&mut property::test_v6_central_push_records());
     test_records.append(&mut name_property::test_v6_central_push_records());
     test_records.append(&mut rnr_form::test_v6_records());
     test_records.append(&mut rnr_form_line::test_v6_records());
     test_records.append(&mut demographic::test_v6_records());
-    test_records.append(&mut vaccine_course::test_v6_records());
     test_records.append(&mut vaccine_course_dose::test_v6_records());
-    test_records.append(&mut vaccine_course_item::test_v6_records());
     test_records.append(&mut vaccination::test_v6_records());
 
     test_records

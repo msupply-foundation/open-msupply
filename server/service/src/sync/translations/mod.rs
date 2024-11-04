@@ -10,14 +10,17 @@ pub(crate) mod asset_type;
 pub(crate) mod barcode;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
+pub(crate) mod cold_storage_type;
 pub(crate) mod currency;
 pub(crate) mod demographic;
 pub(crate) mod document;
 pub(crate) mod document_registry;
 pub(crate) mod form_schema;
+pub(crate) mod indicator_attribute;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
+pub(crate) mod item_variant;
 pub(crate) mod location;
 pub(crate) mod location_movement;
 pub(crate) mod master_list;
@@ -29,6 +32,7 @@ pub(crate) mod name_property;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
+pub(crate) mod packaging_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod program_indicator;
@@ -84,6 +88,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         period::boxed(),
         program_requisition_settings::boxed(),
         program_indicator::boxed(),
+        indicator_attribute::boxed(),
         report::boxed(),
         reason::boxed(),
         store_preference::boxed(),
@@ -91,6 +96,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         document_registry::boxed(),
         property::boxed(),
         name_property::boxed(),
+        cold_storage_type::boxed(),
         // Remote
         location::boxed(),
         location_movement::boxed(),
@@ -141,6 +147,9 @@ pub(crate) fn all_translators() -> SyncTranslators {
         demographic::boxed(),
         // Vaccination
         vaccination::boxed(),
+        // Item Variant
+        item_variant::boxed(),
+        packaging_variant::boxed(),
     ]
 }
 
