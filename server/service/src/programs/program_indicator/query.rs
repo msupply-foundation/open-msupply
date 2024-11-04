@@ -5,13 +5,33 @@ use repository::{
 
 use crate::service_provider::ServiceContext;
 
-// TODO add actual value types
 #[derive(Clone)]
-pub enum ValueType {
+pub enum ColumnValue {
     Text(String),
     Number(f64),
-    // TODO add value type of nested value
-    // MultiColumn
+}
+
+#[derive(Clone)]
+pub enum ValueType {
+    Text,
+    Number,
+}
+
+// // TODO add actual value types
+// #[derive(Clone)]
+// pub enum LineValueType {
+//     // Text(String),
+//     // Number(f64),
+//     // added column value type because didn't want to nest indefintitely
+//     MultiColumn(Vec<IndicatorColumn>),
+// }
+
+#[derive(Clone)]
+pub struct IndicatorColumn {
+    pub name: String,
+    pub code: String,
+    pub r#type: ValueType,
+    pub value: ColumnValue,
 }
 
 #[derive(Clone)]
@@ -19,7 +39,7 @@ pub struct IndicatorLine {
     pub name: String,
     pub code: String,
     // pub r#type: ValueType,
-    pub value: String,
+    pub value: Vec<IndicatorColumn>,
     // later value could become a column
 }
 
@@ -49,12 +69,16 @@ pub fn program_indicators(
     sort: Option<ProgramIndicatorSort>,
     filter: Option<ProgramIndicatorFilter>,
 ) -> Result<Vec<ProgramIndicator>, RepositoryError> {
-    let _indicators =
+    let indicators =
         ProgramIndicatorRepository::new(&ctx.connection).query(pagination, filter, sort)?;
 
-    // grab all values, columns, and rows
+    let indicator_ids: Vec<String> = indicators
+        .into_iter()
+        .map(|indicator| indicator.id)
+        .collect();
 
-    // let indicator_rows = IndicatorRowRe
+    // grab all rows of indicator id (but multiple indicator ids)
+    // let indicator_lines = IndicatorLine
 
     // some logic here
     Ok(Vec::new())

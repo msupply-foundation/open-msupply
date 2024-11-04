@@ -3,7 +3,9 @@ use graphql_core::generic_filters::EqualFilterStringInput;
 use repository::{
     EqualFilter, ProgramIndicatorFilter, ProgramIndicatorSort, ProgramIndicatorSortField,
 };
-use service::programs::program_indicator::query::{IndicatorLine, ProgramIndicator};
+use service::programs::program_indicator::query::{
+    ColumnValue, IndicatorColumn, IndicatorLine, ProgramIndicator, ValueType,
+};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -109,7 +111,95 @@ impl IndicatorLineNode {
         &self.line.name
     }
 
-    pub async fn value(&self) -> &str {
-        &self.line.value
+    pub async fn values(&self) -> Vec<IndicatorColumnNode> {
+        self.line
+            .value
+            .clone()
+            .into_iter()
+            .map(IndicatorColumnNode::from_domain)
+            .collect()
+    }
+}
+
+impl IndicatorColumnNode {
+    pub fn from_domain(column: IndicatorColumn) -> IndicatorColumnNode {
+        IndicatorColumnNode { column }
+    }
+}
+
+pub struct IndicatorColumnNode {
+    pub column: IndicatorColumn,
+}
+
+#[Object]
+impl IndicatorColumnNode {
+    pub async fn code(&self) -> &str {
+        &self.column.code
+    }
+
+    pub async fn name(&self) -> &str {
+        &self.column.name
+    }
+
+    pub async fn value_type(&self) -> IndicatorValueType {
+        IndicatorValueType::from_domain(&self.column.r#type)
+    }
+
+    pub async fn values(&self) -> ColumnValueOutput {
+        ColumnValueOutput::from(self.column.value.clone())
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum IndicatorValueType {
+    Text,
+    Number,
+}
+
+impl IndicatorValueType {
+    pub fn from_domain(r#type: &ValueType) -> Self {
+        match r#type {
+            ValueType::Number => IndicatorValueType::Number,
+            ValueType::Text => IndicatorValueType::Text,
+        }
+    }
+}
+
+#[derive(Union)]
+pub enum ColumnValueOutput {
+    Text(TextOutput),
+    Number(NumberOutput),
+}
+
+pub struct TextOutput {
+    value: String,
+}
+
+#[Object]
+impl TextOutput {
+    async fn value(&self) -> &str {
+        &self.value
+    }
+}
+
+pub struct NumberOutput {
+    value: f64,
+}
+
+#[Object]
+impl NumberOutput {
+    async fn value(&self) -> f64 {
+        self.value
+    }
+}
+
+impl From<ColumnValue> for ColumnValueOutput {
+    fn from(value: ColumnValue) -> Self {
+        match value {
+            ColumnValue::Text(text) => ColumnValueOutput::Text(TextOutput { value: text }),
+            ColumnValue::Number(number) => {
+                ColumnValueOutput::Number(NumberOutput { value: number })
+            }
+        }
     }
 }
