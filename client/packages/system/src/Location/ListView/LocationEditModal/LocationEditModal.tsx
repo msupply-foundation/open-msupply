@@ -107,7 +107,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={
         <DialogButton
-          variant="next"
+          variant="next-and-ok"
           disabled={isInvalid}
           onClick={async () => {
             await onSave();
