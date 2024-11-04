@@ -77,31 +77,25 @@ fn validate(
     store_id: &str,
     input: &DeleteResponseRequisition,
 ) -> Result<(), OutError> {
-    // check if RequisitionDoesNotExist
     let requisition_row = check_requisition_row_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
-    // check if NotThisStoreRequisition
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
     }
 
-    // check if NotAResponseRequisition
     if requisition_row.r#type != RequisitionType::Response {
         return Err(OutError::NotAResponseRequisition);
     }
 
-    // check if FinalisedRequisition
     if requisition_row.status == RequisitionStatus::Finalised {
         return Err(OutError::FinalisedRequisition);
     }
 
-    // check if TransferRequisition
     if requisition_row.linked_requisition_id.is_some() {
         return Err(OutError::TransferRequisition);
     }
 
-    // check if RequisitionWithShipment
     let filter = InvoiceFilter {
         requisition_id: Some(EqualFilter::equal_to(&requisition_row.id)),
         ..Default::default()
