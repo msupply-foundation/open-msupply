@@ -396,6 +396,19 @@ impl GeneralQueries {
     ) -> Result<ReasonOptionResponse> {
         reason_options(ctx, page, filter, sort)
     }
+
+    /// Query omSupply "cold_storage_type" entries
+    pub async fn cold_storage_types(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<ColdStorageTypeFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<ColdStorageTypeSortInput>>,
+    ) -> Result<ColdStorageTypesResponse> {
+        cold_storage_types(ctx, store_id, page, filter, sort)
+    }
 }
 
 #[derive(Default, Clone)]
