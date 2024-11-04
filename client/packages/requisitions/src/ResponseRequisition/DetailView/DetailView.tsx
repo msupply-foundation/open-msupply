@@ -10,9 +10,16 @@ import {
   useEditModal,
   createQueryParamsStore,
   DetailTabs,
+  BasicModal,
+  Box,
+  FnUtils,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { ActivityLogList } from '@openmsupply-client/system';
+import {
+  ActivityLogList,
+  ItemRowFragment,
+  StockItemSearchInput,
+} from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar/Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -22,17 +29,22 @@ import { useResponse, ResponseLineFragment } from '../api';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
+  const navigate = useNavigate();
   const { data, isLoading } = useResponse.document.get();
   const isDisabled = useResponse.utils.isDisabled();
-  const { onOpen } = useEditModal<ResponseLineFragment>();
-  const navigate = useNavigate();
+  const { onOpen, isOpen, onClose } = useEditModal<ItemRowFragment>();
+  const { mutateAsync } = useResponse.line.insert();
 
-  const onRowClick = useCallback(
-    (line: ResponseLineFragment) => {
-      onOpen(line);
-    },
-    [onOpen]
-  );
+  const onRowClick = useCallback((line: ResponseLineFragment) => {
+    navigate(
+      RouteBuilder.create(AppRoute.Distribution)
+        .addPart(AppRoute.CustomerRequisition)
+        .addPart(String(line.requisitionNumber))
+        .addPart(String(line.item.id))
+        .build(),
+      { replace: true }
+    );
+  }, []);
 
   if (isLoading) return <DetailViewSkeleton />;
 
@@ -73,6 +85,35 @@ export const DetailView: FC = () => {
 
       <Footer />
       <SidePanel />
+      {isOpen && (
+        <BasicModal open={isOpen} onClose={onClose} height={500} width={800}>
+          <Box padding={2}>
+            <StockItemSearchInput
+              onChange={(newItem: ItemRowFragment | null) => {
+                if (newItem) {
+                  mutateAsync({
+                    id: FnUtils.generateUUID(),
+                    requisitionId: data.id,
+                    itemId: newItem.id,
+                  });
+                  navigate(
+                    RouteBuilder.create(AppRoute.Distribution)
+                      .addPart(AppRoute.CustomerRequisition)
+                      .addPart(String(data.requisitionNumber))
+                      .addPart(String(newItem.id))
+                      .build(),
+                    { replace: true }
+                  );
+                }
+              }}
+              openOnFocus={true}
+              extraFilter={item =>
+                !data.lines.nodes.some(line => line.item.id === item.id)
+              }
+            />
+          </Box>
+        </BasicModal>
+      )}
     </TableProvider>
   ) : (
     <AlertModal
