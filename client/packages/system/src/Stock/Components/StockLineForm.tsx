@@ -143,7 +143,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
             label={t('label.expiry')}
             Input={
               <ExpiryDateInput
-                value={DateUtils.getDateOrNull(draft.expiryDate)}
+                value={DateUtils.getNaiveDate(draft.expiryDate)}
                 onChange={date =>
                   onUpdate({ expiryDate: Formatter.naiveDate(date) })
                 }

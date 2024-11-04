@@ -451,7 +451,6 @@
   "heading.username": "Nom d'utilisateur",
   "immunisations": "Vaccinations",
   "inbound-shipment": "Bon de livraison",
-  "inbound-shipments": "Bons de livraison",
   "indicators-demographics": "Données démographiques",
   "info.automatic-return": "Ce retour client a été créé automatiquement, suite à un retour fournisseur créé dans un autre dépôt.",
   "info.automatic-return-no-edit": "Vous ne pouvez modifier cette transaction que lorsque le statut est confirmé comme \"Livré(e)\"",

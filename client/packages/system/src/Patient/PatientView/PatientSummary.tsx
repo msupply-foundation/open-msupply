@@ -36,7 +36,7 @@ export const PatientSummary: FC = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const t = useTranslation();
   const formatDateOfBirth = (dateOfBirth: string | null) => {
-    const dob = DateUtils.getDateOrNull(dateOfBirth);
+    const dob = DateUtils.getNaiveDate(dateOfBirth);
 
     return !dob
       ? ''

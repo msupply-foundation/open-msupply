@@ -27,12 +27,14 @@ export {
   Link,
   useNavigate,
   useParams,
-  BrowserRouter,
   HashRouter,
   Routes,
   Route,
   Navigate,
   useMatch,
+  createBrowserRouter,
+  createRoutesFromElements,
+  RouterProvider,
 } from 'react-router-dom';
 
 export * from './utils';
