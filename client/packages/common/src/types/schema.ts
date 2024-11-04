@@ -967,6 +967,17 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
+export type ColdStorageTypeConnector = {
+  __typename: 'ColdStorageTypeConnector';
+  nodes: Array<ColdStorageTypeNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ColdStorageTypeFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type ColdStorageTypeNode = {
   __typename: 'ColdStorageTypeNode';
   id: Scalars['String']['output'];
@@ -974,6 +985,23 @@ export type ColdStorageTypeNode = {
   minTemperature: Scalars['Float']['output'];
   name: Scalars['String']['output'];
 };
+
+export enum ColdStorageTypeSortFieldInput {
+  Id = 'id',
+  Name = 'name'
+}
+
+export type ColdStorageTypeSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: ColdStorageTypeSortFieldInput;
+};
+
+export type ColdStorageTypesResponse = ColdStorageTypeConnector;
 
 export type ConfigureNamePropertiesResponse = Success;
 
@@ -2934,13 +2962,21 @@ export type InsertResponseRequisitionLineErrorInterface = {
 };
 
 export type InsertResponseRequisitionLineInput = {
+  additionInUnits?: InputMaybe<Scalars['Float']['input']>;
+  averageMonthlyConsumption?: InputMaybe<Scalars['Float']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  daysOutOfStock?: InputMaybe<Scalars['Float']['input']>;
+  expiringUnits?: InputMaybe<Scalars['Float']['input']>;
   id: Scalars['String']['input'];
+  incomingUnits?: InputMaybe<Scalars['Float']['input']>;
   itemId: Scalars['String']['input'];
+  lossInUnits?: InputMaybe<Scalars['Float']['input']>;
+  optionId?: InputMaybe<Scalars['String']['input']>;
+  outgoingUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
   requisitionId: Scalars['String']['input'];
+  stockOnHand?: InputMaybe<Scalars['Float']['input']>;
   supplyQuantity?: InputMaybe<Scalars['Float']['input']>;
-  theirStockOnHand?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertResponseRequisitionLineResponse = InsertResponseRequisitionLineError | RequisitionLineNode;
@@ -3563,6 +3599,7 @@ export type ItemVariantMutationsUpsertItemVariantArgs = {
 
 export type ItemVariantNode = {
   __typename: 'ItemVariantNode';
+  coldStorageType?: Maybe<ColdStorageTypeNode>;
   coldStorageTypeId?: Maybe<Scalars['String']['output']>;
   dosesPerUnit?: Maybe<Scalars['Int']['output']>;
   id: Scalars['String']['output'];
@@ -5400,6 +5437,8 @@ export type Queries = {
   barcodeByGtin: BarcodeResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   clinicians: CliniciansResponse;
+  /** Query omSupply "cold_storage_type" entries */
+  coldStorageTypes: ColdStorageTypesResponse;
   contactTraces: ContactTraceResponse;
   currencies: CurrenciesResponse;
   customerProgramRequisitionSettings: Array<CustomerProgramRequisitionSettingNode>;
@@ -5647,6 +5686,14 @@ export type QueriesCliniciansArgs = {
   filter?: InputMaybe<ClinicianFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ClinicianSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesColdStorageTypesArgs = {
+  filter?: InputMaybe<ColdStorageTypeFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ColdStorageTypeSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -6424,6 +6471,8 @@ export type RequisitionLineNode = {
   alreadyIssued: Scalars['Float']['output'];
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Float']['output'];
+  availableStockOnHand: Scalars['Float']['output'];
+  averageMonthlyConsumption: Scalars['Float']['output'];
   comment?: Maybe<Scalars['String']['output']>;
   daysOutOfStock: Scalars['Float']['output'];
   expiringUnits: Scalars['Float']['output'];
@@ -6446,6 +6495,7 @@ export type RequisitionLineNode = {
   /** OutboundShipment lines linked to requisitions line */
   outboundShipmentLines: InvoiceLineConnector;
   outgoingUnits: Scalars['Float']['output'];
+  reason?: Maybe<ReasonOptionNode>;
   /**
    * Quantity remaining to supply
    * supplyQuantity minus all (including unallocated) linked invoice lines numberOfPacks * packSize
@@ -7747,6 +7797,7 @@ export type UpdateLocationErrorInterface = {
 
 export type UpdateLocationInput = {
   code?: InputMaybe<Scalars['String']['input']>;
+  coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
@@ -8089,11 +8140,19 @@ export type UpdateResponseRequisitionLineErrorInterface = {
 };
 
 export type UpdateResponseRequisitionLineInput = {
+  additionInUnits?: InputMaybe<Scalars['Float']['input']>;
+  averageMonthlyConsumption?: InputMaybe<Scalars['Float']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  daysOutOfStock?: InputMaybe<Scalars['Float']['input']>;
+  expiringUnits?: InputMaybe<Scalars['Float']['input']>;
   id: Scalars['String']['input'];
+  incomingUnits?: InputMaybe<Scalars['Float']['input']>;
+  lossInUnits?: InputMaybe<Scalars['Float']['input']>;
+  optionId?: InputMaybe<Scalars['String']['input']>;
+  outgoingUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
+  stockOnHand?: InputMaybe<Scalars['Float']['input']>;
   supplyQuantity?: InputMaybe<Scalars['Float']['input']>;
-  theirStockOnHand?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdateResponseRequisitionLineResponse = RequisitionLineNode | UpdateResponseRequisitionLineError;

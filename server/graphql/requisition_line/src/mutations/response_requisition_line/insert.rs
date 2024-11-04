@@ -22,10 +22,19 @@ pub struct InsertInput {
     pub id: String,
     pub item_id: String,
     pub requisition_id: String,
-    pub their_stock_on_hand: Option<f64>,
     pub supply_quantity: Option<f64>,
-    pub requested_quantity: Option<f64>,
     pub comment: Option<String>,
+    // Manual Requisition fields
+    pub requested_quantity: Option<f64>,
+    pub stock_on_hand: Option<f64>,
+    pub average_monthly_consumption: Option<f64>,
+    pub incoming_units: Option<f64>,
+    pub outgoing_units: Option<f64>,
+    pub loss_in_units: Option<f64>,
+    pub addition_in_units: Option<f64>,
+    pub expiring_units: Option<f64>,
+    pub days_out_of_stock: Option<f64>,
+    pub option_id: Option<String>,
 }
 
 #[derive(Interface)]
@@ -87,20 +96,36 @@ impl InsertInput {
             id,
             item_id,
             requisition_id,
-            their_stock_on_hand,
             supply_quantity,
-            requested_quantity,
             comment,
+            stock_on_hand,
+            requested_quantity,
+            average_monthly_consumption,
+            incoming_units,
+            outgoing_units,
+            loss_in_units,
+            addition_in_units,
+            expiring_units,
+            days_out_of_stock,
+            option_id,
         } = self;
 
         ServiceInput {
             id,
             item_id,
             requisition_id,
-            their_stock_on_hand,
             supply_quantity,
-            requested_quantity,
             comment,
+            stock_on_hand,
+            requested_quantity,
+            average_monthly_consumption,
+            incoming_units,
+            outgoing_units,
+            loss_in_units,
+            addition_in_units,
+            expiring_units,
+            days_out_of_stock,
+            option_id,
         }
     }
 }

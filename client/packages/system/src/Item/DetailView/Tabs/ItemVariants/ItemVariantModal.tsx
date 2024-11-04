@@ -21,6 +21,7 @@ import {
   useItemVariant,
 } from '../../../api';
 import { ManufacturerSearchInput } from '@openmsupply-client/system';
+import { ColdStorageTypeInput } from '../../../Components/ColdStorageTypeInput';
 
 export const ItemVariantModal = ({
   itemId,
@@ -106,16 +107,17 @@ const ItemVariantForm = ({
           label={t('label.temperature')}
           labelWidth="200"
           Input={
-            // TODO: temp range dropdown
-            <BasicTextInput
-              value={variant.coldStorageTypeId}
-              onChange={event => {
-                updateVariant({
-                  coldStorageTypeId: event.target.value,
-                });
-              }}
-              fullWidth
-            />
+            <Box width="100%">
+              <ColdStorageTypeInput
+                value={variant.coldStorageType ?? null}
+                onChange={coldStorageType =>
+                  updateVariant({
+                    coldStorageType,
+                    coldStorageTypeId: coldStorageType?.id ?? '',
+                  })
+                }
+              />
+            </Box>
           }
         />
         <InputWithLabelRow
