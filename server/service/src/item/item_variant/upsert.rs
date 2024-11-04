@@ -1,5 +1,6 @@
 use repository::{
     item_variant::{
+        item_variant::{ItemVariant, ItemVariantFilter, ItemVariantRepository},
         item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
         packaging_variant::{PackagingVariantFilter, PackagingVariantRepository},
         packaging_variant_row::PackagingVariantRowRepository,
@@ -39,7 +40,7 @@ pub struct UpsertItemVariantWithPackaging {
 pub fn upsert_item_variant(
     ctx: &ServiceContext,
     input: UpsertItemVariantWithPackaging,
-) -> Result<ItemVariantRow, UpsertItemVariantError> {
+) -> Result<ItemVariant, UpsertItemVariantError> {
     let item_variant = ctx
         .connection
         .transaction_sync(|connection| {
@@ -80,10 +81,14 @@ pub fn upsert_item_variant(
                     .map_err(|e| UpsertItemVariantError::PackagingVariantError(e))?;
             }
 
-            repo.find_one_by_id(&new_item_variant.id)?
+            ItemVariantRepository::new(connection)
+                .query_one(
+                    ItemVariantFilter::new().id(EqualFilter::equal_to(&new_item_variant.id)),
+                )?
                 .ok_or(UpsertItemVariantError::CreatedRecordNotFound)
         })
         .map_err(|error| error.to_inner_error())?;
+
     Ok(item_variant)
 }
 
