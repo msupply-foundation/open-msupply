@@ -19,6 +19,7 @@ interface ListProps {
   options: ListOptionValues[];
   endIcon?: JSX.Element;
   currentId?: string;
+  enteredLineIds?: string[];
 }
 
 export const ListOptions = ({
@@ -27,6 +28,7 @@ export const ListOptions = ({
   options,
   endIcon,
   currentId,
+  enteredLineIds,
 }: ListProps) => {
   return (
     <List sx={{ padding: 0 }}>
@@ -37,7 +39,11 @@ export const ListOptions = ({
             onClick={() => onClick(option.id)}
           >
             <ListItemIcon sx={{ padding: 0, minWidth: 25 }}>
-              {startIcon}
+              {enteredLineIds?.includes(option.id) ? (
+                startIcon
+              ) : (
+                <Box style={{ visibility: 'hidden' }}>{startIcon}</Box>
+              )}
             </ListItemIcon>
             <ListItemText
               primary={option.value}
