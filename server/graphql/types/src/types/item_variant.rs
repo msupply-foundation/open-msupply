@@ -3,15 +3,18 @@ use async_graphql::*;
 use dataloader::DataLoader;
 use graphql_core::loader::{ColdStorageTypeLoader, NameByIdLoader, NameByIdLoaderInput};
 use graphql_core::{loader::PackagingVariantRowLoader, ContextExt};
+use repository::item_variant::item_variant::ItemVariant;
 use repository::item_variant::{
     item_variant_row::ItemVariantRow, packaging_variant_row::PackagingVariantRow,
 };
+use repository::ItemRow;
 pub struct PackagingVariantNode {
     pub packaging_variant: PackagingVariantRow,
 }
 
 pub struct ItemVariantNode {
     pub item_variant: ItemVariantRow,
+    pub item: ItemRow,
 }
 
 #[Object]
@@ -26,6 +29,14 @@ impl ItemVariantNode {
 
     pub async fn doses_per_unit(&self) -> &Option<i32> {
         &self.item_variant.doses_per_unit
+    }
+
+    pub async fn item_id(&self) -> &String {
+        &self.item.id
+    }
+
+    pub async fn item_name(&self) -> &String {
+        &self.item.name
     }
 
     pub async fn manufacturer_id(&self) -> &Option<String> {
@@ -81,11 +92,19 @@ impl ItemVariantNode {
 }
 
 impl ItemVariantNode {
-    pub fn from_domain(item_variant: ItemVariantRow) -> ItemVariantNode {
-        ItemVariantNode { item_variant }
+    pub fn from_domain(
+        ItemVariant {
+            item_variant_row,
+            item_row,
+        }: ItemVariant,
+    ) -> ItemVariantNode {
+        ItemVariantNode {
+            item_variant: item_variant_row,
+            item: item_row,
+        }
     }
 
-    pub fn from_vec(variants: Vec<ItemVariantRow>) -> Vec<ItemVariantNode> {
+    pub fn from_vec(variants: Vec<ItemVariant>) -> Vec<ItemVariantNode> {
         variants
             .into_iter()
             .map(ItemVariantNode::from_domain)
