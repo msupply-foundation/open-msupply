@@ -5,8 +5,7 @@ use repository::Pagination;
 use repository::ProgramIndicatorFilter;
 use repository::ProgramIndicatorSort;
 use repository::RepositoryError;
-
-use crate::service_provider::ServiceContext;
+use repository::StorageConnection;
 
 // use self::query::program_enrolment;
 // use self::query::program_enrolments;
@@ -15,20 +14,20 @@ pub mod query;
 pub trait ProgramIndicatorServiceTrait: Sync + Send {
     fn program_indicator(
         &self,
-        ctx: &ServiceContext,
+        connection: &StorageConnection,
         filter: ProgramIndicatorFilter,
     ) -> Result<Option<ProgramIndicator>, RepositoryError> {
-        program_indicator(ctx, filter)
+        program_indicator(connection, filter)
     }
 
     fn program_indicators(
         &self,
-        ctx: &ServiceContext,
+        connection: &StorageConnection,
         pagination: Pagination,
         sort: Option<ProgramIndicatorSort>,
         filter: Option<ProgramIndicatorFilter>,
     ) -> Result<Vec<ProgramIndicator>, RepositoryError> {
-        program_indicators(ctx, pagination, sort, filter)
+        program_indicators(connection, pagination, sort, filter)
     }
 }
 
