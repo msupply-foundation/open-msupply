@@ -11,10 +11,19 @@ pub struct InsertResponseRequisitionLine {
     pub id: String,
     pub item_id: String,
     pub requisition_id: String,
-    pub their_stock_on_hand: Option<f64>,
-    pub requested_quantity: Option<f64>,
     pub supply_quantity: Option<f64>,
     pub comment: Option<String>,
+    // Manual Requisition fields
+    pub requested_quantity: Option<f64>,
+    pub stock_on_hand: Option<f64>,
+    pub average_monthly_consumption: Option<f64>,
+    pub incoming_units: Option<f64>,
+    pub outgoing_units: Option<f64>,
+    pub loss_in_units: Option<f64>,
+    pub addition_in_units: Option<f64>,
+    pub expiring_units: Option<f64>,
+    pub days_out_of_stock: Option<f64>,
+    pub option_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -43,8 +52,8 @@ pub fn insert_response_requisition_line(
     let requisition_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, &ctx.store_id, &input)?;
-            let new_requisition_line_row = generate(ctx, &ctx.store_id, requisition_row, input)?;
+            let (requisition_row, item_row) = validate(connection, &ctx.store_id, &input)?;
+            let new_requisition_line_row = generate(requisition_row, item_row, input);
 
             RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;
 
@@ -250,10 +259,11 @@ mod test {
                     requisition_id: new_response_requisition().id,
                     id: "new requisition line id".to_string(),
                     item_id: test_item_stats::item2().id,
-                    their_stock_on_hand: Some(10.0),
+                    stock_on_hand: Some(10.0),
                     requested_quantity: Some(10.0),
                     supply_quantity: Some(20.0),
                     comment: Some("comment".to_string()),
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -270,7 +280,7 @@ mod test {
                 u.requested_quantity = 10.0;
                 u.initial_stock_on_hand_units = 10.0;
                 u.available_stock_on_hand = 10.0;
-                u.average_monthly_consumption = test_item_stats::item2_amc_3_months();
+                u.average_monthly_consumption = 0.0;
                 u.comment = Some("comment".to_string());
                 u
             })
