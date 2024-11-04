@@ -71,5 +71,5 @@ const VolumeInputCell = (props: CellProps<PackagingVariantFragment>) => (
 
 // Input cells can't be defined inline, otherwise they lose focus on re-render
 const PackSizeInputCell = (props: CellProps<PackagingVariantFragment>) => (
-  <NumberInputCell decimalLimit={10} {...props} />
+  <NumberInputCell min={0.0001} step={1} decimalLimit={10} {...props} />
 );
