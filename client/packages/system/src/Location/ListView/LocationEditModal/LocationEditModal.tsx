@@ -11,7 +11,7 @@ import {
   InlineSpinner,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocation } from '../../api';
-import { ColdStorageTypeInput } from 'packages/system/src/Item/Components/ColdStorageTypeInput';
+import { ColdStorageTypeInput } from '@openmsupply-client/system/src/Item/Components/ColdStorageTypeInput';
 interface LocationEditModalProps {
   mode: ModalMode | null;
   isOpen: boolean;
