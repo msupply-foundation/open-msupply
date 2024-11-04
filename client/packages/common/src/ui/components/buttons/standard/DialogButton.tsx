@@ -15,6 +15,7 @@ import { ButtonWithIcon } from './ButtonWithIcon';
 type DialogButtonVariant =
   | 'cancel'
   | 'back'
+  | 'previous'
   | 'next'
   | 'ok'
   | 'save'
@@ -97,6 +98,12 @@ const getButtonProps = (
       return {
         icon: <XCircleIcon />,
         labelKey: 'button.close',
+        variant: 'outlined',
+      };
+    case 'previous':
+      return {
+        icon: <ArrowLeftIcon />,
+        labelKey: 'button.previous',
         variant: 'outlined',
       };
   }
