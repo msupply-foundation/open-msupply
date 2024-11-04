@@ -42,3 +42,11 @@ impl RequisitionWithShipment {
         "Cannot delete a response requisition once a shipment has been generated"
     }
 }
+
+pub struct LineDeleteError;
+#[Object]
+impl LineDeleteError {
+    pub async fn description(&self) -> &str {
+        "Failed to delete lines of requisition"
+    }
+}

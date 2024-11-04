@@ -12,7 +12,7 @@ use service::{
 };
 
 use crate::mutations::errors::{
-    FinalisedRequisition, RequisitionWithShipment, TransferRequisition,
+    FinalisedRequisition, LineDeleteError, RequisitionWithShipment, TransferRequisition,
 };
 
 #[derive(InputObject)]
@@ -29,6 +29,7 @@ pub enum DeleteErrorInterface {
     FinalisedRequisition(FinalisedRequisition),
     TransferRequisition(TransferRequisition),
     RequisitionWithShipment(RequisitionWithShipment),
+    LineDeleteError(LineDeleteError),
 }
 
 #[derive(SimpleObject)]
@@ -104,11 +105,15 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
             return Ok(DeleteErrorInterface::RequisitionWithShipment(
                 RequisitionWithShipment {},
             ))
-        } // Standard Graphql Errors
+        }
+        ServiceError::LineDeleteError { .. } => {
+            return Ok(DeleteErrorInterface::LineDeleteError(LineDeleteError {}))
+        }
+
+        // Standard Graphql Errors
         ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
         ServiceError::NotAResponseRequisition => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        ServiceError::LineDeleteError { .. } => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
