@@ -6,7 +6,7 @@ import {
   Divider,
   Box,
 } from '@mui/material';
-import React, { useState } from 'react';
+import React from 'react';
 
 export type ListOptionValues = {
   id: string;
@@ -18,6 +18,7 @@ interface ListProps {
   onClick: (id: string) => void;
   options: ListOptionValues[];
   endIcon?: JSX.Element;
+  currentId?: string;
 }
 
 export const ListOptions = ({
@@ -25,21 +26,15 @@ export const ListOptions = ({
   onClick,
   options,
   endIcon,
+  currentId,
 }: ListProps) => {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  const handleClick = (id: string) => {
-    setSelectedId(id);
-    onClick(id);
-  };
-
   return (
     <List sx={{ padding: 0 }}>
       {options?.map((option, _) => (
         <React.Fragment key={option.id}>
           <ListItem
             sx={{ padding: '5px 0px' }}
-            onClick={() => handleClick(option.id)}
+            onClick={() => onClick(option.id)}
           >
             <ListItemIcon sx={{ padding: 0, minWidth: 25 }}>
               {startIcon}
@@ -49,7 +44,7 @@ export const ListOptions = ({
               sx={{ margin: 0, padding: 0 }}
             />
             <ListItemIcon sx={{ padding: 0, minWidth: 15 }}>
-              {selectedId === option.id ? (
+              {option.id === currentId ? (
                 endIcon
               ) : (
                 <Box style={{ visibility: 'hidden' }}>{endIcon}</Box>
