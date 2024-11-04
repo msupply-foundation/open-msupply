@@ -34,7 +34,6 @@ pub struct LegacyStocktakeLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub item_line_ID: Option<String>,
     pub item_ID: String,
-    #[serde(default)]
     pub item_name: String,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub Batch: Option<String>,
