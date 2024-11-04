@@ -128,7 +128,7 @@ export const useResponseColumns = () => {
       description: 'description.available-stock',
       Cell: PackQuantityCell,
       accessor: ({ rowData }) => {
-        const stockOnHand = rowData.availableStockOnHand;
+        const stockOnHand = rowData.initialStockOnHandUnits;
 
         const incomingStock = rowData.incomingUnits + rowData.additionInUnits;
         const outgoingStock = rowData.lossInUnits + rowData.outgoingUnits;
@@ -171,7 +171,7 @@ export const useResponseColumns = () => {
       sortable: false,
       Cell: PackQuantityCell,
       accessor: ({ rowData }) => {
-        const stockOnHand = rowData.availableStockOnHand;
+        const stockOnHand = rowData.initialStockOnHandUnits;
         const incomingStock = rowData.incomingUnits + rowData.additionInUnits;
         const outgoingStock = rowData.lossInUnits + rowData.outgoingUnits;
 
