@@ -12,7 +12,7 @@ import { useResponse } from '../../api';
 import { ListItems } from 'packages/system/src';
 import { ResponseLineEdit } from './ResponseLineEdit';
 import { AppRoute } from 'packages/config/src';
-import { useDraftRequisitionLine } from './hooks';
+import { useDraftRequisitionLine, usePreviousNextResponseLine } from './hooks';
 
 interface ResponseLineEditFormLayoutProps {
   Left: React.ReactElement;
@@ -42,6 +42,10 @@ export const ResponseLineEditPage = () => {
   const currentItem = lines.find(l => l.item.id === itemId)?.item;
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { draft, update, save } = useDraftRequisitionLine(currentItem);
+  const { hasNext, next, hasPrevious, previous } = usePreviousNextResponseLine(
+    lines,
+    currentItem
+  );
 
   const enteredLineIds = lines
     .filter(line => line.supplyQuantity !== 0)
@@ -79,6 +83,10 @@ export const ResponseLineEditPage = () => {
               draft={draft}
               update={update}
               save={save}
+              hasNext={hasNext}
+              next={next}
+              hasPrevious={hasPrevious}
+              previous={previous}
             />
           </>
         }
