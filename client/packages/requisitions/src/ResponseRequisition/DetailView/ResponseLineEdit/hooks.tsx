@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useResponse, ResponseLineFragment } from '../../api';
+import { ItemRowFragment } from '@openmsupply-client/system';
 
 export type DraftResponseLine = Omit<ResponseLineFragment, '__typename'> & {
   requisitionId: string;
@@ -16,17 +17,24 @@ const createDraftLine = (
   supplyQuantity: line.supplyQuantity,
 });
 
-export const useDraftRequisitionLine = (line: ResponseLineFragment) => {
-  const { id: reqId } = useResponse.document.fields('id');
+export const useDraftRequisitionLine = (item?: ItemRowFragment | null) => {
+  const { id: reqId, lines } = useResponse.document.fields(['id', 'lines']);
   const { mutateAsync: save, isLoading } = useResponse.line.save();
 
-  const [draft, setDraft] = useState<DraftResponseLine>(
-    createDraftLine(line, reqId)
-  );
+  const [draft, setDraft] = useState<DraftResponseLine | null>(null);
 
   useEffect(() => {
-    setDraft(createDraftLine(line, reqId));
-  }, [line, reqId]);
+    if (lines && item && reqId) {
+      const existingLine = lines.nodes.find(
+        ({ item: reqItem }) => reqItem.id === item.id
+      );
+      if (existingLine) {
+        setDraft(createDraftLine(existingLine, reqId));
+      }
+    } else {
+      setDraft(null);
+    }
+  }, [lines, item, reqId]);
 
   const update = (patch: Partial<DraftResponseLine>) => {
     if (draft) {
@@ -37,21 +45,25 @@ export const useDraftRequisitionLine = (line: ResponseLineFragment) => {
   return { draft, isLoading, save: () => draft && save(draft), update };
 };
 
-export const useNextResponseLine = (currentItem: ResponseLineFragment) => {
-  const { lines } = useResponse.line.list();
+export const useNextResponseLine = (
+  lines?: ResponseLineFragment[],
+  currentItem?: ItemRowFragment | null
+) => {
+  if (!lines) {
+    return { hasNext: false, next: null };
+  }
   const nextState: {
     hasNext: boolean;
-    next: null | ResponseLineFragment;
+    next: null | ItemRowFragment;
   } = { hasNext: true, next: null };
-
-  const idx = lines.findIndex(l => l.id === currentItem.id);
+  const idx = lines.findIndex(l => l.item.id === currentItem?.id);
   const next = lines[idx + 1];
   if (!next) {
     nextState.hasNext = false;
     return nextState;
   }
 
-  nextState.next = next;
+  nextState.next = next.item;
 
   return nextState;
 };
