@@ -86,6 +86,9 @@ impl InvoiceLineNode {
             .extend(),
         )
     }
+    pub async fn item_variant_id(&self) -> &Option<String> {
+        &self.row().item_variant_id
+    }
     // Quantity
     pub async fn pack_size(&self) -> f64 {
         self.row().pack_size

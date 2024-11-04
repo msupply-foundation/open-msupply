@@ -6,6 +6,7 @@ fragment StockLineRow on StockLineNode {
   id
   itemId
   locationId
+  itemVariantId
   locationName
   onHold
   packSize

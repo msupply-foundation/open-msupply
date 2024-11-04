@@ -332,7 +332,6 @@
   "heading.user-sync": "Estado de sincronização de utilizador",
   "heading.username": "Nome do usuário",
   "inbound-shipment": "Entrada",
-  "inbound-shipments": "Entradas",
   "info.automatic-shipment": "Esta entrada foi criada automaticamente, como um resultado de um Envio de outro local.",
   "info.automatic-shipment-no-edit": "Você não pode editar os detalhes até que o status seja confirmado como Entregue.",
   "info.cannot-edit-program-requisition": "Não foi possível editar o fornecedor, mínimo MDE, máximo MDE ou adicionar itens a uma requisição do programa.",

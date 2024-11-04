@@ -1,7 +1,7 @@
-use super::NameNode;
+use super::{ColdStorageTypeNode, NameNode};
 use async_graphql::*;
 use dataloader::DataLoader;
-use graphql_core::loader::{NameByIdLoader, NameByIdLoaderInput};
+use graphql_core::loader::{ColdStorageTypeLoader, NameByIdLoader, NameByIdLoaderInput};
 use graphql_core::{loader::PackagingVariantRowLoader, ContextExt};
 use repository::item_variant::{
     item_variant_row::ItemVariantRow, packaging_variant_row::PackagingVariantRow,
@@ -34,6 +34,21 @@ impl ItemVariantNode {
 
     pub async fn cold_storage_type_id(&self) -> &Option<String> {
         &self.item_variant.cold_storage_type_id
+    }
+
+    pub async fn cold_storage_type(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<ColdStorageTypeNode>> {
+        let cold_storage_type_id = match &self.item_variant.cold_storage_type_id {
+            Some(cold_storage_type_id) => cold_storage_type_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<ColdStorageTypeLoader>>();
+        let result = loader.load_one(cold_storage_type_id.clone()).await?;
+
+        Ok(result.map(|cold_storage_type| ColdStorageTypeNode::from_domain(cold_storage_type)))
     }
 
     pub async fn manufacturer(

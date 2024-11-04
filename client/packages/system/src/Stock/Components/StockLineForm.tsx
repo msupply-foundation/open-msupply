@@ -21,6 +21,7 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
+import { ItemVariantSearchInput } from '../..';
 import { StyledInputRow } from './StyledInputRow';
 import { PackSizeNumberInput } from '../../Item';
 
@@ -158,6 +159,17 @@ export const StockLineForm: FC<StockLineFormProps> = ({
               />
             }
           />
+          <StyledInputRow
+            label={t('label.item-variant')}
+            Input={
+              <ItemVariantSearchInput
+                itemId={draft.itemId}
+                selectedId={draft.itemVariantId ?? null}
+                width={160}
+                onChange={id => onUpdate({ itemVariantId: id })}
+              />
+            }
+          />
           {plugins}
         </Grid>
         <Grid
@@ -249,7 +261,6 @@ export const StockLineForm: FC<StockLineFormProps> = ({
           />
         </Grid>
       </Grid>
-      {/* {footerProps && <Footer {...footerProps} />} */}
     </DetailContainer>
   );
 };
