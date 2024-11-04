@@ -12,6 +12,14 @@ export type UpdateResponseMutationVariables = Types.Exact<{
 
 export type UpdateResponseMutation = { __typename: 'Mutations', updateResponseRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateResponseRequisitionError' } };
 
+export type DeleteRequestMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.BatchResponseRequisitionInput;
+}>;
+
+
+export type DeleteRequestMutation = { __typename: 'Mutations', batchResponseRequisition: { __typename: 'BatchResponseRequisitionResponse', deleteResponseRequisitions?: Array<{ __typename: 'DeleteResponseRequisitionResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteResponseRequisitionError', error: { __typename: 'FinalisedRequisition', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionWithShipment', description: string } | { __typename: 'TransferRequisition', description: string } } }> | null } };
+
 export type ResponseLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, remainingQuantityToSupply: number, alreadyIssued: number, comment?: string | null, averageMonthlyConsumption: number, availableStockOnHand: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, optionId?: string | null, suggestedQuantity: number, approvedQuantity: number, approvalComment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, averageMonthlyConsumption: number, availableMonthsOfStockOnHand?: number | null } } | null, reason?: { __typename: 'ReasonOptionNode', id: string, reason: string } | null };
 
 export type ResponseFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, linesRemainingToSupply: { __typename: 'RequisitionLineConnector', totalCount: number }, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, remainingQuantityToSupply: number, alreadyIssued: number, comment?: string | null, averageMonthlyConsumption: number, availableStockOnHand: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, optionId?: string | null, suggestedQuantity: number, approvedQuantity: number, approvalComment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, averageMonthlyConsumption: number, availableMonthsOfStockOnHand?: number | null } } | null, reason?: { __typename: 'ReasonOptionNode', id: string, reason: string } | null }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, period?: { __typename: 'PeriodNode', name: string, startDate: string, endDate: string } | null, linkedRequisition?: { __typename: 'RequisitionNode', id: string } | null };
@@ -280,6 +288,42 @@ export const UpdateResponseDocument = gql`
   }
 }
     `;
+export const DeleteRequestDocument = gql`
+    mutation deleteRequest($storeId: String!, $input: BatchResponseRequisitionInput!) {
+  batchResponseRequisition(storeId: $storeId, input: $input) {
+    deleteResponseRequisitions {
+      id
+      response {
+        ... on DeleteResponseRequisitionError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on FinalisedRequisition {
+              __typename
+              description
+            }
+            ... on TransferRequisition {
+              __typename
+              description
+            }
+            ... on RequisitionWithShipment {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+    `;
 export const ResponseByNumberDocument = gql`
     query responseByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
@@ -515,6 +559,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   return {
     updateResponse(variables: UpdateResponseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateResponseMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateResponseMutation>(UpdateResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateResponse', 'mutation', variables);
+    },
+    deleteRequest(variables: DeleteRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteRequestMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestMutation>(DeleteRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequest', 'mutation', variables);
     },
     responseByNumber(variables: ResponseByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ResponseByNumberQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ResponseByNumberQuery>(ResponseByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'responseByNumber', 'query', variables);
