@@ -75,6 +75,25 @@ fragment PackagingVariant on PackagingVariantNode {
   volumePerUnit
 }
 
+fragment BundledItemVariant on ItemVariantNode {
+  id
+  name
+  itemId
+  itemName
+}
+
+fragment BundledItem on BundledItemNode {
+  __typename
+  id
+  ratio
+  principalItemVariant {
+    ...BundledItemVariant
+  }
+  bundledItemVariant {
+    ...BundledItemVariant
+  }
+}
+
 fragment ItemVariant on ItemVariantNode {
   __typename
   id
@@ -90,6 +109,12 @@ fragment ItemVariant on ItemVariantNode {
   }
   packagingVariants {
     ...PackagingVariant
+  }
+  bundledItemVariants {
+    ...BundledItem
+  }
+  bundlesWith {
+    ...BundledItem
   }
 }
 
