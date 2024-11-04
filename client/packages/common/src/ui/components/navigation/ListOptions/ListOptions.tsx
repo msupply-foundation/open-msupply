@@ -1,3 +1,4 @@
+import { CheckIcon, ChevronDownIcon } from '@common/icons';
 import {
   List,
   ListItemIcon,
@@ -14,22 +15,37 @@ export type ListOptionValues = {
 };
 
 interface ListProps {
-  startIcon?: JSX.Element;
   onClick: (id: string) => void;
   options: ListOptionValues[];
-  endIcon?: JSX.Element;
   currentId?: string;
   enteredLineIds?: string[];
 }
 
 export const ListOptions = ({
-  startIcon,
   onClick,
   options,
-  endIcon,
   currentId,
   enteredLineIds,
 }: ListProps) => {
+  const startIcon = (
+    <CheckIcon
+      style={{
+        backgroundColor: '#33A901',
+        borderRadius: '50%',
+        padding: '2px',
+        color: 'white',
+        height: 18,
+        width: 18,
+      }}
+    />
+  );
+
+  const endIcon = (
+    <ChevronDownIcon
+      style={{ width: 17, height: 17, transform: 'rotate(-90deg)' }}
+    />
+  );
+
   return (
     <List sx={{ padding: 0 }}>
       {options?.map((option, _) => (
