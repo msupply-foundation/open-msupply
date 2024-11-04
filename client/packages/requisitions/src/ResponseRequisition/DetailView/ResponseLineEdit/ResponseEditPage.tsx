@@ -37,7 +37,9 @@ const ResponseLineEditFormLayout = ({
 
 export const ResponseLineEditPage = () => {
   const { data, isLoading } = useResponse.document.get();
-  const lines = data?.lines.nodes ?? [];
+  const lines =
+    data?.lines.nodes.sort((a, b) => a.item.name.localeCompare(b.item.name)) ??
+    [];
   const { itemId } = useParams();
   const currentItem = lines.find(l => l.item.id === itemId)?.item;
   const { setCustomBreadcrumbs } = useBreadcrumbs();
