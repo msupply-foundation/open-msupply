@@ -311,14 +311,14 @@ impl ProgramsQueries {
     ) -> Result<VaccinationCardResponse> {
         vaccination_card(ctx, store_id, program_enrolment_id)
     }
-    // pub async fn program_indicator(
-    //     &self,
-    //     ctx: &Context<'_>,
-    //     store_id: String,
-    //     program_indicator_id: String,
-    // ) -> Result<Option<ProgramIndicatorNode>> {
-    //     program_indicator(ctx, store_id, program_indicator_id)
-    // }
+    pub async fn program_indicator(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        program_indicator_id: String,
+    ) -> Result<Option<ProgramIndicatorNode>> {
+        program_indicator(ctx, store_id, program_indicator_id)
+    }
 
     pub async fn program_indicators(
         &self,
