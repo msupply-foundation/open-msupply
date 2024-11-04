@@ -2,7 +2,8 @@ use crate::sync::{
     sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
     translations::{
         currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
-        location::LocationTranslation, reason::ReasonTranslation, stock_line::StockLineTranslation,
+        item_variant::ItemVariantTranslation, location::LocationTranslation,
+        reason::ReasonTranslation, stock_line::StockLineTranslation,
     },
 };
 use chrono::NaiveDate;
@@ -100,6 +101,7 @@ impl SyncTranslation for InvoiceLineTranslation {
         vec![
             InvoiceTranslation.table_name(),
             ItemTranslation.table_name(),
+            ItemVariantTranslation.table_name(),
             StockLineTranslation.table_name(),
             LocationTranslation.table_name(),
             ReasonTranslation.table_name(),

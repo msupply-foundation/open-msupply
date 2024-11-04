@@ -25,6 +25,7 @@ allow_tables_to_appear_in_same_query!(location, asset_internal_location);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(table_name = location)]
+#[diesel(treat_none_as_null = true)]
 pub struct LocationRow {
     pub id: String,
     pub name: String,
