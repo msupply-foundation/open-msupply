@@ -45,7 +45,7 @@ export const ResponseLineEdit = ({
   const outgoingStock = (draft?.lossInUnits ?? 0) + (draft?.outgoingUnits ?? 0);
 
   const available =
-    (draft?.availableStockOnHand ?? 0) + incomingStock - outgoingStock;
+    (draft?.initialStockOnHandUnits ?? 0) + incomingStock - outgoingStock;
 
   const MOS =
     draft?.averageMonthlyConsumption !== 0
