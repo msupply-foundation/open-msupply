@@ -3,7 +3,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::{
     loader::{
-        ItemStatsLoaderInput, ItemVariantRowLoader, ItemsStatsForItemLoader,
+        ItemStatsLoaderInput, ItemVariantsByItemIdLoader, ItemsStatsForItemLoader,
         ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, StockLineByItemAndStoreIdLoader,
         StockLineByItemAndStoreIdLoaderInput,
     },
@@ -134,7 +134,7 @@ impl ItemNode {
     }
 
     pub async fn variants(&self, ctx: &Context<'_>) -> Result<Vec<ItemVariantNode>> {
-        let loader = ctx.get_loader::<DataLoader<ItemVariantRowLoader>>();
+        let loader = ctx.get_loader::<DataLoader<ItemVariantsByItemIdLoader>>();
         let result = loader
             .load_one(self.row().id.clone())
             .await?
