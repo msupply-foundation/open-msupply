@@ -18,6 +18,8 @@ fragment ResponseLine on RequisitionLineNode {
   remainingQuantityToSupply
   alreadyIssued
   comment
+  averageMonthlyConsumption
+  availableStockOnHand
   initialStockOnHandUnits
   incomingUnits
   outgoingUnits
@@ -26,10 +28,7 @@ fragment ResponseLine on RequisitionLineNode {
   expiringUnits
   daysOutOfStock
   optionId
-  averageMonthlyConsumption
   suggestedQuantity
-  availableStockOnHand
-
   itemStats {
     __typename
     availableStockOnHand
