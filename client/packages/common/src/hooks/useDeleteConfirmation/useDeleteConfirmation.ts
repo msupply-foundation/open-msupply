@@ -37,6 +37,8 @@ export const useDeleteConfirmation = <T, E = Error>({
   const t = useTranslation();
   const { success, info } = useNotification();
   const cannotDeleteSnack = (err: E | undefined) => {
+    console.log('error returned', err);
+
     if (typeof cantDelete === 'string') {
       return info(cantDelete)();
     }
