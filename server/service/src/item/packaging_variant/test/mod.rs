@@ -48,6 +48,7 @@ mod query {
                     id: test_packaging_variant_id.to_string(),
                     item_variant_id: item_variant.id,
                     name: "packaging_variant_a".to_string(),
+                    packaging_level: 1,
                     ..Default::default()
                 },
             )
@@ -81,6 +82,7 @@ mod query {
                     id: test_packaging_variant_id.to_string(),
                     item_variant_id: test_item_variant_id.to_string(),
                     name: "updated_name".to_string(),
+                    packaging_level: 1,
                     ..Default::default()
                 },
             )
@@ -181,6 +183,7 @@ mod query {
                     id: test_packaging_variant_id.to_string(),
                     item_variant_id: test_item_variant_id.to_string(),
                     name: "packaging_variant_a".to_string(),
+                    packaging_level: 1,
                     ..Default::default()
                 },
             )
@@ -193,6 +196,7 @@ mod query {
                 id: uuid(),
                 item_variant_id: "some_id_that_doesn't_exist".to_string(),
                 name: "packaging_variant_a".to_string(),
+                packaging_level: 1,
                 ..Default::default()
             },
         );
@@ -209,6 +213,7 @@ mod query {
                 id: test_packaging_variant_id.to_string(),
                 item_variant_id: test_item_variant2_id.to_string(),
                 name: "packaging_variant_a".to_string(),
+                packaging_level: 1,
                 ..Default::default()
             },
         );
@@ -241,6 +246,7 @@ mod query {
                 id: test_packaging_variant_id.to_string(),
                 item_variant_id: test_item_variant_id.to_string(),
                 name: "packaging_variant_a".to_string(),
+                packaging_level:1,
                 pack_size: Some(-1.0),
                 ..Default::default()
             },
@@ -258,6 +264,7 @@ mod query {
                 id: test_packaging_variant_id.to_string(),
                 item_variant_id: test_item_variant_id.to_string(),
                 name: "packaging_variant_a".to_string(),
+                packaging_level:1,
                 pack_size: Some(0.0),
                 ..Default::default()
             },
@@ -274,6 +281,7 @@ mod query {
                 id: test_packaging_variant_id.to_string(),
                 item_variant_id: test_item_variant_id.to_string(),
                 name: "packaging_variant_a".to_string(),
+                packaging_level:1,
                 pack_size: Some(0.0),
                 ..Default::default()
             },
@@ -290,6 +298,7 @@ mod query {
                 id: test_packaging_variant_id.to_string(),
                 item_variant_id: test_item_variant_id.to_string(),
                 name: "packaging_variant_a".to_string(),
+                packaging_level:1,
                 volume_per_unit: Some(-1.0),
                 ..Default::default()
             },
@@ -300,20 +309,21 @@ mod query {
         );
 
 
-                // Test that we can't create a record with a volume_per_unit == 0
-                let result = service.upsert_packaging_variant(
-                    &context,
-                    UpsertPackagingVariant {
-                        id: test_packaging_variant_id.to_string(),
-                        item_variant_id: test_item_variant_id.to_string(),
-                        name: "packaging_variant_a".to_string(),
-                        volume_per_unit: Some(0.0),
-                        ..Default::default()
-                    },
-                );
-                assert_eq!(
-                    result.unwrap_err(),
-                    UpsertPackagingVariantError::LessThanZero("volume_per_unit".to_string())
-                );
+        // Test that we can't create a record with a volume_per_unit == 0
+        let result = service.upsert_packaging_variant(
+            &context,
+            UpsertPackagingVariant {
+                id: test_packaging_variant_id.to_string(),
+                item_variant_id: test_item_variant_id.to_string(),
+                name: "packaging_variant_a".to_string(),
+                packaging_level:1,
+                volume_per_unit: Some(0.0),
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            result.unwrap_err(),
+            UpsertPackagingVariantError::LessThanZero("volume_per_unit".to_string())
+        );
     }
 }
