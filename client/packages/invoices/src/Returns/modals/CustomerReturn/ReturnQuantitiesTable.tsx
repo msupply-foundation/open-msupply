@@ -10,6 +10,7 @@ import {
   getExpiryDateInputColumn,
   useColumns,
 } from '@openmsupply-client/common';
+import { ItemVariantInputCell } from '@openmsupply-client/system';
 import React from 'react';
 import { GenerateCustomerReturnLineFragment } from '../../api';
 import { PackSizeEntryCell } from '@openmsupply-client/system';
@@ -29,6 +30,16 @@ export const QuantityReturnedTableComponent = ({
     [
       'itemCode',
       'itemName',
+      {
+        key: 'itemVariantId',
+        label: 'label.item-variant',
+        width: 170,
+        setter: updateLine,
+        Cell: props => (
+          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+        ),
+        getIsDisabled: () => isDisabled,
+      },
       [
         'batch',
         {
