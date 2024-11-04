@@ -250,6 +250,39 @@ mod query {
             UpsertPackagingVariantError::LessThanZero("pack_size".to_string())
         );
 
+
+        // Test that we can't create a record with a pack_size == 0
+        let result = service.upsert_packaging_variant(
+            &context,
+            UpsertPackagingVariant {
+                id: test_packaging_variant_id.to_string(),
+                item_variant_id: test_item_variant_id.to_string(),
+                name: "packaging_variant_a".to_string(),
+                pack_size: Some(0.0),
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            result.unwrap_err(),
+            UpsertPackagingVariantError::LessThanZero("pack_size".to_string())
+        );
+
+        // Test that we can't create a record with a pack_size == 0
+        let result = service.upsert_packaging_variant(
+            &context,
+            UpsertPackagingVariant {
+                id: test_packaging_variant_id.to_string(),
+                item_variant_id: test_item_variant_id.to_string(),
+                name: "packaging_variant_a".to_string(),
+                pack_size: Some(0.0),
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            result.unwrap_err(),
+            UpsertPackagingVariantError::LessThanZero("pack_size".to_string())
+        );
+
         // Test that we can't create a record with a volume_per_unit < 0
         let result = service.upsert_packaging_variant(
             &context,
@@ -265,5 +298,22 @@ mod query {
             result.unwrap_err(),
             UpsertPackagingVariantError::LessThanZero("volume_per_unit".to_string())
         );
+
+
+                // Test that we can't create a record with a volume_per_unit == 0
+                let result = service.upsert_packaging_variant(
+                    &context,
+                    UpsertPackagingVariant {
+                        id: test_packaging_variant_id.to_string(),
+                        item_variant_id: test_item_variant_id.to_string(),
+                        name: "packaging_variant_a".to_string(),
+                        volume_per_unit: Some(0.0),
+                        ..Default::default()
+                    },
+                );
+                assert_eq!(
+                    result.unwrap_err(),
+                    UpsertPackagingVariantError::LessThanZero("volume_per_unit".to_string())
+                );
     }
 }
