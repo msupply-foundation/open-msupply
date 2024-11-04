@@ -30,7 +30,6 @@ import { Site } from './Site';
 import { ErrorAlert } from './components/ErrorAlert';
 import { Discovery } from './components/Discovery';
 import { Android } from './components/Android';
-import { useRefreshPackVariant } from '@openmsupply-client/system';
 import { useInitPlugins } from './plugins';
 import { BackButtonHandler } from './BackButtonHandler';
 
@@ -67,9 +66,6 @@ const skipRequest = () =>
  * For example, this component is called when auth information such as user or store id changed.
  */
 const Init = () => {
-  // Fetch pack units at startup. Note, the units are cached, i.e. they are not fetched repeatedly.
-  // They will be refetched on page reload or when store is changed based on cache usePackVariants cache keys
-  useRefreshPackVariant();
   useInitPlugins();
   return <></>;
 };

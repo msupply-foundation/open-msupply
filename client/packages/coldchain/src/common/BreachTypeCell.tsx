@@ -13,7 +13,7 @@ export const BreachTypeCell = <T extends RecordWithId>({
   rowData,
   column,
 }: CellProps<T>): ReactElement => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   const breachType = column.accessor({
     rowData,

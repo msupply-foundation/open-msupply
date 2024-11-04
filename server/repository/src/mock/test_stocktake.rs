@@ -118,7 +118,7 @@ pub fn mock_stock_line_stocktake_surplus() -> StockLineRow {
         on_hold: false,
         note: None,
         supplier_link_id: Some(String::from("name_store_c")),
-        barcode_id: None,
+        ..Default::default()
     }
 }
 
@@ -164,7 +164,7 @@ pub fn mock_stock_line_stocktake_deficit() -> StockLineRow {
         on_hold: false,
         note: None,
         supplier_link_id: Some(String::from("name_store_c")),
-        barcode_id: None,
+        ..Default::default()
     }
 }
 

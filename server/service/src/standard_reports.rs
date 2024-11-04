@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 #[derive(RustEmbed)]
 // Relative to server/Cargo.toml
 #[folder = "../reports/generated"]
-
+#[exclude = "*.DS_Store"]
 pub struct EmbeddedStandardReports;
 
 #[derive(Debug, Error)]
@@ -29,7 +29,7 @@ impl StandardReports {
             if let Some(content) = EmbeddedStandardReports::get(&file) {
                 let json_data = content.data;
                 let reports_data: ReportsData = serde_json::from_slice(&json_data)?;
-                StandardReports::upsert_reports(reports_data, &con)?;
+                StandardReports::upsert_reports(reports_data, con)?;
             }
         }
         Ok(())
@@ -42,7 +42,7 @@ impl StandardReports {
         let mut num_std_reports = 0;
         for report in reports_data.reports {
             num_std_reports += 1;
-            let existing_report = ReportRowRepository::new(&con)
+            let existing_report = ReportRowRepository::new(con)
                 .find_one_by_code_and_version(&report.code, &report.version)?;
 
             // Use the existing ID if already defined for that report
@@ -54,7 +54,7 @@ impl StandardReports {
                 FormSchemaRowRepository::new(con).upsert_one(form_schema_json)?;
             }
 
-            ReportRowRepository::new(&con).upsert_one(&ReportRow {
+            ReportRowRepository::new(con).upsert_one(&ReportRow {
                 id,
                 name: report.name,
                 r#type: repository::ReportType::OmSupply,

@@ -45,7 +45,7 @@ export const DetailView: FC = () => {
     setMode: setReturnMode,
   } = useEditModal<string[]>();
   const navigate = useNavigate();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { info, error } = useNotification();
 
   const onRowClick = React.useCallback(
@@ -57,7 +57,9 @@ export const DetailView: FC = () => {
 
   const onReturn = async (selectedLines: InboundLineFragment[]) => {
     if (!data || !canReturnInboundLines(data)) {
-      const cantReturnSnack = info(t('messages.cant-return-shipment'));
+      const cantReturnSnack = info(
+        t('messages.cant-return-shipment-replenishment')
+      );
       cantReturnSnack();
       return;
     }

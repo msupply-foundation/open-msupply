@@ -48,7 +48,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   mode,
 }) => {
   const item = !draft ? null : (draft.item ?? null);
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { info } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [currentItem, setCurrentItem] = useBufferState(item);
@@ -72,10 +72,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     currentItem,
     DateUtils.getDateOrNull(prescriptionDate)
   );
-  const packSizeController = usePackSizeController(
-    item,
-    draftPrescriptionLines
-  );
+  const packSizeController = usePackSizeController(draftPrescriptionLines);
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const height = useKeyboardHeightAdjustment(700);
@@ -268,7 +265,7 @@ const TableWrapper: React.FC<TableProps> = ({
   draftPrescriptionLines,
   allocatedQuantity,
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
 
   if (!currentItem) return null;
 

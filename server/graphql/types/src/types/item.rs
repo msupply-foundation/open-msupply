@@ -1,10 +1,10 @@
-use super::{ItemStatsNode, StockLineConnector};
+use super::{ItemStatsNode, ItemVariantNode, StockLineConnector};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::{
     loader::{
-        ItemStatsLoaderInput, ItemsStatsForItemLoader, ItemsStockOnHandLoader,
-        ItemsStockOnHandLoaderInput, StockLineByItemAndStoreIdLoader,
+        ItemStatsLoaderInput, ItemVariantRowLoader, ItemsStatsForItemLoader,
+        ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, StockLineByItemAndStoreIdLoader,
         StockLineByItemAndStoreIdLoaderInput,
     },
     simple_generic_errors::InternalError,
@@ -133,7 +133,15 @@ impl ItemNode {
         Ok(result)
     }
 
-    // Mock
+    pub async fn variants(&self, ctx: &Context<'_>) -> Result<Vec<ItemVariantNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemVariantRowLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(ItemVariantNode::from_vec(result))
+    }
 
     pub async fn msupply_universal_code(&self) -> String {
         self.legacy_string("universalcodes_code")

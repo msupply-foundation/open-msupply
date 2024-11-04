@@ -113,7 +113,7 @@ fn fetch_store_id(url: Url, token: &str, store_name: &str) -> anyhow::Result<Str
         .get("stores")
         .and_then(|d| d.get("nodes"))
         .and_then(|s| s.as_array())
-        .and_then(|a| a.get(0))
+        .and_then(|a| a.first())
         .and_then(|s| s.get("id"))
         .and_then(|s| s.as_str());
     let Some(store_id) = store_id else {
@@ -261,9 +261,9 @@ pub fn generate_report(
         store_id
     } else {
         let Some(store_name) = store_name else {
-            return Err(anyhow::Error::msg(format!(
-                "Either store_id or store_name must be specified"
-            )));
+            return Err(anyhow::Error::msg(
+                "Either store_id or store_name must be specified".to_string(),
+            ));
         };
         println!("> Fetch store id for {store_name}");
         fetch_store_id(gql_url.clone(), &token, &store_name)?

@@ -74,7 +74,7 @@ const useHighlightPlaceholderRows = (
 
 export const ContentArea: FC<ContentAreaProps> = React.memo(
   ({ onAddItem, onRowClick }) => {
-    const t = useTranslation('replenishment');
+    const t = useTranslation();
     const isDisabled = useInbound.utils.isDisabled();
     const { columns, rows } = useInbound.lines.rows();
     useHighlightPlaceholderRows(rows);

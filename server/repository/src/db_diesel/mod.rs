@@ -11,6 +11,8 @@ pub mod clinician;
 mod clinician_link_row;
 mod clinician_row;
 mod clinician_store_join_row;
+pub mod cold_storage_type;
+mod cold_storage_type_row;
 pub mod consumption;
 pub mod contact_trace;
 pub mod contact_trace_row;
@@ -34,6 +36,10 @@ mod filter_restriction;
 mod filter_sort_pagination;
 pub mod form_schema;
 mod form_schema_row;
+pub mod indicator_column;
+mod indicator_column_row;
+pub mod indicator_line;
+mod indicator_line_row;
 pub mod inventory_adjustment_reason;
 mod inventory_adjustment_reason_row;
 pub mod invoice;
@@ -43,6 +49,7 @@ mod invoice_row;
 pub mod item;
 mod item_link_row;
 mod item_row;
+pub mod item_variant;
 pub mod key_value_store;
 pub mod ledger;
 pub mod location;
@@ -65,8 +72,6 @@ pub mod name_tag;
 pub mod name_tag_join;
 mod name_tag_row;
 mod number_row;
-pub mod pack_variant;
-mod pack_variant_row;
 mod patient;
 pub mod period;
 pub mod plugin_data;
@@ -75,9 +80,13 @@ pub mod program_enrolment;
 mod program_enrolment_row;
 pub mod program_event;
 mod program_event_row;
+pub mod program_indicator;
+mod program_indicator_row;
 mod program_requisition;
 pub mod property;
 pub mod property_row;
+pub mod reason_option;
+pub mod reason_option_row;
 pub mod replenishment;
 pub mod report;
 mod report_query;
@@ -136,6 +145,8 @@ pub use clinician::*;
 pub use clinician_link_row::*;
 pub use clinician_row::*;
 pub use clinician_store_join_row::*;
+pub use cold_storage_type::*;
+pub use cold_storage_type_row::*;
 pub use consumption::*;
 pub use context_row::*;
 pub use currency::*;
@@ -153,6 +164,8 @@ pub use encounter_row::*;
 pub use filter_sort_pagination::*;
 pub use form_schema::*;
 pub use form_schema_row::*;
+pub use indicator_column_row::*;
+pub use indicator_line_row::*;
 pub use inventory_adjustment_reason_row::*;
 pub use invoice::*;
 pub use invoice_line::*;
@@ -180,8 +193,6 @@ pub use name_tag::*;
 pub use name_tag_join::*;
 pub use name_tag_row::*;
 pub use number_row::*;
-pub use pack_variant::*;
-pub use pack_variant_row::*;
 pub use patient::*;
 pub use period::*;
 pub use plugin_data::*;
@@ -190,8 +201,11 @@ pub use program_enrolment::*;
 pub use program_enrolment_row::*;
 pub use program_event::*;
 pub use program_event_row::*;
+pub use program_indicator::*;
+pub use program_indicator_row::*;
 pub use program_requisition::*;
 pub use property_row::*;
+pub use reason_option::*;
 pub use replenishment::*;
 pub use report::*;
 pub use report_query::*;
@@ -243,6 +257,8 @@ use diesel::{
     prelude::*,
     r2d2::{ConnectionManager, Pool, PooledConnection},
     result::{DatabaseErrorKind as DieselDatabaseErrorKind, Error as DieselError},
+    sql_query,
+    sql_types::Text,
 };
 
 #[cfg(not(feature = "postgres"))]
@@ -314,4 +330,16 @@ fn get_connection(
         msg: "Failed to open Connection".to_string(),
         extra: format!("{:?}", error),
     })
+}
+
+#[derive(QueryableByName, Debug, PartialEq)]
+pub struct JsonRawRow {
+    #[diesel(sql_type = Text)]
+    pub json_row: String,
+}
+
+pub fn raw_query(connection: &StorageConnection, query: String) -> Vec<JsonRawRow> {
+    sql_query(&query)
+        .get_results::<JsonRawRow>(connection.lock().connection())
+        .unwrap()
 }

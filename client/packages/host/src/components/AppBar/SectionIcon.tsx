@@ -90,7 +90,7 @@ const useSection = (): Section | undefined => {
 };
 
 export const SectionIcon: React.FC = () => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const section = useSection();
 
   return section?.icon ? (

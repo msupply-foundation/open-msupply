@@ -16,7 +16,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { useOutbound } from '../../api';
 
 const RelatedDocumentsSectionComponent = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { localisedDate: d } = useFormatDateTime();
   const { requisition } = useOutbound.document.fields('requisition');
 

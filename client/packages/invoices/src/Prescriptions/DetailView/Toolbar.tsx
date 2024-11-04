@@ -31,11 +31,11 @@ export const Toolbar: FC = () => {
   const { items } = usePrescriptionRows();
 
   const isDisabled = usePrescription.utils.isDisabled();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('messages.confirm-delete-all-lines'),
+    message: t('messages.confirm-delete-prescription-lines'),
   });
 
   const handleDateChange = async (newPrescriptionDate: Date | null) => {

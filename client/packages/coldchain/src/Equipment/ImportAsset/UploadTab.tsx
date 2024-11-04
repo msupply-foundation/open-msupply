@@ -192,7 +192,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   onUploadComplete,
   catalogueItemData,
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const { data: stores } = useStore.document.list();
   const { error } = useNotification();

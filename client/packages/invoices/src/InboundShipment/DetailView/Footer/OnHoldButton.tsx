@@ -7,7 +7,7 @@ import {
 import { useInbound } from '../../api';
 
 export const OnHoldButtonComponent = memo(() => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { onHold, update } = useInbound.document.fields('onHold');
   const isHoldable = useInbound.utils.isHoldable();
   const getConfirmation = useConfirmationModal({

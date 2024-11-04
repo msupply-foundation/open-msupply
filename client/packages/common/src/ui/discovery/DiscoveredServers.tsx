@@ -38,7 +38,7 @@ export const DiscoveredServers = ({
   discoveryTimedOut,
   discover,
 }: DiscoverServersProps) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const { setServerMode } = useNativeClient();
   const { error } = useNotification();
 
@@ -158,7 +158,7 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
   server,
   connect,
 }) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const { error } = useNotification();
 
   const handleConnectionResult = async (result: ConnectionResult) => {

@@ -1,5 +1,5 @@
 declare const API_HOST: string;
-declare const FEATURE_PACK_VARIANTS: boolean;
+declare const FEATURE_EXAMPLE: boolean;
 
 // For production, API is on the same domain/ip and port as web app, available through sub-route
 // i.e. web app is on https://my.openmsupply.com/, then graphql will be available https://my.openmsupply.com/graphql
@@ -40,10 +40,8 @@ export const Environment = {
   // - Declare a const for it above
   // - Follow the pattern below to add to `Environment` (otherwise you'll get compilation errors with tests/storybook)
 
-  FEATURE_PACK_VARIANTS:
-    typeof FEATURE_PACK_VARIANTS === 'undefined'
-      ? false
-      : FEATURE_PACK_VARIANTS,
+  FEATURE_EXAMPLE:
+    typeof FEATURE_EXAMPLE === 'undefined' ? false : FEATURE_EXAMPLE,
 };
 
 export default Environment;

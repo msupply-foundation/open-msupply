@@ -11,6 +11,7 @@ import {
   InlineSpinner,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocation } from '../../api';
+import { ColdStorageTypeInput } from 'packages/system/src/Item/Components/ColdStorageTypeInput';
 interface LocationEditModalProps {
   mode: ModalMode | null;
   isOpen: boolean;
@@ -87,7 +88,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
   location,
 }) => {
   const { Modal } = useDialog({ isOpen, onClose });
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { draft, onUpdate, onChangeLocation, onSave, isLoading } =
     useDraftLocation(location, mode);
   const isInvalid = !draft.code.trim() || !draft.name.trim();
@@ -138,6 +139,11 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
             onChange={e => onUpdate({ code: e.target.value })}
             label={t('label.code')}
             InputLabelProps={{ shrink: true }}
+          />
+          <ColdStorageTypeInput
+            value={draft.coldStorageType ?? null}
+            label={t('label.temperature')}
+            onChange={coldStorageType => onUpdate({ coldStorageType })}
           />
           <Grid alignSelf="center">
             <ToggleButton

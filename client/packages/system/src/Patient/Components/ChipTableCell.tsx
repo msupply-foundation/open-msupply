@@ -23,6 +23,8 @@ export const ChipTableCell = <T extends RecordWithId>({
         alignItems: 'center',
         display: 'flex',
         flexWrap: 'wrap',
+        gap: 0.2,
+        padding: '3px 0',
       }}
     >
       {items.map((item, index) => (

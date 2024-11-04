@@ -24,7 +24,7 @@ import { prescriptionToCsv } from '../../utils';
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const navigate = useNavigate();
   const { success, error } = useNotification();
   const { mutateAsync: onCreate } = usePrescription.document.insert();

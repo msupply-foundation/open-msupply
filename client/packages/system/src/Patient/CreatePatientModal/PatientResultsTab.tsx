@@ -111,7 +111,7 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
   );
 
   const { setCreateNewPatient } = usePatientStore();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const navigate = useNavigate();
   const { localisedDate } = useFormatDateTime();
 
