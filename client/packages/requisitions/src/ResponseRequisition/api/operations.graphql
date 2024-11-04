@@ -29,6 +29,7 @@ fragment ResponseLine on RequisitionLineNode {
   averageMonthlyConsumption
   suggestedQuantity
   availableStockOnHand
+  requisitionNumber
 
   itemStats {
     __typename
@@ -37,10 +38,7 @@ fragment ResponseLine on RequisitionLineNode {
     averageMonthlyConsumption
   }
   item {
-    id
-    name
-    code
-    unitName
+    ...ItemRow
   }
   approvedQuantity
   approvalComment
@@ -53,8 +51,7 @@ fragment ResponseLine on RequisitionLineNode {
   }
 
   reason {
-    id
-    reason
+    ...ReasonOptionRow
   }
 }
 
@@ -229,6 +226,37 @@ mutation insertProgramResponse(
       __typename
       id
       requisitionNumber
+    }
+  }
+}
+
+mutation insertResponseLine(
+  $storeId: String!
+  $input: InsertResponseRequisitionLineInput!
+) {
+  insertResponseRequisitionLine(input: $input, storeId: $storeId) {
+    ... on RequisitionLineNode {
+      __typename
+      id
+    }
+    ... on InsertResponseRequisitionLineError {
+      __typename
+      error {
+        description
+        ... on RequisitionLineWithItemIdExists {
+          __typename
+          description
+        }
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+      }
     }
   }
 }
