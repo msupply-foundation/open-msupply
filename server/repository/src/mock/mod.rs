@@ -730,6 +730,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             currencies: mock_currencies(),
             units: mock_units(),
             items: mock_items(),
+            item_variants: mock_item_variants(),
             locations: mock_locations(),
             sensors: mock_sensors(),
             temperature_logs: mock_temperature_logs(),
