@@ -32,7 +32,7 @@ const mapRoute = (route: string): RouteMapping => {
       return { title: 'customers', docs: '/distribution/customers/' };
     case inRoute(AppRoute.InboundShipment):
       return {
-        title: 'inbound-shipments',
+        title: 'inbound-shipment',
         docs: '/replenishment/inbound-shipments/',
       };
     case inRoute(AppRoute.SupplierReturn):

@@ -37,7 +37,7 @@ pub fn check_item_exists(
     Ok(count > 0)
 }
 
-pub fn check_item_exists_return_item(
+pub fn get_item(
     connection: &StorageConnection,
     store_id: String,
     item_id: &str,
