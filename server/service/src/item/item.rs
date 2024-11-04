@@ -36,3 +36,16 @@ pub fn check_item_exists(
     )?;
     Ok(count > 0)
 }
+
+pub fn get_item(
+    connection: &StorageConnection,
+    store_id: String,
+    item_id: &str,
+) -> Result<Option<Item>, RepositoryError> {
+    Ok(ItemRepository::new(connection)
+        .query_by_filter(
+            ItemFilter::new().id(EqualFilter::equal_to(item_id)),
+            Some(store_id),
+        )?
+        .pop())
+}

@@ -20,7 +20,15 @@ fragment ResponseLine on RequisitionLineNode {
   comment
   averageMonthlyConsumption
   availableStockOnHand
-
+  initialStockOnHandUnits
+  incomingUnits
+  outgoingUnits
+  lossInUnits
+  additionInUnits
+  expiringUnits
+  daysOutOfStock
+  optionId
+  suggestedQuantity
   itemStats {
     __typename
     availableStockOnHand
@@ -35,6 +43,18 @@ fragment ResponseLine on RequisitionLineNode {
   }
   approvedQuantity
   approvalComment
+  linkedRequisitionLine {
+    itemStats {
+      availableStockOnHand
+      averageMonthlyConsumption
+      availableMonthsOfStockOnHand
+    }
+  }
+
+  reason {
+    id
+    reason
+  }
 }
 
 fragment Response on RequisitionNode {
