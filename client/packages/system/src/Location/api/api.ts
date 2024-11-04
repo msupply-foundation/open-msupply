@@ -29,13 +29,17 @@ const locationParsers = {
     name: location?.name,
     code: location?.code,
     onHold: location?.onHold,
+    coldStorageTypeId: location?.coldStorageType?.id ?? null,
   }),
-  toUpdate: (location: LocationRowFragment): UpdateLocationInput => ({
-    id: location?.id,
-    name: location?.name,
-    code: location?.code,
-    onHold: location?.onHold,
-  }),
+  toUpdate: (location: LocationRowFragment): UpdateLocationInput => {
+    return {
+      id: location?.id,
+      name: location?.name,
+      code: location?.code,
+      onHold: location?.onHold,
+      coldStorageTypeId: location?.coldStorageType?.id ?? null,
+    };
+  },
 };
 
 export const getLocationQueries = (sdk: Sdk, storeId: string) => ({
