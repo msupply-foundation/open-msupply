@@ -5,7 +5,8 @@ use repository::{
         packaging_variant::{PackagingVariantFilter, PackagingVariantRepository},
         packaging_variant_row::PackagingVariantRowRepository,
     },
-    ColdStorageTypeRowRepository, EqualFilter, RepositoryError, StorageConnection, StringFilter,
+    ColdStorageTypeRowRepository, EqualFilter, ItemLinkRowRepository, RepositoryError,
+    StorageConnection, StringFilter,
 };
 
 use crate::{
@@ -131,7 +132,14 @@ fn validate(
     let old_item_variant = ItemVariantRowRepository::new(connection).find_one_by_id(&input.id)?;
 
     if let Some(old_item_variant) = old_item_variant {
-        if old_item_variant.item_link_id != input.item_id {
+        // Query Item Link to check if the item_id is the same
+        // If items have been merged, the item_id could be different, but we still want to update the row so we have the latest id
+        let old_item_id = ItemLinkRowRepository::new(connection)
+            .find_one_by_id(&old_item_variant.item_link_id)?
+            .map(|v| v.item_id)
+            .unwrap_or_else(|| old_item_variant.item_link_id.clone());
+
+        if old_item_id != input.item_id {
             return Err(UpsertItemVariantError::CantChangeItem);
         }
     }
