@@ -86,6 +86,9 @@ impl CustomerReturnLineNode {
     pub async fn item_name(&self) -> &str {
         &self.item_row().name
     }
+    pub async fn item_variant_id(&self) -> &Option<String> {
+        &self.return_line.item_variant_id
+    }
 
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
