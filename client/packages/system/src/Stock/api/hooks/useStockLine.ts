@@ -81,8 +81,9 @@ export function useStockLine(id?: string) {
     return result;
   };
   const update = async () => {
-    updateMutation(patch);
     setIsDirty(false);
+    await updateMutation(patch);
+    setPatch({});
   };
 
   return {
