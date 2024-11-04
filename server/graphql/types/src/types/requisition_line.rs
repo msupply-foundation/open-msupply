@@ -9,13 +9,14 @@ use service::{item_stats::ItemStats, usize_to_u32, ListResult};
 use graphql_core::{
     loader::{
         InvoiceLineForRequisitionLine, ItemLoader, ItemStatsLoaderInput, ItemsStatsForItemLoader,
-        LinkedRequisitionLineLoader, RequisitionAndItemId, RequisitionLineSupplyStatusLoader,
+        LinkedRequisitionLineLoader, ReasonOptionLoader, RequisitionAndItemId,
+        RequisitionLineSupplyStatusLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 
-use super::{InvoiceLineConnector, ItemNode, ItemStatsNode};
+use super::{InvoiceLineConnector, ItemNode, ItemStatsNode, ReasonOptionNode};
 
 #[derive(PartialEq, Debug)]
 pub struct RequisitionLineNode {
@@ -260,6 +261,27 @@ impl RequisitionLineNode {
 
     pub async fn option_id(&self) -> &Option<String> {
         &self.row().option_id
+    }
+
+    pub async fn average_monthly_consumption(&self) -> &f64 {
+        &self.row().average_monthly_consumption
+    }
+
+    pub async fn reason(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
+        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
+
+        let reason_option_id = match &self.row().option_id {
+            Some(reason_option_id) => reason_option_id,
+            None => return Ok(None),
+        };
+
+        let result = loader.load_one(reason_option_id.clone()).await?;
+
+        Ok(result.map(ReasonOptionNode::from_domain))
+    }
+
+    pub async fn available_stock_on_hand(&self) -> &f64 {
+        &self.row().available_stock_on_hand
     }
 }
 
