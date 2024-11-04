@@ -16,6 +16,7 @@ type DialogButtonVariant =
   | 'cancel'
   | 'back'
   | 'previous'
+  | 'next-and-ok'
   | 'next'
   | 'ok'
   | 'save'
@@ -64,10 +65,16 @@ const getButtonProps = (
         labelKey: 'button.ok',
         variant: 'contained',
       };
-    case 'next':
+    case 'next-and-ok':
       return {
         icon: <ArrowRightIcon />,
         labelKey: 'button.ok-and-next',
+        variant: 'contained',
+      };
+    case 'next':
+      return {
+        icon: <ArrowRightIcon />,
+        labelKey: 'button.next',
         variant: 'contained',
       };
     case 'save':
