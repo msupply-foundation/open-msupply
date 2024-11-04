@@ -58,7 +58,7 @@ export const Footer: FC<FooterProps> = ({
               }
             />
             <DialogButton
-              variant="next-and-ok"
+              variant="next"
               disabled={!hasNext}
               onClick={() =>
                 navigate(
