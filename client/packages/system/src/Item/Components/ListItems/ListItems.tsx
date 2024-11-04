@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  useToggle,
   Tooltip,
   ListOptions,
   ChevronDownIcon,
@@ -18,13 +17,12 @@ interface ListItemProps {
 export const ListItems = ({ currentItemId, items, route }: ListItemProps) => {
   const navigate = useNavigate();
   const value = items?.find(({ id }) => id === currentItemId) ?? null;
-  const selectControl = useToggle();
 
   return (
     <Tooltip title={value?.name}>
       <ListOptions
+        currentId={value?.id}
         onClick={id => {
-          selectControl.toggleOn();
           navigate(route.addPart(id).build(), { replace: true });
         }}
         options={
@@ -34,11 +32,9 @@ export const ListItems = ({ currentItemId, items, route }: ListItemProps) => {
           })) ?? []
         }
         endIcon={
-          selectControl.isOn ? (
-            <ChevronDownIcon
-              style={{ width: 17, height: 17, transform: 'rotate(-90deg)' }}
-            />
-          ) : undefined
+          <ChevronDownIcon
+            style={{ width: 17, height: 17, transform: 'rotate(-90deg)' }}
+          />
         }
       />
     </Tooltip>
