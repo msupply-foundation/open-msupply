@@ -226,8 +226,10 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     const { batchResponseRequisition } = result || {};
 
+    console.log('response ', batchResponseRequisition);
+
     if (batchResponseRequisition?.deleteResponseRequisitions) {
-      return batchResponseRequisition.deleteResponseRequisitions.length;
+      return batchResponseRequisition.deleteResponseRequisitions;
     }
 
     throw new Error('Could not delete requisitions');
