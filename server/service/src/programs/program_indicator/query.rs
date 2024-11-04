@@ -27,9 +27,7 @@ pub struct IndicatorColumn {
 pub struct IndicatorLine {
     pub name: String,
     pub code: String,
-    // pub r#type: ValueType,
     pub value: Vec<IndicatorColumn>,
-    // later value could become a column
 }
 
 #[derive(serde::Serialize, Clone)]
@@ -44,12 +42,29 @@ pub fn program_indicator(
     connection: &StorageConnection,
     filter: ProgramIndicatorFilter,
 ) -> Result<Option<ProgramIndicator>, RepositoryError> {
-    let _indicator = ProgramIndicatorRepository::new(&connection)
+    let indicator = ProgramIndicatorRepository::new(&connection)
         .query_by_filter(filter)?
         .pop();
 
-    // some logic here to generate actual indicator
-    Ok(None)
+    if let Some(indicator) = indicator {
+        // grafind all relevant lines
+        let all_indicator_line_rows = IndicatorLineRowRepository::new(&connection)
+            .find_many_by_indicator_id(indicator.id.clone())?;
+
+        // find all relevant columns
+        let all_indicator_column_rows = IndicatorColumnRowRepository::new(&connection)
+            .find_many_by_indicator_id(indicator.id.clone())?;
+
+        let program_indicator = ProgramIndicator::from_domain(
+            indicator,
+            all_indicator_line_rows,
+            all_indicator_column_rows,
+        );
+
+        Ok(Some(program_indicator))
+    } else {
+        Ok(None)
+    }
 }
 
 pub fn program_indicators(
@@ -162,6 +177,7 @@ impl IndicatorColumn {
                 },
                 None => ValueType::String,
             },
+            // TODO find actual value from here or from
             value: ColumnValue::Text("default".to_string()),
         }
     }
@@ -215,5 +231,7 @@ mod query {
             let columns = line.value;
             assert_eq!(columns.len(), 2);
         }
+
+        // TODO add filter tests
     }
 }

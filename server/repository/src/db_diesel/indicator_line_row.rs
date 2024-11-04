@@ -75,6 +75,16 @@ impl<'a> IndicatorLineRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_indicator_id(
+        &self,
+        id: String,
+    ) -> Result<Vec<IndicatorLineRow>, RepositoryError> {
+        let result = indicator_line::table
+            .filter(indicator_line::program_indicator_id.eq(id))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
     pub fn find_many_by_indicator_ids(
         &self,
         ids: &[String],
