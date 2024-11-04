@@ -19,7 +19,7 @@ import { TransportSection } from './TransportSection';
 import { canDeleteInvoice } from '../../../utils';
 
 export const SidePanelComponent = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const navigate = useNavigate();
   const { success } = useNotification();
   const { data } = useOutbound.document.get();

@@ -57,7 +57,7 @@ const Wrapper: FC<PropsWithChildren<{ text: string }>> = ({
 };
 
 const Template: StoryFn<{ color: 'primary' | 'secondary' }> = ({ color }) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const [selected, setSelected] = useState(false);
   const [selectedColor, setColor] = useState<Color>({
     hex: '#8f90a6',

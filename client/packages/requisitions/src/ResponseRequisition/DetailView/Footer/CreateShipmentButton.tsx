@@ -16,7 +16,7 @@ export const CreateShipmentButtonComponent = () => {
     'lines',
     'linesRemainingToSupply',
   ]);
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { mutateAsync } = useResponse.utils.createOutbound();
   const isDisabled = useResponse.utils.isDisabled();
   const navigate = useNavigate();

@@ -49,7 +49,7 @@ const createStatusLog = (invoice: OutboundFragment) => {
 };
 
 export const FooterComponent: FC = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { data } = useOutbound.document.get();
   const { navigateUpOne } = useBreadcrumbs();
 

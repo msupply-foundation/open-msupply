@@ -30,7 +30,7 @@ export const BasicSpinner: FC<BasicSpinnerProps> = ({
   messageKey = 'loading',
   inline = false,
 }) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   return (
     <Container style={inline ? {} : { position: 'fixed' }}>
       <CircularProgress />

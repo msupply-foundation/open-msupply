@@ -174,6 +174,7 @@ mod graphql {
                 code,
                 is_customer,
                 is_supplier,
+                is_manufacturer,
                 is_store,
                 store_code,
                 is_visible,
@@ -194,6 +195,7 @@ mod graphql {
 
             assert_eq!(is_customer, Some(true));
             assert_eq!(is_supplier, Some(false));
+            assert_eq!(is_manufacturer, None);
             assert_eq!(is_donor, None);
             assert_eq!(is_store, Some(true));
             assert_eq!(store_code, Some(StringFilter::like("store code like")));

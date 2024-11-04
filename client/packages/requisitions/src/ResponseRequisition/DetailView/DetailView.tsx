@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
-import { Toolbar } from './Toolbar';
+import { Toolbar } from './Toolbar/Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
@@ -27,7 +27,7 @@ export const DetailView: FC = () => {
     useEditModal<ResponseLineFragment>();
   const { data, isLoading } = useResponse.document.get();
   const navigate = useNavigate();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
 
   const onRowClick = useCallback(
     (line: ResponseLineFragment) => {

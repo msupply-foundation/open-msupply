@@ -34,7 +34,7 @@ const useDisableRequestRows = (rows?: RequestRowFragment[]) => {
 
 export const RequestRequisitionListView: FC = () => {
   const navigate = useNavigate();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const modalController = useToggle();
   const { data: programSettings } = useRequest.utils.programSettings();
 

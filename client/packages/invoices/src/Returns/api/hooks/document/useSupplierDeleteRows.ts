@@ -18,7 +18,7 @@ export const useSupplierDeleteRows = () => {
   const { data: rows } = useSupplierReturns(queryParams);
   const api = useReturnsApi();
   const { mutateAsync } = useMutation(api.deleteSupplier);
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   const selectedRows = useTableStore(
     state =>

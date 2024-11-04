@@ -18,7 +18,7 @@ export const useCustomerDeleteRows = () => {
   const { data: rows } = useCustomerReturns(queryParams);
   const api = useReturnsApi();
   const { mutateAsync } = useMutation(api.deleteCustomer);
-  const t = useTranslation('distribution');
+  const t = useTranslation();
 
   const selectedRows = useTableStore(
     state =>

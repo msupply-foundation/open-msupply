@@ -14,6 +14,7 @@ table! {
         code -> Text,
         on_hold -> Bool,
         store_id -> Text,
+        cold_storage_type_id -> Nullable<Text>
     }
 }
 
@@ -24,12 +25,14 @@ allow_tables_to_appear_in_same_query!(location, asset_internal_location);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(table_name = location)]
+#[diesel(treat_none_as_null = true)]
 pub struct LocationRow {
     pub id: String,
     pub name: String,
     pub code: String,
     pub on_hold: bool,
     pub store_id: String,
+    pub cold_storage_type_id: Option<String>,
 }
 
 pub struct LocationRowRepository<'a> {

@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { useItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
-import { PackVariantQuantityCell, PackVariantSelectCell } from '../Components';
+import { PackQuantityCell } from '../Components';
 
 const ItemListComponent: FC = () => {
   const {
@@ -28,7 +28,7 @@ const ItemListComponent: FC = () => {
   const { data, isError, isLoading } = useItems();
   const pagination = { page, first, offset };
   const navigate = useNavigate();
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
 
   const columns = useColumns<ItemsWithStatsFragment>(
     [
@@ -44,20 +44,15 @@ const ItemListComponent: FC = () => {
         key: 'packUnit',
         label: 'label.unit',
         align: ColumnAlign.Right,
-        Cell: PackVariantSelectCell({
-          getItemId: r => r.id,
-          getUnitName: r => r.unitName || null,
-        }),
+        accessor: ({ rowData }) => rowData.unitName,
         width: 130,
         sortable: false,
       },
       [
         'stockOnHand',
         {
-          Cell: PackVariantQuantityCell({
-            getItemId: r => r.id,
-            getQuantity: r => r.stats.availableStockOnHand,
-          }),
+          Cell: PackQuantityCell,
+          accessor: ({rowData}) => rowData.stats.availableStockOnHand,
           label: 'label.soh',
           description: 'description.soh',
           sortable: false,
@@ -67,20 +62,17 @@ const ItemListComponent: FC = () => {
       [
         'monthlyConsumption',
         {
-          Cell: PackVariantQuantityCell({
-            getItemId: r => r.id,
-            getQuantity: r => r.stats.averageMonthlyConsumption,
-          }),
+          Cell: PackQuantityCell,
+          accessor: ({rowData}) => rowData.stats.averageMonthlyConsumption,
+  
           align: ColumnAlign.Right,
           sortable: false,
           width: 100,
         },
       ],
       {
-        Cell: PackVariantQuantityCell({
-          getItemId: r => r.id,
-          getQuantity: r => r.stats.availableMonthsOfStockOnHand ?? 0,
-        }),
+        Cell: PackQuantityCell,
+        accessor: ({rowData}) => rowData.stats.availableMonthsOfStockOnHand ?? 0,
         align: ColumnAlign.Right,
         description: 'description.months-of-stock',
         key: 'availableMonthsOfStockOnHand',

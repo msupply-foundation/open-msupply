@@ -13,7 +13,7 @@ export const useAssetDelete = (id: string) => {
   const { mutateAsync } = useMutation(async (id: string) =>
     api.delete(id, api.storeId)
   );
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
 
   const deleteAction = async () =>

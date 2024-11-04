@@ -17,7 +17,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { useAssets } from '../api';
 
 export const AddFromScannerButtonComponent = () => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { isConnected, isEnabled, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
   const { error } = useNotification();

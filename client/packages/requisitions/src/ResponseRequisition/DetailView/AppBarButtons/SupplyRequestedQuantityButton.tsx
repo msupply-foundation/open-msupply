@@ -8,7 +8,7 @@ import {
 import { useResponse } from '../../api';
 
 export const SupplyRequestedQuantityButtonComponent = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const isDisabled = useResponse.utils.isDisabled();
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
   const { mutate: supplyRequestedQuantity } =

@@ -14,7 +14,7 @@ import {
 import { CustomerReturnFragment, useReturns } from '../../api';
 
 export const AdditionalInfoSectionComponent = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { debouncedMutateAsync } = useReturns.document.updateCustomerReturn();
   const isDisabled = useReturns.utils.customerIsDisabled();
 

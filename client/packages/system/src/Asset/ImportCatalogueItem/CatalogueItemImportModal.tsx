@@ -79,7 +79,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { success } = useNotification();
   const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
   const [activeStep, setActiveStep] = useState(0);

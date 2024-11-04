@@ -22,7 +22,7 @@ import { FacilityEditModal, useName } from '@openmsupply-client/system';
 
 export const Footer: React.FC = () => {
   const { user, store } = useAuthContext();
-  const t = useTranslation('app');
+  const t = useTranslation();
   const { currentLanguageName } = useIntlUtils();
   const isCentralServer = useIsCentralServerApi();
   const { isOpen, onClose, onOpen } = useEditModal();

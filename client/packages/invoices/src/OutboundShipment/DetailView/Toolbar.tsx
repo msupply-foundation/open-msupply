@@ -22,7 +22,7 @@ import { useOutbound } from '../api';
 export const Toolbar: FC<{
   onReturnLines: (stockLineIds: string[]) => void;
 }> = ({ onReturnLines }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const onDelete = useOutbound.line.deleteSelected();
   const { onAllocate } = useOutbound.line.allocateSelected();
   const { id, otherParty, theirReference, update, requisition } =

@@ -21,7 +21,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   importRows,
   showWarnings,
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const [pagination, setPagination] = useState<Pagination>({
     page: 0,

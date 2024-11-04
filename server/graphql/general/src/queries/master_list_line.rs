@@ -1,6 +1,6 @@
 use async_graphql::*;
 use dataloader::DataLoader;
-use graphql_types::types::ItemNode;
+use graphql_types::types::{ItemNode, MasterListFilterInput};
 use repository::{
     EqualFilter, MasterListLine, MasterListLineFilter, MasterListLineSort, PaginationOption,
 };
@@ -101,6 +101,7 @@ pub struct MasterListLineFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub item_id: Option<EqualFilterStringInput>,
     pub master_list_id: Option<EqualFilterStringInput>,
+    pub master_list: Option<MasterListFilterInput>,
 }
 
 impl MasterListLineFilterInput {
@@ -110,6 +111,7 @@ impl MasterListLineFilterInput {
             item_id: self.item_id.map(EqualFilter::from),
             master_list_id: self.master_list_id.map(EqualFilter::from),
             item_type: None,
+            master_list: self.master_list.map(|f| f.to_domain()),
         }
     }
 }

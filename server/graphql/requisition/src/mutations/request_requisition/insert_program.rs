@@ -14,6 +14,8 @@ use service::{
 };
 use util::{constants::expected_delivery_date_offset, date_now_with_offset};
 
+use crate::mutations::errors::MaxOrdersReachedForPeriod;
+
 #[derive(InputObject)]
 #[graphql(name = "InsertProgramRequestRequisitionInput")]
 pub struct InsertProgramRequestRequisitionInput {
@@ -129,15 +131,6 @@ impl InsertProgramRequestRequisitionInput {
             program_order_type_id,
             period_id,
         }
-    }
-}
-
-pub struct MaxOrdersReachedForPeriod;
-
-#[Object]
-impl MaxOrdersReachedForPeriod {
-    pub async fn description(&self) -> &str {
-        "Maximum orders reached for program, order type and period"
     }
 }
 

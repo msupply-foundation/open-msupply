@@ -33,7 +33,7 @@ export const SyncProgress: FC<SyncProgressProps> = ({
   isOperational,
   colour = 'primary',
 }) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const error =
     syncStatus?.error &&

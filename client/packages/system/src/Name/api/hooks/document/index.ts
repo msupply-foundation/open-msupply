@@ -1,5 +1,6 @@
 import { useCustomers } from './useCustomers';
 import { useSuppliers } from './useSuppliers';
+import { useManufacturers } from './useManufacturers';
 import { useInternalSuppliers } from './useInternalSuppliers';
 import { useName } from './useName';
 import { useNames } from './useNames';
@@ -13,6 +14,7 @@ export const Document = {
   useCustomers,
   useFacilities,
   useSuppliers,
+  useManufacturers,
   useInternalSuppliers,
   useName,
   useUpdateProperties,

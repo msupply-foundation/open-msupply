@@ -61,7 +61,7 @@ const AdditionalInfoSection: FC = () => {
 };
 
 export const SidePanel = () => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { success } = useNotification();
   const navigate = useNavigate();
   const { mutateAsync } = useStocktake.document.delete();

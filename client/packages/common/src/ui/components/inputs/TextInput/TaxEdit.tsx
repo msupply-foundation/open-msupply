@@ -16,7 +16,7 @@ interface TaxEditProps {
 
 export const TaxEdit = ({ disabled = false, tax, onChange }: TaxEditProps) => {
   const modalController = useToggle();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const [val, setVal] = useState<number | undefined>(tax);
 
   useEffect(() => {

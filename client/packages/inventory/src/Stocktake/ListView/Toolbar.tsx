@@ -23,7 +23,7 @@ export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
   const onDelete = useStocktake.document.deleteSelected();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
 
   const onFilterChange: AutocompleteOnChange<StatusOption> = (_, option) => {
     if (!option) {

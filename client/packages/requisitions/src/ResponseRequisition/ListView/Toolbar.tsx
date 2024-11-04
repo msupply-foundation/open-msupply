@@ -11,7 +11,7 @@ import {
 export const Toolbar: FC<{
   filter: FilterController;
 }> = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
 
   return (
     <AppBarContentPortal

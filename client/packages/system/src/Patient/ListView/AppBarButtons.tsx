@@ -21,7 +21,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
   sortBy,
 }) => {
   const { success, error } = useNotification();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
   const [createModalOpen, setCreateModalOpen] = useState(false);
 

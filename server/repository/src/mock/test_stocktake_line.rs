@@ -20,7 +20,7 @@ pub fn mock_new_stock_line_for_stocktake_a() -> StockLineRow {
         on_hold: false,
         note: None,
         supplier_link_id: Some(String::from("name_store_b")),
-        barcode_id: None,
+        ..Default::default()
     }
 }
 

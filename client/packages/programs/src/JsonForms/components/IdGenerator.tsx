@@ -299,7 +299,7 @@ const useUniqueProgramPatientCodeValidation = () => {
 const UIComponent = (props: ControlProps) => {
   const { label, errors, path, data, visible, handleChange, uischema } = props;
   const config: JsonFormsConfig = props.config;
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { core } = useJsonForms();
   const { mutateAsync: mutateGenerateId } = useMutation(
     async (input: GenerateIdInput): Promise<string> => generateId(input)

@@ -23,7 +23,7 @@ import { supplierReturnsToCsv } from '../../utils';
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { success, error } = useNotification();
 
   const { mutateAsync: onCreate } = useReturns.document.insertSupplierReturn();

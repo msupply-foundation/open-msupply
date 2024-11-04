@@ -39,7 +39,7 @@ const TotalCount = ({
   count: number;
   message: LocaleKey;
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   if (count < 2) return undefined;
 
@@ -81,7 +81,7 @@ const DetailButton = ({
   queryParameters: any;
   tab: string;
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const navigate = useNavigate();
   const { urlQuery } = useUrlQuery();
   const currentTab = (urlQuery['tab'] as string) ?? '';
@@ -117,7 +117,7 @@ const Location = ({
     | TemperatureNotificationBreachFragment
     | TemperatureExcursionFragment;
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   if (!notification?.location?.name) return null;
   return (
@@ -151,7 +151,7 @@ const Notification = ({
   notification,
 }: NotificationProps) => {
   const theme = useTheme();
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { localisedDistanceToNow } = useFormatDateTime();
 
   if (!notification) return null;
@@ -227,7 +227,7 @@ const Notification = ({
 };
 
 export const ColdchainNotification = () => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { data: notifications } = useTemperatureNotification.document.list({
     first: 1,
     offset: 0,

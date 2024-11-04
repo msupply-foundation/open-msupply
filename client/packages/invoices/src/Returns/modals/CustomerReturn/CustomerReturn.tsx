@@ -43,7 +43,7 @@ export const CustomerReturnEditModal = ({
   hasNextItem = false,
   isNewReturn = false,
 }: CustomerReturnEditModalProps) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
 
   const [itemId, setItemId] = useState<string | undefined>(

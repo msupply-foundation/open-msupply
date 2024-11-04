@@ -54,7 +54,7 @@ export const useOutboundDeleteSelectedLines = (): (() => void) => {
   const { items, lines } = useOutboundRows();
   const { mutateAsync } = useOutboundDeleteLines();
   const isDisabled = useOutboundIsDisabled();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
 
   const selectedRows =
     useTableStore(state => {
@@ -79,7 +79,7 @@ export const useOutboundDeleteSelectedLines = (): (() => void) => {
     deleteAction: onDelete,
     canDelete: !isDisabled,
     messages: {
-      confirmMessage: t('messages.confirm-delete-lines', {
+      confirmMessage: t('messages.confirm-delete-invoice-lines', {
         count: selectedRows.length,
       }),
       deleteSuccess: t('messages.deleted-lines', {

@@ -23,7 +23,7 @@ export const useDeleteSelectedVaccineCourses = () => {
       throw new Error(t('error.could-not-delete-vaccine-course'));
     }
   );
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   const selectedRows =
     useTableStore(state => {

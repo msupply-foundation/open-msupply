@@ -15,7 +15,7 @@ export const InventoryNav: FC = () => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Inventory).addWildCard().build()
   );
-  const t = useTranslation('app');
+  const t = useTranslation();
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Inventory}>

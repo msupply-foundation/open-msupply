@@ -40,7 +40,7 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
 };
 
 export const FooterComponent: FC = () => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { data } = usePrescription.document.get();
   const { navigateUpOne } = useBreadcrumbs();
 

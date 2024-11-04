@@ -24,6 +24,7 @@ import {
   StoreSearchInput,
 } from '@openmsupply-client/system';
 import { DraftAsset } from '../../types';
+import { formatLocationLabel } from '../DetailView';
 interface SummaryProps {
   draft?: DraftAsset;
   onChange: (patch: Partial<DraftAsset>) => void;
@@ -104,7 +105,7 @@ const Row = ({
 );
 
 export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
   const { storeId } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
@@ -112,7 +113,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   if (!draft) return null;
 
   const defaultLocations = draft.locations.nodes.map(location => ({
-    label: location.code,
+    label: formatLocationLabel(location),
     value: location.id,
   }));
 
@@ -122,7 +123,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
         __typename: 'StoreNode',
         id: store.id,
         code: store.code ?? '',
-        storeName: '',
+        storeName: store.storeName,
       },
     });
   };

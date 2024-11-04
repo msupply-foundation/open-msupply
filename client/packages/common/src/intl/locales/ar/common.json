@@ -1,4 +1,16 @@
 {
+  "admin": "مشرف",
   "button.ok": "نعم",
-  "button.open-the-menu": "افتح القائمة"
+  "button.open-the-menu": "افتح القائمة",
+  "customer-requisition": "طلبات الشراء",
+  "dashboard": "لوحة القيادة",
+  "distribution": "توزيع",
+  "logout": "تسجيل خروج",
+  "messages": "رسائل",
+  "outbound-shipment": "شحنة صادرة",
+  "reports": "التقارير",
+  "stock": "الأوراق المالية",
+  "suppliers": "الموردين",
+  "sync": "تزامن",
+  "tools": "أدوات"
 }

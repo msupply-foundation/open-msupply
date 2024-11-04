@@ -29,7 +29,7 @@ const ImmunisationProgramListComponent: FC = () => {
   } = useUrlQueryParams({ filters: [{ key: 'name' }] });
   const pagination = { page, first, offset };
   const navigate = useNavigate();
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   const queryParams = {
     filterBy,

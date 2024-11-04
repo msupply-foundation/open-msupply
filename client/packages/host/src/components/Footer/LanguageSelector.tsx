@@ -14,7 +14,7 @@ import { PropsWithChildrenOnly } from '@common/types';
 export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
   const { hide, PaperClickPopover } = usePaperClickPopover();
-  const t = useTranslation('app');
+  const t = useTranslation();
   const username = useUserName();
 
   const { changeLanguage, currentLanguage, languageOptions, setUserLocale } =

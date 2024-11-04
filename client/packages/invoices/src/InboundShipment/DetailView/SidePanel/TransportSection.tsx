@@ -10,7 +10,7 @@ import {
 import { useInbound } from '../../api';
 
 export const TransportSectionComponent: FC = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { transportReference, update } = useInbound.document.fields([
     'transportReference',
   ]);

@@ -12,7 +12,7 @@ export const useCreateOutboundFromResponse = () => {
   const responseNumber = useResponseNumber();
   const queryClient = useQueryClient();
   const { error, warning } = useNotification();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { id } = useResponseFields('id');
   const api = useResponseApi();
   return useMutation(() => api.createOutboundFromResponse(id), {
