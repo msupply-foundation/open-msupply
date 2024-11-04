@@ -59,8 +59,6 @@ pub fn program_indicators(
     sort: Option<ProgramIndicatorSort>,
     filter: Option<ProgramIndicatorFilter>,
 ) -> Result<Vec<ProgramIndicator>, RepositoryError> {
-    let mut program_indicators: Vec<ProgramIndicator> = Vec::new();
-
     let indicators =
         ProgramIndicatorRepository::new(&ctx.connection).query(pagination, filter, sort)?;
 
@@ -78,9 +76,27 @@ pub fn program_indicators(
     let all_indicator_column_rows = IndicatorColumnRowRepository::new(&ctx.connection)
         .find_many_by_indicator_ids(&indicator_ids)?;
 
-    // TODO refactor all of this into closures with to_domain functions?
+    let program_indicators = indicators
+        .into_iter()
+        .map(|indicator| {
+            ProgramIndicator::from_domain(
+                indicator,
+                all_indicator_line_rows.clone(),
+                all_indicator_column_rows.clone(),
+            )
+        })
+        .collect();
 
-    for indicator in indicators {
+    Ok(program_indicators)
+}
+
+impl ProgramIndicator {
+    pub fn from_domain(
+        indicator: ProgramIndicatorRow,
+        all_indicator_line_rows: Vec<IndicatorLineRow>,
+        all_indicator_column_rows: Vec<IndicatorColumnRow>,
+    ) -> ProgramIndicator {
+        // filter out for columns relevant to indicator
         let indicator_column_rows: Vec<IndicatorColumnRow> = all_indicator_column_rows
             .clone()
             .into_iter()
@@ -93,7 +109,8 @@ pub fn program_indicators(
             })
             .collect();
 
-        let indicator_lines: Vec<IndicatorLine> = all_indicator_line_rows
+        // filter out for lines relevant to indicator
+        let indicator_lines = all_indicator_line_rows
             .clone()
             .into_iter()
             .filter_map(|line| {
@@ -106,17 +123,6 @@ pub fn program_indicators(
             .map(|line| IndicatorLine::from_domain(line, indicator_column_rows.clone()))
             .collect();
 
-        program_indicators.push(ProgramIndicator::from_domain(indicator, indicator_lines));
-    }
-
-    Ok(program_indicators)
-}
-
-impl ProgramIndicator {
-    pub fn from_domain(
-        indicator: ProgramIndicatorRow,
-        indicator_lines: Vec<IndicatorLine>,
-    ) -> ProgramIndicator {
         ProgramIndicator {
             id: indicator.id,
             program_id: indicator.program_id,
