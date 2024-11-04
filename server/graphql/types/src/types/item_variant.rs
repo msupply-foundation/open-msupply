@@ -1,7 +1,10 @@
-use super::{ColdStorageTypeNode, NameNode};
+use super::{BundledItemNode, ColdStorageTypeNode, NameNode};
 use async_graphql::*;
 use dataloader::DataLoader;
-use graphql_core::loader::{ColdStorageTypeLoader, NameByIdLoader, NameByIdLoaderInput};
+use graphql_core::loader::{
+    BundledItemByBundledItemVariantIdLoader, BundledItemByPrincipalItemVariantIdLoader,
+    ColdStorageTypeLoader, NameByIdLoader, NameByIdLoaderInput,
+};
 use graphql_core::{loader::PackagingVariantRowLoader, ContextExt};
 use repository::item_variant::item_variant::ItemVariant;
 use repository::item_variant::{
@@ -88,6 +91,28 @@ impl ItemVariantNode {
             .unwrap_or_default();
 
         Ok(PackagingVariantNode::from_vec(result))
+    }
+
+    /// This item variant is the principal item variant in a bundle - these items are bundled with it
+    pub async fn bundled_item_variants(&self, ctx: &Context<'_>) -> Result<Vec<BundledItemNode>> {
+        let loader = ctx.get_loader::<DataLoader<BundledItemByPrincipalItemVariantIdLoader>>();
+        let result = loader
+            .load_one(self.item_variant.id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(BundledItemNode::from_vec(result))
+    }
+
+    /// This item variant is bundled with other (principal) item variants
+    pub async fn bundles_with(&self, ctx: &Context<'_>) -> Result<Vec<BundledItemNode>> {
+        let loader = ctx.get_loader::<DataLoader<BundledItemByBundledItemVariantIdLoader>>();
+        let result = loader
+            .load_one(self.item_variant.id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(BundledItemNode::from_vec(result))
     }
 }
 
