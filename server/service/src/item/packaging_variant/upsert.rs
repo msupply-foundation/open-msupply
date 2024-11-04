@@ -86,14 +86,14 @@ fn validate(
         }
     }
 
-    if input.packaging_level < 0 {
+    if input.packaging_level <= 0 {
         return Err(UpsertPackagingVariantError::LessThanZero(
             "packaging_level".to_string(),
         ));
     }
 
     if let Some(pack_size) = input.pack_size {
-        if pack_size < 0.0 {
+        if pack_size <= 0.0 {
             return Err(UpsertPackagingVariantError::LessThanZero(
                 "pack_size".to_string(),
             ));
@@ -101,7 +101,7 @@ fn validate(
     }
 
     if let Some(volume_per_unit) = input.volume_per_unit {
-        if volume_per_unit < 0.0 {
+        if volume_per_unit <= 0.0 {
             return Err(UpsertPackagingVariantError::LessThanZero(
                 "volume_per_unit".to_string(),
             ));
