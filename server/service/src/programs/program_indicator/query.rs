@@ -1,6 +1,7 @@
 use repository::{
-    Pagination, ProgramIndicatorFilter, ProgramIndicatorRepository, ProgramIndicatorSort,
-    RepositoryError,
+    IndicatorColumnRow, IndicatorColumnRowRepository, IndicatorLineRow, IndicatorLineRowRepository,
+    IndicatorValueType, Pagination, ProgramIndicatorFilter, ProgramIndicatorRepository,
+    ProgramIndicatorRow, ProgramIndicatorSort, RepositoryError,
 };
 
 use crate::service_provider::ServiceContext;
@@ -13,23 +14,13 @@ pub enum ColumnValue {
 
 #[derive(Clone)]
 pub enum ValueType {
-    Text,
+    String,
     Number,
 }
 
-// // TODO add actual value types
-// #[derive(Clone)]
-// pub enum LineValueType {
-//     // Text(String),
-//     // Number(f64),
-//     // added column value type because didn't want to nest indefintitely
-//     MultiColumn(Vec<IndicatorColumn>),
-// }
-
 #[derive(Clone)]
 pub struct IndicatorColumn {
-    pub name: String,
-    pub code: String,
+    pub header: String,
     pub r#type: ValueType,
     pub value: ColumnValue,
 }
@@ -46,7 +37,6 @@ pub struct IndicatorLine {
 pub struct ProgramIndicator {
     pub id: String,
     pub program_id: String,
-    pub name: String,
     pub code: String,
     pub lines: Vec<IndicatorLine>,
 }
@@ -69,17 +59,107 @@ pub fn program_indicators(
     sort: Option<ProgramIndicatorSort>,
     filter: Option<ProgramIndicatorFilter>,
 ) -> Result<Vec<ProgramIndicator>, RepositoryError> {
+    let mut program_indicators: Vec<ProgramIndicator> = Vec::new();
+
     let indicators =
         ProgramIndicatorRepository::new(&ctx.connection).query(pagination, filter, sort)?;
 
     let indicator_ids: Vec<String> = indicators
+        .clone()
         .into_iter()
         .map(|indicator| indicator.id)
         .collect();
 
-    // grab all rows of indicator id (but multiple indicator ids)
-    // let indicator_lines = IndicatorLine
+    // grafind all relevant lines
+    let all_indicator_line_rows = IndicatorLineRowRepository::new(&ctx.connection)
+        .find_many_by_indicator_ids(&indicator_ids)?;
 
-    // some logic here
-    Ok(Vec::new())
+    // find all relevant columns
+    let all_indicator_column_rows = IndicatorColumnRowRepository::new(&ctx.connection)
+        .find_many_by_indicator_ids(&indicator_ids)?;
+
+    // TODO refactor all of this into closures with to_domain functions?
+
+    for indicator in indicators {
+        let indicator_column_rows: Vec<IndicatorColumnRow> = all_indicator_column_rows
+            .clone()
+            .into_iter()
+            .filter_map(|row| {
+                if row.program_indicator_id == indicator.id {
+                    Some(row)
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        let indicator_lines: Vec<IndicatorLine> = all_indicator_line_rows
+            .clone()
+            .into_iter()
+            .filter_map(|line| {
+                if line.program_indicator_id == indicator.id {
+                    Some(line)
+                } else {
+                    None
+                }
+            })
+            .map(|line| IndicatorLine::from_domain(line, indicator_column_rows.clone()))
+            .collect();
+
+        program_indicators.push(ProgramIndicator::from_domain(indicator, indicator_lines));
+    }
+
+    Ok(program_indicators)
+}
+
+impl ProgramIndicator {
+    pub fn from_domain(
+        indicator: ProgramIndicatorRow,
+        indicator_lines: Vec<IndicatorLine>,
+    ) -> ProgramIndicator {
+        ProgramIndicator {
+            id: indicator.id,
+            program_id: indicator.program_id,
+            code: match indicator.code {
+                Some(code) => code,
+                None => "missing code".to_string(),
+            },
+            lines: indicator_lines,
+        }
+    }
+}
+
+// mapping to and from domain for rows and columns
+impl IndicatorLine {
+    pub fn from_domain(line: IndicatorLineRow, columns: Vec<IndicatorColumnRow>) -> IndicatorLine {
+        IndicatorLine {
+            name: line.description,
+            code: line.code,
+            value: columns
+                .into_iter()
+                .map(|column| IndicatorColumn::from_domain(column))
+                .collect(),
+        }
+    }
+
+    // TODO add to_domain utility function
+}
+
+impl IndicatorColumn {
+    pub fn from_domain(column: IndicatorColumnRow) -> IndicatorColumn {
+        IndicatorColumn {
+            header: column.header,
+            r#type: match column.value_type {
+                // TODO remove optional value type if we initialise default values on requisition creation?
+                Some(value_type) => match value_type {
+                    IndicatorValueType::String => ValueType::String,
+                    IndicatorValueType::Number => ValueType::Number,
+                },
+                None => ValueType::String,
+            },
+            value: ColumnValue::Text("default".to_string()),
+        }
+    }
+
+    // TODO add to_domain utility function
 }

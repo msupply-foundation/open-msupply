@@ -133,12 +133,8 @@ pub struct IndicatorColumnNode {
 
 #[Object]
 impl IndicatorColumnNode {
-    pub async fn code(&self) -> &str {
-        &self.column.code
-    }
-
     pub async fn name(&self) -> &str {
-        &self.column.name
+        &self.column.header
     }
 
     pub async fn value_type(&self) -> IndicatorValueType {
@@ -152,7 +148,7 @@ impl IndicatorColumnNode {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum IndicatorValueType {
-    Text,
+    String,
     Number,
 }
 
@@ -160,7 +156,7 @@ impl IndicatorValueType {
     pub fn from_domain(r#type: &ValueType) -> Self {
         match r#type {
             ValueType::Number => IndicatorValueType::Number,
-            ValueType::Text => IndicatorValueType::Text,
+            ValueType::String => IndicatorValueType::String,
         }
     }
 }
