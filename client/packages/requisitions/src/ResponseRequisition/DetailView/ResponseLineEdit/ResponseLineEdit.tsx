@@ -76,6 +76,7 @@ export const ResponseLineEdit = ({
                   value={draft?.availableStockOnHand}
                   onChange={value => update({ availableStockOnHand: value })}
                   onBlur={save}
+                  disabled={!!hasLinkedRequisition}
                 />
               }
               labelWidth={LABEL_WIDTH}
@@ -90,6 +91,7 @@ export const ResponseLineEdit = ({
                   value={draft?.initialStockOnHandUnits}
                   onChange={value => update({ initialStockOnHandUnits: value })}
                   onBlur={save}
+                  disabled={!!hasLinkedRequisition}
                 />
               }
               labelWidth={LABEL_WIDTH}
@@ -182,6 +184,7 @@ export const ResponseLineEdit = ({
                 value={draft?.averageMonthlyConsumption}
                 onChange={value => update({ averageMonthlyConsumption: value })}
                 onBlur={save}
+                disabled={!!hasLinkedRequisition}
               />
             }
             labelWidth={LABEL_WIDTH}
@@ -326,7 +329,8 @@ export const ResponseLineEdit = ({
                 width={200}
                 type={ReasonOptionNodeType.RequisitionLineVariance}
                 isDisabled={
-                  draft?.requestedQuantity === draft?.suggestedQuantity
+                  draft?.requestedQuantity === draft?.suggestedQuantity ||
+                  !!hasLinkedRequisition
                 }
                 onBlur={save}
               />
