@@ -64,6 +64,8 @@ fragment ColdStorageType on ColdStorageTypeNode {
   __typename
   id
   name
+  minTemperature
+  maxTemperature
 }
 
 fragment PackagingVariant on PackagingVariantNode {
