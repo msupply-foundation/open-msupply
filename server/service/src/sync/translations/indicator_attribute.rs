@@ -36,7 +36,6 @@ impl Into<Option<IndicatorValueType>> for LegacyValueType {
     }
 }
 
-#[allow(non_snake_case)]
 #[derive(Deserialize)]
 pub struct LegacyIndicatorAttribute {
     #[serde(rename = "ID")]

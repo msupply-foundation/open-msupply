@@ -6,7 +6,6 @@ use crate::sync::translations::program_indicator::ProgramIndicatorTranslation;
 
 use super::{PullTranslateResult, SyncTranslation};
 
-#[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyIndicatorValue {
     #[serde(rename = "ID")]
@@ -25,7 +24,6 @@ pub struct LegacyIndicatorValue {
 }
 
 // Needs to be added to all_translators()
-#[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(IndicatorValue)
 }
