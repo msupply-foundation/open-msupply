@@ -42,7 +42,7 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
       case ReasonOptionNodeType.ReturnReason:
         return reason.type === ReasonOptionNodeType.ReturnReason;
       default:
-        return ReasonOptionNodeType.PositiveInventoryAdjustment;
+        return false;
     }
   };
   const reasons = (data?.nodes ?? []).filter(reasonFilter);
