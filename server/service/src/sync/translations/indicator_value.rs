@@ -1,4 +1,4 @@
-use repository::{IndicatorValueDelete, IndicatorValueRow, StorageConnection, SyncBufferRow};
+use repository::{IndicatorValueRow, IndicatorValueRowDelete, StorageConnection, SyncBufferRow};
 
 use serde::{Deserialize, Serialize};
 
@@ -70,7 +70,7 @@ impl SyncTranslation for IndicatorValue {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         // TODO, check site ? (should never get delete records for this site, only transfer other half)
-        Ok(PullTranslateResult::delete(IndicatorValueDelete(
+        Ok(PullTranslateResult::delete(IndicatorValueRowDelete(
             sync_record.record_id.clone(),
         )))
     }

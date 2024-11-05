@@ -91,8 +91,8 @@ impl<'a> IndicatorValueRowRepository<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub struct IndicatorValueDelete(pub String);
-impl Delete for IndicatorValueDelete {
+pub struct IndicatorValueRowDelete(pub String);
+impl Delete for IndicatorValueRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         let change_log_id = IndicatorValueRowRepository::new(con).delete(&self.0)?;
         Ok(change_log_id)
