@@ -122,6 +122,7 @@ pub struct LegacyNameRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub gender: Option<GenderType>,
     #[serde(rename = "om_date_of_death")]
+    #[serde(default)]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub date_of_death: Option<NaiveDate>,

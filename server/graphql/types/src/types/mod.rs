@@ -7,6 +7,9 @@ pub use self::item::*;
 pub mod item_variant;
 pub use self::item_variant::*;
 
+pub mod bundled_item;
+pub use self::bundled_item::*;
+
 pub mod item_stats;
 pub use self::item_stats::*;
 
