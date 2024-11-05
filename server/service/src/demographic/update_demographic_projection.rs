@@ -1,6 +1,8 @@
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{
+    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+};
 use repository::{
-    DemographicProjectionRow, DemographicProjectionRowRepository, RepositoryError,
+    ActivityLogType, DemographicProjectionRow, DemographicProjectionRowRepository, RepositoryError,
     StorageConnection,
 };
 
@@ -42,7 +44,16 @@ pub fn update_demographic_projection(
 
             DemographicProjectionRowRepository::new(connection)
                 .upsert_one(&updated_demographic_projection_row)?;
-            // TODO add activity logs
+
+            activity_log_entry(
+                ctx,
+                ActivityLogType::DemographicProjectionUpdated,
+                Some(updated_demographic_projection_row.id.to_owned()),
+                Some(serde_json::to_string(&demographic_projection_row).unwrap_or_default()),
+                Some(
+                    serde_json::to_string(&updated_demographic_projection_row).unwrap_or_default(),
+                ),
+            )?;
 
             get_demographic_projection(ctx, updated_demographic_projection_row.id)
                 .map_err(UpdateDemographicProjectionError::from)

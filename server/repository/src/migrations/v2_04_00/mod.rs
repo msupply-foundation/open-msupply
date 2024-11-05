@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 
 mod add_bundled_item_table;
 mod add_cold_storage_type_table;
+mod add_demographic_indicator_types_to_activity_log;
 mod add_expected_lifespan_to_assets;
 mod add_item_variant_id_to_stock_line_and_invoice_line;
 mod add_manual_requisition_line_fields;
@@ -38,6 +39,7 @@ impl Migration for V2_04_00 {
             Box::new(add_item_variant_id_to_stock_line_and_invoice_line::Migrate),
             Box::new(indicator_line_column_create_tables::Migrate),
             Box::new(add_bundled_item_table::Migrate),
+            Box::new(add_demographic_indicator_types_to_activity_log::Migrate),
         ]
     }
 }
