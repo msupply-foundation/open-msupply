@@ -378,3 +378,16 @@ query coldStorageTypes($storeId: String!) {
     }
   }
 }
+
+mutation upsertBundledItem($storeId: String!, $input: UpsertBundledItemInput!) {
+  centralServer {
+    bundledItem {
+      upsertBundledItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on BundledItemNode {
+          ...BundledItem
+        }
+      }
+    }
+  }
+}

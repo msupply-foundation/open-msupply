@@ -10,6 +10,8 @@ import {
   useTranslation,
   PlusCircleIcon,
   useEditModal,
+  IconButton,
+  DeleteIcon,
 } from '@openmsupply-client/common';
 import { BundledItemFragment, ItemVariantFragment } from '../../../api';
 import { BundledItemModal } from './BundledItemModal';
@@ -37,6 +39,16 @@ export const BundledItemVariants = ({
       Cell: TooltipTextCell,
       label: 'label.ratio',
       description: 'description.bundle-ratio',
+    },
+    {
+      key: 'delete',
+      Cell: props => (
+        <IconButton
+          icon={<DeleteIcon />}
+          label={t('label.delete')}
+          onClick={() => console.log(props.rowData.id)}
+        />
+      ),
     },
   ]);
 
