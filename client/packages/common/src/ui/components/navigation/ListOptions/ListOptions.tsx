@@ -6,6 +6,7 @@ import {
   ListItemText,
   Divider,
   Box,
+  Typography,
 } from '@mui/material';
 import React from 'react';
 
@@ -62,7 +63,15 @@ export const ListOptions = ({
               )}
             </ListItemIcon>
             <ListItemText
-              primary={option.value}
+              primary={
+                <Typography
+                  style={{
+                    fontWeight: option.id === currentId ? 'bold' : 'normal',
+                  }}
+                >
+                  {option.value}
+                </Typography>
+              }
               sx={{ margin: 0, padding: 0 }}
             />
             <ListItemIcon sx={{ padding: 0, minWidth: 15 }}>
