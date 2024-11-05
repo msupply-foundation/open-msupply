@@ -6,7 +6,7 @@ export const setNullableInput = <NODE, KEY extends keyof NODE>(
 ) => {
   if (entity === null) return { value: null };
 
-  if (entity === undefined) return undefined;
+  if (entity === undefined || entity[key] === undefined) return undefined;
 
   return { value: entity[key] };
 };
