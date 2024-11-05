@@ -136,6 +136,14 @@ export type UpsertBundledItemMutationVariables = Types.Exact<{
 
 export type UpsertBundledItemMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', bundledItem: { __typename: 'BundledItemMutations', upsertBundledItem: { __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null } | { __typename: 'UpsertBundledItemError' } } } };
 
+export type DeleteBundledItemMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.DeleteBundledItemInput;
+}>;
+
+
+export type DeleteBundledItemMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', bundledItem: { __typename: 'BundledItemMutations', deleteBundledItem: { __typename: 'DeleteResponse', id: string } } } };
+
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
   __typename
@@ -520,6 +528,21 @@ export const UpsertBundledItemDocument = gql`
   }
 }
     ${BundledItemFragmentDoc}`;
+export const DeleteBundledItemDocument = gql`
+    mutation deleteBundledItem($storeId: String!, $input: DeleteBundledItemInput!) {
+  centralServer {
+    bundledItem {
+      deleteBundledItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -560,6 +583,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     upsertBundledItem(variables: UpsertBundledItemMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpsertBundledItemMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpsertBundledItemMutation>(UpsertBundledItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertBundledItem', 'mutation', variables);
+    },
+    deleteBundledItem(variables: DeleteBundledItemMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteBundledItemMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteBundledItemMutation>(DeleteBundledItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteBundledItem', 'mutation', variables);
     }
   };
 }

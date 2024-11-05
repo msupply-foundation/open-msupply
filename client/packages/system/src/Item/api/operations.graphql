@@ -391,3 +391,17 @@ mutation upsertBundledItem($storeId: String!, $input: UpsertBundledItemInput!) {
     }
   }
 }
+
+mutation deleteBundledItem($storeId: String!, $input: DeleteBundledItemInput!) {
+  centralServer {
+    bundledItem {
+      deleteBundledItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
