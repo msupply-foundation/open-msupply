@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, InternalError},
+    simple_generic_errors::{DatabaseError, InternalError, UniqueValueKey, UniqueValueViolation},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -49,6 +49,7 @@ pub enum UpsertItemVariantResponse {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpsertItemVariantErrorInterface {
     InternalError(InternalError),
+    DuplicateName(UniqueValueViolation),
     DatabaseError(DatabaseError),
 }
 
@@ -137,6 +138,13 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
+        // Structured errors
+        ServiceError::DuplicateName => {
+            return Ok(UpsertItemVariantErrorInterface::DuplicateName(
+                UniqueValueViolation(UniqueValueKey::Name),
+            ))
+        }
+        // Generic errors
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::ItemDoesNotExist => InternalError(formatted_error),
         ServiceError::PackagingVariantError(upsert_packaging_variant_error) => {
@@ -144,6 +152,9 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
                 UpsertPackagingVariantError::ItemVariantDoesNotExist => {
                     BadUserInput(formatted_error)
                 }
+                UpsertPackagingVariantError::CantChangeItemVariant => BadUserInput(formatted_error),
+                UpsertPackagingVariantError::LessThanZero(_field) => BadUserInput(formatted_error),
+
                 UpsertPackagingVariantError::DatabaseError(_repository_error) => {
                     InternalError(formatted_error)
                 }
@@ -153,6 +164,9 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
             }
         }
         ServiceError::DatabaseError(_repository_error) => InternalError(formatted_error),
+        ServiceError::CantChangeItem => BadUserInput(formatted_error),
+
+        ServiceError::ColdStorageTypeDoesNotExist => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
