@@ -68,7 +68,7 @@ export const BundledItemModal = ({
         <BundledItemForm
           draft={draft}
           updateDraft={updateDraft}
-          principalItemId={variant.itemId}
+          principalVariant={variant}
         />
       </QueryParamsProvider>
     </Modal>
@@ -77,11 +77,11 @@ export const BundledItemModal = ({
 
 const BundledItemForm = ({
   draft,
-  principalItemId,
+  principalVariant,
   updateDraft,
 }: {
   draft: DraftBundle;
-  principalItemId: string;
+  principalVariant: ItemVariantFragment;
   updateDraft: (update: Partial<DraftBundle>) => void;
 }) => {
   const t = useTranslation();
@@ -99,7 +99,7 @@ const BundledItemForm = ({
                 openOnFocus={!draft.itemId}
                 onChange={item => updateDraft({ itemId: item?.id })}
                 currentItemId={draft.itemId}
-                extraFilter={item => item.id !== principalItemId}
+                extraFilter={item => item.id !== principalVariant.itemId}
               />
             </Box>
           }
@@ -119,8 +119,13 @@ const BundledItemForm = ({
                     }
                     itemId={draft.itemId}
                     selectedId={draft.variantId}
-                    extraFilter={variant =>
-                      variant.bundledItemVariants.length === 0
+                    getOptionDisabled={variant =>
+                      // Disable variants that already have variants bundled to them
+                      variant.bundledItemVariants.length > 0 ||
+                      // and variants that we have already bundled to this variant
+                      principalVariant.bundledItemVariants.some(
+                        v => v.bundledItemVariant?.id === variant.id
+                      )
                     }
                   />
                 </Box>
