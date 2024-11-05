@@ -119,5 +119,10 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
 };
 
 function getIsComplete(draft: ItemVariantFragment) {
-  return !!draft.name;
+  return (
+    !!draft.name &&
+    draft.packagingVariants.every(
+      pv => pv.packSize !== 0 && pv.volumePerUnit !== 0
+    )
+  );
 }
