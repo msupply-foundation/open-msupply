@@ -37,7 +37,7 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
       : '100%';
 
   return (
-    <Box sx={{ height: 400, width: 500 }}>
+    <Box sx={{ minHeight: 200, maxHeight: 400, width: 400 }}>
       <Box display="flex" flexDirection="column" paddingTop={2} paddingLeft={4}>
         <Box display="flex">
           <Typography fontSize={12} fontWeight={700}>
