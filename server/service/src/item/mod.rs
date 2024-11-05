@@ -1,6 +1,11 @@
+pub mod bundled_item;
 pub mod item;
 pub mod item_variant;
 pub mod packaging_variant;
+use bundled_item::{
+    delete_bundled_item, get_bundled_items, upsert_bundled_item, DeleteBundledItem,
+    DeleteBundledItemError, UpsertBundledItem, UpsertBundledItemError,
+};
 pub use item::*;
 use item_variant::{
     delete_item_variant, get_item_variants, upsert_item_variant, DeleteItemVariant,
@@ -13,6 +18,8 @@ use packaging_variant::{
 };
 use repository::{
     item_variant::{
+        bundled_item::BundledItemFilter,
+        bundled_item_row::BundledItemRow,
         item_variant::{ItemVariantFilter, ItemVariantSort},
         item_variant_row::ItemVariantRow,
         packaging_variant::{PackagingVariantFilter, PackagingVariantSort},
@@ -74,6 +81,31 @@ pub trait ItemServiceTrait: Sync + Send {
         input: DeletePackagingVariant,
     ) -> Result<String, DeletePackagingVariantError> {
         delete_packaging_variant(ctx, input)
+    }
+
+    fn get_bundled_items(
+        &self,
+        ctx: &ServiceContext,
+        pagination: Option<PaginationOption>,
+        filter: Option<BundledItemFilter>,
+    ) -> Result<ListResult<BundledItemRow>, ListError> {
+        get_bundled_items(&ctx.connection, pagination, filter)
+    }
+
+    fn upsert_bundled_item(
+        &self,
+        ctx: &ServiceContext,
+        input: UpsertBundledItem,
+    ) -> Result<BundledItemRow, UpsertBundledItemError> {
+        upsert_bundled_item(ctx, input)
+    }
+
+    fn delete_bundled_item(
+        &self,
+        ctx: &ServiceContext,
+        input: DeleteBundledItem,
+    ) -> Result<String, DeleteBundledItemError> {
+        delete_bundled_item(ctx, input)
     }
 }
 

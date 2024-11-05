@@ -230,6 +230,10 @@ impl RequisitionLineNode {
         Ok(result_option.map(RequisitionLineNode::from_domain))
     }
 
+    pub async fn average_monthly_consumption(&self) -> &f64 {
+        &self.row().average_monthly_consumption
+    }
+
     // Manual requisition fields
     pub async fn initial_stock_on_hand_units(&self) -> &f64 {
         &self.row().initial_stock_on_hand_units
@@ -261,10 +265,6 @@ impl RequisitionLineNode {
 
     pub async fn option_id(&self) -> &Option<String> {
         &self.row().option_id
-    }
-
-    pub async fn average_monthly_consumption(&self) -> &f64 {
-        &self.row().average_monthly_consumption
     }
 
     pub async fn reason(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
