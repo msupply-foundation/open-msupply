@@ -72,7 +72,7 @@ fn validate(
     connection: &StorageConnection,
     input: &UpsertPackagingVariant,
 ) -> Result<(), UpsertPackagingVariantError> {
-    if !check_item_variant_exists(connection, &input.item_variant_id)? {
+    if check_item_variant_exists(connection, &input.item_variant_id)?.is_none() {
         return Err(UpsertPackagingVariantError::ItemVariantDoesNotExist);
     }
 
