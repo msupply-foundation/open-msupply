@@ -241,6 +241,8 @@
   "error.failed-to-save-item-variant": "Failed to save item variant",
   "error.failed-to-save-service-charges": "Failed to save service charges",
   "error.failed-to-save-vaccination": "Failed to save vaccination!",
+  "error.failed-to-save-item-variant": "Failed to save item variant",
+  "error.duplicate-item-variant-name": "Item variant with the same name already exists for this item",
   "error.failed-to-save-vaccine-course": "Failed to save vaccine course",
   "error.fetch-notifications": "Unable to display cold chain notifications",
   "error.field-must-be-specified": "{{field}} must be specified",
