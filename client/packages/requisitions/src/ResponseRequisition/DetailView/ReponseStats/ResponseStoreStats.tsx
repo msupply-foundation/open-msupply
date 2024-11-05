@@ -118,7 +118,11 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
                         minHeight: 10,
                       }}
                     />
-                    <Typography fontSize={12} style={{ textAlign: 'start' }}>
+                    <Typography
+                      width={150}
+                      fontSize={12}
+                      style={{ textAlign: 'start' }}
+                    >
                       {t('label.stock-on-hand')}
                     </Typography>
                     <Typography fontWeight={800} fontSize={12}>
@@ -137,7 +141,11 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
                         minHeight: 10,
                       }}
                     />
-                    <Typography fontSize={12} style={{ textAlign: 'start' }}>
+                    <Typography
+                      width={150}
+                      fontSize={12}
+                      style={{ textAlign: 'start' }}
+                    >
                       {t('label.incoming-stock')}
                     </Typography>
                     <Typography fontWeight={800} fontSize={12}>
@@ -156,7 +164,11 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
                         minHeight: 10,
                       }}
                     />
-                    <Typography fontSize={12} style={{ textAlign: 'start' }}>
+                    <Typography
+                      width={150}
+                      fontSize={12}
+                      style={{ textAlign: 'start' }}
+                    >
                       {t('label.stock-on-order')}
                     </Typography>
                     <Typography fontWeight={800} fontSize={12}>
@@ -215,7 +227,11 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
                           minHeight: 10,
                         }}
                       />
-                      <Typography fontSize={12} style={{ textAlign: 'start' }}>
+                      <Typography
+                        width={150}
+                        fontSize={12}
+                        style={{ textAlign: 'start' }}
+                      >
                         {t('label.requested')}
                       </Typography>
                       <Typography fontWeight={800} fontSize={12}>
@@ -234,7 +250,11 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
                           minHeight: 10,
                         }}
                       />
-                      <Typography fontSize={12} style={{ textAlign: 'start' }}>
+                      <Typography
+                        width={150}
+                        fontSize={12}
+                        style={{ textAlign: 'start' }}
+                      >
                         {t('label.other-requested-quantity')}
                       </Typography>
                       <Typography fontWeight={800} fontSize={12}>
