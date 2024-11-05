@@ -49,6 +49,7 @@ export const ItemPackagingVariantsTable = ({
       Cell: update ? VolumeInputCell : TooltipTextCell,
       label: 'label.volume-per-unit',
       setter: updatePackaging,
+      width: 150,
     },
   ]);
 
