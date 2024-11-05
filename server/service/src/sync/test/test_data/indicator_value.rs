@@ -1,4 +1,4 @@
-use repository::IndicatorValueRow;
+use repository::{IndicatorValueRow, IndicatorValueRowDelete};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -59,4 +59,17 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         },
     ));
     data
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    test_pull_upsert_records()
+        .into_iter()
+        .map(|r| {
+            TestSyncIncomingRecord::new_pull_delete(
+                &r.sync_buffer_row.table_name,
+                &r.sync_buffer_row.record_id,
+                IndicatorValueRowDelete(r.sync_buffer_row.record_id.clone()),
+            )
+        })
+        .collect()
 }
