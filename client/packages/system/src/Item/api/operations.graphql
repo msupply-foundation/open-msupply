@@ -307,6 +307,10 @@ fragment ItemVariantOption on ItemVariantNode {
   __typename
   id
   label: name
+  # To determine if the variant already has other variants bundled to it
+  bundledItemVariants {
+    id
+  }
 }
 
 query itemVariants($storeId: String!, $itemId: String!) {

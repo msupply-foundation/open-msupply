@@ -86,7 +86,7 @@ export type ItemByIdQueryVariables = Types.Exact<{
 
 export type ItemByIdQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: string, defaultPackSize: number, doses: number, isVaccine: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength?: string | null, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number }, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null, doses: number } }> }, variants: Array<{ __typename: 'ItemVariantNode', id: string, name: string, dosesPerUnit?: number | null, itemId: string, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, minTemperature: number, maxTemperature: number } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }>, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }>, bundlesWith: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }> }> }> } };
 
-export type ItemVariantOptionFragment = { __typename: 'ItemVariantNode', id: string, label: string };
+export type ItemVariantOptionFragment = { __typename: 'ItemVariantNode', id: string, label: string, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string }> };
 
 export type ItemVariantsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -94,7 +94,7 @@ export type ItemVariantsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemVariantsQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', nodes: Array<{ __typename: 'ItemNode', variants: Array<{ __typename: 'ItemVariantNode', id: string, label: string }> }> } };
+export type ItemVariantsQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', nodes: Array<{ __typename: 'ItemNode', variants: Array<{ __typename: 'ItemVariantNode', id: string, label: string, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string }> }> }> } };
 
 export type GetHistoricalStockLinesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -349,6 +349,9 @@ export const ItemVariantOptionFragmentDoc = gql`
   __typename
   id
   label: name
+  bundledItemVariants {
+    id
+  }
 }
     `;
 export const ItemsWithStockLinesDocument = gql`

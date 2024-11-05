@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Autocomplete, useTranslation } from '@openmsupply-client/common';
-import { useItemVariants } from '../../api';
+import { ItemVariantOptionFragment, useItemVariants } from '../../api';
 
 interface ItemVariantSearchInputProps {
   itemId: string;
@@ -8,6 +8,7 @@ interface ItemVariantSearchInputProps {
   onChange: (variantId: string | null) => void;
   disabled?: boolean;
   width?: number | string;
+  extraFilter?: (variant: ItemVariantOptionFragment) => boolean;
 }
 
 export const ItemVariantSearchInput = ({
@@ -16,9 +17,16 @@ export const ItemVariantSearchInput = ({
   onChange,
   disabled,
   itemId,
+  extraFilter,
 }: ItemVariantSearchInputProps) => {
   const t = useTranslation();
   const { data, isLoading } = useItemVariants(itemId);
+
+  const options = useMemo(
+    () => (extraFilter ? (data ?? []).filter(extraFilter) : (data ?? [])),
+
+    [data]
+  );
 
   if (!data) return null;
 
@@ -32,7 +40,7 @@ export const ItemVariantSearchInput = ({
       value={selected ?? null}
       loading={isLoading}
       onChange={(_, option) => onChange(option?.id ?? null)}
-      options={data}
+      options={options}
       noOptionsText={t('messages.no-item-variants')}
       isOptionEqualToValue={(option, value) => option.id === value?.id}
       clearable
