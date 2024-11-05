@@ -12,6 +12,7 @@ import {
   useEditModal,
   IconButton,
   DeleteIcon,
+  Typography,
 } from '@openmsupply-client/common';
 import {
   BundledItemFragment,
@@ -21,16 +22,59 @@ import {
 import { BundledItemModal } from './BundledItemModal';
 
 export const BundledItemVariants = ({
-  data,
   variant,
 }: {
-  data: BundledItemFragment[];
   variant: ItemVariantFragment;
 }) => {
   const t = useTranslation();
 
   const { isOpen, onClose, onOpen, entity } =
     useEditModal<BundledItemFragment>();
+
+  const isBundledOnOtherVariants = variant.bundlesWith.length > 0;
+
+  return (
+    <>
+      {isOpen && (
+        <BundledItemModal onClose={onClose} bundle={entity} variant={variant} />
+      )}
+      {!isBundledOnOtherVariants && (
+        <BundledVariants variant={variant} onOpen={onOpen} />
+      )}
+      <FlatButton
+        disabled={isBundledOnOtherVariants}
+        label={t('label.add-bundled-item')}
+        onClick={() => onOpen()}
+        startIcon={<PlusCircleIcon />}
+        color="primary"
+      />
+
+      {isBundledOnOtherVariants && (
+        <>
+          <Typography
+            variant="caption"
+            fontStyle="italic"
+            color="textSecondary"
+            marginBottom={2}
+            display="block"
+          >
+            {t('messages.cannot-bundle')}
+          </Typography>
+          <BundledOn variant={variant} />
+        </>
+      )}
+    </>
+  );
+};
+
+const BundledVariants = ({
+  variant,
+  onOpen,
+}: {
+  variant: ItemVariantFragment;
+  onOpen: (row?: BundledItemFragment) => void;
+}) => {
+  const t = useTranslation();
 
   const deleteBundledItem = useDeleteBundledItem({ itemId: variant.itemId });
 
@@ -66,22 +110,47 @@ export const BundledItemVariants = ({
 
   return (
     <TableProvider createStore={createTableStore}>
-      {isOpen && (
-        <BundledItemModal onClose={onClose} bundle={entity} variant={variant} />
-      )}
+      <Typography fontWeight="bold">{t('title.bundled-with')}</Typography>
       <DataTable
         id="bundled-item-variants"
-        data={data}
+        data={variant.bundledItemVariants}
         columns={columns}
         onRowClick={row => onOpen(row)}
         noDataMessage={t('messages.no-bundled-items')}
         dense
       />
-      <FlatButton
-        label={t('label.add-bundled-item')}
-        onClick={() => onOpen()}
-        startIcon={<PlusCircleIcon />}
-        color="primary"
+    </TableProvider>
+  );
+};
+
+const BundledOn = ({ variant }: { variant: ItemVariantFragment }) => {
+  const t = useTranslation();
+
+  const columns = useColumns<BundledItemFragment>([
+    {
+      key: 'name',
+      Cell: TooltipTextCell,
+      label: 'label.item-variant',
+      accessor: ({ rowData }) =>
+        `${rowData.principalItemVariant?.itemName} - ${rowData.principalItemVariant?.name}`,
+    },
+    {
+      key: 'ratio',
+      Cell: TooltipTextCell,
+      label: 'label.ratio',
+      description: 'description.bundled-item-ratio',
+      accessor: ({ rowData }) => 1 / rowData.ratio,
+    },
+  ]);
+
+  return (
+    <TableProvider createStore={createTableStore}>
+      <Typography fontWeight="bold">{t('title.bundled-on')}</Typography>
+      <DataTable
+        id="bundled-on"
+        data={variant.bundlesWith}
+        columns={columns}
+        dense
       />
     </TableProvider>
   );

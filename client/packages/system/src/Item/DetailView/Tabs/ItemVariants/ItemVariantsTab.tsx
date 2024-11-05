@@ -78,7 +78,7 @@ const ItemVariant = ({
   const confirmAndDelete = useDeleteItemVariant({ itemId });
 
   return (
-    <Box maxWidth="1000px" margin="25px auto 75px">
+    <Box maxWidth="1000px" margin="25px auto" paddingBottom={6}>
       <Box display="flex" justifyContent="space-between" alignItems="end">
         <Typography variant="h6" fontWeight="bold" color="black">
           {variant.name}
@@ -155,11 +155,7 @@ const ItemVariant = ({
           <ItemPackagingVariantsTable data={variant.packagingVariants} />
         </Box>
       </Box>
-      <Typography fontWeight="bold">{t('title.bundled-with')}</Typography>
-      <BundledItemVariants
-        data={variant.bundledItemVariants}
-        variant={variant}
-      />
+      <BundledItemVariants variant={variant} />
     </Box>
   );
 };
