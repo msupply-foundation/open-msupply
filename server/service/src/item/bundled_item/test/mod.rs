@@ -1,9 +1,7 @@
 #[cfg(test)]
 mod query {
     use repository::item_variant::bundled_item::BundledItemFilter;
-    use repository::mock::{
-        mock_item_a, mock_item_a_variant_1, mock_item_b_variant_1, MockDataInserts,
-    };
+    use repository::mock::{mock_item_a_variant_1, mock_item_b_variant_1, MockDataInserts};
     use repository::test_db::setup_all;
     use repository::EqualFilter;
     use util::uuid::uuid;
@@ -58,8 +56,8 @@ mod query {
                 &context,
                 UpsertBundledItem {
                     id: test_bundled_item_record_id.to_string(),
-                    principal_item_variant_id: mock_item_a().id,
-                    bundled_item_variant_id: mock_item_a().id,
+                    principal_item_variant_id: mock_item_a_variant_1().id,
+                    bundled_item_variant_id: mock_item_b_variant_1().id,
                     ratio: 2.0,
                 },
             )
@@ -114,5 +112,9 @@ mod query {
         // Check that the two item variants are not the same
 
         // Check that the two item variants are not from the same item (that would be bad)
+
+        // Can't bundle the same 2 variants multiple times (otherwise could configure same bundle with different ratios, which one should we pick?)
+
+        // Prevent nested bundling - check the principal variant isn't the bundled variant in another bundle (and I guess vice versa?)
     }
 }
