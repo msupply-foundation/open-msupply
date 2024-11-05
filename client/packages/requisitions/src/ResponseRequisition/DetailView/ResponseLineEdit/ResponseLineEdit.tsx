@@ -12,7 +12,6 @@ import {
   ReasonOptionNodeType,
 } from '@openmsupply-client/common';
 import { Footer } from './Footer';
-
 const INPUT_WIDTH = 100;
 const LABEL_WIDTH = '150px';
 
@@ -26,6 +25,7 @@ interface ResponseLineEditProps {
   next: ItemRowFragment | null;
   hasPrevious: boolean;
   previous: ItemRowFragment | null;
+  isProgram: boolean;
 }
 
 export const ResponseLineEdit = ({
@@ -37,6 +37,7 @@ export const ResponseLineEdit = ({
   next,
   hasPrevious,
   previous,
+  isProgram,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
 
@@ -57,19 +58,35 @@ export const ResponseLineEdit = ({
       <Box display="flex" justifyContent="space-between">
         <Box paddingLeft={4} paddingRight={7}>
           {/* Left column content */}
-          <InputWithLabelRow
-            Input={
-              <NumericTextInput
-                width={INPUT_WIDTH}
-                value={draft?.initialStockOnHandUnits}
-                onChange={value => update({ initialStockOnHandUnits: value })}
-                onBlur={save}
-              />
-            }
-            labelWidth={LABEL_WIDTH}
-            label={t('label.initial-stock-on-hand')}
-            sx={{ marginBottom: 1 }}
-          />
+          {!isProgram ? (
+            <InputWithLabelRow
+              Input={
+                <NumericTextInput
+                  width={INPUT_WIDTH}
+                  value={draft?.availableStockOnHand}
+                  onChange={value => update({ availableStockOnHand: value })}
+                  onBlur={save}
+                />
+              }
+              labelWidth={LABEL_WIDTH}
+              label={t('label.stock-on-hand')}
+              sx={{ marginBottom: 1 }}
+            />
+          ) : (
+            <InputWithLabelRow
+              Input={
+                <NumericTextInput
+                  width={INPUT_WIDTH}
+                  value={draft?.initialStockOnHandUnits}
+                  onChange={value => update({ initialStockOnHandUnits: value })}
+                  onBlur={save}
+                />
+              }
+              labelWidth={LABEL_WIDTH}
+              label={t('label.initial-stock-on-hand')}
+              sx={{ marginBottom: 1 }}
+            />
+          )}
           <InputWithLabelRow
             Input={
               <NumericTextInput
@@ -250,6 +267,7 @@ export const ResponseLineEdit = ({
             label={t('label.supply-quantity')}
             sx={{ marginBottom: 1 }}
           />
+
           <InputWithLabelRow
             Input={
               <ReasonOptionsSearchInput

@@ -89,6 +89,7 @@ export const ResponseLineEditPage = () => {
               next={next}
               hasPrevious={hasPrevious}
               previous={previous}
+              isProgram={!!data?.programName}
             />
           </>
         }
