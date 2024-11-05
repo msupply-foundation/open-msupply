@@ -189,83 +189,82 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
           paddingBottom: 2,
         }}
       >
-        {!!requestedQuantity ||
-          (!!otherRequestedQuantity && (
-            <>
-              <Box>
-                <Typography fontSize={12} style={{ textAlign: 'start' }}>
-                  {t('label.requested')}
-                </Typography>
+        {(!!requestedQuantity || !!otherRequestedQuantity) && (
+          <>
+            <Box>
+              <Typography fontSize={12} style={{ textAlign: 'start' }}>
+                {t('label.requested')}
+              </Typography>
+            </Box>
+            <Box
+              display="flex"
+              alignItems="flex-start"
+              flexDirection="column"
+              width={requestedPercent}
+            >
+              <Box display="flex" width="100%">
+                <NewValueBar
+                  value={requestedQuantity}
+                  total={totalRequested}
+                  colour="primary.main"
+                />
+                <NewValueBar
+                  value={otherRequestedQuantity}
+                  total={totalRequested}
+                  colour="primary.light"
+                />
               </Box>
-              <Box
-                display="flex"
-                alignItems="flex-start"
-                flexDirection="column"
-                width={requestedPercent}
-              >
-                <Box display="flex" width="100%">
-                  <NewValueBar
-                    value={requestedQuantity}
-                    total={totalRequested}
-                    colour="primary.main"
-                  />
-                  <NewValueBar
-                    value={otherRequestedQuantity}
-                    total={totalRequested}
-                    colour="primary.light"
-                  />
-                </Box>
-                <Box paddingTop={1}>
-                  {!!requestedQuantity && (
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Box
-                        sx={{
-                          backgroundColor: 'primary.main',
-                          height: 10,
-                          width: 10,
-                          minWidth: 10,
-                          minHeight: 10,
-                        }}
-                      />
-                      <Typography
-                        width={150}
-                        fontSize={12}
-                        style={{ textAlign: 'start' }}
-                      >
-                        {t('label.requested')}
-                      </Typography>
-                      <Typography fontWeight={800} fontSize={12}>
-                        {requestedQuantity}
-                      </Typography>
-                    </Box>
-                  )}
-                  {!!otherRequestedQuantity && (
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Box
-                        sx={{
-                          backgroundColor: 'primary.light',
-                          height: 10,
-                          width: 10,
-                          minWidth: 10,
-                          minHeight: 10,
-                        }}
-                      />
-                      <Typography
-                        width={150}
-                        fontSize={12}
-                        style={{ textAlign: 'start' }}
-                      >
-                        {t('label.other-requested-quantity')}
-                      </Typography>
-                      <Typography fontWeight={800} fontSize={12}>
-                        {otherRequestedQuantity}
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
+              <Box paddingTop={1}>
+                {!!requestedQuantity && (
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Box
+                      sx={{
+                        backgroundColor: 'primary.main',
+                        height: 10,
+                        width: 10,
+                        minWidth: 10,
+                        minHeight: 10,
+                      }}
+                    />
+                    <Typography
+                      width={150}
+                      fontSize={12}
+                      style={{ textAlign: 'start' }}
+                    >
+                      {t('label.requested')}
+                    </Typography>
+                    <Typography fontWeight={800} fontSize={12}>
+                      {requestedQuantity}
+                    </Typography>
+                  </Box>
+                )}
+                {!!otherRequestedQuantity && (
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Box
+                      sx={{
+                        backgroundColor: 'primary.light',
+                        height: 10,
+                        width: 10,
+                        minWidth: 10,
+                        minHeight: 10,
+                      }}
+                    />
+                    <Typography
+                      width={150}
+                      fontSize={12}
+                      style={{ textAlign: 'start' }}
+                    >
+                      {t('label.other-requested-quantity')}
+                    </Typography>
+                    <Typography fontWeight={800} fontSize={12}>
+                      {otherRequestedQuantity}
+                    </Typography>
+                  </Box>
+                )}
               </Box>
-            </>
-          ))}
+            </Box>
+          </>
+        )}
       </Box>
     </Box>
   );
