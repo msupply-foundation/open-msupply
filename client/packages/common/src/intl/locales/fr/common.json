@@ -488,7 +488,7 @@
   "label.age-months-and_other": "{{count}} mois, ",
   "label.age-months-count_one": "{{count}} mois",
   "label.age-months-count_other": "{{count}} mois",
-  "label.all-requested-quantity": "Autres",
+  "label.other-requested-quantity": "Autres",
   "label.allocated": "Alloué(e)",
   "label.already-issued": "Livrés",
   "label.amc": "CMM",
