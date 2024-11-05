@@ -80,15 +80,12 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
-    async fn test_program_indicator_translation() {
+    async fn test_indicator_value_translation() {
         use crate::sync::test::test_data::indicator_value;
         let translator = IndicatorValue;
 
-        let (_, connection, _, _) = setup_all(
-            "test_program_indicator_translation",
-            MockDataInserts::none(),
-        )
-        .await;
+        let (_, connection, _, _) =
+            setup_all("test_indicator_value_translation", MockDataInserts::none()).await;
 
         indicator_value::test_pull_upsert_records()
             .into_iter()
