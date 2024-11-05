@@ -230,10 +230,6 @@ impl RequisitionLineNode {
         Ok(result_option.map(RequisitionLineNode::from_domain))
     }
 
-    pub async fn available_stock_on_hand(&self) -> &f64 {
-        &self.row().available_stock_on_hand
-    }
-
     pub async fn average_monthly_consumption(&self) -> &f64 {
         &self.row().average_monthly_consumption
     }
