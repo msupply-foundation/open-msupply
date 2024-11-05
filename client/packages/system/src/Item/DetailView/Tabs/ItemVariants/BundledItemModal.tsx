@@ -90,7 +90,7 @@ const BundledItemForm = ({
             <Box width="100%">
               <StockItemSearchInput
                 autoFocus={!draft.itemId}
-                openOnFocus
+                openOnFocus={!draft.itemId}
                 onChange={item => updateDraft({ itemId: item?.id })}
                 currentItemId={draft.itemId}
               />
