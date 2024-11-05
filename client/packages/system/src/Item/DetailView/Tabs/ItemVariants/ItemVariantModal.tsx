@@ -35,7 +35,7 @@ export const ItemVariantModal = ({
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen: true, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(500);
-  const { success } = useNotification();
+  const { success, error } = useNotification();
 
   const { draft, isComplete, updateDraft, updatePackagingVariant, save } =
     useItemVariant({
@@ -52,9 +52,26 @@ export const ItemVariantModal = ({
           disabled={!isComplete}
           variant="ok"
           onClick={() => {
-            save(draft);
-            success(t('messages.item-variant-saved'))();
-            onClose();
+            save(draft)
+              .then(() => {
+                success(t('messages.item-variant-saved'))();
+                onClose();
+              })
+              .catch(e => {
+                // We create the same error message as we get from the default handler, but prevent duplicates
+                // This avoids the same error message being displayed multiple times, and the only appears once bug...
+                // https://github.com/msupply-foundation/open-msupply/issues/3984
+                if (
+                  e instanceof Error &&
+                  e.message.includes(t('error.duplicate-item-variant-name'))
+                ) {
+                  error(t('error.duplicate-item-variant-name'), {
+                    preventDuplicate: true,
+                  })();
+                  return;
+                }
+                error(t('error.failed-to-save-item-variant'))();
+              });
           }}
         />
       }
