@@ -405,6 +405,7 @@ export const ResponseLineEdit = ({
                 onBlur={save}
               />
             }
+            sx={{ width: 275 }}
             labelWidth={'75px'}
             label={t('label.comment')}
           />
