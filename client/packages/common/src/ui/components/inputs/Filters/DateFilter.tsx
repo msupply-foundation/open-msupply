@@ -72,7 +72,7 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
 
 const getDateFromUrl = (query: string, range: RangeOption | undefined) => {
   const value = typeof query !== 'object' || !range ? query : query[range];
-  return DateUtils.getDateOrNull(value);
+  return DateUtils.getNaiveDate(value);
 };
 
 const getRangeBoundary = (
@@ -80,16 +80,17 @@ const getRangeBoundary = (
   range: RangeOption | undefined,
   limit: Date | string | undefined
 ) => {
-  const limitDate = DateUtils.getDateOrNull(limit);
+  const limitDate = DateUtils.getNaiveDate(limit);
   if (typeof query !== 'object' || !range) return limitDate || undefined;
   const { from, to } = query as RangeObject<string>;
 
   if (range === 'from')
     return to
-      ? DateUtils.minDate(DateUtils.getDateOrNull(to), limitDate) ?? undefined
-      : limitDate ?? undefined;
+      ? (DateUtils.minDate(DateUtils.getNaiveDate(to), limitDate) ?? undefined)
+      : (limitDate ?? undefined);
   else
     return from
-      ? DateUtils.maxDate(DateUtils.getDateOrNull(from), limitDate) ?? undefined
-      : limitDate ?? undefined;
+      ? (DateUtils.maxDate(DateUtils.getNaiveDate(from), limitDate) ??
+          undefined)
+      : (limitDate ?? undefined);
 };
