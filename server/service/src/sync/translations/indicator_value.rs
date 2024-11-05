@@ -30,7 +30,7 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 pub(super) struct IndicatorValue;
 impl SyncTranslation for IndicatorValue {
     fn table_name(&self) -> &str {
-        "indicator_attribute"
+        "indicator_value"
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {

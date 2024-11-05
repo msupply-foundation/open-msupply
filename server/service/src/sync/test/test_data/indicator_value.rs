@@ -2,7 +2,7 @@ use repository::{IndicatorValueRow, IndicatorValueRowDelete};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
-const TABLE_NAME: &str = "indicator_attribute";
+const TABLE_NAME: &str = "indicator_value";
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     let mut data = vec![];
