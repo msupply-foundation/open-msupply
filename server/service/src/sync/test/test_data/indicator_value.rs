@@ -1,6 +1,10 @@
 use repository::{IndicatorValueRow, IndicatorValueRowDelete};
+use serde_json::{self, json};
 
-use crate::sync::test::TestSyncIncomingRecord;
+use crate::sync::{
+    test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
+    translations::indicator_value::LegacyIndicatorValue,
+};
 
 const TABLE_NAME: &str = "indicator_value";
 
@@ -70,6 +74,19 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
                 &r.sync_buffer_row.record_id,
                 IndicatorValueRowDelete(r.sync_buffer_row.record_id.clone()),
             )
+        })
+        .collect()
+}
+
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
+    test_pull_upsert_records()
+        .iter()
+        .map(|r| TestSyncOutgoingRecord {
+            record_id: r.sync_buffer_row.record_id.clone(),
+            table_name: r.sync_buffer_row.table_name.clone(),
+            push_data: json!(
+                serde_json::from_str::<LegacyIndicatorValue>(&r.sync_buffer_row.data).unwrap()
+            ),
         })
         .collect()
 }

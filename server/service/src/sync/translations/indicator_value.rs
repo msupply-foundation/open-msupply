@@ -1,14 +1,14 @@
-use anyhow::anyhow;
 use repository::{
-    EqualFilter, IndicatorValueRow, IndicatorValueRowDelete, StorageConnection, StoreFilter,
-    StoreRepository, SyncBufferRow,
+    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
+    ChangelogRow, ChangelogTableName, EqualFilter, IndicatorValueRow, IndicatorValueRowDelete,
+    StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
 
 use crate::sync::translations::program_indicator::ProgramIndicatorTranslation;
 
-use super::{PullTranslateResult, SyncTranslation};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyIndicatorValue {
@@ -41,9 +41,13 @@ impl SyncTranslation for IndicatorValue {
         vec![ProgramIndicatorTranslation.table_name()]
     }
 
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::IndicatorValue)
+    }
+
     fn try_translate_from_upsert_sync_record(
         &self,
-        conn: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyIndicatorValue {
@@ -55,10 +59,9 @@ impl SyncTranslation for IndicatorValue {
             supplier_store_id,
             value,
         } = serde_json::from_str::<LegacyIndicatorValue>(&sync_record.data)?;
-        let store_repo = StoreRepository::new(conn);
-        let customer_name_link_id = store_repo
+        let customer_name_link_id = StoreRepository::new(connection)
             .query_one(StoreFilter::new().id(EqualFilter::equal_to(&customer_store_id)))?
-            .ok_or(anyhow!(
+            .ok_or(anyhow::anyhow!(
                 "The store record for facility_ID/customer_store_id could not be found!"
             ))?
             .store_row
@@ -75,6 +78,54 @@ impl SyncTranslation for IndicatorValue {
         }))
     }
 
+    fn try_translate_to_upsert_sync_record(
+        &self,
+        connection: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Some(indicator_value) = IndicatorValueRepository::new(connection)
+            .query_by_filter(
+                IndicatorValueFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+            )?
+            .pop()
+        else {
+            return Err(anyhow::anyhow!("invoice_line row not found"));
+        };
+
+        let IndicatorValueRow {
+            id,
+            customer_name_link_id,
+            supplier_store_id,
+            period_id,
+            indicator_line_id,
+            indicator_column_id,
+            value,
+        } = indicator_value;
+
+        let customer_store_id = StoreRepository::new(connection)
+            .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&customer_name_link_id)))?
+            .ok_or(anyhow::anyhow!(
+                "The store record for facility_ID/customer_store_id could not be found!"
+            ))?
+            .store_row
+            .id;
+
+        let legacy_row = LegacyIndicatorValue {
+            id,
+            customer_store_id,
+            period_id,
+            indicator_column_id,
+            indicator_line_id,
+            supplier_store_id,
+            value,
+        };
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
+    }
+
     fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
@@ -84,6 +135,14 @@ impl SyncTranslation for IndicatorValue {
         Ok(PullTranslateResult::delete(IndicatorValueRowDelete(
             sync_record.record_id.clone(),
         )))
+    }
+
+    fn try_translate_to_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
 
@@ -109,6 +168,17 @@ mod tests {
                 assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
                 let translation_result = translator
                     .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                    .unwrap();
+
+                assert_eq!(translation_result, record.translated_record);
+            });
+
+        indicator_value::test_pull_delete_records()
+            .into_iter()
+            .for_each(|record| {
+                assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+                let translation_result = translator
+                    .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
                     .unwrap();
 
                 assert_eq!(translation_result, record.translated_record);

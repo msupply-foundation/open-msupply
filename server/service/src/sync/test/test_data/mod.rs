@@ -181,6 +181,7 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut stock_line::test_push_records());
     test_records.append(&mut stocktake_line::test_push_records());
     test_records.append(&mut stocktake::test_push_records());
+    test_records.append(&mut indicator_value::test_push_records());
     test_records.append(&mut invoice_line::test_push_records());
     test_records.append(&mut invoice::test_push_records());
     test_records.append(&mut activity_log::test_push_records());
