@@ -65,7 +65,11 @@ export const BundledItemModal = ({
       <QueryParamsProvider
         createStore={createQueryParamsStore({ initialSortBy: { key: 'name' } })}
       >
-        <BundledItemForm draft={draft} updateDraft={updateDraft} />
+        <BundledItemForm
+          draft={draft}
+          updateDraft={updateDraft}
+          principalItemId={variant.itemId}
+        />
       </QueryParamsProvider>
     </Modal>
   );
@@ -73,9 +77,11 @@ export const BundledItemModal = ({
 
 const BundledItemForm = ({
   draft,
+  principalItemId,
   updateDraft,
 }: {
   draft: DraftBundle;
+  principalItemId: string;
   updateDraft: (update: Partial<DraftBundle>) => void;
 }) => {
   const t = useTranslation();
@@ -93,6 +99,7 @@ const BundledItemForm = ({
                 openOnFocus={!draft.itemId}
                 onChange={item => updateDraft({ itemId: item?.id })}
                 currentItemId={draft.itemId}
+                extraFilter={item => item.id !== principalItemId}
               />
             </Box>
           }
@@ -112,6 +119,9 @@ const BundledItemForm = ({
                     }
                     itemId={draft.itemId}
                     selectedId={draft.variantId}
+                    extraFilter={variant =>
+                      variant.bundledItemVariants.length === 0
+                    }
                   />
                 </Box>
               }
