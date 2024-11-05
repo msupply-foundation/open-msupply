@@ -156,7 +156,10 @@ const ItemVariant = ({
         </Box>
       </Box>
       <Typography fontWeight="bold">{t('title.bundled-with')}</Typography>
-      <BundledItemVariants data={variant.bundledItemVariants} />
+      <BundledItemVariants
+        data={variant.bundledItemVariants}
+        variant={variant}
+      />
     </Box>
   );
 };

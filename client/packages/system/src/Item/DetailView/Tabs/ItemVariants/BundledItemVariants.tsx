@@ -11,12 +11,15 @@ import {
   PlusCircleIcon,
   useEditModal,
 } from '@openmsupply-client/common';
-import { BundledItemFragment } from '../../../api';
+import { BundledItemFragment, ItemVariantFragment } from '../../../api';
+import { BundledItemModal } from './BundledItemModal';
 
 export const BundledItemVariants = ({
   data,
+  variant,
 }: {
   data: BundledItemFragment[];
+  variant: ItemVariantFragment;
 }) => {
   const t = useTranslation();
 
@@ -37,10 +40,11 @@ export const BundledItemVariants = ({
     },
   ]);
 
-  console.log(entity);
-
   return (
     <TableProvider createStore={createTableStore}>
+      {isOpen && (
+        <BundledItemModal onClose={onClose} bundle={entity} variant={variant} />
+      )}
       <DataTable
         id="bundled-item-variants"
         data={data}
