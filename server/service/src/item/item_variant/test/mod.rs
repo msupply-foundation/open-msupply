@@ -6,7 +6,9 @@ mod query {
     use repository::{EqualFilter, StringFilter};
     use util::uuid::uuid;
 
-    use crate::item::item_variant::{DeleteItemVariant, UpsertItemVariantWithPackaging};
+    use crate::item::item_variant::{
+        DeleteItemVariant, UpsertItemVariantError, UpsertItemVariantWithPackaging,
+    };
     use crate::service_provider::ServiceProvider;
 
     #[actix_rt::test]
@@ -139,16 +141,89 @@ mod query {
 
     #[actix_rt::test]
     async fn validate_item_variant() {
-        // TODO validation tests
+        let (_, _, connection_manager, _) =
+            setup_all("validate_item_variant", MockDataInserts::none().items()).await;
 
-        // Test that the item variant name is set?
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.item_service;
+
+        let test_item_a_variant_id = "test_item_variant_id";
 
         // Test that we can't create a record with an item_id that doesn't exist
+        let result = service.upsert_item_variant(
+            &context,
+            UpsertItemVariantWithPackaging {
+                id: test_item_a_variant_id.to_string(),
+                item_id: uuid(),
+                name: "Variant 1".to_string(),
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(
+            result.unwrap_err(),
+            UpsertItemVariantError::ItemDoesNotExist
+        );
 
         // Test that we can't change the item_id on an existing record???
 
-        // Test that we can't create/update a record with an invalid cold_storage_id
+        // Create a new item variant for item_a
+        let _item_a_variant_a = service
+            .upsert_item_variant(
+                &context,
+                UpsertItemVariantWithPackaging {
+                    id: test_item_a_variant_id.to_string(),
+                    item_id: mock_item_a().id,
+                    name: "item_a_variant_a".to_string(),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
 
-        // Test name should be unique for an item?
+        // Try to change the item_id
+        let result = service.upsert_item_variant(
+            &context,
+            UpsertItemVariantWithPackaging {
+                id: test_item_a_variant_id.to_string(),
+                item_id: mock_item_b().id,
+                name: "Variant 1".to_string(),
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(result.unwrap_err(), UpsertItemVariantError::CantChangeItem);
+
+        // Test that we can't create/update a record with an invalid cold_storage_id
+        let result = service.upsert_item_variant(
+            &context,
+            UpsertItemVariantWithPackaging {
+                id: test_item_a_variant_id.to_string(),
+                item_id: mock_item_a().id,
+                name: "Variant 1".to_string(),
+                cold_storage_type_id: Some(uuid()),
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(
+            result.unwrap_err(),
+            UpsertItemVariantError::ColdStorageTypeDoesNotExist
+        );
+
+        // Test: name should be unique for an item
+
+        // Add another item variant for item_a with the same name
+        let result = service.upsert_item_variant(
+            &context,
+            UpsertItemVariantWithPackaging {
+                id: uuid(),
+                item_id: mock_item_a().id,
+                name: "item_a_variant_a".to_string(),
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(result.unwrap_err(), UpsertItemVariantError::DuplicateName);
     }
 }
