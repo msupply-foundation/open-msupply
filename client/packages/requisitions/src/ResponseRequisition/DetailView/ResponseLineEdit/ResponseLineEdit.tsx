@@ -10,6 +10,7 @@ import {
   Box,
   InputWithLabelRow,
   NumericTextInput,
+  NumUtils,
   Popover,
   ReasonOptionNodeType,
   useToggle,
@@ -17,6 +18,7 @@ import {
 import { Footer } from './Footer';
 import { ResponseStoreStats } from '../ReponseStats/ResponseStoreStats';
 import { useResponse } from '../../api';
+import { RequestStoreStats } from '../ReponseStats/RequestStoreStats';
 
 const INPUT_WIDTH = 100;
 const LABEL_WIDTH = '150px';
@@ -47,8 +49,11 @@ export const ResponseLineEdit = ({
 }: ResponseLineEditProps) => {
   const t = useTranslation();
   const { isOn: ourStats, toggle: toggleOurStats } = useToggle();
+  const { isOn: theirStats, toggle: toggleTheirStats } = useToggle();
   const { data } = useResponse.line.stats(draft?.id);
   const [ourStatsAnchorEl, setOurStatsAnchorEl] =
+    React.useState<null | HTMLElement>(null);
+  const [theirStatsAnchorEl, setTheirStatsAnchorEl] =
     React.useState<null | HTMLElement>(null);
 
   const incomingStock =
@@ -181,8 +186,9 @@ export const ResponseLineEdit = ({
             Input={
               <NumericTextInput
                 width={INPUT_WIDTH}
-                value={draft?.averageMonthlyConsumption}
+                value={NumUtils.round(draft?.averageMonthlyConsumption ?? 0, 2)}
                 onChange={value => update({ averageMonthlyConsumption: value })}
+                decimalLimit={2}
                 onBlur={save}
                 disabled={!!hasLinkedRequisition}
               />
@@ -206,19 +212,65 @@ export const ResponseLineEdit = ({
         </Box>
         <Box>
           {/* Right column content */}
-          <InputWithLabelRow
-            Input={
-              <NumericTextInput
-                width={INPUT_WIDTH}
-                value={draft?.requestedQuantity}
-                onChange={value => update({ requestedQuantity: value })}
-                disabled={!!hasLinkedRequisition}
-              />
-            }
-            labelWidth={LABEL_WIDTH}
-            label={t('label.requested-quantity')}
-            sx={{ marginBottom: 1 }}
-          />
+          <Box display="flex" flexDirection="row">
+            <InputWithLabelRow
+              Input={
+                <NumericTextInput
+                  width={INPUT_WIDTH}
+                  value={draft?.requestedQuantity}
+                  onChange={value => update({ requestedQuantity: value })}
+                  disabled={!!hasLinkedRequisition}
+                />
+              }
+              labelWidth={LABEL_WIDTH}
+              label={t('label.requested-quantity')}
+              sx={{ marginBottom: 1 }}
+            />
+            <Box
+              paddingLeft={1}
+              paddingTop={0.5}
+              onClick={e => {
+                toggleTheirStats();
+                setTheirStatsAnchorEl(e?.currentTarget);
+              }}
+            >
+              {hasLinkedRequisition && (
+                <>
+                  <BarIcon
+                    sx={{
+                      color: 'primary.main',
+                      backgroundColor: 'background.drawer',
+                      borderRadius: '30%',
+                      padding: '2px',
+                    }}
+                  />
+                  {theirStats && (
+                    <Popover
+                      anchorOrigin={{ vertical: 'center', horizontal: 'left' }}
+                      anchorEl={theirStatsAnchorEl}
+                      open={theirStats}
+                    >
+                      <RequestStoreStats
+                        item={draft?.item}
+                        maxMonthsOfStock={
+                          data?.requestStoreStats.maxMonthsOfStock || 0
+                        }
+                        suggestedQuantity={
+                          data?.requestStoreStats.suggestedQuantity || 0
+                        }
+                        availableStockOnHand={
+                          data?.requestStoreStats.stockOnHand || 0
+                        }
+                        averageMonthlyConsumption={
+                          data?.requestStoreStats.averageMonthlyConsumption || 0
+                        }
+                      />
+                    </Popover>
+                  )}
+                </>
+              )}
+            </Box>
+          </Box>
           <InputWithLabelRow
             Input={
               <NumericTextInput
