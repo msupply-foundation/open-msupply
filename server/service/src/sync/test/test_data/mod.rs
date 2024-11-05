@@ -16,6 +16,7 @@ pub(crate) mod cold_storage_type;
 pub(crate) mod currency;
 pub(crate) mod demographic;
 pub(crate) mod indicator_attribute;
+pub(crate) mod indicator_value;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
@@ -128,6 +129,7 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingR
     test_records.append(&mut name_store_join::test_pull_upsert_records());
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
     test_records.append(&mut currency::test_pull_upsert_records());
+    test_records.append(&mut indicator_value::test_pull_upsert_records());
 
     // Open mSupply central
     test_records.append(&mut rnr_form::test_pull_upsert_records());

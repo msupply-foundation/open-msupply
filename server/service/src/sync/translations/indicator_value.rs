@@ -83,7 +83,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_program_indicator_translation() {
-        use crate::sync::test::test_data::indicator_attribute;
+        use crate::sync::test::test_data::indicator_value;
         let translator = IndicatorValue;
 
         let (_, connection, _, _) = setup_all(
@@ -92,7 +92,7 @@ mod tests {
         )
         .await;
 
-        indicator_attribute::test_pull_upsert_records()
+        indicator_value::test_pull_upsert_records()
             .into_iter()
             .for_each(|record| {
                 assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
