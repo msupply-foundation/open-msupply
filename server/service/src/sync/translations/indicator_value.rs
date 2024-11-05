@@ -1,4 +1,8 @@
-use repository::{IndicatorValueRow, IndicatorValueRowDelete, StorageConnection, SyncBufferRow};
+use anyhow::anyhow;
+use repository::{
+    EqualFilter, IndicatorValueRow, IndicatorValueRowDelete, StorageConnection, StoreFilter,
+    StoreRepository, SyncBufferRow,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +15,7 @@ pub struct LegacyIndicatorValue {
     #[serde(rename = "ID")]
     id: String,
     #[serde(rename = "facility_ID")]
-    customer_name_link_id: String,
+    customer_store_id: String,
     #[serde(rename = "period_ID")]
     period_id: String,
     #[serde(rename = "column_ID")]
@@ -39,18 +43,27 @@ impl SyncTranslation for IndicatorValue {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        conn: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyIndicatorValue {
             id,
-            customer_name_link_id,
+            customer_store_id,
             period_id,
             indicator_column_id,
             indicator_line_id,
             supplier_store_id,
             value,
         } = serde_json::from_str::<LegacyIndicatorValue>(&sync_record.data)?;
+        let store_repo = StoreRepository::new(conn);
+        let customer_name_link_id = store_repo
+            .query_one(StoreFilter::new().id(EqualFilter::equal_to(&customer_store_id)))?
+            .ok_or(anyhow!(
+                "The store record for facility_ID/customer_store_id could not be found!"
+            ))?
+            .store_row
+            .name_link_id;
+
         Ok(PullTranslateResult::upsert(IndicatorValueRow {
             id,
             customer_name_link_id,
@@ -84,8 +97,11 @@ mod tests {
         use crate::sync::test::test_data::indicator_value;
         let translator = IndicatorValue;
 
-        let (_, connection, _, _) =
-            setup_all("test_indicator_value_translation", MockDataInserts::none()).await;
+        let (_, connection, _, _) = setup_all(
+            "test_indicator_value_translation",
+            MockDataInserts::none().stores(),
+        )
+        .await;
 
         indicator_value::test_pull_upsert_records()
             .into_iter()

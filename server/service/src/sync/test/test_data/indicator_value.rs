@@ -11,12 +11,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         "indicator_value_a",
         r#"{
           "ID": "indicator_value_a",
-          "facility_ID": "name_a",
+          "facility_ID": "store_a",
           "period_ID": "period_1",
           "column_ID": "indicator_column_a",
           "row_ID": "indicator_line_a",
           "value": "123",
-          "store_ID": "store_a"
+          "store_ID": "store_b"
         }"#,
     );
     data.push(TestSyncIncomingRecord::new_pull_upsert(
@@ -24,8 +24,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         INDICATOR_VALUE_A,
         IndicatorValueRow {
             id: "indicator_value_a".to_owned(),
-            customer_name_link_id: "name_a".to_owned(),
-            supplier_store_id: "store_a".to_owned(),
+            customer_name_link_id: "name_store_a".to_owned(),
+            supplier_store_id: "store_b".to_owned(),
             period_id: "period_1".to_owned(),
             indicator_line_id: "indicator_line_a".to_owned(),
             indicator_column_id: "indicator_column_a".to_owned(),
@@ -37,12 +37,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         "indicator_value_b",
         r#"{
           "ID": "indicator_value_b",
-          "facility_ID": "name_a",
+          "facility_ID": "store_a",
           "period_ID": "period_1",
           "column_ID": "indicator_column_b",
           "row_ID": "indicator_line_a",
           "value": "My life for Aiur",
-          "store_ID": "store_a"
+          "store_ID": "store_b"
         }"#,
     );
     data.push(TestSyncIncomingRecord::new_pull_upsert(
@@ -50,8 +50,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         INDICATOR_VALUE_B,
         IndicatorValueRow {
             id: "indicator_value_b".to_owned(),
-            customer_name_link_id: "name_a".to_owned(),
-            supplier_store_id: "store_a".to_owned(),
+            customer_name_link_id: "name_store_a".to_owned(),
+            supplier_store_id: "store_b".to_owned(),
             period_id: "period_1".to_owned(),
             indicator_line_id: "indicator_line_a".to_owned(),
             indicator_column_id: "indicator_column_b".to_owned(),
