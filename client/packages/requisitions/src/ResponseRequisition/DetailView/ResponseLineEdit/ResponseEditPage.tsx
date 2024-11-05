@@ -13,6 +13,7 @@ import { ListItems } from 'packages/system/src';
 import { ResponseLineEdit } from './ResponseLineEdit';
 import { AppRoute } from 'packages/config/src';
 import { useDraftRequisitionLine, usePreviousNextResponseLine } from './hooks';
+import { AppBarButtons } from './AppBarButtons';
 
 interface ResponseLineEditFormLayoutProps {
   Left: React.ReactElement;
@@ -63,37 +64,40 @@ export const ResponseLineEditPage = () => {
   if (!data || !currentItem) return <NothingHere />;
 
   return (
-    <DetailContainer>
-      <ResponseLineEditFormLayout
-        Left={
-          <>
-            <ListItems
-              currentItemId={itemId}
-              items={lines.map(l => l.item)}
-              route={RouteBuilder.create(AppRoute.Distribution)
-                .addPart(AppRoute.CustomerRequisition)
-                .addPart(String(data?.requisitionNumber))}
-              enteredLineIds={enteredLineIds}
-            />
-          </>
-        }
-        Right={
-          <>
-            <ResponseLineEdit
-              item={currentItem}
-              hasLinkedRequisition={!!data?.linkedRequisition}
-              draft={draft}
-              update={update}
-              save={save}
-              hasNext={hasNext}
-              next={next}
-              hasPrevious={hasPrevious}
-              previous={previous}
-              isProgram={!!data?.programName}
-            />
-          </>
-        }
-      />
-    </DetailContainer>
+    <>
+      <AppBarButtons requisitionNumber={data?.requisitionNumber} />
+      <DetailContainer>
+        <ResponseLineEditFormLayout
+          Left={
+            <>
+              <ListItems
+                currentItemId={itemId}
+                items={lines.map(l => l.item)}
+                route={RouteBuilder.create(AppRoute.Distribution)
+                  .addPart(AppRoute.CustomerRequisition)
+                  .addPart(String(data?.requisitionNumber))}
+                enteredLineIds={enteredLineIds}
+              />
+            </>
+          }
+          Right={
+            <>
+              <ResponseLineEdit
+                item={currentItem}
+                hasLinkedRequisition={!!data?.linkedRequisition}
+                draft={draft}
+                update={update}
+                save={save}
+                hasNext={hasNext}
+                next={next}
+                hasPrevious={hasPrevious}
+                previous={previous}
+                isProgram={!!data?.programName}
+              />
+            </>
+          }
+        />
+      </DetailContainer>
+    </>
   );
 };
