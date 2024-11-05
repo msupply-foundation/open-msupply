@@ -225,6 +225,7 @@
   "error.date_minDate": "Date value is too low",
   "error.dose-ages-out-of-order": "Each dose needs a higher minimum age than the previous dose",
   "error.duplicate-asset-number": "duplicate asset number in csv",
+  "error.duplicate-item-variant-name": "Item variant with the same name already exists for this item",
   "error.duplicated-field": "{{field}} already exists in the import file",
   "error.encounter-not-created": "Unable to create encounter",
   "error.encounter-not-found": "Encounter not found.",
