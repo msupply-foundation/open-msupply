@@ -99,6 +99,7 @@ fragment ItemVariant on ItemVariantNode {
   id
   name
   dosesPerUnit
+  itemId
   manufacturerId
   manufacturer(storeId: $storeId) {
     ...NameRow

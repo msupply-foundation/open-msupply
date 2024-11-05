@@ -144,7 +144,7 @@
   "description.already-issued": "Quantity already issued in shipments.",
   "description.average-monthly-consumption": "Average Monthly Consumption",
   "description.breach-type": "Ongoing breach type",
-  "description.bundle-ratio": "The number of units of the bundled item variant for every unit of this item variant",
+  "description.bundle-ratio": "The number of units of the bundled item for every unit of the base item",
   "description.counted-num-of-packs": "Counted # of Packs",
   "description.customer-reference": "Customer reference",
   "description.customer-soh": "Customer Stock on Hand",
