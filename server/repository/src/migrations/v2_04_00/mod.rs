@@ -1,5 +1,6 @@
 use super::{version::Version, Migration, MigrationFragment};
 
+mod add_bundled_item_table;
 mod add_cold_storage_type_table;
 mod add_expected_lifespan_to_assets;
 mod add_item_variant_id_to_stock_line_and_invoice_line;
@@ -36,6 +37,7 @@ impl Migration for V2_04_00 {
             Box::new(program_indicator_create_table::Migrate),
             Box::new(add_item_variant_id_to_stock_line_and_invoice_line::Migrate),
             Box::new(indicator_line_column_create_tables::Migrate),
+            Box::new(add_bundled_item_table::Migrate),
         ]
     }
 }
