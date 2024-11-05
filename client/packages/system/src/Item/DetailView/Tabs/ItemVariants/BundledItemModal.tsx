@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import {
   DialogButton,
@@ -13,17 +13,16 @@ import {
   useNotification,
   Typography,
 } from '@openmsupply-client/common';
-import { BundledItemFragment, ItemVariantFragment } from '../../../api';
+import {
+  BundledItemFragment,
+  DraftBundle,
+  ItemVariantFragment,
+  useUpsertBundledItem,
+} from '../../../api';
 import {
   ItemVariantSearchInput,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
-
-type DraftBundle = {
-  itemId: string;
-  variantId: string;
-  ratio: number;
-};
 
 export const BundledItemModal = ({
   bundle,
@@ -39,16 +38,10 @@ export const BundledItemModal = ({
   const height = useKeyboardHeightAdjustment(350);
   const { success } = useNotification();
 
-  const [draft, setDraft] = useState<DraftBundle>({
-    itemId: bundle?.bundledItemVariant?.itemId ?? '',
-    variantId: bundle?.bundledItemVariant?.id ?? '',
-    ratio: bundle?.ratio ?? 1,
+  const { draft, isComplete, updateDraft, save } = useUpsertBundledItem({
+    bundle,
+    principalVariant: variant,
   });
-
-  // const { draft, isComplete, updateDraft, updatePackagingVariant, save } =
-  //   useItemVariant({
-  //     variant: null,
-  //   });
 
   return (
     <Modal
@@ -56,10 +49,10 @@ export const BundledItemModal = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
         <DialogButton
-          // disabled={!isComplete}
+          disabled={!isComplete}
           variant="ok"
           onClick={() => {
-            // save(draft);
+            save();
             success(t('messages.item-variant-saved'))();
             onClose();
           }}
@@ -72,12 +65,7 @@ export const BundledItemModal = ({
       <QueryParamsProvider
         createStore={createQueryParamsStore({ initialSortBy: { key: 'name' } })}
       >
-        <BundledItemForm
-          updateDraft={(patch: Partial<DraftBundle>) =>
-            setDraft({ ...draft, ...patch })
-          }
-          draft={draft}
-        />
+        <BundledItemForm draft={draft} updateDraft={updateDraft} />
       </QueryParamsProvider>
     </Modal>
   );
@@ -88,7 +76,7 @@ const BundledItemForm = ({
   updateDraft,
 }: {
   draft: DraftBundle;
-  updateDraft: (patch: Partial<DraftBundle>) => void;
+  updateDraft: (update: Partial<DraftBundle>) => void;
 }) => {
   const t = useTranslation();
 
