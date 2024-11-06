@@ -6,6 +6,7 @@ use super::{
 use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
+use serde::Serialize;
 
 table! {
     demographic_projection(id) {
@@ -19,7 +20,7 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize)]
 #[diesel(table_name = demographic_projection)]
 pub struct DemographicProjectionRow {
     pub id: String,
