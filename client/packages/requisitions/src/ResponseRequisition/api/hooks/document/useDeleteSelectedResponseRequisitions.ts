@@ -4,7 +4,6 @@ import {
   RequisitionNodeStatus,
   useDeleteConfirmation,
   useUrlQueryParams,
-  useNotification,
 } from '@openmsupply-client/common';
 import { ResponseFragment } from '../../operations.generated';
 import { useDeleteResponses } from './useDeleteResponses';
@@ -16,7 +15,6 @@ export const useDeleteSelectedResponseRequisitions = () => {
   });
   const { data: rows } = useResponses(queryParams);
   const { mutateAsync } = useDeleteResponses();
-  const { info } = useNotification();
   const t = useTranslation();
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
@@ -28,17 +26,21 @@ export const useDeleteSelectedResponseRequisitions = () => {
     let result = await mutateAsync(selectedRows).catch(err => {
       throw err;
     });
-    let errorMessages = [];
     // check for errors
     result.forEach(line => {
       if (line.response.__typename == 'DeleteResponseRequisitionError') {
-        info(line.response.error.description)();
-        errorMessages.push(line.response.error.description);
+        switch (line.response.error.__typename) {
+          case 'FinalisedRequisition':
+            throw Error(t('messages.cannot-delete-finalised-requisition'));
+          case 'RecordNotFound':
+            throw Error(t('messages.record-not-found'));
+          case 'RequisitionWithShipment':
+            throw Error(t('messages.cannot-delete-requisition-with-shipment'));
+          case 'TransferRequisition':
+            throw Error(t('messages.cannot-delete-transfer-requisition'));
+        }
       }
     });
-    if (errorMessages.length > 0) {
-      throw new Error();
-    }
   };
 
   const confirmAndDelete = useDeleteConfirmation({
