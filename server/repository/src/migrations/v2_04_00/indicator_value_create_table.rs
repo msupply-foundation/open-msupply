@@ -7,6 +7,16 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        #[cfg(feature = "postgres")]
+        {
+            sql!(
+                connection,
+                r#"
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'indicator_value';
+            "#
+            )?;
+        }
+
         sql!(
             connection,
             r#"
