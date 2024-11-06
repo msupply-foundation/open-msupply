@@ -36,7 +36,6 @@ impl Into<Option<IndicatorValueType>> for LegacyValueType {
     }
 }
 
-#[allow(non_snake_case)]
 #[derive(Deserialize)]
 pub struct LegacyIndicatorAttribute {
     #[serde(rename = "ID")]
@@ -45,7 +44,7 @@ pub struct LegacyIndicatorAttribute {
     program_indicator_id: String,
     description: String,
     code: String,
-    index: i64,
+    index: i32,
     is_required: bool,
     value_type: LegacyValueType,
     axis: LegacyAxis,
@@ -54,7 +53,6 @@ pub struct LegacyIndicatorAttribute {
 }
 
 // Needs to be added to all_translators()
-#[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(IndicatorAttribute)
 }
@@ -115,7 +113,7 @@ impl SyncTranslation for IndicatorAttribute {
         _: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Err(anyhow!(
-            "Delete not supported for program_indicator records"
+            "Delete not supported for indicator_attribute records"
         ))
     }
 }
@@ -126,12 +124,12 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
-    async fn test_program_indicator_translation() {
+    async fn test_indicator_attribute_translation() {
         use crate::sync::test::test_data::indicator_attribute;
         let translator = IndicatorAttribute;
 
         let (_, connection, _, _) = setup_all(
-            "test_program_indicator_translation",
+            "test_indicator_attribute_translation",
             MockDataInserts::none(),
         )
         .await;
