@@ -16,8 +16,8 @@ pub struct IndicatorValueRepository<'a> {
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct IndicatorValueFilter {
     pub id: Option<EqualFilter<String>>,
-    pub facility_id: Option<EqualFilter<String>>,
-    pub store_id: Option<EqualFilter<String>>,
+    pub customer_name_link_id: Option<EqualFilter<String>>,
+    pub supplier_store_id: Option<EqualFilter<String>>,
     pub period_id: Option<EqualFilter<String>>,
     pub indicator_line_id: Option<EqualFilter<String>>,
     pub indicator_column_id: Option<EqualFilter<String>>,
@@ -30,12 +30,12 @@ impl IndicatorValueFilter {
         self.id = Some(filter);
         self
     }
-    pub fn facility_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.facility_id = Some(filter);
+    pub fn customer_name_link_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.customer_name_link_id = Some(filter);
         self
     }
-    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.store_id = Some(filter);
+    pub fn supplier_store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.supplier_store_id = Some(filter);
         self
     }
     pub fn period_id(mut self, filter: EqualFilter<String>) -> Self {
@@ -77,8 +77,16 @@ impl<'a> IndicatorValueRepository<'a> {
 
         if let Some(f) = filter {
             apply_equal_filter!(query, f.id, indicator_value::id);
-            apply_equal_filter!(query, f.facility_id, indicator_value::customer_name_link_id);
-            apply_equal_filter!(query, f.store_id, indicator_value::supplier_store_id);
+            apply_equal_filter!(
+                query,
+                f.customer_name_link_id,
+                indicator_value::customer_name_link_id
+            );
+            apply_equal_filter!(
+                query,
+                f.supplier_store_id,
+                indicator_value::supplier_store_id
+            );
             apply_equal_filter!(query, f.period_id, indicator_value::period_id);
             apply_equal_filter!(
                 query,
