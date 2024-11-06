@@ -28,6 +28,7 @@ export function useItemVariant({
       __typename: 'ItemVariantNode',
       id: FnUtils.generateUUID(),
       name: '',
+      itemId,
       manufacturerId: null,
       coldStorageTypeId: null,
       packagingVariants: [
@@ -50,6 +51,8 @@ export function useItemVariant({
           name: t('label.tertiary'),
         },
       ],
+      bundledItemVariants: [],
+      bundlesWith: [],
     }
   );
 
