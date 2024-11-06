@@ -147,7 +147,7 @@ const BundledOn = ({ variant }: { variant: ItemVariantFragment }) => {
             to={RouteBuilder.create(AppRoute.Catalogue)
               .addPart(AppRoute.Items)
               .addPart(rowData.principalItemVariant?.itemId ?? '')
-              .addQuery({ tab: 'Variants' })
+              .addQuery({ tab: t('label.variants') })
               .build()}
           >
             {rowData.principalItemVariant?.itemName}
