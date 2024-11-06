@@ -13,6 +13,7 @@ import {
   IconButton,
   DeleteIcon,
   Typography,
+  NumUtils,
 } from '@openmsupply-client/common';
 import {
   BundledItemFragment,
@@ -139,7 +140,7 @@ const BundledOn = ({ variant }: { variant: ItemVariantFragment }) => {
       Cell: TooltipTextCell,
       label: 'label.ratio',
       description: 'description.bundled-item-ratio',
-      accessor: ({ rowData }) => 1 / rowData.ratio,
+      accessor: ({ rowData }) => NumUtils.round(1 / rowData.ratio, 2),
     },
   ]);
 
