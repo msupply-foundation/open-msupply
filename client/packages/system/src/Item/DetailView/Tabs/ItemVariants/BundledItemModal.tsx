@@ -53,7 +53,7 @@ export const BundledItemModal = ({
           variant="ok"
           onClick={() => {
             save();
-            success(t('messages.item-variant-saved'))();
+            success(t('messages.bundled-item-saved'))();
             onClose();
           }}
         />
