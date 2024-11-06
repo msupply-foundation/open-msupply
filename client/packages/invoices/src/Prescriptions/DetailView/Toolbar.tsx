@@ -19,13 +19,22 @@ import { ClinicianSearchInput } from '../../../../system/src/Clinician';
 import { usePrescriptionRows } from '../api/hooks/line/usePrescriptionRows';
 
 export const Toolbar: FC = () => {
-  const { id, patient, clinician, prescriptionDate, update } =
-    usePrescription.document.fields([
-      'id',
-      'patient',
-      'clinician',
-      'prescriptionDate',
-    ]);
+  const {
+    id,
+    patient,
+    clinician,
+    prescriptionDate,
+    createdDatetime,
+    pickedDatetime,
+    update,
+  } = usePrescription.document.fields([
+    'id',
+    'patient',
+    'clinician',
+    'prescriptionDate',
+    'createdDatetime',
+    'pickedDatetime',
+  ]);
   const onDelete = usePrescription.line.deleteSelected();
   const onDeleteAll = usePrescription.line.deleteAll();
   const { items } = usePrescriptionRows();
@@ -69,6 +78,12 @@ export const Toolbar: FC = () => {
       },
     });
   };
+
+  const defaultPrescriptionDate =
+    DateUtils.getDateOrNull(prescriptionDate) ??
+    DateUtils.getDateOrNull(pickedDatetime) ??
+    DateUtils.getDateOrNull(createdDatetime) ??
+    new Date();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -122,7 +137,7 @@ export const Toolbar: FC = () => {
               Input={
                 <DateTimePickerInput
                   disabled={isDisabled}
-                  defaultValue={new Date()}
+                  defaultValue={defaultPrescriptionDate}
                   value={DateUtils.getDateOrNull(prescriptionDate)}
                   format="P"
                   onChange={handleDateChange}
