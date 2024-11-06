@@ -89,7 +89,7 @@ impl SyncTranslation for IndicatorValue {
             )?
             .pop()
         else {
-            return Err(anyhow::anyhow!("invoice_line row not found"));
+            return Err(anyhow::anyhow!("indicator_value row not found"));
         };
 
         let IndicatorValueRow {
