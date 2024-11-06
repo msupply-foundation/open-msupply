@@ -1,6 +1,6 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    db_diesel::item_row::item, item_link, ChangeLogInsertRow, ChangelogRepository,
+    ChangelogTableName, RepositoryError, RowActionType, StorageConnection, Upsert,
 };
 
 use diesel::prelude::*;
@@ -17,6 +17,10 @@ table! {
         deleted_datetime -> Nullable<Timestamp>,
     }
 }
+
+joinable!(item_variant -> item_link (item_link_id));
+allow_tables_to_appear_in_same_query!(item_variant, item_link);
+allow_tables_to_appear_in_same_query!(item_variant, item);
 
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
