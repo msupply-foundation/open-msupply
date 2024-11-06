@@ -24,8 +24,10 @@ pub struct LegacyActivityLogRow {
     pub record_id: String,
     pub datetime: NaiveDateTime,
     #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
     pub changed_to: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
     pub changed_from: Option<String>,
 }
 

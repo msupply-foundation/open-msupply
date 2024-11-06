@@ -31,7 +31,7 @@ impl MigrationFragment for Migrate {
             CREATE TABLE indicator_column (
                 id TEXT PRIMARY KEY NOT NULL,
                 program_indicator_id TEXT NOT NULL REFERENCES program_indicator(id),
-                column_number BIGINT NOT NULL,
+                column_number INTEGER NOT NULL,
                 header TEXT NOT NULL,
                 value_type {value_type},
                 default_value TEXT NOT NULL,
@@ -41,7 +41,7 @@ impl MigrationFragment for Migrate {
             CREATE TABLE indicator_line (
                 id TEXT PRIMARY KEY NOT NULL,
                 program_indicator_id TEXT NOT NULL REFERENCES program_indicator(id),
-                line_number BIGINT NOT NULL,
+                line_number INTEGER NOT NULL,
                 description TEXT NOT NULL,
                 code TEXT NOT NULL,
                 value_type {value_type},
