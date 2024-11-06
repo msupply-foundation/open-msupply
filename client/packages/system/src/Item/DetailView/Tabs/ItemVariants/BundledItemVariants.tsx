@@ -16,6 +16,7 @@ import {
   NumUtils,
   RouteBuilder,
   Link,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -137,23 +138,31 @@ const BundledOn = ({ variant }: { variant: ItemVariantFragment }) => {
     {
       key: 'name',
       Cell: ({ rowData }) => (
-        <div
-          style={{
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
+        <Tooltip
+          title={
+            rowData.principalItemVariant?.itemName +
+            ' - ' +
+            rowData.principalItemVariant?.name
+          }
         >
-          <Link
-            to={RouteBuilder.create(AppRoute.Catalogue)
-              .addPart(AppRoute.Items)
-              .addPart(rowData.principalItemVariant?.itemId ?? '')
-              .addQuery({ tab: t('label.variants') })
-              .build()}
+          <div
+            style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
           >
-            {rowData.principalItemVariant?.itemName}
-          </Link>{' '}
-          - {rowData.principalItemVariant?.name}
-        </div>
+            <Link
+              to={RouteBuilder.create(AppRoute.Catalogue)
+                .addPart(AppRoute.Items)
+                .addPart(rowData.principalItemVariant?.itemId ?? '')
+                .addQuery({ tab: t('label.variants') })
+                .build()}
+            >
+              {rowData.principalItemVariant?.itemName}
+            </Link>{' '}
+            - {rowData.principalItemVariant?.name}
+          </div>
+        </Tooltip>
       ),
       label: 'label.item-variant',
     },
