@@ -12,8 +12,8 @@ import {
 import { useItemApi, useItemGraphQL } from '../useItemApi';
 
 export type DraftBundle = {
-  itemId: string;
-  variantId: string;
+  itemId: string | null;
+  variantId: string | null;
   ratio: number;
 };
 
@@ -29,13 +29,17 @@ export function useUpsertBundledItem({
   const t = useTranslation();
 
   const [draft, setDraft] = useState<DraftBundle>({
-    itemId: bundle?.bundledItemVariant?.itemId ?? '',
-    variantId: bundle?.bundledItemVariant?.id ?? '',
+    itemId: bundle?.bundledItemVariant?.itemId ?? null,
+    variantId: bundle?.bundledItemVariant?.id ?? null,
     ratio: bundle?.ratio ?? 1,
   });
 
   const { mutateAsync } = useMutation({
     mutationFn: async () => {
+      if (!draft.variantId) {
+        return;
+      }
+
       const apiResult = await api.upsertBundledItem({
         storeId,
         input: {
