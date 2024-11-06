@@ -33,6 +33,7 @@ use graphql_demographic::{DemographicIndicatorQueries, DemographicMutations};
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
+use graphql_item_bundle::BundledItemMutations;
 use graphql_item_variant::ItemVariantMutations;
 use graphql_location::{LocationMutations, LocationQueries};
 use graphql_plugin::{PluginMutations, PluginQueries};
@@ -67,6 +68,9 @@ pub struct CentralServerMutationNode;
 impl CentralServerMutationNode {
     async fn item_variant(&self) -> ItemVariantMutations {
         ItemVariantMutations
+    }
+    async fn bundled_item(&self) -> BundledItemMutations {
+        BundledItemMutations
     }
     async fn asset_catalogue(&self) -> AssetCatalogueMutations {
         AssetCatalogueMutations
