@@ -1,7 +1,10 @@
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use repository::{EqualFilter, RepositoryError};
+use repository::{
+    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
+    EqualFilter, RepositoryError,
+};
 use service::service_provider::{ServiceContext, ServiceProvider};
 use std::collections::HashMap;
 
@@ -52,9 +55,12 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
                 return Ok(HashMap::new());
             };
 
-        let filter = IndicatorValueFilter::new();
+        let filter = IndicatorValueFilter::new()
+            .store_id(EqualFilter::equal_to(&supplier_store_id))
+            .facility_id(EqualFilter::equal_to(&customer_name_id))
+            .period_id(EqualFilter::equal_to(&period_id));
 
-        let values = get_program_indicator_values(&service_context, filter).unwrap();
+        let values = IndicatorValueRepository::query_by_filter(&self, filter)?;
 
         let payload = IndicatorValuePayload {
             period_id,
@@ -67,62 +73,13 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
             .map(|value| {
                 (
                     IndicatorValueLoaderInput::new(
-                        &value.line_id,
-                        &value.column_id,
+                        &value.indicator_line_id,
+                        &value.indicator_column_id,
                         payload.clone(),
                     ),
-                    value,
+                    value::to_domain(),
                 )
             })
             .collect())
     }
-}
-
-// below are mock values which will be replaced by service layer functions later
-#[derive(Clone)]
-
-pub struct ProgramIndicatorValue {
-    pub id: String,
-    pub line_id: String,
-    pub column_id: String,
-    pub period_id: String,
-    pub store_id: String,
-    pub facility_id: String,
-    pub value: String,
-}
-
-pub struct IndicatorValueFilter {
-    pub supplier_store_id: Option<EqualFilter<String>>,
-    pub period_id: Option<EqualFilter<String>>,
-    pub customer_name_id: Option<EqualFilter<String>>,
-}
-
-impl IndicatorValueFilter {
-    pub fn new() -> IndicatorValueFilter {
-        IndicatorValueFilter {
-            supplier_store_id: None,
-            period_id: None,
-            customer_name_id: None,
-        }
-    }
-
-    // Will also impl other filters later in actual PR
-}
-
-pub fn get_program_indicator_values(
-    _ctx: &ServiceContext,
-    _filter: IndicatorValueFilter,
-) -> Result<Vec<ProgramIndicatorValue>, RepositoryError> {
-    let mut result = Vec::new();
-    let dummy_indicator = ProgramIndicatorValue {
-        id: "some_id".to_string(),
-        line_id: "some_id".to_string(),
-        column_id: "some_id".to_string(),
-        period_id: "some_id".to_string(),
-        store_id: "some_id".to_string(),
-        facility_id: "some_id".to_string(),
-        value: "some_value".to_string(),
-    };
-    result.push(dummy_indicator);
-    Ok(result)
 }
