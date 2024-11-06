@@ -1,10 +1,12 @@
 use repository::{
     item_variant::{
+        item_variant::{ItemVariantFilter, ItemVariantRepository},
         item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
         packaging_variant::{PackagingVariantFilter, PackagingVariantRepository},
         packaging_variant_row::PackagingVariantRowRepository,
     },
-    EqualFilter, RepositoryError, StorageConnection,
+    ColdStorageTypeRowRepository, EqualFilter, ItemLinkRowRepository, RepositoryError,
+    StorageConnection, StringFilter,
 };
 
 use crate::{
@@ -21,6 +23,9 @@ use crate::{
 pub enum UpsertItemVariantError {
     CreatedRecordNotFound,
     ItemDoesNotExist,
+    CantChangeItem,
+    DuplicateName,
+    ColdStorageTypeDoesNotExist,
     PackagingVariantError(UpsertPackagingVariantError),
     DatabaseError(RepositoryError),
 }
@@ -122,6 +127,46 @@ fn validate(
 ) -> Result<(), UpsertItemVariantError> {
     if !check_item_exists(connection, store_id.to_string(), &input.item_id)? {
         return Err(UpsertItemVariantError::ItemDoesNotExist);
+    }
+
+    let old_item_variant = ItemVariantRowRepository::new(connection).find_one_by_id(&input.id)?;
+
+    if let Some(old_item_variant) = old_item_variant {
+        // Query Item Link to check if the item_id is the same
+        // If items have been merged, the item_id could be different, but we still want to update the row so we have the latest id
+        let old_item_id = ItemLinkRowRepository::new(connection)
+            .find_one_by_id(&old_item_variant.item_link_id)?
+            .map(|v| v.item_id)
+            .unwrap_or_else(|| old_item_variant.item_link_id.clone());
+
+        if old_item_id != input.item_id {
+            return Err(UpsertItemVariantError::CantChangeItem);
+        }
+    }
+
+    if let Some(cold_storage_type_id) = &input.cold_storage_type_id {
+        // Check if the cold storage type exists
+        let repo = ColdStorageTypeRowRepository::new(connection);
+        let cold_storage_type = repo.find_one_by_id(cold_storage_type_id)?;
+        if cold_storage_type.is_none() {
+            return Err(UpsertItemVariantError::ColdStorageTypeDoesNotExist);
+        }
+    }
+
+    // Check for duplicate name under the same item
+    let item_variants_with_duplicate_name = ItemVariantRepository::new(connection)
+        .query_by_filter(
+            ItemVariantFilter::new()
+                .name(StringFilter::equal_to(&input.name.trim()))
+                .item_id(EqualFilter::equal_to(&input.item_id)),
+        )?;
+
+    if item_variants_with_duplicate_name
+        .iter()
+        .find(|v| v.id != input.id)
+        .is_some()
+    {
+        return Err(UpsertItemVariantError::DuplicateName);
     }
 
     Ok(())

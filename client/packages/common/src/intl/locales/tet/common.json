@@ -191,7 +191,6 @@
   "heading.transport-details": "Detaliu Transportasaun",
   "heading.username": "Naran Ujuáriu",
   "inbound-shipment": "Remessa Sasan Tama",
-  "inbound-shipments": "Remessas sasan sira ne'ebe tama",
   "info.automatic-shipment": "Remessa ne'e kria Automatiku, tanba iha remessa Sasan Sai iha Store seluk. Ita labele hadia detaliu sira ne'e, antes estatus konfirmadu hanesan entrega tiha ona.",
   "info.manual-shipment": "Remessa ne'e kria ho manual. Status 'entrega tiha ona' sei la atualiza automatiku.",
   "info.no-shipment": "Finaliza requizisaun ida ne'e sei prevene ita husi kria remessa ida ba ida ne'e.",

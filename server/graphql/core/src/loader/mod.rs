@@ -27,6 +27,7 @@ mod name_row;
 mod packaging_variant;
 mod patient;
 mod program_enrolment;
+mod reason_option;
 mod requisition;
 mod requisition_line;
 mod requisition_supply_status;
@@ -76,6 +77,7 @@ pub use name_row::*;
 pub use packaging_variant::*;
 pub use patient::*;
 pub use program_enrolment::*;
+pub use reason_option::ReasonOptionLoader;
 pub use requisition::*;
 pub use requisition_line::*;
 pub use requisition_supply_status::*;
@@ -93,7 +95,6 @@ pub use vaccine_course::*;
 pub use vaccine_course_by_program::*;
 pub use vaccine_course_dose_by_vaccine_course::*;
 pub use vaccine_course_item_by_vaccine_course::*;
-
 #[derive(Debug, Clone)]
 /// Sometimes loaders need to take an extra parameter, like store_id or requisition_id
 /// And in some cases even further parameter is required (lookback date for ItemStats)
