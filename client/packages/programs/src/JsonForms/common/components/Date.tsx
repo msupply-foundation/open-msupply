@@ -5,6 +5,7 @@ import {
   DetailInputWithLabelRow,
   useFormatDateTime,
   BaseDatePickerInput,
+  DateUtils,
 } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
@@ -52,7 +53,7 @@ const UIComponent = (props: ControlProps) => {
         <BaseDatePickerInput
           sx={{ width: '100%' }}
           // undefined is displayed as "now" and null as unset
-          value={formatDateTime.getLocalDate(data)}
+          value={DateUtils.getNaiveDate(data)}
           onChange={e => {
             handleChange(
               path,
