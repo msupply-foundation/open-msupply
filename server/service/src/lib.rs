@@ -1,6 +1,6 @@
 // json! hits recursion limit in integration test (central_server_configurations), recursion_limit attribute must be top level
 #![cfg_attr(feature = "integration_test", recursion_limit = "256")]
-use repository::item_variant::item_variant_row::ItemVariantRowRepository;
+use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository};
 use repository::location::{LocationFilter, LocationRepository};
 use repository::{EqualFilter, Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
 use repository::{RepositoryError, StorageConnection};
@@ -313,8 +313,8 @@ fn check_location_exists(
 fn check_item_variant_exists(
     connection: &StorageConnection,
     item_variant_id: &str,
-) -> Result<bool, RepositoryError> {
+) -> Result<Option<ItemVariantRow>, RepositoryError> {
     let variant = ItemVariantRowRepository::new(connection).find_one_by_id(item_variant_id)?;
 
-    return Ok(variant.is_some());
+    return Ok(variant);
 }
