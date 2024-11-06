@@ -1493,7 +1493,7 @@
   "supplier-returns": "Retours fournisseur",
   "suppliers": "Fournisseurs",
   "sync": "Synchronisation",
-  "sync-info.last-successful-sync": "Dernière synchronisation terminé",
+  "sync-info.last-successful-sync": "Dernière synchronisation réussie terminée",
   "sync-info.last-sync": "Dernière tentative de synchronisation",
   "sync-info.last-sync-duration": "Durée de la dernière synchronisation",
   "sync-info.last-sync-finish": "Dernière synchronisation réussie",
