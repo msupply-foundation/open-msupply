@@ -2,8 +2,8 @@
 mod query {
     use repository::item_variant::bundled_item::BundledItemFilter;
     use repository::mock::{
-        mock_item_a_variant_1, mock_item_a_variant_2, mock_item_b_variant_1, mock_item_c_variant_1,
-        MockDataInserts,
+        mock_item_a_variant_1, mock_item_a_variant_2, mock_item_b_variant_1, mock_item_b_variant_2,
+        mock_item_c_variant_1, MockDataInserts,
     };
     use repository::test_db::setup_all;
     use repository::EqualFilter;
@@ -46,8 +46,8 @@ mod query {
                 &context,
                 UpsertBundledItem {
                     id: uuid(),
-                    principal_item_variant_id: mock_item_a_variant_1().id,
-                    bundled_item_variant_id: mock_item_b_variant_1().id,
+                    principal_item_variant_id: mock_item_a_variant_2().id,
+                    bundled_item_variant_id: mock_item_b_variant_2().id,
                     ratio: 1.0,
                 },
             )
