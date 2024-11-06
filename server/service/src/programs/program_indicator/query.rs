@@ -21,7 +21,7 @@ pub struct IndicatorColumn {
     pub header: String,
     pub line_id: String,
     pub id: String,
-    pub column_number: i64,
+    pub column_number: i32,
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -164,30 +164,17 @@ impl IndicatorLine {
             id: line.id,
         }
     }
-
-    // TODO add to_domain utility function
 }
 
 impl IndicatorColumn {
     pub fn from_domain(column: IndicatorColumnRow, line_id: String) -> IndicatorColumn {
         IndicatorColumn {
             header: column.header,
-            // r#type: match column.value_type {
-            //     // TODO remove optional value type if we initialise default values on requisition creation?
-            //     Some(value_type) => match value_type {
-            //         IndicatorValueType::String => ValueType::String,
-            //         IndicatorValueType::Number => ValueType::Number,
-            //     },
-            //     None => ValueType::String,
-            // },
-            // TODO find actual value from here or from
             line_id: line_id,
             id: column.id,
             column_number: column.column_number,
         }
     }
-
-    // TODO add to_domain utility function
 }
 
 #[cfg(test)]
@@ -236,7 +223,5 @@ mod query {
             let columns = line.value;
             assert_eq!(columns.len(), 2);
         }
-
-        // TODO add filter tests
     }
 }

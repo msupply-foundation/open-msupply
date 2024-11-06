@@ -16,11 +16,9 @@ pub struct ProgramIndicatorRepository<'a> {
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
-// TODO add fields periodId, customerId, supplierId
 pub struct ProgramIndicatorFilter {
     pub id: Option<EqualFilter<String>>,
     pub program_id: Option<EqualFilter<String>>,
-    // TODO add periodId, customerId, and supplierId filters
 }
 
 pub enum ProgramIndicatorSortField {
