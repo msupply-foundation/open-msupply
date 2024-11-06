@@ -32,7 +32,7 @@ pub fn validate(
     }
 
     if let Some(item_variant_id) = &input.item_variant_id {
-        if !check_item_variant_exists(connection, item_variant_id)? {
+        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
             return Err(ItemVariantDoesNotExist);
         }
     }

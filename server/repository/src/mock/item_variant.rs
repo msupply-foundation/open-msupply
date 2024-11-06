@@ -48,11 +48,24 @@ pub fn mock_item_b_variant_2() -> ItemVariantRow {
     }
 }
 
+pub fn mock_item_c_variant_1() -> ItemVariantRow {
+    ItemVariantRow {
+        id: "item_c_variant_variant_1".to_string(),
+        name: "Item C Variant 1".to_string(),
+        item_link_id: mock_item_c().id,
+        cold_storage_type_id: None,
+        doses_per_unit: None,
+        manufacturer_link_id: None,
+        deleted_datetime: None,
+    }
+}
+
 pub fn mock_item_variants() -> Vec<ItemVariantRow> {
     vec![
         mock_item_a_variant_1(),
         mock_item_a_variant_2(),
         mock_item_b_variant_1(),
         mock_item_b_variant_2(),
+        mock_item_c_variant_1(),
     ]
 }

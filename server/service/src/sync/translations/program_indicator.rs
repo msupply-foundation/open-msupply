@@ -8,7 +8,6 @@ use crate::sync::translations::master_list::MasterListTranslation;
 
 use super::{PullTranslateResult, SyncTranslation};
 
-#[allow(non_snake_case)]
 #[derive(Deserialize)]
 pub struct LegacyProgramIndicator {
     #[serde(rename = "ID")]
@@ -19,8 +18,8 @@ pub struct LegacyProgramIndicator {
     program_id: String,
     is_active: bool,
 }
+
 // Needs to be added to all_translators()
-#[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(ProgramIndicatorTranslation)
 }
