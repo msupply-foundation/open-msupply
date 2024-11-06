@@ -131,9 +131,10 @@ export const ResponseRequisitionListView: FC = () => {
         t(getApprovalStatusKey(rowData.approvalStatus)),
     });
   }
-  columnDefinitions.push(['comment', { minWidth: 350, Cell: TooltipTextCell }]);
-
-  columnDefinitions.push('selection');
+  columnDefinitions.push(
+    ['comment', { minWidth: 350, Cell: TooltipTextCell }],
+    ['selection']
+  );
 
   const columns = useColumns<ResponseRowFragment>(
     columnDefinitions,
