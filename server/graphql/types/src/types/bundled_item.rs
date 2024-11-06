@@ -15,6 +15,10 @@ impl BundledItemNode {
         &self.bundled_item.id
     }
 
+    pub async fn ratio(&self) -> &f64 {
+        &self.bundled_item.ratio
+    }
+
     pub async fn principal_item_variant_id(&self) -> &String {
         &self.bundled_item.principal_item_variant_id
     }

@@ -1,7 +1,6 @@
 use repository::{
-    item_variant::{
-        item_variant::{ItemVariantFilter, ItemVariantRepository, ItemVariantSort},
-        item_variant_row::ItemVariantRow,
+    item_variant::item_variant::{
+        ItemVariant, ItemVariantFilter, ItemVariantRepository, ItemVariantSort,
     },
     PaginationOption, StorageConnection,
 };
@@ -16,7 +15,7 @@ pub fn get_item_variants(
     pagination: Option<PaginationOption>,
     filter: Option<ItemVariantFilter>,
     sort: Option<ItemVariantSort>,
-) -> Result<ListResult<ItemVariantRow>, ListError> {
+) -> Result<ListResult<ItemVariant>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = ItemVariantRepository::new(connection);
     Ok(ListResult {
