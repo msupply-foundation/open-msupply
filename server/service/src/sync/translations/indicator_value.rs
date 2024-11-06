@@ -6,7 +6,7 @@ use repository::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::sync::translations::program_indicator::ProgramIndicatorTranslation;
+use crate::sync::translations::indicator_attribute::IndicatorAttribute;
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
@@ -38,7 +38,7 @@ impl SyncTranslation for IndicatorValue {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![ProgramIndicatorTranslation.table_name()]
+        vec![IndicatorAttribute.table_name()]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
