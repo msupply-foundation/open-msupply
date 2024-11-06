@@ -77,11 +77,31 @@ fragment PackagingVariant on PackagingVariantNode {
   volumePerUnit
 }
 
+fragment BundledItemVariant on ItemVariantNode {
+  id
+  name
+  itemId
+  itemName
+}
+
+fragment BundledItem on BundledItemNode {
+  __typename
+  id
+  ratio
+  principalItemVariant {
+    ...BundledItemVariant
+  }
+  bundledItemVariant {
+    ...BundledItemVariant
+  }
+}
+
 fragment ItemVariant on ItemVariantNode {
   __typename
   id
   name
   dosesPerUnit
+  itemId
   manufacturerId
   manufacturer(storeId: $storeId) {
     ...NameRow
@@ -92,6 +112,12 @@ fragment ItemVariant on ItemVariantNode {
   }
   packagingVariants {
     ...PackagingVariant
+  }
+  bundledItemVariants {
+    ...BundledItem
+  }
+  bundlesWith {
+    ...BundledItem
   }
 }
 
@@ -281,6 +307,10 @@ fragment ItemVariantOption on ItemVariantNode {
   __typename
   id
   label: name
+  # To determine if the variant already has other variants bundled to it
+  bundledItemVariants {
+    id
+  }
 }
 
 query itemVariants($storeId: String!, $itemId: String!) {
@@ -361,6 +391,33 @@ query coldStorageTypes($storeId: String!) {
     ... on ColdStorageTypeConnector {
       nodes {
         ...ColdStorageType
+      }
+    }
+  }
+}
+
+mutation upsertBundledItem($storeId: String!, $input: UpsertBundledItemInput!) {
+  centralServer {
+    bundledItem {
+      upsertBundledItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on BundledItemNode {
+          ...BundledItem
+        }
+      }
+    }
+  }
+}
+
+mutation deleteBundledItem($storeId: String!, $input: DeleteBundledItemInput!) {
+  centralServer {
+    bundledItem {
+      deleteBundledItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          __typename
+          id
+        }
       }
     }
   }
