@@ -14,7 +14,10 @@ import {
   DeleteIcon,
   Typography,
   NumUtils,
+  RouteBuilder,
+  Link,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import {
   BundledItemFragment,
   ItemVariantFragment,
@@ -133,10 +136,26 @@ const BundledOn = ({ variant }: { variant: ItemVariantFragment }) => {
   const columns = useColumns<BundledItemFragment>([
     {
       key: 'name',
-      Cell: TooltipTextCell,
+      Cell: ({ rowData }) => (
+        <div
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          <Link
+            to={RouteBuilder.create(AppRoute.Catalogue)
+              .addPart(AppRoute.Items)
+              .addPart(rowData.principalItemVariant?.itemId ?? '')
+              .addQuery({ tab: 'Variants' })
+              .build()}
+          >
+            {rowData.principalItemVariant?.itemName}
+          </Link>{' '}
+          - {rowData.principalItemVariant?.name}
+        </div>
+      ),
       label: 'label.item-variant',
-      accessor: ({ rowData }) =>
-        `${rowData.principalItemVariant?.itemName} - ${rowData.principalItemVariant?.name}`,
     },
     {
       key: 'ratio',
