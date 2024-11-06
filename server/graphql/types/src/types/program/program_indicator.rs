@@ -2,15 +2,13 @@ use async_graphql::*;
 use dataloader::DataLoader;
 use graphql_core::{
     generic_filters::EqualFilterStringInput,
-    loader::{
-        IndicatorValueLoader, IndicatorValueLoaderInput, IndicatorValuePayload,
-        ProgramIndicatorValue,
-    },
+    loader::{IndicatorValueLoader, IndicatorValueLoaderInput, IndicatorValuePayload},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use repository::{
-    EqualFilter, ProgramIndicatorFilter, ProgramIndicatorSort, ProgramIndicatorSortField,
+    EqualFilter, IndicatorValueRow, ProgramIndicatorFilter, ProgramIndicatorSort,
+    ProgramIndicatorSortField,
 };
 use service::programs::program_indicator::query::{
     ColumnValue, IndicatorColumn, IndicatorLine, ProgramIndicator, ValueType,
@@ -248,7 +246,7 @@ impl IndicatorValueNode {
 }
 
 impl IndicatorValueNode {
-    pub fn from_domain(value: ProgramIndicatorValue) -> IndicatorValueNode {
+    pub fn from_domain(value: IndicatorValueRow) -> IndicatorValueNode {
         IndicatorValueNode {
             value: value.value,
             id: value.id,
