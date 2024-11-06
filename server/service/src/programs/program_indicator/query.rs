@@ -161,8 +161,6 @@ impl IndicatorLine {
                 .collect(),
         }
     }
-
-    // TODO add to_domain utility function
 }
 
 impl IndicatorColumn {
@@ -181,8 +179,6 @@ impl IndicatorColumn {
             value: ColumnValue::Text("default".to_string()),
         }
     }
-
-    // TODO add to_domain utility function
 }
 
 #[cfg(test)]
@@ -231,7 +227,5 @@ mod query {
             let columns = line.value;
             assert_eq!(columns.len(), 2);
         }
-
-        // TODO add filter tests
     }
 }
