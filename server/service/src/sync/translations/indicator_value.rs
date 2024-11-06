@@ -62,7 +62,7 @@ impl SyncTranslation for IndicatorValue {
         let customer_name_link_id = StoreRepository::new(connection)
             .query_one(StoreFilter::new().id(EqualFilter::equal_to(&customer_store_id)))?
             .ok_or(anyhow::anyhow!(
-                "The store record for facility_ID/customer_store_id could not be found!"
+                "The store record for facility_ID/customer_store_id could not be found! {customer_store_id}"
             ))?
             .store_row
             .name_link_id;
@@ -105,7 +105,7 @@ impl SyncTranslation for IndicatorValue {
         let customer_store_id = StoreRepository::new(connection)
             .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&customer_name_link_id)))?
             .ok_or(anyhow::anyhow!(
-                "The store record for facility_ID/customer_store_id could not be found!"
+                "The store record for customer_name_link_id could not be found! {customer_name_link_id}"
             ))?
             .store_row
             .id;
