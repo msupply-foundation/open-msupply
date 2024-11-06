@@ -1,5 +1,14 @@
-use async_graphql::{Enum, InputObject, Object, SimpleObject, Union};
-use graphql_core::generic_filters::EqualFilterStringInput;
+use async_graphql::*;
+use dataloader::DataLoader;
+use graphql_core::{
+    generic_filters::EqualFilterStringInput,
+    loader::{
+        IndicatorValueLoader, IndicatorValueLoaderInput, IndicatorValuePayload,
+        ProgramIndicatorValue,
+    },
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
+};
 use repository::{
     EqualFilter, ProgramIndicatorFilter, ProgramIndicatorSort, ProgramIndicatorSortField,
 };
@@ -137,12 +146,34 @@ impl IndicatorColumnNode {
         &self.column.header
     }
 
-    pub async fn value_type(&self) -> IndicatorValueType {
-        IndicatorValueType::from_domain(&self.column.r#type)
-    }
-
-    pub async fn values(&self) -> ColumnValueOutput {
-        ColumnValueOutput::from(self.column.value.clone())
+    pub async fn value(
+        &self,
+        ctx: &Context<'_>,
+        period_id: String,
+        supplier_store_id: String,
+        customer_name_id: String,
+    ) -> Result<IndicatorValueNode> {
+        let loader = ctx.get_loader::<DataLoader<IndicatorValueLoader>>();
+        let payload = IndicatorValuePayload {
+            period_id,
+            supplier_store_id,
+            customer_name_id,
+        };
+        let result = loader
+            .load_one(IndicatorValueLoaderInput::new(
+                &self.column.line_id,
+                &self.column.id,
+                payload,
+            ))
+            .await?
+            .ok_or(
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot find value for line {} and column {}",
+                    &self.column.line_id, &self.column.id,
+                ))
+                .extend(),
+            )?;
+        Ok(IndicatorValueNode::from_domain(result))
     }
 }
 
@@ -196,6 +227,31 @@ impl From<ColumnValue> for ColumnValueOutput {
             ColumnValue::Number(number) => {
                 ColumnValueOutput::Number(NumberOutput { value: number })
             }
+        }
+    }
+}
+
+pub struct IndicatorValueNode {
+    pub id: String,
+    pub value: String,
+}
+
+#[Object]
+impl IndicatorValueNode {
+    pub async fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub async fn value(&self) -> &str {
+        &self.value
+    }
+}
+
+impl IndicatorValueNode {
+    pub fn from_domain(value: ProgramIndicatorValue) -> IndicatorValueNode {
+        IndicatorValueNode {
+            value: value.value,
+            id: value.id,
         }
     }
 }

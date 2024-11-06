@@ -1,7 +1,7 @@
 use repository::{
     IndicatorColumnRow, IndicatorColumnRowRepository, IndicatorLineRow, IndicatorLineRowRepository,
-    IndicatorValueType, Pagination, ProgramIndicatorFilter, ProgramIndicatorRepository,
-    ProgramIndicatorRow, ProgramIndicatorSort, RepositoryError, StorageConnection,
+    Pagination, ProgramIndicatorFilter, ProgramIndicatorRepository, ProgramIndicatorRow,
+    ProgramIndicatorSort, RepositoryError, StorageConnection,
 };
 
 #[derive(Clone, serde::Serialize)]
@@ -19,14 +19,16 @@ pub enum ValueType {
 #[derive(Clone, serde::Serialize)]
 pub struct IndicatorColumn {
     pub header: String,
-    pub r#type: ValueType,
-    pub value: ColumnValue,
+    pub line_id: String,
+    pub id: String,
+    pub column_number: i64,
 }
 
 #[derive(Clone, serde::Serialize)]
 pub struct IndicatorLine {
     pub name: String,
     pub code: String,
+    pub id: String,
     pub value: Vec<IndicatorColumn>,
 }
 
@@ -153,12 +155,13 @@ impl ProgramIndicator {
 impl IndicatorLine {
     pub fn from_domain(line: IndicatorLineRow, columns: Vec<IndicatorColumnRow>) -> IndicatorLine {
         IndicatorLine {
-            name: line.description,
-            code: line.code,
+            name: line.description.clone(),
+            code: line.code.clone(),
             value: columns
                 .into_iter()
-                .map(|column| IndicatorColumn::from_domain(column))
+                .map(|column| IndicatorColumn::from_domain(column, line.id.clone()))
                 .collect(),
+            id: line.id,
         }
     }
 
@@ -166,19 +169,21 @@ impl IndicatorLine {
 }
 
 impl IndicatorColumn {
-    pub fn from_domain(column: IndicatorColumnRow) -> IndicatorColumn {
+    pub fn from_domain(column: IndicatorColumnRow, line_id: String) -> IndicatorColumn {
         IndicatorColumn {
             header: column.header,
-            r#type: match column.value_type {
-                // TODO remove optional value type if we initialise default values on requisition creation?
-                Some(value_type) => match value_type {
-                    IndicatorValueType::String => ValueType::String,
-                    IndicatorValueType::Number => ValueType::Number,
-                },
-                None => ValueType::String,
-            },
+            // r#type: match column.value_type {
+            //     // TODO remove optional value type if we initialise default values on requisition creation?
+            //     Some(value_type) => match value_type {
+            //         IndicatorValueType::String => ValueType::String,
+            //         IndicatorValueType::Number => ValueType::Number,
+            //     },
+            //     None => ValueType::String,
+            // },
             // TODO find actual value from here or from
-            value: ColumnValue::Text("default".to_string()),
+            line_id: line_id,
+            id: column.id,
+            column_number: column.column_number,
         }
     }
 
