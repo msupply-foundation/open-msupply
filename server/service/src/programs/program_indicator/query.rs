@@ -170,15 +170,6 @@ impl IndicatorColumn {
     pub fn from_domain(column: IndicatorColumnRow, line_id: String) -> IndicatorColumn {
         IndicatorColumn {
             header: column.header,
-            // r#type: match column.value_type {
-            //     // TODO remove optional value type if we initialise default values on requisition creation?
-            //     Some(value_type) => match value_type {
-            //         IndicatorValueType::String => ValueType::String,
-            //         IndicatorValueType::Number => ValueType::Number,
-            //     },
-            //     None => ValueType::String,
-            // },
-            // TODO find actual value from here or from
             line_id: line_id,
             id: column.id,
             column_number: column.column_number,
