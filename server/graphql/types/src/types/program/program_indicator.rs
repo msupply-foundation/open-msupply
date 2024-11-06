@@ -84,7 +84,7 @@ impl ProgramIndicatorNode {
         &self.program_indicator.program_id
     }
 
-    pub async fn code(&self) -> &str {
+    pub async fn indicator_code(&self) -> &str {
         &self.program_indicator.code
     }
 
@@ -110,7 +110,7 @@ pub struct IndicatorLineNode {
 
 #[Object]
 impl IndicatorLineNode {
-    pub async fn code(&self) -> &str {
+    pub async fn line_code(&self) -> &str {
         &self.line.code
     }
 
@@ -118,7 +118,7 @@ impl IndicatorLineNode {
         &self.line.name
     }
 
-    pub async fn values(&self) -> Vec<IndicatorColumnNode> {
+    pub async fn columns(&self) -> Vec<IndicatorColumnNode> {
         self.line
             .value
             .clone()
@@ -144,7 +144,7 @@ impl IndicatorColumnNode {
         &self.column.header
     }
 
-    pub async fn value(
+    async fn load_value_with_id(
         &self,
         ctx: &Context<'_>,
         period_id: String,
@@ -172,6 +172,32 @@ impl IndicatorColumnNode {
                 .extend(),
             )?;
         Ok(IndicatorValueNode::from_domain(result))
+    }
+
+    pub async fn value(
+        &self,
+        ctx: &Context<'_>,
+        period_id: String,
+        supplier_store_id: String,
+        customer_name_id: String,
+    ) -> Result<String> {
+        Ok(self
+            .load_value_with_id(ctx, period_id, supplier_store_id, customer_name_id)
+            .await?
+            .value)
+    }
+
+    pub async fn value_id(
+        &self,
+        ctx: &Context<'_>,
+        period_id: String,
+        supplier_store_id: String,
+        customer_name_id: String,
+    ) -> Result<String> {
+        Ok(self
+            .load_value_with_id(ctx, period_id, supplier_store_id, customer_name_id)
+            .await?
+            .id)
     }
 }
 
