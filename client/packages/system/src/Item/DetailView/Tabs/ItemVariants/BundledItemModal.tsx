@@ -45,7 +45,7 @@ export const BundledItemModal = ({
 
   return (
     <Modal
-      title={t('title.bundled-with')}
+      title={t('title.bundle-with')}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
         <DialogButton

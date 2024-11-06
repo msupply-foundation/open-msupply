@@ -39,9 +39,13 @@ export const BundledItemVariants = ({
       {isOpen && (
         <BundledItemModal onClose={onClose} bundle={entity} variant={variant} />
       )}
+
+      <Typography fontWeight="bold">{t('title.bundle-with')}</Typography>
+
       {!isBundledOnOtherVariants && (
         <BundledVariants variant={variant} onOpen={onOpen} />
       )}
+
       <FlatButton
         disabled={isBundledOnOtherVariants}
         label={t('label.add-bundled-item')}
@@ -111,7 +115,6 @@ const BundledVariants = ({
 
   return (
     <TableProvider createStore={createTableStore}>
-      <Typography fontWeight="bold">{t('title.bundled-with')}</Typography>
       <DataTable
         id="bundled-item-variants"
         data={variant.bundledItemVariants}
