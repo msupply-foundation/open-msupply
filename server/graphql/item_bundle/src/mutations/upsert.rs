@@ -97,6 +97,9 @@ fn map_error(error: ServiceError) -> Result<UpsertBundledItemErrorInterface> {
         ServiceError::DatabaseError(_repository_error) => InternalError(formatted_error),
         ServiceError::PrincipalItemDoesNotExist => BadUserInput(formatted_error),
         ServiceError::BundledItemDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::CanNotBundleItemWithItself => BadUserInput(formatted_error),
+        ServiceError::DuplicateBundledItem => BadUserInput(formatted_error),
+        ServiceError::CanNotNestBundledItems => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
