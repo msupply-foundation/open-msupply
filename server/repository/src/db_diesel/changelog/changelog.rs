@@ -111,6 +111,8 @@ pub enum ChangelogTableName {
     PackagingVariant,
     IndicatorValue,
     BundledItem,
+    Category,
+    ItemCategory,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -177,6 +179,8 @@ impl ChangelogTableName {
             ChangelogTableName::PackagingVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::IndicatorValue => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::BundledItem => ChangeLogSyncStyle::Central,
+            ChangelogTableName::Category => ChangeLogSyncStyle::Central,
+            ChangelogTableName::ItemCategory => ChangeLogSyncStyle::Central,
         }
     }
 }
