@@ -21,7 +21,7 @@ pub struct IndicatorColumn {
     pub header: String,
     pub line_id: String,
     pub id: String,
-    pub column_number: i64,
+    pub column_number: i32,
 }
 
 #[derive(Clone, serde::Serialize)]

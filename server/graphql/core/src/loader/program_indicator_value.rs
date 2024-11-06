@@ -3,9 +3,9 @@ use async_graphql::dataloader::*;
 use async_graphql::*;
 use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
-    EqualFilter, RepositoryError,
+    EqualFilter, IndicatorValueRow,
 };
-use service::service_provider::{ServiceContext, ServiceProvider};
+use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
 
 use super::IdPair;
@@ -34,7 +34,7 @@ pub struct IndicatorValueLoader {
 }
 
 impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
-    type Value = ProgramIndicatorValue;
+    type Value = IndicatorValueRow;
     type Error = async_graphql::Error;
 
     async fn load(
@@ -60,7 +60,8 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
             .facility_id(EqualFilter::equal_to(&customer_name_id))
             .period_id(EqualFilter::equal_to(&period_id));
 
-        let values = IndicatorValueRepository::query_by_filter(&self, filter)?;
+        let values =
+            IndicatorValueRepository::new(&service_context.connection).query_by_filter(filter)?;
 
         let payload = IndicatorValuePayload {
             period_id,
@@ -77,7 +78,7 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
                         &value.indicator_column_id,
                         payload.clone(),
                     ),
-                    value::to_domain(),
+                    value,
                 )
             })
             .collect())
