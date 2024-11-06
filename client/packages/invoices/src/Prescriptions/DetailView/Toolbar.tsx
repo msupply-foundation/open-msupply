@@ -125,7 +125,11 @@ export const Toolbar: FC = () => {
                   defaultValue={new Date()}
                   value={DateUtils.getDateOrNull(prescriptionDate)}
                   format="P"
-                  onChange={handleDateChange}
+                  // Using onAccept rather than onChange -- on mobile, onChange
+                  // is triggered when first opening the picker, which causes UI
+                  // conflict with the confirmation modal
+                  onAccept={handleDateChange}
+                  onChange={() => {}}
                   maxDate={new Date()}
                 />
               }

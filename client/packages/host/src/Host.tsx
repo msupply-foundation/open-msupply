@@ -1,7 +1,6 @@
 import React from 'react';
 import Bugsnag from '@bugsnag/js';
 import {
-  BrowserRouter,
   Routes,
   Route,
   Box,
@@ -21,6 +20,9 @@ import {
   EnvUtils,
   LocalStorage,
   AuthError,
+  createBrowserRouter,
+  createRoutesFromElements,
+  RouterProvider,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
@@ -68,6 +70,41 @@ const Init = () => {
   return <></>;
 };
 
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route
+      path="*"
+      element={
+        <Viewport>
+          <ErrorAlert />
+          <BackButtonHandler />
+          <Box display="flex" style={{ minHeight: '100%' }}>
+            <Routes>
+              <Route
+                path={RouteBuilder.create(AppRoute.Initialise).build()}
+                element={<Initialise />}
+              />
+              <Route
+                path={RouteBuilder.create(AppRoute.Login).build()}
+                element={<Login />}
+              />
+              <Route
+                path={RouteBuilder.create(AppRoute.Discovery).build()}
+                element={<Discovery />}
+              />
+              <Route
+                path={RouteBuilder.create(AppRoute.Android).build()}
+                element={<Android />}
+              />
+              <Route path="*" element={<Site />} />
+            </Routes>
+          </Box>
+        </Viewport>
+      }
+    />
+  )
+);
+
 const Host = () => (
   <React.Suspense fallback={<div />}>
     <IntlProvider>
@@ -83,41 +120,7 @@ const Host = () => (
                 <AppThemeProvider>
                   <ConfirmationModalProvider>
                     <AlertModalProvider>
-                      <BrowserRouter>
-                        <ErrorAlert />
-                        <BackButtonHandler />
-                        <Viewport>
-                          <Box display="flex" style={{ minHeight: '100%' }}>
-                            <Routes>
-                              <Route
-                                path={RouteBuilder.create(
-                                  AppRoute.Initialise
-                                ).build()}
-                                element={<Initialise />}
-                              />
-                              <Route
-                                path={RouteBuilder.create(
-                                  AppRoute.Login
-                                ).build()}
-                                element={<Login />}
-                              />
-                              <Route
-                                path={RouteBuilder.create(
-                                  AppRoute.Discovery
-                                ).build()}
-                                element={<Discovery />}
-                              />
-                              <Route
-                                path={RouteBuilder.create(
-                                  AppRoute.Android
-                                ).build()}
-                                element={<Android />}
-                              />
-                              <Route path="*" element={<Site />} />
-                            </Routes>
-                          </Box>
-                        </Viewport>
-                      </BrowserRouter>
+                      <RouterProvider router={router} />
                     </AlertModalProvider>
                   </ConfirmationModalProvider>
                 </AppThemeProvider>
