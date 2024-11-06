@@ -226,8 +226,6 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     const { batchResponseRequisition } = result || {};
 
-    console.log('response ', batchResponseRequisition);
-
     if (batchResponseRequisition?.deleteResponseRequisitions) {
       return batchResponseRequisition.deleteResponseRequisitions;
     }
