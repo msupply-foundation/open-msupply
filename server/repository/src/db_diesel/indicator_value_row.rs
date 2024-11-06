@@ -71,8 +71,8 @@ impl<'a> IndicatorValueRowRepository<'a> {
             table_name: ChangelogTableName::IndicatorValue,
             record_id: row.id.clone(),
             row_action: action,
-            store_id: Some(row.supplier_store_id.clone()),
-            name_link_id: Some(row.customer_name_link_id.clone()),
+            store_id: None,
+            name_link_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

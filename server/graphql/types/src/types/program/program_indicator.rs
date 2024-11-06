@@ -2,19 +2,18 @@ use async_graphql::*;
 use dataloader::DataLoader;
 use graphql_core::{
     generic_filters::EqualFilterStringInput,
-    loader::{
-        IndicatorValueLoader, IndicatorValueLoaderInput, IndicatorValuePayload,
-        ProgramIndicatorValue,
-    },
+    loader::{IndicatorValueLoader, IndicatorValueLoaderInput, IndicatorValuePayload},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use repository::{
-    EqualFilter, ProgramIndicatorFilter, ProgramIndicatorSort, ProgramIndicatorSortField,
+    EqualFilter, IndicatorValueRow, ProgramIndicatorFilter, ProgramIndicatorSort,
+    ProgramIndicatorSortField,
 };
 use service::programs::program_indicator::query::{
     ColumnValue, IndicatorColumn, IndicatorLine, ProgramIndicator, ValueType,
 };
+use std::sync::RwLock;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -46,16 +45,13 @@ impl ProgramIndicatorSortInput {
 #[derive(InputObject, Clone)]
 pub struct ProgramIndicatorFilterInput {
     pub program_id: Option<EqualFilterStringInput>,
-    // TODO add fields
-    // pub period_id: Option<EqualFilterStringInput>,
-    // pub customer_id: Option<EqualFilterStringInput>,
-    // pub supplier_id: Option<EqualFilterStringInput>,
+    pub id: Option<EqualFilterStringInput>,
 }
 
 impl From<ProgramIndicatorFilterInput> for ProgramIndicatorFilter {
     fn from(f: ProgramIndicatorFilterInput) -> Self {
         ProgramIndicatorFilter {
-            id: None,
+            id: f.id.map(EqualFilter::from),
             program_id: f.program_id.map(EqualFilter::from),
         }
     }
@@ -86,7 +82,7 @@ impl ProgramIndicatorNode {
         &self.program_indicator.program_id
     }
 
-    pub async fn code(&self) -> &str {
+    pub async fn indicator_code(&self) -> &str {
         &self.program_indicator.code
     }
 
@@ -112,7 +108,7 @@ pub struct IndicatorLineNode {
 
 #[Object]
 impl IndicatorLineNode {
-    pub async fn code(&self) -> &str {
+    pub async fn line_code(&self) -> &str {
         &self.line.code
     }
 
@@ -120,7 +116,7 @@ impl IndicatorLineNode {
         &self.line.name
     }
 
-    pub async fn values(&self) -> Vec<IndicatorColumnNode> {
+    pub async fn columns(&self) -> Vec<IndicatorColumnNode> {
         self.line
             .value
             .clone()
@@ -146,19 +142,24 @@ impl IndicatorColumnNode {
         &self.column.header
     }
 
+    pub async fn id(&self) -> &str {
+        &self.column.id
+    }
+
     pub async fn value(
         &self,
         ctx: &Context<'_>,
         period_id: String,
         supplier_store_id: String,
         customer_name_id: String,
-    ) -> Result<IndicatorValueNode> {
+    ) -> Result<String> {
         let loader = ctx.get_loader::<DataLoader<IndicatorValueLoader>>();
         let payload = IndicatorValuePayload {
             period_id,
             supplier_store_id,
             customer_name_id,
         };
+
         let result = loader
             .load_one(IndicatorValueLoaderInput::new(
                 &self.column.line_id,
@@ -166,14 +167,47 @@ impl IndicatorColumnNode {
                 payload,
             ))
             .await?
-            .ok_or(
+            .ok_or_else(|| {
                 StandardGraphqlError::InternalError(format!(
-                    "Cannot find value for line {} and column {}",
+                    "Cannot find value for column {} with header {}",
                     &self.column.line_id, &self.column.id,
                 ))
-                .extend(),
-            )?;
-        Ok(IndicatorValueNode::from_domain(result))
+                .extend()
+            })?;
+
+        Ok(result.value)
+    }
+
+    pub async fn value_id(
+        &self,
+        ctx: &Context<'_>,
+        period_id: String,
+        supplier_store_id: String,
+        customer_name_id: String,
+    ) -> Result<String> {
+        let loader = ctx.get_loader::<DataLoader<IndicatorValueLoader>>();
+        let payload = IndicatorValuePayload {
+            period_id,
+            supplier_store_id,
+            customer_name_id,
+        };
+
+        let result = loader
+            .load_one(IndicatorValueLoaderInput::new(
+                &self.column.line_id,
+                &self.column.id,
+                payload,
+            ))
+            .await?
+            .ok_or_else(|| {
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot find value for column {} with header {}",
+                    &self.column.line_id, &self.column.id,
+                ))
+                .extend()
+            })?;
+
+        Ok(result.id)
     }
 }
 
@@ -248,7 +282,7 @@ impl IndicatorValueNode {
 }
 
 impl IndicatorValueNode {
-    pub fn from_domain(value: ProgramIndicatorValue) -> IndicatorValueNode {
+    pub fn from_domain(value: IndicatorValueRow) -> IndicatorValueNode {
         IndicatorValueNode {
             value: value.value,
             id: value.id,
