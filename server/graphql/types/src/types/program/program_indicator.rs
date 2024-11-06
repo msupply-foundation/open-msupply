@@ -13,6 +13,7 @@ use repository::{
 use service::programs::program_indicator::query::{
     ColumnValue, IndicatorColumn, IndicatorLine, ProgramIndicator, ValueType,
 };
+use std::sync::RwLock;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -144,34 +145,8 @@ impl IndicatorColumnNode {
         &self.column.header
     }
 
-    async fn load_value_with_id(
-        &self,
-        ctx: &Context<'_>,
-        period_id: String,
-        supplier_store_id: String,
-        customer_name_id: String,
-    ) -> Result<IndicatorValueNode> {
-        let loader = ctx.get_loader::<DataLoader<IndicatorValueLoader>>();
-        let payload = IndicatorValuePayload {
-            period_id,
-            supplier_store_id,
-            customer_name_id,
-        };
-        let result = loader
-            .load_one(IndicatorValueLoaderInput::new(
-                &self.column.line_id,
-                &self.column.id,
-                payload,
-            ))
-            .await?
-            .ok_or(
-                StandardGraphqlError::InternalError(format!(
-                    "Cannot find value for line {} and column {}",
-                    &self.column.line_id, &self.column.id,
-                ))
-                .extend(),
-            )?;
-        Ok(IndicatorValueNode::from_domain(result))
+    pub async fn id(&self) -> &str {
+        &self.column.id
     }
 
     pub async fn value(
@@ -181,10 +156,29 @@ impl IndicatorColumnNode {
         supplier_store_id: String,
         customer_name_id: String,
     ) -> Result<String> {
-        Ok(self
-            .load_value_with_id(ctx, period_id, supplier_store_id, customer_name_id)
+        let loader = ctx.get_loader::<DataLoader<IndicatorValueLoader>>();
+        let payload = IndicatorValuePayload {
+            period_id,
+            supplier_store_id,
+            customer_name_id,
+        };
+
+        let result = loader
+            .load_one(IndicatorValueLoaderInput::new(
+                &self.column.line_id,
+                &self.column.id,
+                payload,
+            ))
             .await?
-            .value)
+            .ok_or_else(|| {
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot find value for column {} with header {}",
+                    &self.column.line_id, &self.column.id,
+                ))
+                .extend()
+            })?;
+
+        Ok(result.value)
     }
 
     pub async fn value_id(
@@ -194,10 +188,29 @@ impl IndicatorColumnNode {
         supplier_store_id: String,
         customer_name_id: String,
     ) -> Result<String> {
-        Ok(self
-            .load_value_with_id(ctx, period_id, supplier_store_id, customer_name_id)
+        let loader = ctx.get_loader::<DataLoader<IndicatorValueLoader>>();
+        let payload = IndicatorValuePayload {
+            period_id,
+            supplier_store_id,
+            customer_name_id,
+        };
+
+        let result = loader
+            .load_one(IndicatorValueLoaderInput::new(
+                &self.column.line_id,
+                &self.column.id,
+                payload,
+            ))
             .await?
-            .id)
+            .ok_or_else(|| {
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot find value for column {} with header {}",
+                    &self.column.line_id, &self.column.id,
+                ))
+                .extend()
+            })?;
+
+        Ok(result.id)
     }
 }
 
