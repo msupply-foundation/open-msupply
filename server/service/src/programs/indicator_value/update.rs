@@ -1,11 +1,10 @@
-use actix_web::{web::ServiceConfig, ResponseError};
 use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
     EqualFilter, IndicatorValueRow, IndicatorValueRowRepository, RepositoryError,
     StorageConnection,
 };
 
-use crate::service_provider::{ServiceContext, ServiceProvider};
+use crate::service_provider::ServiceContext;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct UpdateIndicatorValue {
