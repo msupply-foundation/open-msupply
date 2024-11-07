@@ -1,10 +1,12 @@
 use async_graphql::*;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{
     simple_generic_errors::RecordNotFound, standard_graphql_error::validate_auth, ContextExt,
 };
 use graphql_types::types::program_indicator::IndicatorValueNode;
-use repository::indicator_line;
 use service::auth::{Resource, ResourceAccessRequest};
+use service::programs::indicator_value::UpdateIndicatorValue;
+use service::programs::indicator_value::UpdateIndicatorValueError;
 
 #[derive(InputObject)]
 pub struct UpdateIndicatorValueInput {
@@ -49,15 +51,35 @@ pub fn update_indicator_value(
 
     let response = match service_provider
         .indicator_value_service
-        .update_indicator_value(ctx, input)
+        .update_indicator_value(&service_context, input.to_domain())
     {
-        Ok(incator_value) => {
+        Ok(indicator_value) => {
             UpdateIndicatorValueResponse::Response(IndicatorValueNode::from_domain(indicator_value))
         }
-        Err(error) => UpdateResponse::Error(UpdateError {
+        Err(error) => UpdateIndicatorValueResponse::Error(UpdateError {
             error: map_error(error)?,
         }),
     };
 
     Ok(response)
+}
+
+impl UpdateIndicatorValueInput {
+    pub fn to_domain(self) -> UpdateIndicatorValue {
+        let UpdateIndicatorValueInput { id, value } = self;
+        UpdateIndicatorValue { id, value }
+    }
+}
+
+fn map_error(error: UpdateIndicatorValueError) -> Result<UpdateErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:?}", error);
+    let graphql_error = match error {
+        UpdateIndicatorValueError::IndicatorValueDoesNotExist => {
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
+        }
+        UpdateIndicatorValueError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }
