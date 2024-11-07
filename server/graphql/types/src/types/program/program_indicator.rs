@@ -40,11 +40,11 @@ pub struct ProgramIndicatorFilterInput {
     pub id: Option<EqualFilterStringInput>,
 }
 
-impl From<ProgramIndicatorFilterInput> for ProgramIndicatorFilter {
-    fn from(f: ProgramIndicatorFilterInput) -> Self {
+impl ProgramIndicatorFilterInput {
+    pub fn to_domain(self) -> ProgramIndicatorFilter {
         ProgramIndicatorFilter {
-            id: f.id.map(EqualFilter::from),
-            program_id: f.program_id.map(EqualFilter::from),
+            id: self.id.map(EqualFilter::from),
+            program_id: self.program_id.map(EqualFilter::from),
         }
     }
 }

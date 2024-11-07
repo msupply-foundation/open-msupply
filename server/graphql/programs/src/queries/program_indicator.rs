@@ -33,7 +33,7 @@ pub fn program_indicators(
             &context.connection,
             Pagination::all(),
             sort.map(ProgramIndicatorSortInput::to_domain),
-            filter.map(ProgramIndicatorFilter::from),
+            filter.map(ProgramIndicatorFilterInput::to_domain),
         )?
         .into_iter()
         .map(|program_indicator| ProgramIndicatorNode { program_indicator })
