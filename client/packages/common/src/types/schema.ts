@@ -3269,6 +3269,7 @@ export enum InvoiceSortFieldInput {
   Comment = 'comment',
   CreatedDatetime = 'createdDatetime',
   DeliveredDatetime = 'deliveredDatetime',
+  InvoiceDatetime = 'invoiceDatetime',
   InvoiceNumber = 'invoiceNumber',
   OtherPartyName = 'otherPartyName',
   PickedDatetime = 'pickedDatetime',

@@ -12,6 +12,7 @@ import {
   NothingHere,
   useToggle,
   useUrlQueryParams,
+  ColumnFormat,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
 import { usePrescription } from '../api';
@@ -59,7 +60,16 @@ const PrescriptionListViewComponent: FC = () => {
         'invoiceNumber',
         { description: 'description.invoice-number', maxWidth: 110 },
       ],
-      'createdDatetime',
+      {
+        key: 'prescriptionDatetime',
+        label: 'label.prescription-date',
+        format: ColumnFormat.Date,
+        accessor: ({ rowData }) =>
+          rowData.prescriptionDate
+            ? rowData.prescriptionDate
+            : rowData.createdDatetime,
+        sortable: true,
+      },
       ['comment'],
       'selection',
     ],
