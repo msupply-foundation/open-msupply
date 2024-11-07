@@ -1,4 +1,5 @@
 use async_graphql::*;
+use graphql_core::simple_generic_errors::{CannotEditRequisition, ForeignKey, ForeignKeyError};
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{
     simple_generic_errors::RecordNotFound, standard_graphql_error::validate_auth, ContextExt,
@@ -20,6 +21,8 @@ pub struct UpdateIndicatorValueInput {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
+    RequisitionDoesNotExist(ForeignKeyError),
+    CannotEditRequisition(CannotEditRequisition),
 }
 
 #[derive(SimpleObject)]
@@ -72,7 +75,11 @@ impl UpdateIndicatorValueInput {
             value,
             requisition_id,
         } = self;
-        UpdateIndicatorValue { id, value, requisition_id }
+        UpdateIndicatorValue {
+            id,
+            value,
+            requisition_id,
+        }
     }
 }
 
@@ -80,10 +87,26 @@ fn map_error(error: UpdateIndicatorValueError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:?}", error);
     let graphql_error = match error {
+        // Structured Errors
         UpdateIndicatorValueError::IndicatorValueDoesNotExist => {
             return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
         }
+        UpdateIndicatorValueError::NoRequisitionForIndicator => {
+            return Ok(UpdateErrorInterface::RequisitionDoesNotExist(
+                ForeignKeyError(ForeignKey::RequisitionId),
+            ))
+        }
+        UpdateIndicatorValueError::ValuePeriodNotRequisitionPeriod => BadUserInput(formatted_error),
+        UpdateIndicatorValueError::CannotEditRequisition => {
+            return Ok(UpdateErrorInterface::CannotEditRequisition(
+                CannotEditRequisition {},
+            ))
+        }
+        // Standard graphql errors
         UpdateIndicatorValueError::DatabaseError(_) => InternalError(formatted_error),
+        UpdateIndicatorValueError::NotThisStoreValue => BadUserInput(formatted_error),
+        UpdateIndicatorValueError::NotThisStoreRequisition => BadUserInput(formatted_error),
+        UpdateIndicatorValueError::RequisitionHasNoPeriod => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
