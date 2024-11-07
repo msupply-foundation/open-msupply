@@ -1,6 +1,6 @@
 use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
-    requisition_row, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository, RepositoryError,
+    EqualFilter, IndicatorValueRow, IndicatorValueRowRepository, RepositoryError,
     RequisitionStatus, RequisitionType, StorageConnection,
 };
 
@@ -21,8 +21,8 @@ pub enum UpdateIndicatorValueError {
     DatabaseError(RepositoryError),
     IndicatorValueDoesNotExist,
     NoRequisitionForIndicator,
-    ValueNotOfUsersStore,
-    RequisitionOfDifferentStore,
+    NotThisStoreRequisition,
+    NotThisStoreValue,
     RequisitionHasNoPeriod,
     ValuePeriodNotRequisitionPeriod,
     CannotEditRequisition,
@@ -66,11 +66,11 @@ fn validate(
 
     // todo rename to store_id as it is store_id
     if store_id.to_owned() != indicator_value_row.supplier_store_id {
-        return Err(OutError::ValueNotOfUsersStore);
+        return Err(OutError::NotThisStoreValue);
     }
 
     if requisition.requisition_row.store_id != store_id.to_owned() {
-        return Err(OutError::RequisitionOfDifferentStore);
+        return Err(OutError::NotThisStoreRequisition);
     }
 
     match requisition.period {
