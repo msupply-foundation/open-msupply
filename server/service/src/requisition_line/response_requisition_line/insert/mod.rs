@@ -11,19 +11,6 @@ pub struct InsertResponseRequisitionLine {
     pub id: String,
     pub item_id: String,
     pub requisition_id: String,
-    pub supply_quantity: Option<f64>,
-    pub comment: Option<String>,
-    // Manual Requisition fields
-    pub requested_quantity: Option<f64>,
-    pub stock_on_hand: Option<f64>,
-    pub average_monthly_consumption: Option<f64>,
-    pub incoming_units: Option<f64>,
-    pub outgoing_units: Option<f64>,
-    pub loss_in_units: Option<f64>,
-    pub addition_in_units: Option<f64>,
-    pub expiring_units: Option<f64>,
-    pub days_out_of_stock: Option<f64>,
-    pub option_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -83,7 +70,7 @@ mod test {
         RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionStatus,
         RequisitionType,
     };
-    use util::{inline_edit, inline_init};
+    use util::inline_init;
 
     use crate::{
         requisition_line::response_requisition_line::{
@@ -259,10 +246,6 @@ mod test {
                     requisition_id: new_response_requisition().id,
                     id: "new requisition line id".to_string(),
                     item_id: test_item_stats::item2().id,
-                    stock_on_hand: Some(10.0),
-                    requested_quantity: Some(10.0),
-                    supply_quantity: Some(20.0),
-                    comment: Some("comment".to_string()),
                     ..Default::default()
                 },
             )
@@ -270,20 +253,8 @@ mod test {
 
         let line = RequisitionLineRowRepository::new(&connection)
             .find_one_by_id("new requisition line id")
-            .unwrap()
             .unwrap();
 
-        assert_eq!(
-            line,
-            inline_edit(&line, |mut u| {
-                u.supply_quantity = 20.0;
-                u.requested_quantity = 10.0;
-                u.initial_stock_on_hand_units = 10.0;
-                u.available_stock_on_hand = 10.0;
-                u.average_monthly_consumption = 0.0;
-                u.comment = Some("comment".to_string());
-                u
-            })
-        );
+        assert!(line.is_some());
     }
 }

@@ -196,7 +196,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
       nextButton={
         <DialogButton
           disabled={okNextDisabled}
-          variant="next"
+          variant="next-and-ok"
           onClick={onNext}
         />
       }

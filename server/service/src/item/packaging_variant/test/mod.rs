@@ -46,7 +46,7 @@ mod query {
                 &context,
                 UpsertPackagingVariant {
                     id: test_packaging_variant_id.to_string(),
-                    item_variant_id: item_variant.id,
+                    item_variant_id: item_variant.item_variant_row.id,
                     name: "packaging_variant_a".to_string(),
                     packaging_level: 1,
                     ..Default::default()
@@ -246,7 +246,7 @@ mod query {
                 id: test_packaging_variant_id.to_string(),
                 item_variant_id: test_item_variant_id.to_string(),
                 name: "packaging_variant_a".to_string(),
-                packaging_level:1,
+                packaging_level: 1,
                 pack_size: Some(-1.0),
                 ..Default::default()
             },
@@ -256,7 +256,6 @@ mod query {
             UpsertPackagingVariantError::LessThanZero("pack_size".to_string())
         );
 
-
         // Test that we can't create a record with a pack_size == 0
         let result = service.upsert_packaging_variant(
             &context,
@@ -264,7 +263,7 @@ mod query {
                 id: test_packaging_variant_id.to_string(),
                 item_variant_id: test_item_variant_id.to_string(),
                 name: "packaging_variant_a".to_string(),
-                packaging_level:1,
+                packaging_level: 1,
                 pack_size: Some(0.0),
                 ..Default::default()
             },
@@ -281,7 +280,7 @@ mod query {
                 id: test_packaging_variant_id.to_string(),
                 item_variant_id: test_item_variant_id.to_string(),
                 name: "packaging_variant_a".to_string(),
-                packaging_level:1,
+                packaging_level: 1,
                 pack_size: Some(0.0),
                 ..Default::default()
             },
@@ -298,7 +297,7 @@ mod query {
                 id: test_packaging_variant_id.to_string(),
                 item_variant_id: test_item_variant_id.to_string(),
                 name: "packaging_variant_a".to_string(),
-                packaging_level:1,
+                packaging_level: 1,
                 volume_per_unit: Some(-1.0),
                 ..Default::default()
             },
@@ -308,7 +307,6 @@ mod query {
             UpsertPackagingVariantError::LessThanZero("volume_per_unit".to_string())
         );
 
-
         // Test that we can't create a record with a volume_per_unit == 0
         let result = service.upsert_packaging_variant(
             &context,
@@ -316,7 +314,7 @@ mod query {
                 id: test_packaging_variant_id.to_string(),
                 item_variant_id: test_item_variant_id.to_string(),
                 name: "packaging_variant_a".to_string(),
-                packaging_level:1,
+                packaging_level: 1,
                 volume_per_unit: Some(0.0),
                 ..Default::default()
             },
