@@ -3,6 +3,7 @@ use graphql_core::{
     simple_generic_errors::RecordNotFound, standard_graphql_error::validate_auth, ContextExt,
 };
 use graphql_types::types::program_indicator::IndicatorValueNode;
+use repository::indicator_line;
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject)]
@@ -38,7 +39,7 @@ pub fn update_indicator_value(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateProgram,
+            resource: Resource::MutateRequisition,
             store_id: Some(store_id.clone()),
         },
     )?;
@@ -46,7 +47,17 @@ pub fn update_indicator_value(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    return Ok(UpdateIndicatorValueResponse::Error(UpdateError {
-        error: UpdateErrorInterface::RecordNotFound(RecordNotFound),
-    }));
+    let response = match service_provider
+        .indicator_value_service
+        .update_indicator_value(ctx, input)
+    {
+        Ok(incator_value) => {
+            UpdateIndicatorValueResponse::Response(IndicatorValueNode::from_domain(indicator_value))
+        }
+        Err(error) => UpdateResponse::Error(UpdateError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(response)
 }

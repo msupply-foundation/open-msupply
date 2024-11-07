@@ -65,6 +65,13 @@ impl<'a> IndicatorValueRepository<'a> {
             .get_result(self.connection.lock().connection())?)
     }
 
+    pub fn query_one(
+        &self,
+        filter: IndicatorValueFilter,
+    ) -> Result<Option<IndicatorValueRow>, RepositoryError> {
+        Ok(self.query_by_filter(filter)?.pop())
+    }
+
     pub fn query_by_filter(
         &self,
         filter: IndicatorValueFilter,
