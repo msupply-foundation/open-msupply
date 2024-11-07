@@ -62,6 +62,6 @@ erDiagram
 
 ### Config Example
 
-![diagram](./categories%20and%20properties.drawio.png)
+![diagram](./config.drawio.png)
 
 Examples of properties to follow
