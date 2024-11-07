@@ -94,6 +94,10 @@ export enum ActivityLogNodeType {
   AssetLogReasonDeleted = 'ASSET_LOG_REASON_DELETED',
   AssetPropertyCreated = 'ASSET_PROPERTY_CREATED',
   AssetUpdated = 'ASSET_UPDATED',
+  DemographicIndicatorCreated = 'DEMOGRAPHIC_INDICATOR_CREATED',
+  DemographicIndicatorUpdated = 'DEMOGRAPHIC_INDICATOR_UPDATED',
+  DemographicProjectionCreated = 'DEMOGRAPHIC_PROJECTION_CREATED',
+  DemographicProjectionUpdated = 'DEMOGRAPHIC_PROJECTION_UPDATED',
   InventoryAdjustment = 'INVENTORY_ADJUSTMENT',
   InvoiceCreated = 'INVOICE_CREATED',
   InvoiceDeleted = 'INVOICE_DELETED',
@@ -815,6 +819,7 @@ export type BundledItemNode = {
   id: Scalars['String']['output'];
   principalItemVariant?: Maybe<ItemVariantNode>;
   principalItemVariantId: Scalars['String']['output'];
+  ratio: Scalars['Float']['output'];
 };
 
 export type CanOnlyChangeToAllocatedWhenNoUnallocatedLines = UpdateErrorInterface & {
@@ -3593,10 +3598,16 @@ export type ItemVariantMutationsUpsertItemVariantArgs = {
 
 export type ItemVariantNode = {
   __typename: 'ItemVariantNode';
+  /** This item variant is the principal item variant in a bundle - these items are bundled with it */
+  bundledItemVariants: Array<BundledItemNode>;
+  /** This item variant is bundled with other (principal) item variants */
+  bundlesWith: Array<BundledItemNode>;
   coldStorageType?: Maybe<ColdStorageTypeNode>;
   coldStorageTypeId?: Maybe<Scalars['String']['output']>;
   dosesPerUnit?: Maybe<Scalars['Int']['output']>;
   id: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
   manufacturer?: Maybe<NameNode>;
   manufacturerId?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
