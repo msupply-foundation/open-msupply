@@ -32,11 +32,11 @@ export const Toolbar: FC = () => {
   const { items } = usePrescriptionRows();
 
   const isDisabled = usePrescription.utils.isDisabled();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('messages.confirm-delete-all-lines'),
+    message: t('messages.confirm-delete-prescription-lines'),
   });
 
   const handleDateChange = async (newPrescriptionDate: Date | null) => {
@@ -131,7 +131,11 @@ export const Toolbar: FC = () => {
                   defaultValue={defaultPrescriptionDate}
                   value={DateUtils.getDateOrNull(prescriptionDate)}
                   format="P"
-                  onChange={handleDateChange}
+                  // Using onAccept rather than onChange -- on mobile, onChange
+                  // is triggered when first opening the picker, which causes UI
+                  // conflict with the confirmation modal
+                  onAccept={handleDateChange}
+                  onChange={() => {}}
                   maxDate={new Date()}
                 />
               }

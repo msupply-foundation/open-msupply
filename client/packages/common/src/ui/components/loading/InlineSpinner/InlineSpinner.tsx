@@ -12,7 +12,7 @@ export const InlineSpinner: FC<InlineSpinnerProps> = ({
   color = 'primary',
   messageKey,
 }) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
 
   return (
     <Box

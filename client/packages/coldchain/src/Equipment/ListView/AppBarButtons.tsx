@@ -29,7 +29,7 @@ export const AppBarButtonsComponent = ({
   modalController: ToggleState;
 }) => {
   const { success, error } = useNotification();
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { fetchAsync, isLoading } = useAssets.document.listAll();
   const { data: properties } = useAssetData.utils.properties();
 

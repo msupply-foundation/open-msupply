@@ -31,7 +31,7 @@ const Heading = ({ text }: { text: string }) => (
 );
 
 export const Documents = ({ draft }: { draft: DraftAsset }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { error, success } = useNotification();
   const api = useAssets.utils.api();
   const queryClient = useQueryClient();

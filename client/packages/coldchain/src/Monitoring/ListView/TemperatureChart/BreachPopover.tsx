@@ -72,7 +72,7 @@ const Content = ({
   onClose: () => void;
 }) => {
   const navigate = useNavigate();
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   if (isLoading) return <CircularProgress />;
 

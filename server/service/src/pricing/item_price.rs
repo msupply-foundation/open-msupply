@@ -24,31 +24,14 @@ pub fn get_pricing_for_item(
     input: ItemPriceLookup,
 ) -> Result<ItemPrice, RepositoryError> {
     // 1. Get the default price list & price per unit for the item
-    let default_price_list = MasterListRepository::new(&ctx.connection)
+    let default_price_per_unit = MasterListLineRepository::new(&ctx.connection)
         .query_by_filter(
-            MasterListFilter::new()
-                .is_default_price_list(true)
+            MasterListLineFilter::new()
+                .master_list(MasterListFilter::new().is_default_price_list(true))
                 .item_id(EqualFilter::equal_to(&input.item_id)),
         )?
-        .pop();
-
-    let default_price_per_unit = match default_price_list {
-        Some(default_price_list) => {
-            let master_list_line = MasterListLineRepository::new(&ctx.connection)
-                .query_by_filter(
-                    MasterListLineFilter::new()
-                        .master_list_id(EqualFilter::equal_to(&default_price_list.id))
-                        .item_id(EqualFilter::equal_to(&input.item_id)),
-                )?
-                .pop();
-
-            match master_list_line {
-                Some(master_list_line) => master_list_line.price_per_unit, // Line might not have a default price, so this returns the Optional<f64> price
-                None => None, // This means the price list doesn't have the item, so no price, shouldn't happen though as query above should return the price list only if it has the item
-            }
-        }
-        None => None, // No default price list found, no price
-    };
+        .pop()
+        .and_then(|l| l.price_per_unit);
 
     // 2. Check if we have a name, and that name is not a patient
     let is_patient = match &input.customer_name_id {

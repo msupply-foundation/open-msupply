@@ -15,7 +15,7 @@ export const DistributionNav: FC = () => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Distribution).addWildCard().build()
   );
-  const t = useTranslation('app');
+  const t = useTranslation();
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Distribution}>

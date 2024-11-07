@@ -21,7 +21,7 @@ export const ReplenishmentNav = ({
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Replenishment).addWildCard().build()
   );
-  const t = useTranslation('app');
+  const t = useTranslation();
   const rnrVisible = store?.preferences.omProgramModule;
 
   return (

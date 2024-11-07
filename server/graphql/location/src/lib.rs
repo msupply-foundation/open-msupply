@@ -191,6 +191,7 @@ mod test {
                         code: "test_code".to_owned(),
                         on_hold: true,
                         store_id: "store_a".to_owned(),
+                        cold_storage_type_id: None,
                     },
                 }],
                 count: 1,

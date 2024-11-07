@@ -10,7 +10,7 @@ export const Toolbar: FC = () => {
   const { data } = useAssets.document.get();
 
   const { catalogueItem } = useAssets.document.fields();
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   if (!data) return null;
 

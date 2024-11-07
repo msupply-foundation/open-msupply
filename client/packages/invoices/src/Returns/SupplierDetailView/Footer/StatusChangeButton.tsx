@@ -85,7 +85,7 @@ const getButtonLabel =
 
 const useStatusChangeButton = () => {
   const { success, error } = useNotification();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { data } = useReturns.document.supplierReturn();
   const { mutateAsync } = useReturns.document.updateSupplierReturn();
 

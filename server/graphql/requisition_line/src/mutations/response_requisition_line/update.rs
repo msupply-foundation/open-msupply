@@ -19,6 +19,17 @@ pub struct UpdateInput {
     pub id: String,
     pub supply_quantity: Option<f64>,
     pub comment: Option<String>,
+    // Manual Requisition fields
+    pub requested_quantity: Option<f64>,
+    pub stock_on_hand: Option<f64>,
+    pub average_monthly_consumption: Option<f64>,
+    pub incoming_units: Option<f64>,
+    pub outgoing_units: Option<f64>,
+    pub loss_in_units: Option<f64>,
+    pub addition_in_units: Option<f64>,
+    pub expiring_units: Option<f64>,
+    pub days_out_of_stock: Option<f64>,
+    pub option_id: Option<String>,
 }
 
 #[derive(Interface)]
@@ -74,13 +85,33 @@ impl UpdateInput {
         let UpdateInput {
             id,
             supply_quantity,
+            requested_quantity,
+            stock_on_hand,
             comment,
+            average_monthly_consumption,
+            incoming_units,
+            outgoing_units,
+            loss_in_units,
+            addition_in_units,
+            expiring_units,
+            days_out_of_stock,
+            option_id,
         } = self;
 
         ServiceInput {
             id,
             supply_quantity,
+            requested_quantity,
+            stock_on_hand,
             comment,
+            average_monthly_consumption,
+            incoming_units,
+            outgoing_units,
+            loss_in_units,
+            addition_in_units,
+            expiring_units,
+            days_out_of_stock,
+            option_id,
         }
     }
 }
@@ -323,7 +354,10 @@ mod test {
                 ServiceInput {
                     id: "update line id input".to_string(),
                     supply_quantity: Some(1.0),
+                    requested_quantity: None,
+                    stock_on_hand: None,
                     comment: Some("comment".to_string()),
+                    ..Default::default()
                 }
             );
             Ok(RequisitionLine {
@@ -337,7 +371,17 @@ mod test {
           "input": {
             "id": "update line id input",
             "supplyQuantity": 1,
-            "comment": "comment"
+            "requestedQuantity": null,
+            "stockOnHand": null,
+            "comment": "comment",
+            "averageMonthlyConsumption": null,
+            "incomingUnits": null,
+            "outgoingUnits": null,
+            "lossInUnits": null,
+            "additionInUnits": null,
+            "expiringUnits": null,
+            "daysOutOfStock": null,
+            "optionId": null
           },
           "storeId": "store_a"
         });

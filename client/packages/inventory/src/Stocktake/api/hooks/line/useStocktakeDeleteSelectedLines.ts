@@ -11,7 +11,7 @@ import { useStocktakeRows } from './useStocktakeRows';
 export const useStocktakeDeleteSelectedLines = (): (() => void) => {
   const { isDisabled, items, lines } = useStocktakeRows();
   const { mutateAsync } = useStocktakeDeleteLines();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
 
   const { selectedRows } = useTableStore(state => {
     const { isGrouped } = state;

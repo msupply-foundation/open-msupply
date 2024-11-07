@@ -19,7 +19,7 @@ export const AppBarButtons: FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
   const { success, error } = useNotification();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { isLoading, fetchAsync } = useStocktake.document.listAll({
     key: 'createdDatetime',
     direction: 'desc',

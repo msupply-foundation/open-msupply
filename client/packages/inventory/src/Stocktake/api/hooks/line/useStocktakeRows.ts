@@ -1,4 +1,4 @@
-import { ArrayUtils, useIsGrouped } from '@openmsupply-client/common';
+import { ArrayUtils } from '@openmsupply-client/common';
 import { StocktakeLineFragment } from '../../operations.generated';
 import { StocktakeSummaryItem } from '../../../../types';
 import { useStocktake } from '..';
@@ -21,8 +21,6 @@ export const useStocktakeRows = () => {
   const lines = lineData?.nodes;
   const items = useMemo(() => getStocktakeItems(lines ?? []), [lines]);
   const totalLineCount = lineData?.totalCount ?? 0;
-  const { isGrouped } = useIsGrouped('stocktake');
-  const rows = isGrouped ? items : lines;
   const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
 
   return {
@@ -30,7 +28,6 @@ export const useStocktakeRows = () => {
     isLoading,
     items,
     lines,
-    rows,
     totalLineCount,
   };
 };

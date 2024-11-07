@@ -29,7 +29,7 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
   patient,
   onClose,
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { Modal, showDialog, hideDialog } = useDialog({ onClose });
   const { getLocalisedFullName } = useIntlUtils();
   const [started, setStarted] = useState(false);

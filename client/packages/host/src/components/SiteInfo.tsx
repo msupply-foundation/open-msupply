@@ -28,7 +28,7 @@ const RowWithLabel = ({
 
 export const SiteInfo: FC<{ siteName?: string | null }> = ({ siteName }) => {
   const { connectedServer, goBackToDiscovery } = useNativeClient();
-  const t = useTranslation('app');
+  const t = useTranslation();
   if (!connectedServer) return null;
 
   return (

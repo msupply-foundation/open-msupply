@@ -89,7 +89,7 @@ export const useInitialiseForm = () => {
     setUrl,
     setUsername,
   } = state;
-  const t = useTranslation('app');
+  const t = useTranslation();
   const { mutateAsync: initialise } = useSync.sync.initialise();
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   // Both initialisationStatus and syncStatus are polled because we want to navigate

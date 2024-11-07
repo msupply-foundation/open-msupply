@@ -16,10 +16,6 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
-import {
-  getPackVariantCell,
-  useIsPackVariantsEnabled,
-} from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { AppRoute } from '@openmsupply-client/config';
 import { useStockList } from '../api/hooks/useStockList';
@@ -51,40 +47,24 @@ const StockListComponent: FC = () => {
     first,
   };
 
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
   const pagination = { page, first, offset };
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { data, isLoading, isError } = useStockList(queryParams);
   const pluginColumns = usePluginColumns<StockLineRowFragment>({
     type: 'Stock',
   });
-  const packSizeAndUnitColumns: ColumnDescription<StockLineRowFragment>[] =
-    isPackVariantsEnabled
-      ? [
-          {
-            key: 'packUnit',
-            label: 'label.pack',
-            sortable: false,
-            Cell: getPackVariantCell({
-              getItemId: r => r.itemId,
-              getPackSizes: r => [r.packSize],
-              getUnitName: r => r.item.unitName || null,
-            }),
-            width: 130,
-          },
-        ]
-      : [
-          [
-            'itemUnit',
-            {
-              accessor: ({ rowData }) => rowData.item.unitName,
-              sortable: false,
-              Cell: TooltipTextCell,
-              width: 75,
-            },
-          ],
-          ['packSize', { Cell: TooltipTextCell, width: 125 }],
-        ];
+  const packSizeAndUnitColumns: ColumnDescription<StockLineRowFragment>[] = [
+    [
+      'itemUnit',
+      {
+        accessor: ({ rowData }) => rowData.item.unitName,
+        sortable: false,
+        Cell: TooltipTextCell,
+        width: 75,
+      },
+    ],
+    ['packSize', { Cell: TooltipTextCell, width: 125 }],
+  ];
 
   const columnDefinitions: ColumnDescription<StockLineRowFragment>[] = [
     [
@@ -103,6 +83,7 @@ const StockListComponent: FC = () => {
         width: 350,
       },
     ],
+    // TODO:: Add a column for the master list name
     ['batch', { Cell: TooltipTextCell, width: 100 }],
     [
       'expiryDate',

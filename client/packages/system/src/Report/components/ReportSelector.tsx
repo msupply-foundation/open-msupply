@@ -53,7 +53,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
     subContext,
     queryParams,
   });
-  const t = useTranslation('app');
+  const t = useTranslation();
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined
   >();

@@ -116,7 +116,7 @@ pub enum Resource {
 
     SyncInfo,
     ManualSync,
-    QueryInventoryAdjustmentReasons,
+    QueryReasonOptions,
     QueryStorePreferences,
     ColdChainApi,
     // assets
@@ -538,7 +538,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(Resource::ManualSync, PermissionDSL::NoPermissionRequired);
 
     map.insert(
-        Resource::QueryInventoryAdjustmentReasons,
+        Resource::QueryReasonOptions,
         PermissionDSL::NoPermissionRequired,
     );
     map.insert(
@@ -695,7 +695,7 @@ fn validate_resource_permissions(
     dynamic_permissions: &mut Vec<String>,
 ) -> Result<(), String> {
     // When this code runs, user_permissions have already been filtered by store (if specified).
-    // It is possible to mis-configure an API call and not specify a store_id when it is required which could result in incorrect permssion evaluation.
+    // It is possible to mis-configure an API call and not specify a store_id when it is required which could result in incorrect permission evaluation.
     // We use a StoreAccess permission to catch this case (As it checks both the permission and the store in the request)
 
     // println!(

@@ -1,5 +1,6 @@
 fragment StoreRow on StoreNode {
   code
+  storeName
   id
 }
 

@@ -179,7 +179,7 @@ const Chart = ({
   endTime: Date;
   isLoading: boolean;
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const theme = useTheme();
   const { dayMonthTime, customDate } = useFormatDateTime();
   const dateFormatter = (date: Date) => dayMonthTime(date);

@@ -12,7 +12,7 @@ interface ToolbarDropDownProps {
 }
 
 export const ToolbarDropDown = ({ isDisabled }: ToolbarDropDownProps) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const onDelete = useRequest.line.delete();
 
   return (

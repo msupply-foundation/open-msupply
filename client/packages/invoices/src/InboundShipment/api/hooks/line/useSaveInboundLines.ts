@@ -12,7 +12,7 @@ export const useSaveInboundLines = () => {
   const queryClient = useQueryClient();
   const invoiceNumber = useInboundNumber();
   const api = useInboundApi();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   return useMutation(
     async (lines: DraftInboundLine[]): Promise<{ errorMessage?: string }> => {

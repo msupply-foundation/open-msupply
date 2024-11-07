@@ -8,7 +8,7 @@ import { useTranslation } from '@common/intl';
 
 describe('ColorMenu', () => {
   const TestColorMenu = ({ onClick }: { onClick: (color: Color) => void }) => {
-    const t = useTranslation('app');
+    const t = useTranslation();
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {

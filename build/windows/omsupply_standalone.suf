@@ -958,7 +958,7 @@ if(g_IsValidPath(strInstallFolderPath)) then
 		Screen.Next();
 	else
 		-- there isn't enough space on the drive...
-		
+
 		-- from _SUF70_Global_Functions.lua:
 		-- ask the user if they want to continue anyway
 		if g_ConfirmFreeSpaceOverride() then
@@ -969,7 +969,7 @@ if(g_IsValidPath(strInstallFolderPath)) then
 	end
 else
 	-- the install folder path isn't valid...
-	
+
 	local strTitle = SetupData.GetLocalizedString("MSG_INVALID_ENTRY");
 	local strPrompt;
 
@@ -980,7 +980,7 @@ else
 		strPrompt = SetupData.GetLocalizedString("ERR_INVALID_PATH");
 	else
 		-- the string contains invalid characters
-		strPrompt = SetupData.GetLocalizedString("ERR_INVALID_CHARACTERS") .. "\r\n/ * ? \" &lt; &gt; |";		
+		strPrompt = SetupData.GetLocalizedString("ERR_INVALID_CHARACTERS") .. "\r\n/ * ? \" &lt; &gt; |";
 	end
 
 	-- tell the user to smarten up :)
@@ -1020,7 +1020,7 @@ end
 if(e_CtrlID == CTRL_BUTTON_BROWSE) then
 	-- the control message is from the browse button...
 
-	-- if it's a click message, show the browse dialog 
+	-- if it's a click message, show the browse dialog
 	-- and update the install folder
 	if (e_MsgID == MSGID_CLICKED) then
 
@@ -1028,7 +1028,7 @@ if(e_CtrlID == CTRL_BUTTON_BROWSE) then
 		-- (this will be used as the prompt on the Browse dialog)
 		local strPrompt = Screen.GetLocalizedString("IDS_CTRL_STATICTEXT_LABEL_01");
 		strPrompt = SessionVar.Expand(strPrompt);
-		
+
 		-- from _SUF70_Global_Functions.lua:
 		-- display a folder browse dialog to change the path in the install folder field
 		g_EditFieldFolderBrowse(CTRL_EDIT_FOLDER, strPrompt);
@@ -1044,7 +1044,7 @@ if(e_CtrlID == CTRL_EDIT_FOLDER) then
 	if (e_MsgID == MSGID_ONCHANGED) then
 
 		strInstallFolderPath = e_Details.Text;
-		
+
 		-- from _SUF70_Global_Functions.lua:
 		-- calculate the amount of disk space available on the selected drive
 		_SpaceAvailable = g_GetFreeSpaceInBytes(strInstallFolderPath);
@@ -1600,8 +1600,8 @@ Please click Next to proceed with the installation.</IDS_CTRL_STATICTEXT_BODY>
 <Script>-- These actions are performed whenever progress is made while the setup is installing files.
 
 --[[
-Note: 
-	The file installation process is divided into 4 progress stages: 
+Note:
+	The file installation process is divided into 4 progress stages:
 
 	1. preparing to install
 	2. installing files
@@ -1915,7 +1915,7 @@ Screen.Back();
 <Name>On Next</Name>
 <Args/>
 <Script>-- These actions are performed when the Next button is clicked.
--- Launch omSupply 
+-- Launch omSupply
 if (cbStartOmSupply) then
 	File.Run(SessionVar.Expand("%AppFolder%\\open mSupply.exe"));
 end
@@ -1958,14 +1958,14 @@ if (e_MsgID == MSGID_CLICKED) then
 	if (e_CtrlID == CTRL_BUTTON_01) then
 
 		-- Insert your button handling code here
-		
+
 		Dialog.Message("Click","You clicked on Button 01", MB_OK, MB_ICONNONE);
 	end
-	
+
 	if (e_CtrlID == CTRL_BUTTON_02) then
 
 		-- Insert your button handling code here
-		
+
 		Dialog.Message("Click","You clicked on Button 02", MB_OK, MB_ICONNONE);
 	end
 
@@ -2597,8 +2597,8 @@ Otherwise, click Next to continue.
 <Script>-- These actions are performed whenever progress is made while the setup is uninstalling files.
 
 --[[
-Note: 
-	The uninstallation process is divided into 2 progress stages: 
+Note:
+	The uninstallation process is divided into 2 progress stages:
 
 	1. removing files
 	2. removing shortcuts
@@ -3346,7 +3346,7 @@ local omSupplyServerDatabase = "sqlite";
 if hasOmsupplyStandaloneInstalled then
 	local uninstallPath = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 	local installedApps = Registry.GetKeyNames(HKEY_LOCAL_MACHINE, uninstallPath);
-	if (installedApps ~= nil) then	
+	if (installedApps ~= nil) then
 		-- Remove previous versions of this app from the uninstall list
 		if (Table.Count(installedApps) &gt; 0) then
 			for index, value in pairs(installedApps) do
@@ -3364,7 +3364,7 @@ else
 	config = config .. "  database_name: \"" .. SessionVar.Get("%omsupply_db_name%") .. "\"\r\n";
 	config = config .. "logging:\r\n";
 	config = config .. "  mode: File\r\n";
-	config = config .. "  level: Warn\r\n";
+	config = config .. "  level: Info\r\n";
 	config = config .. "  directory: log\r\n";
 	config = config .. "  filename: omsupply.log\r\n";
 	config = config .. "  max_file_count: 10\r\n";
@@ -3375,14 +3375,14 @@ else
 	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone");
 	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone", "Path", omSupplyServerPath, REG_SZ);
 	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone", "Database", "sqlite", REG_SZ);
-end 
+end
 
 -- Add a firewall rule to allow incoming requests
 local firewallRuleKey = "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\FirewallRules";
 if (Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, firewallRuleKey)) then
 
 	Registry.SetValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "open-mSupply-Server-TCP-IN", "v2.28|Action=Allow|Active=TRUE|Dir=In|Protocol=6|LPort=" .. SessionVar.Get("%omsupply_port%") .. "|Name=".. SessionVar.Get("%ProductName%") .. "|", REG_SZ);
-	
+
 	-- The firewall service requires restarting to detect the new rule
 	local firewallServiceName = "Windows Firewall";
 	queryResult = Service.Query(firewallServiceName, "");

@@ -17,7 +17,7 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
   requestedQuantity,
   otherRequestedQuantity,
 }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const predictedStockLevels = stockOnHand + incomingStock + stockOnOrder;
   const totalRequested = requestedQuantity + otherRequestedQuantity;
 

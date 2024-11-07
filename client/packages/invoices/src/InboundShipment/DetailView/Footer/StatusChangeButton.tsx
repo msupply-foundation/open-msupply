@@ -129,7 +129,7 @@ const useStatusChangeButton = () => {
   const { status, onHold, linkedShipment, update, lines } =
     useInbound.document.fields(['status', 'onHold', 'linkedShipment', 'lines']);
   const { success, error } = useNotification();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const isManuallyCreated = !linkedShipment?.id;
 
   const options = useMemo(

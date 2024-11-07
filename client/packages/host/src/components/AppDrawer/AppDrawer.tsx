@@ -148,7 +148,7 @@ const StyledDrawer = styled(Box, {
 }));
 
 export const AppDrawer: React.FC = () => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const isMediumScreen = useIsMediumScreen();
   const drawer = useDrawer();
   const { logout, userHasPermission, store } = useAuthContext();

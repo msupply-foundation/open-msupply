@@ -19,7 +19,7 @@ import { useExportStockList } from '../api/hooks/useExportStockList';
 
 export const AppBarButtonsComponent = () => {
   const { success, error } = useNotification();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { fetchAllStock, isLoading } = useExportStockList();
 
   const { isOpen, onClose, onOpen } = useEditModal();

@@ -85,12 +85,12 @@ const CalculationError = ({
   isAmcZero?: boolean;
   isSohAndQtyZero?: boolean;
 }) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const detail = isAmcZero
     ? `: ${t('error.amc-is-zero')}`
     : isSohAndQtyZero
-    ? `: ${t('error.soh-and-suggested-quantity-are-zero')}`
-    : '';
+      ? `: ${t('error.soh-and-suggested-quantity-are-zero')}`
+      : '';
   const message = `${t('error.unable-to-calculate')}${detail}`;
 
   return (
@@ -109,7 +109,7 @@ export const RequestStoreStats: React.FC<RequestStoreStatsProps> = ({
   availableStockOnHand,
   averageMonthlyConsumption,
 }) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   if (averageMonthlyConsumption === 0) return <CalculationError isAmcZero />;
 
   const targetQuantity = maxMonthsOfStock * averageMonthlyConsumption;

@@ -15,7 +15,7 @@ const SupplierSearchComponent: FC<NameSearchModalProps> = ({
   onChange,
 }) => {
   const { data, isLoading } = useName.document.suppliers();
-  const t = useTranslation('app');
+  const t = useTranslation();
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
   return (

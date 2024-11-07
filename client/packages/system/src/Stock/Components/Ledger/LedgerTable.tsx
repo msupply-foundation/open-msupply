@@ -14,7 +14,7 @@ interface LedgerTableProps {
   stockLine: StockLineRowFragment;
 }
 export const LedgerTable: FC<LedgerTableProps> = ({ stockLine }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
 
   const [sortBy, setSortBy] = useState<SortBy<LedgerRowFragment>>({
     key: ColumnKey.DateTime,

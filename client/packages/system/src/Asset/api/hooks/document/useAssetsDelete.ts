@@ -14,7 +14,7 @@ export const useAssetsDelete = () => {
   const { data: rows } = useAssets();
   const api = useAssetApi();
   const { mutateAsync } = useMutation(async (id: string) => api.delete(id));
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)

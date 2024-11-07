@@ -74,7 +74,7 @@ const BadgePickersDay = (
 export const CreateEncounterModal: FC = () => {
   const patientId = usePatient.utils.id();
   const { user, storeId } = useAuthContext();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { current, setModal: selectModal } = usePatientModalStore();
   const [encounterRegistry, setEncounterRegistry] = useState<
     EncounterRegistryByProgram | undefined

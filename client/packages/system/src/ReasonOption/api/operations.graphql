@@ -1,0 +1,27 @@
+fragment ReasonOptionRow on ReasonOptionNode {
+  __typename
+  id
+  type
+  reason
+  isActive
+}
+
+query reasonOptions(
+  $sort: [ReasonOptionSortInput!]
+  $filter: ReasonOptionFilterInput
+) {
+  reasonOptions(sort: $sort, filter: $filter) {
+    __typename
+    ... on ReasonOptionConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        id
+        type
+        reason
+        isActive
+      }
+    }
+  }
+}

@@ -17,7 +17,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   openRepack,
   openAdjust,
 }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
 
   return (
     <AppBarButtonsPortal>

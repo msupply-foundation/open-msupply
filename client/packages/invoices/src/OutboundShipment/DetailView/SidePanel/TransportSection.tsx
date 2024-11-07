@@ -10,7 +10,7 @@ import {
 import { useOutbound } from '../../api';
 
 export const TransportSectionComponent: FC = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const isDisabled = useOutbound.utils.isDisabled();
   const { transportReference, update } = useOutbound.document.fields([
     'transportReference',

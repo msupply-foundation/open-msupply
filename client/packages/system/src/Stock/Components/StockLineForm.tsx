@@ -21,12 +21,9 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
-import {
-  PackVariantInput,
-  usePackVariant,
-  useIsPackVariantsEnabled,
-} from '../..';
+import { ItemVariantSearchInput } from '../..';
 import { StyledInputRow } from './StyledInputRow';
+import { PackSizeNumberInput } from '../../Item';
 
 interface StockLineFormProps {
   draft: StockLineRowFragment;
@@ -44,7 +41,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
   packEditable,
   isInModal = false,
 }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { error } = useNotification();
   const { isConnected, isEnabled, isScanning, startScan } =
     useBarcodeScannerContext();
@@ -53,12 +50,6 @@ export const StockLineForm: FC<StockLineFormProps> = ({
     : t('message.no-supplier');
   const location = draft?.location ?? null;
 
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
-  const { asPackVariant } = usePackVariant(
-    draft.itemId,
-    draft.item.unitName ?? null
-  );
-  const packUnit = asPackVariant(draft.packSize);
   const scanBarcode = async () => {
     try {
       const result = await startScan();
@@ -74,7 +65,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         onUpdate(draft);
       }
     } catch (e) {
-      error(t('error.unable-to-scan', { error: e }))();
+      error(t('error.unable-to-scan-barcode', { error: e }))();
     }
   };
 
@@ -168,6 +159,17 @@ export const StockLineForm: FC<StockLineFormProps> = ({
               />
             }
           />
+          <StyledInputRow
+            label={t('label.item-variant')}
+            Input={
+              <ItemVariantSearchInput
+                itemId={draft.itemId}
+                selectedId={draft.itemVariantId ?? null}
+                width={160}
+                onChange={id => onUpdate({ itemVariantId: id })}
+              />
+            }
+          />
           {plugins}
         </Grid>
         <Grid
@@ -180,11 +182,9 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         >
           {packEditable ? (
             <StyledInputRow
-              label={
-                isPackVariantsEnabled ? t('label.pack') : t('label.pack-size')
-              }
+              label={t('label.pack-size')}
               Input={
-                <PackVariantInput
+                <PackSizeNumberInput
                   isDisabled={!packEditable}
                   packSize={draft.packSize}
                   itemId={draft.itemId}
@@ -195,10 +195,8 @@ export const StockLineForm: FC<StockLineFormProps> = ({
             />
           ) : (
             <TextWithLabelRow
-              label={
-                isPackVariantsEnabled ? t('label.pack') : t('label.pack-size')
-              }
-              text={String(isPackVariantsEnabled ? packUnit : draft.packSize)}
+              label={t('label.pack-size')}
+              text={String(draft.packSize)}
               textProps={{ textAlign: 'end' }}
             />
           )}
@@ -263,7 +261,6 @@ export const StockLineForm: FC<StockLineFormProps> = ({
           />
         </Grid>
       </Grid>
-      {/* {footerProps && <Footer {...footerProps} />} */}
     </DetailContainer>
   );
 };
