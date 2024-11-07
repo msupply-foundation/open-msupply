@@ -30,7 +30,7 @@ impl MigrationFragment for Migrate {
             CREATE TABLE item_category_join (
                 id TEXT PRIMARY KEY NOT NULL,
                 item_id TEXT NOT NULL REFERENCES item(id),
-                # no referential constraint due to circular dependency during sync integration
+                -- no referential constraint due to circular dependency during sync integration
                 category_id TEXT NOT NULL,
                 deleted_datetime {DATETIME}
             );
