@@ -139,7 +139,7 @@ impl IndicatorColumnNode {
     }
 
     pub async fn values(&self) -> ColumnValueOutput {
-        ColumnValueOutput::from(self.column.value.clone())
+        ColumnValueOutput::from_domain(self.column.value.clone())
     }
 }
 
@@ -186,8 +186,8 @@ impl NumberOutput {
     }
 }
 
-impl From<ColumnValue> for ColumnValueOutput {
-    fn from(value: ColumnValue) -> Self {
+impl ColumnValueOutput {
+    fn from_domain(value: ColumnValue) -> ColumnValueOutput {
         match value {
             ColumnValue::Text(text) => ColumnValueOutput::Text(TextOutput { value: text }),
             ColumnValue::Number(number) => {
