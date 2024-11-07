@@ -8,6 +8,7 @@ import {
   noOtherVariants,
   useDialog,
   useIntlUtils,
+  useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PatientColumnData } from './PatientResultsTab';
@@ -18,6 +19,7 @@ import {
   Typography,
 } from '@common/components';
 import { useFetchPatient } from './useFetchPatient';
+import { usePatientStore } from 'packages/programs/src';
 
 interface FetchPatientModal {
   patient: PatientColumnData;
@@ -30,7 +32,9 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
   onClose,
 }) => {
   const t = useTranslation();
+  const navigate = useNavigate();
   const { Modal, showDialog, hideDialog } = useDialog({ onClose });
+  const { setCreateNewPatient } = usePatientStore();
   const { getLocalisedFullName } = useIntlUtils();
   const [started, setStarted] = useState(false);
   const { mutateAsync: fetchPatientToStore, step, error } = useFetchPatient();
@@ -63,7 +67,8 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
       title={t('title.patient-retrieval-modal')}
       okButton={
         <DialogButton
-          variant={step === 'Synced' ? 'ok' : 'next'}
+          variant="ok"
+          customLabel={step === 'Synced' ? 'View patient' : undefined}
           onClick={() => {
             if (!started) {
               setStarted(true);
@@ -71,7 +76,8 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
             } else {
               setStarted(false);
               hideDialog();
-              onClose();
+              setCreateNewPatient(undefined);
+              navigate(patient.id);
             }
           }}
           disabled={(step !== 'Start' && step !== 'Synced') || !!error}
