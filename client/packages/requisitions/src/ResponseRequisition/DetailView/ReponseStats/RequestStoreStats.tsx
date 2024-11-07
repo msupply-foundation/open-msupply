@@ -126,7 +126,7 @@ export const RequestStoreStats: React.FC<RequestStoreStatsProps> = ({
       : 100;
 
   return (
-    <Box sx={{ height: 400, width: 500 }}>
+    <Box sx={{ maxHeight: 400, width: 500, minHeight: 200 }}>
       <Box display="flex" flexDirection="column" paddingTop={2} paddingLeft={4}>
         <Box display="flex">
           <Typography fontSize={12} fontWeight={700}>
