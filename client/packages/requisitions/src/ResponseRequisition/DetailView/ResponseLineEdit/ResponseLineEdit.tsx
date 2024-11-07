@@ -107,84 +107,88 @@ export const ResponseLineEdit = ({
               sx={{ marginBottom: 1 }}
             />
           )}
-          <InputWithLabelRow
-            Input={
-              <NumericTextInput
-                width={INPUT_WIDTH}
-                value={draft?.incomingUnits}
-                onChange={value => update({ incomingUnits: value })}
-                onBlur={save}
+          {isProgram && (
+            <>
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    width={INPUT_WIDTH}
+                    value={draft?.incomingUnits}
+                    onChange={value => update({ incomingUnits: value })}
+                    onBlur={save}
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                label={t('label.incoming-stock')}
+                sx={{ marginBottom: 1 }}
               />
-            }
-            labelWidth={LABEL_WIDTH}
-            label={t('label.incoming-stock')}
-            sx={{ marginBottom: 1 }}
-          />
-          <InputWithLabelRow
-            Input={
-              <NumericTextInput
-                width={INPUT_WIDTH}
-                value={draft?.outgoingUnits}
-                onChange={value => update({ outgoingUnits: value })}
-                onBlur={save}
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    width={INPUT_WIDTH}
+                    value={draft?.outgoingUnits}
+                    onChange={value => update({ outgoingUnits: value })}
+                    onBlur={save}
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                label={t('label.outgoing')}
+                sx={{ marginBottom: 1 }}
               />
-            }
-            labelWidth={LABEL_WIDTH}
-            label={t('label.outgoing')}
-            sx={{ marginBottom: 1 }}
-          />
-          <InputWithLabelRow
-            Input={
-              <NumericTextInput
-                width={INPUT_WIDTH}
-                value={draft?.lossInUnits}
-                onChange={value => update({ lossInUnits: value })}
-                onBlur={save}
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    width={INPUT_WIDTH}
+                    value={draft?.lossInUnits}
+                    onChange={value => update({ lossInUnits: value })}
+                    onBlur={save}
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                label={t('label.losses')}
+                sx={{ marginBottom: 1 }}
               />
-            }
-            labelWidth={LABEL_WIDTH}
-            label={t('label.losses')}
-            sx={{ marginBottom: 1 }}
-          />
-          <InputWithLabelRow
-            Input={
-              <NumericTextInput
-                width={INPUT_WIDTH}
-                value={draft?.additionInUnits}
-                onChange={value => update({ additionInUnits: value })}
-                onBlur={save}
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    width={INPUT_WIDTH}
+                    value={draft?.additionInUnits}
+                    onChange={value => update({ additionInUnits: value })}
+                    onBlur={save}
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                label={t('label.additions')}
+                sx={{ marginBottom: 1 }}
               />
-            }
-            labelWidth={LABEL_WIDTH}
-            label={t('label.additions')}
-            sx={{ marginBottom: 1 }}
-          />
-          <InputWithLabelRow
-            Input={
-              <NumericTextInput
-                width={INPUT_WIDTH}
-                value={draft?.expiringUnits}
-                onChange={value => update({ expiringUnits: value })}
-                onBlur={save}
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    width={INPUT_WIDTH}
+                    value={draft?.expiringUnits}
+                    onChange={value => update({ expiringUnits: value })}
+                    onBlur={save}
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                label={t('label.short-expiry')}
+                sx={{ marginBottom: 1 }}
               />
-            }
-            labelWidth={LABEL_WIDTH}
-            label={t('label.short-expiry')}
-            sx={{ marginBottom: 1 }}
-          />
-          <InputWithLabelRow
-            Input={
-              <NumericTextInput
-                width={INPUT_WIDTH}
-                value={draft?.daysOutOfStock}
-                onChange={value => update({ daysOutOfStock: value })}
-                onBlur={save}
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    width={INPUT_WIDTH}
+                    value={draft?.daysOutOfStock}
+                    onChange={value => update({ daysOutOfStock: value })}
+                    onBlur={save}
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                label={t('label.days-out-of-stock')}
+                sx={{ marginBottom: 1 }}
               />
-            }
-            labelWidth={LABEL_WIDTH}
-            label={t('label.days-out-of-stock')}
-            sx={{ marginBottom: 1 }}
-          />
+            </>
+          )}
           <InputWithLabelRow
             Input={
               <NumericTextInput
@@ -200,18 +204,20 @@ export const ResponseLineEdit = ({
             label={t('label.amc')}
             sx={{ marginBottom: 1 }}
           />
-          <InputWithLabelRow
-            Input={
-              <NumericTextInput
-                width={INPUT_WIDTH}
-                value={MOS}
-                disabled
-                decimalLimit={2}
-              />
-            }
-            labelWidth={LABEL_WIDTH}
-            label={t('label.months-of-stock')}
-          />
+          {isProgram && (
+            <InputWithLabelRow
+              Input={
+                <NumericTextInput
+                  width={INPUT_WIDTH}
+                  value={MOS}
+                  disabled
+                  decimalLimit={2}
+                />
+              }
+              labelWidth={LABEL_WIDTH}
+              label={t('label.months-of-stock')}
+            />
+          )}
         </Box>
         <Box>
           {/* Right column content */}
@@ -237,7 +243,7 @@ export const ResponseLineEdit = ({
                 setTheirStatsAnchorEl(e?.currentTarget);
               }}
             >
-              {hasLinkedRequisition && (
+              {
                 <>
                   <BarIcon
                     sx={{
@@ -271,21 +277,23 @@ export const ResponseLineEdit = ({
                     </Popover>
                   )}
                 </>
-              )}
+              }
             </Box>
           </Box>
-          <InputWithLabelRow
-            Input={
-              <NumericTextInput
-                width={INPUT_WIDTH}
-                value={available}
-                disabled
-              />
-            }
-            labelWidth={LABEL_WIDTH}
-            label={t('label.available')}
-            sx={{ marginBottom: 1 }}
-          />
+          {isProgram && (
+            <InputWithLabelRow
+              Input={
+                <NumericTextInput
+                  width={INPUT_WIDTH}
+                  value={available}
+                  disabled
+                />
+              }
+              labelWidth={LABEL_WIDTH}
+              label={t('label.available')}
+              sx={{ marginBottom: 1 }}
+            />
+          )}
           <InputWithLabelRow
             Input={
               <NumericTextInput
@@ -374,26 +382,28 @@ export const ResponseLineEdit = ({
               )}
             </Box>
           </Box>
-          <InputWithLabelRow
-            Input={
-              <ReasonOptionsSearchInput
-                value={draft?.reason}
-                onChange={value => {
-                  update({ reason: value });
-                }}
-                width={200}
-                type={ReasonOptionNodeType.RequisitionLineVariance}
-                isDisabled={
-                  draft?.requestedQuantity === draft?.suggestedQuantity ||
-                  !!hasLinkedRequisition
-                }
-                onBlur={save}
-              />
-            }
-            labelWidth={'66px'}
-            label={t('label.reason')}
-            sx={{ marginBottom: 1 }}
-          />
+          {isProgram && (
+            <InputWithLabelRow
+              Input={
+                <ReasonOptionsSearchInput
+                  value={draft?.reason}
+                  onChange={value => {
+                    update({ reason: value });
+                  }}
+                  width={200}
+                  type={ReasonOptionNodeType.RequisitionLineVariance}
+                  isDisabled={
+                    draft?.requestedQuantity === draft?.suggestedQuantity ||
+                    !!hasLinkedRequisition
+                  }
+                  onBlur={save}
+                />
+              }
+              labelWidth={'66px'}
+              label={t('label.reason')}
+              sx={{ marginBottom: 1 }}
+            />
+          )}
           <InputWithLabelRow
             Input={
               <TextArea
