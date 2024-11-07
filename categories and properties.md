@@ -13,7 +13,6 @@ Need to:
 
 ```mermaid
 erDiagram
-    category_level ||--o{ category_level : id--parent_id
     category_level ||--o{ category : id--category_level_id
     item ||--o{ category_item_join : id--item_id
     category ||--o{ category_item_join : id--category_id
@@ -21,7 +20,6 @@ erDiagram
     name ||--o{ category_name_join : id--name_id
     category_level {
         text id
-        text parent_id
         text description
         text name
         domain_type domain
@@ -59,6 +57,10 @@ erDiagram
 ```
 
 ### Example
+
+![diagram](./categories%20and%20properties.drawio.png)
+
+### Config Example
 
 ![diagram](./categories%20and%20properties.drawio.png)
 
