@@ -21,6 +21,7 @@ import {
 import { ItemPackagingVariantsTable } from './ItemPackagingVariantsTable';
 import { ItemVariantFragment, useDeleteItemVariant } from '../../../api';
 import { ItemVariantModal } from './ItemVariantModal';
+import { BundledItemVariants } from './BundledItemVariants';
 
 export const ItemVariantsTab = ({
   itemId,
@@ -77,7 +78,7 @@ const ItemVariant = ({
   const confirmAndDelete = useDeleteItemVariant({ itemId });
 
   return (
-    <Box maxWidth="1000px" margin="25px auto 75px">
+    <Box maxWidth="1000px" margin="25px auto" paddingBottom={6}>
       <Box display="flex" justifyContent="space-between" alignItems="end">
         <Typography variant="h6" fontWeight="bold" color="black">
           {variant.name}
@@ -98,7 +99,13 @@ const ItemVariant = ({
         </Box>
       </Box>
 
-      <Box justifyContent="center" display="flex" gap={2} alignItems={'center'}>
+      <Box
+        justifyContent="center"
+        display="flex"
+        gap={2}
+        alignItems={'center'}
+        marginBottom={3}
+      >
         <Box display="flex" flexDirection="column" gap={1} flex={1}>
           <InputWithLabelRow
             label={t('label.name')}
@@ -148,6 +155,7 @@ const ItemVariant = ({
           <ItemPackagingVariantsTable data={variant.packagingVariants} />
         </Box>
       </Box>
+      <BundledItemVariants variant={variant} />
     </Box>
   );
 };
