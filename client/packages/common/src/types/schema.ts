@@ -94,6 +94,10 @@ export enum ActivityLogNodeType {
   AssetLogReasonDeleted = 'ASSET_LOG_REASON_DELETED',
   AssetPropertyCreated = 'ASSET_PROPERTY_CREATED',
   AssetUpdated = 'ASSET_UPDATED',
+  DemographicIndicatorCreated = 'DEMOGRAPHIC_INDICATOR_CREATED',
+  DemographicIndicatorUpdated = 'DEMOGRAPHIC_INDICATOR_UPDATED',
+  DemographicProjectionCreated = 'DEMOGRAPHIC_PROJECTION_CREATED',
+  DemographicProjectionUpdated = 'DEMOGRAPHIC_PROJECTION_UPDATED',
   InventoryAdjustment = 'INVENTORY_ADJUSTMENT',
   InvoiceCreated = 'INVOICE_CREATED',
   InvoiceDeleted = 'INVOICE_DELETED',
@@ -2969,21 +2973,9 @@ export type InsertResponseRequisitionLineErrorInterface = {
 };
 
 export type InsertResponseRequisitionLineInput = {
-  additionInUnits?: InputMaybe<Scalars['Float']['input']>;
-  averageMonthlyConsumption?: InputMaybe<Scalars['Float']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
-  daysOutOfStock?: InputMaybe<Scalars['Float']['input']>;
-  expiringUnits?: InputMaybe<Scalars['Float']['input']>;
   id: Scalars['String']['input'];
-  incomingUnits?: InputMaybe<Scalars['Float']['input']>;
   itemId: Scalars['String']['input'];
-  lossInUnits?: InputMaybe<Scalars['Float']['input']>;
-  optionId?: InputMaybe<Scalars['String']['input']>;
-  outgoingUnits?: InputMaybe<Scalars['Float']['input']>;
-  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
   requisitionId: Scalars['String']['input'];
-  stockOnHand?: InputMaybe<Scalars['Float']['input']>;
-  supplyQuantity?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertResponseRequisitionLineResponse = InsertResponseRequisitionLineError | RequisitionLineNode;
@@ -6510,6 +6502,7 @@ export type RequisitionLineNode = {
   remainingQuantityToSupply: Scalars['Float']['output'];
   /** Quantity requested */
   requestedQuantity: Scalars['Float']['output'];
+  requisitionNumber: Scalars['Int']['output'];
   /**
    * Calculated quantity
    * When months_of_stock < requisition.min_months_of_stock, calculated = average_monthly_consumption * requisition.max_months_of_stock - months_of_stock

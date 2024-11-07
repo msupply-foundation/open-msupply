@@ -155,7 +155,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
         cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
         nextButton={
           <DialogButton
-            variant="next"
+            variant="next-and-ok"
             disabled={okNextDisabled || zeroNumberOfPacks}
             onClick={async () => {
               await saveLines();
