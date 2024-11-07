@@ -76,6 +76,7 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
             } else {
               setStarted(false);
               hideDialog();
+              onClose();
               setCreateNewPatient(undefined);
               navigate(patient.id);
             }
