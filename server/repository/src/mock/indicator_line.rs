@@ -32,7 +32,7 @@ pub fn mock_indicator_line_b() -> IndicatorLineRow {
 
 pub fn mock_indicator_line_c() -> IndicatorLineRow {
     IndicatorLineRow {
-        id: "indicator_line_row_b".to_owned(),
+        id: "indicator_line_row_c".to_owned(),
         code: "irc".to_owned(),
         program_indicator_id: mock_program_indicator_a().id,
         line_number: 2,
