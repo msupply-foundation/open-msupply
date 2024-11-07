@@ -7,52 +7,53 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
 table! {
-    category (id) {
+    category_group (id) {
         id -> Text,
         name -> Text,
-        description -> Nullable<Text>,
-        parent_id -> Nullable<Text>,
+        root_id -> Nullable<Text>,
         deleted_datetime -> Nullable<Timestamp>,
     }
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
-#[diesel(table_name = category)]
-pub struct CategoryRow {
+#[diesel(table_name = category_group)]
+pub struct CategoryGroupRow {
     pub id: String,
     pub name: String,
-    pub description: Option<String>,
-    pub parent_id: Option<String>,
+    pub root_id: Option<String>,
     pub deleted_datetime: Option<NaiveDateTime>,
 }
 
-pub struct CategoryRowRepository<'a> {
+pub struct CategoryGroupRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> CategoryRowRepository<'a> {
+impl<'a> CategoryGroupRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        CategoryRowRepository { connection }
+        CategoryGroupRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, category_row: &CategoryRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(category::table)
-            .values(category_row)
-            .on_conflict(category::id)
+    pub fn upsert_one(
+        &self,
+        category_group_row: &CategoryGroupRow,
+    ) -> Result<i64, RepositoryError> {
+        diesel::insert_into(category_group::table)
+            .values(category_group_row)
+            .on_conflict(category_group::id)
             .do_update()
-            .set(category_row)
+            .set(category_group_row)
             .execute(self.connection.lock().connection())?;
 
-        self.insert_changelog(category_row, RowActionType::Upsert)
+        self.insert_changelog(category_group_row, RowActionType::Upsert)
     }
 
     fn insert_changelog(
         &self,
-        row: &CategoryRow,
+        row: &CategoryGroupRow,
         row_action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Category,
+            table_name: ChangelogTableName::CategoryGroup,
             record_id: row.id.clone(),
             row_action,
             store_id: None,
@@ -64,32 +65,32 @@ impl<'a> CategoryRowRepository<'a> {
 
     pub fn find_one_by_id(
         &self,
-        category_id: &str,
-    ) -> Result<Option<CategoryRow>, RepositoryError> {
-        let result = category::table
-            .filter(category::id.eq(category_id))
+        category_group_id: &str,
+    ) -> Result<Option<CategoryGroupRow>, RepositoryError> {
+        let result = category_group::table
+            .filter(category_group::id.eq(category_group_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete(&self, category_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(category::table.filter(category::id.eq(category_id)))
+    pub fn delete(&self, category_group_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(category_group::table.filter(category_group::id.eq(category_group_id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
 
-impl Upsert for CategoryRow {
+impl Upsert for CategoryGroupRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = CategoryRowRepository::new(con).upsert_one(self)?;
+        let change_log_id = CategoryGroupRowRepository::new(con).upsert_one(self)?;
         Ok(Some(change_log_id))
     }
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            CategoryRowRepository::new(con).find_one_by_id(&self.id),
+            CategoryGroupRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }
