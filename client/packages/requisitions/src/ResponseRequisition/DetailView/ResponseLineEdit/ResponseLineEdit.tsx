@@ -83,6 +83,7 @@ export const ResponseLineEdit = ({
                   onChange={value => update({ availableStockOnHand: value })}
                   onBlur={save}
                   disabled={!!hasLinkedRequisition}
+                  autoFocus
                 />
               }
               labelWidth={LABEL_WIDTH}
@@ -98,6 +99,7 @@ export const ResponseLineEdit = ({
                   onChange={value => update({ initialStockOnHandUnits: value })}
                   onBlur={save}
                   disabled={!!hasLinkedRequisition}
+                  autoFocus
                 />
               }
               labelWidth={LABEL_WIDTH}
