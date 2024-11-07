@@ -1,16 +1,29 @@
 use super::item_variant_row::{item_variant, ItemVariantRow};
 use crate::{
+    db_diesel::item_row::item,
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    item_link,
     repository_error::RepositoryError,
-    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
+    DBType, EqualFilter, ItemLinkRow, ItemRow, Pagination, Sort, StorageConnection, StringFilter,
 };
-use diesel::{dsl::IntoBoxed, prelude::*};
+use diesel::{
+    dsl::{InnerJoin, IntoBoxed},
+    prelude::*,
+};
+
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct ItemVariant {
+    pub item_variant_row: ItemVariantRow,
+    pub item_row: ItemRow,
+}
 
 pub enum ItemVariantSortField {
     Name,
 }
 
 pub type ItemVariantSort = Sort<ItemVariantSortField>;
+
+type ItemVariantJoin = (ItemVariantRow, (ItemLinkRow, ItemRow));
 
 #[derive(Clone, Default)]
 pub struct ItemVariantFilter {
@@ -60,14 +73,14 @@ impl<'a> ItemVariantRepository<'a> {
     pub fn query_one(
         &self,
         filter: ItemVariantFilter,
-    ) -> Result<Option<ItemVariantRow>, RepositoryError> {
+    ) -> Result<Option<ItemVariant>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
         &self,
         filter: ItemVariantFilter,
-    ) -> Result<Vec<ItemVariantRow>, RepositoryError> {
+    ) -> Result<Vec<ItemVariant>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
@@ -76,7 +89,7 @@ impl<'a> ItemVariantRepository<'a> {
         pagination: Pagination,
         filter: Option<ItemVariantFilter>,
         sort: Option<ItemVariantSort>,
-    ) -> Result<Vec<ItemVariantRow>, RepositoryError> {
+    ) -> Result<Vec<ItemVariant>, RepositoryError> {
         let mut query = create_filtered_query(filter);
 
         if let Some(sort) = sort {
@@ -99,20 +112,29 @@ impl<'a> ItemVariantRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<ItemVariantRow>(self.connection.lock().connection())?;
+        let result = final_query.load::<ItemVariantJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-fn to_domain(item_variant_row: ItemVariantRow) -> ItemVariantRow {
-    item_variant_row
+fn to_domain((item_variant_row, (_, item_row)): ItemVariantJoin) -> ItemVariant {
+    ItemVariant {
+        item_variant_row,
+        item_row,
+    }
 }
 
-type BoxedItemVariantQuery = IntoBoxed<'static, item_variant::table, DBType>;
+type BoxedItemVariantQuery = IntoBoxed<
+    'static,
+    InnerJoin<item_variant::table, InnerJoin<item_link::table, item::table>>,
+    DBType,
+>;
 
 fn create_filtered_query(filter: Option<ItemVariantFilter>) -> BoxedItemVariantQuery {
-    let mut query = item_variant::table.into_boxed();
+    let mut query = item_variant::table
+        .inner_join(item_link::table.inner_join(item::table))
+        .into_boxed();
     // Exclude any deleted items
     query = query.filter(item_variant::deleted_datetime.is_null());
 
@@ -120,8 +142,8 @@ fn create_filtered_query(filter: Option<ItemVariantFilter>) -> BoxedItemVariantQ
         let ItemVariantFilter { id, name, item_id } = f;
 
         apply_equal_filter!(query, id, item_variant::id);
-        apply_equal_filter!(query, item_id, item_variant::item_link_id); // TODO: item_link_id, look up item_id? If item is merged, should variant be merged with it?
         apply_string_filter!(query, name, item_variant::name);
+        apply_equal_filter!(query, item_id, item::id);
     }
     query
 }
@@ -168,7 +190,9 @@ mod tests {
         let item_variant_row = ItemVariantRepository::new(&storage_connection)
             .query_one(ItemVariantFilter::new().id(EqualFilter::equal_to(&id)))
             .unwrap()
-            .unwrap();
+            .unwrap()
+            .item_variant_row;
+
         assert_eq!(item_variant_row.id, id);
         assert_eq!(item_variant_row.name, name);
 
@@ -176,7 +200,9 @@ mod tests {
         let item_variant_row = ItemVariantRepository::new(&storage_connection)
             .query_one(ItemVariantFilter::new().name(StringFilter::equal_to(&name)))
             .unwrap()
-            .unwrap();
+            .unwrap()
+            .item_variant_row;
+
         assert_eq!(item_variant_row.id, id);
         assert_eq!(item_variant_row.name, name);
     }

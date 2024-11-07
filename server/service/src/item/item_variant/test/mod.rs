@@ -75,7 +75,10 @@ mod query {
             .unwrap();
 
         assert_eq!(item_variant.count, 1);
-        assert_eq!(item_variant.rows[0].id, test_item_a_variant_id);
+        assert_eq!(
+            item_variant.rows[0].item_variant_row.id,
+            test_item_a_variant_id
+        );
 
         // Update the name
         let _item_variant = service
@@ -101,7 +104,10 @@ mod query {
             .unwrap();
 
         assert_eq!(item_variant.count, 1);
-        assert_eq!(item_variant.rows[0].id, test_item_a_variant_id);
+        assert_eq!(
+            item_variant.rows[0].item_variant_row.id,
+            test_item_a_variant_id
+        );
 
         // Query the item variant by id
         let item_variant = service
@@ -114,7 +120,10 @@ mod query {
             .unwrap();
 
         assert_eq!(item_variant.count, 1);
-        assert_eq!(item_variant.rows[0].id, test_item_a_variant_id.to_string(),);
+        assert_eq!(
+            item_variant.rows[0].item_variant_row.id,
+            test_item_a_variant_id.to_string(),
+        );
 
         // Delete the item variant
         service
