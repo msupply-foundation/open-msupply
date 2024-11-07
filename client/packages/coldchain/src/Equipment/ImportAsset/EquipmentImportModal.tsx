@@ -103,7 +103,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { success } = useNotification();
   const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
   const [activeStep, setActiveStep] = useState(0);
@@ -255,7 +255,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
     <Modal
       okButton={
         <DialogButton
-          variant="next"
+          variant="next-and-ok"
           disabled={importNotReady}
           onClick={importAction}
         />

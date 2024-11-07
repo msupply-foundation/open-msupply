@@ -13,7 +13,7 @@ import {
 import { useInbound } from '../api';
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const onDelete = useInbound.document.deleteRows();
 
   return (

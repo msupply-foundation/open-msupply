@@ -79,7 +79,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { success } = useNotification();
   const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
   const [activeStep, setActiveStep] = useState(0);
@@ -275,7 +275,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
     <Modal
       okButton={
         <DialogButton
-          variant="next"
+          variant="next-and-ok"
           disabled={importNotReady}
           onClick={() => {
             importAction();

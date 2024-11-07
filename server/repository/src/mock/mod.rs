@@ -15,18 +15,21 @@ mod encounter;
 mod form_schema;
 mod full_invoice;
 mod full_master_list;
+mod indicator_column;
+mod indicator_line;
 mod invoice;
 mod invoice_line;
 mod item;
+mod item_variant;
 mod location;
 mod name;
 mod name_store_join;
 mod name_tag;
 mod number;
-mod pack_variant;
 mod period_and_period_schedule;
 mod program;
 pub mod program_enrolment;
+mod program_indicator;
 mod program_order_types;
 mod program_requisition_settings;
 mod property;
@@ -75,18 +78,21 @@ pub use encounter::*;
 pub use form_schema::*;
 pub use full_invoice::*;
 pub use full_master_list::*;
+pub use indicator_column::*;
+pub use indicator_line::*;
 pub use invoice::*;
 pub use invoice_line::*;
 pub use item::*;
+pub use item_variant::*;
 pub use location::*;
 pub use name::*;
 pub use name_store_join::*;
 pub use name_tag::*;
 pub use number::*;
-pub use pack_variant::*;
 pub use period_and_period_schedule::*;
 pub use program::*;
 pub use program_enrolment::*;
+pub use program_indicator::*;
 pub use program_order_types::*;
 pub use program_requisition_settings::*;
 pub use property::*;
@@ -123,6 +129,7 @@ use crate::{
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
+    item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
     vaccine_course::{
         vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
@@ -132,15 +139,16 @@ use crate::{
     ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
     ContextRowRepository, CurrencyRow, DemographicRow, Document, DocumentRegistryRow,
     DocumentRegistryRowRepository, DocumentRepository, EncounterRow, EncounterRowRepository,
-    FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow,
+    FormSchema, FormSchemaRowRepository, IndicatorColumnRow, IndicatorColumnRowRepository,
+    IndicatorLineRow, IndicatorLineRowRepository, InventoryAdjustmentReasonRow,
     InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
     ItemLinkRowRepository, ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow,
     LocationRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
     MasterListRowRepository, NameLinkRow, NameLinkRowRepository, NameTagJoinRepository,
-    NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow, NumberRowRepository,
-    PackVariantRow, PackVariantRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
-    PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository, ProgramEnrolmentRow,
-    ProgramEnrolmentRowRepository, ProgramRequisitionOrderTypeRow,
+    NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow, NumberRowRepository, PeriodRow,
+    PeriodRowRepository, PeriodScheduleRow, PeriodScheduleRowRepository, PluginDataRow,
+    PluginDataRowRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
+    ProgramIndicatorRow, ProgramIndicatorRowRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
     ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, PropertyRow,
     PropertyRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
@@ -162,7 +170,7 @@ use super::{
     StoreRowRepository, UnitRow, UnitRowRepository,
 };
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct MockData {
     pub user_accounts: Vec<UserAccountRow>,
     pub user_store_joins: Vec<UserStoreJoinRow>,
@@ -175,6 +183,7 @@ pub struct MockData {
     pub units: Vec<UnitRow>,
     pub currencies: Vec<CurrencyRow>,
     pub items: Vec<ItemRow>,
+    pub item_variants: Vec<ItemVariantRow>,
     pub locations: Vec<LocationRow>,
     pub sensors: Vec<SensorRow>,
     pub temperature_breaches: Vec<TemperatureBreachRow>,
@@ -212,7 +221,6 @@ pub struct MockData {
     pub clinicians: Vec<ClinicianRow>,
     pub clinician_store_joins: Vec<ClinicianStoreJoinRow>,
     pub contexts: Vec<ContextRow>,
-    pub pack_variants: Vec<PackVariantRow>,
     pub plugin_data: Vec<PluginDataRow>,
     pub assets: Vec<AssetRow>,
     pub asset_logs: Vec<AssetLogRow>,
@@ -226,6 +234,9 @@ pub struct MockData {
     pub vaccine_course_items: Vec<VaccineCourseItemRow>,
     pub encounters: Vec<EncounterRow>,
     pub program_enrolments: Vec<ProgramEnrolmentRow>,
+    pub program_indicators: Vec<ProgramIndicatorRow>,
+    pub indicator_lines: Vec<IndicatorLineRow>,
+    pub indicator_columns: Vec<IndicatorColumnRow>,
 }
 
 impl MockData {
@@ -254,6 +265,7 @@ pub struct MockDataInserts {
     pub units: bool,
     pub currencies: bool,
     pub items: bool,
+    pub item_variants: bool,
     pub locations: bool,
     pub sensors: bool,
     pub temperature_breaches: bool,
@@ -288,7 +300,6 @@ pub struct MockDataInserts {
     pub clinicians: bool,
     pub clinician_store_joins: bool,
     pub contexts: bool,
-    pub pack_variants: bool,
     pub plugin_data: bool,
     pub assets: bool,
     pub asset_logs: bool,
@@ -302,6 +313,9 @@ pub struct MockDataInserts {
     pub vaccine_course_items: bool,
     pub encounters: bool,
     pub program_enrolments: bool,
+    pub program_indicators: bool,
+    pub indicator_lines: bool,
+    pub indicator_columns: bool,
 }
 
 impl MockDataInserts {
@@ -319,6 +333,7 @@ impl MockDataInserts {
             units: true,
             currencies: true,
             items: true,
+            item_variants: true,
             locations: true,
             sensors: true,
             temperature_breaches: true,
@@ -353,7 +368,6 @@ impl MockDataInserts {
             clinicians: true,
             clinician_store_joins: true,
             contexts: true,
-            pack_variants: true,
             plugin_data: true,
             assets: true,
             asset_logs: true,
@@ -367,6 +381,9 @@ impl MockDataInserts {
             vaccine_course_items: true,
             encounters: true,
             program_enrolments: true,
+            program_indicators: true,
+            indicator_lines: true,
+            indicator_columns: true,
         }
     }
 
@@ -439,6 +456,13 @@ impl MockDataInserts {
     pub fn items(mut self) -> Self {
         self.units = true;
         self.items = true;
+        self
+    }
+
+    pub fn item_variants(mut self) -> Self {
+        self.units = true;
+        self.items = true;
+        self.item_variants = true;
         self
     }
 
@@ -590,11 +614,6 @@ impl MockDataInserts {
         self
     }
 
-    pub fn pack_variants(mut self) -> Self {
-        self.pack_variants = true;
-        self
-    }
-
     pub fn plugin_data(mut self) -> Self {
         self.plugin_data = true;
         self
@@ -722,6 +741,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             currencies: mock_currencies(),
             units: mock_units(),
             items: mock_items(),
+            item_variants: mock_item_variants(),
             locations: mock_locations(),
             sensors: mock_sensors(),
             temperature_logs: mock_temperature_logs(),
@@ -745,7 +765,6 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             program_order_types: mock_program_order_types(),
             name_tag_joins: mock_name_tag_joins(),
             contexts: mock_contexts(),
-            pack_variants: mock_pack_variants(),
             clinicians: mock_clinicians(),
             assets: mock_assets(),
             asset_logs: mock_asset_logs(),
@@ -759,6 +778,9 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             vaccine_course_items: mock_vaccine_course_items(),
             encounters: mock_encounters(),
             program_enrolments: mock_program_enrolments(),
+            program_indicators: mock_program_indicators(),
+            indicator_lines: mock_indicator_lines(),
+            indicator_columns: mock_indicator_columns(),
             ..Default::default()
         },
     );
@@ -912,6 +934,13 @@ pub fn insert_mock_data(
                 ItemLinkRowRepository::new(connection)
                     .upsert_one(&mock_item_link_from_item(row))
                     .unwrap();
+            }
+        }
+
+        if inserts.item_variants {
+            let repo = ItemVariantRowRepository::new(connection);
+            for row in &mock_data.item_variants {
+                repo.upsert_one(row).unwrap();
             }
         }
 
@@ -1152,13 +1181,6 @@ pub fn insert_mock_data(
             }
         }
 
-        if inserts.pack_variants {
-            let repo = PackVariantRowRepository::new(connection);
-            for row in &mock_data.pack_variants {
-                repo.upsert_one(row).unwrap();
-            }
-        }
-
         if inserts.plugin_data {
             let repo = PluginDataRowRepository::new(connection);
             for row in &mock_data.plugin_data {
@@ -1245,6 +1267,25 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
+        if inserts.program_indicators {
+            let repo = ProgramIndicatorRowRepository::new(connection);
+            for row in &mock_data.program_indicators {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+        if inserts.indicator_lines {
+            let repo = IndicatorLineRowRepository::new(connection);
+            for row in &mock_data.indicator_lines {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+        if inserts.indicator_columns {
+            let repo = IndicatorColumnRowRepository::new(connection);
+            for row in &mock_data.indicator_columns {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1261,6 +1302,7 @@ impl MockData {
             mut stores,
             mut units,
             mut items,
+            mut item_variants,
             mut locations,
             mut sensors,
             mut temperature_breaches,
@@ -1299,7 +1341,6 @@ impl MockData {
             mut clinicians,
             mut clinician_store_joins,
             mut contexts,
-            mut pack_variants,
             mut assets,
             mut asset_logs,
             plugin_data: _,
@@ -1314,6 +1355,9 @@ impl MockData {
             mut vaccine_course_items,
             mut encounters,
             mut program_enrolments,
+            mut program_indicators,
+            mut indicator_lines,
+            mut indicator_columns,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1325,6 +1369,7 @@ impl MockData {
         self.stores.append(&mut stores);
         self.units.append(&mut units);
         self.items.append(&mut items);
+        self.item_variants.append(&mut item_variants);
         self.locations.append(&mut locations);
         self.sensors.append(&mut sensors);
         self.temperature_logs.append(&mut temperature_logs);
@@ -1365,7 +1410,6 @@ impl MockData {
         self.clinician_store_joins
             .append(&mut clinician_store_joins);
         self.contexts.append(&mut contexts);
-        self.pack_variants.append(&mut pack_variants);
         self.currencies.append(&mut currencies);
         self.assets.append(&mut assets);
         self.asset_logs.append(&mut asset_logs);
@@ -1379,6 +1423,9 @@ impl MockData {
         self.vaccine_course_items.append(&mut vaccine_course_items);
         self.encounters.append(&mut encounters);
         self.program_enrolments.append(&mut program_enrolments);
+        self.program_indicators.append(&mut program_indicators);
+        self.indicator_lines.append(&mut indicator_lines);
+        self.indicator_columns.append(&mut indicator_columns);
         self
     }
 }

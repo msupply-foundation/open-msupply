@@ -45,7 +45,7 @@ const DEFAULT_ARGS: CreateStocktakeArgs = {
 export const CreateStocktakeButton: React.FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { mutateAsync, isLoading: isSaving } = useStocktake.document.insert();
   const { user, storeId } = useAuthContext();
   const {

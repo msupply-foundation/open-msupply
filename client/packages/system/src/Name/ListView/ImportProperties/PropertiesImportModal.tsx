@@ -166,7 +166,11 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
   return (
     <Modal
       okButton={
-        <DialogButton variant="next" disabled={false} onClick={importAction} />
+        <DialogButton
+          variant="next-and-ok"
+          disabled={false}
+          onClick={importAction}
+        />
       }
       cancelButton={
         <DialogButton

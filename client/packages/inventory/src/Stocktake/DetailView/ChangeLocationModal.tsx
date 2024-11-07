@@ -21,7 +21,7 @@ export const ChangeLocationConfirmationModal = ({
   isOpen,
   onCancel,
 }: ChangeLocationConfirmationModalProps) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
 
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
 

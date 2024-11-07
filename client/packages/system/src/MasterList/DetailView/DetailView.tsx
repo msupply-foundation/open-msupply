@@ -17,7 +17,7 @@ import { AppRoute } from '@openmsupply-client/config';
 export const MasterListDetailView: FC = () => {
   const { data, isLoading } = useMasterList.document.get();
   const navigate = useNavigate();
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
 
   useEffect(() => {

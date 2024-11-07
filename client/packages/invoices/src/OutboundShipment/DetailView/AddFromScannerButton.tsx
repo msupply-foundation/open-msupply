@@ -20,7 +20,7 @@ export const AddFromScannerButtonComponent = ({
 }: {
   onAddItem: (draft?: Draft) => void;
 }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { data: outbound } = useOutbound.document.get();
   const isDisabled = !!outbound && isOutboundDisabled(outbound);
   const { mutateAsync: getBarcode } = useOutbound.utils.barcode();

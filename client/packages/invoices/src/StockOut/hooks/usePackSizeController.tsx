@@ -6,8 +6,6 @@ import {
   ArrayUtils,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../types';
-import { DraftItem } from '../..';
-import { usePackVariant } from '@openmsupply-client/system';
 
 // Helper to sort the pack sizes by value.
 const sortPackSizes = (a: PackSizeOption, b: PackSizeOption) => {
@@ -31,10 +29,7 @@ type PackSizeOption = {
 const isPlaceholder = (line: DraftStockOutLine): boolean =>
   line.type === InvoiceLineNodeType.UnallocatedStock;
 
-const createPackSizeOption = (
-  asPackVariant: (_: number, defautlPackUnit?: string) => string,
-  line: DraftStockOutLine
-) => ({
+const createPackSizeOption = (line: DraftStockOutLine) => ({
   packSize: line.packSize,
   hasAllocated: line.numberOfPacks > 0,
   hasAvailableStock: isPlaceholder(line)
@@ -46,7 +41,7 @@ const createPackSizeOption = (
     : false,
   isOnHold: line.stockLine?.onHold,
   value: line.packSize,
-  label: asPackVariant(line.packSize, String(line.packSize)),
+  label: String(line.packSize),
 });
 
 const createAnyOption = (t: ReturnType<typeof useTranslation>) => () => ({
@@ -61,15 +56,8 @@ const createAnyOption = (t: ReturnType<typeof useTranslation>) => () => ({
   label: t('label.any'),
 });
 
-export const usePackSizeController = (
-  item: DraftItem | null,
-  lines: DraftStockOutLine[]
-) => {
-  const t = useTranslation('distribution');
-  const { asPackVariant } = usePackVariant(
-    item?.id ?? '',
-    item?.unitName || null
-  );
+export const usePackSizeController = (lines: DraftStockOutLine[]) => {
+  const t = useTranslation();
 
   // The selected pack size for auto allocation. The initial value
   // will be determined by the lines in the invoice.
@@ -91,9 +79,7 @@ export const usePackSizeController = (
   };
 
   // Create the pack size options.
-  const packSizes = lines.map(line =>
-    createPackSizeOption(asPackVariant, line)
-  );
+  const packSizes = lines.map(line => createPackSizeOption(line));
   // Valid pack sizes are the pack size of a line which
   // - is a placeholder and has allocated stock.
   // - is a placeholder and is the only line.

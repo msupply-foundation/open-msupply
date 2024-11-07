@@ -65,7 +65,7 @@ mod repository_test {
                 note: None,
                 location_id: None,
                 supplier_link_id: Some(String::from("name1")),
-                barcode_id: None,
+                ..Default::default()
             }
         }
 
@@ -164,11 +164,7 @@ mod repository_test {
                 tax_percentage: None,
                 r#type: InvoiceLineType::StockIn,
                 number_of_packs: 1.0,
-                note: None,
-                location_id: None,
-                inventory_adjustment_reason_id: None,
-                return_reason_id: None,
-                foreign_currency_price_before_tax: None,
+                ..Default::default()
             }
         }
         pub fn invoice_line_2() -> InvoiceLineRow {
@@ -189,11 +185,7 @@ mod repository_test {
                 tax_percentage: None,
                 r#type: InvoiceLineType::StockOut,
                 number_of_packs: 1.0,
-                note: None,
-                location_id: None,
-                inventory_adjustment_reason_id: None,
-                return_reason_id: None,
-                foreign_currency_price_before_tax: None,
+                ..Default::default()
             }
         }
 
@@ -215,11 +207,7 @@ mod repository_test {
                 tax_percentage: None,
                 r#type: InvoiceLineType::StockOut,
                 number_of_packs: 1.0,
-                note: None,
-                location_id: None,
-                inventory_adjustment_reason_id: None,
-                return_reason_id: None,
-                foreign_currency_price_before_tax: None,
+                ..Default::default()
             }
         }
 
@@ -241,11 +229,7 @@ mod repository_test {
                 tax_percentage: None,
                 r#type: InvoiceLineType::Service,
                 number_of_packs: 1.0,
-                note: None,
-                location_id: None,
-                inventory_adjustment_reason_id: None,
-                return_reason_id: None,
-                foreign_currency_price_before_tax: None,
+                ..Default::default()
             }
         }
 

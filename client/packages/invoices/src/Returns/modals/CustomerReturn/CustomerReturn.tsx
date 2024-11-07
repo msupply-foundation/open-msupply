@@ -43,7 +43,7 @@ export const CustomerReturnEditModal = ({
   hasNextItem = false,
   isNewReturn = false,
 }: CustomerReturnEditModalProps) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
 
   const [itemId, setItemId] = useState<string | undefined>(
@@ -120,7 +120,7 @@ export const CustomerReturnEditModal = ({
   const NextStepButton = (
     <DialogButton
       onClick={handleNextStep}
-      variant="next"
+      variant="next-and-ok"
       disabled={!lines.length}
       customLabel={t('button.next-step')}
     />
@@ -129,7 +129,7 @@ export const CustomerReturnEditModal = ({
   const OkAndNextButton = (
     <DialogButton
       onClick={handleNextItem}
-      variant="next"
+      variant="next-and-ok"
       disabled={
         currentTab !== Tabs.Reason ||
         (isDisabled && !hasNextItem) ||

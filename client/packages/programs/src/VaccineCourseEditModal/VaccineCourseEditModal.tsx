@@ -89,7 +89,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   programId,
   mode,
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { success, error } = useNotification();
   const {
     draft,
@@ -245,7 +245,7 @@ const VaccineCourseDoseTable = ({
   doses: VaccineCourseDoseFragment[];
   updatePatch: (newData: Partial<DraftVaccineCourse>) => void;
 }) => {
-  const t = useTranslation('programs');
+  const t = useTranslation();
 
   const addDose = () => {
     const previousDose = doses[doses.length - 1];

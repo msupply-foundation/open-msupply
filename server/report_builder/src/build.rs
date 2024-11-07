@@ -1,4 +1,5 @@
 use anyhow::Result;
+use base64::prelude::*;
 use service::report::definition::{
     DefaultQuery, GraphQlQuery, Manifest, ReportDefinition, ReportDefinitionEntry,
     ReportDefinitionIndex, ReportOutputType, SQLQuery, TeraTemplate,
@@ -7,6 +8,7 @@ use std::{
     collections::HashMap,
     fs,
     path::{Path, PathBuf},
+    process::Command,
 };
 
 use crate::BuildArgs;
@@ -99,6 +101,8 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         header: None,
         footer: None,
         query: vec![],
+        convert_data: None,
+        custom_wasm_function: None,
     };
     let mut entries: HashMap<String, ReportDefinitionEntry> = HashMap::new();
 
@@ -234,6 +238,36 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         };
 
         entries.insert(name, value);
+    }
+
+    // first check if there is nominated path to custom wasm function
+    if let Some(custom_wasm_function) = &args.custom_wasm_function {
+        let encoded = BASE64_STANDARD.encode(fs::read(custom_wasm_function).unwrap());
+        index.convert_data = Some(encoded)
+    };
+
+    // Then look for data conversion with js functions
+    if let Some(convert_data) = &args.convert_data {
+        if index.convert_data.is_none() {
+            let wasm: &String = &format!("{}/dist/plugin.wasm", convert_data);
+
+            let mut chars = convert_data.chars();
+            chars.next();
+            chars.next();
+
+            let dir = chars.as_str();
+
+            Command::new("npm")
+                .arg("run")
+                .arg("build")
+                .current_dir(dir)
+                .status()
+                .expect(&format!("failed to build wasm plugin function at: {}", dir));
+
+            let encoded = BASE64_STANDARD.encode(fs::read(wasm).unwrap());
+
+            index.convert_data = Some(encoded)
+        }
     }
 
     Ok(ReportDefinition { index, entries })

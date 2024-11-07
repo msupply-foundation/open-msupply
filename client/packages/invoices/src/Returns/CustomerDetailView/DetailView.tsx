@@ -26,7 +26,7 @@ import { getNextItemId } from '../../utils';
 const CustomerReturnsDetailViewComponent = () => {
   const { data, isLoading } = useReturns.document.customerReturn();
   const { rows } = useReturns.lines.customerReturnRows();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const navigate = useNavigate();
 
   const {

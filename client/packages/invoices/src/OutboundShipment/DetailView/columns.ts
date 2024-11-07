@@ -14,10 +14,6 @@ import {
   CurrencyCell,
   ColumnDescription,
 } from '@openmsupply-client/common';
-import {
-  getPackVariantCell,
-  useIsPackVariantsEnabled,
-} from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
@@ -36,9 +32,6 @@ const notePopoverColumn = getNotePopoverColumn<
 const isDefaultPlaceholderRow = (row: StockOutLineFragment) =>
   row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
 
-const getPackSize = (row: StockOutLineFragment) =>
-  isDefaultPlaceholderRow(row) ? '' : row.packSize;
-
 const getNumberOfPacks = (row: StockOutLineFragment) =>
   isDefaultPlaceholderRow(row) ? '' : row.numberOfPacks;
 
@@ -50,8 +43,6 @@ export const useOutboundColumns = ({
   onChangeSortBy,
 }: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
-
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
     [
@@ -152,72 +143,36 @@ export const useOutboundColumns = ({
         width: 100,
       },
     ],
-  ];
-
-  if (isPackVariantsEnabled) {
-    columns.push({
-      key: 'packUnit',
-      label: 'label.pack',
-      sortable: false,
-      Cell: getPackVariantCell({
-        getItemId: row => {
-          if ('lines' in row) return '';
-          else return row?.item?.id;
-        },
-        getPackSizes: row => {
-          if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
-          else return [row.packSize ?? 1];
-        },
-        getUnitName: row => {
-          if ('lines' in row) return row.lines[0]?.item?.unitName ?? null;
-          else return row?.item?.unitName ?? null;
-        },
-      }),
-      width: 130,
-    });
-  } else {
-    columns.push(
-      [
-        'itemUnit',
-        {
-          getSortValue: row =>
-            getColumnPropertyAsString(row, [
-              { path: ['lines', 'item', 'unitName'] },
-              { path: ['item', 'unitName'], default: '' },
-            ]),
-          accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [
-              { path: ['lines', 'item', 'unitName'] },
-              { path: ['item', 'unitName'], default: '' },
-            ]),
-        },
-      ],
-      [
-        'packSize',
-        {
-          getSortValue: row => {
-            if ('lines' in row) {
-              const { lines } = row;
-              return (
-                ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '') ?? ''
-              );
-            } else {
-              return getPackSize(row) ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
-            } else {
-              return getPackSize(rowData);
-            }
-          },
-        },
-      ]
-    );
-  }
-  columns.push(
+    [
+      'itemUnit',
+      {
+        getSortValue: row =>
+          getColumnPropertyAsString(row, [
+            { path: ['lines', 'item', 'unitName'] },
+            { path: ['item', 'unitName'], default: '' },
+          ]),
+        accessor: ({ rowData }) =>
+          getColumnProperty(rowData, [
+            { path: ['lines', 'item', 'unitName'] },
+            { path: ['item', 'unitName'], default: '' },
+          ]),
+      },
+    ],
+    [
+      'packSize',
+      {
+        getSortValue: row =>
+          getColumnPropertyAsString(row, [
+            { path: ['lines', 'packSize'] },
+            { path: ['packSize'], default: '' },
+          ]),
+        accessor: ({ rowData }) =>
+          getColumnProperty(rowData, [
+            { path: ['lines', 'packSize'] },
+            { path: ['packSize'], default: '' },
+          ]),
+      },
+    ],
     [
       'numberOfPacks',
       {
@@ -225,16 +180,7 @@ export const useOutboundColumns = ({
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;
-            const packSize = ArrayUtils.ifTheSameElseDefault(
-              lines,
-              'packSize',
-              ''
-            );
-            if (packSize) {
-              return lines.reduce((acc, value) => acc + value.numberOfPacks, 0);
-            } else {
-              return '';
-            }
+            return lines.reduce((acc, value) => acc + value.numberOfPacks, 0);
           } else {
             return getNumberOfPacks(row);
           }
@@ -242,16 +188,7 @@ export const useOutboundColumns = ({
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
-            const packSize = ArrayUtils.ifTheSameElseDefault(
-              lines,
-              'packSize',
-              ''
-            );
-            if (packSize) {
-              return lines.reduce((acc, value) => acc + value.numberOfPacks, 0);
-            } else {
-              return '';
-            }
+            return lines.reduce((acc, value) => acc + value.numberOfPacks, 0);
           } else {
             return getNumberOfPacks(rowData);
           }
@@ -286,11 +223,16 @@ export const useOutboundColumns = ({
       Cell: CurrencyCell,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
-          return Object.values(rowData.lines).reduce(
-            (sum, batch) =>
-              sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
-            0
-          );
+          // Multiple lines, so we need to calculate the average price per unit
+          let totalSellPrice = 0;
+          let totalUnits = 0;
+
+          for (const line of rowData.lines) {
+            totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
+            totalUnits += line.numberOfPacks * line.packSize;
+          }
+
+          return totalSellPrice / totalUnits;
         } else {
           if (isDefaultPlaceholderRow(rowData)) return undefined;
           return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
@@ -339,8 +281,8 @@ export const useOutboundColumns = ({
       },
     },
     expansionColumn,
-    GenericColumnKey.Selection
-  );
+    GenericColumnKey.Selection,
+  ];
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
 };

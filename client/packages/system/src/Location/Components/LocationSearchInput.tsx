@@ -61,7 +61,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   disabled,
   autoFocus = false,
 }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { fetchAsync, data, isLoading } = useLocation.document.listAll({
     direction: 'asc',
     key: 'name',
@@ -74,7 +74,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   const locations = data?.nodes || [];
   const options: AutocompleteOption<LocationOption>[] = locations.map(l => ({
     value: l.id,
-    label: l.name,
+    label: formatLocationLabel(l),
     code: l.code,
   }));
 
@@ -92,7 +92,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
       value={
         selectedLocation && {
           value: selectedLocation.id,
-          label: selectedLocation.name,
+          label: formatLocationLabel(selectedLocation),
           code: selectedLocation.code,
         }
       }
@@ -107,4 +107,9 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
       isOptionEqualToValue={(option, value) => option.value === value?.value}
     />
   );
+};
+
+export const formatLocationLabel = (location: LocationRowFragment) => {
+  const { name, coldStorageType } = location;
+  return `${name}${coldStorageType ? ` (${coldStorageType.name})` : ''}`;
 };

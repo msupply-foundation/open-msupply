@@ -12,24 +12,43 @@ name: CI
 jobs:
   build_and_test:
     name: Remote Server Tests (sqlite)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: self-hosted
+    timeout-minutes: 25
+    env:
+      CARGO_TARGET_DIR: /tmp/target/sqlite
     steps:
-      # --- install build dependencies taken from https://github.com/stbuehler/rust-async-dnssd/blob/master/.github/workflows/rust.yml
-      - name: Update package list
-        run: sudo apt-get -qq update
-      - name: install libavahi-compat-libdnssd-dev
-        run: sudo apt-get install -y libavahi-compat-libdnssd-dev
-      - uses: actions/checkout@v2
+      - name: Update PATH
+        run: echo "$HOME/.cargo/bin:/opt/homebrew/bin" >> $GITHUB_PATH
+      - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions-rs/cargo@v1
         with:
-          workspaces: server
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@v1.3.1
+          command: clean
+          args: -p repository -p graphql_types -p graphql_plugin --manifest-path server/Cargo.toml
       - uses: actions-rs/cargo@v1
         with:
           command: test
           args: --features=sqlite --manifest-path server/Cargo.toml
+  build_and_test_pg:
+    name: Remote Server Tests (postgres)
+    runs-on: self-hosted
+    timeout-minutes: 25
+    env:
+      CARGO_TARGET_DIR: /tmp/target/postgres
+    steps:
+      - name: Update PATH
+        run: echo "$HOME/.cargo/bin/:/opt/homebrew/bin" >> $GITHUB_PATH
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with:
+          command: clean
+          args: -p repository -p graphql_types -p graphql_plugin --manifest-path server/Cargo.toml
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features=postgres --manifest-path server/Cargo.toml

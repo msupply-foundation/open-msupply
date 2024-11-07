@@ -27,7 +27,7 @@ export const Toolbar = () => {
     classId: { equalTo: CCE_CLASS_ID },
   });
   const { data: typeData } = useAssetData.utils.types();
-  const t = useTranslation(['catalogue', 'coldchain']);
+  const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery({
     skipParse: ['classId', 'categoryId', 'typeId'],
   });
@@ -89,6 +89,10 @@ export const Toolbar = () => {
         {
           label: t('status.not-in-use', { ns: 'coldchain' }),
           value: AssetLogStatusInput.NotInUse,
+        },
+        {
+          label: t('status.unserviceable', { ns: 'coldchain' }),
+          value: AssetLogStatusInput.Unserviceable,
         },
       ],
       isDefault: true,

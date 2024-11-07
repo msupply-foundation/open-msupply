@@ -29,7 +29,7 @@ const useDisableStocktakeRows = (rows?: StocktakeRowFragment[]) => {
 
 export const StocktakeListView: FC = () => {
   const navigate = useNavigate();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const modalController = useToggle();
 
   const {

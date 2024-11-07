@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Autocomplete,
   AutocompleteProps,
@@ -10,8 +10,8 @@ import {
 } from '@openmsupply-client/common';
 import { getNameOptionRenderer } from '@openmsupply-client/system';
 
-import { ProgramSettingsFragment } from '../api';
-import { NewRequisitionType } from './types';
+import { SupplierProgramSettingsFragment } from '../api';
+import { NewRequisitionType } from '../../types';
 
 export interface NewProgramRequisition {
   type: NewRequisitionType.Program;
@@ -30,28 +30,30 @@ type Common<T> = Pick<
 };
 
 const useProgramRequisitionOptions = (
-  programSettings: ProgramSettingsFragment[]
+  programSettings: SupplierProgramSettingsFragment[]
 ) => {
-  type ProgramSetting = ProgramSettingsFragment;
+  type ProgramSetting = SupplierProgramSettingsFragment;
   // [number] gets type of array
-  type OrderType = ProgramSettingsFragment['orderTypes'][number];
-  type Supplier = ProgramSettingsFragment['suppliers'][number];
+  type OrderType = SupplierProgramSettingsFragment['orderTypes'][number];
+  type Supplier = SupplierProgramSettingsFragment['suppliers'][number];
   type Period = OrderType['availablePeriods'][number];
 
   const [program, setProgram] = useState<ProgramSetting | null>(null);
   const [orderType, setOrderType] = useState<OrderType | null>(null);
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [period, setPeriod] = useState<Period | null>(null);
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
-  useEffect(() => {
+  const handleSetProgram = (value: ProgramSetting | null) => {
+    setProgram(value);
     setOrderType(null);
     setSupplier(null);
-  }, [program]);
-
-  useEffect(() => {
     setPeriod(null);
-  }, [orderType]);
+  };
+  const handleSetOrderType = (value: OrderType | null) => {
+    setOrderType(value);
+    setPeriod(null);
+  };
 
   const allOptions: {
     programs: Common<ProgramSetting>;
@@ -62,14 +64,14 @@ const useProgramRequisitionOptions = (
     programs: {
       options: programSettings,
       value: program,
-      set: setProgram,
+      set: handleSetProgram,
       label: t('label.program'),
       disabled: false,
     },
     orderTypes: {
       options: program?.orderTypes || [],
       value: orderType,
-      set: setOrderType,
+      set: handleSetOrderType,
       disabled: program === null,
       labelNoOptions: t('messages.not-configured'),
       label: t('label.order-type'),
@@ -118,8 +120,7 @@ const LabelAndOptions = <T,>({
   optionKey,
   renderOption,
   getOptionDisabled,
-}: Pick<AutocompleteProps<T>, 'optionKey' | 'autoFocus'> &
-  Common<T>) => {
+}: Pick<AutocompleteProps<T>, 'optionKey' | 'autoFocus'> & Common<T>) => {
   const noOptionsDisplay = options.length == 0 &&
     !disabled &&
     !!labelNoOptions && <Typography>{labelNoOptions}</Typography>;
@@ -153,7 +154,7 @@ export const ProgramRequisitionOptions = ({
   onCreate,
 }: {
   onCreate: (props: NewProgramRequisition) => void;
-  programSettings: ProgramSettingsFragment[];
+  programSettings: SupplierProgramSettingsFragment[];
 }) => {
   const { programs, orderTypes, suppliers, periods, createOptions } =
     useProgramRequisitionOptions(programSettings);

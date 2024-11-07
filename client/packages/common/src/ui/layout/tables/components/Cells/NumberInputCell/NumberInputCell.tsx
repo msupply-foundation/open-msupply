@@ -27,11 +27,13 @@ export const NumberInputCell = <T extends RecordWithId>({
   TextInputProps,
   width,
   endAdornment,
+  error,
 }: CellProps<T> &
   NumericInputProps & {
     id?: string;
     TextInputProps?: StandardTextFieldProps;
     endAdornment?: string;
+    error?: boolean;
   }): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
   const updater = useDebounceCallback(column.setter, [column.setter], 250);
@@ -64,6 +66,7 @@ export const NumberInputCell = <T extends RecordWithId>({
       value={buffer as number | undefined}
       width={width}
       endAdornment={endAdornment}
+      error={error}
     />
   );
 };

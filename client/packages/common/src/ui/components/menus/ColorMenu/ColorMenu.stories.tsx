@@ -17,7 +17,7 @@ export default {
 } as Meta<typeof ColorMenu>;
 
 const Template: StoryFn<typeof ColorMenu> = ({ onClick }) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
 
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
