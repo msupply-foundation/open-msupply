@@ -2,9 +2,10 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { ItemRowFragmentDoc } from '../../../../system/src/Item/api/operations.generated';
-import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
-import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
+import { ItemRowFragmentDoc } from 'packages/system/src/Item/api/operations.generated';
+import { NameRowFragmentDoc } from 'packages/system/src/Name/api/operations.generated';
+import { ReasonOptionRowFragmentDoc } from 'packages/system/src/ReasonOption/api/operations.generated';
+
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type UpdateResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -36,32 +37,7 @@ export type DeleteRequestMutation = {
             __typename: 'DeleteResponseRequisitionError';
             error:
               | { __typename: 'FinalisedRequisition'; description: string }
-              | { __typename: 'RecordNotFound'; description: string }
-              | { __typename: 'RequisitionWithShipment'; description: string }
-              | { __typename: 'TransferRequisition'; description: string };
-          };
-    }> | null;
-  };
-};
-
-export type DeleteRequestMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  input: Types.BatchResponseRequisitionInput;
-}>;
-
-export type DeleteRequestMutation = {
-  __typename: 'Mutations';
-  batchResponseRequisition: {
-    __typename: 'BatchResponseRequisitionResponse';
-    deleteResponseRequisitions?: Array<{
-      __typename: 'DeleteResponseRequisitionResponseWithId';
-      id: string;
-      response:
-        | { __typename: 'DeleteResponse'; id: string }
-        | {
-            __typename: 'DeleteResponseRequisitionError';
-            error:
-              | { __typename: 'FinalisedRequisition'; description: string }
+              | { __typename: 'LineDeleteError'; description: string }
               | { __typename: 'RecordNotFound'; description: string }
               | { __typename: 'RequisitionWithShipment'; description: string }
               | { __typename: 'TransferRequisition'; description: string };
