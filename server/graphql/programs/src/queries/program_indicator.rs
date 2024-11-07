@@ -46,30 +46,3 @@ pub fn program_indicators(
         },
     ))
 }
-
-pub fn program_indicator(
-    ctx: &Context<'_>,
-    store_id: String,
-    program_indicator_id: String,
-) -> Result<Option<ProgramIndicatorNode>> {
-    let user = validate_auth(
-        ctx,
-        &ResourceAccessRequest {
-            resource: Resource::QueryProgram,
-            store_id: Some(store_id.clone()),
-        },
-    )?;
-
-    let service_provider = ctx.service_provider();
-    let context = service_provider.context(store_id.clone(), user.user_id)?;
-
-    let node = service_provider
-        .program_indicator_service
-        .program_indicator(
-            &context.connection,
-            ProgramIndicatorFilter::new().id(EqualFilter::equal_to(&program_indicator_id)),
-        )?
-        .map(|program_indicator| ProgramIndicatorNode { program_indicator });
-
-    Ok(node)
-}
