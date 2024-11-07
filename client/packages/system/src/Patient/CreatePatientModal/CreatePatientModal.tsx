@@ -109,12 +109,16 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
       sx={{ maxWidth: '90%' }}
       okButton={
         currentTab === Tabs.SearchResults ? (
-          <DialogButton variant="next" onClick={onOk} />
+          <DialogButton variant="next-and-ok" onClick={onOk} />
         ) : undefined
       }
       nextButton={
         currentTab !== Tabs.SearchResults ? (
-          <DialogButton variant="next" onClick={onNext} disabled={hasError} />
+          <DialogButton
+            variant="next-and-ok"
+            onClick={onNext}
+            disabled={hasError}
+          />
         ) : undefined
       }
       cancelButton={

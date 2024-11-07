@@ -20,6 +20,7 @@ export const useResponse = {
     stats: Lines.useResponseLineStatsData,
     delete: Lines.useDeleteResponseLines,
     save: Lines.useSaveResponseLines,
+    insert: Lines.useInsertResponseLines,
   },
   utils: {
     api: Utils.useResponseApi,

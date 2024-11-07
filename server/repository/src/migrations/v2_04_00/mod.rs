@@ -1,6 +1,8 @@
 use super::{version::Version, Migration, MigrationFragment};
 
+mod add_bundled_item_table;
 mod add_cold_storage_type_table;
+mod add_demographic_indicator_types_to_activity_log;
 mod add_expected_lifespan_to_assets;
 mod add_item_variant_id_to_stock_line_and_invoice_line;
 mod add_manual_requisition_line_fields;
@@ -8,6 +10,7 @@ mod add_reason_option_table;
 mod add_unserviceable_status_to_asset_status_enum;
 mod delete_pack_variant;
 mod indicator_line_column_create_tables;
+mod indicator_value_create_table;
 mod item_variant;
 mod program_indicator_create_table;
 
@@ -36,6 +39,9 @@ impl Migration for V2_04_00 {
             Box::new(program_indicator_create_table::Migrate),
             Box::new(add_item_variant_id_to_stock_line_and_invoice_line::Migrate),
             Box::new(indicator_line_column_create_tables::Migrate),
+            Box::new(indicator_value_create_table::Migrate),
+            Box::new(add_bundled_item_table::Migrate),
+            Box::new(add_demographic_indicator_types_to_activity_log::Migrate),
         ]
     }
 }

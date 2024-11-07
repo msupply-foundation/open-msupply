@@ -8,6 +8,7 @@ import {
   UpdateResponseRequisitionStatusInput,
   UpdateResponseRequisitionLineInput,
   InsertProgramResponseRequisitionInput,
+  InsertResponseRequisitionLineInput,
 } from '@openmsupply-client/common';
 import {
   ResponseFragment,
@@ -91,6 +92,16 @@ const responseParser = {
     id: patch.id,
     supplyQuantity: patch.supplyQuantity,
     comment: patch.comment,
+    stockOnHand: patch.initialStockOnHandUnits,
+    additionInUnits: patch.additionInUnits,
+    averageMonthlyConsumption: patch.averageMonthlyConsumption,
+    daysOutOfStock: patch.daysOutOfStock,
+    expiringUnits: patch.expiringUnits,
+    incomingUnits: patch.incomingUnits,
+    lossInUnits: patch.lossInUnits,
+    outgoingUnits: patch.outgoingUnits,
+    requestedQuantity: patch.requestedQuantity,
+    optionId: patch?.reason?.id ?? null,
   }),
 };
 
@@ -248,6 +259,19 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not delete requisition lines!');
+  },
+  insertLine: async (input: InsertResponseRequisitionLineInput) => {
+    const result =
+      (await sdk.insertResponseLine({
+        storeId,
+        input,
+      })) || {};
+
+    if (
+      result?.insertResponseRequisitionLine.__typename === 'RequisitionLineNode'
+    ) {
+      return result.insertResponseRequisitionLine;
+    } else throw new Error('Could not insert response');
   },
   updateLine: async (patch: DraftResponseLine) => {
     const result =

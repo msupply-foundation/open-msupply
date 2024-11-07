@@ -222,7 +222,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
       nextButton={
         <DialogButton
           disabled={okNextDisabled}
-          variant="next"
+          variant="next-and-ok"
           onClick={onNext}
         />
       }

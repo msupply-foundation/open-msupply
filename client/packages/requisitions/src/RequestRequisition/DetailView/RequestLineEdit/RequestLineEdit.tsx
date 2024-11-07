@@ -76,7 +76,7 @@ export const RequestLineEdit = ({
       nextButton={
         <DialogButton
           disabled={nextDisabled}
-          variant="next"
+          variant="next-and-ok"
           onClick={async () => {
             await save();
             setPreviousItemLineId(null);
