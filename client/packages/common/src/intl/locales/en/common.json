@@ -160,7 +160,6 @@
   "description.fc-sell-price": "Foreign currency sell price per pack",
   "description.forecast-quantity": "Forecast Quantity to Reach Target",
   "description.initial-stock-on-hand": "Stock on hand on the first day of the program period",
-  "description.available-stock": "The customer's initial stock on hand + incoming stock +/- inventory adjustments - outgoing stock",
   "description.invoice-number": "Shipment number",
   "description.last-reading-datetime": "Date and time of the last reading",
   "description.max-min-temperature": "Maximum or minimum temperature reading",

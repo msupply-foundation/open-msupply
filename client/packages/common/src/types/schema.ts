@@ -3731,6 +3731,11 @@ export type LedgerSortInput = {
   key: LedgerSortFieldInput;
 };
 
+export type LineDeleteError = DeleteResponseRequisitionErrorInterface & {
+  __typename: 'LineDeleteError';
+  description: Scalars['String']['output'];
+};
+
 export type LinkPatientPatientToStoreError = {
   __typename: 'LinkPatientPatientToStoreError';
   error: LinkPatientPatientToStoreErrorInterface;
