@@ -1,7 +1,9 @@
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{
+    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+};
 use repository::{
-    DemographicIndicatorRow, DemographicIndicatorRowRepository, DemographicRow, RepositoryError,
-    StorageConnection, Upsert,
+    ActivityLogType, DemographicIndicatorRow, DemographicIndicatorRowRepository, DemographicRow,
+    RepositoryError, StorageConnection, Upsert,
 };
 use util::uuid::uuid;
 
@@ -63,7 +65,14 @@ pub fn insert_demographic_indicator(
             DemographicIndicatorRowRepository::new(connection)
                 .upsert_one(&new_demographic_indicator)?;
 
-            // TODO add activity log entry
+            activity_log_entry(
+                ctx,
+                ActivityLogType::DemographicIndicatorCreated,
+                Some(new_demographic_indicator.id.to_owned()),
+                None,
+                None,
+            )?;
+
             get_demographic_indicator(ctx, new_demographic_indicator.id)
                 .map_err(InsertDemographicIndicatorError::from)
         })

@@ -5,7 +5,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::ItemVariantNode;
-use repository::item_variant::item_variant_row::ItemVariantRow;
+use repository::item_variant::item_variant::ItemVariant;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     item::{
@@ -122,7 +122,7 @@ impl PackagingVariantInput {
     }
 }
 
-fn map_response(from: Result<ItemVariantRow, ServiceError>) -> Result<UpsertItemVariantResponse> {
+fn map_response(from: Result<ItemVariant, ServiceError>) -> Result<UpsertItemVariantResponse> {
     let result = match from {
         Ok(variant) => UpsertItemVariantResponse::Response(ItemVariantNode::from_domain(variant)),
         Err(error) => UpsertItemVariantResponse::Error(UpsertItemVariantError {

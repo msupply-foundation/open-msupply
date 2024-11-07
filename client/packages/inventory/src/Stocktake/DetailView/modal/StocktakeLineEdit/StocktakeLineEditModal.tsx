@@ -38,7 +38,7 @@ export const StocktakeLineEditModal: FC<
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
       nextButton={
         <DialogButton
-          variant="next"
+          variant="next-and-ok"
           onClick={onNext}
           disabled={(!hasNext && mode === ModalMode.Update) || !isValid}
         />
