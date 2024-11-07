@@ -56,6 +56,7 @@ export const useDeleteSelectedResponseRequisitions = () => {
       deleteSuccess: t('messages.deleted-orders', {
         count: selectedRows.length,
       }),
+      cantDelete: (err: Error) => err.message,
     },
   });
   return confirmAndDelete;
