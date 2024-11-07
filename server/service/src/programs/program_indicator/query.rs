@@ -38,35 +38,6 @@ pub struct ProgramIndicator {
     pub lines: Vec<IndicatorLine>,
 }
 
-pub fn program_indicator(
-    connection: &StorageConnection,
-    filter: ProgramIndicatorFilter,
-) -> Result<Option<ProgramIndicator>, RepositoryError> {
-    let indicator = ProgramIndicatorRepository::new(&connection)
-        .query_by_filter(filter)?
-        .pop();
-
-    if let Some(indicator) = indicator {
-        // grafind all relevant lines
-        let all_indicator_line_rows = IndicatorLineRowRepository::new(&connection)
-            .find_many_by_indicator_id(indicator.id.clone())?;
-
-        // find all relevant columns
-        let all_indicator_column_rows = IndicatorColumnRowRepository::new(&connection)
-            .find_many_by_indicator_id(indicator.id.clone())?;
-
-        let program_indicator = ProgramIndicator::from_domain(
-            indicator,
-            all_indicator_line_rows,
-            all_indicator_column_rows,
-        );
-
-        Ok(Some(program_indicator))
-    } else {
-        Ok(None)
-    }
-}
-
 pub fn program_indicators(
     connection: &StorageConnection,
     pagination: Pagination,
