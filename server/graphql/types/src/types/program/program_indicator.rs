@@ -13,8 +13,6 @@ use repository::{
 use service::programs::program_indicator::query::{
     ColumnValue, IndicatorColumn, IndicatorLine, ProgramIndicator, ValueType,
 };
-use std::sync::RwLock;
-
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum ProgramIndicatorSortFieldInput {
@@ -151,13 +149,13 @@ impl IndicatorColumnNode {
         ctx: &Context<'_>,
         period_id: String,
         supplier_store_id: String,
-        customer_name_id: String,
+        customer_name_link_id: String,
     ) -> Result<String> {
         let loader = ctx.get_loader::<DataLoader<IndicatorValueLoader>>();
         let payload = IndicatorValuePayload {
             period_id,
             supplier_store_id,
-            customer_name_id,
+            customer_name_link_id,
         };
 
         let result = loader
@@ -183,13 +181,13 @@ impl IndicatorColumnNode {
         ctx: &Context<'_>,
         period_id: String,
         supplier_store_id: String,
-        customer_name_id: String,
+        customer_name_link_id: String,
     ) -> Result<String> {
         let loader = ctx.get_loader::<DataLoader<IndicatorValueLoader>>();
         let payload = IndicatorValuePayload {
             period_id,
             supplier_store_id,
-            customer_name_id,
+            customer_name_link_id,
         };
 
         let result = loader
