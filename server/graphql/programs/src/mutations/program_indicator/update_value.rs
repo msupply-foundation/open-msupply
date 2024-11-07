@@ -12,6 +12,7 @@ use service::programs::indicator_value::UpdateIndicatorValueError;
 pub struct UpdateIndicatorValueInput {
     pub id: String,
     pub value: String,
+    pub requisition_id: String,
 }
 
 #[derive(Interface)]
@@ -66,8 +67,12 @@ pub fn update_indicator_value(
 
 impl UpdateIndicatorValueInput {
     pub fn to_domain(self) -> UpdateIndicatorValue {
-        let UpdateIndicatorValueInput { id, value } = self;
-        UpdateIndicatorValue { id, value }
+        let UpdateIndicatorValueInput {
+            id,
+            value,
+            requisition_id,
+        } = self;
+        UpdateIndicatorValue { id, value, requisition_id }
     }
 }
 
