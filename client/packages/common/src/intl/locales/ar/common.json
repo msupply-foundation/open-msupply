@@ -12,5 +12,15 @@
   "stock": "الأوراق المالية",
   "suppliers": "الموردين",
   "sync": "تزامن",
-  "tools": "أدوات"
+  "tools": "أدوات",
+  "app": "إم سبلاي",
+  "auth.alert-title": "خطأ في المصادقة",
+  "auth.no-store-assigned": "لم يتم تعيينك في أي مستودع. يرجى تسجيل الدخول كمستخدم آخر أو الاتصال بالمسؤول الإداري.",
+  "auth.not-a-central-server": "لا يمكن إجراء العملية إلا على الخادم المركزي",
+  "app.initialise": "تهيئة",
+  "app.login": "تسجيل الدخول",
+  "approval-status.approved": "مقبول",
+  "approval-status.denied": "مرفوض",
+  "approval-status.none": "لا شيء",
+  "approval-status.pending": "معلق"
 }
