@@ -9,8 +9,8 @@ use crate::{
 
 use super::{
     common::{FullMockInvoice, FullMockInvoiceLine, FullMockMasterList, FullMockRequisition},
-    mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_a, mock_program_a,
-    mock_stock_line_a, mock_store_a, MockData,
+    mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_a, mock_period, mock_program_a,
+    mock_stock_line_a, mock_store_a, mock_store_b, MockData,
 };
 
 pub fn mock_test_requisition_service() -> MockData {
@@ -35,6 +35,10 @@ pub fn mock_test_requisition_service() -> MockData {
         .requisitions
         .push(mock_finalised_response_requisition());
     result.requisitions.push(mock_new_response_requisition());
+    result
+        .requisitions
+        .push(mock_new_response_requisition_store_b());
+
     result.requisitions.push(mock_sent_request_requisition());
     result
         .full_requisitions
@@ -140,6 +144,7 @@ pub fn mock_finalised_response_requisition() -> RequisitionRow {
             .unwrap();
         r.max_months_of_stock = 1.0;
         r.min_months_of_stock = 0.9;
+        r.period_id = Some(mock_period().id);
     })
 }
 
@@ -186,6 +191,24 @@ pub fn mock_new_response_requisition() -> RequisitionRow {
             .unwrap();
         r.max_months_of_stock = 1.0;
         r.min_months_of_stock = 0.9;
+    })
+}
+
+pub fn mock_new_response_requisition_store_b() -> RequisitionRow {
+    inline_init(|r: &mut RequisitionRow| {
+        r.id = "mock_new_response_requisition_store_b".to_string();
+        r.requisition_number = 3;
+        r.name_link_id = "name_a".to_string();
+        r.store_id = mock_store_b().id;
+        r.r#type = RequisitionType::Response;
+        r.status = RequisitionStatus::New;
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
+        r.max_months_of_stock = 1.0;
+        r.min_months_of_stock = 0.9;
+        r.period_id = Some(mock_period().id);
     })
 }
 
