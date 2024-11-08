@@ -23,7 +23,7 @@ impl MigrationFragment for Migrate {
             CREATE TABLE indicator_value (
                 id TEXT PRIMARY KEY NOT NULL,
                 customer_name_link_id TEXT NOT NULL REFERENCES name_link(id),
-                supplier_store_id TEXT NOT NULL REFERENCES store(id),
+                store_id TEXT NOT NULL REFERENCES store(id),
                 period_id TEXT NOT NULL REFERENCES period(id),
                 indicator_line_id TEXT NOT NULL REFERENCES indicator_line(id),
                 indicator_column_id TEXT NOT NULL REFERENCES indicator_column(id),
