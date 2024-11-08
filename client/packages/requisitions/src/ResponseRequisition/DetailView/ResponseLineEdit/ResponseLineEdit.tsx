@@ -243,7 +243,7 @@ export const ResponseLineEdit = ({
                 setTheirStatsAnchorEl(e?.currentTarget);
               }}
             >
-              {
+              {hasLinkedRequisition && (
                 <>
                   <BarIcon
                     sx={{
@@ -277,7 +277,7 @@ export const ResponseLineEdit = ({
                     </Popover>
                   )}
                 </>
-              }
+              )}
             </Box>
           </Box>
           {isProgram && (
