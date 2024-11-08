@@ -133,7 +133,7 @@ const LabelAndOptions = <T,>({
       <Grid item>
         {noOptionsDisplay || (
           <Autocomplete
-            width="300"
+            width="450"
             renderOption={renderOption}
             getOptionDisabled={getOptionDisabled}
             autoFocus={autoFocus}
