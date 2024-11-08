@@ -19,7 +19,7 @@ import {
   Typography,
 } from '@common/components';
 import { useFetchPatient } from './useFetchPatient';
-import { usePatientStore } from 'packages/programs/src';
+import { usePatientStore } from '@openmsupply-client/programs/src';
 
 interface FetchPatientModal {
   patient: PatientColumnData;
@@ -68,7 +68,7 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
       okButton={
         <DialogButton
           variant="ok"
-          customLabel={step === 'Synced' ? 'View patient' : undefined}
+          customLabel={step === 'Synced' ? t('button.view-patient') : undefined}
           onClick={() => {
             if (!started) {
               setStarted(true);
