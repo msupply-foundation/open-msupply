@@ -58,11 +58,15 @@ export const ListOptions = ({
             onClick={() => onClick(option.id)}
           >
             <ListItemIcon sx={{ padding: 0, minWidth: 25 }}>
-              {enteredLineIds?.includes(option.id) ? (
-                startIcon
-              ) : (
-                <Box style={{ visibility: 'hidden' }}>{startIcon}</Box>
-              )}
+              <Box
+                style={{
+                  visibility: enteredLineIds?.includes(option.id)
+                    ? 'visible'
+                    : 'hidden',
+                }}
+              >
+                {startIcon}
+              </Box>
             </ListItemIcon>
             <ListItemText
               primary={
@@ -77,11 +81,13 @@ export const ListOptions = ({
               sx={{ margin: 0, padding: 0 }}
             />
             <ListItemIcon sx={{ padding: 0, minWidth: 15 }}>
-              {option.id === currentId ? (
-                endIcon
-              ) : (
-                <Box style={{ visibility: 'hidden' }}>{endIcon}</Box>
-              )}
+              <Box
+                style={{
+                  visibility: option.id === currentId ? 'visible' : 'hidden',
+                }}
+              >
+                {endIcon}
+              </Box>
             </ListItemIcon>
           </ListItem>
           <Divider component="li" />

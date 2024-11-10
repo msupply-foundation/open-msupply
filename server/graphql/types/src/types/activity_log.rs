@@ -75,6 +75,10 @@ pub enum ActivityLogNodeType {
     VaccinationCreated,
     VaccinationUpdated,
     VaccinationDeleted,
+    DemographicIndicatorCreated,
+    DemographicIndicatorUpdated,
+    DemographicProjectionCreated,
+    DemographicProjectionUpdated,
 }
 
 #[Object]
@@ -205,6 +209,10 @@ impl ActivityLogNodeType {
             from::VaccinationCreated => to::VaccinationCreated,
             from::VaccinationUpdated => to::VaccinationUpdated,
             from::VaccinationDeleted => to::VaccinationDeleted,
+            from::DemographicIndicatorCreated => to::DemographicIndicatorCreated,
+            from::DemographicIndicatorUpdated => to::DemographicIndicatorUpdated,
+            from::DemographicProjectionCreated => to::DemographicProjectionCreated,
+            from::DemographicProjectionUpdated => to::DemographicProjectionUpdated,
         }
     }
 
@@ -265,6 +273,10 @@ impl ActivityLogNodeType {
             from::VaccinationCreated => to::VaccinationCreated,
             from::VaccinationUpdated => to::VaccinationUpdated,
             from::VaccinationDeleted => to::VaccinationDeleted,
+            from::DemographicIndicatorCreated => to::DemographicIndicatorCreated,
+            from::DemographicIndicatorUpdated => to::DemographicIndicatorUpdated,
+            from::DemographicProjectionCreated => to::DemographicProjectionCreated,
+            from::DemographicProjectionUpdated => to::DemographicProjectionUpdated,
         }
     }
 }

@@ -41,7 +41,7 @@ impl<'a> IndicatorColumnRepository<'a> {
 
     pub fn create_filtered_query(filter: Option<IndicatorColumnFilter>) -> BoxedIndicatorQuery {
         let mut query = indicator_column::table.into_boxed();
-        // Filter out inactive program_indicators by default
+        // Filter out inactive by default
         query = query.filter(indicator_column::is_active.eq(true));
 
         if let Some(f) = filter {

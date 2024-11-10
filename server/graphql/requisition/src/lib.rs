@@ -150,6 +150,16 @@ impl RequisitionMutations {
     ) -> Result<response_requisition::update::UpdateResponse> {
         response_requisition::update::update(ctx, &store_id, input)
     }
+
+    async fn delete_response_requisition(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: response_requisition::delete::DeleteInput,
+    ) -> Result<response_requisition::delete::DeleteResponse> {
+        response_requisition::delete::delete(ctx, &store_id, input)
+    }
+
     /// Set supply quantity to requested quantity
     async fn supply_requested_quantity(
         &self,
