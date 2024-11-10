@@ -16,9 +16,9 @@ import {
   useToggle,
 } from '@openmsupply-client/common';
 import { Footer } from './Footer';
-import { ResponseStoreStats } from '../ReponseStats/ResponseStoreStats';
+import { ResponseStoreStats } from '../ResponseStats/ResponseStoreStats';
 import { useResponse } from '../../api';
-import { RequestStoreStats } from '../ReponseStats/RequestStoreStats';
+import { RequestStoreStats } from '../ResponseStats/RequestStoreStats';
 
 const INPUT_WIDTH = 100;
 const LABEL_WIDTH = '150px';
