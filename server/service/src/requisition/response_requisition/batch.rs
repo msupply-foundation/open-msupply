@@ -5,9 +5,14 @@ use crate::{
     BatchMutationsProcessor, InputWithResult, WithDBError,
 };
 
+use super::{
+    delete_response_requisition, DeleteResponseRequisition, DeleteResponseRequisitionError,
+};
+
 #[derive(Clone)]
 pub struct BatchResponseRequisition {
     pub delete_line: Option<Vec<DeleteResponseRequisitionLine>>,
+    pub delete_requisition: Option<Vec<DeleteResponseRequisition>>,
     pub continue_on_error: Option<bool>,
 }
 
@@ -18,9 +23,13 @@ pub type DeleteRequisitionLinesResult = Vec<
     >,
 >;
 
+pub type DeleteRequisitionsResult =
+    Vec<InputWithResult<DeleteResponseRequisition, Result<String, DeleteResponseRequisitionError>>>;
+
 #[derive(Debug, Default)]
 pub struct BatchResponseRequisitionResult {
     pub delete_line: DeleteRequisitionLinesResult,
+    pub delete_requisition: DeleteRequisitionsResult,
 }
 
 pub fn batch_response_requisition(
@@ -38,6 +47,13 @@ pub fn batch_response_requisition(
             let (has_errors, result) = mutations_processor
                 .do_mutations(input.delete_line, delete_response_requisition_line);
             results.delete_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
+
+            let (has_errors, result) = mutations_processor
+                .do_mutations(input.delete_requisition, delete_response_requisition);
+            results.delete_requisition = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
             }
@@ -92,6 +108,7 @@ mod test {
                 |input: &mut DeleteResponseRequisitionLine| input.id = line_id.clone(),
             )]),
             continue_on_error: None,
+            delete_requisition: None,
         };
 
         assert_eq!(
