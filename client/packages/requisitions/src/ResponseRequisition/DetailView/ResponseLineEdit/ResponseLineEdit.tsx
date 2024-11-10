@@ -83,6 +83,7 @@ export const ResponseLineEdit = ({
                   onChange={value => update({ availableStockOnHand: value })}
                   onBlur={save}
                   disabled={!!hasLinkedRequisition}
+                  autoFocus
                 />
               }
               labelWidth={LABEL_WIDTH}
@@ -98,6 +99,7 @@ export const ResponseLineEdit = ({
                   onChange={value => update({ initialStockOnHandUnits: value })}
                   onBlur={save}
                   disabled={!!hasLinkedRequisition}
+                  autoFocus
                 />
               }
               labelWidth={LABEL_WIDTH}
@@ -234,6 +236,7 @@ export const ResponseLineEdit = ({
                 toggleTheirStats();
                 setTheirStatsAnchorEl(e?.currentTarget);
               }}
+              sx={{ cursor: 'pointer' }}
             >
               {hasLinkedRequisition && (
                 <>
@@ -341,6 +344,7 @@ export const ResponseLineEdit = ({
                 toggleOurStats();
                 setOurStatsAnchorEl(e?.currentTarget);
               }}
+              sx={{ cursor: 'pointer' }}
             >
               <BarIcon
                 sx={{

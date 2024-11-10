@@ -8187,6 +8187,7 @@ export type UpdateResponseRequisitionLineInput = {
   expiringUnits?: InputMaybe<Scalars['Float']['input']>;
   id: Scalars['String']['input'];
   incomingUnits?: InputMaybe<Scalars['Float']['input']>;
+  initialStockOnHand?: InputMaybe<Scalars['Float']['input']>;
   lossInUnits?: InputMaybe<Scalars['Float']['input']>;
   optionId?: InputMaybe<Scalars['String']['input']>;
   outgoingUnits?: InputMaybe<Scalars['Float']['input']>;
