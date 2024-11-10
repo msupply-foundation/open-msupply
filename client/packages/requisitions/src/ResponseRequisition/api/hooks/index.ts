@@ -11,7 +11,8 @@ export const useResponse = {
     insert: Document.useInsertResponse,
     insertProgram: Document.useInsertProgramResponse,
     update: Document.useUpdateResponse,
-
+    delete: Document.useDeleteResponses,
+    deleteSelected: Document.useDeleteSelectedResponseRequisitions,
     fields: Document.useResponseFields,
   },
   line: {

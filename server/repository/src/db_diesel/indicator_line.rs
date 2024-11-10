@@ -45,7 +45,7 @@ impl<'a> IndicatorLineRepository<'a> {
 
     pub fn create_filtered_query(filter: Option<IndicatorLineFilter>) -> BoxedIndicatorQuery {
         let mut query = indicator_line::table.into_boxed();
-        // Filter out inactive program_indicators by default
+        // Filter out inactive by default
         query = query.filter(indicator_line::is_active.eq(true));
 
         if let Some(f) = filter {

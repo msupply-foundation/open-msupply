@@ -109,6 +109,7 @@ pub enum ChangelogTableName {
     Vaccination,
     ItemVariant,
     PackagingVariant,
+    IndicatorValue,
     BundledItem,
 }
 
@@ -174,6 +175,7 @@ impl ChangelogTableName {
             ChangelogTableName::ColdStorageType => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::ItemVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::PackagingVariant => ChangeLogSyncStyle::Central,
+            ChangelogTableName::IndicatorValue => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::BundledItem => ChangeLogSyncStyle::Central,
         }
     }
