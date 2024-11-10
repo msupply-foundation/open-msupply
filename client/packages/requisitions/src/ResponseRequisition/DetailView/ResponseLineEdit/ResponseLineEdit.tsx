@@ -18,8 +18,8 @@ import {
 } from '@openmsupply-client/common';
 import { useResponse } from '../../api';
 import { Footer } from './Footer';
-import { ResponseStoreStats } from '../ReponseStats/ResponseStoreStats';
-import { RequestStoreStats } from '../ReponseStats/RequestStoreStats';
+import { ResponseStoreStats } from '../ResponseStats/ResponseStoreStats';
+import { RequestStoreStats } from '../ResponseStats/RequestStoreStats';
 
 const INPUT_WIDTH = 100;
 const LABEL_WIDTH = '150px';

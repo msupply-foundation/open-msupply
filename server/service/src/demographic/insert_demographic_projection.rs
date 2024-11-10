@@ -1,9 +1,11 @@
 use repository::{
-    DemographicProjectionRow, DemographicProjectionRowRepository, RepositoryError,
+    ActivityLogType, DemographicProjectionRow, DemographicProjectionRowRepository, RepositoryError,
     StorageConnection,
 };
 
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{
+    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+};
 
 use super::{
     query_demographic_projection::get_demographic_projection,
@@ -42,7 +44,13 @@ pub fn insert_demographic_projection(
             DemographicProjectionRowRepository::new(connection)
                 .upsert_one(&new_demographic_projection)?;
 
-            // TODO add activity log entry
+            activity_log_entry(
+                ctx,
+                ActivityLogType::DemographicProjectionCreated,
+                Some(new_demographic_projection.id.to_owned()),
+                None,
+                None,
+            )?;
 
             get_demographic_projection(ctx, new_demographic_projection.id)
                 .map_err(InsertDemographicProjectionError::from)

@@ -225,22 +225,19 @@ const IndicatorsDemographicsComponent = () => {
 
   return (
     <>
-      <AppBarButtons
-        createNewRow={createNewRow}
-        rows={Object.values(draft)}
-      ></AppBarButtons>{' '}
+      <AppBarButtons createNewRow={createNewRow} rows={Object.values(draft)} />
       <Box sx={{ width: '100%' }} padding={0}>
         <GrowthRow
           columns={columns}
           data={headerDraft}
           isLoading={isLoadingProjection}
           setData={handleGrowthChange}
-        ></GrowthRow>
+        />
         <DataTable
           data={Object.values(draft)}
           columns={columns}
           id={'indicators-demographics-table'}
-        ></DataTable>
+        />
       </Box>
       <Footer save={save} cancel={cancel} isDirty={isDirty} />
     </>
