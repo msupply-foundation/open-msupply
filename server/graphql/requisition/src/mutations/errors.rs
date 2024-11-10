@@ -27,9 +27,9 @@ impl FinalisedRequisition {
     }
 }
 
-pub struct TransferRequisition;
+pub struct TransferredRequisition;
 #[Object]
-impl TransferRequisition {
+impl TransferredRequisition {
     pub async fn description(&self) -> &str {
         "Cannot delete a response requisition transferred from a request requisition"
     }

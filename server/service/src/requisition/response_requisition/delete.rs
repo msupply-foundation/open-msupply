@@ -25,7 +25,7 @@ pub enum DeleteResponseRequisitionError {
     NotThisStoreRequisition,
     FinalisedRequisition,
     NotAResponseRequisition,
-    TransferRequisition,
+    TransferredRequisition,
     RequisitionWithShipment,
     LineDeleteError {
         line_id: String,
@@ -93,7 +93,7 @@ fn validate(
     }
 
     if requisition_row.linked_requisition_id.is_some() {
-        return Err(OutError::TransferRequisition);
+        return Err(OutError::TransferredRequisition);
     }
 
     let filter = InvoiceFilter {
@@ -183,7 +183,7 @@ mod test_delete {
             Err(ServiceError::NotAResponseRequisition)
         );
 
-        // TransferRequisition,
+        // TransferredRequisition,
         let transfer_requisition = RequisitionRow {
             id: "transfer_requisition".to_string(),
             requisition_number: 3,
@@ -202,7 +202,7 @@ mod test_delete {
                     id: "transfer_requisition".to_string(),
                 },
             ),
-            Err(ServiceError::TransferRequisition)
+            Err(ServiceError::TransferredRequisition)
         );
 
         // RequisitionWithShipment
