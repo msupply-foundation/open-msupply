@@ -236,6 +236,7 @@ export const ResponseLineEdit = ({
                 toggleTheirStats();
                 setTheirStatsAnchorEl(e?.currentTarget);
               }}
+              sx={{ cursor: 'pointer' }}
             >
               {hasLinkedRequisition && (
                 <>
@@ -343,6 +344,7 @@ export const ResponseLineEdit = ({
                 toggleOurStats();
                 setOurStatsAnchorEl(e?.currentTarget);
               }}
+              sx={{ cursor: 'pointer' }}
             >
               <BarIcon
                 sx={{
