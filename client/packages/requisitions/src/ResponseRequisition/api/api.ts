@@ -82,6 +82,9 @@ const responseParser = {
       status: responseParser.toStatus(requisition),
     };
   },
+  toDelete: (line: ResponseFragment) => {
+    return { id: line.id };
+  },
   toDeleteLine: (line: ResponseLineFragment) => ({ id: line.id }),
   toUpdateLine: (
     patch: DraftResponseLine
@@ -222,6 +225,23 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Unable to update requisition');
+  },
+  deleteResponses: async (requisitions: ResponseFragment[]) => {
+    const deleteResponseRequisitions = requisitions.map(
+      responseParser.toDelete
+    );
+    const result = await sdk.deleteRequest({
+      storeId,
+      input: { deleteResponseRequisitions },
+    });
+
+    const { batchResponseRequisition } = result || {};
+
+    if (batchResponseRequisition?.deleteResponseRequisitions) {
+      return batchResponseRequisition.deleteResponseRequisitions;
+    }
+
+    throw new Error('Could not delete requisitions');
   },
   deleteLines: async (responseLines: ResponseLineFragment[]) => {
     const ids = responseLines.map(responseParser.toDeleteLine);

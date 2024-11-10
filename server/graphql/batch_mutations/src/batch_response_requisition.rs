@@ -1,5 +1,6 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_requisition::mutations::response_requisition;
 use graphql_requisition_line::mutations::response_requisition_line;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -16,19 +17,26 @@ type ServiceInput = BatchResponseRequisition;
     name = "DeleteResponseRequisitionLineResponseWithId",
     params(response_requisition_line::delete::DeleteResponse)
 ))]
+#[graphql(concrete(
+    name = "DeleteResponseRequisitionResponseWithId",
+    params(response_requisition::delete::DeleteResponse)
+))]
 
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
     pub response: T,
 }
 
-type DeleteRequisitionLinesResponse =
+pub type DeleteRequisitionLinesResponse =
     Option<Vec<MutationWithId<response_requisition_line::delete::DeleteResponse>>>;
+pub type DeleteRequisitionsResponse =
+    Option<Vec<MutationWithId<response_requisition::delete::DeleteResponse>>>;
 
 #[derive(SimpleObject)]
 #[graphql(name = "BatchResponseRequisitionResponse")]
 pub struct BatchResponse {
     delete_response_requisition_lines: DeleteRequisitionLinesResponse,
+    delete_response_requisitions: DeleteRequisitionsResponse,
 }
 
 #[derive(InputObject)]
@@ -36,6 +44,7 @@ pub struct BatchResponse {
 pub struct BatchInput {
     pub delete_response_requisition_lines:
         Option<Vec<response_requisition_line::delete::DeleteInput>>,
+    pub delete_response_requisitions: Option<Vec<response_requisition::delete::DeleteInput>>,
     pub continue_on_error: Option<bool>,
 }
 
@@ -62,11 +71,14 @@ impl BatchInput {
     fn to_domain(self) -> ServiceInput {
         let BatchInput {
             delete_response_requisition_lines,
+            delete_response_requisitions,
             continue_on_error,
         } = self;
 
         ServiceInput {
             delete_line: delete_response_requisition_lines
+                .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
+            delete_requisition: delete_response_requisitions
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
             continue_on_error,
         }
@@ -74,9 +86,15 @@ impl BatchInput {
 }
 
 impl BatchResponse {
-    fn from_domain(ServiceResult { delete_line }: ServiceResult) -> Result<BatchResponse> {
+    fn from_domain(
+        ServiceResult {
+            delete_line,
+            delete_requisition,
+        }: ServiceResult,
+    ) -> Result<BatchResponse> {
         let result = BatchResponse {
             delete_response_requisition_lines: map_delete_lines(delete_line)?,
+            delete_response_requisitions: map_delete_requisitions(delete_requisition)?,
         };
 
         Ok(result)
@@ -103,6 +121,25 @@ fn map_delete_lines(
     Ok(result.vec_or_none())
 }
 
+fn map_delete_requisitions(
+    responses: DeleteRequisitionsResult,
+) -> Result<DeleteRequisitionsResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response = match response_requisition::delete::map_response(response.result) {
+            Ok(response) => response,
+            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
+        };
+
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
+
+    Ok(result.vec_or_none())
+}
+
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
@@ -111,7 +148,10 @@ mod test {
     use serde_json::json;
     use service::{
         requisition::{
-            response_requisition::{BatchResponseRequisition, BatchResponseRequisitionResult},
+            response_requisition::{
+                BatchResponseRequisition, BatchResponseRequisitionResult,
+                DeleteResponseRequisition, DeleteResponseRequisitionError,
+            },
             RequisitionServiceTrait,
         },
         requisition_line::response_requisition_line::{
@@ -163,6 +203,16 @@ mod test {
         let mutation = r#"
         mutation mut($input: BatchResponseRequisitionInput!, $storeId: String!) {
             batchResponseRequisition(input: $input, storeId: $storeId) {
+              deleteResponseRequisitions {
+                id
+                response {
+                  ... on DeleteResponseRequisitionError {
+                    error {
+                      __typename
+                    }
+                  }
+                }
+              }
               deleteResponseRequisitionLines {
                 response {
                   ... on DeleteResponseRequisitionLineError {
@@ -180,6 +230,16 @@ mod test {
 
         let expected = json!({
             "batchResponseRequisition": {
+              "deleteResponseRequisitions": [
+                {
+                  "id": "id7",
+                  "response": {
+                    "error": {
+                      "__typename": "RecordNotFound"
+                    }
+                  }
+                }
+              ],
               "deleteResponseRequisitionLines": [
                 {
                   "id": "id4",
@@ -207,6 +267,12 @@ mod test {
                         input.id = "id4".to_string()
                     }),
                     result: Err(DeleteResponseRequisitionLineError::RequisitionLineDoesNotExist {}),
+                }],
+                delete_requisition: vec![InputWithResult {
+                    input: inline_init(|input: &mut DeleteResponseRequisition| {
+                        input.id = "id7".to_string()
+                    }),
+                    result: Err(DeleteResponseRequisitionError::RequisitionDoesNotExist {}),
                 }],
             })
         }));
@@ -241,6 +307,7 @@ mod test {
                     }),
                     result: Ok("id3".to_string()),
                 }],
+                delete_requisition: Vec::new(),
             })
         }));
 
