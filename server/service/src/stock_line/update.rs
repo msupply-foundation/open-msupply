@@ -103,7 +103,7 @@ fn validate(
         Some(NullableUpdate {
             value: Some(item_variant_id),
         }) => {
-            if !check_item_variant_exists(connection, item_variant_id)? {
+            if check_item_variant_exists(connection, item_variant_id)?.is_none() {
                 return Err(ItemVariantDoesNotExist);
             }
         }

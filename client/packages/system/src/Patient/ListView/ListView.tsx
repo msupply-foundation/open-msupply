@@ -93,7 +93,7 @@ const PatientListComponent: FC = () => {
     {
       key: 'gender',
       label: 'label.gender',
-      formatter: gender =>Formatter.enumCase(gender as string ?? ''),
+      formatter: gender => Formatter.enumCase((gender as string) ?? ''),
     },
     {
       key: 'dateOfBirth',

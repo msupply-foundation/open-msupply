@@ -11,6 +11,7 @@ use super::{
 };
 
 use crate::{
+    diesel_extensions::datetime_coalesce,
     diesel_macros::{
         apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
         apply_string_filter,
@@ -73,6 +74,7 @@ pub enum InvoiceSortField {
     VerifiedDatetime,
     TheirReference,
     TransportReference,
+    InvoiceDatetime,
 }
 
 pub type InvoiceSort = Sort<InvoiceSortField>;
@@ -130,6 +132,16 @@ impl<'a> InvoiceRepository<'a> {
                 InvoiceSortField::CreatedDatetime => {
                     apply_sort!(query, sort, invoice_dsl::created_datetime);
                 }
+                InvoiceSortField::InvoiceDatetime => {
+                    apply_sort!(
+                        query,
+                        sort,
+                        datetime_coalesce::coalesce(
+                            invoice_dsl::backdated_datetime,
+                            invoice_dsl::created_datetime
+                        )
+                    );
+                }
                 InvoiceSortField::AllocatedDatetime => {
                     apply_sort!(query, sort, invoice_dsl::allocated_datetime);
                 }
@@ -164,6 +176,9 @@ impl<'a> InvoiceRepository<'a> {
         } else {
             query = query.order(invoice_dsl::id.asc())
         }
+
+        // Debug diesel query
+        // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let result = query
             .offset(pagination.offset as i64)
