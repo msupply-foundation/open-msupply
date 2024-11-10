@@ -9,6 +9,8 @@ use crate::{check_item_variant_exists, service_provider::ServiceContext};
 pub enum UpsertPackagingVariantError {
     CreatedRecordNotFound,
     ItemVariantDoesNotExist,
+    CantChangeItemVariant,
+    LessThanZero(String),
     DatabaseError(RepositoryError),
 }
 
@@ -72,8 +74,38 @@ fn validate(
     connection: &StorageConnection,
     input: &UpsertPackagingVariant,
 ) -> Result<(), UpsertPackagingVariantError> {
-    if !check_item_variant_exists(connection, &input.item_variant_id)? {
+    if check_item_variant_exists(connection, &input.item_variant_id)?.is_none() {
         return Err(UpsertPackagingVariantError::ItemVariantDoesNotExist);
+    }
+
+    let old_packaging_variant =
+        PackagingVariantRowRepository::new(connection).find_one_by_id(&input.id)?;
+    if let Some(old_packaging_variant) = old_packaging_variant {
+        if old_packaging_variant.item_variant_id != input.item_variant_id {
+            return Err(UpsertPackagingVariantError::CantChangeItemVariant);
+        }
+    }
+
+    if input.packaging_level <= 0 {
+        return Err(UpsertPackagingVariantError::LessThanZero(
+            "packaging_level".to_string(),
+        ));
+    }
+
+    if let Some(pack_size) = input.pack_size {
+        if pack_size <= 0.0 {
+            return Err(UpsertPackagingVariantError::LessThanZero(
+                "pack_size".to_string(),
+            ));
+        }
+    }
+
+    if let Some(volume_per_unit) = input.volume_per_unit {
+        if volume_per_unit <= 0.0 {
+            return Err(UpsertPackagingVariantError::LessThanZero(
+                "volume_per_unit".to_string(),
+            ));
+        }
     }
 
     Ok(())

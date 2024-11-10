@@ -294,7 +294,7 @@ mod test {
                 u.supply_quantity = 99.0;
                 u.comment = Some("comment".to_string());
                 u.requested_quantity = 99.0;
-                u.initial_stock_on_hand_units = 99.0;
+                u.initial_stock_on_hand_units = 0.0;
                 u.available_stock_on_hand = 99.0;
                 u
             })

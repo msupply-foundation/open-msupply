@@ -17,6 +17,7 @@ pub(crate) mod document;
 pub(crate) mod document_registry;
 pub(crate) mod form_schema;
 pub(crate) mod indicator_attribute;
+pub(crate) mod indicator_value;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
@@ -89,6 +90,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         program_requisition_settings::boxed(),
         program_indicator::boxed(),
         indicator_attribute::boxed(),
+        indicator_value::boxed(),
         report::boxed(),
         reason::boxed(),
         store_preference::boxed(),
