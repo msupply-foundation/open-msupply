@@ -13,11 +13,12 @@ import {
   NumUtils,
   Popover,
   ReasonOptionNodeType,
+  TextArea,
   useToggle,
 } from '@openmsupply-client/common';
+import { useResponse } from '../../api';
 import { Footer } from './Footer';
 import { ResponseStoreStats } from '../ResponseStats/ResponseStoreStats';
-import { useResponse } from '../../api';
 import { RequestStoreStats } from '../ResponseStats/RequestStoreStats';
 
 const INPUT_WIDTH = 100;
@@ -387,8 +388,26 @@ export const ResponseLineEdit = ({
                 onBlur={save}
               />
             }
-            labelWidth={'60px'}
+            labelWidth={'66px'}
             label={t('label.reason')}
+            sx={{ marginBottom: 1 }}
+          />
+          <InputWithLabelRow
+            Input={
+              <TextArea
+                value={draft?.comment ?? ''}
+                onChange={e => update({ comment: e.target.value })}
+                InputProps={{
+                  sx: {
+                    backgroundColor: theme => theme.palette.background.menu,
+                  },
+                }}
+                onBlur={save}
+              />
+            }
+            sx={{ width: 275 }}
+            labelWidth={'75px'}
+            label={t('label.comment')}
           />
         </Box>
       </Box>
