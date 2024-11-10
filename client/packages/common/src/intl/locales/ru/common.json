@@ -465,7 +465,7 @@
   "label.age-days_other": "{{count}} дней",
   "label.age-months-and_one": "{{count}} месяц, ",
   "label.age-months-and_other": "{{count}} месяцев, ",
-  "label.all-requested-quantity": "Другие запрашиваемые",
+  "label.other-requested-quantity": "Другие запрашиваемые",
   "label.allocated": "Выделено",
   "label.already-issued": "Выдано",
   "label.amc": "Среднее Месячное Потребление",
