@@ -449,7 +449,7 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn test_requisition_line_push_merged() {
+    async fn test_invoice_line_push_merged() {
         // The item_links_merged function will merge ALL items into item_a, so all invoice_lines should have an item_id of "item_a" regardless of their original item_id.
         let (mock_data, connection, _, _) = setup_all(
             "test_invoice_line_push_item_link_merged",

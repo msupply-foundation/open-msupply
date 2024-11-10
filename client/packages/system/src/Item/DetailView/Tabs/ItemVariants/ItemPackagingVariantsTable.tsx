@@ -40,15 +40,16 @@ export const ItemPackagingVariantsTable = ({
     },
     {
       key: 'packSize',
-      Cell: update ? PackSizeInputCell : TooltipTextCell,
+      Cell: update ? NonZeroInputCell : TooltipTextCell,
       label: 'label.pack-size',
       setter: updatePackaging,
     },
     {
       key: 'volumePerUnit',
-      Cell: update ? VolumeInputCell : TooltipTextCell,
+      Cell: update ? NonZeroInputCell : TooltipTextCell,
       label: 'label.volume-per-unit',
       setter: updatePackaging,
+      width: 150,
     },
   ]);
 
@@ -65,11 +66,11 @@ export const ItemPackagingVariantsTable = ({
 };
 
 // Input cells can't be defined inline, otherwise they lose focus on re-render
-const VolumeInputCell = (props: CellProps<PackagingVariantFragment>) => (
-  <NumberInputCell decimalLimit={10} {...props} />
-);
-
-// Input cells can't be defined inline, otherwise they lose focus on re-render
-const PackSizeInputCell = (props: CellProps<PackagingVariantFragment>) => (
-  <NumberInputCell decimalLimit={10} {...props} />
+const NonZeroInputCell = (props: CellProps<PackagingVariantFragment>) => (
+  <NumberInputCell
+    step={1}
+    decimalLimit={10}
+    error={props.column.accessor({ rowData: props.rowData }) === 0}
+    {...props}
+  />
 );
