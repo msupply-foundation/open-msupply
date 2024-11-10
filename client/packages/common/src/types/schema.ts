@@ -7542,8 +7542,8 @@ export type TokenExpired = RefreshTokenErrorInterface & {
   description: Scalars['String']['output'];
 };
 
-export type TransferRequisition = DeleteResponseRequisitionErrorInterface & {
-  __typename: 'TransferRequisition';
+export type TransferredRequisition = DeleteResponseRequisitionErrorInterface & {
+  __typename: 'TransferredRequisition';
   description: Scalars['String']['output'];
 };
 

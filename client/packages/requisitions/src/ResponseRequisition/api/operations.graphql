@@ -30,7 +30,7 @@ mutation deleteRequest(
               __typename
               description
             }
-            ... on TransferRequisition {
+            ... on TransferredRequisition {
               __typename
               description
             }

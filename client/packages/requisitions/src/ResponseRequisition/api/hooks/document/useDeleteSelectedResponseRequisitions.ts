@@ -36,7 +36,7 @@ export const useDeleteSelectedResponseRequisitions = () => {
             throw Error(t('messages.record-not-found'));
           case 'RequisitionWithShipment':
             throw Error(t('messages.cannot-delete-requisition-with-shipment'));
-          case 'TransferRequisition':
+          case 'TransferredRequisition':
             throw Error(t('messages.cannot-delete-transfer-requisition'));
         }
       }

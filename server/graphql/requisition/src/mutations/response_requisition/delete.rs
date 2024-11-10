@@ -12,7 +12,7 @@ use service::{
 };
 
 use crate::mutations::errors::{
-    FinalisedRequisition, LineDeleteError, RequisitionWithShipment, TransferRequisition,
+    FinalisedRequisition, LineDeleteError, RequisitionWithShipment, TransferredRequisition,
 };
 
 #[derive(InputObject)]
@@ -27,7 +27,7 @@ pub struct DeleteInput {
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
     FinalisedRequisition(FinalisedRequisition),
-    TransferRequisition(TransferRequisition),
+    TransferredRequisition(TransferredRequisition),
     RequisitionWithShipment(RequisitionWithShipment),
     LineDeleteError(LineDeleteError),
 }
@@ -96,9 +96,9 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
                 FinalisedRequisition {},
             ))
         }
-        ServiceError::TransferRequisition => {
-            return Ok(DeleteErrorInterface::TransferRequisition(
-                TransferRequisition {},
+        ServiceError::TransferredRequisition => {
+            return Ok(DeleteErrorInterface::TransferredRequisition(
+                TransferredRequisition {},
             ))
         }
         ServiceError::RequisitionWithShipment => {
@@ -214,7 +214,6 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // line delete error ?
         // FinalisedRequisition
         let test_service = TestService(Box::new(|_| Err(ServiceError::FinalisedRequisition)));
 
@@ -246,13 +245,13 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // TransferRequisition
-        let test_service = TestService(Box::new(|_| Err(ServiceError::TransferRequisition)));
+        // TransferredRequisition
+        let test_service = TestService(Box::new(|_| Err(ServiceError::TransferredRequisition)));
 
         let expected = json!({
             "deleteResponseRequisition": {
               "error": {
-                "__typename": "TransferRequisition"
+                "__typename": "TransferredRequisition"
               }
             }
           }
