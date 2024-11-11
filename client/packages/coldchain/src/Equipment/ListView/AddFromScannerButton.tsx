@@ -47,9 +47,11 @@ export const AddFromScannerButtonComponent = () => {
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
       const { content } = result;
+
       const asset = await fetchAsset(content).catch(() => {});
       if (asset?.__typename !== 'AssetNode') {
         error(t('error.no-matching-asset', { id: asset?.id }))();
+        return;
       }
       if (asset?.id) {
         navigate(equipmentRoute.addPart(asset?.id).build());
