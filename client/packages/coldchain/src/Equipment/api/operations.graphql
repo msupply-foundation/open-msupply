@@ -167,6 +167,14 @@ query assetById($storeId: String!, $assetId: String!) {
   }
 }
 
+query assetByScannerString($storeId: String!, $inputText: String!) {
+  assetByScannedString(storeId: $storeId, inputText: $inputText) {
+    ... on AssetNode {
+      ...Asset
+    }
+  }
+}
+
 query assetLogs(
   $filter: AssetLogFilterInput!
   $sort: [AssetLogSortInput!]
