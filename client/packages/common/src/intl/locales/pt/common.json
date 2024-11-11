@@ -362,7 +362,7 @@
   "label.age-months-count_other": "{{count}} meses",
   "label.age-months-from": "Idade a partir de (meses)",
   "label.age-months-to": "Idade em (meses)",
-  "label.all-requested-quantity": "Outro requisitado",
+  "label.other-requested-quantity": "Outro requisitado",
   "label.allocated": "Alocado",
   "label.already-issued": "Emitido",
   "label.amc": "CMM",

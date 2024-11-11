@@ -1,3 +1,4 @@
+import { useWindowDimensions } from '@common/hooks';
 import { CheckIcon, ChevronDownIcon } from '@common/icons';
 import {
   List,
@@ -6,6 +7,7 @@ import {
   ListItemText,
   Divider,
   Box,
+  Typography,
 } from '@mui/material';
 import React from 'react';
 
@@ -27,6 +29,7 @@ export const ListOptions = ({
   currentId,
   enteredLineIds,
 }: ListProps) => {
+  const { height } = useWindowDimensions();
   const startIcon = (
     <CheckIcon
       style={{
@@ -47,7 +50,7 @@ export const ListOptions = ({
   );
 
   return (
-    <List sx={{ padding: 0 }}>
+    <List sx={{ padding: 0, maxHeight: height * 0.8, overflow: 'auto' }}>
       {options?.map((option, _) => (
         <React.Fragment key={option.id}>
           <ListItem
@@ -66,7 +69,15 @@ export const ListOptions = ({
               </Box>
             </ListItemIcon>
             <ListItemText
-              primary={option.value}
+              primary={
+                <Typography
+                  style={{
+                    fontWeight: option.id === currentId ? 'bold' : 'normal',
+                  }}
+                >
+                  {option.value}
+                </Typography>
+              }
               sx={{ margin: 0, padding: 0 }}
             />
             <ListItemIcon sx={{ padding: 0, minWidth: 15 }}>

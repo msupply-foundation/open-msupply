@@ -2,9 +2,9 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { ItemRowFragmentDoc } from '../../../../system/src/Item/api/operations.generated';
-import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
-import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
+import { ItemRowFragmentDoc } from 'packages/system/src/Item/api/operations.generated';
+import { NameRowFragmentDoc } from 'packages/system/src/Name/api/operations.generated';
+import { ReasonOptionRowFragmentDoc } from 'packages/system/src/ReasonOption/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type UpdateResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -13,6 +13,14 @@ export type UpdateResponseMutationVariables = Types.Exact<{
 
 
 export type UpdateResponseMutation = { __typename: 'Mutations', updateResponseRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateResponseRequisitionError' } };
+
+export type DeleteRequestMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.BatchResponseRequisitionInput;
+}>;
+
+
+export type DeleteRequestMutation = { __typename: 'Mutations', batchResponseRequisition: { __typename: 'BatchResponseRequisitionResponse', deleteResponseRequisitions?: Array<{ __typename: 'DeleteResponseRequisitionResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteResponseRequisitionError', error: { __typename: 'FinalisedRequisition', description: string } | { __typename: 'LineDeleteError', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionWithShipment', description: string } | { __typename: 'TransferredRequisition', description: string } } }> | null } };
 
 export type ResponseLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, remainingQuantityToSupply: number, alreadyIssued: number, comment?: string | null, averageMonthlyConsumption: number, availableStockOnHand: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, optionId?: string | null, suggestedQuantity: number, requisitionNumber: number, approvedQuantity: number, approvalComment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, averageMonthlyConsumption: number, availableMonthsOfStockOnHand?: number | null } } | null, reason?: { __typename: 'ReasonOptionNode', id: string, type: Types.ReasonOptionNodeType, reason: string, isActive: boolean } | null };
 
@@ -289,6 +297,42 @@ export const UpdateResponseDocument = gql`
   }
 }
     `;
+export const DeleteRequestDocument = gql`
+    mutation deleteRequest($storeId: String!, $input: BatchResponseRequisitionInput!) {
+  batchResponseRequisition(storeId: $storeId, input: $input) {
+    deleteResponseRequisitions {
+      id
+      response {
+        ... on DeleteResponseRequisitionError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on FinalisedRequisition {
+              __typename
+              description
+            }
+            ... on TransferredRequisition {
+              __typename
+              description
+            }
+            ... on RequisitionWithShipment {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+    `;
 export const ResponseByNumberDocument = gql`
     query responseByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
@@ -553,6 +597,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   return {
     updateResponse(variables: UpdateResponseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateResponseMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateResponseMutation>(UpdateResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateResponse', 'mutation', variables);
+    },
+    deleteRequest(variables: DeleteRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteRequestMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestMutation>(DeleteRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequest', 'mutation', variables);
     },
     responseByNumber(variables: ResponseByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ResponseByNumberQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ResponseByNumberQuery>(ResponseByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'responseByNumber', 'query', variables);
