@@ -404,7 +404,7 @@
   "label.age-months-and_other": "months {{count}}, ",
   "label.age-months-count_one": "{{count}} mes",
   "label.age-months-count_other": "{{count}} meses",
-  "label.all-requested-quantity": "Otro solicitado",
+  "label.other-requested-quantity": "Otro solicitado",
   "label.allocated": "Asignado",
   "label.already-issued": "Enviado",
   "label.amc": "AMC",
