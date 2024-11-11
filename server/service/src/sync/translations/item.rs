@@ -1,6 +1,6 @@
 use repository::{
-    ChangelogRow, ItemRow, ItemRowDelete, ItemRowRepository, ItemType, StorageConnection,
-    SyncBufferRow, VENCategory,
+    ChangelogRow, ChangelogTableName, ItemRow, ItemRowDelete, ItemRowRepository, ItemType,
+    StorageConnection, SyncBufferRow, VENCategory,
 };
 use serde::{Deserialize, Serialize};
 
@@ -119,6 +119,10 @@ impl SyncTranslation for ItemTranslation {
         Ok(PullTranslateResult::delete(ItemRowDelete(
             sync_record.record_id.clone(),
         )))
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::Item)
     }
 
     fn try_translate_to_upsert_sync_record(
