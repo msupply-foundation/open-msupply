@@ -26,6 +26,7 @@ import {
   ItemVariantInputCell,
   LocationRowFragment,
   PackSizeEntryCell,
+  useItemVariantsConfigured,
 } from '@openmsupply-client/system';
 
 interface TableProps {
@@ -89,21 +90,28 @@ export const QuantityTableComponent: FC<TableProps> = ({
   isDisabled = false,
 }) => {
   const theme = useTheme();
+  const showItemVariantsColumn = useItemVariantsConfigured();
 
   const columns = useColumns<DraftInboundLine>(
     [
       getBatchColumn(updateDraftLine, theme),
       getExpiryColumn(updateDraftLine, theme),
-
-      {
-        key: 'itemVariantId',
-        label: 'label.item-variant',
-        width: 170,
-        Cell: props => (
-          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
-        ),
-        setter: updateDraftLine,
-      },
+      ...((showItemVariantsColumn
+        ? [
+            {
+              key: 'itemVariantId',
+              label: 'label.item-variant',
+              width: 170,
+              Cell: props => (
+                <ItemVariantInputCell
+                  {...props}
+                  itemId={props.rowData.item.id}
+                />
+              ),
+              setter: updateDraftLine,
+            },
+          ]
+        : []) as ColumnDescription<DraftInboundLine>[]),
       [
         'numberOfPacks',
         {

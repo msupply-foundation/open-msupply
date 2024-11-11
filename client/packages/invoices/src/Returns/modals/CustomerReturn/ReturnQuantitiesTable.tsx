@@ -10,7 +10,10 @@ import {
   getExpiryDateInputColumn,
   useColumns,
 } from '@openmsupply-client/common';
-import { ItemVariantInputCell } from '@openmsupply-client/system';
+import {
+  ItemVariantInputCell,
+  useItemVariantsConfigured,
+} from '@openmsupply-client/system';
 import React from 'react';
 import { GenerateCustomerReturnLineFragment } from '../../api';
 import { PackSizeEntryCell } from '@openmsupply-client/system';
@@ -26,20 +29,29 @@ export const QuantityReturnedTableComponent = ({
   ) => void;
   isDisabled: boolean;
 }) => {
+  const showItemVariantsColumn = useItemVariantsConfigured();
+
   const columns = useColumns<GenerateCustomerReturnLineFragment>(
     [
       'itemCode',
       'itemName',
-      {
-        key: 'itemVariantId',
-        label: 'label.item-variant',
-        width: 170,
-        setter: updateLine,
-        Cell: props => (
-          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
-        ),
-        getIsDisabled: () => isDisabled,
-      },
+      ...((showItemVariantsColumn
+        ? [
+            {
+              key: 'itemVariantId',
+              label: 'label.item-variant',
+              width: 170,
+              setter: updateLine,
+              Cell: props => (
+                <ItemVariantInputCell
+                  {...props}
+                  itemId={props.rowData.item.id}
+                />
+              ),
+              getIsDisabled: () => isDisabled,
+            },
+          ]
+        : []) as ColumnDescription<GenerateCustomerReturnLineFragment>[]),
       [
         'batch',
         {

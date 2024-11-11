@@ -23,7 +23,7 @@ import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
 import { ItemVariantSearchInput } from '../..';
 import { StyledInputRow } from './StyledInputRow';
-import { PackSizeNumberInput } from '../../Item';
+import { PackSizeNumberInput, useItemVariantsConfigured } from '../../Item';
 
 interface StockLineFormProps {
   draft: StockLineRowFragment;
@@ -45,6 +45,8 @@ export const StockLineForm: FC<StockLineFormProps> = ({
   const { error } = useNotification();
   const { isConnected, isEnabled, isScanning, startScan } =
     useBarcodeScannerContext();
+  const showItemVariantsInput = useItemVariantsConfigured();
+
   const supplierName = draft.supplierName
     ? draft.supplierName
     : t('message.no-supplier');
@@ -159,17 +161,19 @@ export const StockLineForm: FC<StockLineFormProps> = ({
               />
             }
           />
-          <StyledInputRow
-            label={t('label.item-variant')}
-            Input={
-              <ItemVariantSearchInput
-                itemId={draft.itemId}
-                selectedId={draft.itemVariantId ?? null}
-                width={160}
-                onChange={id => onUpdate({ itemVariantId: id })}
-              />
-            }
-          />
+          {showItemVariantsInput && (
+            <StyledInputRow
+              label={t('label.item-variant')}
+              Input={
+                <ItemVariantSearchInput
+                  itemId={draft.itemId}
+                  selectedId={draft.itemVariantId ?? null}
+                  width={160}
+                  onChange={id => onUpdate({ itemVariantId: id })}
+                />
+              }
+            />
+          )}
           {plugins}
         </Grid>
         <Grid
