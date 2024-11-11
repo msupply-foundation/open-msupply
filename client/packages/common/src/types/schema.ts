@@ -577,6 +577,8 @@ export type AssetPropertyNode = {
   valueType: PropertyNodeValueType;
 };
 
+export type AssetResponse = AssetNode | NodeError;
+
 export enum AssetSortFieldInput {
   AssetNumber = 'assetNumber',
   InstallationDate = 'installationDate',
@@ -5455,6 +5457,7 @@ export type Queries = {
   activeProgramEvents: ProgramEventResponse;
   activityLogs: ActivityLogResponse;
   apiVersion: Scalars['String']['output'];
+  assetByScannedString: AssetResponse;
   assetCatalogueItem: AssetCatalogueItemResponse;
   assetCatalogueItems: AssetCatalogueItemsResponse;
   assetCategories: AssetCategoriesResponse;
@@ -5623,6 +5626,12 @@ export type QueriesActivityLogsArgs = {
   filter?: InputMaybe<ActivityLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ActivityLogSortInput>>;
+};
+
+
+export type QueriesAssetByScannedStringArgs = {
+  inputText: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
 };
 
 

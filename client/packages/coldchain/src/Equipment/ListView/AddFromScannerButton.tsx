@@ -12,9 +12,11 @@ import {
   useNavigate,
   useDisabledNotificationPopover,
   RouteBuilder,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useAssets } from '../api';
+import { DraftAsset } from '../types';
 
 export const AddFromScannerButtonComponent = () => {
   const t = useTranslation();
@@ -31,18 +33,33 @@ export const AddFromScannerButtonComponent = () => {
     AppRoute.Equipment
   );
   const { mutateAsync: fetchAsset } = useAssets.document.fetch();
+  const { mutateAsync: saveNewAsset } = useAssets.document.insert();
+  const newAssetData = useRef<DraftAsset>();
+
+  const showCreateConfirmation = useConfirmationModal({
+    onConfirm: () => {
+      if (newAssetData.current) saveNewAsset(newAssetData.current);
+    },
+    message: t('heading.create-new-asset'),
+    title: t('messages.create-new-asset-confirmation'),
+  });
 
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
       const { content } = result;
-      const id = content;
-      const asset = await fetchAsset(id).catch(() => {});
-      if (asset) {
-        navigate(equipmentRoute.addPart(id).build());
+      const asset = await fetchAsset(content).catch(() => {});
+      if (asset?.__typename !== 'AssetNode') {
+        error(t('error.no-matching-asset', { id: asset?.id }))();
+      }
+      if (asset?.id) {
+        navigate(equipmentRoute.addPart(asset?.id).build());
         return;
       }
 
-      error(t('error.no-matching-asset', { id }))();
+      // If not existing, offer to create from the parsed GS1 data
+      if (!asset?.id) {
+        showCreateConfirmation();
+      }
     }
   };
 
