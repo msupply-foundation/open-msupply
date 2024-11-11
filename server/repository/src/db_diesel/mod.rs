@@ -6,7 +6,7 @@ pub mod adjustment;
 pub mod assets;
 pub mod barcode;
 mod barcode_row;
-pub mod categories;
+pub mod category_row;
 pub mod changelog;
 pub mod clinician;
 mod clinician_link_row;
