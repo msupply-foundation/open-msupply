@@ -14,7 +14,10 @@ use graphql_core::loader::{
 };
 use graphql_core::loader::{AssetStatusLogLoader, NameByIdLoader};
 use graphql_core::loader::{NameByIdLoaderInput, SyncFileReferenceLoader};
-use graphql_core::simple_generic_errors::NodeError;
+use graphql_core::simple_generic_errors::{
+    DatabaseError, InternalError, NodeError, RecordNotFound,
+};
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{LocationConnector, NameNode, StoreNode, SyncFileReferenceConnector};
 
@@ -25,6 +28,7 @@ use repository::{
     EqualFilter,
 };
 use repository::{DateFilter, StringFilter};
+use service::asset::parse::ScannedDataParseError as ServiceScannedDataParseError;
 use service::{usize_to_u32, ListResult};
 
 use super::{AssetLogNode, AssetLogStatusInput, EqualFilterStatusInput};
@@ -308,6 +312,12 @@ pub enum AssetResponse {
     Response(AssetNode),
 }
 
+#[derive(Union)]
+pub enum AssetParseResponse {
+    Error(ScannedDataParseError),
+    Response(AssetNode),
+}
+
 impl AssetNode {
     pub fn from_domain(asset: Asset) -> AssetNode {
         AssetNode { asset }
@@ -356,4 +366,37 @@ impl AssetSortInput {
             desc: self.desc,
         }
     }
+}
+
+#[derive(SimpleObject)]
+pub struct ScannedDataParseError {
+    pub error: ScannedDataParseErrorInterface,
+}
+
+#[derive(Interface)]
+#[graphql(field(name = "description", ty = "String"))]
+pub enum ScannedDataParseErrorInterface {
+    NotFound(RecordNotFound),
+    InternalError(InternalError),
+    DatabaseError(DatabaseError),
+}
+
+pub(crate) fn map_parse_error(
+    error: ServiceScannedDataParseError,
+) -> Result<ScannedDataParseErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceScannedDataParseError::NotFound => {
+            return Ok(ScannedDataParseErrorInterface::NotFound(RecordNotFound))
+        }
+
+        // Standard Graphql Errors
+        ServiceScannedDataParseError::ParseError => BadUserInput(formatted_error),
+        ServiceScannedDataParseError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }
