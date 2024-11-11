@@ -49,6 +49,7 @@ export const AddFromScannerButtonComponent = () => {
       const { content } = result;
 
       const asset = await fetchAsset(content).catch(() => {});
+
       if (asset?.__typename !== 'AssetNode') {
         error(t('error.no-matching-asset', { id: asset?.id }))();
         return;
@@ -60,6 +61,12 @@ export const AddFromScannerButtonComponent = () => {
 
       // If not existing, offer to create from the parsed GS1 data
       if (!asset?.id) {
+        newAssetData.current = {
+          ...asset,
+          locationIds: [],
+          parsedProperties: {},
+          parsedCatalogProperties: {},
+        };
         showCreateConfirmation();
       }
     }
