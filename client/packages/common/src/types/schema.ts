@@ -5533,6 +5533,7 @@ export type Queries = {
   isCentralServer: Scalars['Boolean']['output'];
   itemCounts: ItemCounts;
   itemPrice: ItemPriceResponse;
+  itemVariantsConfigured: Scalars['Boolean']['output'];
   /** Query omSupply "item" entries */
   items: ItemsResponse;
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
@@ -5939,6 +5940,11 @@ export type QueriesItemCountsArgs = {
 
 export type QueriesItemPriceArgs = {
   input: ItemPriceInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesItemVariantsConfiguredArgs = {
   storeId: Scalars['String']['input'];
 };
 

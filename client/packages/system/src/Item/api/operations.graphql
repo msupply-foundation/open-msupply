@@ -313,6 +313,10 @@ fragment ItemVariantOption on ItemVariantNode {
   }
 }
 
+query itemVariantsConfigured($storeId: String!) {
+  itemVariantsConfigured(storeId: $storeId)
+}
+
 query itemVariants($storeId: String!, $itemId: String!) {
   items(
     storeId: $storeId
