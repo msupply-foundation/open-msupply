@@ -27,6 +27,7 @@ pub mod insert_asset_property;
 pub mod insert_log;
 pub mod insert_log_reason;
 pub mod location;
+pub mod parse;
 pub mod query;
 pub mod query_asset_property;
 pub mod query_log;
