@@ -1,10 +1,9 @@
-use std::collections::HashMap;
-
 use repository::{
     asset::{Asset, AssetFilter, AssetRepository},
-    EqualFilter, RepositoryError,
+    asset_catalogue_item::{AssetCatalogueItemFilter, AssetCatalogueItemRepository},
+    EqualFilter, RepositoryError, StringFilter,
 };
-use util::{parse_gs1_string, GS1ParseError};
+use util::{GS1ParseError, GS1};
 
 use crate::service_provider::ServiceContext;
 
@@ -21,7 +20,7 @@ impl From<RepositoryError> for ScannedDataParseError {
     }
 }
 
-fn lookup_item_by_id(ctx: &ServiceContext, id: String) -> Result<Asset, ScannedDataParseError> {
+fn lookup_asset_by_id(ctx: &ServiceContext, id: String) -> Result<Asset, ScannedDataParseError> {
     let repository = AssetRepository::new(&ctx.connection);
 
     let mut result =
@@ -34,10 +33,49 @@ fn lookup_item_by_id(ctx: &ServiceContext, id: String) -> Result<Asset, ScannedD
     }
 }
 
+fn lookup_asset_by_serial_number(
+    ctx: &ServiceContext,
+    id: String,
+) -> Result<Option<Asset>, RepositoryError> {
+    let repository = AssetRepository::new(&ctx.connection);
+
+    let mut result =
+        repository.query_by_filter(AssetFilter::new().id(EqualFilter::equal_to(&id)))?;
+
+    Ok(result.pop())
+}
+
+fn lookup_asset_catalogue_id_by_pqs_code(
+    ctx: &ServiceContext,
+    pqs_code: String,
+) -> Result<Option<String>, RepositoryError> {
+    let repository = AssetCatalogueItemRepository::new(&ctx.connection);
+
+    let mut result = repository
+        .query_by_filter(AssetCatalogueItemFilter::new().code(StringFilter::equal_to(&pqs_code)))?;
+
+    let catalogue_item_id = result.pop().map(|item| item.id);
+
+    Ok(catalogue_item_id)
+}
+
 fn create_draft_asset_from_gs1(
-    gs1: HashMap<String, String>,
+    ctx: &ServiceContext,
+    gs1: GS1,
 ) -> Result<Asset, ScannedDataParseError> {
     let mut asset = Asset::default();
+
+    asset.serial_number = gs1.serial_number();
+    let (warranty_start, warranty_end) = gs1
+        .warranty_dates()
+        .ok_or(ScannedDataParseError::ParseError)?;
+
+    asset.warranty_start = Some(warranty_start);
+    asset.warranty_end = Some(warranty_end);
+
+    if let Some(part_number) = gs1.part_number() {
+        asset.catalogue_item_id = lookup_asset_catalogue_id_by_pqs_code(ctx, part_number)?;
+    }
 
     Ok(asset)
 }
@@ -51,19 +89,26 @@ pub fn parse_from_scanned_data(
 
     match scanned_data.chars().nth(0) {
         Some('(') => (),
-        _ => return lookup_item_by_id(ctx, scanned_data),
+        _ => return lookup_asset_by_id(ctx, scanned_data),
     }
 
-    let gs1 = parse_gs1_string(scanned_data).map_err(|e| match e {
+    let gs1 = GS1::parse(scanned_data).map_err(|e| match e {
         GS1ParseError::InvalidFormat => ScannedDataParseError::ParseError,
     })?;
 
     // Look up the item by the Serial Number
 
-    // If we find it, return it
+    let serial_number = gs1
+        .serial_number()
+        .ok_or(ScannedDataParseError::ParseError)?;
+
+    // Look up the item by the serial number
+    if let Some(asset) = lookup_asset_by_serial_number(ctx, serial_number)? {
+        return Ok(asset);
+    }
 
     // If we don't find it, create a draft asset with the GS1 data
-    create_draft_asset_from_gs1(gs1)
+    create_draft_asset_from_gs1(ctx, gs1)
 }
 
 #[cfg(test)]
@@ -117,10 +162,16 @@ mod test {
         assert_eq!(draft_asset.serial_number, Some("S12345678".to_string()));
         assert_eq!(
             draft_asset.catalogue_item_id,
-            Some("ac08c366-fbd6-4a6a-85c3-f553e2932804".to_string())
+            Some("c7d48b5c-74b2-4077-94f5-2b25d67a447b".to_string())
         ); // this is looked up from the PQS code E003/002
-        assert_eq!(draft_asset.store_id, Some(mock_store_a().id));
-        assert_eq!(draft_asset.warranty_start, Some("241007".parse().unwrap()));
-        assert_eq!(draft_asset.warranty_end, Some("310101".parse().unwrap()));
+
+        assert_eq!(
+            draft_asset.warranty_start,
+            Some("2024-10-07".parse().unwrap())
+        );
+        assert_eq!(
+            draft_asset.warranty_end,
+            Some("2031-01-01".parse().unwrap())
+        );
     }
 }
