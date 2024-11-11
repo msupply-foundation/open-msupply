@@ -9,19 +9,6 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // category_group table
-        sql!(
-            connection,
-            r#"
-            CREATE TABLE category_group (
-                id TEXT PRIMARY KEY NOT NULL,
-                name TEXT NOT NULL,
-                -- no referential constraint due to circular dependency during sync integration
-                root_id TEXT,
-                deleted_datetime {DATETIME}
-            );
-            "#
-        )?;
         // category table
         sql!(
             connection,
@@ -30,9 +17,7 @@ impl MigrationFragment for Migrate {
                 id TEXT PRIMARY KEY NOT NULL,
                 name TEXT NOT NULL,
                 description TEXT,
-                category_group_id TEXT REFERENCES category_group(id),
-                -- no referential constraint due to circular dependency during sync integration
-                parent_id TEXT,
+                parent_id TEXT, -- REFERENCES category_id (Not added as referential constraint due to circular dependency during sync integration)
                 deleted_datetime {DATETIME}
             );
             "#
