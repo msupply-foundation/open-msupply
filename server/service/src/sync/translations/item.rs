@@ -4,7 +4,10 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::{sync_serde::empty_str_as_option_string, translations::unit::UnitTranslation};
+use crate::sync::{
+    sync_serde::empty_str_as_option_string, translations::unit::UnitTranslation,
+    CentralServerConfig,
+};
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
@@ -130,6 +133,12 @@ impl SyncTranslation for ItemTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        if !CentralServerConfig::is_central_server() {
+            return Err(anyhow::anyhow!(
+                "Item push is only supported from the central server"
+            ));
+        }
+
         let Some(item) = ItemRowRepository::new(connection).find_one_by_id(&changelog.record_id)?
         else {
             return Err(anyhow::anyhow!(
