@@ -10,10 +10,12 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{assets::asset::AssetFilter, PaginationOption};
+use repository::{asset_row::AssetRow, assets::asset::AssetFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
 
-use types::{AssetConnector, AssetFilterInput, AssetSortInput, AssetsResponse};
+use types::{
+    AssetConnector, AssetFilterInput, AssetNode, AssetResponse, AssetSortInput, AssetsResponse,
+};
 
 #[derive(Default, Clone)]
 pub struct AssetQueries;
@@ -56,6 +58,50 @@ impl AssetQueries {
         Ok(AssetsResponse::Response(AssetConnector::from_domain(
             assets,
         )))
+    }
+
+    pub async fn asset_by_scanned_string(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input_text: String,
+    ) -> Result<AssetResponse> {
+        let user = validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::QueryAsset,
+                store_id: Some(store_id.clone()),
+            },
+        )?;
+
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+
+        let asset = AssetNode {
+            asset: AssetRow {
+                id: todo!(),
+                notes: todo!(),
+                asset_number: todo!(),
+                asset_category_id: todo!(),
+                asset_class_id: todo!(),
+                asset_type_id: todo!(),
+                store_id: todo!(),
+                serial_number: todo!(),
+                catalogue_item_id: todo!(),
+                installation_date: todo!(),
+                replacement_date: todo!(),
+                created_datetime: todo!(),
+                modified_datetime: todo!(),
+                deleted_datetime: todo!(),
+                properties: todo!(),
+                donor_name_id: todo!(),
+                warranty_start: todo!(),
+                warranty_end: todo!(),
+                needs_replacement: todo!(),
+            },
+        };
+
+        Ok(AssetResponse::Response(asset))
     }
 }
 
