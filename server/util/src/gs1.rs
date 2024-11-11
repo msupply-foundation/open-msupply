@@ -1,11 +1,73 @@
 use std::collections::HashMap;
 
+use chrono::NaiveDate;
+
 #[derive(Debug)]
 pub enum GS1ParseError {
     InvalidFormat,
 }
 
-pub fn parse_gs1_string(gs1_input: String) -> Result<HashMap<String, String>, GS1ParseError> {
+#[derive(Debug)]
+pub struct GS1 {
+    gs1: HashMap<String, String>,
+}
+
+impl GS1 {
+    pub fn new() -> Self {
+        Self {
+            gs1: HashMap::new(),
+        }
+    }
+
+    pub fn parse(gs1_input: String) -> Result<Self, GS1ParseError> {
+        let gs1 = parse_gs1_string(gs1_input)?;
+
+        Ok(Self { gs1 })
+    }
+
+    pub fn get(&self, key: &str) -> Option<&String> {
+        self.gs1.get(key)
+    }
+
+    pub fn gtin(&self) -> Option<String> {
+        self.gs1.get("01").cloned()
+    }
+
+    pub fn serial_number(&self) -> Option<String> {
+        self.gs1.get("21").cloned()
+    }
+
+    pub fn part_number(&self) -> Option<String> {
+        self.gs1.get("241").cloned()
+    }
+
+    pub fn warranty_dates(&self) -> Option<(NaiveDate, NaiveDate)> {
+        let start_end = self.gs1.get("91").cloned();
+
+        match start_end {
+            Some(start_end) => {
+                let dates: Vec<&str> = start_end.split('-').collect();
+                if dates.len() == 2 {
+                    let start = match NaiveDate::parse_from_str(dates[0], "%y%m%d") {
+                        Ok(date) => date,
+                        Err(_) => return None,
+                    };
+                    let end = match NaiveDate::parse_from_str(dates[1], "%y%m%d") {
+                        Ok(date) => date,
+                        Err(_) => return None,
+                    };
+
+                    Some((start, end))
+                } else {
+                    None
+                }
+            }
+            None => None,
+        }
+    }
+}
+
+fn parse_gs1_string(gs1_input: String) -> Result<HashMap<String, String>, GS1ParseError> {
     // Should start with '(' if it's a GS1 string
     // If we support http in future this would start with `http`
     match gs1_input.chars().nth(0) {
@@ -47,14 +109,14 @@ pub fn parse_gs1_string(gs1_input: String) -> Result<HashMap<String, String>, GS
 }
 
 mod test {
-    use crate::gs1::parse_gs1_string;
+    use super::*;
 
     #[test]
     fn test_parse_gs1_string() {
         // Test a simple GS1 string with just a GTIN
         let gs1_input = "(01)123456".to_string();
 
-        let gs1 = parse_gs1_string(gs1_input).unwrap();
+        let gs1 = GS1::parse(gs1_input).unwrap();
 
         let gtin = gs1.get("01").unwrap();
 
