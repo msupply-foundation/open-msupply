@@ -12,7 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   ItemVariantInputCell,
-  useItemVariantsConfigured,
+  useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
 import React from 'react';
 import { GenerateCustomerReturnLineFragment } from '../../api';
@@ -29,7 +29,7 @@ export const QuantityReturnedTableComponent = ({
   ) => void;
   isDisabled: boolean;
 }) => {
-  const showItemVariantsColumn = useItemVariantsConfigured();
+  const showItemVariantsColumn = useIsItemVariantsEnabled();
 
   const columns = useColumns<GenerateCustomerReturnLineFragment>(
     [
