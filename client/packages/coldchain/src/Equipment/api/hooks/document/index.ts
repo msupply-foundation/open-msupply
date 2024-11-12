@@ -1,4 +1,8 @@
-import { useAsset, useFetchAssetById } from './useAsset';
+import {
+  useAsset,
+  useFetchAssetById,
+  useFetchAssetByScannerString,
+} from './useAsset';
 import { useAssetDelete } from './useAssetDelete';
 import { useAssetFields } from './useAssetFields';
 import { useAssetInsert } from './useAssetInsert';
@@ -18,5 +22,6 @@ export const Document = {
   useAssetsDelete,
   useAssetUpdate,
   useFetchAssetById,
+  useFetchAssetByScannerString,
   useAssetProperties,
 };

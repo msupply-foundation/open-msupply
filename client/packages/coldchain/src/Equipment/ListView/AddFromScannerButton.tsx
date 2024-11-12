@@ -13,6 +13,8 @@ import {
   useDisabledNotificationPopover,
   RouteBuilder,
   useConfirmationModal,
+  FnUtils,
+  AssetLogStatusInput,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useAssets } from '../api';
@@ -32,26 +34,41 @@ export const AddFromScannerButtonComponent = () => {
   const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
     AppRoute.Equipment
   );
-  const { mutateAsync: fetchAsset } = useAssets.document.fetch();
+  const { mutateAsync: scanAsset } = useAssets.document.scan();
   const { mutateAsync: saveNewAsset } = useAssets.document.insert();
+  const { insertLog, invalidateQueries } = useAssets.log.insert();
   const newAssetData = useRef<DraftAsset>();
 
   const showCreateConfirmation = useConfirmationModal({
     onConfirm: () => {
-      if (newAssetData.current) saveNewAsset(newAssetData.current);
+      if (newAssetData.current) {
+        saveNewAsset(newAssetData.current).then(async () => {
+          if (newAssetData.current) {
+            await insertLog({
+              id: FnUtils.generateUUID(),
+              assetId: newAssetData.current.id,
+              comment: t('label.created'),
+              status: AssetLogStatusInput.Functioning,
+            });
+            invalidateQueries();
+            navigate(equipmentRoute.addPart(newAssetData.current.id).build());
+          }
+        });
+      }
     },
     message: t('heading.create-new-asset'),
     title: t('messages.create-new-asset-confirmation'),
   });
 
   const handleScanResult = async (result: ScanResult) => {
+    console.log('result', result);
     if (!!result.content) {
       const { content } = result;
 
-      const asset = await fetchAsset(content).catch(() => {});
+      const asset = await scanAsset(content).catch(() => {});
 
       if (asset?.__typename !== 'AssetNode') {
-        error(t('error.no-matching-asset', { id: asset?.id }))();
+        error(t('error.no-matching-asset', { id: result.content }))();
         return;
       }
       if (asset?.id) {
@@ -63,6 +80,8 @@ export const AddFromScannerButtonComponent = () => {
       if (!asset?.id) {
         newAssetData.current = {
           ...asset,
+          id: FnUtils.generateUUID(),
+          assetNumber: asset.serialNumber, // Use serial number as the asset number Maybe should auto-generate one in future?
           locationIds: [],
           parsedProperties: {},
           parsedCatalogProperties: {},
@@ -73,6 +92,12 @@ export const AddFromScannerButtonComponent = () => {
   };
 
   const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    // handleScanResult({
+    //   content:
+    //     '(01)00012345600012(11)241007(21)S12345678(241)E003/002(3121)82(3131)67(3111)63(8013)HBD 116(90)001(91)241007-310101',
+    // });
+    // return;
+
     if (!isConnected) {
       show(e);
       return;
