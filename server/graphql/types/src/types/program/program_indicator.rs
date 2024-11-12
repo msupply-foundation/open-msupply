@@ -147,6 +147,10 @@ impl IndicatorLineRowNode {
     pub async fn name(&self) -> &str {
         &self.line.description
     }
+
+    pub async fn line_number(&self) -> i32 {
+        self.line.line_number
+    }
 }
 
 impl IndicatorColumnNode {
@@ -171,6 +175,10 @@ impl IndicatorColumnNode {
 
     pub async fn value_type(&self) -> IndicatorValueTypeNode {
         IndicatorValueTypeNode::from_domain(&self.column.value_type)
+    }
+
+    pub async fn column_number(&self) -> i32 {
+        self.column.column_number
     }
 }
 
