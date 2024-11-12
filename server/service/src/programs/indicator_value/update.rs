@@ -31,7 +31,6 @@ pub fn update_indicator_value(
     ctx: &ServiceContext,
     input: UpdateIndicatorValue,
 ) -> Result<IndicatorValueRow, OutError> {
-    // let indicator_value = ctx.connection.transaction
     let indicator_value = ctx
         .connection
         .transaction_sync(|connection| {
