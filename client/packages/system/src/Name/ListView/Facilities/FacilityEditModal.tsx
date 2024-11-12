@@ -92,7 +92,7 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
         setNextFacility && (
           <DialogButton
             disabled={!nextId}
-            variant="next"
+            variant="next-and-ok"
             onClick={async () => {
               await save();
               nextId && setNextFacility(nextId);

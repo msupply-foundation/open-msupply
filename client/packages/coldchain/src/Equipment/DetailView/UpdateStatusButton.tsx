@@ -145,7 +145,7 @@ export const UpdateStatusButtonComponent = ({
         nextButton={
           currentTab === Tabs.Status ? (
             <DialogButton
-              variant="next"
+              variant="next-and-ok"
               onClick={onNext}
               disabled={isInvalid()}
             />

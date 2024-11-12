@@ -1,7 +1,5 @@
 use super::{IndicatorValueType, StorageConnection};
-
 use crate::{repository_error::RepositoryError, Upsert};
-
 use diesel::prelude::*;
 
 table! {
@@ -16,7 +14,7 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[diesel(table_name = indicator_column)]
 pub struct IndicatorColumnRow {
     pub id: String,
@@ -60,15 +58,6 @@ impl<'a> IndicatorColumnRowRepository<'a> {
             .filter(indicator_column::id.eq(record_id))
             .first(self.connection.lock().connection())
             .optional()?;
-        Ok(result)
-    }
-    pub fn find_many_by_indicator_id(
-        &self,
-        id: String,
-    ) -> Result<Vec<IndicatorColumnRow>, RepositoryError> {
-        let result = indicator_column::table
-            .filter(indicator_column::program_indicator_id.eq(id))
-            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 

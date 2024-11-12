@@ -29,7 +29,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         IndicatorValueRow {
             id: "indicator_value_a".to_owned(),
             customer_name_link_id: "name_store_a".to_owned(),
-            supplier_store_id: "store_b".to_owned(),
+            store_id: "store_b".to_owned(),
             period_id: "period_1".to_owned(),
             indicator_line_id: "indicator_line_a".to_owned(),
             indicator_column_id: "indicator_column_a".to_owned(),
@@ -55,7 +55,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         IndicatorValueRow {
             id: "indicator_value_b".to_owned(),
             customer_name_link_id: "name_store_a".to_owned(),
-            supplier_store_id: "store_b".to_owned(),
+            store_id: "store_b".to_owned(),
             period_id: "period_1".to_owned(),
             indicator_line_id: "indicator_line_a".to_owned(),
             indicator_column_id: "indicator_column_b".to_owned(),
