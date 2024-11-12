@@ -8,7 +8,7 @@ use repository::{
     ColumnValue, EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueType,
     ProgramIndicatorFilter, ProgramIndicatorSort, ProgramIndicatorSortField,
 };
-use service::programs::program_indicator::query::ProgramIndicator;
+use service::programs::program_indicator::query::{IndicatorLine, ProgramIndicator};
 
 use super::program_node::ProgramNode;
 
@@ -93,7 +93,7 @@ impl ProgramIndicatorNode {
         &self.program_indicator.program_indicator.code
     }
 
-    pub async fn lines(&self) -> Vec<IndicatorLineNode> {
+    pub async fn line_and_columns(&self) -> Vec<IndicatorLineNode> {
         self.program_indicator
             .lines
             .clone()
@@ -101,29 +101,45 @@ impl ProgramIndicatorNode {
             .map(IndicatorLineNode::from_domain)
             .collect()
     }
+}
 
-    pub async fn columns(&self) -> Vec<IndicatorColumnNode> {
-        self.program_indicator
-            .columns
-            .clone()
-            .into_iter()
-            .map(IndicatorColumnNode::from_domain)
-            .collect()
-    }
+pub struct IndicatorLineNode {
+    pub line: IndicatorLine,
 }
 
 impl IndicatorLineNode {
-    pub fn from_domain(line: IndicatorLineRow) -> IndicatorLineNode {
+    pub fn from_domain(line: IndicatorLine) -> IndicatorLineNode {
         IndicatorLineNode { line }
     }
 }
 
-pub struct IndicatorLineNode {
+#[Object]
+impl IndicatorLineNode {
+    pub async fn line(&self) -> IndicatorLineRowNode {
+        IndicatorLineRowNode::from_domain(self.line.line.clone())
+    }
+
+    pub async fn columns(&self) -> Vec<IndicatorColumnNode> {
+        self.line
+            .columns
+            .clone()
+            .into_iter()
+            .map(|column| IndicatorColumnNode::from_domain(column, self.line.line.id.clone()))
+            .collect()
+    }
+}
+
+pub struct IndicatorLineRowNode {
     pub line: IndicatorLineRow,
+}
+impl IndicatorLineRowNode {
+    pub fn from_domain(line: IndicatorLineRow) -> IndicatorLineRowNode {
+        IndicatorLineRowNode { line }
+    }
 }
 
 #[Object]
-impl IndicatorLineNode {
+impl IndicatorLineRowNode {
     pub async fn code(&self) -> &str {
         &self.line.code
     }
@@ -139,13 +155,14 @@ impl IndicatorLineNode {
 }
 
 impl IndicatorColumnNode {
-    pub fn from_domain(column: IndicatorColumnRow) -> IndicatorColumnNode {
-        IndicatorColumnNode { column }
+    pub fn from_domain(column: IndicatorColumnRow, line_id: String) -> IndicatorColumnNode {
+        IndicatorColumnNode { column, line_id }
     }
 }
 
 pub struct IndicatorColumnNode {
     pub column: IndicatorColumnRow,
+    pub line_id: String,
 }
 
 #[Object]
