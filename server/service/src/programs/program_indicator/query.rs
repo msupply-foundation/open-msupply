@@ -7,10 +7,15 @@ use repository::{
 };
 
 #[derive(Clone, Eq, PartialEq, Debug)]
+pub struct IndicatorLine {
+    pub line: IndicatorLineRow,
+    pub columns: Vec<IndicatorColumnRow>,
+}
+
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct ProgramIndicator {
     pub program_indicator: ProgramIndicatorRow,
-    pub lines: Vec<IndicatorLineRow>,
-    pub columns: Vec<IndicatorColumnRow>,
+    pub lines: Vec<IndicatorLine>,
 }
 
 pub fn program_indicators(
@@ -32,45 +37,38 @@ pub fn program_indicators(
     let all_indicator_column_rows =
         IndicatorColumnRowRepository::new(connection).find_many_by_indicator_ids(&indicator_ids)?;
 
-    let mut program_hash = HashMap::new();
+    let mut indicators_hash = HashMap::new();
 
     for indicator in indicators {
+        let mut indicator_lines_hash: HashMap<String, IndicatorLine> = HashMap::new();
         let indicator_id = indicator.id.clone();
         let indicator_lines: Vec<IndicatorLineRow> = all_indicator_line_rows
             .clone()
             .into_iter()
-            .filter_map(|line| {
-                if line.program_indicator_id == indicator_id {
-                    Some(line)
-                } else {
-                    None
-                }
-            })
+            .filter(|line| line.program_indicator_id == indicator_id)
             .collect();
 
-        let indicator_columns: Vec<IndicatorColumnRow> = all_indicator_column_rows
-            .clone()
-            .into_iter()
-            .filter_map(|column| {
-                if column.program_indicator_id == indicator_id {
-                    Some(column)
-                } else {
-                    None
-                }
-            })
-            .collect();
+        for line in indicator_lines {
+            let line_id: String = line.id.clone();
+            let columns = all_indicator_column_rows
+                .clone()
+                .into_iter()
+                .filter(|column| column.program_indicator_id == indicator_id)
+                .collect();
 
-        program_hash.insert(
+            indicator_lines_hash.insert(line_id, IndicatorLine { line, columns });
+        }
+
+        indicators_hash.insert(
             indicator.id.clone(),
             ProgramIndicator {
                 program_indicator: indicator,
-                lines: indicator_lines,
-                columns: indicator_columns,
+                lines: indicator_lines_hash.clone().into_values().collect(),
             },
         );
     }
 
-    Ok(program_hash)
+    Ok(indicators_hash)
 }
 
 #[cfg(test)]
@@ -110,8 +108,14 @@ mod query {
         let lines_b = result.get_key_value("program_indicator_b");
         assert_eq!(lines_b.unwrap().1.lines.len(), 1);
 
-        // Columns are mapped to each line in program_indicator_a
-        let columns_a = lines_a.unwrap().1.columns.len();
-        assert_eq!(columns_a, 2);
+        // Check columns are mapped to each line in program_indicator_a
+        let columns_a = lines_a
+            .unwrap()
+            .1
+            .lines
+            .iter()
+            .flat_map(|line| line.columns.iter())
+            .count();
+        assert_eq!(columns_a, 6);
     }
 }
