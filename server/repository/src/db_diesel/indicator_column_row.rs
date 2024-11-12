@@ -1,7 +1,8 @@
-use super::{IndicatorValueType, StorageConnection};
+use super::{ColumnValue, IndicatorValueType, StorageConnection};
 
 use crate::{repository_error::RepositoryError, Upsert};
 
+use anyhow::{anyhow, Error};
 use diesel::prelude::*;
 
 table! {
@@ -16,7 +17,7 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[diesel(table_name = indicator_column)]
 pub struct IndicatorColumnRow {
     pub id: String,
@@ -62,15 +63,6 @@ impl<'a> IndicatorColumnRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
-    pub fn find_many_by_indicator_id(
-        &self,
-        id: String,
-    ) -> Result<Vec<IndicatorColumnRow>, RepositoryError> {
-        let result = indicator_column::table
-            .filter(indicator_column::program_indicator_id.eq(id))
-            .load(self.connection.lock().connection())?;
-        Ok(result)
-    }
 
     pub fn find_many_by_indicator_ids(
         &self,
@@ -94,5 +86,20 @@ impl Upsert for IndicatorColumnRow {
             IndicatorColumnRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+
+impl IndicatorColumnRow {
+    pub fn get_default_value(&self, value: &str) -> Result<ColumnValue, Error> {
+        match self.value_type {
+            Some(IndicatorValueType::Number) => {
+                let number = value
+                    .parse::<f64>()
+                    .map_err(|_| anyhow!("Failed to parse value as number: {}", value))?;
+                Ok(ColumnValue::Number(number))
+            }
+            Some(IndicatorValueType::String) => Ok(ColumnValue::Text(value.to_string())),
+            None => Ok(ColumnValue::Text(value.to_string())),
+        }
     }
 }
