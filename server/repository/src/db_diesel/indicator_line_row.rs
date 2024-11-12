@@ -2,6 +2,7 @@ use super::StorageConnection;
 
 use crate::{repository_error::RepositoryError, Upsert};
 
+use anyhow::{anyhow, Error};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -15,6 +16,12 @@ pub enum IndicatorValueType {
     #[serde(rename = "number")]
     #[default]
     Number,
+}
+
+#[derive(Clone, Serialize)]
+pub enum ColumnValue {
+    Text(String),
+    Number(f64),
 }
 
 table! {
@@ -31,7 +38,7 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
+#[derive(Clone, Eq, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
 #[diesel(table_name = indicator_line)]
 pub struct IndicatorLineRow {
     pub id: String,
@@ -75,16 +82,6 @@ impl<'a> IndicatorLineRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_indicator_id(
-        &self,
-        id: String,
-    ) -> Result<Vec<IndicatorLineRow>, RepositoryError> {
-        let result = indicator_line::table
-            .filter(indicator_line::program_indicator_id.eq(id))
-            .load(self.connection.lock().connection())?;
-        Ok(result)
-    }
-
     pub fn find_many_by_indicator_ids(
         &self,
         ids: &[String],
@@ -108,5 +105,20 @@ impl Upsert for IndicatorLineRow {
             IndicatorLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+
+impl IndicatorLineRow {
+    pub fn get_default_value(&self, value: &str) -> Result<ColumnValue, Error> {
+        match self.value_type {
+            Some(IndicatorValueType::Number) => {
+                let number = value
+                    .parse::<f64>()
+                    .map_err(|_| anyhow!("Failed to parse value as number: {}", value))?;
+                Ok(ColumnValue::Number(number))
+            }
+            Some(IndicatorValueType::String) => Ok(ColumnValue::Text(value.to_string())),
+            None => Ok(ColumnValue::Text(value.to_string())),
+        }
     }
 }
