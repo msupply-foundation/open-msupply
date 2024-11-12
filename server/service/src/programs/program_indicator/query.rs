@@ -81,11 +81,8 @@ mod query {
     use crate::service_provider::ServiceProvider;
     #[actix_rt::test]
     async fn program_indicator_query() {
-        let (_, connection, connection_manager, _) = setup_all(
-            "test_program_indicator_query",
-            MockDataInserts::none().program_indicators(),
-        )
-        .await;
+        let (_, connection, connection_manager, _) =
+            setup_all("test_program_indicator_query", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let service = service_provider.program_indicator_service;
