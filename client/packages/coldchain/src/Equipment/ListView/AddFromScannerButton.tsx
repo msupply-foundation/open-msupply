@@ -42,18 +42,20 @@ export const AddFromScannerButtonComponent = () => {
   const showCreateConfirmation = useConfirmationModal({
     onConfirm: () => {
       if (newAssetData.current) {
-        saveNewAsset(newAssetData.current).then(async () => {
-          if (newAssetData.current) {
-            await insertLog({
-              id: FnUtils.generateUUID(),
-              assetId: newAssetData.current.id,
-              comment: t('label.created'),
-              status: AssetLogStatusInput.Functioning,
-            });
-            invalidateQueries();
-            navigate(equipmentRoute.addPart(newAssetData.current.id).build());
-          }
-        });
+        saveNewAsset(newAssetData.current)
+          .catch(e => error(t('error.unable-to-save-asset', { error: e }))())
+          .then(async () => {
+            if (newAssetData.current) {
+              await insertLog({
+                id: FnUtils.generateUUID(),
+                assetId: newAssetData.current.id,
+                comment: t('label.created'),
+                status: AssetLogStatusInput.Functioning,
+              });
+              invalidateQueries();
+              navigate(equipmentRoute.addPart(newAssetData.current.id).build());
+            }
+          });
       }
     },
     message: t('heading.create-new-asset'),
@@ -61,7 +63,6 @@ export const AddFromScannerButtonComponent = () => {
   });
 
   const handleScanResult = async (result: ScanResult) => {
-    console.log('result', result);
     if (!!result.content) {
       const { content } = result;
 
@@ -81,7 +82,6 @@ export const AddFromScannerButtonComponent = () => {
         newAssetData.current = {
           ...asset,
           id: FnUtils.generateUUID(),
-          assetNumber: asset.serialNumber, // Use serial number as the asset number Maybe should auto-generate one in future?
           locationIds: [],
           parsedProperties: {},
           parsedCatalogProperties: {},

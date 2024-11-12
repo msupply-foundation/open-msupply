@@ -89,6 +89,14 @@ fn create_draft_asset_from_gs1(
     let mut asset = Asset::default();
 
     asset.serial_number = gs1.serial_number();
+
+    // Default the asset Number to the part number and serial number
+    asset.asset_number = Some(format!(
+        "{}:{}",
+        gs1.part_number().unwrap_or_default(),
+        gs1.serial_number().unwrap_or_default()
+    ));
+
     let (warranty_start, warranty_end) = gs1
         .warranty_dates()
         .ok_or(ScannedDataParseError::ParseError)?;
