@@ -17,7 +17,7 @@ pub struct IndicatorValueRepository<'a> {
 pub struct IndicatorValueFilter {
     pub id: Option<EqualFilter<String>>,
     pub customer_name_link_id: Option<EqualFilter<String>>,
-    pub supplier_store_id: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
     pub period_id: Option<EqualFilter<String>>,
     pub indicator_line_id: Option<EqualFilter<String>>,
     pub indicator_column_id: Option<EqualFilter<String>>,
@@ -34,8 +34,8 @@ impl IndicatorValueFilter {
         self.customer_name_link_id = Some(filter);
         self
     }
-    pub fn supplier_store_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.supplier_store_id = Some(filter);
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
         self
     }
     pub fn period_id(mut self, filter: EqualFilter<String>) -> Self {
@@ -89,11 +89,7 @@ impl<'a> IndicatorValueRepository<'a> {
                 f.customer_name_link_id,
                 indicator_value::customer_name_link_id
             );
-            apply_equal_filter!(
-                query,
-                f.supplier_store_id,
-                indicator_value::supplier_store_id
-            );
+            apply_equal_filter!(query, f.store_id, indicator_value::store_id);
             apply_equal_filter!(query, f.period_id, indicator_value::period_id);
             apply_equal_filter!(
                 query,

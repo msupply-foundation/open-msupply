@@ -23,7 +23,7 @@ pub struct LegacyIndicatorValue {
     #[serde(rename = "row_ID")]
     indicator_line_id: String,
     #[serde(rename = "store_ID")]
-    supplier_store_id: String,
+    store_id: String,
     value: String,
 }
 
@@ -56,7 +56,7 @@ impl SyncTranslation for IndicatorValue {
             period_id,
             indicator_column_id,
             indicator_line_id,
-            supplier_store_id,
+            store_id,
             value,
         } = serde_json::from_str::<LegacyIndicatorValue>(&sync_record.data)?;
         let customer_name_link_id = StoreRepository::new(connection)
@@ -70,7 +70,7 @@ impl SyncTranslation for IndicatorValue {
         Ok(PullTranslateResult::upsert(IndicatorValueRow {
             id,
             customer_name_link_id,
-            supplier_store_id,
+            store_id,
             period_id,
             indicator_line_id,
             indicator_column_id,
@@ -95,7 +95,7 @@ impl SyncTranslation for IndicatorValue {
         let IndicatorValueRow {
             id,
             customer_name_link_id,
-            supplier_store_id,
+            store_id,
             period_id,
             indicator_line_id,
             indicator_column_id,
@@ -116,7 +116,7 @@ impl SyncTranslation for IndicatorValue {
             period_id,
             indicator_column_id,
             indicator_line_id,
-            supplier_store_id,
+            store_id,
             value,
         };
         Ok(PushTranslateResult::upsert(

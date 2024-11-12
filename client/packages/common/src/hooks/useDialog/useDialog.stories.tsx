@@ -29,7 +29,7 @@ const Template: StoryFn = () => {
       <Modal
         title="Add Item"
         cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
-        nextButton={<DialogButton variant="next" onClick={onOkNext} />}
+        nextButton={<DialogButton variant="next-and-ok" onClick={onOkNext} />}
         okButton={<DialogButton variant="ok" onClick={onOk} />}
       >
         <div>This is an example dialog. There&apos;s nothing much to see</div>

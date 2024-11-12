@@ -8,6 +8,7 @@ import {
   UpdateResponseRequisitionStatusInput,
   UpdateResponseRequisitionLineInput,
   InsertProgramResponseRequisitionInput,
+  InsertResponseRequisitionLineInput,
 } from '@openmsupply-client/common';
 import {
   ResponseFragment,
@@ -81,6 +82,9 @@ const responseParser = {
       status: responseParser.toStatus(requisition),
     };
   },
+  toDelete: (line: ResponseFragment) => {
+    return { id: line.id };
+  },
   toDeleteLine: (line: ResponseLineFragment) => ({ id: line.id }),
   toUpdateLine: (
     patch: DraftResponseLine
@@ -88,6 +92,17 @@ const responseParser = {
     id: patch.id,
     supplyQuantity: patch.supplyQuantity,
     comment: patch.comment,
+    stockOnHand: patch.availableStockOnHand,
+    initialStockOnHand: patch.initialStockOnHandUnits,
+    additionInUnits: patch.additionInUnits,
+    averageMonthlyConsumption: patch.averageMonthlyConsumption,
+    daysOutOfStock: patch.daysOutOfStock,
+    expiringUnits: patch.expiringUnits,
+    incomingUnits: patch.incomingUnits,
+    lossInUnits: patch.lossInUnits,
+    outgoingUnits: patch.outgoingUnits,
+    requestedQuantity: patch.requestedQuantity,
+    optionId: patch?.reason?.id ?? null,
   }),
 };
 
@@ -212,6 +227,23 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to update requisition');
   },
+  deleteResponses: async (requisitions: ResponseFragment[]) => {
+    const deleteResponseRequisitions = requisitions.map(
+      responseParser.toDelete
+    );
+    const result = await sdk.deleteRequest({
+      storeId,
+      input: { deleteResponseRequisitions },
+    });
+
+    const { batchResponseRequisition } = result || {};
+
+    if (batchResponseRequisition?.deleteResponseRequisitions) {
+      return batchResponseRequisition.deleteResponseRequisitions;
+    }
+
+    throw new Error('Could not delete requisitions');
+  },
   deleteLines: async (responseLines: ResponseLineFragment[]) => {
     const ids = responseLines.map(responseParser.toDeleteLine);
     const result = await sdk.deleteResponseLines({ ids, storeId });
@@ -228,6 +260,19 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not delete requisition lines!');
+  },
+  insertLine: async (input: InsertResponseRequisitionLineInput) => {
+    const result =
+      (await sdk.insertResponseLine({
+        storeId,
+        input,
+      })) || {};
+
+    if (
+      result?.insertResponseRequisitionLine.__typename === 'RequisitionLineNode'
+    ) {
+      return result.insertResponseRequisitionLine;
+    } else throw new Error('Could not insert response');
   },
   updateLine: async (patch: DraftResponseLine) => {
     const result =

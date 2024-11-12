@@ -13,7 +13,7 @@ use super::IdPair;
 #[derive(Clone)]
 pub struct IndicatorValuePayload {
     pub period_id: String,
-    pub supplier_store_id: String,
+    pub store_id: String,
     pub customer_name_link_id: String,
 }
 
@@ -43,12 +43,12 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
     ) -> Result<HashMap<IndicatorValueLoaderInput, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
 
-        let (period_id, supplier_store_id, customer_name_link_id) =
+        let (period_id, store_id, customer_name_link_id) =
             // TODO replace with logic to not assume only one combination queried at any time.
             if let Some(loader_input) = loader_inputs.first() {
                 (
                     loader_input.payload.period_id.clone(),
-                    loader_input.payload.supplier_store_id.clone(),
+                    loader_input.payload.store_id.clone(),
                     loader_input.payload.customer_name_link_id.clone(),
                 )
             } else {
@@ -56,7 +56,7 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
             };
 
         let filter = IndicatorValueFilter::new()
-            .supplier_store_id(EqualFilter::equal_to(&supplier_store_id))
+            .store_id(EqualFilter::equal_to(&store_id))
             .customer_name_link_id(EqualFilter::equal_to(&customer_name_link_id))
             .period_id(EqualFilter::equal_to(&period_id));
 
@@ -65,7 +65,7 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
 
         let payload = IndicatorValuePayload {
             period_id,
-            supplier_store_id,
+            store_id,
             customer_name_link_id,
         };
 

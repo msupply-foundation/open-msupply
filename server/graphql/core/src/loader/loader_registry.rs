@@ -430,6 +430,24 @@ pub async fn get_loaders(
         },
         async_std::task::spawn,
     ));
+    loaders.insert(DataLoader::new(
+        BundledItemByBundledItemVariantIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        BundledItemByPrincipalItemVariantIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        ProgramByIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
 
     loaders
 }
