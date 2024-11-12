@@ -26,7 +26,7 @@ import {
   ItemVariantInputCell,
   LocationRowFragment,
   PackSizeEntryCell,
-  useItemVariantsConfigured,
+  useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
 
 interface TableProps {
@@ -90,7 +90,7 @@ export const QuantityTableComponent: FC<TableProps> = ({
   isDisabled = false,
 }) => {
   const theme = useTheme();
-  const showItemVariantsColumn = useItemVariantsConfigured();
+  const showItemVariantsColumn = useIsItemVariantsEnabled();
 
   const columns = useColumns<DraftInboundLine>(
     [

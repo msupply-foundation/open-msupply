@@ -2,7 +2,8 @@ import { useQuery } from 'react-query';
 import { useItemGraphQL } from '../useItemApi';
 import { ITEM_VARIANTS } from '../../keys';
 
-export const useItemVariantsConfigured = () => {
+// Item variant inputs (i.e. in Inbound Shipment) should not be available if no item variants are configured
+export const useIsItemVariantsEnabled = () => {
   const { api, storeId } = useItemGraphQL();
   const { data } = useQuery({
     queryKey: [ITEM_VARIANTS],

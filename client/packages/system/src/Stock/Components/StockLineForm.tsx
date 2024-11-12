@@ -23,7 +23,7 @@ import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
 import { ItemVariantSearchInput } from '../..';
 import { StyledInputRow } from './StyledInputRow';
-import { PackSizeNumberInput, useItemVariantsConfigured } from '../../Item';
+import { PackSizeNumberInput, useIsItemVariantsEnabled } from '../../Item';
 
 interface StockLineFormProps {
   draft: StockLineRowFragment;
@@ -45,7 +45,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
   const { error } = useNotification();
   const { isConnected, isEnabled, isScanning, startScan } =
     useBarcodeScannerContext();
-  const showItemVariantsInput = useItemVariantsConfigured();
+  const showItemVariantsInput = useIsItemVariantsEnabled();
 
   const supplierName = draft.supplierName
     ? draft.supplierName
