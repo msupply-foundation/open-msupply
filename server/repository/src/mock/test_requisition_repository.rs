@@ -31,7 +31,6 @@ pub fn mock_request_draft_requisition() -> RequisitionRow {
             .unwrap();
         r.max_months_of_stock = 1.0;
         r.min_months_of_stock = 0.9;
-        r.period_id = Some("period_a".to_string());
     })
 }
 
