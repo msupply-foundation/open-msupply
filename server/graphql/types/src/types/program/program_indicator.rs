@@ -5,8 +5,8 @@ use graphql_core::{
     generic_filters::EqualFilterStringInput, loader::ProgramByIdLoader, ContextExt,
 };
 use repository::{
-    ColumnValue, EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueType,
-    ProgramIndicatorFilter, ProgramIndicatorSort, ProgramIndicatorSortField,
+    EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueType, ProgramIndicatorFilter,
+    ProgramIndicatorSort, ProgramIndicatorSortField,
 };
 use service::programs::program_indicator::query::{IndicatorLine, ProgramIndicator};
 
@@ -147,11 +147,6 @@ impl IndicatorLineRowNode {
     pub async fn name(&self) -> &str {
         &self.line.description
     }
-
-    pub async fn default_value(&self) -> Result<ColumnValueNode, Error> {
-        let default_value = self.line.get_default_value(&self.line.default_value)?;
-        Ok(ColumnValueNode::from_domain(default_value))
-    }
 }
 
 impl IndicatorColumnNode {
@@ -177,11 +172,6 @@ impl IndicatorColumnNode {
     pub async fn value_type(&self) -> IndicatorValueTypeNode {
         IndicatorValueTypeNode::from_domain(&self.column.value_type)
     }
-
-    pub async fn default_value(&self) -> Result<ColumnValueNode, Error> {
-        let default_value = self.column.get_default_value(&self.column.default_value)?;
-        Ok(ColumnValueNode::from_domain(default_value))
-    }
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -196,43 +186,6 @@ impl IndicatorValueTypeNode {
             Some(IndicatorValueType::Number) => IndicatorValueTypeNode::Number,
             Some(IndicatorValueType::String) => IndicatorValueTypeNode::String,
             None => IndicatorValueTypeNode::String,
-        }
-    }
-}
-
-#[derive(Union)]
-pub enum ColumnValueNode {
-    Text(TextOutput),
-    Number(NumberOutput),
-}
-
-pub struct TextOutput {
-    value: String,
-}
-
-#[Object]
-impl TextOutput {
-    async fn value(&self) -> &str {
-        &self.value
-    }
-}
-
-pub struct NumberOutput {
-    value: f64,
-}
-
-#[Object]
-impl NumberOutput {
-    async fn value(&self) -> f64 {
-        self.value
-    }
-}
-
-impl ColumnValueNode {
-    fn from_domain(value: ColumnValue) -> ColumnValueNode {
-        match value {
-            ColumnValue::Text(text) => ColumnValueNode::Text(TextOutput { value: text }),
-            ColumnValue::Number(number) => ColumnValueNode::Number(NumberOutput { value: number }),
         }
     }
 }

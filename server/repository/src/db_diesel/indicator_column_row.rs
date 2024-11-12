@@ -1,8 +1,5 @@
-use super::{ColumnValue, IndicatorValueType, StorageConnection};
-
+use super::{IndicatorValueType, StorageConnection};
 use crate::{repository_error::RepositoryError, Upsert};
-
-use anyhow::{anyhow, Error};
 use diesel::prelude::*;
 
 table! {
@@ -86,20 +83,5 @@ impl Upsert for IndicatorColumnRow {
             IndicatorColumnRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
-    }
-}
-
-impl IndicatorColumnRow {
-    pub fn get_default_value(&self, value: &str) -> Result<ColumnValue, Error> {
-        match self.value_type {
-            Some(IndicatorValueType::Number) => {
-                let number = value
-                    .parse::<f64>()
-                    .map_err(|_| anyhow!("Failed to parse value as number: {}", value))?;
-                Ok(ColumnValue::Number(number))
-            }
-            Some(IndicatorValueType::String) => Ok(ColumnValue::Text(value.to_string())),
-            None => Ok(ColumnValue::Text(value.to_string())),
-        }
     }
 }
