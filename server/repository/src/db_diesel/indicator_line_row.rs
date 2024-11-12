@@ -1,8 +1,6 @@
 use super::StorageConnection;
 
 use crate::{repository_error::RepositoryError, Upsert};
-
-use anyhow::{anyhow, Error};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -16,12 +14,6 @@ pub enum IndicatorValueType {
     #[serde(rename = "number")]
     #[default]
     Number,
-}
-
-#[derive(Clone, Serialize)]
-pub enum ColumnValue {
-    Text(String),
-    Number(f64),
 }
 
 table! {
@@ -105,20 +97,5 @@ impl Upsert for IndicatorLineRow {
             IndicatorLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
-    }
-}
-
-impl IndicatorLineRow {
-    pub fn get_default_value(&self, value: &str) -> Result<ColumnValue, Error> {
-        match self.value_type {
-            Some(IndicatorValueType::Number) => {
-                let number = value
-                    .parse::<f64>()
-                    .map_err(|_| anyhow!("Failed to parse value as number: {}", value))?;
-                Ok(ColumnValue::Number(number))
-            }
-            Some(IndicatorValueType::String) => Ok(ColumnValue::Text(value.to_string())),
-            None => Ok(ColumnValue::Text(value.to_string())),
-        }
     }
 }
