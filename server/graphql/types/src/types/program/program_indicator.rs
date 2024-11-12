@@ -1,11 +1,16 @@
-use async_graphql::{Enum, InputObject, Object, SimpleObject, Union};
-use graphql_core::generic_filters::EqualFilterStringInput;
+use async_graphql::{
+    dataloader::DataLoader, Context, Enum, Error, InputObject, Object, SimpleObject, Union,
+};
+use graphql_core::{
+    generic_filters::EqualFilterStringInput, loader::ProgramByIdLoader, ContextExt,
+};
 use repository::{
-    EqualFilter, ProgramIndicatorFilter, ProgramIndicatorSort, ProgramIndicatorSortField,
+    ColumnValue, EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueType,
+    ProgramIndicatorFilter, ProgramIndicatorSort, ProgramIndicatorSortField,
 };
-use service::programs::program_indicator::query::{
-    ColumnValue, IndicatorColumn, IndicatorLine, ProgramIndicator, ValueType,
-};
+use service::programs::program_indicator::query::ProgramIndicator;
+
+use super::program_node::ProgramNode;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -67,15 +72,25 @@ pub struct ProgramIndicatorNode {
 #[Object]
 impl ProgramIndicatorNode {
     pub async fn id(&self) -> &str {
-        &self.program_indicator.id
+        &self.program_indicator.program_indicator.id
     }
 
-    pub async fn program_id(&self) -> &str {
-        &self.program_indicator.program_id
+    pub async fn program(&self, ctx: &Context<'_>) -> Result<ProgramNode, Error> {
+        let loader = ctx.get_loader::<DataLoader<ProgramByIdLoader>>();
+
+        let result = loader
+            .load_one(self.program_indicator.program_indicator.program_id.clone())
+            .await?
+            .map(|program| ProgramNode {
+                program_row: program,
+            })
+            .ok_or(Error::new("Cannot find program"))?;
+
+        Ok(result)
     }
 
-    pub async fn code(&self) -> &str {
-        &self.program_indicator.code
+    pub async fn code(&self) -> &Option<String> {
+        &self.program_indicator.program_indicator.code
     }
 
     pub async fn lines(&self) -> Vec<IndicatorLineNode> {
@@ -86,16 +101,25 @@ impl ProgramIndicatorNode {
             .map(IndicatorLineNode::from_domain)
             .collect()
     }
+
+    pub async fn columns(&self) -> Vec<IndicatorColumnNode> {
+        self.program_indicator
+            .columns
+            .clone()
+            .into_iter()
+            .map(IndicatorColumnNode::from_domain)
+            .collect()
+    }
 }
 
 impl IndicatorLineNode {
-    pub fn from_domain(line: IndicatorLine) -> IndicatorLineNode {
+    pub fn from_domain(line: IndicatorLineRow) -> IndicatorLineNode {
         IndicatorLineNode { line }
     }
 }
 
 pub struct IndicatorLineNode {
-    pub line: IndicatorLine,
+    pub line: IndicatorLineRow,
 }
 
 #[Object]
@@ -105,61 +129,62 @@ impl IndicatorLineNode {
     }
 
     pub async fn name(&self) -> &str {
-        &self.line.name
+        &self.line.description
     }
 
-    pub async fn values(&self) -> Vec<IndicatorColumnNode> {
-        self.line
-            .value
-            .clone()
-            .into_iter()
-            .map(IndicatorColumnNode::from_domain)
-            .collect()
+    pub async fn default_value(&self) -> Result<ColumnValueNode, Error> {
+        let default_value = self.line.get_default_value(&self.line.default_value)?;
+        Ok(ColumnValueNode::from_domain(default_value))
     }
 }
 
 impl IndicatorColumnNode {
-    pub fn from_domain(column: IndicatorColumn) -> IndicatorColumnNode {
+    pub fn from_domain(column: IndicatorColumnRow) -> IndicatorColumnNode {
         IndicatorColumnNode { column }
     }
 }
 
 pub struct IndicatorColumnNode {
-    pub column: IndicatorColumn,
+    pub column: IndicatorColumnRow,
 }
 
 #[Object]
 impl IndicatorColumnNode {
+    pub async fn id(&self) -> &str {
+        &self.column.id
+    }
     pub async fn name(&self) -> &str {
         &self.column.header
     }
 
-    pub async fn value_type(&self) -> IndicatorValueType {
-        IndicatorValueType::from_domain(&self.column.r#type)
+    pub async fn value_type(&self) -> IndicatorValueTypeNode {
+        IndicatorValueTypeNode::from_domain(&self.column.value_type)
     }
 
-    pub async fn values(&self) -> ColumnValueOutput {
-        ColumnValueOutput::from_domain(self.column.value.clone())
+    pub async fn default_value(&self) -> Result<ColumnValueNode, Error> {
+        let default_value = self.column.get_default_value(&self.column.default_value)?;
+        Ok(ColumnValueNode::from_domain(default_value))
     }
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum IndicatorValueType {
+pub enum IndicatorValueTypeNode {
     String,
     Number,
 }
 
-impl IndicatorValueType {
-    pub fn from_domain(r#type: &ValueType) -> Self {
+impl IndicatorValueTypeNode {
+    pub fn from_domain(r#type: &Option<IndicatorValueType>) -> Self {
         match r#type {
-            ValueType::Number => IndicatorValueType::Number,
-            ValueType::String => IndicatorValueType::String,
+            Some(IndicatorValueType::Number) => IndicatorValueTypeNode::Number,
+            Some(IndicatorValueType::String) => IndicatorValueTypeNode::String,
+            None => IndicatorValueTypeNode::String,
         }
     }
 }
 
 #[derive(Union)]
-pub enum ColumnValueOutput {
+pub enum ColumnValueNode {
     Text(TextOutput),
     Number(NumberOutput),
 }
@@ -186,13 +211,11 @@ impl NumberOutput {
     }
 }
 
-impl ColumnValueOutput {
-    fn from_domain(value: ColumnValue) -> ColumnValueOutput {
+impl ColumnValueNode {
+    fn from_domain(value: ColumnValue) -> ColumnValueNode {
         match value {
-            ColumnValue::Text(text) => ColumnValueOutput::Text(TextOutput { value: text }),
-            ColumnValue::Number(number) => {
-                ColumnValueOutput::Number(NumberOutput { value: number })
-            }
+            ColumnValue::Text(text) => ColumnValueNode::Text(TextOutput { value: text }),
+            ColumnValue::Number(number) => ColumnValueNode::Number(NumberOutput { value: number }),
         }
     }
 }
