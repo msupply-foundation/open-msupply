@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use query::program_indicators;
 use query::ProgramIndicator;
 use repository::Pagination;
@@ -14,7 +16,7 @@ pub trait ProgramIndicatorServiceTrait: Sync + Send {
         pagination: Pagination,
         sort: Option<ProgramIndicatorSort>,
         filter: Option<ProgramIndicatorFilter>,
-    ) -> Result<Vec<ProgramIndicator>, RepositoryError> {
+    ) -> Result<HashMap<String, ProgramIndicator>, RepositoryError> {
         program_indicators(connection, pagination, sort, filter)
     }
 }
