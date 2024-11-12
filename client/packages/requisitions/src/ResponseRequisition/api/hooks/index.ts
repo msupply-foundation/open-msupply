@@ -11,7 +11,8 @@ export const useResponse = {
     insert: Document.useInsertResponse,
     insertProgram: Document.useInsertProgramResponse,
     update: Document.useUpdateResponse,
-
+    delete: Document.useDeleteResponses,
+    deleteSelected: Document.useDeleteSelectedResponseRequisitions,
     fields: Document.useResponseFields,
   },
   line: {
@@ -19,6 +20,7 @@ export const useResponse = {
     stats: Lines.useResponseLineStatsData,
     delete: Lines.useDeleteResponseLines,
     save: Lines.useSaveResponseLines,
+    insert: Lines.useInsertResponseLines,
   },
   utils: {
     api: Utils.useResponseApi,

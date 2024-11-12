@@ -275,7 +275,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
     <Modal
       okButton={
         <DialogButton
-          variant="next"
+          variant="next-and-ok"
           disabled={importNotReady}
           onClick={() => {
             importAction();
