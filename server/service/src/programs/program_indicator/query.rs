@@ -1,72 +1,21 @@
+use std::collections::HashMap;
+
 use repository::{
     IndicatorColumnRow, IndicatorColumnRowRepository, IndicatorLineRow, IndicatorLineRowRepository,
     Pagination, ProgramIndicatorFilter, ProgramIndicatorRepository, ProgramIndicatorRow,
     ProgramIndicatorSort, RepositoryError, StorageConnection,
 };
 
-#[derive(Clone, serde::Serialize)]
-pub enum ColumnValue {
-    Text(String),
-    Number(f64),
-}
-
-#[derive(Clone, serde::Serialize)]
-pub enum ValueType {
-    String,
-    Number,
-}
-
-#[derive(Clone, serde::Serialize)]
-pub struct IndicatorColumn {
-    pub header: String,
-    pub line_id: String,
-    pub id: String,
-    pub column_number: i32,
-}
-
-#[derive(Clone, serde::Serialize)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct IndicatorLine {
-    pub name: String,
-    pub code: String,
-    pub id: String,
-    pub value: Vec<IndicatorColumn>,
+    pub line: IndicatorLineRow,
+    pub columns: Vec<IndicatorColumnRow>,
 }
 
-#[derive(serde::Serialize, Clone)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct ProgramIndicator {
-    pub id: String,
-    pub program_id: String,
-    pub code: String,
+    pub program_indicator: ProgramIndicatorRow,
     pub lines: Vec<IndicatorLine>,
-}
-
-pub fn program_indicator(
-    connection: &StorageConnection,
-    filter: ProgramIndicatorFilter,
-) -> Result<Option<ProgramIndicator>, RepositoryError> {
-    let indicator = ProgramIndicatorRepository::new(&connection)
-        .query_by_filter(filter)?
-        .pop();
-
-    if let Some(indicator) = indicator {
-        // grafind all relevant lines
-        let all_indicator_line_rows = IndicatorLineRowRepository::new(&connection)
-            .find_many_by_indicator_id(indicator.id.clone())?;
-
-        // find all relevant columns
-        let all_indicator_column_rows = IndicatorColumnRowRepository::new(&connection)
-            .find_many_by_indicator_id(indicator.id.clone())?;
-
-        let program_indicator = ProgramIndicator::from_domain(
-            indicator,
-            all_indicator_line_rows,
-            all_indicator_column_rows,
-        );
-
-        Ok(Some(program_indicator))
-    } else {
-        Ok(None)
-    }
 }
 
 pub fn program_indicators(
@@ -74,9 +23,8 @@ pub fn program_indicators(
     pagination: Pagination,
     sort: Option<ProgramIndicatorSort>,
     filter: Option<ProgramIndicatorFilter>,
-) -> Result<Vec<ProgramIndicator>, RepositoryError> {
-    let indicators =
-        ProgramIndicatorRepository::new(&connection).query(pagination, filter, sort)?;
+) -> Result<HashMap<String, ProgramIndicator>, RepositoryError> {
+    let indicators = ProgramIndicatorRepository::new(connection).query(pagination, filter, sort)?;
 
     let indicator_ids: Vec<String> = indicators
         .clone()
@@ -84,97 +32,43 @@ pub fn program_indicators(
         .map(|indicator| indicator.id)
         .collect();
 
-    // grafind all relevant lines
     let all_indicator_line_rows =
-        IndicatorLineRowRepository::new(&connection).find_many_by_indicator_ids(&indicator_ids)?;
+        IndicatorLineRowRepository::new(connection).find_many_by_indicator_ids(&indicator_ids)?;
+    let all_indicator_column_rows =
+        IndicatorColumnRowRepository::new(connection).find_many_by_indicator_ids(&indicator_ids)?;
 
-    // find all relevant columns
-    let all_indicator_column_rows = IndicatorColumnRowRepository::new(&connection)
-        .find_many_by_indicator_ids(&indicator_ids)?;
+    let mut indicators_hash = HashMap::new();
 
-    let program_indicators = indicators
-        .into_iter()
-        .map(|indicator| {
-            ProgramIndicator::from_domain(
-                indicator,
-                all_indicator_line_rows.clone(),
-                all_indicator_column_rows.clone(),
-            )
-        })
-        .collect();
-
-    Ok(program_indicators)
-}
-
-impl ProgramIndicator {
-    pub fn from_domain(
-        indicator: ProgramIndicatorRow,
-        all_indicator_line_rows: Vec<IndicatorLineRow>,
-        all_indicator_column_rows: Vec<IndicatorColumnRow>,
-    ) -> ProgramIndicator {
-        // filter out for columns relevant to indicator
-        let indicator_column_rows: Vec<IndicatorColumnRow> = all_indicator_column_rows
+    for indicator in indicators {
+        let mut indicator_lines_hash: HashMap<String, IndicatorLine> = HashMap::new();
+        let indicator_id = indicator.id.clone();
+        let indicator_lines: Vec<IndicatorLineRow> = all_indicator_line_rows
             .clone()
             .into_iter()
-            .filter_map(|row| {
-                if row.program_indicator_id == indicator.id {
-                    Some(row)
-                } else {
-                    None
-                }
-            })
+            .filter(|line| line.program_indicator_id == indicator_id)
             .collect();
 
-        // filter out for lines relevant to indicator
-        let indicator_lines = all_indicator_line_rows
-            .clone()
-            .into_iter()
-            .filter_map(|line| {
-                if line.program_indicator_id == indicator.id {
-                    Some(line)
-                } else {
-                    None
-                }
-            })
-            .map(|line| IndicatorLine::from_domain(line, indicator_column_rows.clone()))
-            .collect();
-
-        ProgramIndicator {
-            id: indicator.id,
-            program_id: indicator.program_id,
-            code: match indicator.code {
-                Some(code) => code,
-                None => "missing code".to_string(),
-            },
-            lines: indicator_lines,
-        }
-    }
-}
-
-// mapping to and from domain for rows and columns
-impl IndicatorLine {
-    pub fn from_domain(line: IndicatorLineRow, columns: Vec<IndicatorColumnRow>) -> IndicatorLine {
-        IndicatorLine {
-            name: line.description.clone(),
-            code: line.code.clone(),
-            value: columns
+        for line in indicator_lines {
+            let line_id: String = line.id.clone();
+            let columns = all_indicator_column_rows
+                .clone()
                 .into_iter()
-                .map(|column| IndicatorColumn::from_domain(column, line.id.clone()))
-                .collect(),
-            id: line.id,
-        }
-    }
-}
+                .filter(|column| column.program_indicator_id == indicator_id)
+                .collect();
 
-impl IndicatorColumn {
-    pub fn from_domain(column: IndicatorColumnRow, line_id: String) -> IndicatorColumn {
-        IndicatorColumn {
-            header: column.header,
-            line_id: line_id,
-            id: column.id,
-            column_number: column.column_number,
+            indicator_lines_hash.insert(line_id, IndicatorLine { line, columns });
         }
+
+        indicators_hash.insert(
+            indicator.id.clone(),
+            ProgramIndicator {
+                program_indicator: indicator,
+                lines: indicator_lines_hash.clone().into_values().collect(),
+            },
+        );
     }
+
+    Ok(indicators_hash)
 }
 
 #[cfg(test)]
@@ -185,11 +79,8 @@ mod query {
     use crate::service_provider::ServiceProvider;
     #[actix_rt::test]
     async fn program_indicator_query() {
-        let (_, connection, connection_manager, _) = setup_all(
-            "test_program_indicator_query",
-            MockDataInserts::none().program_indicators(),
-        )
-        .await;
+        let (_, connection, connection_manager, _) =
+            setup_all("test_program_indicator_query", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let service = service_provider.program_indicator_service;
@@ -210,18 +101,21 @@ mod query {
 
         // Check finding 2 mock active program indicators
         assert_eq!(result.len(), 2);
-        // Have mapped lines relevant to program_indiactor_a
-        let lines_a = result.clone().into_iter().nth(0).unwrap().lines;
-        assert_eq!(lines_a.len(), 3);
 
-        // Have mapped lines relevant to program_indicator_b
-        let lines_b = result.into_iter().nth(1).unwrap().lines;
-        assert_eq!(lines_b.len(), 1);
+        let lines_a = result.get_key_value("program_indicator_a");
+        assert_eq!(lines_a.unwrap().1.lines.len(), 3);
 
-        // assert columns are mapped to each line in program_indicator_a
-        for line in lines_a {
-            let columns = line.value;
-            assert_eq!(columns.len(), 2);
-        }
+        let lines_b = result.get_key_value("program_indicator_b");
+        assert_eq!(lines_b.unwrap().1.lines.len(), 1);
+
+        // Check columns are mapped to each line in program_indicator_a
+        let columns_a = lines_a
+            .unwrap()
+            .1
+            .lines
+            .iter()
+            .flat_map(|line| line.columns.iter())
+            .count();
+        assert_eq!(columns_a, 6);
     }
 }

@@ -7,8 +7,10 @@ import {
   Typography,
   ValueBar,
 } from '@openmsupply-client/common';
+import { ItemRowFragment } from 'packages/system/src';
 
 export interface RequestStoreStatsProps {
+  item?: ItemRowFragment;
   maxMonthsOfStock: number;
   suggestedQuantity: number;
   availableStockOnHand: number;
@@ -104,6 +106,7 @@ const CalculationError = ({
 };
 
 export const RequestStoreStats: React.FC<RequestStoreStatsProps> = ({
+  item,
   maxMonthsOfStock,
   suggestedQuantity,
   availableStockOnHand,
@@ -123,7 +126,29 @@ export const RequestStoreStats: React.FC<RequestStoreStatsProps> = ({
       : 100;
 
   return (
-    <>
+    <Box sx={{ maxHeight: 400, width: 500, minHeight: 200 }}>
+      <Box display="flex" flexDirection="column" paddingTop={2} paddingLeft={4}>
+        <Box display="flex">
+          <Typography fontSize={12} fontWeight={700}>
+            {t('label.name')}:&nbsp;
+          </Typography>
+          <Typography fontSize={12}>{item?.name ?? ''}</Typography>
+        </Box>
+        <Box display="flex" gap={5}>
+          <Box display="flex">
+            <Typography fontSize={12} fontWeight={700}>
+              {t('label.code')}:&nbsp;
+            </Typography>
+            <Typography fontSize={12}>{item?.code ?? ''}</Typography>
+          </Box>
+          <Box display="flex">
+            <Typography fontSize={12} fontWeight={700}>
+              {t('label.unit')}:&nbsp;
+            </Typography>
+            <Typography fontSize={12}>{item?.unitName ?? ''}</Typography>
+          </Box>
+        </Box>
+      </Box>
       <Box
         sx={{
           paddingLeft: 4,
@@ -178,6 +203,6 @@ export const RequestStoreStats: React.FC<RequestStoreStatsProps> = ({
           </Box>
         </>
       </Box>
-    </>
+    </Box>
   );
 };
