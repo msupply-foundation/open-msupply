@@ -8,7 +8,7 @@ pub fn mock_indicator_value_a() -> IndicatorValueRow {
     IndicatorValueRow {
         id: String::from("id_a"),
         customer_name_link_id: mock_store_b().name_link_id,
-        supplier_store_id: mock_store_a().id,
+        store_id: mock_store_a().id,
         period_id: mock_period().id,
         indicator_line_id: mock_indicator_line_a().id,
         indicator_column_id: mock_indicator_column_a().id,
@@ -20,7 +20,7 @@ pub fn mock_indicator_value_b() -> IndicatorValueRow {
     IndicatorValueRow {
         id: String::from("id_b"),
         customer_name_link_id: mock_store_a().name_link_id,
-        supplier_store_id: mock_store_b().id,
+        store_id: mock_store_b().id,
         period_id: mock_period().id,
         indicator_line_id: mock_indicator_line_a().id,
         indicator_column_id: mock_indicator_column_a().id,
