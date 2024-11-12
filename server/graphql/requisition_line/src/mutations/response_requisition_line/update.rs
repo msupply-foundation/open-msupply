@@ -22,6 +22,7 @@ pub struct UpdateInput {
     // Manual Requisition fields
     pub requested_quantity: Option<f64>,
     pub stock_on_hand: Option<f64>,
+    pub initial_stock_on_hand: Option<f64>,
     pub average_monthly_consumption: Option<f64>,
     pub incoming_units: Option<f64>,
     pub outgoing_units: Option<f64>,
@@ -87,6 +88,7 @@ impl UpdateInput {
             supply_quantity,
             requested_quantity,
             stock_on_hand,
+            initial_stock_on_hand,
             comment,
             average_monthly_consumption,
             incoming_units,
@@ -103,6 +105,7 @@ impl UpdateInput {
             supply_quantity,
             requested_quantity,
             stock_on_hand,
+            initial_stock_on_hand,
             comment,
             average_monthly_consumption,
             incoming_units,

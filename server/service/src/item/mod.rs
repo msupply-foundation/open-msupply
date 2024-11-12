@@ -20,8 +20,7 @@ use repository::{
     item_variant::{
         bundled_item::BundledItemFilter,
         bundled_item_row::BundledItemRow,
-        item_variant::{ItemVariantFilter, ItemVariantSort},
-        item_variant_row::ItemVariantRow,
+        item_variant::{ItemVariant, ItemVariantFilter, ItemVariantSort},
         packaging_variant::{PackagingVariantFilter, PackagingVariantSort},
         packaging_variant_row::PackagingVariantRow,
     },
@@ -37,7 +36,7 @@ pub trait ItemServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<ItemVariantFilter>,
         sort: Option<ItemVariantSort>,
-    ) -> Result<ListResult<ItemVariantRow>, ListError> {
+    ) -> Result<ListResult<ItemVariant>, ListError> {
         get_item_variants(&ctx.connection, pagination, filter, sort)
     }
 
@@ -45,7 +44,7 @@ pub trait ItemServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         input: UpsertItemVariantWithPackaging,
-    ) -> Result<ItemVariantRow, UpsertItemVariantError> {
+    ) -> Result<ItemVariant, UpsertItemVariantError> {
         upsert_item_variant(ctx, input)
     }
 

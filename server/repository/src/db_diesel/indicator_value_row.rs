@@ -8,7 +8,7 @@ table! {
     indicator_value (id) {
         id -> Text,
         customer_name_link_id -> Text,
-        supplier_store_id -> Text,
+        store_id -> Text,
         period_id -> Text,
         indicator_line_id -> Text,
         indicator_column_id -> Text,
@@ -21,7 +21,7 @@ table! {
 pub struct IndicatorValueRow {
     pub id: String,
     pub customer_name_link_id: String,
-    pub supplier_store_id: String,
+    pub store_id: String,
     pub period_id: String,
     pub indicator_line_id: String,
     pub indicator_column_id: String,
