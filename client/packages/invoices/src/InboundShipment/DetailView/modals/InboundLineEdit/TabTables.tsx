@@ -137,7 +137,6 @@ export const QuantityTableComponent: FC<TableProps> = ({
     columnDefinitions,
   ]);
 
-  console.log('render');
   return (
     <DataTable
       id="inbound-line-quantity"
