@@ -90,53 +90,54 @@ export const QuantityTableComponent: FC<TableProps> = ({
   isDisabled = false,
 }) => {
   const theme = useTheme();
-  const showItemVariantsColumn = useIsItemVariantsEnabled();
+  const itemVariantsEnabled = useIsItemVariantsEnabled();
 
-  const columns = useColumns<DraftInboundLine>(
+  const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
+    getBatchColumn(updateDraftLine, theme),
+    getExpiryColumn(updateDraftLine, theme),
+  ];
+
+  if (itemVariantsEnabled) {
+    columnDefinitions.push({
+      key: 'itemVariantId',
+      label: 'label.item-variant',
+      width: 170,
+      Cell: props => (
+        <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+      ),
+      setter: updateDraftLine,
+    });
+  }
+  columnDefinitions.push(
     [
-      getBatchColumn(updateDraftLine, theme),
-      getExpiryColumn(updateDraftLine, theme),
-      ...((showItemVariantsColumn
-        ? [
-            {
-              key: 'itemVariantId',
-              label: 'label.item-variant',
-              width: 170,
-              Cell: props => (
-                <ItemVariantInputCell
-                  {...props}
-                  itemId={props.rowData.item.id}
-                />
-              ),
-              setter: updateDraftLine,
-            },
-          ]
-        : []) as ColumnDescription<DraftInboundLine>[]),
-      [
-        'numberOfPacks',
-        {
-          Cell: NumberOfPacksCell,
-          width: 100,
-          label: 'label.num-packs',
-          setter: updateDraftLine,
-        },
-      ],
-      getColumnLookupWithOverrides('packSize', {
-        Cell: PackUnitEntryCell,
+      'numberOfPacks',
+      {
+        Cell: NumberOfPacksCell,
+        width: 100,
+        label: 'label.num-packs',
         setter: updateDraftLine,
-        label: 'label.pack-size',
-      }),
-      [
-        'unitQuantity',
-        {
-          accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
-        },
-      ],
+      },
     ],
-    {},
-    [updateDraftLine, lines]
+    getColumnLookupWithOverrides('packSize', {
+      Cell: PackUnitEntryCell,
+      setter: updateDraftLine,
+      label: 'label.pack-size',
+    }),
+    [
+      'unitQuantity',
+      {
+        accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
+      },
+    ]
   );
 
+  const columns = useColumns<DraftInboundLine>(columnDefinitions, {}, [
+    updateDraftLine,
+    lines,
+    columnDefinitions,
+  ]);
+
+  console.log('render');
   return (
     <DataTable
       id="inbound-line-quantity"
