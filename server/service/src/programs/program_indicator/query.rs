@@ -1,41 +1,16 @@
+use std::collections::HashMap;
+
 use repository::{
     IndicatorColumnRow, IndicatorColumnRowRepository, IndicatorLineRow, IndicatorLineRowRepository,
-    IndicatorValueType, Pagination, ProgramIndicatorFilter, ProgramIndicatorRepository,
-    ProgramIndicatorRow, ProgramIndicatorSort, RepositoryError, StorageConnection,
+    Pagination, ProgramIndicatorFilter, ProgramIndicatorRepository, ProgramIndicatorRow,
+    ProgramIndicatorSort, RepositoryError, StorageConnection,
 };
 
-#[derive(Clone, serde::Serialize)]
-pub enum ColumnValue {
-    Text(String),
-    Number(f64),
-}
-
-#[derive(Clone, serde::Serialize)]
-pub enum ValueType {
-    String,
-    Number,
-}
-
-#[derive(Clone, serde::Serialize)]
-pub struct IndicatorColumn {
-    pub header: String,
-    pub r#type: ValueType,
-    pub value: ColumnValue,
-}
-
-#[derive(Clone, serde::Serialize)]
-pub struct IndicatorLine {
-    pub name: String,
-    pub code: String,
-    pub value: Vec<IndicatorColumn>,
-}
-
-#[derive(serde::Serialize, Clone)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct ProgramIndicator {
-    pub id: String,
-    pub program_id: String,
-    pub code: String,
-    pub lines: Vec<IndicatorLine>,
+    pub program_indicator: ProgramIndicatorRow,
+    pub lines: Vec<IndicatorLineRow>,
+    pub columns: Vec<IndicatorColumnRow>,
 }
 
 pub fn program_indicators(
@@ -43,9 +18,8 @@ pub fn program_indicators(
     pagination: Pagination,
     sort: Option<ProgramIndicatorSort>,
     filter: Option<ProgramIndicatorFilter>,
-) -> Result<Vec<ProgramIndicator>, RepositoryError> {
-    let indicators =
-        ProgramIndicatorRepository::new(&connection).query(pagination, filter, sort)?;
+) -> Result<HashMap<String, ProgramIndicator>, RepositoryError> {
+    let indicators = ProgramIndicatorRepository::new(connection).query(pagination, filter, sort)?;
 
     let indicator_ids: Vec<String> = indicators
         .clone()
@@ -53,103 +27,50 @@ pub fn program_indicators(
         .map(|indicator| indicator.id)
         .collect();
 
-    // grafind all relevant lines
     let all_indicator_line_rows =
-        IndicatorLineRowRepository::new(&connection).find_many_by_indicator_ids(&indicator_ids)?;
+        IndicatorLineRowRepository::new(connection).find_many_by_indicator_ids(&indicator_ids)?;
+    let all_indicator_column_rows =
+        IndicatorColumnRowRepository::new(connection).find_many_by_indicator_ids(&indicator_ids)?;
 
-    // find all relevant columns
-    let all_indicator_column_rows = IndicatorColumnRowRepository::new(&connection)
-        .find_many_by_indicator_ids(&indicator_ids)?;
+    let mut program_hash = HashMap::new();
 
-    let program_indicators = indicators
-        .into_iter()
-        .map(|indicator| {
-            ProgramIndicator::from_domain(
-                indicator,
-                all_indicator_line_rows.clone(),
-                all_indicator_column_rows.clone(),
-            )
-        })
-        .collect();
-
-    Ok(program_indicators)
-}
-
-impl ProgramIndicator {
-    pub fn from_domain(
-        indicator: ProgramIndicatorRow,
-        all_indicator_line_rows: Vec<IndicatorLineRow>,
-        all_indicator_column_rows: Vec<IndicatorColumnRow>,
-    ) -> ProgramIndicator {
-        // filter out for columns relevant to indicator
-        let indicator_column_rows: Vec<IndicatorColumnRow> = all_indicator_column_rows
-            .clone()
-            .into_iter()
-            .filter_map(|row| {
-                if row.program_indicator_id == indicator.id {
-                    Some(row)
-                } else {
-                    None
-                }
-            })
-            .collect();
-
-        // filter out for lines relevant to indicator
-        let indicator_lines = all_indicator_line_rows
+    for indicator in indicators {
+        let indicator_id = indicator.id.clone();
+        let indicator_lines: Vec<IndicatorLineRow> = all_indicator_line_rows
             .clone()
             .into_iter()
             .filter_map(|line| {
-                if line.program_indicator_id == indicator.id {
+                if line.program_indicator_id == indicator_id {
                     Some(line)
                 } else {
                     None
                 }
             })
-            .map(|line| IndicatorLine::from_domain(line, indicator_column_rows.clone()))
             .collect();
 
-        ProgramIndicator {
-            id: indicator.id,
-            program_id: indicator.program_id,
-            code: match indicator.code {
-                Some(code) => code,
-                None => "missing code".to_string(),
-            },
-            lines: indicator_lines,
-        }
-    }
-}
+        let indicator_columns: Vec<IndicatorColumnRow> = all_indicator_column_rows
+            .clone()
+            .into_iter()
+            .filter_map(|column| {
+                if column.program_indicator_id == indicator_id {
+                    Some(column)
+                } else {
+                    None
+                }
+            })
+            .collect();
 
-// mapping to and from domain for rows and columns
-impl IndicatorLine {
-    pub fn from_domain(line: IndicatorLineRow, columns: Vec<IndicatorColumnRow>) -> IndicatorLine {
-        IndicatorLine {
-            name: line.description,
-            code: line.code,
-            value: columns
-                .into_iter()
-                .map(|column| IndicatorColumn::from_domain(column))
-                .collect(),
-        }
-    }
-}
-
-impl IndicatorColumn {
-    pub fn from_domain(column: IndicatorColumnRow) -> IndicatorColumn {
-        IndicatorColumn {
-            header: column.header,
-            r#type: match column.value_type {
-                // TODO remove optional value type if we initialise default values on requisition creation?
-                Some(value_type) => match value_type {
-                    IndicatorValueType::String => ValueType::String,
-                    IndicatorValueType::Number => ValueType::Number,
-                },
-                None => ValueType::String,
+        program_hash.insert(
+            indicator.id.clone(),
+            ProgramIndicator {
+                program_indicator: indicator,
+                lines: indicator_lines,
+                columns: indicator_columns,
             },
-            // TODO find actual value from here or from
-            value: ColumnValue::Text("default".to_string()),
-        }
+        );
     }
+
+    Ok(program_hash)
 }
 
 #[cfg(test)]
@@ -185,18 +106,15 @@ mod query {
 
         // Check finding 2 mock active program indicators
         assert_eq!(result.len(), 2);
-        // Have mapped lines relevant to program_indiactor_a
-        let lines_a = result.clone().into_iter().nth(0).unwrap().lines;
-        assert_eq!(lines_a.len(), 3);
 
-        // Have mapped lines relevant to program_indicator_b
-        let lines_b = result.into_iter().nth(1).unwrap().lines;
-        assert_eq!(lines_b.len(), 1);
+        let lines_a = result.get_key_value("program_indicator_a");
+        assert_eq!(lines_a.unwrap().1.lines.len(), 3);
 
-        // assert columns are mapped to each line in program_indicator_a
-        for line in lines_a {
-            let columns = line.value;
-            assert_eq!(columns.len(), 2);
-        }
+        let lines_b = result.get_key_value("program_indicator_b");
+        assert_eq!(lines_b.unwrap().1.lines.len(), 1);
+
+        // Columns are mapped to each line in program_indicator_a
+        let columns_a = lines_a.unwrap().1.columns.len();
+        assert_eq!(columns_a, 2);
     }
 }
