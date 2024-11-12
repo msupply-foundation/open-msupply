@@ -1,3 +1,4 @@
+use chrono::Utc;
 use repository::{
     asset::{Asset, AssetFilter, AssetRepository},
     asset_catalogue_item::{AssetCatalogueItemFilter, AssetCatalogueItemRepository},
@@ -10,6 +11,8 @@ use crate::service_provider::ServiceContext;
 #[derive(Debug)]
 pub enum ScannedDataParseError {
     ParseError,
+    MissingPartNumber,
+    MissingSerialNumber,
     NotFound,
     DatabaseError(RepositoryError),
 }
@@ -20,11 +23,11 @@ impl From<RepositoryError> for ScannedDataParseError {
     }
 }
 
-fn lookup_asset_by_id(ctx: &ServiceContext, id: String) -> Result<Asset, ScannedDataParseError> {
+fn lookup_asset_by_id(ctx: &ServiceContext, id: &str) -> Result<Asset, ScannedDataParseError> {
     let repository = AssetRepository::new(&ctx.connection);
 
     let mut result =
-        repository.query_by_filter(AssetFilter::new().id(EqualFilter::equal_to(&id)))?;
+        repository.query_by_filter(AssetFilter::new().id(EqualFilter::equal_to(id)))?;
 
     if let Some(record) = result.pop() {
         Ok(record)
@@ -33,27 +36,46 @@ fn lookup_asset_by_id(ctx: &ServiceContext, id: String) -> Result<Asset, Scanned
     }
 }
 
-fn lookup_asset_by_serial_number(
+fn check_if_asset_already_exists(
     ctx: &ServiceContext,
-    serial_number: String,
-) -> Result<Option<Asset>, RepositoryError> {
+    gs1: &GS1,
+) -> Result<Option<Asset>, ScannedDataParseError> {
+    // Look up the item by the Serial Number & part number
+    let serial_number = gs1
+        .serial_number()
+        .ok_or(ScannedDataParseError::MissingSerialNumber)?;
+    log::info!("Looking up asset by serial number: {}", serial_number);
+
+    let mut filter = AssetFilter::new().serial_number(StringFilter::equal_to(&serial_number));
+
+    let part_number = gs1
+        .part_number()
+        .ok_or(ScannedDataParseError::MissingPartNumber)?;
+
+    if let Some(asset_catalogue_id) = lookup_asset_catalogue_id_by_pqs_code(ctx, &part_number)? {
+        filter = filter.catalogue_item_id(EqualFilter::equal_to(&asset_catalogue_id));
+    }
+
+    // Look up the item by the serial number & part number
     let repository = AssetRepository::new(&ctx.connection);
 
-    let mut result = repository.query_by_filter(
-        AssetFilter::new().serial_number(StringFilter::equal_to(&serial_number)),
-    )?;
+    let mut result = repository.query_by_filter(filter)?;
 
+    // If we have duplicate serial numbers, we'll just return the first one, hopefully it's the right one :)
+    // Reasons we might have duplicates:
+    // 1. We don't have a part number to filter by and multiple assets have the same serial number
+    // 2. The same asset has been imported in different sync sites there's no guarantee that serial numbers are unique across sync sites
     Ok(result.pop())
 }
 
 fn lookup_asset_catalogue_id_by_pqs_code(
     ctx: &ServiceContext,
-    pqs_code: String,
+    pqs_code: &str,
 ) -> Result<Option<String>, RepositoryError> {
     let repository = AssetCatalogueItemRepository::new(&ctx.connection);
 
     let mut result = repository
-        .query_by_filter(AssetCatalogueItemFilter::new().code(StringFilter::equal_to(&pqs_code)))?;
+        .query_by_filter(AssetCatalogueItemFilter::new().code(StringFilter::equal_to(pqs_code)))?;
 
     let catalogue_item_id = result.pop().map(|item| item.id);
 
@@ -75,8 +97,10 @@ fn create_draft_asset_from_gs1(
     asset.warranty_end = Some(warranty_end);
 
     if let Some(part_number) = gs1.part_number() {
-        asset.catalogue_item_id = lookup_asset_catalogue_id_by_pqs_code(ctx, part_number)?;
+        asset.catalogue_item_id = lookup_asset_catalogue_id_by_pqs_code(ctx, &part_number)?;
     }
+
+    asset.installation_date = Some(Utc::now().naive_local().date()); // Default to today's date
 
     Ok(asset)
 }
@@ -85,26 +109,22 @@ pub fn parse_from_scanned_data(
     ctx: &ServiceContext,
     scanned_data: String,
 ) -> Result<Asset, ScannedDataParseError> {
-    // check if the scanned data starts with '('
-    // If it does not, we check if it's an ID query from our own barcodes
+    log::info!("Parsing scanned data: {}", scanned_data);
 
-    match scanned_data.chars().nth(0) {
-        Some('(') => (),
-        _ => return lookup_asset_by_id(ctx, scanned_data),
-    }
+    let result = GS1::parse(scanned_data.to_string());
 
-    let gs1 = GS1::parse(scanned_data).map_err(|e| match e {
-        GS1ParseError::InvalidFormat => ScannedDataParseError::ParseError,
-    })?;
+    let gs1 = match result {
+        Ok(gs1) => gs1,
+        Err(GS1ParseError::InvalidFormat) => {
+            log::info!(
+                "Scanned data is not GS1 data, it could be an asset ID from our own barcode"
+            );
+            return lookup_asset_by_id(ctx, &scanned_data);
+        }
+    };
 
-    // Look up the item by the Serial Number
-
-    let serial_number = gs1
-        .serial_number()
-        .ok_or(ScannedDataParseError::ParseError)?;
-
-    // Look up the item by the serial number
-    if let Some(asset) = lookup_asset_by_serial_number(ctx, serial_number)? {
+    // Look up the item by the serial number & part number
+    if let Some(asset) = check_if_asset_already_exists(ctx, &gs1)? {
         return Ok(asset);
     }
 
@@ -174,5 +194,30 @@ mod test {
             draft_asset.warranty_end,
             Some("2031-01-01".parse().unwrap())
         );
+    }
+
+    #[actix_rt::test]
+    async fn check_existing_asset_is_found() {
+        let (_, _connection, connection_manager, _) = setup_all(
+            "check_existing_asset_is_found",
+            MockDataInserts::none().assets().locations(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let ctx = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+
+        // Check we can find an existing asset by serial number and part number
+
+        let gs1_data = format!(
+            "(01)00012345600012(11)241007(21){}(241)E003/002",
+            mock_asset_a().serial_number.unwrap()
+        ); // Note E003/002 has to match the catalogue item ID for mock_asset_a
+
+        let existing_asset = parse_from_scanned_data(&ctx, gs1_data).unwrap();
+
+        assert_eq!(existing_asset.id, mock_asset_a().id);
     }
 }

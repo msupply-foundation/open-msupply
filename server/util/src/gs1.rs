@@ -68,11 +68,10 @@ impl GS1 {
 }
 
 fn parse_gs1_string(gs1_input: String) -> Result<HashMap<String, String>, GS1ParseError> {
-    // Should start with '(' if it's a GS1 string
+    // Should start with '(' if it's a GS1 string although can have a BOM at the start \u{FEFF}, so we should ignore that if present
     // If we support http in future this would start with `http`
-    match gs1_input.chars().nth(0) {
-        Some('(') => (),
-        _ => return Err(GS1ParseError::InvalidFormat),
+    if !gs1_input.contains('(') {
+        return Err(GS1ParseError::InvalidFormat);
     }
 
     let mut gs1 = HashMap::new();
@@ -83,7 +82,7 @@ fn parse_gs1_string(gs1_input: String) -> Result<HashMap<String, String>, GS1Par
 
     for c in gs1_input.chars() {
         if c == '(' {
-            // Found the start of a new AI, if we have a leftover AI and data pair, let's add it to the map!
+            // Found the start of a new AI, if we have a leftover AI and data pair, let's add it to the map
             if ai.len() > 0 {
                 gs1.insert(ai.clone(), data.clone());
                 // Clear the data string, so we can start recording the new data string

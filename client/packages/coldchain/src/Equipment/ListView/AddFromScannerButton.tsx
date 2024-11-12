@@ -92,12 +92,6 @@ export const AddFromScannerButtonComponent = () => {
   };
 
   const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    // handleScanResult({
-    //   content:
-    //     '(01)00012345600012(11)241007(21)S12345678(241)E003/002(3121)82(3131)67(3111)63(8013)HBD 116(90)001(91)241007-310101',
-    // });
-    // return;
-
     if (!isConnected) {
       show(e);
       return;

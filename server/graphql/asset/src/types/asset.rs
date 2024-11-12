@@ -396,6 +396,8 @@ pub(crate) fn map_parse_error(
         // Standard Graphql Errors
         ServiceScannedDataParseError::ParseError => BadUserInput(formatted_error),
         ServiceScannedDataParseError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceScannedDataParseError::MissingPartNumber => InternalError(formatted_error),
+        ServiceScannedDataParseError::MissingSerialNumber => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
