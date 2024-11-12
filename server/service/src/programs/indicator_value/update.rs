@@ -35,7 +35,7 @@ pub fn update_indicator_value(
     let indicator_value = ctx
         .connection
         .transaction_sync(|connection| {
-            let indicator_value_row = validate(connection, &input, &ctx.store_id)?;
+            let indicator_value_row = validate(connection, &input, ctx.store_id.clone())?;
 
             let updated_row = generate(indicator_value_row, input);
 
@@ -53,7 +53,7 @@ pub fn update_indicator_value(
 fn validate(
     connection: &StorageConnection,
     input: &UpdateIndicatorValue,
-    store_id: &String,
+    store_id: String,
 ) -> Result<IndicatorValueRow, OutError> {
     let indicator_value_row = check_indicator_value_exists(connection, &input.id)?
         .ok_or(OutError::IndicatorValueDoesNotExist)?;
@@ -61,11 +61,10 @@ fn validate(
     let requisition = check_requisition_exists(connection, &input.requisition_id)?
         .ok_or(OutError::NoRequisitionForIndicator)?;
 
-    // todo rename to store_id as it is store_id
-    if store_id.to_string() != indicator_value_row.supplier_store_id {
+    if store_id != indicator_value_row.store_id {
         return Err(OutError::NotThisStoreValue);
     }
-    if requisition.requisition_row.store_id != store_id.to_string() {
+    if requisition.requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
     }
 
@@ -98,8 +97,8 @@ fn check_indicator_value_exists(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Option<IndicatorValueRow>, RepositoryError> {
-    Ok(IndicatorValueRepository::new(connection)
-        .query_one(IndicatorValueFilter::new().id(EqualFilter::equal_to(id)))?)
+    IndicatorValueRepository::new(connection)
+        .query_one(IndicatorValueFilter::new().id(EqualFilter::equal_to(id)))
 }
 
 fn generate(
@@ -109,7 +108,7 @@ fn generate(
     IndicatorValueRow {
         id: indicator_value_row.id,
         customer_name_link_id: indicator_value_row.customer_name_link_id,
-        supplier_store_id: indicator_value_row.supplier_store_id,
+        store_id: indicator_value_row.store_id,
         period_id: indicator_value_row.period_id,
         indicator_line_id: indicator_value_row.indicator_line_id,
         indicator_column_id: indicator_value_row.indicator_column_id,
@@ -129,8 +128,7 @@ mod test {
         mock::{
             mock_finalised_response_requisition, mock_indicator_value_a, mock_indicator_value_b,
             mock_new_response_requisition, mock_new_response_requisition_store_b,
-            mock_request_draft_requisition, mock_store_a, mock_store_b, mock_user_account_b,
-            MockDataInserts,
+            mock_request_draft_requisition, mock_store_a, mock_store_b, MockDataInserts,
         },
         test_db::setup_all,
     };
