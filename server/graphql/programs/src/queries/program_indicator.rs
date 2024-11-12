@@ -4,7 +4,7 @@ use graphql_types::types::program_indicator::{
     ProgramIndicatorConnector, ProgramIndicatorFilterInput, ProgramIndicatorNode,
     ProgramIndicatorResponse, ProgramIndicatorSortInput,
 };
-use repository::{EqualFilter, Pagination, ProgramIndicatorFilter};
+use repository::Pagination;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     usize_to_u32,
@@ -35,7 +35,7 @@ pub fn program_indicators(
             sort.map(ProgramIndicatorSortInput::to_domain),
             filter.map(ProgramIndicatorFilterInput::to_domain),
         )?
-        .into_iter()
+        .into_values()
         .map(|program_indicator| ProgramIndicatorNode { program_indicator })
         .collect();
 
