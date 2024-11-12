@@ -167,7 +167,7 @@ query assetById($storeId: String!, $assetId: String!) {
   }
 }
 
-query assetByScannerString($storeId: String!, $inputText: String!) {
+query assetByScannedString($storeId: String!, $inputText: String!) {
   assetByScannedString(storeId: $storeId, inputText: $inputText) {
     ... on AssetNode {
       ...Asset
