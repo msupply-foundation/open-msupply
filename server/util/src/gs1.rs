@@ -108,8 +108,9 @@ fn parse_gs1_string(gs1_input: String) -> Result<HashMap<String, String>, GS1Par
     Ok(gs1)
 }
 
+#[cfg(test)]
 mod test {
-    use super::*;
+    use crate::{gs1::parse_gs1_string, GS1};
 
     #[test]
     fn test_parse_gs1_string() {

@@ -35,12 +35,13 @@ fn lookup_asset_by_id(ctx: &ServiceContext, id: String) -> Result<Asset, Scanned
 
 fn lookup_asset_by_serial_number(
     ctx: &ServiceContext,
-    id: String,
+    serial_number: String,
 ) -> Result<Option<Asset>, RepositoryError> {
     let repository = AssetRepository::new(&ctx.connection);
 
-    let mut result =
-        repository.query_by_filter(AssetFilter::new().id(EqualFilter::equal_to(&id)))?;
+    let mut result = repository.query_by_filter(
+        AssetFilter::new().serial_number(StringFilter::equal_to(&serial_number)),
+    )?;
 
     Ok(result.pop())
 }
