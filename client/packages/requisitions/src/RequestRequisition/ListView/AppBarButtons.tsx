@@ -53,7 +53,7 @@ export const AppBarButtons: FC<{
       <Grid container gap={1}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
-          label={t('label.new-requisition')}
+          label={t('label.new-internal-order')}
           onClick={modalController.toggleOn}
         />
         <LoadingButton

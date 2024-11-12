@@ -21,6 +21,7 @@ pub struct UpdateResponseRequisitionLine {
     //Manual Requisition
     pub requested_quantity: Option<f64>,
     pub stock_on_hand: Option<f64>,
+    pub initial_stock_on_hand: Option<f64>,
     pub average_monthly_consumption: Option<f64>,
     pub incoming_units: Option<f64>,
     pub outgoing_units: Option<f64>,
@@ -114,6 +115,7 @@ fn generate(
         comment: updated_comment,
         requested_quantity: updated_requested_quantity,
         stock_on_hand: updated_stock_on_hand,
+        initial_stock_on_hand: updated_initial_stock_on_hand,
         average_monthly_consumption: updated_average_monthly_consumption,
         incoming_units: updated_incoming_units,
         outgoing_units: updated_outgoing_units,
@@ -135,7 +137,7 @@ fn generate(
         // Manual Requisition fields
         u.requested_quantity = updated_requested_quantity.unwrap_or(u.requested_quantity);
         u.initial_stock_on_hand_units =
-            updated_stock_on_hand.unwrap_or(u.initial_stock_on_hand_units);
+            updated_initial_stock_on_hand.unwrap_or(u.initial_stock_on_hand_units);
         u.incoming_units = updated_incoming_units.unwrap_or(u.incoming_units);
         u.outgoing_units = updated_outgoing_units.unwrap_or(u.outgoing_units);
         u.loss_in_units = updated_loss_in_units.unwrap_or(u.loss_in_units);
@@ -292,7 +294,7 @@ mod test {
                 u.supply_quantity = 99.0;
                 u.comment = Some("comment".to_string());
                 u.requested_quantity = 99.0;
-                u.initial_stock_on_hand_units = 99.0;
+                u.initial_stock_on_hand_units = 0.0;
                 u.available_stock_on_hand = 99.0;
                 u
             })
