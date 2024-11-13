@@ -700,24 +700,11 @@ impl MockDataInserts {
     }
 
     pub fn program_indicators(mut self) -> Self {
-        self.contexts = true;
-        self.programs = true;
         self.program_indicators = true;
-        self.indicator_lines = true;
-        self.indicator_columns = true;
         self
     }
 
     pub fn indicator_values(mut self) -> Self {
-        self.contexts = true;
-        self.programs = true;
-        self.program_indicators = true;
-        self.indicator_lines = true;
-        self.indicator_columns = true;
-        self.period_schedules = true;
-        self.periods = true;
-        self.names = true;
-        self.stores = true;
         self.indicator_values = true;
         self
     }
