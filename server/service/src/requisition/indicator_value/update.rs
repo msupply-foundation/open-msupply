@@ -1,28 +1,28 @@
 use repository::{
+    indicator_column::{IndicatorColumnFilter, IndicatorColumnRepository},
+    indicator_line::{IndicatorLineFilter, IndicatorLineRepository},
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
-    EqualFilter, IndicatorValueRow, IndicatorValueRowRepository, RepositoryError,
-    RequisitionStatus, RequisitionType, StorageConnection,
+    EqualFilter, IndicatorValueRow, IndicatorValueRowRepository, IndicatorValueType,
+    RepositoryError, StorageConnection,
 };
 
-use crate::{requisition::common::check_requisition_exists, service_provider::ServiceContext};
+use crate::service_provider::ServiceContext;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct UpdateIndicatorValue {
     pub id: String,
     pub value: String,
-    pub requisition_id: String,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum UpdateIndicatorValueError {
     DatabaseError(RepositoryError),
     IndicatorValueDoesNotExist,
-    NoRequisitionForIndicator,
     NotThisStoreRequisition,
     NotThisStoreValue,
-    RequisitionHasNoPeriod,
-    ValuePeriodNotRequisitionPeriod,
-    CannotEditRequisition,
+    ValueNotCorrectType,
+    IndicatorLineDoesNotExist,
+    IndicatorColumnDoesNotExist,
 }
 
 type OutError = UpdateIndicatorValueError;
@@ -57,34 +57,36 @@ fn validate(
     let indicator_value_row = check_indicator_value_exists(connection, &input.id)?
         .ok_or(OutError::IndicatorValueDoesNotExist)?;
 
-    let requisition = check_requisition_exists(connection, &input.requisition_id)?
-        .ok_or(OutError::NoRequisitionForIndicator)?;
+    let indicator_line = IndicatorLineRepository::new(connection)
+        .query_by_filter(IndicatorLineFilter::new().id(EqualFilter::equal_to(
+            &indicator_value_row.indicator_line_id,
+        )))?
+        .pop()
+        .ok_or(OutError::IndicatorLineDoesNotExist)?;
 
     if store_id != indicator_value_row.store_id {
         return Err(OutError::NotThisStoreValue);
     }
-    if requisition.requisition_row.store_id != store_id {
-        return Err(OutError::NotThisStoreRequisition);
-    }
 
-    match requisition.period {
-        Some(period) => {
-            if period.id != indicator_value_row.period_id {
-                return Err(OutError::ValuePeriodNotRequisitionPeriod);
+    let indicator_column = IndicatorColumnRepository::new(connection)
+        .query_by_filter(IndicatorColumnFilter::new().id(EqualFilter::equal_to(
+            &indicator_value_row.indicator_column_id,
+        )))?
+        .pop()
+        .ok_or(OutError::IndicatorColumnDoesNotExist)?;
+
+    if let Some(column_value_type) = indicator_column.value_type {
+        if column_value_type == IndicatorValueType::Number {
+            match input.value.parse::<f64>() {
+                Ok(_) => {}
+                Err(_) => return Err(OutError::ValueNotCorrectType),
             }
         }
-        None => return Err(OutError::RequisitionHasNoPeriod),
-    }
-
-    match requisition.requisition_row.r#type {
-        RequisitionType::Response => {
-            if requisition.requisition_row.status != RequisitionStatus::New {
-                return Err(OutError::CannotEditRequisition);
-            }
-        }
-        RequisitionType::Request => {
-            if requisition.requisition_row.status != RequisitionStatus::Draft {
-                return Err(OutError::CannotEditRequisition);
+    } else if let Some(line_value_type) = indicator_line.value_type {
+        if line_value_type == IndicatorValueType::Number {
+            match input.value.parse::<f64>() {
+                Ok(_) => {}
+                Err(_) => return Err(OutError::ValueNotCorrectType),
             }
         }
     }
