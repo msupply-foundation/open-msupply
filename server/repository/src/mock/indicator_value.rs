@@ -16,18 +16,6 @@ pub fn mock_indicator_value_a() -> IndicatorValueRow {
     }
 }
 
-pub fn mock_indicator_value_b() -> IndicatorValueRow {
-    IndicatorValueRow {
-        id: String::from("id_b"),
-        customer_name_link_id: mock_store_a().name_link_id,
-        store_id: mock_store_b().id,
-        period_id: mock_period().id,
-        indicator_line_id: mock_indicator_line_a().id,
-        indicator_column_id: mock_indicator_column_a().id,
-        value: String::from("test_value"),
-    }
-}
-
 pub fn mock_indicator_values() -> Vec<IndicatorValueRow> {
-    vec![mock_indicator_value_a(), mock_indicator_value_b()]
+    vec![mock_indicator_value_a()]
 }
