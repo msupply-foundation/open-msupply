@@ -244,11 +244,11 @@ fn generate_program_indicator_values(
     store_id: &str,
     period_id: &str,
     other_party_id: &str,
-    program_indicator: HashMap<String, ProgramIndicator>,
+    program_indicators: HashMap<String, ProgramIndicator>,
 ) -> Vec<IndicatorValueRow> {
     let mut indicator_values = vec![];
 
-    for (_, program_indicator) in program_indicator {
+    for (_, program_indicator) in program_indicators {
         for line in program_indicator.lines {
             for column in line.columns {
                 let value = match column.value_type {
