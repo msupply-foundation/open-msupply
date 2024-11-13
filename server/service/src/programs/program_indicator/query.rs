@@ -23,52 +23,45 @@ pub fn program_indicators(
     pagination: Pagination,
     sort: Option<ProgramIndicatorSort>,
     filter: Option<ProgramIndicatorFilter>,
-) -> Result<HashMap<String, ProgramIndicator>, RepositoryError> {
+) -> Result<Vec<ProgramIndicator>, RepositoryError> {
     let indicators = ProgramIndicatorRepository::new(connection).query(pagination, filter, sort)?;
 
     let indicator_ids: Vec<String> = indicators
-        .clone()
-        .into_iter()
-        .map(|indicator| indicator.id)
+        .iter()
+        .map(|indicator| indicator.id.clone())
         .collect();
 
-    let all_indicator_line_rows =
+    let mut indicator_line_rows =
         IndicatorLineRowRepository::new(connection).find_many_by_indicator_ids(&indicator_ids)?;
-    let all_indicator_column_rows =
+    let mut indicator_column_rows =
         IndicatorColumnRowRepository::new(connection).find_many_by_indicator_ids(&indicator_ids)?;
 
-    let mut indicators_hash = HashMap::new();
+    let mut result_indicators = Vec::new();
 
-    for indicator in indicators {
-        let mut indicator_lines_hash: HashMap<String, IndicatorLine> = HashMap::new();
-        let indicator_id = indicator.id.clone();
-        let indicator_lines: Vec<IndicatorLineRow> = all_indicator_line_rows
-            .clone()
+    for program_indicator in indicators.into_iter() {
+        let (this_indicator_line_rows, remainder) = indicator_line_rows
             .into_iter()
-            .filter(|line| line.program_indicator_id == indicator_id)
-            .collect();
+            .partition(|l| l.program_indicator_id == program_indicator.id);
+        indicator_line_rows = remainder;
 
-        for line in indicator_lines {
-            let line_id: String = line.id.clone();
-            let columns = all_indicator_column_rows
-                .clone()
+        let (this_indicator_columns_rows, remainder) = indicator_column_rows
+            .into_iter()
+            .partition(|l| l.program_indicator_id == program_indicator.id);
+        indicator_column_rows = remainder;
+
+        result_indicators.push(ProgramIndicator {
+            program_indicator,
+            lines: this_indicator_line_rows
                 .into_iter()
-                .filter(|column| column.program_indicator_id == indicator_id)
-                .collect();
-
-            indicator_lines_hash.insert(line_id, IndicatorLine { line, columns });
-        }
-
-        indicators_hash.insert(
-            indicator.id.clone(),
-            ProgramIndicator {
-                program_indicator: indicator,
-                lines: indicator_lines_hash.clone().into_values().collect(),
-            },
-        );
+                .map(|line| IndicatorLine {
+                    line,
+                    columns: this_indicator_columns_rows.clone(),
+                })
+                .collect(),
+        });
     }
 
-    Ok(indicators_hash)
+    Ok(result_indicators)
 }
 
 #[cfg(test)]
