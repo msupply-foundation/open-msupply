@@ -43,7 +43,6 @@ export const AddFromScannerButtonComponent = () => {
     onConfirm: () => {
       if (newAssetData.current) {
         saveNewAsset(newAssetData.current)
-          .catch(e => error(t('error.unable-to-save-asset', { error: e }))())
           .then(async () => {
             if (newAssetData.current) {
               await insertLog({
@@ -55,7 +54,8 @@ export const AddFromScannerButtonComponent = () => {
               invalidateQueries();
               navigate(equipmentRoute.addPart(newAssetData.current.id).build());
             }
-          });
+          })
+          .catch(e => error(t('error.unable-to-save-asset', { error: e }))());
       }
     },
     message: t('heading.create-new-asset'),
