@@ -51,9 +51,6 @@ use mutations::program_enrolment::insert::InsertProgramEnrolmentResponse;
 use mutations::program_enrolment::update::update_program_enrolment;
 use mutations::program_enrolment::update::UpdateProgramEnrolmentInput;
 use mutations::program_enrolment::update::UpdateProgramEnrolmentResponse;
-use mutations::program_indicator::update_value::update_indicator_value;
-use mutations::program_indicator::update_value::UpdateIndicatorValueInput;
-use mutations::program_indicator::update_value::UpdateIndicatorValueResponse;
 use mutations::program_patient::insert::*;
 use mutations::program_patient::update::update_program_patient;
 use mutations::program_patient::update::UpdateProgramPatientInput;
@@ -314,16 +311,6 @@ impl ProgramsQueries {
     ) -> Result<VaccinationCardResponse> {
         vaccination_card(ctx, store_id, program_enrolment_id)
     }
-
-    pub async fn program_indicators(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        sort: Option<ProgramIndicatorSortInput>,
-        filter: Option<ProgramIndicatorFilterInput>,
-    ) -> Result<ProgramIndicatorResponse> {
-        program_indicators(ctx, store_id, sort, filter)
-    }
 }
 
 #[derive(Default, Clone)]
@@ -500,14 +487,5 @@ impl ProgramsMutations {
         input: UpdateVaccinationInput,
     ) -> Result<UpdateVaccinationResponse> {
         update_vaccination(ctx, store_id, input)
-    }
-
-    pub async fn update_indicator_value(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: UpdateIndicatorValueInput,
-    ) -> Result<UpdateIndicatorValueResponse> {
-        update_indicator_value(ctx, store_id, input)
     }
 }

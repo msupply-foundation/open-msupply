@@ -4,7 +4,6 @@ pub mod encounter;
 pub mod insert_document_registry;
 pub mod patient;
 pub mod program_enrolment;
-pub mod program_indicator;
 pub mod program_patient;
 pub mod rnr_form;
 pub mod vaccination;

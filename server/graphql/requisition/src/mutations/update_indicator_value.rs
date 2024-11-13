@@ -32,7 +32,7 @@ pub enum UpdateIndicatorValueResponse {
     Error(UpdateError),
 }
 
-pub fn update_indicator_value(
+pub fn update(
     ctx: &Context<'_>,
     store_id: String,
     input: UpdateIndicatorValueInput,

@@ -27,5 +27,3 @@ pub use self::program::*;
 pub use self::r_and_r_form::*;
 pub mod vaccination;
 pub use self::vaccination::*;
-pub mod program_indicator;
-pub use self::program_indicator::*;
