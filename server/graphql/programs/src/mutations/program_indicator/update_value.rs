@@ -79,8 +79,7 @@ fn map_error(error: UpdateIndicatorValueError) -> Result<UpdateErrorInterface> {
             return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
         }
         // Standard graphql errors
-        UpdateIndicatorValueError::NotThisStoreRequisition
-        | UpdateIndicatorValueError::NotThisStoreValue
+        UpdateIndicatorValueError::NotThisStoreValue
         | UpdateIndicatorValueError::IndicatorColumnDoesNotExist
         | UpdateIndicatorValueError::ValueNotCorrectType
         | UpdateIndicatorValueError::IndicatorLineDoesNotExist => BadUserInput(formatted_error),
