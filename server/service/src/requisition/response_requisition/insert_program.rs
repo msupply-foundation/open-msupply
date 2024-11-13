@@ -19,6 +19,7 @@ use repository::{
     MasterListLineFilter, MasterListLineRepository, NumberRowType, Pagination,
     ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError,
     Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
+    StoreFilter, StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -65,9 +66,11 @@ pub fn insert_program_response_requisition(
                 requisition_line_repo.upsert_one(&requisition_line)?;
             }
 
-            let indicator_value_repo = IndicatorValueRowRepository::new(connection);
-            for indicator_value in indicator_values {
-                indicator_value_repo.upsert_one(&indicator_value)?;
+            if !indicator_values.is_empty() {
+                let indicator_value_repo = IndicatorValueRowRepository::new(connection);
+                for indicator_value in indicator_values {
+                    indicator_value_repo.upsert_one(&indicator_value)?;
+                }
             }
 
             activity_log_entry(
@@ -215,12 +218,20 @@ fn generate(
         Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
     )?;
 
-    let indicator_values = generate_program_indicator_values(
+    let customer_store = StoreRepository::new(connection)
+        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&other_party_id)))?;
+
+    let generate_indicator_values = generate_program_indicator_values(
         &ctx.store_id,
         &period_id,
         &other_party_id,
         program_indicators,
     );
+
+    let indicator_values = match customer_store {
+        Some(_) => generate_indicator_values,
+        None => vec![],
+    };
 
     Ok(GenerateResult {
         requisition,
