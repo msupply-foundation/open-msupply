@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+
 import {
   useTranslation,
   useNotification,
@@ -10,6 +11,7 @@ import {
   JsonSchema,
   UISchemaElement,
 } from '@jsonforms/core';
+
 import {
   EncounterLineChart,
   encounterLineChartTester,
@@ -121,6 +123,7 @@ export const useJsonForms = <R,>(
   }, [loadedData]);
   // current modified data
   const [data, setData] = useState<JsonData | undefined>();
+  const submitActions = useRef<Record<string, () => void>>({});
   const [isSaving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState<boolean>();
   const t = useTranslation();
@@ -128,6 +131,12 @@ export const useJsonForms = <R,>(
   const { success, error: errorNotification } = useNotification();
 
   useConfirmOnLeaving(isDirty);
+
+  const updateSubmitActions = useCallback((key: string, action: () => void) => {
+    const newActions = { ...submitActions.current };
+    newActions[key] = action;
+    submitActions.current = newActions;
+  }, []);
 
   // returns the document name
   const saveData = async (deletion?: boolean): Promise<R | undefined> => {
@@ -140,6 +149,10 @@ export const useJsonForms = <R,>(
     try {
       const sanitizedData = stripEmptyAdditions(initialData, data);
       const result = await save?.(sanitizedData);
+      const actions = Object.values(submitActions.current);
+      for (const action of actions) {
+        await action();
+      }
 
       const successSnack = success(
         deletion ? t('success.data-deleted') : t('success.data-saved')
@@ -197,6 +210,7 @@ export const useJsonForms = <R,>(
         config={{
           ...config,
           initialData,
+          updateSubmitActions,
         }}
       />
     ),
@@ -209,5 +223,7 @@ export const useJsonForms = <R,>(
     isDirty: isDirty ?? false,
     error,
     validationError,
+    submitActions,
+    updateSubmitActions,
   };
 };

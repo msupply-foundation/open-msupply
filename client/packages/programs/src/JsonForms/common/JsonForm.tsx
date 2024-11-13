@@ -67,9 +67,11 @@ export type JsonData =
   | JsonType
   | Array<JsonData>;
 
+type UpdateSubmitActions = (key: string, action: () => void) => void;
+
 interface JsonFormProps {
   data?: JsonData;
-  config?: Record<string, JsonData>;
+  config?: JsonFormsConfig & { updateSubmitActions: UpdateSubmitActions };
   jsonSchema: JsonSchema;
   uiSchema: UISchemaElement;
   isError: boolean;
@@ -87,7 +89,7 @@ interface JsonFormsComponentProps {
   setData: (data: JsonData) => void;
   setError?: (error: string | false) => void;
   renderers: JsonFormsRendererRegistryEntry[];
-  config?: Record<string, JsonData>;
+  config?: JsonFormsConfig & { updateSubmitActions: UpdateSubmitActions };
 }
 
 // Prevents Form window being loaded with the same scroll position as its parent
