@@ -13,7 +13,7 @@ use repository::{
     EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueRow, IndicatorValueType,
     ProgramIndicatorFilter, ProgramIndicatorSort, ProgramIndicatorSortField,
 };
-use service::programs::program_indicator::query::{IndicatorLine, ProgramIndicator};
+use service::requisition::program_indicator::query::{IndicatorLine, ProgramIndicator};
 
 use super::program_node::ProgramNode;
 

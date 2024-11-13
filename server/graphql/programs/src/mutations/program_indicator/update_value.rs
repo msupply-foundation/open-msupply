@@ -6,8 +6,7 @@ use graphql_core::{
 };
 use graphql_types::types::program_indicator::IndicatorValueNode;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::programs::indicator_value::UpdateIndicatorValue;
-use service::programs::indicator_value::UpdateIndicatorValueError;
+use service::requisition::indicator_value::{UpdateIndicatorValue, UpdateIndicatorValueError};
 
 #[derive(InputObject)]
 pub struct UpdateIndicatorValueInput {

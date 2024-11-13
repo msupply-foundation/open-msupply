@@ -3,10 +3,11 @@ use std::collections::HashMap;
 use crate::{
     activity_log::activity_log_entry,
     number::next_number,
-    programs::program_indicator::query::{program_indicators, ProgramIndicator},
     requisition::{
         common::check_requisition_row_exists,
-        program_settings::get_customer_program_requisition_settings, query::get_requisition,
+        program_indicator::query::{program_indicators, ProgramIndicator},
+        program_settings::get_customer_program_requisition_settings,
+        query::get_requisition,
         request_requisition::generate_requisition_lines,
     },
     service_provider::ServiceContext,
