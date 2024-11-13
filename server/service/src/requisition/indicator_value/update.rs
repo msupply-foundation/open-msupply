@@ -18,7 +18,6 @@ pub struct UpdateIndicatorValue {
 pub enum UpdateIndicatorValueError {
     DatabaseError(RepositoryError),
     IndicatorValueDoesNotExist,
-    NotThisStoreRequisition,
     NotThisStoreValue,
     ValueNotCorrectType,
     IndicatorLineDoesNotExist,
@@ -57,16 +56,16 @@ fn validate(
     let indicator_value_row = check_indicator_value_exists(connection, &input.id)?
         .ok_or(OutError::IndicatorValueDoesNotExist)?;
 
+    if store_id != indicator_value_row.store_id {
+        return Err(OutError::NotThisStoreValue);
+    }
+
     let indicator_line = IndicatorLineRepository::new(connection)
         .query_by_filter(IndicatorLineFilter::new().id(EqualFilter::equal_to(
             &indicator_value_row.indicator_line_id,
         )))?
         .pop()
         .ok_or(OutError::IndicatorLineDoesNotExist)?;
-
-    if store_id != indicator_value_row.store_id {
-        return Err(OutError::NotThisStoreValue);
-    }
 
     let indicator_column = IndicatorColumnRepository::new(connection)
         .query_by_filter(IndicatorColumnFilter::new().id(EqualFilter::equal_to(
@@ -123,108 +122,135 @@ impl From<RepositoryError> for UpdateIndicatorValueError {
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use repository::{
-//         mock::{
-//             mock_finalised_response_requisition, mock_indicator_value_a, mock_indicator_value_b,
-//             mock_new_response_requisition, mock_new_response_requisition_store_b,
-//             mock_request_draft_requisition, mock_store_a, mock_store_b, MockDataInserts,
-//         },
-//         test_db::setup_all,
-//     };
-//     use util::inline_init;
+#[cfg(test)]
+mod test {
+    use crate::{
+        requisition::indicator_value::{UpdateIndicatorValue, UpdateIndicatorValueError},
+        service_provider::ServiceProvider,
+    };
+    use chrono::NaiveDate;
+    use repository::{
+        mock::{
+            mock_indicator_column_a, mock_indicator_line_c, mock_indicator_value_a,
+            mock_name_store_b, mock_period, mock_store_a, mock_store_b, MockData, MockDataInserts,
+        },
+        test_db::setup_all_with_data,
+        IndicatorValueRow, RequisitionRow, RequisitionStatus, RequisitionType,
+    };
+    use util::inline_init;
 
-//     use crate::{
-//         programs::indicator_value::{UpdateIndicatorValue, UpdateIndicatorValueError},
-//         service_provider::ServiceProvider,
-//     };
+    fn response_program_req() -> RequisitionRow {
+        inline_init(|r: &mut RequisitionRow| {
+            r.id = "response_program_req".to_string();
+            r.requisition_number = 3;
+            r.name_link_id = mock_name_store_b().id;
+            r.store_id = mock_store_a().id;
+            r.r#type = RequisitionType::Response;
+            r.status = RequisitionStatus::New;
+            r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap();
+            r.max_months_of_stock = 1.0;
+            r.min_months_of_stock = 0.9;
+            r.period_id = Some(mock_period().id);
+        })
+    }
 
-//     #[actix_rt::test]
-//     async fn update_indicator_value_errors() {
-//         let (_, _, connection_manager, _) =
-//             setup_all("update_indicator_value_errors", MockDataInserts::all()).await;
+    fn test_indicator_value() -> IndicatorValueRow {
+        IndicatorValueRow {
+            id: "test_indicator_value".to_string(),
+            customer_name_link_id: mock_name_store_b().id,
+            store_id: mock_store_a().id,
+            period_id: mock_period().id,
+            indicator_line_id: mock_indicator_line_c().id,
+            indicator_column_id: mock_indicator_column_a().id,
+            value: "2".to_string(),
+        }
+    }
 
-//         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-//         let mut context = service_provider
-//             .context(mock_store_a().id, "".to_string())
-//             .unwrap();
-//         let service = service_provider.indicator_value_service;
+    #[actix_rt::test]
+    async fn update_indicator_value_errors() {
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_indicator_value_errors",
+            MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.requisitions = vec![response_program_req()];
+                r.indicator_values = vec![test_indicator_value()];
+            }),
+        )
+        .await;
 
-//         // IndicatorValueDoesNotExist
-//         assert_eq!(
-//             service.update_indicator_value(
-//                 &context,
-//                 inline_init(|r: &mut UpdateIndicatorValue| {
-//                     r.id = "invalid_id".to_string();
-//                     r.requisition_id = mock_new_response_requisition().id;
-//                     r.value = String::from("new value");
-//                 }),
-//             ),
-//             Err(UpdateIndicatorValueError::IndicatorValueDoesNotExist)
-//         );
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.indicator_value_service;
 
-//         // CannotEditRequisition
-//         assert_eq!(
-//             service.update_indicator_value(
-//                 &context,
-//                 inline_init(|r: &mut UpdateIndicatorValue| {
-//                     r.id = mock_indicator_value_a().id;
-//                     r.requisition_id = mock_finalised_response_requisition().id;
-//                     r.value = String::from("new value");
-//                 }),
-//             ),
-//             Err(UpdateIndicatorValueError::CannotEditRequisition)
-//         );
+        // IndicatorValueDoesNotExist
+        assert_eq!(
+            service.update_indicator_value(
+                &context,
+                inline_init(|r: &mut UpdateIndicatorValue| {
+                    r.id = "invalid_id".to_string();
+                    r.value = "new_value".to_string();
+                }),
+            ),
+            Err(UpdateIndicatorValueError::IndicatorValueDoesNotExist)
+        );
 
-//         // NotThisStoreRequisition
-//         context.store_id = mock_store_b().id;
-//         assert_eq!(
-//             service.update_indicator_value(
-//                 &context,
-//                 inline_init(|r: &mut UpdateIndicatorValue| {
-//                     r.id = mock_indicator_value_b().id;
-//                     r.requisition_id = mock_new_response_requisition().id;
-//                     r.value = String::from("new value");
-//                 }),
-//             ),
-//             Err(UpdateIndicatorValueError::NotThisStoreRequisition)
-//         );
+        // ValueNotCorrectType
+        assert_eq!(
+            service.update_indicator_value(
+                &context,
+                inline_init(|r: &mut UpdateIndicatorValue| {
+                    r.id = test_indicator_value().id;
+                    r.value = "new value".to_string();
+                }),
+            ),
+            Err(UpdateIndicatorValueError::ValueNotCorrectType)
+        );
 
-//         // NotThisStoreValue
-//         assert_eq!(
-//             service.update_indicator_value(
-//                 &context,
-//                 inline_init(|r: &mut UpdateIndicatorValue| {
-//                     r.id = mock_indicator_value_a().id;
-//                     r.requisition_id = mock_new_response_requisition_store_b().id;
-//                     r.value = String::from("new value");
-//                 }),
-//             ),
-//             Err(UpdateIndicatorValueError::NotThisStoreValue)
-//         );
-//     }
+        context.store_id = mock_store_b().id;
+        // NotThisStoreValue
+        assert_eq!(
+            service.update_indicator_value(
+                &context,
+                inline_init(|r: &mut UpdateIndicatorValue| {
+                    r.id = mock_indicator_value_a().id;
+                    r.value = "new value".to_string();
+                }),
+            ),
+            Err(UpdateIndicatorValueError::NotThisStoreValue)
+        );
+    }
 
-//     #[actix_rt::test]
-//     async fn update_indicator_value_success() {
-//         let (_, _, connection_manager, _) =
-//             setup_all("update_indicator_value_success", MockDataInserts::all()).await;
+    #[actix_rt::test]
+    async fn update_indicator_value_success() {
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_indicator_value_success",
+            MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.requisitions = vec![response_program_req()];
+                r.indicator_values = vec![test_indicator_value()];
+            }),
+        )
+        .await;
 
-//         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-//         let context = service_provider
-//             .context(mock_store_a().id, "".to_string())
-//             .unwrap();
-//         let service = service_provider.indicator_value_service;
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.indicator_value_service;
 
-//         service
-//             .update_indicator_value(
-//                 &context,
-//                 UpdateIndicatorValue {
-//                     id: mock_indicator_value_a().id,
-//                     value: "new_test_value".to_string(),
-//                     requisition_id: mock_request_draft_requisition().id,
-//                 },
-//             )
-//             .unwrap();
-//     }
-// }
+        service
+            .update_indicator_value(
+                &context,
+                UpdateIndicatorValue {
+                    id: test_indicator_value().id,
+                    value: "6".to_string(),
+                },
+            )
+            .unwrap();
+    }
+}
