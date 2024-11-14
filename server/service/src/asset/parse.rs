@@ -96,7 +96,7 @@ fn create_draft_asset_from_gs1(ctx: &ServiceContext, gs1: GS1) -> Result<Asset, 
     Ok(asset)
 }
 
-pub fn create_from_gs1_data(
+pub fn get_or_create_from_gs1_data(
     ctx: &ServiceContext,
     gs1_data: Vec<GS1DataElement>,
 ) -> Result<Asset, AssetFromGs1Error> {
@@ -113,7 +113,7 @@ pub fn create_from_gs1_data(
 
 #[cfg(test)]
 mod test {
-    use crate::{asset::parse::create_from_gs1_data, service_provider::ServiceProvider};
+    use crate::{asset::parse::get_or_create_from_gs1_data, service_provider::ServiceProvider};
     use repository::{
         mock::{mock_asset_a, mock_store_a, MockDataInserts},
         test_db::setup_all,
@@ -139,7 +139,7 @@ mod test {
 
         let gs1 = GS1::from_human_readable_string(example_gs1.to_string()).unwrap();
 
-        let draft_asset = create_from_gs1_data(&ctx, gs1.to_data_elements()).unwrap();
+        let draft_asset = get_or_create_from_gs1_data(&ctx, gs1.to_data_elements()).unwrap();
 
         assert_eq!(draft_asset.id, ""); // Draft asset has an empty ID
         assert_eq!(draft_asset.serial_number, Some("S12345678".to_string()));
@@ -180,7 +180,7 @@ mod test {
 
         let gs1 = GS1::from_human_readable_string(gs1_data).unwrap();
 
-        let existing_asset = create_from_gs1_data(&ctx, gs1.to_data_elements()).unwrap();
+        let existing_asset = get_or_create_from_gs1_data(&ctx, gs1.to_data_elements()).unwrap();
 
         assert_eq!(existing_asset.id, mock_asset_a().id);
     }
