@@ -171,9 +171,6 @@ pub struct IndicatorColumnNode {
 
 #[Object]
 impl IndicatorColumnNode {
-    pub async fn id(&self) -> &str {
-        &self.column.id
-    }
     pub async fn name(&self) -> &str {
         &self.column.header
     }

@@ -12,9 +12,13 @@ import {
   useNavigate,
   useDisabledNotificationPopover,
   RouteBuilder,
+  useConfirmationModal,
+  FnUtils,
+  AssetLogStatusInput,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useAssets } from '../api';
+import { DraftAsset } from '../types';
 
 export const AddFromScannerButtonComponent = () => {
   const t = useTranslation();
@@ -30,19 +34,60 @@ export const AddFromScannerButtonComponent = () => {
   const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
     AppRoute.Equipment
   );
-  const { mutateAsync: fetchAsset } = useAssets.document.fetch();
+  const { mutateAsync: scanAsset } = useAssets.document.scan();
+  const { mutateAsync: saveNewAsset } = useAssets.document.insert();
+  const { insertLog, invalidateQueries } = useAssets.log.insert();
+  const newAssetData = useRef<DraftAsset>();
+
+  const showCreateConfirmation = useConfirmationModal({
+    onConfirm: () => {
+      if (newAssetData.current) {
+        saveNewAsset(newAssetData.current)
+          .then(async () => {
+            if (newAssetData.current) {
+              await insertLog({
+                id: FnUtils.generateUUID(),
+                assetId: newAssetData.current.id,
+                comment: t('label.created'),
+                status: AssetLogStatusInput.Functioning,
+              });
+              invalidateQueries();
+              navigate(equipmentRoute.addPart(newAssetData.current.id).build());
+            }
+          })
+          .catch(e => error(t('error.unable-to-save-asset', { error: e }))());
+      }
+    },
+    message: t('heading.create-new-asset'),
+    title: t('messages.create-new-asset-confirmation'),
+  });
 
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
       const { content } = result;
-      const id = content;
-      const asset = await fetchAsset(id).catch(() => {});
-      if (asset) {
-        navigate(equipmentRoute.addPart(id).build());
+
+      const asset = await scanAsset(content).catch(() => {});
+
+      if (asset?.__typename !== 'AssetNode') {
+        error(t('error.no-matching-asset', { id: result.content }))();
+        return;
+      }
+      if (asset?.id) {
+        navigate(equipmentRoute.addPart(asset?.id).build());
         return;
       }
 
-      error(t('error.no-matching-asset', { id }))();
+      // If not existing, offer to create from the parsed GS1 data
+      if (!asset?.id) {
+        newAssetData.current = {
+          ...asset,
+          id: FnUtils.generateUUID(),
+          locationIds: [],
+          parsedProperties: {},
+          parsedCatalogProperties: {},
+        };
+        showCreateConfirmation();
+      }
     }
   };
 

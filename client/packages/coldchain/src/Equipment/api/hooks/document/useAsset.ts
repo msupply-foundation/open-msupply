@@ -28,3 +28,10 @@ export const useFetchAssetById = () => {
     onError: () => {},
   });
 };
+
+export const useFetchAssetByScannerString = () => {
+  const api = useAssetApi();
+  return useMutation(api.get.byScannerString, {
+    onError: () => {},
+  });
+};

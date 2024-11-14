@@ -34,7 +34,7 @@ use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
 use graphql_item_bundle::BundledItemMutations;
-use graphql_item_variant::ItemVariantMutations;
+use graphql_item_variant::{ItemVariantMutations, ItemVariantQueries};
 use graphql_location::{LocationMutations, LocationQueries};
 use graphql_plugin::{PluginMutations, PluginQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
@@ -127,6 +127,7 @@ pub struct Queries(
     pub AssetPropertiesQueries,
     pub DemographicIndicatorQueries,
     pub VaccineCourseQueries,
+    pub ItemVariantQueries,
 );
 
 impl Queries {
@@ -154,6 +155,7 @@ impl Queries {
             AssetPropertiesQueries,
             DemographicIndicatorQueries,
             VaccineCourseQueries,
+            ItemVariantQueries,
         )
     }
 }
