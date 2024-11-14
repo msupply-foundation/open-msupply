@@ -23,7 +23,7 @@ pub fn program_indicators(
     pagination: Pagination,
     sort: Option<ProgramIndicatorSort>,
     filter: Option<ProgramIndicatorFilter>,
-) -> Result<HashMap<String, ProgramIndicator>, RepositoryError> {
+) -> Result<Vec<ProgramIndicator>, RepositoryError> {
     let indicators = ProgramIndicatorRepository::new(connection).query(pagination, filter, sort)?;
 
     let indicator_ids: Vec<String> = indicators
@@ -68,7 +68,7 @@ pub fn program_indicators(
         );
     }
 
-    Ok(indicators_hash)
+    Ok(indicators_hash.into_values().collect())
 }
 
 #[cfg(test)]
