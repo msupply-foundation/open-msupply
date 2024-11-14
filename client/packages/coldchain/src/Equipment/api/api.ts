@@ -97,6 +97,13 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Asset not found');
     },
+    byScannerString: async (inputText: string) => {
+      const { assetByScannedString } = await sdk.assetByScannedString({
+        storeId,
+        inputText,
+      });
+      return assetByScannedString;
+    },
     list: async (
       { first, offset, sortBy, filterBy }: ListParams<AssetFragment>,
       storeCode?: string

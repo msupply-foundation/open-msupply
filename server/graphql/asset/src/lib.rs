@@ -13,7 +13,10 @@ use graphql_core::{
 use repository::{assets::asset::AssetFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
 
-use types::{AssetConnector, AssetFilterInput, AssetSortInput, AssetsResponse};
+use types::{
+    map_parse_error, AssetConnector, AssetFilterInput, AssetNode, AssetParseResponse,
+    AssetSortInput, AssetsResponse, ScannedDataParseError,
+};
 
 #[derive(Default, Clone)]
 pub struct AssetQueries;
@@ -56,6 +59,35 @@ impl AssetQueries {
         Ok(AssetsResponse::Response(AssetConnector::from_domain(
             assets,
         )))
+    }
+
+    pub async fn asset_by_scanned_string(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input_text: String,
+    ) -> Result<AssetParseResponse> {
+        let user = validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::QueryAsset,
+                store_id: Some(store_id.clone()),
+            },
+        )?;
+
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+
+        let result = service_provider
+            .asset_service
+            .parse_scanned_data(&service_context, input_text);
+
+        match result {
+            Ok(asset) => Ok(AssetParseResponse::Response(AssetNode::from_domain(asset))),
+            Err(error) => Ok(AssetParseResponse::Error(ScannedDataParseError {
+                error: map_parse_error(error)?,
+            })),
+        }
     }
 }
 

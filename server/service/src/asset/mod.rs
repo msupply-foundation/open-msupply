@@ -13,6 +13,7 @@ use self::update::{update_asset, UpdateAsset, UpdateAssetError};
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
+use parse::ScannedDataParseError;
 use repository::asset_log_reason::{AssetLogReason, AssetLogReasonFilter, AssetLogReasonSort};
 use repository::asset_property::AssetPropertyFilter;
 use repository::asset_property_row::AssetPropertyRow;
@@ -27,6 +28,7 @@ pub mod insert_asset_property;
 pub mod insert_log;
 pub mod insert_log_reason;
 pub mod location;
+pub mod parse;
 pub mod query;
 pub mod query_asset_property;
 pub mod query_log;
@@ -135,6 +137,14 @@ pub trait AssetServiceTrait: Sync + Send {
         filter: Option<AssetPropertyFilter>,
     ) -> Result<ListResult<AssetPropertyRow>, ListError> {
         get_asset_properties(connection, filter)
+    }
+
+    fn parse_scanned_data(
+        &self,
+        ctx: &ServiceContext,
+        scanned_data: String,
+    ) -> Result<Asset, ScannedDataParseError> {
+        parse::parse_from_scanned_data(ctx, scanned_data)
     }
 }
 
