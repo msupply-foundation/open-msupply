@@ -2,11 +2,16 @@ use async_graphql::{
     dataloader::DataLoader, Context, Enum, Error, InputObject, Object, SimpleObject, Union,
 };
 use graphql_core::{
-    generic_filters::EqualFilterStringInput, loader::ProgramByIdLoader, ContextExt,
+    generic_filters::EqualFilterStringInput,
+    loader::{
+        IndicatorValueLoader, IndicatorValueLoaderInput, IndicatorValuePayload, ProgramByIdLoader,
+    },
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
 };
 use repository::{
-    EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueType, ProgramIndicatorFilter,
-    ProgramIndicatorSort, ProgramIndicatorSortField,
+    EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueRow, IndicatorValueType,
+    ProgramIndicatorFilter, ProgramIndicatorSort, ProgramIndicatorSortField,
 };
 use service::programs::program_indicator::query::{IndicatorLine, ProgramIndicator};
 
@@ -177,6 +182,37 @@ impl IndicatorColumnNode {
     pub async fn column_number(&self) -> i32 {
         self.column.column_number
     }
+
+    pub async fn value(
+        &self,
+        ctx: &Context<'_>,
+        period_id: String,
+        store_id: String,
+        customer_name_link_id: String,
+    ) -> Result<Option<IndicatorValueNode>, Error> {
+        let loader = ctx.get_loader::<DataLoader<IndicatorValueLoader>>();
+        let payload = IndicatorValuePayload {
+            period_id,
+            store_id,
+            customer_name_link_id,
+        };
+
+        let result = loader
+            .load_one(IndicatorValueLoaderInput::new(
+                &self.line_id,
+                &self.column.id,
+                payload,
+            ))
+            .await?
+            .ok_or_else(|| {
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot find value for column {} with header {}",
+                    &self.line_id, &self.column.id,
+                ))
+            })?;
+
+        Ok(Some(IndicatorValueNode::from_domain(result)))
+    }
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -192,5 +228,26 @@ impl IndicatorValueTypeNode {
             Some(IndicatorValueType::String) => IndicatorValueTypeNode::String,
             None => IndicatorValueTypeNode::String,
         }
+    }
+}
+
+pub struct IndicatorValueNode {
+    pub value: IndicatorValueRow,
+}
+
+#[Object]
+impl IndicatorValueNode {
+    pub async fn id(&self) -> &str {
+        &self.value.id
+    }
+
+    pub async fn value(&self) -> &str {
+        &self.value.value
+    }
+}
+
+impl IndicatorValueNode {
+    pub fn from_domain(value: IndicatorValueRow) -> IndicatorValueNode {
+        IndicatorValueNode { value }
     }
 }
