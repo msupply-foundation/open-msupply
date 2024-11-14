@@ -309,7 +309,7 @@ Standard reports in the reports dir can then be built into the generated json by
 Because this command utilises the built cli, you will need to first run
 
 ```
-cargo run
+cargo build
 ```
 
 from the open-msupply/server dir.
