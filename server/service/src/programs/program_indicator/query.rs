@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use repository::{
     IndicatorColumnRow, IndicatorColumnRowRepository, IndicatorLineRow, IndicatorLineRowRepository,
     Pagination, ProgramIndicatorFilter, ProgramIndicatorRepository, ProgramIndicatorRow,
@@ -64,51 +62,67 @@ pub fn program_indicators(
     Ok(result_indicators)
 }
 
-// #[cfg(test)]
-// mod query {
-//     use repository::Pagination;
-//     use repository::{mock::MockDataInserts, test_db::setup_all};
+#[cfg(test)]
+mod query {
+    use repository::Pagination;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
 
-//     use crate::service_provider::ServiceProvider;
-//     #[actix_rt::test]
-//     async fn program_indicator_query() {
-//         let (_, connection, connection_manager, _) =
-//             setup_all("test_program_indicator_query", MockDataInserts::all()).await;
+    use crate::programs::program_indicator::query::IndicatorLine;
+    use crate::service_provider::ServiceProvider;
 
-//         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-//         let service = service_provider.program_indicator_service;
+    #[actix_rt::test]
+    async fn program_indicator_query() {
+        let (_, connection, connection_manager, _) =
+            setup_all("test_program_indicator_query", MockDataInserts::all()).await;
 
-//         // test mapping of data to graphql structure
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service = service_provider.program_indicator_service;
 
-//         let result = service
-//             .program_indicators(
-//                 &connection,
-//                 Pagination {
-//                     limit: 500,
-//                     offset: 0,
-//                 },
-//                 None,
-//                 None,
-//             )
-//             .unwrap();
+        let result = service
+            .program_indicators(
+                &connection,
+                Pagination {
+                    limit: 500,
+                    offset: 0,
+                },
+                None,
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 2);
 
-//         // Check finding 2 mock active program indicators
-//         assert_eq!(result.len(), 2);
+        let lines_a: Vec<IndicatorLine> = result
+            .clone()
+            .into_iter()
+            .flat_map(|program_indicator| {
+                program_indicator.lines.into_iter().filter_map(|line| {
+                    if line.line.program_indicator_id == *"program_indicator_a" {
+                        Some(line)
+                    } else {
+                        None
+                    }
+                })
+            })
+            .collect();
 
-//         let lines_a = result.get_key_value("program_indicator_a");
-//         assert_eq!(lines_a.unwrap().1.lines.len(), 3);
+        assert_eq!(lines_a.len(), 2);
 
-//         let lines_b = result.get_key_value("program_indicator_b");
-//         assert_eq!(lines_b.unwrap().1.lines.len(), 1);
+        let lines_b: Vec<IndicatorLine> = result
+            .into_iter()
+            .flat_map(|program_indicator| {
+                program_indicator.lines.into_iter().filter_map(|line| {
+                    if line.line.program_indicator_id == *"program_indicator_b" {
+                        Some(line)
+                    } else {
+                        None
+                    }
+                })
+            })
+            .collect();
+        assert_eq!(lines_b.len(), 1);
 
-//         // Check columns are mapped to each line in program_indicator_a
-//         let columns_a = lines_a
-//             .unwrap()
-//             .1
-//             .lines
-//             .iter()
-//             .flat_map(|line| line.columns.iter())
-//             .count();
-//         assert_eq!(columns_a, 6);
-//     }
-// }
+        // Check columns are mapped to each line in program_indicator_a
+        let columns_a_count = lines_a.iter().flat_map(|line| line.columns.iter()).count();
+        assert_eq!(columns_a_count, 4);
+    }
+}
