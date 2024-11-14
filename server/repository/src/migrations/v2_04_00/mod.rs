@@ -11,6 +11,7 @@ mod add_unserviceable_status_to_asset_status_enum;
 mod delete_pack_variant;
 mod indicator_line_column_create_tables;
 mod indicator_value_create_table;
+mod item_changelog;
 mod item_variant;
 mod program_indicator_create_table;
 
@@ -42,6 +43,7 @@ impl Migration for V2_04_00 {
             Box::new(indicator_value_create_table::Migrate),
             Box::new(add_bundled_item_table::Migrate),
             Box::new(add_demographic_indicator_types_to_activity_log::Migrate),
+            Box::new(item_changelog::Migrate),
         ]
     }
 }
