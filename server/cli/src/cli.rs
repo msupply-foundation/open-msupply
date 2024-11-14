@@ -32,6 +32,7 @@ use simple_log::LogConfigBuilder;
 use std::{
     fs,
     path::{Path, PathBuf},
+    process::{Command, Stdio},
     sync::{Arc, RwLock},
 };
 
@@ -432,6 +433,11 @@ async fn main() -> anyhow::Result<()> {
                 let (_, name) = name_dir.rsplit_once('/').unwrap();
 
                 for version_dir in report_versions {
+                    // install esbuild depedencies
+                    if let Err(e) = run_yarn_install(&version_dir) {
+                        eprintln!("Failed to run yarn install in {}: {}", version_dir, e);
+                        continue;
+                    }
                     // read manifest file
 
                     let manifest_file = fs::File::open(format!("{version_dir}/manifest.json"))
@@ -629,6 +635,34 @@ fn export_paths(name: &str) -> (PathBuf, PathBuf, PathBuf) {
     let users_file_path = export_folder.join("users.txt");
 
     (export_folder, export_file_path, users_file_path)
+}
+
+fn run_yarn_install(directory: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let mut convert_dir = directory.to_owned();
+    convert_dir.push_str("/convert_data_js");
+
+    if !Path::new(&convert_dir).exists() {
+        info!(
+            "No conversion function for {}. Skipping esbuild install.",
+            convert_dir
+        );
+        return Ok(());
+    }
+
+    let status = Command::new("yarn")
+        .args(["install", "--cwd", &convert_dir])
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status()?;
+
+    println!("status {:?}", status);
+
+    if !status.success() {
+        eprintln!("Error: `yarn install` failed");
+        return Err("Failed to run yarn install".into());
+    }
+
+    Ok(())
 }
 
 #[derive(serde::Deserialize, Clone)]
