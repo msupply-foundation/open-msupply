@@ -155,6 +155,10 @@ impl IndicatorLineRowNode {
     pub async fn line_number(&self) -> i32 {
         self.line.line_number
     }
+
+    pub async fn value_type(&self) -> Option<IndicatorValueTypeNode> {
+        IndicatorValueTypeNode::from_domain(&self.line.value_type)
+    }
 }
 
 impl IndicatorColumnNode {
@@ -174,7 +178,7 @@ impl IndicatorColumnNode {
         &self.column.header
     }
 
-    pub async fn value_type(&self) -> IndicatorValueTypeNode {
+    pub async fn value_type(&self) -> Option<IndicatorValueTypeNode> {
         IndicatorValueTypeNode::from_domain(&self.column.value_type)
     }
 
@@ -219,11 +223,11 @@ pub enum IndicatorValueTypeNode {
 }
 
 impl IndicatorValueTypeNode {
-    pub fn from_domain(r#type: &Option<IndicatorValueType>) -> Self {
+    pub fn from_domain(r#type: &Option<IndicatorValueType>) -> Option<Self> {
         match r#type {
-            Some(IndicatorValueType::Number) => IndicatorValueTypeNode::Number,
-            Some(IndicatorValueType::String) => IndicatorValueTypeNode::String,
-            None => IndicatorValueTypeNode::String,
+            Some(IndicatorValueType::Number) => Some(IndicatorValueTypeNode::Number),
+            Some(IndicatorValueType::String) => Some(IndicatorValueTypeNode::String),
+            None => None,
         }
     }
 }
