@@ -71,6 +71,7 @@ export const parseResult = (content?: string): ScanResult => {
 
     return {
       batch,
+      gs1,
       content,
       expiryDate: expiry ? Formatter.naiveDate(expiry) : undefined,
       gtin,
