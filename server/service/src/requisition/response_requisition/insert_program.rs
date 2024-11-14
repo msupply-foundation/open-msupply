@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::{
     activity_log::activity_log_entry,
     number::next_number,
@@ -244,11 +242,11 @@ fn generate_program_indicator_values(
     store_id: &str,
     period_id: &str,
     other_party_id: &str,
-    program_indicators: HashMap<String, ProgramIndicator>,
+    program_indicators: Vec<ProgramIndicator>,
 ) -> Vec<IndicatorValueRow> {
     let mut indicator_values = vec![];
 
-    for (_, program_indicator) in program_indicators {
+    for program_indicator in program_indicators {
         for line in program_indicator.lines {
             for column in line.columns {
                 let value = match column.value_type {
