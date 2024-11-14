@@ -6,7 +6,6 @@ use graphql_core::{
     loader::{
         IndicatorValueLoader, IndicatorValueLoaderInput, IndicatorValuePayload, ProgramByIdLoader,
     },
-    standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use repository::{
@@ -203,15 +202,13 @@ impl IndicatorColumnNode {
                 &self.column.id,
                 payload,
             ))
-            .await?
-            .ok_or_else(|| {
-                StandardGraphqlError::InternalError(format!(
-                    "Cannot find value for column {} with header {}",
-                    &self.line_id, &self.column.id,
-                ))
-            })?;
+            .await?;
 
-        Ok(Some(IndicatorValueNode::from_domain(result)))
+        if let Some(value) = result {
+            Ok(Some(IndicatorValueNode::from_domain(value)))
+        } else {
+            Ok(None)
+        }
     }
 }
 
