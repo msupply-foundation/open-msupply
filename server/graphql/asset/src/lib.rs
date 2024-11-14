@@ -15,7 +15,7 @@ use service::auth::{Resource, ResourceAccessRequest};
 
 use types::{
     map_parse_error, AssetConnector, AssetFilterInput, AssetNode, AssetParseResponse,
-    AssetSortInput, AssetsResponse, ScannedDataParseError,
+    AssetSortInput, AssetsResponse, GS1DataElement, ScannedDataParseError,
 };
 
 #[derive(Default, Clone)]
@@ -61,11 +61,11 @@ impl AssetQueries {
         )))
     }
 
-    pub async fn asset_by_scanned_string(
+    pub async fn asset_from_gs1_data(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input_text: String,
+        gs1: Vec<GS1DataElement>,
     ) -> Result<AssetParseResponse> {
         let user = validate_auth(
             ctx,
@@ -78,9 +78,10 @@ impl AssetQueries {
         let service_provider = ctx.service_provider();
         let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
-        let result = service_provider
-            .asset_service
-            .parse_scanned_data(&service_context, input_text);
+        let result = service_provider.asset_service.asset_from_gs1_data(
+            &service_context,
+            gs1.into_iter().map(GS1DataElement::to_domain).collect(),
+        );
 
         match result {
             Ok(asset) => Ok(AssetParseResponse::Response(AssetNode::from_domain(asset))),

@@ -5,13 +5,14 @@ import { Capacitor } from '@capacitor/core';
 import { GlobalStyles } from '@mui/material';
 import { useNotification } from '../hooks/useNotification';
 import { useTranslation } from '@common/intl';
-import { parseBarcode } from 'gs1-barcode-parser-mod';
+import { Gs1Barcode, parseBarcode } from 'gs1-barcode-parser-mod';
 import { Formatter } from './formatters';
 import { BarcodeScanner, ScannerType } from '@openmsupply-client/common';
 
 const SCAN_TIMEOUT_IN_MS = 5000;
 
 export interface ScanResult {
+  gs1?: Gs1Barcode;
   batch?: string;
   content?: string;
   expiryDate?: string | null;
