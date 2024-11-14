@@ -35,7 +35,7 @@ pub fn program_indicators(
             sort.map(ProgramIndicatorSortInput::to_domain),
             filter.map(ProgramIndicatorFilterInput::to_domain),
         )?
-        .into_values()
+        .into_iter()
         .map(|program_indicator| ProgramIndicatorNode { program_indicator })
         .collect();
 

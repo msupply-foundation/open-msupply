@@ -10,6 +10,7 @@ export const useAssets = {
 
   document: {
     fetch: Document.useFetchAssetById,
+    scan: Document.useFetchAssetByScannerString,
     get: Document.useAsset,
     list: Document.useAssets,
     listAll: Document.useAssetsAll,

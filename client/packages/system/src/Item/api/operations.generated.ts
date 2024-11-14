@@ -88,6 +88,13 @@ export type ItemByIdQuery = { __typename: 'Queries', items: { __typename: 'ItemC
 
 export type ItemVariantOptionFragment = { __typename: 'ItemVariantNode', id: string, label: string, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string }> };
 
+export type ItemVariantsConfiguredQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type ItemVariantsConfiguredQuery = { __typename: 'Queries', itemVariantsConfigured: boolean };
+
 export type ItemVariantsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   itemId: Types.Scalars['String']['input'];
@@ -453,6 +460,11 @@ export const ItemByIdDocument = gql`
 }
     ${ItemFragmentDoc}
 ${StockLineFragmentDoc}`;
+export const ItemVariantsConfiguredDocument = gql`
+    query itemVariantsConfigured($storeId: String!) {
+  itemVariantsConfigured(storeId: $storeId)
+}
+    `;
 export const ItemVariantsDocument = gql`
     query itemVariants($storeId: String!, $itemId: String!) {
   items(storeId: $storeId, filter: {id: {equalTo: $itemId}, isActive: true}) {
@@ -581,6 +593,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     itemById(variables: ItemByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemByIdQuery>(ItemByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemById', 'query', variables);
+    },
+    itemVariantsConfigured(variables: ItemVariantsConfiguredQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemVariantsConfiguredQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemVariantsConfiguredQuery>(ItemVariantsConfiguredDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemVariantsConfigured', 'query', variables);
     },
     itemVariants(variables: ItemVariantsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemVariantsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemVariantsQuery>(ItemVariantsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemVariants', 'query', variables);

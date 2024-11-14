@@ -10,6 +10,7 @@ import {
   PackagingVariantFragment,
 } from '../../operations.generated';
 import { useItemApi, useItemGraphQL } from '../useItemApi';
+import { ITEM_VARIANTS } from '../../keys';
 
 export function useItemVariant({
   itemId,
@@ -117,6 +118,7 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
     mutationFn,
     onSuccess: () => {
       queryClient.invalidateQueries(keys.detail(itemId));
+      queryClient.invalidateQueries(ITEM_VARIANTS);
     },
   });
 };
