@@ -145,7 +145,7 @@ pub trait AssetServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         gs1_data: Vec<GS1DataElement>,
     ) -> Result<Asset, AssetFromGs1Error> {
-        parse::create_from_gs1_data(ctx, gs1_data)
+        parse::get_or_create_from_gs1_data(ctx, gs1_data)
     }
 }
 
