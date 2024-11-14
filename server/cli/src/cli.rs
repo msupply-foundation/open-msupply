@@ -650,7 +650,7 @@ fn run_yarn_install(directory: &str) -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let status = Command::new("yarn")
-        .args(["install", "--cwd", &convert_dir])
+        .args(["install", "--cwd", &convert_dir, "--no-lockfile"])
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .status()?;
