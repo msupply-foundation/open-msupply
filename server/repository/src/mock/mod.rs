@@ -692,6 +692,15 @@ impl MockDataInserts {
         self.program_enrolments = true;
         self
     }
+
+    pub fn program_indicators(mut self) -> Self {
+        self.contexts = true;
+        self.programs = true;
+        self.program_indicators = true;
+        self.indicator_lines = true;
+        self.indicator_columns = true;
+        self
+    }
 }
 
 #[derive(Default)]
