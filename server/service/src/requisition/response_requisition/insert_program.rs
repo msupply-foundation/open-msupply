@@ -219,15 +219,13 @@ fn generate(
     let customer_store = StoreRepository::new(connection)
         .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&other_party_id)))?;
 
-    let generate_indicator_values = generate_program_indicator_values(
-        &ctx.store_id,
-        &period_id,
-        &other_party_id,
-        program_indicators,
-    );
-
     let indicator_values = match customer_store {
-        Some(_) => generate_indicator_values,
+        Some(_) => generate_program_indicator_values(
+            &ctx.store_id,
+            &period_id,
+            &other_party_id,
+            program_indicators,
+        ),
         None => vec![],
     };
 
