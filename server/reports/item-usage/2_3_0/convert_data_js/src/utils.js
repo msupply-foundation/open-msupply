@@ -1,5 +1,3 @@
-import { cleanUpNodes } from "../../../../utils";
-
 const processItemLines = (res) => {
   res.items.nodes.forEach((item) => {
     // don't add default values if empty object added
@@ -32,8 +30,7 @@ const processItemLines = (res) => {
     item.SOH = calculateStatValue(item?.stats?.availableStockOnHand);
     item.MOS = calculateStatValue(item?.stats?.availableMonthsOfStockOnHand);
   });
-  let cleanNodes = cleanUpNodes(res.items.nodes);
-  return cleanNodes;
+  return res.items.nodes;
 };
 
 // function adds month consumption to data  (either this or last month)
@@ -59,5 +56,4 @@ module.exports = {
   calculateQuantity,
   calculateStatValue,
   processItemLines,
-  cleanUpNodes,
 };

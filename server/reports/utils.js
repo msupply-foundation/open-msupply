@@ -1,13 +1,3 @@
-const cleanUpNodes = (nodes) => {
-  let cleanNodes = [];
-  nodes.forEach((node) => {
-    if (Object.keys(node).length != 0) {
-      cleanNodes.push(cleanUpObject(node));
-    }
-  });
-  return cleanNodes;
-};
-
 const cleanUpObject = (node) => {
   let newNode = {};
   // remove empty keys which will fail to parse
@@ -26,5 +16,4 @@ const cleanUpObject = (node) => {
 
 module.exports = {
   cleanUpObject,
-  cleanUpNodes,
 };

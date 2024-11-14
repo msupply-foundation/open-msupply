@@ -1,4 +1,4 @@
-import { cleanUpNodes, cleanUpObject } from "./utils";
+import { cleanUpObject } from "./utils";
 
 describe("cleans up object", () => {
   it("removes empty strings from object", () => {
@@ -38,30 +38,6 @@ describe("cleans up object", () => {
   it("maintains 0 in object", () => {
     expect({ key: 0, key2: "string" }).toEqual(
       cleanUpObject({ key: 0, key2: "string" })
-    );
-  });
-});
-
-describe("cleans up array of nodes", () => {
-  it("removes empty nodes", () => {
-    expect([
-      {
-        key: {
-          nestedKey: "string",
-        },
-        key2: "string",
-      },
-    ]).toEqual(
-      cleanUpNodes([
-        {
-          key: {
-            nestedKey: "string",
-            nestedKey2: "",
-          },
-          key2: "string",
-        },
-        {},
-      ])
     );
   });
 });

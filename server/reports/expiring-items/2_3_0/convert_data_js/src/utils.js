@@ -1,5 +1,3 @@
-import { cleanUpNodes } from "../../../../utils";
-
 const processStockLines = (nodes) => {
   nodes.forEach((line) => {
     if (Object.keys(line).length == 0) {
@@ -24,8 +22,7 @@ const processStockLines = (nodes) => {
     }
     line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat);
   });
-  let cleanNodes = cleanUpNodes(nodes);
-  return cleanNodes;
+  return nodes;
 };
 
 const calculateDaysUntilExpired = (expiryDateString) => {
