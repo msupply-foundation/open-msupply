@@ -1,6 +1,4 @@
-use super::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
-};
+use super::StorageConnection;
 use crate::{repository_error::RepositoryError, Upsert};
 
 use chrono::NaiveDateTime;
@@ -33,7 +31,7 @@ impl<'a> ItemCategoryRowRepository<'a> {
         ItemCategoryRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, item_category_row: &ItemCategoryRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, item_category_row: &ItemCategoryRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item_category::table)
             .values(item_category_row)
             .on_conflict(item_category::id)
@@ -41,23 +39,7 @@ impl<'a> ItemCategoryRowRepository<'a> {
             .set(item_category_row)
             .execute(self.connection.lock().connection())?;
 
-        self.insert_changelog(item_category_row, RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: &ItemCategoryRow,
-        row_action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::ItemCategory,
-            record_id: row.id.clone(),
-            row_action,
-            store_id: None,
-            name_link_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        Ok(())
     }
 
     pub fn find_one_by_id(
@@ -80,8 +62,9 @@ impl<'a> ItemCategoryRowRepository<'a> {
 
 impl Upsert for ItemCategoryRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = ItemCategoryRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+        ItemCategoryRowRepository::new(con).upsert_one(self)?;
+        // Not in changelog
+        Ok(None)
     }
 
     // Test only
