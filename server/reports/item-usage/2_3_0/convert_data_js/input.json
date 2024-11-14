@@ -109,10 +109,8 @@
           "availableMonthsOfStockOnHand": 4.5,
           "availableStockOnHand": 300.902,
           "averageMonthlyConsumption": 266.7
-        },
-        "someOtherKey": ""
+        }
       },
-      {},
       {
         "id": "101",
         "code": "ITEM001",
@@ -120,12 +118,9 @@
         "stats": {
           "totalConsumption": 100,
           "availableMonthsOfStockOnHand": 4.5,
-          "availableStockOnHand": 200,
-          "someNestedEmptyStringKey": ""
-        },
-        "someOtherOtherKey": ""
-      },
-      {}
+          "availableStockOnHand": 200
+        }
+      }
     ]
   }
 }

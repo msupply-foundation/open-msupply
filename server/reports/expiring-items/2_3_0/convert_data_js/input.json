@@ -41,7 +41,6 @@
           }
         }
       },
-      {},
       {
         "batch": "DEF123",
         "expiryDate": "2024-01-10",
@@ -49,20 +48,15 @@
         "packSize": 5,
         "storeId": "STORE002",
         "totalNumberOfPacks": 100,
-        "supplierName": "",
         "location": {
-          "code": "abc",
-          "someKey": ""
+          "code": "abc"
         },
         "item": {
           "code": "ITEM003",
           "name": "drug",
           "unitName": "box",
-          "stats": {
-            "someKey": ""
-          }
-        },
-        "someOtherKey": ""
+          "stats": {}
+        }
       }
     ]
   }
