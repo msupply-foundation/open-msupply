@@ -61,6 +61,9 @@ pub struct LegacyPrefData {
     #[serde(default)]
     #[serde(rename = "stocktakeFrequency")]
     pub stocktake_frequency: f64,
+    #[serde(default)]
+    #[serde(rename = "useExtraFieldsForRequisitions")]
+    pub extra_fields_in_requisition: bool,
 }
 
 // Needs to be added to all_translators()
@@ -110,6 +113,7 @@ impl SyncTranslation for StorePreferenceTranslation {
             months_understock,
             months_items_expire,
             stocktake_frequency,
+            extra_fields_in_requisition,
         } = data;
 
         let result = StorePreferenceRow {
@@ -127,6 +131,7 @@ impl SyncTranslation for StorePreferenceTranslation {
             months_understock,
             months_items_expire,
             stocktake_frequency,
+            extra_fields_in_requisition,
         };
 
         Ok(PullTranslateResult::upsert(result))
