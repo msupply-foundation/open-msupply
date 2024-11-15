@@ -1,6 +1,9 @@
+use chrono::Utc;
 use repository::{
-    ChangelogRow, ChangelogTableName, ItemRow, ItemRowDelete, ItemRowRepository, ItemType,
-    StorageConnection, SyncBufferRow, VENCategory,
+    item_category::{ItemCategoryFilter, ItemCategoryRepository},
+    item_category_row::ItemCategoryRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemRowRepository,
+    ItemType, StorageConnection, SyncBufferRow, VENCategory,
 };
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +12,7 @@ use crate::sync::{
     CentralServerConfig,
 };
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_camel_case_types)]
 #[derive(Deserialize, Serialize)]
@@ -34,6 +37,8 @@ pub struct LegacyItemRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     strength: Option<String>,
     doses: i32,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    category_ID: Option<String>,
 }
 
 fn to_item_type(type_of: LegacyItemType) -> ItemType {
@@ -91,13 +96,16 @@ impl SyncTranslation for ItemTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyItemRow>(&sync_record.data)?;
 
-        let result = ItemRow {
-            id: data.ID,
+        let mut integration_operations = Vec::new();
+
+        // Translate the item row
+        let item_row = ItemRow {
+            id: data.ID.clone(),
             name: data.item_name,
             code: data.code,
             unit_id: data.unit_ID,
@@ -110,8 +118,48 @@ impl SyncTranslation for ItemTranslation {
             ven_category: to_ven_category(data.VEN_category),
             vaccine_doses: data.doses,
         };
+        integration_operations.push(IntegrationOperation::upsert(item_row));
 
-        Ok(PullTranslateResult::upsert(result))
+        // Translate the item_category join row
+        let existing_item_category_join = ItemCategoryRepository::new(connection)
+            .query_one(ItemCategoryFilter::new().item_id(EqualFilter::equal_to(&data.ID)))?;
+
+        match data.category_ID {
+            None => {
+                // If latest item data has no category ID, but existing item category join exists, mark deleted
+                if let Some(item_category) = existing_item_category_join {
+                    let deleted_join = ItemCategoryRow {
+                        deleted_datetime: Some(Utc::now().naive_utc()),
+                        ..item_category.item_category_row
+                    };
+                    integration_operations.push(IntegrationOperation::upsert(deleted_join));
+                }
+            }
+            Some(category_id) => {
+                if let Some(item_category) = existing_item_category_join {
+                    // If latest item data has a different category ID to the existing join, delete that one (we'll create a new one below)
+                    if item_category.item_category_row.category_id != category_id {
+                        let deleted_join = ItemCategoryRow {
+                            deleted_datetime: Some(Utc::now().naive_utc()),
+                            ..item_category.item_category_row
+                        };
+                        integration_operations.push(IntegrationOperation::upsert(deleted_join));
+                    }
+                }
+
+                let item_category_row = ItemCategoryRow {
+                    id: format!("{}-{}", data.ID.clone(), category_id.clone()),
+                    item_id: data.ID,
+                    category_id,
+                    deleted_datetime: None,
+                };
+                integration_operations.push(IntegrationOperation::upsert(item_category_row));
+            }
+        };
+
+        Ok(PullTranslateResult::IntegrationOperations(
+            integration_operations,
+        ))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -173,6 +221,10 @@ impl SyncTranslation for ItemTranslation {
             strength,
             type_of: to_legacy_item_type(r#type),
             VEN_category: to_legacy_ven_category(ven_category),
+            // Item push is only used for GAPS, which doesn't use item categories
+            // Probably better to move management of categories to OMS Central than
+            // build out the syncing back and forth of categories to OG!
+            category_ID: None,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
