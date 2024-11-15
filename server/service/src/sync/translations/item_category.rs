@@ -1,36 +1,23 @@
-use crate::sync::sync_serde::empty_str_as_option_string;
 use repository::{
-    category_row::{CategoryRow, CategoryRowDelete},
-    StorageConnection, SyncBufferRow,
+    item_category::{ItemCategoryFilter, ItemCategoryRepository},
+    item_category_row::ItemCategoryRow,
+    EqualFilter, ItemRowDelete, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
+use crate::sync::{
+    sync_serde::empty_str_as_option_string,
+    translations::{category::CategoryTranslation, item::ItemTranslation},
+};
+
 use super::{PullTranslateResult, SyncTranslation};
 
-#[allow(non_camel_case_types)]
-#[derive(Deserialize, Serialize)]
-pub enum LegacyItemType {
-    non_stock,
-    service,
-    general,
-}
-
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
-pub struct LegacyItemCategoryRow {
+pub struct LegacyCategorisedItemRow {
     ID: String,
-    Description: String,
-    sort_order: i32,
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    parent_ID: Option<String>,
-}
-
-#[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
-pub struct LegacyItemCategoryLevel1Row {
-    ID: String,
-    Description: String,
-    sort_order: i32,
+    category_ID: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -41,54 +28,55 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct ItemCategoryTranslation;
 impl SyncTranslation for ItemCategoryTranslation {
+    // Item is already translated by the ItemTranslation translator, to create item records.
+    // However we also need to create item_category records from that item, so we need to
+    // translate it again here (can't return multiple upsert types from same translator)
     fn table_name(&self) -> &str {
-        "item_category"
+        "item"
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![]
-    }
-
-    //  TODO Can we do this for all three tables??
-    fn should_translate_from_sync_record(&self, row: &SyncBufferRow) -> bool {
-        match row.table_name.as_str() {
-            "item_category" | "item_category_level2" | "item_category_level1" => true,
-            _ => false,
-        }
+        vec![
+            CategoryTranslation.table_name(),
+            ItemTranslation.table_name(),
+        ]
     }
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        // Try to parse as a child category (item_category or item_category_level2)
-        match serde_json::from_str::<LegacyItemCategoryRow>(&sync_record.data) {
-            Ok(data) => {
-                let category_row = CategoryRow {
-                    id: data.ID,
-                    name: data.Description.clone(),
-                    description: Some(data.Description),
-                    parent_id: data.parent_ID,
-                    deleted_datetime: None,
-                };
-                return Ok(PullTranslateResult::upsert(category_row));
+        let data = serde_json::from_str::<LegacyCategorisedItemRow>(&sync_record.data)?;
+
+        // We only create one item_category join per item for now. We might move to a join for every level
+        // in the hierarchy in the future, but keeping translations simpler for now :)
+
+        // search by item id
+        let item_category_join = ItemCategoryRepository::new(connection)
+            .query_one(ItemCategoryFilter::new().item_id(EqualFilter::equal_to(&data.ID)))?;
+
+        // if no join and no category, return not matched
+
+        // if join and no category, delete join
+
+        // if join and category, delete and insert join
+
+        let category_id = match data.category_ID {
+            Some(category_id) => category_id,
+            None => {
+                return Ok(PullTranslateResult::NotMatched);
             }
-            // If parsing as a child category fails, try to parse as a root category below (item_category_level1)
-            Err(_) => {}
-        }
+        };
 
-        let data = serde_json::from_str::<LegacyItemCategoryLevel1Row>(&sync_record.data)?;
-
-        let category_row = CategoryRow {
-            id: data.ID,
-            name: data.Description.clone(),
-            description: Some(data.Description),
-            parent_id: None,
+        let result = ItemCategoryRow {
+            id: format!("{}-{}", data.ID.clone(), category_id.clone()),
+            item_id: data.ID,
+            category_id,
             deleted_datetime: None,
         };
 
-        Ok(PullTranslateResult::upsert(category_row))
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -96,7 +84,7 @@ impl SyncTranslation for ItemCategoryTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(CategoryRowDelete(
+        Ok(PullTranslateResult::delete(ItemRowDelete(
             sync_record.record_id.clone(),
         )))
     }
@@ -108,12 +96,12 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
-    async fn test_item_category_translation() {
-        use crate::sync::test::test_data::item_category as test_data;
-        let translator = ItemCategoryTranslation {};
+    async fn test_item_translation() {
+        use crate::sync::test::test_data::item as test_data;
+        let translator = ItemTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_item_category_translation", MockDataInserts::none()).await;
+            setup_all("test_item_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
