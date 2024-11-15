@@ -14,6 +14,7 @@ import {
   Popover,
   ReasonOptionNodeType,
   TextArea,
+  useAuthContext,
   useToggle,
 } from '@openmsupply-client/common';
 import { useResponse } from '../../api';
@@ -49,6 +50,7 @@ export const ResponseLineEdit = ({
   isProgram,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
+  const { store } = useAuthContext();
   const { isOn: ourStats, toggle: toggleOurStats } = useToggle();
   const { isOn: theirStats, toggle: toggleTheirStats } = useToggle();
   const { data } = useResponse.line.stats(draft?.id);
@@ -107,7 +109,7 @@ export const ResponseLineEdit = ({
               sx={{ marginBottom: 1 }}
             />
           )}
-          {isProgram && (
+          {isProgram && store?.preferences.extraFieldsInRequisition && (
             <>
               <InputWithLabelRow
                 Input={
@@ -204,7 +206,7 @@ export const ResponseLineEdit = ({
             label={t('label.amc')}
             sx={{ marginBottom: 1 }}
           />
-          {isProgram && (
+          {isProgram && store?.preferences.extraFieldsInRequisition && (
             <InputWithLabelRow
               Input={
                 <NumericTextInput
@@ -281,7 +283,7 @@ export const ResponseLineEdit = ({
               )}
             </Box>
           </Box>
-          {isProgram && (
+          {isProgram && store?.preferences.extraFieldsInRequisition && (
             <InputWithLabelRow
               Input={
                 <NumericTextInput
@@ -384,7 +386,7 @@ export const ResponseLineEdit = ({
               )}
             </Box>
           </Box>
-          {isProgram && (
+          {isProgram && store?.preferences.extraFieldsInRequisition && (
             <InputWithLabelRow
               Input={
                 <ReasonOptionsSearchInput

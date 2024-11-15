@@ -7,6 +7,7 @@ import {
   useUrlQueryParams,
   ColumnDescription,
   TooltipTextCell,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from './../api';
 import { PackQuantityCell } from '@openmsupply-client/system';
@@ -16,6 +17,7 @@ export const useResponseColumns = () => {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
+  const { store } = useAuthContext();
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
   const { programName } = useResponse.document.fields(['programName']);
 
@@ -71,7 +73,7 @@ export const useResponseColumns = () => {
       accessor: ({ rowData }) => rowData.availableStockOnHand,
     });
   }
-  if (programName) {
+  if (programName && store?.preferences?.extraFieldsInRequisition) {
     columnDefinitions.push(
       // TODO: Global pref to show/hide the next columns
       {
@@ -234,7 +236,7 @@ export const useResponseColumns = () => {
   ]);
 
   // TODO: Global pref to show/hide column
-  if (programName) {
+  if (programName && store?.preferences?.extraFieldsInRequisition) {
     columnDefinitions.push({
       key: 'reason',
       label: 'label.reason',
