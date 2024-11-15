@@ -50,6 +50,7 @@ pub mod invoice_line;
 mod invoice_line_row;
 mod invoice_row;
 pub mod item;
+pub mod item_category;
 pub mod item_category_row;
 mod item_link_row;
 mod item_row;
