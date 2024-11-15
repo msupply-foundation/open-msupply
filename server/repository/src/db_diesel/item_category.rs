@@ -109,5 +109,7 @@ fn create_filtered_query(filter: Option<ItemCategoryFilter>) -> BoxedItemCategor
         apply_equal_filter!(query, item_id, item_category::item_id);
     }
 
+    query = query.filter(item_category::deleted_datetime.is_null());
+
     query
 }
