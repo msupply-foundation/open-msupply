@@ -206,6 +206,7 @@ export const useStocktakeColumns = ({
     {
       key: 'difference',
       label: 'label.difference',
+      Cell: NumberCell,
       align: ColumnAlign.Right,
       sortable: false,
       accessor: ({ rowData }) => {
