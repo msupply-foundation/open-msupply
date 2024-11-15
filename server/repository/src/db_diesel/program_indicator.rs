@@ -1,13 +1,13 @@
 use super::{
-    program_indicator_row::program_indicator, DBType, ProgramIndicatorRow, StorageConnection,
+    program_indicator_row::program_indicator, DBType, ProgramIndicatorRow, Sort, StorageConnection,
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_string_filter},
+    diesel_macros::{apply_equal_filter, apply_sort},
     repository_error::RepositoryError,
 };
 
-use crate::{EqualFilter, Pagination, StringFilter};
+use crate::{EqualFilter, Pagination};
 
 use diesel::prelude::*;
 
@@ -19,8 +19,14 @@ pub struct ProgramIndicatorRepository<'a> {
 pub struct ProgramIndicatorFilter {
     pub id: Option<EqualFilter<String>>,
     pub program_id: Option<EqualFilter<String>>,
-    pub code: Option<StringFilter>,
 }
+
+pub enum ProgramIndicatorSortField {
+    ProgramId,
+    Code,
+}
+
+pub type ProgramIndicatorSort = Sort<ProgramIndicatorSortField>;
 
 impl<'a> ProgramIndicatorRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -39,7 +45,7 @@ impl<'a> ProgramIndicatorRepository<'a> {
         &self,
         filter: ProgramIndicatorFilter,
     ) -> Result<Vec<ProgramIndicatorRow>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter))
+        self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn create_filtered_query(
@@ -52,7 +58,6 @@ impl<'a> ProgramIndicatorRepository<'a> {
         if let Some(f) = filter {
             apply_equal_filter!(query, f.id, program_indicator::id);
             apply_equal_filter!(query, f.program_id, program_indicator::program_id);
-            apply_string_filter!(query, f.code, program_indicator::code);
         }
 
         query
@@ -62,8 +67,22 @@ impl<'a> ProgramIndicatorRepository<'a> {
         &self,
         pagination: Pagination,
         filter: Option<ProgramIndicatorFilter>,
+        sort: Option<ProgramIndicatorSort>,
     ) -> Result<Vec<ProgramIndicatorRow>, RepositoryError> {
-        let query = Self::create_filtered_query(filter);
+        let mut query = Self::create_filtered_query(filter);
+
+        if let Some(sort) = sort {
+            match sort.key {
+                ProgramIndicatorSortField::ProgramId => {
+                    apply_sort!(query, sort, program_indicator::program_id)
+                }
+                ProgramIndicatorSortField::Code => {
+                    apply_sort!(query, sort, program_indicator::code)
+                }
+            }
+        } else {
+            query = query.order(program_indicator::program_id)
+        }
 
         // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
@@ -90,11 +109,6 @@ impl ProgramIndicatorFilter {
 
     pub fn program_id(mut self, filter: EqualFilter<String>) -> Self {
         self.program_id = Some(filter);
-        self
-    }
-
-    pub fn code(mut self, filter: StringFilter) -> Self {
-        self.code = Some(filter);
         self
     }
 }
