@@ -1,5 +1,7 @@
 package org.openmsupply.client;
 
+import com.getcapacitor.Logger;
+
 public class RemoteServer {
     static {
         // This will load libremote_server_android, from app/src/main/jniLib/ directory
@@ -12,6 +14,7 @@ public class RemoteServer {
     }
 
     public void start(int port, String filesDir, String cacheDir, String androidId) {
+        Logger.info("Starting OMS Rust Server");
         startServer(port, filesDir, cacheDir, androidId);
     }
 
