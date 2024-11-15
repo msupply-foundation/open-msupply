@@ -8,6 +8,7 @@ pub(crate) mod asset_log_reason;
 pub(crate) mod asset_property;
 pub(crate) mod asset_type;
 pub(crate) mod barcode;
+pub(crate) mod category;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
 pub(crate) mod cold_storage_type;
@@ -21,7 +22,6 @@ pub(crate) mod indicator_value;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
-pub(crate) mod item_category;
 pub(crate) mod item_variant;
 pub(crate) mod location;
 pub(crate) mod location_movement;
@@ -82,7 +82,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         name_tag_join::boxed(),
         unit::boxed(),
         item::boxed(),
-        item_category::boxed(),
+        category::boxed(),
         store::boxed(),
         master_list::boxed(),
         master_list_line::boxed(),
