@@ -62,7 +62,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     id: invoiceId,
     prescriptionDate,
   } = usePrescription.document.fields(['status', 'id', 'prescriptionDate']);
-  const { mutateAsync, isLoading:isSaving } = usePrescription.line.save();
+  const { mutateAsync, isLoading: isSaving } = usePrescription.line.save();
   const isDisabled = usePrescription.utils.isDisabled();
   const {
     draftStockOutLines: draftPrescriptionLines,
@@ -206,15 +206,15 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
         <LoadingButton
           disabled={!currentItem}
           isLoading={isSaving}
-          startIcon={<CheckIcon/>}
-          loadingStyle={{iconColor:'secondary.main' }}
+          startIcon={<CheckIcon />}
+          loadingStyle={{ iconColor: 'secondary.main' }}
           variant="contained"
-          color='secondary'
+          color="secondary"
           aria-label={t('button.ok')}
           onClick={() => handleSave(onClose)}
         >
           {t('button.ok')}
-          </LoadingButton>
+        </LoadingButton>
       }
       height={height}
       width={1000}
