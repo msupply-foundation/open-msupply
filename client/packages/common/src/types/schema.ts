@@ -2344,6 +2344,11 @@ export type GeneratedCustomerReturnLineConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type Gs1DataElement = {
+  ai: Scalars['String']['input'];
+  data: Scalars['String']['input'];
+};
+
 export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
@@ -5534,13 +5539,13 @@ export type Queries = {
   activeProgramEvents: ProgramEventResponse;
   activityLogs: ActivityLogResponse;
   apiVersion: Scalars['String']['output'];
-  assetByScannedString: AssetParseResponse;
   assetCatalogueItem: AssetCatalogueItemResponse;
   assetCatalogueItems: AssetCatalogueItemsResponse;
   assetCategories: AssetCategoriesResponse;
   assetCategory: AssetCategoryResponse;
   assetClass: AssetClassResponse;
   assetClasses: AssetClassesResponse;
+  assetFromGs1Data: AssetParseResponse;
   assetLogReasons: AssetLogReasonsResponse;
   assetLogs: AssetLogsResponse;
   assetProperties: AssetPropertiesResponse;
@@ -5708,12 +5713,6 @@ export type QueriesActivityLogsArgs = {
 };
 
 
-export type QueriesAssetByScannedStringArgs = {
-  inputText: Scalars['String']['input'];
-  storeId: Scalars['String']['input'];
-};
-
-
 export type QueriesAssetCatalogueItemArgs = {
   id: Scalars['String']['input'];
 };
@@ -5747,6 +5746,12 @@ export type QueriesAssetClassesArgs = {
   filter?: InputMaybe<AssetClassFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<AssetClassSortInput>>;
+};
+
+
+export type QueriesAssetFromGs1DataArgs = {
+  gs1: Array<Gs1DataElement>;
+  storeId: Scalars['String']['input'];
 };
 
 
