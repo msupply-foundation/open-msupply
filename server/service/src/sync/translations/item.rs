@@ -103,6 +103,9 @@ impl SyncTranslation for ItemTranslation {
 
         let mut integration_operations = Vec::new();
 
+        // Translate the item_category join row
+        let item_category_upserts = translate_item_category_join(connection, &data)?;
+
         // Translate the item row
         let item_row = ItemRow {
             id: data.ID.clone(),
@@ -118,44 +121,9 @@ impl SyncTranslation for ItemTranslation {
             ven_category: to_ven_category(data.VEN_category),
             vaccine_doses: data.doses,
         };
+
         integration_operations.push(IntegrationOperation::upsert(item_row));
-
-        // Translate the item_category join row
-        let existing_item_category_join = ItemCategoryRepository::new(connection)
-            .query_one(ItemCategoryFilter::new().item_id(EqualFilter::equal_to(&data.ID)))?;
-
-        match data.category_ID {
-            None => {
-                // If latest item data has no category ID, but existing item category join exists, mark deleted
-                if let Some(item_category) = existing_item_category_join {
-                    let deleted_join = ItemCategoryRow {
-                        deleted_datetime: Some(Utc::now().naive_utc()),
-                        ..item_category.item_category_row
-                    };
-                    integration_operations.push(IntegrationOperation::upsert(deleted_join));
-                }
-            }
-            Some(category_id) => {
-                if let Some(item_category) = existing_item_category_join {
-                    // If latest item data has a different category ID to the existing join, delete that one (we'll create a new one below)
-                    if item_category.item_category_row.category_id != category_id {
-                        let deleted_join = ItemCategoryRow {
-                            deleted_datetime: Some(Utc::now().naive_utc()),
-                            ..item_category.item_category_row
-                        };
-                        integration_operations.push(IntegrationOperation::upsert(deleted_join));
-                    }
-                }
-
-                let item_category_row = ItemCategoryRow {
-                    id: format!("{}-{}", data.ID.clone(), category_id.clone()),
-                    item_id: data.ID,
-                    category_id,
-                    deleted_datetime: None,
-                };
-                integration_operations.push(IntegrationOperation::upsert(item_category_row));
-            }
-        };
+        integration_operations.extend(item_category_upserts);
 
         Ok(PullTranslateResult::IntegrationOperations(
             integration_operations,
@@ -235,6 +203,45 @@ impl SyncTranslation for ItemTranslation {
             json_record,
         ))
     }
+}
+
+fn translate_item_category_join(
+    connection: &StorageConnection,
+    data: &LegacyItemRow,
+) -> Result<Vec<IntegrationOperation>, anyhow::Error> {
+    let mut integration_operations = Vec::new();
+
+    let existing_item_category_join = ItemCategoryRepository::new(connection)
+        .query_one(ItemCategoryFilter::new().item_id(EqualFilter::equal_to(&data.ID)))?;
+
+    if let Some(item_category) = existing_item_category_join {
+        let existing_category_id = item_category.item_category_row.category_id.clone();
+
+        let new_category_id = data.category_ID.clone().unwrap_or_default();
+
+        // If latest item data has a different category ID than that in the existing join,
+        // or if category has been removed, mark existing join as deleted
+        if existing_category_id != new_category_id {
+            let deleted_join = ItemCategoryRow {
+                deleted_datetime: Some(Utc::now().naive_utc()),
+                ..item_category.item_category_row
+            };
+            integration_operations.push(IntegrationOperation::upsert(deleted_join));
+        }
+    }
+
+    // Upsert the new item category join if a category ID is provided in the latest item data
+    if let Some(category_id) = &data.category_ID {
+        let item_category_row = ItemCategoryRow {
+            id: format!("{}-{}", data.ID.clone(), category_id.clone()),
+            item_id: data.ID.clone(),
+            category_id: category_id.clone(),
+            deleted_datetime: None,
+        };
+        integration_operations.push(IntegrationOperation::upsert(item_category_row));
+    }
+
+    Ok(integration_operations)
 }
 
 #[cfg(test)]
