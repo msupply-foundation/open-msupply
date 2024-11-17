@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { AppRoute } from '@openmsupply-client/config';
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -15,6 +16,8 @@ import {
   FnUtils,
   UserPermission,
   useCallbackWithPermission,
+  RouteBuilder,
+  useNavigate,
 } from '@openmsupply-client/common';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { useReturns } from '../api';
@@ -25,7 +28,7 @@ export const AppBarButtonsComponent: FC<{
 }> = ({ modalController }) => {
   const t = useTranslation();
   const { success, error } = useNotification();
-
+  const navigate = useNavigate();
   const { mutateAsync: onCreate } = useReturns.document.insertSupplierReturn();
   const { fetchAsync, isLoading } = useReturns.document.listAllSupplier({
     key: 'createdDateTime',
@@ -61,6 +64,14 @@ export const AppBarButtonsComponent: FC<{
               id: FnUtils.generateUUID(),
               supplierId: name?.id,
               supplierReturnLines: [],
+            }).then(invoiceNumber => {
+              navigate(
+                RouteBuilder.create(AppRoute.Replenishment)
+                  .addPart(AppRoute.SupplierReturn)
+                  .addPart(String(invoiceNumber))
+                  .build(),
+                { replace: false }
+              );
             });
           } catch (e) {
             const errorSnack = error(
