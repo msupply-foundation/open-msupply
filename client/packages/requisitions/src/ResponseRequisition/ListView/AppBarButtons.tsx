@@ -84,7 +84,8 @@ export const AppBarButtons = ({
                   RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.CustomerRequisition)
                     .addPart(String(requisitionNumber))
-                    .build()
+                    .build(),
+                  { replace: false }
                 );
               });
             case NewRequisitionType.Program:
@@ -98,7 +99,8 @@ export const AppBarButtons = ({
                   RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.CustomerRequisition)
                     .addPart(String(requisitionNumber))
-                    .build()
+                    .build(),
+                  { replace: false }
                 );
               });
           }

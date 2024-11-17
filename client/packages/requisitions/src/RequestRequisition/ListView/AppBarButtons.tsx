@@ -82,7 +82,7 @@ export const AppBarButtons: FC<{
                     .addPart(AppRoute.InternalOrder)
                     .addPart(String(requisitionNumber))
                     .build(),
-                  { replace: true }
+                  { replace: false }
                 );
               });
             case NewRequisitionType.Program:
@@ -97,7 +97,7 @@ export const AppBarButtons: FC<{
                     .addPart(AppRoute.InternalOrder)
                     .addPart(String(requisitionNumber))
                     .build(),
-                  { replace: true }
+                  { replace: false }
                 );
               });
           }
