@@ -129,6 +129,7 @@ use crate::{
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
+    category_row::{CategoryRow, CategoryRowRepository},
     item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
     vaccine_course::{
         vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
@@ -237,6 +238,7 @@ pub struct MockData {
     pub program_indicators: Vec<ProgramIndicatorRow>,
     pub indicator_lines: Vec<IndicatorLineRow>,
     pub indicator_columns: Vec<IndicatorColumnRow>,
+    pub categories: Vec<CategoryRow>,
 }
 
 impl MockData {
@@ -316,6 +318,7 @@ pub struct MockDataInserts {
     pub program_indicators: bool,
     pub indicator_lines: bool,
     pub indicator_columns: bool,
+    pub categories: bool,
 }
 
 impl MockDataInserts {
@@ -384,6 +387,7 @@ impl MockDataInserts {
             program_indicators: true,
             indicator_lines: true,
             indicator_columns: true,
+            categories: true,
         }
     }
 
@@ -690,6 +694,10 @@ impl MockDataInserts {
     }
     pub fn program_enrolments(mut self) -> Self {
         self.program_enrolments = true;
+        self
+    }
+    pub fn categories(mut self) -> Self {
+        self.categories = true;
         self
     }
 }
@@ -1286,6 +1294,12 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.categories {
+            let repo = CategoryRowRepository::new(connection);
+            for row in &mock_data.categories {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1358,6 +1372,7 @@ impl MockData {
             mut program_indicators,
             mut indicator_lines,
             mut indicator_columns,
+            mut categories,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1426,6 +1441,7 @@ impl MockData {
         self.program_indicators.append(&mut program_indicators);
         self.indicator_lines.append(&mut indicator_lines);
         self.indicator_columns.append(&mut indicator_columns);
+        self.categories.append(&mut categories);
         self
     }
 }

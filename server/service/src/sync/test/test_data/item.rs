@@ -1,5 +1,11 @@
-use crate::sync::{test::TestSyncIncomingRecord, translations::item::ordered_simple_json};
-use repository::{ItemRow, ItemRowDelete, ItemType};
+use crate::sync::{
+    test::{IntegrationOperation, PullTranslateResult, TestSyncIncomingRecord},
+    translations::item::ordered_simple_json,
+};
+use repository::{
+    category_row::CategoryRow, item_category_row::ItemCategoryRow, mock::MockData, ItemRow,
+    ItemRowDelete, ItemType, SyncAction, SyncBufferRow,
+};
 
 const TABLE_NAME: &str = "item";
 
@@ -279,26 +285,46 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 ..Default::default()
             },
         ),
-        TestSyncIncomingRecord::new_pull_upsert(
-            TABLE_NAME,
-            (
-                ITEM_3_VACCINE.0,
-                &ordered_simple_json(ITEM_3_VACCINE.1).unwrap(),
-            ),
-            ItemRow {
-                id: ITEM_3_VACCINE.0.to_owned(),
-                name: "Covid-19 Vaccine".to_owned(),
-                code: "Covid19-Pfizer-BioNTech".to_owned(),
-                unit_id: Some("97674EFD5DFD4D8CABCAF58AAB4ED054".to_owned()),
-                r#type: ItemType::Stock,
-                legacy_record: ordered_simple_json(ITEM_3_VACCINE.1).unwrap(),
-                default_pack_size: 1.0,
-                is_active: true,
-                is_vaccine: true,
-                vaccine_doses: 1,
+        TestSyncIncomingRecord {
+            translated_record: PullTranslateResult::IntegrationOperations(vec![
+                IntegrationOperation::upsert(ItemRow {
+                    id: ITEM_3_VACCINE.0.to_owned(),
+                    name: "Covid-19 Vaccine".to_owned(),
+                    code: "Covid19-Pfizer-BioNTech".to_owned(),
+                    unit_id: Some("97674EFD5DFD4D8CABCAF58AAB4ED054".to_owned()),
+                    r#type: ItemType::Stock,
+                    legacy_record: ordered_simple_json(ITEM_3_VACCINE.1).unwrap(),
+                    default_pack_size: 1.0,
+                    is_active: true,
+                    is_vaccine: true,
+                    vaccine_doses: 1,
+                    ..Default::default()
+                }),
+                IntegrationOperation::upsert(ItemCategoryRow {
+                    id: format!(
+                        "{}-{}",
+                        ITEM_3_VACCINE.0, "FA6FC67251CC4560AC7FED0C0B23E5A0"
+                    ),
+                    item_id: ITEM_3_VACCINE.0.to_owned(),
+                    category_id: "FA6FC67251CC4560AC7FED0C0B23E5A0".to_owned(),
+                    deleted_datetime: None,
+                }),
+            ]),
+            sync_buffer_row: SyncBufferRow {
+                table_name: TABLE_NAME.to_string(),
+                record_id: ITEM_3_VACCINE.0.to_owned(),
+                data: ITEM_3_VACCINE.1.to_owned(),
+                action: SyncAction::Upsert,
                 ..Default::default()
             },
-        ),
+            extra_data: Some(MockData {
+                categories: vec![CategoryRow {
+                    id: "FA6FC67251CC4560AC7FED0C0B23E5A0".to_owned(),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            }),
+        },
     ]
 }
 
