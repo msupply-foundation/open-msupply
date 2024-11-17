@@ -36,17 +36,6 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
-        if cfg!(feature = "postgres") {
-            // Postgres changelog variant
-            sql!(
-                connection,
-                r#"
-                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'category';
-                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'item_category_join';
-                    "#
-            )?;
-        }
-
         Ok(())
     }
 }
