@@ -1,5 +1,5 @@
 use super::{
-    item_category_row::{item_category, ItemCategoryRow},
+    item_category_row::{item_category_join, ItemCategoryRow},
     DBType, StorageConnection,
 };
 
@@ -97,19 +97,19 @@ fn to_domain(row: ItemCategoryRow) -> ItemCategory {
     }
 }
 
-type BoxedItemCategoryQuery = IntoBoxed<'static, item_category::table, DBType>;
+type BoxedItemCategoryQuery = IntoBoxed<'static, item_category_join::table, DBType>;
 
 fn create_filtered_query(filter: Option<ItemCategoryFilter>) -> BoxedItemCategoryQuery {
-    let mut query = item_category::table.into_boxed();
+    let mut query = item_category_join::table.into_boxed();
 
     if let Some(f) = filter {
         let ItemCategoryFilter { id, item_id } = f;
 
-        apply_equal_filter!(query, id, item_category::id);
-        apply_equal_filter!(query, item_id, item_category::item_id);
+        apply_equal_filter!(query, id, item_category_join::id);
+        apply_equal_filter!(query, item_id, item_category_join::item_id);
     }
 
-    query = query.filter(item_category::deleted_datetime.is_null());
+    query = query.filter(item_category_join::deleted_datetime.is_null());
 
     query
 }

@@ -5,7 +5,7 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
 table! {
-    item_category (id) {
+    item_category_join (id) {
         id -> Text,
         item_id -> Text,
         category_id -> Text,
@@ -14,7 +14,7 @@ table! {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
-#[diesel(table_name = item_category)]
+#[diesel(table_name = item_category_join)]
 pub struct ItemCategoryRow {
     pub id: String,
     pub item_id: String,
@@ -31,12 +31,15 @@ impl<'a> ItemCategoryRowRepository<'a> {
         ItemCategoryRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, item_category_row: &ItemCategoryRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(item_category::table)
-            .values(item_category_row)
-            .on_conflict(item_category::id)
+    pub fn upsert_one(
+        &self,
+        item_category_join_row: &ItemCategoryRow,
+    ) -> Result<(), RepositoryError> {
+        diesel::insert_into(item_category_join::table)
+            .values(item_category_join_row)
+            .on_conflict(item_category_join::id)
             .do_update()
-            .set(item_category_row)
+            .set(item_category_join_row)
             .execute(self.connection.lock().connection())?;
 
         Ok(())
@@ -44,18 +47,20 @@ impl<'a> ItemCategoryRowRepository<'a> {
 
     pub fn find_one_by_id(
         &self,
-        item_category_id: &str,
+        item_category_join_id: &str,
     ) -> Result<Option<ItemCategoryRow>, RepositoryError> {
-        let result = item_category::table
-            .filter(item_category::id.eq(item_category_id))
+        let result = item_category_join::table
+            .filter(item_category_join::id.eq(item_category_join_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete(&self, item_category_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(item_category::table.filter(item_category::id.eq(item_category_id)))
-            .execute(self.connection.lock().connection())?;
+    pub fn delete(&self, item_category_join_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(
+            item_category_join::table.filter(item_category_join::id.eq(item_category_join_id)),
+        )
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
