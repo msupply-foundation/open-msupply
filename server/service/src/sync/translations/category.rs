@@ -21,16 +21,8 @@ pub struct LegacyItemCategoryRow {
     ID: String,
     Description: String,
     sort_order: i32,
-    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default, deserialize_with = "empty_str_as_option_string")]
     parent_ID: Option<String>,
-}
-
-#[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
-pub struct LegacyItemCategoryLevel1Row {
-    ID: String,
-    Description: String,
-    sort_order: i32,
 }
 
 // Needs to be added to all_translators()
@@ -61,29 +53,13 @@ impl SyncTranslation for CategoryTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        // Try to parse as a child category (item_category or item_category_level2)
-        match serde_json::from_str::<LegacyItemCategoryRow>(&sync_record.data) {
-            Ok(data) => {
-                let category_row = CategoryRow {
-                    id: data.ID,
-                    name: data.Description.clone(),
-                    description: Some(data.Description),
-                    parent_id: data.parent_ID,
-                    deleted_datetime: None,
-                };
-                return Ok(PullTranslateResult::upsert(category_row));
-            }
-            // If parsing as a child category fails, try to parse as a root category below (item_category_level1)
-            Err(_) => {}
-        }
-
-        let data = serde_json::from_str::<LegacyItemCategoryLevel1Row>(&sync_record.data)?;
+        let data = serde_json::from_str::<LegacyItemCategoryRow>(&sync_record.data)?;
 
         let category_row = CategoryRow {
             id: data.ID,
             name: data.Description.clone(),
             description: Some(data.Description),
-            parent_id: None,
+            parent_id: data.parent_ID,
             deleted_datetime: None,
         };
 
