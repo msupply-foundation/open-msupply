@@ -64,7 +64,7 @@ export const AppBarButtonsComponent: FC<{
                     .addPart(AppRoute.Prescription)
                     .addPart(String(invoiceNumber))
                     .build(),
-                  { replace: true }
+                  { replace: false }
                 );
               });
             } catch (e) {

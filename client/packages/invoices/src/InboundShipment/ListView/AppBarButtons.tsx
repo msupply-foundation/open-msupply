@@ -78,7 +78,7 @@ export const AppBarButtons: FC<{
                 .addPart(AppRoute.InboundShipment)
                 .addPart(String(invoiceNumber))
                 .build(),
-              { replace: true }
+              { replace: false }
             );
           });
         }}
