@@ -69,7 +69,7 @@ export const AppBarButtonsComponent: FC<{
                     .addPart(AppRoute.OutboundShipment)
                     .addPart(String(invoiceNumber))
                     .build(),
-                  { replace: true }
+                  { replace: false }
                 );
               });
             } catch (e) {
