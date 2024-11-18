@@ -480,3 +480,62 @@ query customerProgramSettings($storeId: String!) {
     ...CustomerProgramSettings
   }
 }
+
+query programIndicators(
+  $customerNameLinkId: String!
+  $periodId: String!
+  $storeId: String!
+) {
+  programIndicators(storeId: $storeId) {
+    ... on ProgramIndicatorConnector {
+      nodes {
+        code
+        lineAndColumns {
+          columns {
+            columnNumber
+            name
+            valueType
+            value(
+              periodId: $periodId
+              customerNameLinkId: $customerNameLinkId
+              storeId: $storeId
+            ) {
+              id
+              value
+            }
+          }
+          line {
+            code
+            lineNumber
+            name
+            valueType
+          }
+        }
+        id
+      }
+      totalCount
+    }
+  }
+}
+
+mutation updateIndicatorValue(
+  $storeId: String!
+  $input: UpdateIndicatorValueInput!
+) {
+  updateIndicatorValue(input: $input, storeId: $storeId) {
+    ... on IndicatorValueNode {
+      id
+      value
+    }
+    ... on UpdateIndicatorValueError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
