@@ -48,7 +48,6 @@ export const PropertyInput: FC<PropertyInput> = ({
         <NumericTextInput
           value={valueInt ?? 0}
           fullWidth
-          allowNegative
           onChange={n => {
             onChange(n);
           }}
