@@ -69,8 +69,7 @@ export const AppBarButtonsComponent: FC<{
                 RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.SupplierReturn)
                   .addPart(String(invoiceNumber))
-                  .build(),
-                { replace: false }
+                  .build()
               );
             });
           } catch (e) {
