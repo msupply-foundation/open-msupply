@@ -71,7 +71,7 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
             String globalJS = JSExport.getGlobalJS(bridge.getContext(), bridge.getConfig().isLoggingEnabled(),
                     bridge.isDevMode());
             String bridgeJS = JSExport.getBridgeJS(bridge.getContext());
-            String pluginJS = JSExport.getPluginJS(pluginList);    
+            String pluginJS = JSExport.getPluginJS(pluginList);
             String cordovaJS = JSExport.getCordovaJS(bridge.getContext());
             String cordovaPluginsJS = JSExport.getCordovaPluginJS(bridge.getContext());
             String cordovaPluginsFileJS = JSExport.getCordovaPluginsFileJS(bridge.getContext());
