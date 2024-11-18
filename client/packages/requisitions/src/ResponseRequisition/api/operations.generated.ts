@@ -119,6 +119,23 @@ export type CustomerProgramSettingsQueryVariables = Types.Exact<{
 
 export type CustomerProgramSettingsQuery = { __typename: 'Queries', customerProgramRequisitionSettings: Array<{ __typename: 'CustomerProgramRequisitionSettingNode', programName: string, programId: string, customerAndOrderTypes: Array<{ __typename: 'CustomerAndOrderTypeNode', customer: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> }> };
 
+export type ProgramIndicatorsQueryVariables = Types.Exact<{
+  customerNameLinkId: Types.Scalars['String']['input'];
+  periodId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type ProgramIndicatorsQuery = { __typename: 'Queries', programIndicators: { __typename: 'ProgramIndicatorConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramIndicatorNode', code?: string | null, id: string, lineAndColumns: Array<{ __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null } }> }> } };
+
+export type UpdateIndicatorValueMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdateIndicatorValueInput;
+}>;
+
+
+export type UpdateIndicatorValueMutation = { __typename: 'Mutations', updateIndicatorValue: { __typename: 'IndicatorValueNode', id: string, value: string } | { __typename: 'UpdateIndicatorValueError', error: { __typename: 'RecordNotFound', description: string } } };
+
 export const ResponseLineFragmentDoc = gql`
     fragment ResponseLine on RequisitionLineNode {
   id
@@ -587,6 +604,60 @@ export const CustomerProgramSettingsDocument = gql`
   }
 }
     ${CustomerProgramSettingsFragmentDoc}`;
+export const ProgramIndicatorsDocument = gql`
+    query programIndicators($customerNameLinkId: String!, $periodId: String!, $storeId: String!) {
+  programIndicators(storeId: $storeId) {
+    ... on ProgramIndicatorConnector {
+      nodes {
+        code
+        lineAndColumns {
+          columns {
+            columnNumber
+            name
+            valueType
+            value(
+              periodId: $periodId
+              customerNameLinkId: $customerNameLinkId
+              storeId: $storeId
+            ) {
+              id
+              value
+            }
+          }
+          line {
+            code
+            lineNumber
+            name
+            valueType
+          }
+        }
+        id
+      }
+      totalCount
+    }
+  }
+}
+    `;
+export const UpdateIndicatorValueDocument = gql`
+    mutation updateIndicatorValue($storeId: String!, $input: UpdateIndicatorValueInput!) {
+  updateIndicatorValue(input: $input, storeId: $storeId) {
+    ... on IndicatorValueNode {
+      id
+      value
+    }
+    ... on UpdateIndicatorValueError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -633,6 +704,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     customerProgramSettings(variables: CustomerProgramSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CustomerProgramSettingsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<CustomerProgramSettingsQuery>(CustomerProgramSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'customerProgramSettings', 'query', variables);
+    },
+    programIndicators(variables: ProgramIndicatorsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramIndicatorsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProgramIndicatorsQuery>(ProgramIndicatorsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programIndicators', 'query', variables);
+    },
+    updateIndicatorValue(variables: UpdateIndicatorValueMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateIndicatorValueMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateIndicatorValueMutation>(UpdateIndicatorValueDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateIndicatorValue', 'mutation', variables);
     }
   };
 }
