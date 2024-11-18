@@ -21,8 +21,13 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
 
     public ExtendedWebViewClient(Bridge bridge) {
         super(bridge);
-
         this.bridge = bridge;
+    }
+
+    public void loadJsInject() {
+        if(this.jsInject == null) {
+            this.jsInject = this.generatePluginScript();
+        }
     }
 
     // Have to manually inject Capacitor JS, this typically happens in
@@ -34,23 +39,13 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
         Logger.debug("onPageStarted" + url   );
         if (url.startsWith("data:text")) return;
 
-        if (this.jsInject == null){
-            this.jsInject = this.generatePluginScript();
-        }
+        // Just incase the js hasn't been generated yet, generate it here.
+        this.loadJsInject()
 
         if(this.jsInject != null) {
             Logger.debug("injecting JS");
             // .post to run on UI thread
             webView.post(() -> webView.evaluateJavascript(this.jsInject, null));
-        }
-    }
-
-
-    private void sleep(int delay) {
-        try {
-            Thread.sleep(delay);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -66,7 +61,7 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
             PluginHandle plugin = bridge.getPlugin(pluginName);
             if (plugin == null) {
                 Logger.error("Couldn't find plugin : " + pluginName);
-                continue;
+                return null;
             }
             pluginList.add(plugin);
         }

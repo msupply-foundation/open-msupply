@@ -64,11 +64,13 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     boolean isResolvingServer;
     boolean shouldRestartDiscovery;
 
+    CertWebViewClient client;
+
     @Override
     public void load() {
         super.load();
 
-        CertWebViewClient client = new CertWebViewClient(this.getBridge(), this.getContext().getFilesDir(), this);
+        client = new CertWebViewClient(this.getBridge(), this.getContext().getFilesDir(), this);
         bridge.setWebViewClient(client);
 
         serversToResolve = new ArrayDeque<NsdServiceInfo>();
@@ -112,6 +114,17 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     @Override
     protected void handleOnStart() {
         WebView webView = this.getBridge().getWebView();
+
+        // Normally javascript would be loaded by Capcitor by loading the generated javascript from WEBVIEW_SERVER_URL
+        // However we'd get an SSL issue with this approach, so we need to generate it ourselves and inject it later.
+
+        // NOTE: There have been various timing issues with this javascript injection loading, including onPageStarted in ExtendedWebViewClient
+        // We call it here as well as in ExtendedWebViewClient as this gives more time for it to be generated before the webview loads
+        // and onPageStarted happens in the ExtendedWebViewClient
+        // Avoiding issues with it taking too long to generate.
+        client.loadJsInject();
+
+
         // this method (handleOnStart) is called when resuming and switching to the app
         // the webView url will be DEFAULT_URL only on the initial load
         // so this test is a quick check to see if we should be redirecting to the
