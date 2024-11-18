@@ -65,11 +65,18 @@ impl<'a> IndicatorValueRepository<'a> {
             .get_result(self.connection.lock().connection())?)
     }
 
+    pub fn query_one(
+        &self,
+        filter: IndicatorValueFilter,
+    ) -> Result<Option<IndicatorValueRow>, RepositoryError> {
+        Ok(self.query_by_filter(filter)?.pop())
+    }
+
     pub fn query_by_filter(
         &self,
         filter: IndicatorValueFilter,
     ) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter))
+        self.query(Pagination::all(), Some(filter))
     }
 
     pub fn create_filtered_query(filter: Option<IndicatorValueFilter>) -> BoxedIndicatorQuery {

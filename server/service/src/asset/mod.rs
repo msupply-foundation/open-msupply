@@ -13,13 +13,14 @@ use self::update::{update_asset, UpdateAsset, UpdateAssetError};
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
-use parse::ScannedDataParseError;
+use parse::AssetFromGs1Error;
 use repository::asset_log_reason::{AssetLogReason, AssetLogReasonFilter, AssetLogReasonSort};
 use repository::asset_property::AssetPropertyFilter;
 use repository::asset_property_row::AssetPropertyRow;
 use repository::assets::asset::{Asset, AssetFilter, AssetSort};
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort};
 use repository::{PaginationOption, StorageConnection};
+use util::GS1DataElement;
 
 pub mod delete;
 pub mod delete_log_reason;
@@ -139,12 +140,12 @@ pub trait AssetServiceTrait: Sync + Send {
         get_asset_properties(connection, filter)
     }
 
-    fn parse_scanned_data(
+    fn asset_from_gs1_data(
         &self,
         ctx: &ServiceContext,
-        scanned_data: String,
-    ) -> Result<Asset, ScannedDataParseError> {
-        parse::parse_from_scanned_data(ctx, scanned_data)
+        gs1_data: Vec<GS1DataElement>,
+    ) -> Result<Asset, AssetFromGs1Error> {
+        parse::get_or_create_from_gs1_data(ctx, gs1_data)
     }
 }
 
