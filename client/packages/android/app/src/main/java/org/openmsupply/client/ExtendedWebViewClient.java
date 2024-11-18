@@ -26,6 +26,7 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
 
     public void loadJsInject() {
         if(this.jsInject == null) {
+            Logger.debug("Generating JS");
             this.jsInject = this.generatePluginScript();
         }
     }
@@ -36,11 +37,10 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
     // fails for self signed certificates and plugin definitions etc is not injected
     @Override
     public void onPageStarted(WebView webView, String url, Bitmap favicon) {
-        Logger.debug("onPageStarted" + url   );
         if (url.startsWith("data:text")) return;
 
         // Just incase the js hasn't been generated yet, generate it here.
-        this.loadJsInject()
+        this.loadJsInject();
 
         if(this.jsInject != null) {
             Logger.debug("injecting JS");

@@ -113,9 +113,10 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     @Override
     protected void handleOnStart() {
+        Logger.debug("NativeAPI.handleOnStart()");
         WebView webView = this.getBridge().getWebView();
 
-        // Normally javascript would be loaded by Capcitor by loading the generated javascript from WEBVIEW_SERVER_URL
+        // Normally javascript would be loaded by Capacitor by loading the generated javascript from WEBVIEW_SERVER_URL
         // However we'd get an SSL issue with this approach, so we need to generate it ourselves and inject it later.
 
         // NOTE: There have been various timing issues with this javascript injection loading, including onPageStarted in ExtendedWebViewClient
