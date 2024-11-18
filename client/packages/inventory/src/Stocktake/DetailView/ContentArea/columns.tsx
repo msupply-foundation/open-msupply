@@ -142,6 +142,7 @@ export const useStocktakeColumns = ({
     [
       'packSize',
       {
+        Cell: NumberCell,
         accessor: ({ rowData }) =>
           getColumnProperty(rowData, [
             { path: ['lines', 'packSize'] },
@@ -214,24 +215,25 @@ export const useStocktakeColumns = ({
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           const { lines } = rowData;
-                const total =
-                  lines.reduce(
-                    (total, line) =>
-                      total +
-                      (line.snapshotNumberOfPacks -
-                        (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks)),
-                    0
-                  ) ?? 0;
-                return (total < 0 ? Math.abs(total) : -total).toString();
-                 } else if (rowData.countedNumberOfPacks === null ){ return null 
-                 } else {
-                return (
-                  (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
-                  rowData.snapshotNumberOfPacks
-                );
-              }
-            },
-          },
+          const total =
+            lines.reduce(
+              (total, line) =>
+                total +
+                (line.snapshotNumberOfPacks -
+                  (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks)),
+              0
+            ) ?? 0;
+          return (total < 0 ? Math.abs(total) : -total).toString();
+        } else if (rowData.countedNumberOfPacks === null) {
+          return null;
+        } else {
+          return (
+            (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
+            rowData.snapshotNumberOfPacks
+          );
+        }
+      },
+    },
     {
       key: 'inventoryAdjustmentReason',
       label: 'label.reason',
