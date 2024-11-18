@@ -54,10 +54,6 @@ export const Toolbar = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId, typeData]);
 
-  // Because category options are one of the default filters, we should return null until
-  // the category data is loaded
-  if (!categoryData) return null;
-
   const filters: FilterDefinition[] = [
     {
       type: 'boolean',
@@ -102,7 +98,7 @@ export const Toolbar = () => {
       type: 'enum',
       name: t('label.category'),
       urlParameter: 'categoryId',
-      options: mapIdNameToOptions(categoryData.nodes),
+      options: mapIdNameToOptions(categoryData?.nodes ?? []),
       isDefault: true,
     },
     {
