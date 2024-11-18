@@ -119,10 +119,10 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         // Normally javascript would be loaded by Capacitor by loading the generated javascript from WEBVIEW_SERVER_URL
         // However we'd get an SSL issue with this approach, so we need to generate it ourselves and inject it later.
 
-        // NOTE: There have been various timing issues with this javascript injection loading, including onPageStarted in ExtendedWebViewClient
+        // NOTE: There have been various timing issues with this javascript injection loading
+        // We do the actual injection during onPageStarted in ExtendedWebViewClient
         // We call it here as well as in ExtendedWebViewClient as this gives more time for it to be generated before the webview loads
-        // and onPageStarted happens in the ExtendedWebViewClient
-        // Avoiding issues with it taking too long to generate.
+        // Potentially avoiding issues if it takes too long to generate.
         client.loadJsInject();
 
 
