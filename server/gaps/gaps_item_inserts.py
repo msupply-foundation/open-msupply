@@ -29,7 +29,7 @@ with open(item_variants_file_path, 'r') as file:
             item_id = ids['item_id']
             if item_id not in item_id_inserted:
                 upsert_item_stmt(item_id, row)
-                insert_master_list_line(item_id)
+                print(insert_master_list_line(item_id))
                 item_id_inserted[item_id] = True
 
             # Insert the item_variant
