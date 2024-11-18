@@ -28,7 +28,7 @@ export const ListItems = ({
       <ListOptions
         currentId={value?.id}
         onClick={id => {
-          navigate(route.addPart(id).build(), { replace: true });
+          navigate(route.addPart(id).build());
         }}
         options={
           items?.map(({ id, name }) => ({
