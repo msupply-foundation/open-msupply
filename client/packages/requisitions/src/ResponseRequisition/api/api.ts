@@ -281,11 +281,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
         input: responseParser.toUpdateLine(patch),
       })) || {};
 
-    if (
-      result?.updateResponseRequisitionLine.__typename === 'RequisitionLineNode'
-    ) {
-      return result.updateResponseRequisitionLine;
-    } else throw new Error('Could not update response line');
+    return result;
   },
   createOutboundFromResponse: async (responseId: string): Promise<number> => {
     const result =

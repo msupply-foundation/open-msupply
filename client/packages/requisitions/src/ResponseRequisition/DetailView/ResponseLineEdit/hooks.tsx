@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useResponse, ResponseLineFragment } from '../../api';
 import { ItemRowFragment } from '@openmsupply-client/system';
+import { useNotification } from '@common/hooks';
+import { useTranslation } from '@common/intl';
 
 export type DraftResponseLine = Omit<ResponseLineFragment, '__typename'> & {
   requisitionId: string;
@@ -19,7 +21,9 @@ const createDraftLine = (
 
 export const useDraftRequisitionLine = (item?: ItemRowFragment | null) => {
   const { id: reqId, lines } = useResponse.document.fields(['id', 'lines']);
-  const { mutateAsync: save, isLoading } = useResponse.line.save();
+  const { mutateAsync: saveAction, isLoading } = useResponse.line.save();
+  const { error } = useNotification();
+  const t = useTranslation();
 
   const [draft, setDraft] = useState<DraftResponseLine | null>(null);
 
@@ -42,7 +46,26 @@ export const useDraftRequisitionLine = (item?: ItemRowFragment | null) => {
     }
   };
 
-  return { draft, isLoading, save: () => draft && save(draft), update };
+  const save = async () => {
+    if (draft) {
+      let result = await saveAction(draft);
+      if (
+        result.updateResponseRequisitionLine.__typename ===
+        'UpdateResponseRequisitionLineError'
+      ) {
+        switch (result.updateResponseRequisitionLine.error.__typename) {
+          case 'ReasonNotProvided':
+            error(t('error.requires-reason'))();
+            break;
+          default:
+            error(result.updateResponseRequisitionLine.error.description)();
+            break;
+        }
+      }
+    }
+  };
+
+  return { draft, isLoading, save, update };
 };
 
 export const usePreviousNextResponseLine = (

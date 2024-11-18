@@ -378,6 +378,7 @@
   "error.v6-server-not-configured": "V6 central server not configured",
   "error.v6-server-not-configured-hint": "Check the central server URL",
   "error.vaccine-course-update-failed": "Vaccine course failed to save",
+  "error.requires-reason": "Reason required when suggested quantity differs from requested quantity",
   "facilities": "Facilities",
   "filename.asset-categories": "asset-categories",
   "filename.asset-import-example": "Example Asset Item Import",
