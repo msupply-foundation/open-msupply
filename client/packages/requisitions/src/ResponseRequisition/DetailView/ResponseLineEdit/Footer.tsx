@@ -52,8 +52,7 @@ export const Footer: FC<FooterProps> = ({
                     .addPart(AppRoute.CustomerRequisition)
                     .addPart(String(requisitionNumber))
                     .addPart(String(previous?.id))
-                    .build(),
-                  { replace: true }
+                    .build()
                 )
               }
             />
@@ -66,8 +65,7 @@ export const Footer: FC<FooterProps> = ({
                     .addPart(AppRoute.CustomerRequisition)
                     .addPart(String(requisitionNumber))
                     .addPart(String(next?.id))
-                    .build(),
-                  { replace: true }
+                    .build()
                 )
               }
             />
