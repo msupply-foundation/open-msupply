@@ -37,6 +37,8 @@ import {
   HistoricEncounterData,
   bloodPressureTester,
   BloodPressure,
+  Prescription,
+  prescriptionTester,
 } from './components';
 import { EnrolmentId, enrolmentIdTester } from './components/EnrolmentId';
 import {
@@ -81,6 +83,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: historicEncounterDataTester, renderer: HistoricEncounterData },
   { tester: enrolmentIdTester, renderer: EnrolmentId },
   { tester: bloodPressureTester, renderer: BloodPressure },
+  { tester: prescriptionTester, renderer: Prescription },
 ];
 
 /**
