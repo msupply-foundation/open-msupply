@@ -46,6 +46,9 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
             Logger.debug("injecting JS");
             // .post to run on UI thread
             webView.post(() -> webView.evaluateJavascript(this.jsInject, null));
+        } else {
+            Logger.error("JS not generated, not injecting");
+            webView.post(() -> webView.evaluateJavascript("alert('Error unable to load javascript to inject. Please contact mSupply Support for assistance.')", null));
         }
     }
 
