@@ -326,6 +326,10 @@ mutation updateResponseLine(
           __typename
           description
         }
+        ... on ReasonNotProvided {
+          __typename
+          description
+        }
       }
     }
   }
