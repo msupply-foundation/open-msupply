@@ -60,6 +60,67 @@ fragment ItemRowWithStats on ItemNode {
   }
 }
 
+fragment ColdStorageType on ColdStorageTypeNode {
+  __typename
+  id
+  name
+  minTemperature
+  maxTemperature
+}
+
+fragment PackagingVariant on PackagingVariantNode {
+  __typename
+  id
+  name
+  packagingLevel
+  packSize
+  volumePerUnit
+}
+
+fragment BundledItemVariant on ItemVariantNode {
+  id
+  name
+  itemId
+  itemName
+}
+
+fragment BundledItem on BundledItemNode {
+  __typename
+  id
+  ratio
+  principalItemVariant {
+    ...BundledItemVariant
+  }
+  bundledItemVariant {
+    ...BundledItemVariant
+  }
+}
+
+fragment ItemVariant on ItemVariantNode {
+  __typename
+  id
+  name
+  dosesPerUnit
+  itemId
+  manufacturerId
+  manufacturer(storeId: $storeId) {
+    ...NameRow
+  }
+  coldStorageTypeId
+  coldStorageType {
+    ...ColdStorageType
+  }
+  packagingVariants {
+    ...PackagingVariant
+  }
+  bundledItemVariants {
+    ...BundledItem
+  }
+  bundlesWith {
+    ...BundledItem
+  }
+}
+
 fragment Item on ItemNode {
   __typename
   id
@@ -95,6 +156,9 @@ fragment Item on ItemNode {
     availableStockOnHand
     availableMonthsOfStockOnHand
     totalConsumption
+  }
+  variants {
+    ...ItemVariant
   }
 }
 
@@ -239,78 +303,31 @@ query itemById($storeId: String!, $itemId: String!) {
   }
 }
 
-fragment Variant on VariantNode {
+fragment ItemVariantOption on ItemVariantNode {
   __typename
   id
-  itemId
-  longName
-  packSize
-  shortName
-}
-
-fragment PackVariant on ItemPackVariantNode {
-  itemId
-  mostUsedPackVariantId
-  packVariants {
-    ...Variant
+  label: name
+  # To determine if the variant already has other variants bundled to it
+  bundledItemVariants {
+    id
   }
 }
 
-query packVariants($storeId: String!) {
-  packVariants(storeId: $storeId) {
-    __typename
-    nodes {
-      ...PackVariant
-    }
-    totalCount
-  }
+query itemVariantsConfigured($storeId: String!) {
+  itemVariantsConfigured(storeId: $storeId)
 }
 
-mutation insertPackVariant($storeId: String!, $input: InsertPackVariantInput!) {
-  centralServer {
-    packVariant {
-      insertPackVariant(storeId: $storeId, input: $input) {
+query itemVariants($storeId: String!, $itemId: String!) {
+  items(
+    storeId: $storeId
+    filter: { id: { equalTo: $itemId }, isActive: true }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
         __typename
-        ... on VariantNode {
-          ...Variant
-        }
-        ... on InsertPackVariantError {
-          error {
-            __typename
-            description
-          }
-        }
-      }
-    }
-  }
-}
-
-mutation updatePackVariant($storeId: String!, $input: UpdatePackVariantInput!) {
-  centralServer {
-    packVariant {
-      updatePackVariant(storeId: $storeId, input: $input) {
-        __typename
-        ... on VariantNode {
-          ...Variant
-        }
-        ... on UpdatePackVariantError {
-          error {
-            __typename
-            description
-          }
-        }
-      }
-    }
-  }
-}
-
-mutation deletePackVariant($storeId: String!, $input: DeletePackVariantInput!) {
-  centralServer {
-    packVariant {
-      deletePackVariant(storeId: $storeId, input: $input) {
-        ... on DeleteResponse {
-          __typename
-          id
+        variants {
+          ...ItemVariantOption
         }
       }
     }
@@ -330,6 +347,81 @@ query getHistoricalStockLines(
     ... on StockLineConnector {
       nodes {
         ...StockLine
+      }
+    }
+  }
+}
+
+mutation upsertItemVariant($storeId: String!, $input: UpsertItemVariantInput!) {
+  centralServer {
+    itemVariant {
+      upsertItemVariant(storeId: $storeId, input: $input) {
+        __typename
+        ... on ItemVariantNode {
+          ...ItemVariant
+        }
+        ... on UpsertItemVariantError {
+          __typename
+          error {
+            __typename
+            description
+            ... on UniqueValueViolation {
+              description
+              field
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deleteItemVariant($storeId: String!, $input: DeleteItemVariantInput!) {
+  centralServer {
+    itemVariant {
+      deleteItemVariant(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+query coldStorageTypes($storeId: String!) {
+  coldStorageTypes(storeId: $storeId) {
+    ... on ColdStorageTypeConnector {
+      nodes {
+        ...ColdStorageType
+      }
+    }
+  }
+}
+
+mutation upsertBundledItem($storeId: String!, $input: UpsertBundledItemInput!) {
+  centralServer {
+    bundledItem {
+      upsertBundledItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on BundledItemNode {
+          ...BundledItem
+        }
+      }
+    }
+  }
+}
+
+mutation deleteBundledItem($storeId: String!, $input: DeleteBundledItemInput!) {
+  centralServer {
+    bundledItem {
+      deleteBundledItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          __typename
+          id
+        }
       }
     }
   }

@@ -47,6 +47,20 @@ mod test {
             Err(ServiceError::LocationDoesNotExist)
         );
 
+        // ItemVariantDoesNotExist
+        assert_eq!(
+            service.update_stock_line(
+                &context,
+                inline_init(|r: &mut UpdateStockLine| {
+                    r.id = mock_stock_line_a().id;
+                    r.item_variant_id = Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    });
+                })
+            ),
+            Err(ServiceError::ItemVariantDoesNotExist)
+        );
+
         // StockDoesNotBelongToStore
         context.store_id = "store_b".to_string();
         assert_eq!(

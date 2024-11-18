@@ -13,6 +13,7 @@ pub struct CustomerReturnLine {
     pub note: Option<String>,
     pub number_of_packs: f64,
     pub item_row: ItemRow,
+    pub item_variant_id: Option<String>,
     pub packs_issued: Option<f64>,
     pub batch: Option<String>,
     pub pack_size: f64,
@@ -104,6 +105,7 @@ impl CustomerReturnLine {
             note: line.invoice_line_row.note.clone(),
             number_of_packs: line.invoice_line_row.number_of_packs,
             stock_line_id: line.invoice_line_row.stock_line_id.clone(),
+            item_variant_id: line.invoice_line_row.item_variant_id.clone(),
             // We only include packs_issued on new lines. In order to get it for existing lines, we'd need
             // to store a linked invoice line of the outbound shipment against the customer return line
             packs_issued: None,

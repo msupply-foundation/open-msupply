@@ -22,6 +22,7 @@ use crate::{
     },
     invoice::{InvoiceService, InvoiceServiceTrait},
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
+    item::ItemServiceTrait,
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     label_printer_settings_service::LabelPrinterSettingsServiceTrait,
     localisations::Localisations,
@@ -29,7 +30,6 @@ use crate::{
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     name::{NameService, NameServiceTrait},
-    pack_variant::PackVariantServiceTrait,
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     pricing::{PricingService, PricingServiceTrait},
     processors::ProcessorsTrigger,
@@ -43,7 +43,11 @@ use crate::{
     },
     repack::{RepackService, RepackServiceTrait},
     report::report_service::{ReportService, ReportServiceTrait},
-    requisition::{RequisitionService, RequisitionServiceTrait},
+    requisition::{
+        indicator_value::{IndicatorValueService, IndicatorValueServiceTrait},
+        program_indicator::{ProgramIndicatorService, ProgramIndicatorServiceTrait},
+        RequisitionService, RequisitionServiceTrait,
+    },
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
     rnr_form::{RnRFormService, RnRFormServiceTrait},
     sensor::{SensorService, SensorServiceTrait},
@@ -93,6 +97,7 @@ pub struct ServiceProvider {
     // Dashboard:
     pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
+    pub item_service: Box<dyn ItemServiceTrait>,
     pub item_count_service: Box<dyn ItemCountServiceTrait>,
     pub requisition_count_service: Box<dyn RequisitionCountServiceTrait>,
     // Stock stats
@@ -112,7 +117,8 @@ pub struct ServiceProvider {
     pub encounter_service: Box<dyn EncounterServiceTrait>,
     pub program_event_service: Box<dyn ProgramEventServiceTrait>,
     pub contact_trace_service: Box<dyn ContactTraceServiceTrait>,
-
+    pub program_indicator_service: Box<dyn ProgramIndicatorServiceTrait>,
+    pub indicator_value_service: Box<dyn IndicatorValueServiceTrait>,
     // Settings
     pub settings: Box<dyn SettingsServiceTrait>,
     // App Data Service
@@ -129,7 +135,6 @@ pub struct ServiceProvider {
     pub barcode_service: Box<dyn BarcodeServiceTrait>,
     // Log
     pub log_service: Box<dyn LogServiceTrait>,
-    pub pack_variant_service: Box<dyn PackVariantServiceTrait>,
     // Plugin
     pub plugin_data_service: Box<dyn PluginDataServiceTrait>,
     // Currency
@@ -199,6 +204,7 @@ impl ServiceProvider {
             stocktake_line_service: Box::new(StocktakeLineService {}),
             requisition_service: Box::new(RequisitionService {}),
             requisition_line_service: Box::new(RequisitionLineService {}),
+            item_service: Box::new(crate::item::ItemService {}),
             item_stats_service: Box::new(ItemStatsService {}),
             clinician_service: Box::new(ClinicianService {}),
             general_service: Box::new(GeneralService {}),
@@ -209,6 +215,8 @@ impl ServiceProvider {
             form_schema_service: Box::new(FormSchemaService {}),
             patient_service: Box::new(PatientService {}),
             program_enrolment_service: Box::new(ProgramEnrolmentService {}),
+            program_indicator_service: Box::new(ProgramIndicatorService {}),
+            indicator_value_service: Box::new(IndicatorValueService {}),
             program_event_service: Box::new(ProgramEventService {}),
             encounter_service: Box::new(EncounterService {}),
             contact_trace_service: Box::new(ContactTraceService {}),
@@ -224,7 +232,6 @@ impl ServiceProvider {
             barcode_service: Box::new(BarcodeService {}),
             repack_service: Box::new(RepackService {}),
             log_service: Box::new(LogService {}),
-            pack_variant_service: Box::new(crate::pack_variant::PackVariantService {}),
             plugin_data_service: Box::new(PluginDataService {}),
             temperature_excursion_service: Box::new(TemperatureExcursionService {}),
             currency_service: Box::new(CurrencyService {}),

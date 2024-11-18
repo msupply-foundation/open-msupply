@@ -4,11 +4,11 @@ import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { LocationRowFragmentDoc } from '../../Location/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type StockLineRowFragment = { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, masterList: Array<{ __typename: 'MasterListNode', name: string }>, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } };
+export type StockLineRowFragment = { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, itemVariantId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, masterList: Array<{ __typename: 'MasterListNode', name: string }>, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } };
 
-export type RepackStockLineFragment = { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null };
+export type RepackStockLineFragment = { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null } | null };
 
-export type RepackFragment = { __typename: 'RepackNode', id: string, datetime: string, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null } };
+export type RepackFragment = { __typename: 'RepackNode', id: string, datetime: string, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null } | null } };
 
 export type InvoiceRowFragment = { __typename: 'InvoiceNode', id: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemName: string, numberOfPacks: number, itemCode: string, stockLine?: { __typename: 'StockLineNode', id: string } | null }> } };
 
@@ -24,7 +24,7 @@ export type StockLinesQueryVariables = Types.Exact<{
 }>;
 
 
-export type StockLinesQuery = { __typename: 'Queries', stockLines: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, masterList: Array<{ __typename: 'MasterListNode', name: string }>, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } }> } };
+export type StockLinesQuery = { __typename: 'Queries', stockLines: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, itemVariantId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, masterList: Array<{ __typename: 'MasterListNode', name: string }>, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } }> } };
 
 export type StockLineQueryVariables = Types.Exact<{
   id: Types.Scalars['String']['input'];
@@ -32,7 +32,7 @@ export type StockLineQueryVariables = Types.Exact<{
 }>;
 
 
-export type StockLineQuery = { __typename: 'Queries', stockLines: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, masterList: Array<{ __typename: 'MasterListNode', name: string }>, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } }> } };
+export type StockLineQuery = { __typename: 'Queries', stockLines: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, itemVariantId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, masterList: Array<{ __typename: 'MasterListNode', name: string }>, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } }> } };
 
 export type LedgerQueryVariables = Types.Exact<{
   key: Types.LedgerSortFieldInput;
@@ -50,7 +50,7 @@ export type UpdateStockLineMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateStockLineMutation = { __typename: 'Mutations', updateStockLine: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, masterList: Array<{ __typename: 'MasterListNode', name: string }>, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } } | { __typename: 'UpdateStockLineError' } };
+export type UpdateStockLineMutation = { __typename: 'Mutations', updateStockLine: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, itemVariantId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, masterList: Array<{ __typename: 'MasterListNode', name: string }>, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } } | { __typename: 'UpdateStockLineError' } };
 
 export type RepackQueryVariables = Types.Exact<{
   invoiceId: Types.Scalars['String']['input'];
@@ -58,7 +58,7 @@ export type RepackQueryVariables = Types.Exact<{
 }>;
 
 
-export type RepackQuery = { __typename: 'Queries', repack: { __typename: 'NodeError' } | { __typename: 'RepackNode', id: string, datetime: string, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null } } };
+export type RepackQuery = { __typename: 'Queries', repack: { __typename: 'NodeError' } | { __typename: 'RepackNode', id: string, datetime: string, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null } | null } } };
 
 export type RepacksByStockLineQueryVariables = Types.Exact<{
   stockLineId: Types.Scalars['String']['input'];
@@ -66,7 +66,7 @@ export type RepacksByStockLineQueryVariables = Types.Exact<{
 }>;
 
 
-export type RepacksByStockLineQuery = { __typename: 'Queries', repacksByStockLine: { __typename: 'RepackConnector', totalCount: number, nodes: Array<{ __typename: 'RepackNode', id: string, datetime: string, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null } }> } };
+export type RepacksByStockLineQuery = { __typename: 'Queries', repacksByStockLine: { __typename: 'RepackConnector', totalCount: number, nodes: Array<{ __typename: 'RepackNode', id: string, datetime: string, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null } | null } }> } };
 
 export type InsertRepackMutationVariables = Types.Exact<{
   input: Types.InsertRepackInput;
@@ -90,7 +90,7 @@ export type InsertStockLineMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertStockLineMutation = { __typename: 'Mutations', insertStockLine: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, masterList: Array<{ __typename: 'MasterListNode', name: string }>, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } } };
+export type InsertStockLineMutation = { __typename: 'Mutations', insertStockLine: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, itemVariantId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, masterList: Array<{ __typename: 'MasterListNode', name: string }>, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, maxTemperature: number, minTemperature: number } | null } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } } };
 
 export const StockLineRowFragmentDoc = gql`
     fragment StockLineRow on StockLineNode {
@@ -101,6 +101,7 @@ export const StockLineRowFragmentDoc = gql`
   id
   itemId
   locationId
+  itemVariantId
   locationName
   onHold
   packSize

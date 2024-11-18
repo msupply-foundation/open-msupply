@@ -21,12 +21,9 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
-import {
-  PackVariantInput,
-  usePackVariant,
-  useIsPackVariantsEnabled,
-} from '../..';
+import { ItemVariantSearchInput } from '../..';
 import { StyledInputRow } from './StyledInputRow';
+import { PackSizeNumberInput, useIsItemVariantsEnabled } from '../../Item';
 
 interface StockLineFormProps {
   draft: StockLineRowFragment;
@@ -48,17 +45,13 @@ export const StockLineForm: FC<StockLineFormProps> = ({
   const { error } = useNotification();
   const { isConnected, isEnabled, isScanning, startScan } =
     useBarcodeScannerContext();
+  const showItemVariantsInput = useIsItemVariantsEnabled();
+
   const supplierName = draft.supplierName
     ? draft.supplierName
     : t('message.no-supplier');
   const location = draft?.location ?? null;
 
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
-  const { asPackVariant } = usePackVariant(
-    draft.itemId,
-    draft.item.unitName ?? null
-  );
-  const packUnit = asPackVariant(draft.packSize);
   const scanBarcode = async () => {
     try {
       const result = await startScan();
@@ -152,7 +145,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
             label={t('label.expiry')}
             Input={
               <ExpiryDateInput
-                value={DateUtils.getDateOrNull(draft.expiryDate)}
+                value={DateUtils.getNaiveDate(draft.expiryDate)}
                 onChange={date =>
                   onUpdate({ expiryDate: Formatter.naiveDate(date) })
                 }
@@ -168,6 +161,19 @@ export const StockLineForm: FC<StockLineFormProps> = ({
               />
             }
           />
+          {showItemVariantsInput && (
+            <StyledInputRow
+              label={t('label.item-variant')}
+              Input={
+                <ItemVariantSearchInput
+                  itemId={draft.itemId}
+                  selectedId={draft.itemVariantId ?? null}
+                  width={160}
+                  onChange={id => onUpdate({ itemVariantId: id })}
+                />
+              }
+            />
+          )}
           {plugins}
         </Grid>
         <Grid
@@ -180,11 +186,9 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         >
           {packEditable ? (
             <StyledInputRow
-              label={
-                isPackVariantsEnabled ? t('label.pack') : t('label.pack-size')
-              }
+              label={t('label.pack-size')}
               Input={
-                <PackVariantInput
+                <PackSizeNumberInput
                   isDisabled={!packEditable}
                   packSize={draft.packSize}
                   itemId={draft.itemId}
@@ -195,10 +199,8 @@ export const StockLineForm: FC<StockLineFormProps> = ({
             />
           ) : (
             <TextWithLabelRow
-              label={
-                isPackVariantsEnabled ? t('label.pack') : t('label.pack-size')
-              }
-              text={String(isPackVariantsEnabled ? packUnit : draft.packSize)}
+              label={t('label.pack-size')}
+              text={String(draft.packSize)}
               textProps={{ textAlign: 'end' }}
             />
           )}
@@ -263,7 +265,6 @@ export const StockLineForm: FC<StockLineFormProps> = ({
           />
         </Grid>
       </Grid>
-      {/* {footerProps && <Footer {...footerProps} />} */}
     </DetailContainer>
   );
 };

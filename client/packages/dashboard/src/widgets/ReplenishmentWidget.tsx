@@ -116,7 +116,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               error={error as ApiException}
               isError={isError}
               isLoading={isLoading}
-              title={t('inbound-shipments', { ns: 'app' })}
+              title={t('inbound-shipment', { ns: 'app' })}
               stats={[
                 {
                   label: t('label.today', { ns: 'dashboard' }),

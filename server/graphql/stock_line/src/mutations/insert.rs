@@ -29,6 +29,7 @@ pub struct InsertInput {
     pub inventory_adjustment_reason_id: Option<String>,
     /// Empty barcode will unlink barcode from StockLine
     pub barcode: Option<String>,
+    pub item_variant_id: Option<String>,
 }
 
 #[derive(Union)]
@@ -80,6 +81,7 @@ impl InsertInput {
             number_of_packs,
             pack_size,
             inventory_adjustment_reason_id,
+            item_variant_id,
         } = self;
 
         AddNewStockLine {
@@ -97,6 +99,7 @@ impl InsertInput {
             number_of_packs,
             pack_size,
             inventory_adjustment_reason_id,
+            item_variant_id,
         }
     }
 }
@@ -237,13 +240,7 @@ mod test {
                     item_id: mock_item_a().id,
                     number_of_packs: 2.0,
                     pack_size: 1.0,
-                    inventory_adjustment_reason_id: None,
-                    cost_price_per_pack: 0.0,
-                    sell_price_per_pack: 0.0,
-                    expiry_date: None,
-                    batch: None,
-                    on_hold: false,
-                    barcode: None,
+                    ..Default::default()
                 }
             );
             Ok(StockLine {
