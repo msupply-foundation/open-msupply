@@ -49,6 +49,12 @@ with open(item_variants_file_path, 'r') as file:
                     item_id_inserted[diluent_id] = True
                     # Create the item_variant for the diluent
                     upsert_diluent_variant_stmt(ids["diluent_variant_id"], diluent_id, row)
+
+                    # Diluent Packaging Variants
+                    upsert_diluent_packaging_variant_stmt(ids['diluent_packaging_variant_1_id'], ids['diluent_variant_id'], row, 1)
+                    upsert_diluent_packaging_variant_stmt(ids['diluent_packaging_variant_2_id'], ids['diluent_variant_id'], row, 2)
+                    upsert_diluent_packaging_variant_stmt(ids['diluent_packaging_variant_3_id'], ids['diluent_variant_id'], row, 3)            
+
                     # Create the item_bundle
                     upsert_item_bundle_stmt(ids["item_bundle_id"], ids["item_variant_id"], ids["diluent_variant_id"])
 

@@ -75,5 +75,21 @@ def get_or_generate_ids(lookup_hash, row):
         lookup_hash[packaging_variant_3_lookup_id] = str(uuid.uuid4())
     packaging_variant_3_id = lookup_hash[packaging_variant_3_lookup_id]
 
+    # Diluent Packaging Variants
+    diluent_packaging_variant_1_lookup_id = item_variant_lookup_id + "_dil_packaging_1"
+    if diluent_packaging_variant_1_lookup_id not in lookup_hash:
+        lookup_hash[diluent_packaging_variant_1_lookup_id] = str(uuid.uuid4())
+    diluent_packaging_variant_1_id = lookup_hash[diluent_packaging_variant_1_lookup_id]
 
-    return {"item_id": item_id, "item_variant_id": item_variant_id, "diluent_id": diluent_id, "diluent_variant_id": diluent_variant_id, "item_bundle_id": item_bundle_id, "packaging_variant_1_id": packaging_variant_1_id, "packaging_variant_2_id": packaging_variant_2_id, "packaging_variant_3_id": packaging_variant_3_id}
+    diluent_packaging_variant_2_lookup_id = item_variant_lookup_id + "_dil_packaging_2"
+    if diluent_packaging_variant_2_lookup_id not in lookup_hash:
+        lookup_hash[diluent_packaging_variant_2_lookup_id] = str(uuid.uuid4())
+    diluent_packaging_variant_2_id = lookup_hash[diluent_packaging_variant_2_lookup_id]
+
+    diluent_packaging_variant_3_lookup_id = item_variant_lookup_id + "_dil_packaging_3"
+    if diluent_packaging_variant_3_lookup_id not in lookup_hash:
+        lookup_hash[diluent_packaging_variant_3_lookup_id] = str(uuid.uuid4())
+    diluent_packaging_variant_3_id = lookup_hash[diluent_packaging_variant_3_lookup_id]
+
+
+    return {"item_id": item_id, "item_variant_id": item_variant_id, "diluent_id": diluent_id, "diluent_variant_id": diluent_variant_id, "item_bundle_id": item_bundle_id, "packaging_variant_1_id": packaging_variant_1_id, "packaging_variant_2_id": packaging_variant_2_id, "packaging_variant_3_id": packaging_variant_3_id, "diluent_packaging_variant_1_id": diluent_packaging_variant_1_id, "diluent_packaging_variant_2_id": diluent_packaging_variant_2_id, "diluent_packaging_variant_3_id": diluent_packaging_variant_3_id}
