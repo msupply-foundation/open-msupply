@@ -3,7 +3,9 @@ use crate::{
     number::next_number,
     requisition::{
         common::check_requisition_row_exists,
-        program_settings::get_customer_program_requisition_settings, query::get_requisition,
+        program_indicator::query::{program_indicators, ProgramIndicator},
+        program_settings::get_customer_program_requisition_settings,
+        query::get_requisition,
         request_requisition::generate_requisition_lines,
     },
     service_provider::ServiceContext,
@@ -11,10 +13,13 @@ use crate::{
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ActivityLogType, EqualFilter, MasterListLineFilter, MasterListLineRepository, NumberRowType,
-    ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError, Requisition, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRowRepository,
+    ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
+    MasterListLineFilter, MasterListLineRepository, NumberRowType, Pagination,
+    ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError,
+    Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
+    StoreFilter, StoreRepository,
 };
+use util::uuid::uuid;
 
 #[derive(Debug, PartialEq)]
 pub enum InsertProgramResponseRequisitionError {
@@ -47,12 +52,23 @@ pub fn insert_program_response_requisition(
         .connection
         .transaction_sync(|connection| {
             let (program, order_type) = validate(ctx, &input)?;
-            let (new_requisition, requisition_lines) = generate(ctx, program, order_type, input)?;
+            let GenerateResult {
+                requisition: new_requisition,
+                requisition_lines,
+                indicator_values,
+            } = generate(ctx, program, order_type, input)?;
             RequisitionRowRepository::new(connection).upsert_one(&new_requisition)?;
 
             let requisition_line_repo = RequisitionLineRowRepository::new(connection);
             for requisition_line in requisition_lines {
                 requisition_line_repo.upsert_one(&requisition_line)?;
+            }
+
+            if !indicator_values.is_empty() {
+                let indicator_value_repo = IndicatorValueRowRepository::new(connection);
+                for indicator_value in indicator_values {
+                    indicator_value_repo.upsert_one(&indicator_value)?;
+                }
             }
 
             activity_log_entry(
@@ -132,6 +148,12 @@ fn validate(
     ))
 }
 
+pub struct GenerateResult {
+    pub(crate) requisition: RequisitionRow,
+    pub(crate) requisition_lines: Vec<RequisitionLineRow>,
+    pub(crate) indicator_values: Vec<IndicatorValueRow>,
+}
+
 fn generate(
     ctx: &ServiceContext,
     program: ProgramRow,
@@ -142,7 +164,7 @@ fn generate(
         program_order_type_id: _,
         period_id,
     }: InsertProgramResponseRequisition,
-) -> Result<(RequisitionRow, Vec<RequisitionLineRow>), RepositoryError> {
+) -> Result<GenerateResult, RepositoryError> {
     let connection = &ctx.connection;
 
     let requisition = RequisitionRow {
@@ -153,15 +175,15 @@ fn generate(
             &NumberRowType::ResponseRequisition,
             &ctx.store_id,
         )?,
-        name_link_id: other_party_id,
+        name_link_id: other_party_id.clone(),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
         created_datetime: Utc::now().naive_utc(),
         max_months_of_stock: order_type.max_mos,
         min_months_of_stock: order_type.threshold_mos,
-        program_id: Some(program.id),
-        period_id: Some(period_id),
+        program_id: Some(program.id.clone()),
+        period_id: Some(period_id.clone()),
         order_type: Some(order_type.name),
         // Default
         colour: None,
@@ -184,10 +206,68 @@ fn generate(
         .map(|line| line.item_id)
         .collect();
 
-    let requisition_line_rows =
+    let requisition_lines =
         generate_requisition_lines(ctx, &ctx.store_id, &requisition, program_item_ids)?;
 
-    Ok((requisition, requisition_line_rows))
+    let program_indicators = program_indicators(
+        connection,
+        Pagination::all(),
+        None,
+        Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
+    )?;
+
+    let customer_store = StoreRepository::new(connection)
+        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&other_party_id)))?;
+
+    let indicator_values = match customer_store {
+        Some(_) => generate_program_indicator_values(
+            &ctx.store_id,
+            &period_id,
+            &other_party_id,
+            program_indicators,
+        ),
+        None => vec![],
+    };
+
+    Ok(GenerateResult {
+        requisition,
+        requisition_lines,
+        indicator_values,
+    })
+}
+
+fn generate_program_indicator_values(
+    store_id: &str,
+    period_id: &str,
+    other_party_id: &str,
+    program_indicators: Vec<ProgramIndicator>,
+) -> Vec<IndicatorValueRow> {
+    let mut indicator_values = vec![];
+
+    for program_indicator in program_indicators {
+        for line in program_indicator.lines {
+            for column in line.columns {
+                let value = match column.value_type {
+                    Some(_) => column.default_value.clone(),
+                    None => line.line.default_value.clone(),
+                };
+
+                let indicator_value = IndicatorValueRow {
+                    id: uuid(),
+                    customer_name_link_id: other_party_id.to_string(),
+                    store_id: store_id.to_string(),
+                    period_id: period_id.to_string(),
+                    indicator_line_id: line.line.id.to_string(),
+                    indicator_column_id: column.id.to_string(),
+                    value,
+                };
+
+                indicator_values.push(indicator_value);
+            }
+        }
+    }
+
+    indicator_values
 }
 
 impl From<RepositoryError> for InsertProgramResponseRequisitionError {

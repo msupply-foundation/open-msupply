@@ -53,7 +53,7 @@ export const useLedgerColumns = (
       },
       {
         key: ColumnKey.Number,
-        label: 'label.number',
+        label: 'label.invoice-number',
         accessor: ({ rowData }) => rowData.invoiceNumber,
         sortable: false,
       },

@@ -5,17 +5,19 @@ import { Capacitor } from '@capacitor/core';
 import { GlobalStyles } from '@mui/material';
 import { useNotification } from '../hooks/useNotification';
 import { useTranslation } from '@common/intl';
-import { parseBarcode } from 'gs1-barcode-parser-mod';
+import { Gs1Barcode, parseBarcode } from 'gs1-barcode-parser-mod';
 import { Formatter } from './formatters';
 import { BarcodeScanner, ScannerType } from '@openmsupply-client/common';
 
 const SCAN_TIMEOUT_IN_MS = 5000;
 
 export interface ScanResult {
+  gs1?: Gs1Barcode;
   batch?: string;
   content?: string;
   expiryDate?: string | null;
   gtin?: string;
+  gs1string?: string;
 }
 
 export type ScanCallback = (result: ScanResult) => void;
@@ -70,6 +72,7 @@ export const parseResult = (content?: string): ScanResult => {
 
     return {
       batch,
+      gs1,
       content,
       expiryDate: expiry ? Formatter.naiveDate(expiry) : undefined,
       gtin,
@@ -79,6 +82,11 @@ export const parseResult = (content?: string): ScanResult => {
     return { content };
   }
 };
+
+// for data matrix codes, the result is split by a group by character
+// only the first group is parsed, and with a \x1d at the start this group is empty
+const sanitiseBarcodeResult = (result: ScanResult) =>
+  result.content?.replace('\x1d', '');
 
 export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   children,
@@ -125,9 +133,8 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
             // start scanning and wait for a result
             const result = await BarcodeScannerPlugin.startScan();
             BarcodeScannerPlugin.showBackground();
-            // for data matrix codes, the result is split by a group by character
-            // only the first group is parsed, and with a \x1d at the start this group is empty
-            resolve(result.content?.replace('\x1d', ''));
+
+            resolve(sanitiseBarcodeResult(result));
             break;
           default:
             reject(new Error('Cannot find scan api'));
@@ -181,10 +188,11 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       // make background of WebView transparent
       BarcodeScannerPlugin.hideBackground();
       const result = await BarcodeScannerPlugin.startScan(); // start scanning and wait for a result
+
       clearTimeout(timeout);
       setIsScanning(false);
       BarcodeScannerPlugin.showBackground();
-      callback(result);
+      callback(parseResult(sanitiseBarcodeResult(result)));
     }
   };
 
