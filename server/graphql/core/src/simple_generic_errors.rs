@@ -223,6 +223,14 @@ impl CannotEditRequisition {
     }
 }
 
+pub struct ReasonNotProvided;
+#[Object]
+impl ReasonNotProvided {
+    pub async fn description(&self) -> &str {
+        "Reason not provided"
+    }
+}
+
 pub struct CannotEditStocktake;
 #[Object]
 impl CannotEditStocktake {
