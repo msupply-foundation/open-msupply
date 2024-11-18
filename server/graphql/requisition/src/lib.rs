@@ -1,9 +1,14 @@
 pub mod mutations;
+mod program_indicator;
 mod program_settings;
 mod requisition_queries;
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
+use graphql_types::types::program_indicator::{
+    ProgramIndicatorFilterInput, ProgramIndicatorResponse, ProgramIndicatorSortInput,
+};
 use graphql_types::types::RequisitionNodeType;
+use program_indicator::program_indicators;
 use program_settings::{
     get_customer_program_requisition_settings, get_supplier_program_requisition_settings,
     CustomerProgramRequisitionSettingNode, SupplierProgramRequisitionSettingNode,
@@ -11,6 +16,9 @@ use program_settings::{
 
 use self::mutations::{request_requisition, response_requisition};
 use self::requisition_queries::*;
+use mutations::update_indicator_value::{
+    self, UpdateIndicatorValueInput, UpdateIndicatorValueResponse,
+};
 #[derive(Default, Clone)]
 pub struct RequisitionQueries;
 
@@ -60,6 +68,16 @@ impl RequisitionQueries {
         store_id: String,
     ) -> Result<Vec<CustomerProgramRequisitionSettingNode>> {
         get_customer_program_requisition_settings(ctx, &store_id)
+    }
+
+    pub async fn program_indicators(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        sort: Option<ProgramIndicatorSortInput>,
+        filter: Option<ProgramIndicatorFilterInput>,
+    ) -> Result<ProgramIndicatorResponse> {
+        program_indicators(ctx, store_id, sort, filter)
     }
 }
 
@@ -133,6 +151,15 @@ impl RequisitionMutations {
         response_requisition::insert::insert(ctx, &store_id, input)
     }
 
+    async fn insert_program_response_requisition(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: response_requisition::insert_program::InsertProgramResponseRequisitionInput,
+    ) -> Result<response_requisition::insert_program::InsertResponse> {
+        response_requisition::insert_program::insert_program(ctx, &store_id, input)
+    }
+
     async fn update_response_requisition(
         &self,
         ctx: &Context<'_>,
@@ -141,6 +168,16 @@ impl RequisitionMutations {
     ) -> Result<response_requisition::update::UpdateResponse> {
         response_requisition::update::update(ctx, &store_id, input)
     }
+
+    async fn delete_response_requisition(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: response_requisition::delete::DeleteInput,
+    ) -> Result<response_requisition::delete::DeleteResponse> {
+        response_requisition::delete::delete(ctx, &store_id, input)
+    }
+
     /// Set supply quantity to requested quantity
     async fn supply_requested_quantity(
         &self,
@@ -168,6 +205,15 @@ impl RequisitionMutations {
         response_requisition::create_requisition_shipment::create_requisition_shipment(
             ctx, &store_id, input,
         )
+    }
+
+    pub async fn update_indicator_value(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateIndicatorValueInput,
+    ) -> Result<UpdateIndicatorValueResponse> {
+        update_indicator_value::update(ctx, store_id, input)
     }
 }
 

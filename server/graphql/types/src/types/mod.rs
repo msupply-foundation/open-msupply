@@ -4,6 +4,12 @@ pub use self::name::*;
 pub mod item;
 pub use self::item::*;
 
+pub mod item_variant;
+pub use self::item_variant::*;
+
+pub mod bundled_item;
+pub use self::bundled_item::*;
+
 pub mod item_stats;
 pub use self::item_stats::*;
 
@@ -76,9 +82,6 @@ pub use self::property::*;
 pub mod program;
 pub use self::program::*;
 
-pub mod pack_variant;
-pub use self::pack_variant::*;
-
 pub mod supplier_return_line;
 pub use self::supplier_return_line::*;
 
@@ -108,6 +111,9 @@ pub use self::demographic::*;
 
 pub mod reason_option;
 pub use self::reason_option::*;
+
+pub mod cold_storage_type;
+pub use self::cold_storage_type::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);

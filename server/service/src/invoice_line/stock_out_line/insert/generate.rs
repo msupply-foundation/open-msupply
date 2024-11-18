@@ -122,6 +122,7 @@ fn generate_line(
         batch,
         expiry_date,
         location_id,
+        item_variant_id,
         note: _,
         ..
     }: StockLineRow,
@@ -169,6 +170,7 @@ fn generate_line(
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
         foreign_currency_price_before_tax,
+        item_variant_id,
     })
 }
 

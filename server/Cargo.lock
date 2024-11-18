@@ -3844,8 +3844,9 @@ dependencies = [
  "graphql_inventory_adjustment",
  "graphql_invoice",
  "graphql_invoice_line",
+ "graphql_item_bundle",
+ "graphql_item_variant",
  "graphql_location",
- "graphql_pack_variant",
  "graphql_plugin",
  "graphql_programs",
  "graphql_repack",
@@ -4119,7 +4120,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "graphql_location"
+name = "graphql_item_bundle"
 version = "0.1.0"
 dependencies = [
  "actix-rt",
@@ -4128,7 +4129,6 @@ dependencies = [
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
- "chrono",
  "graphql_core",
  "graphql_types",
  "repository",
@@ -4139,7 +4139,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "graphql_pack_variant"
+name = "graphql_item_variant"
 version = "0.1.0"
 dependencies = [
  "actix-rt",
@@ -4148,6 +4148,26 @@ dependencies = [
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_location"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
  "graphql_core",
  "graphql_types",
  "repository",

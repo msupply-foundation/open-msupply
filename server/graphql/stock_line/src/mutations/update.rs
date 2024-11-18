@@ -26,6 +26,7 @@ pub struct UpdateInput {
     pub on_hold: Option<bool>,
     /// Empty barcode will unlink barcode from StockLine
     pub barcode: Option<String>,
+    pub item_variant_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Interface)]
@@ -91,6 +92,7 @@ impl UpdateInput {
             batch,
             on_hold,
             barcode,
+            item_variant_id,
         } = self;
 
         ServiceInput {
@@ -104,6 +106,9 @@ impl UpdateInput {
             batch,
             on_hold,
             barcode,
+            item_variant_id: item_variant_id.map(|item_variant_id| NullableUpdate {
+                value: item_variant_id.value,
+            }),
         }
     }
 }
@@ -123,6 +128,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         // Standard Graphql Errors
         ServiceError::StockDoesNotBelongToStore => BadUserInput(formatted_error),
         ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::ItemVariantDoesNotExist => BadUserInput(formatted_error),
         ServiceError::UpdatedStockNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
@@ -267,12 +273,7 @@ mod test {
                     location: Some(NullableUpdate {
                         value: Some("some location".to_string()),
                     }),
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    expiry_date: None,
-                    batch: None,
-                    on_hold: None,
-                    barcode: None,
+                    ..Default::default()
                 }
             );
             Ok(StockLine {

@@ -267,6 +267,7 @@ fragment GenerateCustomerReturnLine on CustomerReturnLineNode {
   reasonId
   itemName
   itemCode
+  itemVariantId
   item {
     id
     unitName

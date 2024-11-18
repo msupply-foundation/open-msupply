@@ -11,8 +11,10 @@ use self::{
     },
     requisition_supply_status::{get_requisitions_supply_statuses, RequisitionLineSupplyStatus},
     response_requisition::{
-        create_requisition_shipment, insert_response_requisition, supply_requested_quantity,
-        update_response_requisition, CreateRequisitionShipment, CreateRequisitionShipmentError,
+        create_requisition_shipment, insert_program_response_requisition,
+        insert_response_requisition, supply_requested_quantity, update_response_requisition,
+        CreateRequisitionShipment, CreateRequisitionShipmentError,
+        InsertProgramResponseRequisition, InsertProgramResponseRequisitionError,
         InsertResponseRequisition, InsertResponseRequisitionError, SupplyRequestedQuantity,
         SupplyRequestedQuantityError, UpdateResponseRequisition, UpdateResponseRequisitionError,
     },
@@ -24,13 +26,18 @@ use program_settings::{
     customer_program_settings::CustomerProgramSettings, get_customer_program_requisition_settings,
     get_supplier_program_requisition_settings, supplier_program_settings::SupplierProgramSettings,
 };
-use repository::PaginationOption;
 use repository::{
-    requisition_row::RequisitionType, Invoice, RepositoryError, Requisition, RequisitionFilter,
-    RequisitionLine, RequisitionSort,
+    requisition_row::RequisitionType, Invoice, PaginationOption, RepositoryError, Requisition,
+    RequisitionFilter, RequisitionLine, RequisitionSort,
+};
+use response_requisition::{
+    batch_response_requisition, delete_response_requisition, BatchResponseRequisition,
+    BatchResponseRequisitionResult, DeleteResponseRequisition, DeleteResponseRequisitionError,
 };
 
 pub mod common;
+pub mod indicator_value;
+pub mod program_indicator;
 pub mod program_settings;
 pub mod query;
 pub mod request_requisition;
@@ -132,12 +139,28 @@ pub trait RequisitionServiceTrait: Sync + Send {
         insert_response_requisition(ctx, input)
     }
 
+    fn insert_program_response_requisition(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertProgramResponseRequisition,
+    ) -> Result<Requisition, InsertProgramResponseRequisitionError> {
+        insert_program_response_requisition(ctx, input)
+    }
+
     fn update_response_requisition(
         &self,
         ctx: &ServiceContext,
         input: UpdateResponseRequisition,
     ) -> Result<Requisition, UpdateResponseRequisitionError> {
         update_response_requisition(ctx, input)
+    }
+
+    fn delete_response_requisition(
+        &self,
+        ctx: &ServiceContext,
+        input: DeleteResponseRequisition,
+    ) -> Result<String, DeleteResponseRequisitionError> {
+        delete_response_requisition(ctx, input)
     }
 
     fn supply_requested_quantity(
@@ -162,6 +185,14 @@ pub trait RequisitionServiceTrait: Sync + Send {
         input: BatchRequestRequisition,
     ) -> Result<BatchRequestRequisitionResult, RepositoryError> {
         batch_request_requisition(ctx, input)
+    }
+
+    fn batch_response_requisition(
+        &self,
+        ctx: &ServiceContext,
+        input: BatchResponseRequisition,
+    ) -> Result<BatchResponseRequisitionResult, RepositoryError> {
+        batch_response_requisition(ctx, input)
     }
 
     fn get_supplier_program_requisition_settings(

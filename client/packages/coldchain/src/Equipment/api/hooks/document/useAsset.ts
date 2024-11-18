@@ -28,3 +28,10 @@ export const useFetchAssetById = () => {
     onError: () => {},
   });
 };
+
+export const useFetchAssetByGS1 = () => {
+  const api = useAssetApi();
+  return useMutation(api.get.byGs1Elements, {
+    onError: () => {},
+  });
+};
