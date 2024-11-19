@@ -81,8 +81,7 @@ export const AppBarButtons: FC<{
                   RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InternalOrder)
                     .addPart(String(requisitionNumber))
-                    .build(),
-                  { replace: true }
+                    .build()
                 );
               });
             case NewRequisitionType.Program:
@@ -96,8 +95,7 @@ export const AppBarButtons: FC<{
                   RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InternalOrder)
                     .addPart(String(requisitionNumber))
-                    .build(),
-                  { replace: true }
+                    .build()
                 );
               });
           }

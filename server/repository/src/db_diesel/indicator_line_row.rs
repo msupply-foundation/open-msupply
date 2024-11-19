@@ -1,7 +1,6 @@
 use super::StorageConnection;
 
 use crate::{repository_error::RepositoryError, Upsert};
-
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -31,7 +30,7 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
+#[derive(Clone, Eq, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
 #[diesel(table_name = indicator_line)]
 pub struct IndicatorLineRow {
     pub id: String,
@@ -72,6 +71,16 @@ impl<'a> IndicatorLineRowRepository<'a> {
             .filter(indicator_line::id.eq(record_id))
             .first(self.connection.lock().connection())
             .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_many_by_indicator_ids(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<IndicatorLineRow>, RepositoryError> {
+        let result = indicator_line::table
+            .filter(indicator_line::program_indicator_id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 }
