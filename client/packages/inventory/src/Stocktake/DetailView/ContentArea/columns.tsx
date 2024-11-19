@@ -142,6 +142,7 @@ export const useStocktakeColumns = ({
     [
       'packSize',
       {
+        Cell: NumberCell,
         accessor: ({ rowData }) =>
           getColumnProperty(rowData, [
             { path: ['lines', 'packSize'] },
@@ -206,6 +207,9 @@ export const useStocktakeColumns = ({
     {
       key: 'difference',
       label: 'label.difference',
+      Cell: props => (
+        <NumberCell {...props} defaultValue={UNDEFINED_STRING_VALUE} />
+      ),
       align: ColumnAlign.Right,
       sortable: false,
       accessor: ({ rowData }) => {
@@ -220,6 +224,8 @@ export const useStocktakeColumns = ({
               0
             ) ?? 0;
           return (total < 0 ? Math.abs(total) : -total).toString();
+        } else if (rowData.countedNumberOfPacks === null) {
+          return null;
         } else {
           return (
             (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -

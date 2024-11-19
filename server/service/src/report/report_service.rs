@@ -2,7 +2,7 @@ use base64::prelude::*;
 use chrono::{DateTime, Utc};
 use extism::{
     convert::{encoding, Json},
-    host_fn, FromBytes, Manifest, PluginBuilder, UserData, Wasm, WasmMetadata, PTR,
+    host_fn, FromBytes, Manifest, PluginBuilder, ToBytes, UserData, Wasm, WasmMetadata, PTR,
 };
 use repository::{
     raw_query, EqualFilter, JsonRawRow, PaginationOption, Report, ReportFilter, ReportRepository,
@@ -455,11 +455,18 @@ fn wasm_sql(
     })
 }
 
+#[derive(Serialize, Deserialize, FromBytes, ToBytes)]
+#[encoding(Json)]
+struct ReportData {
+    data: serde_json::Value,
+    arguments: Option<serde_json::Value>,
+}
+
 fn transform_data(
     connection: StorageConnection,
-    data: serde_json::Value,
+    data: ReportData,
     convert_data: Option<String>,
-) -> serde_json::Value {
+) -> ReportData {
     let Some(convert_data) = convert_data else {
         return data;
     };
@@ -477,29 +484,25 @@ fn transform_data(
         .build()
         .unwrap();
 
-    plugin
-        .call::<serde_json::Value, serde_json::Value>("convert_data", data)
-        .unwrap()
+    plugin.call("convert_data", data).unwrap()
 }
 
 fn generate_report(
     connection: StorageConnection,
     report: &ResolvedReportDefinition,
-    report_data: serde_json::Value,
+    data: serde_json::Value,
     arguments: Option<serde_json::Value>,
     translation_service: &Localisations,
     current_language: Option<String>,
 ) -> Result<GeneratedReport, ReportError> {
-    let mut context = tera::Context::new();
-
+    let report_data = ReportData { data, arguments };
     let report_data = transform_data(connection, report_data, report.convert_data.clone());
 
-    context.insert("data", &report_data);
+    let mut context = tera::Context::from_serialize(report_data).map_err(|err| {
+        ReportError::DocGenerationError(format!("Tera context from data: {:?}", err))
+    })?;
+    // TODO: Validate if used and if needed
     context.insert("res", &report.resources);
-
-    if let Some(arguments) = arguments {
-        context.insert("arguments", &arguments);
-    }
 
     let mut tera = tera::Tera::default();
 
