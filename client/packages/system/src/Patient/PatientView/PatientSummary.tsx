@@ -13,7 +13,6 @@ import {
   useIntlUtils,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
-import { getDisplayAge } from '../PatientView/getDisplayAge'
 
 const SummaryRow = ({ label, value }: { label: LocaleKey; value: string }) => {
   const t = useTranslation();
@@ -32,7 +31,7 @@ const SummaryRow = ({ label, value }: { label: LocaleKey; value: string }) => {
 export const PatientSummary: FC = () => {
   const patientId = usePatient.utils.id();
   const { data: patient } = usePatient.document.get(patientId);
-  const { localisedDate } = useFormatDateTime();
+  const { localisedDate, getDisplayAge } = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const t = useTranslation();
@@ -41,7 +40,7 @@ export const PatientSummary: FC = () => {
 
     return !dob
       ? ''
-      : `${localisedDate(dob)} (${t('label.age')}: ${getDisplayAge(dob, t)})`;
+      : `${localisedDate(dob)} (${t('label.age')}: ${getDisplayAge(dob)})`;
   };
   useEffect(() => {
     const patientName = patient
