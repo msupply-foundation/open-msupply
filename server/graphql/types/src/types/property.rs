@@ -51,6 +51,10 @@ impl PropertyNode {
     pub async fn value_type(&self) -> PropertyNodeValueType {
         PropertyNodeValueType::from_domain(&self.row().value_type)
     }
+    /// If `valueType` is `String`, this field can contain a comma-separated
+    /// list of allowed values, essentially defining an enum.
+    /// If `valueType` is Integer or Float, this field will include the
+    /// word `negative` if negative values are allowed.
     pub async fn allowed_values(&self) -> &Option<String> {
         &self.row().allowed_values
     }
