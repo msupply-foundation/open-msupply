@@ -1,4 +1,4 @@
-import { getLocale, useIntlUtils } from '@common/intl';
+import { getLocale, useIntlUtils, useTranslation } from '@common/intl';
 import {
   addMinutes,
   addDays,
@@ -202,6 +202,7 @@ export const DateUtils = {
 export const useFormatDateTime = () => {
   const { currentLanguage } = useIntlUtils();
   const locale = getLocale(currentLanguage);
+  const t = useTranslation();
 
   const urlQueryDate = 'yyyy-MM-dd';
   const urlQueryDateTime = 'yyyy-MM-dd HH:mm';
@@ -250,6 +251,16 @@ export const useFormatDateTime = () => {
       : '';
   };
 
+  const getDisplayAge = (dob: Date): string => {
+    const patientAge = DateUtils.age(dob);
+    const { months, days } = DateUtils.ageInMonthsAndDays(dob ?? '');
+
+    if (patientAge >= 1) {
+      return String(patientAge);
+    } else
+      return `${months > 0 ? t('label.age-months-and', { count: months }) : ''}${t('label.age-days', { count: days })}`;
+  };
+
   return {
     urlQueryDate,
     urlQueryDateTime,
@@ -262,5 +273,6 @@ export const useFormatDateTime = () => {
     localisedDistanceToNow,
     localisedTime,
     relativeDateTime,
+    getDisplayAge,
   };
 };
