@@ -381,3 +381,14 @@ common.json:
 "label.customName.label"
 ...
 ```
+
+Translating using the Json schema can be done in a similar way:
+
+```
+{
+  "name": {
+  "type": "string",
+  "i18n": "myCustomName"
+  }
+}
+```
