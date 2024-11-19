@@ -1,3 +1,35 @@
+macro_rules! apply_equal_filter_method {
+    ($query:ident, $filter_method:ident, $filter_field:expr, $dsl_field:expr ) => {{
+        if let Some(equal_filter) = $filter_field {
+            if let Some(value) = equal_filter.equal_to {
+                $query = $query.$filter_method($dsl_field.eq(value));
+            }
+
+            if let Some(value) = equal_filter.not_equal_to {
+                $query = $query.$filter_method($dsl_field.ne(value));
+            }
+
+            if let Some(value) = equal_filter.equal_any {
+                $query = $query.$filter_method($dsl_field.eq_any(value));
+            }
+
+            if let Some(value) = equal_filter.equal_any_or_null {
+                $query = $query.$filter_method($dsl_field.eq_any(value).or($dsl_field.is_null()));
+            }
+
+            if let Some(value) = equal_filter.not_equal_all {
+                $query = $query.$filter_method($dsl_field.ne_all(value));
+            }
+
+            $query = match equal_filter.is_null {
+                Some(true) => $query.$filter_method($dsl_field.is_null()),
+                Some(false) => $query.$filter_method($dsl_field.is_not_null()),
+                None => $query,
+            }
+        }
+    }};
+}
+
 /// Example expand, when called with:
 ///
 /// ```
@@ -17,33 +49,18 @@
 /// ```
 macro_rules! apply_equal_filter {
     ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
-        if let Some(equal_filter) = $filter_field {
-            if let Some(value) = equal_filter.equal_to {
-                $query = $query.filter($dsl_field.eq(value));
-            }
+        crate::diesel_macros::apply_equal_filter_method!($query, filter, $filter_field, $dsl_field);
+    }};
+}
 
-            if let Some(value) = equal_filter.not_equal_to {
-                $query = $query.filter($dsl_field.ne(value));
-            }
-
-            if let Some(value) = equal_filter.equal_any {
-                $query = $query.filter($dsl_field.eq_any(value));
-            }
-
-            if let Some(value) = equal_filter.equal_any_or_null {
-                $query = $query.filter($dsl_field.eq_any(value).or($dsl_field.is_null()));
-            }
-
-            if let Some(value) = equal_filter.not_equal_all {
-                $query = $query.filter($dsl_field.ne_all(value));
-            }
-
-            $query = match equal_filter.is_null {
-                Some(true) => $query.filter($dsl_field.is_null()),
-                Some(false) => $query.filter($dsl_field.is_not_null()),
-                None => $query,
-            }
-        }
+macro_rules! apply_equal_or_filter {
+    ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
+        crate::diesel_macros::apply_equal_filter_method!(
+            $query,
+            or_filter,
+            $filter_field,
+            $dsl_field
+        );
     }};
 }
 
@@ -373,6 +390,8 @@ macro_rules! apply_sort_asc_nulls_first {
 pub(crate) use apply_date_filter;
 pub(crate) use apply_date_time_filter;
 pub(crate) use apply_equal_filter;
+pub(crate) use apply_equal_filter_method;
+pub(crate) use apply_equal_or_filter;
 pub(crate) use apply_number_filter;
 pub(crate) use apply_sort;
 pub(crate) use apply_sort_asc_nulls_first;
