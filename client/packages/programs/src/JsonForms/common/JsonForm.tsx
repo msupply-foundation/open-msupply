@@ -1,8 +1,11 @@
-import React, { FC, PropsWithChildren, useEffect } from 'react';
+import React, { FC, PropsWithChildren, useEffect, useMemo } from 'react';
 import {
+  LocaleKey,
+  TypedTFunction,
   Typography,
   UnhappyMan,
   useAuthContext,
+  useIntlUtils,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
 import { Box, useTranslation, BasicSpinner } from '@openmsupply-client/common';
@@ -10,6 +13,7 @@ import { JsonForms, JsonFormsReactProps } from '@jsonforms/react';
 import {
   JsonFormsRendererRegistryEntry,
   JsonSchema,
+  Translator,
   UISchemaElement,
   createAjv,
 } from '@jsonforms/core';
@@ -154,8 +158,24 @@ const FormComponent = ({
   // This allows "default" values to be set in the JSON schema
   const handleDefaultsAjv = createAjv({ useDefaults: true });
 
+  const { currentLanguage } = useIntlUtils();
+  const t = useTranslation();
+
+  const createTranslator =
+    (t: TypedTFunction<LocaleKey>) =>
+    (key: string, defaultMessage?: string) => {
+      console.log(
+        `Locale: ${currentLanguage}, Key: ${key}, Default Message: ${defaultMessage}`
+      );
+      // if (key in LocaleKey)
+      return t(key as LocaleKey);
+    };
+
+  const translation: Translator = useMemo(() => createTranslator(t), [t]);
+
   return !data ? null : (
     <JsonForms
+      i18n={{ locale: currentLanguage, translate: translation }}
       schema={jsonSchema}
       uischema={uiSchema}
       data={data}
