@@ -17,7 +17,7 @@ type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
   item: InboundLineItem | null;
   disabled: boolean;
-  onChangeItem: (item: ItemStockOnHandFragment) => void;
+  onChangeItem: (item: ItemStockOnHandFragment | null) => void;
 }
 
 export const InboundLineEditForm: FC<InboundLineEditProps> = ({
@@ -41,7 +41,7 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
             openOnFocus={!item}
             disabled={disabled}
             currentItemId={item?.id}
-            onChange={newItem => newItem && onChangeItem(newItem)}
+            onChange={newItem => onChangeItem(newItem)}
             extraFilter={
               disabled
                 ? undefined

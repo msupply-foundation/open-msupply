@@ -74,13 +74,15 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   const locations = data?.nodes || [];
   const options: AutocompleteOption<LocationOption>[] = locations.map(l => ({
     value: l.id,
-    label: l.name,
+    label: formatLocationLabel(l),
     code: l.code,
   }));
 
   if (locations.length > 0 && selectedLocation !== null) {
     options.push({ value: null, label: t('label.remove') });
   }
+
+  const selectedOption = options.find(o => o.value === selectedLocation?.id);
 
   return (
     <Autocomplete
@@ -89,13 +91,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
       width={`${width}px`}
       popperMinWidth={Number(width)}
       clearable={false}
-      value={
-        selectedLocation && {
-          value: selectedLocation.id,
-          label: selectedLocation.name,
-          code: selectedLocation.code,
-        }
-      }
+      value={selectedOption || null}
       loading={isLoading}
       onChange={(_, option) => {
         onChange(locations.find(l => l.id === option?.value) || null);
@@ -107,4 +103,9 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
       isOptionEqualToValue={(option, value) => option.value === value?.value}
     />
   );
+};
+
+export const formatLocationLabel = (location: LocationRowFragment) => {
+  const { name, coldStorageType } = location;
+  return `${name}${coldStorageType ? ` (${coldStorageType.name})` : ''}`;
 };

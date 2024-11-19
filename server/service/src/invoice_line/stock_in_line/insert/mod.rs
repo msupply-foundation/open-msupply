@@ -42,6 +42,7 @@ pub struct InsertStockInLine {
     pub stock_line_id: Option<String>,
     pub barcode: Option<String>,
     pub stock_on_hold: bool,
+    pub item_variant_id: Option<String>,
 }
 
 type OutError = InsertStockInLineError;
@@ -91,6 +92,7 @@ pub enum InsertStockInLineError {
     NotThisStoreInvoice,
     CannotEditFinalised,
     LocationDoesNotExist,
+    ItemVariantDoesNotExist,
     ItemNotFound,
     PackSizeBelowOne,
     NumberOfPacksBelowZero,
@@ -233,6 +235,21 @@ mod test {
                 }),
             ),
             Err(ServiceError::LocationDoesNotExist)
+        );
+
+        // ItemVariantDoesNotExist
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.pack_size = 1.0;
+                    r.number_of_packs = 1.0;
+                    r.item_id = mock_item_a().id;
+                    r.item_variant_id = Some("invalid".to_string());
+                }),
+            ),
+            Err(ServiceError::ItemVariantDoesNotExist)
         );
 
         // InvoiceDoesNotExist

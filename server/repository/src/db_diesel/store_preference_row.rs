@@ -26,6 +26,7 @@ table! {
         months_understock -> Double,
         months_items_expire -> Double,
         stocktake_frequency -> Double,
+        extra_fields_in_requisition -> Bool,
     }
 }
 
@@ -60,6 +61,7 @@ pub struct StorePreferenceRow {
     pub months_understock: f64,
     pub months_items_expire: f64,
     pub stocktake_frequency: f64,
+    pub extra_fields_in_requisition: bool,
 }
 
 pub struct StorePreferenceRowRepository<'a> {

@@ -18,6 +18,18 @@ pub struct UpdateResponseRequisitionLine {
     pub id: String,
     pub supply_quantity: Option<f64>,
     pub comment: Option<String>,
+    //Manual Requisition
+    pub requested_quantity: Option<f64>,
+    pub stock_on_hand: Option<f64>,
+    pub initial_stock_on_hand: Option<f64>,
+    pub average_monthly_consumption: Option<f64>,
+    pub incoming_units: Option<f64>,
+    pub outgoing_units: Option<f64>,
+    pub loss_in_units: Option<f64>,
+    pub addition_in_units: Option<f64>,
+    pub expiring_units: Option<f64>,
+    pub days_out_of_stock: Option<f64>,
+    pub option_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -101,11 +113,39 @@ fn generate(
         id: _,
         supply_quantity: updated_supply_quantity,
         comment: updated_comment,
+        requested_quantity: updated_requested_quantity,
+        stock_on_hand: updated_stock_on_hand,
+        initial_stock_on_hand: updated_initial_stock_on_hand,
+        average_monthly_consumption: updated_average_monthly_consumption,
+        incoming_units: updated_incoming_units,
+        outgoing_units: updated_outgoing_units,
+        loss_in_units: updated_loss_in_units,
+        addition_in_units: updated_addition_in_units,
+        expiring_units: updated_expiring_units,
+        days_out_of_stock: updated_days_out_of_stock,
+        option_id: updated_option_id,
     }: UpdateResponseRequisitionLine,
 ) -> (Option<RequisitionRow>, RequisitionLineRow) {
     let requisition_line_row = inline_edit(&existing, |mut u| {
         u.supply_quantity = updated_supply_quantity.unwrap_or(u.supply_quantity);
         u.comment = updated_comment.or(u.comment);
+        if existing_requisition_row.linked_requisition_id.is_none() {
+            u.available_stock_on_hand = updated_stock_on_hand.unwrap_or(0.0);
+            u.average_monthly_consumption =
+                updated_average_monthly_consumption.unwrap_or(u.average_monthly_consumption);
+        }
+        // Manual Requisition fields
+        u.requested_quantity = updated_requested_quantity.unwrap_or(u.requested_quantity);
+        u.initial_stock_on_hand_units =
+            updated_initial_stock_on_hand.unwrap_or(u.initial_stock_on_hand_units);
+        u.incoming_units = updated_incoming_units.unwrap_or(u.incoming_units);
+        u.outgoing_units = updated_outgoing_units.unwrap_or(u.outgoing_units);
+        u.loss_in_units = updated_loss_in_units.unwrap_or(u.loss_in_units);
+        u.addition_in_units = updated_addition_in_units.unwrap_or(u.addition_in_units);
+        u.expiring_units = updated_expiring_units.unwrap_or(u.expiring_units);
+        u.days_out_of_stock = updated_days_out_of_stock.unwrap_or(u.days_out_of_stock);
+        u.option_id = updated_option_id.or(u.option_id);
+
         u
     });
 
@@ -236,6 +276,9 @@ mod test {
                     id: test_line.id.clone(),
                     supply_quantity: Some(99.0),
                     comment: Some("comment".to_string()),
+                    requested_quantity: Some(99.0),
+                    stock_on_hand: Some(99.0),
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -250,6 +293,9 @@ mod test {
             inline_edit(&test_line, |mut u| {
                 u.supply_quantity = 99.0;
                 u.comment = Some("comment".to_string());
+                u.requested_quantity = 99.0;
+                u.initial_stock_on_hand_units = 0.0;
+                u.available_stock_on_hand = 99.0;
                 u
             })
         );

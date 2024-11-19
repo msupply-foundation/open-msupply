@@ -157,6 +157,7 @@ pub fn generate_lines_from_master_list(
                     on_hold: _,
                     available_number_of_packs: _,
                     barcode_id: _,
+                    item_variant_id: _,
                 } = line.stock_line_row;
 
                 result.push(StocktakeLineRow {
@@ -217,6 +218,7 @@ pub fn generate_lines_from_location(
                 on_hold: _,
                 available_number_of_packs: _,
                 barcode_id: _,
+                item_variant_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {
@@ -273,6 +275,7 @@ pub fn generate_lines_with_stock(
                 on_hold: _,
                 available_number_of_packs: _,
                 barcode_id: _,
+                item_variant_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {
@@ -330,6 +333,7 @@ pub fn generate_lines_expiring_before(
                 on_hold: _,
                 available_number_of_packs: _,
                 barcode_id: _,
+                item_variant_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {

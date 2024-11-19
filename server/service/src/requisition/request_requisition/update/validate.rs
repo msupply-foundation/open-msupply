@@ -29,12 +29,12 @@ pub fn validate(
         return Err(OutError::NotThisStoreRequisition);
     }
 
-    if requisition_row.status != RequisitionStatus::Draft {
-        return Err(OutError::CannotEditRequisition);
-    }
-
     if requisition_row.r#type != RequisitionType::Request {
         return Err(OutError::NotARequestRequisition);
+    }
+
+    if requisition_row.status != RequisitionStatus::Draft {
+        return Err(OutError::CannotEditRequisition);
     }
 
     let other_party_id = match &input.other_party_id {

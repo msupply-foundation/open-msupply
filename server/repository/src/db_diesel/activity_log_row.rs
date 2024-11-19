@@ -81,6 +81,10 @@ pub enum ActivityLogType {
     VaccinationCreated,
     VaccinationUpdated,
     VaccinationDeleted,
+    DemographicIndicatorCreated,
+    DemographicIndicatorUpdated,
+    DemographicProjectionCreated,
+    DemographicProjectionUpdated,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
