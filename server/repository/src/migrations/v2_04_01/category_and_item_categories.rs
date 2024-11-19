@@ -36,6 +36,13 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
+        // Reset translate all items on the next sync
+        sql!(
+            connection,
+            r#"
+            UPDATE sync_buffer SET integration_datetime = NULL WHERE table_name = 'item';
+        "#,
+        )?;
         Ok(())
     }
 }
