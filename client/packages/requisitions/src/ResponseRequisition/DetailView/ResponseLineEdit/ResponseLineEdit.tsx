@@ -332,7 +332,9 @@ export const ResponseLineEdit = ({
             Input={
               <NumericTextInput
                 width={INPUT_WIDTH}
-                value={draft?.remainingQuantityToSupply}
+                value={
+                  (draft?.supplyQuantity ?? 0) - (draft?.alreadyIssued ?? 0)
+                }
                 disabled
               />
             }
