@@ -165,13 +165,17 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&str>
     let mut ts = TopologicalSort::<&str>::new();
     for translator in translators {
         let pull_deps = translator.pull_dependencies();
-        let table = translator.table_name();
+
         if pull_deps.is_empty() {
-            ts.insert(table);
+            for table_name in translator.all_table_names() {
+                ts.insert(table_name);
+            }
             continue;
         }
         for dep in pull_deps {
-            ts.add_dependency(dep, table);
+            for table_name in translator.all_table_names() {
+                ts.add_dependency(dep, table_name);
+            }
         }
     }
 
@@ -335,10 +339,24 @@ pub(crate) trait SyncTranslation {
     /// translation can run.
     fn pull_dependencies(&self) -> Vec<&str>;
     fn table_name(&self) -> &str;
+
+    /// Additional legacy table names that sync buffer records should match on
+    fn additional_legacy_table_names(&self) -> Vec<&str> {
+        vec![]
+    }
+
+    fn all_table_names(&self) -> Vec<&str> {
+        let mut names = vec![self.table_name()];
+        names.extend(self.additional_legacy_table_names());
+        names
+    }
+
     /// By default matching by table name
     /// used to determine if translation applies when remote site pulls sync records from central
     fn should_translate_from_sync_record(&self, row: &SyncBufferRow) -> bool {
-        self.table_name() == row.table_name
+        self.all_table_names()
+            .iter()
+            .any(|name| name == &row.table_name)
     }
 
     /// Translate an upsert record received from the central server(s)

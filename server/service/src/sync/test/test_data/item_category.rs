@@ -1,8 +1,6 @@
 use crate::sync::test::TestSyncIncomingRecord;
 use repository::category_row::{CategoryRow, CategoryRowDelete};
 
-const TABLE_NAME: &str = "item_category";
-
 const ITEM_CATEGORY_1: (&str, &str) = (
     "B4A0CB55544B4473B257CC8A8A433CD8",
     r#"{
@@ -38,7 +36,7 @@ const ITEM_CATEGORY_LEVEL_1_1: (&str, &str) = (
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
         TestSyncIncomingRecord::new_pull_upsert(
-            TABLE_NAME,
+            "item_category",
             ITEM_CATEGORY_1,
             CategoryRow {
                 id: ITEM_CATEGORY_1.0.to_owned(),
@@ -49,7 +47,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
-            TABLE_NAME,
+            "item_category_level2",
             ITEM_CATEGORY_LEVEL_2_1,
             CategoryRow {
                 id: ITEM_CATEGORY_LEVEL_2_1.0.to_owned(),
@@ -60,7 +58,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
-            TABLE_NAME,
+            "item_category_level1",
             ITEM_CATEGORY_LEVEL_1_1,
             CategoryRow {
                 id: ITEM_CATEGORY_LEVEL_1_1.0.to_owned(),
@@ -75,7 +73,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
-        TABLE_NAME,
+        "item_category",
         ITEM_CATEGORY_1.0,
         CategoryRowDelete(ITEM_CATEGORY_1.0.to_string()),
     )]
