@@ -26,6 +26,9 @@ fragment AssetRow on AssetNode {
     model
     code
   }
+  assetCategory {
+    name
+  }
   assetType {
     name
   }
