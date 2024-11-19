@@ -33,12 +33,9 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct CategoryTranslation;
 impl SyncTranslation for CategoryTranslation {
-    fn table_name(&self) -> &str {
-        "item_category"
-    }
-
-    fn additional_legacy_table_names(&self) -> Vec<&str> {
-        vec!["item_category_level1", "item_category_level2"]
+    
+    fn table_names(&self) -> Vec<&str> {
+        vec!["item_category", "item_category_level1", "item_category_level2"]
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
