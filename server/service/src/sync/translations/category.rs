@@ -37,15 +37,12 @@ impl SyncTranslation for CategoryTranslation {
         "item_category"
     }
 
-    fn pull_dependencies(&self) -> Vec<&str> {
-        vec![]
+    fn additional_legacy_table_names(&self) -> Vec<&str> {
+        vec!["item_category_level1", "item_category_level2"]
     }
 
-    fn should_translate_from_sync_record(&self, row: &SyncBufferRow) -> bool {
-        match row.table_name.as_str() {
-            "item_category" | "item_category_level2" | "item_category_level1" => true,
-            _ => false,
-        }
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![]
     }
 
     fn try_translate_from_upsert_sync_record(
