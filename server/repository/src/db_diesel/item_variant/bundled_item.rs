@@ -1,7 +1,8 @@
 use super::bundled_item_row::{bundled_item, BundledItemRow};
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
-    Pagination, StorageConnection,
+    diesel_macros::{apply_equal_filter, apply_equal_or_filter},
+    repository_error::RepositoryError,
+    DBType, EqualFilter, Pagination, StorageConnection,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -10,6 +11,7 @@ pub struct BundledItemFilter {
     pub id: Option<EqualFilter<String>>,
     pub principal_item_variant_id: Option<EqualFilter<String>>,
     pub bundled_item_variant_id: Option<EqualFilter<String>>,
+    pub principal_or_bundled_variant_id: Option<EqualFilter<String>>,
 }
 
 impl BundledItemFilter {
@@ -27,6 +29,10 @@ impl BundledItemFilter {
     }
     pub fn bundled_item_variant_id(mut self, filter: EqualFilter<String>) -> Self {
         self.bundled_item_variant_id = Some(filter);
+        self
+    }
+    pub fn principal_or_bundled_variant_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.principal_or_bundled_variant_id = Some(filter);
         self
     }
 }
@@ -97,7 +103,22 @@ fn create_filtered_query(filter: Option<BundledItemFilter>) -> BoxedBundledItemQ
             id,
             principal_item_variant_id,
             bundled_item_variant_id,
+            principal_or_bundled_variant_id,
         } = f;
+
+        // or filter need to be applied before and filters
+        if principal_or_bundled_variant_id.is_some() {
+            apply_equal_filter!(
+                query,
+                principal_or_bundled_variant_id.clone(),
+                bundled_item::principal_item_variant_id
+            );
+            apply_equal_or_filter!(
+                query,
+                principal_or_bundled_variant_id.clone(),
+                bundled_item::bundled_item_variant_id
+            );
+        }
 
         apply_equal_filter!(query, id, bundled_item::id);
         apply_equal_filter!(
