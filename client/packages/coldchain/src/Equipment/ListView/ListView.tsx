@@ -64,7 +64,7 @@ const AssetListComponent: FC = () => {
       label: 'label.asset-number',
     },
     {
-      key: 'categoryId',
+      key: 'categoryName',
       label: 'label.category',
       sortable: false,
       width: 200,
