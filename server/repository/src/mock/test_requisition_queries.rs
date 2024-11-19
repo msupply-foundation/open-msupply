@@ -197,10 +197,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     tax_percentage: Some(15.0),
                     r#type: InvoiceLineType::StockOut,
                     number_of_packs: 10.0,
-                    note: None,
-                    inventory_adjustment_reason_id: None,
-                    return_reason_id: None,
-                    foreign_currency_price_before_tax: None,
+                    ..Default::default()
                 },
                 stock_line: StockLineRow {
                     id: line1_id.clone(),
@@ -217,7 +214,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     on_hold: false,
                     note: None,
                     supplier_link_id: Some(String::from("name_store_b")),
-                    barcode_id: None,
+                    ..Default::default()
                 },
             },
             FullMockInvoiceLine {
@@ -239,10 +236,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     tax_percentage: Some(15.0),
                     r#type: InvoiceLineType::StockOut,
                     number_of_packs: 10.0,
-                    note: None,
-                    inventory_adjustment_reason_id: None,
-                    return_reason_id: None,
-                    foreign_currency_price_before_tax: None,
+                    ..Default::default()
                 },
                 stock_line: StockLineRow {
                     id: line2_id.clone(),
@@ -259,7 +253,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     on_hold: false,
                     note: None,
                     supplier_link_id: Some(String::from("name_store_b")),
-                    barcode_id: None,
+                    ..Default::default()
                 },
             },
         ],
@@ -303,10 +297,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
                 tax_percentage: Some(15.0),
                 r#type: InvoiceLineType::StockOut,
                 number_of_packs: 10.0,
-                note: None,
-                inventory_adjustment_reason_id: None,
-                return_reason_id: None,
-                foreign_currency_price_before_tax: None,
+                ..Default::default()
             },
             stock_line: StockLineRow {
                 id: line1_id.clone(),
@@ -323,7 +314,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
                 on_hold: false,
                 note: None,
                 supplier_link_id: Some(String::from("name_store_b")),
-                barcode_id: None,
+                ..Default::default()
             },
         }],
     }
@@ -366,10 +357,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
                 tax_percentage: Some(15.0),
                 r#type: InvoiceLineType::StockOut,
                 number_of_packs: 10.0,
-                note: None,
-                inventory_adjustment_reason_id: None,
-                return_reason_id: None,
-                foreign_currency_price_before_tax: None,
+                ..Default::default()
             },
             stock_line: StockLineRow {
                 id: line1_id.clone(),
@@ -386,7 +374,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
                 on_hold: false,
                 note: None,
                 supplier_link_id: Some(String::from("name_store_b")),
-                barcode_id: None,
+                ..Default::default()
             },
         }],
     }

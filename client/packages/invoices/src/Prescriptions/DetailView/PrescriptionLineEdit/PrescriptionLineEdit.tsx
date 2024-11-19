@@ -72,10 +72,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     currentItem,
     DateUtils.getDateOrNull(prescriptionDate)
   );
-  const packSizeController = usePackSizeController(
-    item,
-    draftPrescriptionLines
-  );
+  const packSizeController = usePackSizeController(draftPrescriptionLines);
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const height = useKeyboardHeightAdjustment(700);
@@ -199,7 +196,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
       nextButton={
         <DialogButton
           disabled={okNextDisabled}
-          variant="next"
+          variant="next-and-ok"
           onClick={onNext}
         />
       }

@@ -94,12 +94,12 @@ fn validate(
         return Err(OutError::NotThisStoreRequisition);
     }
 
-    if requisition_row.status != RequisitionStatus::Draft {
-        return Err(OutError::CannotEditRequisition);
-    }
-
     if requisition_row.r#type != RequisitionType::Request {
         return Err(OutError::NotARequestRequisition);
+    }
+
+    if requisition_row.status != RequisitionStatus::Draft {
+        return Err(OutError::CannotEditRequisition);
     }
     // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
     // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
@@ -122,7 +122,7 @@ mod test_delete {
     use repository::{
         mock::{
             mock_draft_request_requisition_for_update_test,
-            mock_full_draft_response_requisition_for_update_test, mock_sent_request_requisition,
+            mock_full_new_response_requisition_for_update_test, mock_sent_request_requisition,
             mock_store_a, mock_store_b, MockDataInserts,
         },
         test_db::setup_all,
@@ -174,7 +174,7 @@ mod test_delete {
             service.delete_request_requisition(
                 &context,
                 DeleteRequestRequisition {
-                    id: mock_full_draft_response_requisition_for_update_test()
+                    id: mock_full_new_response_requisition_for_update_test()
                         .requisition
                         .id,
                 },

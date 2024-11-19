@@ -4,7 +4,7 @@ mod test_update {
     use repository::{
         mock::{
             mock_draft_request_requisition_for_update_test,
-            mock_full_draft_response_requisition_for_update_test, mock_name_store_c,
+            mock_full_new_response_requisition_for_update_test, mock_name_store_c,
             mock_request_draft_requisition_calculation_test, mock_request_program_requisition,
             mock_sent_request_requisition, mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
@@ -89,7 +89,7 @@ mod test_update {
             service.update_request_requisition(
                 &context,
                 inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id = mock_full_draft_response_requisition_for_update_test()
+                    r.id = mock_full_new_response_requisition_for_update_test()
                         .requisition
                         .id;
                 }),

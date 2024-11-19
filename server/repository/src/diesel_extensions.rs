@@ -106,18 +106,31 @@ pub mod date_coalesce {
     define_sql_function! { fn coalesce(x: Nullable<Date>, y: Date) -> Date; }
 }
 
+pub mod datetime_coalesce {
+    use diesel::sql_types::{Nullable, Timestamp};
+    define_sql_function! { fn coalesce(x: Nullable<Timestamp>, y: Timestamp) -> Timestamp; }
+}
+
 #[cfg(test)]
 mod tests {
     use chrono::NaiveDate;
     use diesel::{debug_query, prelude::*, sqlite::Sqlite};
 
-    use crate::diesel_extensions::{date_coalesce, OrderByExtensions};
+    use crate::diesel_extensions::{date_coalesce, datetime_coalesce, OrderByExtensions};
 
     table! {
         item (id) {
             id -> Text,
             name -> Text,
             expiry_date -> Nullable<Date>,
+        }
+    }
+
+    table! {
+        invoice (id) {
+            id -> Text,
+            created_datetime -> Timestamp,
+            modified_datetime -> Nullable<Timestamp>,
         }
     }
 
@@ -194,6 +207,19 @@ mod tests {
         assert_eq!(
             sql,
             r#"SELECT `item`.`id`, `item`.`name`, `item`.`expiry_date` FROM `item` WHERE (coalesce(`item`.`expiry_date`, ?) = ?) -- binds: [9999-12-31, 2023-12-31]"#
+        );
+    }
+
+    #[test]
+    fn datetime_coalesce_test() {
+        let query = invoice::dsl::invoice.order_by(datetime_coalesce::coalesce(
+            invoice::modified_datetime,
+            invoice::created_datetime,
+        ));
+        let sql = debug_query::<Sqlite, _>(&query).to_string();
+        assert_eq!(
+            sql,
+            r#"SELECT `invoice`.`id`, `invoice`.`created_datetime`, `invoice`.`modified_datetime` FROM `invoice` ORDER BY coalesce(`invoice`.`modified_datetime`, `invoice`.`created_datetime`) -- binds: []"#
         );
     }
 }

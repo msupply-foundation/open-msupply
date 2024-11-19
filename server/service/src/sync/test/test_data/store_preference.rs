@@ -104,7 +104,7 @@ const STORE_PREFERENCE_2: (&str, &str) = (
         "includeRequisitionsInSuppliersRemoteAuthorisationProcesses": true,
         "canLinkRequisitionToSupplierInvoice": false,
         "responseRequisitionAutoFillSupplyQuantity": false,
-        "useExtraFieldsForRequisitions": false,
+        "useExtraFieldsForRequisitions": true,
         "CommentFieldToBeShownOnSupplierInvoiceLines": false,
         "UseEDDPlaceholderLinesOnSupplierInvoice": false,
         "consolidateBatches": false,
@@ -156,6 +156,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 months_understock: 4.42,
                 months_items_expire: 2.12,
                 stocktake_frequency: 1.34,
+                extra_fields_in_requisition: false,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -177,6 +178,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 months_understock: 3.0,
                 months_items_expire: 3.0,
                 stocktake_frequency: 1.0,
+                extra_fields_in_requisition: true,
             },
         ),
     ]
