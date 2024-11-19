@@ -167,13 +167,13 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&str>
         let pull_deps = translator.pull_dependencies();
 
         if pull_deps.is_empty() {
-            for table_name in translator.all_table_names() {
+            for table_name in translator.table_names() {
                 ts.insert(table_name);
             }
             continue;
         }
         for dep in pull_deps {
-            for table_name in translator.all_table_names() {
+            for table_name in translator.table_names() {
                 ts.add_dependency(dep, table_name);
             }
         }
@@ -338,23 +338,21 @@ pub(crate) trait SyncTranslation {
     /// Returns information about which legacy tables need to be integrated first before this
     /// translation can run.
     fn pull_dependencies(&self) -> Vec<&str>;
-    fn table_name(&self) -> &str;
 
-    /// Additional legacy table names that sync buffer records should match on
-    fn additional_legacy_table_names(&self) -> Vec<&str> {
-        vec![]
-    }
+    /// A single table name to match on, If there's just one table name to match on, use this function
+    fn table_name(&self) -> &str {
+        ""
+    }   
 
-    fn all_table_names(&self) -> Vec<&str> {
-        let mut names = vec![self.table_name()];
-        names.extend(self.additional_legacy_table_names());
-        names
+    /// If you need to match on more than one table_name with the same translator, use this one...
+    fn table_names(&self) -> Vec<&str> {
+        vec![self.table_name()]
     }
 
     /// By default matching by table name
     /// used to determine if translation applies when remote site pulls sync records from central
     fn should_translate_from_sync_record(&self, row: &SyncBufferRow) -> bool {
-        self.all_table_names()
+        self.table_names()
             .iter()
             .any(|name| name == &row.table_name)
     }
