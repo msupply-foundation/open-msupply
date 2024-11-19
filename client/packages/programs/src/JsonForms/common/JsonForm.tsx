@@ -61,6 +61,7 @@ import {
   FORM_COLUMN_MAX_WIDTH,
   FORM_LABEL_COLUMN_WIDTH,
 } from './styleConstants';
+import * as common from '../../../../../packages/common/src/intl/locales/en/common.json';
 
 export type JsonType = string | number | boolean | null | undefined;
 
@@ -161,15 +162,10 @@ const FormComponent = ({
   const { currentLanguage } = useIntlUtils();
   const t = useTranslation();
 
-  const createTranslator =
-    (t: TypedTFunction<LocaleKey>) =>
-    (key: string, defaultMessage?: string) => {
-      console.log(
-        `Locale: ${currentLanguage}, Key: ${key}, Default Message: ${defaultMessage}`
-      );
-      // if (key in LocaleKey)
-      return t(key as LocaleKey);
-    };
+  const createTranslator = (t: TypedTFunction<LocaleKey>) => (key: string) => {
+    // excludes pluralisation of keys - but probably not required
+    return Object.keys(common).includes(key) ? t(key as LocaleKey) : key;
+  };
 
   const translation: Translator = useMemo(() => createTranslator(t), [t]);
 
