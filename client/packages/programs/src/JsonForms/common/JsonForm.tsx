@@ -135,6 +135,8 @@ const FormComponent = ({
     user,
     ...config,
   };
+  const { currentLanguage } = useIntlUtils();
+  const t = useTranslation();
 
   const mapErrors = (
     errors?: {
@@ -158,9 +160,6 @@ const FormComponent = ({
 
   // This allows "default" values to be set in the JSON schema
   const handleDefaultsAjv = createAjv({ useDefaults: true });
-
-  const { currentLanguage } = useIntlUtils();
-  const t = useTranslation();
 
   const createTranslator = (t: TypedTFunction<LocaleKey>) => (key: string) => {
     // excludes pluralisation of keys - but probably not required
