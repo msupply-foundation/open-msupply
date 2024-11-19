@@ -15,7 +15,7 @@
       </tr>
     </thead>
     <tbody>
-      {% for stockLine in data.data.stockLines.nodes %}
+      {% for stockLine in data.stockLines.nodes %}
       <tr>
         <td>{{stockLine.item.code}}</td>
         <td>{{stockLine.item.name}}</td>
@@ -32,7 +32,7 @@
             <span class="na">N/A</span>
           {% endif %}
         </td>
-        <td>{{stockLine.batch}}</td>
+        <td>{{stockLine.batch | default(value='')}}</td>
         <td>
           {% if stockLine.expiryDate %}
             {{ stockLine.expiryDate | date(format="%d/%m/%Y") }}
