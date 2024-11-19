@@ -1,5 +1,5 @@
 use super::{
-    item_category_row::{item_category_join, ItemCategoryRow},
+    item_category_row::{item_category_join, ItemCategoryJoinRow},
     DBType, StorageConnection,
 };
 
@@ -11,7 +11,7 @@ use crate::{
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct ItemCategory {
-    pub item_category_row: ItemCategoryRow,
+    pub item_category_join_row: ItemCategoryJoinRow,
 }
 
 #[derive(Clone, Default)]
@@ -85,15 +85,16 @@ impl<'a> ItemCategoryRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<ItemCategoryRow>(self.connection.lock().connection())?;
+        let result =
+            final_query.load::<ItemCategoryJoinRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-fn to_domain(row: ItemCategoryRow) -> ItemCategory {
+fn to_domain(row: ItemCategoryJoinRow) -> ItemCategory {
     ItemCategory {
-        item_category_row: row,
+        item_category_join_row: row,
     }
 }
 

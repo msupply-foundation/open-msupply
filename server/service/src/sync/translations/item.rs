@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
     item_category::{ItemCategoryFilter, ItemCategoryRepository},
-    item_category_row::ItemCategoryRow,
+    item_category_row::ItemCategoryJoinRow,
     ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemRowRepository,
     ItemType, StorageConnection, SyncBufferRow, VENCategory,
 };
@@ -215,16 +215,16 @@ fn translate_item_category_join(
         .query_one(ItemCategoryFilter::new().item_id(EqualFilter::equal_to(&data.ID)))?;
 
     if let Some(item_category) = existing_item_category_join {
-        let existing_category_id = item_category.item_category_row.category_id.clone();
+        let existing_category_id = item_category.item_category_join_row.category_id.clone();
 
         let new_category_id = data.category_ID.clone().unwrap_or_default();
 
         // If latest item data has a different category ID than that in the existing join,
         // or if category has been removed, mark existing join as deleted
         if existing_category_id != new_category_id {
-            let deleted_join = ItemCategoryRow {
+            let deleted_join = ItemCategoryJoinRow {
                 deleted_datetime: Some(Utc::now().naive_utc()),
-                ..item_category.item_category_row
+                ..item_category.item_category_join_row
             };
             integration_operations.push(IntegrationOperation::upsert(deleted_join));
         }
@@ -232,13 +232,13 @@ fn translate_item_category_join(
 
     // Upsert the new item category join if a category ID is provided in the latest item data
     if let Some(category_id) = &data.category_ID {
-        let item_category_row = ItemCategoryRow {
+        let item_category_join_row = ItemCategoryJoinRow {
             id: format!("{}-{}", data.ID.clone(), category_id.clone()),
             item_id: data.ID.clone(),
             category_id: category_id.clone(),
             deleted_datetime: None,
         };
-        integration_operations.push(IntegrationOperation::upsert(item_category_row));
+        integration_operations.push(IntegrationOperation::upsert(item_category_join_row));
     }
 
     Ok(integration_operations)

@@ -15,25 +15,25 @@ table! {
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[diesel(table_name = item_category_join)]
-pub struct ItemCategoryRow {
+pub struct ItemCategoryJoinRow {
     pub id: String,
     pub item_id: String,
     pub category_id: String,
     pub deleted_datetime: Option<NaiveDateTime>,
 }
 
-pub struct ItemCategoryRowRepository<'a> {
+pub struct ItemCategoryJoinRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> ItemCategoryRowRepository<'a> {
+impl<'a> ItemCategoryJoinRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        ItemCategoryRowRepository { connection }
+        ItemCategoryJoinRowRepository { connection }
     }
 
     pub fn upsert_one(
         &self,
-        item_category_join_row: &ItemCategoryRow,
+        item_category_join_row: &ItemCategoryJoinRow,
     ) -> Result<(), RepositoryError> {
         diesel::insert_into(item_category_join::table)
             .values(item_category_join_row)
@@ -48,7 +48,7 @@ impl<'a> ItemCategoryRowRepository<'a> {
     pub fn find_one_by_id(
         &self,
         item_category_join_id: &str,
-    ) -> Result<Option<ItemCategoryRow>, RepositoryError> {
+    ) -> Result<Option<ItemCategoryJoinRow>, RepositoryError> {
         let result = item_category_join::table
             .filter(item_category_join::id.eq(item_category_join_id))
             .first(self.connection.lock().connection())
@@ -65,9 +65,9 @@ impl<'a> ItemCategoryRowRepository<'a> {
     }
 }
 
-impl Upsert for ItemCategoryRow {
+impl Upsert for ItemCategoryJoinRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ItemCategoryRowRepository::new(con).upsert_one(self)?;
+        ItemCategoryJoinRowRepository::new(con).upsert_one(self)?;
         // Not in changelog
         Ok(None)
     }
@@ -75,7 +75,7 @@ impl Upsert for ItemCategoryRow {
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            ItemCategoryRowRepository::new(con).find_one_by_id(&self.id),
+            ItemCategoryJoinRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }
