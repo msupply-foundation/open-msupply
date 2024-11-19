@@ -161,9 +161,11 @@ const FormComponent = ({
   // This allows "default" values to be set in the JSON schema
   const handleDefaultsAjv = createAjv({ useDefaults: true });
 
+  const commonKeys = useMemo(() => new Set(Object.keys(common)), []);
+
   const createTranslator = (t: TypedTFunction<LocaleKey>) => (key: string) => {
     // excludes pluralisation of keys - but probably not required
-    return Object.keys(common).includes(key) ? t(key as LocaleKey) : key;
+    return commonKeys.has(key) ? t(key as LocaleKey) : key;
   };
 
   const translation: Translator = useMemo(() => createTranslator(t), [t]);
