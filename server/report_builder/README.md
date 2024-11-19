@@ -354,3 +354,30 @@ Reports can be built and tested directly from the 'open-msupply' repo, but devel
 Once changes are satisfactory, new reports can be moved directly into the OMS repo under a new version dir.
 
 Note that reports won't show up in OMS unless they are built into the generated json using the `build-standard-reports` command.
+
+## Localising JSON form fields
+
+Fields in UI schema can be translated using JSON forms inbuild translation and our translating function.
+
+Translations are invoked by adding by adding the 'I18n' field to the UI schema, or in the json schema. This will localise the field as per usual translation by adding a key and value in common.json.
+
+Json forms append '.label' the I18n field; a translation might look like the following:
+
+UI schema:
+
+```
+{
+  "type": "Control",
+  "label": "name",
+  "scope": "#/properties/name",
+  "i18n": "label.customName"
+}
+```
+
+common.json:
+
+```
+...
+"label.customName.label"
+...
+```
