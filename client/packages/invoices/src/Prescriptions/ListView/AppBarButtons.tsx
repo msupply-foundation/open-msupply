@@ -63,8 +63,7 @@ export const AppBarButtonsComponent: FC<{
                   RouteBuilder.create(AppRoute.Dispensary)
                     .addPart(AppRoute.Prescription)
                     .addPart(String(invoiceNumber))
-                    .build(),
-                  { replace: true }
+                    .build()
                 );
               });
             } catch (e) {
