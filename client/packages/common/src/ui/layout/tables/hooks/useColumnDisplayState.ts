@@ -25,6 +25,10 @@ export const useColumnDisplayState = <T extends RecordWithId>(
     ])
   );
 
+  const [allIsSelected, setAllIsSelected] = useState(false)
+
+
+
   const toggleColumn = (colKey: string) => {
     const newState = {
       ...columnDisplayState,
@@ -36,6 +40,16 @@ export const useColumnDisplayState = <T extends RecordWithId>(
           ? false
           : !columnDisplayState[colKey],
     };
+    if(colKey === 'selection'){
+      if(!allIsSelected){
+        Object.keys(newState).forEach((key)=>newState[key] = true)
+        setAllIsSelected(true)
+      }else{
+        Object.keys(newState).forEach((key)=>newState[key] = false)
+        setAllIsSelected(false)
+      }
+      
+    }
     setColumnDisplayState(newState);
     setHiddenColsStorage({
       ...hiddenColsStorage,
