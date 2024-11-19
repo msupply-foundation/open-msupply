@@ -3,7 +3,7 @@ use crate::sync::{
     translations::item::ordered_simple_json,
 };
 use repository::{
-    category_row::CategoryRow, item_category_row::ItemCategoryRow, mock::MockData, ItemRow,
+    category_row::CategoryRow, item_category_row::ItemCategoryJoinRow, mock::MockData, ItemRow,
     ItemRowDelete, ItemType, SyncAction, SyncBufferRow,
 };
 
@@ -300,7 +300,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     vaccine_doses: 1,
                     ..Default::default()
                 }),
-                IntegrationOperation::upsert(ItemCategoryRow {
+                IntegrationOperation::upsert(ItemCategoryJoinRow {
                     id: format!(
                         "{}-{}",
                         ITEM_3_VACCINE.0, "FA6FC67251CC4560AC7FED0C0B23E5A0"
