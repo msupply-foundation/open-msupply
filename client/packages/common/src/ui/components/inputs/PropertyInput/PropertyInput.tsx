@@ -48,7 +48,9 @@ export const PropertyInput: FC<PropertyInput> = ({
         <NumericTextInput
           value={valueInt ?? 0}
           fullWidth
-          allowNegative
+          allowNegative={allowedValues?.some(
+            value => value.toLowerCase() === 'negative'
+          )}
           onChange={n => {
             onChange(n);
           }}
