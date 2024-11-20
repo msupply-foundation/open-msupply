@@ -10,7 +10,7 @@ import {
 import { useResponse } from '../../api';
 import { PageLayout } from '../PageLayout';
 import { ListIndicatorLines } from './ListIndicators';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 import { AppBarButtons } from '../ResponseLineEdit/AppBarButtons';
 
 export const IndicatorEditPage = () => {
