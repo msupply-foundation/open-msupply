@@ -53,7 +53,7 @@ export const ResponseLineEdit = ({
   const { isOn: ourStats, toggle: toggleOurStats } = useToggle();
   const { isOn: theirStats, toggle: toggleTheirStats } = useToggle();
   const { data } = useResponse.line.stats(draft?.id);
-  const { data: reasonsData, isLoading } =
+  const { data: reasonsData, isLoading: reasonsLoading } =
     reasonOptions.document.listAllActive();
 
   const [ourStatsAnchorEl, setOurStatsAnchorEl] =
@@ -76,7 +76,7 @@ export const ResponseLineEdit = ({
   const customRequestedDisabled =
     !!hasLinkedRequisition ||
     (!!isProgram && reasonsData?.nodes.length === 0) ||
-    isLoading;
+    reasonsLoading;
 
   return (
     <Box>
@@ -408,6 +408,8 @@ export const ResponseLineEdit = ({
                     !!hasLinkedRequisition
                   }
                   onBlur={save}
+                  reasonNodes={reasonsData?.nodes}
+                  reasonsLoading={reasonsLoading}
                 />
               }
               labelWidth={'66px'}
