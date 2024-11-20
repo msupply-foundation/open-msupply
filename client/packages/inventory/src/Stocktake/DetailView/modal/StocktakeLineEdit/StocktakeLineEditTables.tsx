@@ -18,21 +18,19 @@ import {
   NumberInputCell,
   ColumnAlign,
   AdjustmentTypeInput,
+  NumberCell,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
   getLocationInputColumn,
   InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
-  PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
-  PackVariantEntryCell,
-  usePackVariant,
+  PackSizeEntryCell,
 } from '@openmsupply-client/system';
 import {
   useStocktakeLineErrorContext,
   UseStocktakeLineErrors,
 } from '../../../context';
-import { StocktakeLineFragment } from '../../../api';
 
 interface StocktakeLineEditTableProps {
   isDisabled?: boolean;
@@ -151,18 +149,17 @@ const getInventoryAdjustmentReasonInputColumn = (
 // If this is not extracted to it's own component and used directly in Cell:
 // cell will be re rendered anytime rowData changes, which causes it to loose focus
 // if number of packs is changed and tab is pressed (in quick succession)
-const PackUnitEntryCell = PackVariantEntryCell<DraftStocktakeLine>({
-  getItemId: r => r.item.id,
-  getUnitName: r => r.item.unitName || null,
+const PackUnitEntryCell = PackSizeEntryCell<DraftStocktakeLine>({
   getIsDisabled: r => !!r?.stockLine,
 });
 
-export const BatchTable: FC<
-  StocktakeLineEditTableProps & { item: StocktakeLineFragment['item'] | null }
-> = ({ item, batches, update, isDisabled = false }) => {
-  const t = useTranslation('inventory');
+export const BatchTable: FC<StocktakeLineEditTableProps> = ({
+  batches,
+  update,
+  isDisabled = false,
+}) => {
+  const t = useTranslation();
   const theme = useTheme();
-  const { packVariantExists } = usePackVariant(item?.id || '', null);
   useDisableStocktakeRows(batches);
 
   const errorsContext = useStocktakeLineErrorContext();
@@ -173,18 +170,14 @@ export const BatchTable: FC<
     getColumnLookupWithOverrides('packSize', {
       Cell: PackUnitEntryCell,
       setter: update,
-      ...(packVariantExists
-        ? {
-            label: 'label.unit-variant-and-pack-size',
-            minWidth: PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
-          }
-        : { label: 'label.pack-size' }),
+      label: 'label.pack-size',
     }),
     {
       key: 'snapshotNumberOfPacks',
       label: 'label.snapshot-num-of-packs',
       align: ColumnAlign.Right,
       width: 100,
+      Cell: NumberCell,
       getIsError: rowData =>
         errorsContext.getError(rowData)?.__typename ===
         'SnapshotCountCurrentCountMismatchLine',
@@ -194,7 +187,7 @@ export const BatchTable: FC<
 
     {
       key: 'countedNumberOfPacks',
-      label: 'label.counted-num-of-packs',
+      label: 'description.counted-num-of-packs',
       width: 100,
       getIsError: rowData =>
         errorsContext.getError(rowData)?.__typename ===
@@ -241,7 +234,7 @@ export const PricingTable: FC<StocktakeLineEditTableProps> = ({
   isDisabled,
 }) => {
   const theme = useTheme();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const columns = useColumns<DraftStocktakeLine>([
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
@@ -281,7 +274,7 @@ export const LocationTable: FC<StocktakeLineEditTableProps> = ({
   isDisabled,
 }) => {
   const theme = useTheme();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const columns = useColumns<DraftStocktakeLine>([
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),

@@ -29,7 +29,7 @@ const RelatedDocumentsRow: FC<{
 );
 
 export const RelatedDocumentsSection: FC = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { localisedDate: d } = useFormatDateTime();
   const { shipments } = useResponse.document.fields('shipments');
 

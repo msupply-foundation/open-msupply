@@ -19,7 +19,7 @@ export const useOutboundDeleteRows = () => {
   const { data: rows } = useOutbounds(queryParams);
   const api = useOutboundApi();
   const { mutateAsync } = useMutation(api.delete);
-  const t = useTranslation('distribution');
+  const t = useTranslation();
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)

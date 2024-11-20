@@ -30,7 +30,7 @@ export const DetailView: FC = () => {
     useEditModal<ItemRowWithStatsFragment>();
   const isDisabled = useRequest.utils.isDisabled();
   const navigate = useNavigate();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   const onRowClick = React.useCallback(
     (line: RequestLineFragment) => {
@@ -93,7 +93,7 @@ export const DetailView: FC = () => {
             .build()
         )
       }
-      title={t('error.requisition-not-found')}
+      title={t('error.order-not-found')}
       message={t('messages.click-to-return-to-requisitions')}
     />
   );

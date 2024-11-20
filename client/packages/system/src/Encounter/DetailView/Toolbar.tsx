@@ -93,7 +93,7 @@ export const Toolbar: FC<ToolbarProps> = ({
   );
   const [startDatetime, setStartDatetime] = useState<string | undefined>();
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
   const [clinician, setClinician] =

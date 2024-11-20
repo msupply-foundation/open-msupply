@@ -27,7 +27,7 @@ export const AppBarButtonsComponent: FC<{
   const navigate = useNavigate();
   const { success, error } = useNotification();
   const { mutateAsync: onCreate } = useOutbound.document.insert();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { fetchAsync, isLoading } = useOutbound.document.listAll({
     key: 'createdDateTime',
     direction: 'desc',
@@ -68,8 +68,7 @@ export const AppBarButtonsComponent: FC<{
                   RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.OutboundShipment)
                     .addPart(String(invoiceNumber))
-                    .build(),
-                  { replace: true }
+                    .build()
                 );
               });
             } catch (e) {

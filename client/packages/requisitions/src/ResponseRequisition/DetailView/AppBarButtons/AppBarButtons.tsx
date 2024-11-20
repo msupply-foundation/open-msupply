@@ -1,8 +1,10 @@
 import React from 'react';
 import {
   AppBarButtonsPortal,
+  ButtonWithIcon,
   Grid,
   LoadingButton,
+  PlusCircleIcon,
   PrinterIcon,
   ReportContext,
   useDetailPanel,
@@ -17,11 +19,24 @@ import { SupplyRequestedQuantityButton } from './SupplyRequestedQuantityButton';
 import { useResponse } from '../../api';
 import { JsonData } from '@openmsupply-client/programs';
 
-export const AppBarButtonsComponent = () => {
+interface AppBarButtonProps {
+  isDisabled: boolean;
+  hasLinkedRequisition: boolean;
+  isProgram: boolean;
+  onAddItem: (newState: boolean) => void;
+}
+
+export const AppBarButtonsComponent = ({
+  isDisabled,
+  hasLinkedRequisition,
+  isProgram,
+  onAddItem,
+}: AppBarButtonProps) => {
+  const t = useTranslation();
   const { OpenButton } = useDetailPanel();
   const { data } = useResponse.document.get();
   const { print, isPrinting } = usePrintReport();
-  const t = useTranslation();
+  const disableAddButton = isDisabled || isProgram || hasLinkedRequisition;
 
   const printReport = (
     report: ReportRowFragment,
@@ -34,6 +49,13 @@ export const AppBarButtonsComponent = () => {
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        <ButtonWithIcon
+          disabled={disableAddButton}
+          label={t('button.add-item')}
+          Icon={<PlusCircleIcon />}
+          onClick={() => onAddItem(true)}
+        />
+
         <SupplyRequestedQuantityButton />
         <ReportSelector
           context={ReportContext.Requisition}

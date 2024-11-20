@@ -14,6 +14,7 @@ table! {
         store_id -> Text,
         order_type -> Text,
         count -> BigInt,
+        other_party_id -> Text,
         #[sql_name = "type"] type_ -> crate::db_diesel::requisition::requisition_row::RequisitionTypeMapping,
     }
 }
@@ -36,6 +37,7 @@ pub struct RequisitionsInPeriod {
     store_id: String,
     pub order_type: String,
     pub count: i64,
+    pub other_party_id: String,
     #[diesel(column_name = type_)]
     pub r#type: RequisitionType,
 }
@@ -51,6 +53,7 @@ impl Default for RequisitionsInPeriod {
             store_id: Default::default(),
             order_type: Default::default(),
             count: Default::default(),
+            other_party_id: Default::default(),
         }
     }
 }
@@ -312,6 +315,7 @@ mod test {
                     order_type: "Order Type 1".to_string(),
                     count: 2,
                     r#type: RequisitionType::Request,
+                    other_party_id: "name_store_a".to_string(),
                 },
                 RequisitionsInPeriod {
                     id: "n/a".to_string(),
@@ -321,6 +325,7 @@ mod test {
                     order_type: "Order Type 2".to_string(),
                     count: 1,
                     r#type: RequisitionType::Request,
+                    other_party_id: "name_store_a".to_string(),
                 },
             ]
         );
@@ -345,6 +350,7 @@ mod test {
                     order_type: "Order Type 1".to_string(),
                     count: 2,
                     r#type: RequisitionType::Request,
+                    other_party_id: "name_store_a".to_string(),
                 },
                 RequisitionsInPeriod {
                     id: "n/a".to_string(),
@@ -354,6 +360,7 @@ mod test {
                     order_type: "Order Type 1".to_string(),
                     count: 1,
                     r#type: RequisitionType::Request,
+                    other_party_id: "name_store_a".to_string(),
                 },
                 RequisitionsInPeriod {
                     id: "n/a".to_string(),
@@ -363,6 +370,7 @@ mod test {
                     order_type: "Order Type 2".to_string(),
                     count: 1,
                     r#type: RequisitionType::Request,
+                    other_party_id: "name_store_a".to_string(),
                 },
             ]
         );
@@ -387,6 +395,7 @@ mod test {
                 order_type: "Order Type 2".to_string(),
                 count: 1,
                 r#type: RequisitionType::Request,
+                other_party_id: "name_store_a".to_string(),
             }]
         );
     }

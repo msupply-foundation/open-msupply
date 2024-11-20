@@ -25,7 +25,7 @@ export const FooterComponent = ({
   isSaving,
   showSaveConfirmation,
 }: FooterProps) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
   const { data } = useAssets.document.get();
   const onDelete = useAssets.document.delete(data?.id || '');

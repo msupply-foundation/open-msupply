@@ -8,7 +8,7 @@ import {
 import { useRequest } from '../../api';
 
 export const UseSuggestedQuantityButtonComponent = () => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { mutate: setRequestedToSuggested } =
     useRequest.utils.suggestedQuantity();
   const isDisabled = useRequest.utils.isDisabled();

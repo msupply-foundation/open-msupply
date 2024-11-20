@@ -15,7 +15,7 @@ import {
 import { usePatient } from '../api';
 
 const SummaryRow = ({ label, value }: { label: LocaleKey; value: string }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   return (
     <Box gap={1} display="flex">
       <Box style={{ textAlign: 'start', width: 135 }}>
@@ -31,16 +31,16 @@ const SummaryRow = ({ label, value }: { label: LocaleKey; value: string }) => {
 export const PatientSummary: FC = () => {
   const patientId = usePatient.utils.id();
   const { data: patient } = usePatient.document.get(patientId);
-  const { localisedDate } = useFormatDateTime();
+  const { localisedDate, getDisplayAge } = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const formatDateOfBirth = (dateOfBirth: string | null) => {
     const dob = DateUtils.getNaiveDate(dateOfBirth);
 
     return !dob
       ? ''
-      : `${localisedDate(dob)} (${t('label.age')}: ${DateUtils.age(dob)})`;
+      : `${localisedDate(dob)} (${t('label.age')}: ${getDisplayAge(dob)})`;
   };
   useEffect(() => {
     const patientName = patient

@@ -25,7 +25,7 @@ const MasterListComponent: FC = () => {
   const { data, isError, isLoading } = useMasterList.document.list();
   const pagination = { page, first, offset };
   const navigate = useNavigate();
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const columns = useColumns<MasterListRowFragment>(
     [
       ['name', { width: 300, Cell: TooltipTextCell }],

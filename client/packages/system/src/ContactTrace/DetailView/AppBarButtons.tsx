@@ -19,7 +19,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonsProp> = ({
   onLinkContact,
   documentData,
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
 
   const { LinkPatientModal, showDialog } = useLinkPatientModal(
     documentData,

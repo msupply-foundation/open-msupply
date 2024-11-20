@@ -48,7 +48,7 @@ const createStatusLog = (invoice: SupplierReturnRowFragment) => {
 };
 
 export const FooterComponent: FC = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { data } = useReturns.document.supplierReturn();
   const { navigateUpOne } = useBreadcrumbs();
 

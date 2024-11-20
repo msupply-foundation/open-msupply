@@ -30,7 +30,7 @@ import { SupplierSearchModal } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
-  const t = useTranslation('dashboard');
+  const t = useTranslation();
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
   const formatNumber = useFormatNumber();
@@ -97,8 +97,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                 RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InboundShipment)
                   .addPart(String(invoiceNumber))
-                  .build(),
-                { replace: true }
+                  .build()
               );
             });
           }}
@@ -116,7 +115,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               error={error as ApiException}
               isError={isError}
               isLoading={isLoading}
-              title={t('inbound-shipments', { ns: 'app' })}
+              title={t('inbound-shipment', { ns: 'app' })}
               stats={[
                 {
                   label: t('label.today', { ns: 'dashboard' }),

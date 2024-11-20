@@ -19,7 +19,6 @@ import { InboundLineFragment, useInbound } from '../../../api';
 import { DraftInboundLine } from '../../../../types';
 import { CreateDraft } from '../utils';
 import { TabLayout } from './TabLayout';
-import { usePackVariant } from '@openmsupply-client/system';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 
 type InboundLineItem = InboundLineFragment['item'];
@@ -34,7 +33,6 @@ interface InboundLineEditProps {
 }
 
 const useDraftInboundLines = (item: InboundLineItem | null) => {
-  const { variantsControl } = usePackVariant(String(item?.id), null);
   const { data: lines } = useInbound.lines.list(item?.id ?? '');
   const { id } = useInbound.document.fields('id');
   const { mutateAsync, isLoading } = useInbound.lines.save();
@@ -42,8 +40,7 @@ const useDraftInboundLines = (item: InboundLineItem | null) => {
   const { isDirty, setIsDirty } = useDirtyCheck();
   useConfirmOnLeaving(isDirty);
 
-  const defaultPackSize =
-    variantsControl?.activeVariant?.packSize || item?.defaultPackSize || 1;
+  const defaultPackSize = item?.defaultPackSize || 1;
 
   useEffect(() => {
     if (lines && item) {
@@ -124,7 +121,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   currency,
   isExternalSupplier,
 }) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState<InboundLineItem | null>(item);
   const { next: nextItem, disabled: nextDisabled } = useInbound.document.next(
@@ -158,7 +155,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
         cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
         nextButton={
           <DialogButton
-            variant="next"
+            variant="next-and-ok"
             disabled={okNextDisabled || zeroNumberOfPacks}
             onClick={async () => {
               await saveLines();
@@ -200,7 +197,6 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
             />
             <Divider margin={5} />
             <TabLayout
-              item={currentItem}
               draftLines={draftLines}
               addDraftLine={addDraftLine}
               updateDraftLine={updateDraftLine}

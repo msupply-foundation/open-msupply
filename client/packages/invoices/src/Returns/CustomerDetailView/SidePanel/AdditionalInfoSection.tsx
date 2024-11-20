@@ -14,17 +14,17 @@ import {
 import { CustomerReturnFragment, useReturns } from '../../api';
 
 export const AdditionalInfoSectionComponent = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { debouncedMutateAsync } = useReturns.document.updateCustomerReturn();
   const isDisabled = useReturns.utils.customerIsDisabled();
 
-  const { bufferedState, setBufferedState } =
+  const { draft, setDraft } =
     useReturns.document.customerReturn();
-  const { user, colour, comment, id } = bufferedState || {};
+  const { user, colour, comment, id } = draft || {};
 
   const update = (data: Partial<CustomerReturnFragment>) => {
     if (!id) return;
-    setBufferedState({ ...data });
+    setDraft({ ...data });
     debouncedMutateAsync({ id, ...data });
   };
 

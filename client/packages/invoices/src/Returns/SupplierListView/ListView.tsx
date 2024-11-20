@@ -21,7 +21,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { SupplierReturnRowFragment, useReturns } from '../api';
 
 const SupplierReturnListViewComponent: FC = () => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const {
     updateSortQuery,
     updatePaginationQuery,

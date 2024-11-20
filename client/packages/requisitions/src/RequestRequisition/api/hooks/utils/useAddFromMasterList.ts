@@ -22,7 +22,7 @@ export const useAddFromMasterList = () => {
       queryClient.invalidateQueries(api.keys.detail(String(requisitionNumber))),
   });
 
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-add-from-master-list'),

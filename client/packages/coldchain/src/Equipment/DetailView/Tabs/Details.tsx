@@ -92,7 +92,7 @@ const Row = ({
 );
 
 export const Details = ({ draft, onChange }: DetailsProps) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   const { data: assetProperties, isLoading } = useAssets.properties.list({
     assetCategoryId: { equalAnyOrNull: [draft?.assetCategory?.id ?? ''] },

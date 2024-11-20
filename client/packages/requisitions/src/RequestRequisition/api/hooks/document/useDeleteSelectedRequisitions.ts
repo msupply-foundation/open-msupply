@@ -15,7 +15,7 @@ export const useDeleteSelectedRequisitions = () => {
   });
   const { data: rows } = useRequests(queryParams);
   const { mutateAsync } = useDeleteRequests();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
@@ -38,7 +38,7 @@ export const useDeleteSelectedRequisitions = () => {
       confirmMessage: t('messages.confirm-delete-requisitions', {
         count: selectedRows.length,
       }),
-      deleteSuccess: t('messages.deleted-requisitions', {
+      deleteSuccess: t('messages.deleted-orders', {
         count: selectedRows.length,
       }),
       cantDelete: t('messages.cant-delete-requisitions'),

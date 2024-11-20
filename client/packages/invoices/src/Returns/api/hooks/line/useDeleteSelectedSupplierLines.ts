@@ -14,7 +14,7 @@ export const useDeleteSelectedSupplierReturnLines = ({
 }): (() => void) => {
   const { items, lines } = useSupplierReturnRows();
   const isDisabled = useSupplierReturnIsDisabled();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
 
   const { mutateAsync: updateLines } = useReturns.lines.updateSupplierLines();
 
@@ -48,7 +48,7 @@ export const useDeleteSelectedSupplierReturnLines = ({
     deleteAction: onDelete,
     canDelete: !isDisabled,
     messages: {
-      confirmMessage: t('messages.confirm-delete-lines', {
+      confirmMessage: t('messages.confirm-delete-invoice-lines', {
         count: selectedRows.length,
       }),
       deleteSuccess: t('messages.deleted-lines', {

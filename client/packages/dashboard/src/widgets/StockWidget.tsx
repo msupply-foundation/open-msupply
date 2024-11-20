@@ -25,7 +25,7 @@ import { AppRoute } from '@openmsupply-client/config';
 const LOW_MOS_THRESHOLD = 3;
 
 export const StockWidget: React.FC = () => {
-  const t = useTranslation('dashboard');
+  const t = useTranslation();
   const navigate = useNavigate();
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
@@ -84,8 +84,7 @@ export const StockWidget: React.FC = () => {
                 RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InternalOrder)
                   .addPart(String(requisitionNumber))
-                  .build(),
-                { replace: true }
+                  .build()
               );
             });
           }}

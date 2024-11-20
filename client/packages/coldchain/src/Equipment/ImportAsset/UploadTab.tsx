@@ -17,6 +17,8 @@ import {
   FileUtils,
   Formatter,
   useIsCentralServerApi,
+  EnvUtils,
+  Platform,
 } from '@openmsupply-client/common';
 import * as EquipmentImportModal from './EquipmentImportModal';
 import { ImportRow } from './EquipmentImportModal';
@@ -192,15 +194,20 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   onUploadComplete,
   catalogueItemData,
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const { data: stores } = useStore.document.list();
-  const { error } = useNotification();
+  const { error, info } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const EquipmentBuffer: EquipmentImportModal.ImportRow[] = [];
   const { data: properties } = useAssetData.utils.properties();
 
   const csvExample = async () => {
+    if (EnvUtils.platform === Platform.Android) {
+      info(t('messages.cant-download-android'))();
+      return;
+    }
+
     const exampleRows: Partial<ImportRow>[] = [
       {
         assetNumber: 'ASSET NUMBER',

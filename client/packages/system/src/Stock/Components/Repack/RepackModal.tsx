@@ -47,7 +47,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   onClose,
   stockLine,
 }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { error, success } = useNotification();
   const getRedirectConfirmation = useConfirmationModal({
     title: t('title.repack-complete'),
@@ -160,7 +160,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
               // invoice
               const newLineId =
                 result.__typename === 'InvoiceNode'
-                  ? result?.lines?.nodes?.[0]?.stockLine?.id ?? ''
+                  ? (result?.lines?.nodes?.[0]?.stockLine?.id ?? '')
                   : '';
 
               if (errorMessage) {
