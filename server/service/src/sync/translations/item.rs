@@ -8,7 +8,8 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use crate::sync::{
-    sync_serde::empty_str_as_option_string, translations::unit::UnitTranslation,
+    sync_serde::empty_str_as_option_string,
+    translations::{category::CategoryTranslation, unit::UnitTranslation},
     CentralServerConfig,
 };
 
@@ -91,7 +92,10 @@ impl SyncTranslation for ItemTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![UnitTranslation.table_name()]
+        vec![
+            UnitTranslation.table_name(),
+            CategoryTranslation.table_name(),
+        ]
     }
 
     fn try_translate_from_upsert_sync_record(
