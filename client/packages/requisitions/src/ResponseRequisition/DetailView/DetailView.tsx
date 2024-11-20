@@ -13,6 +13,7 @@ import {
   BasicModal,
   Box,
   FnUtils,
+  IndicatorLineRowNode,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -25,7 +26,8 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
-import { useResponse, ResponseLineFragment } from '../api';
+import { useResponse, ResponseLineFragment, ResponseFragment } from '../api';
+import { IndicatorsTab } from './IndicatorsTab';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
@@ -34,6 +36,13 @@ export const DetailView: FC = () => {
   const isDisabled = useResponse.utils.isDisabled();
   const { onOpen, isOpen, onClose } = useEditModal<ItemRowFragment>();
   const { mutateAsync } = useResponse.line.insert();
+  const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
+    useResponse.document.indicators(
+      data?.otherPartyId ?? '',
+      data?.period?.id ?? ''
+    );
+
+  console.log('detailview', programIndicators);
 
   const onRowClick = useCallback((line: ResponseLineFragment) => {
     navigate(
@@ -45,6 +54,22 @@ export const DetailView: FC = () => {
       { replace: true }
     );
   }, []);
+
+  const onProgramIndicatorClick = useCallback(
+    (
+      indicatorLine: IndicatorLineRowNode | undefined,
+      response: ResponseFragment | undefined
+    ) => {
+      navigate(
+        RouteBuilder.create(AppRoute.Distribution)
+          .addPart(AppRoute.CustomerRequisition)
+          .addPart(String(response?.requisitionNumber))
+          .addPart(String(indicatorLine?.id))
+          .build()
+      );
+    },
+    []
+  );
 
   if (isLoading) return <DetailViewSkeleton />;
 
@@ -65,6 +90,16 @@ export const DetailView: FC = () => {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
+    {
+      Component: (
+        <IndicatorsTab
+          onClick={onProgramIndicatorClick}
+          isLoading={isProgramIndicatorsLoading}
+          response={data}
+        />
+      ),
+      value: 'Indicators',
+    },
   ];
 
   return !!data ? (
@@ -82,7 +117,6 @@ export const DetailView: FC = () => {
       />
       <Toolbar />
       <DetailTabs tabs={tabs} />
-
       <Footer />
       <SidePanel />
       {isOpen && (

@@ -164,6 +164,7 @@ fragment Response on RequisitionNode {
   }
   programName
   period {
+    id
     name
     startDate
     endDate
@@ -481,6 +482,13 @@ query customerProgramSettings($storeId: String!) {
   }
 }
 
+# fragment IndicatorLineRow on IndicatorLineRowNode {
+#   id
+#   code
+#   lineNumber
+#   name
+#   valueType
+# }
 query programIndicators(
   $customerNameLinkId: String!
   $periodId: String!
@@ -505,10 +513,7 @@ query programIndicators(
             }
           }
           line {
-            code
-            lineNumber
-            name
-            valueType
+            ...IndicatorLineRowNode
           }
         }
         id

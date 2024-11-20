@@ -12,6 +12,7 @@ import {
 import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { RnRFormDetailView, RnRFormListView } from './RnRForms';
+import { IndicatorEditPage } from './ResponseRequisition/DetailView/IndicatorEdit';
 
 const customerRequisitionsRoute = RouteBuilder.create(
   AppRoute.CustomerRequisition
@@ -27,6 +28,11 @@ const customerRequisitionLineRoute = RouteBuilder.create(
 )
   .addPart(':requisitionNumber')
   .addPart(':itemId')
+  .build();
+
+const indicatorLineRoute = RouteBuilder.create(AppRoute.CustomerRequisition)
+  .addPart(':requisitionNumber')
+  .addPart(':programIndicatorLineId')
   .build();
 
 const internalOrdersRoute = RouteBuilder.create(AppRoute.InternalOrder).build();
@@ -65,6 +71,7 @@ export const RequisitionService: FC = () => {
       />
       <Route path={rnrFormsRoute} element={<RnRFormListView />} />
       <Route path={rnrFormRoute} element={<RnRFormDetailView />} />
+      <Route path={indicatorLineRoute} element={<IndicatorEditPage />} />
     </Routes>
   );
 };
