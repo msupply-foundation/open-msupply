@@ -251,7 +251,8 @@ export const useFormatDateTime = () => {
       : '';
   };
 
-  const getDisplayAge = (dob: Date): string => {
+  const getDisplayAge = (dob: Date | null | undefined): string => {
+    if (!dob) return '';
     const patientAge = DateUtils.age(dob);
     const { months, days } = DateUtils.ageInMonthsAndDays(dob ?? '');
 
@@ -259,6 +260,14 @@ export const useFormatDateTime = () => {
       return String(patientAge);
     } else
       return `${months > 0 ? t('label.age-months-and', { count: months }) : ''}${t('label.age-days', { count: days })}`;
+
+    // Returns a formatted age for the input date (of birth) relative to the
+    // current date. Will format as whole number of years unless the age is less
+    // than one year old, in which case it will format as months/days:
+    // e.g:
+    // - DOB is 2 years in the past => "2"
+    // - DOB is 9 months and 2 days ago => "9 months, 2 days"
+    // - DOB is 5 days ago => "5 days"
   };
 
   return {
