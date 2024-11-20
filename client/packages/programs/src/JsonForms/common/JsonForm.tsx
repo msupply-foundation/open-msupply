@@ -163,10 +163,13 @@ const FormComponent = ({
 
   const commonKeys = useMemo(() => new Set(Object.keys(common)), []);
 
-  const createTranslator = (t: TypedTFunction<LocaleKey>) => (key: string) => {
-    // excludes pluralisation of keys - but probably not required
-    return commonKeys.has(key) ? t(key as LocaleKey) : key;
-  };
+  const createTranslator =
+    (t: TypedTFunction<LocaleKey>) =>
+    (key: string, defaultMessage?: string) => {
+      const message = defaultMessage ?? key;
+      // excludes pluralisation of keys - but probably not required
+      return commonKeys.has(key) ? t(key as LocaleKey) : message;
+    };
 
   const translation: Translator = useMemo(() => createTranslator(t), [t]);
 
