@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from '@common/intl';
 import {
   ItemRowFragment,
+  reasonOptions,
   ReasonOptionsSearchInput,
 } from '@openmsupply-client/system';
 import { DraftResponseLine } from './hooks';
@@ -52,6 +53,9 @@ export const ResponseLineEdit = ({
   const { isOn: ourStats, toggle: toggleOurStats } = useToggle();
   const { isOn: theirStats, toggle: toggleTheirStats } = useToggle();
   const { data } = useResponse.line.stats(draft?.id);
+  const { data: reasonsData, isLoading } =
+    reasonOptions.document.listAllActive();
+
   const [ourStatsAnchorEl, setOurStatsAnchorEl] =
     React.useState<null | HTMLElement>(null);
   const [theirStatsAnchorEl, setTheirStatsAnchorEl] =
@@ -68,6 +72,11 @@ export const ResponseLineEdit = ({
     draft?.averageMonthlyConsumption !== 0
       ? available / (draft?.averageMonthlyConsumption ?? 1)
       : 0;
+
+  const customRequestedDisabled =
+    !!hasLinkedRequisition ||
+    (!!isProgram && reasonsData?.nodes.length === 0) ||
+    isLoading;
 
   return (
     <Box>
@@ -228,7 +237,7 @@ export const ResponseLineEdit = ({
                   width={INPUT_WIDTH}
                   value={draft?.requestedQuantity}
                   onChange={value => update({ requestedQuantity: value })}
-                  disabled={!!hasLinkedRequisition}
+                  disabled={customRequestedDisabled}
                 />
               }
               labelWidth={LABEL_WIDTH}
