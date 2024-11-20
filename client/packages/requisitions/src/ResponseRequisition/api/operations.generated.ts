@@ -119,6 +119,8 @@ export type CustomerProgramSettingsQueryVariables = Types.Exact<{
 
 export type CustomerProgramSettingsQuery = { __typename: 'Queries', customerProgramRequisitionSettings: Array<{ __typename: 'CustomerProgramRequisitionSettingNode', programName: string, programId: string, customerAndOrderTypes: Array<{ __typename: 'CustomerAndOrderTypeNode', customer: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> }> };
 
+export type ProgramIndicatorFragment = { __typename: 'ProgramIndicatorNode', code?: string | null, id: string, lineAndColumns: Array<{ __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null } }> };
+
 export type IndicatorLineRowFragment = { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null };
 
 export type ProgramIndicatorsQueryVariables = Types.Exact<{
@@ -316,6 +318,30 @@ export const IndicatorLineRowFragmentDoc = gql`
   valueType
 }
     `;
+export const ProgramIndicatorFragmentDoc = gql`
+    fragment ProgramIndicator on ProgramIndicatorNode {
+  code
+  lineAndColumns {
+    columns {
+      columnNumber
+      name
+      valueType
+      value(
+        periodId: $periodId
+        customerNameLinkId: $customerNameLinkId
+        storeId: $storeId
+      ) {
+        id
+        value
+      }
+    }
+    line {
+      ...IndicatorLineRow
+    }
+  }
+  id
+}
+    ${IndicatorLineRowFragmentDoc}`;
 export const UpdateResponseDocument = gql`
     mutation updateResponse($storeId: String!, $input: UpdateResponseRequisitionInput!) {
   updateResponseRequisition(input: $input, storeId: $storeId) {
@@ -621,32 +647,13 @@ export const ProgramIndicatorsDocument = gql`
   programIndicators(storeId: $storeId) {
     ... on ProgramIndicatorConnector {
       nodes {
-        code
-        lineAndColumns {
-          columns {
-            columnNumber
-            name
-            valueType
-            value(
-              periodId: $periodId
-              customerNameLinkId: $customerNameLinkId
-              storeId: $storeId
-            ) {
-              id
-              value
-            }
-          }
-          line {
-            ...IndicatorLineRow
-          }
-        }
-        id
+        ...ProgramIndicator
       }
       totalCount
     }
   }
 }
-    ${IndicatorLineRowFragmentDoc}`;
+    ${ProgramIndicatorFragmentDoc}`;
 export const UpdateIndicatorValueDocument = gql`
     mutation updateIndicatorValue($storeId: String!, $input: UpdateIndicatorValueInput!) {
   updateIndicatorValue(input: $input, storeId: $storeId) {
