@@ -236,6 +236,9 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
         }
 
         if let Some(category_id) = category_id {
+            // Don't need to consider merged items (item_link) here - if item
+            // has been merged, we only need to find by the category of the
+            // kept item, not the one that was "deleted"
             let item_ids_for_category_id = item_category_join::table
                 .select(item_category_join::item_id)
                 .filter(item_category_join::category_id.eq(category_id.clone()))
