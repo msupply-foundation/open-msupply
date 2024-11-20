@@ -7,6 +7,7 @@ import { useResponsesAll } from './useResponsesAll';
 import { useUpdateResponse } from './useUpdateResponse';
 import { useDeleteResponses } from './useDeleteResponses';
 import { useDeleteSelectedResponseRequisitions } from './useDeleteSelectedResponseRequisitions';
+import { useIndicators } from './useIndicators';
 
 export const Document = {
   useResponse,
@@ -18,4 +19,5 @@ export const Document = {
   useDeleteSelectedResponseRequisitions,
   useInsertResponse,
   useInsertProgramResponse,
+  useIndicators,
 };

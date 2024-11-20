@@ -318,4 +318,10 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     const result = await sdk.customerProgramSettings({ storeId });
     return result.customerProgramRequisitionSettings;
   },
+  getIndicators: async (customerNameLinkId: string, periodId: string) => {
+    return await sdk.programIndicators({storeId, customerNameLinkId, periodId})
+  },
+  updateIndicators: async () => {
+    return {}
+  }
 });
