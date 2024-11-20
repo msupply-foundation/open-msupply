@@ -20,7 +20,6 @@ mod omsupply_service {
     use std::{
         env::{current_exe, set_current_dir},
         ffi::OsString,
-        panic,
         time::Duration,
     };
     use tokio::sync::mpsc;
