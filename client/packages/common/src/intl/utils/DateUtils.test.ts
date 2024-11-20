@@ -41,5 +41,6 @@ describe('getDisplayAge', () => {
     const dob = null;
     const result = getDisplayAge(dob);
     expect(result).toBe('');
+    expect(getDisplayAge(null)).toBe('');
   });
 });
