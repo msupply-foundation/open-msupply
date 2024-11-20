@@ -486,17 +486,7 @@ fragment ProgramIndicator on ProgramIndicatorNode {
   code
   lineAndColumns {
     columns {
-      columnNumber
-      name
-      valueType
-      value(
-        periodId: $periodId
-        customerNameLinkId: $customerNameLinkId
-        storeId: $storeId
-      ) {
-        id
-        value
-      }
+      ...IndicatorColumn
     }
     line {
       ...IndicatorLineRow
@@ -510,6 +500,22 @@ fragment IndicatorLineRow on IndicatorLineRowNode {
   lineNumber
   name
   valueType
+}
+fragment IndicatorColumn on IndicatorColumnNode {
+  columnNumber
+  name
+  valueType
+  value(
+    periodId: $periodId
+    customerNameLinkId: $customerNameLinkId
+    storeId: $storeId
+  ) {
+    ...IndicatorValue
+  }
+}
+fragment IndicatorValue on IndicatorValueNode {
+  id
+  value
 }
 query programIndicators(
   $customerNameLinkId: String!

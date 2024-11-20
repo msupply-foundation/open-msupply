@@ -123,6 +123,10 @@ export type ProgramIndicatorFragment = { __typename: 'ProgramIndicatorNode', cod
 
 export type IndicatorLineRowFragment = { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null };
 
+export type IndicatorColumnFragment = { __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null };
+
+export type IndicatorValueFragment = { __typename: 'IndicatorValueNode', id: string, value: string };
+
 export type ProgramIndicatorsQueryVariables = Types.Exact<{
   customerNameLinkId: Types.Scalars['String']['input'];
   periodId: Types.Scalars['String']['input'];
@@ -309,6 +313,26 @@ export const CustomerProgramSettingsFragmentDoc = gql`
   }
 }
     ${NameRowFragmentDoc}`;
+export const IndicatorValueFragmentDoc = gql`
+    fragment IndicatorValue on IndicatorValueNode {
+  id
+  value
+}
+    `;
+export const IndicatorColumnFragmentDoc = gql`
+    fragment IndicatorColumn on IndicatorColumnNode {
+  columnNumber
+  name
+  valueType
+  value(
+    periodId: $periodId
+    customerNameLinkId: $customerNameLinkId
+    storeId: $storeId
+  ) {
+    ...IndicatorValue
+  }
+}
+    ${IndicatorValueFragmentDoc}`;
 export const IndicatorLineRowFragmentDoc = gql`
     fragment IndicatorLineRow on IndicatorLineRowNode {
   id
@@ -323,17 +347,7 @@ export const ProgramIndicatorFragmentDoc = gql`
   code
   lineAndColumns {
     columns {
-      columnNumber
-      name
-      valueType
-      value(
-        periodId: $periodId
-        customerNameLinkId: $customerNameLinkId
-        storeId: $storeId
-      ) {
-        id
-        value
-      }
+      ...IndicatorColumn
     }
     line {
       ...IndicatorLineRow
@@ -341,7 +355,8 @@ export const ProgramIndicatorFragmentDoc = gql`
   }
   id
 }
-    ${IndicatorLineRowFragmentDoc}`;
+    ${IndicatorColumnFragmentDoc}
+${IndicatorLineRowFragmentDoc}`;
 export const UpdateResponseDocument = gql`
     mutation updateResponse($storeId: String!, $input: UpdateResponseRequisitionInput!) {
   updateResponseRequisition(input: $input, storeId: $storeId) {
