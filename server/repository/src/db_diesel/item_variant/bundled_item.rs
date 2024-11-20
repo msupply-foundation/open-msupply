@@ -1,8 +1,7 @@
 use super::bundled_item_row::{bundled_item, BundledItemRow};
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_equal_or_filter},
-    repository_error::RepositoryError,
-    DBType, EqualFilter, Pagination, StorageConnection,
+    diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
+    Pagination, StorageConnection,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 
