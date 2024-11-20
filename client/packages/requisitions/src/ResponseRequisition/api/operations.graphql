@@ -482,13 +482,35 @@ query customerProgramSettings($storeId: String!) {
   }
 }
 
-# fragment IndicatorLineRow on IndicatorLineRowNode {
-#   id
-#   code
-#   lineNumber
-#   name
-#   valueType
-# }
+fragment ProgramIndicator on ProgramIndicatorNode {
+  code
+  lineAndColumns {
+    columns {
+      columnNumber
+      name
+      valueType
+      value(
+        periodId: $periodId
+        customerNameLinkId: $customerNameLinkId
+        storeId: $storeId
+      ) {
+        id
+        value
+      }
+    }
+    line {
+      ...IndicatorLineRow
+    }
+  }
+  id
+}
+fragment IndicatorLineRow on IndicatorLineRowNode {
+  id
+  code
+  lineNumber
+  name
+  valueType
+}
 query programIndicators(
   $customerNameLinkId: String!
   $periodId: String!
@@ -497,26 +519,7 @@ query programIndicators(
   programIndicators(storeId: $storeId) {
     ... on ProgramIndicatorConnector {
       nodes {
-        code
-        lineAndColumns {
-          columns {
-            columnNumber
-            name
-            valueType
-            value(
-              periodId: $periodId
-              customerNameLinkId: $customerNameLinkId
-              storeId: $storeId
-            ) {
-              id
-              value
-            }
-          }
-          line {
-            ...IndicatorLineRowNode
-          }
-        }
-        id
+        ...ProgramIndicator
       }
       totalCount
     }
