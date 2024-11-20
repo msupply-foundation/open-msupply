@@ -6,9 +6,9 @@ import {
   RouteBuilder,
   useBreadcrumbs,
   useParams,
-} from 'packages/common/src';
+} from '@openmsupply-client/common';
 import { useResponse } from '../../api';
-import { ListItems } from 'packages/system/src';
+import { ListItems } from '@openmsupply-client/system';
 import { ResponseLineEdit } from './ResponseLineEdit';
 import { AppRoute } from '@openmsupply-client/config';
 import { useDraftRequisitionLine, usePreviousNextResponseLine } from './hooks';

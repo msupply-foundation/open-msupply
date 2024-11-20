@@ -6,8 +6,8 @@ import {
   RouteBuilder,
   useNavigate,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from 'packages/system/src';
-import { AppRoute } from 'packages/config/src';
+import { ItemRowFragment } from '@openmsupply-client/system';
+import { AppRoute } from '@openmsupply-client/config';
 
 interface FooterProps {
   hasNext: boolean;

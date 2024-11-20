@@ -6,7 +6,7 @@ import {
   RouteBuilder,
   useNavigate,
 } from '@openmsupply-client/common';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 
 interface AppBarButtonsProps {
   requisitionNumber: number;

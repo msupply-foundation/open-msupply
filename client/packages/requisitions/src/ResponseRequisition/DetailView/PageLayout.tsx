@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid } from 'packages/common/src';
+import { Grid } from '@openmsupply-client/common';
 
 interface PageLayoutProps {
   Left: React.ReactElement;
