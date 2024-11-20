@@ -48,6 +48,7 @@ pub enum ReportError {
     DocGenerationError(String),
     HTMLToPDFError(String),
     TranslationError,
+    ConvertDataError(anyhow::Error),
 }
 
 #[derive(Debug, Clone)]
@@ -466,9 +467,9 @@ fn transform_data(
     connection: StorageConnection,
     data: ReportData,
     convert_data: Option<String>,
-) -> ReportData {
+) -> Result<ReportData, ReportError> {
     let Some(convert_data) = convert_data else {
-        return data;
+        return Ok(data);
     };
 
     let manifest = Manifest::new([Wasm::Data {
@@ -478,13 +479,21 @@ fn transform_data(
             hash: None,
         },
     }]);
+
     let mut plugin = PluginBuilder::new(manifest)
         .with_wasi(true)
+        // For android was getting error 'config file not specified and failed to get the default'
+        // leading to https://github.com/bytecodealliance/wasmtime/blob/3e0b7e501beebf5d7c094b7ac751f582ba12bc95/crates/cache/src/config.rs#L195
+        .with_cache_disabled()
         .with_function("sql", [PTR], [PTR], UserData::new(connection), sql)
         .build()
-        .unwrap();
+        .map_err(ReportError::ConvertDataError)?;
 
-    plugin.call("convert_data", data).unwrap()
+    let data = plugin
+        .call("convert_data", data)
+        .map_err(ReportError::ConvertDataError)?;
+
+    Ok(data)
 }
 
 fn generate_report(
@@ -496,7 +505,7 @@ fn generate_report(
     current_language: Option<String>,
 ) -> Result<GeneratedReport, ReportError> {
     let report_data = ReportData { data, arguments };
-    let report_data = transform_data(connection, report_data, report.convert_data.clone());
+    let report_data = transform_data(connection, report_data, report.convert_data.clone())?;
 
     let mut context = tera::Context::from_serialize(report_data).map_err(|err| {
         ReportError::DocGenerationError(format!("Tera context from data: {:?}", err))
