@@ -2360,7 +2360,7 @@ export type IndicatorColumnNode = {
   columnNumber: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   value?: Maybe<IndicatorValueNode>;
-  valueType: IndicatorValueTypeNode;
+  valueType?: Maybe<IndicatorValueTypeNode>;
 };
 
 
@@ -2381,6 +2381,7 @@ export type IndicatorLineRowNode = {
   code: Scalars['String']['output'];
   lineNumber: Scalars['Int']['output'];
   name: Scalars['String']['output'];
+  valueType?: Maybe<IndicatorValueTypeNode>;
 };
 
 export type IndicatorValueNode = {
