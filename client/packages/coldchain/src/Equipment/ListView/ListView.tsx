@@ -107,7 +107,7 @@ const AssetListComponent: FC = () => {
     {
       key: 'installationDate',
       label: 'label.installation-date',
-      format: ColumnFormat.Date
+      format: ColumnFormat.Date,
     },
     {
       key: 'notes',
