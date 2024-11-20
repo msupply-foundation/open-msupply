@@ -231,7 +231,7 @@ export const useResponseColumns = () => {
     {
       getSortValue: rowData => rowData.supplyQuantity,
       Cell: PackQuantityCell,
-      accessor: ({ rowData }) => rowData.requestedQuantity,
+      accessor: ({ rowData }) => rowData.supplyQuantity,
     },
   ]);
 
