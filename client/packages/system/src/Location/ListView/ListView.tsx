@@ -48,6 +48,7 @@ const LocationListComponent: FC = () => {
             ? `${coldStorageType.name} (${coldStorageType.minTemperature}°C - ${coldStorageType.maxTemperature}°C)`
             : null,
         width: 200,
+        sortable: false,
       },
       'selection',
     ],

@@ -20,7 +20,7 @@
       </tr>
     </thead>
     <tbody>
-      {% for item in data.data.items.nodes %}
+      {% for item in data.items.nodes %}
         {% set SOH = item.stats.availableStockOnHand | default(value=0) | round(
         precision=1) %}
         {% set AMC = item.stats.averageMonthlyConsumption | default(value=0) |
