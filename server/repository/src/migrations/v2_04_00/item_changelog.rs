@@ -1,4 +1,3 @@
-use crate::migrations::types::{DATETIME, DOUBLE};
 use crate::migrations::*;
 
 pub(crate) struct Migrate;
