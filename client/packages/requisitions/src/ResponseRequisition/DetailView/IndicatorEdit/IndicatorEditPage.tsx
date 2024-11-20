@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   BasicSpinner,
   DetailContainer,
   NothingHere,
   RouteBuilder,
+  useBreadcrumbs,
   useParams,
 } from '@openmsupply-client/common';
 import { useResponse } from '../../api';
@@ -15,16 +16,26 @@ import { AppBarButtons } from '../ResponseLineEdit/AppBarButtons';
 export const IndicatorEditPage = () => {
   const { programIndicatorLineId } = useParams();
   const { data, isLoading } = useResponse.document.get();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useResponse.document.indicators(
       data?.otherPartyId ?? '',
       data?.period?.id ?? ''
     );
 
-  const lines =
-    programIndicators?.programIndicators.nodes.flatMap(indicator =>
-      indicator.lineAndColumns.map(l => l.line)
+  const linesAndColumns =
+    programIndicators?.programIndicators.nodes.flatMap(
+      indicator => indicator.lineAndColumns
     ) ?? [];
+  const lines = linesAndColumns.map(l => l.line);
+  const currentLine = lines.find(l => l.id === programIndicatorLineId);
+
+  useEffect(() => {
+    setCustomBreadcrumbs({
+      2: 'Indicators',
+      3: currentLine?.code || '',
+    });
+  }, [programIndicatorLineId]);
 
   if (isLoading || isProgramIndicatorsLoading) {
     return <BasicSpinner />;
@@ -46,7 +57,6 @@ export const IndicatorEditPage = () => {
                 route={RouteBuilder.create(AppRoute.Distribution)
                   .addPart(AppRoute.CustomerRequisition)
                   .addPart(String(data?.requisitionNumber))}
-                // enteredLineIds={enteredLineIds}
               />
             </>
           }
