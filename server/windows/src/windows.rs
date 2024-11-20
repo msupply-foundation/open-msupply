@@ -65,7 +65,10 @@ mod omsupply_service {
             }
         };
         logging_init(settings.logging.clone(), None);
-        log_panics::init();
+
+        log_panics::Config::new()
+            .backtrace_mode(log_panics::BacktraceMode::Off)
+            .install_panic_hook();
 
         if let Err(_e) = run_service(settings) {
             error!("Unable to start service");
