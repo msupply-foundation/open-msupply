@@ -36,4 +36,10 @@ describe('getDisplayAge', () => {
     const result = getDisplayAge(dob);
     expect(result).toBe('10 days');
   });
+
+  it('returns an empty string if dob is not defined', () => {
+    const dob = null;
+    const result = getDisplayAge(dob);
+    expect(result).toBe('');
+  });
 });
