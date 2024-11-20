@@ -1,9 +1,11 @@
 import React from 'react';
 import {
+  Box,
   ButtonWithIcon,
   IndicatorLineRowNode,
   NothingHere,
   PlusCircleIcon,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { ProgramIndicatorFragment, ResponseFragment } from '../api';
 
@@ -23,15 +25,16 @@ export const IndicatorsTab = ({
   response,
   indicators,
 }: IndicatorTabProps) => {
+  const t = useTranslation();
   if (isLoading) {
     return <NothingHere body="There are no indicators for this requisition" />;
   }
 
   return (
-    <>
+    <Box display="flex" flexDirection="column" padding={2} gap={2}>
       <ButtonWithIcon
         // disabled={disableAddButton}
-        label={'t(REGIMEN)'}
+        label={t('button.regimen')}
         Icon={<PlusCircleIcon />}
         onClick={() =>
           onClick(indicators?.[0]?.lineAndColumns[0]?.line, response)
@@ -39,10 +42,10 @@ export const IndicatorsTab = ({
       />
       <ButtonWithIcon
         // disabled={disableAddButton}
-        label={'t(HIV)'}
+        label={t('button.hiv')}
         Icon={<PlusCircleIcon />}
         onClick={() => {}}
       />
-    </>
+    </Box>
   );
 };
