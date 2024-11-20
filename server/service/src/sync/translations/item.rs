@@ -92,10 +92,10 @@ impl SyncTranslation for ItemTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![
-            UnitTranslation.table_name(),
-            CategoryTranslation.table_name(),
-        ]
+        let mut deps = vec![UnitTranslation.table_name()];
+        deps.extend(CategoryTranslation.table_names());
+
+        deps
     }
 
     fn try_translate_from_upsert_sync_record(
