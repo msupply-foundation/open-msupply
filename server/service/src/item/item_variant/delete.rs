@@ -33,8 +33,7 @@ pub fn delete_item_variant(
             let bundled_item_repo = BundledItemRepository::new(connection);
 
             let bundled_items = bundled_item_repo.query_by_filter(
-                BundledItemFilter::new()
-                    .principal_or_bundled_variant_id(EqualFilter::equal_to(&input.id)),
+                BundledItemFilter::new().principal_or_bundled_variant_id(input.id.clone()),
             )?;
 
             bundled_items
