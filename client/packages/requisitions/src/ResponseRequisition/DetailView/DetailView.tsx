@@ -42,8 +42,6 @@ export const DetailView: FC = () => {
       data?.period?.id ?? ''
     );
 
-  console.log('detailview', programIndicators);
-
   const onRowClick = useCallback((line: ResponseLineFragment) => {
     navigate(
       RouteBuilder.create(AppRoute.Distribution)
@@ -60,11 +58,14 @@ export const DetailView: FC = () => {
       indicatorLine: IndicatorLineRowNode | undefined,
       response: ResponseFragment | undefined
     ) => {
+      // TODO: Snack?
+      if (!response || !indicatorLine) return;
       navigate(
         RouteBuilder.create(AppRoute.Distribution)
           .addPart(AppRoute.CustomerRequisition)
-          .addPart(String(response?.requisitionNumber))
-          .addPart(String(indicatorLine?.id))
+          .addPart(String(response.requisitionNumber))
+          .addPart('indicator')
+          .addPart(String(indicatorLine.id))
           .build()
       );
     },
@@ -90,17 +91,21 @@ export const DetailView: FC = () => {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
-    {
+  ];
+
+  if (data?.programName) {
+    tabs.push({
       Component: (
         <IndicatorsTab
           onClick={onProgramIndicatorClick}
           isLoading={isProgramIndicatorsLoading}
           response={data}
+          indicators={programIndicators?.programIndicators.nodes}
         />
       ),
       value: 'Indicators',
-    },
-  ];
+    });
+  }
 
   return !!data ? (
     <TableProvider

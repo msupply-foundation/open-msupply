@@ -4,9 +4,8 @@ import {
   IndicatorLineRowNode,
   NothingHere,
   PlusCircleIcon,
-  // useTranslation,
 } from '@openmsupply-client/common';
-import { ResponseFragment, useResponse } from '../api';
+import { ProgramIndicatorFragment, ResponseFragment } from '../api';
 
 interface IndicatorTabProps {
   onClick: (
@@ -15,18 +14,15 @@ interface IndicatorTabProps {
   ) => void;
   isLoading: boolean;
   response?: ResponseFragment;
+  indicators?: ProgramIndicatorFragment[];
 }
 
 export const IndicatorsTab = ({
   onClick,
   isLoading,
   response,
+  indicators,
 }: IndicatorTabProps) => {
-  // const t = useTranslation();
-  const { data } = useResponse.document.indicators(
-    response?.otherPartyId || '',
-    response?.period?.id || ''
-  );
   if (isLoading) {
     return <NothingHere body="There are no indicators for this requisition" />;
   }
@@ -38,10 +34,7 @@ export const IndicatorsTab = ({
         label={'t(REGIMEN)'}
         Icon={<PlusCircleIcon />}
         onClick={() =>
-          onClick(
-            data?.programIndicators.nodes[0]?.lineAndColumns[0]?.line,
-            response
-          )
+          onClick(indicators?.[0]?.lineAndColumns[0]?.line, response)
         }
       />
       <ButtonWithIcon
