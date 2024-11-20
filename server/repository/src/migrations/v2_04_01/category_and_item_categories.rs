@@ -36,17 +36,13 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
-        if cfg!(feature = "postgres") {
-            // Postgres changelog variant
-            sql!(
-                connection,
-                r#"
-                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'category';
-                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'item_category_join';
-                    "#
-            )?;
-        }
-
+        // Reset translate all items on the next sync
+        sql!(
+            connection,
+            r#"
+            UPDATE sync_buffer SET integration_datetime = NULL WHERE table_name = 'item';
+        "#,
+        )?;
         Ok(())
     }
 }
