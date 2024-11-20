@@ -1,0 +1,23 @@
+[package]
+name = "codegen"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+doctest = false
+
+[[bin]]
+path = "src/cli.rs"
+name = "code_gen_cli"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+convert_case = "0.6.0"
+prettyplease = "0.2.25"
+quote = "1.0.37"
+syn = "2.0.87"
+
+[lints]
+workspace = true
