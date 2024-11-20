@@ -4,7 +4,7 @@ use repository::{
         bundled_item_row::BundledItemRowRepository,
         item_variant_row::ItemVariantRowRepository,
     },
-    EqualFilter, RepositoryError,
+    RepositoryError,
 };
 
 use crate::service_provider::ServiceContext;
