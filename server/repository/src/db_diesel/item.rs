@@ -1,4 +1,5 @@
 use super::{
+    item_category_row::item_category_join,
     item_link_row::item_link::dsl as item_link_dsl,
     item_row::{item, item::dsl as item_dsl},
     master_list_line_row::master_list_line::dsl as master_list_line_dsl,
@@ -45,6 +46,7 @@ pub struct ItemFilter {
     pub name: Option<StringFilter>,
     pub code: Option<StringFilter>,
     pub r#type: Option<EqualFilter<ItemType>>,
+    pub category_id: Option<String>,
     /// If true it only returns ItemAndMasterList that have a name join row (void if is_visible_or_on_hand is true!)
     pub is_visible: Option<bool>,
     /// If true it returns ItemAndMasterList that have a name join row, or items with stock on hand
@@ -76,6 +78,11 @@ impl ItemFilter {
 
     pub fn r#type(mut self, filter: EqualFilter<ItemType>) -> Self {
         self.r#type = Some(filter);
+        self
+    }
+
+    pub fn category_id(mut self, filter: String) -> Self {
+        self.category_id = Some(filter);
         self
     }
 
@@ -201,6 +208,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             name,
             code,
             r#type,
+            category_id,
             is_visible,
             code_or_name,
             is_active,
@@ -225,6 +233,15 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
 
         if let Some(is_vaccine) = is_vaccine {
             query = query.filter(item_dsl::is_vaccine.eq(is_vaccine));
+        }
+
+        if let Some(category_id) = category_id {
+            let item_ids_for_category_id = item_category_join::table
+                .select(item_category_join::item_id)
+                .filter(item_category_join::category_id.eq(category_id.clone()))
+                .into_boxed();
+
+            query = query.filter(item_dsl::id.eq_any(item_ids_for_category_id));
         }
 
         let visible_item_ids = item_link_dsl::item_link
