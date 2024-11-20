@@ -18,6 +18,7 @@ import {
   NumberInputCell,
   ColumnAlign,
   AdjustmentTypeInput,
+  NumberCell,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -176,6 +177,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       label: 'label.snapshot-num-of-packs',
       align: ColumnAlign.Right,
       width: 100,
+      Cell: NumberCell,
       getIsError: rowData =>
         errorsContext.getError(rowData)?.__typename ===
         'SnapshotCountCurrentCountMismatchLine',

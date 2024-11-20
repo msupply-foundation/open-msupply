@@ -31,7 +31,6 @@ export const Toolbar = () => {
   const { urlQuery, updateQuery } = useUrlQuery({
     skipParse: ['classId', 'categoryId', 'typeId'],
   });
-  const [categories, setCategories] = useState<ReferenceData[]>([]);
   const [types, setTypes] = useState<ReferenceData[]>([]);
 
   const onDelete = useAssets.document.deleteAssets();
@@ -54,8 +53,6 @@ export const Toolbar = () => {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId, typeData]);
-
-  useEffect(() => setCategories(categoryData?.nodes || []), [categoryData]);
 
   const filters: FilterDefinition[] = [
     {
@@ -101,7 +98,7 @@ export const Toolbar = () => {
       type: 'enum',
       name: t('label.category'),
       urlParameter: 'categoryId',
-      options: mapIdNameToOptions(categories),
+      options: mapIdNameToOptions(categoryData?.nodes ?? []),
       isDefault: true,
     },
     {

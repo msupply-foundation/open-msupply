@@ -169,7 +169,13 @@ const updateFilters = (
     else flattened.push(...fil.elements);
   });
 
-  const newFilters = [...activeFilters];
+  // Preserve the order of the active filters, but update the filter definitions
+  const newFilters = activeFilters.map(
+    activeFilter =>
+      flattened.find(fil => fil.name === activeFilter.name) ?? activeFilter
+  );
+
+  // Append new filters
   flattened.forEach(fil => {
     if (
       activeFilters.every(active => active.name !== fil.name) &&

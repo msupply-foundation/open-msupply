@@ -383,7 +383,9 @@ fn map_error(error: ReportError) -> Result<PrintReportErrorInterface> {
         ReportError::MultipleGraphqlQueriesNotAllowed => {
             StandardGraphqlError::BadUserInput(formatted_error)
         }
-        ReportError::TranslationError => StandardGraphqlError::InternalError(formatted_error),
+        ReportError::TranslationError | ReportError::ConvertDataError(_) => {
+            StandardGraphqlError::InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())

@@ -27,8 +27,7 @@ export const AppBarButtonsComponent = ({
               RouteBuilder.create(AppRoute.Distribution)
                 .addPart(AppRoute.CustomerRequisition)
                 .addPart(String(requisitionNumber))
-                .build(),
-              { replace: true }
+                .build()
             )
           }
         />
