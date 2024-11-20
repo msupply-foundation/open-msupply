@@ -10,6 +10,7 @@ export const useAssets = {
 
   document: {
     fetch: Document.useFetchAssetById,
+    gs1: Document.useFetchAssetByGS1,
     get: Document.useAsset,
     list: Document.useAssets,
     listAll: Document.useAssetsAll,

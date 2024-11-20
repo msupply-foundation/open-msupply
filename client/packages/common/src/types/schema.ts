@@ -548,6 +548,8 @@ export type AssetNodeDonorArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type AssetParseResponse = AssetNode | ScannedDataParseError;
+
 export type AssetPropertiesResponse = AssetPropertyConnector;
 
 export type AssetPropertyConnector = {
@@ -1263,7 +1265,7 @@ export type CustomerReturnLineNode = {
   stockLineId?: Maybe<Scalars['String']['output']>;
 };
 
-export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & DeleteVaccineCourseErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpdateVaccineCourseErrorInterface & UpsertBundledItemErrorInterface & UpsertItemVariantErrorInterface & {
+export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & DeleteVaccineCourseErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & ScannedDataParseErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpdateVaccineCourseErrorInterface & UpsertBundledItemErrorInterface & UpsertItemVariantErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -2342,11 +2344,56 @@ export type GeneratedCustomerReturnLineConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type Gs1DataElement = {
+  ai: Scalars['String']['input'];
+  data: Scalars['String']['input'];
+};
+
 export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
   notDelivered: Scalars['Int']['output'];
 };
+
+export type IndicatorColumnNode = {
+  __typename: 'IndicatorColumnNode';
+  columnNumber: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+  value?: Maybe<IndicatorValueNode>;
+  valueType?: Maybe<IndicatorValueTypeNode>;
+};
+
+
+export type IndicatorColumnNodeValueArgs = {
+  customerNameLinkId: Scalars['String']['input'];
+  periodId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type IndicatorLineNode = {
+  __typename: 'IndicatorLineNode';
+  columns: Array<IndicatorColumnNode>;
+  line: IndicatorLineRowNode;
+};
+
+export type IndicatorLineRowNode = {
+  __typename: 'IndicatorLineRowNode';
+  code: Scalars['String']['output'];
+  lineNumber: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+  valueType?: Maybe<IndicatorValueTypeNode>;
+};
+
+export type IndicatorValueNode = {
+  __typename: 'IndicatorValueNode';
+  id: Scalars['String']['output'];
+  value: Scalars['String']['output'];
+};
+
+export enum IndicatorValueTypeNode {
+  Number = 'NUMBER',
+  String = 'STRING'
+}
 
 export type InitialisationStatusNode = {
   __typename: 'InitialisationStatusNode';
@@ -3142,7 +3189,7 @@ export type InsertVaccineCourseInput = {
 
 export type InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode;
 
-export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpsertBundledItemErrorInterface & UpsertItemVariantErrorInterface & {
+export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & ScannedDataParseErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpsertBundledItemErrorInterface & UpsertItemVariantErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -4046,6 +4093,7 @@ export type Mutations = {
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
+  updateIndicatorValue: UpdateIndicatorValueResponse;
   updateLabelPrinterSettings: UpdateLabelPrinterSettingsResponse;
   updateLocation: UpdateLocationResponse;
   updateLogLevel: UpsertLogLevelResponse;
@@ -4560,6 +4608,12 @@ export type MutationsUpdateInboundShipmentLineArgs = {
 
 export type MutationsUpdateInboundShipmentServiceLineArgs = {
   input: UpdateInboundShipmentServiceLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdateIndicatorValueArgs = {
+  input: UpdateIndicatorValueInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5398,6 +5452,37 @@ export type ProgramFilterInput = {
   name?: InputMaybe<StringFilterInput>;
 };
 
+export type ProgramIndicatorConnector = {
+  __typename: 'ProgramIndicatorConnector';
+  nodes: Array<ProgramIndicatorNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ProgramIndicatorFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  programId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type ProgramIndicatorNode = {
+  __typename: 'ProgramIndicatorNode';
+  code?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  lineAndColumns: Array<IndicatorLineNode>;
+  program: ProgramNode;
+};
+
+export type ProgramIndicatorResponse = ProgramIndicatorConnector;
+
+export enum ProgramIndicatorSortFieldInput {
+  Code = 'code',
+  ProgramId = 'programId'
+}
+
+export type ProgramIndicatorSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: ProgramIndicatorSortFieldInput;
+};
+
 export type ProgramNode = {
   __typename: 'ProgramNode';
   id: Scalars['String']['output'];
@@ -5461,6 +5546,7 @@ export type Queries = {
   assetCategory: AssetCategoryResponse;
   assetClass: AssetClassResponse;
   assetClasses: AssetClassesResponse;
+  assetFromGs1Data: AssetParseResponse;
   assetLogReasons: AssetLogReasonsResponse;
   assetLogs: AssetLogsResponse;
   assetProperties: AssetPropertiesResponse;
@@ -5561,6 +5647,7 @@ export type Queries = {
   plugins: Array<PluginNode>;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
+  programIndicators: ProgramIndicatorResponse;
   programs: ProgramsResponse;
   rAndRForm: RnRFormResponse;
   rAndRForms: RnRFormsResponse;
@@ -5660,6 +5747,12 @@ export type QueriesAssetClassesArgs = {
   filter?: InputMaybe<AssetClassFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<AssetClassSortInput>>;
+};
+
+
+export type QueriesAssetFromGs1DataArgs = {
+  gs1: Array<Gs1DataElement>;
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -6045,6 +6138,13 @@ export type QueriesProgramEventsArgs = {
 };
 
 
+export type QueriesProgramIndicatorsArgs = {
+  filter?: InputMaybe<ProgramIndicatorFilterInput>;
+  sort?: InputMaybe<ProgramIndicatorSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesProgramsArgs = {
   filter?: InputMaybe<ProgramFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -6332,7 +6432,7 @@ export type RecordBelongsToAnotherStore = DeleteAssetErrorInterface & DeleteAsse
   description: Scalars['String']['output'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCustomerReturnErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteSupplierReturnErrorInterface & DeleteVaccineCourseErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateNamePropertiesErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateReturnOtherPartyErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCustomerReturnErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteSupplierReturnErrorInterface & DeleteVaccineCourseErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & ScannedDataParseErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateIndicatorValueErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateNamePropertiesErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateReturnOtherPartyErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String']['output'];
 };
@@ -6842,6 +6942,15 @@ export type RnRFormSortInput = {
 
 export type RnRFormsResponse = RnRFormConnector;
 
+export type ScannedDataParseError = {
+  __typename: 'ScannedDataParseError';
+  error: ScannedDataParseErrorInterface;
+};
+
+export type ScannedDataParseErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type SchedulePeriodNode = {
   __typename: 'SchedulePeriodNode';
   id: Scalars['String']['output'];
@@ -7222,6 +7331,7 @@ export type StoreNodeNameArgs = {
 
 export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
+  extraFieldsInRequisition: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   issueInForeignCurrency: Scalars['Boolean']['output'];
   monthlyConsumptionLookBackPeriod: Scalars['Float']['output'];
@@ -7824,6 +7934,22 @@ export enum UpdateInboundShipmentStatusInput {
   Delivered = 'DELIVERED',
   Verified = 'VERIFIED'
 }
+
+export type UpdateIndicatorValueError = {
+  __typename: 'UpdateIndicatorValueError';
+  error: UpdateIndicatorValueErrorInterface;
+};
+
+export type UpdateIndicatorValueErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpdateIndicatorValueInput = {
+  id: Scalars['String']['input'];
+  value: Scalars['String']['input'];
+};
+
+export type UpdateIndicatorValueResponse = IndicatorValueNode | UpdateIndicatorValueError;
 
 export type UpdateLabelPrinterSettingsError = {
   __typename: 'UpdateLabelPrinterSettingsError';

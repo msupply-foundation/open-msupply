@@ -41,8 +41,7 @@ export const DetailView: FC = () => {
         .addPart(AppRoute.CustomerRequisition)
         .addPart(String(line.requisitionNumber))
         .addPart(String(line.item.id))
-        .build(),
-      { replace: true }
+        .build()
     );
   }, []);
 
@@ -101,8 +100,7 @@ export const DetailView: FC = () => {
                       .addPart(AppRoute.CustomerRequisition)
                       .addPart(String(data.requisitionNumber))
                       .addPart(String(newItem.id))
-                      .build(),
-                    { replace: true }
+                      .build()
                   );
                 }
               }}
