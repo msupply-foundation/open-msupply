@@ -1,9 +1,14 @@
 pub mod mutations;
+mod program_indicator;
 mod program_settings;
 mod requisition_queries;
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
+use graphql_types::types::program_indicator::{
+    ProgramIndicatorFilterInput, ProgramIndicatorResponse, ProgramIndicatorSortInput,
+};
 use graphql_types::types::RequisitionNodeType;
+use program_indicator::program_indicators;
 use program_settings::{
     get_customer_program_requisition_settings, get_supplier_program_requisition_settings,
     CustomerProgramRequisitionSettingNode, SupplierProgramRequisitionSettingNode,
@@ -11,6 +16,9 @@ use program_settings::{
 
 use self::mutations::{request_requisition, response_requisition};
 use self::requisition_queries::*;
+use mutations::update_indicator_value::{
+    self, UpdateIndicatorValueInput, UpdateIndicatorValueResponse,
+};
 #[derive(Default, Clone)]
 pub struct RequisitionQueries;
 
@@ -60,6 +68,16 @@ impl RequisitionQueries {
         store_id: String,
     ) -> Result<Vec<CustomerProgramRequisitionSettingNode>> {
         get_customer_program_requisition_settings(ctx, &store_id)
+    }
+
+    pub async fn program_indicators(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        sort: Option<ProgramIndicatorSortInput>,
+        filter: Option<ProgramIndicatorFilterInput>,
+    ) -> Result<ProgramIndicatorResponse> {
+        program_indicators(ctx, store_id, sort, filter)
     }
 }
 
@@ -187,6 +205,15 @@ impl RequisitionMutations {
         response_requisition::create_requisition_shipment::create_requisition_shipment(
             ctx, &store_id, input,
         )
+    }
+
+    pub async fn update_indicator_value(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateIndicatorValueInput,
+    ) -> Result<UpdateIndicatorValueResponse> {
+        update_indicator_value::update(ctx, store_id, input)
     }
 }
 

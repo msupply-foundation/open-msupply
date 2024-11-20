@@ -62,6 +62,10 @@ impl StorePreferenceNode {
     pub async fn stocktake_frequency(&self) -> &f64 {
         &self.store_preference.stocktake_frequency
     }
+
+    pub async fn extra_fields_in_requisition(&self) -> &bool {
+        &self.store_preference.extra_fields_in_requisition
+    }
 }
 
 impl StorePreferenceNode {

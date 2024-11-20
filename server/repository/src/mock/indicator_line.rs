@@ -1,6 +1,6 @@
 use crate::{IndicatorLineRow, IndicatorValueType};
 
-use super::mock_program_indicator_a;
+use super::{mock_program_indicator_a, mock_program_indicator_b};
 
 pub fn mock_indicator_line_a() -> IndicatorLineRow {
     IndicatorLineRow {
@@ -33,10 +33,10 @@ pub fn mock_indicator_line_b() -> IndicatorLineRow {
 pub fn mock_indicator_line_c() -> IndicatorLineRow {
     IndicatorLineRow {
         id: "indicator_line_row_c".to_owned(),
-        code: "irc".to_owned(),
-        program_indicator_id: mock_program_indicator_a().id,
+        code: "ird".to_owned(),
+        program_indicator_id: mock_program_indicator_b().id,
         line_number: 2,
-        description: "Some line C".to_owned(),
+        description: "Some line D".to_owned(),
         value_type: Some(IndicatorValueType::Number),
         default_value: "0".to_owned(),
         is_required: false,

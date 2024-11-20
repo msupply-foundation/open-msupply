@@ -1,39 +1,40 @@
-import { cleanUpNodes } from "../../../../utils";
+import { cleanUpNodes, sortNodes } from "../../../../utils";
 
-const processItemLines = (res) => {
-  res.items.nodes.forEach((item) => {
+const processItemLines = (data, sort, dir) => {
+  data.items.nodes.forEach((item) => {
     // don't add default values if empty object added
     if (Object.keys(item).length == 0) {
       return;
     }
     item.monthConsumption = calculateQuantity(
-      res.thisMonthConsumption,
+      data.thisMonthConsumption,
       item.id
     );
     item.lastMonthConsumption = calculateQuantity(
-      res.lastMonthConsumption,
+      data.lastMonthConsumption,
       item.id
     );
     item.twoMonthsAgoConsumption = calculateQuantity(
-      res.twoMonthsAgoConsumption,
+      data.twoMonthsAgoConsumption,
       item.id
     );
     item.expiringInSixMonths = calculateQuantity(
-      res.expiringInSixMonths,
+      data.expiringInSixMonths,
       item.id
     );
     item.expiringInTwelveMonths = calculateQuantity(
-      res.expiringInTwelveMonths,
+      data.expiringInTwelveMonths,
       item.id
     );
-    item.stockOnOrder = calculateQuantity(res.stockOnOrder, item.id);
-    item.AMC12 = calculateQuantity(res.AMCTwelve, item.id);
-    item.AMC24 = calculateQuantity(res.AMCTwentyFour, item.id);
+    item.stockOnOrder = calculateQuantity(data.stockOnOrder, item.id);
+    item.AMC12 = calculateQuantity(data.AMCTwelve, item.id);
+    item.AMC24 = calculateQuantity(data.AMCTwentyFour, item.id);
     item.SOH = calculateStatValue(item?.stats?.availableStockOnHand);
     item.MOS = calculateStatValue(item?.stats?.availableMonthsOfStockOnHand);
   });
-  let cleanNodes = cleanUpNodes(res.items.nodes);
-  return cleanNodes;
+  let cleanNodes = cleanUpNodes(data.items.nodes);
+  let sortedNodes = sortNodes(cleanNodes, sort, dir);
+  return sortedNodes;
 };
 
 // function adds month consumption to data  (either this or last month)
@@ -60,4 +61,5 @@ module.exports = {
   calculateStatValue,
   processItemLines,
   cleanUpNodes,
+  sortNodes,
 };

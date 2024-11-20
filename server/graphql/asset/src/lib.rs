@@ -13,7 +13,10 @@ use graphql_core::{
 use repository::{assets::asset::AssetFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
 
-use types::{AssetConnector, AssetFilterInput, AssetSortInput, AssetsResponse};
+use types::{
+    map_parse_error, AssetConnector, AssetFilterInput, AssetNode, AssetParseResponse,
+    AssetSortInput, AssetsResponse, GS1DataElement, ScannedDataParseError,
+};
 
 #[derive(Default, Clone)]
 pub struct AssetQueries;
@@ -56,6 +59,36 @@ impl AssetQueries {
         Ok(AssetsResponse::Response(AssetConnector::from_domain(
             assets,
         )))
+    }
+
+    pub async fn asset_from_gs1_data(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        gs1: Vec<GS1DataElement>,
+    ) -> Result<AssetParseResponse> {
+        let user = validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::QueryAsset,
+                store_id: Some(store_id.clone()),
+            },
+        )?;
+
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+
+        let result = service_provider.asset_service.asset_from_gs1_data(
+            &service_context,
+            gs1.into_iter().map(GS1DataElement::to_domain).collect(),
+        );
+
+        match result {
+            Ok(asset) => Ok(AssetParseResponse::Response(AssetNode::from_domain(asset))),
+            Err(error) => Ok(AssetParseResponse::Error(ScannedDataParseError {
+                error: map_parse_error(error)?,
+            })),
+        }
     }
 }
 

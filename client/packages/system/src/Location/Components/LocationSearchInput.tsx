@@ -82,6 +82,8 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
     options.push({ value: null, label: t('label.remove') });
   }
 
+  const selectedOption = options.find(o => o.value === selectedLocation?.id);
+
   return (
     <Autocomplete
       autoFocus={autoFocus}
@@ -89,13 +91,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
       width={`${width}px`}
       popperMinWidth={Number(width)}
       clearable={false}
-      value={
-        selectedLocation && {
-          value: selectedLocation.id,
-          label: formatLocationLabel(selectedLocation),
-          code: selectedLocation.code,
-        }
-      }
+      value={selectedOption || null}
       loading={isLoading}
       onChange={(_, option) => {
         onChange(locations.find(l => l.id === option?.value) || null);

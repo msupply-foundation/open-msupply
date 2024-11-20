@@ -24,7 +24,35 @@ const cleanUpObject = (node) => {
   return newNode;
 };
 
+const getNestedValue = (node, key) => {
+  key = key + "";
+  return key.split(".").reduce((value, part) => value && value[part], node);
+};
+
+const sortNodes = (nodes, sort, dir) => {
+  if (!!sort) {
+    nodes.sort((a, b) => {
+      const valueA = getNestedValue(a, sort);
+      const valueB = getNestedValue(b, sort);
+
+      if (valueA === valueB) {
+        return 0;
+      }
+
+      if (dir === "asc") {
+        return valueA > valueB ? 1 : -1;
+      } else {
+        return valueA < valueB ? 1 : -1;
+      }
+    });
+  }
+
+  return nodes;
+};
+
 module.exports = {
   cleanUpObject,
   cleanUpNodes,
+  getNestedValue,
+  sortNodes,
 };
