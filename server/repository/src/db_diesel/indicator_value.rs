@@ -76,7 +76,7 @@ impl<'a> IndicatorValueRepository<'a> {
         &self,
         filter: IndicatorValueFilter,
     ) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter))
+        self.query(Pagination::all(), Some(filter))
     }
 
     pub fn create_filtered_query(filter: Option<IndicatorValueFilter>) -> BoxedIndicatorQuery {

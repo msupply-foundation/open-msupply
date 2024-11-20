@@ -64,6 +64,14 @@ const AssetListComponent: FC = () => {
       label: 'label.asset-number',
     },
     {
+      key: 'categoryName',
+      label: 'label.category',
+      sortable: false,
+      width: 200,
+      accessor: ({ rowData }) => rowData.assetCategory?.name,
+      Cell: TooltipTextCell,
+    },
+    {
       key: 'type',
       label: 'label.type',
       sortable: false,
