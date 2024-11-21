@@ -6,14 +6,13 @@ use graphql_core::{
     loader::{
         IndicatorValueLoader, IndicatorValueLoaderInput, IndicatorValuePayload, ProgramByIdLoader,
     },
-    standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use repository::{
     EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueRow, IndicatorValueType,
     ProgramIndicatorFilter, ProgramIndicatorSort, ProgramIndicatorSortField,
 };
-use service::programs::program_indicator::query::{IndicatorLine, ProgramIndicator};
+use service::requisition::program_indicator::query::{IndicatorLine, ProgramIndicator};
 
 use super::program_node::ProgramNode;
 
@@ -156,6 +155,10 @@ impl IndicatorLineRowNode {
     pub async fn line_number(&self) -> i32 {
         self.line.line_number
     }
+
+    pub async fn value_type(&self) -> Option<IndicatorValueTypeNode> {
+        IndicatorValueTypeNode::from_domain(&self.line.value_type)
+    }
 }
 
 impl IndicatorColumnNode {
@@ -175,7 +178,7 @@ impl IndicatorColumnNode {
         &self.column.header
     }
 
-    pub async fn value_type(&self) -> IndicatorValueTypeNode {
+    pub async fn value_type(&self) -> Option<IndicatorValueTypeNode> {
         IndicatorValueTypeNode::from_domain(&self.column.value_type)
     }
 
@@ -203,15 +206,13 @@ impl IndicatorColumnNode {
                 &self.column.id,
                 payload,
             ))
-            .await?
-            .ok_or_else(|| {
-                StandardGraphqlError::InternalError(format!(
-                    "Cannot find value for column {} with header {}",
-                    &self.line_id, &self.column.id,
-                ))
-            })?;
+            .await?;
 
-        Ok(Some(IndicatorValueNode::from_domain(result)))
+        if let Some(value) = result {
+            Ok(Some(IndicatorValueNode::from_domain(value)))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -222,11 +223,11 @@ pub enum IndicatorValueTypeNode {
 }
 
 impl IndicatorValueTypeNode {
-    pub fn from_domain(r#type: &Option<IndicatorValueType>) -> Self {
+    pub fn from_domain(r#type: &Option<IndicatorValueType>) -> Option<Self> {
         match r#type {
-            Some(IndicatorValueType::Number) => IndicatorValueTypeNode::Number,
-            Some(IndicatorValueType::String) => IndicatorValueTypeNode::String,
-            None => IndicatorValueTypeNode::String,
+            Some(IndicatorValueType::Number) => Some(IndicatorValueTypeNode::Number),
+            Some(IndicatorValueType::String) => Some(IndicatorValueTypeNode::String),
+            None => None,
         }
     }
 }

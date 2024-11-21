@@ -4,12 +4,12 @@ use repository::{
     asset_catalogue_item::{AssetCatalogueItemFilter, AssetCatalogueItemRepository},
     EqualFilter, RepositoryError, StringFilter,
 };
-use util::{GS1ParseError, GS1};
+use util::{GS1DataElement, GS1};
 
 use crate::service_provider::ServiceContext;
 
 #[derive(Debug)]
-pub enum ScannedDataParseError {
+pub enum AssetFromGs1Error {
     ParseError,
     MissingPartNumber,
     MissingSerialNumber,
@@ -17,40 +17,27 @@ pub enum ScannedDataParseError {
     DatabaseError(RepositoryError),
 }
 
-impl From<RepositoryError> for ScannedDataParseError {
+impl From<RepositoryError> for AssetFromGs1Error {
     fn from(error: RepositoryError) -> Self {
-        ScannedDataParseError::DatabaseError(error)
-    }
-}
-
-fn lookup_asset_by_id(ctx: &ServiceContext, id: &str) -> Result<Asset, ScannedDataParseError> {
-    let repository = AssetRepository::new(&ctx.connection);
-
-    let mut result =
-        repository.query_by_filter(AssetFilter::new().id(EqualFilter::equal_to(id)))?;
-
-    if let Some(record) = result.pop() {
-        Ok(record)
-    } else {
-        Err(ScannedDataParseError::NotFound)
+        AssetFromGs1Error::DatabaseError(error)
     }
 }
 
 fn check_if_asset_already_exists(
     ctx: &ServiceContext,
     gs1: &GS1,
-) -> Result<Option<Asset>, ScannedDataParseError> {
+) -> Result<Option<Asset>, AssetFromGs1Error> {
     // Look up the item by the Serial Number & part number
     let serial_number = gs1
         .serial_number()
-        .ok_or(ScannedDataParseError::MissingSerialNumber)?;
+        .ok_or(AssetFromGs1Error::MissingSerialNumber)?;
     log::info!("Looking up asset by serial number: {}", serial_number);
 
     let mut filter = AssetFilter::new().serial_number(StringFilter::equal_to(&serial_number));
 
     let part_number = gs1
         .part_number()
-        .ok_or(ScannedDataParseError::MissingPartNumber)?;
+        .ok_or(AssetFromGs1Error::MissingPartNumber)?;
 
     if let Some(asset_catalogue_id) = lookup_asset_catalogue_id_by_pqs_code(ctx, &part_number)? {
         filter = filter.catalogue_item_id(EqualFilter::equal_to(&asset_catalogue_id));
@@ -82,10 +69,7 @@ fn lookup_asset_catalogue_id_by_pqs_code(
     Ok(catalogue_item_id)
 }
 
-fn create_draft_asset_from_gs1(
-    ctx: &ServiceContext,
-    gs1: GS1,
-) -> Result<Asset, ScannedDataParseError> {
+fn create_draft_asset_from_gs1(ctx: &ServiceContext, gs1: GS1) -> Result<Asset, AssetFromGs1Error> {
     let mut asset = Asset::default();
 
     asset.serial_number = gs1.serial_number();
@@ -97,9 +81,8 @@ fn create_draft_asset_from_gs1(
         gs1.serial_number().unwrap_or_default()
     ));
 
-    let (warranty_start, warranty_end) = gs1
-        .warranty_dates()
-        .ok_or(ScannedDataParseError::ParseError)?;
+    let (warranty_start, warranty_end) =
+        gs1.warranty_dates().ok_or(AssetFromGs1Error::ParseError)?;
 
     asset.warranty_start = Some(warranty_start);
     asset.warranty_end = Some(warranty_end);
@@ -113,23 +96,11 @@ fn create_draft_asset_from_gs1(
     Ok(asset)
 }
 
-pub fn parse_from_scanned_data(
+pub fn get_or_create_from_gs1_data(
     ctx: &ServiceContext,
-    scanned_data: String,
-) -> Result<Asset, ScannedDataParseError> {
-    log::info!("Parsing scanned data: {}", scanned_data);
-
-    let result = GS1::parse(scanned_data.to_string());
-
-    let gs1 = match result {
-        Ok(gs1) => gs1,
-        Err(GS1ParseError::InvalidFormat) => {
-            log::info!(
-                "Scanned data is not GS1 data, it could be an asset ID from our own barcode"
-            );
-            return lookup_asset_by_id(ctx, &scanned_data);
-        }
-    };
+    gs1_data: Vec<GS1DataElement>,
+) -> Result<Asset, AssetFromGs1Error> {
+    let gs1 = GS1::from_data_elements(gs1_data);
 
     // Look up the item by the serial number & part number
     if let Some(asset) = check_if_asset_already_exists(ctx, &gs1)? {
@@ -142,31 +113,12 @@ pub fn parse_from_scanned_data(
 
 #[cfg(test)]
 mod test {
-    use crate::{asset::parse::parse_from_scanned_data, service_provider::ServiceProvider};
+    use crate::{asset::parse::get_or_create_from_gs1_data, service_provider::ServiceProvider};
     use repository::{
         mock::{mock_asset_a, mock_store_a, MockDataInserts},
         test_db::setup_all,
     };
-
-    #[actix_rt::test]
-    async fn parse_asset_data_internal_id() {
-        let (_, _connection, connection_manager, _) = setup_all(
-            "parse_asset_data_internal_id",
-            MockDataInserts::none().assets().locations(),
-        )
-        .await;
-
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let ctx = service_provider
-            .context(mock_store_a().id, "".to_string())
-            .unwrap();
-
-        // Check we can find an asset by ID if that's the input
-        let result = parse_from_scanned_data(&ctx, mock_asset_a().id.clone());
-        let asset = result.unwrap();
-
-        assert_eq!(asset.id, mock_asset_a().id);
-    }
+    use util::GS1;
 
     #[actix_rt::test]
     async fn parse_asset_data_gs1_data() {
@@ -185,7 +137,9 @@ mod test {
 
         let example_gs1 = "(01)00012345600012(11)241007(21)S12345678(241)E003/002(3121)82(3131)67(3111)63(8013)HBD 116(90)001(91)241007-310101(92){\"pqs\":\"https://apps.who.int/immunization_standards/vaccine_quality/pqs_catalogue/LinkPDF.aspx?UniqueID=3bf9439f-3316-49b4-845e-d50360f8280f&TipoDoc=DataSheet&ID=0\"}";
 
-        let draft_asset = parse_from_scanned_data(&ctx, example_gs1.to_string()).unwrap();
+        let gs1 = GS1::from_human_readable_string(example_gs1.to_string()).unwrap();
+
+        let draft_asset = get_or_create_from_gs1_data(&ctx, gs1.to_data_elements()).unwrap();
 
         assert_eq!(draft_asset.id, ""); // Draft asset has an empty ID
         assert_eq!(draft_asset.serial_number, Some("S12345678".to_string()));
@@ -224,7 +178,9 @@ mod test {
             mock_asset_a().serial_number.unwrap()
         ); // Note E003/002 has to match the catalogue item ID for mock_asset_a
 
-        let existing_asset = parse_from_scanned_data(&ctx, gs1_data).unwrap();
+        let gs1 = GS1::from_human_readable_string(gs1_data).unwrap();
+
+        let existing_asset = get_or_create_from_gs1_data(&ctx, gs1.to_data_elements()).unwrap();
 
         assert_eq!(existing_asset.id, mock_asset_a().id);
     }

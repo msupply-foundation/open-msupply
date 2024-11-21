@@ -64,11 +64,10 @@ pub fn program_indicators(
 
 #[cfg(test)]
 mod query {
+    use crate::requisition::program_indicator::query::IndicatorLine;
+    use crate::service_provider::ServiceProvider;
     use repository::Pagination;
     use repository::{mock::MockDataInserts, test_db::setup_all};
-
-    use crate::programs::program_indicator::query::IndicatorLine;
-    use crate::service_provider::ServiceProvider;
 
     #[actix_rt::test]
     async fn program_indicator_query() {

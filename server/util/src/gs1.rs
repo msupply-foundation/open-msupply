@@ -8,6 +8,12 @@ pub enum GS1ParseError {
 }
 
 #[derive(Debug)]
+pub struct GS1DataElement {
+    pub ai: String,
+    pub data: String,
+}
+
+#[derive(Debug)]
 pub struct GS1 {
     gs1: HashMap<String, String>,
 }
@@ -19,7 +25,30 @@ impl GS1 {
         }
     }
 
-    pub fn parse(gs1_input: String) -> Result<Self, GS1ParseError> {
+    pub fn from_data_elements(data_elements: Vec<GS1DataElement>) -> Self {
+        let mut gs1 = HashMap::new();
+
+        for data_element in data_elements {
+            gs1.insert(data_element.ai.clone(), data_element.data.clone());
+        }
+
+        Self { gs1 }
+    }
+
+    pub fn to_data_elements(&self) -> Vec<GS1DataElement> {
+        let mut data_elements = Vec::new();
+
+        for (ai, data) in &self.gs1 {
+            data_elements.push(GS1DataElement {
+                ai: ai.clone(),
+                data: data.clone(),
+            });
+        }
+
+        data_elements
+    }
+
+    pub fn from_human_readable_string(gs1_input: String) -> Result<Self, GS1ParseError> {
         let gs1 = parse_gs1_string(gs1_input)?;
 
         Ok(Self { gs1 })
@@ -112,11 +141,40 @@ mod test {
     use crate::{gs1::parse_gs1_string, GS1};
 
     #[test]
+    fn gs1_from_data_elements() {
+        let data_elements = vec![
+            crate::GS1DataElement {
+                ai: "01".to_string(),
+                data: "123456".to_string(),
+            },
+            crate::GS1DataElement {
+                ai: "21".to_string(),
+                data: "S12345678".to_string(),
+            },
+            crate::GS1DataElement {
+                ai: "241".to_string(),
+                data: "E003/002".to_string(),
+            },
+        ];
+
+        let gs1 = GS1::from_data_elements(data_elements);
+
+        let gtin = gs1.get("01").unwrap();
+        assert_eq!(gtin, "123456");
+
+        let serial = gs1.get("21").unwrap();
+        assert_eq!(serial, "S12345678");
+
+        let part_number = gs1.get("241").unwrap();
+        assert_eq!(part_number, "E003/002");
+    }
+
+    #[test]
     fn test_parse_gs1_string() {
         // Test a simple GS1 string with just a GTIN
         let gs1_input = "(01)123456".to_string();
 
-        let gs1 = GS1::parse(gs1_input).unwrap();
+        let gs1 = GS1::from_human_readable_string(gs1_input).unwrap();
 
         let gtin = gs1.get("01").unwrap();
 
