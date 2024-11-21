@@ -1,6 +1,6 @@
 import { LocaleKey, TypedTFunction } from '@common/intl';
 import { AssetRowFragment } from './api';
-import { Formatter, ObjUtils } from '@common/utils';
+import { ArrayUtils, Formatter, ObjUtils } from '@common/utils';
 import { StatusType } from '@common/types';
 import { ImportRow, LineNumber } from './ImportAsset';
 
@@ -21,13 +21,23 @@ function baseAssetFields(t: TypedTFunction<LocaleKey>) {
 export const assetsToCsv = (
   items: AssetRowFragment[],
   t: TypedTFunction<LocaleKey>,
-  properties: string[]
+  properties: string[],
+  isCentralServer: boolean
 ) => {
-  const fields: string[] = ['id'].concat(baseAssetFields(t));
+  const dedupedAssetProperties = ArrayUtils.dedupe(properties);
 
-  fields.push(t('label.created-datetime'), t('label.modified-datetime'));
+  const fields: string[] = ['id'];
 
-  fields.push(...properties);
+  if (isCentralServer) {
+    fields.push(t('label.store'));
+  }
+
+  fields.push(
+    ...baseAssetFields(t),
+    t('label.created-datetime'),
+    t('label.modified-datetime'),
+    ...dedupedAssetProperties
+  );
 
   const data = items.map(node => {
     const parsedProperties = ObjUtils.parse(node.properties);
@@ -35,6 +45,7 @@ export const assetsToCsv = (
 
     return [
       node.id,
+      ...(isCentralServer ? [node.store?.code] : []),
       node.assetNumber,
       node.catalogueItem?.code ?? '',
       Formatter.csvDateString(node.installationDate),
@@ -43,7 +54,7 @@ export const assetsToCsv = (
       node.notes,
       Formatter.csvDateTimeString(node.createdDatetime),
       Formatter.csvDateTimeString(node.modifiedDatetime),
-      ...properties.map(
+      ...dedupedAssetProperties.map(
         key => parsedCatalogProperties[key] ?? parsedProperties[key] ?? ''
       ),
     ];
@@ -97,7 +108,7 @@ export const importEquipmentToCsvWithErrors = (
   isCentralServer: boolean,
   properties?: string[]
 ) => {
-  const props = properties ?? [];
+  const dedupedAssetProperties = ArrayUtils.dedupe(properties ?? []);
 
   const fields: string[] = [
     t('label.asset-number'),
@@ -114,7 +125,7 @@ export const importEquipmentToCsvWithErrors = (
     t('label.installation-date'),
     t('label.replacement-date'),
     t('label.line-number'),
-    ...props,
+    ...dedupedAssetProperties,
     t('label.error-message')
   );
 
@@ -130,7 +141,7 @@ export const importEquipmentToCsvWithErrors = (
       node.installationDate,
       node.replacementDate,
       node.lineNumber,
-      ...props.map(key => node.properties?.[key] ?? ''),
+      ...dedupedAssetProperties.map(key => node.properties?.[key] ?? ''),
       node.errorMessage
     );
 
@@ -145,13 +156,14 @@ export const importEquipmentToCsv = (
   isCentralServer: boolean = false,
   properties?: string[]
 ) => {
+  const dedupedAssetProperties = ArrayUtils.dedupe(properties ?? []);
+
   const fields = baseAssetFields(t);
   if (isCentralServer) {
     fields.push(t('label.store'));
   }
 
-  const props = properties ?? [];
-  fields.push(...props);
+  fields.push(...dedupedAssetProperties);
 
   const data = assets.map(node => {
     const row = [
@@ -165,7 +177,9 @@ export const importEquipmentToCsv = (
 
     if (isCentralServer) row.push(node.store?.code);
 
-    return row.concat(props.map(key => node.properties?.[key] ?? ''));
+    return row.concat(
+      dedupedAssetProperties.map(key => node.properties?.[key] ?? '')
+    );
   });
 
   return Formatter.csv({ fields, data });
