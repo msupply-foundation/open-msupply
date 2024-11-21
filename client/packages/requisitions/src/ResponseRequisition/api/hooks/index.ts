@@ -14,7 +14,8 @@ export const useResponse = {
     delete: Document.useDeleteResponses,
     deleteSelected: Document.useDeleteSelectedResponseRequisitions,
     fields: Document.useResponseFields,
-    indicators: Document.useIndicators
+    indicators: Document.useIndicators,
+    updateIndicatorValue: Document.useUpdateIndicatorValue,
   },
   line: {
     list: Lines.useResponseLines,
@@ -22,7 +23,7 @@ export const useResponse = {
     delete: Lines.useDeleteResponseLines,
     save: Lines.useSaveResponseLines,
     insert: Lines.useInsertResponseLines,
-    updateIndicators: Lines.useUpdateIndicatorLine
+    updateIndicators: Lines.useUpdateIndicatorLine,
   },
   utils: {
     api: Utils.useResponseApi,
