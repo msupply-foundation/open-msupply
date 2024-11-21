@@ -19,8 +19,11 @@ interface IndicatorLineEditProps {
   next: IndicatorLineRowFragment | null;
   hasPrevious: boolean;
   previous: IndicatorLineRowFragment | null;
-  currentLine: IndicatorLineWithColumnsFragment | null | undefined;
+  currentLine?: IndicatorLineWithColumnsFragment | null;
 }
+
+const INPUT_WIDTH = 185;
+const LABEL_WIDTH = '150px';
 
 export const IndicatorLineEdit = ({
   requisitionNumber,
@@ -34,39 +37,45 @@ export const IndicatorLineEdit = ({
     (a, b) => a.columnNumber - b.columnNumber
   );
 
+  const inputWithLabel = (
+    label: string,
+    value: string | number,
+    valueType?: IndicatorValueTypeNode | null
+  ) => {
+    const inputComponent =
+      valueType === IndicatorValueTypeNode.Number ? (
+        <NumericTextInput
+          width={INPUT_WIDTH}
+          value={Number(value)}
+          // onChange={value => update({ availableStockOnHand: value })}
+          // onBlur={save}
+          autoFocus
+        />
+      ) : (
+        <BasicTextInput
+          sx={{ width: '200px' }}
+          value={value}
+          // onChange={value => update({ availableStockOnHand: value })}
+          // onBlur={save}
+          autoFocus
+        />
+      );
+
+    return (
+      <InputWithLabelRow
+        Input={inputComponent}
+        labelWidth={LABEL_WIDTH}
+        label={label}
+        sx={{ marginBottom: 1 }}
+      />
+    );
+  };
+
   return (
     <>
       <Box display="flex" flexDirection="column">
         {columns?.map(c => {
-          const valueType = c.valueType || currentLine?.line.valueType;
-          console.log(c.valueType, currentLine?.line.valueType);
-
-          const inputComponent =
-            valueType === IndicatorValueTypeNode.Number ? (
-              <NumericTextInput
-                width={500}
-                value={Number(c.value)}
-                // onChange={value => update({ availableStockOnHand: value })}
-                // onBlur={save}
-                autoFocus
-              />
-            ) : (
-              <BasicTextInput
-                value={Number(c.value)}
-                // onChange={value => update({ availableStockOnHand: value })}
-                // onBlur={save}
-                autoFocus
-              />
-            );
-
-          return (
-            <InputWithLabelRow
-              Input={inputComponent}
-              labelWidth={'500px'}
-              label={c.name}
-              sx={{ marginBottom: 1 }}
-            />
-          );
+          return inputWithLabel(c.name, c.value?.value ?? '', c.valueType);
         })}
       </Box>
       <Box>

@@ -11,9 +11,9 @@ import { ProgramIndicatorFragment, ResponseFragment } from '../api';
 
 interface IndicatorTabProps {
   onClick: (
-    programIndicator: ProgramIndicatorFragment | undefined,
-    indicatorLine: IndicatorLineRowNode | undefined,
-    response: ResponseFragment | undefined
+    programIndicator?: ProgramIndicatorFragment,
+    indicatorLine?: IndicatorLineRowNode,
+    response?: ResponseFragment
   ) => void;
   isLoading: boolean;
   response?: ResponseFragment;

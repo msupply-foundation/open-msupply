@@ -59,9 +59,9 @@ export const DetailView: FC = () => {
 
   const onProgramIndicatorClick = useCallback(
     (
-      programIndicator: ProgramIndicatorFragment | undefined,
-      indicatorLine: IndicatorLineRowNode | undefined,
-      response: ResponseFragment | undefined
+      programIndicator?: ProgramIndicatorFragment,
+      indicatorLine?: IndicatorLineRowNode,
+      response?: ResponseFragment
     ) => {
       // TODO: Snack?
       if (!response || !indicatorLine) return;

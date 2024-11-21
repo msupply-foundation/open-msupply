@@ -16,7 +16,7 @@ import { usePreviousNextIndicatorLine } from './hooks';
 import { IndicatorLineEdit } from './IndicatorLineEdit';
 
 export const IndicatorEditPage = () => {
-  const { programIndicatorLineId } = useParams();
+  const { programIndicatorLineId, programIndicatorCode } = useParams();
   const { data: response, isLoading } = useResponse.document.get();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
@@ -24,19 +24,19 @@ export const IndicatorEditPage = () => {
       response?.otherPartyId ?? '',
       response?.period?.id ?? ''
     );
-  const { programIndicatorCode } = useParams();
 
   const indicators = programIndicators?.nodes.filter(
     indicator => indicator?.code === programIndicatorCode
   );
   const linesAndColumns =
     indicators?.flatMap(indicator => indicator.lineAndColumns) ?? [];
-  const lines = linesAndColumns.map(l => l.line);
   const currentLineAndColumns = linesAndColumns.find(
     l => l.line.id == programIndicatorLineId
   );
+  const lines = linesAndColumns.map(l => l.line);
   const currentLine = lines.find(l => l.id === programIndicatorLineId);
   const sortedLines = lines.sort((a, b) => a.lineNumber - b.lineNumber);
+
   const { hasNext, next, hasPrevious, previous } = usePreviousNextIndicatorLine(
     sortedLines,
     currentLine
