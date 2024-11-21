@@ -26,7 +26,12 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
-import { useResponse, ResponseLineFragment, ResponseFragment } from '../api';
+import {
+  useResponse,
+  ResponseLineFragment,
+  ResponseFragment,
+  ProgramIndicatorFragment,
+} from '../api';
 import { IndicatorsTab } from './IndicatorsTab';
 
 export const DetailView: FC = () => {
@@ -54,6 +59,7 @@ export const DetailView: FC = () => {
 
   const onProgramIndicatorClick = useCallback(
     (
+      programIndicator: ProgramIndicatorFragment | undefined,
       indicatorLine: IndicatorLineRowNode | undefined,
       response: ResponseFragment | undefined
     ) => {
@@ -64,6 +70,7 @@ export const DetailView: FC = () => {
           .addPart(AppRoute.CustomerRequisition)
           .addPart(String(response.requisitionNumber))
           .addPart('indicator')
+          .addPart(String(programIndicator?.code))
           .addPart(String(indicatorLine.id))
           .build()
       );

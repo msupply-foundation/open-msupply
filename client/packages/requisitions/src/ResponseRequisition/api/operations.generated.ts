@@ -127,6 +127,8 @@ export type IndicatorColumnFragment = { __typename: 'IndicatorColumnNode', colum
 
 export type IndicatorValueFragment = { __typename: 'IndicatorValueNode', id: string, value: string };
 
+export type IndicatorLineWithColumnsFragment = { __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null } };
+
 export type ProgramIndicatorsQueryVariables = Types.Exact<{
   customerNameLinkId: Types.Scalars['String']['input'];
   periodId: Types.Scalars['String']['input'];
@@ -342,21 +344,26 @@ export const IndicatorLineRowFragmentDoc = gql`
   valueType
 }
     `;
+export const IndicatorLineWithColumnsFragmentDoc = gql`
+    fragment IndicatorLineWithColumns on IndicatorLineNode {
+  columns {
+    ...IndicatorColumn
+  }
+  line {
+    ...IndicatorLineRow
+  }
+}
+    ${IndicatorColumnFragmentDoc}
+${IndicatorLineRowFragmentDoc}`;
 export const ProgramIndicatorFragmentDoc = gql`
     fragment ProgramIndicator on ProgramIndicatorNode {
   code
   lineAndColumns {
-    columns {
-      ...IndicatorColumn
-    }
-    line {
-      ...IndicatorLineRow
-    }
+    ...IndicatorLineWithColumns
   }
   id
 }
-    ${IndicatorColumnFragmentDoc}
-${IndicatorLineRowFragmentDoc}`;
+    ${IndicatorLineWithColumnsFragmentDoc}`;
 export const UpdateResponseDocument = gql`
     mutation updateResponse($storeId: String!, $input: UpdateResponseRequisitionInput!) {
   updateResponseRequisition(input: $input, storeId: $storeId) {

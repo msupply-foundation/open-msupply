@@ -485,12 +485,7 @@ query customerProgramSettings($storeId: String!) {
 fragment ProgramIndicator on ProgramIndicatorNode {
   code
   lineAndColumns {
-    columns {
-      ...IndicatorColumn
-    }
-    line {
-      ...IndicatorLineRow
-    }
+    ...IndicatorLineWithColumns
   }
   id
 }
@@ -516,6 +511,14 @@ fragment IndicatorColumn on IndicatorColumnNode {
 fragment IndicatorValue on IndicatorValueNode {
   id
   value
+}
+fragment IndicatorLineWithColumns on IndicatorLineNode {
+  columns {
+    ...IndicatorColumn
+  }
+  line {
+    ...IndicatorLineRow
+  }
 }
 query programIndicators(
   $customerNameLinkId: String!
