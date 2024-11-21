@@ -12,23 +12,26 @@ import { PageLayout } from '../PageLayout';
 import { ListIndicatorLines } from './ListIndicators';
 import { AppRoute } from '@openmsupply-client/config';
 import { AppBarButtons } from '../ResponseLineEdit/AppBarButtons';
+import { usePreviousNextIndicatorValue } from './hooks';
+import { IndicatorLineEdit } from './IndicatorLineEdit';
 
 export const IndicatorEditPage = () => {
   const { programIndicatorLineId } = useParams();
-  const { data, isLoading } = useResponse.document.get();
+  const { data: response, isLoading } = useResponse.document.get();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useResponse.document.indicators(
-      data?.otherPartyId ?? '',
-      data?.period?.id ?? ''
+      response?.otherPartyId ?? '',
+      response?.period?.id ?? ''
     );
+  const indicators = programIndicators?.programIndicators.nodes;
 
   const linesAndColumns =
-    programIndicators?.programIndicators.nodes.flatMap(
-      indicator => indicator.lineAndColumns
-    ) ?? [];
+    indicators?.flatMap(indicator => indicator.lineAndColumns) ?? [];
   const lines = linesAndColumns.map(l => l.line);
   const currentLine = lines.find(l => l.id === programIndicatorLineId);
+  const { hasNext, next, hasPrevious, previous } =
+    usePreviousNextIndicatorValue(lines, currentLine);
 
   useEffect(() => {
     setCustomBreadcrumbs({
@@ -40,13 +43,13 @@ export const IndicatorEditPage = () => {
   if (isLoading || isProgramIndicatorsLoading) {
     return <BasicSpinner />;
   }
-  if (!programIndicatorLineId || !data) {
+  if (!programIndicatorLineId || !response) {
     return <NothingHere />;
   }
 
   return (
     <>
-      <AppBarButtons requisitionNumber={data?.requisitionNumber} />
+      <AppBarButtons requisitionNumber={response?.requisitionNumber} />
       <DetailContainer>
         <PageLayout
           Left={
@@ -56,11 +59,21 @@ export const IndicatorEditPage = () => {
                 lines={lines}
                 route={RouteBuilder.create(AppRoute.Distribution)
                   .addPart(AppRoute.CustomerRequisition)
-                  .addPart(String(data?.requisitionNumber))}
+                  .addPart(String(response?.requisitionNumber))}
               />
             </>
           }
-          Right={<></>}
+          Right={
+            <>
+              <IndicatorLineEdit
+                hasNext={hasNext}
+                next={next}
+                hasPrevious={hasPrevious}
+                previous={previous}
+                requisitionNumber={response?.requisitionNumber}
+              />
+            </>
+          }
         />
       </DetailContainer>
     </>

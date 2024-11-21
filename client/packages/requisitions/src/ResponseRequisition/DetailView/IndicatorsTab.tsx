@@ -29,10 +29,10 @@ export const IndicatorsTab = ({
   if (isLoading) {
     return <NothingHere body="There are no indicators for this requisition" />;
   }
-  const hiv_indicators = indicators?.filter(
+  const hivIndicators = indicators?.filter(
     indicator => indicator?.code === 'HIV'
   );
-  const regimen_indicators = indicators?.filter(
+  const regimenIndicators = indicators?.filter(
     indicator => indicator?.code === 'REGIMEN'
   );
 
@@ -43,7 +43,7 @@ export const IndicatorsTab = ({
         label={t('button.regimen')}
         Icon={<PlusCircleIcon />}
         onClick={() =>
-          onClick(regimen_indicators?.[0]?.lineAndColumns[0]?.line, response)
+          onClick(regimenIndicators?.[0]?.lineAndColumns[0]?.line, response)
         }
       />
       <ButtonWithIcon
@@ -51,7 +51,7 @@ export const IndicatorsTab = ({
         label={t('button.hiv')}
         Icon={<PlusCircleIcon />}
         onClick={() =>
-          onClick(hiv_indicators?.[0]?.lineAndColumns[0]?.line, response)
+          onClick(hivIndicators?.[0]?.lineAndColumns[0]?.line, response)
         }
       />
     </Box>
