@@ -38,14 +38,14 @@ export const usePreviousNextIndicatorLine = (
   return state;
 };
 
-const createDraftLine = (
+const createDraftIndicator = (
   indicatorValue: IndicatorValueFragment
 ): IndicatorValueFragment => ({
   ...indicatorValue,
 });
 
 export const useDraftIndicatorValue = (
-  IndicatorValue?: IndicatorValueFragment | null
+  indicatorValue?: IndicatorValueFragment | null
 ) => {
   const { mutateAsync: save, isLoading } =
     useResponse.document.updateIndicatorValue();
@@ -53,11 +53,11 @@ export const useDraftIndicatorValue = (
   const [draft, setDraft] = useState<IndicatorValueFragment | null>(null);
 
   useEffect(() => {
-    if (IndicatorValue) {
-      setDraft(createDraftLine(IndicatorValue));
+    if (indicatorValue) {
+      setDraft(createDraftIndicator(indicatorValue));
     }
     setDraft(null);
-  }, [IndicatorValue]);
+  }, [indicatorValue]);
 
   const update = (patch: Partial<IndicatorValueFragment>) => {
     if (draft) {
