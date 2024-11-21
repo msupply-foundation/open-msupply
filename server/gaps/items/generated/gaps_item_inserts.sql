@@ -1,3 +1,4 @@
+BEGIN;
 INSERT INTO master_list (id, name, code, description, is_active) VALUES ('43491ce9-bc89-4ee5-988d-9dbb2856e398', 'gaps_items', 'gaps_items', 'All Items automatically create for Cold Chain Gap Analysis', true) ON CONFLICT DO NOTHING;
 INSERT INTO master_list_name_join (id, master_list_id, name_link_id) SELECT uuid_in(md5(random()::text || random()::text)::cstring), '43491ce9-bc89-4ee5-988d-9dbb2856e398', id FROM name_link WHERE id NOT IN (select name_link_id from master_list_name_join WHERE master_list_id = '43491ce9-bc89-4ee5-988d-9dbb2856e398');
 INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('51087976-45f0-4837-a3ab-6075a80eb765', 'BCG - ampoule - 10 doses', 'BCG-7-10', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 10, 1) ON CONFLICT DO NOTHING;
@@ -1894,3 +1895,4 @@ INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES (
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fc4f3a9a-6b99-4632-a7db-273773308762', 'item_variant', 'UPSERT');INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0ffc37c8-2d58-4811-8597-24bd9879e34e', 'fc4f3a9a-6b99-4632-a7db-273773308762', 'Primary', 1, 6.31) ON CONFLICT DO NOTHING;
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('67ef2090-8003-45d3-9d2c-6b8b944851d1', 'fc4f3a9a-6b99-4632-a7db-273773308762', 'Secondary', 2, 6.31) ON CONFLICT DO NOTHING;
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('4c21acd7-bb62-4e68-b927-8304fa10df4b', 'fc4f3a9a-6b99-4632-a7db-273773308762', 'Tertiary', 3, 6.31) ON CONFLICT DO NOTHING;
+COMMIT;

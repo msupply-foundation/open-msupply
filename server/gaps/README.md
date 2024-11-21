@@ -1,5 +1,7 @@
 This folder contains setup functions and helper scripts for GAPS functionality.
 
+WARNING: Before running any of these scripts, make sure you have a backup of your 4d and postgres (openmsupply central) databases.
+
 ## Asset Catalogue
 
 The `create_catalogue_migration_script` wasn't written to be re-run it generates new IDs for the assets each time it is run.

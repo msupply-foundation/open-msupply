@@ -23,6 +23,9 @@ except:
 # Open the output file
 output_file = open(output_file, 'w')
 
+# Create a transaction
+output_file.write("BEGIN;\n")
+
 output_file.write(create_master_list())
 
 # Main csv processing loop
@@ -68,6 +71,8 @@ with open(item_variants_file_path, 'r') as file:
                 # Create the item_bundle
                 output_file.write(upsert_item_bundle_stmt(ids["item_bundle_id"], ids["item_variant_id"], ids["diluent_variant_id"]))
 
+# Commit the transaction
+output_file.write("COMMIT;\n")
 
 # save the generated ids to a file
 with open(id_lookup_file, 'w') as file:
