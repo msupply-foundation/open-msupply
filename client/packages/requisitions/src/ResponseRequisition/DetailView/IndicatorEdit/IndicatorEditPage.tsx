@@ -24,7 +24,7 @@ export const IndicatorEditPage = () => {
       response?.otherPartyId ?? '',
       response?.period?.id ?? ''
     );
-  const indicators = programIndicators?.programIndicators.nodes;
+  const indicators = programIndicators?.nodes;
 
   const linesAndColumns =
     indicators?.flatMap(indicator => indicator.lineAndColumns) ?? [];
@@ -71,6 +71,7 @@ export const IndicatorEditPage = () => {
                 hasPrevious={hasPrevious}
                 previous={previous}
                 requisitionNumber={response?.requisitionNumber}
+                indicators={indicators}
               />
             </>
           }

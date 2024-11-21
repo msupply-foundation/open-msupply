@@ -99,7 +99,7 @@ export const DetailView: FC = () => {
           onClick={onProgramIndicatorClick}
           isLoading={isProgramIndicatorsLoading}
           response={data}
-          indicators={programIndicators?.programIndicators.nodes}
+          indicators={programIndicators?.nodes}
         />
       ),
       value: 'Indicators',

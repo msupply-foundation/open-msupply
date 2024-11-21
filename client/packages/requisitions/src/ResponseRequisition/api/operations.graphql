@@ -524,6 +524,7 @@ query programIndicators(
 ) {
   programIndicators(storeId: $storeId) {
     ... on ProgramIndicatorConnector {
+      __typename
       nodes {
         ...ProgramIndicator
       }
