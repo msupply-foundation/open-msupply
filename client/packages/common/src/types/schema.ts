@@ -5517,6 +5517,12 @@ export type ProgramsResponse = ProgramConnector;
 
 export type PropertyNode = {
   __typename: 'PropertyNode';
+  /**
+   * If `valueType` is `String`, this field can contain a comma-separated
+   * list of allowed values, essentially defining an enum.
+   * If `valueType` is Integer or Float, this field will include the
+   * word `negative` if negative values are allowed.
+   */
   allowedValues?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   key: Scalars['String']['output'];

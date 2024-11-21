@@ -661,6 +661,7 @@ export const ProgramIndicatorsDocument = gql`
     query programIndicators($customerNameLinkId: String!, $periodId: String!, $storeId: String!) {
   programIndicators(storeId: $storeId) {
     ... on ProgramIndicatorConnector {
+      __typename
       nodes {
         ...ProgramIndicator
       }

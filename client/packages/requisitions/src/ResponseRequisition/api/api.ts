@@ -320,11 +320,15 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     return result.customerProgramRequisitionSettings;
   },
   getIndicators: async (customerNameLinkId: string, periodId: string) => {
-    return await sdk.programIndicators({
+    let result = await sdk.programIndicators({
       storeId,
       customerNameLinkId,
       periodId,
     });
+
+    if (result?.programIndicators.__typename === 'ProgramIndicatorConnector') {
+      return result.programIndicators;
+    }
   },
   updateIndicatorValue: async (patch: IndicatorValueFragment) => {
     let result = await sdk.updateIndicatorValue({ storeId, input: patch });
