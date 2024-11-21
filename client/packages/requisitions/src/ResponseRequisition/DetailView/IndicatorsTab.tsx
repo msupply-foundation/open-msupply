@@ -11,6 +11,7 @@ import { ProgramIndicatorFragment, ResponseFragment } from '../api';
 
 interface IndicatorTabProps {
   onClick: (
+    programIndicator: ProgramIndicatorFragment | undefined,
     indicatorLine: IndicatorLineRowNode | undefined,
     response: ResponseFragment | undefined
   ) => void;
@@ -43,7 +44,11 @@ export const IndicatorsTab = ({
         label={t('button.regimen')}
         Icon={<PlusCircleIcon />}
         onClick={() =>
-          onClick(regimenIndicators?.[0]?.lineAndColumns[0]?.line, response)
+          onClick(
+            regimenIndicators?.[0],
+            regimenIndicators?.[0]?.lineAndColumns[0]?.line,
+            response
+          )
         }
       />
       <ButtonWithIcon
@@ -51,7 +56,11 @@ export const IndicatorsTab = ({
         label={t('button.hiv')}
         Icon={<PlusCircleIcon />}
         onClick={() =>
-          onClick(hivIndicators?.[0]?.lineAndColumns[0]?.line, response)
+          onClick(
+            hivIndicators?.[0],
+            hivIndicators?.[0]?.lineAndColumns[0]?.line,
+            response
+          )
         }
       />
     </Box>

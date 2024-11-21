@@ -5,6 +5,7 @@ import {
   DialogButton,
   RouteBuilder,
   useNavigate,
+  useParams,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { IndicatorLineRowFragment } from '../../api';
@@ -25,6 +26,7 @@ export const Footer: FC<FooterProps> = ({
   requisitionNumber,
 }) => {
   const navigate = useNavigate();
+  const { programIndicatorCode } = useParams();
 
   return (
     <AppFooterPortal
@@ -52,6 +54,7 @@ export const Footer: FC<FooterProps> = ({
                     .addPart(AppRoute.CustomerRequisition)
                     .addPart(String(requisitionNumber))
                     .addPart('indicator')
+                    .addPart(String(programIndicatorCode))
                     .addPart(String(previous?.id))
                     .build()
                 )
@@ -66,6 +69,7 @@ export const Footer: FC<FooterProps> = ({
                     .addPart(AppRoute.CustomerRequisition)
                     .addPart(String(requisitionNumber))
                     .addPart('indicator')
+                    .addPart(String(programIndicatorCode))
                     .addPart(String(next?.id))
                     .build()
                 )

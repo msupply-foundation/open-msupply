@@ -1,7 +1,16 @@
 import React from 'react';
 import { Footer } from './Footer';
-import { Box } from '@openmsupply-client/common';
-import { IndicatorLineRowFragment, ProgramIndicatorFragment } from '../../api';
+import {
+  BasicTextInput,
+  Box,
+  IndicatorValueTypeNode,
+  InputWithLabelRow,
+  NumericTextInput,
+} from '@openmsupply-client/common';
+import {
+  IndicatorLineRowFragment,
+  IndicatorLineWithColumnsFragment,
+} from '../../api';
 
 interface IndicatorLineEditProps {
   requisitionNumber: number;
@@ -10,7 +19,7 @@ interface IndicatorLineEditProps {
   next: IndicatorLineRowFragment | null;
   hasPrevious: boolean;
   previous: IndicatorLineRowFragment | null;
-  indicators?: ProgramIndicatorFragment[];
+  currentLine: IndicatorLineWithColumnsFragment | null | undefined;
 }
 
 export const IndicatorLineEdit = ({
@@ -19,10 +28,47 @@ export const IndicatorLineEdit = ({
   next,
   hasPrevious,
   previous,
+  currentLine,
 }: IndicatorLineEditProps) => {
+  const columns = currentLine?.columns.sort(
+    (a, b) => a.columnNumber - b.columnNumber
+  );
+
   return (
     <>
-      <Box>hi</Box>
+      <Box display="flex" flexDirection="column">
+        {columns?.map(c => {
+          const valueType = c.valueType || currentLine?.line.valueType;
+          console.log(c.valueType, currentLine?.line.valueType);
+
+          const inputComponent =
+            valueType === IndicatorValueTypeNode.Number ? (
+              <NumericTextInput
+                width={500}
+                value={Number(c.value)}
+                // onChange={value => update({ availableStockOnHand: value })}
+                // onBlur={save}
+                autoFocus
+              />
+            ) : (
+              <BasicTextInput
+                value={Number(c.value)}
+                // onChange={value => update({ availableStockOnHand: value })}
+                // onBlur={save}
+                autoFocus
+              />
+            );
+
+          return (
+            <InputWithLabelRow
+              Input={inputComponent}
+              labelWidth={'500px'}
+              label={c.name}
+              sx={{ marginBottom: 1 }}
+            />
+          );
+        })}
+      </Box>
       <Box>
         <Footer
           hasNext={hasNext}

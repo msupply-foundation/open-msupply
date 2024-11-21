@@ -12,7 +12,7 @@ import { PageLayout } from '../PageLayout';
 import { ListIndicatorLines } from './ListIndicators';
 import { AppRoute } from '@openmsupply-client/config';
 import { AppBarButtons } from '../ResponseLineEdit/AppBarButtons';
-import { usePreviousNextIndicatorValue } from './hooks';
+import { usePreviousNextIndicatorLine } from './hooks';
 import { IndicatorLineEdit } from './IndicatorLineEdit';
 
 export const IndicatorEditPage = () => {
@@ -24,19 +24,28 @@ export const IndicatorEditPage = () => {
       response?.otherPartyId ?? '',
       response?.period?.id ?? ''
     );
-  const indicators = programIndicators?.nodes;
+  const { programIndicatorCode } = useParams();
 
+  const indicators = programIndicators?.nodes.filter(
+    indicator => indicator?.code === programIndicatorCode
+  );
   const linesAndColumns =
     indicators?.flatMap(indicator => indicator.lineAndColumns) ?? [];
   const lines = linesAndColumns.map(l => l.line);
+  const currentLineAndColumns = linesAndColumns.find(
+    l => l.line.id == programIndicatorLineId
+  );
   const currentLine = lines.find(l => l.id === programIndicatorLineId);
-  const { hasNext, next, hasPrevious, previous } =
-    usePreviousNextIndicatorValue(lines, currentLine);
+  const sortedLines = lines.sort((a, b) => a.lineNumber - b.lineNumber);
+  const { hasNext, next, hasPrevious, previous } = usePreviousNextIndicatorLine(
+    sortedLines,
+    currentLine
+  );
 
   useEffect(() => {
     setCustomBreadcrumbs({
       2: 'Indicators',
-      3: currentLine?.code || '',
+      4: currentLine?.code || '',
     });
   }, [programIndicatorLineId]);
 
@@ -56,22 +65,24 @@ export const IndicatorEditPage = () => {
             <>
               <ListIndicatorLines
                 currentIndicatorLineId={programIndicatorLineId ?? ''}
-                lines={lines}
+                lines={sortedLines}
                 route={RouteBuilder.create(AppRoute.Distribution)
                   .addPart(AppRoute.CustomerRequisition)
-                  .addPart(String(response?.requisitionNumber))}
+                  .addPart(String(response?.requisitionNumber))
+                  .addPart('indicator')
+                  .addPart(String(programIndicatorCode))}
               />
             </>
           }
           Right={
             <>
               <IndicatorLineEdit
+                currentLine={currentLineAndColumns}
                 hasNext={hasNext}
                 next={next}
                 hasPrevious={hasPrevious}
                 previous={previous}
                 requisitionNumber={response?.requisitionNumber}
-                indicators={indicators}
               />
             </>
           }

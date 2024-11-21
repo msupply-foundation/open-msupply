@@ -20,19 +20,18 @@ export const ListIndicatorLines = ({
 }: ListIndicatorLineProps) => {
   const navigate = useNavigate();
   const value = lines?.find(({ id }) => id === currentIndicatorLineId) ?? null;
-  const sortedLines = lines.sort((a, b) => a.lineNumber - b.lineNumber);
 
   return (
     <Tooltip title={value?.code}>
       <ListOptions
         currentId={value?.id}
         onClick={id => {
-          navigate(route.addPart('indicator').addPart(id).build(), {
+          navigate(route.addPart(id).build(), {
             replace: true,
           });
         }}
         options={
-          sortedLines?.map(({ id, code }) => ({
+          lines?.map(({ id, code }) => ({
             id,
             value: code,
           })) ?? []
