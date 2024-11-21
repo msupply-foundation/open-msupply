@@ -8,6 +8,7 @@ import { useUpdateResponse } from './useUpdateResponse';
 import { useDeleteResponses } from './useDeleteResponses';
 import { useDeleteSelectedResponseRequisitions } from './useDeleteSelectedResponseRequisitions';
 import { useIndicators } from './useIndicators';
+import { useUpdateIndicatorValue } from './useUpdateIndicatorValue';
 
 export const Document = {
   useResponse,
@@ -20,4 +21,5 @@ export const Document = {
   useInsertResponse,
   useInsertProgramResponse,
   useIndicators,
+  useUpdateIndicatorValue,
 };
