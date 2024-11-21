@@ -18,7 +18,7 @@ export interface ColdStorageTypeInputProps {
 }
 
 const getOptionLabel = (coldStorageType: ColdStorageTypeFragment) =>
-  `${coldStorageType.name} (${coldStorageType.minTemperature}°C - ${coldStorageType.maxTemperature}°C)`;
+  `${coldStorageType.name} (${coldStorageType.minTemperature}°C to ${coldStorageType.maxTemperature}°C)`;
 
 export const ColdStorageTypeInput = ({
   onChange,
