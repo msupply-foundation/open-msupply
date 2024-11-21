@@ -37,6 +37,8 @@ import { PatientTabValue } from '../PatientView/PatientView';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers';
 import Badge from '@mui/material/Badge';
 
+const LABEL_FLEX = '0 0 100px';
+
 type HighlightedDay = { datetime: Date; label?: string | null };
 type BadgePickersDayProps = {
   highlightedDays: HighlightedDay[];
@@ -253,14 +255,15 @@ export const CreateEncounterModal: FC = () => {
       width={700}
     >
       <React.Suspense fallback={<div />}>
-        <Stack alignItems="flex-start" gap={1} sx={{ paddingLeft: '20px' }}>
+        <Stack gap={1} sx={{ padding: '20px' }}>
           <InputWithLabelRow
+            labelProps={{ sx: { flex: LABEL_FLEX } }}
             label={t('label.encounter')}
             Input={
               <EncounterSearchInput
+                fullWidth
                 onChange={onChangeEncounter}
                 lastEncounterType={latestEncounter?.type}
-                width={250}
               />
             }
           />
@@ -271,6 +274,7 @@ export const CreateEncounterModal: FC = () => {
             form={
               <>
                 <InputWithLabelRow
+                  labelProps={{ sx: { flex: LABEL_FLEX } }}
                   label={t('label.visit-date')}
                   Input={
                     <DateTimePickerInput
@@ -280,7 +284,6 @@ export const CreateEncounterModal: FC = () => {
                         setStartDateTimeError(validationError as string)
                       }
                       error={startDateTimeError}
-                      width={250}
                       slots={{
                         day: BadgePickersDay as React.FC<PickersDayProps<Date>>,
                       }}
@@ -293,16 +296,18 @@ export const CreateEncounterModal: FC = () => {
                   }
                 />
                 <InputWithLabelRow
+                  labelProps={{ sx: { flex: LABEL_FLEX } }}
                   label={t('label.clinician')}
                   Input={
                     <ClinicianSearchInput
+                      fullWidth
                       onChange={setClinician}
                       clinicianValue={draft?.clinician}
-                      width={250}
                     />
                   }
                 />
                 <InputWithLabelRow
+                  labelProps={{ sx: { flex: LABEL_FLEX } }}
                   label={t('label.visit-notes')}
                   Input={
                     <TextArea
@@ -311,6 +316,7 @@ export const CreateEncounterModal: FC = () => {
                           backgroundColor: 'background.drawer',
                         },
                       }}
+                      fullWidth
                       value={draft?.notes?.[0]?.text ?? ''}
                       onChange={e => {
                         setNote([
