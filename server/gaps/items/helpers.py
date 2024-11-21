@@ -15,16 +15,18 @@ def cold_storage_type_id_lookup(storage_temp):
 
 
 def create_master_list():
-    print("INSERT INTO master_list (id, name, code, description, is_active) VALUES ('43491ce9-bc89-4ee5-988d-9dbb2856e398', 'gaps_items', 'gaps_items', 'All Items automatically create for Cold Chain Gap Analysis', true) ON CONFLICT DO NOTHING;")
-    print("INSERT INTO master_list_name_join (id, master_list_id, name_link_id) SELECT uuid_in(md5(random()::text || random()::text)::cstring), '43491ce9-bc89-4ee5-988d-9dbb2856e398', id FROM name_link WHERE id NOT IN (select name_link_id from master_list_name_join WHERE master_list_id = '43491ce9-bc89-4ee5-988d-9dbb2856e398');")
+    master_list_statement  = "INSERT INTO master_list (id, name, code, description, is_active) VALUES ('43491ce9-bc89-4ee5-988d-9dbb2856e398', 'gaps_items', 'gaps_items', 'All Items automatically create for Cold Chain Gap Analysis', true) ON CONFLICT DO NOTHING;\n";
+    master_list_join_statement = "INSERT INTO master_list_name_join (id, master_list_id, name_link_id) SELECT uuid_in(md5(random()::text || random()::text)::cstring), '43491ce9-bc89-4ee5-988d-9dbb2856e398', id FROM name_link WHERE id NOT IN (select name_link_id from master_list_name_join WHERE master_list_id = '43491ce9-bc89-4ee5-988d-9dbb2856e398');\n"
+    return master_list_statement + master_list_join_statement
 
 
 def get_or_generate_ids(lookup_hash, row):
     
     # item_variant_id
-    item_variant_lookup_id = row['PQSVaccineID']
-    if item_variant_lookup_id == '':
-        item_variant_lookup_id = "iv_" + row['VaccineTypeName'] + "_" + row['CommercialName'] + "_" + row['DosesCount']
+    item_variant_lookup_id = row['mSupply Row Id']
+    if item_variant_lookup_id == '' or item_variant_lookup_id == None:
+        print("missing mSupply Row Id for row", row)
+        exit(1)
     if item_variant_lookup_id not in lookup_hash:
         lookup_hash[item_variant_lookup_id] = str(uuid.uuid4())
         
@@ -32,7 +34,7 @@ def get_or_generate_ids(lookup_hash, row):
 
 
     # item_id 
-    item_code = row['VaccineTypeName']
+    item_code = row['mSupply item code']
     if item_code not in lookup_hash:
         lookup_hash[item_code] = str(uuid.uuid4())
 
