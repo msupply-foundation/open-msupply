@@ -35,6 +35,7 @@ pub struct ReportFilter {
 pub enum ReportSortField {
     Id,
     Name,
+    Version,
 }
 
 pub type ReportSort = Sort<ReportSortField>;
@@ -115,6 +116,9 @@ impl<'a> ReportRepository<'a> {
                 }
                 ReportSortField::Name => {
                     apply_sort_no_case!(query, sort, report_dsl::name);
+                }
+                ReportSortField::Version => {
+                    apply_sort_no_case!(query, sort, report_dsl::version);
                 }
             }
         }
