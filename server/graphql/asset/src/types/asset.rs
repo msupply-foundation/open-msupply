@@ -28,7 +28,7 @@ use repository::{
     EqualFilter,
 };
 use repository::{DateFilter, StringFilter};
-use service::asset::parse::ScannedDataParseError as ServiceScannedDataParseError;
+use service::asset::parse::AssetFromGs1Error as ServiceScannedDataParseError;
 use service::{usize_to_u32, ListResult};
 
 use super::{AssetLogNode, AssetLogStatusInput, EqualFilterStatusInput};

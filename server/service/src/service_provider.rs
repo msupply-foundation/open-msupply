@@ -40,11 +40,14 @@ use crate::{
         patient::{PatientService, PatientServiceTrait},
         program_enrolment::{ProgramEnrolmentService, ProgramEnrolmentServiceTrait},
         program_event::{ProgramEventService, ProgramEventServiceTrait},
-        program_indicator::{ProgramIndicatorService, ProgramIndicatorServiceTrait},
     },
     repack::{RepackService, RepackServiceTrait},
     report::report_service::{ReportService, ReportServiceTrait},
-    requisition::{RequisitionService, RequisitionServiceTrait},
+    requisition::{
+        indicator_value::{IndicatorValueService, IndicatorValueServiceTrait},
+        program_indicator::{ProgramIndicatorService, ProgramIndicatorServiceTrait},
+        RequisitionService, RequisitionServiceTrait,
+    },
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
     rnr_form::{RnRFormService, RnRFormServiceTrait},
     sensor::{SensorService, SensorServiceTrait},
@@ -115,7 +118,7 @@ pub struct ServiceProvider {
     pub program_event_service: Box<dyn ProgramEventServiceTrait>,
     pub contact_trace_service: Box<dyn ContactTraceServiceTrait>,
     pub program_indicator_service: Box<dyn ProgramIndicatorServiceTrait>,
-
+    pub indicator_value_service: Box<dyn IndicatorValueServiceTrait>,
     // Settings
     pub settings: Box<dyn SettingsServiceTrait>,
     // App Data Service
@@ -213,6 +216,7 @@ impl ServiceProvider {
             patient_service: Box::new(PatientService {}),
             program_enrolment_service: Box::new(ProgramEnrolmentService {}),
             program_indicator_service: Box::new(ProgramIndicatorService {}),
+            indicator_value_service: Box::new(IndicatorValueService {}),
             program_event_service: Box::new(ProgramEventService {}),
             encounter_service: Box::new(EncounterService {}),
             contact_trace_service: Box::new(ContactTraceService {}),

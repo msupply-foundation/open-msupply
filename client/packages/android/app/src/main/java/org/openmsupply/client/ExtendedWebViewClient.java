@@ -11,6 +11,9 @@ import com.getcapacitor.PluginHandle;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.ArrayList;
+
+
 
 public class ExtendedWebViewClient extends BridgeWebViewClient {
     Bridge bridge;
@@ -18,9 +21,14 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
 
     public ExtendedWebViewClient(Bridge bridge) {
         super(bridge);
-
         this.bridge = bridge;
-        this.jsInject = this.generatePluginScript();
+    }
+
+    public void loadJsInject() {
+        if(this.jsInject == null) {
+            Logger.debug("Generating JS");
+            this.jsInject = this.generatePluginScript();
+        }
     }
 
     // Have to manually inject Capacitor JS, this typically happens in
@@ -31,9 +39,16 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
     public void onPageStarted(WebView webView, String url, Bitmap favicon) {
         if (url.startsWith("data:text")) return;
 
+        // Just incase the js hasn't been generated yet, generate it here.
+        this.loadJsInject();
+
         if(this.jsInject != null) {
+            Logger.debug("injecting JS");
             // .post to run on UI thread
             webView.post(() -> webView.evaluateJavascript(this.jsInject, null));
+        } else {
+            Logger.error("JS not generated, not injecting");
+            webView.post(() -> webView.evaluateJavascript("alert('Error unable to load javascript to inject. Please contact mSupply Support for assistance.')", null));
         }
     }
 
@@ -41,16 +56,18 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
         // TODO make sure this is only injected for pages in native bundle
         // There is no way to get the full list of plugins from bridge, use 'debug' and
         // see what plugins to add
-        List<PluginHandle> pluginList = Arrays.asList(
-                bridge.getPlugin("NativeApi"),
-                bridge.getPlugin("Keyboard"),
-                bridge.getPlugin("WebView"),
-                bridge.getPlugin("BarcodeScanner"),
-                bridge.getPlugin("Preferences"),
-                bridge.getPlugin("KeepAwake"),
-                bridge.getPlugin("App"),
-                bridge.getPlugin("Printer")
-        );
+
+        // This function needs to run after plugins are registered, so can't be part of the constructor as order doesn't appear to be consistent.
+        List<String> pluginNames =  Arrays.asList("NativeApi","Keyboard", "WebView","BarcodeScanner","Preferences", "KeepAwake", "App", "Printer");
+        List<PluginHandle> pluginList = new ArrayList<>();
+        for (String pluginName : pluginNames) {
+            PluginHandle plugin = bridge.getPlugin(pluginName);
+            if (plugin == null) {
+                Logger.error("Couldn't find plugin : " + pluginName);
+                return null;
+            }
+            pluginList.add(plugin);
+        }
 
         try {
             // From Bridge.getJSInjector()
