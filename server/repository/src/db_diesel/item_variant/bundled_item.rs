@@ -10,6 +10,7 @@ pub struct BundledItemFilter {
     pub id: Option<EqualFilter<String>>,
     pub principal_item_variant_id: Option<EqualFilter<String>>,
     pub bundled_item_variant_id: Option<EqualFilter<String>>,
+    pub principal_or_bundled_variant_id: Option<String>,
 }
 
 impl BundledItemFilter {
@@ -27,6 +28,10 @@ impl BundledItemFilter {
     }
     pub fn bundled_item_variant_id(mut self, filter: EqualFilter<String>) -> Self {
         self.bundled_item_variant_id = Some(filter);
+        self
+    }
+    pub fn principal_or_bundled_variant_id(mut self, id: String) -> Self {
+        self.principal_or_bundled_variant_id = Some(id);
         self
     }
 }
@@ -75,7 +80,7 @@ impl<'a> BundledItemRepository<'a> {
 
         // Debug diesel query
         // println!(
-        //    "{}",
+        //     "{}",
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
@@ -89,6 +94,7 @@ type BoxedBundledItemQuery = IntoBoxed<'static, bundled_item::table, DBType>;
 
 fn create_filtered_query(filter: Option<BundledItemFilter>) -> BoxedBundledItemQuery {
     let mut query = bundled_item::table.into_boxed();
+
     // Exclude any deleted items
     query = query.filter(bundled_item::deleted_datetime.is_null());
 
@@ -97,7 +103,16 @@ fn create_filtered_query(filter: Option<BundledItemFilter>) -> BoxedBundledItemQ
             id,
             principal_item_variant_id,
             bundled_item_variant_id,
+            principal_or_bundled_variant_id,
         } = f;
+
+        if let Some(record_id) = principal_or_bundled_variant_id {
+            query = query.filter(
+                bundled_item::principal_item_variant_id
+                    .eq(record_id.clone())
+                    .or(bundled_item::bundled_item_variant_id.eq(record_id)),
+            );
+        }
 
         apply_equal_filter!(query, id, bundled_item::id);
         apply_equal_filter!(
@@ -111,6 +126,7 @@ fn create_filtered_query(filter: Option<BundledItemFilter>) -> BoxedBundledItemQ
             bundled_item::bundled_item_variant_id
         );
     }
+
     query
 }
 
@@ -182,6 +198,13 @@ mod tests {
                 BundledItemFilter::new()
                     .principal_item_variant_id(EqualFilter::equal_to(&principal_id)),
             )
+            .unwrap()
+            .unwrap();
+        assert_eq!(bundled_item_row.id, id);
+
+        // Query by principal or bundled variant id
+        let bundled_item_row = BundledItemRepository::new(&storage_connection)
+            .query_one(BundledItemFilter::new().principal_or_bundled_variant_id(principal_id))
             .unwrap()
             .unwrap();
         assert_eq!(bundled_item_row.id, id);
