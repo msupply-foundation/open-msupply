@@ -257,7 +257,7 @@ export const CreateEncounterModal: FC = () => {
       <React.Suspense fallback={<div />}>
         <Stack gap={1} sx={{ padding: '20px' }}>
           <InputWithLabelRow
-            labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+            labelProps={{ sx: { flex: LABEL_FLEX } }}
             label={t('label.encounter')}
             Input={
               <EncounterSearchInput
@@ -274,7 +274,7 @@ export const CreateEncounterModal: FC = () => {
             form={
               <>
                 <InputWithLabelRow
-                  labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+                  labelProps={{ sx: { flex: LABEL_FLEX } }}
                   label={t('label.visit-date')}
                   Input={
                     <DateTimePickerInput
@@ -296,7 +296,7 @@ export const CreateEncounterModal: FC = () => {
                   }
                 />
                 <InputWithLabelRow
-                  labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+                  labelProps={{ sx: { flex: LABEL_FLEX } }}
                   label={t('label.clinician')}
                   Input={
                     <ClinicianSearchInput
@@ -307,7 +307,7 @@ export const CreateEncounterModal: FC = () => {
                   }
                 />
                 <InputWithLabelRow
-                  labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+                  labelProps={{ sx: { flex: LABEL_FLEX } }}
                   label={t('label.visit-notes')}
                   Input={
                     <TextArea
