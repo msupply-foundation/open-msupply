@@ -72,6 +72,12 @@ impl StandardReports {
             .collect();
 
         for report in reports_to_upsert {
+            if existing_reports.keys().any(|(code, version, is_custom)| {
+                code == &report.code && version >= &report.version && is_custom == &report.is_custom
+            }) {
+                break;
+            };
+
             num_std_reports += 1;
             let existing_report = ReportRowRepository::new(con)
                 .find_one_by_code_and_version(&report.code, &report.version)?;
