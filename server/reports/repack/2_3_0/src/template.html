@@ -1,0 +1,54 @@
+<style>
+    {% include "style.css" %}
+</style>
+
+<table class="header_item_details">
+    <tr>
+        <td class="header_section_field_right">Item code: {{ data.repack.from.stockLine.item.code }}</td>
+    </tr>
+
+    <tr>
+        <td class="header_section_field_right">Item name: {{ data.repack.from.stockLine.item.name }}</td>
+    </tr>
+</table>
+<hr>
+
+<body>
+    <table class="body_section" cellpadding="2" cellspacing="0">
+        <tr class="body_column_header">
+            <th class="body_header" colspan="4">Original</th>
+            <th class="arrow" rowspan="1">→</th>
+            <th class="body_header" colspan="4">New</th>
+        </tr>
+        <tr class="body_column_label">
+            <th class="location" style="width: 80px;">Location</th>
+            <th class="pack" style="width: 50px;">Pack</th>
+            <th class="batch" style="width: 50px;">Batch</th>
+            <th class="quantity" style="width: 50px;">Quantity</th>
+            <th></th>
+            <th class="location" style="width: 80px;">Location</th>
+            <th class="pack" style="width: 50px;">Pack</th>
+            <th class="batch" style="width: 50px;">Batch</th>
+            <th class="quantity" style="width: 50px;">Quantity</th>
+        </tr>
+        <tr class="body_value">
+            <td class="location"> 
+                {% if data.repack.from.location %}
+                    {{ data.repack.from.location.name }}
+                {% endif %}
+            </td>
+            <td class="pack">{{ data.repack.from.packSize }}</td>
+            <td class="batch">{{ data.repack.batch }}</td>
+            <td class="original_quantity">{{ data.repack.from.numberOfPacks }}</td>
+            <th></th>
+            <td class="location">
+                {% if data.repack.to.location %}
+                {{ data.repack.to.location.name }}
+                {% endif %}
+            </td>
+            <td class="pack">{{ data.repack.to.packSize }}</td>
+            <td class="batch">{{ data.repack.batch }}</td>
+            <td class="quantity">{{ data.repack.to.numberOfPacks }}</td>
+        </tr>
+    </table>
+</body>
