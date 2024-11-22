@@ -213,19 +213,18 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to create requisition');
   },
-  update: async (
-    patch: Partial<ResponseFragment> & { id: string }
-  ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
+  update: async (patch: Partial<ResponseFragment> & { id: string }) => {
     const input = responseParser.toUpdate(patch);
     const result = (await sdk.updateResponse({ storeId, input })) || {};
 
-    const { updateResponseRequisition } = result;
+    // const { updateResponseRequisition } = result;
 
-    if (updateResponseRequisition?.__typename === 'RequisitionNode') {
-      return updateResponseRequisition;
-    }
+    // if (updateResponseRequisition?.__typename === 'RequisitionNode') {
+    //   return updateResponseRequisition;
+    // }
 
-    throw new Error('Unable to update requisition');
+    // throw new Error('Unable to update requisition');
+    return result.updateResponseRequisition;
   },
   deleteResponses: async (requisitions: ResponseFragment[]) => {
     const deleteResponseRequisitions = requisitions.map(

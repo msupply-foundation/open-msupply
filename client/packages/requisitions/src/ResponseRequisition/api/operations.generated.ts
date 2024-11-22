@@ -6,10 +6,20 @@ import { ItemRowFragmentDoc } from '../../../../system/src/Item/api/operations.g
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type ReasonNotProvidedErrorFragment = {
-  __typename: 'ReasonNotProvided';
+export type RequisitionReasonNotProvidedErrorFragment = {
+  __typename: 'RequisitionReasonNotProvided';
   description: string;
-  errors: Array<{ __typename: 'RequisitionLineNode'; id: string }>;
+  requisitionLine: { __typename: 'RequisitionLineNode'; id: string };
+};
+
+export type RequisitionReasonsNotProvidedErrorFragment = {
+  __typename: 'RequisitionReasonsNotProvided';
+  description: string;
+  errors: Array<{
+    __typename: 'RequisitionReasonNotProvided';
+    description: string;
+    requisitionLine: { __typename: 'RequisitionLineNode'; id: string };
+  }>;
 };
 
 export type UpdateResponseMutationVariables = Types.Exact<{
@@ -25,12 +35,19 @@ export type UpdateResponseMutation = {
         __typename: 'UpdateResponseRequisitionError';
         error:
           | { __typename: 'CannotEditRequisition'; description: string }
+          | { __typename: 'RecordNotFound'; description: string }
           | {
-              __typename: 'ReasonNotProvided';
+              __typename: 'RequisitionReasonsNotProvided';
               description: string;
-              errors: Array<{ __typename: 'RequisitionLineNode'; id: string }>;
-            }
-          | { __typename: 'RecordNotFound'; description: string };
+              errors: Array<{
+                __typename: 'RequisitionReasonNotProvided';
+                description: string;
+                requisitionLine: {
+                  __typename: 'RequisitionLineNode';
+                  id: string;
+                };
+              }>;
+            };
       };
 };
 
@@ -665,14 +682,24 @@ export type CustomerProgramSettingsQuery = {
   }>;
 };
 
-export const ReasonNotProvidedErrorFragmentDoc = gql`
-  fragment ReasonNotProvidedError on ReasonNotProvided {
+export const RequisitionReasonNotProvidedErrorFragmentDoc = gql`
+  fragment RequisitionReasonNotProvidedError on RequisitionReasonNotProvided {
     __typename
-    errors {
+    requisitionLine {
       id
     }
     description
   }
+`;
+export const RequisitionReasonsNotProvidedErrorFragmentDoc = gql`
+  fragment RequisitionReasonsNotProvidedError on RequisitionReasonsNotProvided {
+    __typename
+    errors {
+      ...RequisitionReasonNotProvidedError
+    }
+    description
+  }
+  ${RequisitionReasonNotProvidedErrorFragmentDoc}
 `;
 export const ResponseLineFragmentDoc = gql`
   fragment ResponseLine on RequisitionLineNode {
@@ -859,14 +886,14 @@ export const UpdateResponseDocument = gql`
         __typename
         error {
           description
-          ... on ReasonNotProvided {
-            ...ReasonNotProvidedError
+          ... on RequisitionReasonsNotProvided {
+            ...RequisitionReasonsNotProvidedError
           }
         }
       }
     }
   }
-  ${ReasonNotProvidedErrorFragmentDoc}
+  ${RequisitionReasonsNotProvidedErrorFragmentDoc}
 `;
 export const DeleteRequestDocument = gql`
   mutation deleteRequest(

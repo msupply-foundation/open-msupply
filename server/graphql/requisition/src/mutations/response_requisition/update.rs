@@ -2,11 +2,10 @@ use async_graphql::*;
 
 use graphql_core::{
     simple_generic_errors::{CannotEditRequisition, RecordNotFound},
-    standard_graphql_error::validate_auth,
-    standard_graphql_error::StandardGraphqlError,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{RequisitionLineNode, RequisitionNode};
+use graphql_types::{generic_errors::RequisitionReasonNotProvided, types::RequisitionNode};
 use repository::RequisitionLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -31,19 +30,19 @@ pub enum UpdateResponseRequisitionStatusInput {
     Finalised,
 }
 
-pub struct ReasonNotProvided(pub Vec<RequisitionLine>);
+pub struct RequisitionReasonsNotProvided(pub Vec<RequisitionLine>);
 
 #[Object]
-impl ReasonNotProvided {
+impl RequisitionReasonsNotProvided {
     pub async fn description(&self) -> &str {
         "Reasons not provided for requisition lines when requested differs from suggested."
     }
 
-    pub async fn errors(&self) -> Vec<RequisitionLineNode> {
+    pub async fn errors(&self) -> Vec<RequisitionReasonNotProvided> {
         self.0
             .clone()
             .into_iter()
-            .map(|line| RequisitionLineNode::from_domain(line))
+            .map(|line| RequisitionReasonNotProvided::from_domain(line))
             .collect()
     }
 }
@@ -54,7 +53,7 @@ impl ReasonNotProvided {
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
     CannotEditRequisition(CannotEditRequisition),
-    ReasonNotProvided(ReasonNotProvided),
+    RequisitionReasonsNotProvided(RequisitionReasonsNotProvided),
 }
 
 #[derive(SimpleObject)]
@@ -129,10 +128,10 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 CannotEditRequisition {},
             ))
         }
-        ServiceError::ReasonNotProvided(lines) => {
-            return Ok(UpdateErrorInterface::ReasonNotProvided(ReasonNotProvided(
-                lines,
-            )))
+        ServiceError::ReasonsNotProvided(lines) => {
+            return Ok(UpdateErrorInterface::RequisitionReasonsNotProvided(
+                RequisitionReasonsNotProvided(lines),
+            ))
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),

@@ -8,6 +8,7 @@ import {
   ReasonOptionNode,
   ReasonOptionNodeType,
 } from '@openmsupply-client/common';
+import { reasonOptions } from '../api';
 
 interface ReasonOptionsSearchInputProps {
   value?: ReasonOptionNode | null;
@@ -18,8 +19,6 @@ interface ReasonOptionsSearchInputProps {
   isError?: boolean;
   isDisabled?: boolean;
   onBlur?: () => void;
-  reasonNodes: ReasonOptionNode[] | undefined;
-  reasonsLoading: boolean;
 }
 
 export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
@@ -31,8 +30,6 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
   isError,
   isDisabled,
   onBlur,
-  reasonNodes,
-  reasonsLoading,
 }) => {
   const reasonFilter = (reason: ReasonOptionNode) => {
     switch (type) {
@@ -48,7 +45,9 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
         return false;
     }
   };
-  const reasons = (reasonNodes ?? []).filter(reasonFilter);
+  const { data, isLoading } = reasonOptions.document.listAllActive();
+
+  const reasons = (data?.nodes ?? []).filter(reasonFilter);
 
   const isRequired = reasons.length !== 0;
 
@@ -67,7 +66,7 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
               }
             : null
         }
-        loading={reasonsLoading}
+        loading={isLoading}
         onChange={(_, reason) => {
           onChange(reason);
         }}

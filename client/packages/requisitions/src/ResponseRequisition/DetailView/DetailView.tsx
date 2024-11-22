@@ -26,6 +26,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
 import { useResponse, ResponseLineFragment } from '../api';
+import { ResponseRequisitionLineErrorProvider } from '../context';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
@@ -68,53 +69,55 @@ export const DetailView: FC = () => {
   ];
 
   return !!data ? (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore<ResponseLineFragment>({
-        initialSortBy: { key: 'itemName' },
-      })}
-    >
-      <AppBarButtons
-        isDisabled={isDisabled}
-        hasLinkedRequisition={!!data.linkedRequisition}
-        isProgram={!!data.programName}
-        onAddItem={() => onOpen(null)}
-      />
-      <Toolbar />
-      <DetailTabs tabs={tabs} />
+    <ResponseRequisitionLineErrorProvider>
+      <TableProvider
+        createStore={createTableStore}
+        queryParamsStore={createQueryParamsStore<ResponseLineFragment>({
+          initialSortBy: { key: 'itemName' },
+        })}
+      >
+        <AppBarButtons
+          isDisabled={isDisabled}
+          hasLinkedRequisition={!!data.linkedRequisition}
+          isProgram={!!data.programName}
+          onAddItem={() => onOpen(null)}
+        />
+        <Toolbar />
+        <DetailTabs tabs={tabs} />
 
-      <Footer />
-      <SidePanel />
-      {isOpen && (
-        <BasicModal open={isOpen} onClose={onClose} height={500} width={800}>
-          <Box padding={2}>
-            <StockItemSearchInput
-              onChange={(newItem: ItemRowFragment | null) => {
-                if (newItem) {
-                  mutateAsync({
-                    id: FnUtils.generateUUID(),
-                    requisitionId: data.id,
-                    itemId: newItem.id,
-                  });
-                  navigate(
-                    RouteBuilder.create(AppRoute.Distribution)
-                      .addPart(AppRoute.CustomerRequisition)
-                      .addPart(String(data.requisitionNumber))
-                      .addPart(String(newItem.id))
-                      .build(),
-                    { replace: true }
-                  );
+        <Footer />
+        <SidePanel />
+        {isOpen && (
+          <BasicModal open={isOpen} onClose={onClose} height={500} width={800}>
+            <Box padding={2}>
+              <StockItemSearchInput
+                onChange={(newItem: ItemRowFragment | null) => {
+                  if (newItem) {
+                    mutateAsync({
+                      id: FnUtils.generateUUID(),
+                      requisitionId: data.id,
+                      itemId: newItem.id,
+                    });
+                    navigate(
+                      RouteBuilder.create(AppRoute.Distribution)
+                        .addPart(AppRoute.CustomerRequisition)
+                        .addPart(String(data.requisitionNumber))
+                        .addPart(String(newItem.id))
+                        .build(),
+                      { replace: true }
+                    );
+                  }
+                }}
+                openOnFocus={true}
+                extraFilter={item =>
+                  !data.lines.nodes.some(line => line.item.id === item.id)
                 }
-              }}
-              openOnFocus={true}
-              extraFilter={item =>
-                !data.lines.nodes.some(line => line.item.id === item.id)
-              }
-            />
-          </Box>
-        </BasicModal>
-      )}
-    </TableProvider>
+              />
+            </Box>
+          </BasicModal>
+        )}
+      </TableProvider>
+    </ResponseRequisitionLineErrorProvider>
   ) : (
     <AlertModal
       open={true}

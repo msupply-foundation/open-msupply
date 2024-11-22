@@ -1,7 +1,15 @@
-fragment ReasonNotProvidedError on ReasonNotProvided {
+fragment RequisitionReasonNotProvidedError on RequisitionReasonNotProvided {
+  __typename
+  requisitionLine {
+    id
+  }
+  description
+}
+
+fragment RequisitionReasonsNotProvidedError on RequisitionReasonsNotProvided {
   __typename
   errors {
-    id
+    ...RequisitionReasonNotProvidedError
   }
   description
 }
@@ -19,8 +27,8 @@ mutation updateResponse(
       __typename
       error {
         description
-        ... on ReasonNotProvided {
-          ...ReasonNotProvidedError
+        ... on RequisitionReasonsNotProvided {
+          ...RequisitionReasonsNotProvidedError
         }
       }
     }

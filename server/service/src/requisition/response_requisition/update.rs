@@ -36,7 +36,7 @@ pub enum UpdateResponseRequisitionError {
     NotAResponseRequisition,
     UpdatedRequisitionDoesNotExist,
     DatabaseError(RepositoryError),
-    ReasonNotProvided(Vec<RequisitionLine>),
+    ReasonsNotProvided(Vec<RequisitionLine>),
 }
 
 type OutError = UpdateResponseRequisitionError;
@@ -116,7 +116,7 @@ pub fn validate(
         }
 
         if !lines_missing_reason.is_empty() {
-            return Err(OutError::ReasonNotProvided(lines_missing_reason));
+            return Err(OutError::ReasonsNotProvided(lines_missing_reason));
         }
     }
 
