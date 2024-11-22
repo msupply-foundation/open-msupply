@@ -25,7 +25,9 @@ import {
   getLocationInputColumn,
   InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
+  ItemVariantInputCell,
   PackSizeEntryCell,
+  useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
 import {
   useStocktakeLineErrorContext,
@@ -160,6 +162,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
 }) => {
   const t = useTranslation();
   const theme = useTheme();
+  const itemVariantsEnabled = useIsItemVariantsEnabled();
   useDisableStocktakeRows(batches);
 
   const errorsContext = useStocktakeLineErrorContext();
@@ -215,6 +218,18 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
     ],
     getInventoryAdjustmentReasonInputColumn(update, errorsContext),
   ]);
+
+  if (itemVariantsEnabled) {
+    columns.push({
+      key: 'itemVariantId',
+      label: 'label.item-variant',
+      width: 170,
+      Cell: props => (
+        <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+      ),
+      setter: patch => update({ ...patch }),
+    });
+  }
 
   return (
     <DataTable

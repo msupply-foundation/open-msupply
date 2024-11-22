@@ -17,6 +17,7 @@ pub fn generate(
         sell_price_per_pack,
         note,
         inventory_adjustment_reason_id,
+        item_variant_id,
     }: UpdateStocktakeLine,
 ) -> Result<StocktakeLineRow, UpdateStocktakeLineError> {
     let existing_line = existing.line;
@@ -43,5 +44,6 @@ pub fn generate(
         note: note.or(existing_line.note),
         inventory_adjustment_reason_id: inventory_adjustment_reason_id
             .or(existing_line.inventory_adjustment_reason_id),
+        item_variant_id: item_variant_id.or(existing_line.item_variant_id),
     })
 }
