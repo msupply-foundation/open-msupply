@@ -32,7 +32,6 @@ pub enum UpdateStocktakeStatusInput {
 }
 
 pub struct SnapshotCountCurrentCountMismatch(pub Vec<StocktakeLine>);
-
 #[Object]
 impl SnapshotCountCurrentCountMismatch {
     pub async fn description(&self) -> &str {

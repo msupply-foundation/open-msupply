@@ -88,7 +88,6 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
     );
 
   const mapStructuredErrors = (result: Awaited<ReturnType<typeof save>>) => {
-    console.log('result', result);
     if (result.__typename === 'RequisitionNode') {
       return undefined;
     }

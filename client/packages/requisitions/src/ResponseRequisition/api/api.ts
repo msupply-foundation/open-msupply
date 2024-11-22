@@ -217,13 +217,6 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     const input = responseParser.toUpdate(patch);
     const result = (await sdk.updateResponse({ storeId, input })) || {};
 
-    // const { updateResponseRequisition } = result;
-
-    // if (updateResponseRequisition?.__typename === 'RequisitionNode') {
-    //   return updateResponseRequisition;
-    // }
-
-    // throw new Error('Unable to update requisition');
     return result.updateResponseRequisition;
   },
   deleteResponses: async (requisitions: ResponseFragment[]) => {
