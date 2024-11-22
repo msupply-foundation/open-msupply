@@ -3680,7 +3680,6 @@ export type ItemVariantNode = {
   bundlesWith: Array<BundledItemNode>;
   coldStorageType?: Maybe<ColdStorageTypeNode>;
   coldStorageTypeId?: Maybe<Scalars['String']['output']>;
-  dosesPerUnit?: Maybe<Scalars['Int']['output']>;
   id: Scalars['String']['output'];
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
@@ -5516,6 +5515,12 @@ export type ProgramsResponse = ProgramConnector;
 
 export type PropertyNode = {
   __typename: 'PropertyNode';
+  /**
+   * If `valueType` is `String`, this field can contain a comma-separated
+   * list of allowed values, essentially defining an enum.
+   * If `valueType` is Integer or Float, this field will include the
+   * word `negative` if negative values are allowed.
+   */
   allowedValues?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   key: Scalars['String']['output'];
@@ -8617,7 +8622,6 @@ export type UpsertItemVariantErrorInterface = {
 
 export type UpsertItemVariantInput = {
   coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
-  dosesPerUnit?: InputMaybe<Scalars['Int']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   manufacturerId?: InputMaybe<Scalars['String']['input']>;

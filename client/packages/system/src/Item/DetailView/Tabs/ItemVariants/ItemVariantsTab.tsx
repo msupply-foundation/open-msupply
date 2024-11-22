@@ -135,20 +135,6 @@ const ItemVariant = ({
               />
             }
           />
-
-          <InputWithLabelRow
-            label={t('label.doses-per-unit')}
-            labelWidth="200"
-            Input={
-              <Box width="100%">
-                <NumericTextInput
-                  value={variant.dosesPerUnit ?? undefined}
-                  disabled
-                  style={{ justifyContent: 'flex-start' }}
-                />
-              </Box>
-            }
-          />
         </Box>
         <Box flex={1}>
           <Typography fontWeight="bold">{t('title.packaging')}</Typography>
