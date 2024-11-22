@@ -5516,6 +5516,12 @@ export type ProgramsResponse = ProgramConnector;
 
 export type PropertyNode = {
   __typename: 'PropertyNode';
+  /**
+   * If `valueType` is `String`, this field can contain a comma-separated
+   * list of allowed values, essentially defining an enum.
+   * If `valueType` is Integer or Float, this field will include the
+   * word `negative` if negative values are allowed.
+   */
   allowedValues?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   key: Scalars['String']['output'];
@@ -6512,8 +6518,10 @@ export enum ReportContext {
 }
 
 export type ReportFilterInput = {
+  code?: InputMaybe<EqualFilterStringInput>;
   context?: InputMaybe<EqualFilterReportContextInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isCustom?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
   subContext?: InputMaybe<EqualFilterStringInput>;
 };
@@ -6521,6 +6529,7 @@ export type ReportFilterInput = {
 export type ReportNode = {
   __typename: 'ReportNode';
   argumentSchema?: Maybe<FormSchemaNode>;
+  code: Scalars['String']['output'];
   context: ReportContext;
   id: Scalars['String']['output'];
   isCustom: Scalars['Boolean']['output'];

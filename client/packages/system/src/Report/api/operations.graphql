@@ -4,6 +4,7 @@ fragment ReportRow on ReportNode {
   name
   subContext
   isCustom
+  code
   argumentSchema {
     id
     type
