@@ -541,6 +541,7 @@ mutation updateIndicatorValue(
   $input: UpdateIndicatorValueInput!
 ) {
   updateIndicatorValue(input: $input, storeId: $storeId) {
+    __typename
     ... on IndicatorValueNode {
       id
       value
@@ -550,6 +551,10 @@ mutation updateIndicatorValue(
       error {
         description
         ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on ValueTypeNotCorrect {
           __typename
           description
         }
