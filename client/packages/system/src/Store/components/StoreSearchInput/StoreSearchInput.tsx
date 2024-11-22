@@ -1,12 +1,15 @@
 import React from 'react';
 import { StoreRowFragment, useStore } from '../../api';
 import {
-  Autocomplete,
+  AutocompleteWithPagination,
   createQueryParamsStore,
   QueryParamsProvider,
   RegexUtils,
+  usePagination,
 } from '@openmsupply-client/common';
 import { StoreOptionRender } from './StoreOptionRenderer';
+
+const DEBOUNCE_TIMEOUT = 300;
 
 type StoreSearchInputProps = {
   clearable?: boolean;
@@ -34,16 +37,19 @@ const StoreSearchComponent = ({
   fullWidth = false,
   isDisabled = false,
   value,
-  onInputChange,
   onChange,
 }: StoreSearchInputProps) => {
-  const { data, isLoading } = useStore.document.list();
+  const { pagination, onPageChange } = usePagination();
+
+  const { data, isLoading } = useStore.document.list(
+    pagination.first,
+    pagination.offset
+  );
 
   return (
-    <Autocomplete
+    <AutocompleteWithPagination
       width={fullWidth ? '100%' : undefined}
       sx={fullWidth ? { width: '100%' } : undefined}
-      onInputChange={onInputChange}
       filterOptions={filterByNameAndCode}
       clearable={clearable}
       loading={isLoading}
@@ -54,6 +60,9 @@ const StoreSearchComponent = ({
       onChange={(_, value) => value && onChange(value)}
       value={value ? { label: value.storeName, ...value } : null}
       isOptionEqualToValue={(option, value) => option.id === value.id}
+      pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
+      paginationDebounce={DEBOUNCE_TIMEOUT}
+      onPageChange={onPageChange}
     />
   );
 };
