@@ -10,7 +10,7 @@ import {
 } from '@common/components';
 import { ReportArgumentsModal } from './ReportArgumentsModal';
 import { JsonData } from '@openmsupply-client/programs';
-import { ReportListParams, useReportList } from '../api/hooks';
+import { ReportListParams, useLatestReportList } from '../api/hooks';
 import { ReportRowFragment } from '../api';
 
 interface ReportSelectorProps {
@@ -48,7 +48,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   queryParams,
 }) => {
   const { hide, PaperClickPopover } = usePaperClickPopover();
-  const { data, isLoading } = useReportList({
+  const { data, isLoading } = useLatestReportList({
     context,
     subContext,
     queryParams,
