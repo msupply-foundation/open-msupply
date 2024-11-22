@@ -11,9 +11,9 @@ import {
 } from '@openmsupply-client/common';
 import { BarIcon, InvoiceIcon, TrendingDownIcon } from '@common/icons';
 import {
-  useReportList,
   ReportRowFragment,
   ReportArgumentsModal,
+  useLatestReportList,
 } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButton';
 import { SidePanel } from './SidePanel';
@@ -25,7 +25,7 @@ export const ListView = () => {
   const t = useTranslation();
   const { store } = useAuthContext();
   const navigate = useNavigate();
-  const { data, isLoading } = useReportList({
+  const { data, isLoading } = useLatestReportList({
     queryParams: {
       filterBy: {
         context: { equalAny: [ReportContext.Report, ReportContext.Dispensary] },
