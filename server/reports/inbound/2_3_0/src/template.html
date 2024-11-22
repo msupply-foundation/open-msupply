@@ -1,0 +1,88 @@
+<style>
+    {% include "style.css" %}
+</style>
+
+<table class="header_supplied_section">
+    <tr> 
+        <td class="header_section_field_left">Received from:</td> 
+        <td class="header_section_field_right">Status: {{data.invoice.status}}</td>
+    </tr> 
+
+    <tr> 
+        <td class="header_section_field_left">{{ data.invoice.otherPartyName }}</td> 
+        <td class="header_section_field_right">Their ref: {{ data.invoice.theirReference }}</td>
+    </tr>
+
+    <tr> 
+        <td class="header_section_field_left">{{ data.invoice.otherParty.address1 }}</td> 
+        <td class="header_section_field_right">Confirmed Date: {{ data.invoice.createdDatetime | date(format="%m/%d/%Y") }}</td>
+    </tr>
+
+</table>
+
+<table class="header_date_section">
+    <tr>
+        <td class="header_section_field_left"></td>
+        <td class="header_section_field_right">Printed date: {{ now() | date(format="%m/%d/%Y") }}</td>
+    </tr> 
+
+    <tr> 
+        <td class="header_section_field_left">Entered by: {{ data.invoice.user.username | default(value='') }}</td>
+        <td id= "date" class="header_section_field_right">Invoice type: {{ data.invoice.type }}</td>
+    </tr>
+
+    <tr> 
+        <td class="header_section_field_left">Created date: {{ data.invoice.createdDatetime | date(format="%m/%d/%Y") }}</td>
+        <td class="header_section_field_right">Shipped date: {{ data.invoice.createdDatetime | date(format="%m/%d/%Y") }}</td>
+    </tr> 
+</table>
+
+<body>
+    <table class="body_section" cellpadding="2" cellspacing="0">
+        <tr class="body_column_label">
+            <th class="line_number" style="width: 20px;">Line</th>
+            <th class="location_code" style="width: 80px;">Location</th>
+            <th class="item_name" style="width: 500px;">Item name</th>
+            <th class="quantity" style="width: 50px;">Quantity</th>
+            <th class="pack" style="width: 50px;">Pack</th>
+            <th class="batch" style="width: 50px;">Batch</th>
+            <th class="expiry" style="width: 80px;">Expiry</th>
+            <th class="sell_price" style="width: 50px;">Cost Price</th>
+            <th class="cost_price" style="width: 80px;">Sell Price</th>
+            <th class="total_extension" style="width: 50px;">Extension</th>
+        </tr>
+        {% for line in data.invoiceLines.nodes -%}
+        <tr class="body_value">
+            <td class="line_number" style="width: 20px;">{{ loop.index }}</td>
+            {% if line.location.code %}
+            <td class="location_code" style="width: 80px;">{{ line.location.code }}</td>
+            {% else %}
+            <td class="location_code" style="width: 80px;"></td>
+            {% endif %}
+            <td class="item_name" style="width: 350px;">{{ line.itemName }}</td>
+            <td class="quantity" style="width: 50px;">{{ line.numberOfPacks }}</td>
+            <td class="pack" style="width: 50px;">{{ line.packSize }}</td>
+            <td class="batch" style="width: 50px;">{{ line.batch }}</td>
+            <td class="expiry" style="width: 80px;">{{ line.expiryDate }}</td>
+            <td class="sell_price" style="width: 50px;">{{ line.costPricePerPack }}</td>
+            <td class="cost_price" style="width: 80px;">{{ line.sellPricePerPack   }}</td>
+            <td class="total_extension" style="width: 50px;">{{ line.numberOfPacks * line.costPricePerPack }}</td>
+        </tr>
+        {%- endfor %}
+    </table>
+</body>
+
+<table class="body_total_section" cellpadding="2" cellspacing="0">
+    <tr class="body_total_column_label">
+        <th class="line_number" style="width: 20px;"></th>
+        <th class="location_code" style="width: 80px;"></th>
+        <th class="item_name" style="width: 350px;"></th>
+        <th class="quantity" style="width: 50px;"></th>
+        <th class="pack" style="width: 50px;"></th>
+        <th class="batch" style="width: 50px;"></th>
+        <th class="expiry" style="width: 80px;"></th>
+        <th class="sell_price" style="width: 50px;"></th>
+        <th class="cost_price" style="width: 80px;">Total:</th>
+        <th class="total_extension" style="width: 50px;">{{ data.invoice.pricing.totalAfterTax }}</th>
+    </tr>
+</table>
