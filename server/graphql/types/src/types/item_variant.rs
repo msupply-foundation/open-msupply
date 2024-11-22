@@ -30,10 +30,6 @@ impl ItemVariantNode {
         &self.item_variant.name
     }
 
-    pub async fn doses_per_unit(&self) -> &Option<i32> {
-        &self.item_variant.doses_per_unit
-    }
-
     pub async fn item_id(&self) -> &String {
         &self.item.id
     }
