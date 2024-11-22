@@ -6287,12 +6287,6 @@ export type QueriesVaccineCoursesArgs = {
   sort?: InputMaybe<Array<VaccineCourseSortInput>>;
 };
 
-export type ReasonNotProvided = UpdateResponseRequisitionErrorInterface & {
-  __typename: 'ReasonNotProvided';
-  description: Scalars['String']['output'];
-  errors: Array<RequisitionLineNode>;
-};
-
 export type ReasonOptionConnector = {
   __typename: 'ReasonOptionConnector';
   nodes: Array<ReasonOptionNode>;
@@ -6681,6 +6675,18 @@ export enum RequisitionNodeType {
   /** Supplying store requisition in response to request requisition */
   Response = 'RESPONSE'
 }
+
+export type RequisitionReasonNotProvided = {
+  __typename: 'RequisitionReasonNotProvided';
+  description: Scalars['String']['output'];
+  requisitionLine: RequisitionLineNode;
+};
+
+export type RequisitionReasonsNotProvided = UpdateResponseRequisitionErrorInterface & {
+  __typename: 'RequisitionReasonsNotProvided';
+  description: Scalars['String']['output'];
+  errors: Array<RequisitionReasonNotProvided>;
+};
 
 export type RequisitionResponse = RecordNotFound | RequisitionNode;
 
