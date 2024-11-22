@@ -102,16 +102,6 @@ fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
-    // if let Some(requested_quantity) = input.requested_quantity {
-    //     if requested_quantity != requisition_line_row.suggested_quantity
-    //         && input.option_id.is_none()
-    //         && requisition_line_row.option_id.is_none()
-    //         && requisition_row.program_id.is_some()
-    //     {
-    //         return Err(OutError::ReasonNotProvided);
-    //     }
-    // }
-
     Ok((requisition_row, requisition_line_row))
 }
 
@@ -262,19 +252,6 @@ mod test {
             ),
             Err(ServiceError::CannotEditRequisition)
         );
-
-        // ReasonRequired when requested differs from suggested
-        // assert_eq!(
-        //     service.update_response_requisition_line(
-        //         &context,
-        //         UpdateResponseRequisitionLine {
-        //             id: mock_new_response_program_requisition().lines[1].id.clone(),
-        //             requested_quantity: Some(19.0),
-        //             ..Default::default()
-        //         },
-        //     ),
-        //     Err(ServiceError::ReasonNotProvided())
-        // );
     }
 
     #[actix_rt::test]

@@ -167,10 +167,10 @@ mod test_update {
     use chrono::Utc;
     use repository::{
         mock::{
-            mock_finalised_response_requisition, mock_new_response_requisition,
-            mock_new_response_requisition_for_update_test, mock_response_program_requisition,
-            mock_sent_request_requisition, mock_store_a, mock_store_b, mock_user_account_b,
-            MockDataInserts,
+            mock_finalised_response_requisition, mock_new_response_program_requisition,
+            mock_new_response_requisition, mock_new_response_requisition_for_update_test,
+            mock_response_program_requisition, mock_sent_request_requisition, mock_store_a,
+            mock_store_b, mock_user_account_b, MockDataInserts,
         },
         requisition_row::{RequisitionRow, RequisitionStatus},
         test_db::setup_all,
@@ -269,6 +269,23 @@ mod test_update {
             ),
             Err(ServiceError::CannotEditRequisition)
         );
+
+        // ReasonRequired when requested differs from suggested
+        if let Err(ServiceError::ReasonsNotProvided(errors)) = service.update_response_requisition(
+            &context,
+            UpdateResponseRequisition {
+                id: mock_new_response_program_requisition()
+                    .requisition
+                    .id
+                    .clone(),
+                status: Some(UpdateResponseRequisitionStatus::Finalised),
+                ..Default::default()
+            },
+        ) {
+            assert_eq!(errors.len(), 1);
+        } else {
+            panic!("Expected ReasonsNotProvided error");
+        }
     }
 
     #[actix_rt::test]
