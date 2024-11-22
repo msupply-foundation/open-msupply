@@ -25,6 +25,7 @@ pub struct StandardReports;
 impl StandardReports {
     // Load embedded reports
     pub fn load_reports(con: &StorageConnection) -> Result<(), anyhow::Error> {
+        info!("upserting standard reports...");
         for file in EmbeddedStandardReports::iter() {
             if let Some(content) = EmbeddedStandardReports::get(&file) {
                 let json_data = content.data;

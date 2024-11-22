@@ -45,7 +45,7 @@
         "paddingRight": 25
       }
     },
-      {
+    {
       "type": "Control",
       "scope": "#/properties/monthsItemsExpire",
       "label": "Expiring item period",
@@ -53,6 +53,26 @@
         "inputAlignment": "end",
         "paddingRight": 25
       }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/sort",
+      "label": "Sort by:",
+      "options": {
+        "show": [
+          ["item.name", "item"],
+          ["item.code", "code"],
+          ["expiryDate", "expiry date"],
+          ["daysUntilExpired", "days until expired"],
+          ["stockAtRisk", "stock at risk"],
+          ["expectedUsage", "expected usage"]
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/dir",
+      "label": "Sort direction"
     }
   ]
 }

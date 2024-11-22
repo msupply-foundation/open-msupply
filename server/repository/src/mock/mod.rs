@@ -17,6 +17,7 @@ mod full_invoice;
 mod full_master_list;
 mod indicator_column;
 mod indicator_line;
+mod indicator_value;
 mod invoice;
 mod invoice_line;
 mod item;
@@ -81,6 +82,7 @@ pub use full_invoice::*;
 pub use full_master_list::*;
 pub use indicator_column::*;
 pub use indicator_line::*;
+pub use indicator_value::*;
 pub use invoice::*;
 pub use invoice_line::*;
 pub use item::*;
@@ -143,22 +145,23 @@ use crate::{
     ContextRowRepository, CurrencyRow, DemographicRow, Document, DocumentRegistryRow,
     DocumentRegistryRowRepository, DocumentRepository, EncounterRow, EncounterRowRepository,
     FormSchema, FormSchemaRowRepository, IndicatorColumnRow, IndicatorColumnRowRepository,
-    IndicatorLineRow, IndicatorLineRowRepository, InventoryAdjustmentReasonRow,
-    InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    ItemLinkRowRepository, ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow,
-    LocationRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
-    MasterListRowRepository, NameLinkRow, NameLinkRowRepository, NameTagJoinRepository,
-    NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow, NumberRowRepository, PeriodRow,
-    PeriodRowRepository, PeriodScheduleRow, PeriodScheduleRowRepository, PluginDataRow,
-    PluginDataRowRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
-    ProgramIndicatorRow, ProgramIndicatorRowRepository, ProgramRequisitionOrderTypeRow,
-    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
-    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, PropertyRow,
-    PropertyRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, ReturnReasonRow, ReturnReasonRowRepository, RnRFormLineRow,
-    RnRFormLineRowRepository, RnRFormRow, RnRFormRowRepository, SensorRow, SensorRowRepository,
-    StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow,
-    SyncBufferRowRepository, SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow,
+    IndicatorLineRow, IndicatorLineRowRepository, IndicatorValueRow, IndicatorValueRowRepository,
+    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository, InvoiceLineRow,
+    InvoiceLineRowRepository, InvoiceRow, ItemLinkRowRepository, ItemRow, KeyValueStoreRepository,
+    KeyValueStoreRow, LocationRow, LocationRowRepository, MasterListNameJoinRepository,
+    MasterListNameJoinRow, MasterListRow, MasterListRowRepository, NameLinkRow,
+    NameLinkRowRepository, NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository,
+    NumberRow, NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
+    PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository, ProgramEnrolmentRow,
+    ProgramEnrolmentRowRepository, ProgramIndicatorRow, ProgramIndicatorRowRepository,
+    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
+    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
+    ProgramRowRepository, PropertyRow, PropertyRowRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, ReturnReasonRow,
+    ReturnReasonRowRepository, RnRFormLineRow, RnRFormLineRowRepository, RnRFormRow,
+    RnRFormRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
+    SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow,
     TemperatureBreachConfigRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
     TemperatureLogRow, TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository,
     UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
@@ -240,6 +243,7 @@ pub struct MockData {
     pub program_indicators: Vec<ProgramIndicatorRow>,
     pub indicator_lines: Vec<IndicatorLineRow>,
     pub indicator_columns: Vec<IndicatorColumnRow>,
+    pub indicator_values: Vec<IndicatorValueRow>,
     pub options: Vec<ReasonOptionRow>,
 }
 
@@ -320,6 +324,7 @@ pub struct MockDataInserts {
     pub program_indicators: bool,
     pub indicator_lines: bool,
     pub indicator_columns: bool,
+    pub indicator_values: bool,
     pub options: bool,
 }
 
@@ -389,6 +394,7 @@ impl MockDataInserts {
             program_indicators: true,
             indicator_lines: true,
             indicator_columns: true,
+            indicator_values: true,
             options: true,
         }
     }
@@ -699,6 +705,16 @@ impl MockDataInserts {
         self
     }
 
+    pub fn program_indicators(mut self) -> Self {
+        self.program_indicators = true;
+        self
+    }
+
+    pub fn indicator_values(mut self) -> Self {
+        self.indicator_values = true;
+        self
+    }
+
     pub fn options(mut self) -> Self {
         self.options = true;
         self
@@ -792,6 +808,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             program_indicators: mock_program_indicators(),
             indicator_lines: mock_indicator_lines(),
             indicator_columns: mock_indicator_columns(),
+            indicator_values: mock_indicator_values(),
             options: mock_options(),
             ..Default::default()
         },
@@ -1298,6 +1315,12 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.indicator_values {
+            let repo = IndicatorValueRowRepository::new(connection);
+            for row in &mock_data.indicator_values {
+                repo.upsert_one(row).unwrap();
+            }
+        }
 
         if inserts.options {
             let repo = ReasonOptionRowRepository::new(connection);
@@ -1377,6 +1400,7 @@ impl MockData {
             mut program_indicators,
             mut indicator_lines,
             mut indicator_columns,
+            mut indicator_values,
             mut options,
         } = other;
 
@@ -1446,6 +1470,7 @@ impl MockData {
         self.program_indicators.append(&mut program_indicators);
         self.indicator_lines.append(&mut indicator_lines);
         self.indicator_columns.append(&mut indicator_columns);
+        self.indicator_values.append(&mut indicator_values);
         self.options.append(&mut options);
         self
     }
