@@ -29,9 +29,9 @@ export const useFetchAssetById = () => {
   });
 };
 
-export const useFetchAssetByScannerString = () => {
+export const useFetchAssetByGS1 = () => {
   const api = useAssetApi();
-  return useMutation(api.get.byScannerString, {
+  return useMutation(api.get.byGs1Elements, {
     onError: () => {},
   });
 };

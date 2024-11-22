@@ -36,6 +36,8 @@ use response_requisition::{
 };
 
 pub mod common;
+pub mod indicator_value;
+pub mod program_indicator;
 pub mod program_settings;
 pub mod query;
 pub mod request_requisition;
