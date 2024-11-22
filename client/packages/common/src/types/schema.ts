@@ -8917,6 +8917,11 @@ export type VaccineCourseSortInput = {
 
 export type VaccineCoursesResponse = VaccineCourseConnector;
 
+export type ValueTypeNotCorrect = UpdateIndicatorValueErrorInterface & {
+  __typename: 'ValueTypeNotCorrect';
+  description: Scalars['String']['output'];
+};
+
 export enum VenCategoryType {
   E = 'E',
   N = 'N',

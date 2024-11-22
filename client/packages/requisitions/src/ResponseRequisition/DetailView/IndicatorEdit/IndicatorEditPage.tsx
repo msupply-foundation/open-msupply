@@ -22,12 +22,14 @@ export const IndicatorEditPage = () => {
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useResponse.document.indicators(
       response?.otherPartyId ?? '',
-      response?.period?.id ?? ''
+      response?.period?.id ?? '',
+      !!response
     );
 
   const indicators = programIndicators?.nodes.filter(
     indicator => indicator?.code === programIndicatorCode
   );
+
   const linesAndColumns =
     indicators?.flatMap(indicator => indicator.lineAndColumns) ?? [];
   const currentLineAndColumns = linesAndColumns.find(

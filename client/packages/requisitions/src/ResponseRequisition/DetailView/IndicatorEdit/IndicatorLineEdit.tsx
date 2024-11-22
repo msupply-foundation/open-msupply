@@ -6,10 +6,13 @@ import {
   IndicatorValueTypeNode,
   InputWithLabelRow,
   NumericTextInput,
+  useNotification,
+  useTranslation,
 } from '@openmsupply-client/common';
 import {
   IndicatorLineRowFragment,
   IndicatorLineWithColumnsFragment,
+  useResponse,
 } from '../../api';
 
 interface IndicatorLineEditProps {
@@ -36,10 +39,24 @@ export const IndicatorLineEdit = ({
   const columns = currentLine?.columns.sort(
     (a, b) => a.columnNumber - b.columnNumber
   );
+  const t = useTranslation();
+  const { mutateAsync } = useResponse.document.updateIndicatorValue();
+  const { error } = useNotification();
+  const errorHandler = (res: any) => {
+    // probably shouldn't be any, but UpdateIndicatorValueResponse doesn't have res.error.__typename
+    if (res.__typename === 'UpdateIndicatorValueError') {
+      if (res.error.__typename === 'RecordNotFound') {
+        error(t('messages.record-not-found'))();
+      } else {
+        error(t('error.value-type-not-correct'))();
+      }
+    }
+  };
 
   const inputWithLabel = (
+    id: string,
     label: string,
-    value: string | number,
+    value: string,
     valueType?: IndicatorValueTypeNode | null
   ) => {
     const inputComponent =
@@ -47,16 +64,18 @@ export const IndicatorLineEdit = ({
         <NumericTextInput
           width={INPUT_WIDTH}
           value={Number(value)}
-          // onChange={value => update({ availableStockOnHand: value })}
-          // onBlur={save}
+          onChange={v => {
+            mutateAsync({ id, value: String(v) }).then(errorHandler);
+          }}
           autoFocus
         />
       ) : (
         <BasicTextInput
           sx={{ width: '200px' }}
           value={value}
-          // onChange={value => update({ availableStockOnHand: value })}
-          // onBlur={save}
+          onChange={e => {
+            mutateAsync({ id, value: e.target.value }).then(errorHandler);
+          }}
           autoFocus
         />
       );
@@ -75,7 +94,12 @@ export const IndicatorLineEdit = ({
     <>
       <Box display="flex" flexDirection="column">
         {columns?.map(c => {
-          return inputWithLabel(c.name, c.value?.value ?? '', c.valueType);
+          return inputWithLabel(
+            c.value?.id ?? '',
+            c.name,
+            c.value?.value ?? '',
+            c.valueType
+          );
         })}
       </Box>
       <Box>

@@ -9,9 +9,9 @@ import {
   UpdateResponseRequisitionLineInput,
   InsertProgramResponseRequisitionInput,
   InsertResponseRequisitionLineInput,
+  UpdateIndicatorValueInput,
 } from '@openmsupply-client/common';
 import {
-  IndicatorValueFragment,
   ResponseFragment,
   ResponseLineFragment,
   ResponseRowFragment,
@@ -330,10 +330,10 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
       return result.programIndicators;
     }
   },
-  updateIndicatorValue: async (patch: IndicatorValueFragment) => {
+  updateIndicatorValue: async (patch: UpdateIndicatorValueInput) => {
     let result = await sdk.updateIndicatorValue({ storeId, input: patch });
-
-    if (result?.updateIndicatorValue.__typename === 'IndicatorValueNode') {
+    
+    if (!!result?.updateIndicatorValue) {
       return result.updateIndicatorValue;
     }
 

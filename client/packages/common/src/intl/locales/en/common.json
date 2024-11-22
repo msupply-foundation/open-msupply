@@ -380,6 +380,7 @@
   "error.v6-server-not-configured": "V6 central server not configured",
   "error.v6-server-not-configured-hint": "Check the central server URL",
   "error.vaccine-course-update-failed": "Vaccine course failed to save",
+  "error.value-type-not-correct": "Value type not correct",
   "facilities": "Facilities",
   "filename.asset-categories": "asset-categories",
   "filename.asset-import-example": "Example Asset Item Import",

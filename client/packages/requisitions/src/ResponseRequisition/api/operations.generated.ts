@@ -144,7 +144,7 @@ export type UpdateIndicatorValueMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateIndicatorValueMutation = { __typename: 'Mutations', updateIndicatorValue: { __typename: 'IndicatorValueNode', id: string, value: string } | { __typename: 'UpdateIndicatorValueError', error: { __typename: 'RecordNotFound', description: string } } };
+export type UpdateIndicatorValueMutation = { __typename: 'Mutations', updateIndicatorValue: { __typename: 'IndicatorValueNode', id: string, value: string } | { __typename: 'UpdateIndicatorValueError', error: { __typename: 'RecordNotFound', description: string } | { __typename: 'ValueTypeNotCorrect', description: string } } };
 
 export const ResponseLineFragmentDoc = gql`
     fragment ResponseLine on RequisitionLineNode {
@@ -680,6 +680,7 @@ export const ProgramIndicatorsDocument = gql`
 export const UpdateIndicatorValueDocument = gql`
     mutation updateIndicatorValue($storeId: String!, $input: UpdateIndicatorValueInput!) {
   updateIndicatorValue(input: $input, storeId: $storeId) {
+    __typename
     ... on IndicatorValueNode {
       id
       value
@@ -689,6 +690,10 @@ export const UpdateIndicatorValueDocument = gql`
       error {
         description
         ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on ValueTypeNotCorrect {
           __typename
           description
         }

@@ -99,7 +99,7 @@ export const DetailView: FC = () => {
     },
   ];
 
-  if (data?.programName) {
+  if (data?.programName && !!data?.otherParty.store) {
     tabs.push({
       Component: (
         <IndicatorsTab
