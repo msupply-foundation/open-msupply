@@ -114,6 +114,10 @@ impl ReportNode {
             .clone()
             .map(|schema| FormSchemaNode { schema })
     }
+
+    pub async fn code(&self) -> &str {
+        &self.row.report_row.code
+    }
 }
 
 pub fn report(ctx: &Context<'_>, store_id: String, id: String) -> Result<ReportResponse> {
