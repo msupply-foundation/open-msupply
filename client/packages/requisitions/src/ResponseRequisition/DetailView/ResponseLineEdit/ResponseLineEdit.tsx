@@ -52,7 +52,6 @@ export const ResponseLineEdit = ({
   const { isOn: ourStats, toggle: toggleOurStats } = useToggle();
   const { isOn: theirStats, toggle: toggleTheirStats } = useToggle();
   const { data } = useResponse.line.stats(draft?.id);
-
   const [ourStatsAnchorEl, setOurStatsAnchorEl] =
     React.useState<null | HTMLElement>(null);
   const [theirStatsAnchorEl, setTheirStatsAnchorEl] =

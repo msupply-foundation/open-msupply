@@ -31,6 +31,8 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
   isDisabled,
   onBlur,
 }) => {
+  const { data, isLoading } = reasonOptions.document.listAllActive();
+
   const reasonFilter = (reason: ReasonOptionNode) => {
     switch (type) {
       case ReasonOptionNodeType.PositiveInventoryAdjustment:
@@ -45,8 +47,6 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
         return false;
     }
   };
-  const { data, isLoading } = reasonOptions.document.listAllActive();
-
   const reasons = (data?.nodes ?? []).filter(reasonFilter);
 
   const isRequired = reasons.length !== 0;

@@ -493,12 +493,12 @@ pub fn mock_new_response_program_requisition() -> FullMockRequisition {
                 r.id = line1_id;
                 r.requisition_id = requisition_id.clone();
                 r.item_link_id = mock_item_a().id;
-                r.requested_quantity = 10.0;
+                r.requested_quantity = 9.0;
                 r.suggested_quantity = 10.0;
                 r.supply_quantity = 100.0;
                 r.available_stock_on_hand = 1.0;
                 r.average_monthly_consumption = 1.0;
-                r.option_id = Some(mock_option().id);
+                r.option_id = None;
             }),
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line2_id;
