@@ -1,14 +1,13 @@
 {
   "is_custom": false,
   "version": "2.3.0",
-  "code": "repack",
+  "code": "stock-take-variance",
   "context": "STOCKTAKE",
   "sub_context": "picklist",
-  "name": "repack",
+  "name": "stock-take-variance",
   "queries": {
     "gql": "StockVarianceQuery.graphql"
   },
   "arguments": {},
-  "header": "header.html",
-  "footer": "footer.html"
+  "header": "header.html"
 }
