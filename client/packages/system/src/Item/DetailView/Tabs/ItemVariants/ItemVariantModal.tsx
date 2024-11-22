@@ -4,7 +4,6 @@ import {
   BasicTextInput,
   DialogButton,
   InputWithLabelRow,
-  NumericTextInput,
   Typography,
   Box,
   useTranslation,
