@@ -30,7 +30,7 @@ pub struct ReportFilter {
     pub context: Option<EqualFilter<ContextType>>,
     pub sub_context: Option<EqualFilter<String>>,
     pub code: Option<EqualFilter<String>>,
-    pub is_custom: Option<EqualFilter<bool>>,
+    pub is_custom: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -64,6 +64,16 @@ impl ReportFilter {
 
     pub fn context(mut self, filter: EqualFilter<ContextType>) -> Self {
         self.context = Some(filter);
+        self
+    }
+
+    pub fn code(mut self, filter: EqualFilter<String>) -> Self {
+        self.code = Some(filter);
+        self
+    }
+
+    pub fn is_custom(mut self, value: bool) -> Self {
+        self.is_custom = Some(value);
         self
     }
 }
@@ -161,7 +171,9 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
         apply_equal_filter!(query, context, report_dsl::context);
         apply_equal_filter!(query, sub_context, report_dsl::sub_context);
         apply_equal_filter!(query, code, report_dsl::code);
-        apply_equal_filter!(query, is_custom, report_dsl::is_custom);
+        if let Some(is_custom) = is_custom {
+            query = query.filter(report_dsl::is_custom.eq(is_custom));
+        }
     }
 
     query

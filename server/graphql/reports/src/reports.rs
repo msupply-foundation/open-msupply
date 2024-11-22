@@ -60,6 +60,8 @@ pub struct ReportFilterInput {
     pub name: Option<StringFilterInput>,
     pub context: Option<EqualFilterReportContextInput>,
     pub sub_context: Option<EqualFilterStringInput>,
+    pub code: Option<EqualFilterStringInput>,
+    pub is_custom: Option<bool>,
 }
 
 #[derive(Union)]
@@ -178,6 +180,8 @@ impl ReportFilterInput {
                 .context
                 .map(|t| map_filter!(t, ReportContext::to_domain)),
             sub_context: self.sub_context.map(EqualFilter::from),
+            code: self.code.map(EqualFilter::from),
+            is_custom: self.is_custom,
         }
     }
 }
