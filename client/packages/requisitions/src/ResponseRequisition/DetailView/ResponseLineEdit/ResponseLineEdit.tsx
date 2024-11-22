@@ -238,6 +238,7 @@ export const ResponseLineEdit = ({
                   value={draft?.requestedQuantity}
                   onChange={value => update({ requestedQuantity: value })}
                   disabled={customRequestedDisabled}
+                  onBlur={save}
                 />
               }
               labelWidth={LABEL_WIDTH}
