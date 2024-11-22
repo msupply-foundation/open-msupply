@@ -7,7 +7,6 @@ import {
   FlatButton,
   InputWithLabelRow,
   NothingHere,
-  NumericTextInput,
   Typography,
 } from '@common/components';
 import {
