@@ -21,6 +21,7 @@ pub fn generate(
         sell_price_per_pack,
         note,
         inventory_adjustment_reason_id,
+        item_variant_id,
     }: InsertStocktakeLine,
 ) -> StocktakeLineRow {
     let snapshot_number_of_packs = if let Some(stock_line) = stock_line {
@@ -45,5 +46,6 @@ pub fn generate(
         sell_price_per_pack,
         note,
         inventory_adjustment_reason_id,
+        item_variant_id,
     }
 }

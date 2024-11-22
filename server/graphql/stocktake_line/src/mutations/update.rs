@@ -37,6 +37,7 @@ pub struct UpdateInput {
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
+    pub item_variant_id: Option<String>,
 }
 
 #[derive(Union)]
@@ -107,6 +108,7 @@ impl UpdateInput {
             sell_price_per_pack,
             note,
             inventory_adjustment_reason_id,
+            item_variant_id,
         } = self;
 
         ServiceInput {
@@ -124,6 +126,7 @@ impl UpdateInput {
             sell_price_per_pack,
             note,
             inventory_adjustment_reason_id,
+            item_variant_id,
         }
     }
 }
@@ -286,6 +289,7 @@ mod test {
                     sell_price_per_pack: Some(12.0),
                     note: Some("note".to_string()),
                     inventory_adjustment_reason_id: None,
+                    item_variant_id: None,
                 },
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),
