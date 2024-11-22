@@ -118,6 +118,10 @@ impl ReportNode {
     pub async fn code(&self) -> &str {
         &self.row.report_row.code
     }
+
+    pub async fn version(&self) -> &str {
+        &self.row.report_row.version
+    }
 }
 
 pub fn report(ctx: &Context<'_>, store_id: String, id: String) -> Result<ReportResponse> {
