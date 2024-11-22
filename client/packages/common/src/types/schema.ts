@@ -6287,9 +6287,10 @@ export type QueriesVaccineCoursesArgs = {
   sort?: InputMaybe<Array<VaccineCourseSortInput>>;
 };
 
-export type ReasonNotProvided = UpdateResponseRequisitionLineErrorInterface & {
+export type ReasonNotProvided = UpdateResponseRequisitionErrorInterface & {
   __typename: 'ReasonNotProvided';
   description: Scalars['String']['output'];
+  errors: Array<RequisitionLineNode>;
 };
 
 export type ReasonOptionConnector = {

@@ -1,8 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{
-        CannotEditRequisition, ForeignKey, ForeignKeyError, ReasonNotProvided, RecordNotFound,
-    },
+    simple_generic_errors::{CannotEditRequisition, ForeignKey, ForeignKeyError, RecordNotFound},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -42,7 +40,6 @@ pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
     RequisitionDoesNotExist(ForeignKeyError),
     CannotEditRequisition(CannotEditRequisition),
-    ReasonNotProvided(ReasonNotProvided),
 }
 
 #[derive(SimpleObject)]
@@ -139,11 +136,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::CannotEditRequisition => {
             return Ok(UpdateErrorInterface::CannotEditRequisition(
                 CannotEditRequisition {},
-            ))
-        }
-        ServiceError::ReasonNotProvided => {
-            return Ok(UpdateErrorInterface::ReasonNotProvided(
-                ReasonNotProvided {},
             ))
         }
         // Standard Graphql Errors
