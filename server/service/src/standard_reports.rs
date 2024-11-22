@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use repository::{
-    ContextType, FormSchemaJson, FormSchemaRowRepository, ReportRow, ReportRowRepository,
-    StorageConnection,
+    ContextType, FormSchemaJson, FormSchemaRowRepository, Pagination, ReportRepository, ReportRow,
+    ReportRowRepository, StorageConnection,
 };
 use rust_embed::RustEmbed;
 use thiserror::Error;
@@ -41,7 +43,35 @@ impl StandardReports {
         con: &StorageConnection,
     ) -> Result<(), anyhow::Error> {
         let mut num_std_reports = 0;
-        for report in reports_data.reports {
+
+        let existing_reports = ReportRepository::new(con)
+            .query(Pagination::all(), None, None)?
+            .into_iter()
+            .map(|report| {
+                (
+                    (
+                        report.report_row.code.clone(),
+                        report.report_row.version.clone(),
+                        report.report_row.is_custom,
+                    ),
+                    report,
+                )
+            })
+            .collect::<HashMap<_, _>>();
+
+        let reports_to_upsert: Vec<ReportData> = reports_data
+            .reports
+            .into_iter()
+            .filter(|report| {
+                !existing_reports.contains_key(&(
+                    report.code.clone(),
+                    report.version.clone(),
+                    report.is_custom,
+                ))
+            })
+            .collect();
+
+        for report in reports_to_upsert {
             num_std_reports += 1;
             let existing_report = ReportRowRepository::new(con)
                 .find_one_by_code_and_version(&report.code, &report.version)?;
