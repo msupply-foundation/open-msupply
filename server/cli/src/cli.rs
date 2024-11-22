@@ -649,17 +649,27 @@ fn run_yarn_install(directory: &str) -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    let status = Command::new("yarn")
-        .args(["install", "--cwd", &convert_dir, "--no-lockfile"])
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .status()?;
+    let node_modules_path = Path::new(&convert_dir).join("node_modules");
 
-    println!("status {:?}", status);
+    if !node_modules_path.exists() {
+        let status = Command::new("yarn")
+            .args([
+                "install",
+                "--cwd",
+                &convert_dir,
+                "--no-lockfile",
+                "--check-files",
+            ])
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .status()?;
 
-    if !status.success() {
-        eprintln!("Error: `yarn install` failed");
-        return Err("Failed to run yarn install".into());
+        if !status.success() {
+            println!("Error: `yarn install` failed");
+            return Err("Failed to run yarn install".into());
+        }
+    } else {
+        println!("Dependencies up to date");
     }
 
     Ok(())
