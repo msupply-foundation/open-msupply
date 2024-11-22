@@ -72,38 +72,35 @@ impl StandardReports {
             .collect();
 
         for report in reports_to_upsert {
-            if existing_reports.keys().any(|(code, version, is_custom)| {
+            if !existing_reports.keys().any(|(code, version, is_custom)| {
                 code == &report.code && version >= &report.version && is_custom == &report.is_custom
             }) {
-                break;
+                num_std_reports += 1;
+                let existing_report = ReportRowRepository::new(con)
+                    .find_one_by_code_and_version(&report.code, &report.version)?;
+
+                // Use the existing ID if already defined for that report
+                let id = existing_report.map_or_else(|| report.clone().id, |r| r.id.clone());
+
+                if let Some(form_schema_json) = &report.form_schema {
+                    // TODO: Look up existing json schema and use it's ID to be safe...
+                    FormSchemaRowRepository::new(con).upsert_one(form_schema_json)?;
+                }
+
+                ReportRowRepository::new(con).upsert_one(&ReportRow {
+                    id,
+                    name: report.name,
+                    r#type: repository::ReportType::OmSupply,
+                    template: serde_json::to_string_pretty(&report.template)?,
+                    context: report.context,
+                    sub_context: report.sub_context,
+                    argument_schema_id: report.argument_schema_id,
+                    comment: report.comment,
+                    is_custom: report.is_custom,
+                    version: report.version,
+                    code: report.code,
+                })?;
             };
-
-            num_std_reports += 1;
-            let existing_report = ReportRowRepository::new(con)
-                .find_one_by_code_and_version(&report.code, &report.version)?;
-
-            // Use the existing ID if already defined for that report
-            let id = existing_report.map_or_else(|| report.clone().id, |r| r.id.clone());
-            info!("Upserting Report {} v{}", report.code, report.version);
-
-            if let Some(form_schema_json) = &report.form_schema {
-                // TODO: Look up existing json schema and use it's ID to be safe...
-                FormSchemaRowRepository::new(con).upsert_one(form_schema_json)?;
-            }
-
-            ReportRowRepository::new(con).upsert_one(&ReportRow {
-                id,
-                name: report.name,
-                r#type: repository::ReportType::OmSupply,
-                template: serde_json::to_string_pretty(&report.template)?,
-                context: report.context,
-                sub_context: report.sub_context,
-                argument_schema_id: report.argument_schema_id,
-                comment: report.comment,
-                is_custom: report.is_custom,
-                version: report.version,
-                code: report.code,
-            })?;
         }
         info!("Upserted {} standard reports", num_std_reports);
         Ok(())
