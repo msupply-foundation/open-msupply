@@ -9,7 +9,8 @@ use crate::{
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ActivityLogType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
+    ActivityLogType, EqualFilter, RepositoryError, Requisition, RequisitionLine,
+    RequisitionLineFilter, RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 
@@ -35,6 +36,7 @@ pub enum UpdateResponseRequisitionError {
     NotAResponseRequisition,
     UpdatedRequisitionDoesNotExist,
     DatabaseError(RepositoryError),
+    ReasonNotProvided(Vec<RequisitionLine>),
 }
 
 type OutError = UpdateResponseRequisitionError;
@@ -95,6 +97,27 @@ pub fn validate(
 
     if requisition_row.status != RequisitionStatus::New {
         return Err(OutError::CannotEditRequisition);
+    }
+
+    let response_lines = RequisitionLineRepository::new(connection).query_by_filter(
+        RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&requisition_row.id)),
+    )?;
+
+    if requisition_row.program_id.is_some() {
+        let mut lines_missing_reason = Vec::new();
+
+        for line in response_lines {
+            if line.requisition_line_row.requested_quantity
+                != line.requisition_line_row.suggested_quantity
+                && line.requisition_line_row.option_id.is_none()
+            {
+                lines_missing_reason.push(line.clone())
+            }
+        }
+
+        if !lines_missing_reason.is_empty() {
+            return Err(OutError::ReasonNotProvided(lines_missing_reason));
+        }
     }
 
     let status_changed = input.status.is_some();

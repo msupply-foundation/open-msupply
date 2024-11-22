@@ -6,7 +6,8 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::RequisitionNode;
+use graphql_types::types::{RequisitionLineNode, RequisitionNode};
+use repository::RequisitionLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     requisition::response_requisition::{
@@ -30,12 +31,30 @@ pub enum UpdateResponseRequisitionStatusInput {
     Finalised,
 }
 
+pub struct ReasonNotProvided(pub Vec<RequisitionLine>);
+
+#[Object]
+impl ReasonNotProvided {
+    pub async fn description(&self) -> &str {
+        "Reasons not provided for requisition lines when requested differs from suggested."
+    }
+
+    pub async fn errors(&self) -> Vec<RequisitionLineNode> {
+        self.0
+            .clone()
+            .into_iter()
+            .map(|line| RequisitionLineNode::from_domain(line))
+            .collect()
+    }
+}
+
 #[derive(Interface)]
 #[graphql(name = "UpdateResponseRequisitionErrorInterface")]
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
     CannotEditRequisition(CannotEditRequisition),
+    ReasonNotProvided(ReasonNotProvided),
 }
 
 #[derive(SimpleObject)]
@@ -109,6 +128,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             return Ok(UpdateErrorInterface::CannotEditRequisition(
                 CannotEditRequisition {},
             ))
+        }
+        ServiceError::ReasonNotProvided(lines) => {
+            return Ok(UpdateErrorInterface::ReasonNotProvided(ReasonNotProvided(
+                lines,
+            )))
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),

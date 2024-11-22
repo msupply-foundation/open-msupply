@@ -6,6 +6,12 @@ import { ItemRowFragmentDoc } from '../../../../system/src/Item/api/operations.g
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
+export type ReasonNotProvidedErrorFragment = {
+  __typename: 'ReasonNotProvided';
+  description: string;
+  errors: Array<{ __typename: 'RequisitionLineNode'; id: string }>;
+};
+
 export type UpdateResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpdateResponseRequisitionInput;
@@ -15,7 +21,17 @@ export type UpdateResponseMutation = {
   __typename: 'Mutations';
   updateResponseRequisition:
     | { __typename: 'RequisitionNode'; id: string }
-    | { __typename: 'UpdateResponseRequisitionError' };
+    | {
+        __typename: 'UpdateResponseRequisitionError';
+        error:
+          | { __typename: 'CannotEditRequisition'; description: string }
+          | {
+              __typename: 'ReasonNotProvided';
+              description: string;
+              errors: Array<{ __typename: 'RequisitionLineNode'; id: string }>;
+            }
+          | { __typename: 'RecordNotFound'; description: string };
+      };
 };
 
 export type DeleteRequestMutationVariables = Types.Exact<{
@@ -482,7 +498,6 @@ export type UpdateResponseLineMutation = {
               description: string;
               key: Types.ForeignKey;
             }
-          | { __typename: 'ReasonNotProvided'; description: string }
           | { __typename: 'RecordNotFound'; description: string };
       };
 };
@@ -650,6 +665,15 @@ export type CustomerProgramSettingsQuery = {
   }>;
 };
 
+export const ReasonNotProvidedErrorFragmentDoc = gql`
+  fragment ReasonNotProvidedError on ReasonNotProvided {
+    __typename
+    errors {
+      id
+    }
+    description
+  }
+`;
 export const ResponseLineFragmentDoc = gql`
   fragment ResponseLine on RequisitionLineNode {
     id
@@ -831,8 +855,18 @@ export const UpdateResponseDocument = gql`
         __typename
         id
       }
+      ... on UpdateResponseRequisitionError {
+        __typename
+        error {
+          description
+          ... on ReasonNotProvided {
+            ...ReasonNotProvidedError
+          }
+        }
+      }
     }
   }
+  ${ReasonNotProvidedErrorFragmentDoc}
 `;
 export const DeleteRequestDocument = gql`
   mutation deleteRequest(
@@ -1004,10 +1038,6 @@ export const UpdateResponseLineDocument = gql`
             key
           }
           ... on RecordNotFound {
-            __typename
-            description
-          }
-          ... on ReasonNotProvided {
             __typename
             description
           }
