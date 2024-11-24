@@ -115,7 +115,6 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
     try {
       result = await save({ id, status: selectedOption.value });
       const errorMessage = mapStructuredErrors(result);
-      console.log('errorMessage', errorMessage);
 
       if (errorMessage) {
         error(errorMessage)();
