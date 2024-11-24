@@ -6,7 +6,7 @@ use repository::{
 };
 use rust_embed::RustEmbed;
 use thiserror::Error;
-use version_compare::{Cmp, Version};
+use version_compare::Version;
 
 use crate::report::definition::ReportDefinition;
 use log::info;
@@ -24,20 +24,6 @@ pub struct StandardReportsError;
 
 #[derive(Clone)]
 pub struct StandardReports;
-
-fn a_later_version(a: &str, b: &str) -> bool {
-    let a_version = Version::from(a).unwrap();
-    let b_version = Version::from(b).unwrap();
-
-    match a_version.compare(b_version) {
-        Cmp::Lt => false,
-        Cmp::Eq => false,
-        Cmp::Gt => true,
-        Cmp::Ne => false,
-        Cmp::Le => false,
-        Cmp::Ge => false,
-    }
-}
 
 impl StandardReports {
     // Load embedded reports
@@ -89,7 +75,7 @@ impl StandardReports {
         for report in reports_to_upsert {
             if !existing_reports.keys().any(|(code, version, is_custom)| {
                 code == &report.code
-                    && a_later_version(&version, &report.version)
+                    && (Version::from(&version).unwrap() >= Version::from(&report.version).unwrap())
                     && is_custom == &report.is_custom
             }) {
                 num_std_reports += 1;
