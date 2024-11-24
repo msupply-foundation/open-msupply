@@ -561,13 +561,10 @@ async fn main() -> anyhow::Result<()> {
                 json_path.unwrap_or(format!("{generated_dir}/standard_reports.json")),
             )
             .expect(&format!(
-                "{generated_dir}/standard_reports.json not found for report {:?} {:?}",
-                name, version_dir
+                "{generated_dir}/standard_reports.json not found for report",
             ));
-            let reports_data: ReportsData = serde_json::from_reader(json_file).expect(&format!(
-                "json incorrectly formatted for report {:?} {:?}",
-                name, version_dir
-            ));
+            let reports_data: ReportsData =
+                serde_json::from_reader(json_file).expect("json incorrectly formatted for report");
 
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
