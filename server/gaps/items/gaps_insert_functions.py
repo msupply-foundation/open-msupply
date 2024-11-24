@@ -92,7 +92,7 @@ def upsert_item_bundle_stmt(item_bundle_id, item_id, diluent_id):
 
 
 def insert_master_list_line(item_id):
-    return f"INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES (uuid_in(md5(random()::text || random()::text)::cstring), '43491ce9-bc89-4ee5-988d-9dbb2856e398', '{item_id}') ON CONFLICT DO NOTHING;\n"
+    return f"INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_{item_id}', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '{item_id}') ON CONFLICT DO NOTHING;\n"
 
 
 
