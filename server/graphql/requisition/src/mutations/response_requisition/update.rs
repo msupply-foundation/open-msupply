@@ -42,7 +42,7 @@ impl RequisitionReasonsNotProvided {
         self.0
             .clone()
             .into_iter()
-            .map(|line| RequisitionReasonNotProvided::from_domain(line))
+            .map(RequisitionReasonNotProvided::from_domain)
             .collect()
     }
 }

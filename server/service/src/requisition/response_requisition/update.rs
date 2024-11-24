@@ -107,8 +107,8 @@ pub fn validate(
         let mut lines_missing_reason = Vec::new();
 
         for line in response_lines {
-            if line.requisition_line_row.requested_quantity
-                != line.requisition_line_row.suggested_quantity
+            if (line.requisition_line_row.requested_quantity
+                != line.requisition_line_row.suggested_quantity)
                 && line.requisition_line_row.option_id.is_none()
             {
                 lines_missing_reason.push(line.clone())
