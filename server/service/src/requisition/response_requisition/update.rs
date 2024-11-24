@@ -5,6 +5,7 @@ use crate::{
         query::get_requisition,
     },
     service_provider::ServiceContext,
+    store_preference::get_store_preferences,
 };
 use chrono::Utc;
 use repository::{
@@ -103,7 +104,9 @@ pub fn validate(
         RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&requisition_row.id)),
     )?;
 
-    if requisition_row.program_id.is_some() {
+    if requisition_row.program_id.is_some()
+        && get_store_preferences(connection, &store_id)?.extra_fields_in_requisition
+    {
         let mut lines_missing_reason = Vec::new();
 
         for line in response_lines {
