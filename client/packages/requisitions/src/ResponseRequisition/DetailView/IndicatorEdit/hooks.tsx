@@ -1,9 +1,4 @@
-import { useEffect, useState } from 'react';
-import {
-  IndicatorLineRowFragment,
-  IndicatorValueFragment,
-  useResponse,
-} from '../../api';
+import { IndicatorLineRowFragment } from '../../api';
 
 export const usePreviousNextIndicatorLine = (
   lines?: IndicatorLineRowFragment[],
@@ -36,34 +31,4 @@ export const usePreviousNextIndicatorLine = (
   }
 
   return state;
-};
-
-const createDraftIndicator = (
-  indicatorValue: IndicatorValueFragment
-): IndicatorValueFragment => ({
-  ...indicatorValue,
-});
-
-export const useDraftIndicatorValue = (
-  indicatorValue?: IndicatorValueFragment | null
-) => {
-  const { mutateAsync: save, isLoading } =
-    useResponse.document.updateIndicatorValue();
-
-  const [draft, setDraft] = useState<IndicatorValueFragment | null>(null);
-
-  useEffect(() => {
-    if (indicatorValue) {
-      setDraft(createDraftIndicator(indicatorValue));
-    }
-    setDraft(null);
-  }, [indicatorValue]);
-
-  const update = (patch: Partial<IndicatorValueFragment>) => {
-    if (draft) {
-      setDraft({ ...draft, ...patch });
-    }
-  };
-
-  return { draft, isLoading, save: () => draft && save(draft), update };
 };
