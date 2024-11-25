@@ -28,7 +28,7 @@ export const IndicatorsTab = ({
 }: IndicatorTabProps) => {
   const t = useTranslation();
   if (isLoading) {
-    return <NothingHere body="There are no indicators for this requisition" />;
+    return <NothingHere body={t('error.no-indicators')} />;
   }
   const hivIndicators = indicators?.filter(
     indicator => indicator?.code === 'HIV'
