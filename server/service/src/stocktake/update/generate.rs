@@ -114,6 +114,7 @@ fn generate_stock_in_out_or_update(
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
+            item_variant_id: stock_line_row.item_variant_id,
             ..stock_line_row
         }
         .to_owned();
@@ -326,7 +327,7 @@ fn generate_new_stock_line(
         barcode: None,
         total_before_tax: None,
         tax_percentage: None,
-        item_variant_id: None,
+        item_variant_id: stocktake_line.line.item_variant_id.clone(),
     });
 
     // If new stock line has a location, create location movement
