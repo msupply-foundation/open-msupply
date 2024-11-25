@@ -25,7 +25,10 @@ export const assetsToCsv = (
 ) => {
   const fields: string[] = ['id'].concat(baseAssetFields(t));
 
-  fields.push(t('label.created-datetime'), t('label.modified-datetime'));
+  fields.push(
+    `${t('label.created-datetime') + ' ' + '(UTC)'}`,
+    `${t('label.modified-datetime') + ' ' + '(UTC)'}`
+  );
 
   fields.push(...properties);
 
