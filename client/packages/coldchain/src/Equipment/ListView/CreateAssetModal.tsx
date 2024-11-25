@@ -31,7 +31,7 @@ import { CCE_CLASS_ID } from '../utils';
 import { InsertAsset } from '../api/api';
 
 const DEBOUNCE_TIMEOUT = 300;
-const RECORDS_PER_PAGE = 100;
+const RECORDS_PER_PAGE = 20;
 
 interface CreateAssetModalProps {
   isOpen: boolean;
@@ -137,13 +137,14 @@ export const CreateAssetModal = ({
     });
   };
 
-  const onStoreInputChange = (
-    _event: React.SyntheticEvent<Element, Event>,
-    _value: string,
-    reason: string
-  ) => {
-    if (reason === 'clear') updateDraft({ store: null });
-  };
+  // const onStoreInputChange = (
+  //   _event: React.SyntheticEvent<Element, Event>,
+  //   _value: string,
+  //   reason: string
+  // ) => {
+  //   if (reason === 'clear') updateDraft({ store: null });
+  // };
+
   const isDisabled =
     !draft.assetNumber ||
     (isCatalogueAsset ? !draft.catalogueItemId : !draft.typeId);
@@ -214,7 +215,9 @@ export const CreateAssetModal = ({
                   fullWidth
                   value={draft.store ?? undefined}
                   onChange={onStoreChange}
-                  onInputChange={onStoreInputChange}
+                  onInputChange={(reason, value) => {
+                    if (reason?.type === 'change') debounceOnFilter(value);
+                  }}
                 />
               }
             />
