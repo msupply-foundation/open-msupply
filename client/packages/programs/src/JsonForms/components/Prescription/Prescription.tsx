@@ -33,14 +33,7 @@ type Options = z.infer<typeof Options>;
 
 const UIComponent = (props: ControlProps) => {
   const t = useTranslation();
-  const {
-    data: invoiceLineId,
-    handleChange,
-    label,
-    path,
-    uischema,
-    config,
-  } = props;
+  const { handleChange, label, path, uischema, config } = props;
   const { options } = useZodOptionsValidation(Options, uischema.options);
 
   const { formActions } = config;
@@ -120,10 +113,6 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
 
-  const invoiceLine = invoiceLineId
-    ? prescription?.lines.nodes.find(line => line.id === invoiceLineId)
-    : null;
-
   if (isLoading)
     return (
       <DetailInputWithLabelRow
@@ -167,18 +156,15 @@ const UIComponent = (props: ControlProps) => {
       label={label}
       inputAlignment={'start'}
       Input={
-        <>
-          <Link
-            to={RouteBuilder.create(AppRoute.Dispensary)
-              .addPart(AppRoute.Prescription)
-              .addPart(String(prescription?.invoiceNumber))
-              .build()}
-            target="_blank"
-          >
-            {t('label.click-to-view')}
-          </Link>
-          {invoiceLine && <Typography>{invoiceLine.itemName}</Typography>}
-        </>
+        <Link
+          to={RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Prescription)
+            .addPart(String(prescription?.invoiceNumber))
+            .build()}
+          target="_blank"
+        >
+          {t('label.click-to-view')}
+        </Link>
       }
     />
   );
