@@ -236,7 +236,9 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
     return columnDefinitions;
   }, [itemVariantsEnabled]);
 
-  const columns = useColumns<DraftStocktakeLine>(columnDefinitions);
+  const columns = useColumns<DraftStocktakeLine>(columnDefinitions, {}, [
+    columnDefinitions,
+  ]);
   return (
     <DataTable
       id="stocktake-batch"
