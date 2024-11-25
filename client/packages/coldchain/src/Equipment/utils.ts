@@ -13,6 +13,8 @@ function baseAssetFields(t: TypedTFunction<LocaleKey>) {
     t('label.catalogue-item-code'),
     t('label.installation-date'),
     t('label.replacement-date'),
+    t('label.warranty-start-date'),
+    t('label.warranty-end-date'),
     t('label.serial'),
     t('label.asset-notes'),
   ];
@@ -34,6 +36,8 @@ export const assetsToCsv = (
 
   fields.push(
     ...baseAssetFields(t),
+    t('label.status'),
+    t('label.needs-replacement'),
     t('label.created-datetime'),
     t('label.modified-datetime'),
     ...dedupedAssetProperties
@@ -43,6 +47,9 @@ export const assetsToCsv = (
     const parsedProperties = ObjUtils.parse(node.properties);
     const parsedCatalogProperties = ObjUtils.parse(node.catalogProperties);
 
+    const status =
+      node.statusLog?.status && parseLogStatus(node.statusLog.status);
+
     return [
       node.id,
       ...(isCentralServer ? [node.store?.code] : []),
@@ -50,8 +57,12 @@ export const assetsToCsv = (
       node.catalogueItem?.code ?? '',
       Formatter.csvDateString(node.installationDate),
       Formatter.csvDateString(node.replacementDate),
+      Formatter.csvDateString(node.warrantyStart),
+      Formatter.csvDateString(node.warrantyEnd),
       node.serialNumber,
       node.notes,
+      status ? t(status.key) : '',
+      node.needsReplacement,
       Formatter.csvDateTimeString(node.createdDatetime),
       Formatter.csvDateTimeString(node.modifiedDatetime),
       ...dedupedAssetProperties.map(
@@ -171,6 +182,8 @@ export const importEquipmentToCsv = (
       node.catalogueItemCode,
       node.installationDate,
       node.replacementDate,
+      node.warrantyStart,
+      node.warrantyEnd,
       node.serialNumber,
       node.notes,
     ];

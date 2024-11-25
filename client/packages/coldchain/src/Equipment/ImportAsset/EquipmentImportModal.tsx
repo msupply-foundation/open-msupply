@@ -47,6 +47,8 @@ export type ImportRow = {
   serialNumber: string | null | undefined;
   installationDate: string | null | undefined;
   replacementDate: string | null | undefined;
+  warrantyStart: string | null | undefined;
+  warrantyEnd: string | null | undefined;
   id: string;
   notes: string;
   errorMessage: string;
