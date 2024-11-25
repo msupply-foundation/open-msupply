@@ -14,6 +14,7 @@ mod delete_pack_variant;
 mod indicator_indexes;
 mod indicator_line_column_create_tables;
 mod indicator_value_create_table;
+mod item_changelog;
 mod item_variant;
 mod program_indicator_create_table;
 
@@ -48,6 +49,7 @@ impl Migration for V2_04_00 {
             Box::new(indicator_indexes::Migrate),
             Box::new(add_store_pref_use_extra_fields::Migrate),
             Box::new(add_item_variant_id_to_stocktake_line::Migrate),
+            Box::new(item_changelog::Migrate),
         ]
     }
 }
