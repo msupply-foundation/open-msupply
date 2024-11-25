@@ -114,7 +114,7 @@ fn generate_stock_in_out_or_update(
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
-            item_variant_id: stock_line_row.item_variant_id,
+            item_variant_id: stocktake_line.line.item_variant_id.clone(),
             ..stock_line_row
         }
         .to_owned();
