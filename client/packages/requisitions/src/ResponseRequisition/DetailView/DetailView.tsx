@@ -110,7 +110,7 @@ export const DetailView: FC = () => {
           indicators={programIndicators?.nodes}
         />
       ),
-      value: 'Indicators',
+      value: t('label.indicators'),
     });
   }
 
