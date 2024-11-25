@@ -625,6 +625,7 @@
   "label.customer-soh": "Their SOH",
   "label.date": "Date",
   "label.date-created": "Date Created",
+  "label.date-format": "DD/MM/YYYY",
   "label.date-given": "Date given",
   "label.date-of-birth": "Date of Birth",
   "label.date-time": "Date time",
