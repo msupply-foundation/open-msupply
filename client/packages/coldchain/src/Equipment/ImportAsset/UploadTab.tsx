@@ -210,13 +210,13 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
 
     const exampleRows: Partial<ImportRow>[] = [
       {
-        assetNumber: 'ASSET NUMBER',
+        assetNumber: t('label.asset-number').toUpperCase(),
         catalogueItemCode: '',
         store: undefined,
         notes: '',
         serialNumber: '',
-        installationDate: 'DD/MM/YYYY',
-        replacementDate: 'DD/MM/YYYY',
+        installationDate: t('label.date-format'),
+        replacementDate: t('label.date-format'),
         properties: {},
       },
     ];
