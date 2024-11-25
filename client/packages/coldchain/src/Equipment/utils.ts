@@ -16,6 +16,8 @@ function baseAssetFields(t: TypedTFunction<LocaleKey>) {
     t('label.warranty-start-date'),
     t('label.warranty-end-date'),
     t('label.serial'),
+    t('label.status'),
+    t('label.needs-replacement'),
     t('label.asset-notes'),
   ];
 }
@@ -36,8 +38,6 @@ export const assetsToCsv = (
 
   fields.push(
     ...baseAssetFields(t),
-    t('label.status'),
-    t('label.needs-replacement'),
     t('label.created-datetime'),
     t('label.modified-datetime'),
     ...dedupedAssetProperties
@@ -60,9 +60,9 @@ export const assetsToCsv = (
       Formatter.csvDateString(node.warrantyStart),
       Formatter.csvDateString(node.warrantyEnd),
       node.serialNumber,
-      node.notes,
       status ? t(status.key) : '',
       node.needsReplacement,
+      node.notes,
       Formatter.csvDateTimeString(node.createdDatetime),
       Formatter.csvDateTimeString(node.modifiedDatetime),
       ...dedupedAssetProperties.map(
@@ -121,20 +121,10 @@ export const importEquipmentToCsvWithErrors = (
 ) => {
   const dedupedAssetProperties = ArrayUtils.dedupe(properties ?? []);
 
-  const fields: string[] = [
-    t('label.asset-number'),
-    t('label.catalogue-item-code'),
-  ];
-
-  if (isCentralServer) {
-    fields.push(t('label.store'));
-  }
+  const fields: string[] = isCentralServer ? [t('label.store')] : [];
 
   fields.push(
-    t('label.asset-notes'),
-    t('label.serial'),
-    t('label.installation-date'),
-    t('label.replacement-date'),
+    ...baseAssetFields(t),
     t('label.line-number'),
     ...dedupedAssetProperties,
     t('label.error-message')
@@ -142,19 +132,21 @@ export const importEquipmentToCsvWithErrors = (
 
   const data = assets.map(node => {
     const mapped: (string | number | null | undefined)[] = [
+      ...(isCentralServer ? [node.store?.code] : []),
       node.assetNumber,
       node.catalogueItemCode,
-    ];
-    if (isCentralServer) mapped.push(node.store?.code);
-    mapped.push(
-      node.notes,
-      node.serialNumber,
       node.installationDate,
       node.replacementDate,
+      node.warrantyStart,
+      node.warrantyEnd,
+      node.serialNumber,
+      node.status,
+      node.needsReplacement ? 'X' : '',
+      node.notes,
       node.lineNumber,
       ...dedupedAssetProperties.map(key => node.properties?.[key] ?? ''),
-      node.errorMessage
-    );
+      node.errorMessage,
+    ];
 
     return mapped;
   });
@@ -169,15 +161,13 @@ export const importEquipmentToCsv = (
 ) => {
   const dedupedAssetProperties = ArrayUtils.dedupe(properties ?? []);
 
-  const fields = baseAssetFields(t);
-  if (isCentralServer) {
-    fields.push(t('label.store'));
-  }
+  const fields: string[] = isCentralServer ? [t('label.store')] : [];
 
-  fields.push(...dedupedAssetProperties);
+  fields.push(...baseAssetFields(t), ...dedupedAssetProperties);
 
   const data = assets.map(node => {
     const row = [
+      ...(isCentralServer ? [node.store?.code] : []),
       node.assetNumber,
       node.catalogueItemCode,
       node.installationDate,
@@ -185,10 +175,10 @@ export const importEquipmentToCsv = (
       node.warrantyStart,
       node.warrantyEnd,
       node.serialNumber,
+      node.status ? (parseLogStatus(node.status)?.key ?? '') : '',
+      node.needsReplacement,
       node.notes,
     ];
-
-    if (isCentralServer) row.push(node.store?.code);
 
     return row.concat(
       dedupedAssetProperties.map(key => node.properties?.[key] ?? '')
@@ -196,4 +186,29 @@ export const importEquipmentToCsv = (
   });
 
   return Formatter.csv({ fields, data });
+};
+
+export const parseStatusFromString = (
+  status: string,
+  t: TypedTFunction<LocaleKey>
+): StatusType | undefined => {
+  switch (status.toLowerCase()) {
+    case t('status.decommissioned').toLowerCase():
+      return StatusType.Decommissioned;
+
+    case t('status.functioning').toLowerCase():
+      return StatusType.Functioning;
+
+    case t('status.functioning-but-needs-attention').toLowerCase():
+      return StatusType.FunctioningButNeedsAttention;
+
+    case t('status.not-functioning').toLowerCase():
+      return StatusType.NotFunctioning;
+
+    case t('status.not-in-use').toLowerCase():
+      return StatusType.NotInUse;
+
+    case t('status.unserviceable').toLowerCase():
+      return StatusType.Unserviceable;
+  }
 };
