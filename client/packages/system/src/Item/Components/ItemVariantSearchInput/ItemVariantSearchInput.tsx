@@ -30,7 +30,7 @@ export const ItemVariantSearchInput = ({
     <Autocomplete
       disabled={disabled}
       width={`${width}px`}
-      popperMinWidth={200}
+      popperMinWidth={Math.min(Number(width), 200)}
       value={selected ?? null}
       loading={isLoading}
       onChange={(_, option) => onChange(option?.id ?? null)}
