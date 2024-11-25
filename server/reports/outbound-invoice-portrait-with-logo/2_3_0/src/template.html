@@ -5,36 +5,36 @@
 <table class="header_supplied_section">
     <tr> 
         <td class="header_section_field_left"></td>
-        <td id= "date" class="header_section_field_right"> Printed date: {{ now() | date(format="%m/%d/%Y") }}</td>
+        <td id= "date" class="header_section_field_right"> {{t(k="report.printed-date",f="Printed date")}}: {{ now() | date(format="%m/%d/%Y") }}</td>
     </tr> 
 
     <tr> 
-        <td class="header_section_field_left">Supplied to:</td> 
-        <td class="header_section_field_right">Status: {{ data.invoice.status }}</td>
+        <td class="header_section_field_left">{{t(k=“report.supplied-to”,f=“Supplied to”)}}:</td> 
+        <td class="header_section_field_right">{{t(k="report.status", f="Status")}}: {{ data.invoice.status }}</td>
     </tr> 
 
     <tr> 
         <td class="header_section_field_left">{{ data.invoice.otherPartyName }}</td> 
-        <td class="header_section_field_right">Entered date: {{ data.invoice.createdDatetime | date(format="%m/%d/%Y") }}</td>
+        <td class="header_section_field_right">{{t(k=“report.entered-date”,f=“Entered date”)}}: {{ data.invoice.createdDatetime | date(format="%m/%d/%Y") }}</td>
     </tr> 
 
     <tr> 
         <td class="header_section_field_left">{{ data.invoice.otherParty.address1 }}</td> 
-        <td class="header_section_field_right">Confirmed Date: {{ data.invoice.createdDatetime | date(format="%m/%d/%Y") }}</td>
+        <td class="header_section_field_right">{{t(k=“report.confirmed-date”,f=“Confirmed Date”)}}: {{ data.invoice.createdDatetime | date(format="%m/%d/%Y") }}</td>
     </tr>
 
 </table>
 
 <table class="body_section" cellpadding="2" cellspacing="0">
     <tr class="body_column_label">
-        <th class="line_number" style="width: 5%;">Line</th>
-        <th class="location_code" style="width: 13%;">Location</th>
-        <th class="item_name" style="width: 38%;">Item name</th>
-        <th class="quantity" style="width: 8%;">Quantity</th>
-        <th class="issued" style="width: 5%;">Issued</th>
-        <th class="pack" style="width: 8%;">Pack</th>
-        <th class="batch" style="width: 8%;">Batch</th>
-        <th class="expiry" style="width: 10%;">Expiry</th>
+        <th class="line_number" style="width: 5%;">{{t(k="report.line", f="Line")}}</th>
+        <th class="location_code" style="width: 13%;">{{t(k="label.location",f=“Location”)}}</th>
+        <th class="item_name" style="width: 38%;">{{t(k="report.item-name", f="Item name")}}</th>
+        <th class="quantity" style="width: 8%;">{{t(k=“label.pack”,f=“Pack”)}}</th>
+        <th class="issued" style="width: 5%;">{{t(k=“report.issued”,f=“Issued”)}}</th>
+        <th class="pack" style="width: 8%;">{{t(k=“label.pack”,f=“Pack”)}}</th>
+        <th class="batch" style="width: 8%;">{{t(k="label.batch", f="Batch")}}</th>
+        <th class="expiry" style="width: 10%;">{{t(k="label.expiry",f=“Expiry”)}}</th>
     </tr>
     {% for line in data.invoiceLines.nodes -%}
     <tr class="body_value">
