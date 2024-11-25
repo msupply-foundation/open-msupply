@@ -6,13 +6,17 @@ import { ItemRowFragmentDoc } from '../../../../system/src/Item/api/operations.g
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
+export type RequisitionReasonNotProvidedErrorFragment = { __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } };
+
+export type RequisitionReasonsNotProvidedErrorFragment = { __typename: 'RequisitionReasonsNotProvided', description: string, errors: Array<{ __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } }> };
+
 export type UpdateResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpdateResponseRequisitionInput;
 }>;
 
 
-export type UpdateResponseMutation = { __typename: 'Mutations', updateResponseRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateResponseRequisitionError' } };
+export type UpdateResponseMutation = { __typename: 'Mutations', updateResponseRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateResponseRequisitionError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionReasonsNotProvided', description: string, errors: Array<{ __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } }> } } };
 
 export type DeleteRequestMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -146,6 +150,24 @@ export type UpdateIndicatorValueMutationVariables = Types.Exact<{
 
 export type UpdateIndicatorValueMutation = { __typename: 'Mutations', updateIndicatorValue: { __typename: 'IndicatorValueNode', id: string, value: string } | { __typename: 'UpdateIndicatorValueError', error: { __typename: 'RecordNotFound', description: string } | { __typename: 'ValueTypeNotCorrect', description: string } } };
 
+export const RequisitionReasonNotProvidedErrorFragmentDoc = gql`
+    fragment RequisitionReasonNotProvidedError on RequisitionReasonNotProvided {
+  __typename
+  requisitionLine {
+    id
+  }
+  description
+}
+    `;
+export const RequisitionReasonsNotProvidedErrorFragmentDoc = gql`
+    fragment RequisitionReasonsNotProvidedError on RequisitionReasonsNotProvided {
+  __typename
+  errors {
+    ...RequisitionReasonNotProvidedError
+  }
+  description
+}
+    ${RequisitionReasonNotProvidedErrorFragmentDoc}`;
 export const ResponseLineFragmentDoc = gql`
     fragment ResponseLine on RequisitionLineNode {
   id
@@ -371,9 +393,18 @@ export const UpdateResponseDocument = gql`
       __typename
       id
     }
+    ... on UpdateResponseRequisitionError {
+      __typename
+      error {
+        description
+        ... on RequisitionReasonsNotProvided {
+          ...RequisitionReasonsNotProvidedError
+        }
+      }
+    }
   }
 }
-    `;
+    ${RequisitionReasonsNotProvidedErrorFragmentDoc}`;
 export const DeleteRequestDocument = gql`
     mutation deleteRequest($storeId: String!, $input: BatchResponseRequisitionInput!) {
   batchResponseRequisition(storeId: $storeId, input: $input) {

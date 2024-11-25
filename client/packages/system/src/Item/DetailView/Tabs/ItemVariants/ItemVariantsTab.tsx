@@ -114,7 +114,7 @@ const ItemVariant = ({
           />
 
           <InputWithLabelRow
-            label={t('label.temperature')}
+            label={t('label.cold-storage-type')}
             labelWidth="200"
             Input={
               <BasicTextInput
