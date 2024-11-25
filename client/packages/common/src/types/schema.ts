@@ -3681,7 +3681,6 @@ export type ItemVariantNode = {
   bundlesWith: Array<BundledItemNode>;
   coldStorageType?: Maybe<ColdStorageTypeNode>;
   coldStorageTypeId?: Maybe<Scalars['String']['output']>;
-  dosesPerUnit?: Maybe<Scalars['Int']['output']>;
   id: Scalars['String']['output'];
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
@@ -6774,6 +6773,18 @@ export enum RequisitionNodeType {
   Response = 'RESPONSE'
 }
 
+export type RequisitionReasonNotProvided = {
+  __typename: 'RequisitionReasonNotProvided';
+  description: Scalars['String']['output'];
+  requisitionLine: RequisitionLineNode;
+};
+
+export type RequisitionReasonsNotProvided = UpdateResponseRequisitionErrorInterface & {
+  __typename: 'RequisitionReasonsNotProvided';
+  description: Scalars['String']['output'];
+  errors: Array<RequisitionReasonNotProvided>;
+};
+
 export type RequisitionResponse = RecordNotFound | RequisitionNode;
 
 export enum RequisitionSortFieldInput {
@@ -8626,7 +8637,6 @@ export type UpsertItemVariantErrorInterface = {
 
 export type UpsertItemVariantInput = {
   coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
-  dosesPerUnit?: InputMaybe<Scalars['Int']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   manufacturerId?: InputMaybe<Scalars['String']['input']>;
