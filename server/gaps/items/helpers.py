@@ -41,7 +41,7 @@ def get_or_generate_ids(lookup_hash, row):
     item_id = lookup_hash[item_code]
 
     # diluent_id
-    diluent_item_code = row['VaccineTypeName'] + "_diluent"
+    diluent_item_code = row['mSupply item code'] + "_diluent"
     if diluent_item_code not in lookup_hash:
         lookup_hash[diluent_item_code] = str(uuid.uuid4())
 

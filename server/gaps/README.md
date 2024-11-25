@@ -6,7 +6,7 @@ WARNING: Before running any of these scripts, make sure you have a backup of you
 
 The `create_catalogue_migration_script` wasn't written to be re-run it generates new IDs for the assets each time it is run.
 Next time we need to use it will probably need to adapt it to re-use existing ids where possible?
-It creates asset_catalogue_items as well asset, and categories and types.
+It creates asset_catalogue_items as well as asset classes, and categories and types.
 Based on the pqs_catalogue.csv file, this was exported from a spreadsheet in google drive.
 
 The `pqs_catalogue_properties.py` script, used the same data and updated the asset_catalogue_items with the properties based on their PQS Catalogue Code.

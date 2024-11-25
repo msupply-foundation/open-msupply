@@ -58,6 +58,7 @@ with open(item_variants_file_path, 'r') as file:
                 if diluent_id not in item_id_inserted and row['DiluentBundled'] == 'No':
                     # Create the item for the diluent
                     output_file.write(upsert_diluent_stmt(diluent_id, row))
+                    output_file.write(insert_master_list_line(diluent_id))
                     item_id_inserted[diluent_id] = True
 
                 # Create the item_variant for the diluent
