@@ -247,8 +247,6 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
         : undefined,
     };
 
-    console.log('INPUT', input);
-
     const result = await sdk.upsertPrescription({ storeId, input });
 
     return result;

@@ -60,6 +60,7 @@ const UIComponent = (props: ControlProps) => {
 
   const { mutateAsync: createPrescription } = usePrescription.document.insert();
   const { mutateAsync: updateLines } = usePrescription.line.save();
+
   const { success } = useNotification();
 
   // Ensures that when this component is re-mounted (e.g. in a Modal), it will

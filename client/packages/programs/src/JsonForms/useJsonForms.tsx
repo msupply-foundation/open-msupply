@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-
 import {
   useTranslation,
   useNotification,
@@ -11,7 +10,6 @@ import {
   JsonSchema,
   UISchemaElement,
 } from '@jsonforms/core';
-
 import {
   EncounterLineChart,
   encounterLineChartTester,
@@ -106,14 +104,6 @@ export type JsonFormData<R> = {
   /** Method to update the form data */
   save?: (data: unknown) => Promise<R>;
 };
-
-export type SubmitActionRegistry = Record<
-  string,
-  {
-    action: () => void;
-    preSubmit: boolean;
-  }
->;
 
 /**
  * This hook add provides functionality to save form data and keep track if form data has been
