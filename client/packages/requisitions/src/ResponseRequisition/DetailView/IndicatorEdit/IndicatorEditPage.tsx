@@ -6,6 +6,7 @@ import {
   RouteBuilder,
   useBreadcrumbs,
   useParams,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useResponse } from '../../api';
 import { PageLayout } from '../PageLayout';
@@ -16,6 +17,7 @@ import { usePreviousNextIndicatorLine } from './hooks';
 import { IndicatorLineEdit } from './IndicatorLineEdit';
 
 export const IndicatorEditPage = () => {
+  const t = useTranslation();
   const { programIndicatorLineId, programIndicatorCode } = useParams();
   const { data: response, isLoading } = useResponse.document.get();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
@@ -46,7 +48,7 @@ export const IndicatorEditPage = () => {
 
   useEffect(() => {
     setCustomBreadcrumbs({
-      2: 'Indicators',
+      2: t('label.indicators'),
       4: currentLine?.code || '',
     });
   }, [programIndicatorLineId]);
