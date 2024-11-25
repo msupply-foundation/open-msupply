@@ -93,7 +93,7 @@ const usePatternValidation = (
 export const stringTester = rankWith(3, schemaTypeIs('string'));
 
 const UIComponent = (props: ControlProps) => {
-  const { data, path, handleChange, errors, label, config } = props;
+  const { data, path, handleChange, errors, label } = props;
   const {
     errors: zErrors,
     options: schemaOptions,
@@ -101,17 +101,8 @@ const UIComponent = (props: ControlProps) => {
   } = useOptions(props.uischema.options);
   const customErrors = usePatternValidation(path, pattern, data);
   const error = !!errors || !!zErrors || !!customErrors;
-  const onChange = (value: string | undefined) => {
+  const onChange = (value: string | undefined) =>
     handleChange(path, !!value ? value : undefined);
-
-    // Register additional action for when form is submitted
-    config.updateSubmitActions(path, () => {
-      if (data)
-        console.log(
-          `Submitting ${data} for path ${path}. Can be configured to perform additional action on Data`
-        );
-    });
-  };
   const { text, onChange: onDebounceChange } = useDebouncedTextInput(
     data,
     onChange

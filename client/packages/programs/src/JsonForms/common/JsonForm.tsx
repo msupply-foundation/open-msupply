@@ -57,6 +57,7 @@ import {
   FORM_COLUMN_MAX_WIDTH,
   FORM_LABEL_COLUMN_WIDTH,
 } from './styleConstants';
+import { FormActionStructure } from '../useFormActions';
 
 export type JsonType = string | number | boolean | null | undefined;
 
@@ -67,11 +68,11 @@ export type JsonData =
   | JsonType
   | Array<JsonData>;
 
-type UpdateSubmitActions = (key: string, action: () => void) => void;
-
 interface JsonFormProps {
   data?: JsonData;
-  config?: JsonFormsConfig & { updateSubmitActions: UpdateSubmitActions };
+  config?: JsonFormsConfig & {
+    formActions: FormActionStructure;
+  };
   jsonSchema: JsonSchema;
   uiSchema: UISchemaElement;
   isError: boolean;
@@ -89,7 +90,9 @@ interface JsonFormsComponentProps {
   setData: (data: JsonData) => void;
   setError?: (error: string | false) => void;
   renderers: JsonFormsRendererRegistryEntry[];
-  config?: JsonFormsConfig & { updateSubmitActions: UpdateSubmitActions };
+  config?: JsonFormsConfig & {
+    formActions: FormActionStructure;
+  };
 }
 
 // Prevents Form window being loaded with the same scroll position as its parent

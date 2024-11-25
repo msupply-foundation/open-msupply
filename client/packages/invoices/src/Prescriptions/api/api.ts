@@ -142,7 +142,9 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
         throw new Error('Could not find invoice');
       }
     },
-    byId: async (invoiceId: string): Promise<PrescriptionRowFragment> => {
+    byId: async (
+      invoiceId: string
+    ): Promise<PrescriptionRowFragment | void> => {
       const result = await sdk.prescriptionById({
         invoiceId,
         storeId,
@@ -151,9 +153,10 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
 
       if (invoice?.__typename === 'InvoiceNode') {
         return invoice;
-      } else {
-        throw new Error('Could not find invoice');
       }
+      // Don't throw error for this one if not found -- it's mainly used by
+      // Program component (Prescription), which may have stored an id for a
+      // prescription that doesn't yet exist
     },
   },
   insert: async (
@@ -212,6 +215,8 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
     draftPrescriptionLines: DraftStockOutLine[];
     patch?: RecordPatch<PrescriptionRowFragment>;
   }) => {
+    // console.log('draftPrescriptionLines', draftPrescriptionLines);
+    // console.log('patch', patch);
     const input = {
       insertPrescriptionLines: draftPrescriptionLines
         .filter(
@@ -243,6 +248,8 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
         ? [prescriptionParsers.toUpdate(patch)]
         : undefined,
     };
+
+    console.log('INPUT', input);
 
     const result = await sdk.upsertPrescription({ storeId, input });
 

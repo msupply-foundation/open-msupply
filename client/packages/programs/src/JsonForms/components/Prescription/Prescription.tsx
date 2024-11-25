@@ -1,31 +1,32 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
-import { ControlProps, rankWith, subErrorsAt, uiTypeIs } from '@jsonforms/core';
+import { ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
 import {
   Box,
   DetailInputWithLabelRow,
+  FnUtils,
+  InlineSpinner,
+  InvoiceNodeStatus,
   Link,
-  NumUtils,
-  NumericTextInput,
   RouteBuilder,
   Typography,
   extractProperty,
-  useDebounceCallback,
+  useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
-import { FORM_LABEL_WIDTH, useZodOptionsValidation } from '../../common';
+import { DefaultFormRowSx, useZodOptionsValidation } from '../../common';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
-import { useJSONFormsCustomError } from '../../common/hooks/useJSONFormsCustomError';
 import { usePrescription } from 'packages/invoices/src/Prescriptions/api';
 import { AppRoute } from 'packages/config/src';
-import { StockItemSearchInput } from 'packages/system/src';
+import {
+  ItemStockOnHandFragment,
+  StockItemSearchInput,
+} from 'packages/system/src';
+import { useDraftPrescriptionLines } from 'packages/invoices/src/Prescriptions/DetailView/PrescriptionLineEdit/hooks';
+import { StockLineTable } from './StockLineTable';
+import { DraftStockOutLine } from 'packages/invoices/src/types';
 
 export const prescriptionTester = rankWith(10, uiTypeIs('Prescription'));
-
-type BloodPressureData = {
-  systolic?: number;
-  diastolic?: number;
-};
 
 const Options = z.object({ prescriptionIdPath: z.string() }).strict();
 type Options = z.infer<typeof Options>;
@@ -37,59 +38,82 @@ const UIComponent = (props: ControlProps) => {
     handleChange,
     label,
     path,
-    schema,
     uischema,
+    config,
   } = props;
-  const { errors, options } = useZodOptionsValidation(
-    Options,
-    uischema.options
-  );
+  const { options } = useZodOptionsValidation(Options, uischema.options);
 
+  const { formActions } = config;
   const { core } = useJsonForms();
 
   const prescriptionIdPath = options?.prescriptionIdPath;
-
   const prescriptionId = extractProperty(core?.data, prescriptionIdPath ?? '');
-
   const { data: prescription, isLoading } =
     usePrescription.document.getById(prescriptionId);
 
-  const { customError, setCustomError } = useJSONFormsCustomError(
-    path,
-    'Prescription'
-  );
+  const [selectedItem, setSelectedItem] =
+    useState<ItemStockOnHandFragment | null>(
+      formActions.getState(`${path}_item`) ?? null
+    );
+  const { draftStockOutLines, setDraftStockOutLines } =
+    useDraftPrescriptionLines(selectedItem);
 
-  // useEffect(() => {
-  //   console.log('PATH', path);
-  //   handleChange(path, 'TEMP_ID');
-  //   // handleChange(path, '4688726d-88c8-4af0-a000-f70961c9dd19');
-  // }, []);
+  const { mutateAsync: createPrescription } = usePrescription.document.insert();
+  const { mutateAsync: updateLines } = usePrescription.line.save();
+  const { success } = useNotification();
 
-  console.log('prescription', prescription);
-  console.log('prescriptionIdPath', prescriptionIdPath);
-  console.log('prescriptionId', prescriptionId);
+  // Ensures that when this component is re-mounted (e.g. in a Modal), it will
+  // populate the draft line data with previously acquired state
+  useEffect(() => {
+    const existing: DraftStockOutLine[] = formActions.getState(
+      `${path}_stockline`
+    );
+    if (existing && existing[0]?.item.id === selectedItem?.id)
+      setDraftStockOutLines(existing);
+  }, []);
 
-  console.log('invoiceLineId', invoiceLineId);
-  console.log('core', core);
+  const handleItemSelect = (selectedItem: ItemStockOnHandFragment | null) => {
+    setSelectedItem(selectedItem);
+    if (prescriptionIdPath)
+      handleChange(prescriptionIdPath, FnUtils.generateUUID());
+    formActions.setState(`${path}_item`, selectedItem);
+  };
 
-  // useEffect(() => {
-  //   if (core) {
-  //     const getChildErrors = subErrorsAt(path, schema);
-  //     const errors = getChildErrors(core);
-  //     setCustomError(errors[0]?.message);
-  //   }
-  // }, [core]);
-
-  const onChange = useDebounceCallback(
-    (value: BloodPressureData) => {
-      if (value.diastolic === undefined && value.systolic === undefined) {
-        handleChange(path, undefined);
-      } else {
-        handleChange(path, value);
-      }
-    },
-    [path]
-  );
+  const handleStockLineUpdate = (draftLines: DraftStockOutLine[]) => {
+    setDraftStockOutLines(draftLines);
+    formActions.setState(`${path}_stockline`, draftLines);
+    formActions.register(
+      prescriptionIdPath,
+      async (formActionState: Record<string, unknown>) => {
+        if (!prescription && prescriptionId) {
+          // Create prescription
+          const prescriptionNumber = await createPrescription({
+            id: prescriptionId,
+            patientId: config.patientId,
+          });
+          // Get lines from *ALL* form components, not just this one
+          const allPrescriptionLines = Object.entries(formActionState)
+            .filter(([key, _]) => key.endsWith('_stockline'))
+            .map(([_, value]) => value)
+            .flat() as DraftStockOutLine[];
+          // Mutation requires invoice (prescription) ID to be defined on each
+          // line
+          allPrescriptionLines.forEach(
+            line => (line.invoiceId = prescriptionId)
+          );
+          // Add lines to prescription
+          await updateLines({
+            draftPrescriptionLines: allPrescriptionLines,
+            patch: { id: prescriptionId, status: InvoiceNodeStatus.Picked },
+          });
+          success(
+            t('messages.prescription-created', { count: prescriptionNumber })
+          )();
+        }
+      },
+      true // pre-submit
+    );
+  };
 
   if (!props.visible) {
     return null;
@@ -99,85 +123,61 @@ const UIComponent = (props: ControlProps) => {
     ? prescription?.lines.nodes.find(line => line.id === invoiceLineId)
     : null;
 
-  if (prescription)
+  if (isLoading)
     return (
-      <>
-        <Link
-          to={RouteBuilder.create(AppRoute.Dispensary)
-            .addPart(AppRoute.Prescription)
-            .addPart(String(prescription?.invoiceNumber))
-            .build()}
-        >
-          Prescription
-        </Link>
-        {invoiceLine && <Typography>{invoiceLine.itemName}</Typography>}
-      </>
+      <DetailInputWithLabelRow
+        sx={DefaultFormRowSx}
+        label={label}
+        inputAlignment={'start'}
+        Input={<InlineSpinner />}
+      />
+    );
+
+  if (!prescription)
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <DetailInputWithLabelRow
+          sx={DefaultFormRowSx}
+          label={t('label.create-prescription')}
+          inputAlignment={'start'}
+          Input={null}
+        />
+        <Box sx={{ maxWidth: 550, marginLeft: 5 }}>
+          <Typography sx={{ fontSize: '90%' }}>
+            <em>{t('messages.prescription-will-be-created')}</em>
+          </Typography>
+          <StockItemSearchInput
+            onChange={selected => handleItemSelect(selected)}
+            currentItemId={selectedItem?.id}
+          />
+          {selectedItem && (
+            <StockLineTable
+              stocklines={draftStockOutLines}
+              handleStockLineUpdate={handleStockLineUpdate}
+            />
+          )}
+        </Box>
+      </Box>
     );
 
   return (
-    <>
-      <StockItemSearchInput onChange={() => {}} />
-    </>
-  );
-
-  return <p>This is the prescription renderer</p>;
-
-  return (
     <DetailInputWithLabelRow
+      sx={DefaultFormRowSx}
       label={label}
-      labelWidthPercentage={FORM_LABEL_WIDTH}
-      inputAlignment="start"
-      sx={{ paddingTop: 1 }}
+      inputAlignment={'start'}
       Input={
-        <Box display="flex" flexDirection="column">
-          <Box display="flex" flexDirection="row" paddingLeft={0.5}>
-            <NumericTextInput
-              onChange={value => {
-                const newBP = {
-                  ...bloodPressure,
-                  systolic: value,
-                };
-                setBloodPressure(newBP);
-                onChange(newBP);
-              }}
-              value={bloodPressure?.systolic}
-              label={t('label.systolic')}
-              min={schema.properties?.['systolic']?.minimum ?? 0}
-              max={
-                schema.properties?.['systolic']?.maximum ??
-                NumUtils.MAX_SAFE_API_INTEGER
-              }
-              {...inputProps}
-            />
-            <Typography margin={1} paddingTop={2}>
-              /
-            </Typography>
-            <NumericTextInput
-              onChange={value => {
-                const newBP = {
-                  ...bloodPressure,
-                  diastolic: value,
-                };
-                setBloodPressure(newBP);
-                onChange(newBP);
-              }}
-              value={bloodPressure?.diastolic}
-              label={t('label.diastolic')}
-              width={100}
-              min={schema.properties?.['diastolic']?.minimum ?? 0}
-              max={
-                schema.properties?.['diastolic']?.maximum ??
-                NumUtils.MAX_SAFE_API_INTEGER
-              }
-              {...inputProps}
-            />
-          </Box>
-          <Box display="flex" flexDirection="row" alignSelf="center">
-            {customError && (
-              <Typography variant="caption">{customError}</Typography>
-            )}
-          </Box>
-        </Box>
+        <>
+          <Link
+            to={RouteBuilder.create(AppRoute.Dispensary)
+              .addPart(AppRoute.Prescription)
+              .addPart(String(prescription?.invoiceNumber))
+              .build()}
+            target="_blank"
+          >
+            {t('label.click-to-view')}
+          </Link>
+          {invoiceLine && <Typography>{invoiceLine.itemName}</Typography>}
+        </>
       }
     />
   );

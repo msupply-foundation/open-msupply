@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   useTranslation,
@@ -45,6 +45,7 @@ import {
   isEqualIgnoreUndefinedAndEmpty,
   stripEmptyAdditions,
 } from './stripEmptyAdditions';
+import { useFormActions } from './useFormActions';
 
 export interface SchemaData {
   formSchemaId?: string;
@@ -106,6 +107,14 @@ export type JsonFormData<R> = {
   save?: (data: unknown) => Promise<R>;
 };
 
+export type SubmitActionRegistry = Record<
+  string,
+  {
+    action: () => void;
+    preSubmit: boolean;
+  }
+>;
+
 /**
  * This hook add provides functionality to save form data and keep track if form data has been
  * modified.
@@ -126,20 +135,14 @@ export const useJsonForms = <R,>(
   }, [loadedData]);
   // current modified data
   const [data, setData] = useState<JsonData | undefined>();
-  const submitActions = useRef<Record<string, () => void>>({});
   const [isSaving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState<boolean>();
+  const formActions = useFormActions(setIsDirty);
   const t = useTranslation();
   const [validationError, setValidationError] = useState<string | false>(false);
   const { success, error: errorNotification } = useNotification();
 
   useConfirmOnLeaving(isDirty);
-
-  const updateSubmitActions = useCallback((key: string, action: () => void) => {
-    const newActions = { ...submitActions.current };
-    newActions[key] = action;
-    submitActions.current = newActions;
-  }, []);
 
   // returns the document name
   const saveData = async (deletion?: boolean): Promise<R | undefined> => {
@@ -150,12 +153,12 @@ export const useJsonForms = <R,>(
 
     // Run mutation...
     try {
+      await formActions.run({ preSubmit: true });
+
       const sanitizedData = stripEmptyAdditions(initialData, data);
       const result = await save?.(sanitizedData);
-      const actions = Object.values(submitActions.current);
-      for (const action of actions) {
-        await action();
-      }
+
+      await formActions.run({ preSubmit: false });
 
       const successSnack = success(
         deletion ? t('success.data-deleted') : t('success.data-saved')
@@ -213,7 +216,7 @@ export const useJsonForms = <R,>(
         config={{
           ...config,
           initialData,
-          updateSubmitActions,
+          formActions,
         }}
       />
     ),
@@ -226,7 +229,6 @@ export const useJsonForms = <R,>(
     isDirty: isDirty ?? false,
     error,
     validationError,
-    submitActions,
-    updateSubmitActions,
+    formActions,
   };
 };
