@@ -32,10 +32,10 @@
             margin-left: 20px;
           "
         >
-          <div>Repack #: {{ data.repack.invoice.invoiceNumber }}</div>
-          <div>Status: {{ data.repack.invoice.status }}</div>
+          <div>{{t(k=“label.repack”,f=“Repack”)}} #: {{ data.repack.invoice.invoiceNumber }}</div>
+          <div>{{t(k="report.status", f="Status")}}: {{ data.repack.invoice.status }}</div>
           <div>
-            Confirmed Date: {{ data.repack.datetime | date(format="%m/%d/%Y") }}
+            {{t(k="report.confirmed-date"m f="Confirmed date")}}: {{ data.repack.datetime | date(format="%m/%d/%Y") }}
           </div>
         </span>
       </td>
