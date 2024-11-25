@@ -113,6 +113,7 @@ pub fn validate(
     )?;
 
     let prefs = get_store_preferences(connection, &store_id)?;
+
     if requisition_row.program_id.is_some()
         && prefs.extra_fields_in_requisition
         && reason_options.len() > 0
