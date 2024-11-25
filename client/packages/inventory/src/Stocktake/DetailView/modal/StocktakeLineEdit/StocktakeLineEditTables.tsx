@@ -129,7 +129,7 @@ const getInventoryAdjustmentReasonInputColumn = (
         <InventoryAdjustmentReasonSearchInput
           autoFocus={autoFocus}
           value={value}
-          width={column.width}
+          width={Number(column.width) - 12}
           onChange={onChange}
           adjustmentType={
             rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0)
