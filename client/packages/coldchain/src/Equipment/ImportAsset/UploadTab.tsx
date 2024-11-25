@@ -19,10 +19,11 @@ import {
   useIsCentralServerApi,
   EnvUtils,
   Platform,
+  StatusType,
 } from '@openmsupply-client/common';
 import * as EquipmentImportModal from './EquipmentImportModal';
 import { ImportRow } from './EquipmentImportModal';
-import { importEquipmentToCsv } from '../utils';
+import { importEquipmentToCsv, parseStatusFromString } from '../utils';
 import {
   AssetCatalogueItemFragment,
   processProperties,
@@ -217,6 +218,9 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         serialNumber: '',
         installationDate: t('label.date-format'),
         replacementDate: t('label.date-format'),
+        warrantyStart: t('label.date-format'),
+        warrantyEnd: t('label.date-format'),
+        status: StatusType.Functioning,
         properties: {},
       },
     ];
@@ -304,9 +308,17 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         formatDate
       );
       addSoftRequired('replacementDate', 'label.replacement-date', formatDate);
+      addSoftRequired('warrantyStart', 'label.warranty-start-date', formatDate);
+      addSoftRequired('warrantyEnd', 'label.warranty-end-date', formatDate);
       addCell('serialNumber', 'label.serial', serial =>
         serial === '' ? undefined : serial
       );
+      addCell(
+        'status',
+        'label.status',
+        status => parseStatusFromString(status, t) ?? StatusType.Functioning
+      );
+      addCell('needsReplacement', 'label.needs-replacement');
       processProperties(properties ?? [], row, importRow, rowErrors, t);
       importRow.errorMessage = rowErrors.join(',');
       importRow.warningMessage = rowWarnings.join(',');

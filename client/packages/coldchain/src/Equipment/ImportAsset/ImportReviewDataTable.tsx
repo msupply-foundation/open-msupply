@@ -2,6 +2,7 @@ import React, { FC, useState } from 'react';
 import {
   ColumnDescription,
   DataTable,
+  DotCell,
   Grid,
   NothingHere,
   Pagination,
@@ -12,6 +13,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { ImportRow } from './EquipmentImportModal';
+import { Status } from '../Components';
 
 interface ImportReviewDataTableProps {
   importRows: ImportRow[];
@@ -29,24 +31,12 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     offset: 0,
   });
   const [searchString, setSearchString] = useState<string>(() => '');
-  const columnDescriptions: ColumnDescription<ImportRow>[] = [
-    {
-      key: 'assetNumber',
-      width: 70,
-      sortable: false,
-      label: 'label.asset-number',
-    },
-    {
-      key: 'catalogueItemCode',
-      width: 50,
-      sortable: false,
-      label: 'label.catalogue-item-code',
-    },
-  ];
+  const columnDescriptions: ColumnDescription<ImportRow>[] = [];
+
   if (isCentralServer) {
     columnDescriptions.push({
       key: 'store',
-      width: 50,
+      width: 80,
       sortable: false,
       label: 'label.store',
       accessor: ({ rowData }) => rowData.store?.code,
@@ -55,25 +45,58 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
 
   columnDescriptions.push(
     {
-      key: 'serialNumber',
-      width: 100,
+      key: 'assetNumber',
+      width: 90,
       sortable: false,
-      label: 'label.serial',
-      Cell: TooltipTextCell,
+      label: 'label.asset-number',
+    },
+    {
+      key: 'catalogueItemCode',
+      sortable: false,
+      label: 'label.catalogue-item-code',
     },
     {
       key: 'installationDate',
-      width: 100,
       sortable: false,
       label: 'label.installation-date',
       Cell: TooltipTextCell,
     },
     {
       key: 'replacementDate',
-      width: 100,
       sortable: false,
       label: 'label.replacement-date',
       Cell: TooltipTextCell,
+    },
+    {
+      key: 'warrantyStart',
+      sortable: false,
+      label: 'label.warranty-start-date',
+      Cell: TooltipTextCell,
+    },
+    {
+      key: 'warrantyEnd',
+      sortable: false,
+      label: 'label.warranty-end-date',
+      Cell: TooltipTextCell,
+    },
+    {
+      key: 'serialNumber',
+      sortable: false,
+      label: 'label.serial',
+      Cell: TooltipTextCell,
+    },
+    {
+      key: 'status',
+      sortable: false,
+      label: 'label.status',
+      Cell: ({ rowData }) => <Status status={rowData.status} />,
+    },
+    {
+      key: 'needsReplacement',
+      sortable: false,
+      label: 'label.needs-replacement',
+      Cell: DotCell,
+      accessor: ({ rowData }) => !!rowData.needsReplacement,
     },
     {
       key: 'notes',
@@ -119,7 +142,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   );
 
   return (
-    <Grid flexDirection="column" display="flex" gap={0}>
+    <Grid flexDirection="column" display="flex" gap={0} width={'100%'}>
       <SearchBar
         placeholder={t('messages.search')}
         value={searchString}

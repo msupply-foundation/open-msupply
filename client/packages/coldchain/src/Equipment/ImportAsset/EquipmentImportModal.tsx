@@ -19,6 +19,7 @@ import {
   AssetLogStatusInput,
   FnUtils,
   useIsCentralServerApi,
+  StatusType,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { useAssets } from '../api';
@@ -49,6 +50,8 @@ export type ImportRow = {
   replacementDate: string | null | undefined;
   warrantyStart: string | null | undefined;
   warrantyEnd: string | null | undefined;
+  status: StatusType;
+  needsReplacement: boolean;
   id: string;
   notes: string;
   errorMessage: string;
@@ -72,10 +75,28 @@ export const toInsertEquipmentInput = (
 
   return {
     ...rest,
+    needsReplacement: !!row.needsReplacement,
     catalogueItemId,
     store: store ? { ...store, __typename: 'StoreNode', storeName: '' } : null,
     parsedProperties,
   };
+};
+
+export const toStatusTypeInput = (status: StatusType): AssetLogStatusInput => {
+  switch (status) {
+    case StatusType.Functioning:
+      return AssetLogStatusInput.Functioning;
+    case StatusType.Decommissioned:
+      return AssetLogStatusInput.Decommissioned;
+    case StatusType.FunctioningButNeedsAttention:
+      return AssetLogStatusInput.FunctioningButNeedsAttention;
+    case StatusType.NotFunctioning:
+      return AssetLogStatusInput.NotFunctioning;
+    case StatusType.NotInUse:
+      return AssetLogStatusInput.NotInUse;
+    case StatusType.Unserviceable:
+      return AssetLogStatusInput.Unserviceable;
+  }
 };
 
 export const toExportEquipment = (
@@ -154,7 +175,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
         id: FnUtils.generateUUID(),
         assetId: row.id,
         comment: t('label.created'),
-        status: AssetLogStatusInput.Functioning,
+        status: toStatusTypeInput(row.status),
       });
     } catch (e) {
       const errorMessage = (e as Error).message ?? t('messages.unknown-error');
