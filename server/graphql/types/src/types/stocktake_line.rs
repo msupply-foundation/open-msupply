@@ -86,6 +86,10 @@ impl StocktakeLineNode {
         )
     }
 
+    pub async fn item_variant_id(&self) -> &Option<String> {
+        &self.line.line.item_variant_id
+    }
+
     pub async fn batch(&self) -> &Option<String> {
         &self.line.line.batch
     }

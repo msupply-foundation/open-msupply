@@ -89,7 +89,6 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
         name: input.name,
         manufacturerId: input.manufacturerId,
         coldStorageTypeId: input.coldStorageTypeId,
-        dosesPerUnit: input.dosesPerUnit,
         packagingVariants: input.packagingVariants.map(pv => ({
           id: pv.id,
           name: pv.name,

@@ -5,6 +5,7 @@ mod add_cold_storage_type_table;
 mod add_demographic_indicator_types_to_activity_log;
 mod add_expected_lifespan_to_assets;
 mod add_item_variant_id_to_stock_line_and_invoice_line;
+mod add_item_variant_id_to_stocktake_line;
 mod add_manual_requisition_line_fields;
 mod add_reason_option_table;
 mod add_store_pref_use_extra_fields;
@@ -47,6 +48,7 @@ impl Migration for V2_04_00 {
             Box::new(add_demographic_indicator_types_to_activity_log::Migrate),
             Box::new(indicator_indexes::Migrate),
             Box::new(add_store_pref_use_extra_fields::Migrate),
+            Box::new(add_item_variant_id_to_stocktake_line::Migrate),
             Box::new(item_changelog::Migrate),
         ]
     }

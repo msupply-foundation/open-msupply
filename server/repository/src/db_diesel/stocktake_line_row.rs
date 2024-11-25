@@ -35,6 +35,7 @@ table! {
         sell_price_per_pack -> Nullable<Double>,
         note -> Nullable<Text>,
         inventory_adjustment_reason_id -> Nullable<Text>,
+        item_variant_id -> Nullable<Text>,
     }
 }
 
@@ -69,6 +70,7 @@ pub struct StocktakeLineRow {
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
+    pub item_variant_id: Option<String>,
 }
 
 pub struct StocktakeLineRowRepository<'a> {
