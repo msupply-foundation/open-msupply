@@ -280,6 +280,7 @@
   "error.no-immunisation-programs": "No Immunization programs found",
   "error.no-inbound-items": "No items have been added to this shipment.",
   "error.no-inbound-shipments": "There are no Inbound Shipments to display.",
+  "error.no-indicators": "There are no indicators for this requisition",
   "error.no-internal-orders": "No internal orders to display.",
   "error.no-items": "No items",
   "error.no-items-filter-on": "No items to display. Try changing the filter criteria.",
