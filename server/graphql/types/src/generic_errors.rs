@@ -1,6 +1,6 @@
-use crate::types::{InvoiceLineConnector, StockLineNode, StocktakeLineNode};
+use crate::types::{InvoiceLineConnector, RequisitionLineNode, StockLineNode, StocktakeLineNode};
 use async_graphql::*;
-use repository::{StockLine, StocktakeLine};
+use repository::{RequisitionLine, StockLine, StocktakeLine};
 
 pub struct CannotDeleteInvoiceWithLines(pub InvoiceLineConnector);
 #[Object]
@@ -29,6 +29,25 @@ impl StockLineReducedBelowZero {
     }
 
     pub async fn stock_line(&self) -> &StockLineNode {
+        &self.0
+    }
+}
+
+pub struct RequisitionReasonNotProvided(pub RequisitionLineNode);
+
+impl RequisitionReasonNotProvided {
+    pub fn from_domain(line: RequisitionLine) -> Self {
+        RequisitionReasonNotProvided(RequisitionLineNode::from_domain(line))
+    }
+}
+
+#[Object]
+impl RequisitionReasonNotProvided {
+    pub async fn description(&self) -> &str {
+        "Requisition line reason not provided when suggested differs from requested"
+    }
+
+    pub async fn requisition_line(&self) -> &RequisitionLineNode {
         &self.0
     }
 }

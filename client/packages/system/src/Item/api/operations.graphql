@@ -101,7 +101,6 @@ fragment ItemVariant on ItemVariantNode {
   __typename
   id
   name
-  dosesPerUnit
   itemId
   manufacturerId
   manufacturer(storeId: $storeId) {
