@@ -44,17 +44,19 @@ export const useFormActions = (
   const state = useRef<Record<string, unknown>>({});
   const submitActions = useRef<SubmitActionRegistry>({});
 
-  const setState = (key: string, value: unknown, setDirty: boolean = true) => {
-    const currentValue = state.current[key];
-    if (setDirty && !ObjUtils.isEqual(currentValue, value)) setIsDirty(true);
-    state.current[key] = value;
-    console.log('State', state);
-  };
+  const setState = useCallback(
+    (key: string, value: unknown, setDirty: boolean = true) => {
+      const currentValue = state.current[key];
+      if (setDirty && !ObjUtils.isEqual(currentValue, value)) setIsDirty(true);
+      state.current[key] = value;
+    },
+    []
+  );
 
-  const getState = (key?: string) => {
+  const getState = useCallback((key?: string) => {
     if (!key) return state.current;
     else return state.current[key];
-  };
+  }, []);
 
   const register = useCallback(
     (
@@ -67,15 +69,18 @@ export const useFormActions = (
     []
   );
 
-  const run = async (input: { preSubmit: boolean } = { preSubmit: false }) => {
-    const actions = Object.values(submitActions.current)
-      .filter(({ preSubmit }) => preSubmit === input.preSubmit)
-      .map(({ action }) => action);
+  const run = useCallback(
+    async (input: { preSubmit: boolean } = { preSubmit: false }) => {
+      const actions = Object.values(submitActions.current)
+        .filter(({ preSubmit }) => preSubmit === input.preSubmit)
+        .map(({ action }) => action);
 
-    for (const action of actions) {
-      await action(state.current);
-    }
-  };
+      for (const action of actions) {
+        await action(state.current);
+      }
+    },
+    []
+  );
 
   return { setState, getState, register, run };
 };
