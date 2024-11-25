@@ -114,7 +114,7 @@ fn generate_stock_in_out_or_update(
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
-            item_variant_id: stocktake_line.line.item_variant_id.clone(),
+            item_variant_id: stocktake_line.line.item_variant_id.clone(), // This needs to be a copy of the item variant id, not only on update, otherwise we can't clear the item_variant
             ..stock_line_row
         }
         .to_owned();
