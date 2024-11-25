@@ -35,6 +35,18 @@ const sortNodes = (nodes, sort, dir) => {
       const valueA = getNestedValue(a, sort);
       const valueB = getNestedValue(b, sort);
 
+      if (valueA == null && valueB == null) {
+        return 0;
+      }
+
+      if (valueA == null) {
+        return dir === "asc" ? -1 : 1;
+      }
+
+      if (valueB == null) {
+        return dir === "asc" ? 1 : -1;
+      }
+
       if (valueA === valueB) {
         return 0;
       }
