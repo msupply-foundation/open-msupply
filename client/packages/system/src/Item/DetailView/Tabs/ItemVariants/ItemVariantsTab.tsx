@@ -7,7 +7,6 @@ import {
   FlatButton,
   InputWithLabelRow,
   NothingHere,
-  NumericTextInput,
   Typography,
 } from '@common/components';
 import {
@@ -133,20 +132,6 @@ const ItemVariant = ({
                 disabled
                 fullWidth
               />
-            }
-          />
-
-          <InputWithLabelRow
-            label={t('label.doses-per-unit')}
-            labelWidth="200"
-            Input={
-              <Box width="100%">
-                <NumericTextInput
-                  value={variant.dosesPerUnit ?? undefined}
-                  disabled
-                  style={{ justifyContent: 'flex-start' }}
-                />
-              </Box>
             }
           />
         </Box>
