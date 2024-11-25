@@ -9,7 +9,8 @@ use crate::{
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ActivityLogType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
+    ActivityLogType, EqualFilter, RepositoryError, Requisition, RequisitionLine,
+    RequisitionLineFilter, RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 
@@ -35,6 +36,7 @@ pub enum UpdateResponseRequisitionError {
     NotAResponseRequisition,
     UpdatedRequisitionDoesNotExist,
     DatabaseError(RepositoryError),
+    ReasonsNotProvided(Vec<RequisitionLine>),
 }
 
 type OutError = UpdateResponseRequisitionError;
@@ -97,6 +99,27 @@ pub fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
+    let response_lines = RequisitionLineRepository::new(connection).query_by_filter(
+        RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&requisition_row.id)),
+    )?;
+
+    if requisition_row.program_id.is_some() {
+        let mut lines_missing_reason = Vec::new();
+
+        for line in response_lines {
+            if (line.requisition_line_row.requested_quantity
+                != line.requisition_line_row.suggested_quantity)
+                && line.requisition_line_row.option_id.is_none()
+            {
+                lines_missing_reason.push(line.clone())
+            }
+        }
+
+        if !lines_missing_reason.is_empty() {
+            return Err(OutError::ReasonsNotProvided(lines_missing_reason));
+        }
+    }
+
     let status_changed = input.status.is_some();
 
     Ok((requisition_row, status_changed))
@@ -144,10 +167,10 @@ mod test_update {
     use chrono::Utc;
     use repository::{
         mock::{
-            mock_finalised_response_requisition, mock_new_response_requisition,
-            mock_new_response_requisition_for_update_test, mock_response_program_requisition,
-            mock_sent_request_requisition, mock_store_a, mock_store_b, mock_user_account_b,
-            MockDataInserts,
+            mock_finalised_response_requisition, mock_new_response_program_requisition,
+            mock_new_response_requisition, mock_new_response_requisition_for_update_test,
+            mock_response_program_requisition, mock_sent_request_requisition, mock_store_a,
+            mock_store_b, mock_user_account_b, MockDataInserts,
         },
         requisition_row::{RequisitionRow, RequisitionStatus},
         test_db::setup_all,
@@ -246,6 +269,23 @@ mod test_update {
             ),
             Err(ServiceError::CannotEditRequisition)
         );
+
+        // ReasonRequired when requested differs from suggested
+        if let Err(ServiceError::ReasonsNotProvided(errors)) = service.update_response_requisition(
+            &context,
+            UpdateResponseRequisition {
+                id: mock_new_response_program_requisition()
+                    .requisition
+                    .id
+                    .clone(),
+                status: Some(UpdateResponseRequisitionStatus::Finalised),
+                ..Default::default()
+            },
+        ) {
+            assert_eq!(errors.len(), 1);
+        } else {
+            panic!("Expected ReasonsNotProvided error");
+        }
     }
 
     #[actix_rt::test]

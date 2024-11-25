@@ -1,6 +1,7 @@
 import React, { FC, useState } from 'react';
 import {
   ColumnDescription,
+  ColumnFormat,
   DataTable,
   Grid,
   NothingHere,
@@ -66,14 +67,14 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
       width: 100,
       sortable: false,
       label: 'label.installation-date',
-      Cell: TooltipTextCell,
+      format: ColumnFormat.Date,
     },
     {
       key: 'replacementDate',
       width: 100,
       sortable: false,
       label: 'label.replacement-date',
-      Cell: TooltipTextCell,
+      format: ColumnFormat.Date,
     },
     {
       key: 'notes',
