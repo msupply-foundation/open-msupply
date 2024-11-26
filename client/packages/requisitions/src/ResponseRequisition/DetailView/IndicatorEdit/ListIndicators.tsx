@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Tooltip,
   ListOptions,
   RouteBuilder,
   useNavigate,
@@ -22,21 +21,19 @@ export const ListIndicatorLines = ({
   const value = lines?.find(({ id }) => id === currentIndicatorLineId) ?? null;
 
   return (
-    <Tooltip title={value?.code}>
-      <ListOptions
-        currentId={value?.id}
-        onClick={id => {
-          navigate(route.addPart(id).build(), {
-            replace: true,
-          });
-        }}
-        options={
-          lines?.map(({ id, code }) => ({
-            id,
-            value: code,
-          })) ?? []
-        }
-      />
-    </Tooltip>
+    <ListOptions
+      currentId={value?.id}
+      onClick={id => {
+        navigate(route.addPart(id).build(), {
+          replace: true,
+        });
+      }}
+      options={
+        lines?.map(({ id, code }) => ({
+          id,
+          value: code,
+        })) ?? []
+      }
+    />
   );
 };
