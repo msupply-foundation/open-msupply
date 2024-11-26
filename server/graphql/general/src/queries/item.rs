@@ -46,6 +46,7 @@ pub struct ItemFilterInput {
     pub r#type: Option<EqualFilterItemTypeInput>,
     pub code: Option<StringFilterInput>,
     pub category_id: Option<String>,
+    pub category_name: Option<String>,
     /// Items that are visible in this store OR there is available stock of that item in this store
     pub is_visible_or_on_hand: Option<bool>,
     /// Items that are visible in this store. This filter is void if `is_visible_or_on_hand` is true
@@ -98,6 +99,7 @@ impl ItemFilterInput {
             r#type,
             code,
             category_id,
+            category_name,
             is_visible,
             code_or_name,
             is_active,
@@ -111,6 +113,7 @@ impl ItemFilterInput {
             code: code.map(StringFilter::from),
             r#type: r#type.map(|t| map_filter!(t, ItemNodeType::to_domain)),
             category_id,
+            category_name,
             is_visible,
             code_or_name: code_or_name.map(StringFilter::from),
             is_active,

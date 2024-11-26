@@ -1,4 +1,4 @@
-use super::StorageConnection;
+use super::{category_row::category, StorageConnection};
 use crate::{repository_error::RepositoryError, Upsert};
 
 use chrono::NaiveDateTime;
@@ -12,6 +12,9 @@ table! {
         deleted_datetime -> Nullable<Timestamp>,
     }
 }
+
+joinable!(item_category_join -> category (category_id));
+allow_tables_to_appear_in_same_query!(item_category_join, category);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[diesel(table_name = item_category_join)]
