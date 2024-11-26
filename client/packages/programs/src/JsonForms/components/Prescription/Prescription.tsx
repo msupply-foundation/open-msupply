@@ -14,15 +14,15 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
-import { DefaultFormRowSx, useZodOptionsValidation } from '../../common';
-import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
-import { usePrescription } from 'packages/invoices/src/Prescriptions/api';
-import { AppRoute } from 'packages/config/src';
 import {
   ItemStockOnHandFragment,
   StockItemSearchInput,
-} from 'packages/system/src';
-import { useDraftPrescriptionLines } from 'packages/invoices/src/Prescriptions/DetailView/PrescriptionLineEdit/hooks';
+} from '@openmsupply-client/system';
+import { AppRoute } from '@openmsupply-client/config';
+import { DefaultFormRowSx, useZodOptionsValidation } from '../../common';
+import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
+import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
+import { useDraftPrescriptionLines } from '@openmsupply-client/invoices/src/Prescriptions/DetailView/PrescriptionLineEdit/hooks';
 import { StockLineTable } from './StockLineTable';
 import { DraftStockOutLine } from 'packages/invoices/src/types';
 
