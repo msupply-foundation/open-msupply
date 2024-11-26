@@ -443,7 +443,6 @@ mod test {
                     },
                     customer_and_order_types: vec![(
                         ProgramCustomer {
-                            // program1 master list only visible in mock_name_store_b customer
                             customer: Name {
                                 name_row: mock_name_store_b(),
                                 name_store_join_row: Some(name_store_join1.clone()),
@@ -463,8 +462,6 @@ mod test {
                     },
                     customer_and_order_types: vec![(
                         ProgramCustomer {
-                            // program2 master list only visible in
-                            // name c customer so period 3 & 4 are available as requisition2 is created for name b
                             customer: Name {
                                 name_row: mock_name_store_c(),
                                 name_store_join_row: Some(name_store_join2.clone()),
