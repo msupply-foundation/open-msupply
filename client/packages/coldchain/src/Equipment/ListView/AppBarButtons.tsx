@@ -15,6 +15,7 @@ import {
   UploadIcon,
   UserPermission,
   useCallbackWithPermission,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { assetsToCsv } from '../utils';
@@ -32,6 +33,7 @@ export const AppBarButtonsComponent = ({
   const t = useTranslation();
   const { fetchAsync, isLoading } = useAssets.document.listAll();
   const { data: properties } = useAssetData.utils.properties();
+  const isCentralServer = useIsCentralServerApi();
 
   const onAdd = useCallbackWithPermission(
     UserPermission.AssetMutate,
@@ -46,7 +48,12 @@ export const AppBarButtonsComponent = ({
       return;
     }
 
-    const csv = assetsToCsv(data.nodes, t, properties?.map(p => p.key) ?? []);
+    const csv = assetsToCsv(
+      data.nodes,
+      t,
+      properties?.map(p => p.key) ?? [],
+      isCentralServer
+    );
     FileUtils.exportCSV(csv, t('filename.cold-chain-equipment'));
     success(t('success'))();
   };

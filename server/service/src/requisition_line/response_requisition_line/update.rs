@@ -144,7 +144,7 @@ fn generate(
         u.addition_in_units = updated_addition_in_units.unwrap_or(u.addition_in_units);
         u.expiring_units = updated_expiring_units.unwrap_or(u.expiring_units);
         u.days_out_of_stock = updated_days_out_of_stock.unwrap_or(u.days_out_of_stock);
-        u.option_id = updated_option_id.or(u.option_id);
+        u.option_id = updated_option_id;
 
         u
     });
