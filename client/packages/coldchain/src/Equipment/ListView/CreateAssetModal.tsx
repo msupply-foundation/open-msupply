@@ -137,13 +137,13 @@ export const CreateAssetModal = ({
     });
   };
 
-  // const onStoreInputChange = (
-  //   _event: React.SyntheticEvent<Element, Event>,
-  //   _value: string,
-  //   reason: string
-  // ) => {
-  //   if (reason === 'clear') updateDraft({ store: null });
-  // };
+  const onStoreInputChange = (
+    _event: React.SyntheticEvent<Element, Event>,
+    _value: string,
+    reason: string
+  ) => {
+    if (reason === 'clear') updateDraft({ store: null });
+  };
 
   const isDisabled =
     !draft.assetNumber ||
@@ -215,9 +215,10 @@ export const CreateAssetModal = ({
                   fullWidth
                   value={draft.store ?? undefined}
                   onChange={onStoreChange}
-                  onInputChange={(reason, value) => {
-                    if (reason?.type === 'change') debounceOnFilter(value);
-                  }}
+                  // onInputChange={(_, reason, value) => {
+                  //   if (reason === 'change') debounceOnFilter(value);
+                  // }}
+                  onInputChange={onStoreInputChange}
                 />
               }
             />

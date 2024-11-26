@@ -6,7 +6,8 @@ import {
   createQueryParamsStore,
   QueryParamsProvider,
   RegexUtils,
-  usePagination,
+  useDebounceCallback,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { StoreOptionRender } from './StoreOptionRenderer';
 
@@ -19,7 +20,7 @@ type StoreSearchInputProps = {
   value?: StoreRowFragment;
   onPageChange?: (page: number) => void;
   onChange: (newStore: StoreRowFragment) => void;
-  onInputChange?: (
+  onInputChange: (
     event: React.SyntheticEvent,
     value: string,
     reason: string
@@ -42,25 +43,37 @@ const StoreSearchComponent = ({
   onChange,
   onInputChange,
 }: StoreSearchInputProps) => {
-  const { pagination, onPageChange } = usePagination(30);
+  const { sort, filter, pagination } = useQueryParamsStore();
 
-  const { data, isFetching, fetchNextPage } =
-    useStore.document.list(pagination);
+  // const { filter, onFilter } = useStringFilter('search');
+
+  const { data, isFetching, fetchNextPage } = useStore.document.list({
+    pagination,
+    sort,
+    filter,
+  });
 
   const options = ArrayUtils.flatMap(data?.pages, page => page?.nodes ?? []);
+
+  const debounceOnFilter = useDebounceCallback(
+    (searchText: string) => {
+      pagination.onChangePage(0); // Reset pagination when searching for a new item
+      filter.onChangeStringFilterRule('search', 'like', searchText);
+    },
+    [],
+    DEBOUNCE_TIMEOUT
+  );
 
   // when the pagination changes, fetch the next page
   useEffect(() => {
     console.log(
-      'stores:',
+      'useEffect stores:',
       'first:',
       pagination.first,
       'offset:',
       pagination.offset,
       'page:',
-      pagination.page,
-      'options:',
-      options
+      pagination.page
     );
     fetchNextPage({ pageParam: pagination.page });
   }, [fetchNextPage, pagination.page]);
@@ -72,18 +85,23 @@ const StoreSearchComponent = ({
       filterOptions={filterByNameAndCode}
       clearable={clearable}
       loading={isFetching}
-      // options={mapStores(options)}
       options={options}
       getOptionLabel={option => `${option.code} ${option.storeName}`}
       renderOption={StoreOptionRender}
       disabled={isDisabled}
       onChange={(_, value) => value && onChange(value)}
-      value={value ? { label: value.storeName, ...value } : null}
+      // onChange={onChange}
+      value={value}
+      // value={value ? { label: value.storeName, ...value } : null}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       pagination={{ ...pagination, total: data?.pages?.[0]?.totalCount ?? 0 }}
       paginationDebounce={DEBOUNCE_TIMEOUT}
-      onPageChange={onPageChange}
-      onInputChange={onInputChange}
+      onPageChange={pagination.onChangePage}
+      onInputChange={(event, value, reason) => {
+        if (event?.type === 'change') debounceOnFilter(value);
+        else onInputChange(event, value, reason);
+      }}
+      // onInputChange={onInputChange}
     />
   );
 };
