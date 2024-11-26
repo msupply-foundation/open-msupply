@@ -100,11 +100,19 @@ export const EquipmentDetailView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, setDraft]);
 
-  const locations =
+  let locations =
     locationData?.nodes.map(location => ({
       label: formatLocationLabel(location),
       value: location.id,
     })) || [];
+
+  if (data && data?.locations.nodes.length) {
+    const assignedLocations = data.locations.nodes.map(location => ({
+      label: formatLocationLabel(location),
+      value: location.id,
+    }));
+    locations.push(...assignedLocations);
+  }
 
   if (isLoading || isLoadingLocations) return <DetailFormSkeleton />;
 
