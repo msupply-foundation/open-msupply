@@ -44,12 +44,7 @@ pub(super) fn prepare_customer_program_settings(
         .map(|s| s.program_settings_row.id.clone())
         .collect();
 
-    let program_ids: Vec<String> = settings
-        .iter()
-        .map(|s| s.program_row.id.clone())
-        .collect::<std::collections::HashSet<_>>()
-        .into_iter()
-        .collect();
+    let program_ids: Vec<String> = settings.iter().map(|s| s.program_row.id.clone()).collect();
 
     let order_types = ProgramRequisitionOrderTypeRowRepository::new(&ctx.connection)
         .find_many_by_program_requisition_settings_ids(&program_requisition_settings_ids)?;
