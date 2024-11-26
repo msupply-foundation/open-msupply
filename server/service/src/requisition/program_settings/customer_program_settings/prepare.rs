@@ -68,10 +68,13 @@ pub(super) fn prepare_customer_program_settings(
     let requisitions_in_periods =
         RequisitionsInPeriodRepository::new(&ctx.connection).query(filter)?;
 
-    // Customers, which are visible in current store and have these programs (this is determined by having program master list visible)
     let filter = ProgramCustomerFilter::new().program_id(EqualFilter::equal_any(program_ids));
-    let program_customers =
+    let mut program_customers =
         ProgramCustomerRepository::new(&ctx.connection).query(store_id, filter)?;
+    program_customers.sort_by(|a, b| a.program.id.cmp(&b.program.id));
+    program_customers.dedup_by(|a, b| {
+        a.program.id == b.program.id && a.customer.name_row.id == b.customer.name_row.id
+    });
 
     let program_customer_and_requisitions_in_periods = program_customers
         .iter()
