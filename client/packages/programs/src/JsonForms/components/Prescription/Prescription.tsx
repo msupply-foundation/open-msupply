@@ -24,7 +24,7 @@ import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
 import { useDraftPrescriptionLines } from '@openmsupply-client/invoices/src/Prescriptions/DetailView/PrescriptionLineEdit/hooks';
 import { StockLineTable } from './StockLineTable';
-import { DraftStockOutLine } from 'packages/invoices/src/types';
+import { DraftStockOutLine } from '@openmsupply-client/invoices/src/types';
 
 export const prescriptionTester = rankWith(10, uiTypeIs('Prescription'));
 
