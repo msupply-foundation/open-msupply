@@ -76,6 +76,10 @@ const ItemVariant = ({
   const t = useTranslation();
   const confirmAndDelete = useDeleteItemVariant({ itemId });
 
+  const coldStorageValue = variant.coldStorageType
+    ? `${variant.coldStorageType.name} (${variant.coldStorageType.minTemperature}°C to ${variant.coldStorageType.maxTemperature}°C)`
+    : null;
+
   return (
     <Box maxWidth="1000px" margin="25px auto" paddingBottom={6}>
       <Box display="flex" justifyContent="space-between" alignItems="end">
@@ -116,11 +120,7 @@ const ItemVariant = ({
             label={t('label.cold-storage-type')}
             labelWidth="200"
             Input={
-              <BasicTextInput
-                value={variant.coldStorageType?.name ?? ''}
-                disabled
-                fullWidth
-              />
+              <BasicTextInput value={coldStorageValue} disabled fullWidth />
             }
           />
           <InputWithLabelRow
