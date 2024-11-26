@@ -45,7 +45,9 @@ export const DetailView: FC = () => {
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useResponse.document.indicators(
       data?.otherPartyId ?? '',
-      data?.period?.id ?? ''
+      data?.period?.id ?? '',
+      data?.program?.id ?? '',
+      !!data
     );
 
   const onRowClick = useCallback((line: ResponseLineFragment) => {

@@ -307,11 +307,12 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     const result = await sdk.customerProgramSettings({ storeId });
     return result.customerProgramRequisitionSettings;
   },
-  getIndicators: async (customerNameLinkId: string, periodId: string) => {
+  getIndicators: async (customerNameLinkId: string, periodId: string, programId: string) => {    
     let result = await sdk.programIndicators({
       storeId,
       customerNameLinkId,
       periodId,
+      programId
     });
 
     if (result?.programIndicators.__typename === 'ProgramIndicatorConnector') {

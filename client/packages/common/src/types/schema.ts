@@ -6718,6 +6718,8 @@ export type RequisitionNode = {
   otherPartyId: Scalars['String']['output'];
   otherPartyName: Scalars['String']['output'];
   period?: Maybe<PeriodNode>;
+  program?: Maybe<ProgramNode>;
+  /** @deprecated use `program.name` instead. */
   programName?: Maybe<Scalars['String']['output']>;
   requisitionNumber: Scalars['Int']['output'];
   /** Applicable to request requisition only */

@@ -188,6 +188,10 @@ fragment Response on RequisitionNode {
     }
   }
   programName
+  program {
+    id
+    name
+  }
   period {
     id
     name
@@ -549,8 +553,12 @@ query programIndicators(
   $customerNameLinkId: String!
   $periodId: String!
   $storeId: String!
+  $programId: String!
 ) {
-  programIndicators(storeId: $storeId) {
+  programIndicators(
+    storeId: $storeId
+    filter: { programId: { equalTo: $programId } }
+  ) {
     ... on ProgramIndicatorConnector {
       __typename
       nodes {

@@ -25,6 +25,7 @@ export const IndicatorEditPage = () => {
     useResponse.document.indicators(
       response?.otherPartyId ?? '',
       response?.period?.id ?? '',
+      response?.program?.id ?? '',
       !!response
     );
 
