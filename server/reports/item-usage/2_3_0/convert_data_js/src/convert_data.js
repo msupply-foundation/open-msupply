@@ -2,7 +2,12 @@ import { processItemLines } from "./utils";
 
 function convert_data() {
   const res = JSON.parse(Host.inputString());
-  res.items.nodes = processItemLines(res);
+  res.data.items.nodes = processItemLines(
+    res.data,
+    // assign default sort values
+    res?.arguments?.sort ?? "SOH",
+    res?.arguments?.dir ?? "desc"
+  );
   Host.outputString(JSON.stringify(res));
 }
 

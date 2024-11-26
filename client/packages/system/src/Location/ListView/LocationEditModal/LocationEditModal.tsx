@@ -142,7 +142,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
           />
           <ColdStorageTypeInput
             value={draft.coldStorageType ?? null}
-            label={t('label.temperature')}
+            label={t('label.cold-storage-type')}
             onChange={coldStorageType => onUpdate({ coldStorageType })}
           />
           <Grid alignSelf="center">
