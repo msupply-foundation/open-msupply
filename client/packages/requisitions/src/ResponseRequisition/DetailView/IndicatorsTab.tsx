@@ -43,7 +43,7 @@ export const IndicatorsTab = ({
 
   return (
     <Box display="flex" flexDirection="column" padding={2} gap={2}>
-      {regimenIndicators.length >= 0 && (
+      {regimenIndicators.length > 0 && (
         <ButtonWithIcon
           // disabled={disableAddButton}
           label={t('button.regimen')}
@@ -57,7 +57,7 @@ export const IndicatorsTab = ({
           }
         />
       )}
-      {hivIndicators.length >= 0 && (
+      {hivIndicators.length > 0 && (
         <ButtonWithIcon
           // disabled={disableAddButton}
           label={t('button.hiv')}
