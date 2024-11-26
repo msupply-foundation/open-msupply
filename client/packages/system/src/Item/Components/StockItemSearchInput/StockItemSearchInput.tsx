@@ -29,14 +29,19 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   autoFocus = false,
   openOnFocus,
   includeNonVisibleWithStockOnHand = false,
+  itemCategoryName,
 }) => {
   const [items, setItems] = useState<ItemStockOnHandFragment[]>([]);
   const { pagination, onPageChange } = usePagination();
   const { filter, onFilter } = useStringFilter('name');
 
+  const fullFilter = itemCategoryName
+    ? { ...filter, categoryName: itemCategoryName }
+    : filter;
+
   const { data, isLoading } = useItemStockOnHand({
     pagination,
-    filter,
+    filter: fullFilter,
     includeNonVisibleWithStockOnHand,
   });
   // changed from useStockLines even though that is more appropriate
@@ -52,7 +57,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const options = useMemo(
     () =>
       defaultOptionMapper(
-        extraFilter ? items.filter(extraFilter) ?? [] : items ?? [],
+        extraFilter ? (items.filter(extraFilter) ?? []) : (items ?? []),
         'name'
       ).sort((a, b) => a.label.localeCompare(b.label)),
     [items]

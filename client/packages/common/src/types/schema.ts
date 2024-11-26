@@ -3554,6 +3554,7 @@ export type ItemCountsResponse = {
 
 export type ItemFilterInput = {
   categoryId?: InputMaybe<Scalars['String']['input']>;
+  categoryName?: InputMaybe<Scalars['String']['input']>;
   code?: InputMaybe<StringFilterInput>;
   codeOrName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;

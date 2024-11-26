@@ -28,7 +28,22 @@ import { DraftStockOutLine } from 'packages/invoices/src/types';
 
 export const prescriptionTester = rankWith(10, uiTypeIs('Prescription'));
 
-const Options = z.object({ prescriptionIdPath: z.string() }).strict();
+const Options = z
+  .object({
+    /**
+     * There should only be one prescription for the whole encounter, so where
+     * it's stored in the schema won't be this component's path. Specify the
+     * path in the JSON schema where this value should kept (must be defined in
+     * JSON schema)
+     */
+    prescriptionIdPath: z.string(),
+    /**
+     * Path on the data object to look for an item category name. If not
+     * specified, will display all items, not a particular category
+     */
+    itemCategoryPath: z.string().optional(),
+  })
+  .strict();
 type Options = z.infer<typeof Options>;
 
 const UIComponent = (props: ControlProps) => {
@@ -55,6 +70,13 @@ const UIComponent = (props: ControlProps) => {
   const { mutateAsync: updateLines } = usePrescription.line.save();
 
   const { success } = useNotification();
+
+  const itemCategoryPath = options?.itemCategoryPath;
+  const categoryName: string | undefined = extractProperty(
+    core?.data,
+    itemCategoryPath ?? '',
+    undefined
+  );
 
   // Ensures that when this component is re-mounted (e.g. in a Modal), it will
   // populate the draft line data with previously acquired state
@@ -139,6 +161,7 @@ const UIComponent = (props: ControlProps) => {
           <StockItemSearchInput
             onChange={selected => handleItemSelect(selected)}
             currentItemId={selectedItem?.id}
+            itemCategoryName={categoryName}
           />
           {selectedItem && (
             <StockLineTable
