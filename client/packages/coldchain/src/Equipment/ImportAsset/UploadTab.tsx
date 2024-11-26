@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import Papa, { ParseResult } from 'papaparse';
 import { ImportPanel } from './ImportPanel';
-import { useNotification, useQueryParamsStore } from '@common/hooks';
+import { useNotification } from '@common/hooks';
 import { InlineProgress, Typography, Upload } from '@common/components';
 import {
   DateUtils,
@@ -19,7 +19,6 @@ import {
   useIsCentralServerApi,
   EnvUtils,
   Platform,
-  ArrayUtils,
 } from '@openmsupply-client/common';
 import * as EquipmentImportModal from './EquipmentImportModal';
 import { ImportRow } from './EquipmentImportModal';
@@ -197,12 +196,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
 }) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
-  const { sort, filter, pagination } = useQueryParamsStore();
-  const { data: stores } = useStore.document.list({
-    pagination,
-    sort,
-    filter,
-  });
+  const { data: stores } = useStore.document.list();
   const { error, info } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const EquipmentBuffer: EquipmentImportModal.ImportRow[] = [];
@@ -271,8 +265,6 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
     const rows: ImportRow[] = [];
     let hasErrors = false;
 
-    const store = ArrayUtils.flatMap(stores?.pages, page => page?.nodes ?? []);
-
     data.data.forEach((row, index) => {
       const {
         addLookup,
@@ -296,8 +288,13 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         true
       );
       if (isCentralServer) {
-        addLookup('store', store, lookupStore, 'label.store', false, s =>
-          store.find(store => store.code === s)
+        addLookup(
+          'store',
+          stores?.nodes ?? [],
+          lookupStore,
+          'label.store',
+          false,
+          s => stores?.nodes?.find(store => store.code === s)
         );
       }
       addCell('notes', 'label.asset-notes');
