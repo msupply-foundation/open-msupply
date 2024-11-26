@@ -40,7 +40,7 @@ pub async fn run_test_gql_query<
 
     let service_provider_data = Data::new(match service_provider_override {
         Some(service_provider) => service_provider,
-        None => ServiceProvider::new(connection_manager.clone(), "app_data"),
+        None => ServiceProvider::new(connection_manager.clone()),
     });
 
     let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
