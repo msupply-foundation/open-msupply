@@ -32,7 +32,7 @@ const customerRequisitionLineRoute = RouteBuilder.create(
 
 const indicatorLineRoute = RouteBuilder.create(AppRoute.CustomerRequisition)
   .addPart(':requisitionNumber')
-  .addPart('indicator')
+  .addPart(AppRoute.Indicators)
   .addPart(':programIndicatorCode')
   .addPart(':programIndicatorLineId')
   .build();

@@ -73,7 +73,7 @@ export const IndicatorEditPage = () => {
                 route={RouteBuilder.create(AppRoute.Distribution)
                   .addPart(AppRoute.CustomerRequisition)
                   .addPart(String(response?.requisitionNumber))
-                  .addPart('indicator')
+                  .addPart(AppRoute.Indicators)
                   .addPart(String(programIndicatorCode))}
               />
             </>

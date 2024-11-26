@@ -70,7 +70,7 @@ export const DetailView: FC = () => {
         RouteBuilder.create(AppRoute.Distribution)
           .addPart(AppRoute.CustomerRequisition)
           .addPart(String(response.requisitionNumber))
-          .addPart('indicator')
+          .addPart(AppRoute.Indicators)
           .addPart(String(programIndicator?.code))
           .addPart(String(indicatorLine.id))
           .build()
