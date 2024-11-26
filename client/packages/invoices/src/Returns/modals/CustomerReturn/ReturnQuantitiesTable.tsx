@@ -33,6 +33,20 @@ export const QuantityReturnedTableComponent = ({
 
   const columnDefinitions: ColumnDescription<GenerateCustomerReturnLineFragment>[] =
     ['itemCode', 'itemName'];
+
+  columnDefinitions.push([
+    'batch',
+    {
+      width: 125,
+      accessor: ({ rowData }) => rowData.batch ?? '',
+      setter: updateLine,
+      Cell: props => (
+        <TextInputCell {...props} isRequired autocompleteName="batch" />
+      ),
+      getIsDisabled: () => isDisabled,
+    },
+  ]);
+
   if (showItemVariantsColumn)
     columnDefinitions.push({
       key: 'itemVariantId',
@@ -46,16 +60,6 @@ export const QuantityReturnedTableComponent = ({
     });
 
   columnDefinitions.push(
-    [
-      'batch',
-      {
-        width: 125,
-        accessor: ({ rowData }) => rowData.batch ?? '',
-        setter: updateLine,
-        Cell: TextInputCell,
-        getIsDisabled: () => isDisabled,
-      },
-    ],
     [
       expiryInputColumn,
       {
