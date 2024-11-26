@@ -12,22 +12,22 @@ The UI is not bundled within Capacitor, it is served by the server the client co
 Before building the Android app, the Rust server library that allows us to run the mSupply server on the mobile device needs to be built.
 This requires a couple of steps.
 
-- Install Android Studio
+- Install Android Studio (Ladybug at time of writing 15/11/24)
 - Install NDK (26.1.10909125 at the time of writing on the 8/4/24)
 
 ![omSupply Android NDK](./doc/omSupply_android_ndk.png)
 
-Currently, we support two Android architectures;
+Currently, we support only 1 Android architecture (64bit);
 
 | rust target             | android ABI |
-| ----------------------- | ----------- |
 | aarch64-linux-android   | arm64-v8a   |
-| armv7-linux-androideabi | armeabi-v7a |
+| ----------------------- | ----------- |
+
 
 To add the required build targets to Rust run:
 
 ```bash
-rustup target add aarch64-linux-android && rustup target add armv7-linux-androideabi
+rustup target add aarch64-linux-android
 ```
 
 Next we have to tell Rust where to find the Android NDK binaries required to link the server library.

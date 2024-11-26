@@ -15,6 +15,7 @@ import {
   ColumnAlign,
   DotCell,
   RouteBuilder,
+  ColumnFormat,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { Toolbar } from './Toolbar';
@@ -64,6 +65,14 @@ const AssetListComponent: FC = () => {
       label: 'label.asset-number',
     },
     {
+      key: 'categoryName',
+      label: 'label.category',
+      sortable: false,
+      width: 200,
+      accessor: ({ rowData }) => rowData.assetCategory?.name,
+      Cell: TooltipTextCell,
+    },
+    {
       key: 'type',
       label: 'label.type',
       sortable: false,
@@ -106,6 +115,7 @@ const AssetListComponent: FC = () => {
     {
       key: 'installationDate',
       label: 'label.installation-date',
+      format: ColumnFormat.Date,
     },
     {
       key: 'notes',

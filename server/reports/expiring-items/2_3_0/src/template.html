@@ -32,7 +32,7 @@
             <span class="na">N/A</span>
           {% endif %}
         </td>
-        <td>{{stockLine.batch}}</td>
+        <td>{{stockLine.batch | default(value='')}}</td>
         <td>
           {% if stockLine.expiryDate %}
             {{ stockLine.expiryDate | date(format="%d/%m/%Y") }}
