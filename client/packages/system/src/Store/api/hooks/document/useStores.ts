@@ -1,40 +1,49 @@
 import {
   FilterController,
-  Pagination,
-  SortController,
   useInfiniteQuery,
+  useQuery,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { useStoreApi } from '../utils/useStoreApi';
 
+export const useStores = () => {
+  const api = useStoreApi();
+  const { filter } = useQueryParamsStore();
+  const { filterBy } = filter;
+
+  return useQuery(api.keys.paramList(filterBy), async () =>
+    api.get.list({
+      filter: filterBy,
+      first: 5000, // arbitrary large limit for now
+      offset: 0,
+    })
+  );
+};
+
 interface useStoresProps {
-  sort: SortController<any>;
-  filter: FilterController;
-  pagination?: Pagination;
+  filter?: FilterController;
+  rowsPerPage: number;
 }
 
-export const useStores = ({ pagination, sort, filter }: useStoresProps) => {
-  // const { first, offset } = pagination;
-
+export const usePaginatedStores = ({ rowsPerPage, filter }: useStoresProps) => {
   const api = useStoreApi();
 
-  const params = {
-    filterBy: filter.filterBy,
-    sortBy: sort,
-  };
-
   const query = useInfiniteQuery(
-    api.keys.paramList(params),
-    ({ pageParam }) => {
-      console.log('running query useStores:');
-      console.log('pageparam', pageParam);
-      return api.get.list({ ...params, ...pagination, ...pageParam });
-    },
-    {}
+    api.keys.paramList(filter?.filterBy ?? null),
+    async ({ pageParam }) => {
+      const pageNumber = Number(pageParam ?? 0);
+
+      const data = await api.get.list({
+        filter: filter?.filterBy ?? null,
+        first: rowsPerPage,
+        offset: rowsPerPage * pageNumber,
+      });
+
+      return {
+        data,
+        pageNumber,
+      };
+    }
   );
   return query;
 };
-
-//   return useInfiniteQuery(api.keys.paramList(params), ({ pageParam }) =>
-//     api.get.list({ ...params, ...pagination, ...pageParam })
-//   );
-// };

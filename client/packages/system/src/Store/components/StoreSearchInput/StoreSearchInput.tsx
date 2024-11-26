@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { StoreRowFragment, useStore } from '../../api';
+import React from 'react';
+import { StoreRowFragment, usePaginatedStores } from '../../api';
 import {
   ArrayUtils,
   AutocompleteWithPagination,
@@ -12,6 +12,7 @@ import {
 import { StoreOptionRender } from './StoreOptionRenderer';
 
 const DEBOUNCE_TIMEOUT = 300;
+const RECORDS_PER_PAGE = 100;
 
 type StoreSearchInputProps = {
   clearable?: boolean;
@@ -43,40 +44,36 @@ const StoreSearchComponent = ({
   onChange,
   onInputChange,
 }: StoreSearchInputProps) => {
-  const { sort, filter, pagination } = useQueryParamsStore();
+  const { filter } = useQueryParamsStore();
 
-  // const { filter, onFilter } = useStringFilter('search');
-
-  const { data, isFetching, fetchNextPage } = useStore.document.list({
-    pagination,
-    sort,
+  const { data, isFetching, fetchNextPage } = usePaginatedStores({
+    rowsPerPage: RECORDS_PER_PAGE,
     filter,
   });
 
-  const options = ArrayUtils.flatMap(data?.pages, page => page?.nodes ?? []);
+  const pageNumber = data?.pages[data?.pages.length - 1]?.pageNumber ?? 0;
+
+  // Pagination object, to help `AutocompleteWithPagination` component
+  // manage where it is in the list. The actually pagination is handled by useInfiniteQuery
+  const pagination = {
+    page: pageNumber,
+    first: RECORDS_PER_PAGE,
+    offset: pageNumber * RECORDS_PER_PAGE,
+    total: data?.pages?.[0]?.data.totalCount ?? 0,
+  };
+
+  const options = ArrayUtils.flatMap(
+    data?.pages,
+    page => page.data?.nodes ?? []
+  );
 
   const debounceOnFilter = useDebounceCallback(
     (searchText: string) => {
-      pagination.onChangePage(0); // Reset pagination when searching for a new item
-      filter.onChangeStringFilterRule('search', 'like', searchText);
+      filter.onChangeStringFilterRule('name', 'like', searchText);
     },
     [],
     DEBOUNCE_TIMEOUT
   );
-
-  // when the pagination changes, fetch the next page
-  useEffect(() => {
-    console.log(
-      'useEffect stores:',
-      'first:',
-      pagination.first,
-      'offset:',
-      pagination.offset,
-      'page:',
-      pagination.page
-    );
-    fetchNextPage({ pageParam: pagination.page });
-  }, [fetchNextPage, pagination.page]);
 
   return (
     <AutocompleteWithPagination
@@ -90,18 +87,15 @@ const StoreSearchComponent = ({
       renderOption={StoreOptionRender}
       disabled={isDisabled}
       onChange={(_, value) => value && onChange(value)}
-      // onChange={onChange}
-      value={value}
-      // value={value ? { label: value.storeName, ...value } : null}
+      value={value ? { label: value.storeName, ...value } : null}
       isOptionEqualToValue={(option, value) => option.id === value.id}
-      pagination={{ ...pagination, total: data?.pages?.[0]?.totalCount ?? 0 }}
+      pagination={pagination}
       paginationDebounce={DEBOUNCE_TIMEOUT}
-      onPageChange={pagination.onChangePage}
+      onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
       onInputChange={(event, value, reason) => {
         if (event?.type === 'change') debounceOnFilter(value);
-        else onInputChange(event, value, reason);
+        onInputChange(event, value, reason);
       }}
-      // onInputChange={onInputChange}
     />
   );
 };
@@ -109,7 +103,8 @@ const StoreSearchComponent = ({
 export const StoreSearchInput = (props: StoreSearchInputProps) => (
   <QueryParamsProvider
     createStore={createQueryParamsStore<StoreRowFragment>({
-      initialSortBy: { key: 'code' },
+      initialSortBy: { key: 'name' },
+      initialRowsPerPage: RECORDS_PER_PAGE,
     })}
   >
     <StoreSearchComponent {...props} />
