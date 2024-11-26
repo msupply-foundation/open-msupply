@@ -15,6 +15,7 @@ mod indicator_line_column_create_tables;
 mod indicator_value_create_table;
 mod item_variant;
 mod program_indicator_create_table;
+mod reports;
 
 use crate::StorageConnection;
 
@@ -46,6 +47,7 @@ impl Migration for V2_04_00 {
             Box::new(add_demographic_indicator_types_to_activity_log::Migrate),
             Box::new(indicator_indexes::Migrate),
             Box::new(add_store_pref_use_extra_fields::Migrate),
+            Box::new(reports::Migrate),
         ]
     }
 }
