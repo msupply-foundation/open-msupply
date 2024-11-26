@@ -71,7 +71,8 @@ const UIComponent = (props: ControlProps) => {
 
   const { success } = useNotification();
 
-  const itemCategoryPath = options?.itemCategoryPath;
+  const itemCategoryPath = uischema.options?.['itemCategoryPath'];
+
   const categoryName: string | undefined = extractProperty(
     core?.data,
     itemCategoryPath ?? '',
@@ -87,6 +88,19 @@ const UIComponent = (props: ControlProps) => {
     if (existing && existing[0]?.item.id === selectedItem?.id)
       setDraftStockOutLines(existing);
   }, []);
+
+  useEffect(() => {
+    // We need the selected item to be reset when the category changes.
+    // Unfortunately, the effect runs on all re-mounts as well, so we need to
+    // capture and compare the category of the previous value to determine if
+    // it's *actually* changed or just remounted
+    const previous = formActions.getState(`${path}_category`);
+    if (previous !== categoryName) {
+      handleItemSelect(null);
+    }
+
+    formActions.setState(`${path}_category`, categoryName);
+  }, [categoryName]);
 
   const handleItemSelect = (selectedItem: ItemStockOnHandFragment | null) => {
     setSelectedItem(selectedItem);
