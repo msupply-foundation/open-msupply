@@ -33,6 +33,7 @@ pub(crate) mod name_property;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
+pub(crate) mod om_report;
 pub(crate) mod packaging_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
@@ -152,6 +153,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Item Variant
         item_variant::boxed(),
         packaging_variant::boxed(),
+        om_report::boxed(),
     ]
 }
 

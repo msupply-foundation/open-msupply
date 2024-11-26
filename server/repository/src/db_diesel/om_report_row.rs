@@ -1,6 +1,9 @@
-use super::{om_report_row::om_report::dsl as om_report_dsl, StorageConnection};
+use super::{
+    om_report_row::om_report::dsl as om_report_dsl, ChangeLogInsertRow, ChangelogRepository,
+    ChangelogTableName, RowActionType, StorageConnection,
+};
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -37,19 +40,64 @@ impl<'a> OmReportRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn upsert_one(&self, row: &OmReportRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &OmReportRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(om_report_dsl::om_report)
             .values(row)
             .on_conflict(om_report_dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(&row.id, RowActionType::Upsert)
+    }
+
+    fn insert_changelog(&self, uid: &str, action: RowActionType) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::OmReport,
+            record_id: uid.to_string(),
+            row_action: action,
+            store_id: None,
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(om_report_dsl::om_report.filter(om_report_dsl::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+}
+
+impl Upsert for OmReportRow {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log = OmReportRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log))
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            OmReportRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
+// Most central data will be soft deleted (via upsert), and this trait will not be implemented
+// reports don't have referencial relations to any other tables so it's ok to delete as an example
+pub struct OmReportRowDelete(pub String);
+impl Delete for OmReportRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        OmReportRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // Table not in Changelog
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            OmReportRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
     }
 }
