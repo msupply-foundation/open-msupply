@@ -106,6 +106,8 @@ export const EquipmentDetailView = () => {
       value: location.id,
     })) || [];
 
+  // Any locations that are already assigned to the asset won't be returned by the query above
+  // So we add them in manually here...
   if (data && data?.locations.nodes.length) {
     const assignedLocations = data.locations.nodes.map(location => ({
       label: formatLocationLabel(location),
