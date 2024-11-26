@@ -1,6 +1,6 @@
 import { LocaleKey, TypedTFunction } from '@common/intl';
 import { AssetRowFragment } from './api';
-import { Formatter, ObjUtils } from '@common/utils';
+import { ArrayUtils, Formatter, ObjUtils } from '@common/utils';
 import { StatusType } from '@common/types';
 import { ImportRow, LineNumber } from './ImportAsset';
 
@@ -13,7 +13,11 @@ function baseAssetFields(t: TypedTFunction<LocaleKey>) {
     t('label.catalogue-item-code'),
     t('label.installation-date'),
     t('label.replacement-date'),
+    t('label.warranty-start-date'),
+    t('label.warranty-end-date'),
     t('label.serial'),
+    t('label.status'),
+    t('label.needs-replacement'),
     t('label.asset-notes'),
   ];
 }
@@ -21,29 +25,47 @@ function baseAssetFields(t: TypedTFunction<LocaleKey>) {
 export const assetsToCsv = (
   items: AssetRowFragment[],
   t: TypedTFunction<LocaleKey>,
-  properties: string[]
+  properties: string[],
+  isCentralServer: boolean
 ) => {
-  const fields: string[] = ['id'].concat(baseAssetFields(t));
+  const dedupedAssetProperties = ArrayUtils.dedupe(properties);
 
-  fields.push(t('label.created-datetime'), t('label.modified-datetime'));
+  const fields: string[] = ['id'];
 
-  fields.push(...properties);
+  if (isCentralServer) {
+    fields.push(t('label.store'));
+  }
+
+  fields.push(
+    ...baseAssetFields(t),
+    t('label.created-datetime'),
+    t('label.modified-datetime'),
+    ...dedupedAssetProperties
+  );
 
   const data = items.map(node => {
     const parsedProperties = ObjUtils.parse(node.properties);
     const parsedCatalogProperties = ObjUtils.parse(node.catalogProperties);
 
+    const status =
+      node.statusLog?.status && parseLogStatus(node.statusLog.status);
+
     return [
       node.id,
+      ...(isCentralServer ? [node.store?.code] : []),
       node.assetNumber,
       node.catalogueItem?.code ?? '',
       Formatter.csvDateString(node.installationDate),
       Formatter.csvDateString(node.replacementDate),
+      Formatter.csvDateString(node.warrantyStart),
+      Formatter.csvDateString(node.warrantyEnd),
       node.serialNumber,
+      status ? t(status.key) : '',
+      node.needsReplacement,
       node.notes,
       Formatter.csvDateTimeString(node.createdDatetime),
       Formatter.csvDateTimeString(node.modifiedDatetime),
-      ...properties.map(
+      ...dedupedAssetProperties.map(
         key => parsedCatalogProperties[key] ?? parsedProperties[key] ?? ''
       ),
     ];
@@ -97,42 +119,34 @@ export const importEquipmentToCsvWithErrors = (
   isCentralServer: boolean,
   properties?: string[]
 ) => {
-  const props = properties ?? [];
+  const dedupedAssetProperties = ArrayUtils.dedupe(properties ?? []);
 
-  const fields: string[] = [
-    t('label.asset-number'),
-    t('label.catalogue-item-code'),
-  ];
-
-  if (isCentralServer) {
-    fields.push(t('label.store'));
-  }
+  const fields: string[] = isCentralServer ? [t('label.store')] : [];
 
   fields.push(
-    t('label.asset-notes'),
-    t('label.serial'),
-    t('label.installation-date'),
-    t('label.replacement-date'),
+    ...baseAssetFields(t),
     t('label.line-number'),
-    ...props,
+    ...dedupedAssetProperties,
     t('label.error-message')
   );
 
   const data = assets.map(node => {
     const mapped: (string | number | null | undefined)[] = [
+      ...(isCentralServer ? [node.store?.code] : []),
       node.assetNumber,
       node.catalogueItemCode,
-    ];
-    if (isCentralServer) mapped.push(node.store?.code);
-    mapped.push(
-      node.notes,
-      node.serialNumber,
       node.installationDate,
       node.replacementDate,
+      node.warrantyStart,
+      node.warrantyEnd,
+      node.serialNumber,
+      node.status,
+      node.needsReplacement ? 'X' : '',
+      node.notes,
       node.lineNumber,
-      ...props.map(key => node.properties?.[key] ?? ''),
-      node.errorMessage
-    );
+      ...dedupedAssetProperties.map(key => node.properties?.[key] ?? ''),
+      node.errorMessage,
+    ];
 
     return mapped;
   });
@@ -145,28 +159,56 @@ export const importEquipmentToCsv = (
   isCentralServer: boolean = false,
   properties?: string[]
 ) => {
-  const fields = baseAssetFields(t);
-  if (isCentralServer) {
-    fields.push(t('label.store'));
-  }
+  const dedupedAssetProperties = ArrayUtils.dedupe(properties ?? []);
 
-  const props = properties ?? [];
-  fields.push(...props);
+  const fields: string[] = isCentralServer ? [t('label.store')] : [];
+
+  fields.push(...baseAssetFields(t), ...dedupedAssetProperties);
 
   const data = assets.map(node => {
     const row = [
+      ...(isCentralServer ? [node.store?.code] : []),
       node.assetNumber,
       node.catalogueItemCode,
       node.installationDate,
       node.replacementDate,
+      node.warrantyStart,
+      node.warrantyEnd,
       node.serialNumber,
+      node.status ? (parseLogStatus(node.status)?.key ?? '') : '',
+      node.needsReplacement,
       node.notes,
     ];
 
-    if (isCentralServer) row.push(node.store?.code);
-
-    return row.concat(props.map(key => node.properties?.[key] ?? ''));
+    return row.concat(
+      dedupedAssetProperties.map(key => node.properties?.[key] ?? '')
+    );
   });
 
   return Formatter.csv({ fields, data });
+};
+
+export const parseStatusFromString = (
+  status: string,
+  t: TypedTFunction<LocaleKey>
+): StatusType | undefined => {
+  switch (status.toLowerCase()) {
+    case t('status.decommissioned').toLowerCase():
+      return StatusType.Decommissioned;
+
+    case t('status.functioning').toLowerCase():
+      return StatusType.Functioning;
+
+    case t('status.functioning-but-needs-attention').toLowerCase():
+      return StatusType.FunctioningButNeedsAttention;
+
+    case t('status.not-functioning').toLowerCase():
+      return StatusType.NotFunctioning;
+
+    case t('status.not-in-use').toLowerCase():
+      return StatusType.NotInUse;
+
+    case t('status.unserviceable').toLowerCase():
+      return StatusType.Unserviceable;
+  }
 };

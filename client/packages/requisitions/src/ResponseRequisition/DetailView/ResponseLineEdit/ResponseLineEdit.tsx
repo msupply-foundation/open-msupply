@@ -229,7 +229,13 @@ export const ResponseLineEdit = ({
                 <NumericTextInput
                   width={INPUT_WIDTH}
                   value={draft?.requestedQuantity}
-                  onChange={value => update({ requestedQuantity: value })}
+                  onChange={value => {
+                    if (draft?.suggestedQuantity === value) {
+                      update({ requestedQuantity: value, reason: null });
+                    } else {
+                      update({ requestedQuantity: value });
+                    }
+                  }}
                   disabled={!!hasLinkedRequisition}
                   onBlur={save}
                 />
@@ -326,7 +332,10 @@ export const ResponseLineEdit = ({
             Input={
               <NumericTextInput
                 width={INPUT_WIDTH}
-                value={draft?.remainingQuantityToSupply}
+                value={Math.max(
+                  (draft?.supplyQuantity ?? 0) - (draft?.alreadyIssued ?? 0),
+                  0
+                )}
                 disabled
               />
             }

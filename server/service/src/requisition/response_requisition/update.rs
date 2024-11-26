@@ -5,12 +5,15 @@ use crate::{
         query::get_requisition,
     },
     service_provider::ServiceContext,
+    store_preference::get_store_preferences,
 };
 use chrono::Utc;
 use repository::{
+    reason_option_row::ReasonOptionType,
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ActivityLogType, EqualFilter, RepositoryError, Requisition, RequisitionLine,
-    RequisitionLineFilter, RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
+    ActivityLogType, EqualFilter, ReasonOptionFilter, ReasonOptionRepository, RepositoryError,
+    Requisition, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
+    RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 
@@ -103,7 +106,18 @@ pub fn validate(
         RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&requisition_row.id)),
     )?;
 
-    if requisition_row.program_id.is_some() {
+    let reason_options = ReasonOptionRepository::new(connection).query_by_filter(
+        ReasonOptionFilter::new().r#type(ReasonOptionType::equal_to(
+            &ReasonOptionType::RequisitionLineVariance,
+        )),
+    )?;
+
+    let prefs = get_store_preferences(connection, &store_id)?;
+
+    if requisition_row.program_id.is_some()
+        && prefs.extra_fields_in_requisition
+        && reason_options.len() > 0
+    {
         let mut lines_missing_reason = Vec::new();
 
         for line in response_lines {
