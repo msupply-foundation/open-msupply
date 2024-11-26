@@ -32,9 +32,9 @@ const Options = z
   .object({
     /**
      * There should only be one prescription for the whole encounter, so where
-     * it's stored in the schema won't be this component's path. Specify the
-     * path in the JSON schema where this value should kept (must be defined in
-     * JSON schema)
+     * it's stored in the schema won't be this component's path. This property
+     * should reflect the path in the JSON schema where this value stored.
+     * (must be defined in JSON schema)
      */
     prescriptionIdPath: z.string(),
     /**
