@@ -64,7 +64,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   );
 
   const cachedSearchedItems = useMemo(() => {
-    const newItems = [...items, ...(data?.nodes ?? [])];
+    const newItems = data?.nodes ?? [];
     if (!!currentItem) newItems.unshift(currentItem);
 
     return ArrayUtils.uniqBy(newItems, 'id');
@@ -83,8 +83,9 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   );
 
   useEffect(() => {
-    // using the Autocomplete openOnFocus prop, the popper is incorrectly positioned
-    // when used within a Dialog. This is a workaround to fix the popper position.
+    // Using the Autocomplete openOnFocus prop, the popper is incorrectly
+    // positioned when used within a Dialog. This is a workaround to fix the
+    // popper position.
     if (openOnFocus) {
       setTimeout(() => selectControl.toggleOn(), DEBOUNCE_TIMEOUT);
     }
