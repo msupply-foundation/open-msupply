@@ -112,6 +112,7 @@ pub enum ChangelogTableName {
     IndicatorValue,
     BundledItem,
     Item,
+    OmReport,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -179,6 +180,7 @@ impl ChangelogTableName {
             ChangelogTableName::PackagingVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::IndicatorValue => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::BundledItem => ChangeLogSyncStyle::Central,
+            ChangelogTableName::OmReport => ChangeLogSyncStyle::Central,
         }
     }
 }
