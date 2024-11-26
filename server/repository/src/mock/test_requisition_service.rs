@@ -61,6 +61,10 @@ pub fn mock_test_requisition_service() -> MockData {
     .collect();
 
     result
+        .full_requisitions
+        .push(mock_new_response_program_requisition());
+
+    result
 }
 
 pub fn mock_requisition_for_number_test() -> RequisitionRow {
@@ -460,5 +464,53 @@ pub fn mock_response_program_requisition() -> FullMockRequisition {
             r.available_stock_on_hand = 1.0;
             r.average_monthly_consumption = 1.0;
         })],
+    }
+}
+
+pub fn mock_new_response_program_requisition() -> FullMockRequisition {
+    let requisition_id = "mock_new_response_program_requisition".to_string();
+    let line1_id = format!("{}1", requisition_id);
+    let line2_id = format!("{}2", requisition_id);
+
+    FullMockRequisition {
+        requisition: inline_init(|r: &mut RequisitionRow| {
+            r.id.clone_from(&requisition_id);
+            r.requisition_number = 11;
+            r.name_link_id = "name_a".to_string();
+            r.store_id = mock_store_a().id;
+            r.r#type = RequisitionType::Response;
+            r.status = RequisitionStatus::New;
+            r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap();
+            r.max_months_of_stock = 3.0;
+            r.min_months_of_stock = 1.0;
+            r.program_id = Some(mock_program_a().id);
+        }),
+        lines: vec![
+            inline_init(|r: &mut RequisitionLineRow| {
+                r.id = line1_id;
+                r.requisition_id = requisition_id.clone();
+                r.item_link_id = mock_item_a().id;
+                r.requested_quantity = 9.0;
+                r.suggested_quantity = 10.0;
+                r.supply_quantity = 100.0;
+                r.available_stock_on_hand = 1.0;
+                r.average_monthly_consumption = 1.0;
+                r.option_id = None;
+            }),
+            inline_init(|r: &mut RequisitionLineRow| {
+                r.id = line2_id;
+                r.requisition_id = requisition_id;
+                r.item_link_id = mock_item_b().id;
+                r.requested_quantity = 10.0;
+                r.suggested_quantity = 10.0;
+                r.supply_quantity = 100.0;
+                r.available_stock_on_hand = 1.0;
+                r.average_monthly_consumption = 1.0;
+                r.option_id = None;
+            }),
+        ],
     }
 }
