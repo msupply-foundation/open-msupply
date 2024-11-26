@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import Papa, { ParseResult } from 'papaparse';
 import { ImportPanel } from './ImportPanel';
-import { useNotification } from '@common/hooks';
+import { useNotification, useQueryParamsStore } from '@common/hooks';
 import { InlineProgress, Typography, Upload } from '@common/components';
 import {
   DateUtils,
@@ -197,7 +197,12 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
 }) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
-  const { data: stores } = useStore.document.list();
+  const { sort, filter, pagination } = useQueryParamsStore();
+  const { data: stores } = useStore.document.list({
+    pagination,
+    sort,
+    filter,
+  });
   const { error, info } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const EquipmentBuffer: EquipmentImportModal.ImportRow[] = [];

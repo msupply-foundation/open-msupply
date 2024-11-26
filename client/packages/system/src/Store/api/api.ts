@@ -1,10 +1,10 @@
-import { FilterByWithBoolean, SortBy } from '@common/hooks';
-import { Sdk, StoreRowFragment } from './operations.generated';
+import { FilterByWithBoolean, SortController } from '@common/hooks';
+import { Sdk } from './operations.generated';
 
 export type StoreListParams = {
-  first: number;
-  offset: number;
-  sortBy: SortBy<StoreRowFragment>;
+  first?: number;
+  offset?: number;
+  sortBy: SortController<any>;
   filterBy: FilterByWithBoolean | null;
 };
 

@@ -1,41 +1,40 @@
 import {
+  FilterController,
   Pagination,
+  SortController,
   useInfiniteQuery,
-  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { useStoreApi } from '../utils/useStoreApi';
 
-export const useStores = (pagination?: Pagination) => {
-  const { sort, filter } = useQueryParamsStore();
-  const { filterBy } = filter;
-  const { sortBy } = sort;
+interface useStoresProps {
+  sort: SortController<any>;
+  filter: FilterController;
+  pagination?: Pagination;
+}
+
+export const useStores = ({ pagination, sort, filter }: useStoresProps) => {
+  // const { first, offset } = pagination;
 
   const api = useStoreApi();
 
   const params = {
-    filterBy,
-    first: 0,
-    offset: 0,
-    sortBy,
+    filterBy: filter.filterBy,
+    sortBy: sort,
   };
 
   const query = useInfiniteQuery(
     api.keys.paramList(params),
     ({ pageParam }) => {
+      console.log('running query useStores:');
       console.log('pageparam', pageParam);
       return api.get.list({ ...params, ...pagination, ...pageParam });
-    }
+    },
+    {}
   );
-  console.log('query:', query, 'page:', params);
   return query;
 };
 
-// no options, paginates but cant go up
-//   const query = useInfiniteQuery(
-//     api.keys.paramList(params),
-//     async () => api.get.list({ ...params, ...pagination }),
-//     { refetchOnWindowFocus: false, cacheTime: 0 }
+//   return useInfiniteQuery(api.keys.paramList(params), ({ pageParam }) =>
+//     api.get.list({ ...params, ...pagination, ...pageParam })
 //   );
-//   console.log('query:', query);
-//   return query;
 // };
