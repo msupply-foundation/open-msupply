@@ -3,7 +3,7 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type ReportRowFragment = { __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, isCustom: boolean, code: string, version: string, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null };
+export type ReportRowFragment = { __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, isCustom: boolean, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null };
 
 export type ReportQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -11,7 +11,7 @@ export type ReportQueryVariables = Types.Exact<{
 }>;
 
 
-export type ReportQuery = { __typename: 'Queries', report: { __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, isCustom: boolean, code: string, version: string, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null } };
+export type ReportQuery = { __typename: 'Queries', report: { __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, isCustom: boolean, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null } };
 
 export type ReportsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -21,7 +21,7 @@ export type ReportsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ReportsQuery = { __typename: 'Queries', reports: { __typename: 'ReportConnector', totalCount: number, nodes: Array<{ __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, isCustom: boolean, code: string, version: string, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null }> } };
+export type ReportsQuery = { __typename: 'Queries', reports: { __typename: 'ReportConnector', totalCount: number, nodes: Array<{ __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, isCustom: boolean, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null }> } };
 
 export type GenerateReportQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -43,8 +43,6 @@ export const ReportRowFragmentDoc = gql`
   name
   subContext
   isCustom
-  code
-  version
   argumentSchema {
     id
     type
