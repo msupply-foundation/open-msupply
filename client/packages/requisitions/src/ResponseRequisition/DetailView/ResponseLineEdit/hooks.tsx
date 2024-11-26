@@ -31,12 +31,16 @@ export const useDraftRequisitionLine = (item?: ItemRowFragment | null) => {
         ({ item: reqItem }) => reqItem.id === item.id
       );
       if (existingLine) {
-        setDraft(createDraftLine(existingLine, reqId));
+        if (draft && draft.id === existingLine.id) {
+          setDraft(draft);
+        } else {
+          setDraft(createDraftLine(existingLine, reqId));
+        }
       }
     } else {
       setDraft(null);
     }
-  }, [lines, item, reqId]);
+  }, [lines, item, reqId, draft]);
 
   const update = (patch: Partial<DraftResponseLine>) => {
     if (draft) {
