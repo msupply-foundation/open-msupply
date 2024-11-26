@@ -26,7 +26,7 @@ joinable!(program -> context (context_id));
 allow_tables_to_appear_in_same_query!(program, document);
 allow_tables_to_appear_in_same_query!(program, name_link);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default)]
 #[diesel(table_name = program)]
 pub struct ProgramRow {
     pub id: String, // Master list id
