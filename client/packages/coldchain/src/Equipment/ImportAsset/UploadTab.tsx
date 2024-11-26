@@ -45,8 +45,15 @@ interface ParsedAsset {
   [key: string]: string | undefined;
 }
 
-const formatDate = (value: string): string | null =>
-  Formatter.naiveDate(DateUtils.getDateOrNull(value, 'dd/MM/yyyy'));
+const formatDate = (value: string): string | null => {
+  // Check the date format has 4 characters for the year (sometimes the
+  // year is only 2 characters, e.g. 05/10/24, which would be imported as
+  // the year 0024!)
+  if (value.split('/')[2]?.length !== 4) {
+    return null;
+  }
+  return Formatter.naiveDate(DateUtils.getDateOrNull(value, 'dd/MM/yyyy'));
+};
 
 function getImportHelpers<T, P>(
   row: P,
