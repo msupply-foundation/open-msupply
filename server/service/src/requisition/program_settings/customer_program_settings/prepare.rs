@@ -3,7 +3,8 @@ use repository::{
     ProgramCustomerFilter, ProgramCustomerRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettings,
     ProgramRequisitionSettingsFilter, ProgramRequisitionSettingsRepository, RepositoryError,
-    RequisitionsInPeriod, RequisitionsInPeriodFilter, RequisitionsInPeriodRepository,
+    RequisitionType, RequisitionsInPeriod, RequisitionsInPeriodFilter,
+    RequisitionsInPeriodRepository,
 };
 
 use crate::service_provider::ServiceContext;
@@ -43,7 +44,12 @@ pub(super) fn prepare_customer_program_settings(
         .map(|s| s.program_settings_row.id.clone())
         .collect();
 
-    let program_ids: Vec<String> = settings.iter().map(|s| s.program_row.id.clone()).collect();
+    let program_ids: Vec<String> = settings
+        .iter()
+        .map(|s| s.program_row.id.clone())
+        .collect::<std::collections::HashSet<_>>()
+        .into_iter()
+        .collect();
 
     let order_types = ProgramRequisitionOrderTypeRowRepository::new(&ctx.connection)
         .find_many_by_program_requisition_settings_ids(&program_requisition_settings_ids)?;
@@ -63,7 +69,8 @@ pub(super) fn prepare_customer_program_settings(
     let filter = RequisitionsInPeriodFilter::new()
         .store_id(equal_to_store_id)
         .program_id(EqualFilter::equal_any(program_ids.clone()))
-        .period_id(EqualFilter::equal_any(period_ids));
+        .period_id(EqualFilter::equal_any(period_ids))
+        .r#type(RequisitionType::Response.equal_to());
 
     let requisitions_in_periods =
         RequisitionsInPeriodRepository::new(&ctx.connection).query(filter)?;
@@ -112,6 +119,7 @@ mod test {
         ContextRow, MasterListNameJoinRow, MasterListRow, Name, NameStoreJoinRow, NameTagJoinRow,
         NameTagRow, PeriodRow, PeriodScheduleRow, ProgramCustomer, ProgramRequisitionOrderTypeRow,
         ProgramRequisitionSettings, ProgramRequisitionSettingsRow, ProgramRow, RequisitionRow,
+        RequisitionType,
     };
 
     use crate::{
@@ -245,6 +253,31 @@ mod test {
             ..Default::default()
         };
 
+        // store b name tag + program settings
+        let name_tag_join3 = NameTagJoinRow {
+            id: "name_tag_join3".to_string(),
+            name_tag_id: name_tag1.id.clone(),
+            name_link_id: mock_name_store_b().id,
+        };
+        let program_requisition_setting3 = ProgramRequisitionSettingsRow {
+            id: "program_setting3".to_string(),
+            program_id: program1.id.clone(),
+            name_tag_id: name_tag1.id.clone(),
+            period_schedule_id: period_schedule1.id.clone(),
+        };
+        // store c
+        let name_tag_join4 = NameTagJoinRow {
+            id: "name_tag_join4".to_string(),
+            name_tag_id: name_tag2.id.clone(),
+            name_link_id: mock_name_store_c().id,
+        };
+        let program_requisition_setting4 = ProgramRequisitionSettingsRow {
+            id: "program_setting4".to_string(),
+            program_id: program2.id.clone(),
+            name_tag_id: name_tag2.id.clone(),
+            period_schedule_id: period_schedule2.id.clone(),
+        };
+
         // Two requisitions, one for period 1 for program 1 for order type 1
         // second for period 4 for program 2 for order type 2
         let requisition1 = RequisitionRow {
@@ -254,6 +287,7 @@ mod test {
             store_id: mock_store_a().id,
             period_id: Some(period1.id.clone()),
             program_id: Some(program1.id.clone()),
+            r#type: RequisitionType::Response,
             ..Default::default()
         };
         let requisition2 = RequisitionRow {
@@ -264,6 +298,7 @@ mod test {
             store_id: mock_store_a().id,
             period_id: Some(period4.id.clone()),
             program_id: Some(program2.id.clone()),
+            r#type: RequisitionType::Response,
             ..Default::default()
         };
 
@@ -293,13 +328,14 @@ mod test {
             name_is_customer: true,
             ..Default::default()
         };
+
         let ServiceTestContext {
             service_provider,
             service_context,
             ..
         } = setup_all_with_data_and_service_provider(
             "get_customer_program_requisition_settings",
-            MockDataInserts::none().names().stores().period_schedules(),
+            MockDataInserts::none().names().stores(),
             MockData {
                 periods: vec![
                     period1.clone(),
@@ -309,7 +345,12 @@ mod test {
                 ],
                 period_schedules: vec![period_schedule1, period_schedule2],
                 name_tags: vec![name_tag1, name_tag2],
-                name_tag_joins: vec![name_tag_join1, name_tag_join2],
+                name_tag_joins: vec![
+                    name_tag_join1,
+                    name_tag_join2,
+                    name_tag_join3,
+                    name_tag_join4,
+                ],
                 name_store_joins: vec![name_store_join1.clone(), name_store_join2.clone()],
                 master_lists: vec![master_list1.clone(), master_list2.clone()],
                 master_list_name_joins: vec![
@@ -321,6 +362,8 @@ mod test {
                 program_requisition_settings: vec![
                     program_requisition_setting1.clone(),
                     program_requisition_setting2.clone(),
+                    program_requisition_setting3.clone(),
+                    program_requisition_setting4.clone(),
                 ],
                 program_order_types: vec![order_type1.clone(), order_type2.clone()],
                 contexts: vec![context1.clone(), context2.clone()],
@@ -330,8 +373,6 @@ mod test {
             },
         )
         .await;
-
-        // Test request requisition
 
         let mut result = service_provider
             .requisition_service
@@ -397,6 +438,47 @@ mod test {
                             order_type: order_type2.clone(),
                             available_periods: vec![period3, period4]
                         }]
+                    )],
+                },
+                CustomerProgramSettings {
+                    program_requisition_settings: ProgramRequisitionSettings {
+                        program_settings_row: program_requisition_setting3.clone(),
+                        program_row: program1.clone(),
+                        master_list: master_list1.clone()
+                    },
+                    customer_and_order_types: vec![(
+                        ProgramCustomer {
+                            // program1 master list only visible in mock_name_store_b customer
+                            customer: Name {
+                                name_row: mock_name_store_b(),
+                                name_store_join_row: Some(name_store_join1.clone()),
+                                store_row: Some(mock_store_b()),
+                                properties: None,
+                            },
+                            program: program1.clone(),
+                        },
+                        vec![]
+                    )],
+                },
+                CustomerProgramSettings {
+                    program_requisition_settings: ProgramRequisitionSettings {
+                        program_settings_row: program_requisition_setting4.clone(),
+                        program_row: program2.clone(),
+                        master_list: master_list2.clone()
+                    },
+                    customer_and_order_types: vec![(
+                        ProgramCustomer {
+                            // program2 master list only visible in
+                            // name c customer so period 3 & 4 are available as requisition2 is created for name b
+                            customer: Name {
+                                name_row: mock_name_store_c(),
+                                name_store_join_row: Some(name_store_join2.clone()),
+                                store_row: Some(mock_store_c()),
+                                properties: None,
+                            },
+                            program: program2.clone(),
+                        },
+                        vec![]
                     )],
                 }
             ]
