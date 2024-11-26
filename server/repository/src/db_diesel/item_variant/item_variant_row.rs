@@ -12,7 +12,6 @@ table! {
         name -> Text,
         item_link_id -> Text,
         cold_storage_type_id -> Nullable<Text>,
-        doses_per_unit -> Nullable<Integer>,
         manufacturer_link_id -> Nullable<Text>,
         deleted_datetime -> Nullable<Timestamp>,
     }
@@ -31,7 +30,6 @@ pub struct ItemVariantRow {
     pub name: String,
     pub item_link_id: String,
     pub cold_storage_type_id: Option<String>,
-    pub doses_per_unit: Option<i32>,
     pub manufacturer_link_id: Option<String>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
 }

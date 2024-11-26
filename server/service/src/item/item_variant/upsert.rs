@@ -36,7 +36,6 @@ pub struct UpsertItemVariantWithPackaging {
     pub item_id: String,
     pub cold_storage_type_id: Option<String>,
     pub name: String,
-    pub doses_per_unit: Option<i32>,
     pub manufacturer_id: Option<String>,
     pub packaging_variants: Vec<UpsertPackagingVariant>,
 }
@@ -108,7 +107,6 @@ pub fn generate(
         name,
         item_id,
         cold_storage_type_id,
-        doses_per_unit,
         manufacturer_id,
         packaging_variants: _, // Mapped separately
     }: UpsertItemVariantWithPackaging,
@@ -118,7 +116,6 @@ pub fn generate(
         name,
         item_link_id: item_id,
         cold_storage_type_id,
-        doses_per_unit,
         manufacturer_link_id: manufacturer_id,
         deleted_datetime: None,
     }

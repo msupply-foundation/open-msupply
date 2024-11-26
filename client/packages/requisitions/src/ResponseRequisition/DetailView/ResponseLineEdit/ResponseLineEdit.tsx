@@ -231,6 +231,7 @@ export const ResponseLineEdit = ({
                   value={draft?.requestedQuantity}
                   onChange={value => update({ requestedQuantity: value })}
                   disabled={!!hasLinkedRequisition}
+                  onBlur={save}
                 />
               }
               labelWidth={LABEL_WIDTH}
