@@ -5,12 +5,12 @@ import {
   DataTable,
   Grid,
   NothingHere,
-  Pagination,
   SearchBar,
   TooltipTextCell,
   useColumns,
   useIsCentralServerApi,
   useTranslation,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { ImportRow } from './EquipmentImportModal';
 
@@ -24,11 +24,12 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
 }) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
-  const [pagination, setPagination] = useState<Pagination>({
-    page: 0,
-    first: 20,
-    offset: 0,
-  });
+
+  const {
+    queryParams: { page, first, offset },
+    updatePaginationQuery,
+  } = useUrlQueryParams();
+
   const [searchString, setSearchString] = useState<string>(() => '');
   const columnDescriptions: ColumnDescription<ImportRow>[] = [
     {
@@ -114,10 +115,10 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
       row.id === searchString
     );
   });
-  const currentEquipmentPage = filteredEquipment.slice(
-    pagination.offset,
-    pagination.offset + pagination.first
-  );
+
+  const currentEquipmentPage = filteredEquipment.slice(offset, offset + first);
+
+  const pagination = { first, offset, page };
 
   return (
     <Grid flexDirection="column" display="flex" gap={0}>
@@ -127,11 +128,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
         debounceTime={300}
         onChange={newValue => {
           setSearchString(newValue);
-          setPagination({
-            first: pagination.first,
-            offset: 0,
-            page: 0,
-          });
+          updatePaginationQuery;
         }}
       />
       <DataTable
@@ -139,13 +136,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
           ...pagination,
           total: filteredEquipment.length,
         }}
-        onChangePage={page => {
-          setPagination({
-            first: pagination.first,
-            offset: pagination.first * page,
-            page: page,
-          });
-        }}
+        onChangePage={updatePaginationQuery}
         columns={columns}
         data={currentEquipmentPage}
         noDataElement={<NothingHere body={t('error.asset-not-found')} />}
