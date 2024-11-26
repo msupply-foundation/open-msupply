@@ -107,7 +107,7 @@ export const DetailView: FC = () => {
       Component: (
         <IndicatorsTab
           onClick={onProgramIndicatorClick}
-          isLoading={isProgramIndicatorsLoading}
+          isLoading={isLoading || isProgramIndicatorsLoading}
           response={data}
           indicators={programIndicators?.nodes}
         />
