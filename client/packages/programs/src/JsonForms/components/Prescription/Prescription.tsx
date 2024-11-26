@@ -104,9 +104,9 @@ const UIComponent = (props: ControlProps) => {
 
   const handleItemSelect = (selectedItem: ItemStockOnHandFragment | null) => {
     setSelectedItem(selectedItem);
+    formActions.setState(`${path}_item`, selectedItem, false);
     if (prescriptionIdPath)
       handleChange(prescriptionIdPath, FnUtils.generateUUID());
-    formActions.setState(`${path}_item`, selectedItem);
   };
 
   const handleStockLineUpdate = (draftLines: DraftStockOutLine[]) => {
