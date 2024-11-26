@@ -5,12 +5,13 @@ use extism::{
     host_fn, FromBytes, Manifest, PluginBuilder, ToBytes, UserData, Wasm, WasmMetadata, PTR,
 };
 use repository::{
-    raw_query, EqualFilter, JsonRawRow, PaginationOption, Report, ReportFilter, ReportRepository,
-    ReportRowRepository, ReportSort, ReportType, RepositoryError, StorageConnection,
+    migrations::Version, raw_query, EqualFilter, JsonRawRow, PaginationOption, Report,
+    ReportFilter, ReportRepository, ReportRowRepository, ReportSort, ReportType, RepositoryError,
+    StorageConnection,
 };
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, time::SystemTime};
+use std::{cmp::Ordering, collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
 
 use crate::{
@@ -329,12 +330,56 @@ fn query_reports(
     filter: Option<ReportFilter>,
     sort: Option<ReportSort>,
 ) -> Result<Vec<Report>, ListError> {
+    let app_version: String = Version::from_package_json().to_string();
+
     let repo = ReportRepository::new(&ctx.connection);
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let filter = filter
         .unwrap_or_default()
         .r#type(ReportType::OmSupply.equal_to());
-    Ok(repo.query(pagination, Some(filter.clone()), sort)?)
+
+    let all_reports = repo.query(pagination, Some(filter.clone()), sort)?;
+
+    let mut latest_reports: HashMap<String, Report> = HashMap::new();
+
+    for report in all_reports {
+        let code = report.report_row.name.clone();
+        if let Some(comparison) = Version::from_str(&report.report_row.version)
+            .partial_cmp(&Version::from_str(&app_version))
+        {
+            if comparison != Ordering::Greater {
+                if let Some(existing) = latest_reports.get(&code) {
+                    if should_replace(existing, &report) {
+                        latest_reports.insert(code, report);
+                    }
+                } else {
+                    latest_reports.insert(code, report);
+                }
+            }
+        }
+    }
+
+    Ok(latest_reports.into_values().collect())
+}
+
+fn should_replace(existing: &Report, new: &Report) -> bool {
+    if let Some(comparison) = Version::from_str(&new.report_row.version)
+        .partial_cmp(&Version::from_str(&existing.report_row.version))
+    {
+        if (new.report_row.is_custom) && (!existing.report_row.is_custom) {
+            return true;
+        }
+
+        if !new.report_row.is_custom && !existing.report_row.is_custom {
+            return comparison == Ordering::Greater;
+        }
+
+        if new.report_row.is_custom && existing.report_row.is_custom {
+            return comparison == Ordering::Greater;
+        }
+    }
+
+    false
 }
 
 fn resolve_report(
