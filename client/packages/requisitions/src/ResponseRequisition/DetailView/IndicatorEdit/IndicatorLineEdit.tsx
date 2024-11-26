@@ -33,7 +33,6 @@ const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
   if (!data?.value) {
     return;
   }
-  console.log('data', data.value.value);
 
   const { draft, update } = useDraftIndicatorValue(data.value);
   const t = useTranslation();
@@ -90,8 +89,6 @@ export const IndicatorLineEdit = ({
   previous,
   currentLine,
 }: IndicatorLineEditProps) => {
-  console.log('currentline', currentLine?.line.id);
-
   const columns = currentLine?.columns.sort(
     (a, b) => a.columnNumber - b.columnNumber
   );
