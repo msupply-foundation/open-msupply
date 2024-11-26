@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   IndicatorLineRowFragment,
   IndicatorValueFragment,
   useResponse,
 } from '../../api';
+import { useDebounceCallback } from '@common/hooks';
 
 export const usePreviousNextIndicatorLine = (
   lines?: IndicatorLineRowFragment[],
@@ -38,32 +39,24 @@ export const usePreviousNextIndicatorLine = (
   return state;
 };
 
-const createDraftIndicator = (
-  indicatorValue: IndicatorValueFragment
-): IndicatorValueFragment => ({
-  ...indicatorValue,
-});
-
 export const useDraftIndicatorValue = (
-  indicatorValue?: IndicatorValueFragment | null
+  indicatorValue: IndicatorValueFragment
 ) => {
-  const { mutateAsync: save, isLoading } =
+  const { mutateAsync, isLoading } =
     useResponse.document.updateIndicatorValue();
-
-  const [draft, setDraft] = useState<IndicatorValueFragment | null>(null);
-
-  useEffect(() => {
-    if (indicatorValue) {
-      setDraft(createDraftIndicator(indicatorValue));
-    }
-    setDraft(null);
-  }, [indicatorValue]);
+  const [draft, setDraft] = useState<IndicatorValueFragment>(indicatorValue);
+  const save = useDebounceCallback(
+    (patch: Partial<IndicatorValueFragment>) =>
+      mutateAsync({ ...draft, ...patch }),
+    [],
+    500
+  );
 
   const update = (patch: Partial<IndicatorValueFragment>) => {
-    if (draft) {
-      setDraft({ ...draft, ...patch });
-    }
+    const newDraft = { ...draft, ...patch };
+    setDraft(newDraft);
+    return save(newDraft);
   };
 
-  return { draft, isLoading, save: () => draft && save(draft), update };
+  return { draft, isLoading, update };
 };

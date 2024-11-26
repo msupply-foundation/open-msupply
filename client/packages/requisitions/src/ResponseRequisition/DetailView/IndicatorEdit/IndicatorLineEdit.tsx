@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Footer } from './Footer';
 import {
   BasicTextInput,
   Box,
+  IndicatorColumnNode,
   IndicatorValueTypeNode,
   InputWithLabelRow,
   NumericTextInput,
@@ -12,8 +13,8 @@ import {
 import {
   IndicatorLineRowFragment,
   IndicatorLineWithColumnsFragment,
-  useResponse,
 } from '../../api';
+import { useDraftIndicatorValue } from './hooks';
 
 interface IndicatorLineEditProps {
   requisitionNumber: number;
@@ -28,6 +29,59 @@ interface IndicatorLineEditProps {
 const INPUT_WIDTH = 185;
 const LABEL_WIDTH = '150px';
 
+const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
+  if (!data?.value) {
+    return;
+  }
+  console.log('data', data.value.value);
+
+  const { draft, update } = useDraftIndicatorValue(data.value);
+  const t = useTranslation();
+  const { error } = useNotification();
+  const errorHandler = useCallback(
+    (res: any) => {
+      // probably shouldn't be any, but UpdateIndicatorValueResponse doesn't have res.error.__typename
+      if (res.__typename === 'UpdateIndicatorValueError') {
+        if (res.error.__typename === 'RecordNotFound') {
+          error(t('messages.record-not-found'))();
+        } else {
+          error(t('error.value-type-not-correct'))();
+        }
+      }
+    },
+    [t]
+  );
+  const inputComponent =
+    data.valueType === IndicatorValueTypeNode.Number ? (
+      <NumericTextInput
+        width={INPUT_WIDTH}
+        value={Number(draft?.value)}
+        onChange={v => {
+          update({ value: String(v) }).then(errorHandler);
+        }}
+        autoFocus
+      />
+    ) : (
+      <BasicTextInput
+        sx={{ width: '200px' }}
+        value={draft?.value}
+        onChange={e => {
+          update({ value: e.target.value }).then(errorHandler);
+        }}
+        autoFocus
+      />
+    );
+
+  return (
+    <InputWithLabelRow
+      Input={inputComponent}
+      labelWidth={LABEL_WIDTH}
+      label={data.name}
+      sx={{ marginBottom: 1 }}
+    />
+  );
+};
+
 export const IndicatorLineEdit = ({
   requisitionNumber,
   hasNext,
@@ -36,70 +90,16 @@ export const IndicatorLineEdit = ({
   previous,
   currentLine,
 }: IndicatorLineEditProps) => {
+  console.log('currentline', currentLine?.line.id);
+
   const columns = currentLine?.columns.sort(
     (a, b) => a.columnNumber - b.columnNumber
   );
-  const t = useTranslation();
-  const { mutateAsync } = useResponse.document.updateIndicatorValue();
-  const { error } = useNotification();
-  const errorHandler = (res: any) => {
-    // probably shouldn't be any, but UpdateIndicatorValueResponse doesn't have res.error.__typename
-    if (res.__typename === 'UpdateIndicatorValueError') {
-      if (res.error.__typename === 'RecordNotFound') {
-        error(t('messages.record-not-found'))();
-      } else {
-        error(t('error.value-type-not-correct'))();
-      }
-    }
-  };
-
-  const inputWithLabel = (
-    id: string,
-    label: string,
-    value: string,
-    valueType?: IndicatorValueTypeNode | null
-  ) => {
-    const inputComponent =
-      valueType === IndicatorValueTypeNode.Number ? (
-        <NumericTextInput
-          width={INPUT_WIDTH}
-          value={Number(value)}
-          onChange={v => {
-            mutateAsync({ id, value: String(v) }).then(errorHandler);
-          }}
-          autoFocus
-        />
-      ) : (
-        <BasicTextInput
-          sx={{ width: '200px' }}
-          value={value}
-          onChange={e => {
-            mutateAsync({ id, value: e.target.value }).then(errorHandler);
-          }}
-          autoFocus
-        />
-      );
-
-    return (
-      <InputWithLabelRow
-        Input={inputComponent}
-        labelWidth={LABEL_WIDTH}
-        label={label}
-        sx={{ marginBottom: 1 }}
-      />
-    );
-  };
-
   return (
     <>
       <Box display="flex" flexDirection="column">
         {columns?.map(c => {
-          return inputWithLabel(
-            c.value?.id ?? '',
-            c.name,
-            c.value?.value ?? '',
-            c.valueType
-          );
+          return <InputWithLabel key={c.value?.id} data={c} />;
         })}
       </Box>
       <Box>
