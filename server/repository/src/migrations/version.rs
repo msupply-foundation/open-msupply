@@ -64,7 +64,7 @@ impl Version {
         Self::from_str(&PackageJsonAsset::version())
     }
 
-    pub(crate) fn from_str(version: &str) -> Self {
+    pub fn from_str(version: &str) -> Self {
         let mut version_split = version.split('.');
         let major = version_split.next().unwrap();
         let minor = version_split.next().unwrap();
