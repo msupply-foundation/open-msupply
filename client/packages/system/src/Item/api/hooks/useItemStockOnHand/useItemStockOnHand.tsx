@@ -3,7 +3,7 @@ import { useItemApi } from '../useItemApi';
 
 type UseItemStockOnHandParams = {
   pagination: { first: number; offset: number };
-  filter: { [key: string]: { like: string } };
+  filter: Record<string, { like: string } | string>;
   preload?: boolean;
   includeNonVisibleWithStockOnHand?: boolean;
 };

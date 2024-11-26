@@ -37,6 +37,7 @@ export interface StockItemSearchInputProps
   onChange: (item: ItemStockOnHandFragment | null) => void;
   extraFilter?: (item: ItemStockOnHandFragment) => boolean;
   includeNonVisibleWithStockOnHand?: boolean;
+  itemCategoryName?: string;
 }
 
 export interface StockItemSearchInputWithStatsProps
