@@ -28,7 +28,22 @@ import { DraftStockOutLine } from '@openmsupply-client/invoices/src/types';
 
 export const prescriptionTester = rankWith(10, uiTypeIs('Prescription'));
 
-const Options = z.object({ prescriptionIdPath: z.string() }).strict();
+const Options = z
+  .object({
+    /**
+     * There should only be one prescription for the whole encounter, so where
+     * it's stored in the schema won't be this component's path. This property
+     * should reflect the path in the JSON schema where this value stored.
+     * (must be defined in JSON schema)
+     */
+    prescriptionIdPath: z.string(),
+    /**
+     * Path on the data object to look for an item category name. If not
+     * specified, will display all items, not a particular category
+     */
+    itemCategoryPath: z.string().optional(),
+  })
+  .strict();
 type Options = z.infer<typeof Options>;
 
 const UIComponent = (props: ControlProps) => {
@@ -56,6 +71,14 @@ const UIComponent = (props: ControlProps) => {
 
   const { success } = useNotification();
 
+  const itemCategoryPath = uischema.options?.['itemCategoryPath'];
+
+  const categoryName: string | undefined = extractProperty(
+    core?.data,
+    itemCategoryPath ?? '',
+    undefined
+  );
+
   // Ensures that when this component is re-mounted (e.g. in a Modal), it will
   // populate the draft line data with previously acquired state
   useEffect(() => {
@@ -66,11 +89,24 @@ const UIComponent = (props: ControlProps) => {
       setDraftStockOutLines(existing);
   }, []);
 
+  useEffect(() => {
+    // We need the selected item to be reset when the category changes.
+    // Unfortunately, the effect runs on all re-mounts as well, so we need to
+    // capture and compare the category of the previous value to determine if
+    // it's *actually* changed or just remounted
+    const previous = formActions.getState(`${path}_category`);
+    if (previous !== categoryName) {
+      handleItemSelect(null);
+    }
+
+    formActions.setState(`${path}_category`, categoryName);
+  }, [categoryName]);
+
   const handleItemSelect = (selectedItem: ItemStockOnHandFragment | null) => {
     setSelectedItem(selectedItem);
+    formActions.setState(`${path}_item`, selectedItem, false);
     if (prescriptionIdPath)
       handleChange(prescriptionIdPath, FnUtils.generateUUID());
-    formActions.setState(`${path}_item`, selectedItem);
   };
 
   const handleStockLineUpdate = (draftLines: DraftStockOutLine[]) => {
@@ -139,6 +175,7 @@ const UIComponent = (props: ControlProps) => {
           <StockItemSearchInput
             onChange={selected => handleItemSelect(selected)}
             currentItemId={selectedItem?.id}
+            itemCategoryName={categoryName}
           />
           {selectedItem && (
             <StockLineTable

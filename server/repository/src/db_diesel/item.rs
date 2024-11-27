@@ -1,4 +1,5 @@
 use super::{
+    category_row::category::dsl as category_dsl,
     item_category_row::item_category_join,
     item_link_row::item_link::dsl as item_link_dsl,
     item_row::{item, item::dsl as item_dsl},
@@ -18,6 +19,7 @@ use diesel::{
 use util::inline_init;
 
 use crate::{
+    category_row::category,
     diesel_macros::{
         apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
         apply_string_or_filter,
@@ -47,6 +49,7 @@ pub struct ItemFilter {
     pub code: Option<StringFilter>,
     pub r#type: Option<EqualFilter<ItemType>>,
     pub category_id: Option<String>,
+    pub category_name: Option<String>,
     /// If true it only returns ItemAndMasterList that have a name join row (void if is_visible_or_on_hand is true!)
     pub is_visible: Option<bool>,
     /// If true it returns ItemAndMasterList that have a name join row, or items with stock on hand
@@ -83,6 +86,11 @@ impl ItemFilter {
 
     pub fn category_id(mut self, filter: String) -> Self {
         self.category_id = Some(filter);
+        self
+    }
+
+    pub fn category_name(mut self, filter: String) -> Self {
+        self.category_name = Some(filter);
         self
     }
 
@@ -209,6 +217,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             code,
             r#type,
             category_id,
+            category_name,
             is_visible,
             code_or_name,
             is_active,
@@ -245,6 +254,18 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
                 .into_boxed();
 
             query = query.filter(item_dsl::id.eq_any(item_ids_for_category_id));
+        }
+
+        if let Some(category_name) = category_name {
+            let item_ids_for_category_name = item_category_join::table
+                .select(item_category_join::item_id)
+                .inner_join(
+                    category_dsl::category.on(category_dsl::id.eq(item_category_join::category_id)),
+                )
+                .filter(category::name.eq(category_name.clone()))
+                .into_boxed();
+
+            query = query.filter(item_dsl::id.eq_any(item_ids_for_category_name));
         }
 
         let visible_item_ids = item_link_dsl::item_link
