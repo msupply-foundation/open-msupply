@@ -71,7 +71,7 @@ pub(super) fn prepare_customer_program_settings(
         RequisitionsInPeriodRepository::new(&ctx.connection).query(filter)?;
 
     let filter = ProgramCustomerFilter::new().program_id(EqualFilter::equal_any(program_ids));
-    let mut program_customers =
+    let program_customers =
         ProgramCustomerRepository::new(&ctx.connection).query(store_id, filter)?;
 
     let program_customer_and_requisitions_in_periods = program_customers
