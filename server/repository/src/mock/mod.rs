@@ -158,10 +158,10 @@ use crate::{
     ProgramEnrolmentRowRepository, ProgramIndicatorRow, ProgramIndicatorRowRepository,
     ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
-    ProgramRowRepository, PropertyRow, PropertyRowRepository, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, ReturnReasonRow,
-    ReturnReasonRowRepository, RnRFormLineRow, RnRFormLineRowRepository, RnRFormRow,
-    RnRFormRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
+    ProgramRowRepository, PropertyRow, PropertyRowRepository, ReportRowRepository,
+    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository,
+    ReturnReasonRow, ReturnReasonRowRepository, RnRFormLineRow, RnRFormLineRowRepository,
+    RnRFormRow, RnRFormRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
     StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
     SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow,
     TemperatureBreachConfigRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
@@ -247,7 +247,7 @@ pub struct MockData {
     pub indicator_columns: Vec<IndicatorColumnRow>,
     pub indicator_values: Vec<IndicatorValueRow>,
     pub options: Vec<ReasonOptionRow>,
-    reports: Vec<crate::ReportRow>,
+    pub reports: Vec<crate::ReportRow>,
 }
 
 impl MockData {
@@ -1336,6 +1336,13 @@ pub fn insert_mock_data(
         if inserts.options {
             let repo = ReasonOptionRowRepository::new(connection);
             for row in &mock_data.options {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.reports {
+            let repo = ReportRowRepository::new(connection);
+            for row in &mock_data.reports {
                 repo.upsert_one(row).unwrap();
             }
         }

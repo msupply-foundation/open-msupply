@@ -5,9 +5,9 @@ use extism::{
     host_fn, FromBytes, Manifest, PluginBuilder, ToBytes, UserData, Wasm, WasmMetadata, PTR,
 };
 use repository::{
-    migrations::Version, raw_query, EqualFilter, JsonRawRow, PaginationOption, Report,
-    ReportFilter, ReportRepository, ReportRowRepository, ReportSort, ReportType, RepositoryError,
-    StorageConnection,
+    migrations::Version, mock::MockDataInserts, raw_query, test_db::setup_all, EqualFilter,
+    JsonRawRow, Pagination, Report, ReportFilter, ReportRepository, ReportRowRepository,
+    ReportSort, ReportType, RepositoryError, StorageConnection,
 };
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
@@ -15,9 +15,8 @@ use std::{cmp::Ordering, collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
 
 use crate::{
-    get_default_pagination,
     localisations::Localisations,
-    service_provider::ServiceContext,
+    service_provider::{ServiceContext, ServiceProvider},
     static_files::{StaticFileCategory, StaticFileService},
     ListError,
 };
@@ -90,11 +89,10 @@ pub trait ReportServiceTrait: Sync + Send {
     fn query_reports(
         &self,
         ctx: &ServiceContext,
-        pagination: Option<PaginationOption>,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
     ) -> Result<Vec<Report>, ListError> {
-        query_reports(ctx, pagination, filter, sort)
+        query_reports(ctx, filter, sort)
     }
 
     /// Loads a report definition by id and resolves it
@@ -326,60 +324,36 @@ fn get_report(ctx: &ServiceContext, id: &str) -> Result<Report, RepositoryError>
 
 fn query_reports(
     ctx: &ServiceContext,
-    pagination: Option<PaginationOption>,
     filter: Option<ReportFilter>,
     sort: Option<ReportSort>,
 ) -> Result<Vec<Report>, ListError> {
-    let app_version: String = Version::from_package_json().to_string();
+    let app_version: Version = Version::from_package_json();
 
     let repo = ReportRepository::new(&ctx.connection);
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let filter = filter
         .unwrap_or_default()
         .r#type(ReportType::OmSupply.equal_to());
 
-    let all_reports = repo.query(pagination, Some(filter.clone()), sort)?;
+    let all_reports = repo.query(Pagination::all(), Some(filter.clone()), sort)?;
 
-    let mut latest_reports: HashMap<String, Report> = HashMap::new();
+    let reports: Vec<Report> = report_filter_method(all_reports, app_version);
 
-    for report in all_reports {
-        let code = report.report_row.name.clone();
-        if let Some(comparison) = Version::from_str(&report.report_row.version)
-            .partial_cmp(&Version::from_str(&app_version))
-        {
-            if comparison != Ordering::Greater {
-                if let Some(existing) = latest_reports.get(&code) {
-                    if should_replace(existing, &report) {
-                        latest_reports.insert(code, report);
-                    }
-                } else {
-                    latest_reports.insert(code, report);
-                }
-            }
-        }
-    }
-
-    Ok(latest_reports.into_values().collect())
+    Ok(reports)
 }
 
-fn should_replace(existing: &Report, new: &Report) -> bool {
-    if let Some(comparison) = Version::from_str(&new.report_row.version)
-        .partial_cmp(&Version::from_str(&existing.report_row.version))
-    {
-        if (new.report_row.is_custom) && (!existing.report_row.is_custom) {
-            return true;
-        }
+fn report_filter_method(reports: Vec<Report>, app_version: Version) -> Vec<Report> {
+    // let reports = reports.into_iter().filter_map(|r| Version::from_str())
+    reports
+}
 
-        if !new.report_row.is_custom && !existing.report_row.is_custom {
-            return comparison == Ordering::Greater;
-        }
-
-        if new.report_row.is_custom && existing.report_row.is_custom {
-            return comparison == Ordering::Greater;
-        }
-    }
-
-    false
+fn find_latest_report(reports: Vec<Report>) -> Option<Report> {
+    let report = reports.into_iter().max_by(|a, b| {
+        Version::from_str(&a.report_row.version)
+            .partial_cmp(&Version::from_str(&b.report_row.version))
+            // TODO comment need to convert Option to non optional
+            .unwrap()
+    });
+    report
 }
 
 fn resolve_report(
@@ -1030,7 +1004,7 @@ mod report_generation_test {
 
     #[actix_rt::test]
 
-    async fn test_standard_reprt_generation() {
+    async fn test_standard_report_generation() {
         let template_content = include_str!("templates/test.html").to_string();
 
         let tera_template = TeraTemplate {
@@ -1090,5 +1064,103 @@ mod report_generation_test {
 
         assert!(generated_report.document.contains("some text"));
         assert!(generated_report.document.contains("Nom"));
+    }
+}
+
+#[cfg(test)]
+mod report_filter_test {
+
+    use repository::{
+        migrations::Version, mock::MockDataInserts, test_db::setup_all, EqualFilter, Pagination,
+        ReportFilter, ReportRepository,
+    };
+
+    use crate::{report::report_service::report_filter_method, service_provider::ServiceProvider};
+
+    // adding tests to generate reports
+
+    #[actix_rt::test]
+    async fn test_standard_report_filter_method() {
+        let (_, _, connection_manager, _) = setup_all(
+            "test_standard_report_filter_method",
+            MockDataInserts::none().reports(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let ctx = service_provider.basic_context().unwrap();
+
+        // test standard reports
+        let filter = ReportFilter::new().code(EqualFilter::equal_to("standard_report"));
+        let reports =
+            ReportRepository::new(&ctx.connection).query(Pagination::all(), Some(filter), None);
+
+        let mut app_version = Version::from_str("2.3.00");
+        let mut result = report_filter_method(reports.clone(), app_version);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.first().unwrap().report_row.version, "2.3.5");
+
+        app_version = Version::from_str("2.4.00");
+        result = report_filter_method(reports.clone(), app_version);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.first().unwrap().report_row.version, "2.3.5");
+
+        app_version = Version::from_str("2.8.00");
+        result = report_filter_method(reports.clone(), app_version);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.first().unwrap().report_row.version, "2.8.3");
+
+        app_version = Version::from_str("3.2.00");
+        result = report_filter_method(reports.clone(), app_version);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.first().unwrap().report_row.version, "3.0.1");
+
+        app_version = Version::from_str("4.5.00");
+        result = report_filter_method(reports, app_version);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.first().unwrap().report_row.version, "3.5.1");
+    }
+
+    #[actix_rt::test]
+    async fn test_custom_report_filter_method() {
+        let (_, _, connection_manager, _) = setup_all(
+            "test_custom_report_filter_method",
+            MockDataInserts::none().reports(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let ctx = service_provider.basic_context().unwrap();
+
+        // test standard reports
+        let filter = ReportFilter::new().code(EqualFilter::equal_to("report_with_custom_option"));
+        let reports = ReportRepository::new(&ctx.connection)
+            .query(Pagination::all(), Some(filter), None)
+            .unwrap();
+
+        let mut app_version = Version::from_str("2.3.00");
+        let mut result = report_filter_method(reports.clone(), app_version);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.first().unwrap().report_row.version, "2.3.5");
+
+        app_version = Version::from_str("2.4.00");
+        result = report_filter_method(reports.clone(), app_version);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.first().unwrap().report_row.version, "2.3.5");
+
+        app_version = Version::from_str("2.8.00");
+        result = report_filter_method(reports.clone(), app_version);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.first().unwrap().report_row.version, "2.8.3");
+
+        app_version = Version::from_str("3.2.00");
+        result = report_filter_method(reports.clone(), app_version);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.first().unwrap().report_row.version, "3.0.1");
+
+        app_version = Version::from_str("4.5.00");
+        result = report_filter_method(reports, app_version);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.first().unwrap().report_row.version, "3.5.1");
     }
 }
