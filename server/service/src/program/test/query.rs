@@ -15,7 +15,7 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("test_program_single_record", MockDataInserts::none()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.program_service;
 
@@ -49,7 +49,7 @@ mod query {
         let (_, connection, connection_manager, _) =
             setup_all("test_program_filter", MockDataInserts::none()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.program_service;
 
