@@ -86,6 +86,7 @@ export function Autocomplete<T>({
         disableUnderline: false,
         ...props.InputProps,
       }}
+      InputLabelProps={{ shrink: true }}
       sx={{ minWidth: width }}
     />
   );

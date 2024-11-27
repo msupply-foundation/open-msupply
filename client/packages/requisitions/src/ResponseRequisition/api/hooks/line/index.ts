@@ -3,6 +3,7 @@ import { useInsertResponseLines } from './useInsertResponseLines';
 import { useResponseLines } from './useResponseLines';
 import { useResponseLineStatsData } from './useResponseLineStatsData';
 import { useSaveResponseLines } from './useSaveResponseLines';
+import { useUpdateIndicatorLine } from './useUpdateIndicatorLine';
 
 export const Lines = {
   useDeleteResponseLines,
@@ -10,4 +11,5 @@ export const Lines = {
   useSaveResponseLines,
   useResponseLineStatsData,
   useInsertResponseLines,
+  useUpdateIndicatorLine,
 };

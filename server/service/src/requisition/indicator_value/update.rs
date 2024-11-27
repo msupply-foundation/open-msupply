@@ -19,7 +19,7 @@ pub enum UpdateIndicatorValueError {
     DatabaseError(RepositoryError),
     IndicatorValueDoesNotExist,
     NotThisStoreValue,
-    ValueNotCorrectType,
+    ValueTypeNotCorrect,
     IndicatorLineDoesNotExist,
     IndicatorColumnDoesNotExist,
 }
@@ -78,14 +78,14 @@ fn validate(
         if column_value_type == IndicatorValueType::Number {
             match input.value.parse::<f64>() {
                 Ok(_) => {}
-                Err(_) => return Err(OutError::ValueNotCorrectType),
+                Err(_) => return Err(OutError::ValueTypeNotCorrect),
             }
         }
     } else if let Some(line_value_type) = indicator_line.value_type {
         if line_value_type == IndicatorValueType::Number {
             match input.value.parse::<f64>() {
                 Ok(_) => {}
-                Err(_) => return Err(OutError::ValueNotCorrectType),
+                Err(_) => return Err(OutError::ValueTypeNotCorrect),
             }
         }
     }
@@ -208,7 +208,7 @@ mod test {
                     r.value = "new value".to_string();
                 }),
             ),
-            Err(UpdateIndicatorValueError::ValueNotCorrectType)
+            Err(UpdateIndicatorValueError::ValueTypeNotCorrect)
         );
 
         context.store_id = mock_store_b().id;

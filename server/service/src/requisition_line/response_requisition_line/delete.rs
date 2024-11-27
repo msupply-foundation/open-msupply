@@ -68,7 +68,7 @@ fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
-    if requisition_row.linked_requisition_id != None {
+    if requisition_row.linked_requisition_id.is_some() {
         return Err(OutError::CannotDeleteLineFromTransferredRequisition);
     }
 
