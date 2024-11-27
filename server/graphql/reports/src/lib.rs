@@ -74,11 +74,10 @@ impl ReportQueries {
         #[graphql(desc = "The report definition to be generated")] report: serde_json::Value,
         data_id: Option<String>,
         arguments: Option<serde_json::Value>,
-        format: Option<PrintFormat>,    
+        format: Option<PrintFormat>,        
         current_language: Option<String>,
     ) -> Result<PrintReportResponse> {
         generate_report_definition(ctx, store_id, name, report, data_id, arguments, format, current_language).await
-
     }
 }
 
