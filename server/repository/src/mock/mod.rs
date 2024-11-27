@@ -65,6 +65,7 @@ mod unit;
 mod user_account;
 mod vaccination;
 mod vaccine_course;
+mod reports;
 
 pub use asset::*;
 pub use asset_log::*;
@@ -127,6 +128,7 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 pub use vaccination::*;
 pub use vaccine_course::*;
+pub use reports::*;
 
 use crate::{
     assets::{
@@ -245,6 +247,7 @@ pub struct MockData {
     pub indicator_columns: Vec<IndicatorColumnRow>,
     pub indicator_values: Vec<IndicatorValueRow>,
     pub options: Vec<ReasonOptionRow>,
+    reports: Vec<crate::ReportRow>,
 }
 
 impl MockData {
@@ -326,6 +329,7 @@ pub struct MockDataInserts {
     pub indicator_columns: bool,
     pub indicator_values: bool,
     pub options: bool,
+    pub reports: bool,
 }
 
 impl MockDataInserts {
@@ -396,6 +400,7 @@ impl MockDataInserts {
             indicator_columns: true,
             indicator_values: true,
             options: true,
+            reports: true,
         }
     }
 
@@ -719,6 +724,11 @@ impl MockDataInserts {
         self.options = true;
         self
     }
+
+    pub fn reports(mut self) -> Self {
+        self.reports = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -810,7 +820,8 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             indicator_columns: mock_indicator_columns(),
             indicator_values: mock_indicator_values(),
             options: mock_options(),
-            ..Default::default()
+            reports: mock_reports(),
+            ..Default::default(),
         },
     );
     data.insert(
@@ -1402,6 +1413,7 @@ impl MockData {
             mut indicator_columns,
             mut indicator_values,
             mut options,
+            mut reports,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1472,6 +1484,7 @@ impl MockData {
         self.indicator_columns.append(&mut indicator_columns);
         self.indicator_values.append(&mut indicator_values);
         self.options.append(&mut options);
+        self.reports.append(&mut reports);
         self
     }
 }
