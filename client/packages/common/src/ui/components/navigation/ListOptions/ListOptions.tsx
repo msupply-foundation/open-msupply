@@ -50,7 +50,13 @@ export const ListOptions = ({
   );
 
   return (
-    <List sx={{ padding: 0, maxHeight: height * 0.8, overflow: 'auto' }}>
+    <List
+      sx={{
+        padding: 0,
+        maxHeight: height * 0.6,
+        overflow: 'auto',
+      }}
+    >
       {options?.map((option, _) => (
         <React.Fragment key={option.id}>
           <ListItem
