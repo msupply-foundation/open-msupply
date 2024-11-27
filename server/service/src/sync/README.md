@@ -90,9 +90,9 @@ In google drive, under `Knowledge Base > Sync System > How to add v6 sync for ce
 
 [Add om report](https://github.com/msupply-foundation/open-msupply/commit/04a37a88148bf7315e79b97ba753a6d4536d1428)
 
-[Add om report translations](https://github.com/msupply-foundation/open-msupply/commit/3de161ed-93ef-4210-aa31-3ae9e53748e8)
+[Add om report translations](https://github.com/msupply-foundation/open-msupply/commit/bd73a2be5cf33670635e55709a120d2145a98731)
 
-[Add tests](https://github.com/msupply-foundation/open-msupply/commit/4973907f-835b-4035-8dd1-6e63f5713dcf) 
+[Add tests](https://github.com/msupply-foundation/open-msupply/commit/6ef0d9952ac89d3eb31fa5ac1893e154ad8319ee) 
 
 ## Central Servers
 
