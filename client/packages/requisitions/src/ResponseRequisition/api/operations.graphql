@@ -188,7 +188,12 @@ fragment Response on RequisitionNode {
     }
   }
   programName
+  program {
+    id
+    name
+  }
   period {
+    id
     name
     startDate
     endDate
@@ -503,5 +508,90 @@ fragment CustomerProgramSettings on CustomerProgramRequisitionSettingNode {
 query customerProgramSettings($storeId: String!) {
   customerProgramRequisitionSettings(storeId: $storeId) {
     ...CustomerProgramSettings
+  }
+}
+
+fragment ProgramIndicator on ProgramIndicatorNode {
+  code
+  lineAndColumns {
+    ...IndicatorLineWithColumns
+  }
+  id
+}
+fragment IndicatorLineRow on IndicatorLineRowNode {
+  id
+  code
+  lineNumber
+  name
+  valueType
+}
+fragment IndicatorColumn on IndicatorColumnNode {
+  columnNumber
+  name
+  valueType
+  value(
+    periodId: $periodId
+    customerNameLinkId: $customerNameLinkId
+    storeId: $storeId
+  ) {
+    ...IndicatorValue
+  }
+}
+fragment IndicatorValue on IndicatorValueNode {
+  id
+  value
+}
+fragment IndicatorLineWithColumns on IndicatorLineNode {
+  columns {
+    ...IndicatorColumn
+  }
+  line {
+    ...IndicatorLineRow
+  }
+}
+query programIndicators(
+  $customerNameLinkId: String!
+  $periodId: String!
+  $storeId: String!
+  $programId: String!
+) {
+  programIndicators(
+    storeId: $storeId
+    filter: { programId: { equalTo: $programId } }
+  ) {
+    ... on ProgramIndicatorConnector {
+      __typename
+      nodes {
+        ...ProgramIndicator
+      }
+      totalCount
+    }
+  }
+}
+
+mutation updateIndicatorValue(
+  $storeId: String!
+  $input: UpdateIndicatorValueInput!
+) {
+  updateIndicatorValue(input: $input, storeId: $storeId) {
+    __typename
+    ... on IndicatorValueNode {
+      id
+      value
+    }
+    ... on UpdateIndicatorValueError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on ValueTypeNotCorrect {
+          __typename
+          description
+        }
+      }
+    }
   }
 }

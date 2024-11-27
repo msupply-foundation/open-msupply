@@ -2379,6 +2379,7 @@ export type IndicatorLineNode = {
 export type IndicatorLineRowNode = {
   __typename: 'IndicatorLineRowNode';
   code: Scalars['String']['output'];
+  id: Scalars['String']['output'];
   lineNumber: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   valueType?: Maybe<IndicatorValueTypeNode>;
@@ -6717,6 +6718,8 @@ export type RequisitionNode = {
   otherPartyId: Scalars['String']['output'];
   otherPartyName: Scalars['String']['output'];
   period?: Maybe<PeriodNode>;
+  program?: Maybe<ProgramNode>;
+  /** @deprecated use `program.name` instead. */
   programName?: Maybe<Scalars['String']['output']>;
   requisitionNumber: Scalars['Int']['output'];
   /** Applicable to request requisition only */
@@ -8928,6 +8931,11 @@ export type VaccineCourseSortInput = {
 };
 
 export type VaccineCoursesResponse = VaccineCourseConnector;
+
+export type ValueTypeNotCorrect = UpdateIndicatorValueErrorInterface & {
+  __typename: 'ValueTypeNotCorrect';
+  description: Scalars['String']['output'];
+};
 
 export enum VenCategoryType {
   E = 'E',
