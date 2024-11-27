@@ -83,15 +83,17 @@ impl<'a> ProgramCustomerRepository<'a> {
 
         apply_equal_filter!(query, program_id_filter, program::id);
 
-        let query = query.select((
-            // Same as NameRepository
-            name::table::all_columns(),
-            name_oms_fields_alias.fields((name_oms_fields::id, name_oms_fields::properties)),
-            name_link::table::all_columns().nullable().assume_not_null(),
-            name_store_join::table::all_columns().nullable(),
-            store::table::all_columns().nullable(),
-            program::table::all_columns().nullable().assume_not_null(),
-        ));
+        let query = query
+            .select((
+                // Same as NameRepository
+                name::table::all_columns(),
+                name_oms_fields_alias.fields((name_oms_fields::id, name_oms_fields::properties)),
+                name_link::table::all_columns().nullable().assume_not_null(),
+                name_store_join::table::all_columns().nullable(),
+                store::table::all_columns().nullable(),
+                program::table::all_columns().nullable().assume_not_null(),
+            ))
+            .distinct();
         let result = query.load::<ProgramCustomerJoin>(self.connection.lock().connection())?;
 
         Ok(result
