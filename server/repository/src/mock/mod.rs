@@ -35,6 +35,7 @@ mod program_indicator;
 mod program_order_types;
 mod program_requisition_settings;
 mod property;
+mod reports;
 mod rnr_form;
 mod sensor;
 mod stock_line;
@@ -65,7 +66,6 @@ mod unit;
 mod user_account;
 mod vaccination;
 mod vaccine_course;
-mod reports;
 
 pub use asset::*;
 pub use asset_log::*;
@@ -101,6 +101,7 @@ pub use program_indicator::*;
 pub use program_order_types::*;
 pub use program_requisition_settings::*;
 pub use property::*;
+pub use reports::*;
 pub use rnr_form::*;
 pub use sensor::*;
 pub use stock_line::*;
@@ -128,7 +129,6 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 pub use vaccination::*;
 pub use vaccine_course::*;
-pub use reports::*;
 
 use crate::{
     assets::{
@@ -821,7 +821,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             indicator_values: mock_indicator_values(),
             options: mock_options(),
             reports: mock_reports(),
-            ..Default::default(),
+            ..Default::default()
         },
     );
     data.insert(
