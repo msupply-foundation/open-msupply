@@ -37,19 +37,18 @@ const ResponseLineEditFormLayout = ({
 };
 
 export const ResponseLineEditPage = () => {
+  const { itemId } = useParams();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { data, isLoading } = useResponse.document.get();
   const lines =
     data?.lines.nodes.sort((a, b) => a.item.name.localeCompare(b.item.name)) ??
     [];
-  const { itemId } = useParams();
   const currentItem = lines.find(l => l.item.id === itemId)?.item;
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { draft, update, save } = useDraftRequisitionLine(currentItem);
   const { hasNext, next, hasPrevious, previous } = usePreviousNextResponseLine(
     lines,
     currentItem
   );
-
   const enteredLineIds = lines
     .filter(line => line.supplyQuantity !== 0)
     .map(line => line.item.id);
@@ -60,8 +59,8 @@ export const ResponseLineEditPage = () => {
     });
   }, [currentItem]);
 
-  if (isLoading) return <BasicSpinner />;
-  if (!data || !currentItem) return <NothingHere />;
+  if (isLoading || !currentItem) return <BasicSpinner />;
+  if (!data) return <NothingHere />;
 
   return (
     <>
