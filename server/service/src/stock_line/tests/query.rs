@@ -14,7 +14,7 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("test_stock_line_service_pagination", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.stock_line_service;
 
@@ -52,7 +52,7 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("test_stock_line_single_record", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let service_provider = ServiceProvider::new(connection_manager.clone());
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.stock_line_service;
 
@@ -74,7 +74,7 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("test_stock_line_filter", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.stock_line_service;
 
@@ -131,7 +131,7 @@ mod query {
         let (mock_data, _, connection_manager, _) =
             setup_all("test_stock_line_sort", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.stock_line_service;
         let mut stock_lines = mock_data["base"].stock_lines.clone();
