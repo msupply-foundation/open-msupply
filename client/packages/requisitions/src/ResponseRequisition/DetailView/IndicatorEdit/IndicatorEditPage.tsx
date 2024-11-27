@@ -38,7 +38,11 @@ export const IndicatorEditPage = () => {
   const currentLineAndColumns = linesAndColumns.find(
     l => l.line.id == programIndicatorLineId
   );
-  const lines = linesAndColumns.map(l => l.line);
+  // Lines may be added to a program_indicator after the requisition was made. We need to hide them, as they're not valid or necessary for past requisitions.
+  const populatedLines = linesAndColumns.filter(l =>
+    l.columns.find(c => c.value)
+  );
+  const lines = populatedLines.map(l => l.line);
   const currentLine = lines.find(l => l.id === programIndicatorLineId);
   const sortedLines = lines.sort((a, b) => a.lineNumber - b.lineNumber);
 
