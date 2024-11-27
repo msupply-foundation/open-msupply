@@ -42,11 +42,11 @@ impl StandardReports {
     ) -> Result<(), anyhow::Error> {
         let mut num_std_reports = 0;
         for report in reports_data.reports {
-            let existing_report = ReportRepository::new(con).count(Some(
+            let existing_report_count = ReportRepository::new(con).count(Some(
                 ReportFilter::new().id(EqualFilter::equal_to(&report.id)),
             ))?;
 
-            if existing_report == 0 {
+            if existing_report_count == 0 {
                 if let Some(form_schema_json) = &report.form_schema {
                     // TODO: Look up existing json schema and use it's ID to be safe...
                     FormSchemaRowRepository::new(con).upsert_one(form_schema_json)?;
