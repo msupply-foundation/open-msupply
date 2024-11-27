@@ -1,6 +1,5 @@
 use crate::{
     activity_log::activity_log_entry,
-    item_stats::{get_item_stats, ItemStatsFilter},
     number::next_number,
     requisition::{
         common::check_requisition_row_exists,
@@ -13,8 +12,8 @@ use crate::{
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
-    MasterListLineFilter, MasterListLineRepository, NumberRowType, Pagination,
+    ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository, ItemFilter,
+    ItemRepository, MasterListLineFilter, MasterListLineRepository, NumberRowType, Pagination,
     ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError,
     Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
     StoreFilter, StoreRepository,
@@ -241,21 +240,19 @@ fn generate_lines(
     requisition_row: &RequisitionRow,
     item_ids: Vec<String>,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
-    let item_stats_rows = get_item_stats(
-        ctx,
-        store_id,
-        None,
-        Some(ItemStatsFilter::new().item_id(EqualFilter::equal_any(item_ids))),
+    let items = ItemRepository::new(&ctx.connection).query_by_filter(
+        ItemFilter::new().id(EqualFilter::equal_any(item_ids)),
+        Some(store_id.to_string()),
     )?;
 
-    let result = item_stats_rows
+    let result = items
         .into_iter()
-        .map(|item_stats| {
+        .map(|item| {
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition_row.id.clone(),
-                item_link_id: item_stats.item_id,
-                item_name: item_stats.item_name,
+                item_link_id: item.item_row.id.clone(),
+                item_name: item.item_row.name.clone(),
                 snapshot_datetime: Some(Utc::now().naive_utc()),
                 // Default
                 suggested_quantity: 0.0,
