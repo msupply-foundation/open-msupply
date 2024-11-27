@@ -38,7 +38,7 @@ export const IndicatorsTab = ({
   const regimenIndicators = indicators.filter(
     indicator =>
       indicator.code === 'REGIMEN' &&
-      // Should only include regimen indicators if they have at least one column with a value
+      // Should only include indicators if they have at least one column with a value
       indicator.lineAndColumns.some(line => line.columns.some(c => c.value))
   );
 
@@ -47,7 +47,10 @@ export const IndicatorsTab = ({
   )[0]?.line;
 
   const hivIndicators = indicators.filter(
-    indicator => indicator.code === 'HIV'
+    indicator =>
+      indicator.code === 'HIV' &&
+      // Should only include indicators if they have at least one column with a value
+      indicator.lineAndColumns.some(line => line.columns.some(c => c.value))
   );
   const firstHivLine = hivIndicators[0]?.lineAndColumns.sort(
     (a, b) => a.line.lineNumber - b.line.lineNumber
