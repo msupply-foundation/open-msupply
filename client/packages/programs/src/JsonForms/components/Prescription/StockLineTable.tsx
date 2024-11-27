@@ -7,7 +7,7 @@ import {
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
-import { DraftStockOutLine } from 'packages/invoices/src/types';
+import { DraftStockOutLine } from '@openmsupply-client/invoices/src/types';
 
 interface StockLineTableProps {
   stocklines: DraftStockOutLine[];
