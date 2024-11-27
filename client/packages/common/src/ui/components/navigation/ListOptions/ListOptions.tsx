@@ -55,6 +55,7 @@ export const ListOptions = ({
         padding: 0,
         maxHeight: height * 0.6,
         overflow: 'auto',
+        scrollBehavior: 'smooth',
       }}
     >
       {options?.map((option, _) => (
@@ -62,6 +63,12 @@ export const ListOptions = ({
           <ListItem
             sx={{ padding: '5px 0px' }}
             onClick={() => onClick(option.id)}
+            ref={
+              option.id === currentId
+                ? l =>
+                    l?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                : null
+            }
           >
             <ListItemIcon sx={{ padding: 0, minWidth: 25 }}>
               <Box
