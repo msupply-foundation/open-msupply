@@ -40,7 +40,7 @@ pub struct Requisition {
     pub requisition_row: RequisitionRow,
     pub name_row: NameRow,
     pub store_row: StoreRow,
-    pub program_name: Option<String>,
+    pub program: Option<ProgramRow>,
     pub period: Option<PeriodRow>,
 }
 
@@ -237,13 +237,13 @@ fn create_filtered_query(
 }
 
 fn to_domain(
-    (requisition_row, (_, name_row), store_row, program_row, period_row): RequisitionJoin,
+    (requisition_row, (_, name_row), store_row, program, period_row): RequisitionJoin,
 ) -> Requisition {
     Requisition {
         requisition_row,
         name_row,
         store_row,
-        program_name: program_row.map(|program_row| program_row.name),
+        program,
         period: period_row,
     }
 }

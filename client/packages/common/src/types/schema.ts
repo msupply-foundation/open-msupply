@@ -2379,6 +2379,7 @@ export type IndicatorLineNode = {
 export type IndicatorLineRowNode = {
   __typename: 'IndicatorLineRowNode';
   code: Scalars['String']['output'];
+  id: Scalars['String']['output'];
   lineNumber: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   valueType?: Maybe<IndicatorValueTypeNode>;
@@ -3115,6 +3116,7 @@ export type InsertStocktakeLineInput = {
   id: Scalars['String']['input'];
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemId?: InputMaybe<Scalars['String']['input']>;
+  itemVariantId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
@@ -3681,7 +3683,6 @@ export type ItemVariantNode = {
   bundlesWith: Array<BundledItemNode>;
   coldStorageType?: Maybe<ColdStorageTypeNode>;
   coldStorageTypeId?: Maybe<Scalars['String']['output']>;
-  dosesPerUnit?: Maybe<Scalars['Int']['output']>;
   id: Scalars['String']['output'];
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
@@ -6718,6 +6719,8 @@ export type RequisitionNode = {
   otherPartyId: Scalars['String']['output'];
   otherPartyName: Scalars['String']['output'];
   period?: Maybe<PeriodNode>;
+  program?: Maybe<ProgramNode>;
+  /** @deprecated use `program.name` instead. */
   programName?: Maybe<Scalars['String']['output']>;
   requisitionNumber: Scalars['Int']['output'];
   /** Applicable to request requisition only */
@@ -6773,6 +6776,18 @@ export enum RequisitionNodeType {
   /** Supplying store requisition in response to request requisition */
   Response = 'RESPONSE'
 }
+
+export type RequisitionReasonNotProvided = {
+  __typename: 'RequisitionReasonNotProvided';
+  description: Scalars['String']['output'];
+  requisitionLine: RequisitionLineNode;
+};
+
+export type RequisitionReasonsNotProvided = UpdateResponseRequisitionErrorInterface & {
+  __typename: 'RequisitionReasonsNotProvided';
+  description: Scalars['String']['output'];
+  errors: Array<RequisitionReasonNotProvided>;
+};
 
 export type RequisitionResponse = RecordNotFound | RequisitionNode;
 
@@ -7214,6 +7229,7 @@ export type StocktakeLineNode = {
   item: ItemNode;
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  itemVariantId?: Maybe<Scalars['String']['output']>;
   location?: Maybe<LocationNode>;
   note?: Maybe<Scalars['String']['output']>;
   packSize?: Maybe<Scalars['Float']['output']>;
@@ -8460,6 +8476,7 @@ export type UpdateStocktakeLineInput = {
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
+  itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
@@ -8624,7 +8641,6 @@ export type UpsertItemVariantErrorInterface = {
 
 export type UpsertItemVariantInput = {
   coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
-  dosesPerUnit?: InputMaybe<Scalars['Int']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   manufacturerId?: InputMaybe<Scalars['String']['input']>;
@@ -8916,6 +8932,11 @@ export type VaccineCourseSortInput = {
 };
 
 export type VaccineCoursesResponse = VaccineCourseConnector;
+
+export type ValueTypeNotCorrect = UpdateIndicatorValueErrorInterface & {
+  __typename: 'ValueTypeNotCorrect';
+  description: Scalars['String']['output'];
+};
 
 export enum VenCategoryType {
   E = 'E',

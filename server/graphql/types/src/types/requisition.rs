@@ -12,11 +12,14 @@ use graphql_core::{
 };
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ApprovalStatusType, NameRow, PeriodRow, Requisition,
+    ApprovalStatusType, NameRow, Requisition,
 };
 use service::ListResult;
 
-use super::{InvoiceConnector, NameNode, PeriodNode, RequisitionLineConnector, UserNode};
+use super::{
+    program_node::ProgramNode, InvoiceConnector, NameNode, PeriodNode, RequisitionLineConnector,
+    UserNode,
+};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum RequisitionNodeType {
@@ -228,8 +231,18 @@ impl RequisitionNode {
         Ok(RequisitionLineConnector::from_vec(result))
     }
 
-    pub async fn program_name(&self) -> &Option<String> {
-        &self.requisition.program_name
+    pub async fn program(&self) -> Option<ProgramNode> {
+        self.requisition
+            .program
+            .as_ref()
+            .map(|program| ProgramNode {
+                program_row: program.to_owned(),
+            })
+    }
+
+    #[graphql(deprecation = "use `program.name` instead.")]
+    pub async fn program_name(&self) -> Option<String> {
+        self.requisition.program.as_ref().map(|p| p.name.to_owned())
     }
 
     pub async fn order_type(&self) -> &Option<String> {
@@ -255,10 +268,6 @@ impl RequisitionNode {
 
     pub fn name_row(&self) -> &NameRow {
         &self.requisition.name_row
-    }
-
-    pub fn period_row(&self) -> &Option<PeriodRow> {
-        &self.requisition.period
     }
 
     pub fn from_domain(requisition: Requisition) -> RequisitionNode {
