@@ -110,19 +110,6 @@ impl<'a> ReportRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_one_by_code_and_version(
-        &self,
-        code: &str,
-        version: &str,
-    ) -> Result<Option<ReportRow>, RepositoryError> {
-        let result = report_dsl::report
-            .filter(report_dsl::code.eq(code))
-            .filter(report_dsl::version.eq(version))
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
-    }
-
     pub fn upsert_one(&self, row: &ReportRow) -> Result<(), RepositoryError> {
         diesel::insert_into(report_dsl::report)
             .values(row)
