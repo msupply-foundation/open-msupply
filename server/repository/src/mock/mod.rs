@@ -27,6 +27,7 @@ mod name;
 mod name_store_join;
 mod name_tag;
 mod number;
+mod option;
 mod period_and_period_schedule;
 mod program;
 pub mod program_enrolment;
@@ -91,6 +92,7 @@ pub use name::*;
 pub use name_store_join::*;
 pub use name_tag::*;
 pub use number::*;
+pub use option::*;
 pub use period_and_period_schedule::*;
 pub use program::*;
 pub use program_enrolment::*;
@@ -133,6 +135,7 @@ use crate::{
     },
     category_row::{CategoryRow, CategoryRowRepository},
     item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
+    reason_option_row::{ReasonOptionRow, ReasonOptionRowRepository},
     vaccine_course::{
         vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
@@ -243,6 +246,7 @@ pub struct MockData {
     pub indicator_columns: Vec<IndicatorColumnRow>,
     pub indicator_values: Vec<IndicatorValueRow>,
     pub categories: Vec<CategoryRow>,
+    pub options: Vec<ReasonOptionRow>,
 }
 
 impl MockData {
@@ -324,6 +328,7 @@ pub struct MockDataInserts {
     pub indicator_columns: bool,
     pub indicator_values: bool,
     pub categories: bool,
+    pub options: bool,
 }
 
 impl MockDataInserts {
@@ -394,6 +399,7 @@ impl MockDataInserts {
             indicator_columns: true,
             indicator_values: true,
             categories: true,
+            options: true,
         }
     }
 
@@ -716,6 +722,11 @@ impl MockDataInserts {
         self.categories = true;
         self
     }
+
+    pub fn options(mut self) -> Self {
+        self.options = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -806,6 +817,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             indicator_lines: mock_indicator_lines(),
             indicator_columns: mock_indicator_columns(),
             indicator_values: mock_indicator_values(),
+            options: mock_options(),
             ..Default::default()
         },
     );
@@ -1323,6 +1335,13 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
+        if inserts.options {
+            let repo = ReasonOptionRowRepository::new(connection);
+            for row in &mock_data.options {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1397,6 +1416,7 @@ impl MockData {
             mut indicator_columns,
             mut indicator_values,
             mut categories,
+            mut options,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1467,6 +1487,7 @@ impl MockData {
         self.indicator_columns.append(&mut indicator_columns);
         self.indicator_values.append(&mut indicator_values);
         self.categories.append(&mut categories);
+        self.options.append(&mut options);
         self
     }
 }

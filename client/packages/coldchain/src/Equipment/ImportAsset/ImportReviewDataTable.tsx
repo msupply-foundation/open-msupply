@@ -1,7 +1,9 @@
 import React, { FC, useState } from 'react';
 import {
   ColumnDescription,
+  ColumnFormat,
   DataTable,
+  DotCell,
   Grid,
   NothingHere,
   Pagination,
@@ -12,6 +14,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { ImportRow } from './EquipmentImportModal';
+import { Status } from '../Components';
 
 interface ImportReviewDataTableProps {
   importRows: ImportRow[];
@@ -29,24 +32,12 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     offset: 0,
   });
   const [searchString, setSearchString] = useState<string>(() => '');
-  const columnDescriptions: ColumnDescription<ImportRow>[] = [
-    {
-      key: 'assetNumber',
-      width: 70,
-      sortable: false,
-      label: 'label.asset-number',
-    },
-    {
-      key: 'catalogueItemCode',
-      width: 50,
-      sortable: false,
-      label: 'label.catalogue-item-code',
-    },
-  ];
+  const columnDescriptions: ColumnDescription<ImportRow>[] = [];
+
   if (isCentralServer) {
     columnDescriptions.push({
       key: 'store',
-      width: 50,
+      width: 80,
       sortable: false,
       label: 'label.store',
       accessor: ({ rowData }) => rowData.store?.code,
@@ -55,25 +46,58 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
 
   columnDescriptions.push(
     {
+      key: 'assetNumber',
+      width: 90,
+      sortable: false,
+      label: 'label.asset-number',
+    },
+    {
+      key: 'catalogueItemCode',
+      sortable: false,
+      label: 'label.catalogue-item-code',
+    },
+    {
+      key: 'installationDate',
+      sortable: false,
+      label: 'label.installation-date',
+      format: ColumnFormat.Date,
+    },
+    {
+      key: 'replacementDate',
+      sortable: false,
+      label: 'label.replacement-date',
+      format: ColumnFormat.Date,
+    },
+    {
+      key: 'warrantyStart',
+      sortable: false,
+      label: 'label.warranty-start-date',
+      Cell: TooltipTextCell,
+    },
+    {
+      key: 'warrantyEnd',
+      sortable: false,
+      label: 'label.warranty-end-date',
+      Cell: TooltipTextCell,
+    },
+    {
       key: 'serialNumber',
-      width: 100,
       sortable: false,
       label: 'label.serial',
       Cell: TooltipTextCell,
     },
     {
-      key: 'installationDate',
-      width: 100,
+      key: 'status',
       sortable: false,
-      label: 'label.installation-date',
-      Cell: TooltipTextCell,
+      label: 'label.status',
+      Cell: ({ rowData }) => <Status status={rowData.status} />,
     },
     {
-      key: 'replacementDate',
-      width: 100,
+      key: 'needsReplacement',
       sortable: false,
-      label: 'label.replacement-date',
-      Cell: TooltipTextCell,
+      label: 'label.needs-replacement',
+      Cell: DotCell,
+      accessor: ({ rowData }) => !!rowData.needsReplacement,
     },
     {
       key: 'notes',

@@ -144,6 +144,10 @@ impl IndicatorLineRowNode {
 
 #[Object]
 impl IndicatorLineRowNode {
+    pub async fn id(&self) -> &str {
+        &self.line.id
+    }
+
     pub async fn code(&self) -> &str {
         &self.line.code
     }

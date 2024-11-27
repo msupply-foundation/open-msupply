@@ -14,7 +14,7 @@ import {
   ItemVariantInputCell,
   useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { GenerateCustomerReturnLineFragment } from '../../api';
 import { PackSizeEntryCell } from '@openmsupply-client/system';
 
@@ -31,78 +31,85 @@ export const QuantityReturnedTableComponent = ({
 }) => {
   const showItemVariantsColumn = useIsItemVariantsEnabled();
 
-  const columnDefinitions: ColumnDescription<GenerateCustomerReturnLineFragment>[] =
-    ['itemCode', 'itemName'];
-  if (showItemVariantsColumn)
-    columnDefinitions.push({
-      key: 'itemVariantId',
-      label: 'label.item-variant',
-      width: 170,
-      setter: updateLine,
-      Cell: props => (
-        <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
-      ),
-      getIsDisabled: () => isDisabled,
-    });
+  const columnDefinitions = useMemo(() => {
+    const columnDefinitions: ColumnDescription<GenerateCustomerReturnLineFragment>[] =
+      ['itemCode', 'itemName'];
 
-  columnDefinitions.push(
-    [
+    columnDefinitions.push([
       'batch',
       {
         width: 125,
         accessor: ({ rowData }) => rowData.batch ?? '',
         setter: updateLine,
-        Cell: TextInputCell,
-        getIsDisabled: () => isDisabled,
-      },
-    ],
-    [
-      expiryInputColumn,
-      {
-        width: 150,
-        getIsDisabled: () => isDisabled,
-        setter: l =>
-          updateLine({
-            ...l,
-            expiryDate: l.expiryDate
-              ? Formatter.naiveDate(new Date(l.expiryDate))
-              : null,
-          }),
-      },
-    ],
-    getColumnLookupWithOverrides('packSize', {
-      Cell: PackUnitEntryCell,
-      setter: updateLine,
-      getIsDisabled: () => isDisabled,
-      label: 'label.pack-size',
-    })
-  );
-
-  if (lines.some(l => l.numberOfPacksIssued !== null)) {
-    // if any line has a value, show the column
-
-    columnDefinitions.push([
-      'numberOfPacks',
-      {
-        label: 'label.pack-quantity-issued',
-        width: 110,
-        accessor: ({ rowData }) => rowData.numberOfPacksIssued ?? '--',
-        Cell: BasicCell,
+        Cell: props => (
+          <TextInputCell {...props} isRequired autocompleteName="batch" />
+        ),
         getIsDisabled: () => isDisabled,
       },
     ]);
-  }
 
-  columnDefinitions.push([
-    'numberOfPacksReturned',
-    {
-      description: 'description.pack-quantity',
-      width: 100,
-      setter: updateLine,
-      getIsDisabled: () => isDisabled,
-      Cell: NumberOfPacksReturnedInputCell,
-    },
-  ]);
+    if (showItemVariantsColumn)
+      columnDefinitions.push({
+        key: 'itemVariantId',
+        label: 'label.item-variant',
+        width: 170,
+        setter: updateLine,
+        Cell: props => (
+          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+        ),
+        getIsDisabled: () => isDisabled,
+      });
+
+    columnDefinitions.push(
+      [
+        expiryInputColumn,
+        {
+          width: 150,
+          getIsDisabled: () => isDisabled,
+          setter: l =>
+            updateLine({
+              ...l,
+              expiryDate: l.expiryDate
+                ? Formatter.naiveDate(new Date(l.expiryDate))
+                : null,
+            }),
+        },
+      ],
+      getColumnLookupWithOverrides('packSize', {
+        Cell: PackUnitEntryCell,
+        setter: updateLine,
+        getIsDisabled: () => isDisabled,
+        label: 'label.pack-size',
+      })
+    );
+
+    if (lines.some(l => l.numberOfPacksIssued !== null)) {
+      // if any line has a value, show the column
+
+      columnDefinitions.push([
+        'numberOfPacks',
+        {
+          label: 'label.pack-quantity-issued',
+          width: 110,
+          accessor: ({ rowData }) => rowData.numberOfPacksIssued ?? '--',
+          Cell: BasicCell,
+          getIsDisabled: () => isDisabled,
+        },
+      ]);
+    }
+
+    columnDefinitions.push([
+      'numberOfPacksReturned',
+      {
+        description: 'description.pack-quantity',
+        width: 100,
+        setter: updateLine,
+        getIsDisabled: () => isDisabled,
+        Cell: NumberOfPacksReturnedInputCell,
+      },
+    ]);
+    return columnDefinitions;
+  }, [showItemVariantsColumn]);
 
   const columns = useColumns(columnDefinitions, {}, [
     updateLine,
