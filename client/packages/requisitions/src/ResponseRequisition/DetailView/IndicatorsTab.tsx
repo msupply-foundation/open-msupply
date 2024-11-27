@@ -34,9 +34,14 @@ export const IndicatorsTab = ({
   if (!indicators || indicators.length === 0) {
     return <NothingHere body={t('error.no-indicators')} />;
   }
+
   const regimenIndicators = indicators.filter(
-    indicator => indicator.code === 'REGIMEN'
+    indicator =>
+      indicator.code === 'REGIMEN' &&
+      // Should only include regimen indicators if they have at least one column with a value
+      indicator.lineAndColumns.some(line => line.columns.some(c => c.value))
   );
+
   const firstRegimenLine = regimenIndicators[0]?.lineAndColumns.sort(
     (a, b) => a.line.lineNumber - b.line.lineNumber
   )[0]?.line;
