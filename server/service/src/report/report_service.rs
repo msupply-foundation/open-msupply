@@ -354,14 +354,14 @@ fn report_filter_method(
     reports: Vec<ReportMetaDataRow>,
     app_version: Version,
 ) -> Vec<ReportMetaDataRow> {
-    let reports_without_incompatible_versions: Vec<ReportMetaDataRow> = reports
+    let reports_with_compatible_versions: Vec<ReportMetaDataRow> = reports
         .into_iter()
         .filter(|r| {
             compare_major_minor(Version::from_str(&r.version), &app_version) != Ordering::Greater
         })
         .collect();
 
-    let mut codes: Vec<String> = reports_without_incompatible_versions
+    let mut codes: Vec<String> = reports_with_compatible_versions
         .iter()
         .map(|r| r.code.clone())
         .collect();
@@ -369,7 +369,7 @@ fn report_filter_method(
 
     let mut reports_to_show: Vec<ReportMetaDataRow> = vec![];
     for code in codes {
-        let reports_of_code: Vec<ReportMetaDataRow> = reports_without_incompatible_versions
+        let reports_of_code: Vec<ReportMetaDataRow> = reports_with_compatible_versions
             .clone()
             .into_iter()
             .filter(|r| r.code == code)
@@ -391,7 +391,6 @@ fn report_filter_method(
 }
 
 fn find_latest_report(reports: Vec<ReportMetaDataRow>) -> Option<ReportMetaDataRow> {
-    
     reports.into_iter().max_by(|a, b| {
         Version::from_str(&a.version)
             .partial_cmp(&Version::from_str(&b.version))
