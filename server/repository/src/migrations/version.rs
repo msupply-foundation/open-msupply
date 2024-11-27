@@ -32,9 +32,9 @@ impl PackageJsonAsset {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Version {
-    major: i16,
-    minor: i16,
-    patch: i16,
+    pub major: i16,
+    pub minor: i16,
+    pub patch: i16,
     // RC or TEST etc
     pre_release: Option<String>,
 }
