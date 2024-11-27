@@ -37,9 +37,16 @@ export const IndicatorsTab = ({
   const regimenIndicators = indicators.filter(
     indicator => indicator.code === 'REGIMEN'
   );
+  const firstRegimenLine = regimenIndicators[0]?.lineAndColumns.sort(
+    (a, b) => a.line.lineNumber - b.line.lineNumber
+  )[0]?.line;
+
   const hivIndicators = indicators.filter(
     indicator => indicator.code === 'HIV'
   );
+  const firstHivLine = hivIndicators[0]?.lineAndColumns.sort(
+    (a, b) => a.line.lineNumber - b.line.lineNumber
+  )[0]?.line;
 
   return (
     <Box display="flex" flexDirection="column" padding={2} gap={2}>
@@ -49,11 +56,7 @@ export const IndicatorsTab = ({
           label={t('button.regimen')}
           Icon={<PlusCircleIcon />}
           onClick={() =>
-            onClick(
-              regimenIndicators[0],
-              regimenIndicators[0]?.lineAndColumns[0]?.line,
-              response
-            )
+            onClick(regimenIndicators[0], firstRegimenLine, response)
           }
         />
       )}
@@ -62,13 +65,7 @@ export const IndicatorsTab = ({
           // disabled={disableAddButton}
           label={t('button.hiv')}
           Icon={<PlusCircleIcon />}
-          onClick={() =>
-            onClick(
-              hivIndicators[0],
-              hivIndicators[0]?.lineAndColumns[0]?.line,
-              response
-            )
-          }
+          onClick={() => onClick(hivIndicators[0], firstHivLine, response)}
         />
       )}
     </Box>
