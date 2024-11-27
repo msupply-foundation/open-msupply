@@ -8,7 +8,7 @@ use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     schema_from_row, FormSchema, FormSchemaRow,
 };
-use crate::{EqualFilter, Pagination, Sort, StringFilter};
+use crate::{EqualFilter, Sort, StringFilter};
 
 use crate::{diesel_macros::apply_string_filter, DBType, RepositoryError};
 
@@ -41,7 +41,6 @@ pub struct ReportFilter {
 pub enum ReportSortField {
     Id,
     Name,
-    Version,
 }
 
 pub type ReportSort = Sort<ReportSortField>;
@@ -115,12 +114,11 @@ impl<'a> ReportRepository<'a> {
     }
 
     pub fn query_by_filter(&self, filter: ReportFilter) -> Result<Vec<Report>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter), None)
+        self.query(Some(filter), None)
     }
 
     pub fn query(
         &self,
-        pagination: Pagination,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
     ) -> Result<Vec<Report>, RepositoryError> {
@@ -133,15 +131,9 @@ impl<'a> ReportRepository<'a> {
                 ReportSortField::Name => {
                     apply_sort_no_case!(query, sort, report_dsl::name);
                 }
-                ReportSortField::Version => {
-                    apply_sort_no_case!(query, sort, report_dsl::version);
-                }
             }
         }
-        let result = query
-            .offset(pagination.offset as i64)
-            .limit(pagination.limit as i64)
-            .load::<ReportJoin>(self.connection.lock().connection())?;
+        let result = query.load::<ReportJoin>(self.connection.lock().connection())?;
 
         result
             .into_iter()
@@ -151,7 +143,6 @@ impl<'a> ReportRepository<'a> {
 
     pub fn query_meta_data(
         &self,
-        pagination: Pagination,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
     ) -> Result<Vec<ReportMetaDataRow>, RepositoryError> {
@@ -164,20 +155,9 @@ impl<'a> ReportRepository<'a> {
                 ReportSortField::Name => {
                     apply_sort_no_case!(query, sort, report_dsl::name);
                 }
-                ReportSortField::Version => {
-                    apply_sort_no_case!(query, sort, report_dsl::version);
-                }
             }
         }
         Ok(query
-            .offset(pagination.offset as i64)
-            .limit(pagination.limit as i64)
-            // .select((
-            //     report_dsl::id,
-            //     report_dsl::code,
-            //     report_dsl::version,
-            //     report_dsl::is_custom,
-            // ))
             .select(ReportMetaDataRow::as_select())
             .load::<ReportMetaDataRow>(self.connection.lock().connection())?)
     }
