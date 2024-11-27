@@ -60,8 +60,6 @@ pub struct ReportFilterInput {
     pub name: Option<StringFilterInput>,
     pub context: Option<EqualFilterReportContextInput>,
     pub sub_context: Option<EqualFilterStringInput>,
-    pub code: Option<EqualFilterStringInput>,
-    pub is_custom: Option<bool>,
 }
 
 #[derive(Union)]
@@ -113,14 +111,6 @@ impl ReportNode {
             .argument_schema
             .clone()
             .map(|schema| FormSchemaNode { schema })
-    }
-
-    pub async fn code(&self) -> &str {
-        &self.row.report_row.code
-    }
-
-    pub async fn version(&self) -> &str {
-        &self.row.report_row.version
     }
 }
 
@@ -188,8 +178,8 @@ impl ReportFilterInput {
                 .context
                 .map(|t| map_filter!(t, ReportContext::to_domain)),
             sub_context: self.sub_context.map(EqualFilter::from),
-            code: self.code.map(EqualFilter::from),
-            is_custom: self.is_custom,
+            code: None,
+            is_custom: None,
         }
     }
 }

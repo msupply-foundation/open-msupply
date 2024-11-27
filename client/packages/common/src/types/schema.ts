@@ -6518,10 +6518,8 @@ export enum ReportContext {
 }
 
 export type ReportFilterInput = {
-  code?: InputMaybe<EqualFilterStringInput>;
   context?: InputMaybe<EqualFilterReportContextInput>;
   id?: InputMaybe<EqualFilterStringInput>;
-  isCustom?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
   subContext?: InputMaybe<EqualFilterStringInput>;
 };
@@ -6529,14 +6527,12 @@ export type ReportFilterInput = {
 export type ReportNode = {
   __typename: 'ReportNode';
   argumentSchema?: Maybe<FormSchemaNode>;
-  code: Scalars['String']['output'];
   context: ReportContext;
   id: Scalars['String']['output'];
   isCustom: Scalars['Boolean']['output'];
   /** Human readable name of the report */
   name: Scalars['String']['output'];
   subContext?: Maybe<Scalars['String']['output']>;
-  version: Scalars['String']['output'];
 };
 
 export type ReportResponse = ReportNode;
