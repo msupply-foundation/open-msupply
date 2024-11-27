@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useResponse, ResponseLineFragment } from '../../api';
 import { ItemRowFragment } from '@openmsupply-client/system';
+import { useNotification } from '@common/hooks';
 
 export type DraftResponseLine = Omit<ResponseLineFragment, '__typename'> & {
   requisitionId: string;
@@ -19,7 +20,8 @@ const createDraftLine = (
 
 export const useDraftRequisitionLine = (item?: ItemRowFragment | null) => {
   const { id: reqId, lines } = useResponse.document.fields(['id', 'lines']);
-  const { mutateAsync: save, isLoading } = useResponse.line.save();
+  const { mutateAsync: saveAction, isLoading } = useResponse.line.save();
+  const { error } = useNotification();
 
   const [draft, setDraft] = useState<DraftResponseLine | null>(null);
 
@@ -29,12 +31,16 @@ export const useDraftRequisitionLine = (item?: ItemRowFragment | null) => {
         ({ item: reqItem }) => reqItem.id === item.id
       );
       if (existingLine) {
-        setDraft(createDraftLine(existingLine, reqId));
+        if (draft && draft.id === existingLine.id) {
+          setDraft(draft);
+        } else {
+          setDraft(createDraftLine(existingLine, reqId));
+        }
       }
     } else {
       setDraft(null);
     }
-  }, [lines, item, reqId]);
+  }, [lines, item, reqId, draft]);
 
   const update = (patch: Partial<DraftResponseLine>) => {
     if (draft) {
@@ -42,7 +48,23 @@ export const useDraftRequisitionLine = (item?: ItemRowFragment | null) => {
     }
   };
 
-  return { draft, isLoading, save: () => draft && save(draft), update };
+  const save = async () => {
+    if (draft) {
+      let result = await saveAction(draft);
+      if (
+        result.updateResponseRequisitionLine.__typename ===
+        'UpdateResponseRequisitionLineError'
+      ) {
+        switch (result.updateResponseRequisitionLine.error.__typename) {
+          default:
+            error(result.updateResponseRequisitionLine.error.description)();
+            break;
+        }
+      }
+    }
+  };
+
+  return { draft, isLoading, save, update };
 };
 
 export const usePreviousNextResponseLine = (

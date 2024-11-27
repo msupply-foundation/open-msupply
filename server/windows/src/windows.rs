@@ -20,7 +20,6 @@ mod omsupply_service {
     use std::{
         env::{current_exe, set_current_dir},
         ffi::OsString,
-        panic,
         time::Duration,
     };
     use tokio::sync::mpsc;
@@ -66,11 +65,10 @@ mod omsupply_service {
             }
         };
         logging_init(settings.logging.clone(), None);
-        log_panics::init();
 
-        panic::set_hook(Box::new(|panic_info| {
-            error!("panic occurred {:?}", panic_info);
-        }));
+        log_panics::Config::new()
+            .backtrace_mode(log_panics::BacktraceMode::Off)
+            .install_panic_hook();
 
         if let Err(_e) = run_service(settings) {
             error!("Unable to start service");

@@ -7,7 +7,7 @@ import {
   Typography,
   ValueBar,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from 'packages/system/src';
+import { ItemRowFragment } from '@openmsupply-client/system';
 
 export interface RequestStoreStatsProps {
   item?: ItemRowFragment;

@@ -12,7 +12,6 @@ const ITEM_VARIANT1: (&str, &str) = (
         "name": "Item Variant 1",
         "item_link_id": "8F252B5884B74888AAB73A0D42C09E7A",
         "cold_storage_type_id": null,
-        "doses_per_unit": null,
         "manufacturer_link_id": null
     }"#,
 );
@@ -23,7 +22,6 @@ fn item_variant1() -> ItemVariantRow {
         name: "Item Variant 1".to_string(),
         item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(), // ITEM_1.0
         cold_storage_type_id: None,
-        doses_per_unit: None,
         manufacturer_link_id: None,
         deleted_datetime: None,
     }
@@ -36,7 +34,6 @@ const ITEM_VARIANT2: (&str, &str) = (
         "name": "Item Variant 2",
         "item_link_id": "8F252B5884B74888AAB73A0D42C09E7A",
         "cold_storage_type_id": null,
-        "doses_per_unit": 10,
         "manufacturer_link_id": "1FB32324AF8049248D929CFB35F255BA"
     }"#,
 );
@@ -47,7 +44,6 @@ fn item_variant2() -> ItemVariantRow {
         name: "Item Variant 2".to_string(),
         item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(), // ITEM_1.0
         cold_storage_type_id: None, //TODO: Add cold storage type when sync is implemented
-        doses_per_unit: Some(10),
         manufacturer_link_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()), // NAME_1.0 (currently marked as manufacturer)
         deleted_datetime: None,
     }
