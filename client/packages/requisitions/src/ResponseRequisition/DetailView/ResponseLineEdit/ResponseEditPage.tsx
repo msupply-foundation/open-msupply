@@ -60,7 +60,7 @@ export const ResponseLineEditPage = () => {
   }, [currentItem]);
 
   if (isLoading || !currentItem) return <BasicSpinner />;
-  if (!data || !itemId) return <NothingHere />;
+  if (!data) return <NothingHere />;
 
   return (
     <>
