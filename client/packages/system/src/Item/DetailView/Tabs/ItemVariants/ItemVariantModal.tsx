@@ -4,7 +4,6 @@ import {
   BasicTextInput,
   DialogButton,
   InputWithLabelRow,
-  NumericTextInput,
   Typography,
   Box,
   useTranslation,
@@ -121,7 +120,7 @@ const ItemVariantForm = ({
         />
 
         <InputWithLabelRow
-          label={t('label.temperature')}
+          label={t('label.cold-storage-type')}
           labelWidth="200"
           Input={
             <Box width="100%">
@@ -150,22 +149,6 @@ const ItemVariantForm = ({
                     manufacturerId: manufacturer?.id ?? '',
                   })
                 }
-              />
-            </Box>
-          }
-        />
-
-        <InputWithLabelRow
-          label={t('label.doses-per-unit')}
-          labelWidth="200"
-          Input={
-            <Box width="100%">
-              <NumericTextInput
-                value={variant.dosesPerUnit ?? undefined}
-                onChange={v => {
-                  updateVariant({ dosesPerUnit: v });
-                }}
-                style={{ justifyContent: 'flex-start' }}
               />
             </Box>
           }

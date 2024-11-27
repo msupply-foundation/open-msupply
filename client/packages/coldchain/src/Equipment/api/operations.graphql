@@ -8,6 +8,11 @@ fragment AssetRow on AssetNode {
   installationDate
   createdDatetime
   replacementDate
+
+  warrantyStart
+  warrantyEnd
+  needsReplacement
+
   statusLog {
     logDatetime
     reason {
