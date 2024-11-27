@@ -93,6 +93,26 @@ impl Default for ReportRow {
     }
 }
 
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Selectable)]
+#[diesel(table_name = report)]
+pub struct ReportMetaDataRow {
+    pub id: String,
+    pub is_custom: bool,
+    pub version: String,
+    pub code: String,
+}
+
+impl Default for ReportMetaDataRow {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            is_custom: true,
+            version: Default::default(),
+            code: Default::default(),
+        }
+    }
+}
+
 pub struct ReportRowRepository<'a> {
     connection: &'a StorageConnection,
 }

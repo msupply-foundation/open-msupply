@@ -6,8 +6,8 @@ use extism::{
 };
 use repository::{
     migrations::Version, raw_query, EqualFilter, JsonRawRow, Pagination, Report, ReportFilter,
-    ReportRepository, ReportRowRepository, ReportSort, ReportType, RepositoryError,
-    StorageConnection,
+    ReportMetaDataRow, ReportRepository, ReportRowRepository, ReportSort, ReportType,
+    RepositoryError, StorageConnection,
 };
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
@@ -334,39 +334,48 @@ fn query_reports(
         .unwrap_or_default()
         .r#type(ReportType::OmSupply.equal_to());
 
-    // TODO carryover issue make a view here to query metadata, then later query other factors
-    let all_reports = repo.query(Pagination::all(), Some(filter.clone()), sort)?;
+    let reports_to_show_meta_data = report_filter_method(
+        repo.query_meta_data(Pagination::all(), Some(filter.clone()), None)?,
+        app_version,
+    );
 
-    let reports: Vec<Report> = report_filter_method(all_reports, app_version);
+    let filter = ReportFilter::new().id(EqualFilter::equal_any(
+        reports_to_show_meta_data
+            .into_iter()
+            .map(|r| r.id)
+            .collect(),
+    ));
 
+    let reports = repo.query(Pagination::all(), Some(filter), sort)?;
     Ok(reports)
 }
 
-fn report_filter_method(reports: Vec<Report>, app_version: Version) -> Vec<Report> {
-    let reports: Vec<Report> = reports
+fn report_filter_method(
+    reports: Vec<ReportMetaDataRow>,
+    app_version: Version,
+) -> Vec<ReportMetaDataRow> {
+    let reports: Vec<ReportMetaDataRow> = reports
         .into_iter()
         .filter(|r| {
-            compare_major_minor(Version::from_str(&r.report_row.version), &app_version)
-                != Ordering::Greater
+            compare_major_minor(Version::from_str(&r.version), &app_version) != Ordering::Greater
         })
         .collect();
 
-    let mut codes: Vec<String> = reports.iter().map(|r| r.report_row.code.clone()).collect();
+    let mut codes: Vec<String> = reports.iter().map(|r| r.code.clone()).collect();
     codes.dedup();
 
-    let mut reports_to_show: Vec<Report> = vec![];
+    let mut reports_to_show: Vec<ReportMetaDataRow> = vec![];
     for code in codes {
-        let reports_of_code: Vec<Report> = reports
+        let reports_of_code: Vec<ReportMetaDataRow> = reports
             .clone()
             .into_iter()
-            .filter(|r| r.report_row.code == code)
+            .filter(|r| r.code == code)
             .collect();
-        let custom_reports_of_code: Vec<Report> = reports_of_code
+        let custom_reports_of_code: Vec<ReportMetaDataRow> = reports_of_code
             .clone()
             .into_iter()
-            .filter(|r| r.report_row.is_custom == true)
+            .filter(|r| r.is_custom == true)
             .collect();
-
         if custom_reports_of_code.len() > 0 {
             if let Some(report) = find_latest_report(custom_reports_of_code) {
                 reports_to_show.push(report);
@@ -377,14 +386,13 @@ fn report_filter_method(reports: Vec<Report>, app_version: Version) -> Vec<Repor
             }
         }
     }
-
     reports_to_show
 }
 
-fn find_latest_report(reports: Vec<Report>) -> Option<Report> {
+fn find_latest_report(reports: Vec<ReportMetaDataRow>) -> Option<ReportMetaDataRow> {
     let report = reports.into_iter().max_by(|a, b| {
-        Version::from_str(&a.report_row.version)
-            .partial_cmp(&Version::from_str(&b.report_row.version))
+        Version::from_str(&a.version)
+            .partial_cmp(&Version::from_str(&b.version))
             // TODO comment need to convert Option to non optional
             .unwrap()
     });
@@ -1138,33 +1146,33 @@ mod report_filter_test {
         // test standard reports
         let filter = ReportFilter::new().code(EqualFilter::equal_to("standard_report"));
         let reports = ReportRepository::new(&ctx.connection)
-            .query(Pagination::all(), Some(filter), None)
+            .query_meta_data(Pagination::all(), Some(filter), None)
             .unwrap();
 
         let mut app_version = Version::from_str("2.3.00");
         let mut result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().report_row.version, "2.3.5");
+        assert_eq!(result.first().unwrap().version, "2.3.5");
 
         app_version = Version::from_str("2.4.00");
         result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().report_row.version, "2.3.5");
+        assert_eq!(result.first().unwrap().version, "2.3.5");
 
         app_version = Version::from_str("2.8.00");
         result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().report_row.version, "2.8.3");
+        assert_eq!(result.first().unwrap().version, "2.8.3");
 
         app_version = Version::from_str("3.2.00");
         result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().report_row.version, "3.0.1");
+        assert_eq!(result.first().unwrap().version, "3.0.1");
 
         app_version = Version::from_str("4.5.00");
         result = report_filter_method(reports, app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().report_row.version, "3.5.1");
+        assert_eq!(result.first().unwrap().version, "3.5.1");
     }
 
     #[actix_rt::test]
@@ -1181,32 +1189,32 @@ mod report_filter_test {
         // test standard reports
         let filter = ReportFilter::new().code(EqualFilter::equal_to("report_with_custom_option"));
         let reports = ReportRepository::new(&ctx.connection)
-            .query(Pagination::all(), Some(filter), None)
+            .query_meta_data(Pagination::all(), Some(filter), None)
             .unwrap();
 
         let mut app_version = Version::from_str("2.3.00");
         let mut result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().report_row.version, "2.3.0");
+        assert_eq!(result.first().unwrap().version, "2.3.0");
 
         app_version = Version::from_str("2.4.00");
         result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().report_row.version, "2.3.0");
+        assert_eq!(result.first().unwrap().version, "2.3.0");
 
         app_version = Version::from_str("2.8.00");
         result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().report_row.version, "2.8.2");
+        assert_eq!(result.first().unwrap().version, "2.8.2");
 
         app_version = Version::from_str("3.2.00");
         result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().report_row.version, "2.8.2");
+        assert_eq!(result.first().unwrap().version, "2.8.2");
 
         app_version = Version::from_str("4.5.00");
         result = report_filter_method(reports, app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().report_row.version, "2.8.2");
+        assert_eq!(result.first().unwrap().version, "2.8.2");
     }
 }
