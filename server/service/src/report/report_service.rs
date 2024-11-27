@@ -377,28 +377,26 @@ fn report_filter_method(
         let custom_reports_of_code: Vec<ReportMetaDataRow> = reports_of_code
             .clone()
             .into_iter()
-            .filter(|r| r.is_custom == true)
+            .filter(|r| r.is_custom)
             .collect();
-        if custom_reports_of_code.len() > 0 {
+        if !custom_reports_of_code.is_empty() {
             if let Some(report) = find_latest_report(custom_reports_of_code) {
                 reports_to_show.push(report);
             }
-        } else {
-            if let Some(report) = find_latest_report(reports_of_code) {
-                reports_to_show.push(report);
-            }
+        } else if let Some(report) = find_latest_report(reports_of_code) {
+            reports_to_show.push(report);
         }
     }
     reports_to_show
 }
 
 fn find_latest_report(reports: Vec<ReportMetaDataRow>) -> Option<ReportMetaDataRow> {
-    let report = reports.into_iter().max_by(|a, b| {
+    
+    reports.into_iter().max_by(|a, b| {
         Version::from_str(&a.version)
             .partial_cmp(&Version::from_str(&b.version))
             .unwrap()
-    });
-    report
+    })
 }
 
 fn compare_major_minor(first: Version, second: &Version) -> Ordering {
