@@ -7864,7 +7864,6 @@ dependencies = [
  "umya-spreadsheet",
  "url",
  "util",
- "version-compare",
  "walkdir",
  "x509-parser",
 ]

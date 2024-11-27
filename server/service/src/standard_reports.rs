@@ -6,7 +6,6 @@ use repository::{
 };
 use rust_embed::RustEmbed;
 use thiserror::Error;
-use version_compare::Version;
 
 use crate::report::definition::ReportDefinition;
 use log::info;
@@ -75,7 +74,7 @@ impl StandardReports {
         for report in reports_to_upsert {
             if !existing_reports.keys().any(|(code, version, is_custom)| {
                 code == &report.code
-                    && (Version::from(&version).unwrap() >= Version::from(&report.version).unwrap())
+                    // && (Version::from(&version).unwrap() >= Version::from(&report.version).unwrap())
                     && is_custom == &report.is_custom
             }) {
                 num_std_reports += 1;

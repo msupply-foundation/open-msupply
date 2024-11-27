@@ -60,7 +60,6 @@ qrcode = "0.14"
 rust-embed = { version = "8.4.0", features = ["include-exclude"] }
 extism = { workspace = true }
 base64 = "0.22.1"
-version-compare = "0.2"
 
 
 [dev-dependencies]
