@@ -1,8 +1,7 @@
 use super::{
-    form_schema_row,
-    form_schema_row::form_schema::dsl as form_schema_dsl,
-    report_row::{report, report::dsl as report_dsl},
-    ContextType, ReportRow, ReportType, StorageConnection,
+    form_schema_row::{self, form_schema::dsl as form_schema_dsl},
+    report_row::report::{self, dsl as report_dsl},
+    ContextType, ReportMetaDataRow, ReportRow, ReportType, StorageConnection,
 };
 
 use crate::{
@@ -20,6 +19,11 @@ use util::inline_init;
 pub struct Report {
     pub report_row: ReportRow,
     pub argument_schema: Option<FormSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ReportMetaData {
+    pub report_data_row: ReportMetaDataRow,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -143,6 +147,39 @@ impl<'a> ReportRepository<'a> {
             .into_iter()
             .map(map_report_row_join_to_report)
             .collect::<Result<Vec<Report>, RepositoryError>>()
+    }
+
+    pub fn query_meta_data(
+        &self,
+        pagination: Pagination,
+        filter: Option<ReportFilter>,
+        sort: Option<ReportSort>,
+    ) -> Result<Vec<ReportMetaDataRow>, RepositoryError> {
+        let mut query = create_filtered_query(filter);
+        if let Some(sort) = sort {
+            match sort.key {
+                ReportSortField::Id => {
+                    apply_sort_no_case!(query, sort, report_dsl::id);
+                }
+                ReportSortField::Name => {
+                    apply_sort_no_case!(query, sort, report_dsl::name);
+                }
+                ReportSortField::Version => {
+                    apply_sort_no_case!(query, sort, report_dsl::version);
+                }
+            }
+        }
+        Ok(query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            // .select((
+            //     report_dsl::id,
+            //     report_dsl::code,
+            //     report_dsl::version,
+            //     report_dsl::is_custom,
+            // ))
+            .select(ReportMetaDataRow::as_select())
+            .load::<ReportMetaDataRow>(self.connection.lock().connection())?)
     }
 }
 
