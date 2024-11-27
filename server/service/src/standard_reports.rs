@@ -1,7 +1,5 @@
-use std::collections::HashMap;
-
 use repository::{
-    ContextType, EqualFilter, FormSchemaJson, FormSchemaRowRepository, Pagination, ReportFilter,
+    ContextType, EqualFilter, FormSchemaJson, FormSchemaRowRepository, ReportFilter,
     ReportRepository, ReportRow, ReportRowRepository, StorageConnection,
 };
 use rust_embed::RustEmbed;
