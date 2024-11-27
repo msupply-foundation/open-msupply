@@ -41,7 +41,6 @@ impl StandardReports {
         con: &StorageConnection,
     ) -> Result<(), anyhow::Error> {
         let mut num_std_reports = 0;
-
         for report in reports_data.reports {
             let existing_report = ReportRepository::new(con).count(Some(
                 ReportFilter::new().id(EqualFilter::equal_to(&report.id)),
