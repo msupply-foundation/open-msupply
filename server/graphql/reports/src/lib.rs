@@ -35,11 +35,10 @@ impl ReportQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        page: Option<PaginationInput>,
         filter: Option<ReportFilterInput>,
         sort: Option<Vec<ReportSortInput>>,
     ) -> Result<ReportsResponse> {
-        reports(ctx, store_id, page, filter, sort)
+        reports(ctx, store_id, filter, sort)
     }
 
     /// Creates a generated report.
@@ -62,7 +61,17 @@ impl ReportQueries {
         sort: Option<PrintReportSortInput>,
         current_language: Option<String>,
     ) -> Result<PrintReportResponse> {
-        generate_report(ctx, store_id, report_id, data_id, arguments, format, sort, current_language).await
+        generate_report(
+            ctx,
+            store_id,
+            report_id,
+            data_id,
+            arguments,
+            format,
+            sort,
+            current_language,
+        )
+        .await
     }
 
     /// Can be used when developing reports, e.g. to generate a report that is not already in the
@@ -75,10 +84,20 @@ impl ReportQueries {
         #[graphql(desc = "The report definition to be generated")] report: serde_json::Value,
         data_id: Option<String>,
         arguments: Option<serde_json::Value>,
-        format: Option<PrintFormat>,        
+        format: Option<PrintFormat>,
         current_language: Option<String>,
     ) -> Result<PrintReportResponse> {
-        generate_report_definition(ctx, store_id, name, report, data_id, arguments, format, current_language).await
+        generate_report_definition(
+            ctx,
+            store_id,
+            name,
+            report,
+            data_id,
+            arguments,
+            format,
+            current_language,
+        )
+        .await
     }
 }
 

@@ -3,14 +3,13 @@ use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, StringFilterInput},
-    pagination::PaginationInput,
     standard_graphql_error::validate_auth,
 };
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::FormSchemaNode;
 use repository::{
-    ContextType as ReportContextDomain, EqualFilter, PaginationOption, Report, ReportFilter,
-    ReportSort, ReportSortField, StringFilter,
+    ContextType as ReportContextDomain, EqualFilter, Report, ReportFilter, ReportSort,
+    ReportSortField, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -137,7 +136,6 @@ pub fn report(ctx: &Context<'_>, store_id: String, id: String) -> Result<ReportR
 pub fn reports(
     ctx: &Context<'_>,
     store_id: String,
-    page: Option<PaginationInput>,
     filter: Option<ReportFilterInput>,
     sort: Option<Vec<ReportSortInput>>,
 ) -> Result<ReportsResponse> {
@@ -156,7 +154,6 @@ pub fn reports(
         .report_service
         .query_reports(
             &service_context,
-            page.map(PaginationOption::from),
             filter.map(|f| f.to_domain()),
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
