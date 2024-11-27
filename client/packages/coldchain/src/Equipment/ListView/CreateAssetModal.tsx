@@ -144,6 +144,7 @@ export const CreateAssetModal = ({
   ) => {
     if (reason === 'clear') updateDraft({ store: null });
   };
+
   const isDisabled =
     !draft.assetNumber ||
     (isCatalogueAsset ? !draft.catalogueItemId : !draft.typeId);
