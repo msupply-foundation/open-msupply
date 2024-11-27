@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use repository::{
-    ContextType, FormSchemaJson, FormSchemaRowRepository, Pagination, ReportRepository, ReportRow,
-    ReportRowRepository, StorageConnection,
+    ContextType, EqualFilter, FormSchemaJson, FormSchemaRowRepository, Pagination, ReportFilter,
+    ReportRepository, ReportRow, ReportRowRepository, StorageConnection,
 };
 use rust_embed::RustEmbed;
 use thiserror::Error;
@@ -44,53 +44,18 @@ impl StandardReports {
     ) -> Result<(), anyhow::Error> {
         let mut num_std_reports = 0;
 
-        let existing_reports = ReportRepository::new(con)
-            .query(Pagination::all(), None, None)?
-            .into_iter()
-            .map(|report| {
-                (
-                    (
-                        report.report_row.code.clone(),
-                        report.report_row.version.clone(),
-                        report.report_row.is_custom,
-                    ),
-                    report,
-                )
-            })
-            .collect::<HashMap<_, _>>();
+        for report in reports_data.reports {
+            let existing_report = ReportRepository::new(con).count(Some(
+                ReportFilter::new().id(EqualFilter::equal_to(&report.id)),
+            ))?;
 
-        let reports_to_upsert: Vec<ReportData> = reports_data
-            .reports
-            .into_iter()
-            .filter(|report| {
-                !existing_reports.contains_key(&(
-                    report.code.clone(),
-                    report.version.clone(),
-                    report.is_custom,
-                ))
-            })
-            .collect();
-
-        for report in reports_to_upsert {
-            if !existing_reports.keys().any(|(code, version, is_custom)| {
-                code == &report.code
-                    // && (Version::from(&version).unwrap() >= Version::from(&report.version).unwrap())
-                    && is_custom == &report.is_custom
-            }) {
-                num_std_reports += 1;
-                let existing_report = ReportRowRepository::new(con)
-                    .find_one_by_code_and_version(&report.code, &report.version)?;
-
-                // Use the existing ID if already defined for that report
-                let id = existing_report.map_or_else(|| report.clone().id, |r| r.id.clone());
-
+            if existing_report == 0 {
                 if let Some(form_schema_json) = &report.form_schema {
                     // TODO: Look up existing json schema and use it's ID to be safe...
                     FormSchemaRowRepository::new(con).upsert_one(form_schema_json)?;
                 }
-
                 ReportRowRepository::new(con).upsert_one(&ReportRow {
-                    id,
+                    id: report.id,
                     name: report.name,
                     r#type: repository::ReportType::OmSupply,
                     template: serde_json::to_string_pretty(&report.template)?,
@@ -102,7 +67,8 @@ impl StandardReports {
                     version: report.version,
                     code: report.code,
                 })?;
-            };
+                num_std_reports += 1;
+            }
         }
         info!("Upserted {} standard reports", num_std_reports);
         Ok(())
