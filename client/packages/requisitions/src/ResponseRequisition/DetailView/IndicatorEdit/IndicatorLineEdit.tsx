@@ -89,9 +89,10 @@ export const IndicatorLineEdit = ({
   previous,
   currentLine,
 }: IndicatorLineEditProps) => {
-  const columns = currentLine?.columns.sort(
-    (a, b) => a.columnNumber - b.columnNumber
-  );
+  const columns = currentLine?.columns
+    .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
+    .sort((a, b) => a.columnNumber - b.columnNumber);
+
   return (
     <>
       <Box display="flex" flexDirection="column">
