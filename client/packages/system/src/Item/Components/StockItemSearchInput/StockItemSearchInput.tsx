@@ -64,7 +64,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   );
 
   const cachedSearchedItems = useMemo(() => {
-    const newItems = data?.nodes ?? [];
+    const newItems = [...items, ...(data?.nodes ?? [])];
     if (!!currentItem) newItems.unshift(currentItem);
 
     return ArrayUtils.uniqBy(newItems, 'id');
