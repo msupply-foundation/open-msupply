@@ -64,7 +64,7 @@ export const IndicatorEditPage = () => {
   if (isLoading || isProgramIndicatorsLoading) {
     return <BasicSpinner />;
   }
-  if (!programIndicatorLineId || !response) {
+  if (!response) {
     return <NothingHere />;
   }
 
