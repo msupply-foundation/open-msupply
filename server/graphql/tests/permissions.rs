@@ -1175,7 +1175,7 @@ mod permission_tests {
         test_service: &TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.validation_service = Box::new(test_service.clone());
         service_provider
     }

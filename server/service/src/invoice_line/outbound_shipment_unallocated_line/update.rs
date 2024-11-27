@@ -107,7 +107,7 @@ mod test_update {
         let (_, _, connection_manager, _) =
             setup_all("update_unallocated_line_errors", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -156,7 +156,7 @@ mod test_update {
             setup_all("update_unallocated_line_success", MockDataInserts::all()).await;
 
         let connection = connection_manager.connection().unwrap();
-        let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let service_provider = ServiceProvider::new(connection_manager.clone());
         let context = service_provider
             .context(mock_store_c().id, "".to_string())
             .unwrap();

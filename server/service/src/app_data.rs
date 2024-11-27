@@ -29,16 +29,6 @@ pub trait AppDataServiceTrait: Send + Sync {
     }
 }
 
-pub struct AppDataService {
-    pub app_data_folder: String,
-}
-
-impl AppDataService {
-    pub fn new(app_data_folder: &str) -> Self {
-        AppDataService {
-            app_data_folder: app_data_folder.to_string(),
-        }
-    }
-}
+pub struct AppDataService {}
 
 impl AppDataServiceTrait for AppDataService {}
