@@ -1,13 +1,13 @@
 import React from 'react';
 import {
   DataTable,
-  NumberInputCell,
   TableProvider,
   createTableStore,
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '@openmsupply-client/invoices/src/types';
+import { PackQuantityCell } from '@openmsupply-client/invoices/src/StockOut';
 
 interface StockLineTableProps {
   stocklines: DraftStockOutLine[];
@@ -57,7 +57,7 @@ export const StockLineTable = ({
         label: 'label.amount',
         accessor: ({ rowData }) => rowData.numberOfPacks,
         setter: handleUpdateDraft,
-        Cell: props => <NumberInputCell {...props} />,
+        Cell: PackQuantityCell,
       },
     ],
     {},
