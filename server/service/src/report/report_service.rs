@@ -5,7 +5,7 @@ use extism::{
     host_fn, FromBytes, Manifest, PluginBuilder, ToBytes, UserData, Wasm, WasmMetadata, PTR,
 };
 use repository::{
-    migrations::Version, raw_query, EqualFilter, JsonRawRow, Pagination, Report, ReportFilter,
+    migrations::Version, raw_query, EqualFilter, JsonRawRow, Report, ReportFilter,
     ReportMetaDataRow, ReportRepository, ReportRowRepository, ReportSort, ReportType,
     RepositoryError, StorageConnection,
 };
@@ -335,7 +335,7 @@ fn query_reports(
         .r#type(ReportType::OmSupply.equal_to());
 
     let reports_to_show_meta_data = report_filter_method(
-        repo.query_meta_data(Pagination::all(), Some(filter.clone()), None)?,
+        repo.query_meta_data(Some(filter.clone()), None)?,
         app_version,
     );
 
@@ -346,7 +346,7 @@ fn query_reports(
             .collect(),
     ));
 
-    let reports = repo.query(Pagination::all(), Some(filter), sort)?;
+    let reports = repo.query(Some(filter), sort)?;
     Ok(reports)
 }
 
@@ -393,7 +393,6 @@ fn find_latest_report(reports: Vec<ReportMetaDataRow>) -> Option<ReportMetaDataR
     let report = reports.into_iter().max_by(|a, b| {
         Version::from_str(&a.version)
             .partial_cmp(&Version::from_str(&b.version))
-            // TODO comment need to convert Option to non optional
             .unwrap()
     });
     report
@@ -1124,8 +1123,8 @@ mod report_generation_test {
 mod report_filter_test {
 
     use repository::{
-        migrations::Version, mock::MockDataInserts, test_db::setup_all, EqualFilter, Pagination,
-        ReportFilter, ReportRepository,
+        migrations::Version, mock::MockDataInserts, test_db::setup_all, EqualFilter, ReportFilter,
+        ReportRepository,
     };
 
     use crate::{report::report_service::report_filter_method, service_provider::ServiceProvider};
@@ -1146,7 +1145,7 @@ mod report_filter_test {
         // test standard reports
         let filter = ReportFilter::new().code(EqualFilter::equal_to("standard_report"));
         let reports = ReportRepository::new(&ctx.connection)
-            .query_meta_data(Pagination::all(), Some(filter), None)
+            .query_meta_data(Some(filter), None)
             .unwrap();
 
         let mut app_version = Version::from_str("2.3.00");
@@ -1189,7 +1188,7 @@ mod report_filter_test {
         // test standard reports
         let filter = ReportFilter::new().code(EqualFilter::equal_to("report_with_custom_option"));
         let reports = ReportRepository::new(&ctx.connection)
-            .query_meta_data(Pagination::all(), Some(filter), None)
+            .query_meta_data(Some(filter), None)
             .unwrap();
 
         let mut app_version = Version::from_str("2.3.00");
