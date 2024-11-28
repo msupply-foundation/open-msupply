@@ -35,11 +35,11 @@ export const PaginationRow: FC<PaginationRowProps> = ({
     value: number
   ) => {
     // The type here is broken and `value` can be `null`!
-
     const isValidPage = !!value;
 
     if (isValidPage) {
       const zeroIndexedPageNumber = value - 1;
+      console.log('paginationRow', page, first, offset, total, value);
       onChange(zeroIndexedPageNumber);
     }
   };
