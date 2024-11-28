@@ -9,26 +9,54 @@ import {
   TooltipTextCell,
   useColumns,
   useIsCentralServerApi,
+  usePaginationRow,
   useTranslation,
-  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { ImportRow } from './EquipmentImportModal';
 
 interface ImportReviewDataTableProps {
   importRows: ImportRow[];
   showWarnings: boolean;
+  // onChangePage: (page: number) => void;
 }
 export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   importRows,
   showWarnings,
+  // onChangePage,
 }) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
 
+  //original hook used. updates url
+  //change this to new hook for pagination with rows selection
+  // const {
+  //   queryParams: { page, first, offset },
+  //   updatePaginationQuery,
+  // } = useUrlQueryParams();
+
+  //setting the original state data
+  // const pagination = {
+  //   page: 0,
+  //   first: 20,
+  //   offset: 0,
+  //   onChangePage,
+  // };
+
+  //state now handled in hook
+  // const [pagination, setPagination] = useState<Pagination>({
+  //   page: 0,
+  //   first: 20,
+  //   offset: 0,
+  // });
+
+  //new hook. didnt import from new file so added to usePagination file
   const {
-    queryParams: { page, first, offset },
-    updatePaginationQuery,
-  } = useUrlQueryParams();
+    paginationRow: { page, first, offset },
+    updatePaginationRows,
+  } = usePaginationRow();
+
+  const pagination = { page, first, offset };
+  console.log('import', pagination);
 
   const [searchString, setSearchString] = useState<string>(() => '');
   const columnDescriptions: ColumnDescription<ImportRow>[] = [
@@ -111,14 +139,18 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     return (
       row.assetNumber.includes(searchString) ||
       (row.catalogueItemCode && row.catalogueItemCode.includes(searchString)) ||
-      row.errorMessage.includes(searchString) ||
+      row.errorMessage?.includes(searchString) ||
       row.id === searchString
     );
   });
 
-  const currentEquipmentPage = filteredEquipment.slice(offset, offset + first);
-
-  const pagination = { first, offset, page };
+  //having this active stops any row pagination
+  const currentEquipmentPage = filteredEquipment.slice(
+    pagination.offset,
+    pagination.offset + pagination.first
+  );
+  // console.log('page', pagination.page);
+  // console.log('total', filteredEquipment.length);
 
   return (
     <Grid flexDirection="column" display="flex" gap={0}>
@@ -128,15 +160,16 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
         debounceTime={300}
         onChange={newValue => {
           setSearchString(newValue);
-          updatePaginationQuery;
+          updatePaginationRows(0);
         }}
       />
+
       <DataTable
-        pagination={{
+        manualPagination={{
           ...pagination,
           total: filteredEquipment.length,
         }}
-        onChangePage={updatePaginationQuery}
+        onChangePage={updatePaginationRows}
         columns={columns}
         data={currentEquipmentPage}
         noDataElement={<NothingHere body={t('error.asset-not-found')} />}
