@@ -134,7 +134,6 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
           updateUserPreferencePagination(0);
         }}
       />
-
       <DataTable
         pagination={{
           ...pagination,

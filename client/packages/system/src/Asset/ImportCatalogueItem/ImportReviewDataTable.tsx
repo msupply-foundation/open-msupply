@@ -3,7 +3,7 @@ import {
   DataTable,
   Grid,
   NothingHere,
-  Pagination,
+  useUserPreferencePagination,
   SearchBar,
   TooltipTextCell,
   useColumns,
@@ -18,11 +18,14 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   importRows,
 }) => {
   const t = useTranslation();
-  const [pagination, setPagination] = useState<Pagination>({
-    page: 0,
-    first: 20,
-    offset: 0,
-  });
+
+  const {
+    pagination: { page, first, offset },
+    updateUserPreferencePagination,
+  } = useUserPreferencePagination();
+
+  const pagination = { page, first, offset };
+
   const [searchString, setSearchString] = useState<string>(() => '');
   const columns = useColumns<ImportRow>(
     [
@@ -107,11 +110,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
         debounceTime={300}
         onChange={newValue => {
           setSearchString(newValue);
-          setPagination({
-            first: pagination.first,
-            offset: 0,
-            page: 0,
-          });
+          updateUserPreferencePagination(0);
         }}
       />
       <DataTable
@@ -119,13 +118,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
           ...pagination,
           total: filteredAssetItem.length,
         }}
-        onChangePage={page => {
-          setPagination({
-            first: pagination.first,
-            offset: pagination.first * page,
-            page: page,
-          });
-        }}
+        onChangePage={updateUserPreferencePagination}
         columns={columns}
         data={currentAssetItemPage}
         noDataElement={<NothingHere body={t('error.asset-not-found')} />}
