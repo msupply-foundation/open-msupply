@@ -101,7 +101,6 @@ export const DetailView: FC = () => {
       value: 'Log',
     },
   ];
-  console.log('programIndicators', programIndicators);
 
   if (
     data?.programName &&
