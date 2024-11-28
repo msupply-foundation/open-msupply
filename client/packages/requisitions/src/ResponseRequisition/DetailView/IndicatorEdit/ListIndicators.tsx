@@ -3,6 +3,7 @@ import {
   ListOptions,
   RouteBuilder,
   useNavigate,
+  useParams,
 } from '@openmsupply-client/common';
 import { IndicatorLineRowFragment } from '../../api';
 
@@ -17,6 +18,7 @@ export const ListIndicatorLines = ({
   lines,
   route,
 }: ListIndicatorLineProps) => {
+  const { programIndicatorCode } = useParams();
   const navigate = useNavigate();
   const value = lines?.find(({ id }) => id === currentIndicatorLineId) ?? null;
 
@@ -29,9 +31,9 @@ export const ListIndicatorLines = ({
         });
       }}
       options={
-        lines?.map(({ id, code }) => ({
+        lines?.map(({ id, name, code }) => ({
           id,
-          value: code,
+          value: programIndicatorCode === 'HIV' ? `${name}: ${code}` : code,
         })) ?? []
       }
     />
