@@ -56,6 +56,9 @@ const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
         width={INPUT_WIDTH}
         value={isNaN(Number(draft?.value)) ? 0 : Number(draft?.value)}
         onChange={v => {
+          if (isNaN(Number(v))) {
+            update({ value: '0' }).then(errorHandler);
+          }
           update({ value: String(v) }).then(errorHandler);
         }}
         autoFocus
