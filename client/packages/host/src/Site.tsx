@@ -22,7 +22,7 @@ import {
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
 import { AppRoute } from '@openmsupply-client/config';
-import { Settings } from './Help/Help';
+import { Settings } from './Admin/Settings';
 import {
   DashboardRouter,
   CatalogueRouter,
@@ -39,6 +39,7 @@ import { RequireAuthentication } from './components/Navigation/RequireAuthentica
 import { QueryErrorHandler } from './QueryErrorHandler';
 import { Sync } from './components/Sync';
 import { EasterEggModalProvider } from './components';
+import { Help } from './Admin/Help';
 
 const NotifyOnLogin = () => {
   const { success } = useNotification();
@@ -156,10 +157,16 @@ export const Site: FC = () => {
                       }
                     />
                     <Route
-                      path={RouteBuilder.create(AppRoute.Help)
+                      path={RouteBuilder.create(AppRoute.Settings)
                         .addWildCard()
                         .build()}
                       element={<Settings />}
+                    />
+                    <Route
+                      path={RouteBuilder.create(AppRoute.Help)
+                        .addWildCard()
+                        .build()}
+                      element={<Help />}
                     />
                     <Route
                       path={RouteBuilder.create(AppRoute.Sync)

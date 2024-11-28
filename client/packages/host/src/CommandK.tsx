@@ -268,15 +268,22 @@ const Actions = () => {
       keywords: 'easter egg game',
       perform: showEasterEgg,
     },
+    {
+      id: 'navigation:help',
+      name: `${t('help')} (h)`,
+      keywords: 'help, docs, guide',
+      shortcut: ['h'],
+      perform: () => navigate(RouteBuilder.create(AppRoute.Help).build()),
+    },
   ];
 
   if (userHasPermission(UserPermission.ServerAdmin)) {
     actions.push({
-      id: 'navigation:help',
-      name: `${t('help')} (h)`,
-      shortcut: ['h'],
-      keywords: 'settings, help',
-      perform: () => navigate(RouteBuilder.create(AppRoute.Help).build()),
+      id: 'navigation:settings',
+      name: `${t('settings')} (a)`,
+      shortcut: ['a'],
+      keywords: 'settings',
+      perform: () => navigate(RouteBuilder.create(AppRoute.Settings).build()),
     });
   }
 
