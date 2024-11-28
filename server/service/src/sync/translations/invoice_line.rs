@@ -335,6 +335,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                 },
             item_row,
             invoice_row,
+            ..
         } = invoice_line;
 
         let option_id = match invoice_row.r#type {
