@@ -272,11 +272,11 @@ const Actions = () => {
 
   if (userHasPermission(UserPermission.ServerAdmin)) {
     actions.push({
-      id: 'navigation:settings',
-      name: `${t('settings')} (a)`,
-      shortcut: ['a'],
-      keywords: 'settings',
-      perform: () => navigate(RouteBuilder.create(AppRoute.Settings).build()),
+      id: 'navigation:help',
+      name: `${t('help')} (h)`,
+      shortcut: ['h'],
+      keywords: 'settings, help',
+      perform: () => navigate(RouteBuilder.create(AppRoute.Help).build()),
     });
   }
 
