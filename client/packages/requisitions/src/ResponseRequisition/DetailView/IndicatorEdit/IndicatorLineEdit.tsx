@@ -18,7 +18,6 @@ import { useDraftIndicatorValue } from './hooks';
 
 interface IndicatorLineEditProps {
   requisitionNumber: number;
-  indicatorCode?: string;
   hasNext: boolean;
   next: IndicatorLineRowFragment | null;
   hasPrevious: boolean;
