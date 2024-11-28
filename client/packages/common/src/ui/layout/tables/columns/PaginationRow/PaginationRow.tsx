@@ -39,7 +39,6 @@ export const PaginationRow: FC<PaginationRowProps> = ({
 
     if (isValidPage) {
       const zeroIndexedPageNumber = value - 1;
-      console.log('paginationRow', page, first, offset, total, value);
       onChange(zeroIndexedPageNumber);
     }
   };
