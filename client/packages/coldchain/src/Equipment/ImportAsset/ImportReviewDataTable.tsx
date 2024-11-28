@@ -11,6 +11,7 @@ import {
   useIsCentralServerApi,
   useTranslation,
   useUserPreferencePagination,
+  useWindowDimensions,
 } from '@openmsupply-client/common';
 import { ImportRow } from './EquipmentImportModal';
 
@@ -24,6 +25,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
 }) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
+  const { height } = useWindowDimensions();
 
   const {
     pagination: { page, first, offset },
@@ -124,7 +126,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   );
 
   return (
-    <Grid flexDirection="column" display="flex" gap={0}>
+    <Grid flexDirection="column" display="flex" gap={0} height={height * 0.5}>
       <SearchBar
         placeholder={t('messages.search')}
         value={searchString}
