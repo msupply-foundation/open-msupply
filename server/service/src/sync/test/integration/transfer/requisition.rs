@@ -24,7 +24,7 @@ async fn integration_sync_requisition_transfers_normal() {
             &response_site.store,
             &item1,
             &item2,
-            5,
+            6,
         );
 
         log::info!(
@@ -53,7 +53,7 @@ async fn integration_sync_requisition_transfers_normal() {
             "Checking response requisition is created on site {:?}",
             response_site.config
         );
-        tester.check_response_requisition_created(&response_site.connection, 5);
+        tester.check_response_requisition_created(&response_site.connection, 6);
 
         sync_and_delay(&response_site, &request_site).await;
 
@@ -106,7 +106,7 @@ async fn integration_sync_requisition_transfers_initialisation() {
             &response_site.store,
             &item1,
             &item2,
-            5,
+            6,
         );
 
         log::info!(
@@ -141,7 +141,7 @@ async fn integration_sync_requisition_transfers_initialisation() {
             "Checking response requisition is created on site {:?}",
             response_site.config
         );
-        tester.check_response_requisition_created(&response_site.connection, 5);
+        tester.check_response_requisition_created(&response_site.connection, 6);
     };
 
     tokio::select! {
