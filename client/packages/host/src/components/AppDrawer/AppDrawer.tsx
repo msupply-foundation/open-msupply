@@ -24,6 +24,7 @@ import {
   ReportsIcon,
   useHostContext,
   HelpIcon,
+  SettingsIcon,
 } from '@openmsupply-client/common';
 import {
   AppRoute,
@@ -246,10 +247,15 @@ export const AppDrawer: React.FC = () => {
           />
           <SyncNavLink />
           <AppNavLink
+            to={AppRoute.Settings}
+            icon={<SettingsIcon fontSize="small" color="primary" />}
+            text={t('settings')}
+            visible={userHasPermission(UserPermission.ServerAdmin)}
+          />
+          <AppNavLink
             to={AppRoute.Help}
             icon={<HelpIcon fontSize="small" color="primary" />}
             text={t('help')}
-            visible={userHasPermission(UserPermission.ServerAdmin)}
           />
           <AppNavLink
             to={'#'}

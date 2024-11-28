@@ -6,6 +6,7 @@ import {
   ListIcon,
   RadioIcon,
   ReportsIcon,
+  SettingsIcon,
   SlidersIcon,
   StockIcon,
   SuppliersIcon,
@@ -29,6 +30,8 @@ type Section = {
 
 const getIcon = (section?: AppRoute) => {
   switch (section) {
+    case AppRoute.Settings:
+      return <SettingsIcon color="primary" fontSize="small" />;
     case AppRoute.Help:
       return <HelpIcon color="primary" fontSize="small" />;
     case AppRoute.Catalogue:
@@ -58,6 +61,7 @@ const getIcon = (section?: AppRoute) => {
 
 const useSection = (): Section | undefined => {
   const routes = [
+    AppRoute.Settings,
     AppRoute.Help,
     AppRoute.Catalogue,
     AppRoute.Coldchain,
