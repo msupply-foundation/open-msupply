@@ -21,11 +21,6 @@ pub struct Report {
     pub argument_schema: Option<FormSchema>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct ReportMetaData {
-    pub report_data_row: ReportMetaDataRow,
-}
-
 #[derive(Debug, Clone, Default)]
 pub struct ReportFilter {
     pub id: Option<EqualFilter<String>>,
