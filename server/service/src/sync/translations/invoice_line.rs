@@ -334,20 +334,10 @@ impl SyncTranslation for InvoiceLineTranslation {
                     item_variant_id,
                 },
             item_row,
-            ..
+            invoice_row,
         } = invoice_line;
 
-        let invoice = match InvoiceRowRepository::new(connection).find_one_by_id(&invoice_id)? {
-            Some(invoice) => invoice,
-            None => {
-                return Err(anyhow::Error::msg(format!(
-                    "Failed to get invoice: {}",
-                    invoice_id
-                )))
-            }
-        };
-
-        let option_id = match invoice.r#type {
+        let option_id = match invoice_row.r#type {
             InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => {
                 inventory_adjustment_reason_id
             }
