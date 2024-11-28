@@ -53,13 +53,13 @@ export const AppBarButtonsComponent = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        {isCentralServer && (
-          <ButtonWithIcon
-            Icon={<UploadIcon />}
-            label={t('button.import')}
-            onClick={importModalController.toggleOn}
-          />
-        )}
+        {/* {isCentralServer && ( */}
+        <ButtonWithIcon
+          Icon={<UploadIcon />}
+          label={t('button.import')}
+          onClick={importModalController.toggleOn}
+        />
+        {/* )} */}
         <LoadingButton
           startIcon={<DownloadIcon />}
           isLoading={isLoading}

@@ -125,7 +125,6 @@ const DataTableComponent = <T extends RecordWithId>({
   noDataMessage,
   overflowX = 'unset',
   pagination,
-  manualPagination,
   onChangePage,
   onRowClick,
   additionalRows,
@@ -143,8 +142,6 @@ const DataTableComponent = <T extends RecordWithId>({
     () => columns.filter(c => columnDisplayState[String(c.key)] ?? true),
     [columns, columnDisplayState]
   );
-  console.log('table', 'url:', pagination, 'manual:', manualPagination);
-  const currentPagination = manualPagination ? manualPagination : pagination;
 
   useRegisterActions([
     {
@@ -182,11 +179,11 @@ const DataTableComponent = <T extends RecordWithId>({
   }, [isDisabled, data]);
 
   // guard against a page number being set which is greater than the data allows
-  // useEffect(() => {
-  //   if (!currentPagination || !onChangePage || !currentPagination.total) return;
-  //   const { page, first, total } = currentPagination;
-  //   if (page * first > total) onChangePage(0);
-  // }, [currentPagination]);
+  useEffect(() => {
+    if (!pagination || !onChangePage || !pagination.total) return;
+    const { page, first, total } = pagination;
+    if (page * first > total) onChangePage(0);
+  }, [pagination]);
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -290,12 +287,12 @@ const DataTableComponent = <T extends RecordWithId>({
           zIndex: 100,
         }}
       >
-        {currentPagination && onChangePage && (
+        {pagination && onChangePage && (
           <PaginationRow
-            page={currentPagination.page}
-            offset={currentPagination.offset}
-            first={currentPagination.first}
-            total={currentPagination.total ?? 0}
+            page={pagination.page}
+            offset={pagination.offset}
+            first={pagination.first}
+            total={pagination.total ?? 0}
             onChange={onChangePage}
           />
         )}
