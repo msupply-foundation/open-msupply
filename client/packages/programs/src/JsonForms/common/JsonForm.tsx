@@ -1,11 +1,8 @@
-import React, { FC, PropsWithChildren, useEffect, useMemo } from 'react';
+import React, { FC, PropsWithChildren, useEffect } from 'react';
 import {
-  LocaleKey,
-  TypedTFunction,
   Typography,
   UnhappyMan,
   useAuthContext,
-  useIntlUtils,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
 import { Box, useTranslation, BasicSpinner } from '@openmsupply-client/common';
@@ -13,7 +10,6 @@ import { JsonForms, JsonFormsReactProps } from '@jsonforms/react';
 import {
   JsonFormsRendererRegistryEntry,
   JsonSchema,
-  Translator,
   UISchemaElement,
   createAjv,
 } from '@jsonforms/core';
@@ -61,7 +57,6 @@ import {
   FORM_COLUMN_MAX_WIDTH,
   FORM_LABEL_COLUMN_WIDTH,
 } from './styleConstants';
-import * as common from '../../../../../packages/common/src/intl/locales/en/common.json';
 
 export type JsonType = string | number | boolean | null | undefined;
 
@@ -135,8 +130,6 @@ const FormComponent = ({
     user,
     ...config,
   };
-  const { currentLanguage } = useIntlUtils();
-  const t = useTranslation();
 
   const mapErrors = (
     errors?: {
@@ -161,21 +154,8 @@ const FormComponent = ({
   // This allows "default" values to be set in the JSON schema
   const handleDefaultsAjv = createAjv({ useDefaults: true });
 
-  const commonKeys = useMemo(() => new Set(Object.keys(common)), []);
-
-  const createTranslator =
-    (t: TypedTFunction<LocaleKey>) =>
-    (key: string, defaultMessage?: string) => {
-      const message = defaultMessage ?? key;
-      // excludes pluralisation of keys - but probably not required
-      return commonKeys.has(key) ? t(key as LocaleKey) : message;
-    };
-
-  const translation: Translator = useMemo(() => createTranslator(t), [t]);
-
   return !data ? null : (
     <JsonForms
-      i18n={{ locale: currentLanguage, translate: translation }}
       schema={jsonSchema}
       uischema={uiSchema}
       data={data}
