@@ -55,7 +55,7 @@ export const IndicatorEditPage = () => {
     setCustomBreadcrumbs(
       {
         2: t('label.indicators'),
-        4: currentLine?.code || '',
+        4: `${currentLine?.name}: ${currentLine?.code}`,
       },
       [2, 3]
     );
