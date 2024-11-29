@@ -39,7 +39,7 @@ import { RequireAuthentication } from './components/Navigation/RequireAuthentica
 import { QueryErrorHandler } from './QueryErrorHandler';
 import { Sync } from './components/Sync';
 import { EasterEggModalProvider } from './components';
-import { Help } from './Admin/Help';
+import { Help } from './Help/Help';
 
 const NotifyOnLogin = () => {
   const { success } = useNotification();
