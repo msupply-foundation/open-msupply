@@ -12,7 +12,6 @@ import {
   SunIcon,
   PrinterIcon,
   ListIcon,
-  BookIcon,
 } from '@common/icons';
 import { AppVersion } from '../components';
 import { SyncSettings } from './SyncSettings';
@@ -23,7 +22,6 @@ import { DisplaySettings } from './DisplaySettings';
 import { SettingsSection } from './SettingsSection';
 import { LabelPrinterSettings } from './LabelPrinterSettings';
 import { ConfigurationSettings } from './ConfigurationSettings';
-import { UserGuide } from './UserGuide';
 
 export const Settings: React.FC = () => {
   const { data: initStatus } = useInitialisationStatus();
@@ -79,14 +77,6 @@ export const Settings: React.FC = () => {
           <ConfigurationSettings />
         </SettingsSection>
       )}
-      <SettingsSection
-        Icon={BookIcon}
-        titleKey="heading.user-guide"
-        expanded={activeSection === 5}
-        onChange={toggleSection(5)}
-      >
-        <UserGuide />
-      </SettingsSection>
       <AppBarButtonsPortal>
         <AppVersion SiteInfo={<SiteInfo siteName={initStatus?.siteName} />} />
       </AppBarButtonsPortal>
