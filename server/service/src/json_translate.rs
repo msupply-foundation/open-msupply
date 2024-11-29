@@ -65,7 +65,7 @@ fn crawl_and_translate(
 
 #[cfg(test)]
 mod json_translate_test {
-    use crate::{report::translate::crawl_and_translate, service_provider::ServiceProvider};
+    use crate::{json_translate::crawl_and_translate, service_provider::ServiceProvider};
     use repository::{mock::MockDataInserts, test_db::setup_all};
     #[actix_rt::test]
     async fn json_translate_test() {
