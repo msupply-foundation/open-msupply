@@ -25,6 +25,9 @@ import {
   Typography,
   styled,
   isEmpty,
+  MedicalIcons,
+  Box,
+  ChevronDownIcon,
 } from '@openmsupply-client/common';
 import { ModalProps, useDialog } from '@common/hooks';
 import {
@@ -215,7 +218,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
     elements:
       activeCategory === undefined
         ? []
-        : categorization.elements[activeCategory]?.elements ?? [],
+        : (categorization.elements[activeCategory]?.elements ?? []),
     schema,
     // assume the root path if not specified
     path: path ?? '',
@@ -241,43 +244,64 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
       gap={2}
       padding={2}
     >
-      {categories.map((category: Category, idx: number) => (
-        <Grid item key={category.label}>
-          <Button
-            variant="outlined"
-            startIcon={<Icon className={`${category.options?.['icon']}`} />}
-            key={category.label}
-            onClick={() => setActiveCategory(idx)}
-            sx={{
-              width: '150px',
-              height: '150px',
-              flexDirection: 'column',
-              textTransform: 'none',
-              '& .MuiButton-startIcon': {
-                paddingBottom: '8px',
-                margin: 0,
-              },
-            }}
-          >
-            {category.label}
-            <ErrorStringComponent category={category} errorPaths={errorPaths} />
-          </Button>
-          <CategoryModal
-            sx={{
-              '& .MuiDialogTitle-root': {
-                fontSize: '1.5em',
-              },
-            }}
-            onClose={onClose}
-            isOpen={activeCategory === idx}
-            title={category.options?.['title'] ?? category.label}
-            okButton={<DialogButton variant="ok" onClick={onClose} />}
-            width={700}
-          >
-            <CategoryLayoutRenderer {...childProps} />
-          </CategoryModal>
-        </Grid>
-      ))}
+      {categories.map((category: Category, idx: number) => {
+        const iconName =
+          (category?.options?.['icon'] as keyof typeof MedicalIcons) ??
+          'pregnancy';
+        console.log('iconName', iconName);
+        const CategoryIcon =
+          MedicalIcons[iconName] ?? MedicalIcons['stethoscope'];
+        return (
+          <Grid item key={category.label}>
+            <Button
+              variant="outlined"
+              startIcon={<CategoryIcon sx={{ fontSize: '4em !important' }} />}
+              key={category.label}
+              onClick={() => setActiveCategory(idx)}
+              sx={{
+                width: '150px',
+                height: '150px',
+                flexDirection: 'column',
+                textTransform: 'none',
+                '& .MuiButton-startIcon': {
+                  paddingBottom: '8px',
+                  margin: 0,
+                },
+                border: 'none',
+                backgroundColor: 'programs.encounterCategory',
+                borderRadius: '2em',
+                color: 'secondary.main',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                {category.label}{' '}
+                <ChevronDownIcon
+                  fontSize="medium"
+                  sx={{ transform: 'rotate(-90deg)' }}
+                />
+              </Box>
+              <ErrorStringComponent
+                category={category}
+                errorPaths={errorPaths}
+              />
+            </Button>
+            <CategoryModal
+              sx={{
+                '& .MuiDialogTitle-root': {
+                  fontSize: '1.5em',
+                },
+              }}
+              onClose={onClose}
+              isOpen={activeCategory === idx}
+              title={category.options?.['title'] ?? category.label}
+              okButton={<DialogButton variant="ok" onClick={onClose} />}
+              width={700}
+            >
+              <CategoryLayoutRenderer {...childProps} />
+            </CategoryModal>
+          </Grid>
+        );
+      })}
     </Grid>
   );
 };
