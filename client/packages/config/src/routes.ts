@@ -54,6 +54,8 @@ export enum AppRoute {
 
   Settings = 'settings',
 
+  Help = 'help',
+
   Logout = 'logout',
 
   Catalogue = 'catalogue',
