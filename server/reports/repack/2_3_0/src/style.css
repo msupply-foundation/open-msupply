@@ -1,0 +1,84 @@
+@media print {
+    @page {
+        size: A4 landscape
+    }
+}
+
+.header_image_section,
+.body_section {
+    margin-left: 8px;
+    width: 100%;
+}
+
+.repack_details {
+    white-space: nowrap;
+    font-family: Tahoma;
+    font-size: 8pt;
+}
+
+.header_item_details {
+    font-family: Tahoma;
+    font-size: 8pt;
+    border-bottom: 0.5px solid black;
+    padding-top: 1pt;
+    margin-left: 8px;
+    width: 100%;
+}
+
+.header_image_section {
+    width: 100%;
+    font-family: Tahoma;
+    font-size: 8pt;
+    border-bottom: 0.5px solid black;
+    padding-top: 8pt;
+    font-family: Tahoma;
+}
+
+.header_section_field_right {
+    text-align: right;
+    font-family: Tahoma;
+    font-size: 8pt;
+}
+
+.location
+.pack
+.batch
+.quantity {
+    text-align: right;
+    font-family: Tahoma;
+    font-size: 8pt;
+}
+
+.body_section,
+.body_total_section {
+    width: 100%;
+    font-family: Tahoma;
+    font-size: 8pt;
+    text-align: right;
+}
+
+.body_section tr.body_column_header th {
+    border-bottom: 0.5px solid black;
+    text-align: center;
+}
+
+.body_section tr.body_column_label th {
+    border-bottom: 0.5px solid black;
+}
+
+.body_value td {
+    border-bottom: 0.5px solid black;
+}
+
+hr {
+    width: 100%;
+    margin-left: 8px;
+    border: 0.1px solid black;
+}
+
+.pageNumber::after {
+    font-family: Tahoma;
+    font-size: 8pt;
+    counter-increment: page;
+    content: "Page " counter(page);
+} 

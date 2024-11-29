@@ -1,0 +1,14 @@
+{
+  "is_custom": false,
+  "version": "2.3.0",
+  "code": "requisition",
+  "context": "OUTBOUND_SHIPMENT",
+  "sub_context": "picklist",
+  "name": "requisition",
+  "queries": {
+    "gql": "requisitionQuery.graphql"
+  },
+  "arguments": {},
+  "header": "header.html",
+  "footer": "footer.html"
+}
