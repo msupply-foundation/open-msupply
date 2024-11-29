@@ -2,7 +2,7 @@ import {
   AppBarButtonsPortal,
   Box,
   useInitialisationStatus,
-} from 'packages/common/src';
+} from '@openmsupply-client/common/src';
 import React from 'react';
 import { AppVersion } from '../components';
 import { SiteInfo } from '../components/SiteInfo';
