@@ -147,9 +147,9 @@ impl Localisations {
 }
 
 pub struct GetTranslation {
-    namespace: Option<String>,
-    fallback: Option<String>,
-    key: String,
+    pub(crate) namespace: Option<String>,
+    pub(crate) fallback: Option<String>,
+    pub(crate) key: String,
 }
 
 #[cfg(test)]
