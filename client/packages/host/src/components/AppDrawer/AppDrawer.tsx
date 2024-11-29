@@ -8,7 +8,6 @@ import {
   ExternalNavLink,
   List,
   PowerIcon,
-  SettingsIcon,
   Theme,
   IconButton,
   styled,
@@ -24,6 +23,8 @@ import {
   useConfirmationModal,
   ReportsIcon,
   useHostContext,
+  HelpIcon,
+  SettingsIcon,
 } from '@openmsupply-client/common';
 import {
   AppRoute,
@@ -233,17 +234,6 @@ export const AppDrawer: React.FC = () => {
           <ColdChainNav store={store} />
           <ProgramsNav store={store} />
           <ManageNav store={store} />
-
-          {/* <AppNavLink
-            to={AppRoute.Tools}
-            icon={<ToolsIcon fontSize="small" color="primary" />}
-            text={t('tools')}
-          /> */}
-          {/* <AppNavLink
-            to={AppRoute.Messages}
-            icon={<MessagesIcon fontSize="small" color="primary" />}
-            text={t('messages')}
-          /> */}
         </List>
       </UpperListContainer>
       <LowerListContainer onMouseEnter={onHoverOver} onMouseLeave={onHoverOut}>
@@ -261,6 +251,11 @@ export const AppDrawer: React.FC = () => {
             icon={<SettingsIcon fontSize="small" color="primary" />}
             text={t('settings')}
             visible={userHasPermission(UserPermission.ServerAdmin)}
+          />
+          <AppNavLink
+            to={AppRoute.Help}
+            icon={<HelpIcon fontSize="small" color="primary" />}
+            text={t('help')}
           />
           <AppNavLink
             to={'#'}
