@@ -28,6 +28,7 @@ use super::{
     },
     html_printing::html_to_pdf,
     qr_code::qr_code_svg,
+    translate::translate_json,
 };
 
 pub enum PrintFormat {
@@ -88,11 +89,12 @@ pub trait ReportServiceTrait: Sync + Send {
     fn query_reports(
         &self,
         ctx: &ServiceContext,
+        translation_service: &Box<Localisations>,
         pagination: Option<PaginationOption>,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
     ) -> Result<Vec<Report>, ListError> {
-        query_reports(ctx, pagination, filter, sort)
+        query_reports(ctx, translation_service, pagination, filter, sort)
     }
 
     /// Loads a report definition by id and resolves it
@@ -324,6 +326,7 @@ fn get_report(ctx: &ServiceContext, id: &str) -> Result<Report, RepositoryError>
 
 fn query_reports(
     ctx: &ServiceContext,
+    translation_service: &Box<Localisations>,
     pagination: Option<PaginationOption>,
     filter: Option<ReportFilter>,
     sort: Option<ReportSort>,
@@ -333,7 +336,21 @@ fn query_reports(
     let filter = filter
         .unwrap_or_default()
         .r#type(ReportType::OmSupply.equal_to());
-    Ok(repo.query(pagination, Some(filter.clone()), sort)?)
+
+    let reports = repo.query(pagination, Some(filter.clone()), sort)?;
+    let reports = reports
+        .into_iter()
+        .map(|mut r| {
+            r.argument_schema = if let Some(argument_schema) = r.argument_schema {
+                Some(translate_json(argument_schema, translation_service).unwrap())
+            } else {
+                None
+            };
+            r
+        })
+        .collect::<Vec<Report>>();
+
+    Ok(reports)
 }
 
 fn resolve_report(

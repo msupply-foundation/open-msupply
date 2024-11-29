@@ -151,11 +151,13 @@ pub fn reports(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, user.user_id)?;
+    let translation_service = &service_provider.translations_service;
 
     let reports = service_provider
         .report_service
         .query_reports(
             &service_context,
+            &translation_service,
             page.map(PaginationOption::from),
             filter.map(|f| f.to_domain()),
             sort.and_then(|mut sort_list| sort_list.pop())
