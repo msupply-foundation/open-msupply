@@ -23,7 +23,6 @@ import {
   Grid,
   Hidden,
   Typography,
-  styled,
   isEmpty,
   MedicalIcons,
   Box,
@@ -63,12 +62,6 @@ export const categorizationTabLayoutTester: RankedTester = rankWith(
     optionIs('variant', 'tab')
   )
 );
-
-const Icon = styled('i')(({ theme }) => ({
-  backgroundColor: theme.palette.primary.main,
-  height: 50,
-  width: 50,
-}));
 
 // Specialized layout render to fix some layout issues in the modal
 const CategoryLayoutRendererComponent = ({
