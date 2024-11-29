@@ -15,6 +15,7 @@ use util::uuid::uuid;
 
 use crate::{
     get_default_pagination,
+    json_translate::translate_json,
     localisations::Localisations,
     service_provider::ServiceContext,
     static_files::{StaticFileCategory, StaticFileService},
@@ -28,7 +29,6 @@ use super::{
     },
     html_printing::html_to_pdf,
     qr_code::qr_code_svg,
-    translate::translate_json,
 };
 
 pub enum PrintFormat {
