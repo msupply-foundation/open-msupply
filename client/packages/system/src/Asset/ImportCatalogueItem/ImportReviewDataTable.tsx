@@ -8,6 +8,7 @@ import {
   TooltipTextCell,
   useColumns,
   useTranslation,
+  useWindowDimensions,
 } from '@openmsupply-client/common';
 import { ImportRow } from './CatalogueItemImportModal';
 
@@ -18,13 +19,10 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   importRows,
 }) => {
   const t = useTranslation();
+  const { height } = useWindowDimensions();
 
-  const {
-    pagination: { page, first, offset },
-    updateUserPreferencePagination,
-  } = useUserPreferencePagination();
-
-  const pagination = { page, first, offset };
+  const { pagination, updateUserPreferencePagination } =
+    useUserPreferencePagination();
 
   const [searchString, setSearchString] = useState<string>(() => '');
   const columns = useColumns<ImportRow>(
@@ -103,7 +101,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   );
 
   return (
-    <Grid flexDirection="column" display="flex" gap={0}>
+    <Grid flexDirection="column" display="flex" gap={0} height={height * 0.5}>
       <SearchBar
         placeholder={t('messages.search')}
         value={searchString}

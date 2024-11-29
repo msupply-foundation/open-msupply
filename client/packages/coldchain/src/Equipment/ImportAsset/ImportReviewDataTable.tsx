@@ -27,12 +27,8 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   const isCentralServer = useIsCentralServerApi();
   const { height } = useWindowDimensions();
 
-  const {
-    pagination: { page, first, offset },
-    updateUserPreferencePagination,
-  } = useUserPreferencePagination();
-
-  const pagination = { page, first, offset };
+  const { pagination, updateUserPreferencePagination } =
+    useUserPreferencePagination();
 
   const [searchString, setSearchString] = useState<string>(() => '');
   const columnDescriptions: ColumnDescription<ImportRow>[] = [
