@@ -159,9 +159,22 @@ pub(crate) fn process_invoice_transfers(
 
             // Try record against all of the processors
             for processor in processors.iter() {
-                processor
+                let result = processor
                     .try_process_record_common(&ctx.connection, &record)
-                    .map_err(Error::ProcessorError)?;
+                    .map_err(Error::ProcessorError);
+
+                match result {
+                    Ok(_) => {}
+                    Err(error) => {
+                        log::error!(
+                            "Processor error with {} - {:?}",
+                            processor.get_description(),
+                            error
+                        );
+                        // TODO record error in error logs and continue
+                        return Err(error);
+                    }
+                };
             }
 
             cursor_controller
