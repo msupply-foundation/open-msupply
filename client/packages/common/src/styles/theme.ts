@@ -228,6 +228,9 @@ export const themeOptions = {
       pending: 'info.light',
       late: 'error.main',
     },
+    programs: {
+      encounterCategory: '#e7effe',
+    },
   },
   zIndex: {
     tableHeader: 1000,
