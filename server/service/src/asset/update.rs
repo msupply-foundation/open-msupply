@@ -106,7 +106,8 @@ pub fn validate(
 
     // Check asset number is unique (on this site)
     if let Some(asset_number) = &input.asset_number {
-        if check_asset_number_exists(asset_number, connection)?.len() >= 1 {
+        if check_asset_number_exists(connection, &asset_number, Some(input.id.clone()))?.len() >= 1
+        {
             return Err(UpdateAssetError::AssetNumberAlreadyExists);
         }
     }
