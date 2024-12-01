@@ -1,7 +1,10 @@
 use super::{
     location::set_asset_location,
     query::get_asset,
-    validate::{check_asset_exists, check_locations_are_assigned, check_locations_belong_to_store},
+    validate::{
+        check_asset_exists, check_asset_number_exists, check_locations_are_assigned,
+        check_locations_belong_to_store,
+    },
 };
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate,
@@ -25,6 +28,7 @@ pub enum UpdateAssetError {
     DatabaseError(RepositoryError),
     LocationsAlreadyAssigned,
     LocationDoesNotBelongToStore,
+    AssetNumberAlreadyExists,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -97,6 +101,13 @@ pub fn validate(
             {
                 return Err(UpdateAssetError::SerialNumberAlreadyExists);
             }
+        }
+    }
+
+    // Check asset number is unique (on this site)
+    if let Some(asset_number) = &input.asset_number {
+        if check_asset_number_exists(asset_number, connection)?.len() >= 1 {
+            return Err(UpdateAssetError::AssetNumberAlreadyExists);
         }
     }
 
