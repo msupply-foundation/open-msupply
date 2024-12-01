@@ -274,7 +274,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
                   fontWeight: 600,
                 }}
               >
-                {category.label}{' '}
+                {category.label}
                 <ChevronDownIcon
                   fontSize="medium"
                   sx={{ transform: 'rotate(-90deg)' }}
