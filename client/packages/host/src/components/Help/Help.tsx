@@ -4,8 +4,8 @@ import {
   useInitialisationStatus,
 } from '@openmsupply-client/common/src';
 import React from 'react';
-import { AppVersion } from '../components';
-import { SiteInfo } from '../components/SiteInfo';
+import { AppVersion } from '..';
+import { SiteInfo } from '../SiteInfo';
 import { FeedbackForm } from './FeedbackForm';
 
 export const Help: React.FC = () => {
