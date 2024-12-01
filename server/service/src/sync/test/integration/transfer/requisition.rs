@@ -87,7 +87,7 @@ async fn integration_sync_transfer_requisition_normal() {
 
 #[actix_rt::test]
 async fn integration_sync_transfer_requisition_initialisation() {
-    util::init_logger(util::LogLevel::Info);
+    // util::init_logger(util::LogLevel::Info);
     let identifier = "requisition_transfers_initialisation";
 
     let SyncIntegrationTransferContext {
