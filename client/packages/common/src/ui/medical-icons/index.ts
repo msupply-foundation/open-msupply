@@ -37,6 +37,7 @@ export const MedicalIcons = {
   gynaecological: GynaecologicalIcon,
   haemotology: HaemotologyIcon,
   immunization: ImmunizationIcon,
+  injection: ImmunizationIcon,
   indexTesting: IndexTestingIcon,
   liver: LiverIcon,
   lungsVirus: LungsVirusIcon,
