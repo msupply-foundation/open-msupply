@@ -6,7 +6,7 @@ use crate::{
 use super::{initialise_transfer_sites, SyncIntegrationTransferContext};
 
 #[actix_rt::test]
-async fn integration_sync_requisition_transfers_normal() {
+async fn integration_sync_transfer_requisition_normal() {
     // util::init_logger(util::LogLevel::Info);
     let SyncIntegrationTransferContext {
         site_1: request_site,
@@ -86,8 +86,8 @@ async fn integration_sync_requisition_transfers_normal() {
 }
 
 #[actix_rt::test]
-async fn integration_sync_requisition_transfers_initialisation() {
-    // util::init_logger(util::LogLevel::Info);
+async fn integration_sync_transfer_requisition_initialisation() {
+    util::init_logger(util::LogLevel::Info);
     let identifier = "requisition_transfers_initialisation";
 
     let SyncIntegrationTransferContext {
