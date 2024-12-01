@@ -4,15 +4,15 @@ import {
   useInitialisationStatus,
 } from '@openmsupply-client/common/src';
 import React from 'react';
-import { AppVersion } from '..';
-import { SiteInfo } from '../SiteInfo';
-import { FeedbackForm } from './FeedbackForm';
+import { AppVersion } from '../components';
+import { SiteInfo } from '../components/SiteInfo';
+import { FeedbackSection } from './FeedbackSection';
 
 export const Help: React.FC = () => {
   const { data: initStatus } = useInitialisationStatus();
   return (
     <Box flex={1} padding={4} sx={{ maxWidth: 800 }}>
-      <FeedbackForm />
+      <FeedbackSection />
       <AppBarButtonsPortal>
         <AppVersion SiteInfo={<SiteInfo siteName={initStatus?.siteName} />} />
       </AppBarButtonsPortal>
