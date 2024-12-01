@@ -241,7 +241,6 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
         const iconName = category?.options?.[
           'icon'
         ] as keyof typeof MedicalIcons;
-        console.log('iconName', iconName);
         const CategoryIcon =
           MedicalIcons[iconName] ?? MedicalIcons['stethoscope'];
         return (
