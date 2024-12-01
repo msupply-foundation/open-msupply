@@ -95,6 +95,7 @@ pub fn validate(
         return Err(InsertAssetError::AssetAlreadyExists);
     }
 
+    // Check asset number is unique (on this site)
     if let Some(asset_number) = &input.asset_number {
         if check_asset_number_exists(asset_number, connection)?.len() >= 1 {
             return Err(InsertAssetError::AssetNumberAlreadyExists);
