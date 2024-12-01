@@ -238,9 +238,9 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
       padding={2}
     >
       {categories.map((category: Category, idx: number) => {
-        const iconName =
-          (category?.options?.['icon'] as keyof typeof MedicalIcons) ??
-          'pregnancy';
+        const iconName = category?.options?.[
+          'icon'
+        ] as keyof typeof MedicalIcons;
         console.log('iconName', iconName);
         const CategoryIcon =
           MedicalIcons[iconName] ?? MedicalIcons['stethoscope'];
@@ -248,25 +248,32 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
           <Grid item key={category.label}>
             <Button
               variant="outlined"
-              startIcon={<CategoryIcon sx={{ fontSize: '4em !important' }} />}
+              startIcon={<CategoryIcon sx={{ fontSize: '5em !important' }} />}
               key={category.label}
               onClick={() => setActiveCategory(idx)}
               sx={{
                 width: '150px',
                 height: '150px',
+                padding: '5px 10px',
                 flexDirection: 'column',
                 textTransform: 'none',
                 '& .MuiButton-startIcon': {
-                  paddingBottom: '8px',
                   margin: 0,
                 },
                 border: 'none',
                 backgroundColor: 'programs.encounterCategory',
-                borderRadius: '2em',
+                borderRadius: 5,
                 color: 'secondary.main',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  lineHeight: 1.4,
+                  fontWeight: 600,
+                }}
+              >
                 {category.label}{' '}
                 <ChevronDownIcon
                   fontSize="medium"

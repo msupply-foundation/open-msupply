@@ -279,7 +279,6 @@ export const DetailView: FC = () => {
 
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
-      {/* <link rel="stylesheet" href="/medical-icons.css" media="all"></link> */}
       <AppBarButtons logicalStatus={logicalStatus} />
       {!encounter ? (
         <AlertModal
