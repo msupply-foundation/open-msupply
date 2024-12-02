@@ -361,36 +361,24 @@ Note that reports won't show up in OMS unless they are built into the generated 
 
 Fields in UI schema can be translated using JSON forms inbuild translation and our translating function.
 
-Translations are invoked by adding by adding the 'I18n' field to the UI schema, or in the json schema. This will localise the field as per usual translation by adding a key and value in common.json.
+Translations are invoked by adding by adding a identifying text key `T#` before a value in the json or ui schema.
+A translating function will step through the serialised json Value searching instances of this identifier. It will then strip it from the string, and translate the remaining string value.
 
-Json forms append '.label' the I18n field; a translation might look like the following:
+For example:
 
-UI schema:
-
-```
 {
-  "type": "Control",
-  "label": "name",
-  "scope": "#/properties/name",
-  "i18n": "label.customName"
+"key": "T#label.value"
 }
-```
 
-common.json:
+becomes
 
-```
-...
-"label.customName.label"
-...
-```
-
-Translating using the Json schema can be done in a similar way:
-
-```
 {
-  "name": {
-  "type": "string",
-  "i18n": "myCustomName"
-  }
+"key": "value"
 }
-```
+
+Where value is the translated value of 'label.value' in our `common.json` translation json in the front end.
+
+In translations for reports, the "label" key of the ui schema controls the text displayed in the front end.
+Where this is not specified, the text falls back to the key of the json schema (the same as the scope of the ui schema). This value will not be translated as keys are not translated with the translation function.
+
+This function could also be used on any other serialised json value such as patient json schema.
