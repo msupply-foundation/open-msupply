@@ -18,7 +18,6 @@ import { useDraftIndicatorValue } from './hooks';
 
 interface IndicatorLineEditProps {
   requisitionNumber: number;
-  indicatorCode?: string;
   hasNext: boolean;
   next: IndicatorLineRowFragment | null;
   hasPrevious: boolean;
@@ -54,9 +53,10 @@ const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
     data.valueType === IndicatorValueTypeNode.Number ? (
       <NumericTextInput
         width={INPUT_WIDTH}
-        value={Number(draft?.value)}
+        value={isNaN(Number(draft?.value)) ? 0 : Number(draft?.value)}
         onChange={v => {
-          update({ value: String(v) }).then(errorHandler);
+          const newValue = isNaN(Number(v)) ? 0 : v;
+          update({ value: String(newValue) }).then(errorHandler);
         }}
         autoFocus
       />
