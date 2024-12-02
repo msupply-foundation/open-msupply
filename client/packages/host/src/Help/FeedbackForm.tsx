@@ -1,4 +1,4 @@
-import React, { ReactElement, useState } from 'react';
+import React from 'react';
 import {
   Grid,
   useTranslation,
@@ -9,48 +9,23 @@ import {
   MailIcon,
   useNotification,
 } from '@openmsupply-client/common';
+import { useFeedbackForm } from '../api/hooks/help/useFeedbackForm';
 
-// to do: replace with backend type once generated
-interface DummyFeedbackFormInput {
-  // id: string;
-  email: string;
-  message: string;
-}
-
-export const FeedbackForm = (): ReactElement => {
+export const FeedbackForm = () => {
   const t = useTranslation();
-  const { success } = useNotification();
-  const [draft, setDraft] = useState<DummyFeedbackFormInput>({
-    // id: '',
-    email: '',
-    message: '',
-  });
-
-  // draft update
-  const updateDraft = (newData: Partial<DummyFeedbackFormInput>) => {
-    const newDraft: DummyFeedbackFormInput = { ...draft, ...newData };
-    setDraft(newDraft);
-  };
+  const { success, error } = useNotification();
+  const { updateDraft, resetDraft, draft } = useFeedbackForm();
 
   // save input email address and message to email queue on server
   const save = async () => {
     try {
-      // const result = await create();
-      const successSnack = success(t('messages.message-sent')); // edit label
+      // TODO: Call create() to create new mutation
+      const successSnack = success(t('messages.message-sent'));
       successSnack();
       resetDraft();
-      console.log({ draft });
     } catch {
-      // todo
-    }
-  };
-
-  const resetDraft = () => {
-    if (draft) {
-      setDraft({
-        email: '',
-        message: '',
-      });
+      const errorSnack = error(t('messages.message-not-sent'));
+      errorSnack();
     }
   };
 
@@ -87,12 +62,12 @@ export const FeedbackForm = (): ReactElement => {
       />
       <Grid item justifyContent="flex-end" width="100%" display="flex">
         <LoadingButton
-          isLoading={false} // isSaving}
+          isLoading={false}
           startIcon={<MailIcon />}
           type="submit"
           variant="contained"
           sx={{ fontSize: '12px' }}
-          disabled={false} // !isValid}
+          disabled={false}
           onClick={save}
         >
           {t('button.send')}
