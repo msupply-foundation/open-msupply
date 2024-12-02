@@ -391,8 +391,8 @@ fn translate_schema(
     Ok(FormSchemaJson {
         id: argument_schema.id,
         r#type: argument_schema.r#type,
-        json_schema: json_schema.into(),
-        ui_schema: ui_schema.into(),
+        json_schema: json_schema,
+        ui_schema: ui_schema,
     })
 }
 
