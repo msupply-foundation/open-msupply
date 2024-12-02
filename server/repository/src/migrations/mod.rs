@@ -26,6 +26,7 @@ mod v2_02_02;
 mod v2_03_00;
 mod v2_03_01;
 mod v2_04_00;
+mod v2_04_01;
 mod v2_05_00;
 mod version;
 mod views;
@@ -124,6 +125,7 @@ pub fn migrate(
         Box::new(v2_03_00::V2_03_00),
         Box::new(v2_03_01::V2_03_01),
         Box::new(v2_04_00::V2_04_00),
+        Box::new(v2_04_01::V2_04_01),
         Box::new(v2_05_00::V2_05_00),
     ];
 
