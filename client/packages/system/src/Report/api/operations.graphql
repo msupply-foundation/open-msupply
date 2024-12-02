@@ -20,12 +20,14 @@ query report($storeId: String!, $id: String!) {
 
 query reports(
   $storeId: String!
+  $userLanguage: String!
   $key: ReportSortFieldInput!
   $desc: Boolean
   $filter: ReportFilterInput
 ) {
   reports(
     storeId: $storeId
+    userLanguage: $userLanguage
     sort: { key: $key, desc: $desc }
     filter: $filter
   ) {

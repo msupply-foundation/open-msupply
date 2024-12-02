@@ -152,6 +152,7 @@ pub fn report(ctx: &Context<'_>, store_id: String, id: String) -> Result<ReportR
 pub fn reports(
     ctx: &Context<'_>,
     store_id: String,
+    user_language: String,
     page: Option<PaginationInput>,
     filter: Option<ReportFilterInput>,
     sort: Option<Vec<ReportSortInput>>,
@@ -171,6 +172,7 @@ pub fn reports(
     match service_provider.report_service.query_reports(
         &service_context,
         &translation_service,
+        user_language,
         page.map(PaginationOption::from),
         filter.map(|f| f.to_domain()),
         sort.and_then(|mut sort_list| sort_list.pop())

@@ -1,32 +1,13 @@
-use repository::FormSchemaJson;
 use serde_json::Value;
 
 use crate::localisations::{GetTranslation, Localisations, TranslationError};
 
 const UNIQUE_TRANSLATE_KEY: &str = "T#";
 
-const LANG: &str = "fr";
-
-pub fn translate_json(
-    argument_schema: FormSchemaJson,
-    translation_service: &Box<Localisations>,
-) -> Result<FormSchemaJson, TranslationError> {
-    let mut json_schema = argument_schema.json_schema.clone();
-    crawl_and_translate(&mut json_schema, translation_service)?;
-    let mut ui_schema = argument_schema.ui_schema.clone();
-    crawl_and_translate(&mut ui_schema, translation_service)?;
-
-    Ok(FormSchemaJson {
-        id: argument_schema.id,
-        r#type: argument_schema.r#type,
-        json_schema: json_schema.into(),
-        ui_schema: ui_schema.into(),
-    })
-}
-
-fn crawl_and_translate(
+pub fn crawl_and_translate(
     json: &mut Value,
     translation_service: &Box<Localisations>,
+    user_language: &str,
 ) -> Result<(), TranslationError> {
     match json {
         Value::String(text) => {
@@ -37,7 +18,7 @@ fn crawl_and_translate(
                         fallback: Some(key.to_string()),
                         key: key.to_string(),
                     },
-                    LANG,
+                    user_language,
                 )?
             } else {
                 ()
@@ -46,13 +27,13 @@ fn crawl_and_translate(
         }
         Value::Array(array) => {
             for item in array {
-                crawl_and_translate(item, translation_service)?;
+                crawl_and_translate(item, translation_service, user_language)?;
             }
             Ok(())
         }
         Value::Object(map) => {
             for (_, v) in map.iter_mut() {
-                crawl_and_translate(v, translation_service)?;
+                crawl_and_translate(v, translation_service, user_language)?;
             }
             Ok(())
         }
@@ -93,7 +74,12 @@ mod json_translate_test {
             "list": ["Add Form", "no-translation"]
         });
 
-        crawl_and_translate(&mut serialised_json, &service_provider.translations_service).unwrap();
+        crawl_and_translate(
+            &mut serialised_json,
+            &service_provider.translations_service,
+            "en",
+        )
+        .unwrap();
 
         assert_eq!(serialised_json, expected);
     }

@@ -5,8 +5,9 @@ use extism::{
     host_fn, FromBytes, Manifest, PluginBuilder, UserData, Wasm, WasmMetadata, PTR,
 };
 use repository::{
-    raw_query, EqualFilter, JsonRawRow, PaginationOption, Report, ReportFilter, ReportRepository,
-    ReportRowRepository, ReportSort, ReportType, RepositoryError, StorageConnection,
+    raw_query, EqualFilter, FormSchemaJson, JsonRawRow, PaginationOption, Report, ReportFilter,
+    ReportRepository, ReportRowRepository, ReportSort, ReportType, RepositoryError,
+    StorageConnection,
 };
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
@@ -15,8 +16,8 @@ use util::uuid::uuid;
 
 use crate::{
     get_default_pagination,
-    json_translate::translate_json,
-    localisations::Localisations,
+    json_translate::crawl_and_translate,
+    localisations::{Localisations, TranslationError},
     service_provider::ServiceContext,
     static_files::{StaticFileCategory, StaticFileService},
     ListError,
@@ -90,11 +91,19 @@ pub trait ReportServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         translation_service: &Box<Localisations>,
+        user_language: String,
         pagination: Option<PaginationOption>,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
     ) -> Result<Vec<Report>, GetReportsError> {
-        query_reports(ctx, translation_service, pagination, filter, sort)
+        query_reports(
+            ctx,
+            translation_service,
+            user_language,
+            pagination,
+            filter,
+            sort,
+        )
     }
 
     /// Loads a report definition by id and resolves it
@@ -334,6 +343,7 @@ pub enum GetReportsError {
 fn query_reports(
     ctx: &ServiceContext,
     translation_service: &Box<Localisations>,
+    user_language: String,
     pagination: Option<PaginationOption>,
     filter: Option<ReportFilter>,
     sort: Option<ReportSort>,
@@ -353,7 +363,7 @@ fn query_reports(
         .map(|r| {
             let translated_schema = if let Some(argument_schema) = r.argument_schema {
                 Some(
-                    translate_json(argument_schema, translation_service)
+                    translate_schema(argument_schema, translation_service, &user_language)
                         .map_err(|_e| GetReportsError::TranslationError)?,
                 )
             } else {
@@ -366,6 +376,24 @@ fn query_reports(
         })
         .collect::<Result<Vec<Report>, GetReportsError>>();
     reports
+}
+
+fn translate_schema(
+    argument_schema: FormSchemaJson,
+    translation_service: &Box<Localisations>,
+    user_language: &str,
+) -> Result<FormSchemaJson, TranslationError> {
+    let mut json_schema = argument_schema.json_schema.clone();
+    crawl_and_translate(&mut json_schema, translation_service, user_language)?;
+    let mut ui_schema = argument_schema.ui_schema.clone();
+    crawl_and_translate(&mut ui_schema, translation_service, user_language)?;
+
+    Ok(FormSchemaJson {
+        id: argument_schema.id,
+        r#type: argument_schema.r#type,
+        json_schema: json_schema.into(),
+        ui_schema: ui_schema.into(),
+    })
 }
 
 fn resolve_report(

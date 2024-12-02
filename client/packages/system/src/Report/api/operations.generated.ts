@@ -15,6 +15,7 @@ export type ReportQuery = { __typename: 'Queries', report: { __typename: 'Report
 
 export type ReportsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
+  userLanguage: Types.Scalars['String']['input'];
   key: Types.ReportSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.ReportFilterInput>;
@@ -59,8 +60,13 @@ export const ReportDocument = gql`
 }
     ${ReportRowFragmentDoc}`;
 export const ReportsDocument = gql`
-    query reports($storeId: String!, $key: ReportSortFieldInput!, $desc: Boolean, $filter: ReportFilterInput) {
-  reports(storeId: $storeId, sort: {key: $key, desc: $desc}, filter: $filter) {
+    query reports($storeId: String!, $userLanguage: String!, $key: ReportSortFieldInput!, $desc: Boolean, $filter: ReportFilterInput) {
+  reports(
+    storeId: $storeId
+    userLanguage: $userLanguage
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+  ) {
     __typename
     ... on ReportConnector {
       nodes {
