@@ -4,6 +4,7 @@ import {
   SortBy,
   ReportSortFieldInput,
   ReportFilterInput,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import { ReportRowFragment } from '../operations.generated';
 import { useReportGraphQL } from '../useReportGraphQL';
@@ -25,6 +26,8 @@ export const useReportList = ({
   queryParams?: ReportListParams;
 }) => {
   const { reportApi, storeId } = useReportGraphQL();
+  const { currentLanguage: language } = useIntlUtils();
+
   const {
     filterBy,
     sortBy = {
@@ -48,9 +51,8 @@ export const useReportList = ({
       key: sortBy.key as ReportSortFieldInput,
       desc: sortBy.isDesc,
       storeId,
+      userLanguage: language,
     });
-
-    console.log('query', query);
 
     if (query?.reports?.__typename == 'ReportConnector') {
       return {

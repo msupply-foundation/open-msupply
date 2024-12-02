@@ -6208,6 +6208,7 @@ export type QueriesReportsArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ReportSortInput>>;
   storeId: Scalars['String']['input'];
+  userLanguage: Scalars['String']['input'];
 };
 
 
