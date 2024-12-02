@@ -114,6 +114,7 @@ export const DetailView: FC = () => {
           isLoading={isLoading || isProgramIndicatorsLoading}
           response={data}
           indicators={programIndicators?.nodes}
+          disabled={isDisabled}
         />
       ),
       value: t('label.indicators'),
