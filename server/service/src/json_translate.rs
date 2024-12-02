@@ -55,7 +55,6 @@ mod json_translate_test {
 
         let service_provider = ServiceProvider::new(connection_manager);
 
-        // TODO mock translation service in case key values change
         let mut serialised_json: tera::Value = serde_json::json!({
             "key": "T#auth.alert-title",
             "nested": {
