@@ -29,12 +29,22 @@ query reports(
     sort: { key: $key, desc: $desc }
     filter: $filter
   ) {
+    __typename
     ... on ReportConnector {
       nodes {
         __typename
         ...ReportRow
       }
       totalCount
+    }
+    ... on QueryReportsError {
+      __typename
+      error {
+        ... on FailedTranslation {
+          __typename
+          description
+        }
+      }
     }
   }
 }

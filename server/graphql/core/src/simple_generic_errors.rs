@@ -340,3 +340,11 @@ impl MasterListNotFoundForThisStore {
         "Master list not found (might not be visible to this store)"
     }
 }
+
+pub struct FailedTranslation;
+#[Object]
+impl FailedTranslation {
+    pub async fn description(&self) -> &'static str {
+        "Translation failed."
+    }
+}

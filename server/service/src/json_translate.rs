@@ -5,7 +5,7 @@ use crate::localisations::{GetTranslation, Localisations, TranslationError};
 
 const UNIQUE_TRANSLATE_KEY: &str = "T#";
 
-const LANG: &str = "en";
+const LANG: &str = "fr";
 
 pub fn translate_json(
     argument_schema: FormSchemaJson,

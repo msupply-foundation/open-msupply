@@ -1,6 +1,7 @@
 use ::serde::Serialize;
 use async_graphql::*;
-use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::simple_generic_errors::FailedTranslation;
+use graphql_core::standard_graphql_error::{list_error_to_gql_err, StandardGraphqlError};
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, StringFilterInput},
     pagination::PaginationInput,
@@ -13,6 +14,7 @@ use repository::{
     ReportSort, ReportSortField, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
+use service::report::report_service::GetReportsError;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -64,18 +66,31 @@ pub struct ReportFilterInput {
 
 #[derive(Union)]
 pub enum ReportResponse {
+    // TODO add error handling here also?
     Report(ReportNode),
 }
 
 #[derive(Union)]
 pub enum ReportsResponse {
     Response(ReportConnector),
+    Error(QueryReportsError),
 }
 
 #[derive(SimpleObject)]
 pub struct ReportConnector {
     total_count: u32,
     nodes: Vec<ReportNode>,
+}
+
+#[derive(Interface)]
+#[graphql(field(name = "description", ty = "String"))]
+pub enum QueryReportsErrorInterface {
+    ReportsTranslationError(FailedTranslation),
+}
+
+#[derive(SimpleObject)]
+pub struct QueryReportsError {
+    pub error: QueryReportsErrorInterface,
 }
 
 #[derive(PartialEq, Debug)]
@@ -153,21 +168,20 @@ pub fn reports(
     let service_context = service_provider.context(store_id, user.user_id)?;
     let translation_service = &service_provider.translations_service;
 
-    let reports = service_provider
-        .report_service
-        .query_reports(
-            &service_context,
-            &translation_service,
-            page.map(PaginationOption::from),
-            filter.map(|f| f.to_domain()),
-            sort.and_then(|mut sort_list| sort_list.pop())
-                .map(|sort| sort.to_domain()),
-        )
-        .map_err(StandardGraphqlError::from_list_error)?;
-    Ok(ReportsResponse::Response(ReportConnector {
-        total_count: reports.len() as u32,
-        nodes: reports.into_iter().map(|row| ReportNode { row }).collect(),
-    }))
+    match service_provider.report_service.query_reports(
+        &service_context,
+        &translation_service,
+        page.map(PaginationOption::from),
+        filter.map(|f| f.to_domain()),
+        sort.and_then(|mut sort_list| sort_list.pop())
+            .map(|sort| sort.to_domain()),
+    ) {
+        Ok(reports) => Ok(ReportsResponse::Response(ReportConnector {
+            total_count: reports.len() as u32,
+            nodes: reports.into_iter().map(|row| ReportNode { row }).collect(),
+        })),
+        Err(err) => map_error(err),
+    }
 }
 
 impl ReportFilterInput {
@@ -230,5 +244,16 @@ impl ReportContext {
             ReportContextDomain::InboundReturn => ReportContext::InboundReturn,
             ReportContextDomain::Report => ReportContext::Report,
         }
+    }
+}
+
+fn map_error(error: GetReportsError) -> Result<ReportsResponse> {
+    match error {
+        GetReportsError::TranslationError => {
+            return Ok(ReportsResponse::Error(QueryReportsError {
+                error: QueryReportsErrorInterface::ReportsTranslationError(FailedTranslation),
+            }))
+        }
+        GetReportsError::ListError(error) => return Err(list_error_to_gql_err(error)),
     }
 }
