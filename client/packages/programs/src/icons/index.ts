@@ -10,7 +10,7 @@ import { LiverIcon } from './Liver';
 import { LungsIcon } from './Lungs';
 import { LungsVirusIcon } from './LungsVirus';
 import { MedicalBagIcon } from './MedicalBag';
-import { MedicalClipboardIcon } from './MedicalClipboard';
+import { MedicalChartIcon } from './MedicalChart';
 import { MedicalHistoryIcon } from './MedicalHistory';
 import { MedicationIcon } from './Medication';
 import { MicroscopeIcon } from './Microscope';
@@ -24,37 +24,49 @@ import { VisitTypeIcon } from './VisitType';
 
 // Use this object when you need to refer to an icon dynamically, e.g. when
 // defined in JSON Forms schemas
-export const MedicalIcons = {
-  pregnancy: PregnancyIcon,
-  maternalHistory: PregnancyIcon,
-  heart: HeartIcon,
-  referrals: ReferralsIcon,
-  stethoscope: StethoscopeIcon,
-  testTube: TestTubeIcon,
-  microscope: MicroscopeIcon,
+export const ProgramsIcons = {
   contraceptive: ContraceptiveIcon,
+  document: DocsIcon,
   gbv: GenderBasedViolenceIcon,
+  genderBasedViolence: GenderBasedViolenceIcon,
+  'gender-based-violence': GenderBasedViolenceIcon,
   gynaecological: GynaecologicalIcon,
   haemotology: HaemotologyIcon,
+  heart: HeartIcon,
   immunization: ImmunizationIcon,
-  injection: ImmunizationIcon,
   indexTesting: IndexTestingIcon,
+  'index-testing': IndexTestingIcon,
+  injection: ImmunizationIcon,
   liver: LiverIcon,
-  lungsVirus: LungsVirusIcon,
   lungs: LungsIcon,
+  lungsVirus: LungsVirusIcon,
+  'lungs-virus': LungsVirusIcon,
+  maternalHistory: PregnancyIcon,
   medicalBag: MedicalBagIcon,
+  'medical-bag': MedicalBagIcon,
+  medicalChart: MedicalChartIcon,
+  'medical-chart': MedicalChartIcon,
   medicalHistory: MedicalHistoryIcon,
+  'medical-history': MedicalHistoryIcon,
   medication: MedicationIcon,
   medicine: MedicationIcon,
+  microscope: MicroscopeIcon,
   nutrition: NutritionIcon,
-  medicalClipboard: MedicalClipboardIcon,
-  riskBehaviour: MedicalClipboardIcon,
-  documents: DocsIcon,
+  pregnancy: PregnancyIcon,
+  referrals: ReferralsIcon,
+  riskBehaviour: MedicalChartIcon,
+  'risk-behaviour': MedicalChartIcon,
   riskBehaviourAlt: DocsIcon,
-  virus: VirusIcon,
+  'risk-behaviour-alt': DocsIcon,
+  stethoscope: StethoscopeIcon,
+  testTube: TestTubeIcon,
+  'test-tube': TestTubeIcon,
   viralLoad: VirusIcon,
-  visitType: VisitTypeIcon,
+  'viral-load': VirusIcon,
+  virus: VirusIcon,
   visit: VisitTypeIcon,
+  visitType: VisitTypeIcon,
+  'visit-type': VisitTypeIcon,
 };
 
 export {
@@ -77,7 +89,7 @@ export {
   MedicalHistoryIcon,
   MedicationIcon,
   NutritionIcon,
-  MedicalClipboardIcon,
+  MedicalChartIcon as MedicalClipboardIcon,
   DocsIcon,
   VirusIcon,
   VisitTypeIcon,
