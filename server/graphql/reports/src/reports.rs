@@ -68,6 +68,7 @@ pub struct ReportFilterInput {
 pub enum ReportResponse {
     // TODO add error handling here also?
     Report(ReportNode),
+    Error(QueryReportError),
 }
 
 #[derive(Union)]
@@ -84,8 +85,19 @@ pub struct ReportConnector {
 
 #[derive(Interface)]
 #[graphql(field(name = "description", ty = "String"))]
+pub enum QueryReportErrorInterface {
+    ReportTranslationError(FailedTranslation),
+}
+
+#[derive(Interface)]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum QueryReportsErrorInterface {
     ReportsTranslationError(FailedTranslation),
+}
+
+#[derive(SimpleObject)]
+pub struct QueryReportError {
+    pub error: QueryReportErrorInterface,
 }
 
 #[derive(SimpleObject)]
