@@ -335,7 +335,6 @@ pub const MIN_LIMIT: u32 = 1;
 
 #[derive(Debug)]
 pub enum GetReportError {
-    // TODO add more detail about specific report? Breaking out of iterator will prevent listing all reports
     TranslationError,
     RepositoryError(RepositoryError),
 }
@@ -369,7 +368,6 @@ fn get_report(
 
 #[derive(Debug)]
 pub enum GetReportsError {
-    // TODO add more detail about specific report? Breaking out of iterator will prevent listing all reports
     TranslationError,
     ListError(ListError),
 }
