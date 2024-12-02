@@ -263,6 +263,10 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
                 backgroundColor: 'programs.encounterCategory',
                 borderRadius: 5,
                 color: 'secondary.main',
+                '&:hover': {
+                  border: 'none',
+                  backgroundColor: 'programs.encounterCategoryHover',
+                },
               }}
             >
               <Box

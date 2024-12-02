@@ -1,5 +1,6 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import { GradientStops } from './_gradient';
 
 export const GenderBasedViolenceIcon = (props: SvgIconProps): JSX.Element => (
   <SvgIcon {...props} viewBox="0 0 60 60" fill="none">
@@ -40,8 +41,7 @@ export const GenderBasedViolenceIcon = (props: SvgIconProps): JSX.Element => (
         y2="11.5821"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint1_linear_247_41536"
@@ -51,8 +51,7 @@ export const GenderBasedViolenceIcon = (props: SvgIconProps): JSX.Element => (
         y2="19.1621"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint2_linear_247_41536"
@@ -62,8 +61,7 @@ export const GenderBasedViolenceIcon = (props: SvgIconProps): JSX.Element => (
         y2="13.7593"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint3_linear_247_41536"
@@ -73,8 +71,7 @@ export const GenderBasedViolenceIcon = (props: SvgIconProps): JSX.Element => (
         y2="55.9997"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint4_linear_247_41536"
@@ -84,8 +81,7 @@ export const GenderBasedViolenceIcon = (props: SvgIconProps): JSX.Element => (
         y2="12.6667"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint5_linear_247_41536"
@@ -95,8 +91,7 @@ export const GenderBasedViolenceIcon = (props: SvgIconProps): JSX.Element => (
         y2="55.9998"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint6_linear_247_41536"
@@ -106,8 +101,7 @@ export const GenderBasedViolenceIcon = (props: SvgIconProps): JSX.Element => (
         y2="12.6667"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
     </defs>
   </SvgIcon>

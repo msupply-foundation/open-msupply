@@ -1,5 +1,6 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import { GradientStops } from './_gradient';
 
 export const VisitTypeIcon = (props: SvgIconProps): JSX.Element => (
   <SvgIcon {...props} viewBox="0 0 60 60" fill="none">
@@ -28,8 +29,7 @@ export const VisitTypeIcon = (props: SvgIconProps): JSX.Element => (
         y2="42.7045"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint1_linear_247_41597"
@@ -39,8 +39,7 @@ export const VisitTypeIcon = (props: SvgIconProps): JSX.Element => (
         y2="42.7045"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint2_linear_247_41597"
@@ -50,8 +49,7 @@ export const VisitTypeIcon = (props: SvgIconProps): JSX.Element => (
         y2="42.6728"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint3_linear_247_41597"
@@ -61,8 +59,7 @@ export const VisitTypeIcon = (props: SvgIconProps): JSX.Element => (
         y2="35.5713"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
     </defs>
   </SvgIcon>

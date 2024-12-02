@@ -1,5 +1,6 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import { GradientStops } from './_gradient';
 
 export const HaemotologyIcon = (props: SvgIconProps): JSX.Element => (
   <SvgIcon {...props} viewBox="0 0 60 60" fill="none">
@@ -32,8 +33,7 @@ export const HaemotologyIcon = (props: SvgIconProps): JSX.Element => (
         y2="25.3109"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint1_linear_247_41331"
@@ -43,8 +43,7 @@ export const HaemotologyIcon = (props: SvgIconProps): JSX.Element => (
         y2="32.986"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint2_linear_247_41331"
@@ -54,8 +53,7 @@ export const HaemotologyIcon = (props: SvgIconProps): JSX.Element => (
         y2="46.9141"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint3_linear_247_41331"
@@ -65,8 +63,7 @@ export const HaemotologyIcon = (props: SvgIconProps): JSX.Element => (
         y2="49.004"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint4_linear_247_41331"
@@ -76,8 +73,7 @@ export const HaemotologyIcon = (props: SvgIconProps): JSX.Element => (
         y2="22.2332"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
     </defs>
   </SvgIcon>

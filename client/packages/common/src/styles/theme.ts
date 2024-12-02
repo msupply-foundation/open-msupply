@@ -102,6 +102,12 @@ declare module '@mui/material/styles/createPalette' {
       pending: string;
       late: string;
     };
+    programs: {
+      encounterCategory: string;
+      encounterCategoryHover: string;
+      iconGradientStart: string;
+      iconGradientStop: string;
+    };
     drawerDivider: string;
     gray: PaletteColor & { pale: string };
     outline: Palette['primary'];
@@ -230,6 +236,9 @@ export const themeOptions = {
     },
     programs: {
       encounterCategory: '#e7effe',
+      encounterCategoryHover: '#D2DFFF',
+      iconGradientStart: '#E73735',
+      iconGradientStop: '#FC7E08',
     },
   },
   zIndex: {
