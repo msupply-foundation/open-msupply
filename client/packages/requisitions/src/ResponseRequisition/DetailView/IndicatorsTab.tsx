@@ -19,7 +19,7 @@ interface IndicatorTabProps {
   isLoading: boolean;
   response?: ResponseFragment;
   indicators?: ProgramIndicatorFragment[];
-  disabled: boolean;
+  // disabled: boolean;
 }
 
 export const IndicatorsTab = ({
@@ -27,7 +27,7 @@ export const IndicatorsTab = ({
   isLoading,
   response,
   indicators,
-  disabled,
+  // disabled,
 }: IndicatorTabProps) => {
   const t = useTranslation();
   if (isLoading) {
@@ -62,7 +62,7 @@ export const IndicatorsTab = ({
     <Box display="flex" flexDirection="column" padding={2} gap={2}>
       {regimenIndicators.length > 0 && (
         <ButtonWithIcon
-          disabled={disabled}
+          // disabled={disabled}
           label={t('button.regimen')}
           Icon={<PlusCircleIcon />}
           onClick={() =>
@@ -72,7 +72,7 @@ export const IndicatorsTab = ({
       )}
       {hivIndicators.length > 0 && (
         <ButtonWithIcon
-          disabled={disabled}
+          // disabled={disabled}
           label={t('button.hiv')}
           Icon={<PlusCircleIcon />}
           onClick={() => onClick(hivIndicators[0], firstHivLine, response)}
