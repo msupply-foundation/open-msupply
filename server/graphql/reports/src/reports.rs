@@ -66,7 +66,6 @@ pub struct ReportFilterInput {
 
 #[derive(Union)]
 pub enum ReportResponse {
-    // TODO add error handling here also?
     Report(ReportNode),
     Error(QueryReportError),
 }
