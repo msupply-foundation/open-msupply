@@ -4,15 +4,29 @@ import {
   useMutation,
   useTableStore,
   useDeleteConfirmation,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { canDeletePrescription } from '../../../../utils';
 import { usePrescriptionApi } from '../../utils/usePrescriptionApi';
 import { PrescriptionRowFragment } from '../../operations.generated';
-import { usePrescriptions } from './usePrescriptions';
+import { usePrescriptionList } from '../usePrescriptionList';
 
 export const usePrescriptionDeleteRows = () => {
   const queryClient = useQueryClient();
-  const { data: rows } = usePrescriptions();
+  const {
+    filter,
+    queryParams: { sortBy, first, offset },
+  } = useUrlQueryParams({
+    filters: [{ key: 'otherPartyName' }],
+    initialSort: { key: 'prescriptionDatetime', dir: 'desc' },
+  });
+  const listParams = {
+    sortBy,
+    first,
+    offset,
+    filterBy: filter.filterBy,
+  };
+  const { data: rows } = usePrescriptionList(listParams);
   const api = usePrescriptionApi();
   const { mutateAsync } = useMutation(api.delete);
   const t = useTranslation();

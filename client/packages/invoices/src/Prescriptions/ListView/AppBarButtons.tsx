@@ -18,17 +18,18 @@ import {
   RouteBuilder,
 } from '@openmsupply-client/common';
 import { PatientSearchModal } from '@openmsupply-client/system';
-import { usePrescription } from '../api';
+import { ListParams, usePrescription, usePrescriptionList } from '../api';
 import { prescriptionToCsv } from '../../utils';
 
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
-}> = ({ modalController }) => {
+  listParams: ListParams;
+}> = ({ modalController, listParams }) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { success, error } = useNotification();
   const { mutateAsync: onCreate } = usePrescription.document.insert();
-  const { data, isLoading } = usePrescription.document.list();
+  const { data, isLoading } = usePrescriptionList(listParams);
 
   const csvExport = async () => {
     if (!data || !data?.nodes.length) {
