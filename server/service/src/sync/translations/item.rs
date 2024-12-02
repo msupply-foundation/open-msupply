@@ -71,7 +71,9 @@ fn to_legacy_ven_category(ven_category: VENCategory) -> String {
 pub(crate) fn ordered_simple_json(text: &str) -> Result<String, serde_json::Error> {
     let mut json: serde_json::Value = serde_json::from_str(text)?;
     // Saving dose_picture 'picture' type as incoming 'empty string' causes issues in integration tests
-    json.as_object_mut().unwrap().remove("dose_picture");
+    if let Some(json_as_object) = json.as_object_mut() {
+        json_as_object.remove("dose_picture");
+    }
     serde_json::to_string(&json)
 }
 
