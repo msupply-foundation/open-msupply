@@ -1587,6 +1587,8 @@
   "report.variance-packs": "Variance (packs)",
   "report.variance-value": "Variance (value)",
   "report.well-stocked": "Well stocked",
+  "report.item-code-or-name": "Item Code or Name",
+  "report.AMC-lookback": "AMC Lookback Period",
   "reports": "Reports",
   "returns": "Returns",
   "saving": "Saving…",

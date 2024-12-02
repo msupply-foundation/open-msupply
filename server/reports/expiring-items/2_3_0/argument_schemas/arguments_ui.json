@@ -4,7 +4,7 @@
     {
       "type": "Control",
       "scope": "#/properties/expiryDate",
-      "label": "Expiry Date",
+      "label": "T#report.expiry-date",
       "options": {
         "dateOnly": true
       }
@@ -12,7 +12,7 @@
     {
       "type": "Control",
       "scope": "#/properties/itemCodeOrName",
-      "label": "Item Code or Name",
+      "label": "T#report.item-code-or-name",
       "options": {
         "useDebounce": false,
         "flexBasis": "90%"
@@ -21,7 +21,7 @@
     {
       "type": "Control",
       "scope": "#/properties/monthlyConsumptionLookBackPeriod",
-      "label": "AMC Lookback Period",
+      "label": "T#report.AMC-lookback",
       "options": {
         "inputAlignment": "end",
         "paddingRight": 25
@@ -30,7 +30,7 @@
     {
       "type": "Control",
       "scope": "#/properties/monthsOverstock",
-      "label": "Target MOS",
+      "label": "T#label.max-months-of-stock",
       "options": {
         "inputAlignment": "end",
         "paddingRight": 25
@@ -39,7 +39,7 @@
     {
       "type": "Control",
       "scope": "#/properties/monthsUnderstock",
-      "label": "Reorder threshold MOS",
+      "label": "T#label.min-months-of-stock",
       "options": {
         "inputAlignment": "end",
         "paddingRight": 25
@@ -48,7 +48,7 @@
     {
       "type": "Control",
       "scope": "#/properties/monthsItemsExpire",
-      "label": "Expiring item period",
+      "label": "T#label.expiring-item-period",
       "options": {
         "inputAlignment": "end",
         "paddingRight": 25
