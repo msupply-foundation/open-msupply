@@ -21,6 +21,7 @@ impl SyncRecordTester for LocationMovementRecordTester {
             code: "LocationCode".to_string(),
             on_hold: false,
             store_id: store_id.clone(),
+            cold_storage_type_id: None,
         };
         let stock_line_row = StockLineRow {
             id: uuid(),
@@ -38,6 +39,7 @@ impl SyncRecordTester for LocationMovementRecordTester {
             note: Some("some remote sync test note".to_string()),
             supplier_link_id: Some(new_site_properties.name_id.clone()),
             barcode_id: None,
+            item_variant_id: None,
         };
 
         let location_movement_row = LocationMovementRow {

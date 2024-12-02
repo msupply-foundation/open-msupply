@@ -52,16 +52,19 @@ export const IndicatorEditPage = () => {
   );
 
   useEffect(() => {
-    setCustomBreadcrumbs({
-      2: t('label.indicators'),
-      4: currentLine?.code || '',
-    });
+    setCustomBreadcrumbs(
+      {
+        2: t('label.indicators'),
+        4: `${currentLine?.name}: ${currentLine?.code}`,
+      },
+      [2, 3]
+    );
   }, [programIndicatorLineId]);
 
   if (isLoading || isProgramIndicatorsLoading) {
     return <BasicSpinner />;
   }
-  if (!programIndicatorLineId || !response) {
+  if (!response) {
     return <NothingHere />;
   }
 
