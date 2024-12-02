@@ -6,7 +6,6 @@ export const usePrescription = {
   document: {
     get: Document.usePrescription,
     fields: Document.usePrescriptionFields,
-    list: Document.usePrescriptions,
     insert: Document.usePrescriptionInsert,
     update: Document.usePrescriptionUpdate,
     delete: Document.usePrescriptionDelete,
@@ -24,3 +23,5 @@ export const usePrescription = {
     isDisabled: Utils.usePrescriptionIsDisabled,
   },
 };
+
+export * from './usePrescriptionList';

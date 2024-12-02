@@ -15,7 +15,7 @@ import {
   ColumnFormat,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
-import { usePrescription } from '../api';
+import { usePrescription, usePrescriptionList } from '../api';
 import { PrescriptionRowFragment } from '../api/operations.generated';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -38,11 +38,21 @@ const PrescriptionListViewComponent: FC = () => {
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
+  } = useUrlQueryParams({
+    filters: [{ key: 'otherPartyName' }],
+    initialSort: { key: 'prescriptionDatetime', dir: 'desc' },
+  });
   const navigate = useNavigate();
   const modalController = useToggle();
 
-  const { data, isError, isLoading } = usePrescription.document.list();
+  const listParams = {
+    sortBy,
+    first,
+    offset,
+    filterBy: filter.filterBy,
+  };
+
+  const { data, isError, isLoading } = usePrescriptionList(listParams);
   const pagination = { page, first, offset };
   useDisablePrescriptionRows(data?.nodes);
 
@@ -80,8 +90,10 @@ const PrescriptionListViewComponent: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons modalController={modalController} />
-
+      <AppBarButtons
+        modalController={modalController}
+        listParams={listParams}
+      />
       <DataTable
         id="prescription-list"
         enableColumnSelection
