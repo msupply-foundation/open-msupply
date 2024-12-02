@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement, useState } from 'react';
 import {
   Grid,
   useTranslation,
@@ -9,29 +9,32 @@ import {
   SaveIcon,
 } from '@openmsupply-client/common';
 
-// interface FeedbackFormProps {
-//   draft: FeedbackFormFragment;
-// }
+// to do: replace with backend type once generated
+interface DummyFeedbackFormInput {
+  id: string;
+  email: string;
+  message: string;
+}
 
-export const FeedbackForm = (
-  {
-    // draft,
-    // loading,
-    // onUpdate,
-    // plugins,
-    // packEditable,
-    // isInModal = false,
-  }
-) => {
+// state
+// updating state
+// button to submit and
+// refactor into external hook
+// show success notification and clear form once backend has successfuly received data
+
+export const FeedbackForm = (): ReactElement => {
   const t = useTranslation();
-  // const { error } = useNotification();
+  const [draft, setDraft] = useState<DummyFeedbackFormInput>({
+    id: '',
+    email: '',
+    message: '',
+  });
 
-  // const supplierName = draft.supplierName
-  //   ? draft.supplierName
-  //   : t('message.no-supplier');
-  // const location = draft?.location ?? null;
-
-  // if (loading) return null;
+  //draft hook
+  const updateDraft = (newData: Partial<DummyFeedbackFormInput>) => {
+    const newDraft: DummyFeedbackFormInput = { ...draft, ...newData };
+    setDraft(newDraft);
+  };
 
   return (
     <>
@@ -40,8 +43,8 @@ export const FeedbackForm = (
         labelWidth="200"
         Input={
           <BasicTextInput
-            value={''}
-            // onChange={}
+            value={draft.email}
+            onChange={e => updateDraft({ email: e.target.value })}
             fullWidth
           />
         }
@@ -51,8 +54,10 @@ export const FeedbackForm = (
         labelWidth="200"
         Input={
           <TextArea
-            value={''}
-            // onChange={}
+            value={draft.message}
+            onChange={e => {
+              updateDraft({ message: e.target.value });
+            }}
             InputProps={{
               sx: {
                 backgroundColor: theme => theme.palette.background.menu,
