@@ -6,34 +6,52 @@ import {
   InputWithLabelRow,
   BasicTextInput,
   LoadingButton,
-  SaveIcon,
+  MailIcon,
+  useNotification,
 } from '@openmsupply-client/common';
 
 // to do: replace with backend type once generated
 interface DummyFeedbackFormInput {
-  id: string;
+  // id: string;
   email: string;
   message: string;
 }
 
-// state
-// updating state
-// button to submit and
-// refactor into external hook
-// show success notification and clear form once backend has successfuly received data
-
 export const FeedbackForm = (): ReactElement => {
   const t = useTranslation();
+  const { success } = useNotification();
   const [draft, setDraft] = useState<DummyFeedbackFormInput>({
-    id: '',
+    // id: '',
     email: '',
     message: '',
   });
 
-  //draft hook
+  // draft update
   const updateDraft = (newData: Partial<DummyFeedbackFormInput>) => {
     const newDraft: DummyFeedbackFormInput = { ...draft, ...newData };
     setDraft(newDraft);
+  };
+
+  // save input email address and message to email queue on server
+  const save = async () => {
+    try {
+      // const result = await create();
+      const successSnack = success(t('messages.message-sent')); // edit label
+      successSnack();
+      resetDraft();
+      console.log({ draft });
+    } catch {
+      // todo
+    }
+  };
+
+  const resetDraft = () => {
+    if (draft) {
+      setDraft({
+        email: '',
+        message: '',
+      });
+    }
   };
 
   return (
@@ -70,14 +88,14 @@ export const FeedbackForm = (): ReactElement => {
       <Grid item justifyContent="flex-end" width="100%" display="flex">
         <LoadingButton
           isLoading={false} // isSaving}
-          startIcon={<SaveIcon />}
+          startIcon={<MailIcon />}
           type="submit"
           variant="contained"
           sx={{ fontSize: '12px' }}
           disabled={false} // !isValid}
-          onClick={() => {}} // onSave}
+          onClick={save}
         >
-          {t('button.save')}
+          {t('button.send')}
         </LoadingButton>
       </Grid>
     </>
