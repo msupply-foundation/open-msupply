@@ -5,6 +5,8 @@ import {
   ReportSortFieldInput,
   ReportFilterInput,
   useIntlUtils,
+  useNotification,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { ReportRowFragment } from '../operations.generated';
 import { useReportGraphQL } from '../useReportGraphQL';
@@ -27,6 +29,8 @@ export const useReportList = ({
 }) => {
   const { reportApi, storeId } = useReportGraphQL();
   const { currentLanguage: language } = useIntlUtils();
+  const { error } = useNotification();
+  const t = useTranslation();
 
   const {
     filterBy,
@@ -60,6 +64,7 @@ export const useReportList = ({
         totalCount: query.reports.totalCount,
       };
     } else {
+      error(t('report.error-translating'))();
       throw new Error('Could not translate reports');
     }
   };
