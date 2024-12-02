@@ -23,6 +23,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             code: "TestLocationCode".to_string(),
             on_hold: false,
             store_id: store_id.to_string(),
+            cold_storage_type_id: None,
         };
         // create test home currency
         let currency_row = CurrencyRow {
@@ -90,6 +91,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             inventory_adjustment_reason_id: Some(inventory_adjustment_reason_id.clone()),
             foreign_currency_price_before_tax: Some(0.0),
             return_reason_id: None,
+            item_variant_id: None,
         };
         let invoice_row_1 = base_invoice_row.clone();
         let invoice_line_row_1 = base_invoice_line_row.clone();
