@@ -13,6 +13,10 @@ export type FilterRule = {
 
 export type FilterBy = Record<string, FilterRule | null>;
 export type FilterByWithBoolean = Record<string, FilterRule | null | boolean>;
+export type FilterByWithStringAndBool = Record<
+  string,
+  FilterRule | null | boolean | string
+>;
 
 export interface FilterController {
   filterBy: FilterByWithBoolean | null;
