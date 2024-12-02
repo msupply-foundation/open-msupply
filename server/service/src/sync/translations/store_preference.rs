@@ -64,6 +64,15 @@ pub struct LegacyPrefData {
     #[serde(default)]
     #[serde(rename = "useExtraFieldsForRequisitions")]
     pub extra_fields_in_requisition: bool,
+    #[serde(default)]
+    #[serde(rename = "keepRequisitionLinesWithZeroQuantity")]
+    pub keep_requisition_lines_with_zero_requested_quantity_on_finalised: bool,
+    #[serde(default)]
+    #[serde(rename = "useConsumptionAndStockFromCustomersForInternalOrders")]
+    pub use_consumption_and_stock_from_customers_for_internal_orders: bool,
+    #[serde(default)]
+    #[serde(rename = "canLinkRequistionToSupplierInvoice")]
+    pub manually_link_internal_order_to_inbound_shipment: bool,
 }
 
 // Needs to be added to all_translators()
@@ -114,6 +123,9 @@ impl SyncTranslation for StorePreferenceTranslation {
             months_items_expire,
             stocktake_frequency,
             extra_fields_in_requisition,
+            keep_requisition_lines_with_zero_requested_quantity_on_finalised,
+            use_consumption_and_stock_from_customers_for_internal_orders,
+            manually_link_internal_order_to_inbound_shipment,
         } = data;
 
         let result = StorePreferenceRow {
@@ -132,6 +144,9 @@ impl SyncTranslation for StorePreferenceTranslation {
             months_items_expire,
             stocktake_frequency,
             extra_fields_in_requisition,
+            keep_requisition_lines_with_zero_requested_quantity_on_finalised,
+            use_consumption_and_stock_from_customers_for_internal_orders,
+            manually_link_internal_order_to_inbound_shipment,
         };
 
         Ok(PullTranslateResult::upsert(result))
