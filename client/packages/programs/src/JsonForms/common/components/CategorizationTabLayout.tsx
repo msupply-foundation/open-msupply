@@ -24,10 +24,10 @@ import {
   Hidden,
   Typography,
   isEmpty,
-  MedicalIcons,
   Box,
   ChevronDownIcon,
 } from '@openmsupply-client/common';
+import { ProgramsIcons } from '@openmsupply-client/programs';
 import { ModalProps, useDialog } from '@common/hooks';
 import {
   AjvProps,
@@ -240,9 +240,9 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
       {categories.map((category: Category, idx: number) => {
         const iconName = category?.options?.[
           'icon'
-        ] as keyof typeof MedicalIcons;
+        ] as keyof typeof ProgramsIcons;
         const CategoryIcon =
-          MedicalIcons[iconName] ?? MedicalIcons['stethoscope'];
+          ProgramsIcons[iconName] ?? ProgramsIcons['stethoscope'];
         return (
           <Grid item key={category.label}>
             <Button
