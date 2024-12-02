@@ -53,7 +53,7 @@ mod json_translate_test {
         let (_, _, connection_manager, _) =
             setup_all("json_translate_test", MockDataInserts::none()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
 
         // TODO mock translation service in case key values change
         let mut serialised_json: tera::Value = serde_json::json!({
