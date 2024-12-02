@@ -1,15 +1,19 @@
+use chrono::Utc;
 use repository::{
-    ChangelogRow, ChangelogTableName, ItemRow, ItemRowDelete, ItemRowRepository, ItemType,
-    StorageConnection, SyncBufferRow, VENCategory,
+    item_category::{ItemCategoryFilter, ItemCategoryRepository},
+    item_category_row::ItemCategoryJoinRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemRowRepository,
+    ItemType, StorageConnection, SyncBufferRow, VENCategory,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::sync::{
-    sync_serde::empty_str_as_option_string, translations::unit::UnitTranslation,
+    sync_serde::empty_str_as_option_string,
+    translations::{category::CategoryTranslation, unit::UnitTranslation},
     CentralServerConfig,
 };
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_camel_case_types)]
 #[derive(Deserialize, Serialize)]
@@ -34,6 +38,8 @@ pub struct LegacyItemRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     strength: Option<String>,
     doses: i32,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    category_ID: Option<String>,
 }
 
 fn to_item_type(type_of: LegacyItemType) -> ItemType {
@@ -90,18 +96,27 @@ impl SyncTranslation for ItemTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![UnitTranslation.table_name()]
+        let mut deps = vec![UnitTranslation.table_name()];
+        deps.extend(CategoryTranslation.table_names());
+
+        deps
     }
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyItemRow>(&sync_record.data)?;
 
-        let result = ItemRow {
-            id: data.ID,
+        let mut integration_operations = Vec::new();
+
+        // Translate the item_category join row
+        let item_category_upserts = translate_item_category_join(connection, &data)?;
+
+        // Translate the item row
+        let item_row = ItemRow {
+            id: data.ID.clone(),
             name: data.item_name,
             code: data.code,
             unit_id: data.unit_ID,
@@ -115,7 +130,12 @@ impl SyncTranslation for ItemTranslation {
             vaccine_doses: data.doses,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        integration_operations.push(IntegrationOperation::upsert(item_row));
+        integration_operations.extend(item_category_upserts);
+
+        Ok(PullTranslateResult::IntegrationOperations(
+            integration_operations,
+        ))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -177,6 +197,10 @@ impl SyncTranslation for ItemTranslation {
             strength,
             type_of: to_legacy_item_type(r#type),
             VEN_category: to_legacy_ven_category(ven_category),
+            // Item push is only used for GAPS, which doesn't use item categories
+            // Probably better to move management of categories to OMS Central than
+            // build out the syncing back and forth of categories to OG!
+            category_ID: None,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
@@ -187,6 +211,45 @@ impl SyncTranslation for ItemTranslation {
             json_record,
         ))
     }
+}
+
+fn translate_item_category_join(
+    connection: &StorageConnection,
+    data: &LegacyItemRow,
+) -> Result<Vec<IntegrationOperation>, anyhow::Error> {
+    let mut integration_operations = Vec::new();
+
+    let existing_item_category_join = ItemCategoryRepository::new(connection)
+        .query_one(ItemCategoryFilter::new().item_id(EqualFilter::equal_to(&data.ID)))?;
+
+    if let Some(item_category) = existing_item_category_join {
+        let existing_category_id = item_category.item_category_join_row.category_id.clone();
+
+        let new_category_id = data.category_ID.clone().unwrap_or_default();
+
+        // If latest item data has a different category ID than that in the existing join,
+        // or if category has been removed, mark existing join as deleted
+        if existing_category_id != new_category_id {
+            let deleted_join = ItemCategoryJoinRow {
+                deleted_datetime: Some(Utc::now().naive_utc()),
+                ..item_category.item_category_join_row
+            };
+            integration_operations.push(IntegrationOperation::upsert(deleted_join));
+        }
+    }
+
+    // Upsert the new item category join if a category ID is provided in the latest item data
+    if let Some(category_id) = &data.category_ID {
+        let item_category_join_row = ItemCategoryJoinRow {
+            id: format!("{}-{}", data.ID.clone(), category_id.clone()),
+            item_id: data.ID.clone(),
+            category_id: category_id.clone(),
+            deleted_datetime: None,
+        };
+        integration_operations.push(IntegrationOperation::upsert(item_category_join_row));
+    }
+
+    Ok(integration_operations)
 }
 
 #[cfg(test)]
