@@ -97,8 +97,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                 RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InboundShipment)
                   .addPart(String(invoiceNumber))
-                  .build(),
-                { replace: true }
+                  .build()
               );
             });
           }}

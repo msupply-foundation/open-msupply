@@ -186,7 +186,7 @@ mod test_insert {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -258,7 +258,7 @@ mod test_insert {
         let (_, connection, connection_manager, _) =
             setup_all("insert_request_requisition_success", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();

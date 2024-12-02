@@ -2,7 +2,7 @@ use base64::prelude::*;
 use chrono::{DateTime, Utc};
 use extism::{
     convert::{encoding, Json},
-    host_fn, FromBytes, Manifest, PluginBuilder, UserData, Wasm, WasmMetadata, PTR,
+    host_fn, FromBytes, Manifest, PluginBuilder, ToBytes, UserData, Wasm, WasmMetadata, PTR,
 };
 use repository::{
     raw_query, EqualFilter, FormSchemaJson, JsonRawRow, PaginationOption, Report, ReportFilter,
@@ -50,6 +50,7 @@ pub enum ReportError {
     DocGenerationError(String),
     HTMLToPDFError(String),
     TranslationError,
+    ConvertDataError(anyhow::Error),
 }
 
 #[derive(Debug, Clone)]
@@ -515,13 +516,20 @@ fn wasm_sql(
     })
 }
 
+#[derive(Serialize, Deserialize, FromBytes, ToBytes)]
+#[encoding(Json)]
+struct ReportData {
+    data: serde_json::Value,
+    arguments: Option<serde_json::Value>,
+}
+
 fn transform_data(
     connection: StorageConnection,
-    data: serde_json::Value,
+    data: ReportData,
     convert_data: Option<String>,
-) -> serde_json::Value {
+) -> Result<ReportData, ReportError> {
     let Some(convert_data) = convert_data else {
-        return data;
+        return Ok(data);
     };
 
     let manifest = Manifest::new([Wasm::Data {
@@ -531,35 +539,39 @@ fn transform_data(
             hash: None,
         },
     }]);
+
     let mut plugin = PluginBuilder::new(manifest)
         .with_wasi(true)
+        // For android was getting error 'config file not specified and failed to get the default'
+        // leading to https://github.com/bytecodealliance/wasmtime/blob/3e0b7e501beebf5d7c094b7ac751f582ba12bc95/crates/cache/src/config.rs#L195
+        .with_cache_disabled()
         .with_function("sql", [PTR], [PTR], UserData::new(connection), sql)
         .build()
-        .unwrap();
+        .map_err(ReportError::ConvertDataError)?;
 
-    plugin
-        .call::<serde_json::Value, serde_json::Value>("convert_data", data)
-        .unwrap()
+    let data = plugin
+        .call("convert_data", data)
+        .map_err(ReportError::ConvertDataError)?;
+
+    Ok(data)
 }
 
 fn generate_report(
     connection: StorageConnection,
     report: &ResolvedReportDefinition,
-    report_data: serde_json::Value,
+    data: serde_json::Value,
     arguments: Option<serde_json::Value>,
     translation_service: &Localisations,
     current_language: Option<String>,
 ) -> Result<GeneratedReport, ReportError> {
-    let mut context = tera::Context::new();
+    let report_data = ReportData { data, arguments };
+    let report_data = transform_data(connection, report_data, report.convert_data.clone())?;
 
-    let report_data = transform_data(connection, report_data, report.convert_data.clone());
-
-    context.insert("data", &report_data);
+    let mut context = tera::Context::from_serialize(report_data).map_err(|err| {
+        ReportError::DocGenerationError(format!("Tera context from data: {:?}", err))
+    })?;
+    // TODO: Validate if used and if needed
     context.insert("res", &report.resources);
-
-    if let Some(arguments) = arguments {
-        context.insert("arguments", &arguments);
-    }
 
     let mut tera = tera::Tera::default();
 
@@ -885,7 +897,7 @@ mod report_service_test {
         })
         .unwrap();
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context("store_id".to_string(), "".to_string())
             .unwrap();
@@ -1045,7 +1057,7 @@ mod report_generation_test {
             setup_all("test_report_translations", MockDataInserts::none()).await;
 
         let translation_service =
-            ServiceProvider::new(connection_manager, "app_data").translations_service;
+            ServiceProvider::new(connection_manager).translations_service;
 
         let mut templates = HashMap::new();
         templates.insert("test.html".to_string(), tera_template);

@@ -44,8 +44,8 @@ Only data that needs to be present on central server site is a new sync site (th
 
 ## 4 `Open mSupply central server`
 
-- Another instance of omSupply should be running as central server, in order to set omSupply instance as central server, you will need to check "Site is open mSupply central server" against the site and enter correct This site url agains the site in mSupply->Special->Synchronisation->{Site}
-- And graphql API should be 'open' (without token), thus 'APP__SERVER\_\_DEBUG_NO_ACCESS_CONTROL' env variable should be set to `true`
+- Another instance of omSupply should be running as central server, in order to set omSupply instance as central server, you will need to check "Site is open mSupply central server" against the site and enter correct This site url again the site in mSupply->Special->Synchronisation->{Site}
+- And graphql API should be 'open' (without token), thus 'APP\_\_SERVER\_\_DEBUG_NO_ACCESS_CONTROL' env variable should be set to `true`
 
 In case you are wondering, the APP env variables translate to settings in [configuration .yaml](https://github.com/msupply-foundation/open-msupply/blob/1b8b9237863eef1a764be3973d563e6d84358827/server/configuration/example.yaml#L7) files, and override them
 
@@ -125,7 +125,7 @@ For each step:
 - Request and wait for sync of open mSupply central server (which will sync the central data we just created in original mSupply central server)
 - Perform graphql data mutations on open mSupply central server
 - Sync (remote site)
-- Upsert/Delete (on remote server) IntegrationRecords in TestData 
+- Upsert/Delete (on remote server) IntegrationRecords in TestData
 - Sync (remote site)
 - Completely Re Sync
 - Check IntegrationRecords in TestData against database

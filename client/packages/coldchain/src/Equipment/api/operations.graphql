@@ -8,6 +8,11 @@ fragment AssetRow on AssetNode {
   installationDate
   createdDatetime
   replacementDate
+
+  warrantyStart
+  warrantyEnd
+  needsReplacement
+
   statusLog {
     logDatetime
     reason {
@@ -25,6 +30,9 @@ fragment AssetRow on AssetNode {
     manufacturer
     model
     code
+  }
+  assetCategory {
+    name
   }
   assetType {
     name

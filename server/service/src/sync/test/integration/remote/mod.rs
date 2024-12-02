@@ -122,8 +122,7 @@ fn replace_system_name_ids(
 
         let Some(mut_invoice) = record
             .as_mut_any()
-            .map(|any| any.downcast_mut::<InvoiceRow>())
-            .flatten()
+            .and_then(|any| any.downcast_mut::<InvoiceRow>())
         else {
             continue;
         };

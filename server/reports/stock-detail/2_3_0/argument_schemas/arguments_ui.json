@@ -32,6 +32,27 @@
       "options": {
         "readonly": true
       }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/sort",
+      "label": "Sort by:",
+      "options": {
+        "show": [
+          ["item.name", "item"],
+          ["item.code", "code"],
+          ["expiryDate", "expiry date"],
+          ["location.code", "location code"],
+          ["item.unitName", "unit name"],
+          ["packSize", "pack size"],
+          ["totalNumberOfPacks", "total number of packs"]
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/dir",
+      "label": "Sort direction"
     }
   ]
 }

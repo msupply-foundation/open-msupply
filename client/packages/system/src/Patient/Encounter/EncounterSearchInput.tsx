@@ -18,6 +18,7 @@ interface EncounterSearchInputProps {
   width?: number;
   lastEncounterType: string | undefined;
   disabled?: boolean;
+  fullWidth?: boolean;
 }
 
 export const getEncounterOptionRenderer =
@@ -38,6 +39,7 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
   onChange,
   width = 250,
   disabled = false,
+  fullWidth,
   lastEncounterType: encounterType,
 }) => {
   const patientId = usePatient.utils.id();
@@ -82,6 +84,7 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
       options={encounterData ?? []}
       renderOption={EncounterOptionRenderer}
       width={`${width}px`}
+      fullWidth={fullWidth}
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) =>
         option.encounter.id === value.encounter.id

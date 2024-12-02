@@ -17,6 +17,9 @@ export interface ColdStorageTypeInputProps {
   clearable?: boolean;
 }
 
+const getOptionLabel = (coldStorageType: ColdStorageTypeFragment) =>
+  `${coldStorageType.name} (${coldStorageType.minTemperature}°C to ${coldStorageType.maxTemperature}°C)`;
+
 export const ColdStorageTypeInput = ({
   onChange,
   width = 250,
@@ -37,7 +40,7 @@ export const ColdStorageTypeInput = ({
         onChange(name);
       }}
       options={data?.coldStorageTypes.nodes ?? []}
-      getOptionLabel={option => option.name}
+      getOptionLabel={getOptionLabel}
       width={`${width}px`}
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}

@@ -180,7 +180,6 @@ mod tests {
                 name: name.clone(),
                 item_link_id: mock_item_a().id,
                 cold_storage_type_id: None,
-                doses_per_unit: Some(10),
                 manufacturer_link_id: None,
                 deleted_datetime: None,
             })
