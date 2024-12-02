@@ -2228,6 +2228,11 @@ export type FailedToFetchReportData = PrintReportErrorInterface & {
   errors: Scalars['JSON']['output'];
 };
 
+export type FailedTranslation = QueryReportsErrorInterface & {
+  __typename: 'FailedTranslation';
+  description: Scalars['String']['output'];
+};
+
 export type FinaliseRnRFormInput = {
   id: Scalars['String']['input'];
 };
@@ -2360,7 +2365,7 @@ export type IndicatorColumnNode = {
   columnNumber: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   value?: Maybe<IndicatorValueNode>;
-  valueType: IndicatorValueTypeNode;
+  valueType?: Maybe<IndicatorValueTypeNode>;
 };
 
 
@@ -2381,6 +2386,7 @@ export type IndicatorLineRowNode = {
   code: Scalars['String']['output'];
   lineNumber: Scalars['Int']['output'];
   name: Scalars['String']['output'];
+  valueType?: Maybe<IndicatorValueTypeNode>;
 };
 
 export type IndicatorValueNode = {
@@ -5515,6 +5521,12 @@ export type ProgramsResponse = ProgramConnector;
 
 export type PropertyNode = {
   __typename: 'PropertyNode';
+  /**
+   * If `valueType` is `String`, this field can contain a comma-separated
+   * list of allowed values, essentially defining an enum.
+   * If `valueType` is Integer or Float, this field will include the
+   * word `negative` if negative values are allowed.
+   */
   allowedValues?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   key: Scalars['String']['output'];
@@ -6377,6 +6389,15 @@ export type QueriesVaccineCoursesArgs = {
   sort?: InputMaybe<Array<VaccineCourseSortInput>>;
 };
 
+export type QueryReportsError = {
+  __typename: 'QueryReportsError';
+  error: QueryReportsErrorInterface;
+};
+
+export type QueryReportsErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type ReasonOptionConnector = {
   __typename: 'ReasonOptionConnector';
   nodes: Array<ReasonOptionNode>;
@@ -6545,7 +6566,7 @@ export type ReportSortInput = {
   key: ReportSortFieldInput;
 };
 
-export type ReportsResponse = ReportConnector;
+export type ReportsResponse = QueryReportsError | ReportConnector;
 
 export type RequestRequisitionCounts = {
   __typename: 'RequestRequisitionCounts';

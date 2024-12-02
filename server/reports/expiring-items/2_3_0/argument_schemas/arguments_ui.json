@@ -45,7 +45,7 @@
         "paddingRight": 25
       }
     },
-      {
+    {
       "type": "Control",
       "scope": "#/properties/monthsItemsExpire",
       "label": "Expiring item period",

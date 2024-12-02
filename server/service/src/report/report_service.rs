@@ -93,7 +93,7 @@ pub trait ReportServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
-    ) -> Result<Vec<Report>, ListError> {
+    ) -> Result<Vec<Report>, GetReportsError> {
         query_reports(ctx, translation_service, pagination, filter, sort)
     }
 
@@ -324,33 +324,48 @@ fn get_report(ctx: &ServiceContext, id: &str) -> Result<Report, RepositoryError>
         .ok_or(RepositoryError::NotFound)
 }
 
+#[derive(Debug)]
+pub enum GetReportsError {
+    // TODO add more detail about specific report? Breaking out of iterator will prevent listing all reports
+    TranslationError,
+    ListError(ListError),
+}
+
 fn query_reports(
     ctx: &ServiceContext,
     translation_service: &Box<Localisations>,
     pagination: Option<PaginationOption>,
     filter: Option<ReportFilter>,
     sort: Option<ReportSort>,
-) -> Result<Vec<Report>, ListError> {
+) -> Result<Vec<Report>, GetReportsError> {
     let repo = ReportRepository::new(&ctx.connection);
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)
+        .map_err(GetReportsError::ListError)?;
     let filter = filter
         .unwrap_or_default()
         .r#type(ReportType::OmSupply.equal_to());
 
-    let reports = repo.query(pagination, Some(filter.clone()), sort)?;
+    let reports = repo
+        .query(pagination, Some(filter.clone()), sort)
+        .map_err(|e| GetReportsError::ListError(ListError::DatabaseError(e)))?;
     let reports = reports
         .into_iter()
-        .map(|mut r| {
-            r.argument_schema = if let Some(argument_schema) = r.argument_schema {
-                Some(translate_json(argument_schema, translation_service).unwrap())
+        .map(|r| {
+            let translated_schema = if let Some(argument_schema) = r.argument_schema {
+                Some(
+                    translate_json(argument_schema, translation_service)
+                        .map_err(|_e| GetReportsError::TranslationError)?,
+                )
             } else {
                 None
             };
-            r
+            Ok(Report {
+                report_row: r.report_row,
+                argument_schema: translated_schema,
+            })
         })
-        .collect::<Vec<Report>>();
-
-    Ok(reports)
+        .collect::<Result<Vec<Report>, GetReportsError>>();
+    reports
 }
 
 fn resolve_report(

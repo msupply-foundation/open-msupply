@@ -49,10 +49,17 @@ export const useReportList = ({
       desc: sortBy.isDesc,
       storeId,
     });
-    return {
-      nodes: query.reports.nodes,
-      totalCount: query.reports.totalCount,
-    };
+
+    console.log('query', query);
+
+    if (query?.reports?.__typename == 'ReportConnector') {
+      return {
+        nodes: query.reports.nodes,
+        totalCount: query.reports.totalCount,
+      };
+    } else {
+      throw new Error('Could not translate reports');
+    }
   };
 
   return useQuery({

@@ -4,7 +4,7 @@
     "StockFilters": {
       "properties": {
         "expiryDate": {
-          "description": "Expiry Date",
+          "description": "label.expiry-date",
           "format": "date",
           "type": "string"
         },

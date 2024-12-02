@@ -21,7 +21,7 @@ export type ReportsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ReportsQuery = { __typename: 'Queries', reports: { __typename: 'ReportConnector', totalCount: number, nodes: Array<{ __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, isCustom: boolean, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null }> } };
+export type ReportsQuery = { __typename: 'Queries', reports: { __typename: 'QueryReportsError', error: { __typename: 'FailedTranslation', description: string } } | { __typename: 'ReportConnector', totalCount: number, nodes: Array<{ __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, isCustom: boolean, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null }> } };
 
 export type GenerateReportQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -61,12 +61,22 @@ export const ReportDocument = gql`
 export const ReportsDocument = gql`
     query reports($storeId: String!, $key: ReportSortFieldInput!, $desc: Boolean, $filter: ReportFilterInput) {
   reports(storeId: $storeId, sort: {key: $key, desc: $desc}, filter: $filter) {
+    __typename
     ... on ReportConnector {
       nodes {
         __typename
         ...ReportRow
       }
       totalCount
+    }
+    ... on QueryReportsError {
+      __typename
+      error {
+        ... on FailedTranslation {
+          __typename
+          description
+        }
+      }
     }
   }
 }
