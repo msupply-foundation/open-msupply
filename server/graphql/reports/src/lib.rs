@@ -25,9 +25,10 @@ impl ReportQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
+        user_language: String,
         id: String,
     ) -> Result<ReportResponse> {
-        report(ctx, store_id, id)
+        report(ctx, store_id, user_language, id)
     }
 
     /// Queries a list of available reports

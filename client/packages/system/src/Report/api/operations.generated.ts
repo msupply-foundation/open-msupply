@@ -7,11 +7,12 @@ export type ReportRowFragment = { __typename: 'ReportNode', context: Types.Repor
 
 export type ReportQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
+  userLanguage: Types.Scalars['String']['input'];
   id: Types.Scalars['String']['input'];
 }>;
 
 
-export type ReportQuery = { __typename: 'Queries', report: { __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, isCustom: boolean, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null } };
+export type ReportQuery = { __typename: 'Queries', report: { __typename: 'QueryReportError', error: { __typename: 'FailedTranslation', description: string } } | { __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, isCustom: boolean, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null } };
 
 export type ReportsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -53,9 +54,20 @@ export const ReportRowFragmentDoc = gql`
 }
     `;
 export const ReportDocument = gql`
-    query report($storeId: String!, $id: String!) {
-  report(storeId: $storeId, id: $id) {
-    ...ReportRow
+    query report($storeId: String!, $userLanguage: String!, $id: String!) {
+  report(storeId: $storeId, userLanguage: $userLanguage, id: $id) {
+    ... on ReportNode {
+      ...ReportRow
+    }
+    ... on QueryReportError {
+      __typename
+      error {
+        ... on FailedTranslation {
+          __typename
+          description
+        }
+      }
+    }
   }
 }
     ${ReportRowFragmentDoc}`;

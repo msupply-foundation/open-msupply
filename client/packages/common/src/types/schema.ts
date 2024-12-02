@@ -2228,7 +2228,7 @@ export type FailedToFetchReportData = PrintReportErrorInterface & {
   errors: Scalars['JSON']['output'];
 };
 
-export type FailedTranslation = QueryReportsErrorInterface & {
+export type FailedTranslation = QueryReportErrorInterface & QueryReportsErrorInterface & {
   __typename: 'FailedTranslation';
   description: Scalars['String']['output'];
 };
@@ -6201,6 +6201,7 @@ export type QueriesRepacksByStockLineArgs = {
 export type QueriesReportArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
+  userLanguage: Scalars['String']['input'];
 };
 
 
@@ -6391,6 +6392,15 @@ export type QueriesVaccineCoursesArgs = {
   sort?: InputMaybe<Array<VaccineCourseSortInput>>;
 };
 
+export type QueryReportError = {
+  __typename: 'QueryReportError';
+  error: QueryReportErrorInterface;
+};
+
+export type QueryReportErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type QueryReportsError = {
   __typename: 'QueryReportsError';
   error: QueryReportsErrorInterface;
@@ -6551,7 +6561,7 @@ export type ReportNode = {
   subContext?: Maybe<Scalars['String']['output']>;
 };
 
-export type ReportResponse = ReportNode;
+export type ReportResponse = QueryReportError | ReportNode;
 
 export enum ReportSortFieldInput {
   Id = 'id',

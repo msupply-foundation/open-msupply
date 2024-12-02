@@ -84,8 +84,14 @@ pub struct GeneratedReport {
 }
 
 pub trait ReportServiceTrait: Sync + Send {
-    fn get_report(&self, ctx: &ServiceContext, id: &str) -> Result<Report, RepositoryError> {
-        get_report(ctx, id)
+    fn get_report(
+        &self,
+        ctx: &ServiceContext,
+        translation_service: &Box<Localisations>,
+        user_language: String,
+        id: &str,
+    ) -> Result<Report, GetReportError> {
+        get_report(ctx, translation_service, user_language, id)
     }
 
     fn query_reports(
@@ -327,11 +333,38 @@ impl ReportServiceTrait for ReportService {}
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
 
-fn get_report(ctx: &ServiceContext, id: &str) -> Result<Report, RepositoryError> {
-    ReportRepository::new(&ctx.connection)
-        .query_by_filter(ReportFilter::new().id(EqualFilter::equal_to(id)))?
+#[derive(Debug)]
+pub enum GetReportError {
+    // TODO add more detail about specific report? Breaking out of iterator will prevent listing all reports
+    TranslationError,
+    RepositoryError(RepositoryError),
+}
+
+fn get_report(
+    ctx: &ServiceContext,
+    translation_service: &Box<Localisations>,
+    user_language: String,
+    id: &str,
+) -> Result<Report, GetReportError> {
+    let report = ReportRepository::new(&ctx.connection)
+        .query_by_filter(ReportFilter::new().id(EqualFilter::equal_to(id)))
+        .map_err(|e| GetReportError::RepositoryError(e))?
         .pop()
-        .ok_or(RepositoryError::NotFound)
+        .ok_or(GetReportError::RepositoryError(RepositoryError::NotFound))?;
+
+    let translated_schema = if let Some(argument_schema) = report.argument_schema {
+        Some(
+            translate_schema(argument_schema, translation_service, &user_language)
+                .map_err(|_e| GetReportError::TranslationError)?,
+        )
+    } else {
+        None
+    };
+
+    Ok(Report {
+        report_row: report.report_row,
+        argument_schema: translated_schema,
+    })
 }
 
 #[derive(Debug)]

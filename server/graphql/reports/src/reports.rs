@@ -14,7 +14,7 @@ use repository::{
     ReportSort, ReportSortField, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
-use service::report::report_service::GetReportsError;
+use service::report::report_service::{GetReportError, GetReportsError};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -141,7 +141,12 @@ impl ReportNode {
     }
 }
 
-pub fn report(ctx: &Context<'_>, store_id: String, id: String) -> Result<ReportResponse> {
+pub fn report(
+    ctx: &Context<'_>,
+    store_id: String,
+    user_language: String,
+    id: String,
+) -> Result<ReportResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -152,13 +157,17 @@ pub fn report(ctx: &Context<'_>, store_id: String, id: String) -> Result<ReportR
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, user.user_id)?;
+    let translation_service = &service_provider.translations_service;
 
-    let report = service_provider
-        .report_service
-        .get_report(&service_context, &id)
-        .map_err(StandardGraphqlError::from_repository_error)?;
-
-    Ok(ReportResponse::Report(ReportNode { row: report }))
+    match service_provider.report_service.get_report(
+        &service_context,
+        translation_service,
+        user_language,
+        &id,
+    ) {
+        Ok(report) => Ok(ReportResponse::Report(ReportNode { row: report })),
+        Err(err) => map_report_error(err),
+    }
 }
 
 pub fn reports(
@@ -194,7 +203,7 @@ pub fn reports(
             total_count: reports.len() as u32,
             nodes: reports.into_iter().map(|row| ReportNode { row }).collect(),
         })),
-        Err(err) => map_error(err),
+        Err(err) => map_reports_error(err),
     }
 }
 
@@ -261,7 +270,20 @@ impl ReportContext {
     }
 }
 
-fn map_error(error: GetReportsError) -> Result<ReportsResponse> {
+fn map_report_error(error: GetReportError) -> Result<ReportResponse> {
+    match error {
+        GetReportError::TranslationError => {
+            return Ok(ReportResponse::Error(QueryReportError {
+                error: QueryReportErrorInterface::ReportTranslationError(FailedTranslation),
+            }))
+        }
+        GetReportError::RepositoryError(error) => {
+            return Err(StandardGraphqlError::from_repository_error(error))
+        }
+    }
+}
+
+fn map_reports_error(error: GetReportsError) -> Result<ReportsResponse> {
     match error {
         GetReportsError::TranslationError => {
             return Ok(ReportsResponse::Error(QueryReportsError {
