@@ -115,6 +115,30 @@ query prescriptionByNumber($invoiceNumber: Int!, $storeId: String!) {
   }
 }
 
+query prescriptionById($invoiceId: String!, $storeId: String!) {
+  invoice(id: $invoiceId, storeId: $storeId) {
+    __typename
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+    ... on InvoiceNode {
+      ...PrescriptionRow
+    }
+  }
+}
+
 mutation insertPrescription(
   $id: String!
   $patientId: String!
