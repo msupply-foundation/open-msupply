@@ -34,7 +34,7 @@ fn crawl_and_translate(
                 *text = translation_service.get_translation(
                     GetTranslation {
                         namespace: None,
-                        fallback: None,
+                        fallback: Some(key.to_string()),
                         key: key.to_string(),
                     },
                     LANG,
