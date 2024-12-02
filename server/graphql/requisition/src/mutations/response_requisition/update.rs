@@ -2,11 +2,11 @@ use async_graphql::*;
 
 use graphql_core::{
     simple_generic_errors::{CannotEditRequisition, RecordNotFound},
-    standard_graphql_error::validate_auth,
-    standard_graphql_error::StandardGraphqlError,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::RequisitionNode;
+use graphql_types::{generic_errors::RequisitionReasonNotProvided, types::RequisitionNode};
+use repository::RequisitionLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     requisition::response_requisition::{
@@ -30,12 +30,30 @@ pub enum UpdateResponseRequisitionStatusInput {
     Finalised,
 }
 
+pub struct RequisitionReasonsNotProvided(pub Vec<RequisitionLine>);
+
+#[Object]
+impl RequisitionReasonsNotProvided {
+    pub async fn description(&self) -> &str {
+        "Reasons not provided for requisition lines when requested differs from suggested."
+    }
+
+    pub async fn errors(&self) -> Vec<RequisitionReasonNotProvided> {
+        self.0
+            .clone()
+            .into_iter()
+            .map(RequisitionReasonNotProvided::from_domain)
+            .collect()
+    }
+}
+
 #[derive(Interface)]
 #[graphql(name = "UpdateResponseRequisitionErrorInterface")]
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
     CannotEditRequisition(CannotEditRequisition),
+    RequisitionReasonsNotProvided(RequisitionReasonsNotProvided),
 }
 
 #[derive(SimpleObject)]
@@ -110,6 +128,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 CannotEditRequisition {},
             ))
         }
+        ServiceError::ReasonsNotProvided(lines) => {
+            return Ok(UpdateErrorInterface::RequisitionReasonsNotProvided(
+                RequisitionReasonsNotProvided(lines),
+            ))
+        }
         // Standard Graphql Errors
         ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
         ServiceError::NotAResponseRequisition => BadUserInput(formatted_error),
@@ -172,7 +195,7 @@ mod test {
         test_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.requisition_service = Box::new(test_service);
         service_provider
     }

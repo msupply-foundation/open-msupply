@@ -68,7 +68,7 @@ fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
-    if requisition_row.linked_requisition_id != None {
+    if requisition_row.linked_requisition_id.is_some() {
         return Err(OutError::CannotDeleteLineFromTransferredRequisition);
     }
 
@@ -108,7 +108,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -161,7 +161,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();

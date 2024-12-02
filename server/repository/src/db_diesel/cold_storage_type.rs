@@ -1,9 +1,11 @@
 use super::{
-    cold_storage_type_row::{cold_storage_type, cold_storage_type::dsl as cold_storage_type_dsl},
+    cold_storage_type_row::cold_storage_type::{
+        self, dsl as cold_storage_type_dsl, max_temperature,
+    },
     ColdStorageTypeRow, DBType, StorageConnection,
 };
 
-use diesel::prelude::*;
+use diesel::{dsl::not, prelude::*};
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
@@ -74,6 +76,12 @@ impl<'a> ColdStorageTypeRepository<'a> {
             query = query.order(cold_storage_type_dsl::name.desc())
         }
 
+        // Debug diesel query
+        // println!(
+        //     "{}",
+        //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
+        // );
+
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
@@ -86,6 +94,11 @@ impl<'a> ColdStorageTypeRepository<'a> {
         filter: Option<ColdStorageTypeFilter>,
     ) -> BoxedColdStorageTypeQuery {
         let mut query = cold_storage_type_dsl::cold_storage_type.into_boxed();
+        // Any cold storage types that don't have temperature set (OdegC to 0degC default value) are invalid => filter out
+
+        query = query.filter(not(cold_storage_type_dsl::min_temperature
+            .eq(0.0)
+            .and(max_temperature.eq(0.0))));
 
         if let Some(f) = filter {
             let ColdStorageTypeFilter { id, name } = f;

@@ -19,6 +19,7 @@ impl SyncRecordTester for LocationRecordTester {
             code: "LocationCode".to_string(),
             on_hold: false,
             store_id: store_id.to_string(),
+            cold_storage_type_id: None,
         };
 
         result.push(TestStepData {

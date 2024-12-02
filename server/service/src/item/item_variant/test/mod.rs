@@ -1,11 +1,13 @@
 #[cfg(test)]
 mod query {
+    use repository::item_variant::bundled_item::BundledItemFilter;
     use repository::item_variant::item_variant::ItemVariantFilter;
     use repository::mock::{mock_item_a, mock_item_b, MockDataInserts};
     use repository::test_db::setup_all;
     use repository::{EqualFilter, StringFilter};
     use util::uuid::uuid;
 
+    use crate::item::bundled_item::UpsertBundledItem;
     use crate::item::item_variant::{
         DeleteItemVariant, UpsertItemVariantError, UpsertItemVariantWithPackaging,
     };
@@ -19,7 +21,7 @@ mod query {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.item_service;
 
@@ -51,15 +53,30 @@ mod query {
             )
             .unwrap();
 
+        let test_item_b_variant_id = "test_item_b_variant_id";
+
         // Create a new item variant for item_b
         let _item_b_variant_a = service
             .upsert_item_variant(
                 &context,
                 UpsertItemVariantWithPackaging {
-                    id: uuid(),
+                    id: test_item_b_variant_id.to_string(),
                     item_id: mock_item_b().id,
                     name: "item_b_variant_a".to_string(),
                     ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // Bundle item_a_variant_a with item_b_variant_a
+        let _bundled_item = service
+            .upsert_bundled_item(
+                &context,
+                UpsertBundledItem {
+                    id: uuid(),
+                    principal_item_variant_id: test_item_b_variant_id.to_string(),
+                    bundled_item_variant_id: test_item_a_variant_id.to_string(),
+                    ratio: 1.0,
                 },
             )
             .unwrap();
@@ -146,6 +163,20 @@ mod query {
             .unwrap();
 
         assert_eq!(item_variant.count, 0);
+
+        // Check that delete also soft deleted the bundled item record
+
+        let bundled_item = service
+            .get_bundled_items(
+                &context,
+                None,
+                Some(
+                    BundledItemFilter::new()
+                        .principal_item_variant_id(EqualFilter::equal_to(&test_item_b_variant_id)),
+                ),
+            )
+            .unwrap();
+        assert_eq!(bundled_item.count, 0);
     }
 
     #[actix_rt::test]
@@ -153,7 +184,7 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("validate_item_variant", MockDataInserts::none().items()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.item_service;
 

@@ -171,10 +171,9 @@ impl ServiceProvider {
     // TODO we should really use `new` with processors_trigger, we constructs ServiceProvider manually in tests though
     // and it would be a bit of refactor, ideally setup_all and setup_all_with_data will return an instance of ServiceProvider
     // {make an issue}
-    pub fn new(connection_manager: StorageConnectionManager, app_data_folder: &str) -> Self {
+    pub fn new(connection_manager: StorageConnectionManager) -> Self {
         ServiceProvider::new_with_triggers(
             connection_manager,
-            app_data_folder,
             ProcessorsTrigger::new_void(),
             SyncTrigger::new_void(),
             SiteIsInitialisedTrigger::new_void(),
@@ -183,7 +182,6 @@ impl ServiceProvider {
 
     pub fn new_with_triggers(
         connection_manager: StorageConnectionManager,
-        app_data_folder: &str,
         processors_trigger: ProcessorsTrigger,
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
@@ -220,7 +218,7 @@ impl ServiceProvider {
             program_event_service: Box::new(ProgramEventService {}),
             encounter_service: Box::new(EncounterService {}),
             contact_trace_service: Box::new(ContactTraceService {}),
-            app_data_service: Box::new(AppDataService::new(app_data_folder)),
+            app_data_service: Box::new(AppDataService {}),
             site_info_service: Box::new(SiteInfoService),
             sync_status_service: Box::new(SyncStatusService),
             processors_trigger,
