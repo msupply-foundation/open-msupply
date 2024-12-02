@@ -7,7 +7,7 @@ use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus},
     EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionLineRow, StorageConnection,
+    RequisitionLineRepository, RequisitionLineRow, StorageConnection, StorePreferenceRowRepository,
 };
 use util::inline_edit;
 
@@ -32,6 +32,13 @@ pub fn generate(
         expected_delivery_date: update_expected_delivery_date,
     }: UpdateRequestRequisition,
 ) -> Result<GenerateResult, RepositoryError> {
+    let keep_requisition_lines_with_zero_requested_quantity_on_finalised =
+        StorePreferenceRowRepository::new(connection)
+            .find_one_by_id(&existing.store_id)?
+            .map_or(false, |p| {
+                p.keep_requisition_lines_with_zero_requested_quantity_on_finalised
+            });
+
     // Recalculate lines only if max_months_of_stock or min_months_of_stock changed
     let update_threshold_months_of_stock =
         update_threshold_months_of_stock.unwrap_or(existing.min_months_of_stock);
@@ -75,10 +82,16 @@ pub fn generate(
         vec![]
     };
 
+    let empty_lines_to_trim = if keep_requisition_lines_with_zero_requested_quantity_on_finalised {
+        None
+    } else {
+        empty_lines_to_trim(connection, &existing, &update_status)?
+    };
+
     Ok(GenerateResult {
         updated_requisition_row,
         updated_requisition_lines,
-        empty_lines_to_trim: empty_lines_to_trim(connection, &existing, &update_status)?,
+        empty_lines_to_trim,
     })
 }
 
