@@ -1,5 +1,6 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import { GradientStops } from './_gradient';
 
 export const MedicalHistoryIcon = (props: SvgIconProps): JSX.Element => (
   <SvgIcon {...props} viewBox="0 0 60 60" fill="none">
@@ -20,8 +21,7 @@ export const MedicalHistoryIcon = (props: SvgIconProps): JSX.Element => (
         y2="26.5729"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint1_linear_247_41355"
@@ -31,8 +31,7 @@ export const MedicalHistoryIcon = (props: SvgIconProps): JSX.Element => (
         y2="48.5555"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
     </defs>
   </SvgIcon>

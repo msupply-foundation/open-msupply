@@ -1,5 +1,6 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import { GradientStops } from './_gradient';
 
 export const MedicationIcon = (props: SvgIconProps): JSX.Element => (
   <SvgIcon {...props} viewBox="0 0 60 60" fill="none">
@@ -24,8 +25,7 @@ export const MedicationIcon = (props: SvgIconProps): JSX.Element => (
         y2="43.5515"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint1_linear_266_13565"
@@ -35,8 +35,7 @@ export const MedicationIcon = (props: SvgIconProps): JSX.Element => (
         y2="50.1148"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
       <linearGradient
         id="paint2_linear_266_13565"
@@ -46,8 +45,7 @@ export const MedicationIcon = (props: SvgIconProps): JSX.Element => (
         y2="17.3023"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#E73735" />
-        <stop offset="1" stop-color="#FC7E08" />
+        <GradientStops />
       </linearGradient>
     </defs>
   </SvgIcon>
