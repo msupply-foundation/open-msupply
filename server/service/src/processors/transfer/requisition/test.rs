@@ -348,8 +348,6 @@ impl RequisitionTransferTester {
             ))
             .unwrap();
 
-        println!("{}", self.request_requisition.id);
-
         assert!(response_requisition.is_some());
         let response_requisition = response_requisition.unwrap().requisition_row;
         self.response_requisition = Some(response_requisition.clone());
