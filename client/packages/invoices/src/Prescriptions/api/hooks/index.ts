@@ -5,6 +5,7 @@ import { Utils } from './utils';
 export const usePrescription = {
   document: {
     get: Document.usePrescription,
+    getById: Document.usePrescriptionById,
     fields: Document.usePrescriptionFields,
     insert: Document.usePrescriptionInsert,
     update: Document.usePrescriptionUpdate,
