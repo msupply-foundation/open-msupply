@@ -366,15 +366,19 @@ A translating function will step through the serialised json Value searching ins
 
 For example:
 
+```
 {
 "key": "T#label.value"
 }
+```
 
 becomes
 
+```
 {
 "key": "value"
 }
+```
 
 Where value is the translated value of 'label.value' in our `common.json` translation json in the front end.
 
