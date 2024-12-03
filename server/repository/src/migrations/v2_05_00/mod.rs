@@ -23,12 +23,12 @@ impl Migration for V2_05_00 {
 #[cfg(test)]
 #[actix_rt::test]
 async fn migration_2_05_00() {
-    use v2_04_00::V2_04_00;
+    use v2_04_01::V2_04_01;
 
     use crate::migrations::*;
     use crate::test_db::*;
 
-    let previous_version = V2_04_00.version();
+    let previous_version = V2_04_01.version();
     let version = V2_05_00.version();
 
     let SetupResult { connection, .. } = setup_test(SetupOption {
