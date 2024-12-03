@@ -61,7 +61,7 @@ export const ListOptions = ({
       {options?.map((option, _) => (
         <React.Fragment key={option.id}>
           <ListItem
-            sx={{ padding: '5px 0px' }}
+            sx={{ padding: '5px 0px', cursor: 'pointer' }}
             onClick={() => onClick(option.id)}
             ref={
               option.id === currentId

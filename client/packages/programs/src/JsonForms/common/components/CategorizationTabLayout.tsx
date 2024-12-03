@@ -23,9 +23,11 @@ import {
   Grid,
   Hidden,
   Typography,
-  styled,
   isEmpty,
+  Box,
+  ChevronDownIcon,
 } from '@openmsupply-client/common';
+import { ProgramsIcons } from '@openmsupply-client/programs';
 import { ModalProps, useDialog } from '@common/hooks';
 import {
   AjvProps,
@@ -60,12 +62,6 @@ export const categorizationTabLayoutTester: RankedTester = rankWith(
     optionIs('variant', 'tab')
   )
 );
-
-const Icon = styled('i')(({ theme }) => ({
-  backgroundColor: theme.palette.primary.main,
-  height: 50,
-  width: 50,
-}));
 
 // Specialized layout render to fix some layout issues in the modal
 const CategoryLayoutRendererComponent = ({
@@ -215,7 +211,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
     elements:
       activeCategory === undefined
         ? []
-        : categorization.elements[activeCategory]?.elements ?? [],
+        : (categorization.elements[activeCategory]?.elements ?? []),
     schema,
     // assume the root path if not specified
     path: path ?? '',
@@ -241,43 +237,74 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
       gap={2}
       padding={2}
     >
-      {categories.map((category: Category, idx: number) => (
-        <Grid item key={category.label}>
-          <Button
-            variant="outlined"
-            startIcon={<Icon className={`${category.options?.['icon']}`} />}
-            key={category.label}
-            onClick={() => setActiveCategory(idx)}
-            sx={{
-              width: '150px',
-              height: '150px',
-              flexDirection: 'column',
-              textTransform: 'none',
-              '& .MuiButton-startIcon': {
-                paddingBottom: '8px',
-                margin: 0,
-              },
-            }}
-          >
-            {category.label}
-            <ErrorStringComponent category={category} errorPaths={errorPaths} />
-          </Button>
-          <CategoryModal
-            sx={{
-              '& .MuiDialogTitle-root': {
-                fontSize: '1.5em',
-              },
-            }}
-            onClose={onClose}
-            isOpen={activeCategory === idx}
-            title={category.options?.['title'] ?? category.label}
-            okButton={<DialogButton variant="ok" onClick={onClose} />}
-            width={700}
-          >
-            <CategoryLayoutRenderer {...childProps} />
-          </CategoryModal>
-        </Grid>
-      ))}
+      {categories.map((category: Category, idx: number) => {
+        const iconName = category?.options?.[
+          'icon'
+        ] as keyof typeof ProgramsIcons;
+        const CategoryIcon =
+          ProgramsIcons[iconName] ?? ProgramsIcons['stethoscope'];
+        return (
+          <Grid item key={category.label}>
+            <Button
+              variant="outlined"
+              startIcon={<CategoryIcon sx={{ fontSize: '5em !important' }} />}
+              key={category.label}
+              onClick={() => setActiveCategory(idx)}
+              sx={{
+                width: '150px',
+                height: '150px',
+                padding: '5px 10px',
+                flexDirection: 'column',
+                textTransform: 'none',
+                '& .MuiButton-startIcon': {
+                  margin: 0,
+                },
+                border: 'none',
+                backgroundColor: 'programs.encounterCategory',
+                borderRadius: 5,
+                color: 'secondary.main',
+                '&:hover': {
+                  border: 'none',
+                  backgroundColor: 'programs.encounterCategoryHover',
+                },
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  lineHeight: 1.4,
+                  fontWeight: 600,
+                }}
+              >
+                {category.label}
+                <ChevronDownIcon
+                  fontSize="medium"
+                  sx={{ transform: 'rotate(-90deg)' }}
+                />
+              </Box>
+              <ErrorStringComponent
+                category={category}
+                errorPaths={errorPaths}
+              />
+            </Button>
+            <CategoryModal
+              sx={{
+                '& .MuiDialogTitle-root': {
+                  fontSize: '1.5em',
+                },
+              }}
+              onClose={onClose}
+              isOpen={activeCategory === idx}
+              title={category.options?.['title'] ?? category.label}
+              okButton={<DialogButton variant="ok" onClick={onClose} />}
+              width={700}
+            >
+              <CategoryLayoutRenderer {...childProps} />
+            </CategoryModal>
+          </Grid>
+        );
+      })}
     </Grid>
   );
 };
