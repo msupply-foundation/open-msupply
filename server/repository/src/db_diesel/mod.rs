@@ -32,6 +32,8 @@ mod document_registry_config;
 mod document_registry_row;
 pub mod encounter;
 pub mod encounter_row;
+pub mod feedback_form;
+pub mod feedback_form_row;
 mod filter_restriction;
 mod filter_sort_pagination;
 pub mod form_schema;
