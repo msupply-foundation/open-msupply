@@ -151,6 +151,7 @@ fn map_error(error: ServiceError) -> Result<UpdateAssetErrorInterface> {
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::SerialNumberAlreadyExists => BadUserInput(formatted_error),
         ServiceError::LocationsAlreadyAssigned => BadUserInput(formatted_error),
+        ServiceError::AssetNumberAlreadyExists => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

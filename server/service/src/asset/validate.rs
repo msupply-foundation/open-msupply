@@ -30,11 +30,15 @@ pub fn check_asset_property_exists(
 }
 
 pub fn check_asset_number_exists(
-    asset_number: &str,
     connection: &StorageConnection,
+    asset_number: &str,
+    updated_asset_id: Option<String>,
 ) -> Result<Vec<Asset>, RepositoryError> {
-    AssetRepository::new(connection)
-        .query_by_filter(AssetFilter::new().asset_number(StringFilter::equal_to(asset_number)))
+    let mut filter = AssetFilter::new().asset_number(StringFilter::equal_to(asset_number));
+    if let Some(updated_asset_id) = updated_asset_id {
+        filter = filter.id(EqualFilter::not_equal_to(&updated_asset_id));
+    }
+    AssetRepository::new(connection).query_by_filter(filter)
 }
 
 pub fn check_asset_log_exists(

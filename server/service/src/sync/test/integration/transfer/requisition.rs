@@ -6,7 +6,7 @@ use crate::{
 use super::{initialise_transfer_sites, SyncIntegrationTransferContext};
 
 #[actix_rt::test]
-async fn integration_sync_requisition_transfers_normal() {
+async fn integration_sync_transfer_requisition_normal() {
     // util::init_logger(util::LogLevel::Info);
     let SyncIntegrationTransferContext {
         site_1: request_site,
@@ -24,6 +24,7 @@ async fn integration_sync_requisition_transfers_normal() {
             &response_site.store,
             &item1,
             &item2,
+            6,
         );
 
         log::info!(
@@ -52,7 +53,7 @@ async fn integration_sync_requisition_transfers_normal() {
             "Checking response requisition is created on site {:?}",
             response_site.config
         );
-        tester.check_response_requisition_created(&response_site.connection);
+        tester.check_response_requisition_created(&response_site.connection, 6);
 
         sync_and_delay(&response_site, &request_site).await;
 
@@ -85,7 +86,7 @@ async fn integration_sync_requisition_transfers_normal() {
 }
 
 #[actix_rt::test]
-async fn integration_sync_requisition_transfers_initialisation() {
+async fn integration_sync_transfer_requisition_initialisation() {
     // util::init_logger(util::LogLevel::Info);
     let identifier = "requisition_transfers_initialisation";
 
@@ -105,6 +106,7 @@ async fn integration_sync_requisition_transfers_initialisation() {
             &response_site.store,
             &item1,
             &item2,
+            6,
         );
 
         log::info!(
@@ -139,7 +141,7 @@ async fn integration_sync_requisition_transfers_initialisation() {
             "Checking response requisition is created on site {:?}",
             response_site.config
         );
-        tester.check_response_requisition_created(&response_site.connection);
+        tester.check_response_requisition_created(&response_site.connection, 6);
     };
 
     tokio::select! {

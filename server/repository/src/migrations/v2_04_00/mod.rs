@@ -11,6 +11,7 @@ mod add_reason_option_table;
 mod add_store_pref_use_extra_fields;
 mod add_unserviceable_status_to_asset_status_enum;
 mod delete_pack_variant;
+mod fix_asset_log_reasons_postgres;
 mod indicator_indexes;
 mod indicator_line_column_create_tables;
 mod indicator_value_create_table;
@@ -50,6 +51,7 @@ impl Migration for V2_04_00 {
             Box::new(add_store_pref_use_extra_fields::Migrate),
             Box::new(add_item_variant_id_to_stocktake_line::Migrate),
             Box::new(item_changelog::Migrate),
+            Box::new(fix_asset_log_reasons_postgres::Migrate),
         ]
     }
 }
