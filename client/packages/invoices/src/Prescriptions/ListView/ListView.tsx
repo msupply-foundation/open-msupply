@@ -15,7 +15,7 @@ import {
   ColumnFormat,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
-import { usePrescription, usePrescriptionList } from '../api';
+import { usePrescriptionList, usePrescriptionSingle } from '../api';
 import { PrescriptionRowFragment } from '../api/operations.generated';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -31,7 +31,9 @@ const useDisablePrescriptionRows = (rows?: PrescriptionRowFragment[]) => {
 };
 
 const PrescriptionListViewComponent: FC = () => {
-  const { mutate: onUpdate } = usePrescription.document.update();
+  const {
+    update: { update },
+  } = usePrescriptionSingle();
   const t = useTranslation();
   const {
     updateSortQuery,
@@ -52,13 +54,15 @@ const PrescriptionListViewComponent: FC = () => {
     filterBy: filter.filterBy,
   };
 
-  const { data, isError, isLoading } = usePrescriptionList(listParams);
+  const {
+    query: { data, isError, isLoading },
+  } = usePrescriptionList(listParams);
   const pagination = { page, first, offset };
   useDisablePrescriptionRows(data?.nodes);
 
   const columns = useColumns<PrescriptionRowFragment>(
     [
-      [getNameAndColorColumn(), { setter: onUpdate }],
+      [getNameAndColorColumn(), { setter: update }],
       [
         'status',
         {
@@ -89,7 +93,7 @@ const PrescriptionListViewComponent: FC = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
+      <Toolbar filter={filter} listParams={listParams} />
       <AppBarButtons
         modalController={modalController}
         listParams={listParams}

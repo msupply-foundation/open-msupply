@@ -11,7 +11,7 @@ import {
   useNavigate,
   RouteBuilder,
 } from '@openmsupply-client/common';
-import { usePrescription } from '../../api';
+import { usePrescriptionSingle } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { PricingSection } from './PricingSection';
 import { canDeleteInvoice } from '../../../utils';
@@ -20,13 +20,14 @@ export const SidePanelComponent = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { success } = useNotification();
-  const { data } = usePrescription.document.get();
-  const { mutateAsync } = usePrescription.document.delete();
+  const {
+    query: { data },
+    delete: { deletePrescription },
+  } = usePrescriptionSingle();
   const canDelete = data ? canDeleteInvoice(data) : false;
 
   const deleteAction = async () => {
-    if (!data) return;
-    await mutateAsync([data]);
+    await deletePrescription();
     navigate(
       RouteBuilder.create(AppRoute.Dispensary)
         .addPart(AppRoute.Prescription)

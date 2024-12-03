@@ -9,7 +9,6 @@ import {
   InsertPrescriptionLineInput,
   InvoiceLineNodeType,
   InvoiceNodeStatus,
-  InvoiceNodeType,
   InvoiceSortFieldInput,
   RecordPatch,
   UpdatePrescriptionInput,
@@ -104,29 +103,6 @@ const prescriptionParsers = {
 
 export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    list: async ({
-      first,
-      offset,
-      sortBy,
-      filterBy,
-    }: ListParams): Promise<{
-      nodes: PrescriptionRowFragment[];
-      totalCount: number;
-    }> => {
-      const filter = {
-        ...filterBy,
-        type: { equalTo: InvoiceNodeType.Prescription },
-      };
-      const result = await sdk.prescriptions({
-        first,
-        offset,
-        key: prescriptionParsers.toSortField(sortBy),
-        desc: !!sortBy.isDesc,
-        filter,
-        storeId,
-      });
-      return result?.invoices;
-    },
     byNumber: async (
       invoiceNumber: string
     ): Promise<PrescriptionRowFragment> => {
@@ -215,6 +191,9 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
     draftPrescriptionLines: DraftStockOutLine[];
     patch?: RecordPatch<PrescriptionRowFragment>;
   }) => {
+    console.log('Update patch', patch);
+    console.log('draftPrescriptionLines', draftPrescriptionLines);
+
     const input = {
       insertPrescriptionLines: draftPrescriptionLines
         .filter(

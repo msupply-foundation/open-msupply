@@ -1,0 +1,220 @@
+import {
+  RecordPatch,
+  UpdatePrescriptionInput,
+  useMutation,
+  useQuery,
+} from '@openmsupply-client/common';
+import {
+  InsertPrescriptionMutationVariables,
+  PrescriptionRowFragment,
+} from '../operations.generated';
+import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
+import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
+import { usePrescriptionNumber } from '../utils/usePrescriptionNumber';
+import { isPrescriptionDisabled } from 'packages/invoices/src/utils';
+import { mapStatus } from './hookUtils';
+import { usePatchState } from './usePatchState';
+import { useDelete } from './usePrescriptionDelete';
+
+export const usePrescriptionSingle = (id?: string) => {
+  const invoiceNumber = usePrescriptionNumber();
+
+  // If an id is passed in, we use that and get by ID. Otherwise we use the
+  // invoice number from the URL
+  const invoiceNum = !id ? Number(invoiceNumber) : undefined;
+
+  // QUERY
+  const {
+    data: dataByNum,
+    isLoading,
+    error: errorByNum,
+  } = useGetByNumber(invoiceNum);
+  const {
+    data: dataById,
+    isLoading: loadingById,
+    error: errorById,
+  } = useGetById(id);
+
+  const data = id ? dataById : dataByNum;
+  const loading = id ? loadingById : isLoading;
+  const error = id ? errorById : errorByNum;
+  const isDisabled = data ? isPrescriptionDisabled(data) : false;
+
+  // UPDATE
+  const { patch, updatePatch, resetDraft, isDirty } =
+    usePatchState<PrescriptionRowFragment>(data ?? {});
+
+  const {
+    mutateAsync: updateMutation,
+    isLoading: isUpdating,
+    error: updateError,
+  } = useUpdate(data?.id ?? '');
+
+  const update = async (newData?: Partial<PrescriptionRowFragment>) => {
+    if (!data?.id) return;
+    // Data can be passed directly to the update method, or if omitted will use
+    // the current patch data
+    if (newData) await updateMutation({ ...newData, id: data.id });
+    else await updateMutation({ ...patch, id: data.id });
+    resetDraft();
+  };
+
+  // CREATE
+  const {
+    mutateAsync: createMutation,
+    isLoading: isCreating,
+    error: createError,
+  } = useCreate();
+
+  const create = async (
+    invoice: Omit<InsertPrescriptionMutationVariables, 'storeId'>
+  ) => {
+    const result = await createMutation(invoice);
+    resetDraft();
+    return result;
+  };
+
+  // DELETE
+  const {
+    mutateAsync: deleteMutation,
+    isLoading: isDeleting,
+    error: deleteError,
+  } = useDelete();
+
+  const deletePrescription = async () => {
+    if (!data) return;
+    const result = await deleteMutation([data]);
+    resetDraft();
+    return result;
+  };
+
+  return {
+    query: { data, loading, error },
+    isDisabled,
+    update: { update, isUpdating, updateError },
+    create: { create, isCreating, createError },
+    delete: { deletePrescription, isDeleting, deleteError },
+    isDirty,
+    updatePatch,
+  };
+};
+
+const useGetByNumber = (invoiceNum: number | undefined) => {
+  const { prescriptionApi, storeId } = usePrescriptionGraphQL();
+
+  const queryFn = async (): Promise<PrescriptionRowFragment> => {
+    console.log('invoiceNum', invoiceNum);
+
+    const result = await prescriptionApi.prescriptionByNumber({
+      invoiceNumber: invoiceNum ?? -1,
+      storeId,
+    });
+
+    const invoice = result?.invoiceByNumber;
+
+    if (invoice?.__typename === 'InvoiceNode') {
+      return invoice;
+    } else {
+      throw new Error('Could not find invoice');
+    }
+  };
+
+  const query = useQuery({
+    queryKey: [PRESCRIPTION, PRESCRIPTION_LINE, invoiceNum],
+    queryFn,
+    enabled: !!invoiceNum && invoiceNum > 0,
+  });
+
+  return query;
+};
+
+const useGetById = (invoiceId: string | undefined) => {
+  const { prescriptionApi, storeId } = usePrescriptionGraphQL();
+
+  const queryFn = async (): Promise<PrescriptionRowFragment | void> => {
+    console.log('invoiceId', invoiceId);
+    const result = await prescriptionApi.prescriptionById({
+      invoiceId: invoiceId ?? '',
+      storeId,
+    });
+
+    const invoice = result?.invoice;
+
+    if (invoice?.__typename === 'InvoiceNode') {
+      return invoice;
+    }
+    // Don't throw error for this one if not found -- it's mainly used by
+    // Program component (Prescription), which may have stored an id for a
+    // prescription that doesn't yet exist
+  };
+
+  const query = useQuery({
+    queryKey: [PRESCRIPTION, PRESCRIPTION_LINE, invoiceId],
+    queryFn,
+    enabled: !!invoiceId,
+  });
+
+  return query;
+};
+
+const useUpdate = (id: string) => {
+  const { prescriptionApi, storeId, queryClient } = usePrescriptionGraphQL();
+
+  const mutationFn = async (patch: RecordPatch<PrescriptionRowFragment>) => {
+    const input: UpdatePrescriptionInput = {
+      ...patch,
+      id,
+      status: mapStatus(patch),
+    };
+    const result =
+      (await prescriptionApi.upsertPrescription({
+        storeId,
+        input: {
+          updatePrescriptions: [input],
+        },
+      })) || {};
+
+    const { batchPrescription } = result;
+
+    if (batchPrescription?.__typename === 'BatchPrescriptionResponse') {
+      return batchPrescription;
+    }
+
+    throw new Error('Unable to update invoice');
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries([PRESCRIPTION]);
+    },
+  });
+};
+
+const useCreate = () => {
+  const { prescriptionApi, storeId, queryClient } = usePrescriptionGraphQL();
+
+  const mutationFn = async (
+    invoice: Omit<InsertPrescriptionMutationVariables, 'storeId'>
+  ): Promise<number> => {
+    const result =
+      (await prescriptionApi.insertPrescription({
+        id: invoice.id,
+        patientId: invoice.patientId,
+        storeId,
+      })) || {};
+
+    const { insertPrescription } = result;
+
+    if (insertPrescription?.__typename === 'InvoiceNode') {
+      return insertPrescription.invoiceNumber;
+    }
+
+    throw new Error('Could not insert invoice');
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries([PRESCRIPTION]),
+  });
+};

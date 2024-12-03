@@ -8,7 +8,7 @@ import {
   uniqBy,
 } from '@openmsupply-client/common';
 import { useHistoricalStockLines } from '@openmsupply-client/system';
-import { usePrescription } from '../../../api';
+import { usePrescription, usePrescriptionSingle } from '../../../api';
 import { DraftItem } from '../../../..';
 import { DraftStockOutLine } from '../../../../types';
 import {
@@ -28,10 +28,10 @@ export const useDraftPrescriptionLines = (
   item: DraftItem | null,
   date?: Date | null
 ): UseDraftPrescriptionLinesControl => {
-  const { id: invoiceId, status } = usePrescription.document.fields([
-    'id',
-    'status',
-  ]);
+  const {
+    query: { data: prescriptionData },
+  } = usePrescriptionSingle();
+  const { id: invoiceId, status } = prescriptionData ?? {};
 
   const { data: lines, isLoading: prescriptionLinesLoading } =
     usePrescription.line.stockLines(item?.id ?? '');
@@ -48,7 +48,7 @@ export const useDraftPrescriptionLines = (
   useConfirmOnLeaving(isDirty);
 
   useEffect(() => {
-    if (!item) {
+    if (!item || !status || !invoiceId) {
       return setDraftStockOutLines([]);
     }
 

@@ -4,25 +4,19 @@ import {
   InvoiceSortFieldInput,
   SortBy,
   useQuery,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { LIST, PRESCRIPTION } from './keys';
 import { PrescriptionRowFragment } from '../operations.generated';
+import { sortFieldMap } from './hookUtils';
+import { useDelete } from './usePrescriptionDelete';
 
 export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<PrescriptionRowFragment>;
   filterBy: FilterByWithBoolean | null;
-};
-
-const sortFieldMap: Record<string, InvoiceSortFieldInput> = {
-  createdDateTime: InvoiceSortFieldInput.CreatedDatetime,
-  prescriptionDatetime: InvoiceSortFieldInput.InvoiceDatetime,
-  otherPartyName: InvoiceSortFieldInput.OtherPartyName,
-  comment: InvoiceSortFieldInput.Comment,
-  invoiceNumber: InvoiceSortFieldInput.InvoiceNumber,
-  status: InvoiceSortFieldInput.Status,
 };
 
 export const usePrescriptionList = (queryParams: ListParams) => {
@@ -39,9 +33,9 @@ export const usePrescriptionList = (queryParams: ListParams) => {
   } = queryParams;
 
   const queryKey = [
+    LIST,
     PRESCRIPTION,
     storeId,
-    LIST,
     sortBy,
     first,
     offset,
@@ -69,6 +63,28 @@ export const usePrescriptionList = (queryParams: ListParams) => {
     return { nodes, totalCount };
   };
 
-  const query = useQuery({ queryKey, queryFn });
-  return query;
+  const { data, isLoading, isError } = useQuery({ queryKey, queryFn });
+
+  const { selectedRows } = useTableStore(state => ({
+    selectedRows: Object.keys(state.rowState)
+      .filter(id => state.rowState[id]?.isSelected)
+      .map(selectedId => data?.nodes?.find(({ id }) => selectedId === id))
+      .filter(Boolean) as PrescriptionRowFragment[],
+  }));
+
+  const {
+    mutateAsync: deleteMutation,
+    isLoading: isDeleting,
+    error: deleteError,
+  } = useDelete();
+
+  const deletePrescriptions = async () => {
+    await deleteMutation(selectedRows);
+  };
+
+  return {
+    query: { data, isLoading, isError },
+    delete: { deletePrescriptions, isDeleting, deleteError },
+    selectedRows,
+  };
 };
