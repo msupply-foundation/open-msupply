@@ -14,24 +14,22 @@ import {
   useConfirmationModal,
 } from '@openmsupply-client/common';
 import { PatientSearchInput } from '@openmsupply-client/system';
-import { usePrescription } from '../api';
+import { usePrescription, usePrescriptionSingle } from '../api';
 import { ClinicianSearchInput } from '../../../../system/src/Clinician';
 import { usePrescriptionRows } from '../api/hooks/line/usePrescriptionRows';
 
 export const Toolbar: FC = () => {
-  const { id, patient, clinician, prescriptionDate, createdDatetime, update } =
-    usePrescription.document.fields([
-      'id',
-      'patient',
-      'clinician',
-      'prescriptionDate',
-      'createdDatetime',
-    ]);
+  const {
+    query: { data },
+    update: { update },
+    isDisabled,
+  } = usePrescriptionSingle();
+  const { id, patient, clinician, prescriptionDate, createdDatetime } =
+    data ?? {};
   const onDelete = usePrescription.line.deleteSelected();
   const onDeleteAll = usePrescription.line.deleteAll();
   const { items } = usePrescriptionRows();
 
-  const isDisabled = usePrescription.utils.isDisabled();
   const t = useTranslation();
 
   const getConfirmation = useConfirmationModal({

@@ -1,5 +1,6 @@
 import { useGql, useAuthContext } from '@openmsupply-client/common';
-import { ListParams, getPrescriptionQueries } from '../api';
+import { ListParams } from '../hooks';
+import { getPrescriptionQueries } from '../api';
 import { getSdk } from '../operations.generated';
 
 export const usePrescriptionApi = () => {

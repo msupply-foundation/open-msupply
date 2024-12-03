@@ -21,7 +21,10 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { DefaultFormRowSx, useZodOptionsValidation } from '../../common';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
-import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
+import {
+  usePrescription,
+  usePrescriptionSingle,
+} from '@openmsupply-client/invoices/src/Prescriptions';
 import { useDraftPrescriptionLines } from '@openmsupply-client/invoices/src/Prescriptions/DetailView/PrescriptionLineEdit/hooks';
 import { StockLineTable } from './StockLineTable';
 import { DraftStockOutLine } from '@openmsupply-client/invoices/src/types';
@@ -56,8 +59,10 @@ const UIComponent = (props: ControlProps) => {
 
   const prescriptionIdPath = options?.prescriptionIdPath;
   const prescriptionId = extractProperty(core?.data, prescriptionIdPath ?? '');
-  const { data: prescription, isLoading } =
-    usePrescription.document.getById(prescriptionId);
+  const {
+    query: { data: prescription, loading },
+    create: { create },
+  } = usePrescriptionSingle(prescriptionId);
 
   const [selectedItem, setSelectedItem] =
     useState<ItemStockOnHandFragment | null>(
@@ -66,7 +71,6 @@ const UIComponent = (props: ControlProps) => {
   const { draftStockOutLines, setDraftStockOutLines } =
     useDraftPrescriptionLines(selectedItem);
 
-  const { mutateAsync: createPrescription } = usePrescription.document.insert();
   const { mutateAsync: updateLines } = usePrescription.line.save();
 
   const { success } = useNotification();
@@ -117,7 +121,7 @@ const UIComponent = (props: ControlProps) => {
       async (formActionState: Record<string, unknown>) => {
         if (!prescription && prescriptionId) {
           // Create prescription
-          const prescriptionNumber = await createPrescription({
+          const prescriptionNumber = await create({
             id: prescriptionId,
             patientId: config.patientId,
           });
@@ -149,7 +153,7 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
 
-  if (isLoading)
+  if (loading)
     return (
       <DetailInputWithLabelRow
         sx={DefaultFormRowSx}

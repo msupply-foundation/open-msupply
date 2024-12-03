@@ -14,8 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
-import { usePrescriptionIsDisabled } from '../api/hooks/utils/usePrescriptionIsDisabled';
-import { usePrescription } from '../api/hooks';
+import { usePrescriptionSingle } from '../api';
 import { ContentArea } from './ContentArea';
 import { AppBarButtons } from './AppBarButton';
 import { Toolbar } from './Toolbar';
@@ -27,10 +26,12 @@ import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
 export const PrescriptionDetailView: FC = () => {
-  const isDisabled = usePrescriptionIsDisabled();
   const { entity, mode, onOpen, onClose, isOpen, setMode } =
     useEditModal<Draft>();
-  const { data, isLoading } = usePrescription.document.get();
+  const {
+    query: { data, loading },
+    isDisabled,
+  } = usePrescriptionSingle();
   const t = useTranslation();
   const navigate = useNavigate();
   const onRowClick = useCallback(
@@ -44,7 +45,7 @@ export const PrescriptionDetailView: FC = () => {
     setMode(ModalMode.Create);
   };
 
-  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
+  if (loading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
     {

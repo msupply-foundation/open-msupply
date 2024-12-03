@@ -18,7 +18,7 @@ import {
   RouteBuilder,
 } from '@openmsupply-client/common';
 import { PatientSearchModal } from '@openmsupply-client/system';
-import { ListParams, usePrescription, usePrescriptionList } from '../api';
+import { ListParams, usePrescriptionList, usePrescriptionSingle } from '../api';
 import { prescriptionToCsv } from '../../utils';
 
 export const AppBarButtonsComponent: FC<{
@@ -28,8 +28,12 @@ export const AppBarButtonsComponent: FC<{
   const t = useTranslation();
   const navigate = useNavigate();
   const { success, error } = useNotification();
-  const { mutateAsync: onCreate } = usePrescription.document.insert();
-  const { data, isLoading } = usePrescriptionList(listParams);
+  const {
+    create: { create },
+  } = usePrescriptionSingle();
+  const {
+    query: { data, isLoading },
+  } = usePrescriptionList(listParams);
 
   const csvExport = async () => {
     if (!data || !data?.nodes.length) {
@@ -56,7 +60,7 @@ export const AppBarButtonsComponent: FC<{
           onChange={async name => {
             modalController.toggleOff();
             try {
-              onCreate({
+              create({
                 id: FnUtils.generateUUID(),
                 patientId: name?.id,
               }).then(invoiceNumber => {

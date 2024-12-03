@@ -7,7 +7,7 @@ import {
   DataTable,
   MiniTable,
 } from '@openmsupply-client/common';
-import { usePrescription } from '../api';
+import { usePrescription, usePrescriptionSingle } from '../api';
 import { usePrescriptionColumn } from './columns';
 import { useExpansionColumns } from './PrescriptionLineEdit/columns';
 import { StockOutItem } from '../../types';
@@ -44,7 +44,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     onChangeSortBy: updateSortQuery,
     sortBy,
   });
-  const isDisabled = usePrescription.utils.isDisabled();
+  const { isDisabled } = usePrescriptionSingle();
 
   if (!rows) return null;
 

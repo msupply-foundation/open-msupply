@@ -8,13 +8,19 @@ import {
   useTranslation,
   useFormatCurrency,
 } from '@openmsupply-client/common';
-import { usePrescription } from '../../api';
+import { usePrescriptionSingle } from '../../api';
 
 export const PricingSectionComponent = () => {
   const t = useTranslation();
   const c = useFormatCurrency();
 
-  const { pricing } = usePrescription.document.fields('pricing');
+  const {
+    query: { data },
+  } = usePrescriptionSingle();
+
+  const pricing = data?.pricing;
+
+  if (!pricing) return null;
 
   return (
     <DetailPanelSection title={t('heading.dispensary-details')}>
@@ -24,7 +30,7 @@ export const PricingSectionComponent = () => {
             <PanelLabel fontWeight="bold">
               {t('heading.grand-total')}
             </PanelLabel>
-            <PanelField>{c(pricing.totalAfterTax)}</PanelField>
+            <PanelField>{c(pricing?.totalAfterTax)}</PanelField>
           </PanelRow>
         </>
       </Grid>
