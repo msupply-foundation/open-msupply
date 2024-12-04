@@ -1,7 +1,10 @@
 use crate::{
     activity_log::activity_log_entry,
     requisition::{
-        common::{check_approval_status, check_requisition_row_exists},
+        common::{
+            check_approval_status, check_requisition_row_exists, get_requisition_order_type,
+            OrderTypeNotFoundError,
+        },
         query::get_requisition,
     },
     service_provider::ServiceContext,
@@ -11,9 +14,11 @@ use chrono::Utc;
 use repository::{
     reason_option_row::ReasonOptionType,
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ActivityLogType, EqualFilter, ReasonOptionFilter, ReasonOptionRepository, RepositoryError,
-    Requisition, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
-    RequisitionRowRepository, StorageConnection,
+    ActivityLogType, EqualFilter, ProgramFilter, ProgramRepository,
+    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
+    ProgramRequisitionSettingsRepository, ReasonOptionFilter, ReasonOptionRepository,
+    RepositoryError, Requisition, RequisitionLine, RequisitionLineFilter,
+    RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 
@@ -38,6 +43,8 @@ pub enum UpdateResponseRequisitionError {
     CannotEditRequisition,
     NotAResponseRequisition,
     UpdatedRequisitionDoesNotExist,
+    OrderTypeNotFound,
+    OrderingTooManyItems(i32), // emergency order
     DatabaseError(RepositoryError),
     ReasonsNotProvided(Vec<RequisitionLine>),
 }
@@ -111,6 +118,31 @@ pub fn validate(
             &ReasonOptionType::RequisitionLineVariance,
         )),
     )?;
+
+    if let (Some(program_id), Some(order_type)) =
+        (&requisition_row.program_id, &requisition_row.order_type)
+    {
+        let order_type = get_requisition_order_type(connection, program_id, order_type).map_err(
+            |e| match e {
+                OrderTypeNotFoundError::OrderTypeNotFound => OutError::OrderTypeNotFound,
+                OrderTypeNotFoundError::DatabaseError(repository_error) => {
+                    OutError::DatabaseError(repository_error)
+                }
+            },
+        )?;
+
+        let line_count = response_lines
+            .iter()
+            .filter(|line| line.requisition_line_row.requested_quantity != 0.0)
+            .count();
+
+        if order_type.is_emergency && line_count > order_type.max_items_in_emergency_order as usize
+        {
+            return Err(OutError::OrderingTooManyItems(
+                order_type.max_items_in_emergency_order,
+            ));
+        }
+    }
 
     let prefs = get_store_preferences(connection, store_id)?;
 
