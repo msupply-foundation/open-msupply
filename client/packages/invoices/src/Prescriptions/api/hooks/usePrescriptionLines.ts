@@ -37,9 +37,22 @@ export const usePrescriptionLines = () => {
       patch,
     });
   };
-  // DELETE LINES
 
-  return { save: { saveLines, isSavingLines, saveLineError } };
+  // DELETE LINES
+  const {
+    mutateAsync: deleteMutation,
+    isLoading: isDeletingLines,
+    error: deleteLinesError,
+  } = useDeleteLines(data?.invoiceNumber ?? -1);
+
+  const deleteLines = async (lines: { id: string }[]) => {
+    await deleteMutation(lines);
+  };
+
+  return {
+    save: { saveLines, isSavingLines, saveLineError },
+    delete: { deleteLines, isDeletingLines, deleteLinesError },
+  };
 };
 
 const useSaveLines = (id: string, invoiceNum: number) => {
@@ -120,6 +133,32 @@ const useSaveLines = (id: string, invoiceNum: number) => {
     const result = await prescriptionApi.upsertPrescription({ storeId, input });
 
     return result;
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries([
+        PRESCRIPTION,
+        PRESCRIPTION_LINE,
+        invoiceNum,
+      ]);
+    },
+  });
+};
+
+const useDeleteLines = (invoiceNum: number) => {
+  const { prescriptionApi, storeId, queryClient } = usePrescriptionGraphQL();
+
+  const toDeleteLine = (line: { id: string }): DeletePrescriptionLineInput => ({
+    id: line.id,
+  });
+
+  const mutationFn = async (lines: { id: string }[]) => {
+    return prescriptionApi.deletePrescriptionLines({
+      storeId,
+      deletePrescriptionLines: lines.map(toDeleteLine),
+    });
   };
 
   return useMutation({

@@ -33,8 +33,6 @@ export const useDraftPrescriptionLines = (
   } = usePrescriptionSingle();
   const { id: invoiceId, status } = prescriptionData ?? {};
 
-  // const { data: lines, isLoading: prescriptionLinesLoading } =
-  //   usePrescription.line.stockLines(item?.id ?? '');
   const lines = prescriptionData?.lines.nodes.filter(
     line => item?.id === line.item.id
   );

@@ -3,7 +3,7 @@ import { Line } from './line';
 export const usePrescription = {
   line: {
     stockLines: Line.usePrescriptionLine,
-    rows: Line.usePrescriptionRows,
+    // rows: Line.usePrescriptionRows,
     delete: Line.usePrescriptionDeleteLines,
     deleteSelected: Line.usePrescriptionDeleteSelectedLines,
     deleteAll: Line.usePrescriptionDeleteAllLines,

@@ -19,7 +19,7 @@ import {
   StockItemSearchInput,
   ItemRowFragment,
 } from '@openmsupply-client/system';
-import { usePrescription } from '../../api';
+import { usePrescriptionSingle } from '../../api';
 import { DraftItem } from '../../..';
 import { PackSizeController } from '../../../StockOut';
 import {
@@ -73,7 +73,8 @@ export const PrescriptionLineEditForm: React.FC<
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
   const [issueQuantity, setIssueQuantity] = useState(0);
   const { format } = useFormatNumber();
-  const { items } = usePrescription.line.rows();
+  // const { items } = usePrescription.line.rows();
+  const { rows: items } = usePrescriptionSingle();
 
   const onChangePackSize = (newPackSize: number) => {
     const packSize = newPackSize === -1 ? 1 : newPackSize;

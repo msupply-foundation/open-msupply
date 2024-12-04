@@ -16,7 +16,6 @@ import {
 import { PatientSearchInput } from '@openmsupply-client/system';
 import { usePrescription, usePrescriptionSingle } from '../api';
 import { ClinicianSearchInput } from '../../../../system/src/Clinician';
-import { usePrescriptionRows } from '../api/hooks/line/usePrescriptionRows';
 
 export const Toolbar: FC = () => {
   const {
@@ -28,7 +27,7 @@ export const Toolbar: FC = () => {
     data ?? {};
   const onDelete = usePrescription.line.deleteSelected();
   const onDeleteAll = usePrescription.line.deleteAll();
-  const { items } = usePrescriptionRows();
+  const { rows: items } = usePrescriptionSingle();
 
   const t = useTranslation();
 
