@@ -45,7 +45,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     sortBy,
   });
 
-  if (!rows) return;
+  if (!rows) return null;
 
   return (
     <Box flexDirection="column" display="flex" flex={1}>
