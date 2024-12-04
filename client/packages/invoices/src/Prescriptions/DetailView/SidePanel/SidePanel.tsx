@@ -11,7 +11,7 @@ import {
   useNavigate,
   RouteBuilder,
 } from '@openmsupply-client/common';
-import { usePrescriptionSingle } from '../../api';
+import { usePrescription } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { PricingSection } from './PricingSection';
 import { canDeleteInvoice } from '../../../utils';
@@ -23,7 +23,7 @@ export const SidePanelComponent = () => {
   const {
     query: { data },
     delete: { deletePrescription },
-  } = usePrescriptionSingle();
+  } = usePrescription();
   const canDelete = data ? canDeleteInvoice(data) : false;
 
   const deleteAction = async () => {

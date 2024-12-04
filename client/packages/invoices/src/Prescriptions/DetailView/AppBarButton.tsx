@@ -7,7 +7,7 @@ import {
   useDetailPanel,
   useTranslation,
 } from '@openmsupply-client/common';
-import { usePrescriptionSingle } from '../api';
+import { usePrescription } from '../api';
 import { Draft } from '../..';
 
 interface AppBarButtonProps {
@@ -17,7 +17,7 @@ interface AppBarButtonProps {
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
-  const { isDisabled } = usePrescriptionSingle();
+  const { isDisabled } = usePrescription();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation();
   return (

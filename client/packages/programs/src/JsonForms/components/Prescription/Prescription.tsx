@@ -22,7 +22,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { DefaultFormRowSx, useZodOptionsValidation } from '../../common';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import {
-  usePrescriptionSingle,
+  usePrescription,
   usePrescriptionLines,
 } from '@openmsupply-client/invoices/src/Prescriptions';
 import { useDraftPrescriptionLines } from '@openmsupply-client/invoices/src/Prescriptions/DetailView/PrescriptionLineEdit/hooks';
@@ -62,7 +62,7 @@ const UIComponent = (props: ControlProps) => {
   const {
     query: { data: prescription, loading },
     create: { create },
-  } = usePrescriptionSingle(prescriptionId);
+  } = usePrescription(prescriptionId);
 
   const {
     save: { saveLines },

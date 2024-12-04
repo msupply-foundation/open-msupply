@@ -18,7 +18,7 @@ import {
   RouteBuilder,
 } from '@openmsupply-client/common';
 import { PatientSearchModal } from '@openmsupply-client/system';
-import { ListParams, usePrescriptionList, usePrescriptionSingle } from '../api';
+import { ListParams, usePrescriptionList, usePrescription } from '../api';
 import { prescriptionToCsv } from '../../utils';
 
 export const AppBarButtonsComponent: FC<{
@@ -30,7 +30,7 @@ export const AppBarButtonsComponent: FC<{
   const { success, error } = useNotification();
   const {
     create: { create },
-  } = usePrescriptionSingle();
+  } = usePrescription();
   const {
     query: { data, isLoading },
   } = usePrescriptionList(listParams);

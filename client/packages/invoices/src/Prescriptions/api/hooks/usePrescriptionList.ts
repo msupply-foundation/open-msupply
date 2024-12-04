@@ -9,7 +9,7 @@ import {
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { LIST, PRESCRIPTION } from './keys';
 import { PrescriptionRowFragment } from '../operations.generated';
-import { sortFieldMap } from './hookUtils';
+import { sortFieldMap } from './utils';
 import { useDelete } from './usePrescriptionDelete';
 
 export type ListParams = {

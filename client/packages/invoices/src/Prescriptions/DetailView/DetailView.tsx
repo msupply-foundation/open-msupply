@@ -14,7 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
-import { usePrescriptionSingle } from '../api';
+import { usePrescription } from '../api';
 import { ContentArea } from './ContentArea';
 import { AppBarButtons } from './AppBarButton';
 import { Toolbar } from './Toolbar';
@@ -31,7 +31,7 @@ export const PrescriptionDetailView: FC = () => {
   const {
     query: { data, loading },
     isDisabled,
-  } = usePrescriptionSingle();
+  } = usePrescription();
   const t = useTranslation();
   const navigate = useNavigate();
   const onRowClick = useCallback(

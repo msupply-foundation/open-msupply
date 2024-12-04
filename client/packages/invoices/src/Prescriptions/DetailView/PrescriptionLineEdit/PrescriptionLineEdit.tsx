@@ -22,7 +22,7 @@ import {
   CheckIcon,
 } from '@openmsupply-client/common';
 import { useDraftPrescriptionLines, useNextItem } from './hooks';
-import { usePrescriptionSingle } from '../../api';
+import { usePrescription } from '../../api';
 import { Draft, DraftItem } from '../../..';
 import {
   PackSizeController,
@@ -61,7 +61,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   const {
     query: { data },
     isDisabled,
-  } = usePrescriptionSingle();
+  } = usePrescription();
   const {
     status = InvoiceNodeStatus.New,
     id: invoiceId = '',

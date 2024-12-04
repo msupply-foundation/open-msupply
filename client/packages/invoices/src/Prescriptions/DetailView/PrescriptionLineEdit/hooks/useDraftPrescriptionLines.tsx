@@ -8,7 +8,7 @@ import {
   uniqBy,
 } from '@openmsupply-client/common';
 import { useHistoricalStockLines } from '@openmsupply-client/system';
-import { usePrescriptionSingle } from '../../../api';
+import { usePrescription } from '../../../api';
 import { DraftItem } from '../../../..';
 import { DraftStockOutLine } from '../../../../types';
 import {
@@ -30,7 +30,7 @@ export const useDraftPrescriptionLines = (
 ): UseDraftPrescriptionLinesControl => {
   const {
     query: { data: prescriptionData },
-  } = usePrescriptionSingle();
+  } = usePrescription();
   const { id: invoiceId, status } = prescriptionData ?? {};
 
   const lines = prescriptionData?.lines.nodes.filter(

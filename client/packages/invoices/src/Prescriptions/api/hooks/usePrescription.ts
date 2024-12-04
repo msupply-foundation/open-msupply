@@ -15,7 +15,7 @@ import {
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
 import { isPrescriptionDisabled } from 'packages/invoices/src/utils';
-import { mapStatus } from './hookUtils';
+import { mapStatus } from './utils';
 import { usePatchState } from './usePatchState';
 import { useDelete } from './usePrescriptionDelete';
 import { useMemo } from 'react';
@@ -27,7 +27,7 @@ export const usePrescriptionNumber = () => {
   return Number.isNaN(asNumber) ? undefined : asNumber;
 };
 
-export const usePrescriptionSingle = (id?: string) => {
+export const usePrescription = (id?: string) => {
   const invoiceNumber = usePrescriptionNumber();
   const {
     updateSortQuery,
