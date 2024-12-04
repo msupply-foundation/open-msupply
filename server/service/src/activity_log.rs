@@ -89,10 +89,8 @@ pub fn system_log_entry(
     log_type: SystemLogType,
     message: &str,
 ) -> Result<(), RepositoryError> {
-    println!("system_log_entry");
     let sync_site_id =
         KeyValueStoreRepository::new(&connection).get_i32(KeyType::SettingsSyncSiteId)?;
-    println!("sync_site_id: {:?}", sync_site_id);
 
     let log = &SystemLogRow {
         id: uuid(),
@@ -102,7 +100,6 @@ pub fn system_log_entry(
         message: Some(message.to_string()),
         is_error: log_type.is_error(),
     };
-    println!("log: {:?}", log);
 
     let _change_log_id = SystemLogRowRepository::new(connection).insert_one(log)?;
     Ok(())
