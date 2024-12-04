@@ -77,6 +77,22 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_one_by_setting_and_name(
+        &self,
+        setting_id: &[String],
+        name: &str,
+    ) -> Result<Option<ProgramRequisitionOrderTypeRow>, RepositoryError> {
+        let result = program_requisition_order_type_dsl::program_requisition_order_type
+            .filter(
+                program_requisition_order_type_dsl::program_requisition_settings_id
+                    .eq_any(setting_id)
+                    .and(program_requisition_order_type_dsl::name.eq(name)),
+            )
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn delete(&self, order_type_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             program_requisition_order_type_dsl::program_requisition_order_type
