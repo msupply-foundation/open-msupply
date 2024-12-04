@@ -4,6 +4,7 @@ import {
   SortUtils,
   UpdatePrescriptionInput,
   useMutation,
+  useParams,
   useQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
@@ -13,13 +14,18 @@ import {
 } from '../operations.generated';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
-import { usePrescriptionNumber } from '../utils/usePrescriptionNumber';
 import { isPrescriptionDisabled } from 'packages/invoices/src/utils';
 import { mapStatus } from './hookUtils';
 import { usePatchState } from './usePatchState';
 import { useDelete } from './usePrescriptionDelete';
 import { useMemo } from 'react';
 import { usePrescriptionColumn } from '../../DetailView/columns';
+
+export const usePrescriptionNumber = () => {
+  const { invoiceNumber } = useParams();
+  const asNumber = Number(invoiceNumber);
+  return Number.isNaN(asNumber) ? undefined : asNumber;
+};
 
 export const usePrescriptionSingle = (id?: string) => {
   const invoiceNumber = usePrescriptionNumber();
@@ -35,7 +41,7 @@ export const usePrescriptionSingle = (id?: string) => {
 
   // If an id is passed in, we use that and get by ID. Otherwise we use the
   // invoice number from the URL
-  const invoiceNum = !id ? Number(invoiceNumber) : undefined;
+  const invoiceNum = !id ? invoiceNumber : undefined;
 
   // QUERY
   const {
