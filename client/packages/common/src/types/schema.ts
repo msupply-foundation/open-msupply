@@ -7358,6 +7358,7 @@ export type StorePreferenceNode = {
   extraFieldsInRequisition: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   issueInForeignCurrency: Scalars['Boolean']['output'];
+  manuallyLinkInternalOrderToInboundShipment: Scalars['Boolean']['output'];
   monthlyConsumptionLookBackPeriod: Scalars['Float']['output'];
   monthsItemsExpire: Scalars['Float']['output'];
   monthsLeadTime: Scalars['Float']['output'];
