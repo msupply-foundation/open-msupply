@@ -8,11 +8,15 @@ import {
   ColumnDescription,
   TooltipTextCell,
   useAuthContext,
+  getLinesFromRow,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from './../api';
 import { PackQuantityCell } from '@openmsupply-client/system';
+import { useResponseRequisitionLineErrorContext } from '../context';
 
 export const useResponseColumns = () => {
+  const { getError } = useResponseRequisitionLineErrorContext();
+
   const {
     updateSortQuery,
     queryParams: { sortBy },
@@ -241,6 +245,10 @@ export const useResponseColumns = () => {
       key: 'reason',
       label: 'label.reason',
       sortable: false,
+      getIsError: row =>
+        getLinesFromRow(row).some(
+          r => getError(r)?.__typename === 'RequisitionReasonNotProvided'
+        ),
       accessor: ({ rowData }) => rowData.reason?.reason,
     });
   }

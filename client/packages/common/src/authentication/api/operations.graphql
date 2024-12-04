@@ -19,6 +19,7 @@ fragment UserStoreNode on UserStoreNode {
     monthsItemsExpire
     stocktakeFrequency
     extraFieldsInRequisition
+    manuallyLinkInternalOrderToInboundShipment
   }
   createdDate
   homeCurrencyCode

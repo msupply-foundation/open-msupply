@@ -4,6 +4,7 @@ import { styled, TabPanel, Box } from '@openmsupply-client/common';
 
 const StyledTabPanel = styled(TabPanel)({
   height: '100%',
+  width: '100%',
 });
 
 const StyledTabContainer = styled(Box)(({ theme }) => ({

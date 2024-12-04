@@ -87,7 +87,7 @@ mod stocktake_line_test {
         let (_, _, connection_manager, _) =
             setup_all("query_stocktake_line", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.stocktake_line_service;
 

@@ -1200,7 +1200,7 @@ mod permission_validation_test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let service_provider = ServiceProvider::new(connection_manager.clone());
         let context = service_provider
             .context("".to_string(), user_id.to_string())
             .unwrap();
@@ -1362,7 +1362,7 @@ mod permission_validation_test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let password = "pass";
 

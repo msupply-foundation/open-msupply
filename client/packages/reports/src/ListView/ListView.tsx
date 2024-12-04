@@ -18,8 +18,8 @@ import {
 import { AppBarButtons } from './AppBarButton';
 import { SidePanel } from './SidePanel';
 import { ReportWidget } from '../components';
-import { JsonData } from 'packages/programs/src';
-import { AppRoute } from 'packages/config/src';
+import { JsonData } from '@openmsupply-client/programs';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const ListView = () => {
   const t = useTranslation();

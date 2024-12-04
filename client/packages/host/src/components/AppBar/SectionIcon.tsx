@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   CustomersIcon,
+  HelpIcon,
   InvoiceIcon,
   ListIcon,
   RadioIcon,
@@ -31,6 +32,8 @@ const getIcon = (section?: AppRoute) => {
   switch (section) {
     case AppRoute.Settings:
       return <SettingsIcon color="primary" fontSize="small" />;
+    case AppRoute.Help:
+      return <HelpIcon color="primary" fontSize="small" />;
     case AppRoute.Catalogue:
       return <ListIcon color="primary" fontSize="small" />;
     case AppRoute.Coldchain:
@@ -59,6 +62,7 @@ const getIcon = (section?: AppRoute) => {
 const useSection = (): Section | undefined => {
   const routes = [
     AppRoute.Settings,
+    AppRoute.Help,
     AppRoute.Catalogue,
     AppRoute.Coldchain,
     AppRoute.Dispensary,
