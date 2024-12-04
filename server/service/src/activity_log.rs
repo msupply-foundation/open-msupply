@@ -1,8 +1,9 @@
 use chrono::Utc;
 use repository::{
     activity_log::{ActivityLog, ActivityLogFilter, ActivityLogRepository, ActivityLogSort},
-    ActivityLogRow, ActivityLogRowRepository, ActivityLogType, InvoiceStatus, StorageConnection,
-    StorageConnectionManager,
+    system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
+    ActivityLogRow, ActivityLogRowRepository, ActivityLogType, InvoiceStatus, KeyType,
+    KeyValueStoreRepository, StorageConnection, StorageConnectionManager,
 };
 
 use repository::{PaginationOption, RepositoryError};
@@ -80,6 +81,30 @@ pub fn system_activity_log_entry(
     };
 
     let _change_log_id = ActivityLogRowRepository::new(connection).insert_one(log)?;
+    Ok(())
+}
+
+pub fn system_log_entry(
+    connection: &StorageConnection,
+    log_type: SystemLogType,
+    message: &str,
+) -> Result<(), RepositoryError> {
+    println!("system_log_entry");
+    let sync_site_id =
+        KeyValueStoreRepository::new(&connection).get_i32(KeyType::SettingsSyncSiteId)?;
+    println!("sync_site_id: {:?}", sync_site_id);
+
+    let log = &SystemLogRow {
+        id: uuid(),
+        r#type: log_type.clone(),
+        sync_site_id: sync_site_id,
+        datetime: Utc::now().naive_utc(),
+        message: Some(message.to_string()),
+        is_error: log_type.is_error(),
+    };
+    println!("log: {:?}", log);
+
+    let _change_log_id = SystemLogRowRepository::new(connection).insert_one(log)?;
     Ok(())
 }
 
