@@ -1,4 +1,5 @@
 import { usePrescription } from './usePrescription';
+import { usePrescriptionById } from './usePrescriptionById';
 import { usePrescriptionDelete } from './usePrescriptionDelete';
 import { usePrescriptionDeleteRows } from './usePrescriptionDeleteRows';
 import { usePrescriptionFields } from './usePrescriptionFields';
@@ -8,6 +9,7 @@ import { usePrescriptions } from './usePrescriptions';
 
 export const Document = {
   usePrescription,
+  usePrescriptionById,
   usePrescriptions,
   usePrescriptionInsert,
   usePrescriptionUpdate,

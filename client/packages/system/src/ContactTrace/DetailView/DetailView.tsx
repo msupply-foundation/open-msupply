@@ -166,8 +166,6 @@ export const DetailView: FC<DetailViewProps> = ({
 
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
-      <link rel="stylesheet" href="/medical-icons.css" media="all"></link>
-
       <AppBarButtons
         onLinkContact={patientLinked}
         documentData={documentData}
