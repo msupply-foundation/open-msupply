@@ -9,8 +9,6 @@ export const useNextItem = (
 
   const { rows: items } = usePrescription();
 
-  // const { items } = usePrescription.line.rows();
-
   if (!items || !currentItemId) return { next, disabled };
 
   const numberOfItems = items.length;
