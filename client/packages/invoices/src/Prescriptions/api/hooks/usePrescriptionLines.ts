@@ -13,10 +13,10 @@ import { PrescriptionRowFragment } from '../operations.generated';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
 import { mapStatus } from './hookUtils';
 
-export const usePrescriptionLines = () => {
+export const usePrescriptionLines = (id?: string) => {
   const {
     query: { data },
-  } = usePrescriptionSingle();
+  } = usePrescriptionSingle(id);
 
   // SAVE LINES
   const {

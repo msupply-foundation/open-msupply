@@ -64,6 +64,10 @@ const UIComponent = (props: ControlProps) => {
     create: { create },
   } = usePrescriptionSingle(prescriptionId);
 
+  const {
+    save: { saveLines },
+  } = usePrescriptionLines(prescriptionId);
+
   const [selectedItem, setSelectedItem] =
     useState<ItemStockOnHandFragment | null>(
       formActions.getState(`${path}_item`) ?? null
@@ -71,11 +75,7 @@ const UIComponent = (props: ControlProps) => {
   const { draftStockOutLines, setDraftStockOutLines } =
     useDraftPrescriptionLines(selectedItem);
 
-  const {
-    save: { saveLines },
-  } = usePrescriptionLines();
-
-  // const { mutateAsync: updateLines } = usePrescription.line.save();
+  console.log('draftStockOutLines', draftStockOutLines);
 
   const { success } = useNotification();
 
