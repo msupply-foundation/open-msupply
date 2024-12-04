@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import {
   useTranslation,
   NothingHere,
@@ -6,8 +6,10 @@ import {
   Box,
   DataTable,
   MiniTable,
+  SortUtils,
+  ArrayUtils,
 } from '@openmsupply-client/common';
-import { usePrescription, usePrescriptionSingle } from '../api';
+import { usePrescriptionSingle } from '../api';
 import { usePrescriptionColumn } from './columns';
 import { useExpansionColumns } from './PrescriptionLineEdit/columns';
 import { StockOutItem } from '../../types';
@@ -39,14 +41,32 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams();
-  const { rows } = usePrescription.line.rows();
+  const {
+    query: { data },
+    isDisabled,
+  } = usePrescriptionSingle();
   const columns = usePrescriptionColumn({
     onChangeSortBy: updateSortQuery,
     sortBy,
   });
-  const { isDisabled } = usePrescriptionSingle();
 
-  if (!rows) return null;
+  if (!data) return;
+
+  const rows = useMemo(() => {
+    const stockLines = data?.lines?.nodes;
+    const items = Object.entries(
+      ArrayUtils.groupBy(stockLines, line => line.item.id)
+    ).map(([itemId, lines]) => {
+      return { id: itemId, itemId, lines };
+    });
+    const currentColumn = columns.find(({ key }) => key === sortBy.key);
+    if (!currentColumn?.getSortValue) return items;
+    const sorter = SortUtils.getColumnSorter(
+      currentColumn?.getSortValue,
+      !!sortBy.isDesc
+    );
+    return [...(items ?? [])].sort(sorter);
+  }, [data, sortBy.key, sortBy.isDesc]);
 
   return (
     <Box flexDirection="column" display="flex" flex={1}>
