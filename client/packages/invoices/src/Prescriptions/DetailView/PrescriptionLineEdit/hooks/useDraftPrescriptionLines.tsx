@@ -8,7 +8,7 @@ import {
   uniqBy,
 } from '@openmsupply-client/common';
 import { useHistoricalStockLines } from '@openmsupply-client/system';
-import { usePrescription, usePrescriptionSingle } from '../../../api';
+import { usePrescriptionSingle } from '../../../api';
 import { DraftItem } from '../../../..';
 import { DraftStockOutLine } from '../../../../types';
 import {
@@ -33,8 +33,11 @@ export const useDraftPrescriptionLines = (
   } = usePrescriptionSingle();
   const { id: invoiceId, status } = prescriptionData ?? {};
 
-  const { data: lines, isLoading: prescriptionLinesLoading } =
-    usePrescription.line.stockLines(item?.id ?? '');
+  // const { data: lines, isLoading: prescriptionLinesLoading } =
+  //   usePrescription.line.stockLines(item?.id ?? '');
+  const lines = prescriptionData?.lines.nodes.filter(
+    line => item?.id === line.item.id
+  );
   const { data, isLoading } = useHistoricalStockLines({
     itemId: item?.id ?? '',
     datetime: date ? date.toISOString() : undefined,
@@ -116,7 +119,7 @@ export const useDraftPrescriptionLines = (
 
       return rows;
     });
-  }, [data, lines, item, invoiceId]);
+  }, [data, item, prescriptionData]);
 
   const onChangeRowQuantity = useCallback(
     (batchId: string, value: number) => {
@@ -136,7 +139,7 @@ export const useDraftPrescriptionLines = (
 
   return {
     draftStockOutLines,
-    isLoading: isLoading || prescriptionLinesLoading,
+    isLoading,
     setDraftStockOutLines,
     updateQuantity: onChangeRowQuantity,
     updateNotes: onUpdateNote,

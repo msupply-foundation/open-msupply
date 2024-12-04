@@ -13,6 +13,7 @@ export const usePrescriptionRows = () => {
     onChangeSortBy,
     sortBy,
   });
+
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     if (!currentColumn?.getSortValue) return items;

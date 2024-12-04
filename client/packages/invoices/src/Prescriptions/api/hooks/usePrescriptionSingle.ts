@@ -103,8 +103,6 @@ const useGetByNumber = (invoiceNum: number | undefined) => {
   const { prescriptionApi, storeId } = usePrescriptionGraphQL();
 
   const queryFn = async (): Promise<PrescriptionRowFragment> => {
-    console.log('invoiceNum', invoiceNum);
-
     const result = await prescriptionApi.prescriptionByNumber({
       invoiceNumber: invoiceNum ?? -1,
       storeId,
@@ -132,7 +130,6 @@ const useGetById = (invoiceId: string | undefined) => {
   const { prescriptionApi, storeId } = usePrescriptionGraphQL();
 
   const queryFn = async (): Promise<PrescriptionRowFragment | void> => {
-    console.log('invoiceId', invoiceId);
     const result = await prescriptionApi.prescriptionById({
       invoiceId: invoiceId ?? '',
       storeId,

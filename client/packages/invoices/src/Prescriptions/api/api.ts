@@ -191,9 +191,6 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
     draftPrescriptionLines: DraftStockOutLine[];
     patch?: RecordPatch<PrescriptionRowFragment>;
   }) => {
-    console.log('Update patch', patch);
-    console.log('draftPrescriptionLines', draftPrescriptionLines);
-
     const input = {
       insertPrescriptionLines: draftPrescriptionLines
         .filter(
