@@ -15,7 +15,7 @@ impl MigrationFragment for Migrate {
                     ALTER TABLE temperature_breach_config DROP CONSTRAINT temperature_breach_config_description_key;
                 "#
             );
-            if (result.is_err()) {
+            if result.is_err() {
                 log::warn!("Failed to drop unique constraint on description column of temperature_breach_config table, please check name of constraint");
             }
         } else {
