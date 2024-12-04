@@ -9,7 +9,7 @@ const SYSTEM_LOG_1: (&str, &str) = (
     "2c0dedfa-a878-46f3-939c-9c4d42e41a6e",
     r#"{
     "id": "2c0dedfa-a878-46f3-939c-9c4d42e41a6e",
-    "type": "PROCESSOR_ERROR",
+    "type": "ProcessorError",
     "datetime": "2020-01-01T00:00:00",
     "message": "Unable to process transfer record for invoice ABCDEDF",
     "is_error": true

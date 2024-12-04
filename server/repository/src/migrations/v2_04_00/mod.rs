@@ -18,7 +18,6 @@ mod indicator_value_create_table;
 mod item_changelog;
 mod item_variant;
 mod program_indicator_create_table;
-mod system_log_table;
 
 use crate::StorageConnection;
 
@@ -53,7 +52,6 @@ impl Migration for V2_04_00 {
             Box::new(add_item_variant_id_to_stocktake_line::Migrate),
             Box::new(item_changelog::Migrate),
             Box::new(fix_asset_log_reasons_postgres::Migrate),
-            Box::new(system_log_table::Migrate),
         ]
     }
 }
