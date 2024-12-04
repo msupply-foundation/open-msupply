@@ -5504,6 +5504,7 @@ export type ProgramRequisitionOrderTypeNode = {
   __typename: 'ProgramRequisitionOrderTypeNode';
   availablePeriods: Array<PeriodNode>;
   id: Scalars['String']['output'];
+  isEmergency: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
 };
 

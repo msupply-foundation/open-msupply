@@ -500,12 +500,7 @@ fragment CustomerProgramSettings on CustomerProgramRequisitionSettingNode {
       ...NameRow
     }
     orderTypes {
-      id
-      name
-      availablePeriods {
-        id
-        name
-      }
+      ...OrderTypeRow
     }
   }
 }
