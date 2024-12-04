@@ -15,7 +15,7 @@ import {
   ColumnFormat,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
-import { usePrescriptionList, usePrescriptionSingle } from '../api';
+import { usePrescriptionList, usePrescription } from '../api';
 import { PrescriptionRowFragment } from '../api/operations.generated';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -33,7 +33,7 @@ const useDisablePrescriptionRows = (rows?: PrescriptionRowFragment[]) => {
 const PrescriptionListViewComponent: FC = () => {
   const {
     update: { update },
-  } = usePrescriptionSingle();
+  } = usePrescription();
   const t = useTranslation();
   const {
     updateSortQuery,

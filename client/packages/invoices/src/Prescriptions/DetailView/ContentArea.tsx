@@ -7,7 +7,7 @@ import {
   DataTable,
   MiniTable,
 } from '@openmsupply-client/common';
-import { usePrescriptionSingle } from '../api';
+import { usePrescription } from '../api';
 import { usePrescriptionColumn } from './columns';
 import { useExpansionColumns } from './PrescriptionLineEdit/columns';
 import { StockOutItem } from '../../types';
@@ -39,7 +39,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams();
-  const { isDisabled, rows } = usePrescriptionSingle();
+  const { isDisabled, rows } = usePrescription();
   const columns = usePrescriptionColumn({
     onChangeSortBy: updateSortQuery,
     sortBy,

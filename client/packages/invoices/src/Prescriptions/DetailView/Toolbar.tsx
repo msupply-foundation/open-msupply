@@ -16,7 +16,7 @@ import {
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { PatientSearchInput } from '@openmsupply-client/system';
-import { usePrescriptionSingle } from '../api';
+import { usePrescription } from '../api';
 import { ClinicianSearchInput } from '../../../../system/src/Clinician';
 import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 
@@ -26,7 +26,7 @@ export const Toolbar: FC = () => {
     update: { update },
     isDisabled,
     rows: items,
-  } = usePrescriptionSingle();
+  } = usePrescription();
   const { id, patient, clinician, prescriptionDate, createdDatetime } =
     data ?? {};
 

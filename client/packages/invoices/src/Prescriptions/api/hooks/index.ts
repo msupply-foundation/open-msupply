@@ -1,3 +1,3 @@
 export * from './usePrescriptionList';
-export * from './usePrescriptionSingle';
+export * from './usePrescription';
 export * from './usePrescriptionLines';

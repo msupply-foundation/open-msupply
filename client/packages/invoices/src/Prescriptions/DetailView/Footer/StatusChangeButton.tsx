@@ -14,7 +14,7 @@ import {
   getNextPrescriptionStatus,
   getStatusTranslation,
 } from '../../../utils';
-import { usePrescriptionSingle } from '../../api';
+import { usePrescription } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus | undefined,
@@ -81,7 +81,7 @@ const useStatusChangeButton = () => {
     query: { data },
     update: { update },
     isDisabled,
-  } = usePrescriptionSingle();
+  } = usePrescription();
 
   const { status, lines } = data ?? {};
   const hasLinesToPrune =

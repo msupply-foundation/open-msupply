@@ -6,17 +6,17 @@ import {
   UpdatePrescriptionLineInput,
   useMutation,
 } from '@openmsupply-client/common';
-import { usePrescriptionSingle } from './usePrescriptionSingle';
+import { usePrescription } from './usePrescription';
 import { DraftStockOutLine } from 'packages/invoices/src/types';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { PrescriptionRowFragment } from '../operations.generated';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
-import { mapStatus } from './hookUtils';
+import { mapStatus } from './utils';
 
 export const usePrescriptionLines = (id?: string) => {
   const {
     query: { data },
-  } = usePrescriptionSingle(id);
+  } = usePrescription(id);
 
   // SAVE LINES
   const {

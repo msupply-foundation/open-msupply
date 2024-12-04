@@ -8,7 +8,7 @@ import {
   useTranslation,
   useFormatCurrency,
 } from '@openmsupply-client/common';
-import { usePrescriptionSingle } from '../../api';
+import { usePrescription } from '../../api';
 
 export const PricingSectionComponent = () => {
   const t = useTranslation();
@@ -16,7 +16,7 @@ export const PricingSectionComponent = () => {
 
   const {
     query: { data },
-  } = usePrescriptionSingle();
+  } = usePrescription();
 
   const pricing = data?.pricing;
 

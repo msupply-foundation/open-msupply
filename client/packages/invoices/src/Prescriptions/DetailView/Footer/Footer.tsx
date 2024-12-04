@@ -11,7 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { getStatusTranslator, prescriptionStatuses } from '../../../utils';
 import { StatusChangeButton } from './StatusChangeButton';
-import { PrescriptionRowFragment, usePrescriptionSingle } from '../../api';
+import { PrescriptionRowFragment, usePrescription } from '../../api';
 
 const createStatusLog = (invoice: PrescriptionRowFragment) => {
   const statusIdx = prescriptionStatuses.findIndex(s => invoice.status === s);
@@ -43,7 +43,7 @@ export const FooterComponent: FC = () => {
   const t = useTranslation();
   const {
     query: { data },
-  } = usePrescriptionSingle();
+  } = usePrescription();
   const { navigateUpOne } = useBreadcrumbs();
 
   return (

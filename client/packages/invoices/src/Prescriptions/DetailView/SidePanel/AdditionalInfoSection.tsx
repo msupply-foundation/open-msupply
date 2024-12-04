@@ -13,7 +13,7 @@ import {
   useFormatDateTime,
   UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
-import { usePrescriptionSingle } from '../../api';
+import { usePrescription } from '../../api';
 
 export const AdditionalInfoSectionComponent: FC = () => {
   const t = useTranslation();
@@ -21,7 +21,7 @@ export const AdditionalInfoSectionComponent: FC = () => {
     query: { data },
     isDisabled,
     update: { update },
-  } = usePrescriptionSingle();
+  } = usePrescription();
   const { colour, comment, user, createdDatetime } = data ?? {};
   const [colorBuffer, setColorBuffer] = useBufferState(colour);
   const [commentBuffer, setCommentBuffer] = useBufferState(comment ?? '');

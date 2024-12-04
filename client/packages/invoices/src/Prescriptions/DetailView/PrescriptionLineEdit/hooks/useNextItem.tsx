@@ -1,5 +1,5 @@
 import { ItemRowFragment, toItemRow } from '@openmsupply-client/system';
-import { usePrescriptionSingle } from '../../../api';
+import { usePrescription } from '../../../api';
 
 export const useNextItem = (
   currentItemId?: string
@@ -7,7 +7,7 @@ export const useNextItem = (
   const next: ItemRowFragment | null = null;
   const disabled = true;
 
-  const { rows: items } = usePrescriptionSingle();
+  const { rows: items } = usePrescription();
 
   // const { items } = usePrescription.line.rows();
 
