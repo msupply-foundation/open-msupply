@@ -75,8 +75,6 @@ const UIComponent = (props: ControlProps) => {
   const { draftStockOutLines, setDraftStockOutLines } =
     useDraftPrescriptionLines(selectedItem);
 
-  console.log('draftStockOutLines', draftStockOutLines);
-
   const { success } = useNotification();
 
   const itemCategoryPath = uischema.options?.['itemCategoryPath'];
