@@ -14,11 +14,9 @@ use chrono::Utc;
 use repository::{
     reason_option_row::ReasonOptionType,
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ActivityLogType, EqualFilter, ProgramFilter, ProgramRepository,
-    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
-    ProgramRequisitionSettingsRepository, ReasonOptionFilter, ReasonOptionRepository,
-    RepositoryError, Requisition, RequisitionLine, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
+    ActivityLogType, EqualFilter, ReasonOptionFilter, ReasonOptionRepository, RepositoryError,
+    Requisition, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
+    RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 
