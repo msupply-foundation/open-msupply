@@ -8,6 +8,7 @@ use crate::{
         stock_in_line::{DeleteStockInLine, InsertStockInLine, StockInType, UpdateStockInLine},
         update_return_reason_id::UpdateLineReturnReason,
     },
+    NullableUpdate,
 };
 
 use super::UpdateCustomerReturnLines;
@@ -50,6 +51,7 @@ pub fn generate(
                  reason_id: _,
                  note,
                  stock_line_id: _,
+                 item_variant_id,
              }| InsertStockInLine {
                 id,
                 invoice_id: customer_return_id.clone(),
@@ -58,6 +60,7 @@ pub fn generate(
                 note,
                 pack_size,
                 batch,
+                item_variant_id,
                 expiry_date,
                 r#type: StockInType::CustomerReturn,
                 // Default
@@ -88,6 +91,7 @@ pub fn generate(
                  reason_id: _,
                  note,
                  stock_line_id: _,
+                 item_variant_id,
              }| UpdateStockInLine {
                 id,
                 batch,
@@ -97,6 +101,9 @@ pub fn generate(
                 pack_size: Some(pack_size),
                 number_of_packs: Some(number_of_packs),
                 r#type: StockInType::CustomerReturn,
+                item_variant_id: Some(NullableUpdate {
+                    value: item_variant_id,
+                }),
                 // Default
                 location: None,
                 cost_price_per_pack: None,

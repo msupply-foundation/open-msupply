@@ -10,6 +10,7 @@ export const useName = {
     internalSuppliers: Document.useInternalSuppliers,
     list: Document.useNames,
     suppliers: Document.useSuppliers,
+    manufacturers: Document.useManufacturers,
     facilities: Document.useFacilities,
     facilitiesAll: Document.useFacilitiesAll,
     donors: Document.useDonors,

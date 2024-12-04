@@ -490,7 +490,7 @@ mutation deleteRequest(
   }
 }
 
-fragment ProgramSettings on ProgramRequisitionSettingNode {
+fragment SupplierProgramSettings on SupplierProgramRequisitionSettingNode {
   programName
   programId
   suppliers {
@@ -506,8 +506,8 @@ fragment ProgramSettings on ProgramRequisitionSettingNode {
   }
 }
 
-query programSettings($storeId: String!) {
-  programRequisitionSettings(storeId: $storeId) {
-    ...ProgramSettings
+query supplierProgramSettings($storeId: String!) {
+  supplierProgramRequisitionSettings(storeId: $storeId) {
+    ...SupplierProgramSettings
   }
 }

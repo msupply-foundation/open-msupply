@@ -19,8 +19,8 @@ import {
 import { useRequest } from '../api';
 import { requestsToCsv } from '../../utils';
 import { CreateRequisitionModal } from './CreateRequisitionModal';
-import { NewRequisitionType } from './types';
 import { AppRoute } from '@openmsupply-client/config';
+import { NewRequisitionType } from '../../types';
 
 export const AppBarButtons: FC<{
   modalController: ToggleState;
@@ -53,7 +53,7 @@ export const AppBarButtons: FC<{
       <Grid container gap={1}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
-          label={t('label.new-requisition')}
+          label={t('label.new-internal-order')}
           onClick={modalController.toggleOn}
         />
         <LoadingButton
@@ -81,8 +81,7 @@ export const AppBarButtons: FC<{
                   RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InternalOrder)
                     .addPart(String(requisitionNumber))
-                    .build(),
-                  { replace: true }
+                    .build()
                 );
               });
             case NewRequisitionType.Program:
@@ -96,8 +95,7 @@ export const AppBarButtons: FC<{
                   RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InternalOrder)
                     .addPart(String(requisitionNumber))
-                    .build(),
-                  { replace: true }
+                    .build()
                 );
               });
           }

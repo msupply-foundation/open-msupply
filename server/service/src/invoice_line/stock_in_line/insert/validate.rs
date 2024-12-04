@@ -1,5 +1,5 @@
 use crate::{
-    check_location_exists,
+    check_item_variant_exists, check_location_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         stock_in_line::check_pack_size,
@@ -29,6 +29,12 @@ pub fn validate(
     let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;
     if !check_location_exists(connection, store_id, &input.location)? {
         return Err(LocationDoesNotExist);
+    }
+
+    if let Some(item_variant_id) = &input.item_variant_id {
+        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
+            return Err(ItemVariantDoesNotExist);
+        }
     }
 
     let invoice =

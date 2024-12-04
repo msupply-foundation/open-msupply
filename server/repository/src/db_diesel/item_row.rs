@@ -148,7 +148,7 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result)
     }
 
-    fn find_one_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
         let result = item
             .filter(id.eq(item_id))
             .first(self.connection.lock().connection())

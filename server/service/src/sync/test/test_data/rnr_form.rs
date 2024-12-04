@@ -31,6 +31,8 @@ fn rnr_form1() -> RnRFormRow {
         finalised_datetime: None,
         status: RnRFormStatus::Draft,
         linked_requisition_id: None,
+        their_reference: None,
+        comment: None,
     }
 }
 

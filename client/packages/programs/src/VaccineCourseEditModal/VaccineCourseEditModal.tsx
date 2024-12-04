@@ -11,7 +11,7 @@ import {
   createTableStore,
   DataTable,
   DeleteIcon,
-  DemographicIndicatorNode,
+  DemographicNode,
   DialogButton,
   FnUtils,
   IconButton,
@@ -37,13 +37,11 @@ import { VaccineItemSelect } from './VaccineCourseItemSelect';
 import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
 import { VaccineCourseDoseFragment } from '../api/operations.generated';
 
-const getDemographicOptions = (
-  demographicIndicators: DemographicIndicatorNode[]
-) => {
-  const options = demographicIndicators.map(indicator => {
+const getDemographicOptions = (demographics: DemographicNode[]) => {
+  const options = demographics.map(demographic => {
     return {
-      value: indicator.id,
-      label: `${indicator.name} ${indicator.baseYear}`,
+      value: demographic.id,
+      label: demographic.name,
     };
   });
   return options;
@@ -102,7 +100,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     isDirty,
     setIsDirty,
   } = useVaccineCourse(vaccineCourse?.id ?? undefined);
-  const { data: demographicData } = useDemographicData.indicator.list();
+  const { data: demographicData } = useDemographicData.demographics.list();
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(900);
@@ -113,10 +111,8 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   );
 
   const defaultValue = {
-    value: draft.demographicIndicator?.name ?? '',
-    label: draft.demographicIndicator
-      ? `${draft.demographicIndicator?.name} ${draft.demographicIndicator?.baseYear}`
-      : '',
+    value: draft.demographic?.name ?? '',
+    label: draft.demographic?.name ?? '',
   };
 
   const save = async () => {
@@ -168,10 +164,10 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         <Row label={t('label.target-demographic')}>
           <Autocomplete
             isOptionEqualToValue={option =>
-              option?.value === draft.demographicIndicatorId
+              option?.value === draft.demographicId
             }
             onChange={(_e, selected) =>
-              updatePatch({ demographicIndicatorId: selected?.value })
+              updatePatch({ demographicId: selected?.value })
             }
             defaultValue={defaultValue}
             options={options}
@@ -379,8 +375,18 @@ const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => {
       width={25}
       {...props}
       units={[
-        { key: 'year', ratio: 12, label: t('label.years-abbreviation') },
-        { key: 'month', ratio: 1, label: t('label.months-abbreviation') },
+        {
+          key: 'year',
+          ratio: 12,
+          label: t('label.years-abbreviation'),
+          max: 150,
+        },
+        {
+          key: 'month',
+          ratio: 1,
+          label: t('label.months-abbreviation'),
+          max: 11,
+        },
       ]}
     />
   );

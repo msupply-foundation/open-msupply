@@ -208,6 +208,8 @@ fn generate(
         finalised_datetime: None,
         status: RnRFormStatus::Draft,
         linked_requisition_id: None,
+        their_reference: None,
+        comment: None,
     };
 
     let rnr_form_lines = generate_rnr_form_lines(

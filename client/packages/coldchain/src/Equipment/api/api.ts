@@ -7,10 +7,12 @@ import {
   setNullableInput,
   InsertAssetLogInput,
   AssetLogSortFieldInput,
+  Gs1DataElement,
 } from '@openmsupply-client/common';
 import { Sdk, AssetFragment } from './operations.generated';
 import { CCE_CLASS_ID } from '../utils';
 import { DraftAsset } from '../types';
+import { Gs1Barcode } from 'gs1-barcode-parser-mod';
 
 export type ListParams<T> = {
   first: number;
@@ -96,6 +98,16 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
       }
 
       throw new Error('Asset not found');
+    },
+    byGs1Elements: async (data: Gs1Barcode) => {
+      let dataElements: Gs1DataElement[] = data.parsedCodeItems.map(item => {
+        return { ai: item.ai, data: item.data.toString() };
+      });
+      const { assetFromGs1Data } = await sdk.assetFromGs1Data({
+        storeId,
+        data: dataElements,
+      });
+      return assetFromGs1Data;
     },
     list: async (
       { first, offset, sortBy, filterBy }: ListParams<AssetFragment>,

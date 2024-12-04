@@ -33,6 +33,9 @@ const prescriptionParsers = {
       case 'createdDatetime': {
         return InvoiceSortFieldInput.CreatedDatetime;
       }
+      case 'prescriptionDatetime': {
+        return InvoiceSortFieldInput.InvoiceDatetime;
+      }
       case 'otherPartyName': {
         return InvoiceSortFieldInput.OtherPartyName;
       }

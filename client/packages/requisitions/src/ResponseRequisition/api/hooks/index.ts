@@ -8,16 +8,19 @@ export const useResponse = {
     list: Document.useResponses,
     listAll: Document.useResponsesAll,
 
+    insert: Document.useInsertResponse,
+    insertProgram: Document.useInsertProgramResponse,
     update: Document.useUpdateResponse,
-
+    delete: Document.useDeleteResponses,
+    deleteSelected: Document.useDeleteSelectedResponseRequisitions,
     fields: Document.useResponseFields,
   },
   line: {
     list: Lines.useResponseLines,
     stats: Lines.useResponseLineStatsData,
-
     delete: Lines.useDeleteResponseLines,
     save: Lines.useSaveResponseLines,
+    insert: Lines.useInsertResponseLines,
   },
   utils: {
     api: Utils.useResponseApi,
@@ -27,5 +30,6 @@ export const useResponse = {
     preferences: Utils.useRequisitionPreferences,
     supplyRequested: Utils.useSupplyRequestedQuantity,
     isDisabledByAuthorisation: Utils.useIsDisabledByAuthorisation,
+    programSettings: Utils.useProgramSettings,
   },
 };

@@ -8,9 +8,10 @@ import {
   useNotification,
   AdjustmentTypeInput,
   useDialog,
+  useKeyboardHeightAdjustment,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
-import { InventoryAdjustmentReasonSearchInput, usePackVariant } from '../../..';
+import { InventoryAdjustmentReasonSearchInput } from '../../..';
 import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionSearchInput';
 import { INPUT_WIDTH, StyledInputRow } from '../StyledInputRow';
 
@@ -27,14 +28,11 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
   const t = useTranslation();
   const { success, error } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
+  const height = useKeyboardHeightAdjustment(575);
 
   const { draft, setDraft, create } = useInventoryAdjustment(stockLine);
 
-  const { asPackVariant } = usePackVariant(
-    stockLine.itemId,
-    stockLine.item.unitName ?? null
-  );
-  const packUnit = asPackVariant(stockLine.packSize);
+  const packUnit = String(stockLine.packSize);
 
   const saveDisabled = draft.adjustment === 0;
 
@@ -58,7 +56,8 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
 
   return (
     <Modal
-      sx={{ maxWidth: 'unset', minWidth: 700, minHeight: 575 }}
+      sx={{ maxWidth: 'unset', minWidth: 700 }}
+      height={height}
       slideAnimation={false}
       title={t('title.adjustment-details')}
       okButton={

@@ -1,11 +1,18 @@
-use crate::{service_provider::ServiceContext, SingleRecordError};
-use repository::{
-    DemographicIndicatorRow, DemographicIndicatorRowRepository, RepositoryError, StorageConnection,
+use crate::{
+    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
 };
+use repository::{
+    ActivityLogType, DemographicIndicatorRow, DemographicIndicatorRowRepository, DemographicRow,
+    RepositoryError, StorageConnection, Upsert,
+};
+use util::uuid::uuid;
 
 use super::{
     query_demographic_indicator::get_demographic_indicator,
-    validate::{check_demographic_indicator_exists, check_year_name_combination_unique},
+    validate::{
+        check_demographic_indicator_exists, check_year_name_combination_unique,
+        find_demographic_by_name,
+    },
 };
 
 #[derive(PartialEq, Debug)]
@@ -38,13 +45,33 @@ pub fn insert_demographic_indicator(
     let demographic_indicator = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&input, connection)?;
+            let (demographic, demographic_name) = validate(&input, connection)?;
 
-            let new_demographic_indicator = generate(input);
+            let demographic = match demographic {
+                Some(demographic) => demographic,
+                None => {
+                    // Create new demographic, as the name doesn't exist yet!
+                    let new_demographic = DemographicRow {
+                        id: uuid(),
+                        name: demographic_name.clone(),
+                    };
+                    new_demographic.upsert(connection)?;
+                    // TODO add activity log entry
+                    new_demographic
+                }
+            };
+
+            let new_demographic_indicator = generate(input, demographic.id);
             DemographicIndicatorRowRepository::new(connection)
                 .upsert_one(&new_demographic_indicator)?;
 
-            // TODO add activity log entry
+            activity_log_entry(
+                ctx,
+                ActivityLogType::DemographicIndicatorCreated,
+                Some(new_demographic_indicator.id.to_owned()),
+                None,
+                None,
+            )?;
 
             get_demographic_indicator(ctx, new_demographic_indicator.id)
                 .map_err(InsertDemographicIndicatorError::from)
@@ -56,25 +83,28 @@ pub fn insert_demographic_indicator(
 pub fn validate(
     input: &InsertDemographicIndicator,
     connection: &StorageConnection,
-) -> Result<(), InsertDemographicIndicatorError> {
-    match &input.name {
+) -> Result<(Option<DemographicRow>, String), InsertDemographicIndicatorError> {
+    let name = match &input.name {
         Some(name) => {
             if !check_year_name_combination_unique(name, input.base_year, None, connection)? {
                 return Err(
                     InsertDemographicIndicatorError::DemographicIndicatorAlreadyExistsForThisYear,
                 );
             }
+            name
         }
         None => {
             return Err(InsertDemographicIndicatorError::DemographicIndicatorHasNoName);
         }
-    }
+    };
 
     if check_demographic_indicator_exists(&input.id, connection)?.is_some() {
         return Err(InsertDemographicIndicatorError::DemographicIndicatorAlreadyExists);
     }
 
-    Ok(())
+    let demographic = find_demographic_by_name(name, connection)?;
+
+    Ok((demographic, name.to_string()))
 }
 
 pub fn generate(
@@ -90,10 +120,12 @@ pub fn generate(
         year_4_projection,
         year_5_projection,
     }: InsertDemographicIndicator,
+    demographic_id: String,
 ) -> DemographicIndicatorRow {
     DemographicIndicatorRow {
         id,
-        name: name.unwrap_or_default(),
+        demographic_id,
+        name: name.unwrap_or_default(), // This should really happen due to validation, but possibly should be a required field?
         base_year,
         base_population: base_population.unwrap_or_default(),
         population_percentage: population_percentage.unwrap_or_default(),

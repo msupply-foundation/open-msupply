@@ -9,19 +9,23 @@
         <td>{{t(k="label.code", f="Code")}}</td>
         <td>{{t(k="label.name", f="Name")}}</td>
         <td>{{t(k="label.status", f="Status")}}</td>
-        <td>{{t(k="report.consumption", f="Consumption")}} ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}} months)</td>
+        <td>{{t(k="report.consumption", f="Consumption")}}
+        ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}})
+        {{t(k="label.months", f="months")}}</td>
         <td>{{t(k="label.soh", f="SOH")}}</td>
-        <td>{{t(k="label.amc", f="AMC")}} ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}} months)</td>
+        <td>{{t(k="label.amc", f="AMC")}}
+        ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}})
+        {{t(k="label.months", f="months")}}</td>
         <td>{{t(k="report.mos", f="MOS")}}</td>
       </tr>
     </thead>
     <tbody>
       {% for item in data.items.nodes %}
-      {% set SOH = item.stats.availableStockOnHand | default(value=0) | round(
-      precision=1) %}
-      {% set AMC = item.stats.averageMonthlyConsumption | default(value=0) |
-      round(precision=1) %}
-      {% set MOS = item.stats.availableMonthsOfStockOnHand | default(value=0) | round( precision=1) %}
+        {% set SOH = item.stats.availableStockOnHand | default(value=0) | round(
+        precision=1) %}
+        {% set AMC = item.stats.averageMonthlyConsumption | default(value=0) |
+        round(precision=1) %}
+        {% set MOS = item.stats.availableMonthsOfStockOnHand | default(value=0) | round( precision=1) %}
 
       <tr>
         <td>{{item.code}}</td>

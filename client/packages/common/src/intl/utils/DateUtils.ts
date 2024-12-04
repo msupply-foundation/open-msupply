@@ -1,4 +1,4 @@
-import { getLocale, useIntlUtils } from '@common/intl';
+import { getLocale, useIntlUtils, useTranslation } from '@common/intl';
 import {
   addMinutes,
   addDays,
@@ -104,6 +104,35 @@ export const DateUtils = {
         : new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
+  /**
+   * While getDateOrNull is naive to the timezone, the timezone will still
+   * change. When converting from the assumed naive zone of GMT to the local
+   * timezone, the dateTime will be wrong if the timezone is behind GMT.
+   * For example: for a user in -10 timezone, a date of 24-02-2024 will become
+   * 2024-02-23T13:00:00.000Z when rendered for mui datepicker.
+   * This function acts in the same way as getDateOrNull, but will create a
+   * datetime of start of day local time rather than start of day GMT by
+   * subtracting the local timezone offset.
+   * You can use this function anytime you need a datetime for mui date picker
+   * to be created from a date only string. This includes date of birth, date of
+   * death or any other date which is time and timezone agnostic.
+   */
+  getNaiveDate: (
+    date?: Date | string | null,
+    format?: string,
+    options?: ParseOptions,
+    timeZone?: string
+  ): Date | null => {
+    // tz passed as props options for testing purposes
+    const tz = timeZone ?? new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const UTCDateWithoutTime = DateUtils.getDateOrNull(date, format, options);
+    const offset = UTCDateWithoutTime
+      ? getTimezoneOffset(tz, UTCDateWithoutTime)
+      : 0;
+    return UTCDateWithoutTime
+      ? addMilliseconds(UTCDateWithoutTime, -offset)
+      : null;
+  },
   minDate: (...dates: (Date | null)[]) => {
     const maybeDate = fromUnixTime(
       Math.min(
@@ -173,6 +202,7 @@ export const DateUtils = {
 export const useFormatDateTime = () => {
   const { currentLanguage } = useIntlUtils();
   const locale = getLocale(currentLanguage);
+  const t = useTranslation();
 
   const urlQueryDate = 'yyyy-MM-dd';
   const urlQueryDateTime = 'yyyy-MM-dd HH:mm';
@@ -221,34 +251,22 @@ export const useFormatDateTime = () => {
       : '';
   };
 
-  /**
-   * While getDateOrNull is naive to the timezone, the timezone will still change.
-   * When converting from the assumed naive zone of GMT to the local timezone, the
-   * dateTime will be wrong if the timezone is behind GMT.
-   * For example: for a user in -10 timezone, a date of 24-02-2024 will become
-   * 2024-02-23T13:00:00.000Z when rendered for mui datepicker.
-   * This function acts in the same way as getDateOrNull, but will create a datetime
-   * of start of day local time rather than start of day GMT by subtracting the local
-   * timezone offset.
-   * You can use this function anytime you need a datetime for mui date picker to
-   * be created from a date only string. This includes date of birth, date of death
-   * or any other date which is time and timezone agnostic.
-   */
-  const getLocalDate = (
-    date?: Date | string | null,
-    format?: string,
-    options?: ParseOptions,
-    timeZone?: string
-  ): Date | null => {
-    // tz passed as props options for testing purposes
-    const tz = timeZone ?? new Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const UTCDateWithoutTime = DateUtils.getDateOrNull(date, format, options);
-    const offset = UTCDateWithoutTime
-      ? getTimezoneOffset(tz, UTCDateWithoutTime)
-      : 0;
-    return UTCDateWithoutTime
-      ? addMilliseconds(UTCDateWithoutTime, -offset)
-      : null;
+  // Returns a formatted age for the input date (of birth) relative to the
+  // current date. Will format as whole number of years unless the age is less
+  // than one year old, in which case it will format as months/days:
+  // e.g:
+  // - DOB is 2 years in the past => "2"
+  // - DOB is 9 months and 2 days ago => "9 months, 2 days"
+  // - DOB is 5 days ago => "5 days"
+  const getDisplayAge = (dob: Date | null | undefined): string => {
+    if (!dob) return '';
+    const patientAge = DateUtils.age(dob);
+    const { months, days } = DateUtils.ageInMonthsAndDays(dob ?? '');
+
+    if (patientAge >= 1) {
+      return String(patientAge);
+    } else
+      return `${months > 0 ? t('label.age-months-and', { count: months }) : ''}${t('label.age-days', { count: days })}`;
   };
 
   return {
@@ -263,6 +281,6 @@ export const useFormatDateTime = () => {
     localisedDistanceToNow,
     localisedTime,
     relativeDateTime,
-    getLocalDate,
+    getDisplayAge,
   };
 };

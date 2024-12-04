@@ -7,6 +7,7 @@ export * from './Name';
 export * from './Location';
 export * from './Store';
 export * from './MasterList';
+export * from './ReasonOption';
 export * from './Report';
 export * from './InventoryAdjustmentReason';
 export * from './Patient';

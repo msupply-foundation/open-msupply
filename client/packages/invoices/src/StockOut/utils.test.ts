@@ -33,6 +33,7 @@ const createTestLine = ({
 }: TestLineParams): DraftStockOutLine =>
   createDraftStockOutLine({
     invoiceId: '',
+    invoiceStatus: InvoiceNodeStatus.New,
     invoiceLine: {
       id,
       totalAfterTax: 0,

@@ -1,4 +1,4 @@
-import { SortBy, useGql } from '@openmsupply-client/common';
+import { SortBy, useAuthContext, useGql } from '@openmsupply-client/common';
 import { ListParams, getDemographicIndicatorQueries } from '../../api';
 import {
   DemographicIndicatorFragment,
@@ -7,13 +7,18 @@ import {
 } from '../../operations.generated';
 export const useDemographicsApi = () => {
   const { client } = useGql();
+  const { storeId } = useAuthContext();
 
   const keys = {
+    baseDemographic: () => ['demographic'] as const,
     baseIndicator: () => ['demographic indicator'] as const,
     detailIndicator: (id: string) => [...keys.baseIndicator(), id] as const,
     indicatorList: () => [...keys.baseIndicator(), 'list'] as const,
+    demographicList: () => [...keys.baseIndicator(), 'list'] as const,
     paramIndicatorList: (params: ListParams<DemographicIndicatorFragment>) =>
       [...keys.indicatorList(), params] as const,
+    paramDemographicList: (params: ListParams<DemographicIndicatorFragment>) =>
+      [...keys.demographicList(), params] as const,
     sortedIndicatorList: (sortBy: SortBy<DemographicIndicatorFragment>) =>
       [...keys.indicatorList(), sortBy] as const,
     baseProjection: () => ['demographic projection'] as const,
@@ -27,6 +32,6 @@ export const useDemographicsApi = () => {
       [...keys.projectionList(), sortBy] as const,
   };
 
-  const queries = getDemographicIndicatorQueries(getSdk(client));
+  const queries = getDemographicIndicatorQueries(getSdk(client), storeId);
   return { ...queries, keys };
 };

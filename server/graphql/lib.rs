@@ -33,8 +33,9 @@ use graphql_demographic::{DemographicIndicatorQueries, DemographicMutations};
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
+use graphql_item_bundle::BundledItemMutations;
+use graphql_item_variant::{ItemVariantMutations, ItemVariantQueries};
 use graphql_location::{LocationMutations, LocationQueries};
-use graphql_pack_variant::{PackVariantMutations, PackVariantQueries};
 use graphql_plugin::{PluginMutations, PluginQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
@@ -65,8 +66,11 @@ pub type InitialisationSchema = async_graphql::Schema<
 pub struct CentralServerMutationNode;
 #[Object]
 impl CentralServerMutationNode {
-    async fn pack_variant(&self) -> PackVariantMutations {
-        PackVariantMutations
+    async fn item_variant(&self) -> ItemVariantMutations {
+        ItemVariantMutations
+    }
+    async fn bundled_item(&self) -> BundledItemMutations {
+        BundledItemMutations
     }
     async fn asset_catalogue(&self) -> AssetCatalogueMutations {
         AssetCatalogueMutations
@@ -115,7 +119,6 @@ pub struct Queries(
     pub ProgramsQueries,
     pub FormSchemaQueries,
     pub ClinicianQueries,
-    pub PackVariantQueries,
     pub PluginQueries,
     pub AssetCatalogueQueries,
     pub AssetQueries,
@@ -124,6 +127,7 @@ pub struct Queries(
     pub AssetPropertiesQueries,
     pub DemographicIndicatorQueries,
     pub VaccineCourseQueries,
+    pub ItemVariantQueries,
 );
 
 impl Queries {
@@ -143,7 +147,6 @@ impl Queries {
             ProgramsQueries,
             FormSchemaQueries,
             ClinicianQueries,
-            PackVariantQueries,
             PluginQueries,
             AssetCatalogueQueries,
             AssetQueries,
@@ -152,6 +155,7 @@ impl Queries {
             AssetPropertiesQueries,
             DemographicIndicatorQueries,
             VaccineCourseQueries,
+            ItemVariantQueries,
         )
     }
 }
