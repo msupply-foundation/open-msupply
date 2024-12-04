@@ -3,9 +3,9 @@ use repository::{
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
 use repository::{
-    ApprovalStatusType, EqualFilter, ProgramFilter, ProgramRequisitionOrderTypeRow,
-    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
-    ProgramRequisitionSettingsRepository, Requisition, RequisitionFilter, RequisitionRepository,
+    ApprovalStatusType, EqualFilter, ProgramFilter, ProgramRequisitionOrderTypeRowRepository,
+    ProgramRequisitionSettingsFilter, ProgramRequisitionSettingsRepository, Requisition,
+    RequisitionFilter, RequisitionRepository,
 };
 use util::inline_edit;
 
