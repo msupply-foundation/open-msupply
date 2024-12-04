@@ -1,5 +1,4 @@
 use self::{
-    program_settings::{get_program_requisition_settings, ProgramSettings},
     query::{get_requisition, get_requisition_by_number, get_requisitions},
     request_requisition::{
         add_from_master_list, batch_request_requisition, delete_request_requisition,
@@ -12,21 +11,33 @@ use self::{
     },
     requisition_supply_status::{get_requisitions_supply_statuses, RequisitionLineSupplyStatus},
     response_requisition::{
-        create_requisition_shipment, supply_requested_quantity, update_response_requisition,
-        CreateRequisitionShipment, CreateRequisitionShipmentError, SupplyRequestedQuantity,
+        create_requisition_shipment, insert_program_response_requisition,
+        insert_response_requisition, supply_requested_quantity, update_response_requisition,
+        CreateRequisitionShipment, CreateRequisitionShipmentError,
+        InsertProgramResponseRequisition, InsertProgramResponseRequisitionError,
+        InsertResponseRequisition, InsertResponseRequisitionError, SupplyRequestedQuantity,
         SupplyRequestedQuantityError, UpdateResponseRequisition, UpdateResponseRequisitionError,
     },
 };
 
 use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
-use repository::PaginationOption;
+use program_settings::{
+    customer_program_settings::CustomerProgramSettings, get_customer_program_requisition_settings,
+    get_supplier_program_requisition_settings, supplier_program_settings::SupplierProgramSettings,
+};
 use repository::{
-    requisition_row::RequisitionType, Invoice, RepositoryError, Requisition, RequisitionFilter,
-    RequisitionLine, RequisitionSort,
+    requisition_row::RequisitionType, Invoice, PaginationOption, RepositoryError, Requisition,
+    RequisitionFilter, RequisitionLine, RequisitionSort,
+};
+use response_requisition::{
+    batch_response_requisition, delete_response_requisition, BatchResponseRequisition,
+    BatchResponseRequisitionResult, DeleteResponseRequisition, DeleteResponseRequisitionError,
 };
 
 pub mod common;
+pub mod indicator_value;
+pub mod program_indicator;
 pub mod program_settings;
 pub mod query;
 pub mod request_requisition;
@@ -120,12 +131,36 @@ pub trait RequisitionServiceTrait: Sync + Send {
         add_from_master_list(ctx, input)
     }
 
+    fn insert_response_requisition(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertResponseRequisition,
+    ) -> Result<Requisition, InsertResponseRequisitionError> {
+        insert_response_requisition(ctx, input)
+    }
+
+    fn insert_program_response_requisition(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertProgramResponseRequisition,
+    ) -> Result<Requisition, InsertProgramResponseRequisitionError> {
+        insert_program_response_requisition(ctx, input)
+    }
+
     fn update_response_requisition(
         &self,
         ctx: &ServiceContext,
         input: UpdateResponseRequisition,
     ) -> Result<Requisition, UpdateResponseRequisitionError> {
         update_response_requisition(ctx, input)
+    }
+
+    fn delete_response_requisition(
+        &self,
+        ctx: &ServiceContext,
+        input: DeleteResponseRequisition,
+    ) -> Result<String, DeleteResponseRequisitionError> {
+        delete_response_requisition(ctx, input)
     }
 
     fn supply_requested_quantity(
@@ -152,12 +187,28 @@ pub trait RequisitionServiceTrait: Sync + Send {
         batch_request_requisition(ctx, input)
     }
 
-    fn get_program_requisition_settings(
+    fn batch_response_requisition(
+        &self,
+        ctx: &ServiceContext,
+        input: BatchResponseRequisition,
+    ) -> Result<BatchResponseRequisitionResult, RepositoryError> {
+        batch_response_requisition(ctx, input)
+    }
+
+    fn get_supplier_program_requisition_settings(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-    ) -> Result<Vec<ProgramSettings>, RepositoryError> {
-        get_program_requisition_settings(ctx, store_id)
+    ) -> Result<Vec<SupplierProgramSettings>, RepositoryError> {
+        get_supplier_program_requisition_settings(ctx, store_id)
+    }
+
+    fn get_customer_program_requisition_settings(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+    ) -> Result<Vec<CustomerProgramSettings>, RepositoryError> {
+        get_customer_program_requisition_settings(ctx, store_id)
     }
 }
 

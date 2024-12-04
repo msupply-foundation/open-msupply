@@ -12,7 +12,7 @@ export * from './useDrawer';
 export * from './useEditModal';
 export * from './useEffectAfterMounting';
 export * from './useGetPageTitle';
-export * from './useHostContext/useHostContext';
+export * from './useHostContext';
 export * from './useIsMountedRef';
 export * from './useIsScreen';
 export * from './useNotification';

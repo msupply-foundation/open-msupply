@@ -57,6 +57,7 @@ interface Unit {
   key: string;
   ratio: number;
   label: string;
+  max?: number;
 }
 
 export const MultipleNumberInputCell = <T extends RecordWithId>({
@@ -127,6 +128,7 @@ export const MultipleNumberInputCell = <T extends RecordWithId>({
           value={cellValues[index]}
           width={width}
           endAdornment={unit.label}
+          max={unit.max}
         />
       ))}
     </Box>

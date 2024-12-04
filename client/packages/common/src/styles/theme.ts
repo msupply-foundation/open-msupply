@@ -88,6 +88,7 @@ declare module '@mui/material/styles/createPalette' {
       functioningButNeedsAttention: string;
       notFunctioning: string;
       notInUse: string;
+      unserviceable: string;
       text: string;
     };
     chart: {
@@ -218,6 +219,7 @@ export const themeOptions = {
       functioningButNeedsAttention: '#f2a001',
       notFunctioning: '#de0001',
       notInUse: '#b0b0b0',
+      unserviceable: '#555555',
       text: '#fff',
     },
     vaccinationStatus: {

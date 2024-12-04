@@ -31,6 +31,11 @@ const parseStatus = (
         key: 'status.not-in-use',
         colour: 'cceStatus.notInUse',
       };
+    case StatusType.Unserviceable:
+      return {
+        key: 'status.unserviceable',
+        colour: 'cceStatus.unserviceable',
+      };
     default:
       console.warn(`Unknown equipment status: ${status}`);
   }

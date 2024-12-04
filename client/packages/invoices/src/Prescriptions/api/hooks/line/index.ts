@@ -1,6 +1,7 @@
 import {
   usePrescriptionDeleteLines,
   usePrescriptionDeleteSelectedLines,
+  usePrescriptionDeleteAllLines,
 } from './usePrescriptionDeleteLines';
 import { usePrescriptionLine } from './usePrescriptionLine';
 import { usePrescriptionRows } from './usePrescriptionRows';
@@ -11,5 +12,6 @@ export const Line = {
   usePrescriptionLine,
   usePrescriptionDeleteLines,
   usePrescriptionDeleteSelectedLines,
+  usePrescriptionDeleteAllLines,
   usePrescriptionSaveLines,
 };

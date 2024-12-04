@@ -54,6 +54,7 @@ pub fn mock_vaccine_course_item_1() -> VaccineCourseItemRow {
         id: "vaccine_course_item_1".to_string(),
         item_link_id: mock_vaccine_item_a().id,
         vaccine_course_id: mock_vaccine_course_a().id,
+        deleted_datetime: None,
     }
 }
 

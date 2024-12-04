@@ -18,6 +18,7 @@ impl Default for SchemaProgramEnrolment {
             notes: Default::default(),
             contacts: Default::default(),
             extension: Default::default(),
+            store_id: None,
         }
     }
 }

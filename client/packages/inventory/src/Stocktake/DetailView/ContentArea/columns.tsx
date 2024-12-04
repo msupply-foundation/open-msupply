@@ -17,11 +17,7 @@ import {
   ColumnDescription,
   UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
-import {
-  InventoryAdjustmentReasonRowFragment,
-  getPackVariantCell,
-  useIsPackVariantsEnabled,
-} from '@openmsupply-client/system';
+import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
 import { useStocktakeLineErrorContext } from '../../context';
@@ -69,8 +65,6 @@ export const useStocktakeColumns = ({
   const { getError } = useStocktakeLineErrorContext();
   const t = useTranslation();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
-
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columns: ColumnDescription<
     StocktakeLineFragment | StocktakeSummaryItem
@@ -135,49 +129,27 @@ export const useStocktakeColumns = ({
           { path: ['location', 'code'] },
         ]),
     },
-  ];
-
-  if (isPackVariantsEnabled) {
-    columns.push({
-      key: 'packUnit',
-      label: 'label.pack',
-      sortable: false,
-      Cell: getPackVariantCell({
-        getItemId: row => row?.item?.id ?? '',
-        getPackSizes: row => {
-          if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
-          else return [row.packSize ?? 1];
+    [
+      'itemUnit',
+      {
+        getSortValue: row => {
+          return row.item?.unitName ?? '';
         },
-        getUnitName: row => row?.item?.unitName ?? null,
-      }),
-      width: 130,
-    });
-  } else {
-    columns.push(
-      [
-        'itemUnit',
-        {
-          getSortValue: row => {
-            return row.item?.unitName ?? '';
-          },
-          accessor: ({ rowData }) => rowData.item?.unitName ?? '',
-          sortable: false,
-        },
-      ],
-      [
-        'packSize',
-        {
-          accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [
-              { path: ['lines', 'packSize'] },
-              { path: ['packSize'] },
-            ]),
-        },
-      ]
-    );
-  }
-
-  columns.push(
+        accessor: ({ rowData }) => rowData.item?.unitName ?? '',
+        sortable: false,
+      },
+    ],
+    [
+      'packSize',
+      {
+        Cell: NumberCell,
+        accessor: ({ rowData }) =>
+          getColumnProperty(rowData, [
+            { path: ['lines', 'packSize'] },
+            { path: ['packSize'] },
+          ]),
+      },
+    ],
     {
       key: 'snapshotNumPacks',
       label: 'label.snapshot-num-of-packs',
@@ -235,6 +207,9 @@ export const useStocktakeColumns = ({
     {
       key: 'difference',
       label: 'label.difference',
+      Cell: props => (
+        <NumberCell {...props} defaultValue={UNDEFINED_STRING_VALUE} />
+      ),
       align: ColumnAlign.Right,
       sortable: false,
       accessor: ({ rowData }) => {
@@ -249,6 +224,8 @@ export const useStocktakeColumns = ({
               0
             ) ?? 0;
           return (total < 0 ? Math.abs(total) : -total).toString();
+        } else if (rowData.countedNumberOfPacks === null) {
+          return null;
         } else {
           return (
             (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
@@ -274,8 +251,8 @@ export const useStocktakeColumns = ({
         ]),
     },
     expandColumn,
-    GenericColumnKey.Selection
-  );
+    GenericColumnKey.Selection,
+  ];
 
   return useColumns(columns, { sortBy, onChangeSortBy }, [
     sortBy,
@@ -285,7 +262,6 @@ export const useStocktakeColumns = ({
 
 export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
   const { getError } = useStocktakeLineErrorContext();
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   return useColumns([
     'batch',
@@ -296,23 +272,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
         accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
-    ...(isPackVariantsEnabled
-      ? [
-          {
-            key: 'packUnit',
-            label: 'label.pack',
-            sortable: false,
-            Cell: getPackVariantCell({
-              getItemId: row => row?.itemId,
-              getPackSizes: row => {
-                return [row?.packSize ?? 1];
-              },
-              getUnitName: row => row?.item.unitName ?? null,
-            }),
-            width: 130,
-          } as ColumnDescription<StocktakeLineFragment>,
-        ]
-      : ['packSize' as ColumnDescription<StocktakeLineFragment>]),
+    'packSize',
     {
       key: 'snapshotNumPacks',
       width: 150,

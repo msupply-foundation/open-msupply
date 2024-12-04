@@ -14,10 +14,6 @@ import {
 } from '@openmsupply-client/common';
 import { SupplierReturnLineFragment } from '../api';
 import { SupplierReturnItem } from '../../types';
-import {
-  getPackVariantCell,
-  useIsPackVariantsEnabled,
-} from '@openmsupply-client/system';
 
 interface UseSupplierColumnOptions {
   sortBy: SortBy<SupplierReturnLineFragment | SupplierReturnItem>;
@@ -27,9 +23,6 @@ interface UseSupplierColumnOptions {
 const expansionColumn = getRowExpandColumn<
   SupplierReturnLineFragment | SupplierReturnItem
 >();
-// const notePopoverColumn = getNotePopoverColumn<
-//   StockOutLineFragment | StockOutItem
-// >();
 
 const getUnitQuantity = (row: SupplierReturnLineFragment) =>
   row.packSize * row.numberOfPacks;
@@ -43,32 +36,9 @@ export const useSupplierReturnColumns = ({
   const { c } = useCurrency();
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
 
-  const isPackVariantsEnabled = useIsPackVariantsEnabled();
-
   const columns: ColumnDescription<
     SupplierReturnLineFragment | SupplierReturnItem
   >[] = [
-    //   [
-    //     notePopoverColumn,
-    //     {
-    //       accessor: ({ rowData }) => {
-    //         if ('lines' in rowData) {
-    //           const { lines } = rowData;
-    //           const noteSections = lines
-    //             .map(({ batch, note }) => ({
-    //               header: batch ?? '',
-    //               body: note ?? '',
-    //             }))
-    //             .filter(({ body }) => !!body);
-    //           return noteSections.length ? noteSections : null;
-    //         } else {
-    //           return rowData.batch && rowData.note
-    //             ? { header: rowData.batch, body: rowData.note }
-    //             : null;
-    //         }
-    //       },
-    //     },
-    //   ],
     [
       'itemCode',
       {
@@ -100,21 +70,6 @@ export const useSupplierReturnColumns = ({
           ]),
       },
     ],
-    //   [
-    //     'itemUnit',
-    //     {
-    //       getSortValue: row =>
-    //         getColumnPropertyAsString(row, [
-    //           { path: ['lines', 'item', 'unitName'] },
-    //           { path: ['item', 'unitName'], default: '' },
-    //         ]),
-    //       accessor: ({ rowData }) =>
-    //         getColumnProperty(rowData, [
-    //           { path: ['lines', 'item', 'unitName'] },
-    //           { path: ['item', 'unitName'], default: '' },
-    //         ]),
-    //     },
-    //   ],
     [
       'batch',
       {
@@ -133,88 +88,42 @@ export const useSupplierReturnColumns = ({
           getColumnProperty(rowData, [{ path: ['expiryDate'] }]),
       },
     ],
-    //   [
-    //     'location',
-    //     {
-    //       getSortValue: row =>
-    //         getColumnPropertyAsString(row, [
-    //           { path: ['lines', 'location', 'code'] },
-    //           { path: ['location', 'code'], default: '' },
-    //         ]),
-    //       accessor: ({ rowData }) =>
-    //         getColumnProperty(rowData, [
-    //           { path: ['lines', 'location', 'code'] },
-    //           { path: ['location', 'code'], default: '' },
-    //         ]),
-    //     },
-    //   ],
-  ];
-
-  if (isPackVariantsEnabled) {
-    columns.push({
-      key: 'packUnit',
-      label: 'label.pack',
-      sortable: false,
-      Cell: getPackVariantCell({
-        getItemId: row => {
-          if ('lines' in row) return '';
-          else return row?.item?.id;
+    [
+      'itemUnit',
+      {
+        getSortValue: row =>
+          getColumnPropertyAsString(row, [
+            { path: ['lines', 'item', 'unitName'] },
+            { path: ['item', 'unitName'], default: '' },
+          ]),
+        accessor: ({ rowData }) =>
+          getColumnProperty(rowData, [
+            { path: ['lines', 'item', 'unitName'] },
+            { path: ['item', 'unitName'], default: '' },
+          ]),
+      },
+    ],
+    [
+      'packSize',
+      {
+        getSortValue: row => {
+          if ('lines' in row) {
+            const { lines } = row;
+            return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
+          } else {
+            return row.packSize ?? '';
+          }
         },
-        getPackSizes: row => {
-          if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
-          else return [row.packSize ?? 1];
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
+          } else {
+            return rowData.packSize;
+          }
         },
-        getUnitName: row => {
-          if ('lines' in row) return row.lines[0]?.item?.unitName ?? null;
-          else return row?.item?.unitName ?? null;
-        },
-      }),
-      width: 130,
-    });
-  } else {
-    columns.push(
-      [
-        'itemUnit',
-        {
-          getSortValue: row =>
-            getColumnPropertyAsString(row, [
-              { path: ['lines', 'item', 'unitName'] },
-              { path: ['item', 'unitName'], default: '' },
-            ]),
-          accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [
-              { path: ['lines', 'item', 'unitName'] },
-              { path: ['item', 'unitName'], default: '' },
-            ]),
-        },
-      ],
-      [
-        'packSize',
-        {
-          getSortValue: row => {
-            if ('lines' in row) {
-              const { lines } = row;
-              return (
-                ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '') ?? ''
-              );
-            } else {
-              return row.packSize ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
-            } else {
-              return rowData.packSize;
-            }
-          },
-        },
-      ]
-    );
-  }
-
-  columns.push(
+      },
+    ],
     [
       'numberOfPacks',
       {
@@ -325,8 +234,8 @@ export const useSupplierReturnColumns = ({
       },
     },
     expansionColumn,
-    GenericColumnKey.Selection
-  );
+    GenericColumnKey.Selection,
+  ];
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
 };

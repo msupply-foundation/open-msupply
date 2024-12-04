@@ -18,6 +18,7 @@ fragment UserStoreNode on UserStoreNode {
     monthsUnderstock
     monthsItemsExpire
     stocktakeFrequency
+    extraFieldsInRequisition
   }
   createdDate
   homeCurrencyCode

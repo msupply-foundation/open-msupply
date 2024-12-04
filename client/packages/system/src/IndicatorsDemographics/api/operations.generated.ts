@@ -5,11 +5,26 @@ import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type DemographicIndicatorFragment = { __typename: 'DemographicIndicatorNode', id: string, name: string, baseYear: number, basePopulation: number, populationPercentage: number, year1Projection: number, year2Projection: number, year3Projection: number, year4Projection: number, year5Projection: number };
 
+export type DemographicFragment = { __typename: 'DemographicNode', id: string, name: string };
+
 export type DemographicProjectionFragment = { __typename: 'DemographicProjectionNode', id: string, baseYear: number, year1: number, year2: number, year3: number, year4: number, year5: number };
+
+export type DemographicsQueryVariables = Types.Exact<{
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  storeId: Types.Scalars['String']['input'];
+  key: Types.DemographicSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.DemographicFilterInput>;
+}>;
+
+
+export type DemographicsQuery = { __typename: 'Queries', demographics: { __typename: 'DemographicConnector', totalCount: number, nodes: Array<{ __typename: 'DemographicNode', id: string, name: string }> } };
 
 export type DemographicIndicatorsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  storeId: Types.Scalars['String']['input'];
   key: Types.DemographicIndicatorSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.DemographicIndicatorFilterInput>;
@@ -38,6 +53,7 @@ export type DemographicProjectionsByBaseYearQuery = { __typename: 'Queries', dem
 
 export type DemographicIndicatorByIdQueryVariables = Types.Exact<{
   demographicIndicatorId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -85,6 +101,12 @@ export const DemographicIndicatorFragmentDoc = gql`
   year5Projection
 }
     `;
+export const DemographicFragmentDoc = gql`
+    fragment Demographic on DemographicNode {
+  id
+  name
+}
+    `;
 export const DemographicProjectionFragmentDoc = gql`
     fragment DemographicProjection on DemographicProjectionNode {
   id
@@ -96,14 +118,34 @@ export const DemographicProjectionFragmentDoc = gql`
   year5
 }
     `;
+export const DemographicsDocument = gql`
+    query demographics($first: Int, $offset: Int, $storeId: String!, $key: DemographicSortFieldInput!, $desc: Boolean, $filter: DemographicFilterInput) {
+  demographics(
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on DemographicConnector {
+      __typename
+      nodes {
+        ...Demographic
+      }
+      totalCount
+    }
+  }
+}
+    ${DemographicFragmentDoc}`;
 export const DemographicIndicatorsDocument = gql`
-    query demographicIndicators($first: Int, $offset: Int, $key: DemographicIndicatorSortFieldInput!, $desc: Boolean, $filter: DemographicIndicatorFilterInput) {
+    query demographicIndicators($first: Int, $offset: Int, $storeId: String!, $key: DemographicIndicatorSortFieldInput!, $desc: Boolean, $filter: DemographicIndicatorFilterInput) {
   demographicIndicators(
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
     filter: $filter
+    storeId: $storeId
   ) {
     ... on DemographicIndicatorConnector {
+      __typename
       nodes {
         ...DemographicIndicator
       }
@@ -145,8 +187,11 @@ export const DemographicProjectionsByBaseYearDocument = gql`
 }
     ${DemographicProjectionFragmentDoc}`;
 export const DemographicIndicatorByIdDocument = gql`
-    query demographicIndicatorById($demographicIndicatorId: String!) {
-  demographicIndicators(filter: {id: {equalTo: $demographicIndicatorId}}) {
+    query demographicIndicatorById($demographicIndicatorId: String!, $storeId: String!) {
+  demographicIndicators(
+    filter: {id: {equalTo: $demographicIndicatorId}}
+    storeId: $storeId
+  ) {
     ... on DemographicIndicatorConnector {
       nodes {
         ...DemographicIndicator
@@ -240,6 +285,9 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
+    demographics(variables: DemographicsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DemographicsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DemographicsQuery>(DemographicsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'demographics', 'query', variables);
+    },
     demographicIndicators(variables: DemographicIndicatorsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DemographicIndicatorsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DemographicIndicatorsQuery>(DemographicIndicatorsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'demographicIndicators', 'query', variables);
     },

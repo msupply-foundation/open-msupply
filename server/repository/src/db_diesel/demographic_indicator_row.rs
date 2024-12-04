@@ -3,10 +3,7 @@ use super::{
     StorageConnection,
 };
 
-use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    Upsert,
-};
+use crate::RepositoryError;
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -14,6 +11,7 @@ use serde::{Deserialize, Serialize};
 table! {
     demographic_indicator(id) {
         id -> Text,
+        demographic_id -> Text,
         name -> Text,
         base_year -> Integer,
         base_population -> Integer,
@@ -32,6 +30,7 @@ table! {
 #[diesel(table_name = demographic_indicator)]
 pub struct DemographicIndicatorRow {
     pub id: String,
+    pub demographic_id: String,
     pub name: String,
     pub base_year: i32,
     pub base_population: i32,
@@ -52,7 +51,7 @@ impl<'a> DemographicIndicatorRowRepository<'a> {
         DemographicIndicatorRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &DemographicIndicatorRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &DemographicIndicatorRow) -> Result<(), RepositoryError> {
         diesel::insert_into(demographic_indicator_dsl::demographic_indicator)
             .values(row)
             .on_conflict(demographic_indicator_dsl::id)
@@ -60,22 +59,7 @@ impl<'a> DemographicIndicatorRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
 
-        self.insert_changelog(row.id.to_owned(), RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row_id: String,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::DemographicIndicator,
-            record_id: row_id,
-            row_action: action,
-            store_id: None,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+        Ok(())
     }
 
     pub fn find_one_by_id(
@@ -87,20 +71,5 @@ impl<'a> DemographicIndicatorRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
-    }
-}
-
-impl Upsert for DemographicIndicatorRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = DemographicIndicatorRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            DemographicIndicatorRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

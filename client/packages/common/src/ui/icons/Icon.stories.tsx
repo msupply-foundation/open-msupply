@@ -19,7 +19,6 @@ import { CheckboxEmptyIcon } from './CheckboxEmpty';
 import { CheckboxIndeterminateIcon } from './CheckboxIndeterminate';
 import { ChevronDownIcon } from './ChevronDown';
 import { ChevronsDownIcon } from './ChevronsDown';
-import { ChevronUpIcon } from './ChevronUp';
 import { CircleAlertIcon } from './CircleAlert';
 import { CircleIcon } from './Circle';
 import { ClockIcon } from './Clock';

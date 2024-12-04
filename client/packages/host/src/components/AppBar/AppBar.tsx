@@ -11,6 +11,10 @@ import {
   AppBarTabs,
   useAuthContext,
   Theme,
+  useHostContext,
+  MinimiseIcon,
+  ButtonWithIcon,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SectionIcon } from './SectionIcon';
@@ -26,9 +30,11 @@ const StyledContainer = styled(Box)(({ theme }) => ({
 }));
 
 export const AppBar: React.FC = () => {
+  const t = useTranslation();
   const { ref } = useAppBarRect();
   const isDashboard = useMatch(AppRoute.Dashboard);
   const { store } = useAuthContext();
+  const { fullScreen, setFullScreen } = useHostContext();
   const hasVaccineModule = store?.preferences.vaccineModule ?? false;
   const containerStyle = isDashboard
     ? { borderBottom: 0, minHeight: '10px' }
@@ -36,20 +42,44 @@ export const AppBar: React.FC = () => {
 
   return (
     <>
-      {hasVaccineModule && <ColdchainNotification />}
-      <StyledContainer ref={ref} sx={containerStyle}>
-        {!isDashboard && (
-          <Toolbar disableGutters>
-            <Box style={{ marginInlineEnd: 5 }}>
-              <SectionIcon />
-            </Box>
-            <Breadcrumbs />
-            <AppBarButtons />
-          </Toolbar>
-        )}
-        <AppBarContent />
-        {!isDashboard && <AppBarTabs />}
-      </StyledContainer>
+      <Box display={fullScreen ? 'none' : undefined}>
+        {hasVaccineModule && <ColdchainNotification />}
+        <StyledContainer ref={ref} sx={containerStyle}>
+          {!isDashboard && (
+            <Toolbar disableGutters>
+              <Box style={{ marginInlineEnd: 5 }}>
+                <SectionIcon />
+              </Box>
+              <Breadcrumbs />
+              <AppBarButtons />
+            </Toolbar>
+          )}
+          <AppBarContent />
+          {!isDashboard && <AppBarTabs />}
+        </StyledContainer>
+      </Box>
+
+      {/* Show the exit button in the top right of the page if full screen mode enabled */}
+      {fullScreen && (
+        <Box
+          sx={{
+            position: 'absolute',
+            right: 15,
+            top: 15,
+            height: '50px',
+            zIndex: 999999,
+          }}
+        >
+          <ButtonWithIcon
+            sx={{ minWidth: '0' }}
+            variant="outlined"
+            Icon={<MinimiseIcon />}
+            onClick={() => setFullScreen(false)}
+            label={t('label.exit')}
+            shrinkThreshold="xl"
+          />
+        </Box>
+      )}
     </>
   );
 };

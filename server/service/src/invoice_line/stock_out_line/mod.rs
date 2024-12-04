@@ -35,7 +35,7 @@ impl StockOutType {
 }
 
 pub(crate) fn invoice_backdated_date(invoice: &InvoiceRow) -> Option<NaiveDateTime> {
-    if let Some(backdated_datetime) = invoice.backdated_datetime.clone() {
+    if let Some(backdated_datetime) = invoice.backdated_datetime {
         if backdated_datetime < invoice.created_datetime {
             return Some(backdated_datetime);
         }

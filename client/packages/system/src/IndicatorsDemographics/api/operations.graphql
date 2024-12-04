@@ -11,6 +11,11 @@ fragment DemographicIndicator on DemographicIndicatorNode {
   year5Projection
 }
 
+fragment Demographic on DemographicNode {
+  id
+  name
+}
+
 fragment DemographicProjection on DemographicProjectionNode {
   id
   baseYear
@@ -21,9 +26,34 @@ fragment DemographicProjection on DemographicProjectionNode {
   year5
 }
 
+query demographics(
+  $first: Int
+  $offset: Int
+  $storeId: String!
+  $key: DemographicSortFieldInput!
+  $desc: Boolean
+  $filter: DemographicFilterInput
+) {
+  demographics(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on DemographicConnector {
+      __typename
+      nodes {
+        ...Demographic
+      }
+      totalCount
+    }
+  }
+}
+
 query demographicIndicators(
   $first: Int
   $offset: Int
+  $storeId: String!
   $key: DemographicIndicatorSortFieldInput!
   $desc: Boolean
   $filter: DemographicIndicatorFilterInput
@@ -32,8 +62,10 @@ query demographicIndicators(
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
     filter: $filter
+    storeId: $storeId
   ) {
     ... on DemographicIndicatorConnector {
+      __typename
       nodes {
         ...DemographicIndicator
       }
@@ -78,8 +110,14 @@ query demographicProjectionsByBaseYear($baseYear: Int!) {
   }
 }
 
-query demographicIndicatorById($demographicIndicatorId: String!) {
-  demographicIndicators(filter: { id: { equalTo: $demographicIndicatorId } }) {
+query demographicIndicatorById(
+  $demographicIndicatorId: String!
+  $storeId: String!
+) {
+  demographicIndicators(
+    filter: { id: { equalTo: $demographicIndicatorId } }
+    storeId: $storeId
+  ) {
     ... on DemographicIndicatorConnector {
       nodes {
         ...DemographicIndicator

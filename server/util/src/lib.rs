@@ -27,3 +27,6 @@ pub use error::*;
 
 mod file;
 pub use file::*;
+
+mod gs1;
+pub use gs1::*;

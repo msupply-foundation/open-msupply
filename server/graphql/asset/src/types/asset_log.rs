@@ -34,6 +34,7 @@ pub enum AssetLogStatusInput {
     FunctioningButNeedsAttention,
     NotFunctioning,
     Decommissioned,
+    Unserviceable,
 }
 
 impl AssetLogStatusInput {
@@ -46,6 +47,7 @@ impl AssetLogStatusInput {
             }
             AssetLogStatusInput::NotFunctioning => AssetLogStatus::NotFunctioning,
             AssetLogStatusInput::Decommissioned => AssetLogStatus::Decommissioned,
+            AssetLogStatusInput::Unserviceable => AssetLogStatus::Unserviceable,
         }
     }
 }
@@ -107,6 +109,7 @@ pub enum StatusType {
     FunctioningButNeedsAttention,
     NotFunctioning,
     Decommissioned,
+    Unserviceable,
 }
 impl StatusType {
     pub fn from_domain(status: &AssetLogStatus) -> Self {
@@ -118,6 +121,7 @@ impl StatusType {
             }
             AssetLogStatus::NotFunctioning => StatusType::NotFunctioning,
             AssetLogStatus::Decommissioned => StatusType::Decommissioned,
+            AssetLogStatus::Unserviceable => StatusType::Unserviceable,
         }
     }
 }

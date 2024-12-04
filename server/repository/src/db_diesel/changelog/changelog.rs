@@ -74,6 +74,7 @@ pub enum ChangelogTableName {
     Barcode,
     Clinician,
     ClinicianStoreJoin,
+    ColdStorageType,
     Name,
     NameStoreJoin,
     Document,
@@ -101,11 +102,16 @@ pub enum ChangelogTableName {
     NameOmsFields,
     RnrForm,
     RnrFormLine,
-    DemographicIndicator,
+    Demographic,
     VaccineCourse,
     VaccineCourseItem,
     VaccineCourseDose,
     Vaccination,
+    ItemVariant,
+    PackagingVariant,
+    IndicatorValue,
+    BundledItem,
+    Item,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -144,6 +150,7 @@ impl ChangelogTableName {
             ChangelogTableName::TemperatureBreachConfig => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::TemperatureLog => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Currency => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::Item => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::PackVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetClass => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetCategory => ChangeLogSyncStyle::Central,
@@ -162,11 +169,16 @@ impl ChangelogTableName {
             ChangelogTableName::NameOmsFields => ChangeLogSyncStyle::Central,
             ChangelogTableName::RnrForm => ChangeLogSyncStyle::Remote,
             ChangelogTableName::RnrFormLine => ChangeLogSyncStyle::Remote,
-            ChangelogTableName::DemographicIndicator => ChangeLogSyncStyle::Central,
+            ChangelogTableName::Demographic => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourse => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourseItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourseDose => ChangeLogSyncStyle::Central,
             ChangelogTableName::Vaccination => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::ColdStorageType => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::ItemVariant => ChangeLogSyncStyle::Central,
+            ChangelogTableName::PackagingVariant => ChangeLogSyncStyle::Central,
+            ChangelogTableName::IndicatorValue => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::BundledItem => ChangeLogSyncStyle::Central,
         }
     }
 }

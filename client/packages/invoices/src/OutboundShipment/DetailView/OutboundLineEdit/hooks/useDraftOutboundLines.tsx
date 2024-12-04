@@ -73,11 +73,12 @@ export const useDraftOutboundLines = (
           const invoiceLine = lines?.find(
             ({ stockLine }) => stockLine?.id === batch.id
           );
-
           if (invoiceLine) {
             return createDraftStockOutLine({
               invoiceLine,
+              stockLine: batch,
               invoiceId,
+              invoiceStatus: status,
             });
           } else {
             return createDraftStockOutLineFromStockLine({
@@ -98,7 +99,11 @@ export const useDraftOutboundLines = (
           const placeHolderItem = lines?.find(l => l.item.id === item.id)?.item;
           if (!!placeHolderItem) placeholder.item = placeHolderItem;
           rows.push(
-            createDraftStockOutLine({ invoiceId, invoiceLine: placeholder })
+            createDraftStockOutLine({
+              invoiceId,
+              invoiceLine: placeholder,
+              invoiceStatus: status,
+            })
           );
         } else {
           rows.push(createStockOutPlaceholderRow(invoiceId, item.id));

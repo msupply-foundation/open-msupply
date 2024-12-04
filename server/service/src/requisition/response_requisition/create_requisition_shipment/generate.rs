@@ -99,6 +99,7 @@ pub fn generate_invoice_lines(
             inventory_adjustment_reason_id: None,
             return_reason_id: None,
             foreign_currency_price_before_tax: None,
+            item_variant_id: None,
         });
     }
 

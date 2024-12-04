@@ -45,6 +45,10 @@ impl VaccinationCardNode {
         &self.vaccination_card.enrolment.patient_row.last_name
     }
 
+    pub async fn enrolment_store_id(&self) -> &Option<String> {
+        &self.vaccination_card.enrolment.row.store_id
+    }
+
     pub async fn items(&self) -> Vec<VaccinationCardItemNode> {
         self.vaccination_card
             .items

@@ -152,6 +152,10 @@
             "$ref": "#/definitions/ProgramStatus"
           },
           "type": "array"
+        },
+        "storeId": {
+          "description": "Store ID of the facility where the patient was originally enrolled",
+          "type": "string"
         }
       },
       "required": ["enrolmentDatetime"],

@@ -17,9 +17,11 @@ const RNR_FORM_LINE_1: (&str, &str) = (
         "snapshot_quantity_consumed": 0.0,
         "adjusted_quantity_consumed": 0.0,
         "snapshot_adjustments": 0.0,
+        "entered_losses": 1.0,
         "stock_out_duration": 0,
         "final_balance": 0.0,
         "maximum_quantity": 0.0,
+        "minimum_quantity": 0.0,
         "expiry_date": null,
         "calculated_requested_quantity": 0.0,
         "comment": null,
@@ -54,6 +56,8 @@ fn rnr_form_line_1() -> RnRFormLineRow {
         confirmed: false,
         previous_monthly_consumption_values: "".to_string(),
         low_stock: RnRFormLowStock::Ok,
+        entered_losses: Some(1.0),
+        minimum_quantity: 0.0,
     }
 }
 

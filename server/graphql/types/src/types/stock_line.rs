@@ -33,6 +33,9 @@ impl StockLineNode {
     pub async fn item_id(&self) -> &str {
         &self.item_row().id
     }
+    pub async fn item_name(&self) -> &str {
+        &self.item_row().name
+    }
     pub async fn store_id(&self) -> &str {
         &self.row().store_id
     }
@@ -41,6 +44,9 @@ impl StockLineNode {
     }
     pub async fn pack_size(&self) -> f64 {
         self.row().pack_size
+    }
+    pub async fn item_variant_id(&self) -> &Option<String> {
+        &self.row().item_variant_id
     }
     pub async fn cost_price_per_pack(&self) -> f64 {
         self.row().cost_price_per_pack

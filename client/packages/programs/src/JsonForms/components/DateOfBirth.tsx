@@ -74,8 +74,6 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
 
-  const { months, days } = DateUtils.ageInMonthsAndDays(dob ?? '');
-
   return (
     <DetailInputWithLabelRow
       sx={DefaultFormRowSx}
@@ -86,7 +84,7 @@ const UIComponent = (props: ControlProps) => {
         <Box display="flex" alignItems="center" gap={FORM_GAP} width="100%">
           <BaseDatePickerInput
             // undefined is displayed as "now" and null as unset
-            value={formatDateTime.getLocalDate(dob)}
+            value={DateUtils.getNaiveDate(dob)}
             onChange={onChangeDoB}
             format="P"
             width={135}
@@ -115,8 +113,7 @@ const UIComponent = (props: ControlProps) => {
             </Box>
           ) : (
             <Typography fontSize="85%" whiteSpace="nowrap">
-              {months > 0 && t('label.age-months-and', { count: months })}
-              {t('label.age-days', { count: days })}
+              {formatDateTime.getDisplayAge(dob)}
             </Typography>
           )}
         </Box>

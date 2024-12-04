@@ -15,11 +15,17 @@ bench = false
 default-target = "x86_64-pc-windows-msvc"
 
 [target.'cfg(windows)'.dependencies]
+windows-service = "0.5.0"
+eventlog = "0.2.2"
+
+[dependencies]
 actix-web = { workspace = true }
 futures = { workspace = true }
 log = { workspace = true }
 server = { path = "../server", default-features = false }
 service = { path = "../service" }
 tokio = { workspace = true }
-windows-service = "0.5.0"
-eventlog = "0.2.2"
+log-panics = { workspace = true }
+
+
+

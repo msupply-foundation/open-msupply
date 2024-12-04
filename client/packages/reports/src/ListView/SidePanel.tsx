@@ -77,7 +77,7 @@ export const SidePanelComponent = () => {
           </PanelRow>
           <PanelRow>
             <NumericTextInput
-              label={t('label.leads-time')}
+              label={t('label.lead-time')}
               decimalLimit={2}
               endAdornment={t('label.months')}
               value={preferences?.monthsLeadTime}

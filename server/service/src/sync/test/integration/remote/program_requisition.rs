@@ -21,7 +21,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
         // STEP 1 - insert
         let period_schedule1 = PeriodScheduleRow {
             id: uuid(),
-            name: "Weekly".to_string(),
+            name: uuid(),
         };
         let period_schedule_json1 = json!({
             "ID": period_schedule1.id,
@@ -30,7 +30,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
 
         let period_schedule2 = PeriodScheduleRow {
             id: uuid(),
-            name: "Monthly".to_string(),
+            name: uuid(),
         };
         let period_schedule_json2 = json!({
             "ID": period_schedule2.id,
@@ -60,6 +60,8 @@ impl SyncRecordTester for ProgramRequisitionTester {
             code: uuid(),
             description: uuid(),
             is_active: true,
+            is_default_price_list: false,
+            discount_percentage: Some(0.0),
         };
         let master_list_json = json!({
         "ID": master_list_row.id,
@@ -91,7 +93,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
                             "type": "Order type"
                         }
                         ],
-                        "periodScheduleName": "Weekly"
+                        "periodScheduleName": period_schedule1.name
                     },
                 &name_tag2.name: {
                     "orderTypes": [
@@ -105,7 +107,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
                             "type": "Order type"
                         }
                         ],
-                        "periodScheduleName": "Monthly"
+                        "periodScheduleName": period_schedule2.name
                     }
                 }
             }
@@ -128,7 +130,6 @@ impl SyncRecordTester for ProgramRequisitionTester {
             master_list_id: Some(master_list_row.id.clone()),
             context_id: master_list_row.id.clone(),
             is_immunisation: false,
-            deleted_datetime: None,
         };
 
         let program_requisition_settings1 = ProgramRequisitionSettingsRow {
@@ -178,6 +179,8 @@ impl SyncRecordTester for ProgramRequisitionTester {
             code: uuid(),
             description: uuid(),
             is_active: false,
+            is_default_price_list: false,
+            discount_percentage: Some(0.0),
         };
         let master_list_json2 = json!({
         "ID": master_list_row2.id,
@@ -191,7 +194,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
             "storeTags": {
                 &name_tag1.name: {
                     "orderTypes": [],
-                    "periodScheduleName": "Weekly"
+                    "periodScheduleName": period_schedule1.name
                     }
                 }
         }});
@@ -213,7 +216,6 @@ impl SyncRecordTester for ProgramRequisitionTester {
             master_list_id: Some(master_list_row2.id.clone()),
             context_id: master_list_row2.id.clone(),
             is_immunisation: false,
-            deleted_datetime: None,
         };
 
         let program_requisition_settings3 = ProgramRequisitionSettingsRow {
@@ -281,7 +283,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
                             "thresholdMOS": 3,
                             "type": "Order type"
                         }],
-                        "periodScheduleName": "Weekly"
+                        "periodScheduleName": period_schedule1.name
                     }
                 }
             }});

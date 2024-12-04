@@ -5,6 +5,9 @@ export const useDemographicData = {
   utils: {
     demographics: Utils.useDemographicsApi,
   },
+  demographics: {
+    list: Document.useDemographics,
+  },
   indicator: {
     get: Document.useDemographicIndicator,
     list: Document.useDemographicIndicators,

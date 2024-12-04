@@ -49,7 +49,7 @@ export type GenerateSupplierReturnLinesQueryVariables = Types.Exact<{
 
 export type GenerateSupplierReturnLinesQuery = { __typename: 'Queries', generateSupplierReturnLines: { __typename: 'SupplierReturnLineConnector', nodes: Array<{ __typename: 'SupplierReturnLineNode', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string, note?: string | null, reasonId?: string | null, itemName: string, itemCode: string, item: { __typename: 'ItemNode', id: string, unitName?: string | null } }> } };
 
-export type GenerateCustomerReturnLineFragment = { __typename: 'CustomerReturnLineNode', batch?: string | null, expiryDate?: string | null, id: string, packSize: number, stockLineId?: string | null, numberOfPacksReturned: number, numberOfPacksIssued?: number | null, note?: string | null, reasonId?: string | null, itemName: string, itemCode: string, item: { __typename: 'ItemNode', id: string, unitName?: string | null, code: string, name: string } };
+export type GenerateCustomerReturnLineFragment = { __typename: 'CustomerReturnLineNode', batch?: string | null, expiryDate?: string | null, id: string, packSize: number, stockLineId?: string | null, numberOfPacksReturned: number, numberOfPacksIssued?: number | null, note?: string | null, reasonId?: string | null, itemName: string, itemCode: string, itemVariantId?: string | null, item: { __typename: 'ItemNode', id: string, unitName?: string | null, code: string, name: string } };
 
 export type GenerateCustomerReturnLinesQueryVariables = Types.Exact<{
   input: Types.GenerateCustomerReturnLinesInput;
@@ -57,7 +57,7 @@ export type GenerateCustomerReturnLinesQueryVariables = Types.Exact<{
 }>;
 
 
-export type GenerateCustomerReturnLinesQuery = { __typename: 'Queries', generateCustomerReturnLines: { __typename: 'GeneratedCustomerReturnLineConnector', nodes: Array<{ __typename: 'CustomerReturnLineNode', batch?: string | null, expiryDate?: string | null, id: string, packSize: number, stockLineId?: string | null, numberOfPacksReturned: number, numberOfPacksIssued?: number | null, note?: string | null, reasonId?: string | null, itemName: string, itemCode: string, item: { __typename: 'ItemNode', id: string, unitName?: string | null, code: string, name: string } }> } };
+export type GenerateCustomerReturnLinesQuery = { __typename: 'Queries', generateCustomerReturnLines: { __typename: 'GeneratedCustomerReturnLineConnector', nodes: Array<{ __typename: 'CustomerReturnLineNode', batch?: string | null, expiryDate?: string | null, id: string, packSize: number, stockLineId?: string | null, numberOfPacksReturned: number, numberOfPacksIssued?: number | null, note?: string | null, reasonId?: string | null, itemName: string, itemCode: string, itemVariantId?: string | null, item: { __typename: 'ItemNode', id: string, unitName?: string | null, code: string, name: string } }> } };
 
 export type SupplierReturnByNumberQueryVariables = Types.Exact<{
   invoiceNumber: Types.Scalars['Int']['input'];
@@ -352,6 +352,7 @@ export const GenerateCustomerReturnLineFragmentDoc = gql`
   reasonId
   itemName
   itemCode
+  itemVariantId
   item {
     id
     unitName

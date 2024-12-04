@@ -24,12 +24,22 @@ export const SelectItemAndBatch = ({
   const t = useTranslation();
 
   const vaccineItemOptions = useMemo(() => {
-    return (
+    const options =
       dose?.vaccineCourse.vaccineCourseItems?.map(item => ({
         label: item.name,
         value: item.itemId,
-      })) ?? []
-    );
+      })) ?? [];
+
+    // If the vaccine item for the selected stock line has since been deleted
+    // Add to list so user can still see it
+    if (!!draft.stockLine && !options.some(o => o.value === draft.itemId)) {
+      options.push({
+        label: draft.stockLine.itemName ?? '',
+        value: draft.stockLine.itemId,
+      });
+    }
+
+    return options;
   }, [dose.id]);
 
   const isHistorical = draft.date?.toDateString() !== new Date().toDateString();

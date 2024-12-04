@@ -6,11 +6,11 @@ import { VaccineCourseItemFragmentDoc } from '../../../../programs/src/api/opera
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type VaccinationCourseDoseFragment = { __typename: 'VaccineCourseDoseNode', id: string, label: string, vaccineCourse: { __typename: 'VaccineCourseNode', id: string, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null } };
 
-export type VaccinationDetailFragment = { __typename: 'VaccinationNode', id: string, facilityNameId?: string | null, facilityFreeText?: string | null, vaccinationDate: string, given: boolean, notGivenReason?: string | null, comment?: string | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null } | null, invoice?: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | null };
+export type VaccinationDetailFragment = { __typename: 'VaccinationNode', id: string, facilityNameId?: string | null, facilityFreeText?: string | null, vaccinationDate: string, given: boolean, notGivenReason?: string | null, comment?: string | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, itemName: string, batch?: string | null } | null, invoice?: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | null };
 
 export type VaccinationCardItemFragment = { __typename: 'VaccinationCardItemNode', id: string, vaccineCourseId: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, customAgeLabel?: string | null, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null, batch?: string | null, facilityName?: string | null, status?: Types.VaccinationCardItemNodeStatus | null };
 
-export type VaccinationCardFragment = { __typename: 'VaccinationCardNode', id: string, patientFirstName?: string | null, patientLastName?: string | null, programName: string, items: Array<{ __typename: 'VaccinationCardItemNode', id: string, vaccineCourseId: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, customAgeLabel?: string | null, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null, batch?: string | null, facilityName?: string | null, status?: Types.VaccinationCardItemNodeStatus | null }> };
+export type VaccinationCardFragment = { __typename: 'VaccinationCardNode', id: string, patientFirstName?: string | null, patientLastName?: string | null, programName: string, enrolmentStoreId?: string | null, items: Array<{ __typename: 'VaccinationCardItemNode', id: string, vaccineCourseId: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, customAgeLabel?: string | null, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null, batch?: string | null, facilityName?: string | null, status?: Types.VaccinationCardItemNodeStatus | null }> };
 
 export type VaccinationCardQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -18,7 +18,7 @@ export type VaccinationCardQueryVariables = Types.Exact<{
 }>;
 
 
-export type VaccinationCardQuery = { __typename: 'Queries', vaccinationCard: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'VaccinationCardNode', id: string, patientFirstName?: string | null, patientLastName?: string | null, programName: string, items: Array<{ __typename: 'VaccinationCardItemNode', id: string, vaccineCourseId: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, customAgeLabel?: string | null, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null, batch?: string | null, facilityName?: string | null, status?: Types.VaccinationCardItemNodeStatus | null }> } };
+export type VaccinationCardQuery = { __typename: 'Queries', vaccinationCard: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'VaccinationCardNode', id: string, patientFirstName?: string | null, patientLastName?: string | null, programName: string, enrolmentStoreId?: string | null, items: Array<{ __typename: 'VaccinationCardItemNode', id: string, vaccineCourseId: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, customAgeLabel?: string | null, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null, batch?: string | null, facilityName?: string | null, status?: Types.VaccinationCardItemNodeStatus | null }> } };
 
 export type VaccinationQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -26,7 +26,7 @@ export type VaccinationQueryVariables = Types.Exact<{
 }>;
 
 
-export type VaccinationQuery = { __typename: 'Queries', vaccination?: { __typename: 'VaccinationNode', id: string, facilityNameId?: string | null, facilityFreeText?: string | null, vaccinationDate: string, given: boolean, notGivenReason?: string | null, comment?: string | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null } | null, invoice?: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | null } | null };
+export type VaccinationQuery = { __typename: 'Queries', vaccination?: { __typename: 'VaccinationNode', id: string, facilityNameId?: string | null, facilityFreeText?: string | null, vaccinationDate: string, given: boolean, notGivenReason?: string | null, comment?: string | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, itemName: string, batch?: string | null } | null, invoice?: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | null } | null };
 
 export type VaccineCourseDoseQueryVariables = Types.Exact<{
   doseId: Types.Scalars['String']['input'];
@@ -80,6 +80,7 @@ export const VaccinationDetailFragmentDoc = gql`
   stockLine {
     id
     itemId
+    itemName
     batch
   }
   invoice {
@@ -115,6 +116,7 @@ export const VaccinationCardFragmentDoc = gql`
   patientFirstName
   patientLastName
   programName
+  enrolmentStoreId
   items {
     ... on VaccinationCardItemNode {
       ...VaccinationCardItem

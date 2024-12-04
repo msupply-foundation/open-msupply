@@ -1,4 +1,5 @@
 use repository::{
+    demographic::{Demographic, DemographicFilter, DemographicRepository, DemographicSort},
     demographic_indicator::{
         DemographicIndicator, DemographicIndicatorFilter, DemographicIndicatorRepository,
         DemographicIndicatorSort,
@@ -13,6 +14,21 @@ use crate::{
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
+
+pub fn get_demographics(
+    connection: &StorageConnection,
+    pagination: Option<PaginationOption>,
+    filter: Option<DemographicFilter>,
+    sort: Option<DemographicSort>,
+) -> Result<ListResult<Demographic>, ListError> {
+    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let repository = DemographicRepository::new(connection);
+
+    Ok(ListResult {
+        rows: repository.query(pagination, filter.clone(), sort)?,
+        count: i64_to_u32(repository.count(filter)?),
+    })
+}
 
 pub fn get_demographic_indicators(
     connection: &StorageConnection,

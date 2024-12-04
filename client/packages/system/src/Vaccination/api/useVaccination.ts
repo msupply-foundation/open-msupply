@@ -17,6 +17,7 @@ import { OTHER_FACILITY } from '../Components/FacilitySearchInput';
 export interface VaccinationStockLine {
   id: string;
   itemId: string;
+  itemName?: string;
   batch?: string | null;
 }
 

@@ -115,7 +115,10 @@ const Template: StoryFn<{ color: 'primary' | 'secondary' }> = ({ color }) => {
         </Wrapper>
 
         <Wrapper text="Dialog OK & Next button">
-          <DialogButton variant="next" onClick={getOnClick('OK & Next!')} />
+          <DialogButton
+            variant="next-and-ok"
+            onClick={getOnClick('OK & Next!')}
+          />
         </Wrapper>
 
         <Wrapper text="Dialog cancel button">

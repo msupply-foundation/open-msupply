@@ -26,6 +26,8 @@ table! {
         finalised_datetime -> Nullable<Timestamp>,
         status -> crate::db_diesel::rnr_form_row::RnRFormStatusMapping,
         linked_requisition_id -> Nullable<Text>,
+        their_reference -> Nullable<Text>,
+        comment -> Nullable<Text>,
     }
 }
 
@@ -56,6 +58,8 @@ pub struct RnRFormRow {
     pub finalised_datetime: Option<NaiveDateTime>,
     pub status: RnRFormStatus,
     pub linked_requisition_id: Option<String>,
+    pub their_reference: Option<String>,
+    pub comment: Option<String>,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]

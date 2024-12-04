@@ -1,6 +1,7 @@
 import {
   DemographicIndicatorSortFieldInput,
   DemographicProjectionSortFieldInput,
+  DemographicSortFieldInput,
   FilterByWithBoolean,
   InsertDemographicIndicatorInput,
   InsertDemographicProjectionInput,
@@ -10,6 +11,7 @@ import {
   UpdateDemographicProjectionInput,
 } from '@openmsupply-client/common';
 import {
+  DemographicFragment,
   DemographicIndicatorFragment,
   DemographicProjectionFragment,
   Sdk,
@@ -23,6 +25,13 @@ export type ListParams<T> = {
 };
 // Leaving this here as probably want to sort by other values in future ie population percentage
 const Parsers = {
+  toSortField: (sortBy: SortBy<DemographicFragment>) => {
+    const fields: Record<string, DemographicSortFieldInput> = {
+      id: DemographicSortFieldInput.Id,
+      name: DemographicSortFieldInput.Name,
+    };
+    return fields[sortBy.key] ?? DemographicSortFieldInput.Id;
+  },
   toIndicatorSortField: (sortBy: SortBy<DemographicIndicatorFragment>) => {
     const fields: Record<string, DemographicIndicatorSortFieldInput> = {
       id: DemographicIndicatorSortFieldInput.Id,
@@ -38,11 +47,31 @@ const Parsers = {
   },
 };
 
-export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
+export const getDemographicIndicatorQueries = (sdk: Sdk, storeId: string) => ({
+  getDemographics: {
+    list: async ({
+      first,
+      offset,
+      sortBy,
+      filterBy,
+    }: ListParams<DemographicFragment>) => {
+      const result = await sdk.demographics({
+        first,
+        offset,
+        key: Parsers.toSortField(sortBy),
+        desc: sortBy.isDesc,
+        filter: filterBy,
+        storeId: storeId,
+      });
+
+      return result?.demographics;
+    },
+  },
   getIndicators: {
     byId: async (demographicIndicatorId: string) => {
       const result = await sdk.demographicIndicatorById({
         demographicIndicatorId,
+        storeId,
       });
       const { demographicIndicators } = result;
       if (
@@ -66,6 +95,7 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
         key: Parsers.toIndicatorSortField(sortBy),
         desc: sortBy.isDesc,
         filter: filterBy,
+        storeId: storeId,
       });
 
       return result?.demographicIndicators;
@@ -74,6 +104,7 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
       const result = await sdk.demographicIndicators({
         key: Parsers.toIndicatorSortField(sortBy),
         desc: sortBy.isDesc,
+        storeId: storeId,
       });
 
       const demographicIndicators = result?.demographicIndicators;

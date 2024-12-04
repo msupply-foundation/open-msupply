@@ -3,7 +3,7 @@ use super::{
     validate::{check_dose_min_ages_are_in_order, check_vaccine_course_name_exists_for_program},
 };
 use crate::{
-    activity_log::activity_log_entry, demographic::validate::check_demographic_indicator_exists,
+    activity_log::activity_log_entry, demographic::validate::check_demographic_exists,
     service_provider::ServiceContext, vaccine_course::validate::check_vaccine_course_exists,
     SingleRecordError,
 };
@@ -12,6 +12,7 @@ use repository::{
     vaccine_course::{
         vaccine_course_dose::{VaccineCourseDoseFilter, VaccineCourseDoseRepository},
         vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
+        vaccine_course_item::{VaccineCourseItemFilter, VaccineCourseItemRepository},
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
     },
@@ -24,7 +25,7 @@ pub enum UpdateVaccineCourseError {
     VaccineCourseDoesNotExist,
     DoseMinAgesAreNotInOrder,
     CreatedRecordNotFound,
-    DemographicIndicatorDoesNotExist,
+    DemographicDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
@@ -40,6 +41,7 @@ impl VaccineCourseItemInput {
             id: self.id,
             item_link_id: self.item_id, // Todo item_link_id ? https://github.com/msupply-foundation/open-msupply/issues/4129
             vaccine_course_id,
+            deleted_datetime: None,
         }
     }
 }
@@ -75,7 +77,7 @@ pub struct UpdateVaccineCourse {
     pub name: Option<String>,
     pub vaccine_items: Vec<VaccineCourseItemInput>,
     pub doses: Vec<VaccineCourseDoseInput>,
-    pub demographic_indicator_id: Option<String>,
+    pub demographic_id: Option<String>,
     pub coverage_rate: f64,
     pub is_active: bool,
     pub wastage_rate: f64,
@@ -89,18 +91,24 @@ pub fn update_vaccine_course(
         .connection
         .transaction_sync(|connection| {
             let old_row = validate(&input, connection)?;
-            let (new_vaccine_course, doses_to_delete) =
-                generate(connection, old_row, input.clone())?;
-            VaccineCourseRowRepository::new(connection).upsert_one(&new_vaccine_course)?;
+            let GenerateResult {
+                updated_course,
+                doses_to_delete,
+                vaccine_items_to_delete,
+                vaccine_items_to_add,
+            } = generate(connection, old_row, input.clone())?;
+            VaccineCourseRowRepository::new(connection).upsert_one(&updated_course)?;
 
-            // Update ITEMS - Delete and recreate all records.
-            // If nothing has changed, we still need to query and compare each record so this is the simplest way
+            // Update Items
+            // Can't delete and recreate due to foreign key constraints - we'll soft delete the explicitly deleted items, and upsert the rest
             let item_repo = VaccineCourseItemRowRepository::new(connection);
-            // Delete the existing vaccine course items
-            item_repo.delete_by_vaccine_course_id(&new_vaccine_course.id)?;
+            // Delete any existing items that were not in the new list
+            for id in vaccine_items_to_delete {
+                item_repo.mark_deleted(&id)?;
+            }
 
             // Insert the new vaccine course items
-            for item in input.clone().vaccine_items {
+            for item in vaccine_items_to_add {
                 item_repo.upsert_one(&item.to_domain(input.clone().id))?;
             }
 
@@ -121,12 +129,12 @@ pub fn update_vaccine_course(
             activity_log_entry(
                 ctx,
                 ActivityLogType::VaccineCourseUpdated,
-                Some(new_vaccine_course.id.clone()),
+                Some(updated_course.id.clone()),
                 None,
                 None,
             )?;
 
-            get_vaccine_course(&ctx.connection, new_vaccine_course.id)
+            get_vaccine_course(&ctx.connection, updated_course.id)
                 .map_err(UpdateVaccineCourseError::from)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -144,9 +152,9 @@ pub fn validate(
         None => return Err(UpdateVaccineCourseError::VaccineCourseDoesNotExist),
     };
 
-    if let Some(demographic_indicator_id) = &input.demographic_indicator_id {
-        if check_demographic_indicator_exists(demographic_indicator_id, connection)?.is_none() {
-            return Err(UpdateVaccineCourseError::DemographicIndicatorDoesNotExist);
+    if let Some(demographic_id) = &input.demographic_id {
+        if check_demographic_exists(demographic_id, connection)?.is_none() {
+            return Err(UpdateVaccineCourseError::DemographicDoesNotExist);
         }
     }
 
@@ -173,25 +181,32 @@ pub fn validate(
     Ok(old_row)
 }
 
-pub fn generate(
+struct GenerateResult {
+    updated_course: VaccineCourseRow,
+    doses_to_delete: Vec<String>,
+    vaccine_items_to_delete: Vec<String>,
+    vaccine_items_to_add: Vec<VaccineCourseItemInput>,
+}
+
+fn generate(
     connection: &StorageConnection,
     old_row: VaccineCourseRow,
     UpdateVaccineCourse {
         id,
         name,
-        vaccine_items: _, // Updated in main function
+        vaccine_items,
         doses,
-        demographic_indicator_id,
+        demographic_id,
         coverage_rate,
         is_active,
         wastage_rate,
     }: UpdateVaccineCourse,
-) -> Result<(VaccineCourseRow, Vec<String>), RepositoryError> {
+) -> Result<GenerateResult, RepositoryError> {
     let updated_course = VaccineCourseRow {
         id: id.clone(),
         name: name.unwrap_or(old_row.name),
         program_id: old_row.program_id,
-        demographic_indicator_id: demographic_indicator_id.or(old_row.demographic_indicator_id),
+        demographic_id: demographic_id.or(old_row.demographic_id),
         coverage_rate,
         is_active,
         wastage_rate,
@@ -212,7 +227,42 @@ pub fn generate(
         .filter(|dose_id| !doses.iter().any(|new_dose| &new_dose.id == dose_id))
         .collect();
 
-    Ok((updated_course, doses_to_delete))
+    let items_for_course = VaccineCourseItemRepository::new(&connection).query_by_filter(
+        VaccineCourseItemFilter::new().vaccine_course_id(EqualFilter::equal_to(&id)),
+    )?;
+
+    // Should remove any items that are not in the new list
+    let vaccine_items_to_delete = items_for_course
+        .clone()
+        .into_iter()
+        .filter_map(|item| {
+            if !vaccine_items
+                .iter()
+                .any(|new_item| new_item.id == item.vaccine_course_item.id)
+            {
+                Some(item.vaccine_course_item.id)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    // Should add any items that don't yet exist
+    let vaccine_items_to_add = vaccine_items
+        .into_iter()
+        .filter(|item| {
+            !items_for_course
+                .iter()
+                .any(|existing_item| existing_item.vaccine_course_item.id == item.id)
+        })
+        .collect();
+
+    Ok(GenerateResult {
+        updated_course,
+        doses_to_delete,
+        vaccine_items_to_delete,
+        vaccine_items_to_add,
+    })
 }
 
 impl From<RepositoryError> for UpdateVaccineCourseError {

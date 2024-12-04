@@ -4,7 +4,7 @@ use repository::{
 };
 
 use crate::sync::translations::{
-    demographic_indicator::DemographicIndicatorTranslation, master_list::MasterListTranslation,
+    demographic::DemographicTranslation, master_list::MasterListTranslation,
     program_requisition_settings::ProgramRequisitionSettingsTranslation,
 };
 
@@ -29,7 +29,7 @@ impl SyncTranslation for VaccineCourseTranslation {
         vec![
             MasterListTranslation.table_name(),
             ProgramRequisitionSettingsTranslation.table_name(),
-            DemographicIndicatorTranslation.table_name(),
+            DemographicTranslation.table_name(),
         ]
     }
 

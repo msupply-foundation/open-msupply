@@ -13,6 +13,7 @@ import {
   useUrlQueryParams,
   ColumnDescription,
   TooltipTextCell,
+  useToggle,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -32,9 +33,10 @@ const useDisableResponseRows = (rows?: ResponseRowFragment[]) => {
 };
 
 export const ResponseRequisitionListView: FC = () => {
-  const { mutate: onUpdate } = useResponse.document.update();
-  const navigate = useNavigate();
   const t = useTranslation();
+  const navigate = useNavigate();
+  const modalController = useToggle();
+  const { mutate: onUpdate } = useResponse.document.update();
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -129,7 +131,10 @@ export const ResponseRequisitionListView: FC = () => {
         t(getApprovalStatusKey(rowData.approvalStatus)),
     });
   }
-  columnDefinitions.push(['comment', { minWidth: 400, Cell: TooltipTextCell }]);
+  columnDefinitions.push(
+    ['comment', { minWidth: 350, Cell: TooltipTextCell }],
+    ['selection']
+  );
 
   const columns = useColumns<ResponseRowFragment>(
     columnDefinitions,
@@ -140,7 +145,7 @@ export const ResponseRequisitionListView: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons />
+      <AppBarButtons modalController={modalController} />
 
       <DataTable
         id="requisition-list"

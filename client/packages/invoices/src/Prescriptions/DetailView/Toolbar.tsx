@@ -11,23 +11,70 @@ import {
   DateTimePickerInput,
   Formatter,
   DateUtils,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { PatientSearchInput } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
 import { ClinicianSearchInput } from '../../../../system/src/Clinician';
+import { usePrescriptionRows } from '../api/hooks/line/usePrescriptionRows';
 
 export const Toolbar: FC = () => {
-  const { id, patient, clinician, prescriptionDate, update } =
+  const { id, patient, clinician, prescriptionDate, createdDatetime, update } =
     usePrescription.document.fields([
       'id',
       'patient',
       'clinician',
       'prescriptionDate',
+      'createdDatetime',
     ]);
   const onDelete = usePrescription.line.deleteSelected();
+  const onDeleteAll = usePrescription.line.deleteAll();
+  const { items } = usePrescriptionRows();
 
   const isDisabled = usePrescription.utils.isDisabled();
   const t = useTranslation();
+
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-delete-prescription-lines'),
+  });
+
+  const handleDateChange = async (newPrescriptionDate: Date | null) => {
+    if (!newPrescriptionDate) return;
+
+    const oldPrescriptionDate = DateUtils.getDateOrNull(prescriptionDate);
+
+    if (newPrescriptionDate === oldPrescriptionDate) return;
+
+    if (!items || items.length === 0) {
+      // If there are no lines, we can just update the prescription date
+      await update({
+        id,
+        prescriptionDate: Formatter.toIsoString(
+          DateUtils.endOfDayOrNull(newPrescriptionDate)
+        ),
+      });
+      return;
+    }
+
+    // Otherwise, we need to delete all the lines first
+    getConfirmation({
+      onConfirm: async () => {
+        await onDeleteAll();
+        await update({
+          id,
+          prescriptionDate: Formatter.toIsoString(
+            DateUtils.endOfDayOrNull(newPrescriptionDate)
+          ),
+        });
+      },
+    });
+  };
+
+  const defaultPrescriptionDate =
+    DateUtils.getDateOrNull(prescriptionDate) ??
+    DateUtils.getDateOrNull(createdDatetime) ??
+    new Date();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -81,17 +128,14 @@ export const Toolbar: FC = () => {
               Input={
                 <DateTimePickerInput
                   disabled={isDisabled}
-                  defaultValue={new Date()}
+                  defaultValue={defaultPrescriptionDate}
                   value={DateUtils.getDateOrNull(prescriptionDate)}
                   format="P"
-                  onChange={async prescriptionDate => {
-                    await update({
-                      id,
-                      prescriptionDate: Formatter.toIsoString(
-                        DateUtils.endOfDayOrNull(prescriptionDate)
-                      ),
-                    });
-                  }}
+                  // Using onAccept rather than onChange -- on mobile, onChange
+                  // is triggered when first opening the picker, which causes UI
+                  // conflict with the confirmation modal
+                  onAccept={handleDateChange}
+                  onChange={() => {}}
                   maxDate={new Date()}
                 />
               }

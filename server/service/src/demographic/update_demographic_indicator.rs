@@ -1,6 +1,9 @@
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{
+    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+};
 use repository::{
-    DemographicIndicatorRow, DemographicIndicatorRowRepository, RepositoryError, StorageConnection,
+    ActivityLogType, DemographicIndicatorRow, DemographicIndicatorRowRepository, RepositoryError,
+    StorageConnection,
 };
 
 use super::{
@@ -43,7 +46,15 @@ pub fn update_demographic_indicator(
                 generate(input.clone(), demographic_indicator_row.clone());
             DemographicIndicatorRowRepository::new(connection)
                 .upsert_one(&updated_demographic_indicator_row)?;
-            // TODO add activity logs
+
+            activity_log_entry(
+                ctx,
+                ActivityLogType::DemographicIndicatorUpdated,
+                Some(updated_demographic_indicator_row.id.to_owned()),
+                Some(serde_json::to_string(&demographic_indicator_row).unwrap_or_default()),
+                Some(serde_json::to_string(&updated_demographic_indicator_row).unwrap_or_default()),
+            )?;
+
             get_demographic_indicator(ctx, updated_demographic_indicator_row.id)
                 .map_err(UpdateDemographicIndicatorError::from)
         })

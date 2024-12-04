@@ -13,9 +13,16 @@ import {
   useTheme,
   StatusCell,
   VaccinationCardItemNodeStatus,
+  useAuthContext,
+  Alert,
+  Box,
+  UnhappyMan,
 } from '@openmsupply-client/common';
 import { usePatientVaccineCard } from '../api/usePatientVaccineCard';
-import { VaccinationCardItemFragment } from '../api/operations.generated';
+import {
+  VaccinationCardFragment,
+  VaccinationCardItemFragment,
+} from '../api/operations.generated';
 
 interface VaccinationCardProps {
   programEnrolmentId: string;
@@ -110,18 +117,16 @@ const useStyleRowsByStatus = (
   }, [rows]);
 };
 
-export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
-  programEnrolmentId,
-  openModal,
+const VaccinationCardComponent = ({
+  data,
   encounterId,
+  openModal,
+}: VaccinationCardProps & {
+  data?: VaccinationCardFragment;
 }) => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
   const theme = useTheme();
-
-  const {
-    query: { data, isLoading },
-  } = usePatientVaccineCard(programEnrolmentId);
 
   const isEncounter = !!encounterId;
 
@@ -222,15 +227,12 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
     [data]
   );
 
-  return isLoading ? (
-    <InlineSpinner />
-  ) : (
+  return (
     <>
       <DataTable
         id={'Vaccine Course List'}
         columns={columns}
         data={data?.items ?? []}
-        isLoading={isLoading}
         onRowClick={row => {
           if (includeRow(isEncounter, row, data?.items))
             openModal(row.vaccinationId, row.vaccineCourseDoseId);
@@ -241,13 +243,41 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
   );
 };
 
-export const VaccineCardTable: FC<VaccinationCardProps> = props => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore({
-      initialSortBy: { key: 'name' },
-    })}
-  >
-    <VaccinationCardComponent {...props} />
-  </TableProvider>
-);
+export const VaccineCardTable: FC<VaccinationCardProps> = props => {
+  const { storeId } = useAuthContext();
+  const t = useTranslation();
+  const {
+    query: { data, isLoading },
+  } = usePatientVaccineCard(props.programEnrolmentId);
+
+  if (isLoading) return <InlineSpinner />;
+
+  if (!!data?.enrolmentStoreId && data?.enrolmentStoreId !== storeId)
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        width="100%"
+        flexDirection="column"
+      >
+        <UnhappyMan />
+        <Alert severity="info">
+          {t('messages.cannot-view-vaccine-card', {
+            programName: data?.programName,
+          })}
+        </Alert>
+      </Box>
+    );
+
+  return (
+    <TableProvider
+      createStore={createTableStore}
+      queryParamsStore={createQueryParamsStore({
+        initialSortBy: { key: 'name' },
+      })}
+    >
+      <VaccinationCardComponent data={data} {...props} />
+    </TableProvider>
+  );
+};

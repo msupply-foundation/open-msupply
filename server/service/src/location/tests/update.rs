@@ -40,9 +40,7 @@ mod query {
                 &context,
                 UpdateLocation {
                     id: "invalid".to_string(),
-                    code: None,
-                    name: None,
-                    on_hold: None
+                    ..Default::default()
                 },
             ),
             Err(UpdateLocationError::LocationDoesNotExist)
@@ -54,9 +52,7 @@ mod query {
                 &context,
                 UpdateLocation {
                     id: locations_not_in_store[0].location_row.id.clone(),
-                    code: None,
-                    name: None,
-                    on_hold: None
+                    ..Default::default()
                 },
             ),
             Err(UpdateLocationError::LocationDoesNotBelongToCurrentStore)
@@ -69,8 +65,7 @@ mod query {
                 UpdateLocation {
                     id: locations_in_store[0].location_row.id.clone(),
                     code: Some(locations_in_store[1].location_row.code.clone()),
-                    name: None,
-                    on_hold: None
+                    ..Default::default()
                 },
             ),
             Err(UpdateLocationError::CodeAlreadyExists)
@@ -100,9 +95,7 @@ mod query {
                 &context,
                 UpdateLocation {
                     id: location.location_row.id.clone(),
-                    code: None,
-                    name: None,
-                    on_hold: None
+                    ..Default::default()
                 },
             ),
             Ok(location.clone())
@@ -131,6 +124,7 @@ mod query {
                     code: Some(location.location_row.code.clone()),
                     name: Some(location.location_row.name.clone()),
                     on_hold: Some(location.location_row.on_hold),
+                    ..Default::default()
                 },
             ),
             Ok(location.clone())

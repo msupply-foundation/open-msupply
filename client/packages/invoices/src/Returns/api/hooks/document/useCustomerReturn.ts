@@ -5,7 +5,7 @@ import {
   useQuery,
 } from '@openmsupply-client/common';
 import { useReturnsApi } from '../utils/useReturnsApi';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { CustomerReturnFragment } from '../../operations.generated';
 import { AppRoute } from '@openmsupply-client/config/src';
 
@@ -28,15 +28,17 @@ export const useCustomerReturn = () => {
     }
   );
 
-  const [bufferedState, setBufferedState] = useState(query.data);
+  const [patch, setPatch] = useState<Partial<CustomerReturnFragment>>({});
 
-  useEffect(() => setBufferedState(query.data), [query.isFetched]);
+  const draft: CustomerReturnFragment | undefined = query.data
+    ? { ...query.data, ...patch }
+    : undefined;
 
   // TODO, future: Co-locate this with the update mutation, so one "update" call would
-  // update the buffered state and the queue the debounced mutation call
-  const patchBufferedState = (patch: Partial<CustomerReturnFragment>) => {
-    setBufferedState(state => (!state ? undefined : { ...state, ...patch }));
+  // update the patch state and the queue the debounced mutation call
+  const setDraft = (patch: Partial<CustomerReturnFragment>) => {
+    setPatch(state => ({ ...state, ...patch }));
   };
 
-  return { ...query, bufferedState, setBufferedState: patchBufferedState };
+  return { ...query, draft, setDraft };
 };

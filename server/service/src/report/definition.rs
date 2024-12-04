@@ -86,6 +86,8 @@ pub struct ReportDefinitionIndex {
     pub footer: Option<String>,
     #[serde(deserialize_with = "string_or_vec")]
     pub query: Vec<String>,
+    pub convert_data: Option<String>,
+    pub custom_wasm_function: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -157,6 +159,8 @@ mod report_dsl_test {
                     header: None,
                     footer: Some("local_footer.html".to_string()),
                     query: vec!["query".to_string()],
+                    convert_data: None,
+                    custom_wasm_function: None,
                 },
                 entries: HashMap::from([
                     (

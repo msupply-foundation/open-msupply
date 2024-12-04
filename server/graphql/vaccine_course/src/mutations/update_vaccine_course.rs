@@ -67,7 +67,7 @@ pub struct UpdateVaccineCourseInput {
     pub name: Option<String>,
     pub vaccine_items: Vec<UpsertVaccineCourseItemInput>,
     pub doses: Vec<UpsertVaccineCourseDoseInput>,
-    pub demographic_indicator_id: Option<String>,
+    pub demographic_id: Option<String>,
     pub coverage_rate: f64,
     pub is_active: bool,
     pub wastage_rate: f64,
@@ -80,7 +80,7 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
             name,
             vaccine_items,
             doses,
-            demographic_indicator_id,
+            demographic_id,
             coverage_rate,
             is_active,
             wastage_rate,
@@ -107,7 +107,7 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
                     min_interval_days: d.min_interval_days,
                 })
                 .collect(),
-            demographic_indicator_id,
+            demographic_id,
             coverage_rate,
             is_active,
             wastage_rate,
@@ -148,7 +148,7 @@ fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
         }
         // Standard Graphql Errors
         ServiceError::VaccineCourseDoesNotExist
-        | ServiceError::DemographicIndicatorDoesNotExist
+        | ServiceError::DemographicDoesNotExist
         | ServiceError::DoseMinAgesAreNotInOrder => BadUserInput(formatted_error),
         ServiceError::CreatedRecordNotFound | ServiceError::DatabaseError(_) => {
             InternalError(formatted_error)

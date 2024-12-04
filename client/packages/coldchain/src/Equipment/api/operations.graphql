@@ -26,6 +26,9 @@ fragment AssetRow on AssetNode {
     model
     code
   }
+  assetCategory {
+    name
+  }
   assetType {
     name
   }
@@ -53,6 +56,12 @@ fragment Asset on AssetNode {
       code
       name
       onHold
+      coldStorageType {
+        id
+        name
+        maxTemperature
+        minTemperature
+      }
     }
     totalCount
   }
@@ -157,6 +166,14 @@ query assetById($storeId: String!, $assetId: String!) {
         ...Asset
       }
       totalCount
+    }
+  }
+}
+
+query assetFromGs1Data($storeId: String!, $data: [Gs1DataElement!]!) {
+  assetFromGs1Data(storeId: $storeId, gs1: $data) {
+    ... on AssetNode {
+      ...Asset
     }
   }
 }
