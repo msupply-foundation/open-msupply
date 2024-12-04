@@ -103,7 +103,7 @@ export type UpdateRequestMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateRequestMutation = { __typename: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string, requisitionNumber: number } | { __typename: 'UpdateRequestRequisitionError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } };
+export type UpdateRequestMutation = { __typename: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string, requisitionNumber: number } | { __typename: 'UpdateRequestRequisitionError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'OrderingTooManyItems', description: string, maxItemsInEmergencyOrder: number } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type DeleteRequestMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -573,6 +573,11 @@ export const UpdateRequestDocument = gql`
         ... on OtherPartyNotASupplier {
           __typename
           description
+        }
+        ... on OrderingTooManyItems {
+          __typename
+          description
+          maxItemsInEmergencyOrder
         }
       }
     }

@@ -16,7 +16,7 @@ export type UpdateResponseMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateResponseMutation = { __typename: 'Mutations', updateResponseRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateResponseRequisitionError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionReasonsNotProvided', description: string, errors: Array<{ __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } }> } } };
+export type UpdateResponseMutation = { __typename: 'Mutations', updateResponseRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateResponseRequisitionError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'OrderingTooManyItems', description: string, maxItemsInEmergencyOrder: number } | { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionReasonsNotProvided', description: string, errors: Array<{ __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } }> } } };
 
 export type DeleteRequestMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -404,6 +404,11 @@ export const UpdateResponseDocument = gql`
         description
         ... on RequisitionReasonsNotProvided {
           ...RequisitionReasonsNotProvidedError
+        }
+        ... on OrderingTooManyItems {
+          __typename
+          description
+          maxItemsInEmergencyOrder
         }
       }
     }

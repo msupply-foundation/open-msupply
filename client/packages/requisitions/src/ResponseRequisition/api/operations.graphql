@@ -30,6 +30,11 @@ mutation updateResponse(
         ... on RequisitionReasonsNotProvided {
           ...RequisitionReasonsNotProvidedError
         }
+        ... on OrderingTooManyItems {
+          __typename
+          description
+          maxItemsInEmergencyOrder
+        }
       }
     }
   }
