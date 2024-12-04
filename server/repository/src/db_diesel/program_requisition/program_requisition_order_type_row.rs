@@ -15,6 +15,8 @@ table! {
         threshold_mos -> Double,
         max_mos -> Double,
         max_order_per_period -> Integer,
+        is_emergency -> Bool,
+        max_items_in_emergency_order -> Integer,
     }
 }
 use crate::{Delete, Upsert};
@@ -30,6 +32,8 @@ pub struct ProgramRequisitionOrderTypeRow {
     pub threshold_mos: f64,
     pub max_mos: f64,
     pub max_order_per_period: i32,
+    pub is_emergency: bool,
+    pub max_items_in_emergency_order: i32,
 }
 
 pub struct ProgramRequisitionOrderTypeRowRepository<'a> {
