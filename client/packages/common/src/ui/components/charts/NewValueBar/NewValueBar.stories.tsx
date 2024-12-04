@@ -32,6 +32,6 @@ BothDividers.args = {
 };
 
 export default {
-  title: 'Charts/ValueBar',
+  title: 'Charts/NewValueBar',
   component: NewValueBar,
 } as Meta<typeof NewValueBar>;
