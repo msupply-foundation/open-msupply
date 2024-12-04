@@ -9,6 +9,7 @@ import {
   RequisitionNodeStatus,
   mapKeys,
   mapValues,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import { getNextResponseStatus, getStatusTranslation } from '../../../utils';
 import { ResponseFragment, useResponse } from '../../api';
@@ -94,19 +95,30 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
 
     const { error } = result;
 
-    if (error.__typename == 'RequisitionReasonsNotProvided') {
-      const ids = mapValues(
-        mapKeys(lines.nodes, line => line?.id),
-        'id'
-      );
-      const mappedErrors = mapKeys(
-        error.errors,
-        line => ids[line.requisitionLine.id]
-      );
-      errorsContext.setErrors(mappedErrors);
-      return t('error.reasons-not-provided-program-requisition');
+    switch (error.__typename) {
+      case 'RequisitionReasonsNotProvided': {
+        const ids = mapValues(
+          mapKeys(lines.nodes, line => line?.id),
+          'id'
+        );
+        const mappedErrors = mapKeys(
+          error.errors,
+          line => ids[line.requisitionLine.id]
+        );
+        errorsContext.setErrors(mappedErrors);
+        return t('error.reasons-not-provided-program-requisition');
+      }
+      case 'OrderingTooManyItems':
+        return t('error.ordering-too-many-items', {
+          maxItems: error.maxItemsInEmergencyOrder,
+        });
+      case 'CannotEditRequisition':
+        return t('error.cannot-edit-requisition');
+      case 'RecordNotFound':
+        return t('messages.record-not-found');
+      default:
+        return noOtherVariants(error);
     }
-    return undefined;
   };
 
   const onConfirmStatusChange = async () => {
