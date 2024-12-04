@@ -1,8 +1,11 @@
 import {
+  ArrayUtils,
   RecordPatch,
+  SortUtils,
   UpdatePrescriptionInput,
   useMutation,
   useQuery,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import {
   InsertPrescriptionMutationVariables,
@@ -15,9 +18,20 @@ import { isPrescriptionDisabled } from 'packages/invoices/src/utils';
 import { mapStatus } from './hookUtils';
 import { usePatchState } from './usePatchState';
 import { useDelete } from './usePrescriptionDelete';
+import { useMemo } from 'react';
+import { usePrescriptionColumn } from '../../DetailView/columns';
 
 export const usePrescriptionSingle = (id?: string) => {
   const invoiceNumber = usePrescriptionNumber();
+  const {
+    updateSortQuery,
+    queryParams: { sortBy },
+  } = useUrlQueryParams();
+
+  const columns = usePrescriptionColumn({
+    onChangeSortBy: updateSortQuery,
+    sortBy,
+  });
 
   // If an id is passed in, we use that and get by ID. Otherwise we use the
   // invoice number from the URL
@@ -39,6 +53,22 @@ export const usePrescriptionSingle = (id?: string) => {
   const loading = id ? loadingById : isLoading;
   const error = id ? errorById : errorByNum;
   const isDisabled = data ? isPrescriptionDisabled(data) : false;
+
+  const rows = useMemo(() => {
+    const stockLines = data?.lines?.nodes;
+    const items = Object.entries(
+      ArrayUtils.groupBy(stockLines, line => line.item.id)
+    ).map(([itemId, lines]) => {
+      return { id: itemId, itemId, lines };
+    });
+    const currentColumn = columns.find(({ key }) => key === sortBy.key);
+    if (!currentColumn?.getSortValue) return items;
+    const sorter = SortUtils.getColumnSorter(
+      currentColumn?.getSortValue,
+      !!sortBy.isDesc
+    );
+    return [...(items ?? [])].sort(sorter);
+  }, [data, sortBy.key, sortBy.isDesc]);
 
   // UPDATE
   const { patch, updatePatch, resetDraft, isDirty } =
@@ -96,6 +126,7 @@ export const usePrescriptionSingle = (id?: string) => {
     delete: { deletePrescription, isDeleting, deleteError },
     isDirty,
     updatePatch,
+    rows,
   };
 };
 

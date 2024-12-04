@@ -8,8 +8,8 @@ import {
 import { usePrescriptionNumber } from '../../utils/usePrescriptionNumber';
 import { usePrescriptionApi } from '../utils/usePrescriptionApi';
 import { PrescriptionRowFragment } from '../../operations.generated';
-import { usePrescriptionRows } from './usePrescriptionRows';
 import { usePrescriptionIsDisabled } from '../utils/usePrescriptionIsDisabled';
+import { usePrescriptionSingle } from '../usePrescriptionSingle';
 
 export const usePrescriptionDeleteLines = () => {
   const prescriptionNumber = usePrescriptionNumber();
@@ -52,7 +52,8 @@ export const usePrescriptionDeleteLines = () => {
 };
 
 export const usePrescriptionDeleteSelectedLines = (): (() => void) => {
-  const { items } = usePrescriptionRows();
+  // const { items } = usePrescriptionRows();
+  const { rows: items } = usePrescriptionSingle();
   const { mutateAsync } = usePrescriptionDeleteLines();
   const isDisabled = usePrescriptionIsDisabled();
   const t = useTranslation();
@@ -89,7 +90,7 @@ export const usePrescriptionDeleteSelectedLines = (): (() => void) => {
 };
 
 export const usePrescriptionDeleteAllLines = (): (() => Promise<void>) => {
-  const { items } = usePrescriptionRows();
+  const { rows: items } = usePrescriptionSingle();
   const { mutateAsync } = usePrescriptionDeleteLines();
 
   // Select all rows!
