@@ -64,11 +64,12 @@ pub enum OrderTypeNotFoundError {
     DatabaseError(RepositoryError),
 }
 
-pub fn get_requisition_order_type(
+pub fn check_emergency_order_within_max_items_limit(
     connection: &StorageConnection,
     program_id: &str,
     order_type: &str,
-) -> Result<ProgramRequisitionOrderTypeRow, OrderTypeNotFoundError> {
+    requisition_lines: Vec<RequisitionLine>,
+) -> Result<(bool, i32), OrderTypeNotFoundError> {
     let program_settings_ids = ProgramRequisitionSettingsRepository::new(connection)
         .query(Some(ProgramRequisitionSettingsFilter::new().program(
             ProgramFilter::new().id(EqualFilter::equal_to(program_id)),
@@ -81,7 +82,15 @@ pub fn get_requisition_order_type(
         .find_one_by_setting_and_name(&program_settings_ids, order_type)?
         .ok_or(OrderTypeNotFoundError::OrderTypeNotFound)?;
 
-    Ok(order_type)
+    let line_count = requisition_lines
+        .iter()
+        .filter(|line| line.requisition_line_row.requested_quantity != 0.0)
+        .count();
+
+    return Ok((
+        order_type.is_emergency && line_count < order_type.max_items_in_emergency_order as usize,
+        order_type.max_items_in_emergency_order,
+    ));
 }
 
 impl From<RepositoryError> for OrderTypeNotFoundError {
