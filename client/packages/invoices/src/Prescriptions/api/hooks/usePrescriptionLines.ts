@@ -11,7 +11,14 @@ import { DraftStockOutLine } from 'packages/invoices/src/types';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { PrescriptionRowFragment } from '../operations.generated';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
-import { mapStatus } from './utils';
+import { createInputObject, mapStatus } from './utils';
+
+// Hook to manage prescription lines. Only has "save" and "delete"
+// functionality, as the query is done as part of the full prescription query
+// (usePrescription).
+//
+// We don't manage draft state in here, as there is a lot of complex logic
+// associated with it, which is handled by the `useDraftPrescriptionLines` hook.
 
 export const usePrescriptionLines = (id?: string) => {
   const {
@@ -59,33 +66,6 @@ export const usePrescriptionLines = (id?: string) => {
 const useSaveLines = (id: string, invoiceNum: number) => {
   const { prescriptionApi, storeId, queryClient } = usePrescriptionGraphQL();
 
-  const toInsertLine = (
-    line: DraftStockOutLine
-  ): InsertPrescriptionLineInput => {
-    return {
-      id: line.id,
-      numberOfPacks: line.numberOfPacks,
-      stockLineId: line.stockLine?.id ?? '',
-      invoiceId: line.invoiceId,
-      note: line.note ?? '',
-    };
-  };
-
-  const toUpdateLine = (
-    line: DraftStockOutLine
-  ): UpdatePrescriptionLineInput => {
-    return {
-      id: line.id,
-      numberOfPacks: line.numberOfPacks,
-      stockLineId: line.stockLine?.id ?? '',
-      note: line.note ?? '',
-    };
-  };
-
-  const toDeleteLine = (line: { id: string }): DeletePrescriptionLineInput => ({
-    id: line.id,
-  });
-
   const mutationFn = async ({
     draftPrescriptionLines,
     patch,
@@ -101,7 +81,10 @@ const useSaveLines = (id: string, invoiceNum: number) => {
             type === InvoiceLineNodeType.StockOut &&
             numberOfPacks > 0
         )
-        .map(toInsertLine),
+        .map(
+          line =>
+            createInputObject(line, 'insert') as InsertPrescriptionLineInput
+        ),
       updatePrescriptionLines: draftPrescriptionLines
         .filter(
           ({ type, isCreated, isUpdated, numberOfPacks }) =>
@@ -110,7 +93,10 @@ const useSaveLines = (id: string, invoiceNum: number) => {
             type === InvoiceLineNodeType.StockOut &&
             numberOfPacks > 0
         )
-        .map(toUpdateLine),
+        .map(
+          line =>
+            createInputObject(line, 'update') as UpdatePrescriptionLineInput
+        ),
       deletePrescriptionLines: draftPrescriptionLines
         .filter(
           ({ type, isCreated, isUpdated, numberOfPacks }) =>
@@ -119,7 +105,10 @@ const useSaveLines = (id: string, invoiceNum: number) => {
             type === InvoiceLineNodeType.StockOut &&
             numberOfPacks === 0
         )
-        .map(toDeleteLine),
+        .map(
+          line =>
+            createInputObject(line, 'delete') as DeletePrescriptionLineInput
+        ),
       updatePrescriptions: !!patch
         ? [
             {

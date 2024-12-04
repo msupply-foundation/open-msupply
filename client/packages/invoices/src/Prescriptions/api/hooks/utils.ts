@@ -5,6 +5,7 @@ import {
   UpdatePrescriptionStatusInput,
 } from '@openmsupply-client/common';
 import { PrescriptionRowFragment } from '../operations.generated';
+import { DraftStockOutLine } from 'packages/invoices/src/types';
 
 export const sortFieldMap: Record<string, InvoiceSortFieldInput> = {
   createdDateTime: InvoiceSortFieldInput.CreatedDatetime,
@@ -23,5 +24,24 @@ export const mapStatus = (patch: RecordPatch<PrescriptionRowFragment>) => {
       return UpdatePrescriptionStatusInput.Verified;
     default:
       return undefined;
+  }
+};
+
+export const createInputObject = (
+  line: DraftStockOutLine,
+  type: 'insert' | 'update' | 'delete'
+) => {
+  const { id, numberOfPacks, stockLine, invoiceId, note } = line;
+
+  const stockLineId = stockLine?.id ?? '';
+  const output = { id, numberOfPacks, stockLineId, note };
+
+  switch (type) {
+    case 'delete':
+      return { id };
+    case 'update':
+      return output;
+    case 'insert':
+      return { ...output, invoiceId };
   }
 };
