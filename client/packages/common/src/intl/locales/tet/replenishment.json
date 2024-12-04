@@ -41,7 +41,6 @@
   "label.new": "Foun",
   "label.number-months_one": "Fulan {{count}}",
   "label.number-months_other": "Fulan {{count}}",
-  "label.amc": "AMC",
   "label.order-quantity": "Kuantidade ba Pedidu",
   "label.past": "Anterior",
   "label.projected": "Projesaun",
@@ -86,5 +85,18 @@
   "messages.deleted-requisitions_one": "Hamos ona {{count}} pedidu",
   "messages.deleted-requisitions_other": "Hamos ona {{count}} pedidu sira",
   "messages.confirm-status-as": "Konfirma estatus hanesan $t({{status}})?",
-  "messages.saved": "Salva ona"
+  "messages.saved": "Salva ona",
+  "label.rnr-adjustments": "Ajustamentu",
+  "label.rnr-consumed": "Kuantitade konsumu / distribuída",
+  "label.rnr-final-balance": "Balansu Ikus",
+  "label.rnr-initial-balance": "Balansu Inisiu",
+  "label.rnr-maximum-quantity": "Kuantidade maximu",
+  "label.rnr-minimum-quantity": "Kuantidade minimu",
+  "label.rnr-received": "Kuantidade Simu",
+  "label.rnr-stock-out-duration": "Durasaun stock out",
+  "label.adjusted": "Ajustamentu kuantitade konsumu / distribuída",
+  "label.low-stock": "Stock menus",
+  "label.approved-quantity": "Kuantidade aprova",
+  "label.losses": "Lakon",
+  "label.amc": " Konsumu Mediu Mensal (AMC/AMD)"
 }
