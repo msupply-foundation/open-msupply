@@ -208,7 +208,6 @@
   "label.address": "Enderesu",
   "label.other-requested-quantity": "Pedidu seluk",
   "label.allocated": "Aloka Ona",
-  "label.amc": "AMC",
   "label.amount": "Montante",
   "label.any": "Kualker",
   "label.app-version": "Versaun:",
@@ -569,5 +568,18 @@
   "title.stock-on-hand": "Stock ne'ebe disponivel",
   "tools": "Ekipamentus",
   "warning.caps-lock": "Alerta: Caps Lock ativu hela",
-  "warning.nothing-to-supply": "Laiha buat ida atu distribui!"
+  "warning.nothing-to-supply": "Laiha buat ida atu distribui!",
+  "label.rnr-adjustments": "Ajustamentu",
+  "label.rnr-consumed": "Kuantitade konsumu / distribuída",
+  "label.rnr-final-balance": "Balansu Ikus",
+  "label.rnr-initial-balance": "Balansu Inisiu",
+  "label.rnr-maximum-quantity": "Kuantidade maximu",
+  "label.rnr-minimum-quantity": "Kuantidade minimu",
+  "label.rnr-received": "Kuantidade Simu",
+  "label.rnr-stock-out-duration": "Durasaun stock out",
+  "label.adjusted": "Ajustamentu kuantitade konsumu / distribuída",
+  "label.low-stock": "Stock menus",
+  "label.approved-quantity": "Kuantidade aprova",
+  "label.losses": "Lakon",
+  "label.amc": " Konsumu / Distribuída mediu mensal"
 }
