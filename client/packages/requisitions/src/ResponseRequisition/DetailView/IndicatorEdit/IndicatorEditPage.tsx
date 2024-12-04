@@ -21,6 +21,7 @@ export const IndicatorEditPage = () => {
   const { programIndicatorLineId, programIndicatorCode } = useParams();
   const { data: response, isLoading } = useResponse.document.get();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const isDisabled = useResponse.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useResponse.document.indicators(
       response?.otherPartyId ?? '',
@@ -95,6 +96,7 @@ export const IndicatorEditPage = () => {
                 hasPrevious={hasPrevious}
                 previous={previous}
                 requisitionNumber={response?.requisitionNumber}
+                disabled={isDisabled}
               />
             </>
           }
