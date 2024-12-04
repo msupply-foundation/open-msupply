@@ -49,7 +49,7 @@ export const useDraftPrescriptionLines = (
   useConfirmOnLeaving(isDirty);
 
   useEffect(() => {
-    if (!item || !status || !invoiceId) {
+    if (!item) {
       return setDraftStockOutLines([]);
     }
 
@@ -74,7 +74,7 @@ export const useDraftPrescriptionLines = (
           const invoiceLine = lines?.find(
             ({ stockLine }) => stockLine?.id === batch.id
           );
-          if (invoiceLine) {
+          if (invoiceLine && invoiceId && status) {
             return createDraftStockOutLine({
               invoiceLine,
               invoiceId,
@@ -82,9 +82,10 @@ export const useDraftPrescriptionLines = (
               invoiceStatus: status,
             });
           } else {
+            console.log('invoiceId', invoiceId);
             return createDraftStockOutLineFromStockLine({
               stockLine: batch,
-              invoiceId,
+              invoiceId: invoiceId ?? '',
             });
           }
         })
