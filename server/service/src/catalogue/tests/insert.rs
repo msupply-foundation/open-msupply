@@ -21,7 +21,7 @@ mod query {
 
         const REFRIGERATORS_UUID: &str = "fd79171f-5da8-4801-b299-9426f34310a8";
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let ctx = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();

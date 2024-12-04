@@ -251,7 +251,7 @@ mod document_service_test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.document_service;
 
@@ -402,7 +402,7 @@ mod document_service_test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
 
         let service = service_provider.document_service;

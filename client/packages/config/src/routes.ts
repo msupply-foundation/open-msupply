@@ -38,6 +38,7 @@ export enum AppRoute {
   Locations = 'locations',
   MasterLists = 'master-lists',
   IndicatorsDemographics = 'indicators-demographics',
+  Indicators = 'indicators',
 
   Manage = 'manage',
   Programs = 'programs',
@@ -52,6 +53,8 @@ export enum AppRoute {
   Sync = 'sync',
 
   Settings = 'settings',
+
+  Help = 'help',
 
   Logout = 'logout',
 

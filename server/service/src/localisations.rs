@@ -6,6 +6,7 @@ use thiserror::Error;
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
+#[include = "*.json"]
 // Relative to server/Cargo.toml
 #[folder = "../../client/packages/common/src/intl/locales"]
 pub struct EmbeddedLocalisations;

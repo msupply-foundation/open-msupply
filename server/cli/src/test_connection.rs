@@ -247,13 +247,9 @@ impl Test for SyncTest {
 
         let v5_settings = get_sync_settings(config)?;
 
-        let server_folder = config
-            .server
-            .base_dir
-            .clone()
-            .ok_or(anyhow!("No server base dir in config"))?;
+        let app_data_service = AppDataService {};
 
-        let hardware_id = AppDataService::new(server_folder.as_str())
+        let hardware_id = app_data_service
             .get_hardware_id()
             .map_err(|err| anyhow!("Failed to get hardware ID from app data service: {:?}", err))?;
 
@@ -506,10 +502,7 @@ fn get_url(config: &service::settings::Settings) -> Result<Url> {
 fn get_sync_settings(config: &service::settings::Settings) -> Result<SyncSettings> {
     let machine_uid = machine_uid::get().expect("Failed to query OS for hardware id");
     let connection_manager = get_storage_connection_manager(&config.database);
-    let service_provider = ServiceProvider::new(
-        connection_manager.clone(),
-        &config.server.base_dir.clone().unwrap(),
-    );
+    let service_provider = ServiceProvider::new(connection_manager.clone());
 
     service_provider
         .app_data_service

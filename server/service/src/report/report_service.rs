@@ -837,7 +837,7 @@ mod report_service_test {
         })
         .unwrap();
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context("store_id".to_string(), "".to_string())
             .unwrap();
@@ -997,7 +997,7 @@ mod report_generation_test {
             setup_all("test_report_translations", MockDataInserts::none()).await;
 
         let translation_service =
-            ServiceProvider::new(connection_manager, "app_data").translations_service;
+            ServiceProvider::new(connection_manager).translations_service;
 
         let mut templates = HashMap::new();
         templates.insert("test.html".to_string(), tera_template);

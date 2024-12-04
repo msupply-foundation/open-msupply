@@ -80,9 +80,19 @@ Please see below commit for an example of adding a new table and relative transl
 
 [Add asset table](https://github.com/msupply-foundation/open-msupply/commit/dfa5b8e4a4d0a906b0c19f3ee00e194344834508)
 
-[Add translations](https://github.com/msupply-foundation/open-msupply/commit/a9b3d90a597f9670687f0fc26a5632310fe6b4c9)
+[Add translations](https://github.com/msupply-foundation/open-msupply/commit/a9b3d90a597f9670687f0fc26a5632310fe6b4c9) `note - change log upsert with triggers has been replaced with changelog upsert via repository, see latest version of the file for details`
 
 [Add asset log reason](https://github.com/msupply-foundation/open-msupply/commit/507681182ec39f716df73b7487167057b6731e0e) (Shows - Changelog Trigger, Upsert Trait, Translation, etc)
+
+## Tutorial on adding V6 sync central record
+
+In google drive, under `Knowledge Base > Sync System > How to add v6 sync for central data`
+
+[Add om report](https://github.com/msupply-foundation/open-msupply/commit/04a37a88148bf7315e79b97ba753a6d4536d1428)
+
+[Add om report translations](https://github.com/msupply-foundation/open-msupply/commit/bd73a2be5cf33670635e55709a120d2145a98731)
+
+[Add tests](https://github.com/msupply-foundation/open-msupply/commit/6ef0d9952ac89d3eb31fa5ac1893e154ad8319ee) 
 
 ## Central Servers
 
@@ -107,6 +117,8 @@ Open mSupply's central server uses ChangeLog to keep track of which records have
 In Original mSupply central server, remote/transfer/shared records are added to a sync queue for the related remote site. This queue is used to figure out what should go to what site when there are sync API requests from remote sites.
 
 In Open mSupply, ChangeLog is used for this. The logic, of determining which records should go to which site, happens in one sql statement on the `ChangeLog` table, which would look something like this:
+
+
 
 ```SQL
 SELECT * FROM changelog_dedup

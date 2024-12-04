@@ -1,6 +1,9 @@
-use super::{name_tag_join::name_tag_join::dsl as name_tag_join_dsl, StorageConnection};
+use super::{
+    name_link, name_oms_fields, name_tag_join::name_tag_join::dsl as name_tag_join_dsl,
+    name_tag_row::name_tag, StorageConnection,
+};
 use crate::repository_error::RepositoryError;
-use crate::{name_link, Delete, Upsert};
+use crate::{Delete, Upsert};
 use diesel::prelude::*;
 
 table! {
@@ -20,7 +23,9 @@ pub struct NameTagJoinRow {
 }
 
 joinable!(name_tag_join -> name_link (name_link_id));
+joinable!(name_tag_join -> name_tag (name_tag_id));
 allow_tables_to_appear_in_same_query!(name_tag_join, name_link);
+allow_tables_to_appear_in_same_query!(name_tag_join, name_oms_fields);
 
 pub struct NameTagJoinRepository<'a> {
     connection: &'a StorageConnection,

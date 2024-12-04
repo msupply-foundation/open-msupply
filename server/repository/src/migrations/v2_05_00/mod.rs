@@ -1,5 +1,6 @@
 use super::{version::Version, Migration, MigrationFragment};
 
+mod new_store_preferences;
 mod remove_unique_description_on_tmp_breach;
 
 use crate::StorageConnection;
@@ -16,7 +17,10 @@ impl Migration for V2_05_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(remove_unique_description_on_tmp_breach::Migrate)]
+        vec![
+            Box::new(new_store_preferences::Migrate),
+            Box::new(remove_unique_description_on_tmp_breach::Migrate),
+        ]
     }
 }
 

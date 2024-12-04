@@ -50,12 +50,25 @@ export const ListOptions = ({
   );
 
   return (
-    <List sx={{ padding: 0, maxHeight: height * 0.8, overflow: 'auto' }}>
+    <List
+      sx={{
+        padding: 0,
+        maxHeight: height * 0.6,
+        overflow: 'auto',
+        scrollBehavior: 'smooth',
+      }}
+    >
       {options?.map((option, _) => (
         <React.Fragment key={option.id}>
           <ListItem
-            sx={{ padding: '5px 0px' }}
+            sx={{ padding: '5px 0px', cursor: 'pointer' }}
             onClick={() => onClick(option.id)}
+            ref={
+              option.id === currentId
+                ? l =>
+                    l?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                : null
+            }
           >
             <ListItemIcon sx={{ padding: 0, minWidth: 25 }}>
               <Box
