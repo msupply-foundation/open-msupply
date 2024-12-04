@@ -12,6 +12,7 @@ import {
   useIntlUtils,
   useDisabledNotificationToast,
   UNDEFINED_STRING_VALUE,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import { getNextRequestStatus, getStatusTranslation } from '../../../utils';
 import { useRequest } from '../../api';
@@ -69,11 +70,13 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, update, comment, lines } = useRequest.document.fields([
+  const { id, status, comment, lines } = useRequest.document.fields([
+    'id',
     'status',
     'comment',
     'lines',
   ]);
+  const { mutateAsync: update } = useRequest.document.update();
   const { success, error } = useNotification();
   const t = useTranslation();
   const { user } = useAuthContext();
@@ -109,11 +112,38 @@ const useStatusChangeButton = () => {
   const onConfirmStatusChange = async () => {
     if (!selectedOption) return null;
     try {
-      await update({
+      const result = await update({
+        id,
         status: selectedOption.value,
         comment: getUpdatedComment(),
       });
-      success(t('messages.saved'))();
+
+      if (result.__typename === 'RequisitionNode') {
+        success(t('messages.saved'))();
+      }
+
+      if (result.__typename === 'UpdateRequestRequisitionError') {
+        const { error: updateError } = result;
+
+        switch (updateError.__typename) {
+          case 'OrderingTooManyItems':
+            return error(
+              t('error.ordering-too-many-items', {
+                maxItems: updateError.maxItemsInEmergencyOrder,
+              })
+            )();
+          case 'OtherPartyNotASupplier':
+            return error(t('error.other-party-not-a-supplier'))();
+          case 'CannotEditRequisition':
+            return error(t('error.cannot-edit-requisition'))();
+          case 'OtherPartyNotVisible':
+            return error(t('error.other-party-not-visible'))();
+          case 'RecordNotFound':
+            return error(t('messages.record-not-found'))();
+          default:
+            return noOtherVariants(updateError);
+        }
+      }
     } catch (e) {
       error(t('messages.could-not-save'))();
     }

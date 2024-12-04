@@ -238,11 +238,7 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
     const { updateRequestRequisition } = result || {};
 
-    if (updateRequestRequisition?.__typename === 'RequisitionNode') {
-      return updateRequestRequisition;
-    }
-
-    throw new Error('Unable to update requisition');
+    return updateRequestRequisition;
   },
   insert: async ({
     id,
