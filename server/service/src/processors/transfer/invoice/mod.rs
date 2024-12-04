@@ -98,7 +98,7 @@ fn log_system_error(
     connection: &StorageConnection,
     error: &ProcessInvoiceTransfersError,
 ) -> Result<(), ProcessInvoiceTransfersError> {
-    let error_message = format!("{:?}", error);
+    let error_message = format!("ProcessInvoiceTransfersError: {:?}", error);
     log::error!("{}", error_message);
     system_log_entry(connection, SystemLogType::ProcessorError, &error_message)
         .map_err(|e| ProcessInvoiceTransfersError::DatabaseError(RepositoryError::from(e)))?;
