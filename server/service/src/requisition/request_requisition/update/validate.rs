@@ -1,7 +1,8 @@
 use super::{OutError, UpdateRequestRequisition};
 use crate::{
     requisition::common::{
-        check_requisition_row_exists, get_requisition_order_type, OrderTypeNotFoundError,
+        check_emergency_order_within_max_items_limit, check_requisition_row_exists,
+        OrderTypeNotFoundError,
     },
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
@@ -45,25 +46,21 @@ pub fn validate(
     if let (Some(program_id), Some(order_type)) =
         (&requisition_row.program_id, &requisition_row.order_type)
     {
-        let order_type = get_requisition_order_type(connection, program_id, order_type).map_err(
-            |e| match e {
-                OrderTypeNotFoundError::OrderTypeNotFound => OutError::OrderTypeNotFound,
-                OrderTypeNotFoundError::DatabaseError(repository_error) => {
-                    OutError::DatabaseError(repository_error)
-                }
-            },
-        )?;
+        let (within_limit, max_items) = check_emergency_order_within_max_items_limit(
+            connection,
+            program_id,
+            order_type,
+            requisition_lines,
+        )
+        .map_err(|e| match e {
+            OrderTypeNotFoundError::OrderTypeNotFound => OutError::OrderTypeNotFound,
+            OrderTypeNotFoundError::DatabaseError(repository_error) => {
+                OutError::DatabaseError(repository_error)
+            }
+        })?;
 
-        let line_count = requisition_lines
-            .iter()
-            .filter(|line| line.requisition_line_row.requested_quantity != 0.0)
-            .count();
-
-        if order_type.is_emergency && line_count > order_type.max_items_in_emergency_order as usize
-        {
-            return Err(OutError::OrderingTooManyItems(
-                order_type.max_items_in_emergency_order,
-            ));
+        if !within_limit {
+            return Err(OutError::OrderingTooManyItems(max_items));
         }
     }
 
