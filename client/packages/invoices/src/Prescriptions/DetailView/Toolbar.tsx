@@ -12,24 +12,57 @@ import {
   Formatter,
   DateUtils,
   useConfirmationModal,
+  useTableStore,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { PatientSearchInput } from '@openmsupply-client/system';
-import { usePrescription, usePrescriptionSingle } from '../api';
+import { usePrescriptionSingle } from '../api';
 import { ClinicianSearchInput } from '../../../../system/src/Clinician';
+import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 
 export const Toolbar: FC = () => {
   const {
     query: { data },
     update: { update },
     isDisabled,
+    rows: items,
   } = usePrescriptionSingle();
   const { id, patient, clinician, prescriptionDate, createdDatetime } =
     data ?? {};
-  const onDelete = usePrescription.line.deleteSelected();
-  const onDeleteAll = usePrescription.line.deleteAll();
-  const { rows: items } = usePrescriptionSingle();
+
+  const selectedRows =
+    useTableStore(state => {
+      return items
+        ?.filter(({ id }) => state.rowState[id]?.isSelected)
+        .map(({ lines }) => lines.flat())
+        .flat();
+    }) || [];
+
+  const {
+    delete: { deleteLines },
+  } = usePrescriptionLines();
+
+  const deleteAll = () => {
+    const allRows = (items ?? []).map(({ lines }) => lines.flat()).flat() ?? [];
+    if (allRows.length === 0) return;
+    deleteLines(allRows);
+  };
 
   const t = useTranslation();
+
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction: () => deleteLines(selectedRows),
+    canDelete: !isDisabled,
+    messages: {
+      confirmMessage: t('messages.confirm-delete-lines', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-lines', {
+        count: selectedRows.length,
+      }),
+    },
+  });
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
@@ -57,7 +90,7 @@ export const Toolbar: FC = () => {
     // Otherwise, we need to delete all the lines first
     getConfirmation({
       onConfirm: async () => {
-        await onDeleteAll();
+        await deleteAll();
         await update({
           id,
           prescriptionDate: Formatter.toIsoString(
@@ -149,7 +182,7 @@ export const Toolbar: FC = () => {
           <DropdownMenu label={t('label.actions')}>
             <DropdownMenuItem
               IconComponent={DeleteIcon}
-              onClick={onDelete}
+              onClick={confirmAndDelete}
               disabled={isDisabled}
             >
               {t('button.delete-lines')}

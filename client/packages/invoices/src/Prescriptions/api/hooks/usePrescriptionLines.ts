@@ -45,7 +45,8 @@ export const usePrescriptionLines = () => {
     error: deleteLinesError,
   } = useDeleteLines(data?.invoiceNumber ?? -1);
 
-  const deleteLines = async (lines: { id: string }[]) => {
+  const deleteLines = async (rowsToDelete: DraftStockOutLine[]) => {
+    const lines = rowsToDelete.map(({ id }) => ({ id }));
     await deleteMutation(lines);
   };
 
