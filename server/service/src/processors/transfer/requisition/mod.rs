@@ -9,12 +9,14 @@ pub(crate) mod update_request_requisition_status;
 pub(crate) mod test;
 
 use repository::{
-    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, KeyType,
-    RepositoryError, Requisition, RowActionType, StorageConnection,
+    system_log_row::SystemLogType, ChangelogFilter, ChangelogRepository, ChangelogRow,
+    ChangelogTableName, EqualFilter, KeyType, RepositoryError, Requisition, RowActionType,
+    StorageConnection,
 };
 use thiserror::Error;
 
 use crate::{
+    activity_log::system_log_entry,
     cursor_controller::CursorController,
     processors::transfer::{
         get_requisition_and_linked_requisition,
@@ -57,6 +59,55 @@ pub(crate) enum ProcessRequisitionTransfersError {
     NameIdIsMissingFromChangelog(ChangelogRow),
     #[error("Name is not an active store {0:?}")]
     NameIsNotAnActiveStore(ChangelogRow),
+}
+
+fn log_system_error(
+    connection: &StorageConnection,
+    error: &ProcessRequisitionTransfersError,
+) -> Result<(), ProcessRequisitionTransfersError> {
+    let error_message = format!("{:?}", error);
+    log::error!("{}", error_message);
+    system_log_entry(connection, SystemLogType::ProcessorError, &error_message)
+        .map_err(|e| ProcessRequisitionTransfersError::DatabaseError(RepositoryError::from(e)))?;
+    Ok(())
+}
+
+fn process_change_log(
+    connection: &StorageConnection,
+    log: &ChangelogRow,
+    processors: &[Box<dyn RequisitionTransferProcessor>],
+    active_stores: &ActiveStoresOnSite,
+) -> Result<(), ProcessRequisitionTransfersError> {
+    use ProcessRequisitionTransfersError as Error;
+    let name_id = log
+        .name_id
+        .as_ref()
+        .ok_or_else(|| Error::NameIdIsMissingFromChangelog(log.clone()))?;
+
+    // Prepare record
+    let (requisition, linked_requisition) = match &log.row_action {
+        RowActionType::Upsert => {
+            get_requisition_and_linked_requisition(&connection, &log.record_id)
+                .map_err(Error::GetRequisitionAndLinkedRequisitionError)?
+        }
+        RowActionType::Delete => return Ok(()), // Nothing to do for deletes
+    };
+
+    let record = RequisitionTransferProcessorRecord {
+        requisition,
+        linked_requisition,
+        other_party_store_id: active_stores
+            .get_store_id_for_name_id(name_id)
+            .ok_or_else(|| Error::NameIsNotAnActiveStore(log.clone()))?,
+    };
+
+    // Try record against all of the processors
+    for processor in processors.iter() {
+        processor
+            .try_process_record_common(&connection, &record)
+            .map_err(Error::ProcessorError)?;
+    }
+    Ok(())
 }
 
 pub(crate) fn process_requisition_transfers(
@@ -102,48 +153,12 @@ pub(crate) fn process_requisition_transfers(
         }
 
         for log in logs {
-            let name_id = log
-                .name_id
-                .as_ref()
-                .ok_or_else(|| Error::NameIdIsMissingFromChangelog(log.clone()))?;
-
-            // Prepare record
-            let (requisition, linked_requisition) = match &log.row_action {
-                RowActionType::Upsert => {
-                    get_requisition_and_linked_requisition(&ctx.connection, &log.record_id)
-                        .map_err(Error::GetRequisitionAndLinkedRequisitionError)?
-                }
-                RowActionType::Delete => continue,
-            };
-
-            let record = RequisitionTransferProcessorRecord {
-                requisition,
-                linked_requisition,
-                other_party_store_id: active_stores
-                    .get_store_id_for_name_id(name_id)
-                    .ok_or_else(|| Error::NameIsNotAnActiveStore(log.clone()))?,
-            };
-
-            // Try record against all of the processors
-            for processor in processors.iter() {
-                let result = processor
-                    .try_process_record_common(&ctx.connection, &record)
-                    .map_err(Error::ProcessorError);
-
-                match result {
-                    Ok(_) => {}
-                    Err(error) => {
-                        log::error!(
-                            "Processor error with {} - {:?}",
-                            processor.get_description(),
-                            error
-                        );
-                        // TODO record error in error logs and continue
-                        return Err(error);
-                    }
-                };
+            let result = process_change_log(&ctx.connection, &log, &processors, &active_stores);
+            if let Err(e) = result {
+                log_system_error(&ctx.connection, &e)?;
             }
 
+            // Always update cursor and move on to the next log, even if there's an error
             cursor_controller
                 .update(&ctx.connection, (log.cursor + 1) as u64)
                 .map_err(Error::DatabaseError)?;
