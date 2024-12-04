@@ -18,7 +18,6 @@ import {
   useAuthContext,
   useLocation,
   EnvUtils,
-  UserPermission,
   RouteBuilder,
   useConfirmationModal,
   ReportsIcon,
@@ -152,7 +151,7 @@ export const AppDrawer: React.FC = () => {
   const t = useTranslation();
   const isMediumScreen = useIsMediumScreen();
   const drawer = useDrawer();
-  const { logout, userHasPermission, store } = useAuthContext();
+  const { logout, store } = useAuthContext();
   const { fullScreen } = useHostContext();
   const location = useLocation();
   const navigate = useNavigate();
@@ -250,7 +249,6 @@ export const AppDrawer: React.FC = () => {
             to={AppRoute.Settings}
             icon={<SettingsIcon fontSize="small" color="primary" />}
             text={t('settings')}
-            visible={userHasPermission(UserPermission.ServerAdmin)}
           />
           <AppNavLink
             to={AppRoute.Help}
