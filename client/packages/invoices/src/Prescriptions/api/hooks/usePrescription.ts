@@ -14,7 +14,7 @@ import {
 } from '../operations.generated';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
-import { isPrescriptionDisabled } from 'packages/invoices/src/utils';
+import { isPrescriptionDisabled } from '@openmsupply-client/invoices/src/utils';
 import { mapStatus } from './utils';
 import { usePatchState } from './usePatchState';
 import { useDelete } from './usePrescriptionDelete';
@@ -39,7 +39,8 @@ export const usePrescription = (id?: string) => {
     sortBy,
   });
 
-  // If an id is passed in, we use that and get by ID. Otherwise we use the
+  // If an id is passed in (which is the case when accessing from JSON Forms
+  // Prescription component), we use that and fetch by ID. Otherwise we use the
   // invoice number from the URL
   const invoiceNum = !id ? invoiceNumber : undefined;
 

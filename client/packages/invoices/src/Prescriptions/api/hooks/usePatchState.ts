@@ -27,10 +27,8 @@ export const usePatchState = <T>(referenceData: Record<string, unknown>) => {
   };
 
   const resetDraft = () => {
-    // if (data) {
     setPatch({});
     setIsDirty(false);
-    // }
   };
 
   return { patch, updatePatch, resetDraft, isDirty };
