@@ -3,7 +3,9 @@ use repository::{
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
 use repository::{
-    ApprovalStatusType, EqualFilter, Requisition, RequisitionFilter, RequisitionRepository,
+    ApprovalStatusType, EqualFilter, ProgramFilter, ProgramRequisitionOrderTypeRow,
+    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
+    ProgramRequisitionSettingsRepository, Requisition, RequisitionFilter, RequisitionRepository,
 };
 use util::inline_edit;
 
@@ -55,4 +57,35 @@ pub fn check_approval_status(requisition_row: &RequisitionRow) -> bool {
                 || *approval_status == ApprovalStatusType::DeniedByAnother);
     }
     false
+}
+
+pub enum OrderTypeNotFoundError {
+    OrderTypeNotFound,
+    DatabaseError(RepositoryError),
+}
+
+pub fn get_requisition_order_type(
+    connection: &StorageConnection,
+    program_id: &str,
+    order_type: &str,
+) -> Result<ProgramRequisitionOrderTypeRow, OrderTypeNotFoundError> {
+    let program_settings_ids = ProgramRequisitionSettingsRepository::new(connection)
+        .query(Some(ProgramRequisitionSettingsFilter::new().program(
+            ProgramFilter::new().id(EqualFilter::equal_to(program_id)),
+        )))?
+        .iter()
+        .map(|settings| settings.program_settings_row.id.clone())
+        .collect::<Vec<String>>();
+
+    let order_type = ProgramRequisitionOrderTypeRowRepository::new(connection)
+        .find_one_by_setting_and_name(&program_settings_ids, order_type)?
+        .ok_or(OrderTypeNotFoundError::OrderTypeNotFound)?;
+
+    Ok(order_type)
+}
+
+impl From<RepositoryError> for OrderTypeNotFoundError {
+    fn from(error: RepositoryError) -> Self {
+        Self::DatabaseError(error)
+    }
 }
