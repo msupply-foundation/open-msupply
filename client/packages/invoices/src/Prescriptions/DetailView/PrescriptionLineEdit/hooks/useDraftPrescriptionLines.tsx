@@ -105,7 +105,7 @@ export const useDraftPrescriptionLines = (
           if (!!placeholderItem) placeholder.item = placeholderItem;
           rows.push(
             createDraftStockOutLine({
-              invoiceId,
+              invoiceId: invoiceId ?? '',
               invoiceLine: placeholder,
               invoiceStatus: status,
             })
