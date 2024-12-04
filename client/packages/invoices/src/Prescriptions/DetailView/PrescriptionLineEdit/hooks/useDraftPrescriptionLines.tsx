@@ -82,7 +82,6 @@ export const useDraftPrescriptionLines = (
               invoiceStatus: status,
             });
           } else {
-            console.log('invoiceId', invoiceId);
             return createDraftStockOutLineFromStockLine({
               stockLine: batch,
               invoiceId: invoiceId ?? '',

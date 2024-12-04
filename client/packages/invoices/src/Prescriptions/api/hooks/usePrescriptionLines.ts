@@ -73,6 +73,7 @@ const useSaveLines = (id: string, invoiceNum: number) => {
     draftPrescriptionLines: DraftStockOutLine[];
     patch?: RecordPatch<PrescriptionRowFragment>;
   }) => {
+    if (patch && id !== '') patch.id = id;
     const input = {
       insertPrescriptionLines: draftPrescriptionLines
         .filter(
@@ -113,7 +114,6 @@ const useSaveLines = (id: string, invoiceNum: number) => {
         ? [
             {
               ...patch,
-              id,
               status: mapStatus(patch),
             },
           ]
