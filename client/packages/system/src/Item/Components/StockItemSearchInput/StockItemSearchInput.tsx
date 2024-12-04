@@ -29,14 +29,19 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   autoFocus = false,
   openOnFocus,
   includeNonVisibleWithStockOnHand = false,
+  itemCategoryName,
 }) => {
   const [items, setItems] = useState<ItemStockOnHandFragment[]>([]);
   const { pagination, onPageChange } = usePagination();
   const { filter, onFilter } = useStringFilter('name');
 
+  const fullFilter = itemCategoryName
+    ? { ...filter, categoryName: itemCategoryName }
+    : filter;
+
   const { data, isLoading } = useItemStockOnHand({
     pagination,
-    filter,
+    filter: fullFilter,
     includeNonVisibleWithStockOnHand,
   });
   // changed from useStockLines even though that is more appropriate
@@ -52,7 +57,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const options = useMemo(
     () =>
       defaultOptionMapper(
-        extraFilter ? items.filter(extraFilter) ?? [] : items ?? [],
+        extraFilter ? (items.filter(extraFilter) ?? []) : (items ?? []),
         'name'
       ).sort((a, b) => a.label.localeCompare(b.label)),
     [items]
@@ -78,8 +83,9 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   );
 
   useEffect(() => {
-    // using the Autocomplete openOnFocus prop, the popper is incorrectly positioned
-    // when used within a Dialog. This is a workaround to fix the popper position.
+    // Using the Autocomplete openOnFocus prop, the popper is incorrectly
+    // positioned when used within a Dialog. This is a workaround to fix the
+    // popper position.
     if (openOnFocus) {
       setTimeout(() => selectControl.toggleOn(), DEBOUNCE_TIMEOUT);
     }

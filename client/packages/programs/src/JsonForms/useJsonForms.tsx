@@ -35,12 +35,15 @@ import {
   HistoricEncounterData,
   bloodPressureTester,
   BloodPressure,
+  Prescription,
+  prescriptionTester,
 } from './components';
 import { EnrolmentId, enrolmentIdTester } from './components/EnrolmentId';
 import {
   isEqualIgnoreUndefinedAndEmpty,
   stripEmptyAdditions,
 } from './stripEmptyAdditions';
+import { useFormActions } from './useFormActions';
 
 export interface SchemaData {
   formSchemaId?: string;
@@ -79,6 +82,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: historicEncounterDataTester, renderer: HistoricEncounterData },
   { tester: enrolmentIdTester, renderer: EnrolmentId },
   { tester: bloodPressureTester, renderer: BloodPressure },
+  { tester: prescriptionTester, renderer: Prescription },
 ];
 
 /**
@@ -123,6 +127,7 @@ export const useJsonForms = <R,>(
   const [data, setData] = useState<JsonData | undefined>();
   const [isSaving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState<boolean>();
+  const formActions = useFormActions(setIsDirty);
   const t = useTranslation();
   const [validationError, setValidationError] = useState<string | false>(false);
   const { success, error: errorNotification } = useNotification();
@@ -138,8 +143,12 @@ export const useJsonForms = <R,>(
 
     // Run mutation...
     try {
+      await formActions.run({ preSubmit: true });
+
       const sanitizedData = stripEmptyAdditions(initialData, data);
       const result = await save?.(sanitizedData);
+
+      await formActions.run({ preSubmit: false });
 
       const successSnack = success(
         deletion ? t('success.data-deleted') : t('success.data-saved')
@@ -197,6 +206,7 @@ export const useJsonForms = <R,>(
         config={{
           ...config,
           initialData,
+          formActions,
         }}
       />
     ),
@@ -209,5 +219,6 @@ export const useJsonForms = <R,>(
     isDirty: isDirty ?? false,
     error,
     validationError,
+    formActions,
   };
 };

@@ -60,6 +60,14 @@ impl SyncRecordTester for RequisitionRecordTester {
             snapshot_datetime: None,
             approved_quantity: 0.0,
             approval_comment: None,
+            initial_stock_on_hand_units: 5.0,
+            incoming_units: 5.0,
+            outgoing_units: 5.0,
+            loss_in_units: 5.0,
+            addition_in_units: 5.0,
+            expiring_units: 5.0,
+            days_out_of_stock: 5.0,
+            option_id: None,
         };
 
         let requisition_row_2 = inline_edit(&base_requisition_row, |mut d| {
@@ -136,6 +144,13 @@ impl SyncRecordTester for RequisitionRecordTester {
             d.snapshot_datetime = NaiveDate::from_ymd_opt(2022, 03, 20)
                 .unwrap()
                 .and_hms_opt(12, 13, 14);
+            d.initial_stock_on_hand_units = 5.0;
+            d.incoming_units = 5.0;
+            d.outgoing_units = 5.0;
+            d.loss_in_units = 5.0;
+            d.addition_in_units = 5.0;
+            d.expiring_units = 5.0;
+            d.days_out_of_stock = 5.0;
             d
         });
 
