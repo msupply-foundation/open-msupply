@@ -22,8 +22,8 @@ import { AppRoute } from '@openmsupply-client/config';
 import { DefaultFormRowSx, useZodOptionsValidation } from '../../common';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import {
-  usePrescription,
   usePrescriptionSingle,
+  usePrescriptionLines,
 } from '@openmsupply-client/invoices/src/Prescriptions';
 import { useDraftPrescriptionLines } from '@openmsupply-client/invoices/src/Prescriptions/DetailView/PrescriptionLineEdit/hooks';
 import { StockLineTable } from './StockLineTable';
@@ -71,7 +71,11 @@ const UIComponent = (props: ControlProps) => {
   const { draftStockOutLines, setDraftStockOutLines } =
     useDraftPrescriptionLines(selectedItem);
 
-  const { mutateAsync: updateLines } = usePrescription.line.save();
+  const {
+    save: { saveLines },
+  } = usePrescriptionLines();
+
+  // const { mutateAsync: updateLines } = usePrescription.line.save();
 
   const { success } = useNotification();
 
@@ -136,7 +140,7 @@ const UIComponent = (props: ControlProps) => {
             line => (line.invoiceId = prescriptionId)
           );
           // Add lines to prescription
-          await updateLines({
+          await saveLines({
             draftPrescriptionLines: allPrescriptionLines,
             patch: { id: prescriptionId, status: InvoiceNodeStatus.Picked },
           });
