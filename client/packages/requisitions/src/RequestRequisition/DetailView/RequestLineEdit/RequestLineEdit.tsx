@@ -2,14 +2,18 @@ import React from 'react';
 import { useTranslation } from '@common/intl';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import {
+  BarIcon,
   Box,
   InputWithLabelRow,
   NumericTextInput,
   NumUtils,
+  Popover,
   TextArea,
+  useToggle,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { Footer } from './Footer';
+import { RequestStats } from './ItemCharts/RequestStats';
 
 const INPUT_WIDTH = 100;
 const LABEL_WIDTH = '150px';
@@ -35,6 +39,8 @@ export const RequestLineEdit = ({
   previous,
 }: RequestLineEditProps) => {
   const t = useTranslation();
+  const { isOn, toggle } = useToggle();
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   return (
     <Box>
@@ -89,6 +95,33 @@ export const RequestLineEdit = ({
               label={t('label.requested-quantity')}
               sx={{ marginBottom: 1 }}
             />
+            <Box
+              paddingLeft={1}
+              paddingTop={0.5}
+              onClick={e => {
+                toggle();
+                setAnchorEl(e?.currentTarget);
+              }}
+              sx={{ cursor: 'pointer' }}
+            >
+              <BarIcon
+                sx={{
+                  color: 'primary.main',
+                  backgroundColor: 'background.drawer',
+                  borderRadius: '30%',
+                  padding: '2px',
+                }}
+              />
+              {isOn && (
+                <Popover
+                  anchorOrigin={{ vertical: 'center', horizontal: 'left' }}
+                  anchorEl={anchorEl}
+                  open={isOn}
+                >
+                  <RequestStats draft={draft} />
+                </Popover>
+              )}
+            </Box>
           </Box>
           <InputWithLabelRow
             Input={
