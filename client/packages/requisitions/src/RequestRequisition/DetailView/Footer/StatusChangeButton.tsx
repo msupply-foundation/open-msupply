@@ -129,7 +129,7 @@ const useStatusChangeButton = () => {
           case 'OrderingTooManyItems':
             return error(
               t('error.ordering-too-many-items', {
-                maxItems: updateError.maxItemsInEmergencyOrder,
+                count: updateError.maxItemsInEmergencyOrder,
               })
             )();
           case 'OtherPartyNotASupplier':
