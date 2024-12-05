@@ -3,9 +3,9 @@ use repository::{
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
 use repository::{
-    ApprovalStatusType, EqualFilter, ProgramFilter, ProgramRequisitionOrderTypeRow,
-    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
-    ProgramRequisitionSettingsRepository, Requisition, RequisitionFilter, RequisitionRepository,
+    ApprovalStatusType, EqualFilter, ProgramFilter, ProgramRequisitionOrderTypeRowRepository,
+    ProgramRequisitionSettingsFilter, ProgramRequisitionSettingsRepository, Requisition,
+    RequisitionFilter, RequisitionRepository,
 };
 use util::inline_edit;
 
@@ -87,10 +87,10 @@ pub fn check_emergency_order_within_max_items_limit(
         .filter(|line| line.requisition_line_row.requested_quantity != 0.0)
         .count();
 
-    return Ok((
-        order_type.is_emergency && line_count < order_type.max_items_in_emergency_order as usize,
+    Ok((
+        order_type.is_emergency && line_count <= order_type.max_items_in_emergency_order as usize,
         order_type.max_items_in_emergency_order,
-    ));
+    ))
 }
 
 impl From<RepositoryError> for OrderTypeNotFoundError {
