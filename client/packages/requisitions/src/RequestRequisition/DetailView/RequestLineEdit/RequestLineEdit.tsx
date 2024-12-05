@@ -1,142 +1,135 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { useTranslation } from '@common/intl';
+import { ItemRowFragment } from '@openmsupply-client/system';
 import {
-  ModalMode,
-  useDialog,
-  DialogButton,
-  BasicSpinner,
-  useBufferState,
   Box,
-  useKeyboardHeightAdjustment,
+  InputWithLabelRow,
+  NumericTextInput,
+  NumUtils,
+  TextArea,
 } from '@openmsupply-client/common';
-import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
-import { RequestLineEditForm } from './RequestLineEditForm';
-import { useRequest } from '../../api';
-import { useNextRequestLine, useDraftRequisitionLine } from './hooks';
-import { StockDistribution } from './ItemCharts/StockDistribution';
-import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
-import { StockEvolution } from './ItemCharts/StockEvolution';
+import { DraftRequestLine } from './hooks';
+import { Footer } from './Footer';
+
+const INPUT_WIDTH = 100;
+const LABEL_WIDTH = '150px';
 
 interface RequestLineEditProps {
-  isOpen: boolean;
-  onClose: () => void;
-  mode: ModalMode | null;
-  item: ItemRowWithStatsFragment | null;
+  item?: ItemRowFragment | null;
+  draft?: DraftRequestLine | null;
+  update: (patch: Partial<DraftRequestLine>) => void;
+  save?: () => void;
+  hasNext: boolean;
+  next: ItemRowFragment | null;
+  hasPrevious: boolean;
+  previous: ItemRowFragment | null;
 }
 
 export const RequestLineEdit = ({
-  isOpen,
-  onClose,
-  mode,
-  item,
+  draft,
+  update,
+  save,
+  hasNext,
+  next,
+  hasPrevious,
+  previous,
 }: RequestLineEditProps) => {
-  const disabled = useRequest.utils.isDisabled();
-  const { Modal } = useDialog({ onClose, isOpen, animationTimeout: 100 });
-  const [currentItem, setCurrentItem] = useBufferState(item);
-  const [previousItemLineId, setPreviousItemLineId] = useBufferState<
-    string | null
-  >(null);
-  const { draft, isLoading, save, update } =
-    useDraftRequisitionLine(currentItem);
-  const { next, hasNext } = useNextRequestLine(currentItem);
-  const deleteLine = useRequest.line.deleteLine();
-  const isDisabled = useRequest.utils.isDisabled();
-
-  const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
-  const height = useKeyboardHeightAdjustment(600);
-
-  const deletePreviousLine = () => {
-    if (previousItemLineId && !isDisabled) deleteLine(previousItemLineId);
-  };
-  const onChangeItem = (item: ItemRowWithStatsFragment) => {
-    deletePreviousLine();
-    setCurrentItem(item);
-  };
-
-  const onCancel = () => {
-    if (mode === ModalMode.Create) {
-      deletePreviousLine();
-    }
-    onClose();
-  };
-
-  useEffect(() => {
-    // isCreated is true when the line exists only locally i.e. not saved to server
-    if (!!draft?.isCreated) {
-      save();
-    } else {
-      if (!!draft?.id) setPreviousItemLineId(draft.id);
-    }
-  }, [draft]);
+  const t = useTranslation();
 
   return (
-    <Modal
-      title={''}
-      contentProps={{ sx: { padding: 0 } }}
-      cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
-      nextButton={
-        <DialogButton
-          disabled={nextDisabled}
-          variant="next-and-ok"
-          onClick={async () => {
-            await save();
-            setPreviousItemLineId(null);
-            if (mode === ModalMode.Update && next) setCurrentItem(next);
-            else if (mode === ModalMode.Create) setCurrentItem(null);
-            else onClose();
-            // Returning true here triggers the slide animation
-            return true;
-          }}
-        />
-      }
-      okButton={
-        <DialogButton
-          variant="ok"
-          disabled={!currentItem}
-          onClick={async () => {
-            await save();
-            onClose();
-          }}
-        />
-      }
-      height={height}
-      width={1024}
-    >
-      {!isLoading ? (
-        <>
-          <RequestLineEditForm
-            draftLine={draft}
-            update={update}
-            disabled={mode === ModalMode.Update || disabled}
-            onChangeItem={onChangeItem}
-            currentItem={currentItem}
+    <Box>
+      <Box display="flex" justifyContent="space-between">
+        <Box paddingLeft={4} paddingRight={7}>
+          {/* Left column content */}
+          <InputWithLabelRow
+            Input={
+              <NumericTextInput
+                width={INPUT_WIDTH}
+                value={draft?.itemStats.availableStockOnHand}
+                disabled
+                autoFocus
+              />
+            }
+            labelWidth={LABEL_WIDTH}
+            label={t('label.stock-on-hand')}
+            sx={{ marginBottom: 1 }}
           />
-          {!!draft && (
-            <StockDistribution
-              availableStockOnHand={draft?.itemStats?.availableStockOnHand}
-              averageMonthlyConsumption={
-                draft?.itemStats?.averageMonthlyConsumption
+          <InputWithLabelRow
+            Input={
+              <NumericTextInput
+                width={INPUT_WIDTH}
+                value={NumUtils.round(
+                  draft?.itemStats.averageMonthlyConsumption ?? 0,
+                  2
+                )}
+                decimalLimit={2}
+                disabled
+              />
+            }
+            labelWidth={LABEL_WIDTH}
+            label={t('label.amc')}
+            sx={{ marginBottom: 1 }}
+          />
+        </Box>
+        <Box>
+          {/* Right column content */}
+          <Box display="flex" flexDirection="row">
+            <InputWithLabelRow
+              Input={
+                <NumericTextInput
+                  width={INPUT_WIDTH}
+                  value={draft?.requestedQuantity}
+                  onChange={value => {
+                    update({ requestedQuantity: value });
+                  }}
+                  onBlur={save}
+                />
               }
-              suggestedQuantity={draft?.suggestedQuantity}
+              labelWidth={LABEL_WIDTH}
+              label={t('label.requested-quantity')}
+              sx={{ marginBottom: 1 }}
             />
-          )}
-          <Box
-            display="flex"
-            sx={{ paddingLeft: 4, paddingRight: 4 }}
-            justifyContent="space-between"
-          >
-            {draft?.isCreated ? (
-              <Box display="flex" height={289} />
-            ) : (
-              <>
-                <ConsumptionHistory id={draft?.id || ''} />
-                <StockEvolution id={draft?.id || ''} />
-              </>
-            )}
           </Box>
-        </>
-      ) : (
-        <BasicSpinner />
-      )}
-    </Modal>
+          <InputWithLabelRow
+            Input={
+              <NumericTextInput
+                width={INPUT_WIDTH}
+                value={draft?.suggestedQuantity}
+                disabled
+              />
+            }
+            labelWidth={LABEL_WIDTH}
+            label={t('label.suggested-quantity')}
+            sx={{ marginBottom: 1 }}
+          />
+          <InputWithLabelRow
+            Input={
+              <TextArea
+                value={draft?.comment ?? ''}
+                onChange={e => update({ comment: e.target.value })}
+                InputProps={{
+                  sx: {
+                    backgroundColor: theme => theme.palette.background.menu,
+                  },
+                }}
+                onBlur={save}
+              />
+            }
+            sx={{ width: 275 }}
+            labelWidth={'75px'}
+            label={t('label.comment')}
+          />
+        </Box>
+      </Box>
+      <Box>
+        <Footer
+          hasNext={hasNext}
+          next={next}
+          hasPrevious={hasPrevious}
+          previous={previous}
+          requisitionNumber={draft?.requisitionNumber}
+        />
+      </Box>
+    </Box>
   );
 };
