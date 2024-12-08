@@ -48,6 +48,8 @@ pub enum UpdateRequestRequisitionError {
     OtherPartyNotVisible,
     OtherPartyDoesNotExist,
     OtherPartyIsNotAStore,
+    OrderTypeNotFound,
+    OrderingTooManyItems(i32), // emergency order
     // Internal
     UpdatedRequisitionDoesNotExist,
     DatabaseError(RepositoryError),

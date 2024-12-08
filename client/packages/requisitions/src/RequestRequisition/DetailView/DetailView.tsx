@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useCallback } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -10,10 +10,15 @@ import {
   useEditModal,
   createQueryParamsStore,
   DetailTabs,
+  BasicModal,
+  Box,
+  FnUtils,
 } from '@openmsupply-client/common';
 import {
   ItemRowWithStatsFragment,
   ActivityLogList,
+  StockItemSearchInput,
+  ItemRowFragment,
 } from '@openmsupply-client/system';
 import { RequestLineFragment, useRequest } from '../api';
 import { Toolbar } from './Toolbar';
@@ -22,22 +27,24 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
-import { RequestLineEdit } from './RequestLineEdit';
 
 export const DetailView: FC = () => {
-  const { data, isLoading } = useRequest.document.get();
-  const { onOpen, onClose, mode, entity, isOpen } =
-    useEditModal<ItemRowWithStatsFragment>();
-  const isDisabled = useRequest.utils.isDisabled();
-  const navigate = useNavigate();
   const t = useTranslation();
+  const navigate = useNavigate();
+  const { data, isLoading } = useRequest.document.get();
+  const isDisabled = useRequest.utils.isDisabled();
+  const { mutateAsync } = useRequest.line.insert();
+  const { onOpen, onClose, isOpen } = useEditModal<ItemRowWithStatsFragment>();
 
-  const onRowClick = React.useCallback(
-    (line: RequestLineFragment) => {
-      onOpen(line.item);
-    },
-    [onOpen]
-  );
+  const onRowClick = useCallback((line: RequestLineFragment) => {
+    navigate(
+      RouteBuilder.create(AppRoute.Replenishment)
+        .addPart(AppRoute.InternalOrder)
+        .addPart(String(line.requisitionNumber))
+        .addPart(String(line.item.id))
+        .build()
+    );
+  }, []);
 
   if (isLoading) return <DetailViewSkeleton />;
 
@@ -75,12 +82,32 @@ export const DetailView: FC = () => {
       <Footer />
       <SidePanel />
       {isOpen && (
-        <RequestLineEdit
-          isOpen={isOpen}
-          onClose={onClose}
-          mode={mode}
-          item={entity}
-        />
+        <BasicModal open={isOpen} onClose={onClose} height={500} width={800}>
+          <Box padding={2}>
+            <StockItemSearchInput
+              onChange={(newItem: ItemRowFragment | null) => {
+                if (newItem) {
+                  mutateAsync({
+                    id: FnUtils.generateUUID(),
+                    requisitionId: data.id,
+                    itemId: newItem.id,
+                  });
+                  navigate(
+                    RouteBuilder.create(AppRoute.Replenishment)
+                      .addPart(AppRoute.InternalOrder)
+                      .addPart(String(data.requisitionNumber))
+                      .addPart(String(newItem.id))
+                      .build()
+                  );
+                }
+              }}
+              openOnFocus={true}
+              extraFilter={item =>
+                !data.lines.nodes.some(line => line.item.id === item.id)
+              }
+            />
+          </Box>
+        </BasicModal>
       )}
     </TableProvider>
   ) : (
