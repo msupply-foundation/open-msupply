@@ -437,16 +437,21 @@ mutation insertProgramRequest(
   }
 }
 
-fragment RequisitionReasonsNotProvided on RequisitionReasonsNotProvided {
+fragment RequisitionReasonNotProvidedError on RequisitionReasonNotProvided {
   __typename
-  errors {
-    requisitionLine {
+  requisitionLine {
     id
-    }
   }
   description
 }
 
+fragment RequisitionReasonsNotProvidedError on RequisitionReasonsNotProvided {
+  __typename
+  errors {
+    ...RequisitionReasonNotProvidedError
+  }
+  description
+}
 
 mutation updateRequest(
   $storeId: String!
@@ -480,7 +485,7 @@ mutation updateRequest(
           maxItemsInEmergencyOrder
         }
         ... on RequisitionReasonsNotProvided {
-          ...RequisitionReasonsNotProvided
+          ...RequisitionReasonsNotProvidedError
         }
       }
     }

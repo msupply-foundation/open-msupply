@@ -97,7 +97,9 @@ export type InsertProgramRequestMutationVariables = Types.Exact<{
 
 export type InsertProgramRequestMutation = { __typename: 'Mutations', insertProgramRequestRequisition: { __typename: 'InsertProgramRequestRequisitionError' } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
 
-export type RequisitionReasonsNotProvidedFragment = { __typename: 'RequisitionReasonsNotProvided', description: string, errors: Array<{ __typename: 'RequisitionReasonNotProvided', requisitionLine: { __typename: 'RequisitionLineNode', id: string } }> };
+export type RequisitionReasonNotProvidedErrorFragment = { __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } };
+
+export type RequisitionReasonsNotProvidedErrorFragment = { __typename: 'RequisitionReasonsNotProvided', description: string, errors: Array<{ __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } }> };
 
 export type UpdateRequestMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -105,7 +107,7 @@ export type UpdateRequestMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateRequestMutation = { __typename: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string, requisitionNumber: number } | { __typename: 'UpdateRequestRequisitionError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'OrderingTooManyItems', description: string, maxItemsInEmergencyOrder: number } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionReasonsNotProvided', description: string, errors: Array<{ __typename: 'RequisitionReasonNotProvided', requisitionLine: { __typename: 'RequisitionLineNode', id: string } }> } } };
+export type UpdateRequestMutation = { __typename: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string, requisitionNumber: number } | { __typename: 'UpdateRequestRequisitionError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'OrderingTooManyItems', description: string, maxItemsInEmergencyOrder: number } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionReasonsNotProvided', description: string, errors: Array<{ __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } }> } } };
 
 export type DeleteRequestMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -281,17 +283,24 @@ export const ConsumptionHistoryFragmentDoc = gql`
   isHistoric
 }
     `;
-export const RequisitionReasonsNotProvidedFragmentDoc = gql`
-    fragment RequisitionReasonsNotProvided on RequisitionReasonsNotProvided {
+export const RequisitionReasonNotProvidedErrorFragmentDoc = gql`
+    fragment RequisitionReasonNotProvidedError on RequisitionReasonNotProvided {
   __typename
-  errors {
-    requisitionLine {
-      id
-    }
+  requisitionLine {
+    id
   }
   description
 }
     `;
+export const RequisitionReasonsNotProvidedErrorFragmentDoc = gql`
+    fragment RequisitionReasonsNotProvidedError on RequisitionReasonsNotProvided {
+  __typename
+  errors {
+    ...RequisitionReasonNotProvidedError
+  }
+  description
+}
+    ${RequisitionReasonNotProvidedErrorFragmentDoc}`;
 export const OrderTypeRowFragmentDoc = gql`
     fragment OrderTypeRow on ProgramRequisitionOrderTypeNode {
   id
@@ -614,13 +623,13 @@ export const UpdateRequestDocument = gql`
           maxItemsInEmergencyOrder
         }
         ... on RequisitionReasonsNotProvided {
-          ...RequisitionReasonsNotProvided
+          ...RequisitionReasonsNotProvidedError
         }
       }
     }
   }
 }
-    ${RequisitionReasonsNotProvidedFragmentDoc}`;
+    ${RequisitionReasonsNotProvidedErrorFragmentDoc}`;
 export const DeleteRequestDocument = gql`
     mutation deleteRequest($storeId: String!, $input: BatchRequestRequisitionInput!) {
   batchRequestRequisition(storeId: $storeId, input: $input) {
