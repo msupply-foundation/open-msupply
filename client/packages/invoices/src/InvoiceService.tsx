@@ -13,6 +13,7 @@ import {
 } from './InboundShipment';
 import { PrescriptionListView, PrescriptionDetailView } from './Prescriptions';
 import { CustomerReturnDetailView } from './Returns/CustomerDetailView';
+import { PrescriptionLineEditPage } from './Prescriptions/DetailView/PrescriptionLineEdit/PrescriptionLineEditPage';
 
 const InvoiceService: FC = () => {
   const outboundShipmentsRoute = RouteBuilder.create(
@@ -35,6 +36,11 @@ const InvoiceService: FC = () => {
 
   const prescriptionRoute = RouteBuilder.create(AppRoute.Prescription)
     .addPart(':invoiceNumber')
+    .build();
+
+  const prescriptionLineRoute = RouteBuilder.create(AppRoute.Prescription)
+    .addPart(':invoiceNumber')
+    .addPart(':itemId')
     .build();
 
   const supplierReturnsRoute = RouteBuilder.create(
@@ -70,6 +76,10 @@ const InvoiceService: FC = () => {
       />
       <Route path={prescriptionsRoute} element={<PrescriptionListView />} />
       <Route path={prescriptionRoute} element={<PrescriptionDetailView />} />
+      <Route
+        path={prescriptionLineRoute}
+        element={<PrescriptionLineEditPage />}
+      />
 
       <Route path={supplierReturnsRoute} element={<SupplierReturnListView />} />
       <Route
