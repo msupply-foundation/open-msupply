@@ -110,7 +110,7 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
       }
       case 'OrderingTooManyItems':
         return t('error.ordering-too-many-items', {
-          maxItems: error.maxItemsInEmergencyOrder,
+          count: error.maxItemsInEmergencyOrder,
         });
       case 'CannotEditRequisition':
         return t('error.cannot-edit-requisition');
