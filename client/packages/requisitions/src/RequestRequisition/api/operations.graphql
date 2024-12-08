@@ -451,6 +451,11 @@ mutation updateRequest(
           __typename
           description
         }
+        ... on OrderingTooManyItems {
+          __typename
+          description
+          maxItemsInEmergencyOrder
+        }
       }
     }
   }
@@ -490,6 +495,16 @@ mutation deleteRequest(
   }
 }
 
+fragment OrderTypeRow on ProgramRequisitionOrderTypeNode {
+  id
+  name
+  availablePeriods {
+    id
+    name
+  }
+  isEmergency
+}
+
 fragment SupplierProgramSettings on SupplierProgramRequisitionSettingNode {
   programName
   programId
@@ -497,12 +512,7 @@ fragment SupplierProgramSettings on SupplierProgramRequisitionSettingNode {
     ...NameRow
   }
   orderTypes {
-    id
-    name
-    availablePeriods {
-      id
-      name
-    }
+    ...OrderTypeRow
   }
 }
 
