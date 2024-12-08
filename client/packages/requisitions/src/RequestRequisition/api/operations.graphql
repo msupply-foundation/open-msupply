@@ -47,6 +47,13 @@ fragment RequestLine on RequisitionLineNode {
   comment
   itemName
   requisitionNumber
+  initialStockOnHandUnits
+  incomingUnits
+  outgoingUnits
+  lossInUnits
+  additionInUnits
+  expiringUnits
+  daysOutOfStock
 
   itemStats {
     __typename
@@ -60,6 +67,10 @@ fragment RequestLine on RequisitionLineNode {
   }
   item {
     ...ItemWithStats
+  }
+  reason {
+    id
+    reason
   }
 }
 
@@ -426,6 +437,17 @@ mutation insertProgramRequest(
   }
 }
 
+fragment RequisitionReasonsNotProvided on RequisitionReasonsNotProvided {
+  __typename
+  errors {
+    requisitionLine {
+    id
+    }
+  }
+  description
+}
+
+
 mutation updateRequest(
   $storeId: String!
   $input: UpdateRequestRequisitionInput!
@@ -456,6 +478,9 @@ mutation updateRequest(
           __typename
           description
           maxItemsInEmergencyOrder
+        }
+        ... on RequisitionReasonsNotProvided {
+          ...RequisitionReasonsNotProvided
         }
       }
     }
