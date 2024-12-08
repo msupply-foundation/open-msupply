@@ -1,6 +1,9 @@
 import React from 'react';
 import { useTranslation } from '@common/intl';
-import { ItemRowFragment } from '@openmsupply-client/system';
+import {
+  ItemRowFragment,
+  ReasonOptionsSearchInput,
+} from '@openmsupply-client/system';
 import {
   BarIcon,
   Box,
@@ -8,7 +11,9 @@ import {
   NumericTextInput,
   NumUtils,
   Popover,
+  ReasonOptionNodeType,
   TextArea,
+  useAuthContext,
   useToggle,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
@@ -27,6 +32,7 @@ interface RequestLineEditProps {
   next: ItemRowFragment | null;
   hasPrevious: boolean;
   previous: ItemRowFragment | null;
+  isProgram: boolean;
 }
 
 export const RequestLineEdit = ({
@@ -37,10 +43,14 @@ export const RequestLineEdit = ({
   next,
   hasPrevious,
   previous,
+  isProgram,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { isOn, toggle } = useToggle();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const { store } = useAuthContext();
+  const useConsumptionData =
+    store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
 
   return (
     <Box>
@@ -60,6 +70,85 @@ export const RequestLineEdit = ({
             label={t('label.stock-on-hand')}
             sx={{ marginBottom: 1 }}
           />
+          {isProgram && useConsumptionData && (
+            <>
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    width={INPUT_WIDTH}
+                    value={draft?.incomingUnits}
+                    disabled
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                label={t('label.incoming-stock')}
+                sx={{ marginBottom: 1 }}
+              />
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    width={INPUT_WIDTH}
+                    value={draft?.outgoingUnits}
+                    disabled
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                label={t('label.outgoing')}
+                sx={{ marginBottom: 1 }}
+              />
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    width={INPUT_WIDTH}
+                    value={draft?.lossInUnits}
+                    disabled
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                label={t('label.losses')}
+                sx={{ marginBottom: 1 }}
+              />
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    width={INPUT_WIDTH}
+                    value={draft?.additionInUnits}
+                    disabled
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                label={t('label.additions')}
+                sx={{ marginBottom: 1 }}
+              />
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    width={INPUT_WIDTH}
+                    value={draft?.expiringUnits}
+                    disabled
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                label={t('label.short-expiry')}
+                sx={{ marginBottom: 1 }}
+              />
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    width={INPUT_WIDTH}
+                    value={draft?.daysOutOfStock}
+                    disabled
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                label={t('label.days-out-of-stock')}
+                sx={{ marginBottom: 1 }}
+              />
+            </>
+          )}
+        </Box>
+        <Box>
+          {/* Right column content */}
           <InputWithLabelRow
             Input={
               <NumericTextInput
@@ -76,9 +165,21 @@ export const RequestLineEdit = ({
             label={t('label.amc')}
             sx={{ marginBottom: 1 }}
           />
-        </Box>
-        <Box>
-          {/* Right column content */}
+          {isProgram && useConsumptionData && (
+            <InputWithLabelRow
+              Input={
+                <NumericTextInput
+                  width={INPUT_WIDTH}
+                  value={draft?.itemStats.availableMonthsOfStockOnHand ?? 0}
+                  disabled
+                  decimalLimit={2}
+                  sx={{ marginBottom: 1 }}
+                />
+              }
+              labelWidth={LABEL_WIDTH}
+              label={t('label.months-of-stock')}
+            />
+          )}
           <Box display="flex" flexDirection="row">
             <InputWithLabelRow
               Input={
@@ -86,7 +187,14 @@ export const RequestLineEdit = ({
                   width={INPUT_WIDTH}
                   value={draft?.requestedQuantity}
                   onChange={value => {
-                    update({ requestedQuantity: value });
+                    if (draft?.suggestedQuantity === value) {
+                      update({
+                        requestedQuantity: value,
+                        reason: null,
+                      });
+                    } else {
+                      update({ requestedQuantity: value });
+                    }
                   }}
                   onBlur={save}
                 />
@@ -135,6 +243,27 @@ export const RequestLineEdit = ({
             label={t('label.suggested-quantity')}
             sx={{ marginBottom: 1 }}
           />
+          {isProgram && useConsumptionData && (
+            <InputWithLabelRow
+              Input={
+                <ReasonOptionsSearchInput
+                  value={draft?.reason}
+                  onChange={value => {
+                    update({ reason: value });
+                  }}
+                  width={200}
+                  type={ReasonOptionNodeType.RequisitionLineVariance}
+                  isDisabled={
+                    draft?.requestedQuantity === draft?.suggestedQuantity
+                  }
+                  onBlur={save}
+                />
+              }
+              labelWidth={'66px'}
+              label={t('label.reason')}
+              sx={{ marginBottom: 1 }}
+            />
+          )}
           <InputWithLabelRow
             Input={
               <TextArea
