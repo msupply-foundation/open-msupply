@@ -19,7 +19,6 @@ export const PricingSectionComponent = () => {
   } = usePrescription();
 
   const pricing = data?.pricing;
-
   if (!pricing) return null;
 
   return (
@@ -30,7 +29,7 @@ export const PricingSectionComponent = () => {
             <PanelLabel fontWeight="bold">
               {t('heading.grand-total')}
             </PanelLabel>
-            <PanelField>{c(pricing?.totalAfterTax)}</PanelField>
+            <PanelField>{c(pricing.totalAfterTax)}</PanelField>
           </PanelRow>
         </>
       </Grid>

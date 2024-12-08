@@ -73,7 +73,6 @@ export const PrescriptionLineEditForm: React.FC<
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
   const [issueQuantity, setIssueQuantity] = useState(0);
   const { format } = useFormatNumber();
-  // const { items } = usePrescription.line.rows();
   const { rows: items } = usePrescription();
 
   const onChangePackSize = (newPackSize: number) => {

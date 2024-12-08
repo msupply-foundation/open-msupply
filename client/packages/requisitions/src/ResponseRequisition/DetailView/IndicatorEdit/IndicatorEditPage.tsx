@@ -9,7 +9,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useResponse } from '../../api';
-import { PageLayout } from '../PageLayout';
+import { PageLayout } from '../../../PageLayout';
 import { ListIndicatorLines } from './ListIndicators';
 import { AppRoute } from '@openmsupply-client/config';
 import { AppBarButtons } from '../ResponseLineEdit/AppBarButtons';
@@ -21,6 +21,7 @@ export const IndicatorEditPage = () => {
   const { programIndicatorLineId, programIndicatorCode } = useParams();
   const { data: response, isLoading } = useResponse.document.get();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const isDisabled = useResponse.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useResponse.document.indicators(
       response?.otherPartyId ?? '',
@@ -95,6 +96,7 @@ export const IndicatorEditPage = () => {
                 hasPrevious={hasPrevious}
                 previous={previous}
                 requisitionNumber={response?.requisitionNumber}
+                disabled={isDisabled}
               />
             </>
           }

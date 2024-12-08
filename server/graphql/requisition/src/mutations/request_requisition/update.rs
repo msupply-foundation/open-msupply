@@ -2,10 +2,10 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     simple_generic_errors::{
-        CannotEditRequisition, OtherPartyNotASupplier, OtherPartyNotVisible, RecordNotFound,
+        CannotEditRequisition, OrderingTooManyItems, OtherPartyNotASupplier, OtherPartyNotVisible,
+        RecordNotFound,
     },
-    standard_graphql_error::validate_auth,
-    standard_graphql_error::StandardGraphqlError,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::RequisitionNode;
@@ -45,6 +45,7 @@ pub enum UpdateErrorInterface {
     OtherPartyNotASupplier(OtherPartyNotASupplier),
     RecordNotFound(RecordNotFound),
     CannotEditRequisition(CannotEditRequisition),
+    OrderingTooManyItems(OrderingTooManyItems),
 }
 
 #[derive(SimpleObject)]
@@ -152,8 +153,15 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 OtherPartyNotVisible,
             ))
         }
+        ServiceError::OrderingTooManyItems(max_order) => {
+            return Ok(UpdateErrorInterface::OrderingTooManyItems(
+                OrderingTooManyItems(max_order),
+            ))
+        }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreRequisition | ServiceError::OrderTypeNotFound => {
+            BadUserInput(formatted_error)
+        }
         ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::OtherPartyIsNotAStore => BadUserInput(formatted_error),
