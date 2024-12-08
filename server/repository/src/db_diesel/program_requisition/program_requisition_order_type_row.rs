@@ -15,6 +15,8 @@ table! {
         threshold_mos -> Double,
         max_mos -> Double,
         max_order_per_period -> Integer,
+        is_emergency -> Bool,
+        max_items_in_emergency_order -> Integer,
     }
 }
 use crate::{Delete, Upsert};
@@ -30,6 +32,8 @@ pub struct ProgramRequisitionOrderTypeRow {
     pub threshold_mos: f64,
     pub max_mos: f64,
     pub max_order_per_period: i32,
+    pub is_emergency: bool,
+    pub max_items_in_emergency_order: i32,
 }
 
 pub struct ProgramRequisitionOrderTypeRowRepository<'a> {
@@ -70,6 +74,22 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
             .filter(program_requisition_order_type_dsl::program_requisition_settings_id.eq_any(ids))
             .load(self.connection.lock().connection())?;
 
+        Ok(result)
+    }
+
+    pub fn find_one_by_setting_and_name(
+        &self,
+        setting_id: &[String],
+        name: &str,
+    ) -> Result<Option<ProgramRequisitionOrderTypeRow>, RepositoryError> {
+        let result = program_requisition_order_type_dsl::program_requisition_order_type
+            .filter(
+                program_requisition_order_type_dsl::program_requisition_settings_id
+                    .eq_any(setting_id)
+                    .and(program_requisition_order_type_dsl::name.eq(name)),
+            )
+            .first(self.connection.lock().connection())
+            .optional()?;
         Ok(result)
     }
 
