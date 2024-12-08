@@ -5,8 +5,6 @@ import {
   Box,
   AppBarButtonsPortal,
   useIsCentralServerApi,
-  UserPermission,
-  useAuthContext,
 } from '@openmsupply-client/common';
 import {
   RadioIcon,
@@ -30,7 +28,6 @@ export const Settings: React.FC = () => {
   const [activeSection, setActiveSection] = React.useState<number | null>(null);
 
   const isCentralServer = useIsCentralServerApi();
-  const { userHasPermission } = useAuthContext();
 
   const toggleSection = (index: number) => () =>
     setActiveSection(activeSection === index ? null : index);
@@ -42,7 +39,6 @@ export const Settings: React.FC = () => {
         titleKey="heading.settings-display"
         expanded={activeSection === 0}
         onChange={toggleSection(0)}
-        visible={true}
       >
         <DisplaySettings />
       </SettingsSection>
@@ -51,7 +47,6 @@ export const Settings: React.FC = () => {
         titleKey="heading.settings-sync"
         expanded={activeSection === 1}
         onChange={toggleSection(1)}
-        visible={userHasPermission(UserPermission.ServerAdmin)}
       >
         <SyncSettings />
       </SettingsSection>
@@ -60,7 +55,6 @@ export const Settings: React.FC = () => {
         titleKey="heading.support"
         expanded={activeSection === 2}
         onChange={toggleSection(2)}
-        visible={userHasPermission(UserPermission.ServerAdmin)}
       >
         <ServerSettings />
       </SettingsSection>
@@ -69,7 +63,6 @@ export const Settings: React.FC = () => {
         titleKey="heading.devices"
         expanded={activeSection === 3}
         onChange={toggleSection(3)}
-        visible={userHasPermission(UserPermission.ServerAdmin)}
       >
         <LabelPrinterSettings />
         <ElectronSettings />
@@ -80,7 +73,6 @@ export const Settings: React.FC = () => {
           titleKey="heading.configuration"
           expanded={activeSection === 4}
           onChange={toggleSection(4)}
-          visible={userHasPermission(UserPermission.ServerAdmin)}
         >
           <ConfigurationSettings />
         </SettingsSection>

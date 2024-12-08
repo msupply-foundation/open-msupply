@@ -15,7 +15,6 @@ interface SettingsSectionProps {
   Icon: (props: SvgIconProps & { stroke?: string }) => JSX.Element;
   onChange: () => void;
   titleKey: LocaleKey;
-  visible: boolean;
 }
 export const SettingsSubHeading = ({ title }: { title: string }) => (
   <Typography
@@ -37,11 +36,10 @@ export const SettingsSection: FC<PropsWithChildren<SettingsSectionProps>> = ({
   Icon,
   onChange,
   titleKey,
-  visible,
 }) => {
   const t = useTranslation();
 
-  return visible ? (
+  return (
     <Accordion expanded={expanded} onChange={onChange}>
       <AccordionSummary
         expandIcon={<ChevronDownIcon />}
@@ -63,5 +61,5 @@ export const SettingsSection: FC<PropsWithChildren<SettingsSectionProps>> = ({
       </AccordionSummary>
       <AccordionDetails>{children}</AccordionDetails>
     </Accordion>
-  ) : null;
+  );
 };
