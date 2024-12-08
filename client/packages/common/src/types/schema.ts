@@ -5017,6 +5017,12 @@ export type NumberNode = {
   number: Scalars['Int']['output'];
 };
 
+export type OrderingTooManyItems = UpdateRequestRequisitionErrorInterface & UpdateResponseRequisitionErrorInterface & {
+  __typename: 'OrderingTooManyItems';
+  description: Scalars['String']['output'];
+  maxItemsInEmergencyOrder: Scalars['Int']['output'];
+};
+
 export type OtherPartyNotACustomer = InsertCustomerReturnErrorInterface & InsertErrorInterface & InsertResponseRequisitionErrorInterface & UpdateCustomerReturnErrorInterface & UpdateNameErrorInterface & {
   __typename: 'OtherPartyNotACustomer';
   description: Scalars['String']['output'];
@@ -5498,6 +5504,7 @@ export type ProgramRequisitionOrderTypeNode = {
   __typename: 'ProgramRequisitionOrderTypeNode';
   availablePeriods: Array<PeriodNode>;
   id: Scalars['String']['output'];
+  isEmergency: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
 };
 

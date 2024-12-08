@@ -3,7 +3,7 @@
 import React, { ChangeEvent, useState } from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
-import { SvgIconProps } from '.';
+import { EmergencyIcon, SvgIconProps } from '.';
 
 import { AlertIcon } from './Alert';
 import { ArrowLeftIcon } from './ArrowLeft';
@@ -132,6 +132,7 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
     { icon: <DeleteIcon {...args} />, name: 'Delete' },
     { icon: <DownloadIcon {...args} />, name: 'Download' },
     { icon: <EditIcon {...args} />, name: 'Edit' },
+    { icon: <EmergencyIcon {...args} />, name: 'Emergency' },
     { icon: <ExternalLinkIcon {...args} />, name: 'External Link' },
     { icon: <EyeIcon {...args} />, name: 'Eye' },
     { icon: <EyeOffIcon {...args} />, name: 'EyeOff' },
