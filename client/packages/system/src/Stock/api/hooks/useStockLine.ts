@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import {
   FnUtils,
-  isEqual,
   setNullableInput,
   useMutation,
+  usePatchState,
   useQuery,
 } from '@openmsupply-client/common';
 import {
@@ -38,8 +37,6 @@ const defaultDraftStockLine: DraftStockLine = {
 };
 
 export function useStockLine(id?: string) {
-  const [patch, setPatch] = useState<Partial<DraftStockLine>>({});
-  const [isDirty, setIsDirty] = useState(false);
   const { data, isLoading, error } = useGet(id ?? '');
   const {
     mutateAsync: createMutation,
@@ -52,38 +49,21 @@ export function useStockLine(id?: string) {
     error: updateError,
   } = useUpdate(id ?? '');
 
+  const { patch, updatePatch, resetDraft, isDirty } =
+    usePatchState<DraftStockLine>(data ?? {});
+
   const draft: DraftStockLine = data
     ? { ...defaultDraftStockLine, ...data?.nodes[0], ...patch }
     : { ...defaultDraftStockLine, ...patch };
 
-  const updatePatch = (newData: Partial<DraftStockLine>) => {
-    const newPatch = { ...patch, ...newData };
-    setPatch(newPatch);
-
-    // Ensures that UI doesn't show in "dirty" state if nothing actually
-    // different from the saved data
-    const updatedData = { ...data?.nodes[0], ...newPatch };
-    if (isEqual(data?.nodes[0], updatedData)) setIsDirty(false);
-    else setIsDirty(true);
-    return;
-  };
-
-  const resetDraft = () => {
-    if (data) {
-      setPatch({});
-      setIsDirty(false);
-    }
-  };
-
   const create = async () => {
     const result = await createMutation(draft);
-    setIsDirty(false);
+    resetDraft();
     return result;
   };
   const update = async () => {
-    setIsDirty(false);
     await updateMutation(patch);
-    setPatch({});
+    resetDraft();
   };
 
   return {

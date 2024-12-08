@@ -7,6 +7,7 @@ import {
   useParams,
   useQuery,
   useUrlQueryParams,
+  usePatchState,
 } from '@openmsupply-client/common';
 import {
   InsertPrescriptionMutationVariables,
@@ -16,7 +17,6 @@ import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
 import { isPrescriptionDisabled } from '@openmsupply-client/invoices/src/utils';
 import { mapStatus } from './utils';
-import { usePatchState } from './usePatchState';
 import { useDelete } from './usePrescriptionDelete';
 import { useMemo } from 'react';
 import { usePrescriptionColumn } from '../../DetailView/columns';
