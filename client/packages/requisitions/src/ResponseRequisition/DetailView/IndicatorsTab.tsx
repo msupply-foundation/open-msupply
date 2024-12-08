@@ -41,6 +41,7 @@ export const IndicatorsTab = ({
     indicator =>
       indicator.code === 'REGIMEN' &&
       // Should only include indicators if they have at least one column with a value
+      // Filtering for !value done on FE because values are queried via loader
       indicator.lineAndColumns.some(line => line.columns.some(c => c.value))
   );
 
@@ -52,6 +53,7 @@ export const IndicatorsTab = ({
     indicator =>
       indicator.code === 'HIV' &&
       // Should only include indicators if they have at least one column with a value
+      // Filtering for !value done on FE because values are queried via loader
       indicator.lineAndColumns.some(line => line.columns.some(c => c.value))
   );
   const firstHivLine = hivIndicators[0]?.lineAndColumns.sort(
