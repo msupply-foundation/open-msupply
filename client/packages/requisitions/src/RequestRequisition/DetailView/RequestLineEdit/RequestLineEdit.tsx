@@ -146,9 +146,6 @@ export const RequestLineEdit = ({
               />
             </>
           )}
-        </Box>
-        <Box>
-          {/* Right column content */}
           <InputWithLabelRow
             Input={
               <NumericTextInput
@@ -180,6 +177,9 @@ export const RequestLineEdit = ({
               label={t('label.months-of-stock')}
             />
           )}
+        </Box>
+        <Box>
+          {/* Right column content */}
           <Box display="flex" flexDirection="row">
             <InputWithLabelRow
               Input={
