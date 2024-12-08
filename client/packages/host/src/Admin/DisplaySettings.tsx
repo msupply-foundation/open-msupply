@@ -6,6 +6,8 @@ import {
   useNavigate,
   useTranslation,
   useNotification,
+  UserPermission,
+  usePermissionCheck,
   LocalStorage,
 } from '@openmsupply-client/common';
 import { themeOptions } from '@common/styles';
@@ -23,6 +25,7 @@ export const DisplaySettings: React.FC = () => {
   const [customTheme, setCustomTheme] = useLocalStorage('/theme/custom');
   const [customLogo, setCustomLogo] = useLocalStorage('/theme/logo');
   const { mutate: updateSettings } = useHost.settings.updateDisplaySettings();
+  usePermissionCheck(UserPermission.ServerAdmin);
   const customThemeEnabled =
     !!customTheme && Object.keys(customTheme).length > 0;
 
