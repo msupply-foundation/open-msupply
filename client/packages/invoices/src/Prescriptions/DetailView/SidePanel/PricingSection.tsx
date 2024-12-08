@@ -14,7 +14,12 @@ export const PricingSectionComponent = () => {
   const t = useTranslation();
   const c = useFormatCurrency();
 
-  const { pricing } = usePrescription.document.fields('pricing');
+  const {
+    query: { data },
+  } = usePrescription();
+
+  const pricing = data?.pricing;
+  if (!pricing) return null;
 
   return (
     <DetailPanelSection title={t('heading.dispensary-details')}>

@@ -17,7 +17,7 @@ interface AppBarButtonProps {
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
-  const isDisabled = usePrescription.utils.isDisabled();
+  const { isDisabled } = usePrescription();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation();
   return (
