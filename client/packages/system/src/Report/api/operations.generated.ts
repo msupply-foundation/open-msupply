@@ -7,21 +7,23 @@ export type ReportRowFragment = { __typename: 'ReportNode', context: Types.Repor
 
 export type ReportQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
+  userLanguage: Types.Scalars['String']['input'];
   id: Types.Scalars['String']['input'];
 }>;
 
 
-export type ReportQuery = { __typename: 'Queries', report: { __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, isCustom: boolean, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null } };
+export type ReportQuery = { __typename: 'Queries', report: { __typename: 'QueryReportError', error: { __typename: 'FailedTranslation', description: string } } | { __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, isCustom: boolean, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null } };
 
 export type ReportsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
+  userLanguage: Types.Scalars['String']['input'];
   key: Types.ReportSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.ReportFilterInput>;
 }>;
 
 
-export type ReportsQuery = { __typename: 'Queries', reports: { __typename: 'ReportConnector', totalCount: number, nodes: Array<{ __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, isCustom: boolean, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null }> } };
+export type ReportsQuery = { __typename: 'Queries', reports: { __typename: 'QueryReportsError', error: { __typename: 'FailedTranslation', description: string } } | { __typename: 'ReportConnector', totalCount: number, nodes: Array<{ __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, isCustom: boolean, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null }> } };
 
 export type GenerateReportQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -52,21 +54,47 @@ export const ReportRowFragmentDoc = gql`
 }
     `;
 export const ReportDocument = gql`
-    query report($storeId: String!, $id: String!) {
-  report(storeId: $storeId, id: $id) {
-    ...ReportRow
+    query report($storeId: String!, $userLanguage: String!, $id: String!) {
+  report(storeId: $storeId, userLanguage: $userLanguage, id: $id) {
+    ... on ReportNode {
+      ...ReportRow
+    }
+    ... on QueryReportError {
+      __typename
+      error {
+        ... on FailedTranslation {
+          __typename
+          description
+        }
+      }
+    }
   }
 }
     ${ReportRowFragmentDoc}`;
 export const ReportsDocument = gql`
-    query reports($storeId: String!, $key: ReportSortFieldInput!, $desc: Boolean, $filter: ReportFilterInput) {
-  reports(storeId: $storeId, sort: {key: $key, desc: $desc}, filter: $filter) {
+    query reports($storeId: String!, $userLanguage: String!, $key: ReportSortFieldInput!, $desc: Boolean, $filter: ReportFilterInput) {
+  reports(
+    storeId: $storeId
+    userLanguage: $userLanguage
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+  ) {
+    __typename
     ... on ReportConnector {
       nodes {
         __typename
         ...ReportRow
       }
       totalCount
+    }
+    ... on QueryReportsError {
+      __typename
+      error {
+        ... on FailedTranslation {
+          __typename
+          description
+        }
+      }
     }
   }
 }
