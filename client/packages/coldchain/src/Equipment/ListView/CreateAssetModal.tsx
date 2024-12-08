@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   BasicSpinner,
   useNotification,
@@ -13,7 +13,6 @@ import {
   useIsCentralServerApi,
   Switch,
   AutocompleteWithPagination,
-  usePagination,
   useStringFilter,
   ArrayUtils,
   useDebounceCallback,
@@ -31,7 +30,7 @@ import { CCE_CLASS_ID } from '../utils';
 import { InsertAsset } from '../api/api';
 
 const DEBOUNCE_TIMEOUT = 300;
-const RECORDS_PER_PAGE = 100;
+const RECORDS_PER_PAGE = 20;
 
 interface CreateAssetModalProps {
   isOpen: boolean;
@@ -92,8 +91,8 @@ export const CreateAssetModal = ({
     useAssetData.utils.types({
       categoryId: { equalTo: draft.categoryId ?? '' },
     });
-  const { pagination, onPageChange } = usePagination(RECORDS_PER_PAGE);
   const { filter, onFilter } = useStringFilter('search');
+
   const {
     data: catalogueItemData,
     isFetching,
@@ -101,8 +100,12 @@ export const CreateAssetModal = ({
   } = useAssetData.document.infiniteList({
     filter,
     categoryId: draft.categoryId,
-    pagination,
+    rowsPerPage: RECORDS_PER_PAGE,
   });
+
+  const currentPageIndex = (catalogueItemData?.pages.length ?? 0) - 1;
+  const pageNumber =
+    catalogueItemData?.pages[currentPageIndex]?.pageNumber ?? 0;
 
   const { mutateAsync: save } = useAssets.document.insert();
   const { insertLog, invalidateQueries } = useAssets.log.insert();
@@ -119,7 +122,7 @@ export const CreateAssetModal = ({
 
   const catalogueItems = ArrayUtils.flatMap(
     catalogueItemData?.pages,
-    page => page?.nodes ?? []
+    page => page.data?.nodes ?? []
   );
 
   const selectedCatalogueItem = catalogueItems.find(
@@ -151,7 +154,6 @@ export const CreateAssetModal = ({
 
   const debounceOnFilter = useDebounceCallback(
     (searchText: string) => {
-      onPageChange(0); // Reset pagination when searching for a new item
       onFilter(searchText);
     },
     [onFilter],
@@ -174,16 +176,6 @@ export const CreateAssetModal = ({
       error(t(parseInsertError(e)))();
     }
   };
-
-  // when the pagination changes, fetch the next page
-  useEffect(() => {
-    fetchNextPage({ pageParam: pagination.page });
-  }, [fetchNextPage, pagination.page]);
-
-  // reset the catalogue item pagination when the category changes
-  useEffect(() => {
-    onPageChange(0);
-  }, [draft.categoryId, onPageChange]);
 
   return (
     <Modal
@@ -256,12 +248,17 @@ export const CreateAssetModal = ({
                   onChange={(_event, selected) =>
                     updateDraft({ catalogueItemId: selected?.value ?? '' })
                   }
+                  // Pagination data helps Autocomplete scroll know where in the list we're up to
                   pagination={{
-                    ...pagination,
-                    total: catalogueItemData?.pages?.[0]?.totalCount ?? 0,
+                    first: RECORDS_PER_PAGE,
+                    page: pageNumber,
+                    offset: pageNumber * RECORDS_PER_PAGE,
+                    total: catalogueItemData?.pages?.[0]?.data.totalCount ?? 0,
                   }}
                   paginationDebounce={DEBOUNCE_TIMEOUT}
-                  onPageChange={onPageChange}
+                  onPageChange={pageNumber =>
+                    fetchNextPage({ pageParam: pageNumber })
+                  }
                   loading={isFetching}
                   onInputChange={(reason, value) => {
                     if (reason?.type === 'change') debounceOnFilter(value);
