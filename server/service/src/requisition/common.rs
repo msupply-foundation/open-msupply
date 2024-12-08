@@ -82,13 +82,17 @@ pub fn check_emergency_order_within_max_items_limit(
         .find_one_by_setting_and_name(&program_settings_ids, order_type)?
         .ok_or(OrderTypeNotFoundError::OrderTypeNotFound)?;
 
+    if !order_type.is_emergency {
+        return Ok((true, 0));
+    }
+
     let line_count = requisition_lines
         .iter()
         .filter(|line| line.requisition_line_row.requested_quantity != 0.0)
         .count();
 
     Ok((
-        order_type.is_emergency && line_count <= order_type.max_items_in_emergency_order as usize,
+        line_count <= order_type.max_items_in_emergency_order as usize,
         order_type.max_items_in_emergency_order,
     ))
 }
