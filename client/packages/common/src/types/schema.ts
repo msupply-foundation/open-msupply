@@ -3000,10 +3000,8 @@ export type InsertRequestRequisitionLineErrorInterface = {
 };
 
 export type InsertRequestRequisitionLineInput = {
-  comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
   requisitionId: Scalars['String']['input'];
 };
 
