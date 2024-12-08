@@ -32,9 +32,9 @@ impl PackageJsonAsset {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Version {
-    major: i16,
-    minor: i16,
-    patch: i16,
+    pub major: i16,
+    pub minor: i16,
+    pub patch: i16,
     // RC or TEST etc
     pre_release: Option<String>,
 }
@@ -64,7 +64,7 @@ impl Version {
         Self::from_str(&PackageJsonAsset::version())
     }
 
-    pub(crate) fn from_str(version: &str) -> Self {
+    pub fn from_str(version: &str) -> Self {
         let mut version_split = version.split('.');
         let major = version_split.next().unwrap();
         let minor = version_split.next().unwrap();
