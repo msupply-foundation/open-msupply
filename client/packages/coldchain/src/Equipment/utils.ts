@@ -31,19 +31,15 @@ export const assetsToCsv = (
   const dedupedAssetProperties = ArrayUtils.dedupe(properties);
 
   const fields: string[] = ['id'];
-  fields.push(
-    `${t('label.created-datetime')} (UTC)`,
-    `${t('label.modified-datetime')} (UTC)`
-  );
-
+ 
   if (isCentralServer) {
     fields.push(t('label.store'));
   }
 
   fields.push(
     ...baseAssetFields(t),
-    t('label.created-datetime'),
-    t('label.modified-datetime'),
+    t('label.created-datetime-UTC'),
+    t('label.modified-datetime-UTC'),
     ...dedupedAssetProperties
   );
 
