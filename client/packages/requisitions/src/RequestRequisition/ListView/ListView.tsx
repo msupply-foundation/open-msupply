@@ -131,6 +131,9 @@ export const RequestRequisitionListView: FC = () => {
     [navigate]
   );
 
+  console.log('sortBy', sortBy)
+  console.log('nodes', data?.nodes.filter(({ period }) => period != null))
+
   return (
     <>
       <Toolbar filter={filter} />
