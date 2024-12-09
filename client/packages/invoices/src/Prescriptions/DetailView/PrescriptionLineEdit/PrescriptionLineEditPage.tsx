@@ -1,38 +1,29 @@
 import React, { useEffect, useMemo } from 'react';
 import {
   BasicSpinner,
-  DateUtils,
   DetailContainer,
-  InvoiceNodeStatus,
   NothingHere,
   RouteBuilder,
-  Typography,
   useBreadcrumbs,
   useParams,
 } from '@openmsupply-client/common';
 
-import { ListItems } from '@openmsupply-client/system';
-// import { ResponseLineEdit } from './ResponseLineEdit';
+import { ItemRowFragment, ListItems } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PageLayout } from './PageLayout';
-import { usePrescription, usePrescriptionLines } from '../../api';
-import { useDraftPrescriptionLines } from './hooks';
-// import { AppBarButtons } from './AppBarButtons';
-// import { PageLayout } from '../PageLayout';
+import { usePrescription } from '../../api';
+import { usePreviousNextItem } from './hooks';
+import { Footer } from './Footer';
+import { AppBarButtons } from './AppBarButtons';
+import { PrescriptionLineEdit } from './PrescriptionLineEdit';
 
 export const PrescriptionLineEditPage = () => {
   const { invoiceNumber, itemId } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
 
   const {
-    query: { data },
-    isDisabled,
+    query: { data, loading: isLoading },
   } = usePrescription();
-  const {
-    status = InvoiceNodeStatus.New,
-    id: invoiceId = '',
-    prescriptionDate,
-  } = data ?? {};
 
   const lines =
     data?.lines.nodes.sort((a, b) => a.item.name.localeCompare(b.item.name)) ??
@@ -41,27 +32,21 @@ export const PrescriptionLineEditPage = () => {
   let currentItem = lines.find(line => line.item.id === itemId)?.item;
 
   let items = useMemo(() => {
-    return [...new Set(data?.lines.nodes.map(line => line.item))];
+    let itemSet = new Set();
+    let items: ItemRowFragment[] = [];
+    lines.forEach(line => {
+      if (!itemSet.has(line.item.id)) {
+        items.push(line.item);
+        itemSet.add(line.item.id);
+      }
+    });
+    return items;
   }, [data]);
 
-  const {
-    draftStockOutLines: draftPrescriptionLines,
-    updateQuantity,
-    setDraftStockOutLines,
-    isLoading,
-    updateNotes,
-  } = useDraftPrescriptionLines(
-    currentItem ?? null,
-    DateUtils.getDateOrNull(prescriptionDate)
+  const { hasNext, next, hasPrevious, previous } = usePreviousNextItem(
+    items,
+    currentItem?.id
   );
-  const {
-    save: { saveLines, isSavingLines },
-  } = usePrescriptionLines();
-
-  //   const { hasNext, next, hasPrevious, previous } = usePreviousNextResponseLine(
-  //     lines,
-  //     currentItem
-  //   );
 
   const enteredLineIds = lines
     .filter(line => line.numberOfPacks !== 0)
@@ -73,12 +58,12 @@ export const PrescriptionLineEditPage = () => {
     });
   }, [currentItem]);
 
-  //   if (isLoading || !currentItem) return <BasicSpinner />;
-  //   if (!data) return <NothingHere />;
+  if (isLoading || !currentItem) return <BasicSpinner />;
+  if (!data) return <NothingHere />;
 
   return (
     <>
-      {/* <AppBarButtons requisitionNumber={data?.requisitionNumber} /> */}
+      <AppBarButtons invoiceNumber={data?.invoiceNumber} />
       <DetailContainer>
         <PageLayout
           Left={
@@ -95,7 +80,14 @@ export const PrescriptionLineEditPage = () => {
           }
           Right={
             <>
-              <Typography variant="h5">PrescriptionLineEdit</Typography>
+              <PrescriptionLineEdit draft={{ item: currentItem }} mode={null} />
+              <Footer
+                hasNext={hasNext}
+                next={next}
+                hasPrevious={hasPrevious}
+                previous={previous}
+                invoiceNumber={data?.invoiceNumber}
+              />
             </>
           }
         />

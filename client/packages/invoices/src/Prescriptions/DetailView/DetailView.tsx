@@ -21,7 +21,7 @@ import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
 import { Draft } from '../..';
 import { Footer } from './Footer';
-import { PrescriptionLineEdit } from './PrescriptionLineEdit/PrescriptionLineEdit';
+import { PrescriptionLineEditModal } from './PrescriptionLineEdit/PrescriptionLineEditModal';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
@@ -36,7 +36,14 @@ export const PrescriptionDetailView: FC = () => {
   const navigate = useNavigate();
   const onRowClick = useCallback(
     (item: StockOutLineFragment | StockOutItem) => {
-      onOpen({ item: toItemRow(item) });
+      // onOpen({ item: toItemRow(item) });
+      navigate(
+        RouteBuilder.create(AppRoute.Dispensary)
+          .addPart(AppRoute.Prescription)
+          .addPart(String(data?.invoiceNumber))
+          .addPart(String(item.id))
+          .build()
+      );
     },
     [toItemRow, onOpen]
   );
@@ -80,7 +87,7 @@ export const PrescriptionDetailView: FC = () => {
         >
           <AppBarButtons onAddItem={onAddItem} />
           {isOpen && (
-            <PrescriptionLineEdit
+            <PrescriptionLineEditModal
               draft={entity}
               mode={mode}
               isOpen={isOpen}
