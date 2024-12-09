@@ -7,6 +7,7 @@ use crate::{
 use super::contact_form_row::contact_form::dsl::*;
 
 use chrono::NaiveDateTime;
+use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 use diesel::prelude::*;
@@ -20,6 +21,7 @@ table! {
         user_id -> Text,
         store_id -> Text,
         site_id -> Text,
+        contact_type -> crate::db_diesel::contact_form_row::ContactTypeMapping,
     }
 }
 
@@ -39,6 +41,16 @@ pub struct ContactFormRow {
     pub site_id: String,
     pub store_id: String,
     pub user_id: String,
+    pub contact_type: ContactType,
+}
+
+#[derive(Clone, Debug, PartialEq, Default, DbEnum, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum ContactType {
+    #[default]
+    Feedback,
+    Support,
 }
 
 pub struct ContactFormRowRepository<'a> {
