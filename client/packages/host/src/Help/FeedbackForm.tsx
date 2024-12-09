@@ -53,7 +53,7 @@ export const FeedbackForm = () => {
             }}
             InputProps={{
               sx: {
-                backgroundColor: theme => theme.palette.background.menu,
+                backgroundColor: 'background.menu',
               },
             }}
             fullWidth
