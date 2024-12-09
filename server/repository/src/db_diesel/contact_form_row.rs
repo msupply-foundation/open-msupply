@@ -4,7 +4,7 @@ use crate::{
 };
 
 // TODO create joinable with tables that contain site_id
-use super::feedback_form_row::feedback_form::dsl::*;
+use super::contact_form_row::contact_form::dsl::*;
 
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use diesel::prelude::*;
 
 table! {
-    feedback_form (id) {
+    contact_form (id) {
         id -> Text,
         reply_email -> Text,
         body -> Text,
@@ -23,15 +23,15 @@ table! {
     }
 }
 
-// joinable!(feedback_form -> user (user_id));
+// joinable!(contact_form -> user (user_id));
 
-// allow_tables_to_appear_in_same_query!(feedback_form, name_link);
+// allow_tables_to_appear_in_same_query!(contact_form, name_link);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
 )]
-#[diesel(table_name = feedback_form)]
-pub struct FeedbackFormRow {
+#[diesel(table_name = contact_form)]
+pub struct ContactFormRow {
     pub id: String,
     pub reply_email: String,
     pub body: String,
@@ -41,37 +41,37 @@ pub struct FeedbackFormRow {
     pub user_id: String,
 }
 
-pub struct FeedbackFormRowRepository<'a> {
+pub struct ContactFormRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> FeedbackFormRowRepository<'a> {
+impl<'a> ContactFormRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        FeedbackFormRowRepository { connection }
+        ContactFormRowRepository { connection }
     }
 
-    pub fn _upsert_one(&self, feedback_form_row: &FeedbackFormRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(feedback_form)
-            .values(feedback_form_row)
+    pub fn _upsert_one(&self, contact_form_row: &ContactFormRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(contact_form)
+            .values(contact_form_row)
             .on_conflict(id)
             .do_update()
-            .set(feedback_form_row)
+            .set(contact_form_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn upsert_one(&self, feedback_form_row: &FeedbackFormRow) -> Result<i64, RepositoryError> {
-        self._upsert_one(feedback_form_row)?;
-        self.insert_changelog(feedback_form_row.to_owned(), RowActionType::Upsert)
+    pub fn upsert_one(&self, contact_form_row: &ContactFormRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(contact_form_row)?;
+        self.insert_changelog(contact_form_row.to_owned(), RowActionType::Upsert)
     }
 
     fn insert_changelog(
         &self,
-        row: FeedbackFormRow,
+        row: ContactFormRow,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::FeedbackForm,
+            table_name: ChangelogTableName::ContactForm,
             record_id: row.id,
             row_action: action,
             store_id: Some(row.store_id),
@@ -83,26 +83,26 @@ impl<'a> FeedbackFormRowRepository<'a> {
 
     pub fn find_one_by_id(
         &self,
-        feedback_form_id: &str,
-    ) -> Result<Option<FeedbackFormRow>, RepositoryError> {
-        let result = feedback_form
-            .filter(id.eq(feedback_form_id))
+        contact_form_id: &str,
+    ) -> Result<Option<ContactFormRow>, RepositoryError> {
+        let result = contact_form
+            .filter(id.eq(contact_form_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 }
 
-impl Upsert for FeedbackFormRow {
+impl Upsert for ContactFormRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = FeedbackFormRowRepository::new(con).upsert_one(self)?;
+        let cursor_id = ContactFormRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
     }
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            FeedbackFormRowRepository::new(con).find_one_by_id(&self.id),
+            ContactFormRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }
