@@ -112,7 +112,7 @@ pub enum ChangelogTableName {
     IndicatorValue,
     BundledItem,
     Item,
-    FeedbackForm,
+    ContactForm,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -180,7 +180,7 @@ impl ChangelogTableName {
             ChangelogTableName::PackagingVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::IndicatorValue => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::BundledItem => ChangeLogSyncStyle::Central,
-            ChangelogTableName::FeedbackForm => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::ContactForm => ChangeLogSyncStyle::Remote,
         }
     }
 }
