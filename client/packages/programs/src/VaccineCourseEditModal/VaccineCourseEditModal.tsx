@@ -138,6 +138,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
           mode === ModalMode.Update
             ? `${t('messages.updated-new-vaccine-course')}: ${result.name}`
             : `${t('messages.created-new-vaccine-course')}: ${result.name}`;
+        resetDraft();
         success(message)();
         onClose();
       }
@@ -145,7 +146,6 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
       error(t('error.failed-to-save-vaccine-course'))();
       console.error(e);
     }
-    resetDraft();
   };
 
   const modalContent = isLoading ? (
