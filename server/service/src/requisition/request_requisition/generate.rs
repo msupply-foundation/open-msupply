@@ -1,8 +1,11 @@
 use chrono::Utc;
-use repository::{EqualFilter, RepositoryError, RequisitionLineRow, RequisitionRow};
+use repository::{
+    EqualFilter, IndicatorValueRow, RepositoryError, RequisitionLineRow, RequisitionRow,
+};
 use util::uuid::uuid;
 
 use crate::item_stats::{get_item_stats, ItemStatsFilter};
+use crate::requisition::program_indicator::query::ProgramIndicator;
 use crate::service_provider::ServiceContext;
 
 pub struct GenerateSuggestedQuantity {
@@ -91,4 +94,37 @@ pub fn generate_requisition_lines(
         .collect();
 
     Ok(result)
+}
+
+pub(crate) fn generate_program_indicator_values(
+    store_id: &str,
+    period_id: &str,
+    program_indicators: Vec<ProgramIndicator>,
+) -> Vec<IndicatorValueRow> {
+    let mut indicator_values = vec![];
+
+    for program_indicator in program_indicators {
+        for line in program_indicator.lines {
+            for column in line.columns {
+                let value = match column.value_type {
+                    Some(_) => column.default_value.clone(),
+                    None => line.line.default_value.clone(),
+                };
+
+                let indicator_value = IndicatorValueRow {
+                    id: uuid(),
+                    customer_name_link_id: store_id.to_string(),
+                    store_id: store_id.to_string(),
+                    period_id: period_id.to_string(),
+                    indicator_line_id: line.line.id.to_string(),
+                    indicator_column_id: column.id.to_string(),
+                    value,
+                };
+
+                indicator_values.push(indicator_value);
+            }
+        }
+    }
+
+    indicator_values
 }
