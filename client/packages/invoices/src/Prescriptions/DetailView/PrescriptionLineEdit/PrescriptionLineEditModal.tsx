@@ -1,7 +1,10 @@
+// TODO DELETE THIS FILE or change to a create only Modal?
 import React, { useState } from 'react';
 import {
   Typography,
+  DialogButton,
   Grid,
+  useDialog,
   InlineSpinner,
   Box,
   useTranslation,
@@ -11,6 +14,7 @@ import {
   TableProvider,
   createTableStore,
   createQueryParamsStore,
+  useKeyboardHeightAdjustment,
   InvoiceLineNodeType,
   useNotification,
   InvoiceNodeStatus,
@@ -18,7 +22,7 @@ import {
   LoadingButton,
   CheckIcon,
 } from '@openmsupply-client/common';
-import { useDraftPrescriptionLines } from './hooks';
+import { useDraftPrescriptionLines, useNextItem } from './hooks';
 import { usePrescription } from '../../api';
 import { Draft, DraftItem } from '../../..';
 import {
@@ -35,17 +39,19 @@ import { ItemRowFragment } from '@openmsupply-client/system';
 import { usePrescriptionLines } from '../../api/hooks/usePrescriptionLines';
 
 interface PrescriptionLineEditModalProps {
+  isOpen: boolean;
+  onClose: () => void;
   draft: Draft | null;
   mode: ModalMode | null;
 }
 
-export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
-  draft,
-  mode,
-}) => {
+export const PrescriptionLineEditModal: React.FC<
+  PrescriptionLineEditModalProps
+> = ({ isOpen, onClose, draft, mode }) => {
   const item = !draft ? null : (draft.item ?? null);
   const t = useTranslation();
   const { info } = useNotification();
+  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [currentItem, setCurrentItem] = useBufferState(item);
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
   const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
@@ -74,7 +80,9 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   } = usePrescriptionLines();
 
   const packSizeController = usePackSizeController(draftPrescriptionLines);
+  const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
+  const height = useKeyboardHeightAdjustment(700);
 
   const placeholder = draftPrescriptionLines?.find(
     ({ type, numberOfPacks }) =>
@@ -133,6 +141,8 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   };
 
   const canAutoAllocate = !!(currentItem && draftPrescriptionLines.length);
+  const okNextDisabled =
+    (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
   const handleSave = async (onSaved: () => boolean | void) => {
     if (
@@ -156,6 +166,23 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     }
   };
 
+  const onNext = async () => {
+    const onSaved = () => {
+      if (mode === ModalMode.Update && next) {
+        setCurrentItem(next);
+        return true;
+      }
+      if (mode === ModalMode.Create) {
+        setCurrentItem(null);
+        return true;
+      }
+      onClose();
+    };
+
+    // Returning true here triggers the slide animation
+    return await handleSave(onSaved);
+  };
+
   const hasOnHold = draftPrescriptionLines.some(
     ({ stockLine }) =>
       (stockLine?.availableNumberOfPacks ?? 0) > 0 && !!stockLine?.onHold
@@ -168,50 +195,68 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   );
 
   return (
-    <Grid container gap={0.5}>
-      <PrescriptionLineEditForm
-        disabled={mode === ModalMode.Update || isDisabled}
-        packSizeController={packSizeController}
-        onChangeItem={(item: ItemRowFragment | null) => {
-          if (status === InvoiceNodeStatus.New) setIsDirty(true);
-          setIsAutoAllocated(false);
-          setCurrentItem(item);
-        }}
-        item={currentItem}
-        allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
-        availableQuantity={sumAvailableQuantity(draftPrescriptionLines)}
-        onChangeQuantity={onAllocate}
-        canAutoAllocate={canAutoAllocate}
-        isAutoAllocated={isAutoAllocated}
-        updateNotes={onUpdateNotes}
-        draftPrescriptionLines={draftPrescriptionLines}
-        showZeroQuantityConfirmation={showZeroQuantityConfirmation}
-        hasOnHold={hasOnHold}
-        hasExpired={hasExpired}
-      />
+    <Modal
+      title={t(
+        mode === ModalMode.Update ? 'heading.edit-item' : 'heading.add-item'
+      )}
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      nextButton={
+        <DialogButton
+          disabled={okNextDisabled}
+          variant="next-and-ok"
+          onClick={onNext}
+        />
+      }
+      okButton={
+        <LoadingButton
+          disabled={!currentItem}
+          isLoading={isSavingLines}
+          startIcon={<CheckIcon />}
+          loadingStyle={{ iconColor: 'secondary.main' }}
+          variant="contained"
+          color="secondary"
+          aria-label={t('button.ok')}
+          onClick={() => handleSave(onClose)}
+        >
+          {t('button.ok')}
+        </LoadingButton>
+      }
+      height={height}
+      width={1000}
+    >
+      <Grid container gap={0.5}>
+        <PrescriptionLineEditForm
+          disabled={mode === ModalMode.Update || isDisabled}
+          packSizeController={packSizeController}
+          onChangeItem={(item: ItemRowFragment | null) => {
+            if (status === InvoiceNodeStatus.New) setIsDirty(true);
+            setIsAutoAllocated(false);
+            setCurrentItem(item);
+          }}
+          item={currentItem}
+          allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
+          availableQuantity={sumAvailableQuantity(draftPrescriptionLines)}
+          onChangeQuantity={onAllocate}
+          canAutoAllocate={canAutoAllocate}
+          isAutoAllocated={isAutoAllocated}
+          updateNotes={onUpdateNotes}
+          draftPrescriptionLines={draftPrescriptionLines}
+          showZeroQuantityConfirmation={showZeroQuantityConfirmation}
+          hasOnHold={hasOnHold}
+          hasExpired={hasExpired}
+        />
 
-      <TableWrapper
-        canAutoAllocate={canAutoAllocate}
-        currentItem={currentItem}
-        isLoading={isLoading}
-        packSizeController={packSizeController}
-        updateQuantity={onUpdateQuantity}
-        draftPrescriptionLines={draftPrescriptionLines}
-        allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
-      />
-      <LoadingButton
-        disabled={!currentItem}
-        isLoading={isSavingLines}
-        startIcon={<CheckIcon />}
-        loadingStyle={{ iconColor: 'secondary.main' }}
-        variant="contained"
-        color="secondary"
-        aria-label={t('button.ok')}
-        onClick={() => handleSave(() => true)}
-      >
-        SAVE Todo: Auto Save
-      </LoadingButton>
-    </Grid>
+        <TableWrapper
+          canAutoAllocate={canAutoAllocate}
+          currentItem={currentItem}
+          isLoading={isLoading}
+          packSizeController={packSizeController}
+          updateQuantity={onUpdateQuantity}
+          draftPrescriptionLines={draftPrescriptionLines}
+          allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
+        />
+      </Grid>
+    </Modal>
   );
 };
 

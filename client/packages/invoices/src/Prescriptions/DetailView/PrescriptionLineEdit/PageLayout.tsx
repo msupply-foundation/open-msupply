@@ -9,10 +9,10 @@ interface PageLayoutProps {
 export const PageLayout = ({ Left, Right }: PageLayoutProps) => {
   return (
     <Grid container spacing={2} direction="row" padding={2} paddingBottom={2}>
-      <Grid item xs={4}>
+      <Grid item xs={3}>
         {Left}
       </Grid>
-      <Grid item xs={6}>
+      <Grid item xs={9}>
         {Right}
       </Grid>
     </Grid>
