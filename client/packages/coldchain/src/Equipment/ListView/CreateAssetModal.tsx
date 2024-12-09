@@ -30,7 +30,7 @@ import { CCE_CLASS_ID } from '../utils';
 import { InsertAsset } from '../api/api';
 
 const DEBOUNCE_TIMEOUT = 300;
-const RECORDS_PER_PAGE = 20;
+const RECORDS_PER_PAGE = 100;
 
 interface CreateAssetModalProps {
   isOpen: boolean;
@@ -103,9 +103,9 @@ export const CreateAssetModal = ({
     rowsPerPage: RECORDS_PER_PAGE,
   });
 
-  const currentPageIndex = (catalogueItemData?.pages.length ?? 0) - 1;
   const pageNumber =
-    catalogueItemData?.pages[currentPageIndex]?.pageNumber ?? 0;
+    catalogueItemData?.pages[catalogueItemData?.pages.length - 1]?.pageNumber ??
+    0;
 
   const { mutateAsync: save } = useAssets.document.insert();
   const { insertLog, invalidateQueries } = useAssets.log.insert();
