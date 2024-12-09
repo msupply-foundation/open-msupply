@@ -8,6 +8,24 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
+                CREATE TYPE contact_type_enum AS ENUM (
+                    'FEEDBACK',
+                    'SUPPORT'
+                );
+                "#
+            )?
+        }
+
+        let contact_type = if cfg!(feature = "postgres") {
+            "contact_type_enum"
+        } else {
+            "TEXT"
+        };
+
         sql!(
             connection,
             r#"
@@ -18,7 +36,8 @@ impl MigrationFragment for Migrate {
                     created_datetime {DATETIME} NOT NULL,
                     user_id TEXT NOT NULL REFERENCES user_account(id),
                     store_id TEXT NOT NULL REFERENCES store(id),
-                    site_id TEXT NOT NULL
+                    site_id TEXT NOT NULL,
+                    contact_type {contact_type}
                 );
             "#
         )?;
