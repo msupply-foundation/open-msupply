@@ -5,10 +5,10 @@ import {
   UpsertVaccineCourseDoseInput,
   VaccineCourseSortFieldInput,
   isEmpty,
-  isEqual,
   useMutation,
   useQuery,
   useTranslation,
+  usePatchState,
 } from '@openmsupply-client/common';
 import { VACCINE } from './keys';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
@@ -57,10 +57,10 @@ const vaccineCourseParsers = {
 };
 
 export const useVaccineCourse = (id?: string) => {
-  const [patch, setPatch] = useState<Partial<DraftVaccineCourse>>({});
-  const [isDirty, setIsDirty] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const { data, isLoading, error } = useGet(id ?? '');
+  const { patch, updatePatch, resetDraft, isDirty } =
+    usePatchState<DraftVaccineCourse>(data ?? {});
   const {
     mutateAsync: createMutation,
     isLoading: isCreating,
@@ -77,32 +77,15 @@ export const useVaccineCourse = (id?: string) => {
     ? { ...defaultDraftVaccineCourse, ...data, ...patch }
     : { ...defaultDraftVaccineCourse, ...patch };
 
-  const updatePatch = (newData: Partial<DraftVaccineCourse>) => {
-    const newPatch = { ...patch, ...newData };
-    setPatch(newPatch);
-
-    // Ensures that UI doesn't show in "dirty" state if nothing actually
-    // different from the saved data
-    const updatedData = { ...data, ...newPatch };
-    setIsDirty(!isEqual(data, updatedData));
-  };
-
-  const resetDraft = () => {
-    if (data) {
-      setPatch({});
-      setIsDirty(false);
-    }
-  };
-
   const create = async (programId: string) => {
     const result = await createMutation({ ...draft, programId });
-    setIsDirty(false);
+    resetDraft();
     return result;
   };
 
   const update = async () => {
     const result = await updateMutation(draft);
-    setIsDirty(false);
+    resetDraft();
     return result;
   };
 
@@ -115,7 +98,6 @@ export const useVaccineCourse = (id?: string) => {
     resetDraft,
     isDirty,
     updatePatch,
-    setIsDirty,
   };
 };
 

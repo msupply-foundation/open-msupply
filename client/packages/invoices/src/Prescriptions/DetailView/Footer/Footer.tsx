@@ -41,13 +41,15 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
 
 export const FooterComponent: FC = () => {
   const t = useTranslation();
-  const { data } = usePrescription.document.get();
+  const {
+    query: { data },
+  } = usePrescription();
   const { navigateUpOne } = useBreadcrumbs();
 
   return (
     <AppFooterPortal
       Content={
-        data && (
+        data?.id && (
           <Box
             gap={2}
             display="flex"

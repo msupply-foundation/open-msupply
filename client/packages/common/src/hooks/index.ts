@@ -17,6 +17,7 @@ export * from './useIsMountedRef';
 export * from './useIsScreen';
 export * from './useNotification';
 export * from './useOpenInNewTab';
+export * from './usePatchState';
 export * from './useQueryParams';
 export * from './useUrlQuery';
 export * from './useToggle';
