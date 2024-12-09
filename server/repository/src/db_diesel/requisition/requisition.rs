@@ -118,7 +118,7 @@ impl<'a> RequisitionRepository<'a> {
                     apply_sort_no_case!(query, sort, requisition_dsl::order_type);
                 }
                 RequisitionSortField::PeriodStartDate => {
-                    apply_sort_no_case!(query, sort, period_dsl::start_date);
+                    apply_sort!(query, sort, period_dsl::start_date);
                 }
                 RequisitionSortField::ProgramName => {
                     apply_sort_no_case!(query, sort, program_dsl::name);
