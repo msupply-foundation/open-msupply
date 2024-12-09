@@ -1,5 +1,15 @@
 use chrono::NaiveDateTime;
-use repository::{FeedbackForm, RepositoryError};
+use repository::{
+    feedback_form_row::{FeedbackFormRow, FeedbackFormRowRepository},
+    RepositoryError, TransactionError,
+};
+mod generate;
+mod test;
+mod validate;
+use generate::generate;
+use validate::validate;
+
+use crate::service_provider::ServiceContext;
 
 //error enum
 //each of these should have a test
@@ -30,7 +40,31 @@ pub struct InsertContactForm {
 //insert function
 //do db changes within a transaction
 
+pub fn insert_contact_form(
+    ctx: &ServiceContext,
+    input: InsertContactForm,
+) -> Result<FeedbackFormRow, InsertContactFormError> {
+    let contact_form = ctx
+        .connection
+        .transaction_sync(|connection| {
+            validate(&input, connection)?;
+
+            let new_contact_form = generate(input);
+            FeedbackFormRowRepository::new(connection).upsert_one(&new_contact_form)?;
+            //TODO: implement get contact form
+            // get_contact_form(ctx, new_contact_form.id).map_err(InsertContactFormError::from)
+            Ok(new_contact_form)
+        })
+        .map_err(|error: TransactionError<InsertContactFormError>| error.to_inner_error())?;
+    Ok(contact_form)
+}
+
 //map errors - repository error
+impl From<RepositoryError> for InsertContactFormError {
+    fn from(error: RepositoryError) -> Self {
+        InsertContactFormError::DatabaseError(error)
+    }
+}
 
 //TESTS - later
 //#[cfg(test)]
