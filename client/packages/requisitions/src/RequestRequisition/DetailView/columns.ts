@@ -11,9 +11,11 @@ import {
   ColumnDataAccessor,
   TooltipTextCell,
   useAuthContext,
+  getLinesFromRow,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { PackQuantityCell } from '@openmsupply-client/system';
+import { useRequestRequisitionLineErrorContext } from '../context';
 
 const useStockOnHand: ColumnDataAccessor<RequestLineFragment, string> = ({
   rowData,
@@ -45,6 +47,7 @@ export const useRequestColumns = () => {
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
   const { store } = useAuthContext();
+  const { getError } = useRequestRequisitionLineErrorContext();
 
   const columnDefinitions: ColumnDescription<RequestLineFragment>[] = [
     getCommentPopoverColumn(),
@@ -220,6 +223,10 @@ export const useRequestColumns = () => {
         key: 'reason',
         label: 'label.reason',
         sortable: false,
+        getIsError: row =>
+          getLinesFromRow(row).some(
+            r => getError(r)?.__typename === 'RequisitionReasonNotProvided'
+          ),
         accessor: ({ rowData }) => rowData.reason?.reason,
       }
     );
