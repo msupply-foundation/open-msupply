@@ -94,8 +94,6 @@ const requestParser = {
     id: line.id,
     itemId: line.itemId,
     requisitionId: line.requisitionId,
-    requestedQuantity: line.requestedQuantity,
-    comment: line.comment,
   }),
   toUpdateLine: (
     line: DraftRequestLine
@@ -164,6 +162,19 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Unable to load chart data');
     },
+  },
+  insertLine: async (input: InsertRequestRequisitionLineInput) => {
+    const result = await sdk.insertRequestLine({
+      storeId,
+      input,
+    });
+
+    const { insertRequestRequisitionLine } = result || {};
+    if (insertRequestRequisitionLine?.__typename === 'RequisitionLineNode') {
+      return insertRequestRequisitionLine;
+    }
+
+    throw new Error('Unable to insert requisition line');
   },
   deleteLine: async (requestLineId: string) => {
     const ids = [{ id: requestLineId }];
@@ -238,11 +249,7 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
     const { updateRequestRequisition } = result || {};
 
-    if (updateRequestRequisition?.__typename === 'RequisitionNode') {
-      return updateRequestRequisition;
-    }
-
-    throw new Error('Unable to update requisition');
+    return updateRequestRequisition;
   },
   insert: async ({
     id,

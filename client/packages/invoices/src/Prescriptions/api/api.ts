@@ -142,6 +142,22 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
         throw new Error('Could not find invoice');
       }
     },
+    byId: async (
+      invoiceId: string
+    ): Promise<PrescriptionRowFragment | void> => {
+      const result = await sdk.prescriptionById({
+        invoiceId,
+        storeId,
+      });
+      const invoice = result?.invoice;
+
+      if (invoice?.__typename === 'InvoiceNode') {
+        return invoice;
+      }
+      // Don't throw error for this one if not found -- it's mainly used by
+      // Program component (Prescription), which may have stored an id for a
+      // prescription that doesn't yet exist
+    },
   },
   insert: async (
     invoice: Omit<InsertPrescriptionMutationVariables, 'storeId'>

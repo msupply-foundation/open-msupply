@@ -1,3 +1,5 @@
+use std::cmp;
+
 use super::{
     api::{CommonSyncRecord, ParsingSyncRecordError, SyncApiError, SyncApiV5},
     sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
@@ -60,7 +62,9 @@ impl CentralDataSynchroniser {
 
             logger.progress(
                 SyncStepProgress::PullCentral,
-                max_cursor - last_cursor_in_batch,
+                // During integration tests got attempt to 'substract with overflow'
+                // There is a chance that max_cursor is lower the last cursor in batch
+                max_cursor - cmp::min(max_cursor, last_cursor_in_batch),
             )?;
 
             match (batch_length, last_cursor_in_batch < max_cursor) {

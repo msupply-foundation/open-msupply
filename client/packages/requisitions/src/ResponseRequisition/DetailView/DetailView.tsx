@@ -102,7 +102,11 @@ export const DetailView: FC = () => {
     },
   ];
 
-  if (data?.programName && !!data?.otherParty.store) {
+  if (
+    data?.programName &&
+    !!data?.otherParty.store &&
+    programIndicators?.totalCount !== 0
+  ) {
     tabs.push({
       Component: (
         <IndicatorsTab
@@ -110,6 +114,7 @@ export const DetailView: FC = () => {
           isLoading={isLoading || isProgramIndicatorsLoading}
           response={data}
           indicators={programIndicators?.nodes}
+          // disabled={isDisabled}
         />
       ),
       value: t('label.indicators'),
