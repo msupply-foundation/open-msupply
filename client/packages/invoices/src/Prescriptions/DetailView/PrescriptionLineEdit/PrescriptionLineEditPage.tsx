@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   BasicSpinner,
   DateUtils,
@@ -39,6 +39,11 @@ export const PrescriptionLineEditPage = () => {
     [];
 
   let currentItem = lines.find(line => line.item.id === itemId)?.item;
+
+  let items = useMemo(() => {
+    return [...new Set(data?.lines.nodes.map(line => line.item))];
+  }, [data]);
+
   const {
     draftStockOutLines: draftPrescriptionLines,
     updateQuantity,
@@ -80,7 +85,7 @@ export const PrescriptionLineEditPage = () => {
             <>
               <ListItems
                 currentItemId={itemId}
-                items={lines.map(l => l.item)}
+                items={items}
                 route={RouteBuilder.create(AppRoute.Dispensary)
                   .addPart(AppRoute.Prescription)
                   .addPart(String(invoiceNumber))}
