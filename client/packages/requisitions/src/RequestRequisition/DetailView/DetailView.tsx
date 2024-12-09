@@ -27,6 +27,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
+import { RequestRequisitionLineErrorProvider } from '../context';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
@@ -65,51 +66,53 @@ export const DetailView: FC = () => {
   ];
 
   return !!data ? (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore<RequestLineFragment>({
-        initialSortBy: { key: 'itemName' },
-      })}
-    >
-      <AppBarButtons
-        isDisabled={!data || isDisabled}
-        onAddItem={() => onOpen(null)}
-      />
-      <Toolbar />
+    <RequestRequisitionLineErrorProvider>
+      <TableProvider
+        createStore={createTableStore}
+        queryParamsStore={createQueryParamsStore<RequestLineFragment>({
+          initialSortBy: { key: 'itemName' },
+        })}
+      >
+        <AppBarButtons
+          isDisabled={!data || isDisabled}
+          onAddItem={() => onOpen(null)}
+        />
+        <Toolbar />
 
-      <DetailTabs tabs={tabs} />
+        <DetailTabs tabs={tabs} />
 
-      <Footer />
-      <SidePanel />
-      {isOpen && (
-        <BasicModal open={isOpen} onClose={onClose} height={500} width={800}>
-          <Box padding={2}>
-            <StockItemSearchInput
-              onChange={(newItem: ItemRowFragment | null) => {
-                if (newItem) {
-                  mutateAsync({
-                    id: FnUtils.generateUUID(),
-                    requisitionId: data.id,
-                    itemId: newItem.id,
-                  });
-                  navigate(
-                    RouteBuilder.create(AppRoute.Replenishment)
-                      .addPart(AppRoute.InternalOrder)
-                      .addPart(String(data.requisitionNumber))
-                      .addPart(String(newItem.id))
-                      .build()
-                  );
+        <Footer />
+        <SidePanel />
+        {isOpen && (
+          <BasicModal open={isOpen} onClose={onClose} height={500} width={800}>
+            <Box padding={2}>
+              <StockItemSearchInput
+                onChange={(newItem: ItemRowFragment | null) => {
+                  if (newItem) {
+                    mutateAsync({
+                      id: FnUtils.generateUUID(),
+                      requisitionId: data.id,
+                      itemId: newItem.id,
+                    });
+                    navigate(
+                      RouteBuilder.create(AppRoute.Replenishment)
+                        .addPart(AppRoute.InternalOrder)
+                        .addPart(String(data.requisitionNumber))
+                        .addPart(String(newItem.id))
+                        .build()
+                    );
+                  }
+                }}
+                openOnFocus={true}
+                extraFilter={item =>
+                  !data.lines.nodes.some(line => line.item.id === item.id)
                 }
-              }}
-              openOnFocus={true}
-              extraFilter={item =>
-                !data.lines.nodes.some(line => line.item.id === item.id)
-              }
-            />
-          </Box>
-        </BasicModal>
-      )}
-    </TableProvider>
+              />
+            </Box>
+          </BasicModal>
+        )}
+      </TableProvider>
+    </RequestRequisitionLineErrorProvider>
   ) : (
     <AlertModal
       open={true}
