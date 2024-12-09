@@ -37,7 +37,7 @@ impl MigrationFragment for Migrate {
                     user_id TEXT NOT NULL REFERENCES user_account(id),
                     store_id TEXT NOT NULL REFERENCES store(id),
                     site_id TEXT NOT NULL,
-                    contact_type {contact_type}
+                    contact_type {contact_type} NOT NULL
                 );
             "#
         )?;
