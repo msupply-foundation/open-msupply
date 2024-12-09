@@ -15,6 +15,7 @@ pub struct ProgramRequisitionOrderTypeNode {
     pub name: String,
     pub id: String,
     pub available_periods: Vec<PeriodNode>,
+    pub is_emergency: bool,
 }
 
 #[derive(SimpleObject)]
@@ -89,6 +90,7 @@ pub fn get_supplier_program_requisition_settings(
                                 .into_iter()
                                 .map(PeriodNode::from_domain)
                                 .collect(),
+                            is_emergency: order_type.is_emergency,
                         },
                     )
                     .collect(),
@@ -150,6 +152,7 @@ pub fn get_customer_program_requisition_settings(
                                                 .into_iter()
                                                 .map(PeriodNode::from_domain)
                                                 .collect(),
+                                            is_emergency: order_type.is_emergency,
                                         }
                                     },
                                 )

@@ -1,5 +1,6 @@
 use super::{version::Version, Migration, MigrationFragment};
 
+mod add_emergency_orders;
 mod new_store_preferences;
 mod remove_unique_description_on_tmp_breach;
 
@@ -20,6 +21,7 @@ impl Migration for V2_05_00 {
         vec![
             Box::new(new_store_preferences::Migrate),
             Box::new(remove_unique_description_on_tmp_breach::Migrate),
+            Box::new(add_emergency_orders::Migrate),
         ]
     }
 }

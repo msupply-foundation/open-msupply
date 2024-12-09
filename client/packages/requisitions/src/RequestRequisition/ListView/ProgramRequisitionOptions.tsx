@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import {
   Autocomplete,
+  AutocompleteOptionRenderer,
   AutocompleteProps,
+  Box,
   ButtonWithIcon,
+  DefaultAutocompleteItemOption,
+  EmergencyIcon,
   Grid,
   PlusCircleIcon,
   Typography,
@@ -10,7 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import { getNameOptionRenderer } from '@openmsupply-client/system';
 
-import { SupplierProgramSettingsFragment } from '../api';
+import { OrderTypeRowFragment, SupplierProgramSettingsFragment } from '../api';
 import { NewRequisitionType } from '../../types';
 
 export interface NewProgramRequisition {
@@ -28,6 +32,28 @@ type Common<T> = Pick<
   set: (value: T | null) => void;
   labelNoOptions?: string;
 };
+
+export const getOrderTypeRenderer =
+  (): AutocompleteOptionRenderer<OrderTypeRowFragment> => (props, item) => (
+    <DefaultAutocompleteItemOption {...props} key={item.id}>
+      <Box display="flex" flexDirection="row" gap={1} alignItems="center">
+        {item?.isEmergency && (
+          <Box display="flex" alignItems="center">
+            <EmergencyIcon />
+          </Box>
+        )}
+        <Typography
+          overflow="hidden"
+          textOverflow="ellipsis"
+          sx={{
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {item.name}
+        </Typography>
+      </Box>
+    </DefaultAutocompleteItemOption>
+  );
 
 const useProgramRequisitionOptions = (
   programSettings: SupplierProgramSettingsFragment[]
@@ -75,6 +101,7 @@ const useProgramRequisitionOptions = (
       disabled: program === null,
       labelNoOptions: t('messages.not-configured'),
       label: t('label.order-type'),
+      renderOption: getOrderTypeRenderer(),
     },
     suppliers: {
       options: program?.suppliers || [],
