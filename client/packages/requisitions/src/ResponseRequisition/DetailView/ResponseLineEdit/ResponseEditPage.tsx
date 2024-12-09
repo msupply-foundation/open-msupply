@@ -13,7 +13,7 @@ import { ResponseLineEdit } from './ResponseLineEdit';
 import { AppRoute } from '@openmsupply-client/config';
 import { useDraftRequisitionLine, usePreviousNextResponseLine } from './hooks';
 import { AppBarButtons } from './AppBarButtons';
-import { PageLayout } from '../PageLayout';
+import { PageLayout } from '../../../PageLayout';
 
 export const ResponseLineEditPage = () => {
   const { itemId } = useParams();

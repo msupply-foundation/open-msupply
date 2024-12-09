@@ -12,6 +12,7 @@ import { getNameOptionRenderer } from '@openmsupply-client/system';
 
 import { CustomerProgramSettingsFragment } from '../api';
 import { NewRequisitionType } from '../../types';
+import { getOrderTypeRenderer } from '../../RequestRequisition/ListView/ProgramRequisitionOptions';
 
 export interface NewProgramRequisition {
   type: NewRequisitionType.Program;
@@ -79,6 +80,7 @@ const useProgramRequisitionOptions = (
       disabled: program === null || customer === null,
       labelNoOptions: t('messages.not-configured'),
       label: t('label.order-type'),
+      renderOption: getOrderTypeRenderer(),
     },
     customers: {
       options: program?.customerAndOrderTypes.map(c => c.customer) || [],

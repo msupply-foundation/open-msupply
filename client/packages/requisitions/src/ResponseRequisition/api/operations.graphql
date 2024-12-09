@@ -30,6 +30,11 @@ mutation updateResponse(
         ... on RequisitionReasonsNotProvided {
           ...RequisitionReasonsNotProvidedError
         }
+        ... on OrderingTooManyItems {
+          __typename
+          description
+          maxItemsInEmergencyOrder
+        }
       }
     }
   }
@@ -495,12 +500,7 @@ fragment CustomerProgramSettings on CustomerProgramRequisitionSettingNode {
       ...NameRow
     }
     orderTypes {
-      id
-      name
-      availablePeriods {
-        id
-        name
-      }
+      ...OrderTypeRow
     }
   }
 }
