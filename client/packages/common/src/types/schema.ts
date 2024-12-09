@@ -3000,10 +3000,8 @@ export type InsertRequestRequisitionLineErrorInterface = {
 };
 
 export type InsertRequestRequisitionLineInput = {
-  comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
   requisitionId: Scalars['String']['input'];
 };
 
@@ -5017,6 +5015,12 @@ export type NumberNode = {
   number: Scalars['Int']['output'];
 };
 
+export type OrderingTooManyItems = UpdateRequestRequisitionErrorInterface & UpdateResponseRequisitionErrorInterface & {
+  __typename: 'OrderingTooManyItems';
+  description: Scalars['String']['output'];
+  maxItemsInEmergencyOrder: Scalars['Int']['output'];
+};
+
 export type OtherPartyNotACustomer = InsertCustomerReturnErrorInterface & InsertErrorInterface & InsertResponseRequisitionErrorInterface & UpdateCustomerReturnErrorInterface & UpdateNameErrorInterface & {
   __typename: 'OtherPartyNotACustomer';
   description: Scalars['String']['output'];
@@ -5498,6 +5502,7 @@ export type ProgramRequisitionOrderTypeNode = {
   __typename: 'ProgramRequisitionOrderTypeNode';
   availablePeriods: Array<PeriodNode>;
   id: Scalars['String']['output'];
+  isEmergency: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
 };
 
@@ -7358,6 +7363,7 @@ export type StorePreferenceNode = {
   extraFieldsInRequisition: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   issueInForeignCurrency: Scalars['Boolean']['output'];
+  manuallyLinkInternalOrderToInboundShipment: Scalars['Boolean']['output'];
   monthlyConsumptionLookBackPeriod: Scalars['Float']['output'];
   monthsItemsExpire: Scalars['Float']['output'];
   monthsLeadTime: Scalars['Float']['output'];

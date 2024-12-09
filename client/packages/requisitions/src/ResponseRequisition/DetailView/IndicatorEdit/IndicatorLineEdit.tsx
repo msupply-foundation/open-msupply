@@ -23,12 +23,19 @@ interface IndicatorLineEditProps {
   hasPrevious: boolean;
   previous: IndicatorLineRowFragment | null;
   currentLine?: IndicatorLineWithColumnsFragment | null;
+  disabled: boolean;
 }
 
 const INPUT_WIDTH = 185;
 const LABEL_WIDTH = '150px';
 
-const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
+const InputWithLabel = ({
+  data,
+  disabled,
+}: {
+  data: IndicatorColumnNode;
+  disabled: boolean;
+}) => {
   if (!data?.value) {
     return;
   }
@@ -58,6 +65,7 @@ const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
           const newValue = isNaN(Number(v)) ? 0 : v;
           update({ value: String(newValue) }).then(errorHandler);
         }}
+        disabled={disabled}
         autoFocus
       />
     ) : (
@@ -67,6 +75,7 @@ const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
         onChange={e => {
           update({ value: e.target.value }).then(errorHandler);
         }}
+        disabled={disabled}
         autoFocus
       />
     );
@@ -88,6 +97,7 @@ export const IndicatorLineEdit = ({
   hasPrevious,
   previous,
   currentLine,
+  disabled,
 }: IndicatorLineEditProps) => {
   const columns = currentLine?.columns
     .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
@@ -97,7 +107,9 @@ export const IndicatorLineEdit = ({
     <>
       <Box display="flex" flexDirection="column">
         {columns?.map(c => {
-          return <InputWithLabel key={c.value?.id} data={c} />;
+          return (
+            <InputWithLabel key={c.value?.id} data={c} disabled={disabled} />
+          );
         })}
       </Box>
       <Box>
