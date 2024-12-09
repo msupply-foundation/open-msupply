@@ -180,6 +180,13 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               onChange={e => onChange({ serialNumber: e.target.value })}
             />
           </Row>
+          <Row label={t('label.asset-number')}>
+            <BasicTextInput
+              value={draft.assetNumber ?? ''}
+              fullWidth
+              onChange={e => onChange({ assetNumber: e.target.value })}
+            />
+          </Row>
           <Row label={t('label.installation-date')}>
             <DateTimePickerInput
               value={DateUtils.getDateOrNull(draft.installationDate)}

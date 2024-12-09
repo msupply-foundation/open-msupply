@@ -66,6 +66,12 @@ impl StorePreferenceNode {
     pub async fn extra_fields_in_requisition(&self) -> &bool {
         &self.store_preference.extra_fields_in_requisition
     }
+
+    pub async fn manually_link_internal_order_to_inbound_shipment(&self) -> &bool {
+        &self
+            .store_preference
+            .manually_link_internal_order_to_inbound_shipment
+    }
 }
 
 impl StorePreferenceNode {
