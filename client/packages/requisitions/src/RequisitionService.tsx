@@ -3,12 +3,13 @@ import React, { FC } from 'react';
 import {
   ListView as RequestRequisitionListView,
   DetailView as RequestRequisitionDetailView,
+  RequestLineEditPage,
 } from './RequestRequisition';
 import {
   ListView as ResponseRequisitionListView,
   DetailView as ResponseRequisitionDetailView,
   ResponseLineEditPage,
-  IndicatorEditPage,
+  IndicatorEditPage as ResponseRequisitionIndicatorEditPage,
 } from './ResponseRequisition';
 import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -42,6 +43,11 @@ const internalOrderRoute = RouteBuilder.create(AppRoute.InternalOrder)
   .addPart(':requisitionNumber')
   .build();
 
+const internalOrderLineRoute = RouteBuilder.create(AppRoute.InternalOrder)
+  .addPart(':requisitionNumber')
+  .addPart(':itemId')
+  .build();
+
 const rnrFormsRoute = RouteBuilder.create(AppRoute.RnRForms).build();
 
 const rnrFormRoute = RouteBuilder.create(AppRoute.RnRForms)
@@ -63,7 +69,10 @@ export const RequisitionService: FC = () => {
         path={customerRequisitionLineRoute}
         element={<ResponseLineEditPage />}
       />
-      <Route path={indicatorLineRoute} element={<IndicatorEditPage />} />
+      <Route
+        path={indicatorLineRoute}
+        element={<ResponseRequisitionIndicatorEditPage />}
+      />
       <Route
         path={internalOrdersRoute}
         element={<RequestRequisitionListView />}
@@ -72,6 +81,7 @@ export const RequisitionService: FC = () => {
         path={internalOrderRoute}
         element={<RequestRequisitionDetailView />}
       />
+      <Route path={internalOrderLineRoute} element={<RequestLineEditPage />} />
       <Route path={rnrFormsRoute} element={<RnRFormListView />} />
       <Route path={rnrFormRoute} element={<RnRFormDetailView />} />
     </Routes>
