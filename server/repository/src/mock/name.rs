@@ -5,6 +5,8 @@ use util::{
 
 use crate::{NameLinkRow, NameRow, NameRowType};
 
+use super::program_master_list_store;
+
 pub fn mock_name_store_a() -> NameRow {
     inline_init(|r: &mut NameRow| {
         r.id = String::from("name_store_a");
@@ -152,6 +154,13 @@ pub fn mock_merged_patient_name_link() -> NameLinkRow {
     }
 }
 
+pub fn mock_customer_store_name_link() -> NameLinkRow {
+    NameLinkRow {
+        id: program_master_list_store().id,
+        name_id: mock_name_store_a().id,
+    }
+}
+
 pub fn mock_names() -> Vec<NameRow> {
     vec![
         mock_name_a(),
@@ -172,5 +181,8 @@ pub fn mock_names() -> Vec<NameRow> {
 }
 
 pub fn mock_name_links() -> Vec<NameLinkRow> {
-    vec![mock_merged_patient_name_link()]
+    vec![
+        mock_merged_patient_name_link(),
+        mock_customer_store_name_link(),
+    ]
 }

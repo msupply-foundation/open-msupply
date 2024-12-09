@@ -714,6 +714,9 @@ impl MockDataInserts {
     }
 
     pub fn indicator_values(mut self) -> Self {
+        self.names = true;
+        self.indicator_columns = true;
+        self.indicator_lines = true;
         self.indicator_values = true;
         self
     }
