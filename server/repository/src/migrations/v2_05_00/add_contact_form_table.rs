@@ -4,14 +4,14 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "add_feedback_form_table"
+        "add_contact_form_table"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-                CREATE TABLE feedback_form (
+                CREATE TABLE contact_form (
                     id TEXT NOT NULL PRIMARY KEY,
                     reply_email TEXT NOT NULL,
                     body TEXT NOT NULL,
@@ -28,7 +28,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'feedback_form';
+                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'contact_form';
                 "#
             )?;
         }
