@@ -1,7 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 
+mod add_contact_form_table;
 mod add_emergency_orders;
-mod add_feedback_form_table;
 mod new_store_preferences;
 mod remove_unique_description_on_tmp_breach;
 
@@ -20,7 +20,7 @@ impl Migration for V2_05_00 {
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
-            Box::new(add_feedback_form_table::Migrate),
+            Box::new(add_contact_form_table::Migrate),
             Box::new(new_store_preferences::Migrate),
             Box::new(remove_unique_description_on_tmp_breach::Migrate),
             Box::new(add_emergency_orders::Migrate),
