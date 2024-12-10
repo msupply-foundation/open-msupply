@@ -11,7 +11,7 @@ impl ContactFormMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: InsertInput,
+        input: InsertContactFormInput,
     ) -> Result<InsertContactFormResponse> {
         insert_contact_form(ctx, &store_id, input)
     }
