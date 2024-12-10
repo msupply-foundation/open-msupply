@@ -35,11 +35,10 @@ impl ReportQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        page: Option<PaginationInput>,
         filter: Option<ReportFilterInput>,
         sort: Option<Vec<ReportSortInput>>,
     ) -> Result<ReportsResponse> {
-        reports(ctx, store_id, page, filter, sort)
+        reports(ctx, store_id, filter, sort)
     }
 
     /// Creates a generated report.

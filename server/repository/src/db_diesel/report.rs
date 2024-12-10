@@ -1,15 +1,14 @@
 use super::{
-    form_schema_row,
-    form_schema_row::form_schema::dsl as form_schema_dsl,
-    report_row::{report, report::dsl as report_dsl},
-    ContextType, ReportRow, ReportType, StorageConnection,
+    form_schema_row::{self, form_schema::dsl as form_schema_dsl},
+    report_row::report::{self, dsl as report_dsl},
+    ContextType, ReportMetaDataRow, ReportRow, ReportType, StorageConnection,
 };
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     schema_from_row, FormSchema, FormSchemaRow,
 };
-use crate::{EqualFilter, Pagination, Sort, StringFilter};
+use crate::{EqualFilter, Sort, StringFilter};
 
 use crate::{diesel_macros::apply_string_filter, DBType, RepositoryError};
 
@@ -29,6 +28,8 @@ pub struct ReportFilter {
     pub r#type: Option<EqualFilter<ReportType>>,
     pub context: Option<EqualFilter<ContextType>>,
     pub sub_context: Option<EqualFilter<String>>,
+    pub code: Option<EqualFilter<String>>,
+    pub is_custom: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -61,6 +62,16 @@ impl ReportFilter {
 
     pub fn context(mut self, filter: EqualFilter<ContextType>) -> Self {
         self.context = Some(filter);
+        self
+    }
+
+    pub fn code(mut self, filter: EqualFilter<String>) -> Self {
+        self.code = Some(filter);
+        self
+    }
+
+    pub fn is_custom(mut self, value: bool) -> Self {
+        self.is_custom = Some(value);
         self
     }
 }
@@ -98,12 +109,11 @@ impl<'a> ReportRepository<'a> {
     }
 
     pub fn query_by_filter(&self, filter: ReportFilter) -> Result<Vec<Report>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter), None)
+        self.query(Some(filter), None)
     }
 
     pub fn query(
         &self,
-        pagination: Pagination,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
     ) -> Result<Vec<Report>, RepositoryError> {
@@ -118,15 +128,33 @@ impl<'a> ReportRepository<'a> {
                 }
             }
         }
-        let result = query
-            .offset(pagination.offset as i64)
-            .limit(pagination.limit as i64)
-            .load::<ReportJoin>(self.connection.lock().connection())?;
+        let result = query.load::<ReportJoin>(self.connection.lock().connection())?;
 
         result
             .into_iter()
             .map(map_report_row_join_to_report)
             .collect::<Result<Vec<Report>, RepositoryError>>()
+    }
+
+    pub fn query_meta_data(
+        &self,
+        filter: Option<ReportFilter>,
+        sort: Option<ReportSort>,
+    ) -> Result<Vec<ReportMetaDataRow>, RepositoryError> {
+        let mut query = create_filtered_query(filter);
+        if let Some(sort) = sort {
+            match sort.key {
+                ReportSortField::Id => {
+                    apply_sort_no_case!(query, sort, report_dsl::id);
+                }
+                ReportSortField::Name => {
+                    apply_sort_no_case!(query, sort, report_dsl::name);
+                }
+            }
+        }
+        Ok(query
+            .select(ReportMetaDataRow::as_select())
+            .load::<ReportMetaDataRow>(self.connection.lock().connection())?)
     }
 }
 
@@ -145,6 +173,8 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
             r#type,
             context,
             sub_context,
+            code,
+            is_custom,
         } = f;
 
         apply_equal_filter!(query, id, report_dsl::id);
@@ -152,6 +182,10 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
         apply_equal_filter!(query, r#type, report_dsl::type_);
         apply_equal_filter!(query, context, report_dsl::context);
         apply_equal_filter!(query, sub_context, report_dsl::sub_context);
+        apply_equal_filter!(query, code, report_dsl::code);
+        if let Some(is_custom) = is_custom {
+            query = query.filter(report_dsl::is_custom.eq(is_custom));
+        }
     }
 
     query
