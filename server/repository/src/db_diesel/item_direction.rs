@@ -69,9 +69,4 @@ impl ItemDirectionFilter {
         self.id = Some(filter);
         self
     }
-
-    pub fn key(mut self, filter: StringFilter) -> Self {
-        self.text = Some(filter);
-        self
-    }
 }
