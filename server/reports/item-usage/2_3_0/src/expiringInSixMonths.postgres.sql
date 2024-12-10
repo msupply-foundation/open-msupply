@@ -13,5 +13,5 @@ FROM stock_line s
 INNER JOIN item_link i ON i.id = s.item_link_id
 INNER JOIN this_month ON true
 INNER JOIN six_months ON true
-WHERE s.expiry_date >= this_month AND s.expiry_date < six_months AND s.store_id = $storeId
+WHERE s.expiry_date < six_months AND s.store_id = $storeId
 GROUP BY s.id, i.item_id
