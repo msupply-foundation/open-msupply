@@ -1,6 +1,4 @@
-// use repository::db_diesel::feedback_form::FeedbackForm; // TODO something missing here where it needs explicit import
-//the error here was cause it needed to be imported on insert/mod file
-use repository::feedback_form_row::FeedbackFormRow;
+use repository::contact_form_row::ContactFormRow;
 
 use crate::service_provider::ServiceContext;
 
@@ -13,7 +11,7 @@ pub trait ContactFormServiceTrait: Sync + Send {
         store_id: &str,
         site_id: &str,
         input: insert::InsertContactForm,
-    ) -> Result<FeedbackFormRow, insert::InsertContactFormError> {
+    ) -> Result<ContactFormRow, insert::InsertContactFormError> {
         insert::insert_contact_form(ctx, store_id, site_id, input)
     }
 }
