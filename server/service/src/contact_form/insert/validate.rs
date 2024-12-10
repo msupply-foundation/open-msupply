@@ -1,7 +1,5 @@
 use regex::Regex;
-use repository::{
-    feedback_form_row::FeedbackFormRowRepository, RepositoryError, StorageConnection,
-};
+use repository::{contact_form_row::ContactFormRowRepository, RepositoryError, StorageConnection};
 
 use super::{InsertContactForm, InsertContactFormError};
 
@@ -17,7 +15,7 @@ pub fn validate(
         return Err(InsertContactFormError::EmailDoesNotExist);
     }
 
-    let email_regex = Regex::new(r"^[\w\.=-]+@[\w\.-]+\.[\w]{2,3}$").unwrap();
+    let email_regex = Regex::new(r"^[\w\.=-]+@[\w\.-]+\.[\w]{2,}$").unwrap();
 
     if !email_regex.is_match(&input.reply_email) {
         return Err(InsertContactFormError::EmailIsInvalid);
@@ -26,7 +24,6 @@ pub fn validate(
     if input.body.is_empty() {
         return Err(InsertContactFormError::MessageDoesNotExist);
     }
-
     Ok(())
 }
 
@@ -34,7 +31,7 @@ pub fn check_contact_form_record_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
-    let result = FeedbackFormRowRepository::new(connection).find_one_by_id(id)?;
+    let result = ContactFormRowRepository::new(connection).find_one_by_id(id)?;
 
     Ok(result.is_some())
 }
