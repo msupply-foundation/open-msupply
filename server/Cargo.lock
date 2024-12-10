@@ -7813,6 +7813,7 @@ dependencies = [
  "pretty_assertions",
  "qrcode",
  "rand",
+ "regex",
  "repository",
  "reqwest",
  "rsa",
