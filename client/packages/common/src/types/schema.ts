@@ -6789,7 +6789,7 @@ export type RequisitionReasonNotProvided = {
   requisitionLine: RequisitionLineNode;
 };
 
-export type RequisitionReasonsNotProvided = UpdateResponseRequisitionErrorInterface & {
+export type RequisitionReasonsNotProvided = UpdateRequestRequisitionErrorInterface & UpdateResponseRequisitionErrorInterface & {
   __typename: 'RequisitionReasonsNotProvided';
   description: Scalars['String']['output'];
   errors: Array<RequisitionReasonNotProvided>;
@@ -7374,6 +7374,7 @@ export type StorePreferenceNode = {
   requestRequisitionRequiresAuthorisation: Scalars['Boolean']['output'];
   responseRequisitionRequiresAuthorisation: Scalars['Boolean']['output'];
   stocktakeFrequency: Scalars['Float']['output'];
+  useConsumptionAndStockFromCustomersForInternalOrders: Scalars['Boolean']['output'];
   vaccineModule: Scalars['Boolean']['output'];
 };
 
@@ -8292,6 +8293,7 @@ export type UpdateRequestRequisitionLineErrorInterface = {
 export type UpdateRequestRequisitionLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  optionId?: InputMaybe<Scalars['String']['input']>;
   requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
 };
 
