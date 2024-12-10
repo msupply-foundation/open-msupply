@@ -10,6 +10,7 @@ use crate::{
             update_inbound_invoice::UpdateInboundInvoiceProcessor,
             update_outbound_invoice_status::UpdateOutboundInvoiceStatusProcessor,
         },
+        log_system_error,
     },
     service_provider::ServiceProvider,
     sync::{ActiveStoresOnSite, GetActiveStoresOnSiteError},
@@ -93,6 +94,49 @@ pub(crate) enum ProcessInvoiceTransfersError {
     NameIsNotAnActiveStore(ChangelogRow),
 }
 
+fn process_change_log(
+    connection: &StorageConnection,
+    log: &ChangelogRow,
+    processors: &[Box<dyn InvoiceTransferProcessor>],
+    active_stores: &ActiveStoresOnSite,
+) -> Result<(), ProcessInvoiceTransfersError> {
+    use ProcessInvoiceTransfersError as Error;
+    let name_id = log
+        .name_id
+        .as_ref()
+        .ok_or_else(|| Error::NameIdIsMissingFromChangelog(log.clone()))?;
+
+    // Prepare record
+    let operation = match &log.row_action {
+        RowActionType::Upsert => {
+            get_upsert_operation(connection, log).map_err(Error::GetUpsertOperationError)?
+        }
+        RowActionType::Delete => {
+            get_delete_operation(connection, log).map_err(Error::GetDeleteOperationError)?
+        }
+    };
+
+    let record = InvoiceTransferProcessorRecord {
+        operation,
+        other_party_store_id: active_stores
+            .get_store_id_for_name_id(name_id)
+            .ok_or_else(|| Error::NameIsNotAnActiveStore(log.clone()))?,
+    };
+
+    // TODO: MERGE: Ignore if invoice name_link_id points to store's name. Supplying to itself! (Can happen with names are merge into stores)
+
+    // Try record against all of the processors
+    for processor in processors.iter() {
+        let result = processor
+            .try_process_record_common(&connection, &record)
+            .map_err(Error::ProcessorError);
+        if let Err(e) = result {
+            log_system_error(connection, &e).map_err(Error::DatabaseError)?;
+        }
+    }
+    Ok(())
+}
+
 pub(crate) fn process_invoice_transfers(
     service_provider: &ServiceProvider,
 ) -> Result<(), ProcessInvoiceTransfersError> {
@@ -135,33 +179,9 @@ pub(crate) fn process_invoice_transfers(
         }
 
         for log in logs {
-            let name_id = log
-                .name_id
-                .as_ref()
-                .ok_or_else(|| Error::NameIdIsMissingFromChangelog(log.clone()))?;
-
-            // Prepare record
-            let operation = match &log.row_action {
-                RowActionType::Upsert => get_upsert_operation(&ctx.connection, &log)
-                    .map_err(Error::GetUpsertOperationError)?,
-                RowActionType::Delete => get_delete_operation(&ctx.connection, &log)
-                    .map_err(Error::GetDeleteOperationError)?,
-            };
-
-            let record = InvoiceTransferProcessorRecord {
-                operation,
-                other_party_store_id: active_stores
-                    .get_store_id_for_name_id(name_id)
-                    .ok_or_else(|| Error::NameIsNotAnActiveStore(log.clone()))?,
-            };
-
-            // TODO: MERGE: Ignore if invoice name_link_id points to store's name. Supplying to itself! (Can happen with names are merge into stores)
-
-            // Try record against all of the processors
-            for processor in processors.iter() {
-                processor
-                    .try_process_record_common(&ctx.connection, &record)
-                    .map_err(Error::ProcessorError)?;
+            let result = process_change_log(&ctx.connection, &log, &processors, &active_stores);
+            if let Err(e) = result {
+                log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
             }
 
             cursor_controller
