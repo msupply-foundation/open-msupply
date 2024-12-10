@@ -273,7 +273,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  lineHeight: 1.4,
+                  lineHeight: 1.3,
                   fontWeight: 600,
                 }}
               >
