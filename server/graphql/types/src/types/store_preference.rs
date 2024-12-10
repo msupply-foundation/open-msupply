@@ -66,6 +66,18 @@ impl StorePreferenceNode {
     pub async fn extra_fields_in_requisition(&self) -> &bool {
         &self.store_preference.extra_fields_in_requisition
     }
+
+    pub async fn manually_link_internal_order_to_inbound_shipment(&self) -> &bool {
+        &self
+            .store_preference
+            .manually_link_internal_order_to_inbound_shipment
+    }
+
+    pub async fn use_consumption_and_stock_from_customers_for_internal_orders(&self) -> &bool {
+        &self
+            .store_preference
+            .use_consumption_and_stock_from_customers_for_internal_orders
+    }
 }
 
 impl StorePreferenceNode {

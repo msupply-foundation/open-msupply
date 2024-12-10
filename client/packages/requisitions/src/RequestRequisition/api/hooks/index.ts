@@ -26,6 +26,7 @@ export const useRequest = {
     fields: Document.useRequestFields,
   },
   line: {
+    insert: Lines.useInsertRequestLines,
     chartData: Lines.useRequestLineChartData,
     delete: Lines.useDeleteRequestLines,
     deleteLine: Lines.useDeleteRequestLine,
