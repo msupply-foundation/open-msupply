@@ -58,6 +58,7 @@ mod insert {
             ),
             Err(InsertContactFormError::EmailIsInvalid)
         );
+
         // EmailIsNotValid - no domain
         assert_eq!(
             service.insert_contact_form(
@@ -130,8 +131,6 @@ mod insert {
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
 
-        // let service = service_provider.contact_form_service;
-
         let store_id = &mock_store_a().id;
         let user_id = mock_user_account_a().id;
 
@@ -144,7 +143,7 @@ mod insert {
                 &user_id,
                 InsertContactForm {
                     id: "test_id".to_string(),
-                    reply_email: "some@email.com".to_string(),
+                    reply_email: "test_email@msupply.foundation".to_string(),
                     body: "body".to_string(),
                     ..Default::default()
                 },
