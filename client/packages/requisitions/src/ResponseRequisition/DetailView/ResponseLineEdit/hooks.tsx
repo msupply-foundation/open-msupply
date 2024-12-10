@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useResponse, ResponseLineFragment } from '../../api';
+import { ItemRowFragment } from '@openmsupply-client/system';
+import { useNotification } from '@common/hooks';
 
 export type DraftResponseLine = Omit<ResponseLineFragment, '__typename'> & {
   requisitionId: string;
@@ -16,17 +18,29 @@ const createDraftLine = (
   supplyQuantity: line.supplyQuantity,
 });
 
-export const useDraftRequisitionLine = (line: ResponseLineFragment) => {
-  const { id: reqId } = useResponse.document.fields('id');
-  const { mutateAsync: save, isLoading } = useResponse.line.save();
+export const useDraftRequisitionLine = (item?: ItemRowFragment | null) => {
+  const { id: reqId, lines } = useResponse.document.fields(['id', 'lines']);
+  const { mutateAsync: saveAction, isLoading } = useResponse.line.save();
+  const { error } = useNotification();
 
-  const [draft, setDraft] = useState<DraftResponseLine>(
-    createDraftLine(line, reqId)
-  );
+  const [draft, setDraft] = useState<DraftResponseLine | null>(null);
 
   useEffect(() => {
-    setDraft(createDraftLine(line, reqId));
-  }, [line, reqId]);
+    if (lines && item && reqId) {
+      const existingLine = lines.nodes.find(
+        ({ item: reqItem }) => reqItem.id === item.id
+      );
+      if (existingLine) {
+        if (draft && draft.id === existingLine.id) {
+          setDraft(draft);
+        } else {
+          setDraft(createDraftLine(existingLine, reqId));
+        }
+      }
+    } else {
+      setDraft(null);
+    }
+  }, [lines, item, reqId, draft]);
 
   const update = (patch: Partial<DraftResponseLine>) => {
     if (draft) {
@@ -34,24 +48,54 @@ export const useDraftRequisitionLine = (line: ResponseLineFragment) => {
     }
   };
 
-  return { draft, isLoading, save: () => draft && save(draft), update };
+  const save = async () => {
+    if (draft) {
+      let result = await saveAction(draft);
+      if (
+        result.updateResponseRequisitionLine.__typename ===
+        'UpdateResponseRequisitionLineError'
+      ) {
+        switch (result.updateResponseRequisitionLine.error.__typename) {
+          default:
+            error(result.updateResponseRequisitionLine.error.description)();
+            break;
+        }
+      }
+    }
+  };
+
+  return { draft, isLoading, save, update };
 };
 
-export const useNextResponseLine = (currentItem: ResponseLineFragment) => {
-  const { lines } = useResponse.line.list();
-  const nextState: {
-    hasNext: boolean;
-    next: null | ResponseLineFragment;
-  } = { hasNext: true, next: null };
-
-  const idx = lines.findIndex(l => l.id === currentItem.id);
-  const next = lines[idx + 1];
-  if (!next) {
-    nextState.hasNext = false;
-    return nextState;
+export const usePreviousNextResponseLine = (
+  lines?: ResponseLineFragment[],
+  currentItem?: ItemRowFragment | null
+) => {
+  if (!lines) {
+    return { hasNext: false, next: null, hasPrevious: false, previous: null };
   }
 
-  nextState.next = next;
+  const state: {
+    hasPrevious: boolean;
+    previous: null | ItemRowFragment;
+    hasNext: boolean;
+    next: null | ItemRowFragment;
+  } = { hasNext: true, next: null, hasPrevious: true, previous: null };
+  const idx = lines.findIndex(l => l.item.id === currentItem?.id);
+  const previous = lines[idx - 1];
+  const next = lines[idx + 1];
 
-  return nextState;
+  if (!previous) {
+    state.hasPrevious = false;
+  } else {
+    state.previous = previous.item;
+  }
+
+  if (!next) {
+    state.hasNext = false;
+  } else {
+    state.next = next.item;
+  }
+
+  return state;
 };

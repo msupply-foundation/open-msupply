@@ -35,9 +35,23 @@ const LocationListComponent: FC = () => {
   const queryParams = { sortBy, first, offset, filterBy };
   const { data, isError, isLoading } = useLocation.document.list(queryParams);
   const pagination = { page, first, offset };
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const columns = useColumns<LocationRowFragment>(
-    ['code', 'name', 'selection'],
+    [
+      'code',
+      'name',
+      {
+        key: 'coldStorageType',
+        label: 'label.cold-storage-type',
+        accessor: ({ rowData: { coldStorageType } }) =>
+          coldStorageType
+            ? `${coldStorageType.name} (${coldStorageType.minTemperature}°C to ${coldStorageType.maxTemperature}°C)`
+            : null,
+        width: 200,
+        sortable: false,
+      },
+      'selection',
+    ],
     {
       onChangeSortBy: updateSortQuery,
       sortBy,

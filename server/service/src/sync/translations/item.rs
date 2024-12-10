@@ -1,12 +1,18 @@
-use repository::{ItemRow, ItemRowDelete, ItemType, StorageConnection, SyncBufferRow, VENCategory};
-use serde::Deserialize;
+use repository::{
+    ChangelogRow, ChangelogTableName, ItemRow, ItemRowDelete, ItemRowRepository, ItemType,
+    StorageConnection, SyncBufferRow, VENCategory,
+};
+use serde::{Deserialize, Serialize};
 
-use crate::sync::{sync_serde::empty_str_as_option_string, translations::unit::UnitTranslation};
+use crate::sync::{
+    sync_serde::empty_str_as_option_string, translations::unit::UnitTranslation,
+    CentralServerConfig,
+};
 
-use super::{PullTranslateResult, SyncTranslation};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_camel_case_types)]
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub enum LegacyItemType {
     non_stock,
     service,
@@ -14,7 +20,7 @@ pub enum LegacyItemType {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct LegacyItemRow {
     ID: String,
     item_name: String,
@@ -37,6 +43,14 @@ fn to_item_type(type_of: LegacyItemType) -> ItemType {
         LegacyItemType::general => ItemType::Stock,
     }
 }
+fn to_legacy_item_type(r#type: ItemType) -> LegacyItemType {
+    match r#type {
+        ItemType::NonStock => LegacyItemType::non_stock,
+        ItemType::Service => LegacyItemType::service,
+        ItemType::Stock => LegacyItemType::general,
+    }
+}
+
 fn to_ven_category(ven_category: String) -> VENCategory {
     match ven_category.as_str() {
         "V" => VENCategory::V,
@@ -45,9 +59,21 @@ fn to_ven_category(ven_category: String) -> VENCategory {
         _ => VENCategory::NotAssigned,
     }
 }
+fn to_legacy_ven_category(ven_category: VENCategory) -> String {
+    match ven_category {
+        VENCategory::V => "V".to_string(),
+        VENCategory::E => "E".to_string(),
+        VENCategory::N => "N".to_string(),
+        VENCategory::NotAssigned => "".to_string(),
+    }
+}
 
 pub(crate) fn ordered_simple_json(text: &str) -> Result<String, serde_json::Error> {
-    let json: serde_json::Value = serde_json::from_str(text)?;
+    let mut json: serde_json::Value = serde_json::from_str(text)?;
+    // Saving dose_picture 'picture' type as incoming 'empty string' causes issues in integration tests
+    if let Some(json_as_object) = json.as_object_mut() {
+        json_as_object.remove("dose_picture");
+    }
     serde_json::to_string(&json)
 }
 
@@ -100,6 +126,66 @@ impl SyncTranslation for ItemTranslation {
         Ok(PullTranslateResult::delete(ItemRowDelete(
             sync_record.record_id.clone(),
         )))
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::Item)
+    }
+
+    fn try_translate_to_upsert_sync_record(
+        &self,
+        connection: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        if !CentralServerConfig::is_central_server() {
+            return Err(anyhow::anyhow!(
+                "Item push is only supported from the central server"
+            ));
+        }
+
+        let Some(item) = ItemRowRepository::new(connection).find_one_by_id(&changelog.record_id)?
+        else {
+            return Err(anyhow::anyhow!(
+                "Item with ID {} could not be found",
+                changelog.record_id
+            ));
+        };
+
+        let ItemRow {
+            id,
+            name,
+            code,
+            unit_id,
+            r#type,
+            legacy_record: _,
+            default_pack_size,
+            is_active: _,
+            is_vaccine,
+            strength,
+            ven_category,
+            vaccine_doses,
+        } = item;
+
+        let legacy_row = LegacyItemRow {
+            ID: id,
+            item_name: name,
+            code,
+            default_pack_size,
+            is_vaccine,
+            doses: vaccine_doses,
+            unit_ID: unit_id,
+            strength,
+            type_of: to_legacy_item_type(r#type),
+            VEN_category: to_legacy_ven_category(ven_category),
+        };
+
+        let json_record = serde_json::to_value(legacy_row)?;
+
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            json_record,
+        ))
     }
 }
 

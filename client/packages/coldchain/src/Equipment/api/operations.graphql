@@ -8,6 +8,11 @@ fragment AssetRow on AssetNode {
   installationDate
   createdDatetime
   replacementDate
+
+  warrantyStart
+  warrantyEnd
+  needsReplacement
+
   statusLog {
     logDatetime
     reason {
@@ -25,6 +30,9 @@ fragment AssetRow on AssetNode {
     manufacturer
     model
     code
+  }
+  assetCategory {
+    name
   }
   assetType {
     name
@@ -53,6 +61,12 @@ fragment Asset on AssetNode {
       code
       name
       onHold
+      coldStorageType {
+        id
+        name
+        maxTemperature
+        minTemperature
+      }
     }
     totalCount
   }
@@ -157,6 +171,14 @@ query assetById($storeId: String!, $assetId: String!) {
         ...Asset
       }
       totalCount
+    }
+  }
+}
+
+query assetFromGs1Data($storeId: String!, $data: [Gs1DataElement!]!) {
+  assetFromGs1Data(storeId: $storeId, gs1: $data) {
+    ... on AssetNode {
+      ...Asset
     }
   }
 }

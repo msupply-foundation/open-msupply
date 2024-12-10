@@ -24,7 +24,11 @@ import { Summary } from './Tabs';
 import { useAssets } from '../api';
 import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
-import { ActivityLogList, useLocation } from '@openmsupply-client/system';
+import {
+  ActivityLogList,
+  LocationRowFragment,
+  useLocation,
+} from '@openmsupply-client/system';
 import { DraftAsset } from '../types';
 import { Details } from './Tabs/Details';
 
@@ -43,7 +47,7 @@ export const EquipmentDetailView = () => {
       filterBy: { assignedToAsset: false, storeId: { equalTo: data?.storeId } },
     });
   const navigate = useNavigate();
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const [draft, setDraft] = useState<DraftAsset>();
   const [isDirty, setIsDirty] = useState(false);
@@ -96,11 +100,21 @@ export const EquipmentDetailView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, setDraft]);
 
-  const locations =
+  let locations =
     locationData?.nodes.map(location => ({
-      label: location.code,
+      label: formatLocationLabel(location),
       value: location.id,
     })) || [];
+
+  // Any locations that are already assigned to the asset won't be returned by the query above
+  // So we add them in manually here...
+  if (data && data?.locations.nodes.length) {
+    const assignedLocations = data.locations.nodes.map(location => ({
+      label: formatLocationLabel(location),
+      value: location.id,
+    }));
+    locations.push(...assignedLocations);
+  }
 
   if (isLoading || isLoadingLocations) return <DetailFormSkeleton />;
 
@@ -162,4 +176,11 @@ export const EquipmentDetailView = () => {
       )}
     </React.Suspense>
   );
+};
+
+// Displays location with storage name if present, e.g. "ABC (Cold store)".
+// If not present, just displays the code alone
+export const formatLocationLabel = (location: LocationRowFragment) => {
+  const { code, coldStorageType } = location;
+  return `${code}${coldStorageType ? ` (${coldStorageType.name})` : ''}`;
 };

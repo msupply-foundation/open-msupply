@@ -96,6 +96,7 @@ pub fn generate(
         sell_price_per_pack,
         note,
         on_hold,
+        item_variant_id,
         ..
     } = stock_line.stock_line_row.clone();
 
@@ -120,6 +121,7 @@ pub fn generate(
             expiry_date,
             stock_on_hold: on_hold,
             note,
+            item_variant_id,
             // Default
             barcode: None,
             total_before_tax: None,

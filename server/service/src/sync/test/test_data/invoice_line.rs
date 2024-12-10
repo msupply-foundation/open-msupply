@@ -94,6 +94,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             inventory_adjustment_reason_id: None,
             return_reason_id: None,
             foreign_currency_price_before_tax: Some(0.0),
+            item_variant_id: None,
         },
     )
 }
@@ -120,8 +121,9 @@ fn trans_line_1_push_record() -> TestSyncOutgoingRecord {
             tax_percentage: None,
             total_before_tax: Some(10.0 * 700.36363636),
             total_after_tax: Some(10.0 * 700.36363636),
-            inventory_adjustment_reason_id: None,
+            option_id: None,
             foreign_currency_price_before_tax: Some(0.0),
+            item_variant_id: None,
         }),
     }
 }
@@ -209,6 +211,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             inventory_adjustment_reason_id: None,
             return_reason_id: None,
             foreign_currency_price_before_tax: Some(0.0),
+            item_variant_id: None,
         },
     )
 }
@@ -235,8 +238,9 @@ fn trans_line_2_push_record() -> TestSyncOutgoingRecord {
             tax_percentage: None,
             total_before_tax: Some(2.0 * 1000.9124798),
             total_after_tax: Some(2.0 * 1000.9124798),
-            inventory_adjustment_reason_id: None,
+            option_id: None,
             foreign_currency_price_before_tax: Some(0.0),
+            item_variant_id: None,
         }),
     }
 }
@@ -298,7 +302,8 @@ const TRANS_LINE_OM_FIELDS: (&str, &str) = (
         "om_item_code": "item_a_code",
         "om_tax": 33.3,
         "om_total_before_tax": 105.4,
-        "om_total_after_tax": 130.5
+        "om_total_after_tax": 130.5,
+        "om_item_variant_id": "5fb99f9c-03f4-47f2-965b-c9ecd083c675"
     }"#,
 );
 fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
@@ -327,6 +332,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             inventory_adjustment_reason_id: None,
             return_reason_id: None,
             foreign_currency_price_before_tax: Some(0.0),
+            item_variant_id: Some("5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string()),
         },
     )
 }
@@ -353,8 +359,9 @@ fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
             tax_percentage: Some(33.3),
             total_before_tax: Some(105.4),
             total_after_tax: Some(130.5),
-            inventory_adjustment_reason_id: None,
+            option_id: None,
             foreign_currency_price_before_tax: Some(0.0),
+            item_variant_id: Some("5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string()),
         }),
     }
 }
@@ -445,6 +452,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             inventory_adjustment_reason_id: None,
             return_reason_id: None,
             foreign_currency_price_before_tax: Some(0.0),
+            item_variant_id: None,
         },
     )
 }
@@ -471,8 +479,9 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncOutgoingRecord {
             tax_percentage: None,
             total_before_tax: Some(105.4),
             total_after_tax: Some(130.5),
-            inventory_adjustment_reason_id: None,
+            option_id: None,
             foreign_currency_price_before_tax: Some(0.0),
+            item_variant_id: None,
         }),
     }
 }

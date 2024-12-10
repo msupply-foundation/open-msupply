@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useMemo } from 'react';
 import {
   TextInputCell,
   alpha,
@@ -18,21 +18,21 @@ import {
   NumberInputCell,
   ColumnAlign,
   AdjustmentTypeInput,
+  NumberCell,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
   getLocationInputColumn,
   InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
-  PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
-  PackVariantEntryCell,
-  usePackVariant,
+  ItemVariantInputCell,
+  PackSizeEntryCell,
+  useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
 import {
   useStocktakeLineErrorContext,
   UseStocktakeLineErrors,
 } from '../../../context';
-import { StocktakeLineFragment } from '../../../api';
 
 interface StocktakeLineEditTableProps {
   isDisabled?: boolean;
@@ -129,7 +129,7 @@ const getInventoryAdjustmentReasonInputColumn = (
         <InventoryAdjustmentReasonSearchInput
           autoFocus={autoFocus}
           value={value}
-          width={column.width}
+          width={Number(column.width) - 12}
           onChange={onChange}
           adjustmentType={
             rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0)
@@ -151,78 +151,94 @@ const getInventoryAdjustmentReasonInputColumn = (
 // If this is not extracted to it's own component and used directly in Cell:
 // cell will be re rendered anytime rowData changes, which causes it to loose focus
 // if number of packs is changed and tab is pressed (in quick succession)
-const PackUnitEntryCell = PackVariantEntryCell<DraftStocktakeLine>({
-  getItemId: r => r.item.id,
-  getUnitName: r => r.item.unitName || null,
+const PackUnitEntryCell = PackSizeEntryCell<DraftStocktakeLine>({
   getIsDisabled: r => !!r?.stockLine,
 });
 
-export const BatchTable: FC<
-  StocktakeLineEditTableProps & { item: StocktakeLineFragment['item'] | null }
-> = ({ item, batches, update, isDisabled = false }) => {
-  const t = useTranslation('inventory');
+export const BatchTable: FC<StocktakeLineEditTableProps> = ({
+  batches,
+  update,
+  isDisabled = false,
+}) => {
+  const t = useTranslation();
   const theme = useTheme();
-  const { packVariantExists } = usePackVariant(item?.id || '', null);
+  const itemVariantsEnabled = useIsItemVariantsEnabled();
   useDisableStocktakeRows(batches);
 
   const errorsContext = useStocktakeLineErrorContext();
 
-  const columns = useColumns<DraftStocktakeLine>([
-    getCountThisLineColumn(update, theme),
-    getBatchColumn(update, theme),
-    getColumnLookupWithOverrides('packSize', {
-      Cell: PackUnitEntryCell,
-      setter: update,
-      ...(packVariantExists
-        ? {
-            label: 'label.unit-variant-and-pack-size',
-            minWidth: PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
-          }
-        : { label: 'label.pack-size' }),
-    }),
-    {
-      key: 'snapshotNumberOfPacks',
-      label: 'label.snapshot-num-of-packs',
-      align: ColumnAlign.Right,
-      width: 100,
-      getIsError: rowData =>
-        errorsContext.getError(rowData)?.__typename ===
-        'SnapshotCountCurrentCountMismatchLine',
-      setter: patch => update({ ...patch, countThisLine: true }),
-      accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '0',
-    },
-
-    {
-      key: 'countedNumberOfPacks',
-      label: 'label.counted-num-of-packs',
-      width: 100,
-      getIsError: rowData =>
-        errorsContext.getError(rowData)?.__typename ===
-        'StockLineReducedBelowZero',
-      Cell: props => <NumberInputCell {...props} decimalLimit={2} min={0} />,
-      setter: patch => {
-        // If counted number of packs was changed to result in no adjustment we
-        // should remove inventoryAdjustmentReason, otherwise could have a
-        // reason on a line with no adjustments
-        const inventoryAdjustmentReason =
-          !patch.countedNumberOfPacks ||
-          patch.snapshotNumberOfPacks == patch.countedNumberOfPacks
-            ? null
-            : patch.inventoryAdjustmentReason;
-        update({ ...patch, countThisLine: true, inventoryAdjustmentReason });
-      },
-      accessor: ({ rowData }) => rowData.countedNumberOfPacks,
-    },
-    [
-      expiryDateColumn,
+  let columnDefinitions = useMemo(() => {
+    const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
+      getCountThisLineColumn(update, theme),
+      getBatchColumn(update, theme),
+    ];
+    if (itemVariantsEnabled) {
+      columnDefinitions.push({
+        key: 'itemVariantId',
+        label: 'label.item-variant',
+        width: 170,
+        Cell: props => (
+          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+        ),
+        setter: patch => update({ ...patch }),
+      });
+    }
+    columnDefinitions.push(
+      getColumnLookupWithOverrides('packSize', {
+        Cell: PackUnitEntryCell,
+        setter: update,
+        label: 'label.pack-size',
+      }),
       {
-        width: 150,
+        key: 'snapshotNumberOfPacks',
+        label: 'label.snapshot-num-of-packs',
+        align: ColumnAlign.Right,
+        width: 100,
+        Cell: NumberCell,
+        getIsError: rowData =>
+          errorsContext.getError(rowData)?.__typename ===
+          'SnapshotCountCurrentCountMismatchLine',
         setter: patch => update({ ...patch, countThisLine: true }),
+        accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '0',
       },
-    ],
-    getInventoryAdjustmentReasonInputColumn(update, errorsContext),
-  ]);
 
+      {
+        key: 'countedNumberOfPacks',
+        label: 'description.counted-num-of-packs',
+        width: 100,
+        getIsError: rowData =>
+          errorsContext.getError(rowData)?.__typename ===
+          'StockLineReducedBelowZero',
+        Cell: props => <NumberInputCell {...props} decimalLimit={2} min={0} />,
+        setter: patch => {
+          // If counted number of packs was changed to result in no adjustment we
+          // should remove inventoryAdjustmentReason, otherwise could have a
+          // reason on a line with no adjustments
+          const inventoryAdjustmentReason =
+            !patch.countedNumberOfPacks ||
+            patch.snapshotNumberOfPacks == patch.countedNumberOfPacks
+              ? null
+              : patch.inventoryAdjustmentReason;
+          update({ ...patch, countThisLine: true, inventoryAdjustmentReason });
+        },
+        accessor: ({ rowData }) => rowData.countedNumberOfPacks,
+      },
+      [
+        expiryDateColumn,
+        {
+          width: 150,
+          setter: patch => update({ ...patch, countThisLine: true }),
+        },
+      ],
+      getInventoryAdjustmentReasonInputColumn(update, errorsContext)
+    );
+
+    return columnDefinitions;
+  }, [itemVariantsEnabled]);
+
+  const columns = useColumns<DraftStocktakeLine>(columnDefinitions, {}, [
+    columnDefinitions,
+  ]);
   return (
     <DataTable
       id="stocktake-batch"
@@ -241,7 +257,7 @@ export const PricingTable: FC<StocktakeLineEditTableProps> = ({
   isDisabled,
 }) => {
   const theme = useTheme();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const columns = useColumns<DraftStocktakeLine>([
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
@@ -281,7 +297,7 @@ export const LocationTable: FC<StocktakeLineEditTableProps> = ({
   isDisabled,
 }) => {
   const theme = useTheme();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const columns = useColumns<DraftStocktakeLine>([
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),

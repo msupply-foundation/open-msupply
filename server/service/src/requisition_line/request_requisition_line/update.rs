@@ -70,12 +70,12 @@ fn validate(
         return Err(OutError::NotThisStoreRequisition);
     }
 
-    if requisition_row.status != RequisitionStatus::Draft {
-        return Err(OutError::CannotEditRequisition);
-    }
-
     if requisition_row.r#type != RequisitionType::Request {
         return Err(OutError::NotARequestRequisition);
+    }
+
+    if requisition_row.status != RequisitionStatus::Draft {
+        return Err(OutError::CannotEditRequisition);
     }
 
     Ok(requisition_line_row)
@@ -106,7 +106,7 @@ impl From<RepositoryError> for UpdateRequestRequisitionLineError {
 mod test {
     use repository::{
         mock::{
-            mock_full_draft_response_requisition_for_update_test,
+            mock_full_new_response_requisition_for_update_test,
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition_line,
             mock_store_a, mock_store_b, MockDataInserts,
         },
@@ -164,7 +164,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateRequestRequisitionLine| {
                     r.id.clone_from(
-                        &mock_full_draft_response_requisition_for_update_test().lines[0].id,
+                        &mock_full_new_response_requisition_for_update_test().lines[0].id,
                     );
                 }),
             ),

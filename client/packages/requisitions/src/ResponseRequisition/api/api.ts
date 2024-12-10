@@ -7,6 +7,9 @@ import {
   UpdateResponseRequisitionInput,
   UpdateResponseRequisitionStatusInput,
   UpdateResponseRequisitionLineInput,
+  InsertProgramResponseRequisitionInput,
+  InsertResponseRequisitionLineInput,
+  UpdateIndicatorValueInput,
 } from '@openmsupply-client/common';
 import {
   ResponseFragment,
@@ -80,6 +83,9 @@ const responseParser = {
       status: responseParser.toStatus(requisition),
     };
   },
+  toDelete: (line: ResponseFragment) => {
+    return { id: line.id };
+  },
   toDeleteLine: (line: ResponseLineFragment) => ({ id: line.id }),
   toUpdateLine: (
     patch: DraftResponseLine
@@ -87,6 +93,17 @@ const responseParser = {
     id: patch.id,
     supplyQuantity: patch.supplyQuantity,
     comment: patch.comment,
+    stockOnHand: patch.availableStockOnHand,
+    initialStockOnHand: patch.initialStockOnHandUnits,
+    additionInUnits: patch.additionInUnits,
+    averageMonthlyConsumption: patch.averageMonthlyConsumption,
+    daysOutOfStock: patch.daysOutOfStock,
+    expiringUnits: patch.expiringUnits,
+    incomingUnits: patch.incomingUnits,
+    lossInUnits: patch.lossInUnits,
+    outgoingUnits: patch.outgoingUnits,
+    requestedQuantity: patch.requestedQuantity,
+    optionId: patch?.reason?.id ?? null,
   }),
 };
 
@@ -148,38 +165,107 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
       throw new Error('Unable to load chart data');
     },
   },
-  update: async (
-    patch: Partial<ResponseFragment> & { id: string }
-  ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
+  insert: async ({
+    id,
+    otherPartyId,
+  }: {
+    id: string;
+    otherPartyId: string;
+  }): Promise<{
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+  }> => {
+    const result = await sdk.insertResponse({
+      storeId,
+      input: {
+        id,
+        otherPartyId,
+        maxMonthsOfStock: 1,
+        minMonthsOfStock: 0,
+      },
+    });
+
+    const { insertResponseRequisition } = result || {};
+
+    if (insertResponseRequisition?.__typename === 'RequisitionNode') {
+      return insertResponseRequisition;
+    }
+
+    throw new Error('Unable to create requisition');
+  },
+  insertProgram: async (
+    input: InsertProgramResponseRequisitionInput
+  ): Promise<{
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+  }> => {
+    const result = await sdk.insertProgramResponse({
+      storeId,
+      input,
+    });
+
+    const { insertProgramResponseRequisition } = result || {};
+
+    if (insertProgramResponseRequisition?.__typename === 'RequisitionNode') {
+      return insertProgramResponseRequisition;
+    }
+
+    throw new Error('Unable to create requisition');
+  },
+  update: async (patch: Partial<ResponseFragment> & { id: string }) => {
     const input = responseParser.toUpdate(patch);
     const result = (await sdk.updateResponse({ storeId, input })) || {};
 
-    const { updateResponseRequisition } = result;
+    return result.updateResponseRequisition;
+  },
+  deleteResponses: async (requisitions: ResponseFragment[]) => {
+    const deleteResponseRequisitions = requisitions.map(
+      responseParser.toDelete
+    );
+    const result = await sdk.deleteRequest({
+      storeId,
+      input: { deleteResponseRequisitions },
+    });
 
-    if (updateResponseRequisition?.__typename === 'RequisitionNode') {
-      return updateResponseRequisition;
+    const { batchResponseRequisition } = result || {};
+
+    if (batchResponseRequisition?.deleteResponseRequisitions) {
+      return batchResponseRequisition.deleteResponseRequisitions;
     }
 
-    throw new Error('Unable to update requisition');
+    throw new Error('Could not delete requisitions');
   },
-  deleteLines: async (_: ResponseLineFragment[]) => {
-    // NOT YET IMPLEMENTED IN SERVER API
+  deleteLines: async (responseLines: ResponseLineFragment[]) => {
+    const ids = responseLines.map(responseParser.toDeleteLine);
+    const result = await sdk.deleteResponseLines({ ids, storeId });
 
-    // const ids = responseLines.map(responseParser.toDeleteLine);
-    // const result = await sdk.deleteRequestLines({ ids, storeId });
-
-    // if (result.batchRequestRequisition.deleteRequestRequisitionLines) {
-    //   const failedLines =
-    //     result.batchRequestRequisition.deleteRequestRequisitionLines.filter(
-    //       line =>
-    //         line.response.__typename === 'DeleteRequestRequisitionLineError'
-    //     );
-    //   if (failedLines.length === 0) {
-    //     return result.batchRequestRequisition.deleteRequestRequisitionLines;
-    //   }
-    // }
+    if (result.batchResponseRequisition.deleteResponseRequisitionLines) {
+      const failedLines =
+        result.batchResponseRequisition.deleteResponseRequisitionLines.filter(
+          line =>
+            line.response.__typename === 'DeleteResponseRequisitionLineError'
+        );
+      if (failedLines.length === 0) {
+        return result.batchResponseRequisition.deleteResponseRequisitionLines;
+      }
+    }
 
     throw new Error('Could not delete requisition lines!');
+  },
+  insertLine: async (input: InsertResponseRequisitionLineInput) => {
+    const result =
+      (await sdk.insertResponseLine({
+        storeId,
+        input,
+      })) || {};
+
+    if (
+      result?.insertResponseRequisitionLine.__typename === 'RequisitionLineNode'
+    ) {
+      return result.insertResponseRequisitionLine;
+    } else throw new Error('Could not insert response');
   },
   updateLine: async (patch: DraftResponseLine) => {
     const result =
@@ -188,11 +274,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
         input: responseParser.toUpdateLine(patch),
       })) || {};
 
-    if (
-      result?.updateResponseRequisitionLine.__typename === 'RequisitionLineNode'
-    ) {
-      return result.updateResponseRequisitionLine;
-    } else throw new Error('Could not update response line');
+    return result;
   },
   createOutboundFromResponse: async (responseId: string): Promise<number> => {
     const result =
@@ -220,5 +302,30 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     const result =
       (await sdk.supplyRequestedQuantity({ storeId, responseId })) || {};
     return result;
+  },
+  programSettings: async () => {
+    const result = await sdk.customerProgramSettings({ storeId });
+    return result.customerProgramRequisitionSettings;
+  },
+  getIndicators: async (customerNameLinkId: string, periodId: string, programId: string) => {    
+    let result = await sdk.programIndicators({
+      storeId,
+      customerNameLinkId,
+      periodId,
+      programId
+    });
+
+    if (result?.programIndicators.__typename === 'ProgramIndicatorConnector') {
+      return result.programIndicators;
+    }
+  },
+  updateIndicatorValue: async (patch: UpdateIndicatorValueInput) => {
+    let result = await sdk.updateIndicatorValue({ storeId, input: patch });
+    
+    if (!!result?.updateIndicatorValue) {
+      return result.updateIndicatorValue;
+    }
+
+    throw new Error('Could not update indicator value');
   },
 });

@@ -19,7 +19,7 @@ export const Breadcrumbs = ({
 }: {
   topLevelPaths?: string[];
 }) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const { fullScreen } = useHostContext();
   const { urlParts, navigateUpOne, customBreadcrumbs } =
     useBreadcrumbs(topLevelPaths);

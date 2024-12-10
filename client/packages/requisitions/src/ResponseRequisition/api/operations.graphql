@@ -1,3 +1,19 @@
+fragment RequisitionReasonNotProvidedError on RequisitionReasonNotProvided {
+  __typename
+  requisitionLine {
+    id
+  }
+  description
+}
+
+fragment RequisitionReasonsNotProvidedError on RequisitionReasonsNotProvided {
+  __typename
+  errors {
+    ...RequisitionReasonNotProvidedError
+  }
+  description
+}
+
 mutation updateResponse(
   $storeId: String!
   $input: UpdateResponseRequisitionInput!
@@ -6,6 +22,53 @@ mutation updateResponse(
     ... on RequisitionNode {
       __typename
       id
+    }
+    ... on UpdateResponseRequisitionError {
+      __typename
+      error {
+        description
+        ... on RequisitionReasonsNotProvided {
+          ...RequisitionReasonsNotProvidedError
+        }
+      }
+    }
+  }
+}
+
+mutation deleteRequest(
+  $storeId: String!
+  $input: BatchResponseRequisitionInput!
+) {
+  batchResponseRequisition(storeId: $storeId, input: $input) {
+    deleteResponseRequisitions {
+      id
+      response {
+        ... on DeleteResponseRequisitionError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on FinalisedRequisition {
+              __typename
+              description
+            }
+            ... on TransferredRequisition {
+              __typename
+              description
+            }
+            ... on RequisitionWithShipment {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
     }
   }
 }
@@ -20,6 +83,17 @@ fragment ResponseLine on RequisitionLineNode {
   comment
   averageMonthlyConsumption
   availableStockOnHand
+  initialStockOnHandUnits
+  incomingUnits
+  outgoingUnits
+  lossInUnits
+  additionInUnits
+  expiringUnits
+  daysOutOfStock
+  optionId
+  suggestedQuantity
+  availableStockOnHand
+  requisitionNumber
 
   itemStats {
     __typename
@@ -28,13 +102,21 @@ fragment ResponseLine on RequisitionLineNode {
     averageMonthlyConsumption
   }
   item {
-    id
-    name
-    code
-    unitName
+    ...ItemRow
   }
   approvedQuantity
   approvalComment
+  linkedRequisitionLine {
+    itemStats {
+      availableStockOnHand
+      averageMonthlyConsumption
+      availableMonthsOfStockOnHand
+    }
+  }
+
+  reason {
+    ...ReasonOptionRow
+  }
 }
 
 fragment Response on RequisitionNode {
@@ -106,10 +188,18 @@ fragment Response on RequisitionNode {
     }
   }
   programName
+  program {
+    id
+    name
+  }
   period {
+    id
     name
     startDate
     endDate
+  }
+  linkedRequisition {
+    id
   }
   orderType
 }
@@ -169,6 +259,77 @@ query responses(
   }
 }
 
+mutation insertResponse(
+  $storeId: String!
+  $input: InsertResponseRequisitionInput!
+) {
+  insertResponseRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+      requisitionNumber
+    }
+    ... on InsertResponseRequisitionError {
+      __typename
+      error {
+        description
+        ... on OtherPartyNotACustomer {
+          __typename
+          description
+        }
+        ... on OtherPartyNotVisible {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation insertProgramResponse(
+  $storeId: String!
+  $input: InsertProgramResponseRequisitionInput!
+) {
+  insertProgramResponseRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+      requisitionNumber
+    }
+  }
+}
+
+mutation insertResponseLine(
+  $storeId: String!
+  $input: InsertResponseRequisitionLineInput!
+) {
+  insertResponseRequisitionLine(input: $input, storeId: $storeId) {
+    ... on RequisitionLineNode {
+      __typename
+      id
+    }
+    ... on InsertResponseRequisitionLineError {
+      __typename
+      error {
+        description
+        ... on RequisitionLineWithItemIdExists {
+          __typename
+          description
+        }
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+      }
+    }
+  }
+}
+
 mutation updateResponseLine(
   $storeId: String!
   $input: UpdateResponseRequisitionLineInput!
@@ -194,6 +355,39 @@ mutation updateResponseLine(
         ... on RecordNotFound {
           __typename
           description
+        }
+      }
+    }
+  }
+}
+
+mutation deleteResponseLines(
+  $ids: [DeleteResponseRequisitionLineInput!]
+  $storeId: String!
+) {
+  batchResponseRequisition(
+    input: { deleteResponseRequisitionLines: $ids }
+    storeId: $storeId
+  ) {
+    deleteResponseRequisitionLines {
+      id
+      response {
+        ... on DeleteResponseRequisitionLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditRequisition {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
         }
       }
     }
@@ -288,6 +482,115 @@ query responseRequisitionStats($storeId: String!, $requisitionLineId: String!) {
           description
         }
         description
+      }
+    }
+  }
+}
+
+fragment CustomerProgramSettings on CustomerProgramRequisitionSettingNode {
+  programName
+  programId
+  customerAndOrderTypes {
+    customer {
+      ...NameRow
+    }
+    orderTypes {
+      id
+      name
+      availablePeriods {
+        id
+        name
+      }
+    }
+  }
+}
+
+query customerProgramSettings($storeId: String!) {
+  customerProgramRequisitionSettings(storeId: $storeId) {
+    ...CustomerProgramSettings
+  }
+}
+
+fragment ProgramIndicator on ProgramIndicatorNode {
+  code
+  lineAndColumns {
+    ...IndicatorLineWithColumns
+  }
+  id
+}
+fragment IndicatorLineRow on IndicatorLineRowNode {
+  id
+  code
+  lineNumber
+  name
+  valueType
+}
+fragment IndicatorColumn on IndicatorColumnNode {
+  columnNumber
+  name
+  valueType
+  value(
+    periodId: $periodId
+    customerNameLinkId: $customerNameLinkId
+    storeId: $storeId
+  ) {
+    ...IndicatorValue
+  }
+}
+fragment IndicatorValue on IndicatorValueNode {
+  id
+  value
+}
+fragment IndicatorLineWithColumns on IndicatorLineNode {
+  columns {
+    ...IndicatorColumn
+  }
+  line {
+    ...IndicatorLineRow
+  }
+}
+query programIndicators(
+  $customerNameLinkId: String!
+  $periodId: String!
+  $storeId: String!
+  $programId: String!
+) {
+  programIndicators(
+    storeId: $storeId
+    filter: { programId: { equalTo: $programId } }
+  ) {
+    ... on ProgramIndicatorConnector {
+      __typename
+      nodes {
+        ...ProgramIndicator
+      }
+      totalCount
+    }
+  }
+}
+
+mutation updateIndicatorValue(
+  $storeId: String!
+  $input: UpdateIndicatorValueInput!
+) {
+  updateIndicatorValue(input: $input, storeId: $storeId) {
+    __typename
+    ... on IndicatorValueNode {
+      id
+      value
+    }
+    ... on UpdateIndicatorValueError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on ValueTypeNotCorrect {
+          __typename
+          description
+        }
       }
     }
   }

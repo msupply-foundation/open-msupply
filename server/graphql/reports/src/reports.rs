@@ -102,6 +102,10 @@ impl ReportNode {
         &self.row.report_row.sub_context
     }
 
+    pub async fn is_custom(&self) -> bool {
+        self.row.report_row.is_custom
+    }
+
     pub async fn argument_schema(&self) -> Option<FormSchemaNode> {
         self.row
             .argument_schema

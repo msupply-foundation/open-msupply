@@ -35,7 +35,7 @@ export const useOutboundAllocateSelectedLines = (): {
   const { success, info, warning, error } = useNotification();
   const { items, lines } = useOutboundRows();
   const { mutateAsync } = useOutboundAllocateLines();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
 
   const selectedRows =
     useTableStore(state => {

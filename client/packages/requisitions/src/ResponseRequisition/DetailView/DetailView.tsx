@@ -10,37 +10,90 @@ import {
   useEditModal,
   createQueryParamsStore,
   DetailTabs,
+  BasicModal,
+  Box,
+  FnUtils,
+  IndicatorLineRowNode,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { ActivityLogList } from '@openmsupply-client/system';
-import { Toolbar } from './Toolbar';
+import {
+  ActivityLogList,
+  ItemRowFragment,
+  StockItemSearchInput,
+} from '@openmsupply-client/system';
+import { Toolbar } from './Toolbar/Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
-import { useResponse, ResponseLineFragment } from '../api';
-import { ResponseLineEdit } from './ResponseLineEdit';
+import {
+  useResponse,
+  ResponseLineFragment,
+  ResponseFragment,
+  ProgramIndicatorFragment,
+} from '../api';
+import { IndicatorsTab } from './IndicatorsTab';
+import { ResponseRequisitionLineErrorProvider } from '../context';
 
 export const DetailView: FC = () => {
-  const isDisabled = useResponse.utils.isDisabled();
-  const { onOpen, onClose, entity, isOpen } =
-    useEditModal<ResponseLineFragment>();
-  const { data, isLoading } = useResponse.document.get();
+  const t = useTranslation();
   const navigate = useNavigate();
-  const t = useTranslation('distribution');
+  const { data, isLoading } = useResponse.document.get();
+  const isDisabled = useResponse.utils.isDisabled();
+  const { onOpen, isOpen, onClose } = useEditModal<ItemRowFragment>();
+  const { mutateAsync } = useResponse.line.insert();
+  const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
+    useResponse.document.indicators(
+      data?.otherPartyId ?? '',
+      data?.period?.id ?? '',
+      data?.program?.id ?? '',
+      !!data
+    );
 
-  const onRowClick = useCallback(
-    (line: ResponseLineFragment) => {
-      onOpen(line);
+  const onRowClick = useCallback((line: ResponseLineFragment) => {
+    navigate(
+      RouteBuilder.create(AppRoute.Distribution)
+        .addPart(AppRoute.CustomerRequisition)
+        .addPart(String(line.requisitionNumber))
+        .addPart(String(line.item.id))
+        .build()
+    );
+  }, []);
+
+  const onProgramIndicatorClick = useCallback(
+    (
+      programIndicator?: ProgramIndicatorFragment,
+      indicatorLine?: IndicatorLineRowNode,
+      response?: ResponseFragment
+    ) => {
+      // TODO: Snack?
+      if (!response || !indicatorLine) return;
+      navigate(
+        RouteBuilder.create(AppRoute.Distribution)
+          .addPart(AppRoute.CustomerRequisition)
+          .addPart(String(response.requisitionNumber))
+          .addPart(AppRoute.Indicators)
+          .addPart(String(programIndicator?.code))
+          .addPart(String(indicatorLine.id))
+          .build()
+      );
     },
-    [onOpen]
+    []
   );
 
   if (isLoading) return <DetailViewSkeleton />;
 
   const tabs = [
     {
-      Component: <ContentArea onRowClick={!isDisabled ? onRowClick : null} />,
+      Component: (
+        <ContentArea
+          onAddItem={() => onOpen(null)}
+          onRowClick={!isDisabled ? onRowClick : null}
+          disableAddLine={
+            isDisabled || !!data?.linkedRequisition || !!data?.programName
+          }
+        />
+      ),
       value: 'Details',
     },
     {
@@ -49,23 +102,73 @@ export const DetailView: FC = () => {
     },
   ];
 
-  return !!data ? (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore<ResponseLineFragment>({
-        initialSortBy: { key: 'itemName' },
-      })}
-    >
-      <AppBarButtons />
-      <Toolbar />
-      <DetailTabs tabs={tabs} />
+  if (
+    data?.programName &&
+    !!data?.otherParty.store &&
+    programIndicators?.totalCount !== 0
+  ) {
+    tabs.push({
+      Component: (
+        <IndicatorsTab
+          onClick={onProgramIndicatorClick}
+          isLoading={isLoading || isProgramIndicatorsLoading}
+          response={data}
+          indicators={programIndicators?.nodes}
+        />
+      ),
+      value: t('label.indicators'),
+    });
+  }
 
-      <Footer />
-      <SidePanel />
-      {entity && (
-        <ResponseLineEdit isOpen={isOpen} onClose={onClose} line={entity} />
-      )}
-    </TableProvider>
+  return !!data ? (
+    <ResponseRequisitionLineErrorProvider>
+      <TableProvider
+        createStore={createTableStore}
+        queryParamsStore={createQueryParamsStore<ResponseLineFragment>({
+          initialSortBy: { key: 'itemName' },
+        })}
+      >
+        <AppBarButtons
+          isDisabled={isDisabled}
+          hasLinkedRequisition={!!data.linkedRequisition}
+          isProgram={!!data.programName}
+          onAddItem={() => onOpen(null)}
+        />
+        <Toolbar />
+        <DetailTabs tabs={tabs} />
+
+        <Footer />
+        <SidePanel />
+        {isOpen && (
+          <BasicModal open={isOpen} onClose={onClose} height={500} width={800}>
+            <Box padding={2}>
+              <StockItemSearchInput
+                onChange={(newItem: ItemRowFragment | null) => {
+                  if (newItem) {
+                    mutateAsync({
+                      id: FnUtils.generateUUID(),
+                      requisitionId: data.id,
+                      itemId: newItem.id,
+                    });
+                    navigate(
+                      RouteBuilder.create(AppRoute.Distribution)
+                        .addPart(AppRoute.CustomerRequisition)
+                        .addPart(String(data.requisitionNumber))
+                        .addPart(String(newItem.id))
+                        .build()
+                    );
+                  }
+                }}
+                openOnFocus={true}
+                extraFilter={item =>
+                  !data.lines.nodes.some(line => line.item.id === item.id)
+                }
+              />
+            </Box>
+          </BasicModal>
+        )}
+      </TableProvider>
+    </ResponseRequisitionLineErrorProvider>
   ) : (
     <AlertModal
       open={true}

@@ -50,7 +50,7 @@ const ListView: FC = () => {
   const { data, isLoading, isError } =
     useTemperatureLog.document.list(queryParams);
   const pagination = { page, first, offset };
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const formatTemperature = useFormatTemperature();
 
   const columns = useColumns<TemperatureLogFragment>(

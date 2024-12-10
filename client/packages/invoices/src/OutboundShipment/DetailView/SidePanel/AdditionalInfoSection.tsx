@@ -16,7 +16,7 @@ import {
 import { useOutbound } from '../../api';
 
 export const AdditionalInfoSectionComponent: FC = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const isDisabled = useOutbound.utils.isDisabled();
   const { colour, comment, user, createdDatetime, update } =
     useOutbound.document.fields([

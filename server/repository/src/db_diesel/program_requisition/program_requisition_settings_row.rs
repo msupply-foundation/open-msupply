@@ -7,7 +7,7 @@ use crate::{
     db_diesel::name_tag_row::name_tag, period_schedule_row::period_schedule,
     repository_error::RepositoryError, StorageConnection,
 };
-use crate::{Delete, Upsert};
+use crate::{name_link, name_oms_fields, Delete, Upsert};
 use diesel::prelude::*;
 
 table! {
@@ -22,6 +22,8 @@ table! {
 joinable!(program_requisition_settings -> name_tag (name_tag_id));
 joinable!(program_requisition_settings -> program (program_id));
 joinable!(program_requisition_settings -> period_schedule(period_schedule_id));
+allow_tables_to_appear_in_same_query!(program_requisition_settings, name_oms_fields);
+allow_tables_to_appear_in_same_query!(program_requisition_settings, name_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(table_name = program_requisition_settings)]

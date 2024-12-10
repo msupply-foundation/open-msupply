@@ -24,7 +24,7 @@ import { InboundServiceLineEdit } from '../modals';
 import { CurrencyModal, CurrencyRowFragment } from '@openmsupply-client/system';
 
 export const PricingSectionComponent = () => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const isDisabled = useInbound.utils.isDisabled();
   const serviceLineModal = useToggle(false);
   const { c } = useCurrency();

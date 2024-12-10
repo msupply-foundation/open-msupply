@@ -39,7 +39,7 @@ export const ReturnSteps = ({
   setZeroQuantityAlert,
   returnId,
 }: ReturnStepsProps) => {
-  const t = useTranslation(['distribution', 'replenishment']);
+  const t = useTranslation();
   const isDisabled = useReturns.utils.customerIsDisabled();
 
   useAddBatchKeyBinding(addDraftLine);

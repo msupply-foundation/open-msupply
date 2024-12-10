@@ -18,17 +18,17 @@ import { CustomerReturnFragment, useReturns } from '../api';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
 export const Toolbar: FC = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const isDisabled = useReturns.utils.customerIsDisabled();
 
-  const { bufferedState, setBufferedState } =
+  const { draft, setDraft } =
     useReturns.document.customerReturn();
   const {
     otherParty,
     theirReference,
     id,
     linkedShipment = '',
-  } = bufferedState ?? { id: '' };
+  } = draft ?? { id: '' };
 
   const onDelete = useReturns.lines.deleteSelectedCustomerLines({
     returnId: id,
@@ -39,7 +39,7 @@ export const Toolbar: FC = () => {
 
   const update = (data: Partial<CustomerReturnFragment>) => {
     if (!id) return;
-    setBufferedState({ ...data });
+    setDraft({ ...data });
     debouncedMutateAsync({ id, ...data });
   };
 
@@ -82,7 +82,7 @@ export const Toolbar: FC = () => {
                 />
               }
             />
-            <InfoAlert customerReturn={bufferedState} />
+            <InfoAlert customerReturn={draft} />
           </Box>
         </Grid>
         <Grid
@@ -121,7 +121,7 @@ const InfoAlert = ({
 }: {
   customerReturn: CustomerReturnFragment | undefined;
 }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const loadMessage = (customerReturn: CustomerReturnFragment | undefined) => {
     if (!customerReturn?.linkedShipment?.id) {
       return t('info.manual-return');

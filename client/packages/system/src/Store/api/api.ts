@@ -1,11 +1,17 @@
-import { FilterByWithBoolean } from '@openmsupply-client/common';
+import { FilterByWithBoolean } from '@common/hooks';
 import { Sdk } from './operations.generated';
+
+export type StoreListParams = {
+  first?: number;
+  offset?: number;
+  filter: FilterByWithBoolean | null;
+};
 
 export const getStoreQueries = (sdk: Sdk) => ({
   get: {
-    list: async (filterBy: FilterByWithBoolean | null) => {
+    list: async ({ ...params }: StoreListParams) => {
       const result = await sdk.stores({
-        filter: filterBy,
+        ...params,
       });
 
       return result.stores;

@@ -43,7 +43,7 @@ export const SupplierReturnEditModal = ({
   hasNextItem = false,
   isNewReturn = false,
 }: SupplierReturnEditModalProps) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
   const [itemId, setItemId] = useState<string | undefined>(
     initialItemId ?? undefined
@@ -118,7 +118,7 @@ export const SupplierReturnEditModal = ({
   const NextStepButton = (
     <DialogButton
       onClick={handleNextStep}
-      variant="next"
+      variant="next-and-ok"
       disabled={!lines.length}
       customLabel={t('button.next-step')}
     />
@@ -127,7 +127,7 @@ export const SupplierReturnEditModal = ({
   const OkAndNextButton = (
     <DialogButton
       onClick={handleNextItem}
-      variant="next"
+      variant="next-and-ok"
       disabled={
         currentTab !== Tabs.Reason ||
         (isDisabled && !hasNextItem) ||

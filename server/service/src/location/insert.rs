@@ -19,6 +19,7 @@ pub struct InsertLocation {
     pub code: String,
     pub name: Option<String>,
     pub on_hold: Option<bool>,
+    pub cold_storage_type_id: Option<String>,
 }
 
 pub fn insert_location(
@@ -59,6 +60,7 @@ pub fn generate(
         code,
         name,
         on_hold,
+        cold_storage_type_id,
     }: InsertLocation,
 ) -> LocationRow {
     LocationRow {
@@ -67,6 +69,7 @@ pub fn generate(
         code,
         on_hold: on_hold.unwrap_or(false),
         store_id: store_id.to_string(),
+        cold_storage_type_id,
     }
 }
 

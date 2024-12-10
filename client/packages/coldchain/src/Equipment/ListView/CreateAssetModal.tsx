@@ -81,7 +81,7 @@ export const CreateAssetModal = ({
   isOpen,
   onClose,
 }: CreateAssetModalProps) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { error, success } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
   const [isCatalogueAsset, setIsCatalogueAsset] = useState(true);
@@ -132,7 +132,7 @@ export const CreateAssetModal = ({
         __typename: 'StoreNode',
         id: store.id,
         code: store.code ?? '',
-        storeName: '',
+        storeName: store.storeName,
       },
     });
   };
@@ -144,6 +144,7 @@ export const CreateAssetModal = ({
   ) => {
     if (reason === 'clear') updateDraft({ store: null });
   };
+
   const isDisabled =
     !draft.assetNumber ||
     (isCatalogueAsset ? !draft.catalogueItemId : !draft.typeId);
