@@ -90,12 +90,16 @@ const UIComponent = (props: ControlProps) => {
   }, []);
 
   useEffect(() => {
+    // Don't change anything if prescription already exists (it just shows link
+    // to existing prescription for now)
+    if (prescription) return;
+
     // We need the selected item to be reset when the category changes.
     // Unfortunately, the effect runs on all re-mounts as well, so we need to
     // capture and compare the category of the previous value to determine if
     // it's *actually* changed or just remounted
     const previous = formActions.getState(`${path}_category`);
-    if (previous !== categoryName) {
+    if (previous && previous !== categoryName) {
       handleItemSelect(null);
     }
 
