@@ -124,7 +124,7 @@ const VaccinationCardComponent = ({
 }: VaccinationCardProps & {
   data?: VaccinationCardFragment;
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
   const theme = useTheme();
 

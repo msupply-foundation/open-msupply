@@ -44,6 +44,8 @@ rand = "0.8.5"
 anyhow = "1.0.56"
 actix-files = "0.6.0"
 log-panics = { version = "2.1.0", features = ["with-backtrace"] }
+extism = "1.9.1"
+
 
 # TODO: Remove. async_graphql is using 1.0 but SET_COOKIE was being imported from wrong version.
 http2 = { package = "http", version = "1.0.0" }
@@ -81,7 +83,6 @@ members = [
   "graphql/invoice",
   "graphql/invoice_line",
   "graphql/location",
-  "graphql/pack_variant",
   "graphql/plugin",
   "graphql/programs",
   "graphql/repack",

@@ -34,7 +34,7 @@ export const StocktakeLineEditTabs: FC<
     isDisabled: boolean;
   }>
 > = ({ children, onAddLine, isDisabled }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const [currentTab, setCurrentTab] = useState(Tabs.Batch);
 
   return (

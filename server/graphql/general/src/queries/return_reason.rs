@@ -46,8 +46,7 @@ pub fn return_reasons(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            // resource: Resource::QueryReturnReasons, // TODO
-            resource: Resource::QueryInventoryAdjustmentReasons,
+            resource: Resource::QueryReasonOptions,
             store_id: None,
         },
     )?;

@@ -25,6 +25,15 @@ table! {
         approved_quantity -> Double,
         approval_comment -> Nullable<Text>,
         comment -> Nullable<Text>,
+        // Manual requisition fields
+        initial_stock_on_hand_units -> Double,
+        incoming_units -> Double,
+        outgoing_units -> Double,
+        loss_in_units -> Double,
+        addition_in_units -> Double,
+        expiring_units -> Double,
+        days_out_of_stock -> Double,
+        option_id -> Nullable<Text>
     }
 }
 
@@ -33,6 +42,7 @@ joinable!(requisition_line -> requisition (requisition_id));
 allow_tables_to_appear_in_same_query!(requisition_line, item_link);
 
 #[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
+#[diesel(treat_none_as_null = true)]
 #[diesel(table_name = requisition_line)]
 pub struct RequisitionLineRow {
     pub id: String,
@@ -48,6 +58,15 @@ pub struct RequisitionLineRow {
     pub approved_quantity: f64,
     pub approval_comment: Option<String>,
     pub comment: Option<String>,
+    // Manual requisition fields
+    pub initial_stock_on_hand_units: f64,
+    pub incoming_units: f64,
+    pub outgoing_units: f64,
+    pub loss_in_units: f64,
+    pub addition_in_units: f64,
+    pub expiring_units: f64,
+    pub days_out_of_stock: f64,
+    pub option_id: Option<String>,
 }
 
 pub struct RequisitionLineRowRepository<'a> {

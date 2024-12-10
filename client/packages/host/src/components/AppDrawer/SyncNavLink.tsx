@@ -13,7 +13,7 @@ import { useSync } from '@openmsupply-client/system';
 const POLLING_INTERVAL_IN_MILLISECONDS = 60 * 1000;
 
 export const SyncNavLink = () => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const theme = useTheme();
   const { syncStatus, numberOfRecordsInPushQueue } = useSync.utils.syncInfo(
     POLLING_INTERVAL_IN_MILLISECONDS

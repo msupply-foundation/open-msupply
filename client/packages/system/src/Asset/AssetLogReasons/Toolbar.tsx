@@ -31,7 +31,7 @@ export const Toolbar: FC<{
   data: AssetLogReasonNode[];
   filter: FilterController;
 }> = ({ data, filter }) => {
-  const t = useTranslation(['catalogue', 'coldchain']);
+  const t = useTranslation();
 
   const { mutateAsync: deleteReason } = useAssetData.log.deleteReason();
   const { error, success, info } = useNotification();

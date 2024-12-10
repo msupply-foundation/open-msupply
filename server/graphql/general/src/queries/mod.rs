@@ -20,6 +20,8 @@ pub mod names;
 pub use self::names::*;
 pub mod item;
 pub use self::item::*;
+pub mod cold_storage_type;
+pub use self::cold_storage_type::*;
 pub mod stock_counts;
 pub use self::stock_counts::*;
 pub mod store;
@@ -56,6 +58,8 @@ pub mod label_printer_settings;
 pub use self::label_printer_settings::*;
 pub mod pricing;
 pub use self::pricing::*;
+pub mod reason_option;
+pub use self::reason_option::*;
 
 pub mod generate_customer_return_lines;
 pub use self::generate_customer_return_lines::*;

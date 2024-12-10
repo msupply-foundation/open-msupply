@@ -37,7 +37,7 @@ export const ReturnSteps = ({
   setZeroQuantityAlert,
   returnId,
 }: ReturnStepsProps) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const isDisabled = useReturns.utils.supplierIsDisabled();
 
   const returnsSteps = [

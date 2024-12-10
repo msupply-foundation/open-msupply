@@ -74,7 +74,7 @@ export const LogReasonCreateModal: FC<LogReasonCreateModalProps> = ({
   logReason,
 }) => {
   const { Modal } = useDialog({ isOpen, onClose });
-  const t = useTranslation(['catalogue', 'coldchain']);
+  const t = useTranslation();
   const { draft, onUpdate, onSave, isLoading } = useDraftLogReason(logReason);
   const isInvalid = !draft.reason.trim();
 

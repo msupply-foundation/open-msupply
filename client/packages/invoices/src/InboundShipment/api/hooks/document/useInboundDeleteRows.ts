@@ -18,7 +18,7 @@ export const useInboundDeleteRows = () => {
   const { data: rows } = useInbounds(queryParams);
   const api = useInboundApi();
   const { mutateAsync } = useMutation(api.delete);
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   const selectedRows = useTableStore(
     state =>

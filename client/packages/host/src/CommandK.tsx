@@ -87,7 +87,7 @@ const actionSorter = (a: Action, b: Action) => {
 const Actions = () => {
   const navigate = useNavigate();
   const drawer = useDrawer();
-  const t = useTranslation('app');
+  const t = useTranslation();
   const { store, logout, user, userHasPermission } = useAuthContext();
   const showEasterEgg = useEasterEggModal();
   const confirmLogout = useConfirmationModal({
@@ -357,7 +357,7 @@ const Actions = () => {
 };
 
 export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   return (
     <KBarProvider actions={[]}>
       <Actions />

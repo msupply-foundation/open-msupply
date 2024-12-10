@@ -299,6 +299,7 @@ impl ProgramsQueries {
     ) -> Result<Option<VaccinationNode>> {
         vaccination(ctx, store_id, id)
     }
+
     pub async fn vaccination_card(
         &self,
         ctx: &Context<'_>,

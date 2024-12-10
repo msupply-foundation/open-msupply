@@ -18,6 +18,8 @@ import {
   useNotification,
   InvoiceNodeStatus,
   DateUtils,
+  LoadingButton,
+  CheckIcon,
 } from '@openmsupply-client/common';
 import { useDraftPrescriptionLines, useNextItem } from './hooks';
 import { usePrescription } from '../../api';
@@ -48,7 +50,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   mode,
 }) => {
   const item = !draft ? null : (draft.item ?? null);
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { info } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [currentItem, setCurrentItem] = useBufferState(item);
@@ -60,7 +62,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     id: invoiceId,
     prescriptionDate,
   } = usePrescription.document.fields(['status', 'id', 'prescriptionDate']);
-  const { mutateAsync } = usePrescription.line.save();
+  const { mutateAsync, isLoading: isSaving } = usePrescription.line.save();
   const isDisabled = usePrescription.utils.isDisabled();
   const {
     draftStockOutLines: draftPrescriptionLines,
@@ -72,10 +74,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     currentItem,
     DateUtils.getDateOrNull(prescriptionDate)
   );
-  const packSizeController = usePackSizeController(
-    item,
-    draftPrescriptionLines
-  );
+  const packSizeController = usePackSizeController(draftPrescriptionLines);
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const height = useKeyboardHeightAdjustment(700);
@@ -199,16 +198,23 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
       nextButton={
         <DialogButton
           disabled={okNextDisabled}
-          variant="next"
+          variant="next-and-ok"
           onClick={onNext}
         />
       }
       okButton={
-        <DialogButton
+        <LoadingButton
           disabled={!currentItem}
-          variant="ok"
+          isLoading={isSaving}
+          startIcon={<CheckIcon />}
+          loadingStyle={{ iconColor: 'secondary.main' }}
+          variant="contained"
+          color="secondary"
+          aria-label={t('button.ok')}
           onClick={() => handleSave(onClose)}
-        />
+        >
+          {t('button.ok')}
+        </LoadingButton>
       }
       height={height}
       width={1000}
@@ -268,7 +274,7 @@ const TableWrapper: React.FC<TableProps> = ({
   draftPrescriptionLines,
   allocatedQuantity,
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
 
   if (!currentItem) return null;
 

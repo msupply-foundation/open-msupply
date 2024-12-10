@@ -33,7 +33,7 @@ export const SupplierReturnsDetailViewComponent = () => {
   } = useEditModal<string>();
   const { data, isLoading } = useReturns.document.supplierReturn();
   const { rows } = useReturns.lines.supplierReturnRows();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const navigate = useNavigate();
 
   const onRowClick = (row: SupplierReturnLineFragment | SupplierReturnItem) =>

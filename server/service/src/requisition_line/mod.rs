@@ -16,8 +16,9 @@ use self::{
         ResponseRequisitionStatsError,
     },
     response_requisition_line::{
-        update_response_requisition_line, UpdateResponseRequisitionLine,
-        UpdateResponseRequisitionLineError,
+        insert_response_requisition_line, update_response_requisition_line,
+        InsertResponseRequisitionLine, InsertResponseRequisitionLineError,
+        UpdateResponseRequisitionLine, UpdateResponseRequisitionLineError,
     },
 };
 
@@ -25,6 +26,10 @@ use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
 
 use repository::{RequisitionLine, RequisitionLineFilter};
+use response_requisition_line::{
+    delete_response_requisition_line, DeleteResponseRequisitionLine,
+    DeleteResponseRequisitionLineError,
+};
 
 pub mod chart;
 pub mod common;
@@ -66,6 +71,14 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
         delete_request_requisition_line(ctx, input)
     }
 
+    fn insert_response_requisition_line(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertResponseRequisitionLine,
+    ) -> Result<RequisitionLine, InsertResponseRequisitionLineError> {
+        insert_response_requisition_line(ctx, input)
+    }
+
     fn update_response_requisition_line(
         &self,
         ctx: &ServiceContext,
@@ -95,6 +108,14 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
         requisition_line_id: &str,
     ) -> Result<ResponseRequisitionStats, ResponseRequisitionStatsError> {
         get_response_requisition_line_stats(ctx, requisition_line_id)
+    }
+
+    fn delete_response_requisition_line(
+        &self,
+        ctx: &ServiceContext,
+        input: DeleteResponseRequisitionLine,
+    ) -> Result<String, DeleteResponseRequisitionLineError> {
+        delete_response_requisition_line(ctx, input)
     }
 }
 

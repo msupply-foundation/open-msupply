@@ -11,7 +11,7 @@ import { MasterListSearchModal } from '@openmsupply-client/system';
 import { useInbound } from '../api';
 
 export const AddFromMasterListButtonComponent = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { addFromMasterList } = useInbound.utils.addFromMasterList();
   const { storeId } = useAuthContext();
   const { status } = useInbound.document.fields(['status']);

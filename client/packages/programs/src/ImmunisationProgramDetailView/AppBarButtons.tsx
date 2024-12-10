@@ -14,7 +14,7 @@ interface ProgramAppBarButtonsProps {
 }
 
 export const AppBarButtons = ({ onCreate }: ProgramAppBarButtonsProps) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const onClick = useCallbackWithPermission(
     UserPermission.EditCentralData,
     onCreate

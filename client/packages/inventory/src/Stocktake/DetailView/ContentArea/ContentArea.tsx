@@ -88,18 +88,18 @@ export const ContentArea: FC<ContentAreaProps> = ({
   onAddItem,
   onRowClick,
 }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const {
     updateSortQuery: onChangeSortBy,
     updatePaginationQuery,
     queryParams: { page, first, offset, sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
-  const { isDisabled, isLoading, rows, totalLineCount } =
+  const { isDisabled, isLoading, lines, totalLineCount } =
     useStocktake.line.rows();
   const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
   const pagination = { page, first, offset };
 
-  useHighlightUncountedRows(rows);
+  useHighlightUncountedRows(lines);
 
   return isLoading ? (
     <BasicSpinner />
@@ -109,7 +109,7 @@ export const ContentArea: FC<ContentAreaProps> = ({
       ExpandContent={Expando}
       isRowAnimated={true}
       columns={columns}
-      data={rows}
+      data={lines}
       id="stocktake-detail"
       noDataElement={
         <NothingHere

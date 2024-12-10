@@ -9,10 +9,11 @@ import {
 import { useResponse } from '../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { RelatedDocumentsSection } from './RelatedDocumentsSection';
+import { ProgramInfoSection } from './ProgramInfoSection';
 
 export const SidePanel: FC = () => {
   const { success } = useNotification();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { data } = useResponse.document.get();
 
   const copyToClipboard = () => {
@@ -31,6 +32,7 @@ export const SidePanel: FC = () => {
         />
       }
     >
+      <ProgramInfoSection />
       <AdditionalInfoSection />
       <RelatedDocumentsSection />
     </DetailPanelPortal>

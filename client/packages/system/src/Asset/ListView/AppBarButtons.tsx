@@ -29,7 +29,7 @@ export const AppBarButtonsComponent = ({
 }) => {
   const isCentralServer = useIsCentralServerApi();
   const { success, error } = useNotification();
-  const t = useTranslation(['catalogue']);
+  const t = useTranslation();
   const navigate = useNavigate();
 
   const { fetchAsync, isLoading } = useAssetData.document.listAll();

@@ -23,7 +23,7 @@ import { customerReturnsToCsv } from '../../utils';
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { success, error } = useNotification();
 
   const { mutateAsync: onCreate } = useReturns.document.insertCustomerReturn();

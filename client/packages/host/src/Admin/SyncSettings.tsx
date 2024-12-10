@@ -151,7 +151,7 @@ const useUpdateSyncSettingsState = () => {
 };
 
 export const SyncSettings = ({}) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const { data, isError } = useSync.settings.syncSettings();
   const { mutateAsync: update } = useSync.sync.update();
   const {

@@ -2,7 +2,8 @@ use crate::sync::{
     sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
     translations::{
         currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
-        location::LocationTranslation, reason::ReasonTranslation, stock_line::StockLineTranslation,
+        item_variant::ItemVariantTranslation, location::LocationTranslation,
+        reason::ReasonTranslation, stock_line::StockLineTranslation,
     },
 };
 use chrono::NaiveDate;
@@ -78,9 +79,11 @@ pub struct LegacyTransLineRow {
     pub total_after_tax: Option<f64>,
     #[serde(rename = "optionID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub inventory_adjustment_reason_id: Option<String>,
+    pub option_id: Option<String>,
     #[serde(rename = "foreign_currency_price")]
     pub foreign_currency_price_before_tax: Option<f64>,
+    #[serde(rename = "om_item_variant_id")]
+    pub item_variant_id: Option<String>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -98,6 +101,7 @@ impl SyncTranslation for InvoiceLineTranslation {
         vec![
             InvoiceTranslation.table_name(),
             ItemTranslation.table_name(),
+            ItemVariantTranslation.table_name(),
             StockLineTranslation.table_name(),
             LocationTranslation.table_name(),
             ReasonTranslation.table_name(),
@@ -133,19 +137,10 @@ impl SyncTranslation for InvoiceLineTranslation {
             tax_percentage,
             total_before_tax,
             total_after_tax,
-            inventory_adjustment_reason_id,
+            option_id,
             foreign_currency_price_before_tax,
+            item_variant_id,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
-        let inventory_adjustment_reason_id =
-            inventory_adjustment_reason_id.and_then(|inventory_adjustment_reason_id| {
-                if inventory_adjustment_reason_id == "0" {
-                    // This is not a valid optionID
-                    None
-                } else {
-                    Some(inventory_adjustment_reason_id)
-                }
-            });
-
         let line_type = match to_invoice_line_type(&r#type) {
             Some(line_type) => line_type,
             None => {
@@ -245,6 +240,15 @@ impl SyncTranslation for InvoiceLineTranslation {
         };
         let location_id = clear_invalid_location_id(connection, location_id)?;
 
+        let option_id = option_id.and_then(|option_id| {
+            if option_id == "0" {
+                // This is not a valid optionID
+                None
+            } else {
+                Some(option_id)
+            }
+        });
+
         let result = InvoiceLineRow {
             id,
             invoice_id,
@@ -264,9 +268,18 @@ impl SyncTranslation for InvoiceLineTranslation {
             r#type: line_type,
             number_of_packs,
             note,
-            inventory_adjustment_reason_id,
-            return_reason_id: None, // TODO
+            inventory_adjustment_reason_id: match invoice.r#type {
+                InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => {
+                    option_id.clone()
+                }
+                _ => None,
+            },
+            return_reason_id: match invoice.r#type {
+                InvoiceType::CustomerReturn | InvoiceType::SupplierReturn => option_id,
+                _ => None,
+            },
             foreign_currency_price_before_tax,
+            item_variant_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -316,12 +329,22 @@ impl SyncTranslation for InvoiceLineTranslation {
                     number_of_packs,
                     note,
                     inventory_adjustment_reason_id,
-                    return_reason_id: _, // TODO
+                    return_reason_id,
                     foreign_currency_price_before_tax,
+                    item_variant_id,
                 },
             item_row,
+            invoice_row,
             ..
         } = invoice_line;
+
+        let option_id = match invoice_row.r#type {
+            InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => {
+                inventory_adjustment_reason_id
+            }
+            InvoiceType::CustomerReturn | InvoiceType::SupplierReturn => return_reason_id,
+            _ => None,
+        };
 
         let legacy_row = LegacyTransLineRow {
             id: id.clone(),
@@ -342,8 +365,9 @@ impl SyncTranslation for InvoiceLineTranslation {
             tax_percentage,
             total_before_tax: Some(total_before_tax),
             total_after_tax: Some(total_after_tax),
-            inventory_adjustment_reason_id,
             foreign_currency_price_before_tax,
+            item_variant_id,
+            option_id,
         };
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -441,7 +465,7 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn test_requisition_line_push_merged() {
+    async fn test_invoice_line_push_merged() {
         // The item_links_merged function will merge ALL items into item_a, so all invoice_lines should have an item_id of "item_a" regardless of their original item_id.
         let (mock_data, connection, _, _) = setup_all(
             "test_invoice_line_push_item_link_merged",

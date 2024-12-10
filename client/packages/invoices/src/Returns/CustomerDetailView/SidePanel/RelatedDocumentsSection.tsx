@@ -15,7 +15,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { useReturns } from '../../api';
 
 export const RelatedDocumentsSectionComponent = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { localisedDate: d } = useFormatDateTime();
   const { data } = useReturns.document.customerReturn();
   const { originalShipment } = data ?? {};

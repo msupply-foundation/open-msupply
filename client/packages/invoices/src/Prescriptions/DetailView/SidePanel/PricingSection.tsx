@@ -11,7 +11,7 @@ import {
 import { usePrescription } from '../../api';
 
 export const PricingSectionComponent = () => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const c = useFormatCurrency();
 
   const { pricing } = usePrescription.document.fields('pricing');

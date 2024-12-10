@@ -16,7 +16,7 @@ import { ToolbarDropDown } from './ToolbarDropDown';
 
 export const Toolbar: FC = () => {
   const { on, toggle } = useHideOverStocked();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const isDisabled = useRequest.utils.isDisabled();
   const isProgram = useRequest.utils.isProgram();
   const { itemFilter, setItemFilter } = useRequest.line.list();

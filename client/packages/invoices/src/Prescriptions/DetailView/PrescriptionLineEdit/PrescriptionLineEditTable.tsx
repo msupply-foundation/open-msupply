@@ -8,6 +8,7 @@ import {
   styled,
   useFormatNumber,
   Tooltip,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { DraftItem } from '../../..';
@@ -37,12 +38,11 @@ const TotalCell = styled(TableCell)({
 });
 
 const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const [placeholderBuffer, setPlaceholderBuffer] = useState(
     line?.numberOfPacks ?? 0
   );
   const formattedValue = useFormatNumber().round(placeholderBuffer, 2);
-  const hasMoreThanTwoDp = ((placeholderBuffer ?? 0) * 100) % 1 !== 0;
 
   useEffect(() => {
     setPlaceholderBuffer(line?.numberOfPacks ?? 0);
@@ -57,7 +57,9 @@ const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
       <PlaceholderCell colSpan={4}></PlaceholderCell>
       <Tooltip title={line?.numberOfPacks.toString()}>
         <PlaceholderCell style={{ textAlign: 'right' }}>
-          {!!hasMoreThanTwoDp ? `${formattedValue}...` : formattedValue}
+          {!!NumUtils.hasMoreThanTwoDp(placeholderBuffer)
+            ? `${formattedValue}...`
+            : formattedValue}
         </PlaceholderCell>
       </Tooltip>
     </tr>
@@ -65,9 +67,8 @@ const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
 };
 
 const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const formattedValue = useFormatNumber().round(allocatedQuantity, 2);
-  const hasMoreThanTwoDp = ((allocatedQuantity ?? 0) * 100) % 1 !== 0;
 
   return (
     <tr>
@@ -80,7 +81,9 @@ const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
             paddingRight: 12,
           }}
         >
-          {!!hasMoreThanTwoDp ? `${formattedValue}...` : formattedValue}
+          {!!NumUtils.hasMoreThanTwoDp(allocatedQuantity)
+            ? `${formattedValue}...`
+            : formattedValue}
         </TotalCell>
       </Tooltip>
     </tr>
@@ -90,7 +93,7 @@ const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
 export const PrescriptionLineEditTable: React.FC<
   PrescriptionLineEditTableProps
 > = ({ onChange, packSizeController, rows, item, allocatedQuantity }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { orderedRows, placeholderRow } = usePrescriptionLineEditRows(
     rows,
     packSizeController

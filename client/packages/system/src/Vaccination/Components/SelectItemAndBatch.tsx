@@ -21,7 +21,7 @@ export const SelectItemAndBatch = ({
   hasExistingSelectedBatch: boolean;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
 
   const vaccineItemOptions = useMemo(() => {
     const options =

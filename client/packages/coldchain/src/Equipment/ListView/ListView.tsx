@@ -15,6 +15,7 @@ import {
   ColumnAlign,
   DotCell,
   RouteBuilder,
+  ColumnFormat,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { Toolbar } from './Toolbar';
@@ -41,7 +42,7 @@ const AssetListComponent: FC = () => {
   const { data, isError, isLoading } = useAssets.document.list();
   const pagination = { page, first, offset };
   const navigate = useNavigate();
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const modalController = useToggle();
   const importModalController = useToggle();
   const isCentralServer = useIsCentralServerApi();
@@ -62,6 +63,14 @@ const AssetListComponent: FC = () => {
       key: 'assetNumber',
       width: 150,
       label: 'label.asset-number',
+    },
+    {
+      key: 'categoryName',
+      label: 'label.category',
+      sortable: false,
+      width: 200,
+      accessor: ({ rowData }) => rowData.assetCategory?.name,
+      Cell: TooltipTextCell,
     },
     {
       key: 'type',
@@ -106,6 +115,7 @@ const AssetListComponent: FC = () => {
     {
       key: 'installationDate',
       label: 'label.installation-date',
+      format: ColumnFormat.Date,
     },
     {
       key: 'notes',
@@ -148,7 +158,7 @@ const AssetListComponent: FC = () => {
         isError={isError}
         isLoading={isLoading}
         onRowClick={row => navigate(equipmentRoute.addPart(row.id).build())}
-        noDataElement={<NothingHere body={t('error.no-items')} />}
+        noDataElement={<NothingHere body={t('error.no-items-to-display')} />}
         enableColumnSelection
       />
     </>

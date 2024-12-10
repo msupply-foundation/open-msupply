@@ -16,7 +16,7 @@ import {
 import { usePrescription } from '../../api';
 
 export const AdditionalInfoSectionComponent: FC = () => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const isDisabled = usePrescription.utils.isDisabled();
   const { colour, comment, user, createdDatetime, update } =
     usePrescription.document.fields([

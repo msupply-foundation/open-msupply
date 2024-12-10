@@ -2,6 +2,7 @@ use crate::loader::*;
 use actix_web::web::Data;
 use anymap::{any::Any, Map};
 use async_graphql::dataloader::DataLoader;
+use item_variant::{ItemVariantByItemVariantIdLoader, ItemVariantsByItemIdLoader};
 use repository::StorageConnectionManager;
 use service::service_provider::ServiceProvider;
 
@@ -244,6 +245,13 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
+    let program_indicator_value_loader = DataLoader::new(
+        IndicatorValueLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
+
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_by_id_loader);
@@ -275,6 +283,7 @@ pub async fn get_loaders(
     loaders.insert(file_sync_reference_loader);
     loaders.insert(asset_log_reason_loader);
     loaders.insert(return_reason_loader);
+    loaders.insert(program_indicator_value_loader);
     loaders.insert(DataLoader::new(
         PatientLoader {
             service_provider: service_provider.clone(),
@@ -380,6 +389,61 @@ pub async fn get_loaders(
 
     loaders.insert(DataLoader::new(
         VaccineCourseLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        MasterListByItemIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        ReasonOptionLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        ColdStorageTypeLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+
+    loaders.insert(DataLoader::new(
+        ItemVariantsByItemIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        ItemVariantByItemVariantIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        PackagingVariantRowLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        BundledItemByBundledItemVariantIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        BundledItemByPrincipalItemVariantIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        ProgramByIdLoader {
             connection_manager: connection_manager.clone(),
         },
         async_std::task::spawn,

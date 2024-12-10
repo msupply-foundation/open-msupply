@@ -12,11 +12,8 @@ import {
   DateTimePickerInput,
   Formatter,
   SearchBar,
-  Box,
-  Switch,
   DateUtils,
   Alert,
-  useIsGrouped,
   useUrlQuery,
   RewindIcon,
   useEditModal,
@@ -29,10 +26,8 @@ import { ChangeLocationConfirmationModal } from './ChangeLocationModal';
 
 export const Toolbar = () => {
   const { info } = useNotification();
-  const { isGrouped, toggleIsGrouped } = useIsGrouped('stocktake');
-  const [localIsGrouped, setLocalIsGrouped] = React.useState(isGrouped);
   const isDisabled = useStocktake.utils.isDisabled();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { isLocked, stocktakeDate, description, update } =
     useStocktake.document.fields(['isLocked', 'description', 'stocktakeDate']);
   const onDelete = useStocktake.line.deleteSelected();
@@ -41,13 +36,7 @@ export const Toolbar = () => {
   const infoMessage = isLocked
     ? t('messages.on-hold-stock-take')
     : t('messages.finalised-stock-take');
-  const onChangeIsGrouped = () => {
-    setLocalIsGrouped(!localIsGrouped);
-    // when the render of the dependent component is slow
-    // separate the render of the switch change from the wider state change
-    // otherwise the switch doesn't render until the slow component completes
-    setTimeout(toggleIsGrouped, 100);
-  };
+
   const { urlQuery, updateQuery } = useUrlQuery({
     skipParse: ['itemCodeOrName'],
   });
@@ -148,15 +137,6 @@ export const Toolbar = () => {
               setItemFilter(newValue);
             }}
           />
-          <Box sx={{ marginRight: 2 }}>
-            <Switch
-              label={t('label.group-by-item')}
-              onChange={onChangeIsGrouped}
-              checked={localIsGrouped}
-              size="small"
-              color="secondary"
-            />
-          </Box>
           <DropdownMenu disabled={isDisabled} label={t('label.actions')}>
             <>
               <DropdownMenuItem

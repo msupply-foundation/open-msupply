@@ -26,7 +26,7 @@ export const AdditionalInfoSection: FC = () => {
     ]);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
   const { localisedDate } = useFormatDateTime();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>

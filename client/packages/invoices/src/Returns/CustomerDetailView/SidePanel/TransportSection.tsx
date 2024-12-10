@@ -9,7 +9,7 @@ import {
 import { useReturns } from '../../api';
 
 export const TransportSectionComponent: FC = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { data } = useReturns.document.customerReturn();
 
   // the text input is read-only, as the transport reference is only populated

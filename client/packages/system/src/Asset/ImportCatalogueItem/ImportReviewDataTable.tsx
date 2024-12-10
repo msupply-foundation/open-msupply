@@ -17,7 +17,7 @@ interface ImportReviewDataTableProps {
 export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   importRows,
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const [pagination, setPagination] = useState<Pagination>({
     page: 0,
     first: 20,

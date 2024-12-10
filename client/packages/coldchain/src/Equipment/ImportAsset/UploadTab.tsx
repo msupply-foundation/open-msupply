@@ -17,10 +17,13 @@ import {
   FileUtils,
   Formatter,
   useIsCentralServerApi,
+  EnvUtils,
+  Platform,
+  StatusType,
 } from '@openmsupply-client/common';
 import * as EquipmentImportModal from './EquipmentImportModal';
 import { ImportRow } from './EquipmentImportModal';
-import { importEquipmentToCsv } from '../utils';
+import { importEquipmentToCsv, parseStatusFromString } from '../utils';
 import {
   AssetCatalogueItemFragment,
   processProperties,
@@ -42,8 +45,15 @@ interface ParsedAsset {
   [key: string]: string | undefined;
 }
 
-const formatDate = (value: string): string | null =>
-  Formatter.naiveDate(DateUtils.getDateOrNull(value, 'dd/MM/yyyy'));
+const formatDate = (value: string): string | null => {
+  // Check the date format has 4 characters for the year (sometimes the
+  // year is only 2 characters, e.g. 05/10/24, which would be imported as
+  // the year 0024!)
+  if (value.split('/')[2]?.length !== 4) {
+    return null;
+  }
+  return Formatter.naiveDate(DateUtils.getDateOrNull(value, 'dd/MM/yyyy'));
+};
 
 function getImportHelpers<T, P>(
   row: P,
@@ -192,24 +202,32 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   onUploadComplete,
   catalogueItemData,
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const { data: stores } = useStore.document.list();
-  const { error } = useNotification();
+  const { error, info } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const EquipmentBuffer: EquipmentImportModal.ImportRow[] = [];
   const { data: properties } = useAssetData.utils.properties();
 
   const csvExample = async () => {
+    if (EnvUtils.platform === Platform.Android) {
+      info(t('messages.cant-download-android'))();
+      return;
+    }
+
     const exampleRows: Partial<ImportRow>[] = [
       {
-        assetNumber: 'ASSET NUMBER',
+        assetNumber: t('label.asset-number').toUpperCase(),
         catalogueItemCode: '',
         store: undefined,
         notes: '',
         serialNumber: '',
-        installationDate: 'DD/MM/YYYY',
-        replacementDate: 'DD/MM/YYYY',
+        installationDate: t('label.date-format'),
+        replacementDate: t('label.date-format'),
+        warrantyStart: t('label.date-format'),
+        warrantyEnd: t('label.date-format'),
+        status: StatusType.Functioning,
         properties: {},
       },
     ];
@@ -297,9 +315,17 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         formatDate
       );
       addSoftRequired('replacementDate', 'label.replacement-date', formatDate);
+      addSoftRequired('warrantyStart', 'label.warranty-start-date', formatDate);
+      addSoftRequired('warrantyEnd', 'label.warranty-end-date', formatDate);
       addCell('serialNumber', 'label.serial', serial =>
         serial === '' ? undefined : serial
       );
+      addCell(
+        'status',
+        'label.status',
+        status => parseStatusFromString(status, t) ?? StatusType.Functioning
+      );
+      addCell('needsReplacement', 'label.needs-replacement');
       processProperties(properties ?? [], row, importRow, rowErrors, t);
       importRow.errorMessage = rowErrors.join(',');
       importRow.warningMessage = rowWarnings.join(',');

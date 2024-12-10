@@ -43,7 +43,7 @@ export const DetailView: FC = () => {
   } = useEditModal<string[]>();
 
   const { data, isLoading } = useOutbound.document.get();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const navigate = useNavigate();
   const onRowClick = useCallback(
     (item: StockOutLineFragment | StockOutItem) => {

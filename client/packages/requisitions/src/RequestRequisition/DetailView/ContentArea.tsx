@@ -33,7 +33,7 @@ const useHighlightPlaceholderRows = (
 };
 
 export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { lines, columns, itemFilter } = useRequest.line.list();
   const { on } = useHideOverStocked();
   const isDisabled = useRequest.utils.isDisabled();

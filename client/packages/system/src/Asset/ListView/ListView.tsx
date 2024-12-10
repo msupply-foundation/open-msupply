@@ -36,7 +36,7 @@ const AssetListComponent: FC = () => {
   });
   const { data, isError, isLoading } = useAssetData.document.list();
   const pagination = { page, first, offset };
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const importModalController = useToggle();
 
   const columnDescriptions: ColumnDescription<AssetCatalogueItemFragment>[] = [

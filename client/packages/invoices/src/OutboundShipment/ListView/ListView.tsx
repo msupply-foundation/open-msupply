@@ -30,7 +30,7 @@ const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
 
 const OutboundShipmentListViewComponent: FC = () => {
   const { mutate: onUpdate } = useOutbound.document.update();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const {
     updateSortQuery,
     updatePaginationQuery,

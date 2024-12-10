@@ -18,7 +18,7 @@ export const useFetchPatient = () => {
   const queryClient = useQueryClient();
 
   const [step, setStep] = useState<Step>('Start');
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const [error, setError] = useState<string | undefined>(undefined);
 
   const { mutateAsync: linkPatientToStore } = useMutation((nameId: string) =>

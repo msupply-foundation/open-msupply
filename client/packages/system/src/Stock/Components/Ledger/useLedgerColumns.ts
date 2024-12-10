@@ -23,7 +23,7 @@ export const useLedgerColumns = (
   sortBy: SortBy<LedgerRowFragment>,
   updateSort: (sort: string, dir: 'asc' | 'desc') => void
 ) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const { localisedTime } = useFormatDateTime();
 
   const columns = useColumns<LedgerRowFragment>(
@@ -53,7 +53,7 @@ export const useLedgerColumns = (
       },
       {
         key: ColumnKey.Number,
-        label: 'label.number',
+        label: 'label.invoice-number',
         accessor: ({ rowData }) => rowData.invoiceNumber,
         sortable: false,
       },

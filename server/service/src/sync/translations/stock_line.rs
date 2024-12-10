@@ -1,8 +1,8 @@
 use crate::sync::{
     sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
     translations::{
-        barcode::BarcodeTranslation, item::ItemTranslation, location::LocationTranslation,
-        name::NameTranslation, store::StoreTranslation,
+        barcode::BarcodeTranslation, item::ItemTranslation, item_variant::ItemVariantTranslation,
+        location::LocationTranslation, name::NameTranslation, store::StoreTranslation,
     },
 };
 use chrono::NaiveDate;
@@ -43,6 +43,9 @@ pub struct LegacyStockLineRow {
     pub supplier_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string", rename = "barcodeID")]
     pub barcode_id: Option<String>,
+    #[serde(rename = "om_item_variant_id")]
+    #[serde(default)]
+    pub item_variant_id: Option<String>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -59,6 +62,7 @@ impl SyncTranslation for StockLineTranslation {
     fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             ItemTranslation.table_name(),
+            ItemVariantTranslation.table_name(),
             NameTranslation.table_name(),
             StoreTranslation.table_name(),
             LocationTranslation.table_name(),
@@ -91,6 +95,7 @@ impl SyncTranslation for StockLineTranslation {
             note,
             supplier_id,
             barcode_id,
+            item_variant_id,
         } = serde_json::from_str::<LegacyStockLineRow>(&sync_record.data)?;
 
         let barcode_id = clear_invalid_barcode_id(connection, barcode_id)?;
@@ -111,6 +116,7 @@ impl SyncTranslation for StockLineTranslation {
             note,
             supplier_link_id: supplier_id,
             barcode_id,
+            item_variant_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -149,6 +155,7 @@ impl SyncTranslation for StockLineTranslation {
                     note,
                     supplier_link_id: _,
                     barcode_id,
+                    item_variant_id,
                 },
             item_row,
             supplier_name_row,
@@ -171,6 +178,7 @@ impl SyncTranslation for StockLineTranslation {
             note,
             supplier_id: supplier_name_row.map(|supplier| supplier.id),
             barcode_id,
+            item_variant_id,
         };
 
         Ok(PushTranslateResult::upsert(

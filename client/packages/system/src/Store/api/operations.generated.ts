@@ -3,7 +3,7 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type StoreRowFragment = { __typename: 'StoreNode', code: string, id: string };
+export type StoreRowFragment = { __typename: 'StoreNode', code: string, storeName: string, id: string };
 
 export type StoresQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -12,11 +12,12 @@ export type StoresQueryVariables = Types.Exact<{
 }>;
 
 
-export type StoresQuery = { __typename: 'Queries', stores: { __typename: 'StoreConnector', totalCount: number, nodes: Array<{ __typename: 'StoreNode', code: string, id: string }> } };
+export type StoresQuery = { __typename: 'Queries', stores: { __typename: 'StoreConnector', totalCount: number, nodes: Array<{ __typename: 'StoreNode', code: string, storeName: string, id: string }> } };
 
 export const StoreRowFragmentDoc = gql`
     fragment StoreRow on StoreNode {
   code
+  storeName
   id
 }
     `;

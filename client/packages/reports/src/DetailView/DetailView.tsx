@@ -21,6 +21,7 @@ import {
 import { Environment } from '@openmsupply-client/config';
 import { AppBarButtons } from './AppBarButton';
 import { JsonData } from '@openmsupply-client/programs';
+import { Toolbar } from './Toolbar';
 
 export const DetailView = () => {
   const { id } = useParams();
@@ -188,6 +189,7 @@ const DetailViewInner = ({
 
   return (
     <>
+      <Toolbar reportName={report.name} isCustom={report.isCustom} />
       <AppBarButtons
         isFilterDisabled={!report?.argumentSchema}
         onFilterOpen={openReportArgumentsModal}

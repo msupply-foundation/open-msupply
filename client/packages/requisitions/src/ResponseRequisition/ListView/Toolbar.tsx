@@ -6,12 +6,17 @@ import {
   Box,
   useTranslation,
   RequisitionNodeStatus,
+  DeleteIcon,
+  DropdownMenu,
+  DropdownMenuItem,
 } from '@openmsupply-client/common';
+import { useResponse } from '../api';
 
 export const Toolbar: FC<{
   filter: FilterController;
 }> = () => {
-  const t = useTranslation('distribution');
+  const onDelete = useResponse.document.deleteSelected();
+  const t = useTranslation();
 
   return (
     <AppBarContentPortal
@@ -51,6 +56,11 @@ export const Toolbar: FC<{
           ]}
         />
       </Box>
+      <DropdownMenu label={t('label.actions')}>
+        <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
+          {t('button.delete-lines')}
+        </DropdownMenuItem>
+      </DropdownMenu>
     </AppBarContentPortal>
   );
 };

@@ -38,7 +38,7 @@ export const SearchWithUserSource = (
     schema,
     renderers,
   } = props;
-  const t = useTranslation('programs');
+  const t = useTranslation();
   const isPatientSelected = !!data?.id;
   const { results, error: queryError, mutateAsync } = usePatientSearchQuery();
 

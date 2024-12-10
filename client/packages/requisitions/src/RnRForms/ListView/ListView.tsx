@@ -33,7 +33,7 @@ const RnRFormListComponent = () => {
 
   const pagination = { page, first, offset };
   const navigate = useNavigate();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   const queryParams = {
     filterBy,

@@ -90,28 +90,39 @@ async fn requisition_transfer() {
     let test_handle = exec_concurrent(
         test_input,
         number_of_instances,
-        |_, test_input| async move {
+        |thread_num, test_input| async move {
             let (service_provider, request_store, response_store, item1, item2) = test_input;
 
             let ctx = service_provider.basic_context().unwrap();
+            let mut tester = RequisitionTransferTester::new(
+                &request_store,
+                &response_store,
+                &item1,
+                &item2,
+                thread_num,
+            );
 
-            let mut tester =
-                RequisitionTransferTester::new(&request_store, &response_store, &item1, &item2);
-
+            log::debug!("{}: insert", thread_num);
             tester.insert_request_requisition(&ctx.connection);
             // manually trigger because inserting the requisition doesn't trigger the processor
             ctx.processors_trigger
                 .requisition_transfer
                 .try_send(())
                 .unwrap();
+            log::debug!("{}: await_events_processed", thread_num);
             ctx.processors_trigger.await_events_processed().await;
+            log::debug!("{}: check_response_requisition_not_created", thread_num);
             tester.check_response_requisition_not_created(&ctx.connection);
+            log::debug!("{}: update_request_requisition_to_sent", thread_num);
             tester.update_request_requisition_to_sent(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_response_requisition_created(&ctx.connection);
+            log::debug!("{}: check_response_requisition_created", thread_num);
+            tester.check_response_requisition_created(&ctx.connection, thread_num);
             ctx.processors_trigger.await_events_processed().await;
+            log::debug!("{}: check_request_requisition_was_linked", thread_num);
             tester.check_request_requisition_was_linked(&ctx.connection);
-            tester.update_response_requisition_to_approved(&service_provider);
+            log::debug!("{}: update_response_requisition_to_approved", thread_num);
+            tester.update_response_requisition_to_approved(&service_provider, thread_num);
             // Response requisition approval is usually done by mSupply
             // Processor would be triggered after sync
             // We've approved manually for testing, so need to manually trigger the processor as well
@@ -119,12 +130,14 @@ async fn requisition_transfer() {
                 .requisition_transfer
                 .try_send(())
                 .unwrap();
+            log::debug!("{}: await_events_processed", thread_num);
             ctx.processors_trigger.await_events_processed().await;
-            // Sometimes processor isn't finished the first time, so we await twice?
-            ctx.processors_trigger.await_events_processed().await;
-            tester.check_request_requisition_approved(&ctx.connection);
+            log::debug!("{}: check_request_requisition_approved", thread_num);
+            tester.check_request_requisition_approved(&ctx.connection, thread_num);
+            log::debug!("{}: update_response_requisition_to_finalised", thread_num);
             tester.update_response_requisition_to_finalised(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
+            log::debug!("{}: check_request_requisition_status_updated", thread_num);
             tester.check_request_requisition_status_updated(&ctx.connection);
         },
     );
@@ -221,9 +234,10 @@ impl RequisitionTransferTester {
         response_store: &StoreRow,
         item1: &ItemRow,
         item2: &ItemRow,
+        thread_number: u32,
     ) -> RequisitionTransferTester {
         let request_requisition = inline_init(|r: &mut RequisitionRow| {
-            r.id = uuid();
+            r.id = format!("{}_request_requisition_{}", thread_number, uuid());
             r.requisition_number = 3;
             r.name_link_id.clone_from(&response_store.name_link_id);
             r.store_id.clone_from(&request_store.id);
@@ -241,7 +255,7 @@ impl RequisitionTransferTester {
         });
 
         let request_requisition_line1 = inline_init(|r: &mut RequisitionLineRow| {
-            r.id = uuid();
+            r.id = format!("{}_request_requisition_line_1_{}", thread_number, uuid());
             r.requisition_id.clone_from(&request_requisition.id);
             r.item_link_id.clone_from(&item1.id);
             r.requested_quantity = 2.0;
@@ -258,7 +272,7 @@ impl RequisitionTransferTester {
         });
 
         let request_requisition_line2 = inline_init(|r: &mut RequisitionLineRow| {
-            r.id = uuid();
+            r.id = format!("{}_request_requisition_line_2_{}", thread_number, uuid());
             r.requisition_id.clone_from(&request_requisition.id);
             r.item_link_id.clone_from(&item2.id);
             r.requested_quantity = 10.0;
@@ -323,7 +337,11 @@ impl RequisitionTransferTester {
             .unwrap();
     }
 
-    pub(crate) fn check_response_requisition_created(&mut self, connection: &StorageConnection) {
+    pub(crate) fn check_response_requisition_created(
+        &mut self,
+        connection: &StorageConnection,
+        thread_number: u32,
+    ) {
         let response_requisition = RequisitionRepository::new(connection)
             .query_one(RequisitionFilter::by_linked_requisition_id(
                 &self.request_requisition.id,
@@ -374,11 +392,13 @@ impl RequisitionTransferTester {
             connection,
             &response_requisition.id,
             &self.request_requisition_line1,
+            thread_number,
         );
         check_line(
             connection,
             &response_requisition.id,
             &self.request_requisition_line2,
+            thread_number,
         );
     }
 
@@ -399,6 +419,7 @@ impl RequisitionTransferTester {
     pub(crate) fn update_response_requisition_to_approved(
         &mut self,
         service_provider: &ServiceProvider,
+        thread_number: u32,
     ) {
         let ctx = service_provider
             .context(self.response_store.id.clone(), "".to_string())
@@ -407,6 +428,31 @@ impl RequisitionTransferTester {
         let requisition_repo = RequisitionRowRepository::new(&ctx.connection);
 
         let response_req = self.response_requisition.clone().unwrap();
+
+        let response_lines = RequisitionLineRepository::new(&ctx.connection)
+            .query_by_filter(
+                RequisitionLineFilter::new()
+                    .requisition_id(EqualFilter::equal_to(&response_req.id)),
+            )
+            .unwrap();
+
+        let line_count = response_lines.len();
+        let mut i = 1;
+        for line in response_lines {
+            let mut line = line.requisition_line_row;
+            log::debug!(
+                "{}: Updating line {} to approved (42.0) {}/{}",
+                thread_number,
+                line.id,
+                i,
+                line_count
+            );
+            line.approved_quantity = 42.0;
+            RequisitionLineRowRepository::new(&ctx.connection)
+                .upsert_one(&line)
+                .unwrap();
+            i += 1;
+        }
 
         let approved_response_requisition = RequisitionRow {
             approval_status: Some(ApprovalStatusType::Approved),
@@ -417,25 +463,14 @@ impl RequisitionTransferTester {
             .upsert_one(&approved_response_requisition)
             .unwrap();
 
-        let response_lines = RequisitionLineRepository::new(&ctx.connection)
-            .query_by_filter(
-                RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(&approved_response_requisition.id)),
-            )
-            .unwrap();
-
-        for line in response_lines {
-            let mut line = line.requisition_line_row;
-            line.approved_quantity = 42.0;
-            RequisitionLineRowRepository::new(&ctx.connection)
-                .upsert_one(&line)
-                .unwrap();
-        }
-
         self.response_requisition = Some(approved_response_requisition);
     }
 
-    pub(crate) fn check_request_requisition_approved(&mut self, connection: &StorageConnection) {
+    pub(crate) fn check_request_requisition_approved(
+        &mut self,
+        connection: &StorageConnection,
+        thread_number: u32,
+    ) {
         let request_requisition = RequisitionRowRepository::new(connection)
             .find_one_by_id(&self.request_requisition.id)
             .unwrap();
@@ -468,11 +503,13 @@ impl RequisitionTransferTester {
             connection,
             &response_requisition.id,
             &self.request_requisition_line1,
+            thread_number,
         );
         check_line(
             connection,
             &response_requisition.id,
             &self.request_requisition_line2,
+            thread_number,
         );
     }
 
@@ -525,7 +562,9 @@ fn check_line(
     connection: &StorageConnection,
     response_requisition_id: &str,
     request_line: &RequisitionLineRow,
+    thread_number: u32,
 ) {
+    log::debug!("{}: Checking line {}", thread_number, request_line.id);
     let response_line = RequisitionLineRepository::new(connection)
         .query_one(
             RequisitionLineFilter::new()
@@ -563,4 +602,10 @@ fn check_line(
         request_line.snapshot_datetime
     );
     assert_eq!(response_line.supply_quantity, 0.0);
+
+    log::debug!(
+        "{}: Finished checking line {}",
+        thread_number,
+        request_line.id
+    );
 }

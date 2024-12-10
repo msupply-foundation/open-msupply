@@ -36,7 +36,7 @@ export const DetailView: FC<DetailViewProps> = ({
   createType,
   createPatientId,
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs, urlParts } = useBreadcrumbs();
   const dateFormat = useFormatDateTime();
