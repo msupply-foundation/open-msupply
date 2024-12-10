@@ -7,7 +7,6 @@ query StockDetail($storeId: String, $itemCodeOrName: String) {
       hasPacksInStore: true
       isActive: true
     }
-    sort: { key: itemName, desc: false }
   ) {
     ... on StockLineConnector {
       nodes {
