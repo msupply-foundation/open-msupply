@@ -2,7 +2,6 @@ import React, { FC, useCallback } from 'react';
 import {
   TableProvider,
   createTableStore,
-  useEditModal,
   DetailViewSkeleton,
   AlertModal,
   useNavigate,
@@ -10,7 +9,6 @@ import {
   useTranslation,
   createQueryParamsStore,
   DetailTabs,
-  ModalMode,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
@@ -19,15 +17,11 @@ import { ContentArea } from './ContentArea';
 import { AppBarButtons } from './AppBarButton';
 import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
-import { Draft } from '../..';
 import { Footer } from './Footer';
-import { PrescriptionLineEditModal } from './PrescriptionLineEdit/PrescriptionLineEditModal';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
 export const PrescriptionDetailView: FC = () => {
-  const { entity, mode, onOpen, onClose, isOpen, setMode } =
-    useEditModal<Draft>();
   const {
     query: { data, loading },
     isDisabled,
@@ -36,7 +30,6 @@ export const PrescriptionDetailView: FC = () => {
   const navigate = useNavigate();
   const onRowClick = useCallback(
     (item: StockOutLineFragment | StockOutItem) => {
-      // onOpen({ item: toItemRow(item) });
       navigate(
         RouteBuilder.create(AppRoute.Dispensary)
           .addPart(AppRoute.Prescription)
@@ -45,11 +38,16 @@ export const PrescriptionDetailView: FC = () => {
           .build()
       );
     },
-    [toItemRow, onOpen]
+    [toItemRow]
   );
-  const onAddItem = (draft?: Draft) => {
-    onOpen(draft);
-    setMode(ModalMode.Create);
+  const onAddItem = () => {
+    navigate(
+      RouteBuilder.create(AppRoute.Dispensary)
+        .addPart(AppRoute.Prescription)
+        .addPart(String(data?.invoiceNumber))
+        .addPart(String('new'))
+        .build()
+    );
   };
 
   if (loading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
@@ -86,15 +84,6 @@ export const PrescriptionDetailView: FC = () => {
           })}
         >
           <AppBarButtons onAddItem={onAddItem} />
-          {isOpen && (
-            <PrescriptionLineEditModal
-              draft={entity}
-              mode={mode}
-              isOpen={isOpen}
-              onClose={onClose}
-            />
-          )}
-
           <Toolbar />
           <DetailTabs tabs={tabs} />
           <Footer />

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import {
   BasicSpinner,
   DetailContainer,
+  ModalMode,
   NothingHere,
   RouteBuilder,
   useBreadcrumbs,
@@ -58,7 +59,7 @@ export const PrescriptionLineEditPage = () => {
     });
   }, [currentItem]);
 
-  if (isLoading || !currentItem) return <BasicSpinner />;
+  if (isLoading) return <BasicSpinner />;
   if (!data) return <NothingHere />;
 
   return (
@@ -75,12 +76,16 @@ export const PrescriptionLineEditPage = () => {
                   .addPart(AppRoute.Prescription)
                   .addPart(String(invoiceNumber))}
                 enteredLineIds={enteredLineIds}
+                showNew={true}
               />
             </>
           }
           Right={
             <>
-              <PrescriptionLineEdit draft={{ item: currentItem }} mode={null} />
+              <PrescriptionLineEdit
+                draft={{ item: currentItem }}
+                mode={currentItem ? ModalMode.Update : ModalMode.Create}
+              />
               <Footer
                 hasNext={hasNext}
                 next={next}
