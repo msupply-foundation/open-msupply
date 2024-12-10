@@ -13,7 +13,7 @@ impl MigrationFragment for Migrate {
             r#"
             CREATE TABLE item_direction (
                 id TEXT NOT NULL PRIMARY KEY,
-                item_id TEXT NOT NULL REFERENCES item(id),
+                item_link_id TEXT NOT NULL REFERENCES item_link(id),
                 directions TEXT NOT NULL,
                 priority {DOUBLE} NOT NULL
             );
