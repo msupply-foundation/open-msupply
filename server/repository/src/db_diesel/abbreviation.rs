@@ -75,7 +75,7 @@ impl AbbreviationFilter {
         self
     }
 
-    pub fn key(mut self, filter: StringFilter) -> Self {
+    pub fn text(mut self, filter: StringFilter) -> Self {
         self.text = Some(filter);
         self
     }
