@@ -144,7 +144,6 @@ const ItemLedgerTable = ({
   );
 
   if (isLoading) return <BasicSpinner />;
-  console.log('clicked ', onRowClick);
 
   return (
     <DataTable
