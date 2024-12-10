@@ -1,8 +1,9 @@
 use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime};
 use serde::{
-    de::{value::StrDeserializer, IntoDeserializer},
+    de::{value::StrDeserializer, Error, IntoDeserializer},
     Deserialize, Deserializer, Serialize, Serializer,
 };
+use serde_yaml::Value;
 use util::format_error;
 
 pub fn empty_str_as_option_string<'de, D: Deserializer<'de>>(
@@ -73,6 +74,15 @@ pub fn naive_time<'de, D: Deserializer<'de>>(d: D) -> Result<NaiveTime, D::Error
     // if the deserialisation panics then the whole server crashes, so have used the error & default
     Ok(NaiveTime::from_num_seconds_from_midnight_opt(secs, 0)
         .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()))
+}
+
+pub fn empty_str_or_i32<'de, D: Deserializer<'de>>(d: D) -> Result<i32, D::Error> {
+    let value = Value::deserialize(d)?;
+    match value {
+        Value::String(_) => Ok(0),
+        Value::Number(n) => Ok(n.as_i64().unwrap_or(0) as i32),
+        _ => Err(Error::custom("Expected a string or number")),
+    }
 }
 
 pub fn string_to_f64<'de, D: Deserializer<'de>>(d: D) -> Result<f64, D::Error> {

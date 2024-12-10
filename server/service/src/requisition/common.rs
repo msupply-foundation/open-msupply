@@ -3,7 +3,9 @@ use repository::{
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
 use repository::{
-    ApprovalStatusType, EqualFilter, Requisition, RequisitionFilter, RequisitionRepository,
+    ApprovalStatusType, EqualFilter, ProgramFilter, ProgramRequisitionOrderTypeRowRepository,
+    ProgramRequisitionSettingsFilter, ProgramRequisitionSettingsRepository, Requisition,
+    RequisitionFilter, RequisitionRepository,
 };
 use util::inline_edit;
 
@@ -55,4 +57,48 @@ pub fn check_approval_status(requisition_row: &RequisitionRow) -> bool {
                 || *approval_status == ApprovalStatusType::DeniedByAnother);
     }
     false
+}
+
+pub enum OrderTypeNotFoundError {
+    OrderTypeNotFound,
+    DatabaseError(RepositoryError),
+}
+
+pub fn check_emergency_order_within_max_items_limit(
+    connection: &StorageConnection,
+    program_id: &str,
+    order_type: &str,
+    requisition_lines: Vec<RequisitionLine>,
+) -> Result<(bool, i32), OrderTypeNotFoundError> {
+    let program_settings_ids = ProgramRequisitionSettingsRepository::new(connection)
+        .query(Some(ProgramRequisitionSettingsFilter::new().program(
+            ProgramFilter::new().id(EqualFilter::equal_to(program_id)),
+        )))?
+        .iter()
+        .map(|settings| settings.program_settings_row.id.clone())
+        .collect::<Vec<String>>();
+
+    let order_type = ProgramRequisitionOrderTypeRowRepository::new(connection)
+        .find_one_by_setting_and_name(&program_settings_ids, order_type)?
+        .ok_or(OrderTypeNotFoundError::OrderTypeNotFound)?;
+
+    if !order_type.is_emergency {
+        return Ok((true, 0));
+    }
+
+    let line_count = requisition_lines
+        .iter()
+        .filter(|line| line.requisition_line_row.requested_quantity != 0.0)
+        .count();
+
+    Ok((
+        line_count <= order_type.max_items_in_emergency_order as usize,
+        order_type.max_items_in_emergency_order,
+    ))
+}
+
+impl From<RepositoryError> for OrderTypeNotFoundError {
+    fn from(error: RepositoryError) -> Self {
+        Self::DatabaseError(error)
+    }
 }
