@@ -2,6 +2,7 @@
 //the error here was cause it needed to be imported on insert/mod file
 use repository::feedback_form_row::FeedbackFormRow;
 
+pub use self::insert::{InsertContactForm, InsertContactFormError};
 use crate::service_provider::ServiceContext;
 
 pub mod insert;
