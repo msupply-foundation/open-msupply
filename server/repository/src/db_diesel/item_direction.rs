@@ -1,6 +1,6 @@
 use super::{item_direction_row::item_direction, ItemDirectionRow, StorageConnection};
 
-use crate::{diesel_macros::apply_equal_filter, StringFilter};
+use crate::diesel_macros::apply_equal_filter;
 
 use crate::{repository_error::RepositoryError, DBType, EqualFilter};
 use diesel::{dsl::IntoBoxed, prelude::*};
