@@ -7,7 +7,6 @@ query ItemUsage($storeId: String, $itemCode: String, $itemName: String) {
       isVisibleOrOnHand: true
       isActive: true
     }
-    sort: { key: name, desc: false }
     page: { first: 5000 }
   ) {
     ... on ItemConnector {
