@@ -18,6 +18,8 @@ use service::{
     },
 };
 
+use crate::mutations::response_requisition::update::RequisitionReasonsNotProvided;
+
 #[derive(InputObject)]
 #[graphql(name = "UpdateRequestRequisitionInput")]
 pub struct UpdateInput {
@@ -46,6 +48,7 @@ pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
     CannotEditRequisition(CannotEditRequisition),
     OrderingTooManyItems(OrderingTooManyItems),
+    RequisitionReasonsNotProvided(RequisitionReasonsNotProvided),
 }
 
 #[derive(SimpleObject)]
@@ -156,6 +159,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::OrderingTooManyItems(max_order) => {
             return Ok(UpdateErrorInterface::OrderingTooManyItems(
                 OrderingTooManyItems(max_order),
+            ))
+        }
+        ServiceError::ReasonsNotProvided(lines) => {
+            return Ok(UpdateErrorInterface::RequisitionReasonsNotProvided(
+                RequisitionReasonsNotProvided(lines),
             ))
         }
         // Standard Graphql Errors

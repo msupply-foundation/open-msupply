@@ -37,6 +37,13 @@ const createDraftFromItem = (
     itemStats: item.stats,
     itemName: item.name,
     requisitionNumber: request.requisitionNumber,
+    initialStockOnHandUnits: 0,
+    incomingUnits: 0,
+    outgoingUnits: 0,
+    lossInUnits: 0,
+    additionInUnits: 0,
+    daysOutOfStock: 0,
+    expiringUnits: 0,
   };
 };
 
