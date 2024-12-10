@@ -503,7 +503,7 @@ async fn main() -> anyhow::Result<()> {
                     let form_schema_json = match (arguments_path, arguments_ui_path) {
                         (Some(_), None) | (None, Some(_)) => {
                             return Err(anyhow!(format!(
-                                "When arguments path are specified both paths must be present in report {:?} {:?}", name, version_dir
+                                "When arguments_path is specified arguments_ui_path must be specified too in report {:?} {:?}", name, version_dir
                             )))
                         }
                         (Some(arguments_path), Some(arguments_ui_path)) => {
