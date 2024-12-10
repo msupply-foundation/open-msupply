@@ -16,6 +16,7 @@ import { GeneralTab } from './Tabs/General';
 import { MasterListsTab } from './Tabs/MasterLists';
 import { AppRoute } from '@openmsupply-client/config';
 import { ItemVariantsTab } from './Tabs/ItemVariants';
+import { ItemLedgerTab } from './Tabs/ItemLedger';
 
 export const ItemDetailView: FC = () => {
   const { data, isLoading } = useItem();
@@ -38,6 +39,10 @@ export const ItemDetailView: FC = () => {
     {
       Component: <MasterListsTab itemId={data.id} />,
       value: t('label.master-lists'),
+    },
+    {
+      Component: <ItemLedgerTab itemId={data.id} />,
+      value: t('label.ledger'),
     },
   ];
 
