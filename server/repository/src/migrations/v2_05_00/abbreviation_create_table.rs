@@ -13,7 +13,7 @@ impl MigrationFragment for Migrate {
             r#"
             CREATE TABLE abbreviation (
                 id TEXT NOT NULL PRIMARY KEY,
-                abbreviation TEXT NOT NULL,
+                text TEXT NOT NULL,
                 expansion TEXT NOT NULL,
             );
         "#
