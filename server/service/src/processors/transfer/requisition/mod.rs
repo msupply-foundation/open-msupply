@@ -9,17 +9,15 @@ pub(crate) mod update_request_requisition_status;
 pub(crate) mod test;
 
 use repository::{
-    system_log_row::SystemLogType, ChangelogFilter, ChangelogRepository, ChangelogRow,
-    ChangelogTableName, EqualFilter, KeyType, RepositoryError, Requisition, RowActionType,
-    StorageConnection,
+    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, KeyType,
+    RepositoryError, Requisition, RowActionType, StorageConnection,
 };
 use thiserror::Error;
 
 use crate::{
-    activity_log::system_log_entry,
     cursor_controller::CursorController,
     processors::transfer::{
-        get_requisition_and_linked_requisition,
+        get_requisition_and_linked_requisition, log_system_error,
         requisition::{
             assign_requisition_number::AssignRequisitionNumberProcessor,
             create_response_requisition::CreateResponseRequisitionProcessor,
@@ -59,17 +57,6 @@ pub(crate) enum ProcessRequisitionTransfersError {
     NameIdIsMissingFromChangelog(ChangelogRow),
     #[error("Name is not an active store {0:?}")]
     NameIsNotAnActiveStore(ChangelogRow),
-}
-
-fn log_system_error(
-    connection: &StorageConnection,
-    error: &ProcessRequisitionTransfersError,
-) -> Result<(), ProcessRequisitionTransfersError> {
-    let error_message = format!("ProcessRequisitionTransfersError: {:?}", error);
-    log::error!("{}", error_message);
-    system_log_entry(connection, SystemLogType::ProcessorError, &error_message)
-        .map_err(|e| ProcessRequisitionTransfersError::DatabaseError(RepositoryError::from(e)))?;
-    Ok(())
 }
 
 fn process_change_log(
@@ -155,7 +142,7 @@ pub(crate) fn process_requisition_transfers(
         for log in logs {
             let result = process_change_log(&ctx.connection, &log, &processors, &active_stores);
             if let Err(e) = result {
-                log_system_error(&ctx.connection, &e)?;
+                log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
             }
 
             // Always update cursor and move on to the next log, even if there's an error

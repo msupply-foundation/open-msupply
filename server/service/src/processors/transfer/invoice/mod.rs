@@ -1,5 +1,4 @@
 use crate::{
-    activity_log::system_log_entry,
     cursor_controller::CursorController,
     processors::transfer::{
         get_linked_original_shipment, get_requisition_and_linked_requisition,
@@ -11,14 +10,15 @@ use crate::{
             update_inbound_invoice::UpdateInboundInvoiceProcessor,
             update_outbound_invoice_status::UpdateOutboundInvoiceStatusProcessor,
         },
+        log_system_error,
     },
     service_provider::ServiceProvider,
     sync::{ActiveStoresOnSite, GetActiveStoresOnSiteError},
 };
 use repository::{
-    system_log_row::SystemLogType, ChangelogFilter, ChangelogRepository, ChangelogRow,
-    ChangelogTableName, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, KeyType,
-    RepositoryError, Requisition, RowActionType, StorageConnection,
+    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, Invoice,
+    InvoiceFilter, InvoiceRepository, KeyType, RepositoryError, Requisition, RowActionType,
+    StorageConnection,
 };
 use thiserror::Error;
 
@@ -94,17 +94,6 @@ pub(crate) enum ProcessInvoiceTransfersError {
     NameIsNotAnActiveStore(ChangelogRow),
 }
 
-fn log_system_error(
-    connection: &StorageConnection,
-    error: &ProcessInvoiceTransfersError,
-) -> Result<(), ProcessInvoiceTransfersError> {
-    let error_message = format!("ProcessInvoiceTransfersError: {:?}", error);
-    log::error!("{}", error_message);
-    system_log_entry(connection, SystemLogType::ProcessorError, &error_message)
-        .map_err(|e| ProcessInvoiceTransfersError::DatabaseError(RepositoryError::from(e)))?;
-    Ok(())
-}
-
 fn process_change_log(
     connection: &StorageConnection,
     log: &ChangelogRow,
@@ -142,7 +131,7 @@ fn process_change_log(
             .try_process_record_common(&connection, &record)
             .map_err(Error::ProcessorError);
         if let Err(e) = result {
-            log_system_error(connection, &e)?;
+            log_system_error(connection, &e).map_err(Error::DatabaseError)?;
         }
     }
     Ok(())
@@ -192,7 +181,7 @@ pub(crate) fn process_invoice_transfers(
         for log in logs {
             let result = process_change_log(&ctx.connection, &log, &processors, &active_stores);
             if let Err(e) = result {
-                log_system_error(&ctx.connection, &e)?;
+                log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
             }
 
             cursor_controller
