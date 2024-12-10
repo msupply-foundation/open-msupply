@@ -195,6 +195,7 @@ export const NumericTextInput = React.forwardRef<
       noFormatting = false,
       fullWidth,
       endAdornment,
+      inputMode,
       ...props
     },
     ref
@@ -265,8 +266,6 @@ export const NumericTextInput = React.forwardRef<
 
     return (
       <BasicTextInput
-        // NOTE: not setting input mode as numeric here, because on Samsung tablets,
-        // the numeric keyboard doesn't allow entering negative numbers!
         ref={ref}
         sx={{
           '& .MuiInput-input': {
@@ -275,6 +274,7 @@ export const NumericTextInput = React.forwardRef<
           },
           ...sx,
         }}
+        inputMode={inputMode ?? 'numeric'}
         InputProps={{
           endAdornment: endAdornment ? (
             <InputAdornment position="end" sx={{ paddingBottom: '2px' }}>
