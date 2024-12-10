@@ -1,5 +1,7 @@
 use crate::repository_error::RepositoryError;
 
+pub mod abbreviation;
+pub mod abbreviation_row;
 pub mod activity_log;
 mod activity_log_row;
 pub mod adjustment;
@@ -143,6 +145,7 @@ pub mod vaccination_card;
 pub mod vaccination_row;
 pub mod vaccine_course;
 
+pub use abbreviation_row::*;
 pub use activity_log_row::*;
 pub use adjustment::*;
 pub use assets::*;
