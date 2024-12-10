@@ -18,4 +18,4 @@ export * from './Log';
 export * from './ReturnReason';
 export * from './Currency';
 export * from './IndicatorsDemographics';
-export { processProperties } from './utils';
+export { getInvoiceLocalisationKey, processProperties } from './utils';

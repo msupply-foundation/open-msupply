@@ -3,7 +3,7 @@ import { Formatter } from '@common/utils';
 import { AssetPropertyFragment, MasterListRowFragment } from '.';
 import { LocationRowFragment } from './Location/api';
 import { StockLineRowFragment } from './Stock/api';
-import { PropertyNode } from '@common/types';
+import { InvoiceNodeType, PropertyNode } from '@common/types';
 
 export const locationsToCsv = (
   invoices: LocationRowFragment[],
@@ -130,4 +130,25 @@ export const processProperties = <
       }
     }
   });
+};
+
+export const getInvoiceLocalisationKey = (type: InvoiceNodeType): LocaleKey => {
+  switch (type) {
+    case InvoiceNodeType.InboundShipment:
+      return 'inbound-shipment';
+    case InvoiceNodeType.OutboundShipment:
+      return 'outbound-shipment';
+    case InvoiceNodeType.CustomerReturn:
+      return 'customer-return';
+    case InvoiceNodeType.SupplierReturn:
+      return 'supplier-return';
+    case InvoiceNodeType.Prescription:
+      return 'prescription';
+    case InvoiceNodeType.InventoryAddition:
+      return 'inventory-addition';
+    case InvoiceNodeType.InventoryReduction:
+      return 'inventory-reduction';
+    case InvoiceNodeType.Repack:
+      return 'label.repack';
+  }
 };
