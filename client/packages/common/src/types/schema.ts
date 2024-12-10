@@ -6804,7 +6804,7 @@ export enum RequisitionSortFieldInput {
   FinalisedDatetime = 'finalisedDatetime',
   OrderType = 'orderType',
   OtherPartyName = 'otherPartyName',
-  PeriodName = 'periodName',
+  PeriodStartDate = 'periodStartDate',
   ProgramName = 'programName',
   RequisitionNumber = 'requisitionNumber',
   SentDatetime = 'sentDatetime',
