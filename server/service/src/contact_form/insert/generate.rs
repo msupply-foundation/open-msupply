@@ -1,5 +1,5 @@
 use chrono::Utc;
-use repository::feedback_form_row::FeedbackFormRow;
+use repository::contact_form_row::{ContactFormRow, ContactType};
 
 use super::InsertContactForm;
 
@@ -18,7 +18,7 @@ pub fn generate(
         site_id,
         insert_input,
     }: GenerateInput,
-) -> FeedbackFormRow {
+) -> ContactFormRow {
     let InsertContactForm {
         id,
         reply_email,
@@ -27,7 +27,7 @@ pub fn generate(
 
     let now = Utc::now().naive_utc();
 
-    FeedbackFormRow {
+    ContactFormRow {
         id,
         store_id,
         user_id,
@@ -35,5 +35,7 @@ pub fn generate(
         reply_email,
         body,
         site_id,
+        //harcoded contact type until optional types available in front end
+        contact_type: ContactType::Feedback,
     }
 }
