@@ -9,8 +9,9 @@ import {
   useBreadcrumbs,
   DetailTabs,
   useIsCentralServerApi,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
-import { useItem } from '../api';
+import { ItemLedgerFragment, useItem } from '../api';
 import { Toolbar } from './Toolbar';
 import { GeneralTab } from './Tabs/General';
 import { MasterListsTab } from './Tabs/MasterLists';
@@ -31,6 +32,53 @@ export const ItemDetailView: FC = () => {
 
   if (isLoading || !data) return <DetailFormSkeleton />;
 
+  const onLedgerRowClick = (ledger: ItemLedgerFragment) => {
+    switch (ledger.invoiceType) {
+      case InvoiceNodeType.InboundShipment:
+        navigate(
+          RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.InboundShipment)
+            .addPart(String(ledger.invoiceNumber))
+            .build()
+        );
+        break;
+      case InvoiceNodeType.SupplierReturn:
+        navigate(
+          RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.SupplierReturn)
+            .addPart(String(ledger.invoiceNumber))
+            .build()
+        );
+        break;
+      case InvoiceNodeType.OutboundShipment:
+        navigate(
+          RouteBuilder.create(AppRoute.Distribution)
+            .addPart(AppRoute.OutboundShipment)
+            .addPart(String(ledger.invoiceNumber))
+            .build()
+        );
+        break;
+      case InvoiceNodeType.CustomerReturn:
+        navigate(
+          RouteBuilder.create(AppRoute.Distribution)
+            .addPart(AppRoute.CustomerReturn)
+            .addPart(String(ledger.invoiceNumber))
+            .build()
+        );
+        break;
+      case InvoiceNodeType.Prescription:
+        navigate(
+          RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Prescription)
+            .addPart(String(ledger.invoiceNumber))
+            .build()
+        );
+        break;
+      default:
+        break;
+    }
+  };
+
   const tabs = [
     {
       Component: <GeneralTab />,
@@ -41,7 +89,9 @@ export const ItemDetailView: FC = () => {
       value: t('label.master-lists'),
     },
     {
-      Component: <ItemLedgerTab itemId={data.id} />,
+      Component: (
+        <ItemLedgerTab itemId={data.id} onRowClick={onLedgerRowClick} />
+      ),
       value: t('label.ledger'),
     },
   ];
