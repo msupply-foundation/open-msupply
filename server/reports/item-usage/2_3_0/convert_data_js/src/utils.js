@@ -29,7 +29,7 @@ const processItemLines = (data, sort, dir) => {
     item.stockOnOrder = calculateQuantity(data.stockOnOrder, item.id);
     item.AMC12 = calculateQuantity(data.AMCTwelve, item.id);
     item.AMC24 = calculateQuantity(data.AMCTwentyFour, item.id);
-    item.SOH = calculateStatValue(item?.stats?.availableStockOnHand);
+    item.SOH = calculateStatValue(item?.stats?.totalStockOnHand);
     item.MOS = calculateStatValue(item?.stats?.availableMonthsOfStockOnHand);
   });
   let cleanNodes = cleanUpNodes(data.items.nodes);
