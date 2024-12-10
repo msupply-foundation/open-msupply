@@ -35,6 +35,7 @@ import { DraftStockOutLine } from '../../../types';
 import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 import { ItemRowFragment } from '@openmsupply-client/system';
+import { usePrescriptionLines } from '../../api/hooks/usePrescriptionLines';
 
 interface PrescriptionLineEditModalProps {
   isOpen: boolean;
@@ -58,12 +59,14 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
     useState(false);
   const {
-    status,
-    id: invoiceId,
+    query: { data },
+    isDisabled,
+  } = usePrescription();
+  const {
+    status = InvoiceNodeStatus.New,
+    id: invoiceId = '',
     prescriptionDate,
-  } = usePrescription.document.fields(['status', 'id', 'prescriptionDate']);
-  const { mutateAsync, isLoading: isSaving } = usePrescription.line.save();
-  const isDisabled = usePrescription.utils.isDisabled();
+  } = data ?? {};
   const {
     draftStockOutLines: draftPrescriptionLines,
     updateQuantity,
@@ -74,6 +77,10 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     currentItem,
     DateUtils.getDateOrNull(prescriptionDate)
   );
+  const {
+    save: { saveLines, isSavingLines },
+  } = usePrescriptionLines();
+
   const packSizeController = usePackSizeController(draftPrescriptionLines);
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
@@ -112,7 +119,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
           }
         : undefined;
 
-    await mutateAsync({ draftPrescriptionLines, patch });
+    await saveLines({ draftPrescriptionLines, patch });
 
     if (!draft) return;
   };
@@ -205,7 +212,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
       okButton={
         <LoadingButton
           disabled={!currentItem}
-          isLoading={isSaving}
+          isLoading={isSavingLines}
           startIcon={<CheckIcon />}
           loadingStyle={{ iconColor: 'secondary.main' }}
           variant="contained"

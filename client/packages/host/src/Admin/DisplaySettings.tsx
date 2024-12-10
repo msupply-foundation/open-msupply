@@ -6,9 +6,9 @@ import {
   useNavigate,
   useTranslation,
   useNotification,
-  UserPermission,
-  usePermissionCheck,
   LocalStorage,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { themeOptions } from '@common/styles';
 
@@ -25,7 +25,7 @@ export const DisplaySettings: React.FC = () => {
   const [customTheme, setCustomTheme] = useLocalStorage('/theme/custom');
   const [customLogo, setCustomLogo] = useLocalStorage('/theme/logo');
   const { mutate: updateSettings } = useHost.settings.updateDisplaySettings();
-  usePermissionCheck(UserPermission.ServerAdmin);
+  const { userHasPermission } = useAuthContext();
   const customThemeEnabled =
     !!customTheme && Object.keys(customTheme).length > 0;
 
@@ -121,6 +121,7 @@ export const DisplaySettings: React.FC = () => {
         onSave={saveTheme}
         onToggle={onToggleCustomTheme}
         title={t('heading.custom-theme')}
+        visible={userHasPermission(UserPermission.ServerAdmin)}
       />
       <SettingTextArea
         defaultValue={customLogoValue}
@@ -128,6 +129,7 @@ export const DisplaySettings: React.FC = () => {
         onToggle={onToggleCustomLogo}
         infoText={t('heading.custom-logo-info')}
         title={t('heading.custom-logo')}
+        visible={userHasPermission(UserPermission.ServerAdmin)}
       />
     </>
   );

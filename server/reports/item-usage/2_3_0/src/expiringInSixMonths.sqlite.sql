@@ -11,5 +11,5 @@ SELECT
     SUM(stock_line.available_number_of_packs) AS quantity
 FROM stock_line, six_months, this_month
 INNER JOIN item_link i ON i.id = stock_line.item_link_id
-WHERE stock_line.expiry_date >= this_month AND stock_line.expiry_date < six_months AND stock_line.store_id = $storeId
+WHERE stock_line.expiry_date < six_months AND stock_line.store_id = $storeId
 GROUP BY i.item_id

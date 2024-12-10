@@ -1,7 +1,7 @@
 use async_graphql::*;
 
 use graphql_core::{
-    simple_generic_errors::{CannotEditRequisition, RecordNotFound},
+    simple_generic_errors::{CannotEditRequisition, OrderingTooManyItems, RecordNotFound},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -54,6 +54,7 @@ pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
     CannotEditRequisition(CannotEditRequisition),
     RequisitionReasonsNotProvided(RequisitionReasonsNotProvided),
+    OrderingTooManyItems(OrderingTooManyItems),
 }
 
 #[derive(SimpleObject)]
@@ -133,9 +134,15 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 RequisitionReasonsNotProvided(lines),
             ))
         }
+        ServiceError::OrderingTooManyItems(max_order) => {
+            return Ok(UpdateErrorInterface::OrderingTooManyItems(
+                OrderingTooManyItems(max_order),
+            ))
+        }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
-        ServiceError::NotAResponseRequisition => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreRequisition
+        | ServiceError::OrderTypeNotFound
+        | ServiceError::NotAResponseRequisition => BadUserInput(formatted_error),
         ServiceError::UpdatedRequisitionDoesNotExist => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };

@@ -25,7 +25,7 @@ export const useRequestLines = () => {
       : lines?.nodes;
 
     if (on) {
-      return sorted.filter(
+      return sorted?.filter(
         ({ item, itemStats }) =>
           (itemStats.availableStockOnHand === 0 &&
             itemStats.averageMonthlyConsumption === 0) ||
@@ -34,7 +34,7 @@ export const useRequestLines = () => {
             matchItem(itemFilter, item))
       );
     } else {
-      return sorted.filter(item => matchItem(itemFilter, item.item));
+      return sorted?.filter(item => matchItem(itemFilter, item.item));
     }
   }, [sortBy.key, sortBy.isDesc, lines, on, minMonthsOfStock, itemFilter]);
 
