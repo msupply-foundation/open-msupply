@@ -120,8 +120,7 @@ pub(crate) enum ChangeLogSyncStyle {
     Central,
     Remote,
     File,
-    // Transfer,
-    // Patient??  etc
+    RemoteToCentral, // These records won't sync back to the remote site on re-initalisation
 }
 // When adding a new change log record type, specify how it should be synced
 // If new requirements are needed a different ChangeLogSyncStyle can be added
@@ -180,7 +179,7 @@ impl ChangelogTableName {
             ChangelogTableName::PackagingVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::IndicatorValue => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::BundledItem => ChangeLogSyncStyle::Central,
-            ChangelogTableName::SystemLog => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::SystemLog => ChangeLogSyncStyle::RemoteToCentral, // System Log records won't be synced to remote site on initialisation
         }
     }
 }
@@ -487,7 +486,10 @@ fn create_filtered_outgoing_sync_query(
 
     // Remote Records
     let remote_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
-        .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::Remote))
+        .filter(|table| {
+            matches!(table.sync_style(), ChangeLogSyncStyle::Remote)
+                || matches!(table.sync_style(), ChangeLogSyncStyle::RemoteToCentral)
+        })
         .collect();
 
     let active_stores_for_site = store::table
