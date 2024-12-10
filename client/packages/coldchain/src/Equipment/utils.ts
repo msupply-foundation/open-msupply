@@ -31,19 +31,15 @@ export const assetsToCsv = (
   const dedupedAssetProperties = ArrayUtils.dedupe(properties);
 
   const fields: string[] = ['id'];
-  fields.push(
-    `${t('label.created-datetime')} (UTC)`,
-    `${t('label.modified-datetime')} (UTC)`
-  );
-
+ 
   if (isCentralServer) {
     fields.push(t('label.store'));
   }
 
   fields.push(
     ...baseAssetFields(t),
-    t('label.created-datetime'),
-    t('label.modified-datetime'),
+    t('label.created-datetime-UTC'),
+    t('label.modified-datetime-UTC'),
     ...dedupedAssetProperties
   );
 
@@ -170,6 +166,7 @@ export const importEquipmentToCsv = (
   fields.push(...baseAssetFields(t), ...dedupedAssetProperties);
 
   const data = assets.map(node => {
+    const parsedStatus = parseLogStatus(node.status??StatusType.Functioning)?.key // to avoid status being undefined
     const row = [
       ...(isCentralServer ? [node.store?.code] : []),
       node.assetNumber,
@@ -179,7 +176,7 @@ export const importEquipmentToCsv = (
       node.warrantyStart,
       node.warrantyEnd,
       node.serialNumber,
-      node.status ? (parseLogStatus(node.status)?.key ?? '') : '',
+      node.status && parsedStatus ? t(parsedStatus) : '',
       node.needsReplacement,
       node.notes,
     ];
