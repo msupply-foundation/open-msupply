@@ -5,8 +5,9 @@ use extism::{
     host_fn, FromBytes, Manifest, PluginBuilder, ToBytes, UserData, Wasm, WasmMetadata, PTR,
 };
 use repository::{
-    raw_query, EqualFilter, JsonRawRow, PaginationOption, Report, ReportFilter, ReportRepository,
-    ReportRowRepository, ReportSort, ReportType, RepositoryError, StorageConnection,
+    raw_query, EqualFilter, FormSchemaJson, JsonRawRow, PaginationOption, Report, ReportFilter,
+    ReportRepository, ReportRowRepository, ReportSort, ReportType, RepositoryError,
+    StorageConnection,
 };
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
@@ -15,7 +16,8 @@ use util::uuid::uuid;
 
 use crate::{
     get_default_pagination,
-    localisations::Localisations,
+    json_translate::crawl_and_translate,
+    localisations::{Localisations, TranslationError},
     service_provider::ServiceContext,
     static_files::{StaticFileCategory, StaticFileService},
     ListError,
@@ -82,18 +84,33 @@ pub struct GeneratedReport {
 }
 
 pub trait ReportServiceTrait: Sync + Send {
-    fn get_report(&self, ctx: &ServiceContext, id: &str) -> Result<Report, RepositoryError> {
-        get_report(ctx, id)
+    fn get_report(
+        &self,
+        ctx: &ServiceContext,
+        translation_service: &Box<Localisations>,
+        user_language: String,
+        id: &str,
+    ) -> Result<Report, GetReportError> {
+        get_report(ctx, translation_service, user_language, id)
     }
 
     fn query_reports(
         &self,
         ctx: &ServiceContext,
+        translation_service: &Box<Localisations>,
+        user_language: String,
         pagination: Option<PaginationOption>,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
-    ) -> Result<Vec<Report>, ListError> {
-        query_reports(ctx, pagination, filter, sort)
+    ) -> Result<Vec<Report>, GetReportsError> {
+        query_reports(
+            ctx,
+            translation_service,
+            user_language,
+            pagination,
+            filter,
+            sort,
+        )
     }
 
     /// Loads a report definition by id and resolves it
@@ -316,25 +333,99 @@ impl ReportServiceTrait for ReportService {}
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
 
-fn get_report(ctx: &ServiceContext, id: &str) -> Result<Report, RepositoryError> {
-    ReportRepository::new(&ctx.connection)
-        .query_by_filter(ReportFilter::new().id(EqualFilter::equal_to(id)))?
+#[derive(Debug)]
+pub enum GetReportError {
+    TranslationError,
+    RepositoryError(RepositoryError),
+}
+
+fn get_report(
+    ctx: &ServiceContext,
+    translation_service: &Box<Localisations>,
+    user_language: String,
+    id: &str,
+) -> Result<Report, GetReportError> {
+    let report = ReportRepository::new(&ctx.connection)
+        .query_by_filter(ReportFilter::new().id(EqualFilter::equal_to(id)))
+        .map_err(|e| GetReportError::RepositoryError(e))?
         .pop()
-        .ok_or(RepositoryError::NotFound)
+        .ok_or(GetReportError::RepositoryError(RepositoryError::NotFound))?;
+
+    let translated_schema = if let Some(argument_schema) = report.argument_schema {
+        Some(
+            translate_schema(argument_schema, translation_service, &user_language)
+                .map_err(|_e| GetReportError::TranslationError)?,
+        )
+    } else {
+        None
+    };
+
+    Ok(Report {
+        report_row: report.report_row,
+        argument_schema: translated_schema,
+    })
+}
+
+#[derive(Debug)]
+pub enum GetReportsError {
+    TranslationError,
+    ListError(ListError),
 }
 
 fn query_reports(
     ctx: &ServiceContext,
+    translation_service: &Box<Localisations>,
+    user_language: String,
     pagination: Option<PaginationOption>,
     filter: Option<ReportFilter>,
     sort: Option<ReportSort>,
-) -> Result<Vec<Report>, ListError> {
+) -> Result<Vec<Report>, GetReportsError> {
     let repo = ReportRepository::new(&ctx.connection);
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)
+        .map_err(GetReportsError::ListError)?;
     let filter = filter
         .unwrap_or_default()
         .r#type(ReportType::OmSupply.equal_to());
-    Ok(repo.query(pagination, Some(filter.clone()), sort)?)
+
+    let reports = repo
+        .query(pagination, Some(filter.clone()), sort)
+        .map_err(|e| GetReportsError::ListError(ListError::DatabaseError(e)))?;
+    let reports = reports
+        .into_iter()
+        .map(|r| {
+            let translated_schema = if let Some(argument_schema) = r.argument_schema {
+                Some(
+                    translate_schema(argument_schema, translation_service, &user_language)
+                        .map_err(|_e| GetReportsError::TranslationError)?,
+                )
+            } else {
+                None
+            };
+            Ok(Report {
+                report_row: r.report_row,
+                argument_schema: translated_schema,
+            })
+        })
+        .collect::<Result<Vec<Report>, GetReportsError>>();
+    reports
+}
+
+fn translate_schema(
+    argument_schema: FormSchemaJson,
+    translation_service: &Box<Localisations>,
+    user_language: &str,
+) -> Result<FormSchemaJson, TranslationError> {
+    let mut json_schema = argument_schema.json_schema.clone();
+    crawl_and_translate(&mut json_schema, translation_service, user_language)?;
+    let mut ui_schema = argument_schema.ui_schema.clone();
+    crawl_and_translate(&mut ui_schema, translation_service, user_language)?;
+
+    Ok(FormSchemaJson {
+        id: argument_schema.id,
+        r#type: argument_schema.r#type,
+        json_schema: json_schema,
+        ui_schema: ui_schema,
+    })
 }
 
 fn resolve_report(
@@ -996,8 +1087,7 @@ mod report_generation_test {
         let (_, connection, connection_manager, _) =
             setup_all("test_report_translations", MockDataInserts::none()).await;
 
-        let translation_service =
-            ServiceProvider::new(connection_manager).translations_service;
+        let translation_service = ServiceProvider::new(connection_manager).translations_service;
 
         let mut templates = HashMap::new();
         templates.insert("test.html".to_string(), tera_template);
