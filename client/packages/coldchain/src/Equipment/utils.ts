@@ -31,7 +31,7 @@ export const assetsToCsv = (
   const dedupedAssetProperties = ArrayUtils.dedupe(properties);
 
   const fields: string[] = ['id'];
- 
+
   if (isCentralServer) {
     fields.push(t('label.store'));
   }
@@ -166,7 +166,9 @@ export const importEquipmentToCsv = (
   fields.push(...baseAssetFields(t), ...dedupedAssetProperties);
 
   const data = assets.map(node => {
-    const parsedStatus = parseLogStatus(node.status??StatusType.Functioning)?.key // to avoid status being undefined
+    const statusKey = parseLogStatus(
+      node.status ?? StatusType.Functioning // to avoid status being undefined
+    )?.key;
     const row = [
       ...(isCentralServer ? [node.store?.code] : []),
       node.assetNumber,
@@ -176,7 +178,7 @@ export const importEquipmentToCsv = (
       node.warrantyStart,
       node.warrantyEnd,
       node.serialNumber,
-      node.status && parsedStatus ? t(parsedStatus) : '',
+      statusKey ? t(statusKey) : '',
       node.needsReplacement,
       node.notes,
     ];
