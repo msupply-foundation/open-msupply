@@ -101,6 +101,7 @@ const requestParser = {
     id: line.id,
     requestedQuantity: line.requestedQuantity,
     comment: line.comment,
+    optionId: line?.reason?.id ?? null,
   }),
 };
 
