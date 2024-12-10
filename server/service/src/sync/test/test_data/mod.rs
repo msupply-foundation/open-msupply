@@ -2,6 +2,7 @@ use self::special::name_to_name_store_join;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
+pub(crate) mod abbreviation;
 pub(crate) mod activity_log;
 pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
@@ -65,6 +66,7 @@ pub(crate) mod vaccine_course_item;
 
 pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncomingRecord> {
     let mut test_records = Vec::new();
+    test_records.append(&mut abbreviation::test_pull_upsert_records());
     test_records.append(&mut user::test_pull_upsert_records());
     test_records.append(&mut user_permission::test_pull_upsert_records());
     test_records.append(&mut item::test_pull_upsert_records());

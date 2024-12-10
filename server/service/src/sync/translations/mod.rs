@@ -1,3 +1,4 @@
+pub(crate) mod abbreviation;
 pub(crate) mod activity_log;
 pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
@@ -76,6 +77,7 @@ pub(crate) type SyncTranslators = Vec<Box<dyn SyncTranslation>>;
 pub(crate) fn all_translators() -> SyncTranslators {
     vec![
         // Central
+        abbreviation::boxed(),
         user::boxed(),
         name::boxed(),
         name_tag::boxed(),
@@ -342,7 +344,7 @@ pub(crate) trait SyncTranslation {
     /// A single table name to match on, If there's just one table name to match on, use this function
     fn table_name(&self) -> &str {
         ""
-    }   
+    }
 
     /// If you need to match on more than one table_name with the same translator, use this one...
     fn table_names(&self) -> Vec<&str> {
