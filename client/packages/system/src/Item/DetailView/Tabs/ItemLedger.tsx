@@ -20,7 +20,13 @@ import {
 } from '@openmsupply-client/common';
 import { getStatusTranslation } from '@openmsupply-client/invoices/src/utils';
 
-const ItemLedgerTable = ({ itemId }: { itemId: string }) => {
+const ItemLedgerTable = ({
+  itemId,
+  onRowClick,
+}: {
+  itemId: string;
+  onRowClick: (ledger: ItemLedgerFragment) => void;
+}) => {
   const t = useTranslation();
   const {
     updateSortQuery,
@@ -138,6 +144,7 @@ const ItemLedgerTable = ({ itemId }: { itemId: string }) => {
   );
 
   if (isLoading) return <BasicSpinner />;
+  console.log('clicked ', onRowClick);
 
   return (
     <DataTable
@@ -147,12 +154,19 @@ const ItemLedgerTable = ({ itemId }: { itemId: string }) => {
       pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
       onChangePage={updatePaginationQuery}
       isLoading={isLoading}
+      onRowClick={onRowClick}
       noDataElement={<NothingHere body={t('messages.no-ledger')} />}
     />
   );
 };
 
-export const ItemLedgerTab = ({ itemId }: { itemId: string }) => (
+export const ItemLedgerTab = ({
+  itemId,
+  onRowClick,
+}: {
+  itemId: string;
+  onRowClick: (ledger: ItemLedgerFragment) => void;
+}) => (
   <Box justifyContent="center" display="flex" flex={1}>
     <Box flex={1} display="flex">
       <TableProvider
@@ -161,7 +175,7 @@ export const ItemLedgerTab = ({ itemId }: { itemId: string }) => (
           initialSortBy: { key: 'datetime' },
         })}
       >
-        <ItemLedgerTable itemId={itemId} />
+        <ItemLedgerTable itemId={itemId} onRowClick={onRowClick} />
       </TableProvider>
     </Box>
   </Box>
