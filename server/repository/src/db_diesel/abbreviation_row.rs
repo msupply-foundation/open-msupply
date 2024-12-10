@@ -1,4 +1,5 @@
 use super::abbreviation_row::abbreviation::dsl::*;
+use crate::Delete;
 use crate::RepositoryError;
 use crate::StorageConnection;
 use crate::Upsert;
@@ -34,9 +35,9 @@ impl<'a> AbbreviationRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &AbbreviationRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(abbreviation::table)
+        diesel::insert_into(abbreviation)
             .values(row)
-            .on_conflict(abbreviation::id)
+            .on_conflict(id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -60,8 +61,7 @@ impl<'a> AbbreviationRowRepository<'a> {
     }
 
     pub fn delete(&self, abbreviation_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(abbreviation)
-            .filter(id.eq(abbreviation_id))
+        diesel::delete(abbreviation.filter(id.eq(abbreviation_id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -78,6 +78,23 @@ impl Upsert for AbbreviationRow {
         assert_eq!(
             AbbreviationRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
+        )
+    }
+}
+
+#[derive(Debug)]
+pub struct AbbreviationRowDelete(pub String);
+impl Delete for AbbreviationRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        AbbreviationRowRepository::new(con).delete(&self.0)?;
+        Ok(None)
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            AbbreviationRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
         )
     }
 }

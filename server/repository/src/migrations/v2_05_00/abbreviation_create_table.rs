@@ -14,7 +14,7 @@ impl MigrationFragment for Migrate {
             CREATE TABLE abbreviation (
                 id TEXT NOT NULL PRIMARY KEY,
                 text TEXT NOT NULL,
-                expansion TEXT NOT NULL,
+                expansion TEXT NOT NULL
             );
         "#
         )?;
