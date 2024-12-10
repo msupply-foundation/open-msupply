@@ -39,12 +39,11 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams();
-  const { rows } = usePrescription.line.rows();
+  const { isDisabled, rows } = usePrescription();
   const columns = usePrescriptionColumn({
     onChangeSortBy: updateSortQuery,
     sortBy,
   });
-  const isDisabled = usePrescription.utils.isDisabled();
 
   if (!rows) return null;
 

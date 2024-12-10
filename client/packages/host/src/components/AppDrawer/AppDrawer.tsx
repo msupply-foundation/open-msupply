@@ -1,11 +1,9 @@
 import React from 'react';
 import { Property } from 'csstype';
 import {
-  BookIcon,
   Box,
   DashboardIcon,
   Divider,
-  ExternalNavLink,
   List,
   PowerIcon,
   Theme,
@@ -16,9 +14,7 @@ import {
   AppNavLink,
   useIsMediumScreen,
   useAuthContext,
-  useLocation,
   EnvUtils,
-  UserPermission,
   RouteBuilder,
   useConfirmationModal,
   ReportsIcon,
@@ -26,11 +22,7 @@ import {
   HelpIcon,
   SettingsIcon,
 } from '@openmsupply-client/common';
-import {
-  AppRoute,
-  ExternalURL,
-  useExternalUrl,
-} from '@openmsupply-client/config';
+import { AppRoute } from '@openmsupply-client/config';
 import {
   CatalogueNav,
   DistributionNav,
@@ -152,9 +144,8 @@ export const AppDrawer: React.FC = () => {
   const t = useTranslation();
   const isMediumScreen = useIsMediumScreen();
   const drawer = useDrawer();
-  const { logout, userHasPermission, store } = useAuthContext();
+  const { logout, store } = useAuthContext();
   const { fullScreen } = useHostContext();
-  const location = useLocation();
   const navigate = useNavigate();
 
   React.useEffect(() => {
@@ -180,11 +171,6 @@ export const AppDrawer: React.FC = () => {
     drawer.open();
     drawer.setHoverOpen(true);
   };
-
-  const publicDocsUrl = useExternalUrl(ExternalURL.PublicDocs);
-  const docsUrl = `${publicDocsUrl}${
-    EnvUtils.mapRoute(location.pathname).docs
-  }`;
 
   const handleLogout = () => {
     navigate(RouteBuilder.create(AppRoute.Login).build());
@@ -239,18 +225,11 @@ export const AppDrawer: React.FC = () => {
       <LowerListContainer onMouseEnter={onHoverOver} onMouseLeave={onHoverOut}>
         <List>
           {drawer.isOpen && <StyledDivider color="drawerDivider" />}
-          <ExternalNavLink
-            to={docsUrl}
-            icon={<BookIcon fontSize="small" color="primary" />}
-            text={t('docs')}
-            trustedSite={true}
-          />
           <SyncNavLink />
           <AppNavLink
             to={AppRoute.Settings}
             icon={<SettingsIcon fontSize="small" color="primary" />}
             text={t('settings')}
-            visible={userHasPermission(UserPermission.ServerAdmin)}
           />
           <AppNavLink
             to={AppRoute.Help}

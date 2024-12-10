@@ -16,6 +16,7 @@ pub struct UpdateRequestRequisitionLine {
     pub id: String,
     pub requested_quantity: Option<f64>,
     pub comment: Option<String>,
+    pub option_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -87,11 +88,13 @@ fn generate(
         id: _,
         requested_quantity: updated_requested_quantity,
         comment: updated_comment,
+        option_id,
     }: UpdateRequestRequisitionLine,
 ) -> RequisitionLineRow {
     inline_edit(&existing, |mut u| {
         u.requested_quantity = updated_requested_quantity.unwrap_or(u.requested_quantity);
         u.comment = updated_comment.or(u.comment);
+        u.option_id = option_id.or(u.option_id);
         u
     })
 }
@@ -207,6 +210,7 @@ mod test {
                     id: test_line.id.clone(),
                     requested_quantity: Some(99.0),
                     comment: Some("comment".to_string()),
+                    option_id: None,
                 },
             )
             .unwrap();
