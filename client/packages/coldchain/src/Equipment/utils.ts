@@ -166,6 +166,7 @@ export const importEquipmentToCsv = (
   fields.push(...baseAssetFields(t), ...dedupedAssetProperties);
 
   const data = assets.map(node => {
+    const parsedStatus = parseLogStatus(node.status??StatusType.Functioning)?.key // to avoid status being undefined
     const row = [
       ...(isCentralServer ? [node.store?.code] : []),
       node.assetNumber,
@@ -175,7 +176,7 @@ export const importEquipmentToCsv = (
       node.warrantyStart,
       node.warrantyEnd,
       node.serialNumber,
-      node.status ? (parseLogStatus(node.status)?.key ?? '') : '',
+      node.status && parsedStatus ? t(parsedStatus) : '',
       node.needsReplacement,
       node.notes,
     ];
