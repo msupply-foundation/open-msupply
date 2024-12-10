@@ -88,6 +88,7 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("asset_log", "log_datetime"),
         ("sync_file_reference", "retry_at"),
         ("migration_fragment_log", "datetime"),
+        ("system_log", "datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
