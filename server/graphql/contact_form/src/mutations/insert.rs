@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use repository::feedback_form_row::FeedbackFormRow;
+use repository::contact_form_row::ContactFormRow;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     contact_form::{InsertContactForm as ServiceInput, InsertContactFormError as ServiceError},
@@ -9,7 +9,7 @@ use service::{
 
 #[derive(InputObject)]
 #[graphql(name = "InsertContactFormInput")]
-pub struct InsertInput {
+pub struct InsertContactFormInput {
     pub id: String,
     pub reply_email: String,
     pub body: String,
@@ -35,7 +35,7 @@ pub enum InsertContactFormResponse {
 pub fn insert_contact_form(
     ctx: &Context<'_>,
     store_id: &str,
-    input: InsertInput,
+    input: InsertContactFormInput,
 ) -> Result<InsertContactFormResponse> {
     let user = validate_auth(
         ctx,
@@ -60,7 +60,7 @@ pub fn insert_contact_form(
 }
 
 pub fn map_response(
-    from: Result<FeedbackFormRow, ServiceError>,
+    from: Result<ContactFormRow, ServiceError>,
 ) -> Result<InsertContactFormResponse> {
     match from {
         Ok(contact_form) => Ok(InsertContactFormResponse::Response(InsertResponse {
@@ -70,9 +70,9 @@ pub fn map_response(
     }
 }
 
-impl InsertInput {
+impl InsertContactFormInput {
     pub fn to_domain(self) -> ServiceInput {
-        let InsertInput {
+        let InsertContactFormInput {
             id,
             reply_email,
             body,
