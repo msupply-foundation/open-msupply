@@ -15,7 +15,7 @@ impl MigrationFragment for Migrate {
                 id TEXT NOT NULL PRIMARY KEY,
                 item_link_id TEXT NOT NULL REFERENCES item_link(id),
                 directions TEXT NOT NULL,
-                priority {DOUBLE} NOT NULL
+                priority BIGINT NOT NULL
             );
         "#
         )?;
