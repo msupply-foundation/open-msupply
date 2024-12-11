@@ -2,6 +2,7 @@ use self::special::name_to_name_store_join;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
+pub(crate) mod abbreviation;
 pub(crate) mod activity_log;
 pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
@@ -53,6 +54,7 @@ pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
 pub(crate) mod sync_file_reference;
+pub(crate) mod system_log;
 pub(crate) mod temperature_breach;
 pub(crate) mod temperature_log;
 pub(crate) mod unit;
@@ -65,6 +67,7 @@ pub(crate) mod vaccine_course_item;
 
 pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncomingRecord> {
     let mut test_records = Vec::new();
+    test_records.append(&mut abbreviation::test_pull_upsert_records());
     test_records.append(&mut user::test_pull_upsert_records());
     test_records.append(&mut user_permission::test_pull_upsert_records());
     test_records.append(&mut item::test_pull_upsert_records());
@@ -106,6 +109,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut indicator_attribute::test_pull_upsert_records());
     test_records.append(&mut item_variant::test_pull_upsert_records());
     test_records.append(&mut packaging_variant::test_pull_upsert_records());
+    test_records.append(&mut system_log::test_pull_upsert_records());
 
     test_records
 }
@@ -220,6 +224,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut demographic::test_v6_records());
     test_records.append(&mut vaccine_course_dose::test_v6_records());
     test_records.append(&mut vaccination::test_v6_records());
+    test_records.append(&mut system_log::test_v6_records());
 
     test_records
 }
