@@ -65,7 +65,7 @@ export const StocktakeLineEditTabs: FC<
             color="primary"
             variant="outlined"
             onClick={onAddLine}
-            label={`${t('label.add-batch', { ns: 'inventory' })} (+)`}
+            label={`${t('label.add-batch')} (+)`}
             Icon={<PlusCircleIcon />}
           />
         </Box>
