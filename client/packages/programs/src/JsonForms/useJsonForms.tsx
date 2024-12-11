@@ -112,7 +112,7 @@ export type JsonFormData<R> = {
  * What data is shown and how it is saved can be customized through the `jsonFormData` form
  * parameter.
  */
-export const useJsonForms = <R,>(
+export const useJsonFormsHandler = <R,>(
   config: JsonFormsConfig,
   jsonFormData: JsonFormData<R>
 ) => {
