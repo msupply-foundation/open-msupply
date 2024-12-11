@@ -40,7 +40,7 @@ export const PrescriptionLineEditPage = () => {
       }
     });
     return items;
-  }, [data]);
+  }, [lines]);
 
   const enteredLineIds = lines
     .filter(line => line.numberOfPacks !== 0)
