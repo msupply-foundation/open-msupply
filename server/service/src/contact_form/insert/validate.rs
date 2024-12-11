@@ -14,8 +14,8 @@ pub fn validate(
     if input.reply_email.is_empty() {
         return Err(InsertContactFormError::EmailDoesNotExist);
     }
-
-    let email_regex = Regex::new(r"^[\w\.=-]+@[\w\.-]+\.[\w]{2,}$").unwrap();
+    //unwrap - unwrap is ok here as it is 'new' therefore always exists
+    let email_regex = Regex::new(r"[^@]+@[^@]+\.[^@]+").unwrap();
 
     if !email_regex.is_match(&input.reply_email) {
         return Err(InsertContactFormError::EmailIsInvalid);
