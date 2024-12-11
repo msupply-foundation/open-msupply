@@ -41,6 +41,7 @@ export { InvoiceIcon } from './Invoice';
 export { LinkIcon } from './Link';
 export { ListIcon } from './List';
 export { MaximiseIcon } from './Maximise';
+export { MailIcon } from './Mail';
 export { MSupplyGuy, AnimatedMSupplyGuy } from './MSupplyGuy';
 export { MedicineIcon } from './MedicineIcon';
 export { MenuDotsIcon } from './MenuDots';

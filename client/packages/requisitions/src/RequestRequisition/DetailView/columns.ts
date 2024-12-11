@@ -73,6 +73,7 @@ export const useRequestColumns = () => {
       label: 'label.unit',
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.item.unitName,
+      sortable: false,
     },
     {
       key: 'defaultPackSize',
