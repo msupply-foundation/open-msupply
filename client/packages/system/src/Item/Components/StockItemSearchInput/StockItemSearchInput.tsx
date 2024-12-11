@@ -33,11 +33,12 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
     ? { ...filter, categoryName: itemCategoryName }
     : filter;
 
-  const { data, isLoading, fetchNextPage } = useItemStockOnHandInfinite({
-    rowsPerPage: ROWS_PER_PAGE,
-    filter: fullFilter,
-    includeNonVisibleWithStockOnHand,
-  });
+  const { data, isLoading, fetchNextPage, isFetchingNextPage } =
+    useItemStockOnHandInfinite({
+      rowsPerPage: ROWS_PER_PAGE,
+      filter: fullFilter,
+      includeNonVisibleWithStockOnHand,
+    });
   // changed from useStockLines even though that is more appropriate
   // when viewing a stocktake, you may have a stocktake line which has no stock lines.
   // this call is to fetch the current item; if you have a large number of items
@@ -90,7 +91,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       onOpen={selectControl.toggleOn}
       onClose={selectControl.toggleOff}
       filterOptionConfig={itemFilterOptions}
-      loading={isLoading}
+      loading={isLoading || isFetchingNextPage}
       value={value ? { ...value, label: value.name ?? '' } : null}
       noOptionsText={t('error.no-items')}
       onChange={(_, item) => onChange(item)}
