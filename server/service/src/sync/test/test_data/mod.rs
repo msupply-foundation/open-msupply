@@ -22,6 +22,7 @@ pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
 pub(crate) mod item_category;
+pub(crate) mod item_direction;
 pub(crate) mod item_variant;
 pub(crate) mod location;
 pub(crate) mod location_movement;
@@ -70,6 +71,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut user::test_pull_upsert_records());
     test_records.append(&mut user_permission::test_pull_upsert_records());
     test_records.append(&mut item::test_pull_upsert_records());
+    test_records.append(&mut item_direction::test_pull_upsert_records());
     test_records.append(&mut master_list_line::test_pull_upsert_records());
     test_records.append(&mut master_list_name_join::test_pull_upsert_records());
     test_records.append(&mut master_list::test_pull_upsert_records());
