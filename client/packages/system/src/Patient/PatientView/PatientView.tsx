@@ -29,7 +29,7 @@ import {
   SavedDocument,
   SchemaData,
   useDocumentRegistry,
-  useJsonForms,
+  useJsonFormsHandler,
   usePatientModalStore,
   usePatientStore,
   useProgramEnrolments,
@@ -199,7 +199,7 @@ const PatientDetailView = ({
       };
 
   const { JsonForm, saveData, isSaving, isDirty, validationError } =
-    useJsonForms(
+  useJsonFormsHandler (
       {
         documentName: createNewPatient ? undefined : documentName,
         patientId: patientId,
