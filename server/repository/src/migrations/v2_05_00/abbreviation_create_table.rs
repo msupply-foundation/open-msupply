@@ -16,8 +16,6 @@ impl MigrationFragment for Migrate {
                 text TEXT NOT NULL,
                 expansion TEXT NOT NULL
             );
-            
-            UPDATE sync_buffer SET integration_datetime = NULL WHERE table_name = 'abbreviation';
         "#
         )?;
 
