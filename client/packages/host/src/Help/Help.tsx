@@ -14,8 +14,8 @@ export const Help: React.FC = () => {
 
   return (
     <Box flex={1} padding={4} sx={{ maxWidth: 800 }}>
-      <FeedbackSection />
       <UserGuide />
+      <FeedbackSection />
       <AppBarButtonsPortal>
         <AppVersion SiteInfo={<SiteInfo siteName={initStatus?.siteName} />} />
       </AppBarButtonsPortal>
