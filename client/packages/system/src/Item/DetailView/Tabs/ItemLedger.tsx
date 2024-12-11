@@ -116,12 +116,14 @@ const ItemLedgerTable = ({
         label: 'label.pack-cost-price',
         sortable: false,
         accessor: ({ rowData }) => rowData.costPricePerPack,
+        Cell: CurrencyCell,
       },
       {
         key: 'sellPricePerPack',
         label: 'label.pack-sell-price',
         sortable: false,
         accessor: ({ rowData }) => rowData.sellPricePerPack,
+        Cell: CurrencyCell,
       },
       {
         key: 'foreignCurrencyPriceBeforeTax',
