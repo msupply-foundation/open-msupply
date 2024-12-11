@@ -13,8 +13,6 @@ import { ItemRowFragment, ListItems } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PageLayout } from './PageLayout';
 import { usePrescription } from '../../api';
-import { usePreviousNextItem } from './hooks';
-import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { PrescriptionLineEdit } from './PrescriptionLineEdit';
 
@@ -43,11 +41,6 @@ export const PrescriptionLineEditPage = () => {
     });
     return items;
   }, [data]);
-
-  const { hasNext, next, hasPrevious, previous } = usePreviousNextItem(
-    items,
-    currentItem?.id
-  );
 
   const enteredLineIds = lines
     .filter(line => line.numberOfPacks !== 0)
@@ -85,13 +78,7 @@ export const PrescriptionLineEditPage = () => {
               <PrescriptionLineEdit
                 draft={{ item: currentItem }}
                 mode={currentItem ? ModalMode.Update : ModalMode.Create}
-              />
-              <Footer
-                hasNext={hasNext}
-                next={next}
-                hasPrevious={hasPrevious}
-                previous={previous}
-                invoiceNumber={data?.invoiceNumber}
+                items={items}
               />
             </>
           }

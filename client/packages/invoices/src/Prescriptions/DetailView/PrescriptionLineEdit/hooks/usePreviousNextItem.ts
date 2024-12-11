@@ -10,8 +10,18 @@ interface prevNextState {
 }
 
 export const usePreviousNextItem = (items?: itemId[], currentItem?: string) => {
-  if (!items || !currentItem) {
+  if (!items) {
     return { hasNext: false, next: null, hasPrevious: false, previous: null };
+  }
+
+  if (!currentItem) {
+    // Assume if we don't have a current item, we're adding a new item
+    return {
+      hasNext: false,
+      next: null,
+      hasPrevious: items.length > 0,
+      previous: items[items.length - 1]?.id ?? null,
+    };
   }
 
   const state: prevNextState = {
@@ -23,6 +33,15 @@ export const usePreviousNextItem = (items?: itemId[], currentItem?: string) => {
   const idx = items.findIndex(i => i.id === currentItem);
   const previous = items[idx - 1];
   const next = items[idx + 1];
+
+  if (idx === -1) {
+    return {
+      hasNext: false,
+      next: null,
+      hasPrevious: items.length > 0,
+      previous: items[items.length - 1]?.id ?? null,
+    };
+  }
 
   if (!previous) {
     state.hasPrevious = false;

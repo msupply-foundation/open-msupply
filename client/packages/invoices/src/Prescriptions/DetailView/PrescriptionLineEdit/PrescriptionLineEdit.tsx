@@ -15,10 +15,9 @@ import {
   useNotification,
   InvoiceNodeStatus,
   DateUtils,
-  LoadingButton,
-  CheckIcon,
+  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
-import { useDraftPrescriptionLines } from './hooks';
+import { useDraftPrescriptionLines, usePreviousNextItem } from './hooks';
 import { usePrescription } from '../../api';
 import { Draft, DraftItem } from '../../..';
 import {
@@ -33,15 +32,18 @@ import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { usePrescriptionLines } from '../../api/hooks/usePrescriptionLines';
+import { Footer } from './Footer';
 
 interface PrescriptionLineEditModalProps {
   draft: Draft | null;
   mode: ModalMode | null;
+  items: ItemRowFragment[];
 }
 
 export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   draft,
   mode,
+  items,
 }) => {
   const item = !draft ? null : (draft.item ?? null);
   const t = useTranslation();
@@ -90,6 +92,8 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     updateNotes(note);
     setIsAutoAllocated(false);
   };
+
+  useConfirmOnLeaving(isDirty);
 
   const onSave = async () => {
     if (!isDirty) return;
@@ -144,7 +148,9 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     }
 
     try {
+      console.log('onSave');
       await onSave();
+      console.log('onSave done');
       setIsDirty(false);
       if (!!placeholder) {
         const infoSnack = info(t('message.placeholder-line'));
@@ -167,51 +173,56 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
       DateUtils.isExpired(new Date(stockLine?.expiryDate))
   );
 
-  return (
-    <Grid container gap={0.5}>
-      <PrescriptionLineEditForm
-        disabled={mode === ModalMode.Update || isDisabled}
-        packSizeController={packSizeController}
-        onChangeItem={(item: ItemRowFragment | null) => {
-          if (status === InvoiceNodeStatus.New) setIsDirty(true);
-          setIsAutoAllocated(false);
-          setCurrentItem(item);
-        }}
-        item={currentItem}
-        allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
-        availableQuantity={sumAvailableQuantity(draftPrescriptionLines)}
-        onChangeQuantity={onAllocate}
-        canAutoAllocate={canAutoAllocate}
-        isAutoAllocated={isAutoAllocated}
-        updateNotes={onUpdateNotes}
-        draftPrescriptionLines={draftPrescriptionLines}
-        showZeroQuantityConfirmation={showZeroQuantityConfirmation}
-        hasOnHold={hasOnHold}
-        hasExpired={hasExpired}
-      />
+  const { hasNext, next, hasPrevious, previous } = usePreviousNextItem(
+    items,
+    currentItem?.id
+  );
 
-      <TableWrapper
-        canAutoAllocate={canAutoAllocate}
-        currentItem={currentItem}
-        isLoading={isLoading}
-        packSizeController={packSizeController}
-        updateQuantity={onUpdateQuantity}
-        draftPrescriptionLines={draftPrescriptionLines}
-        allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
+  return (
+    <>
+      <Grid container gap={0.5}>
+        <PrescriptionLineEditForm
+          disabled={mode === ModalMode.Update || isDisabled}
+          packSizeController={packSizeController}
+          onChangeItem={(item: ItemRowFragment | null) => {
+            if (status === InvoiceNodeStatus.New) setIsDirty(true);
+            setIsAutoAllocated(false);
+            setCurrentItem(item);
+          }}
+          item={currentItem}
+          allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
+          availableQuantity={sumAvailableQuantity(draftPrescriptionLines)}
+          onChangeQuantity={onAllocate}
+          canAutoAllocate={canAutoAllocate}
+          isAutoAllocated={isAutoAllocated}
+          updateNotes={onUpdateNotes}
+          draftPrescriptionLines={draftPrescriptionLines}
+          showZeroQuantityConfirmation={showZeroQuantityConfirmation}
+          hasOnHold={hasOnHold}
+          hasExpired={hasExpired}
+        />
+
+        <TableWrapper
+          canAutoAllocate={canAutoAllocate}
+          currentItem={currentItem}
+          isLoading={isLoading}
+          packSizeController={packSizeController}
+          updateQuantity={onUpdateQuantity}
+          draftPrescriptionLines={draftPrescriptionLines}
+          allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
+        />
+      </Grid>
+      <Footer
+        hasNext={hasNext}
+        next={next}
+        hasPrevious={hasPrevious}
+        previous={previous}
+        invoiceNumber={data?.invoiceNumber}
+        loading={isSavingLines || isLoading}
+        isDirty={isDirty}
+        handleSave={handleSave}
       />
-      <LoadingButton
-        disabled={!currentItem}
-        isLoading={isSavingLines}
-        startIcon={<CheckIcon />}
-        loadingStyle={{ iconColor: 'secondary.main' }}
-        variant="contained"
-        color="secondary"
-        aria-label={t('button.ok')}
-        onClick={() => handleSave(() => true)}
-      >
-        SAVE Todo: Auto Save
-      </LoadingButton>
-    </Grid>
+    </>
   );
 };
 
@@ -259,19 +270,21 @@ const TableWrapper: React.FC<TableProps> = ({
     );
 
   return (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore({
-        initialSortBy: { key: 'expiryDate' },
-      })}
-    >
-      <PrescriptionLineEditTable
-        packSizeController={packSizeController}
-        onChange={updateQuantity}
-        rows={draftPrescriptionLines}
-        item={currentItem}
-        allocatedQuantity={allocatedQuantity}
-      />
-    </TableProvider>
+    <>
+      <TableProvider
+        createStore={createTableStore}
+        queryParamsStore={createQueryParamsStore({
+          initialSortBy: { key: 'expiryDate' },
+        })}
+      >
+        <PrescriptionLineEditTable
+          packSizeController={packSizeController}
+          onChange={updateQuantity}
+          rows={draftPrescriptionLines}
+          item={currentItem}
+          allocatedQuantity={allocatedQuantity}
+        />
+      </TableProvider>
+    </>
   );
 };
