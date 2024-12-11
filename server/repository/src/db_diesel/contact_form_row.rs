@@ -45,6 +45,7 @@ pub struct ContactFormRow {
 }
 
 #[derive(Clone, Debug, PartialEq, Default, DbEnum, Eq, Deserialize, Serialize)]
+#[PgType = "contact_type_enum"]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ContactType {
