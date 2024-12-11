@@ -39,7 +39,7 @@ export const ListItems = ({
   return (
     <Tooltip title={value?.name}>
       <ListOptions
-        currentId={value?.id}
+        currentId={value?.id ?? 'new'}
         onClick={id => {
           navigate(route.addPart(id).build());
         }}
