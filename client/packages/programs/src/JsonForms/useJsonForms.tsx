@@ -106,7 +106,7 @@ export type JsonFormData<R> = {
 };
 
 /**
- * This hook add provides functionality to save form data and keep track if form data has been
+  * This hook add provides functionality to save form data and keep track if form data has been
  * modified.
  *
  * What data is shown and how it is saved can be customized through the `jsonFormData` form
