@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo } from 'react';
+import React, { FC, useEffect, useMemo, useRef } from 'react';
 import {
   useToggle,
   useFormatNumber,
@@ -8,13 +8,15 @@ import {
   ArrayUtils,
   useDebounceCallback,
   useStringFilter,
+  ItemNode,
+  Option,
 } from '@openmsupply-client/common';
 import { useItemById, useItemStockOnHandInfinite } from '../../api';
 import { itemFilterOptions, StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
 const DEBOUNCE_TIMEOUT = 300;
-const ROWS_PER_PAGE = 100;
+const ROWS_PER_PAGE = 10;
 
 export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   onChange,
@@ -28,6 +30,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   itemCategoryName,
 }) => {
   const { filter, onFilter } = useStringFilter('name');
+  const lastOptions = useRef<ItemNode[]>([]);
 
   const fullFilter = itemCategoryName
     ? { ...filter, categoryName: itemCategoryName }
@@ -52,6 +55,9 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const selectControl = useToggle();
 
   const options = useMemo(() => {
+    if (!data?.pages) {
+      return lastOptions.current;
+    }
     const items = ArrayUtils.flatMap(
       data?.pages,
       page => page.data?.nodes ?? []
@@ -61,10 +67,14 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       items.unshift(currentItem);
     }
 
-    return defaultOptionMapper(
+    const newOptions = defaultOptionMapper(
       extraFilter ? (items.filter(extraFilter) ?? []) : (items ?? []),
       'name'
     ).sort((a, b) => a.label.localeCompare(b.label));
+
+    lastOptions.current = newOptions;
+
+    return newOptions;
   }, [data?.pages]);
 
   const value = options.find(({ id }) => id === currentItemId) ?? null;
