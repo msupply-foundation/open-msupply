@@ -160,7 +160,6 @@ const useStatusChangeButton = () => {
         comment: getUpdatedComment(),
       });
       const errorMessage = mapStructuredErrors(result);
-      console.log('Error messages: ', errorMessage);
 
       if (errorMessage) {
         error(errorMessage)();

@@ -15,6 +15,8 @@ mod clinician_store_join_row;
 pub mod cold_storage_type;
 mod cold_storage_type_row;
 pub mod consumption;
+pub mod contact_form;
+pub mod contact_form_row;
 pub mod contact_trace;
 pub mod contact_trace_row;
 mod context_row;
