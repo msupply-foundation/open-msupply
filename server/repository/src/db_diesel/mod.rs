@@ -127,6 +127,7 @@ pub mod sync_file_reference;
 pub mod sync_file_reference_row;
 pub mod sync_log;
 mod sync_log_row;
+pub mod system_log_row;
 pub mod temperature_breach;
 pub mod temperature_breach_config;
 mod temperature_breach_config_row;
