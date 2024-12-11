@@ -18,7 +18,6 @@ pub enum InsertContactFormError {
     MessageDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
-    //TODO: message invalid eg /n
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
