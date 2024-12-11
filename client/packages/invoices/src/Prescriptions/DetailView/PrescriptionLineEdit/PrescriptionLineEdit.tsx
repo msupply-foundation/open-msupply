@@ -148,9 +148,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     }
 
     try {
-      console.log('onSave');
       await onSave();
-      console.log('onSave done');
       setIsDirty(false);
       if (!!placeholder) {
         const infoSnack = info(t('message.placeholder-line'));
