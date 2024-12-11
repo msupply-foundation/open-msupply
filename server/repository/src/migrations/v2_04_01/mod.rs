@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 
 mod category_and_item_categories;
+mod system_log_table;
 
 use crate::StorageConnection;
 
@@ -16,7 +17,10 @@ impl Migration for V2_04_01 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(category_and_item_categories::Migrate)]
+        vec![
+            Box::new(category_and_item_categories::Migrate),
+            Box::new(system_log_table::Migrate),
+        ]
     }
 }
 
