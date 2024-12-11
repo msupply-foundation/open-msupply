@@ -17,6 +17,8 @@ impl MigrationFragment for Migrate {
                 directions TEXT NOT NULL,
                 priority {DOUBLE} NOT NULL
             );
+
+            UPDATE sync_buffer SET integration_datetime = NULL WHERE table_name = 'item_direction';
         "#
         )?;
 
