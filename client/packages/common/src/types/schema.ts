@@ -3667,7 +3667,6 @@ export type ItemStatsNode = {
   availableStockOnHand: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
   totalConsumption: Scalars['Float']['output'];
-  totalStockOnHand: Scalars['Float']['output'];
 };
 
 export type ItemVariantMutations = {
