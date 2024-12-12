@@ -8,7 +8,6 @@ use service::{
 };
 
 #[derive(InputObject)]
-#[graphql(name = "InsertContactFormInput")]
 pub struct InsertContactFormInput {
     pub id: String,
     pub reply_email: String,
