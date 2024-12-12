@@ -122,7 +122,6 @@ const StockListComponent: FC = () => {
       Cell: CurrencyCell,
       width: 125,
     },
-
     {
       key: 'totalValue',
       label: 'label.total',
