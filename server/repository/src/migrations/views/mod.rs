@@ -158,7 +158,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         invoice_line_stock_movement
         LEFT JOIN inventory_adjustment_reason ON invoice_line_stock_movement.inventory_adjustment_reason_id = inventory_adjustment_reason.id
         LEFT JOIN return_reason ON invoice_line_stock_movement.return_reason_id = return_reason.id
-        JOIN stock_line ON stock_line.id = invoice_line_stock_movement.stock_line_id
+        LEFT JOIN stock_line ON stock_line.id = invoice_line_stock_movement.stock_line_id
         JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
         JOIN name_link ON invoice.name_link_id = name_link.id
         JOIN name ON name_link.name_id = name.id
