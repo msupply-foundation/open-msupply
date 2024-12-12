@@ -8,16 +8,16 @@ import {
   uniqBy,
 } from '@openmsupply-client/common';
 import { useHistoricalStockLines } from '@openmsupply-client/system';
-import { usePrescription } from '../../../api';
+import { usePrescription } from '../../api';
 import { DraftItem } from '../../../..';
-import { DraftStockOutLine } from '../../../../types';
+import { DraftStockOutLine } from '../../../types';
 import {
   UseDraftStockOutLinesControl,
   createDraftStockOutLine,
   createDraftStockOutLineFromStockLine,
   issueStock,
   updateNotes,
-} from '../../../../StockOut/utils';
+} from '../../../StockOut/utils';
 
 export interface UseDraftPrescriptionLinesControl
   extends UseDraftStockOutLinesControl {

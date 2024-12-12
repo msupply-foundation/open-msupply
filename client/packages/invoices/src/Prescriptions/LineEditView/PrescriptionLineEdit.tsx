@@ -18,20 +18,20 @@ import {
   useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { useDraftPrescriptionLines, usePreviousNextItem } from './hooks';
-import { usePrescription } from '../../api';
-import { Draft, DraftItem } from '../../..';
+import { usePrescription } from '../api';
+import { Draft, DraftItem } from '../..';
 import {
   PackSizeController,
   getAllocatedQuantity,
   sumAvailableQuantity,
   usePackSizeController,
   allocateQuantities,
-} from '../../../StockOut';
-import { DraftStockOutLine } from '../../../types';
+} from '../../StockOut';
+import { DraftStockOutLine } from '../../types';
 import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 import { ItemRowFragment } from '@openmsupply-client/system';
-import { usePrescriptionLines } from '../../api/hooks/usePrescriptionLines';
+import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 import { Footer } from './Footer';
 
 interface PrescriptionLineEditModalProps {

@@ -13,7 +13,7 @@ import {
 } from './InboundShipment';
 import { PrescriptionListView, PrescriptionDetailView } from './Prescriptions';
 import { CustomerReturnDetailView } from './Returns/CustomerDetailView';
-import { PrescriptionLineEditPage } from './Prescriptions/DetailView/PrescriptionLineEdit/PrescriptionLineEditPage';
+import { PrescriptionLineEditView } from './Prescriptions/LineEditView';
 
 const InvoiceService: FC = () => {
   const outboundShipmentsRoute = RouteBuilder.create(
@@ -78,7 +78,7 @@ const InvoiceService: FC = () => {
       <Route path={prescriptionRoute} element={<PrescriptionDetailView />} />
       <Route
         path={prescriptionLineRoute}
-        element={<PrescriptionLineEditPage />}
+        element={<PrescriptionLineEditView />}
       />
 
       <Route path={supplierReturnsRoute} element={<SupplierReturnListView />} />
