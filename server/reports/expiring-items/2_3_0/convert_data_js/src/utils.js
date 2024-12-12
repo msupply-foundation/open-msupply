@@ -77,6 +77,9 @@ const calculateStockAtRisk = (
       }
     }
   }
+  if (stockAtRisk < 0) {
+    return 0;
+  }
   return stockAtRisk;
 };
 
