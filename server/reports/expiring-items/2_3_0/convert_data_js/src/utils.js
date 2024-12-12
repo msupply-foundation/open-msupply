@@ -11,8 +11,9 @@ const processStockLines = (nodes, sort, dir) => {
       line?.item?.stats?.averageMonthlyConsumption
     );
     if (!!expectedUsage) {
-      line.expectedUsage = expectedUsage;
+      line.expectedUsage = Math.min(expectedUsage, line?.totalNumberOfPacks ?? expectedUsage);
     }
+    
     const stockAtRisk = calculateStockAtRisk(
       line?.packSize,
       line?.totalNumberOfPacks,
