@@ -12,7 +12,7 @@ pub fn validate(
     }
 
     if input.reply_email.is_empty() {
-        return Err(InsertContactFormError::EmailNotPRovided);
+        return Err(InsertContactFormError::EmailNotProvided);
     }
     // Unwrap is ok here as would only panic if regex pattern was invalid
     // Tests pass so we know this is a valid regex
