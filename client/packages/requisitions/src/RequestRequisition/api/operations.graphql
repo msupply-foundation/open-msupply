@@ -8,6 +8,7 @@ fragment ItemWithStats on ItemNode {
   stats(storeId: $storeId) {
     averageMonthlyConsumption
     availableStockOnHand
+    totalStockOnHand
     availableMonthsOfStockOnHand
     totalConsumption
   }
@@ -47,6 +48,13 @@ fragment RequestLine on RequisitionLineNode {
   comment
   itemName
   requisitionNumber
+  initialStockOnHandUnits
+  incomingUnits
+  outgoingUnits
+  lossInUnits
+  additionInUnits
+  expiringUnits
+  daysOutOfStock
 
   itemStats {
     __typename
@@ -60,6 +68,9 @@ fragment RequestLine on RequisitionLineNode {
   }
   item {
     ...ItemWithStats
+  }
+  reason {
+    ...ReasonOptionRow
   }
 }
 
@@ -426,6 +437,22 @@ mutation insertProgramRequest(
   }
 }
 
+fragment RequisitionReasonNotProvidedError on RequisitionReasonNotProvided {
+  __typename
+  requisitionLine {
+    id
+  }
+  description
+}
+
+fragment RequisitionReasonsNotProvidedError on RequisitionReasonsNotProvided {
+  __typename
+  errors {
+    ...RequisitionReasonNotProvidedError
+  }
+  description
+}
+
 mutation updateRequest(
   $storeId: String!
   $input: UpdateRequestRequisitionInput!
@@ -456,6 +483,9 @@ mutation updateRequest(
           __typename
           description
           maxItemsInEmergencyOrder
+        }
+        ... on RequisitionReasonsNotProvided {
+          ...RequisitionReasonsNotProvidedError
         }
       }
     }

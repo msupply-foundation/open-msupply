@@ -11,7 +11,10 @@ const processStockLines = (nodes, sort, dir) => {
       line?.item?.stats?.averageMonthlyConsumption
     );
     if (!!expectedUsage) {
-      line.expectedUsage = expectedUsage;
+      line.expectedUsage = Math.min(
+        expectedUsage,
+        totalNumberOfPacks ?? expectedUsage
+      );
     }
     const stockAtRisk = calculateStockAtRisk(
       line?.packSize,
@@ -23,7 +26,10 @@ const processStockLines = (nodes, sort, dir) => {
       line.stockAtRisk = stockAtRisk;
     }
     line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat);
+    line.averageMonthlyConsumption =
+      Math.round((line?.item?.stats?.averageMonthlyConsumption ?? 0) * 10) / 10;
   });
+
   let cleanNodes = cleanUpNodes(nodes);
   let sortedNodes = sortNodes(cleanNodes, sort, dir);
   return sortedNodes;
@@ -76,6 +82,9 @@ const calculateStockAtRisk = (
         stockAtRisk = Math.round(totalStock);
       }
     }
+  }
+  if (stockAtRisk < 0) {
+    return 0;
   }
   return stockAtRisk;
 };

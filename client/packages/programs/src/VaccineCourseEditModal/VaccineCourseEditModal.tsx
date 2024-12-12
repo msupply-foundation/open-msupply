@@ -98,7 +98,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     updatePatch,
     query: { isLoading },
     isDirty,
-    setIsDirty,
+    resetDraft,
   } = useVaccineCourse(vaccineCourse?.id ?? undefined);
   const { data: demographicData } = useDemographicData.demographics.list();
 
@@ -116,8 +116,6 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   };
 
   const save = async () => {
-    setIsDirty(false);
-
     const agesAreInOrder = (draft.vaccineCourseDoses ?? []).every(
       (dose, index, doses) => {
         const prevDoseAge = doses[index - 1]?.minAgeMonths ?? -0.01;
@@ -140,6 +138,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
           mode === ModalMode.Update
             ? `${t('messages.updated-new-vaccine-course')}: ${result.name}`
             : `${t('messages.created-new-vaccine-course')}: ${result.name}`;
+        resetDraft();
         success(message)();
         onClose();
       }

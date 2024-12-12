@@ -17,9 +17,10 @@ import {
 import { usePrescription } from '../../api';
 
 const getStatusOptions = (
-  currentStatus: InvoiceNodeStatus,
+  currentStatus: InvoiceNodeStatus | undefined,
   getButtonLabel: (status: InvoiceNodeStatus) => string
 ): SplitButtonOption<InvoiceNodeStatus>[] => {
+  if (!currentStatus) return [];
   const options: [
     SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
@@ -55,7 +56,7 @@ const getStatusOptions = (
 };
 
 const getNextStatusOption = (
-  status: InvoiceNodeStatus,
+  status: InvoiceNodeStatus | undefined,
   options: SplitButtonOption<InvoiceNodeStatus>[]
 ): SplitButtonOption<InvoiceNodeStatus> | null => {
   if (!status) return options[0] ?? null;
@@ -74,13 +75,15 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, update, lines } = usePrescription.document.fields([
-    'status',
-    'lines',
-  ]);
   const { success, error } = useNotification();
   const t = useTranslation();
-  const { data } = usePrescription.document.get();
+  const {
+    query: { data },
+    update: { update },
+    isDisabled,
+  } = usePrescription();
+
+  const { status, lines } = data ?? {};
   const hasLinesToPrune =
     data?.status !== InvoiceNodeStatus.Verified &&
     (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
@@ -127,13 +130,19 @@ const useStatusChangeButton = () => {
     setSelectedOption,
     getConfirmation,
     lines,
+    isDisabled,
   };
 };
 
 export const StatusChangeButton = () => {
-  const { options, selectedOption, setSelectedOption, getConfirmation, lines } =
-    useStatusChangeButton();
-  const isDisabled = usePrescription.utils.isDisabled();
+  const {
+    options,
+    selectedOption,
+    setSelectedOption,
+    getConfirmation,
+    lines,
+    isDisabled,
+  } = useStatusChangeButton();
   const t = useTranslation();
   const noLines =
     lines?.totalCount === 0 ||

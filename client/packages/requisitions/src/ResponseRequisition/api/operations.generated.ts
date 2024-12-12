@@ -2,15 +2,11 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { RequisitionReasonsNotProvidedErrorFragmentDoc, OrderTypeRowFragmentDoc } from '../../RequestRequisition/api/operations.generated';
 import { ItemRowFragmentDoc } from '../../../../system/src/Item/api/operations.generated';
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
-import { OrderTypeRowFragmentDoc } from '../../RequestRequisition/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type RequisitionReasonNotProvidedErrorFragment = { __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } };
-
-export type RequisitionReasonsNotProvidedErrorFragment = { __typename: 'RequisitionReasonsNotProvided', description: string, errors: Array<{ __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } }> };
-
 export type UpdateResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpdateResponseRequisitionInput;
@@ -152,24 +148,6 @@ export type UpdateIndicatorValueMutationVariables = Types.Exact<{
 
 export type UpdateIndicatorValueMutation = { __typename: 'Mutations', updateIndicatorValue: { __typename: 'IndicatorValueNode', id: string, value: string } | { __typename: 'UpdateIndicatorValueError', error: { __typename: 'RecordNotFound', description: string } | { __typename: 'ValueTypeNotCorrect', description: string } } };
 
-export const RequisitionReasonNotProvidedErrorFragmentDoc = gql`
-    fragment RequisitionReasonNotProvidedError on RequisitionReasonNotProvided {
-  __typename
-  requisitionLine {
-    id
-  }
-  description
-}
-    `;
-export const RequisitionReasonsNotProvidedErrorFragmentDoc = gql`
-    fragment RequisitionReasonsNotProvidedError on RequisitionReasonsNotProvided {
-  __typename
-  errors {
-    ...RequisitionReasonNotProvidedError
-  }
-  description
-}
-    ${RequisitionReasonNotProvidedErrorFragmentDoc}`;
 export const ResponseLineFragmentDoc = gql`
     fragment ResponseLine on RequisitionLineNode {
   id

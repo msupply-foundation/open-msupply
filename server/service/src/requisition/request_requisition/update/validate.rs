@@ -4,11 +4,14 @@ use crate::{
         check_emergency_order_within_max_items_limit, check_requisition_row_exists,
         OrderTypeNotFoundError,
     },
+    store_preference::get_store_preferences,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
 use repository::{
+    reason_option_row::ReasonOptionType,
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    EqualFilter, RequisitionLineFilter, RequisitionLineRepository, StorageConnection,
+    EqualFilter, ReasonOptionFilter, ReasonOptionRepository, RequisitionLineFilter,
+    RequisitionLineRepository, StorageConnection,
 };
 
 pub fn validate(
@@ -50,7 +53,7 @@ pub fn validate(
             connection,
             program_id,
             order_type,
-            requisition_lines,
+            requisition_lines.clone(),
         )
         .map_err(|e| match e {
             OrderTypeNotFoundError::OrderTypeNotFound => OutError::OrderTypeNotFound,
@@ -61,6 +64,34 @@ pub fn validate(
 
         if !within_limit {
             return Err(OutError::OrderingTooManyItems(max_items));
+        }
+    }
+
+    let reason_options = ReasonOptionRepository::new(connection).query_by_filter(
+        ReasonOptionFilter::new().r#type(ReasonOptionType::equal_to(
+            &ReasonOptionType::RequisitionLineVariance,
+        )),
+    )?;
+
+    let prefs = get_store_preferences(connection, store_id)?;
+
+    if requisition_row.program_id.is_some()
+        && prefs.use_consumption_and_stock_from_customers_for_internal_orders
+        && !reason_options.is_empty()
+    {
+        let mut lines_missing_reason = Vec::new();
+
+        for line in requisition_lines {
+            if (line.requisition_line_row.requested_quantity
+                != line.requisition_line_row.suggested_quantity)
+                && line.requisition_line_row.option_id.is_none()
+            {
+                lines_missing_reason.push(line.clone())
+            }
+        }
+
+        if !lines_missing_reason.is_empty() {
+            return Err(OutError::ReasonsNotProvided(lines_missing_reason));
         }
     }
 

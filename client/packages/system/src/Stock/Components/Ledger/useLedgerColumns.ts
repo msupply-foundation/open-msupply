@@ -3,6 +3,7 @@ import {
   InvoiceNodeType,
   LocaleKey,
   SortBy,
+  TypedTFunction,
   useColumns,
   useFormatDateTime,
   useTranslation,
@@ -43,6 +44,7 @@ export const useLedgerColumns = (
       {
         key: ColumnKey.Name,
         label: 'label.name',
+        accessor: ({ rowData }) => getNameValue(t, rowData.name),
         sortable: false,
       },
       {
@@ -107,4 +109,12 @@ const getLocalisationKey = (type: InvoiceNodeType): LocaleKey => {
     case InvoiceNodeType.Repack:
       return 'label.repack';
   }
+};
+
+const getNameValue = (t: TypedTFunction<LocaleKey>, name: String) => {
+  if (name == 'repack') {
+    return t('label.repack');
+  } else if (name == 'Inventory adjustments') {
+    return t('inventory-adjustment');
+  } else return name;
 };

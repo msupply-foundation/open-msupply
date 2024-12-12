@@ -7,18 +7,6 @@
           "description": "Item Code or Name",
           "type": "string"
         },
-        "monthlyConsumptionLookBackPeriod": {
-          "description": "Average Monthly Consumption Look Back Period",
-          "type": "number"
-        },
-        "monthsOverstock": {
-          "description": "Months Overstock",
-          "type": "number"
-        },
-        "monthsUnderstock": {
-          "description": "Months Understock",
-          "type": "number"
-        },
         "sort": {
           "description": "sort by",
           "type": "string",

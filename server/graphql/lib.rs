@@ -13,6 +13,7 @@ use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_asset::property::AssetPropertiesQueries;
 use graphql_batch_mutations::BatchMutations;
 use graphql_clinician::ClinicianQueries;
+use graphql_contact_form::ContactFormMutations;
 use graphql_core::loader::LoaderRegistry;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
@@ -181,6 +182,7 @@ pub struct Mutations(
     pub AssetMutations,
     pub AssetLogMutations,
     pub InventoryAdjustmentMutations,
+    pub ContactFormMutations,
 );
 
 impl Mutations {
@@ -205,6 +207,7 @@ impl Mutations {
             AssetMutations,
             AssetLogMutations,
             InventoryAdjustmentMutations,
+            ContactFormMutations,
         )
     }
 }

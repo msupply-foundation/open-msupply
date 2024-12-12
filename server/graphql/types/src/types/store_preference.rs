@@ -72,6 +72,12 @@ impl StorePreferenceNode {
             .store_preference
             .manually_link_internal_order_to_inbound_shipment
     }
+
+    pub async fn use_consumption_and_stock_from_customers_for_internal_orders(&self) -> &bool {
+        &self
+            .store_preference
+            .use_consumption_and_stock_from_customers_for_internal_orders
+    }
 }
 
 impl StorePreferenceNode {

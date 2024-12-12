@@ -17,17 +17,17 @@ import { usePrescription } from '../../api';
 
 export const AdditionalInfoSectionComponent: FC = () => {
   const t = useTranslation();
-  const isDisabled = usePrescription.utils.isDisabled();
-  const { colour, comment, user, createdDatetime, update } =
-    usePrescription.document.fields([
-      'colour',
-      'comment',
-      'user',
-      'createdDatetime',
-    ]);
+  const {
+    query: { data },
+    isDisabled,
+    update: { update },
+  } = usePrescription();
+  const { colour, comment, user, createdDatetime } = data ?? {};
   const [colorBuffer, setColorBuffer] = useBufferState(colour);
   const [commentBuffer, setCommentBuffer] = useBufferState(comment ?? '');
   const { localisedDate } = useFormatDateTime();
+
+  if (!createdDatetime) return null;
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>

@@ -56,7 +56,7 @@ const requestParser = {
         return RequisitionSortFieldInput.OrderType;
       }
       case 'period': {
-        return RequisitionSortFieldInput.PeriodName;
+        return RequisitionSortFieldInput.PeriodStartDate;
       }
       case 'programName': {
         return RequisitionSortFieldInput.ProgramName;
@@ -101,6 +101,7 @@ const requestParser = {
     id: line.id,
     requestedQuantity: line.requestedQuantity,
     comment: line.comment,
+    optionId: line?.reason?.id ?? null,
   }),
 };
 

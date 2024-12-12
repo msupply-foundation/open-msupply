@@ -1157,5 +1157,20 @@
   "error.name-program-duplicate": "Já existe um nome de curso de vacinação para este programa",
   "error.no-customer-return-items": "Nenhum artigo foi adicionado a esse retorno.",
   "error.no-customer-returns": "Não há devoluções de Clientes para mostrar.",
-  "error.no-immunisation-programs": "Não foram encontrados programas de imunização"
+  "error.no-immunisation-programs": "Não foram encontrados programas de imunização",
+  "button.new-requisition": "Nova Requisição",
+  "description.bundle-ratio": "O número de unidades do artigo agrupado por cada unidade do item base",
+  "description.bundled-item-ratio": "O número de unidades do artigo base para cada unidade deste item",
+  "button.hiv": "HIV",
+  "button.regimen": "Regime",
+  "description.available-stock": "Stock inicial disponível + stock a receber +/- ajustes de inventário - stock a sair",
+  "description.initial-stock-on-hand": "Stock disponível no primeiro dia do período do programa",
+  "description.rnr-losses": "Registrar manualmente as perdas deste artigo durante o período",
+  "button.create-new": "Criar novo(a)",
+  "button.view-patient": "Ver paciente",
+  "error.failed-to-delete-bundled-item": "Não foi possível excluir o artigo agrupado",
+  "description.rnr-adjustments": "Ajustes realizados para este artigo durante este período (mediante tomada de inventário ou Ajustes de Inventário)",
+  "button.next": "Próximo(a)",
+  "button.previous": "Anterior",
+  "error.duplicate-item-variant-name": "Já existe uma variante com este mesmo nome para este artigo"
 }

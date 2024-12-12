@@ -4,7 +4,7 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
-    ActivityLogType, RepositoryError, Requisition, RequisitionLineRowRepository,
+    ActivityLogType, RepositoryError, Requisition, RequisitionLine, RequisitionLineRowRepository,
     RequisitionRowRepository,
 };
 
@@ -50,6 +50,7 @@ pub enum UpdateRequestRequisitionError {
     OtherPartyIsNotAStore,
     OrderTypeNotFound,
     OrderingTooManyItems(i32), // emergency order
+    ReasonsNotProvided(Vec<RequisitionLine>),
     // Internal
     UpdatedRequisitionDoesNotExist,
     DatabaseError(RepositoryError),

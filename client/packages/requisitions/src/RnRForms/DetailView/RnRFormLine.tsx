@@ -360,6 +360,11 @@ const RnRNumberCell = ({
           max={max}
           allowNegative={allowNegative}
           defaultValue={0}
+          // NOTE: not setting input mode to text, because on Samsung tablets,
+          // the numeric keyboard doesn't allow entering negative numbers!
+          // Only needed for the negative columns, but better feel to have a consistent
+          // keyboard as you click through the whole R&R form
+          inputMode="text"
         />
       </Tooltip>
     </td>
