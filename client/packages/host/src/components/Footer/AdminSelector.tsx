@@ -81,3 +81,5 @@ export const AdminSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
     </PaperClickPopover>
   );
 };
+
+// TODO: tidy up popover styling + rename components if need be
