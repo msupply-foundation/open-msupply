@@ -3,7 +3,6 @@ use repository::contact_form_row::{ContactFormRow, ContactType};
 
 use super::InsertContactForm;
 
-//inputs from graphql layer
 pub struct GenerateInput {
     pub store_id: String,
     pub user_id: String,

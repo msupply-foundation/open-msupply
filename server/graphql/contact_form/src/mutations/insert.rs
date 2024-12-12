@@ -8,7 +8,6 @@ use service::{
 };
 
 #[derive(InputObject)]
-#[graphql(name = "InsertContactFormInput")]
 pub struct InsertContactFormInput {
     pub id: String,
     pub reply_email: String,
@@ -87,9 +86,9 @@ fn map_error(error: ServiceError) -> Result<InsertContactFormResponse> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        ServiceError::MessageDoesNotExist
-        | ServiceError::ContactIdAlreadyExists
-        | ServiceError::EmailDoesNotExist
+        ServiceError::MessageNotProvided
+        | ServiceError::ContactFormAlreadyExists
+        | ServiceError::EmailNotProvided
         | ServiceError::EmailIsInvalid => BadUserInput(formatted_error),
 
         ServiceError::DatabaseError(_) | ServiceError::InternalError(_) => {
