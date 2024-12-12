@@ -16,6 +16,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly } from '@common/types';
+import { Tooltip } from 'recharts';
 
 export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { logout, user, token } = useAuthContext();
@@ -53,7 +54,7 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
     />
   );
 
-  return user ? (
+  return user && Tooltip ? (
     <PaperClickPopover
       placement="top"
       width={300}
@@ -67,7 +68,6 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
                 overflowY: 'auto',
                 overflowX: 'auto',
                 maxHeight: 300,
-                gap: 10,
                 margin: '.5rem',
               }}
             >
@@ -85,6 +85,7 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
                 labelProps={{
                   sx: { textAlign: 'left', width: 80, lineHeight: 1.5 },
                 }}
+                showToolTip={true}
               />
               <TextWithLabelRow
                 label={t('label.email')}
@@ -100,6 +101,7 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
                 labelProps={{
                   sx: { textAlign: 'left', width: 45, lineHeight: 1.5 },
                 }}
+                showToolTip={true}
               />
             </Box>
           )}
