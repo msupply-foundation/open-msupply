@@ -38,7 +38,7 @@ pub fn add_from_master_list(
         .connection
         .transaction_sync(|connection| {
             let invoice_row = validate(connection, &ctx.store_id, &input)?;
-            let new_invoice_line_rows = generate(ctx, invoice_row, &input)?;
+            let new_invoice_line_rows = generate(connection, ctx, invoice_row, &input)?;
 
             let invoice_line_row_repository = InvoiceLineRowRepository::new(connection);
 
@@ -83,6 +83,7 @@ fn validate(
 }
 
 fn generate(
+    connection: &StorageConnection,
     ctx: &ServiceContext,
     invoice_row: InvoiceRow,
     input: &ServiceInput,
@@ -107,7 +108,7 @@ fn generate(
         .map(|master_list_line| master_list_line.item_id)
         .collect();
 
-    generate_empty_invoice_lines(ctx, &invoice_row, items_ids_not_in_invoice)
+    generate_empty_invoice_lines(connection, ctx, &invoice_row, items_ids_not_in_invoice)
 }
 
 #[cfg(test)]
