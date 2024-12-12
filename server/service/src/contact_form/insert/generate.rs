@@ -7,7 +7,6 @@ use super::InsertContactForm;
 pub struct GenerateInput {
     pub store_id: String,
     pub user_id: String,
-    pub site_id: String,
     pub insert_input: InsertContactForm,
 }
 
@@ -15,7 +14,6 @@ pub fn generate(
     GenerateInput {
         store_id,
         user_id,
-        site_id,
         insert_input,
     }: GenerateInput,
 ) -> ContactFormRow {
@@ -34,7 +32,6 @@ pub fn generate(
         created_datetime: now,
         reply_email,
         body,
-        site_id,
         //harcoded contact type until optional types available in front end
         contact_type: ContactType::Feedback,
     }

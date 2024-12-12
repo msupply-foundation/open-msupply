@@ -30,7 +30,6 @@ pub struct InsertContactForm {
 pub fn insert_contact_form(
     ctx: &ServiceContext,
     store_id: &str,
-    site_id: &str,
     input: InsertContactForm,
 ) -> Result<ContactFormRow, InsertContactFormError> {
     let new_contact_form = ctx
@@ -43,7 +42,6 @@ pub fn insert_contact_form(
                 store_id: store_id.to_string(),
                 user_id: ctx.user_id.clone(),
                 insert_input: input.clone(),
-                site_id: site_id.to_string(),
             });
 
             //create the contact form

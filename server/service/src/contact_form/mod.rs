@@ -10,10 +10,9 @@ pub trait ContactFormServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        site_id: &str,
         input: InsertContactForm,
     ) -> Result<ContactFormRow, InsertContactFormError> {
-        insert::insert_contact_form(ctx, store_id, site_id, input)
+        insert::insert_contact_form(ctx, store_id, input)
     }
 }
 
