@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   getInvoiceLocalisationKey,
+  getNameValue,
   ItemLedgerFragment,
   useItemLedger,
 } from '@openmsupply-client/system';
@@ -70,6 +71,7 @@ const ItemLedgerTable = ({
         key: 'name',
         label: 'label.name',
         sortable: false,
+        accessor: ({ rowData }) => getNameValue(t, rowData.name),
       },
       {
         key: 'status',
