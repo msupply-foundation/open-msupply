@@ -1380,7 +1380,7 @@
   "messages.how-to-read-item-usage": "Column descriptions: \n* Stock on order: Sum of quantity in Internal Orders minus any linked Inbound Shipments \n* Months cover: Number of months the current stock is expected to last. The value is 'In stock' / 'AMC'. Note that AMC is calculated using the number of months given by the 'AMC lookback period' shown in the report filter which is configured with the 'monthly consumption lookback period' store preference.",
   "messages.how-to-read-report": "How to read {{reportName}} report?",
   "messages.how-to-read-stock-detail": "This report has the same information as the stock page without any interactivity.",
-  "messages.how-to-read-stock-status": "Status descriptions: \n* Understocked - MOS is lower than min MOS (store preference: threshold for understock) \n* Overstocked - MOS is higher than max MOS (store preference: threshold for overstock) \n* Out of stock - SOH and AMC is 0 \n* Well stocked - MOS is between min and max MOS \n* No consumption - AMC is 0",
+  "messages.how-to-read-stock-status": "Status descriptions: \n* Understocked - MOS is lower than min MOS (store preference: threshold for understock) \n* Overstocked - MOS is higher than max MOS (store preference: threshold for overstock) \n* Out of stock - SOH is 0 and AMC is > 0 \n* Well stocked - MOS is between min and max MOS \n* No consumption - AMC is 0",
   "messages.import-error": "Some or all assets failed to import. Click export to download a csv file with rows which caused an error. Error free rows will have been imported",
   "messages.import-error-on-upload": "Import error on upload. Please fix errors and re upload",
   "messages.import-generic": "import successful",
