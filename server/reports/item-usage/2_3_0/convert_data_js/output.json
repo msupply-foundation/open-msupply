@@ -8,7 +8,7 @@
         "stats": {
           "totalConsumption": 1200,
           "availableMonthsOfStockOnHand": 4.5,
-          "totalStockOnHand": 300.902,
+          "availableStockOnHand": 300.902,
           "averageMonthlyConsumption": 266.7
         },
         "monthConsumption": 200,
@@ -27,7 +27,7 @@
         "code": "ITEM001",
         "name": "Item A",
         "stats": {
-          "totalStockOnHand": 200,
+          "availableStockOnHand": 200,
           "totalConsumption": 100,
           "availableMonthsOfStockOnHand": 4.5
         },
