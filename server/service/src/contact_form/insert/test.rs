@@ -32,7 +32,6 @@ mod insert {
             service.insert_contact_form(
                 &context,
                 store_id,
-                &user_id,
                 InsertContactForm {
                     id: "test_id".to_string(),
                     reply_email: "not_an_email".to_string(),
@@ -48,7 +47,6 @@ mod insert {
             service.insert_contact_form(
                 &context,
                 store_id,
-                &user_id,
                 InsertContactForm {
                     id: "test_id".to_string(),
                     reply_email: "not_an_email.com".to_string(),
@@ -64,7 +62,6 @@ mod insert {
             service.insert_contact_form(
                 &context,
                 store_id,
-                &user_id,
                 InsertContactForm {
                     id: "test_id".to_string(),
                     reply_email: "not_an_email@com".to_string(),
@@ -80,7 +77,6 @@ mod insert {
             service.insert_contact_form(
                 &context,
                 store_id,
-                &user_id,
                 InsertContactForm {
                     id: "test_id".to_string(),
                     reply_email: "".to_string(),
@@ -96,7 +92,6 @@ mod insert {
             service.insert_contact_form(
                 &context,
                 store_id,
-                &user_id,
                 InsertContactForm {
                     id: "test_id".to_string(),
                     reply_email: "abcd@eda.ca".to_string(),
@@ -109,11 +104,11 @@ mod insert {
 
         // Create contact form
         service
-            .insert_contact_form(&context, store_id, &user_id, input.clone())
+            .insert_contact_form(&context, store_id, input.clone())
             .unwrap();
 
         // try create a second time
-        let result = service.insert_contact_form(&context, store_id, &user_id, input);
+        let result = service.insert_contact_form(&context, store_id, input);
 
         let expected_result = Err(InsertContactFormError::ContactIdAlreadyExists);
 
@@ -140,7 +135,6 @@ mod insert {
             .insert_contact_form(
                 &context,
                 store_id,
-                &user_id,
                 InsertContactForm {
                     id: "test_id".to_string(),
                     reply_email: "test_email@msupply.foundation".to_string(),
