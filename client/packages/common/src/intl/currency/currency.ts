@@ -106,7 +106,8 @@ export type Currencies =
   | 'PGK'
   | 'COP'
   | 'SBD'
-  | 'KMF';
+  | 'KMF'
+  | 'XOF';
 
 export const currencyOptions = (locale: string, code?: Currencies) => {
   switch (code) {
@@ -127,6 +128,16 @@ export const currencyOptions = (locale: string, code?: Currencies) => {
         ...getSeparatorAndDecimal(locale),
         ...getPatterns(locale),
         symbol: 'DJF',
+        precision: 0,
+        format,
+      };
+    case 'XOF':
+      return {
+        // eslint-disable-next-line no-irregular-whitespace
+        // separator: " " decimal = ","
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'CFA',
         precision: 0,
         format,
       };
