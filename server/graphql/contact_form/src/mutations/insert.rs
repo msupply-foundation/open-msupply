@@ -91,9 +91,9 @@ fn map_error(error: ServiceError) -> Result<InsertContactFormResponse> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        ServiceError::MessageDoesNotExist
-        | ServiceError::ContactIdAlreadyExists
-        | ServiceError::EmailDoesNotExist
+        ServiceError::MessageNotProvided
+        | ServiceError::ContactFormAlreadyExists
+        | ServiceError::EmailNotProvided
         | ServiceError::EmailIsInvalid => BadUserInput(formatted_error),
 
         ServiceError::DatabaseError(_) | ServiceError::InternalError(_) => {
