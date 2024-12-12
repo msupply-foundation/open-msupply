@@ -54,7 +54,7 @@ const StoreSearchComponent = ({
   const pageNumber = data?.pages[data?.pages.length - 1]?.pageNumber ?? 0;
 
   // Pagination object, to help `AutocompleteWithPagination` component
-  // manage where it is in the list. The actually pagination is handled by useInfiniteQuery
+  // manage where it is in the list. The query pagination is handled by useInfiniteQuery
   const pagination = {
     page: pageNumber,
     first: RECORDS_PER_PAGE,
