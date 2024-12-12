@@ -132,7 +132,7 @@ describe("calculate SOH", () => {
   });
   it("returns rounded value if value exists", () => {
     expect(
-      calculateStatValue(inputData.items.nodes[0].stats.totalStockOnHand)
+      calculateStatValue(inputData.items.nodes[0].stats.availableStockOnHand)
     ).toBe(300.9);
   });
 });
