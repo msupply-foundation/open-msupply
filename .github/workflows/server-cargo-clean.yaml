@@ -1,0 +1,20 @@
+on: 
+  workflow_dispatch: 
+
+name: Manual Cargo Clean
+
+jobs: 
+  build_and_test: 
+    name: Run cargo clean against self-hosted
+    runs-on: self-hosted
+    timeout-minutes: 25
+    steps: 
+      - name: Update PATH
+        run: echo "$HOME/.cargo/bin:/opt/homebrew/bin" >> $GITHUB_PATH
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with: 
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with: 
+          command: clean
