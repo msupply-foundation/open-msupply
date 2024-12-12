@@ -1,0 +1,100 @@
+import React, { FC } from 'react';
+import {
+  Box,
+  CircularProgress,
+  FlatButton,
+  PaperPopoverSection,
+  useAuthContext,
+  usePaperClickPopover,
+  useTranslation,
+  useNavigate,
+  useUserDetails,
+  useConfirmationModal,
+  RouteBuilder,
+  PowerIcon,
+  TextWithLabelRow,
+} from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
+import { PropsWithChildrenOnly } from '@common/types';
+
+export const AdminSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
+  const { logout, user, token } = useAuthContext();
+  const navigate = useNavigate();
+  const { hide, PaperClickPopover } = usePaperClickPopover();
+  const { isLoading } = useUserDetails(token);
+  const t = useTranslation();
+
+  const handleLogout = () => {
+    navigate(RouteBuilder.create(AppRoute.Login).build());
+    logout();
+  };
+
+  const showConfirmation = useConfirmationModal({
+    onConfirm: handleLogout,
+    message: t('messages.logout-confirm'),
+    title: t('heading.logout-confirm'),
+  });
+
+  const logoutButton = (
+    <FlatButton
+      startIcon={<PowerIcon fontSize="small" color="primary" />}
+      label={t('logout')}
+      disabled={false}
+      onClick={async () => {
+        hide();
+        showConfirmation();
+      }}
+      sx={{
+        whiteSpace: 'nowrap',
+        overflowX: 'hidden',
+        overflowY: 'visible',
+        textOverflow: 'ellipsis',
+      }}
+    />
+  );
+
+  return user ? (
+    <PaperClickPopover
+      placement="top"
+      width={350}
+      Content={
+        <PaperPopoverSection label={`${user.firstName} ${user.lastName}`}>
+          {isLoading ? (
+            <CircularProgress size={12} />
+          ) : (
+            <Box
+              style={{
+                overflowY: 'auto',
+                maxHeight: 300,
+                gap: 10,
+                margin: '.5rem',
+              }}
+            >
+              <TextWithLabelRow
+                label={t('heading.username')}
+                text={user.name}
+                textProps={{ textAlign: 'left', lineHeight: 1.5 }}
+                labelProps={{
+                  sx: { textAlign: 'left', width: 80, lineHeight: 1.5 },
+                }}
+              />
+              <TextWithLabelRow
+                label={t('label.email')}
+                text={user.email ?? ''}
+                textProps={{ textAlign: 'left', lineHeight: 1.5 }}
+                labelProps={{
+                  sx: { textAlign: 'left', width: 50, lineHeight: 1.5 },
+                }}
+              />
+            </Box>
+          )}
+          {logoutButton}
+        </PaperPopoverSection>
+      }
+    >
+      {children}
+    </PaperClickPopover>
+  ) : (
+    isLoading
+  );
+};
