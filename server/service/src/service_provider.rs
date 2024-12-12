@@ -6,6 +6,7 @@ use crate::{
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
     cold_chain::{ColdChainService, ColdChainServiceTrait},
+    contact_form::{ContactFormService, ContactFormServiceTrait},
     currency::{CurrencyService, CurrencyServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
@@ -158,6 +159,8 @@ pub struct ServiceProvider {
     pub translations_service: Box<Localisations>,
     // Standard Reports
     pub standard_reports: Box<StandardReports>,
+    // Contact Form
+    pub contact_form_service: Box<dyn ContactFormServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -247,6 +250,7 @@ impl ServiceProvider {
             vaccination_service: Box::new(VaccinationService {}),
             translations_service: Box::new(Localisations::new()),
             standard_reports: Box::new(StandardReports {}),
+            contact_form_service: Box::new(ContactFormService {}),
         }
     }
 
