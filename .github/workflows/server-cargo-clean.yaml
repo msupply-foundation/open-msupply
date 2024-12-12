@@ -14,8 +14,6 @@ jobs:
     name: Run cargo clean against self-hosted
     runs-on: self-hosted
     timeout-minutes: 25
-    env:
-      CARGO_TARGET_DIR: /tmp/target/sqlite
     steps: 
       - name: Update PATH
         run: echo "$HOME/.cargo/bin:/opt/homebrew/bin" >> $GITHUB_PATH
@@ -23,11 +21,20 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with: 
           toolchain: stable
-      - uses: actions-rs/cargo@v1
+      - name: Clean SQLite Artifacts
+        env:
+          CARGO_TARGET_DIR: /tmp/target/sqlite
+        uses: actions-rs/cargo@v1
         with: 
           command: clean
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --features=sqlite --manifest-path server/Cargo.toml
+          args: --manifest-path server/Cargo.toml
+      - name: Clean PostgreSQL artifacts
+        env:
+          CARGO_TARGET_DIR: /tmp/target/postgres
+        uses: actions-rs/cargo@v1
+        with: 
+          command: clean
+          args: --manifest-path server/Cargo.toml
+
+
       
