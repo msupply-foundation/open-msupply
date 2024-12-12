@@ -1,3 +1,4 @@
+pub(crate) mod abbreviation;
 pub(crate) mod activity_log;
 pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
@@ -22,6 +23,7 @@ pub(crate) mod indicator_value;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
+pub(crate) mod item_direction;
 pub(crate) mod item_variant;
 pub(crate) mod location;
 pub(crate) mod location_movement;
@@ -54,6 +56,7 @@ pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
 pub(crate) mod sync_file_reference;
+pub(crate) mod system_log;
 pub(crate) mod temperature_breach;
 pub(crate) mod temperature_log;
 pub(crate) mod unit;
@@ -76,6 +79,8 @@ pub(crate) type SyncTranslators = Vec<Box<dyn SyncTranslation>>;
 pub(crate) fn all_translators() -> SyncTranslators {
     vec![
         // Central
+        abbreviation::boxed(),
+        item_direction::boxed(),
         user::boxed(),
         name::boxed(),
         name_tag::boxed(),
@@ -154,6 +159,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Item Variant
         item_variant::boxed(),
         packaging_variant::boxed(),
+        // System log
+        system_log::boxed(),
     ]
 }
 
@@ -342,7 +349,7 @@ pub(crate) trait SyncTranslation {
     /// A single table name to match on, If there's just one table name to match on, use this function
     fn table_name(&self) -> &str {
         ""
-    }   
+    }
 
     /// If you need to match on more than one table_name with the same translator, use this one...
     fn table_names(&self) -> Vec<&str> {

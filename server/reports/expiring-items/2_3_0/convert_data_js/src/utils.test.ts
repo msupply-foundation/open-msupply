@@ -79,18 +79,22 @@ describe("calculate stock at risk ", () => {
   it("returns stock at risk as all stock minus what we will consume before expiry date", () => {
     expect(calculateStockAtRisk(2, 100, 10, 60)).toBe(180);
   });
-});
 
-describe("test round days to integer", () => {
-  it("returns undefined if undefined", () => {
-    expect(roundDaysToInteger(undefined)).toBe(undefined);
+  it("returns 0 if will consume more than total stock within expiry date", () => {
+    expect(calculateStockAtRisk(1, 1, 3, 30)).toBe(0);
   });
 
-  it("returns rounded value if defined", () => {
-    expect(roundDaysToInteger(2.1)).toBe(2);
-    expect(roundDaysToInteger(2.11)).toBe(2);
-    expect(roundDaysToInteger(0.123)).toBe(0);
-    expect(roundDaysToInteger(2)).toBe(2);
+  describe("test round days to integer", () => {
+    it("returns undefined if undefined", () => {
+      expect(roundDaysToInteger(undefined)).toBe(undefined);
+    });
+
+    it("returns rounded value if defined", () => {
+      expect(roundDaysToInteger(2.1)).toBe(2);
+      expect(roundDaysToInteger(2.11)).toBe(2);
+      expect(roundDaysToInteger(0.123)).toBe(0);
+      expect(roundDaysToInteger(2)).toBe(2);
+    });
   });
 });
 
