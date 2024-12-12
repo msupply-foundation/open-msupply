@@ -23,7 +23,10 @@ const processStockLines = (nodes, sort, dir) => {
       line.stockAtRisk = stockAtRisk;
     }
     line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat);
+    line.averageMonthlyConsumption =
+      Math.round((line?.item?.stats?.averageMonthlyConsumption ?? 0) * 10) / 10;
   });
+
   let cleanNodes = cleanUpNodes(nodes);
   let sortedNodes = sortNodes(cleanNodes, sort, dir);
   return sortedNodes;
