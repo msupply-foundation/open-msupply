@@ -46,6 +46,14 @@ export type ConfigureNamePropertiesMutationVariables = Types.Exact<{
 
 export type ConfigureNamePropertiesMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', general: { __typename: 'CentralGeneralMutations', configureNameProperties: { __typename: 'Success', success: boolean } } } };
 
+export type InsertContactFormMutationVariables = Types.Exact<{
+  input: Types.InsertContactFormInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type InsertContactFormMutation = { __typename: 'Mutations', insertContactForm: { __typename: 'InsertResponse', id: string } };
+
 
 export const DatabaseSettingsDocument = gql`
     query databaseSettings {
@@ -131,6 +139,15 @@ export const ConfigureNamePropertiesDocument = gql`
   }
 }
     `;
+export const InsertContactFormDocument = gql`
+    mutation insertContactForm($input: InsertContactFormInput!, $storeId: String!) {
+  insertContactForm(input: $input, storeId: $storeId) {
+    ... on InsertResponse {
+      id
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -159,6 +176,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     configureNameProperties(variables: ConfigureNamePropertiesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ConfigureNamePropertiesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<ConfigureNamePropertiesMutation>(ConfigureNamePropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'configureNameProperties', 'mutation', variables);
+    },
+    insertContactForm(variables: InsertContactFormMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertContactFormMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertContactFormMutation>(InsertContactFormDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertContactForm', 'mutation', variables);
     }
   };
 }
