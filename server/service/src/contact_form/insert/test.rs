@@ -88,7 +88,7 @@ mod insert {
                     ..Default::default()
                 },
             ),
-            Err(InsertContactFormError::EmailDoesNotExist)
+            Err(InsertContactFormError::EmailNotProvided)
         );
 
         //Body/Message does not exist
@@ -104,7 +104,7 @@ mod insert {
                     ..Default::default()
                 },
             ),
-            Err(InsertContactFormError::MessageDoesNotExist)
+            Err(InsertContactFormError::MessageNotProvided)
         );
 
         // Create contact form
@@ -115,7 +115,7 @@ mod insert {
         // try create a second time
         let result = service.insert_contact_form(&context, store_id, &user_id, input);
 
-        let expected_result = Err(InsertContactFormError::ContactIdAlreadyExists);
+        let expected_result = Err(InsertContactFormError::ContactFormAlreadyExists);
 
         // ContactFormAlreadyExists
         assert_eq!(result, expected_result);

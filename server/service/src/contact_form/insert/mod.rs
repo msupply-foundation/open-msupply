@@ -14,7 +14,7 @@ use crate::service_provider::ServiceContext;
 pub enum InsertContactFormError {
     ContactFormAlreadyExists,
     EmailIsInvalid,
-    EmailNotPRovided,
+    EmailNotProvided,
     MessageNotProvided,
     InternalError(String),
     DatabaseError(RepositoryError),
