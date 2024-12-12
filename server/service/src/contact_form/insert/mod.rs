@@ -12,10 +12,10 @@ use crate::service_provider::ServiceContext;
 
 #[derive(PartialEq, Debug)]
 pub enum InsertContactFormError {
-    ContactIdAlreadyExists,
+    ContactFormAlreadyExists,
     EmailIsInvalid,
-    EmailDoesNotExist,
-    MessageDoesNotExist,
+    EmailNotPRovided,
+    MessageNotProvided,
     InternalError(String),
     DatabaseError(RepositoryError),
 }

@@ -8,13 +8,14 @@ pub fn validate(
     connection: &StorageConnection,
 ) -> Result<(), InsertContactFormError> {
     if check_contact_form_record_exists(&input.id, connection)? {
-        return Err(InsertContactFormError::ContactIdAlreadyExists);
+        return Err(InsertContactFormError::ContactFormAlreadyExists);
     }
 
     if input.reply_email.is_empty() {
-        return Err(InsertContactFormError::EmailDoesNotExist);
+        return Err(InsertContactFormError::EmailNotPRovided);
     }
-    //unwrap - unwrap is ok here as it is 'new' therefore always exists
+    // Unwrap is ok here as would only panic if regex pattern was invalid
+    // Tests pass so we know this is a valid regex
     let email_regex = Regex::new(r"[^@]+@[^@]+\.[^@]+").unwrap();
 
     if !email_regex.is_match(&input.reply_email) {
@@ -22,7 +23,7 @@ pub fn validate(
     }
 
     if input.body.is_empty() {
-        return Err(InsertContactFormError::MessageDoesNotExist);
+        return Err(InsertContactFormError::MessageNotProvided);
     }
     Ok(())
 }
