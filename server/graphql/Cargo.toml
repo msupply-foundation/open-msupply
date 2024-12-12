@@ -39,6 +39,7 @@ graphql_repack = { path = "repack" }
 graphql_form_schema = { path = "form_schema" }
 graphql_clinician = { path = "clinician" }
 graphql_plugin = { path = "plugin" }
+graphql_contact_form = { path = "contact_form"}
 
 actix-web = { workspace = true }
 async-graphql = { workspace = true }
