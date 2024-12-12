@@ -152,3 +152,11 @@ export const getInvoiceLocalisationKey = (type: InvoiceNodeType): LocaleKey => {
       return 'label.repack';
   }
 };
+
+export const getNameValue = (t: TypedTFunction<LocaleKey>, name: String) => {
+  if (name == 'repack') {
+    return t('label.repack');
+  } else if (name == 'Inventory adjustments') {
+    return t('inventory-adjustment');
+  } else return name;
+};
