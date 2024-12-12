@@ -38,7 +38,7 @@ export const PrescriptionDetailView: FC = () => {
           .build()
       );
     },
-    [toItemRow]
+    [toItemRow, data]
   );
   const onAddItem = () => {
     navigate(
