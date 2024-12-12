@@ -1,5 +1,7 @@
 use crate::repository_error::RepositoryError;
 
+pub mod abbreviation;
+pub mod abbreviation_row;
 pub mod activity_log;
 mod activity_log_row;
 pub mod adjustment;
@@ -15,6 +17,8 @@ mod clinician_store_join_row;
 pub mod cold_storage_type;
 mod cold_storage_type_row;
 pub mod consumption;
+pub mod contact_form;
+pub mod contact_form_row;
 pub mod contact_trace;
 pub mod contact_trace_row;
 mod context_row;
@@ -123,6 +127,7 @@ pub mod sync_file_reference;
 pub mod sync_file_reference_row;
 pub mod sync_log;
 mod sync_log_row;
+pub mod system_log_row;
 pub mod temperature_breach;
 pub mod temperature_breach_config;
 mod temperature_breach_config_row;
@@ -141,6 +146,7 @@ pub mod vaccination_card;
 pub mod vaccination_row;
 pub mod vaccine_course;
 
+pub use abbreviation_row::*;
 pub use activity_log_row::*;
 pub use adjustment::*;
 pub use assets::*;

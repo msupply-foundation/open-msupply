@@ -3000,10 +3000,8 @@ export type InsertRequestRequisitionLineErrorInterface = {
 };
 
 export type InsertRequestRequisitionLineInput = {
-  comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
   requisitionId: Scalars['String']['input'];
 };
 
@@ -5017,6 +5015,12 @@ export type NumberNode = {
   number: Scalars['Int']['output'];
 };
 
+export type OrderingTooManyItems = UpdateRequestRequisitionErrorInterface & UpdateResponseRequisitionErrorInterface & {
+  __typename: 'OrderingTooManyItems';
+  description: Scalars['String']['output'];
+  maxItemsInEmergencyOrder: Scalars['Int']['output'];
+};
+
 export type OtherPartyNotACustomer = InsertCustomerReturnErrorInterface & InsertErrorInterface & InsertResponseRequisitionErrorInterface & UpdateCustomerReturnErrorInterface & UpdateNameErrorInterface & {
   __typename: 'OtherPartyNotACustomer';
   description: Scalars['String']['output'];
@@ -5498,6 +5502,7 @@ export type ProgramRequisitionOrderTypeNode = {
   __typename: 'ProgramRequisitionOrderTypeNode';
   availablePeriods: Array<PeriodNode>;
   id: Scalars['String']['output'];
+  isEmergency: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
 };
 
@@ -6784,7 +6789,7 @@ export type RequisitionReasonNotProvided = {
   requisitionLine: RequisitionLineNode;
 };
 
-export type RequisitionReasonsNotProvided = UpdateResponseRequisitionErrorInterface & {
+export type RequisitionReasonsNotProvided = UpdateRequestRequisitionErrorInterface & UpdateResponseRequisitionErrorInterface & {
   __typename: 'RequisitionReasonsNotProvided';
   description: Scalars['String']['output'];
   errors: Array<RequisitionReasonNotProvided>;
@@ -6799,7 +6804,7 @@ export enum RequisitionSortFieldInput {
   FinalisedDatetime = 'finalisedDatetime',
   OrderType = 'orderType',
   OtherPartyName = 'otherPartyName',
-  PeriodName = 'periodName',
+  PeriodStartDate = 'periodStartDate',
   ProgramName = 'programName',
   RequisitionNumber = 'requisitionNumber',
   SentDatetime = 'sentDatetime',
@@ -7369,6 +7374,7 @@ export type StorePreferenceNode = {
   requestRequisitionRequiresAuthorisation: Scalars['Boolean']['output'];
   responseRequisitionRequiresAuthorisation: Scalars['Boolean']['output'];
   stocktakeFrequency: Scalars['Float']['output'];
+  useConsumptionAndStockFromCustomersForInternalOrders: Scalars['Boolean']['output'];
   vaccineModule: Scalars['Boolean']['output'];
 };
 
@@ -8287,6 +8293,7 @@ export type UpdateRequestRequisitionLineErrorInterface = {
 export type UpdateRequestRequisitionLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  optionId?: InputMaybe<Scalars['String']['input']>;
   requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
 };
 

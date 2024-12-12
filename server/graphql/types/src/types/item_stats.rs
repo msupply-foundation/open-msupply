@@ -9,7 +9,7 @@ impl ItemStatsNode {
     pub async fn total_consumption(&self) -> f64 {
         self.item_stats.total_consumption
     }
-    
+
     pub async fn average_monthly_consumption(&self) -> f64 {
         self.item_stats.average_monthly_consumption
     }
@@ -22,6 +22,10 @@ impl ItemStatsNode {
         (self.item_stats.average_monthly_consumption != 0.0).then(|| {
             self.item_stats.available_stock_on_hand / self.item_stats.average_monthly_consumption
         })
+    }
+
+    pub async fn total_stock_on_hand(&self) -> f64 {
+        self.item_stats.total_stock_on_hand
     }
 }
 
