@@ -1,4 +1,10 @@
 on: 
+  pull_request: 
+    branches: 
+      - main
+      - develop
+    paths: 
+      - 'server/**'
   workflow_dispatch: 
 
 name: Manual Cargo Clean
