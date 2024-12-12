@@ -12,6 +12,7 @@ import {
   NothingHere,
   useUrlQueryParams,
   ColumnFormat,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -46,6 +47,7 @@ export const StocktakeListView: FC = () => {
 
   const columns = useColumns<StocktakeRowFragment>(
     [
+      GenericColumnKey.Selection, // Adds padding to the left
       ['stocktakeNumber', { maxWidth: 75, sortable: false }],
       [
         'status',
@@ -57,7 +59,6 @@ export const StocktakeListView: FC = () => {
       ['createdDatetime', { format: ColumnFormat.Date }],
       ['stocktakeDate', { sortable: false }],
       ['comment', { sortable: false }],
-      'selection',
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]

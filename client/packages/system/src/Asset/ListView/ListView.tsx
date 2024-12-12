@@ -11,6 +11,7 @@ import {
   useToggle,
   useIsCentralServerApi,
   ColumnDescription,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { AssetCatalogueItemFragment, useAssetData } from '../api';
 import { Toolbar } from './Toolbar';
@@ -79,7 +80,7 @@ const AssetListComponent: FC = () => {
     },
   ];
 
-  if (isCentralServer) columnDescriptions.push('selection');
+  if (isCentralServer) columnDescriptions.unshift(GenericColumnKey.Selection);
   const columns = useColumns<AssetCatalogueItemFragment>(
     columnDescriptions,
     {
