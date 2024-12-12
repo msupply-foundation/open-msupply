@@ -16,7 +16,7 @@
         "twoMonthsAgoConsumption": 123,
         "expiringInSixMonths": 150,
         "expiringInTwelveMonths": 170,
-        "stockOnOrder": 0,
+        "stockOnOrder": 5,
         "AMC12": 150.8,
         "AMC24": 250.8,
         "SOH": 300.9,
@@ -31,7 +31,7 @@
           "totalConsumption": 100,
           "availableMonthsOfStockOnHand": 4.5
         },
-        "stockOnOrder": 0,
+        "stockOnOrder": 5,
         "AMC12": 150.8,
         "AMC24": 250.8,
         "SOH": 200,
