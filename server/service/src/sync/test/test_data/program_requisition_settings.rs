@@ -69,10 +69,10 @@ const MASTER_LIST_WITH_PROGRAM_1: (&str, &str) = (
             "NewProgramTag3": {
                 "orderTypes": [
                     {
-                        "isEmergency": false,
-                        "maxEmergencyOrders": "",
+                        "isEmergency": true,
+                        "maxEmergencyOrders": 2,
                         "maxMOS": 2,
-                        "maxOrdersPerPeriod": 3,
+                        "maxOrdersPerPeriod": 0,
                         "name": "New order 1",
                         "thresholdMOS": 2,
                         "type": "Order type"
@@ -150,6 +150,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     threshold_mos: 3.0,
                     max_mos: 3.0,
                     max_order_per_period: 1,
+                    is_emergency: false,
+                    max_items_in_emergency_order: 0,
                 }),
                 IntegrationOperation::upsert(ProgramRequisitionOrderTypeRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned()
@@ -161,6 +163,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     threshold_mos: 3.0,
                     max_mos: 3.0,
                     max_order_per_period: 1,
+                    is_emergency: false,
+                    max_items_in_emergency_order: 0,
                 }),
                 IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_2().id,
@@ -178,6 +182,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     threshold_mos: 4.0,
                     max_mos: 4.0,
                     max_order_per_period: 1,
+                    is_emergency: false,
+                    max_items_in_emergency_order: 0,
                 }),
                 IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_3().id,
@@ -194,7 +200,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     name: "New order 1".to_owned(),
                     threshold_mos: 2.0,
                     max_mos: 2.0,
-                    max_order_per_period: 3,
+                    max_order_per_period: 0,
+                    is_emergency: true,
+                    max_items_in_emergency_order: 2,
                 }),
             ]),
             sync_buffer_row: SyncBufferRow {

@@ -9,29 +9,29 @@ const Template: StoryFn<typeof NewValueBar> = ({ value, total, colour }) => (
   </Box>
 );
 
-export const Default = Template.bind({});
-export const NoDividers = Template.bind({});
-export const BothDividers = Template.bind({});
+export const NewDefault = Template.bind({});
+export const NewNoDividers = Template.bind({});
+export const NewBothDividers = Template.bind({});
 
-Default.args = {
+NewDefault.args = {
   value: 10,
   total: 20,
   colour: 'gray.main',
 };
 
-NoDividers.args = {
+NewNoDividers.args = {
   value: 10,
   total: 20,
   colour: 'gray.main',
 };
 
-BothDividers.args = {
+NewBothDividers.args = {
   value: 10,
   total: 20,
   colour: 'gray.main',
 };
 
 export default {
-  title: 'Charts/ValueBar',
+  title: 'Charts/NewValueBar',
   component: NewValueBar,
 } as Meta<typeof NewValueBar>;

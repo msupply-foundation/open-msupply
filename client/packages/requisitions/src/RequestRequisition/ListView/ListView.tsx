@@ -102,7 +102,7 @@ export const RequestRequisitionListView: FC = () => {
           getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
       },
     ],
-    ['comment', { width: '100%', Cell: TooltipTextCell }]
+    ['comment', { width: '100%', Cell: TooltipTextCell, sortable: false }]
   );
 
   if (requireSupplierAuthorisation) {
