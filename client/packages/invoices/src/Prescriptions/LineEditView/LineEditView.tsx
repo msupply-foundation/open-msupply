@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import {
   BasicSpinner,
-  DetailContainer,
   ModalMode,
   NothingHere,
   RouteBuilder,
@@ -58,32 +57,28 @@ export const PrescriptionLineEditView = () => {
   return (
     <>
       <AppBarButtons invoiceNumber={data?.invoiceNumber} />
-      <DetailContainer>
-        <PageLayout
-          Left={
-            <>
-              <ListItems
-                currentItemId={itemId}
-                items={items}
-                route={RouteBuilder.create(AppRoute.Dispensary)
-                  .addPart(AppRoute.Prescription)
-                  .addPart(String(invoiceNumber))}
-                enteredLineIds={enteredLineIds}
-                showNew={true}
-              />
-            </>
-          }
-          Right={
-            <>
-              <PrescriptionLineEdit
-                draft={{ item: currentItem }}
-                mode={currentItem ? ModalMode.Update : ModalMode.Create}
-                items={items}
-              />
-            </>
-          }
-        />
-      </DetailContainer>
+      <PageLayout
+        Left={
+          <ListItems
+            currentItemId={itemId}
+            items={items}
+            route={RouteBuilder.create(AppRoute.Dispensary)
+              .addPart(AppRoute.Prescription)
+              .addPart(String(invoiceNumber))}
+            enteredLineIds={enteredLineIds}
+            showNew={true}
+          />
+        }
+        Right={
+          <>
+            <PrescriptionLineEdit
+              draft={{ item: currentItem }}
+              mode={currentItem ? ModalMode.Update : ModalMode.Create}
+              items={items}
+            />
+          </>
+        }
+      />
     </>
   );
 };

@@ -54,9 +54,10 @@ export const useDraftPrescriptionLines = (
     }
 
     if (!data) return;
-    // Stock lines (data.nodes) are coming from availableStockLines from itemNode
-    // these are filtered by totalNumberOfPacks > 0 but it's possible to issue all of the packs
-    // from the batch in picked status, need to make sure these are not hidden
+    // Stock lines (data.nodes) are coming from availableStockLines from
+    // itemNode these are filtered by totalNumberOfPacks > 0 but it's possible
+    // to issue all of the packs from the batch in picked status, need to make
+    // sure these are not hidden
     const invoiceLineStockLines = (lines ?? []).flatMap(l =>
       l.stockLine ? [l.stockLine] : []
     );
@@ -110,7 +111,8 @@ export const useDraftPrescriptionLines = (
             })
           );
         } else {
-          // Commented out for now until placeholders are implemented for prescriptions
+          // Commented out for now until placeholders are implemented for
+          // prescriptions
           // rows.push(createStockOutPlaceholderRow(invoiceId, item.id));
         }
       }
