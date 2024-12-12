@@ -19,7 +19,7 @@ import {
 import { StoreSelector } from './StoreSelector';
 import { LanguageSelector } from './LanguageSelector';
 import { FacilityEditModal, useName } from '@openmsupply-client/system';
-import { AdminSelector } from './UserDetails';
+import { UserDetails } from './UserDetails';
 
 export const Footer: React.FC = () => {
   const { user, store } = useAuthContext();
@@ -78,14 +78,14 @@ export const Footer: React.FC = () => {
       {user ? (
         <>
           <Divider />
-          <AdminSelector>
+          <UserDetails>
             <PaddedCell>
               <UserIcon sx={iconStyles} />
               <Tooltip title={`${user.firstName} ${user.lastName}`}>
                 <Typography sx={textStyles}>{user.name}</Typography>
               </Tooltip>
             </PaddedCell>
-          </AdminSelector>
+          </UserDetails>
         </>
       ) : null}
       <Divider />

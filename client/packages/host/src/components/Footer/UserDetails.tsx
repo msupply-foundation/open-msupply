@@ -17,7 +17,7 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly } from '@common/types';
 
-export const AdminSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
+export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { logout, user, token } = useAuthContext();
   const navigate = useNavigate();
   const { hide, PaperClickPopover } = usePaperClickPopover();
@@ -56,15 +56,16 @@ export const AdminSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   return user ? (
     <PaperClickPopover
       placement="top"
-      width={350}
+      width={300}
       Content={
         <PaperPopoverSection label={`${user.firstName} ${user.lastName}`}>
           {isLoading ? (
             <CircularProgress size={12} />
           ) : (
             <Box
-              style={{
+              sx={{
                 overflowY: 'auto',
+                overflowX: 'auto',
                 maxHeight: 300,
                 gap: 10,
                 margin: '.5rem',
@@ -73,7 +74,14 @@ export const AdminSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
               <TextWithLabelRow
                 label={t('heading.username')}
                 text={user.name}
-                textProps={{ textAlign: 'left', lineHeight: 1.5 }}
+                textProps={{
+                  textAlign: 'left',
+                  lineHeight: 1.5,
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  width: 150,
+                }}
                 labelProps={{
                   sx: { textAlign: 'left', width: 80, lineHeight: 1.5 },
                 }}
@@ -81,9 +89,16 @@ export const AdminSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
               <TextWithLabelRow
                 label={t('label.email')}
                 text={user.email ?? ''}
-                textProps={{ textAlign: 'left', lineHeight: 1.5 }}
+                textProps={{
+                  textAlign: 'left',
+                  lineHeight: 1.5,
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  width: 180,
+                }}
                 labelProps={{
-                  sx: { textAlign: 'left', width: 50, lineHeight: 1.5 },
+                  sx: { textAlign: 'left', width: 45, lineHeight: 1.5 },
                 }}
               />
             </Box>
