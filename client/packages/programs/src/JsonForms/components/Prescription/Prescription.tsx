@@ -25,7 +25,7 @@ import {
   usePrescription,
   usePrescriptionLines,
 } from '@openmsupply-client/invoices/src/Prescriptions';
-import { useDraftPrescriptionLines } from '@openmsupply-client/invoices/src/Prescriptions/DetailView/PrescriptionLineEdit/hooks';
+import { useDraftPrescriptionLines } from '@openmsupply-client/invoices/src/Prescriptions/LineEditView/hooks';
 import { StockLineTable } from './StockLineTable';
 import { DraftStockOutLine } from '@openmsupply-client/invoices/src/types';
 

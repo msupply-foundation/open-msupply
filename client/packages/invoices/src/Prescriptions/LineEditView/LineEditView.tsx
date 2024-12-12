@@ -12,11 +12,11 @@ import {
 import { ItemRowFragment, ListItems } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PageLayout } from './PageLayout';
-import { usePrescription } from '../../api';
+import { usePrescription } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { PrescriptionLineEdit } from './PrescriptionLineEdit';
 
-export const PrescriptionLineEditPage = () => {
+export const PrescriptionLineEditView = () => {
   const { invoiceNumber, itemId } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
 
