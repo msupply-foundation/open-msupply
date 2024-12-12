@@ -6,7 +6,10 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { LedgerRowFragment } from '../../api';
-import { getInvoiceLocalisationKey } from '@openmsupply-client/system';
+import {
+  getInvoiceLocalisationKey,
+  getNameValue,
+} from '@openmsupply-client/system';
 
 export enum ColumnKey {
   'DateTime' = 'datetime',
@@ -42,6 +45,7 @@ export const useLedgerColumns = (
       {
         key: ColumnKey.Name,
         label: 'label.name',
+        accessor: ({ rowData }) => getNameValue(t, rowData.name),
         sortable: false,
       },
       {

@@ -10,6 +10,7 @@
         <td>{{t(k="label.batch", f="Batch")}}</td>
         <td>{{t(k="report.expiry-date", f="Expiry date")}}</td>
         <td>{{t(k="report.stock-on-hand", f="Stock on hand")}}</td>
+        <td>{{t(k="report.average-monthly-consumption", f="Average monthly consumption")}}</td>
         <td>{{t(k="report.expected-usage", f="Expected usage")}}</td>
         <td>{{t(k="report.stock-at-risk", f="Stock at risk")}}</td>
       </tr>
@@ -42,6 +43,7 @@
         </td>
         <td>{{stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)
           }}</td>
+        <td>{{stockLine.averageMonthlyConsumption }}</td>
         <td>
           {% if stockLine.expectedUsage %}
               {{ stockLine.expectedUsage | round( precision=1) }}

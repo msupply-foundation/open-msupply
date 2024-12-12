@@ -132,7 +132,7 @@ describe("calculate SOH", () => {
   });
   it("returns rounded value if value exists", () => {
     expect(
-      calculateStatValue(inputData.items.nodes[0].stats.totalStockOnHand)
+      calculateStatValue(inputData.items.nodes[0].stats.availableStockOnHand)
     ).toBe(300.9);
   });
 });
@@ -147,5 +147,12 @@ describe("calculate MOS", () => {
         inputData.items.nodes[0].stats.availableMonthsOfStockOnHand
       )
     ).toBe(4.5);
+  });
+});
+
+describe("calculate stockOnOrder", () => {
+  it("return  0 when calculate quantity input is negative", () => {
+    // covers possible negative cases such as where invoice line stock is greater than requisition line stock
+    expect(calculateQuantity(inputData.stockOnOrder, "102")).toBe(0);
   });
 });
