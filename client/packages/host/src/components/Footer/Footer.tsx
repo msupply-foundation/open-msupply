@@ -19,7 +19,7 @@ import {
 import { StoreSelector } from './StoreSelector';
 import { LanguageSelector } from './LanguageSelector';
 import { FacilityEditModal, useName } from '@openmsupply-client/system';
-import { AdminSelector } from './AdminSelector';
+import { AdminSelector } from './UserDetails';
 
 export const Footer: React.FC = () => {
   const { user, store } = useAuthContext();
