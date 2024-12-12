@@ -43,7 +43,7 @@ const calculateExpectedUsage = (daysUntilExpired, line) => {
   let totalStock = line?.totalNumberOfPacks * line?.packSize;
 
   let expectedUsage = undefined;
-  if (!!daysUntilExpired && !!averageMonthlyConsumption) {
+  if (!!daysUntilExpired && !!averageMonthlyConsumption && !!totalStock) {
     if (daysUntilExpired >= 0) {
       const usage = Math.round(
         daysUntilExpired * (averageMonthlyConsumption / 30)
