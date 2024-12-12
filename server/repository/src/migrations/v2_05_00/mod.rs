@@ -1,6 +1,11 @@
 use super::{version::Version, Migration, MigrationFragment};
 
+mod abbreviation_create_table;
+mod add_contact_form_table;
+mod add_emergency_orders;
+mod item_direction_create_table;
 mod new_store_preferences;
+mod remove_unique_description_on_tmp_breach;
 
 use crate::StorageConnection;
 
@@ -16,19 +21,26 @@ impl Migration for V2_05_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(new_store_preferences::Migrate)]
+        vec![
+            Box::new(add_contact_form_table::Migrate),
+            Box::new(new_store_preferences::Migrate),
+            Box::new(remove_unique_description_on_tmp_breach::Migrate),
+            Box::new(add_emergency_orders::Migrate),
+            Box::new(abbreviation_create_table::Migrate),
+            Box::new(item_direction_create_table::Migrate),
+        ]
     }
 }
 
 #[cfg(test)]
 #[actix_rt::test]
 async fn migration_2_05_00() {
-    use v2_04_00::V2_04_00;
+    use v2_04_01::V2_04_01;
 
     use crate::migrations::*;
     use crate::test_db::*;
 
-    let previous_version = V2_04_00.version();
+    let previous_version = V2_04_01.version();
     let version = V2_05_00.version();
 
     let SetupResult { connection, .. } = setup_test(SetupOption {

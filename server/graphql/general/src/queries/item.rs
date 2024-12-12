@@ -47,9 +47,9 @@ pub struct ItemFilterInput {
     pub code: Option<StringFilterInput>,
     pub category_id: Option<String>,
     pub category_name: Option<String>,
-    /// Items that are visible in this store OR there is available stock of that item in this store
+    /// Items that are part of a masterlist which is visible in this store OR there is available stock of that item in this store
     pub is_visible_or_on_hand: Option<bool>,
-    /// Items that are visible in this store. This filter is void if `is_visible_or_on_hand` is true
+    /// Items that are part of a masterlist which is visible in this store. This filter is void if `is_visible_or_on_hand` is true
     pub is_visible: Option<bool>,
     pub code_or_name: Option<StringFilterInput>,
     pub is_active: Option<bool>,

@@ -8,8 +8,9 @@ use repository::{
 use serde::Deserialize;
 use std::collections::HashMap;
 
-use crate::sync::translations::{
-    name_tag::NameTagTranslation, period_schedule::PeriodScheduleTranslation,
+use crate::sync::{
+    sync_serde::empty_str_or_i32,
+    translations::{name_tag::NameTagTranslation, period_schedule::PeriodScheduleTranslation},
 };
 
 use super::{
@@ -51,6 +52,12 @@ struct LegacyOrderType {
     max_mos: f64,
     #[serde(rename = "maxOrdersPerPeriod")]
     max_order_per_period: i32,
+    #[serde(rename = "isEmergency")]
+    is_emergency: bool,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_or_i32")]
+    #[serde(rename = "maxEmergencyOrders")]
+    max_items_in_emergency_order: i32,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -230,6 +237,8 @@ fn generate_requisition_program(
                         threshold_mos: order_type.threshold_mos,
                         max_mos: order_type.max_mos,
                         max_order_per_period: order_type.max_order_per_period,
+                        is_emergency: order_type.is_emergency,
+                        max_items_in_emergency_order: order_type.max_items_in_emergency_order,
                     };
 
                     program_requisition_order_type_rows.push(program_requisition_order_type_row);
