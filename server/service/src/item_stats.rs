@@ -22,7 +22,6 @@ pub struct ItemStats {
     pub total_consumption: f64,
     pub average_monthly_consumption: f64,
     pub available_stock_on_hand: f64,
-    pub total_stock_on_hand: f64,
     pub item_id: String,
     pub item_name: String,
 }
@@ -141,7 +140,6 @@ impl ItemStats {
                     .get(&stock_on_hand.item_id)
                     .copied()
                     .unwrap_or_default(),
-                total_stock_on_hand: stock_on_hand.total_stock_on_hand,
             })
             .collect()
     }
@@ -155,7 +153,6 @@ impl ItemStats {
             item_name: requisition_line.item_row.name.clone(),
             // TODO: Implement total consumption & total_stock_on_hand
             total_consumption: 0.0,
-            total_stock_on_hand: 0.0,
         }
     }
 }
