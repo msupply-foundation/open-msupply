@@ -29,7 +29,7 @@ import {
   SavedDocument,
   SchemaData,
   useDocumentRegistry,
-  useJsonForms,
+  useJsonFormsHandler,
   usePatientModalStore,
   usePatientStore,
   useProgramEnrolments,
@@ -135,8 +135,8 @@ const PatientDetailView = ({
         isCreating: true,
       };
     } else if (!!currentPatient && !currentPatient.document) {
-      // The loaded patient doesn't has a document. Use the information we got (from the name
-      // table).
+      // The loaded patient doesn't has a document. Use the information we got
+      // (from the name table).
       return {
         schema: patientRegistry ?? DEFAULT_SCHEMA,
         data: {
@@ -199,7 +199,7 @@ const PatientDetailView = ({
       };
 
   const { JsonForm, saveData, isSaving, isDirty, validationError } =
-    useJsonForms(
+    useJsonFormsHandler(
       {
         documentName: createNewPatient ? undefined : documentName,
         patientId: patientId,
