@@ -29,7 +29,7 @@ const processItemLines = (data, sort, dir) => {
     item.stockOnOrder = calculateQuantity(data.stockOnOrder, item.id);
     item.AMC12 = calculateQuantity(data.AMCTwelve, item.id);
     item.AMC24 = calculateQuantity(data.AMCTwentyFour, item.id);
-    item.SOH = calculateStatValue(item?.stats?.totalStockOnHand);
+    item.SOH = calculateStatValue(item?.stats?.availableStockOnHand);
     item.MOS = calculateStatValue(item?.stats?.availableMonthsOfStockOnHand);
   });
   let cleanNodes = cleanUpNodes(data.items.nodes);
@@ -43,6 +43,10 @@ const calculateQuantity = (queryResult, id) => {
   if (!!queryResult && !!id) {
     const node = queryResult.find((element) => element.item_id == id);
     quantity = node?.quantity ? node.quantity : 0;
+  }
+  // return 0 if quantity is less than 0. This covers use cases such as stock on order which can be negative if invoice line stock is greater than requested stock.
+  if (quantity < 0) {
+    return 0;
   }
   return quantity;
 };
