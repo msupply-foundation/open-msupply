@@ -14,11 +14,12 @@ import { useFeedbackForm } from '../api/hooks/help/useFeedbackForm';
 export const FeedbackForm = () => {
   const t = useTranslation();
   const { success, error } = useNotification();
-  const { updateDraft, resetDraft, saveFeedback, draft } = useFeedbackForm();
+  const { updateDraft, resetDraft, saveFeedback, draft, isValidInput } =
+    useFeedbackForm();
 
   const save = async () => {
     try {
-      saveFeedback(draft)
+      saveFeedback(draft);
       const successSnack = success(t('messages.message-sent'));
       successSnack();
       resetDraft();
@@ -66,7 +67,7 @@ export const FeedbackForm = () => {
           type="submit"
           variant="contained"
           sx={{ fontSize: '12px' }}
-          disabled={false}
+          disabled={!isValidInput}
           onClick={save}
         >
           {t('button.send')}
