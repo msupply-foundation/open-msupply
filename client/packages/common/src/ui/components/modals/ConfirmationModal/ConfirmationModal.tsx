@@ -12,7 +12,7 @@ interface ConfirmationModalProps {
   onCancel: () => void;
   title: string;
   message: string;
-  info: string | undefined;
+  info?: string | undefined;
   iconType?: 'alert' | 'info' | 'help';
 }
 
