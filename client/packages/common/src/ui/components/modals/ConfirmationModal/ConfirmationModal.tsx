@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Grid, Typography } from '@mui/material';
+import { Alert, Grid, Typography } from '@mui/material';
 import { BasicModal } from '../BasicModal';
 import { AlertIcon, HelpIcon, InfoIcon } from '@common/icons';
 import { DialogButton, LoadingButton } from '../../buttons';
@@ -12,6 +12,7 @@ interface ConfirmationModalProps {
   onCancel: () => void;
   title: string;
   message: string;
+  info: string | undefined;
   iconType?: 'alert' | 'info' | 'help';
 }
 
@@ -28,6 +29,7 @@ export const ConfirmationModal = ({
   onConfirm,
   title,
   message,
+  info,
   onCancel,
   iconType = 'alert',
 }: ConfirmationModalProps) => {
@@ -48,6 +50,13 @@ export const ConfirmationModal = ({
         <Grid item>
           <Typography style={{ whiteSpace: 'pre-line' }}>{message}</Typography>
         </Grid>
+        {info && (
+          <Grid item paddingY={1}>
+            <Alert style={{ whiteSpace: 'pre-line' }} severity="info">
+              {info}
+            </Alert>
+          </Grid>
+        )}
         <Grid
           container
           gap={1}

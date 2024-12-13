@@ -62,10 +62,11 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = (requisition: ResponseFragment) => {
-  const { id, lines, status } = useResponse.document.fields([
+  const { id, lines, status, shipments } = useResponse.document.fields([
     'id',
     'lines',
     'status',
+    'shipments',
   ]);
   const { mutateAsync: save } = useResponse.document.update();
 
@@ -78,6 +79,8 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
     () => getStatusOptions(status, getButtonLabel(t)),
     [status, t]
   );
+
+  const isDisabled = useResponse.utils.isDisabled();
 
   const notFullySuppliedLines = requisition.lines.nodes.filter(
     line => line.remainingQuantityToSupply > 0
@@ -155,9 +158,16 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
             : '',
         });
 
+  const confirmationInfo = () => {
+    if (shipments?.totalCount === 0 && !isDisabled) {
+      return t('info.no-shipment');
+    }
+  };
+
   const getConfirmation = useConfirmationModal({
     title: confirmationTitle,
     message: confirmationMessage,
+    info: confirmationInfo(),
     onConfirm: onConfirmStatusChange,
   });
 
