@@ -3562,9 +3562,9 @@ export type ItemFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isVaccine?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Items that are visible in this store. This filter is void if `is_visible_or_on_hand` is true */
+  /** Items that are part of a masterlist which is visible in this store. This filter is void if `is_visible_or_on_hand` is true */
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Items that are visible in this store OR there is available stock of that item in this store */
+  /** Items that are part of a masterlist which is visible in this store OR there is available stock of that item in this store */
   isVisibleOrOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
@@ -7099,6 +7099,7 @@ export type StockLineFilterInput = {
   expiryDate?: InputMaybe<DateFilterInput>;
   hasPacksInStore?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isAvailable?: InputMaybe<Scalars['Boolean']['input']>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
