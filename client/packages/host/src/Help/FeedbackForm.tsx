@@ -14,8 +14,14 @@ import { useFeedbackForm } from '../api/hooks/help/useFeedbackForm';
 export const FeedbackForm = () => {
   const t = useTranslation();
   const { success, error } = useNotification();
-  const { updateDraft, resetDraft, saveFeedback, draft, isValidInput } =
-    useFeedbackForm();
+  const {
+    updateDraft,
+    resetDraft,
+    saveFeedback,
+    draft,
+    isValidInput,
+    checkEmailValidity,
+  } = useFeedbackForm();
 
   const save = async () => {
     try {
@@ -29,6 +35,8 @@ export const FeedbackForm = () => {
     }
   };
 
+  const isValidEmail = checkEmailValidity(draft.replyEmail);
+
   return (
     <>
       <InputWithLabelRow
@@ -38,7 +46,14 @@ export const FeedbackForm = () => {
           <BasicTextInput
             value={draft.replyEmail}
             onChange={e => updateDraft({ replyEmail: e.target.value })}
+            // onChange={handleChange}
             fullWidth
+            helperText={
+              !isValidEmail
+                ? 'Please enter a valid email e.g help@example.com'
+                : ''
+            }
+            error={!isValidEmail}
           />
         }
       />
