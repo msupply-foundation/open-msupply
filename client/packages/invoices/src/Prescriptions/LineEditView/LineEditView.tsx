@@ -1,19 +1,24 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   BasicSpinner,
+  InvoiceNodeStatus,
   ModalMode,
   NothingHere,
   RouteBuilder,
   useBreadcrumbs,
+  useConfirmOnLeaving,
+  useDirtyCheck,
   useParams,
 } from '@openmsupply-client/common';
 
 import { ItemRowFragment, ListItems } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PageLayout } from './PageLayout';
-import { usePrescription } from '../api';
+import { usePrescription, usePrescriptionLines } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { PrescriptionLineEdit } from './PrescriptionLineEdit';
+import { DraftStockOutLine } from '../../types';
+import { Footer } from './Footer';
 
 export const PrescriptionLineEditView = () => {
   const { invoiceNumber, itemId } = useParams();
@@ -23,9 +28,23 @@ export const PrescriptionLineEditView = () => {
     query: { data, loading: isLoading },
   } = usePrescription();
 
+  const {
+    save: { saveLines, isSavingLines },
+    delete: { deleteLines },
+  } = usePrescriptionLines(data?.id);
+
+  const { isDirty, setIsDirty } = useDirtyCheck();
+
   const lines =
     data?.lines.nodes.sort((a, b) => a.item.name.localeCompare(b.item.name)) ??
     [];
+
+  const invoiceId = data?.id ?? '';
+  const status = data?.status;
+
+  const [allDraftLines, setAllDraftLines] = useState<
+    Record<string, DraftStockOutLine[]>
+  >({});
 
   let currentItem = lines.find(line => line.item.id === itemId)?.item;
 
@@ -51,8 +70,42 @@ export const PrescriptionLineEditView = () => {
     });
   }, [currentItem]);
 
-  if (isLoading) return <BasicSpinner />;
+  // useConfirmOnLeaving(isDirty);
+
+  const updateAllLines = (lines: DraftStockOutLine[]) => {
+    itemId && setAllDraftLines({ ...allDraftLines, [itemId]: lines });
+    setIsDirty(true);
+  };
+
+  const onSave = async () => {
+    if (!isDirty) return;
+
+    const flattenedLines = Object.values(allDraftLines).flat();
+
+    // needed since placeholders aren't being created for prescriptions yet, but still adding to array
+    const isOnHold = flattenedLines.some(
+      ({ stockLine, location }) => stockLine?.onHold || location?.onHold
+    );
+
+    const patch =
+      status !== InvoiceNodeStatus.Picked &&
+      flattenedLines.length >= 1 &&
+      !isOnHold
+        ? {
+            id: invoiceId,
+            status: InvoiceNodeStatus.Picked,
+          }
+        : undefined;
+
+    await saveLines({ draftPrescriptionLines: flattenedLines, patch });
+
+    // if (!draft) return;
+  };
+
+  if (isLoading || !itemId) return <BasicSpinner />;
   if (!data) return <NothingHere />;
+
+  console.log('allDraftLines', allDraftLines);
 
   return (
     <>
@@ -66,19 +119,21 @@ export const PrescriptionLineEditView = () => {
               .addPart(AppRoute.Prescription)
               .addPart(String(invoiceNumber))}
             enteredLineIds={enteredLineIds}
-            showNew={true}
+            showNew={status !== InvoiceNodeStatus.Verified}
           />
         }
         Right={
           <>
             <PrescriptionLineEdit
               draft={{ item: currentItem }}
-              mode={currentItem ? ModalMode.Update : ModalMode.Create}
               items={items}
+              draftLines={allDraftLines[itemId] ?? []}
+              updateLines={updateAllLines}
             />
           </>
         }
       />
+      <Footer isSaving={isSavingLines} isDirty={isDirty} handleSave={onSave} />
     </>
   );
 };

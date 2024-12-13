@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import {
   InvoiceLineNodeType,
   InvoiceNodeStatus,
@@ -12,20 +12,22 @@ import { usePrescription } from '../../api';
 import { DraftItem } from '../../../..';
 import { DraftStockOutLine } from '../../../types';
 import {
-  UseDraftStockOutLinesControl,
   createDraftStockOutLine,
   createDraftStockOutLineFromStockLine,
   issueStock,
   updateNotes,
 } from '../../../StockOut/utils';
 
-export interface UseDraftPrescriptionLinesControl
-  extends UseDraftStockOutLinesControl {
+export interface UseDraftPrescriptionLinesControl {
   updateNotes: (note: string) => void;
+  updateQuantity: (batchId: string, quantity: number) => void;
+  isLoading: boolean;
 }
 
 export const useDraftPrescriptionLines = (
   item: DraftItem | null,
+  draftLines: DraftStockOutLine[],
+  updateDraftLines: (lines: DraftStockOutLine[]) => void,
   date?: Date | null
 ): UseDraftPrescriptionLinesControl => {
   const {
@@ -41,16 +43,16 @@ export const useDraftPrescriptionLines = (
     datetime: date ? date.toISOString() : undefined,
   });
 
-  const { isDirty, setIsDirty } = useDirtyCheck();
-  const [draftStockOutLines, setDraftStockOutLines] = useState<
-    DraftStockOutLine[]
-  >([]);
+  // const { isDirty, setIsDirty } = useDirtyCheck();
+  // const [draftStockOutLines, setDraftStockOutLines] = useState<
+  //   DraftStockOutLine[]
+  // >([]);
 
-  useConfirmOnLeaving(isDirty);
+  // useConfirmOnLeaving(isDirty);
 
   useEffect(() => {
     if (!item) {
-      return setDraftStockOutLines([]);
+      // return setDraftStockOutLines([]);
     }
 
     if (!data) return;
@@ -65,82 +67,133 @@ export const useDraftPrescriptionLines = (
 
     const noStockLines = stockLines.length == 0;
 
-    if (noStockLines) {
-      return setDraftStockOutLines([]);
+    if (noStockLines || !item) {
+      // return setDraftStockOutLines([]);
+      return updateDraftLines([]);
     }
 
-    setDraftStockOutLines(() => {
-      const rows = stockLines
-        .map(batch => {
-          const invoiceLine = lines?.find(
-            ({ stockLine }) => stockLine?.id === batch.id
-          );
-          if (invoiceLine && invoiceId && status) {
-            return createDraftStockOutLine({
-              invoiceLine,
-              invoiceId,
-              stockLine: batch,
-              invoiceStatus: status,
-            });
-          } else {
-            return createDraftStockOutLineFromStockLine({
-              stockLine: batch,
-              invoiceId: invoiceId ?? '',
-            });
-          }
-        })
-        .sort(SortUtils.byExpiryAsc);
+    const rows = stockLines
+      .map(batch => {
+        const invoiceLine = lines?.find(
+          ({ stockLine }) => stockLine?.id === batch.id
+        );
+        if (invoiceLine && invoiceId && status) {
+          return createDraftStockOutLine({
+            invoiceLine,
+            invoiceId,
+            stockLine: batch,
+            invoiceStatus: status,
+          });
+        } else {
+          return createDraftStockOutLineFromStockLine({
+            stockLine: batch,
+            invoiceId: invoiceId ?? '',
+          });
+        }
+      })
+      .sort(SortUtils.byExpiryAsc);
 
-      if (status === InvoiceNodeStatus.New) {
-        let placeholder = lines?.find(
+    if (status === InvoiceNodeStatus.New) {
+      let placeholder = lines?.find(
+        ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+      );
+      if (!placeholder) {
+        placeholder = draftLines.find(
           ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
         );
-        if (!placeholder) {
-          placeholder = draftStockOutLines.find(
-            ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-          );
-        }
-        if (placeholder) {
-          const placeholderItem = lines?.find(l => l.item.id === item.id)?.item;
-          if (!!placeholderItem) placeholder.item = placeholderItem;
-          rows.push(
-            createDraftStockOutLine({
-              invoiceId: invoiceId ?? '',
-              invoiceLine: placeholder,
-              invoiceStatus: status,
-            })
-          );
-        } else {
-          // Commented out for now until placeholders are implemented for
-          // prescriptions
-          // rows.push(createStockOutPlaceholderRow(invoiceId, item.id));
-        }
       }
+      if (placeholder) {
+        const placeholderItem = lines?.find(l => l.item.id === item.id)?.item;
+        if (!!placeholderItem) placeholder.item = placeholderItem;
+        rows.push(
+          createDraftStockOutLine({
+            invoiceId: invoiceId ?? '',
+            invoiceLine: placeholder,
+            invoiceStatus: status,
+          })
+        );
+      } else {
+        // Commented out for now until placeholders are implemented for
+        // prescriptions
+        // rows.push(createStockOutPlaceholderRow(invoiceId, item.id));
+      }
+    }
 
-      return rows;
-    });
+    updateDraftLines(rows);
+
+    // setDraftStockOutLines(() => {
+    //   const rows = stockLines
+    //     .map(batch => {
+    //       const invoiceLine = lines?.find(
+    //         ({ stockLine }) => stockLine?.id === batch.id
+    //       );
+    //       if (invoiceLine && invoiceId && status) {
+    //         return createDraftStockOutLine({
+    //           invoiceLine,
+    //           invoiceId,
+    //           stockLine: batch,
+    //           invoiceStatus: status,
+    //         });
+    //       } else {
+    //         return createDraftStockOutLineFromStockLine({
+    //           stockLine: batch,
+    //           invoiceId: invoiceId ?? '',
+    //         });
+    //       }
+    //     })
+    //     .sort(SortUtils.byExpiryAsc);
+
+    //   if (status === InvoiceNodeStatus.New) {
+    //     let placeholder = lines?.find(
+    //       ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+    //     );
+    //     if (!placeholder) {
+    //       placeholder = draftStockOutLines.find(
+    //         ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+    //       );
+    //     }
+    //     if (placeholder) {
+    //       const placeholderItem = lines?.find(l => l.item.id === item.id)?.item;
+    //       if (!!placeholderItem) placeholder.item = placeholderItem;
+    //       rows.push(
+    //         createDraftStockOutLine({
+    //           invoiceId: invoiceId ?? '',
+    //           invoiceLine: placeholder,
+    //           invoiceStatus: status,
+    //         })
+    //       );
+    //     } else {
+    //       // Commented out for now until placeholders are implemented for
+    //       // prescriptions
+    //       // rows.push(createStockOutPlaceholderRow(invoiceId, item.id));
+    //     }
+    //   }
+
+    //   return rows;
+    // });
   }, [data, item, prescriptionData]);
 
   const onChangeRowQuantity = useCallback(
     (batchId: string, value: number) => {
-      setIsDirty(true);
-      setDraftStockOutLines(issueStock(draftStockOutLines, batchId, value));
+      // setIsDirty(true);
+      console.log('UPdating...');
+      updateDraftLines(issueStock(draftLines, batchId, value));
     },
-    [draftStockOutLines]
+    [draftLines]
   );
 
   const onUpdateNote = useCallback(
     (note: string) => {
-      setIsDirty(true);
-      setDraftStockOutLines(updateNotes(draftStockOutLines, note));
+      // setIsDirty(true);
+      updateDraftLines(updateNotes(draftLines, note));
     },
-    [draftStockOutLines]
+    [draftLines]
   );
 
   return {
-    draftStockOutLines,
+    // draftStockOutLines,
     isLoading,
-    setDraftStockOutLines,
+    // setDraftStockOutLines,
     updateQuantity: onChangeRowQuantity,
     updateNotes: onUpdateNote,
   };

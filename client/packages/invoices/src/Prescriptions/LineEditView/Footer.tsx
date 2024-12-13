@@ -11,44 +11,18 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 
 interface FooterProps {
-  hasNext: boolean;
-  next: string | null;
-  hasPrevious: boolean;
-  previous: string | null;
-  invoiceNumber?: number;
-  loading: boolean;
+  isSaving: boolean;
   isDirty: boolean;
-  handleSave: (onSaved: () => boolean | void) => Promise<boolean | void>;
+  handleSave: () => Promise<boolean | void>;
 }
 
-export const Footer: FC<FooterProps> = ({
-  hasNext,
-  next,
-  hasPrevious,
-  previous,
-  invoiceNumber,
-  loading,
-  isDirty,
-  handleSave,
-}) => {
-  const navigate = useNavigate();
+export const Footer: FC<FooterProps> = ({ isSaving, isDirty, handleSave }) => {
   const { itemId } = useParams();
-
-  // When saving, we need to navigate to the next or previous prescription line, but we'll get a not saved warning if we don't wait for the save to complete
-  // Use effect gets around this issue (but is ugly)
-  let [navigateTo, setNavigateTo] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (navigateTo) {
-      navigate(navigateTo);
-      setNavigateTo(null);
-    }
-  }, [navigateTo, navigate]);
 
   return (
     <AppFooterPortal
       Content={
-        loading ? (
+        isSaving ? (
           <InlineSpinner />
         ) : (
           <Box
@@ -66,35 +40,16 @@ export const Footer: FC<FooterProps> = ({
               marginLeft="auto"
             >
               <DialogButton
-                variant="previous"
-                disabled={!hasPrevious}
+                variant="cancel"
+                // disabled={!hasPrevious}
                 onClick={() => {
-                  handleSave(() =>
-                    setNavigateTo(
-                      RouteBuilder.create(AppRoute.Dispensary)
-                        .addPart(AppRoute.Prescription)
-                        .addPart(String(invoiceNumber))
-                        .addPart(String(previous))
-                        .build()
-                    )
-                  );
+                  // TO-DO
                 }}
               />
               <DialogButton
-                variant={isDirty ? 'next-and-ok' : 'next'}
+                variant={'save'}
                 disabled={itemId === 'new' && !isDirty}
-                onClick={async () => {
-                  const nextPath = hasNext ? String(next) : 'new';
-                  handleSave(() =>
-                    setNavigateTo(
-                      RouteBuilder.create(AppRoute.Dispensary)
-                        .addPart(AppRoute.Prescription)
-                        .addPart(String(invoiceNumber))
-                        .addPart(nextPath)
-                        .build()
-                    )
-                  );
-                }}
+                onClick={handleSave}
               />
             </Box>
           </Box>

@@ -36,16 +36,19 @@ import { Footer } from './Footer';
 
 interface PrescriptionLineEditModalProps {
   draft: Draft | null;
-  mode: ModalMode | null;
   items: ItemRowFragment[];
+  draftLines: DraftStockOutLine[];
+  updateLines: (lines: DraftStockOutLine[]) => void;
 }
 
 export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   draft,
-  mode,
   items,
+  draftLines: draftPrescriptionLines,
+  updateLines,
 }) => {
   const item = !draft ? null : (draft.item ?? null);
+  const isNew = item === undefined;
   const t = useTranslation();
   const { info } = useNotification();
   const [currentItem, setCurrentItem] = useBufferState(item);
@@ -62,13 +65,15 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     prescriptionDate,
   } = data ?? {};
   const {
-    draftStockOutLines: draftPrescriptionLines,
+    // draftStockOutLines: draftPrescriptionLines,
     updateQuantity,
-    setDraftStockOutLines,
+    // setDraftStockOutLines,
     isLoading,
     updateNotes,
   } = useDraftPrescriptionLines(
     currentItem,
+    draftPrescriptionLines,
+    updateLines,
     DateUtils.getDateOrNull(prescriptionDate)
   );
   const {
@@ -76,7 +81,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   } = usePrescriptionLines();
 
   const packSizeController = usePackSizeController(draftPrescriptionLines);
-  const { isDirty, setIsDirty } = useDirtyCheck();
+  // const { isDirty, setIsDirty } = useDirtyCheck();
 
   const placeholder = draftPrescriptionLines?.find(
     ({ type, numberOfPacks }) =>
@@ -93,10 +98,19 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     setIsAutoAllocated(false);
   };
 
-  useConfirmOnLeaving(isDirty);
+  console.log('draft', draft);
+
+  // useConfirmOnLeaving(isDirty);
+
+  // const updateDrafts = (draftLines: DraftStockOutLine[]) => {
+  //   if (!item) return;
+  //   // setDraftStockOutLines(draftLines);
+
+  //   updateLines(draftLines);
+  // };
 
   const onSave = async () => {
-    if (!isDirty) return;
+    // if (!isDirty) return;
 
     // needed since placeholders aren't being created for prescriptions yet, but still adding to array
     const isOnHold = draftPrescriptionLines.some(
@@ -127,8 +141,9 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
       status,
       draftPrescriptionLines
     )(newVal, packSize);
-    setIsDirty(true);
-    setDraftStockOutLines(newAllocateQuantities ?? draftPrescriptionLines);
+    // setIsDirty(true);
+    updateLines(newAllocateQuantities ?? draftPrescriptionLines);
+    // setDraftStockOutLines(newAllocateQuantities ?? draftPrescriptionLines);
     setIsAutoAllocated(autoAllocated);
     if (showZeroQuantityConfirmation && newVal !== 0)
       setShowZeroQuantityConfirmation(false);
@@ -149,7 +164,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
 
     try {
       await onSave();
-      setIsDirty(false);
+      // setIsDirty(false);
       if (!!placeholder) {
         const infoSnack = info(t('message.placeholder-line'));
         infoSnack();
@@ -180,10 +195,10 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     <>
       <Grid container gap={0.5}>
         <PrescriptionLineEditForm
-          disabled={mode === ModalMode.Update || isDisabled}
+          disabled={isNew || isDisabled}
           packSizeController={packSizeController}
           onChangeItem={(item: ItemRowFragment | null) => {
-            if (status === InvoiceNodeStatus.New) setIsDirty(true);
+            // if (status === InvoiceNodeStatus.New) setIsDirty(true);
             setIsAutoAllocated(false);
             setCurrentItem(item);
           }}
@@ -210,16 +225,16 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
           allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
         />
       </Grid>
-      <Footer
+      {/* <Footer
         hasNext={hasNext}
         next={next}
         hasPrevious={hasPrevious}
         previous={previous}
         invoiceNumber={data?.invoiceNumber}
         loading={isSavingLines || isLoading}
-        isDirty={isDirty}
+        isDirty={false}
         handleSave={handleSave}
-      />
+      /> */}
     </>
   );
 };
