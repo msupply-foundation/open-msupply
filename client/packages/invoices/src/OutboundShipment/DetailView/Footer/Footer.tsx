@@ -13,6 +13,7 @@ import { getStatusTranslator, outboundStatuses } from '../../../utils';
 import { useOutbound, OutboundFragment } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
+import { ActionsFooter } from '../ActionsFooter';
 
 const createStatusLog = (invoice: OutboundFragment) => {
   const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
@@ -48,44 +49,62 @@ const createStatusLog = (invoice: OutboundFragment) => {
   return statusLog;
 };
 
-export const FooterComponent: FC = () => {
+interface FooterComponentProps {
+  onReturnLines: (stockLineIds: string[]) => void;
+}
+
+export const FooterComponent: FC<FooterComponentProps> = ({
+  onReturnLines,
+}) => {
   const t = useTranslation();
   const { data } = useOutbound.document.get();
   const { navigateUpOne } = useBreadcrumbs();
+  const selectedIds = useOutbound.utils.selectedIds();
 
   return (
     <AppFooterPortal
       Content={
-        data && (
-          <Box
-            gap={2}
-            display="flex"
-            flexDirection="row"
-            alignItems="center"
-            height={64}
-          >
-            <OnHoldButton />
-
-            <StatusCrumbs
-              statuses={outboundStatuses}
-              statusLog={createStatusLog(data)}
-              statusFormatter={getStatusTranslator(t)}
+        <>
+          {selectedIds.length !== 0 && (
+            <ActionsFooter
+              showAllocate
+              showDelete
+              showReturnLines
+              onReturnLines={onReturnLines}
+              selectedRowCount={selectedIds.length}
             />
+          )}
+          {data && selectedIds.length === 0 && (
+            <Box
+              gap={2}
+              display="flex"
+              flexDirection="row"
+              alignItems="center"
+              height={64}
+            >
+              <OnHoldButton />
 
-            <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-              <ButtonWithIcon
-                shrinkThreshold="lg"
-                Icon={<XCircleIcon />}
-                label={t('button.close')}
-                color="secondary"
-                sx={{ fontSize: '12px' }}
-                onClick={() => navigateUpOne()}
+              <StatusCrumbs
+                statuses={outboundStatuses}
+                statusLog={createStatusLog(data)}
+                statusFormatter={getStatusTranslator(t)}
               />
 
-              <StatusChangeButton />
+              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+                <ButtonWithIcon
+                  shrinkThreshold="lg"
+                  Icon={<XCircleIcon />}
+                  label={t('button.close')}
+                  color="secondary"
+                  sx={{ fontSize: '12px' }}
+                  onClick={() => navigateUpOne()}
+                />
+
+                <StatusChangeButton />
+              </Box>
             </Box>
-          </Box>
-        )
+          )}
+        </>
       }
     />
   );
