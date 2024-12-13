@@ -26,12 +26,9 @@ const LOADER_HIDE_TIMEOUT = 500;
 
 export interface AutocompleteWithPaginationProps<T extends RecordWithId>
   extends Omit<AutocompleteProps<T>, 'options'> {
-  pagination?: {
-    page: number;
-    first: number;
-    offset: number;
-    total: number;
-  };
+  pageNumber: number;
+  rowsPerPage: number;
+  totalRows: number;
   paginationDebounce?: number;
   pages: { data: { nodes: T[] } }[];
   onPageChange?: (page: number) => void;
@@ -49,6 +46,9 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   noOptionsText,
   onChange,
   pages,
+  rowsPerPage,
+  totalRows,
+  pageNumber,
   renderInput,
   renderOption,
   width = 'auto',
@@ -62,7 +62,6 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   getOptionLabel,
   popperMinWidth,
   inputProps,
-  pagination,
   paginationDebounce,
   onPageChange,
   mapOptions,
@@ -138,25 +137,23 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
     paginationDebounce
   );
 
-  const listboxProps =
-    !pagination || !onPageChange
-      ? undefined
-      : {
-          onScroll: (event: SyntheticEvent) => {
-            const listboxNode = event.currentTarget;
-            const scrollPosition =
-              listboxNode.scrollTop + listboxNode.clientHeight;
+  const listboxProps = !onPageChange
+    ? undefined
+    : {
+        onScroll: (event: SyntheticEvent) => {
+          const listboxNode = event.currentTarget;
+          const scrollPosition =
+            listboxNode.scrollTop + listboxNode.clientHeight;
 
-            // the scrollPosition should equal scrollHeight at the end of the list
-            // but can be off by 0.5px, hence the +1 and greater than or equal to
-            if (scrollPosition + 1 >= listboxNode.scrollHeight) {
-              // Scroll bar is at the end, load more data
-              const { page, first, total } = pagination;
-              if (first * (page + 1) > total) return; // We have no more data to fetch
-              debounceOnPageChange(page + 1);
-            }
-          },
-        };
+          // the scrollPosition should equal scrollHeight at the end of the list
+          // but can be off by 0.5px, hence the +1 and greater than or equal to
+          if (scrollPosition + 1 >= listboxNode.scrollHeight) {
+            // Scroll bar is at the end, load more data
+            if (rowsPerPage * (pageNumber + 1) > totalRows) return; // We have no more data to fetch
+            debounceOnPageChange(pageNumber + 1);
+          }
+        },
+      };
 
   const CustomPopper: React.FC<PopperProps> = props => (
     <StyledPopper

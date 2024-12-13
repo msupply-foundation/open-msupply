@@ -67,6 +67,10 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
 
   return (
     <Autocomplete
+      pages={data?.pages ?? []}
+      pageNumber={pageNumber}
+      rowsPerPage={ROWS_PER_PAGE}
+      totalRows={data?.pages?.[0]?.data.totalCount ?? 0}
       autoFocus={autoFocus}
       disabled={disabled}
       onOpen={selectControl.toggleOn}
@@ -88,16 +92,8 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       open={selectControl.isOn}
       onInputChange={(_, value) => debounceOnFilter(value)}
-      // Pagination data helps Autocomplete scroll know where in the list we're up to
-      pagination={{
-        first: ROWS_PER_PAGE,
-        page: pageNumber,
-        offset: pageNumber * ROWS_PER_PAGE,
-        total: data?.pages?.[0]?.data.totalCount ?? 0,
-      }}
       paginationDebounce={DEBOUNCE_TIMEOUT}
       onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
-      pages={data?.pages ?? []}
       mapOptions={items =>
         defaultOptionMapper(
           extraFilter ? items.filter(extraFilter) : items,

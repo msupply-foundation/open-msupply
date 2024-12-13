@@ -52,15 +52,6 @@ const StoreSearchComponent = ({
 
   const pageNumber = data?.pages[data?.pages.length - 1]?.pageNumber ?? 0;
 
-  // Pagination object, to help `AutocompleteWithPagination` component
-  // manage where it is in the list. The query pagination is handled by useInfiniteQuery
-  const pagination = {
-    page: pageNumber,
-    first: RECORDS_PER_PAGE,
-    offset: pageNumber * RECORDS_PER_PAGE,
-    total: data?.pages?.[0]?.data.totalCount ?? 0,
-  };
-
   const debounceOnFilter = useDebounceCallback(
     (searchText: string) => {
       filter.onChangeStringFilterRule('name', 'like', searchText);
@@ -72,6 +63,9 @@ const StoreSearchComponent = ({
   return (
     <AutocompleteWithPagination
       pages={data?.pages ?? []}
+      pageNumber={pageNumber}
+      rowsPerPage={RECORDS_PER_PAGE}
+      totalRows={data?.pages?.[0]?.data.totalCount ?? 0}
       width={fullWidth ? '100%' : undefined}
       sx={fullWidth ? { width: '100%' } : undefined}
       filterOptions={filterByNameAndCode}
@@ -83,7 +77,6 @@ const StoreSearchComponent = ({
       onChange={(_, value) => value && onChange(value)}
       value={value ? { label: value.storeName, ...value } : null}
       isOptionEqualToValue={(option, value) => option.id === value.id}
-      pagination={pagination}
       paginationDebounce={DEBOUNCE_TIMEOUT}
       onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
       onInputChange={(event, value, reason) => {
