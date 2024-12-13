@@ -16,7 +16,6 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly } from '@common/types';
-import { Tooltip } from 'recharts';
 
 export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { logout, user, token } = useAuthContext();
@@ -54,7 +53,7 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
     />
   );
 
-  return user && Tooltip ? (
+  return user ? (
     <PaperClickPopover
       placement="top"
       width={300}
@@ -112,6 +111,6 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
       {children}
     </PaperClickPopover>
   ) : (
-    isLoading
+    <></>
   );
 };
