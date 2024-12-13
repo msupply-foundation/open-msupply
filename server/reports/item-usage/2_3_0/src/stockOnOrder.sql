@@ -8,4 +8,4 @@ LEFT JOIN requisition r ON r.id = rl.requisition_id
 LEFT JOIN invoice ON invoice.requisition_id = r.id
 LEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id
 WHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'
-GROUP BY item_id
+GROUP BY 1

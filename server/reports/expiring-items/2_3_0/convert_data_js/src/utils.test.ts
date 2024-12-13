@@ -52,12 +52,20 @@ describe("days until expired is added correctly", () => {
 describe("calculate expected usage", () => {
   it("returns undefined if either are undefined", () => {
     expect(calculateExpectedUsage(undefined, undefined)).toBe(undefined);
-    expect(calculateExpectedUsage(undefined, 1)).toBe(undefined);
+    expect(
+      calculateExpectedUsage(undefined, inputData.stockLines.nodes[0])
+    ).toBe(undefined);
     expect(calculateExpectedUsage(1, undefined)).toBe(undefined);
   });
 
   it("returns expected usage if both defined", () => {
-    expect(calculateExpectedUsage(20, 500)).toBe(333);
+    expect(calculateExpectedUsage(20, inputData.stockLines.nodes[1])).toBe(13);
+  });
+
+  it("returns total stock if expected usage > total stock", () => {
+    expect(calculateExpectedUsage(1000, inputData.stockLines.nodes[0])).toBe(
+      1000
+    );
   });
 });
 
