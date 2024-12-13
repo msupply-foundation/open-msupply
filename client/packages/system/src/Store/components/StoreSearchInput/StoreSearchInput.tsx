@@ -1,7 +1,6 @@
 import React from 'react';
 import { StoreRowFragment, usePaginatedStores } from '../../api';
 import {
-  ArrayUtils,
   AutocompleteWithPagination,
   createQueryParamsStore,
   QueryParamsProvider,
@@ -62,11 +61,6 @@ const StoreSearchComponent = ({
     total: data?.pages?.[0]?.data.totalCount ?? 0,
   };
 
-  const options = ArrayUtils.flatMap(
-    data?.pages,
-    page => page.data?.nodes ?? []
-  );
-
   const debounceOnFilter = useDebounceCallback(
     (searchText: string) => {
       filter.onChangeStringFilterRule('name', 'like', searchText);
@@ -77,12 +71,12 @@ const StoreSearchComponent = ({
 
   return (
     <AutocompleteWithPagination
+      pages={data?.pages ?? []}
       width={fullWidth ? '100%' : undefined}
       sx={fullWidth ? { width: '100%' } : undefined}
       filterOptions={filterByNameAndCode}
       clearable={clearable}
       loading={isFetching}
-      options={options}
       getOptionLabel={option => `${option.code} ${option.storeName}`}
       renderOption={StoreOptionRender}
       disabled={isDisabled}

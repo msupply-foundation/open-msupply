@@ -38,9 +38,8 @@ interface CreateAssetModalProps {
 }
 
 const mapCatalogueItem = (catalogueItem: AssetCatalogueItemFragment) => ({
+  ...catalogueItem,
   label: `${catalogueItem.code} ${catalogueItem.assetType?.name} ${catalogueItem.manufacturer} ${catalogueItem.model}`,
-  value: catalogueItem.id,
-  id: catalogueItem.id,
 });
 
 const mapCatalogueItems = (catalogueItems: AssetCatalogueItemFragment[]) =>
@@ -234,19 +233,19 @@ export const CreateAssetModal = ({
               label={t('label.catalogue-item')}
               Input={
                 <AutocompleteWithPagination
-                  value={
-                    !!selectedCatalogueItem
-                      ? mapCatalogueItem(selectedCatalogueItem)
-                      : null
-                  }
+                  value={selectedCatalogueItem}
+                  mapOptions={mapCatalogueItems}
                   isOptionEqualToValue={option =>
-                    option.value === selectedCatalogueItem?.id
+                    option.id === selectedCatalogueItem?.id
                   }
-                  options={mapCatalogueItems(catalogueItems)}
+                  pages={catalogueItemData?.pages ?? []}
                   width="100%"
                   sx={{ width: '100%' }}
+                  getOptionLabel={option =>
+                    `${option.code} ${option.assetType?.name} ${option.manufacturer} ${option.model}`
+                  }
                   onChange={(_event, selected) =>
-                    updateDraft({ catalogueItemId: selected?.value ?? '' })
+                    updateDraft({ catalogueItemId: selected?.id ?? '' })
                   }
                   // Pagination data helps Autocomplete scroll know where in the list we're up to
                   pagination={{

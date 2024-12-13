@@ -239,7 +239,7 @@ const AutocompleteWithPaginationTemplate: StoryFn = () => {
             pagination={{ ...pagination, total: longOptions.length }}
             onPageChange={onPageChange}
             paginationDebounce={300}
-            options={currOptions}
+            pages={[{ data: { nodes: currOptions } }]}
             width="500px"
           />
         </Paper>
