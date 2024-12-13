@@ -14,10 +14,11 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
   const [confirmationModalState, setState] = useState<ConfirmationModalState>({
     open: false,
     message: '',
+    info: '',
     title: '',
     iconType: 'help',
   });
-  const { open, message, title, iconType, onConfirm, onCancel } =
+  const { open, message, info, title, iconType, onConfirm, onCancel } =
     confirmationModalState;
 
   const confirmationModalController: ConfirmationModalControllerState = useMemo(
@@ -26,6 +27,8 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
         setState(state => ({ ...state, iconType })),
       setMessage: (message: string) =>
         setState(state => ({ ...state, message })),
+      setInfo: (info: string | undefined) =>
+        setState(state => ({ ...state, info })),
       setTitle: (title: string) => setState(state => ({ ...state, title })),
       setOnConfirm: (
         onConfirm: (() => Promise<void>) | (() => void) | undefined
@@ -46,6 +49,7 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
       <ConfirmationModal
         open={open}
         message={message}
+        info={info}
         title={title}
         onConfirm={onConfirm}
         onCancel={() => {

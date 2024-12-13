@@ -8,6 +8,7 @@ import {
 export const useConfirmationModal = ({
   onConfirm,
   message,
+  info,
   title,
   onCancel,
   iconType = 'help',
@@ -16,6 +17,7 @@ export const useConfirmationModal = ({
     setIconType,
     setOpen,
     setMessage,
+    setInfo,
     setOnConfirm,
     setOnCancel,
     setTitle,
@@ -25,6 +27,7 @@ export const useConfirmationModal = ({
     paramPatch?: Partial<PartialBy<ConfirmationModalState, 'open'>>
   ) => {
     setMessage(paramPatch?.message ?? message);
+    setInfo(paramPatch?.info ?? info);
     setOnConfirm(paramPatch?.onConfirm ?? onConfirm);
     setTitle(paramPatch?.title ?? title);
     setOnCancel(paramPatch?.onCancel ?? onCancel);
@@ -37,6 +40,7 @@ export const useConfirmationModal = ({
     onConfirm,
     title,
     setMessage,
+    setInfo,
     setOnConfirm,
     setTitle,
     setOpen,

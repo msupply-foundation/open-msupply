@@ -4,6 +4,7 @@ export type IconType = 'alert' | 'help' | 'info';
 export interface ConfirmationModalState {
   open: boolean;
   message: string;
+  info?: string | undefined;
   title: string;
   iconType?: IconType;
   onConfirm?: (() => void) | (() => Promise<void>);
@@ -15,6 +16,7 @@ export interface ConfirmationModalControllerState
   setState: (state: ConfirmationModalState) => void;
   setIconType: (iconType: IconType) => void;
   setMessage: (message: string) => void;
+  setInfo: (info: string | undefined) => void;
   setTitle: (title: string) => void;
   setOnConfirm: (
     onConfirm: (() => Promise<void>) | (() => void) | undefined
