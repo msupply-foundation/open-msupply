@@ -1,22 +1,19 @@
-import React, { FC, useEffect, useMemo, useRef } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   useToggle,
   useFormatNumber,
   useTranslation,
   AutocompleteWithPagination as Autocomplete,
   defaultOptionMapper,
-  ArrayUtils,
   useDebounceCallback,
   useStringFilter,
-  ItemNode,
-  Option,
 } from '@openmsupply-client/common';
 import { useItemById, useItemStockOnHandInfinite } from '../../api';
 import { itemFilterOptions, StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
 const DEBOUNCE_TIMEOUT = 300;
-const ROWS_PER_PAGE = 10;
+const ROWS_PER_PAGE = 100;
 
 export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   onChange,
@@ -30,7 +27,6 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   itemCategoryName,
 }) => {
   const { filter, onFilter } = useStringFilter('name');
-  const lastOptions = useRef<ItemNode[]>([]);
 
   const fullFilter = itemCategoryName
     ? { ...filter, categoryName: itemCategoryName }
@@ -53,31 +49,6 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const t = useTranslation();
   const formatNumber = useFormatNumber();
   const selectControl = useToggle();
-
-  const options = useMemo(() => {
-    if (!data?.pages) {
-      return lastOptions.current;
-    }
-    const items = ArrayUtils.flatMap(
-      data?.pages,
-      page => page.data?.nodes ?? []
-    );
-
-    if (!!currentItem && !items.some(i => i.id === currentItemId)) {
-      items.unshift(currentItem);
-    }
-
-    const newOptions = defaultOptionMapper(
-      extraFilter ? (items.filter(extraFilter) ?? []) : (items ?? []),
-      'name'
-    ).sort((a, b) => a.label.localeCompare(b.label));
-
-    lastOptions.current = newOptions;
-
-    return newOptions;
-  }, [data?.pages]);
-
-  const value = options.find(({ id }) => id === currentItemId) ?? null;
 
   const debounceOnFilter = useDebounceCallback(
     (searchText: string) => onFilter(searchText),
@@ -102,10 +73,11 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       onClose={selectControl.toggleOff}
       filterOptionConfig={itemFilterOptions}
       loading={isLoading || isFetchingNextPage}
-      value={value ? { ...value, label: value.name ?? '' } : null}
+      value={
+        currentItem ? { ...currentItem, label: currentItem.name ?? '' } : null
+      }
       noOptionsText={t('error.no-items')}
       onChange={(_, item) => onChange(item)}
-      options={options}
       getOptionLabel={option => `${option.code}     ${option.name}`}
       renderOption={getItemOptionRenderer(
         t('label.units'),
@@ -125,6 +97,13 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       }}
       paginationDebounce={DEBOUNCE_TIMEOUT}
       onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
+      pages={data?.pages ?? []}
+      mapOptions={items =>
+        defaultOptionMapper(
+          extraFilter ? items.filter(extraFilter) : items,
+          'name'
+        ).sort((a, b) => a.label.localeCompare(b.label))
+      }
     />
   );
 };
