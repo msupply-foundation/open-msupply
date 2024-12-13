@@ -23,12 +23,18 @@ export function useFeedbackForm() {
     setDraft(defaultDraft);
   };
 
-  const isValidEmail = () => {
+  const checkEmailValidity = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(draft.replyEmail);
+    return emailRegex.test(email);
   };
 
-  const isValidInput = !!draft.replyEmail && !!draft.body && isValidEmail();
+  // const isNotValidEmail = (email: string) => {
+  //   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  //   if (!emailRegex.test(email)) return true;
+  // };
+
+  const isValidInput =
+    !!draft.replyEmail && !!draft.body && checkEmailValidity(draft.replyEmail);
 
   return {
     updateDraft,
@@ -36,6 +42,7 @@ export function useFeedbackForm() {
     saveFeedback: insert,
     draft,
     isValidInput,
+    checkEmailValidity,
   };
 }
 
