@@ -124,9 +124,9 @@ export const DetailView: FC = () => {
             />
           )}
 
-          <Toolbar onReturnLines={onReturn} />
+          <Toolbar />
           <DetailTabs tabs={tabs} />
-          <Footer />
+          <Footer onReturnLines={onReturn} />
           <SidePanel />
         </TableProvider>
       ) : (
