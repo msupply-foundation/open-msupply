@@ -159,7 +159,7 @@ export const currencyOptions = (locale: string, code?: Currencies) => {
         // separator: " " decimal = ","
         ...getSeparatorAndDecimal(locale),
         ...getPatterns(locale),
-        symbol: 'CF',
+        symbol: 'CDF',
         precision: 2,
         format,
       };
