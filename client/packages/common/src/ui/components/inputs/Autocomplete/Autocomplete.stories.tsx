@@ -208,9 +208,9 @@ const AutocompleteWithPaginationTemplate: StoryFn = () => {
     first: 10,
     offset: 0,
   });
-  const [currOptions, setCurrOptions] = React.useState<typeof longOptions>(
-    longOptions.slice(0, pagination.first)
-  );
+  const [pages, setPages] = React.useState([
+    { data: { nodes: longOptions.slice(0, pagination.first) } },
+  ]);
 
   const onPageChange = (page: number) => {
     setPagination({ ...pagination, offset: pagination.first * page, page });
@@ -218,12 +218,17 @@ const AutocompleteWithPaginationTemplate: StoryFn = () => {
 
   React.useEffect(() => {
     if (pagination.offset > 0) {
-      setCurrOptions(
-        longOptions.slice(
-          pagination.offset,
-          pagination.offset + pagination.first
-        )
-      );
+      setPages(pages => {
+        pages[pagination.page - 1] = {
+          data: {
+            nodes: longOptions.slice(
+              pagination.offset,
+              pagination.offset + pagination.first
+            ),
+          },
+        };
+        return [...pages];
+      });
     }
   }, [pagination]);
 
@@ -236,10 +241,12 @@ const AutocompleteWithPaginationTemplate: StoryFn = () => {
             <Typography>Search Text:</Typography>
           </div>
           <AutocompleteWithPagination
-            pagination={{ ...pagination, total: longOptions.length }}
+            pageNumber={1}
+            rowsPerPage={10}
+            totalRows={longOptions.length}
             onPageChange={onPageChange}
             paginationDebounce={300}
-            pages={[{ data: { nodes: currOptions } }]}
+            pages={pages}
             width="500px"
           />
         </Paper>

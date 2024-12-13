@@ -233,12 +233,17 @@ export const CreateAssetModal = ({
               label={t('label.catalogue-item')}
               Input={
                 <AutocompleteWithPagination
+                  pages={catalogueItemData?.pages ?? []}
+                  pageNumber={pageNumber}
+                  rowsPerPage={RECORDS_PER_PAGE}
+                  totalRows={
+                    catalogueItemData?.pages?.[0]?.data.totalCount ?? 0
+                  }
                   value={selectedCatalogueItem}
                   mapOptions={mapCatalogueItems}
                   isOptionEqualToValue={option =>
                     option.id === selectedCatalogueItem?.id
                   }
-                  pages={catalogueItemData?.pages ?? []}
                   width="100%"
                   sx={{ width: '100%' }}
                   getOptionLabel={option =>
@@ -247,13 +252,6 @@ export const CreateAssetModal = ({
                   onChange={(_event, selected) =>
                     updateDraft({ catalogueItemId: selected?.id ?? '' })
                   }
-                  // Pagination data helps Autocomplete scroll know where in the list we're up to
-                  pagination={{
-                    first: RECORDS_PER_PAGE,
-                    page: pageNumber,
-                    offset: pageNumber * RECORDS_PER_PAGE,
-                    total: catalogueItemData?.pages?.[0]?.data.totalCount ?? 0,
-                  }}
                   paginationDebounce={DEBOUNCE_TIMEOUT}
                   onPageChange={pageNumber =>
                     fetchNextPage({ pageParam: pageNumber })
