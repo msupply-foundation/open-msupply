@@ -20,7 +20,9 @@ export const FeedbackForm = () => {
     saveFeedback,
     draft,
     isValidInput,
-    checkEmailValidity,
+    checkEmailIsValid,
+    debounceValidation,
+    emailError,
   } = useFeedbackForm();
 
   const save = async () => {
@@ -35,7 +37,13 @@ export const FeedbackForm = () => {
     }
   };
 
-  const isValidEmail = checkEmailValidity(draft.replyEmail);
+  const isValidEmail = checkEmailIsValid(draft.replyEmail);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const email = e.target.value;
+    updateDraft({ replyEmail: email });
+    debounceValidation(email);
+  };
 
   return (
     <>
@@ -45,15 +53,10 @@ export const FeedbackForm = () => {
         Input={
           <BasicTextInput
             value={draft.replyEmail}
-            onChange={e => updateDraft({ replyEmail: e.target.value })}
-            // onChange={handleChange}
+            onChange={handleChange}
             fullWidth
-            helperText={
-              !isValidEmail
-                ? 'Please enter a valid email e.g help@example.com'
-                : ''
-            }
-            error={!isValidEmail}
+            helperText={emailError}
+            error={!isValidEmail && draft.replyEmail !== ''}
           />
         }
       />
