@@ -1365,6 +1365,7 @@
   "messages.error-generic_one": "{{count}} error",
   "messages.error-generic_other": "{{count}} errors",
   "messages.error-no-file-selected": "No file selected",
+  "messages.error-not-valid-email": "Please enter a valid email address",
   "messages.error-saving-prescription": "Error saving prescription 🥺",
   "messages.error-saving-return": "Error saving return 🥺",
   "messages.error-saving-shipment": "Error saving shipment 🥺",
