@@ -271,7 +271,7 @@ impl ReportContext {
 
 fn map_report_error(error: GetReportError) -> Result<ReportResponse> {
     match error {
-        GetReportError::TranslationError => {
+        GetReportError::TranslationError(_) => {
             return Ok(ReportResponse::Error(QueryReportError {
                 error: QueryReportErrorInterface::ReportTranslationError(FailedTranslation),
             }))
@@ -284,7 +284,7 @@ fn map_report_error(error: GetReportError) -> Result<ReportResponse> {
 
 fn map_reports_error(error: GetReportsError) -> Result<ReportsResponse> {
     match error {
-        GetReportsError::TranslationError => {
+        GetReportsError::TranslationError(_) => {
             return Ok(ReportsResponse::Error(QueryReportsError {
                 error: QueryReportsErrorInterface::ReportsTranslationError(FailedTranslation),
             }))
