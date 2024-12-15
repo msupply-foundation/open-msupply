@@ -85,14 +85,6 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
           disabled={disabled}
           onClick={onClick}
           size={'large'}
-          sx={{
-            '&.MuiButton-text': {
-              color: theme => theme.typography.body1.color,
-            },
-            '& .MuiButton-startIcon': {
-              color: 'primary.main',
-            },
-          }}
         >
           {label}
         </Button>
