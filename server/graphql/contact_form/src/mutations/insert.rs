@@ -50,10 +50,6 @@ pub fn insert_contact_form(
     map_response(service_provider.contact_form_service.insert_contact_form(
         &service_context,
         &store_id,
-        // &service_provider
-        //     .site_info_service
-        //     .get_site_id(&service_context)?
-        "Todo: update type of site id in service layer and database table",
         input.to_domain(),
     ))
 }
