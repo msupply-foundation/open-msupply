@@ -7,14 +7,14 @@ import { ColumnAlign } from '../columns';
  */
 export const tooltipPlacement = (
   align: ColumnAlign
-): 'bottom-end' | 'bottom-start' | 'bottom' => {
+): 'top-end' | 'top-start' | 'top' => {
   switch (align) {
     case ColumnAlign.Left:
-      return 'bottom-start';
+      return 'top-start';
     case ColumnAlign.Right:
-      return 'bottom-end';
+      return 'top-end';
     case ColumnAlign.Center:
-      return 'bottom';
+      return 'top';
     default:
       return noOtherVariants(align);
   }
