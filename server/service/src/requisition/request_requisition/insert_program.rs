@@ -2,8 +2,13 @@ use crate::{
     activity_log::activity_log_entry,
     number::next_number,
     requisition::{
-        common::check_requisition_row_exists, program_indicator::query::program_indicators,
-        program_settings::get_supplier_program_requisition_settings, query::get_requisition,
+        common::{
+            check_requisition_row_exists, generate_program_indicator_values,
+            IndicatorGenerationInput,
+        },
+        program_indicator::query::program_indicators,
+        program_settings::get_supplier_program_requisition_settings,
+        query::get_requisition,
         response_requisition::GenerateResult,
     },
     service_provider::ServiceContext,
@@ -17,7 +22,7 @@ use repository::{
     RequisitionLineRowRepository, RequisitionRowRepository, StoreFilter, StoreRepository,
 };
 
-use super::{generate_program_indicator_values, generate_requisition_lines};
+use super::generate_requisition_lines;
 
 #[derive(Debug, PartialEq)]
 pub enum InsertProgramRequestRequisitionError {
@@ -206,7 +211,12 @@ fn generate(
     let indicator_values = match supplier_store {
         Some(supplier_store) => {
             if supplier_store.name_row.is_supplier {
-                generate_program_indicator_values(&ctx.store_id, &period_id, program_indicators)
+                generate_program_indicator_values(IndicatorGenerationInput {
+                    store_id: &ctx.store_id,
+                    period_id: &period_id,
+                    program_indicators,
+                    other_party_id: &other_party_id,
+                })
             } else {
                 vec![]
             }

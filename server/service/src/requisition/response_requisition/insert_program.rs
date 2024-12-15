@@ -2,8 +2,11 @@ use crate::{
     activity_log::activity_log_entry,
     number::next_number,
     requisition::{
-        common::check_requisition_row_exists,
-        program_indicator::query::{program_indicators, ProgramIndicator},
+        common::{
+            check_requisition_row_exists, generate_program_indicator_values,
+            IndicatorGenerationInput,
+        },
+        program_indicator::query::program_indicators,
         program_settings::get_customer_program_requisition_settings,
         query::get_requisition,
     },
@@ -218,12 +221,12 @@ fn generate(
         .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&other_party_id)))?;
 
     let indicator_values = match customer_store {
-        Some(_) => generate_program_indicator_values(
-            &ctx.store_id,
-            &period_id,
-            &other_party_id,
+        Some(_) => generate_program_indicator_values(IndicatorGenerationInput {
+            store_id: &ctx.store_id,
+            period_id: &period_id,
             program_indicators,
-        ),
+            other_party_id: &other_party_id,
+        }),
         None => vec![],
     };
 
@@ -276,40 +279,6 @@ fn generate_lines(
         .collect();
 
     Ok(result)
-}
-
-fn generate_program_indicator_values(
-    store_id: &str,
-    period_id: &str,
-    other_party_id: &str,
-    program_indicators: Vec<ProgramIndicator>,
-) -> Vec<IndicatorValueRow> {
-    let mut indicator_values = vec![];
-
-    for program_indicator in program_indicators {
-        for line in program_indicator.lines {
-            for column in line.columns {
-                let value = match column.value_type {
-                    Some(_) => column.default_value.clone(),
-                    None => line.line.default_value.clone(),
-                };
-
-                let indicator_value = IndicatorValueRow {
-                    id: uuid(),
-                    customer_name_link_id: other_party_id.to_string(),
-                    store_id: store_id.to_string(),
-                    period_id: period_id.to_string(),
-                    indicator_line_id: line.line.id.to_string(),
-                    indicator_column_id: column.id.to_string(),
-                    value,
-                };
-
-                indicator_values.push(indicator_value);
-            }
-        }
-    }
-
-    indicator_values
 }
 
 impl From<RepositoryError> for InsertProgramResponseRequisitionError {
