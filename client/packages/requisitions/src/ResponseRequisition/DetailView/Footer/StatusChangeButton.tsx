@@ -158,16 +158,15 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
             : '',
         });
 
-  const confirmationInfo = () => {
-    if (shipments?.totalCount === 0 && !isDisabled) {
-      return t('info.no-shipment');
-    }
-  };
+  const confirmationInfo =
+    shipments?.totalCount === 0 && !isDisabled
+      ? t('info.no-shipment')
+      : undefined;
 
   const getConfirmation = useConfirmationModal({
     title: confirmationTitle,
     message: confirmationMessage,
-    info: confirmationInfo(),
+    info: confirmationInfo,
     onConfirm: onConfirmStatusChange,
   });
 
