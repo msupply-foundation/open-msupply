@@ -1,20 +1,18 @@
-import { useQuery } from '@openmsupply-client/common';
+import { useInfiniteQuery } from '@openmsupply-client/common';
 import { useItemApi } from '../useItemApi';
 
 type UseItemStockOnHandParams = {
-  pagination: { first: number; offset: number };
   filter: Record<string, { like: string } | string>;
-  preload?: boolean;
+  rowsPerPage: number;
   includeNonVisibleWithStockOnHand?: boolean;
 };
 
-export const useItemStockOnHand = ({
-  pagination,
+export const useItemStockOnHandInfinite = ({
+  rowsPerPage,
   filter,
   includeNonVisibleWithStockOnHand,
 }: UseItemStockOnHandParams) => {
   const queryParams = {
-    ...pagination,
     filterBy: filter,
     sortBy: { key: 'name', isDesc: false, direction: 'asc' as 'asc' | 'desc' },
     includeNonVisibleWithStockOnHand,
@@ -22,9 +20,27 @@ export const useItemStockOnHand = ({
 
   const api = useItemApi();
 
-  return useQuery(
-    api.keys.paramList(queryParams),
-    () => api.get.itemStockOnHand(queryParams),
+  return useInfiniteQuery(
+    api.keys.paramList({
+      ...queryParams,
+      // pagination cache managed by useInfiniteQuery, don't include in query keys
+      // (default values for compiler)
+      first: 0,
+      offset: 0,
+    }),
+    async ({ pageParam }) => {
+      const pageNumber = Number(pageParam ?? 0);
+
+      const data = await api.get.itemStockOnHand({
+        ...queryParams,
+        first: rowsPerPage,
+        offset: rowsPerPage * pageNumber,
+      });
+      return {
+        data,
+        pageNumber,
+      };
+    },
     { refetchOnWindowFocus: false, cacheTime: 0 }
   );
 };
