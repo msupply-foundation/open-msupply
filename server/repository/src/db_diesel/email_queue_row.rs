@@ -38,7 +38,7 @@ impl Default for EmailQueueStatus {
 #[derive(
     Clone, Queryable, Insertable, Identifiable, Debug, PartialEq, Eq, AsChangeset, Default,
 )]
-#[table_name = "email_queue"]
+#[diesel(table_name = email_queue)]
 pub struct EmailQueueRow {
     pub id: String,
     pub to_address: String,
