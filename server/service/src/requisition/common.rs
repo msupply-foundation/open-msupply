@@ -106,11 +106,11 @@ impl From<RepositoryError> for OrderTypeNotFoundError {
     }
 }
 
-pub struct IndicatorGenerationInput<'a> {
-    pub store_id: &'a str,
-    pub period_id: &'a str,
+pub struct IndicatorGenerationInput {
+    pub store_id: String,
+    pub period_id: String,
     pub program_indicators: Vec<ProgramIndicator>,
-    pub other_party_id: &'a str,
+    pub other_party_id: String,
 }
 
 pub fn generate_program_indicator_values(
