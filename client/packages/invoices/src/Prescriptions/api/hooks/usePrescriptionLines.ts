@@ -39,7 +39,7 @@ export const usePrescriptionLines = (id?: string) => {
     draftPrescriptionLines: DraftStockOutLine[];
     patch?: RecordPatch<PrescriptionRowFragment>;
   }) => {
-    await updateMutation({
+    return await updateMutation({
       draftPrescriptionLines,
       patch,
     });

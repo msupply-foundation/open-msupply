@@ -2,8 +2,6 @@ import { useEffect, useCallback } from 'react';
 import {
   InvoiceLineNodeType,
   InvoiceNodeStatus,
-  useConfirmOnLeaving,
-  useDirtyCheck,
   SortUtils,
   uniqBy,
 } from '@openmsupply-client/common';
@@ -42,13 +40,6 @@ export const useDraftPrescriptionLines = (
     itemId: item?.id ?? '',
     datetime: date ? date.toISOString() : undefined,
   });
-
-  // const { isDirty, setIsDirty } = useDirtyCheck();
-  // const [draftStockOutLines, setDraftStockOutLines] = useState<
-  //   DraftStockOutLine[]
-  // >([]);
-
-  // useConfirmOnLeaving(isDirty);
 
   useEffect(() => {
     if (!item) {
@@ -120,63 +111,10 @@ export const useDraftPrescriptionLines = (
     }
 
     updateDraftLines(rows);
-
-    // setDraftStockOutLines(() => {
-    //   const rows = stockLines
-    //     .map(batch => {
-    //       const invoiceLine = lines?.find(
-    //         ({ stockLine }) => stockLine?.id === batch.id
-    //       );
-    //       if (invoiceLine && invoiceId && status) {
-    //         return createDraftStockOutLine({
-    //           invoiceLine,
-    //           invoiceId,
-    //           stockLine: batch,
-    //           invoiceStatus: status,
-    //         });
-    //       } else {
-    //         return createDraftStockOutLineFromStockLine({
-    //           stockLine: batch,
-    //           invoiceId: invoiceId ?? '',
-    //         });
-    //       }
-    //     })
-    //     .sort(SortUtils.byExpiryAsc);
-
-    //   if (status === InvoiceNodeStatus.New) {
-    //     let placeholder = lines?.find(
-    //       ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-    //     );
-    //     if (!placeholder) {
-    //       placeholder = draftStockOutLines.find(
-    //         ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-    //       );
-    //     }
-    //     if (placeholder) {
-    //       const placeholderItem = lines?.find(l => l.item.id === item.id)?.item;
-    //       if (!!placeholderItem) placeholder.item = placeholderItem;
-    //       rows.push(
-    //         createDraftStockOutLine({
-    //           invoiceId: invoiceId ?? '',
-    //           invoiceLine: placeholder,
-    //           invoiceStatus: status,
-    //         })
-    //       );
-    //     } else {
-    //       // Commented out for now until placeholders are implemented for
-    //       // prescriptions
-    //       // rows.push(createStockOutPlaceholderRow(invoiceId, item.id));
-    //     }
-    //   }
-
-    //   return rows;
-    // });
   }, [data, item, prescriptionData]);
 
   const onChangeRowQuantity = useCallback(
     (batchId: string, value: number) => {
-      // setIsDirty(true);
-      console.log('UPdating...');
       updateDraftLines(issueStock(draftLines, batchId, value));
     },
     [draftLines]
@@ -184,16 +122,13 @@ export const useDraftPrescriptionLines = (
 
   const onUpdateNote = useCallback(
     (note: string) => {
-      // setIsDirty(true);
       updateDraftLines(updateNotes(draftLines, note));
     },
     [draftLines]
   );
 
   return {
-    // draftStockOutLines,
     isLoading,
-    // setDraftStockOutLines,
     updateQuantity: onChangeRowQuantity,
     updateNotes: onUpdateNote,
   };

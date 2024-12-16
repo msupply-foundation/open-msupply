@@ -5,9 +5,7 @@ import {
   InlineSpinner,
   Box,
   useTranslation,
-  ModalMode,
   useBufferState,
-  useDirtyCheck,
   TableProvider,
   createTableStore,
   createQueryParamsStore,
@@ -15,7 +13,6 @@ import {
   useNotification,
   InvoiceNodeStatus,
   DateUtils,
-  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { useDraftPrescriptionLines, usePreviousNextItem } from './hooks';
 import { usePrescription } from '../api';
@@ -32,13 +29,13 @@ import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
-import { Footer } from './Footer';
 
 interface PrescriptionLineEditModalProps {
   draft: Draft | null;
   items: ItemRowFragment[];
   draftLines: DraftStockOutLine[];
   updateLines: (lines: DraftStockOutLine[]) => void;
+  setIsDirty: (dirty: boolean) => void;
 }
 
 export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
@@ -46,6 +43,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   items,
   draftLines: draftPrescriptionLines,
   updateLines,
+  setIsDirty,
 }) => {
   const item = !draft ? null : (draft.item ?? null);
   const isNew = item === undefined;
@@ -98,20 +96,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     setIsAutoAllocated(false);
   };
 
-  console.log('draft', draft);
-
-  // useConfirmOnLeaving(isDirty);
-
-  // const updateDrafts = (draftLines: DraftStockOutLine[]) => {
-  //   if (!item) return;
-  //   // setDraftStockOutLines(draftLines);
-
-  //   updateLines(draftLines);
-  // };
-
   const onSave = async () => {
-    // if (!isDirty) return;
-
     // needed since placeholders aren't being created for prescriptions yet, but still adding to array
     const isOnHold = draftPrescriptionLines.some(
       ({ stockLine, location }) => stockLine?.onHold || location?.onHold
@@ -141,7 +126,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
       status,
       draftPrescriptionLines
     )(newVal, packSize);
-    // setIsDirty(true);
+    setIsDirty(true);
     updateLines(newAllocateQuantities ?? draftPrescriptionLines);
     // setDraftStockOutLines(newAllocateQuantities ?? draftPrescriptionLines);
     setIsAutoAllocated(autoAllocated);

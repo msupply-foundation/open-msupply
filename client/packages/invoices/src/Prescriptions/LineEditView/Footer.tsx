@@ -1,14 +1,11 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC } from 'react';
 import {
   Box,
   AppFooterPortal,
   DialogButton,
-  RouteBuilder,
-  useNavigate,
   InlineSpinner,
-  useParams,
+  // useParams,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
 
 interface FooterProps {
   isSaving: boolean;
@@ -17,7 +14,7 @@ interface FooterProps {
 }
 
 export const Footer: FC<FooterProps> = ({ isSaving, isDirty, handleSave }) => {
-  const { itemId } = useParams();
+  // const { itemId } = useParams();
 
   return (
     <AppFooterPortal
@@ -48,7 +45,8 @@ export const Footer: FC<FooterProps> = ({ isSaving, isDirty, handleSave }) => {
               />
               <DialogButton
                 variant={'save'}
-                disabled={itemId === 'new' && !isDirty}
+                // disabled={itemId === 'new' && !isDirty}
+                disabled={!isDirty}
                 onClick={handleSave}
               />
             </Box>

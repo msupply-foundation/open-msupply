@@ -1,13 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BasicSpinner,
   InvoiceNodeStatus,
-  ModalMode,
+  isEqual,
   NothingHere,
   RouteBuilder,
   useBreadcrumbs,
   useConfirmOnLeaving,
   useDirtyCheck,
+  useNavigate,
   useParams,
 } from '@openmsupply-client/common';
 
@@ -23,6 +24,7 @@ import { Footer } from './Footer';
 export const PrescriptionLineEditView = () => {
   const { invoiceNumber, itemId } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const navigate = useNavigate();
 
   const {
     query: { data, loading: isLoading },
@@ -30,14 +32,15 @@ export const PrescriptionLineEditView = () => {
 
   const {
     save: { saveLines, isSavingLines },
-    delete: { deleteLines },
+    // delete: { deleteLines },
   } = usePrescriptionLines(data?.id);
+
+  const newItemId = useRef<string>();
 
   const { isDirty, setIsDirty } = useDirtyCheck();
 
   const lines =
-    data?.lines.nodes.sort((a, b) => a.item.name.localeCompare(b.item.name)) ??
-    [];
+    data?.lines.nodes.sort((a, b) => a.id.localeCompare(b.id)) ?? [];
 
   const invoiceId = data?.id ?? '';
   const status = data?.status;
@@ -70,11 +73,29 @@ export const PrescriptionLineEditView = () => {
     });
   }, [currentItem]);
 
-  // useConfirmOnLeaving(isDirty);
+  useConfirmOnLeaving(
+    isDirty,
+    // Need a custom checking method here, as we don't want to warn user when
+    // switching to a different item within this page
+    (current, next) => {
+      if (!isDirty) return false;
+
+      const currentPathParts = current.pathname.split('/');
+      const nextPathParts = next.pathname.split('/');
+      // Compare URLS, but don't include the last part, which is the ItemID
+      currentPathParts.pop();
+      nextPathParts.pop();
+      return !isEqual(currentPathParts, nextPathParts);
+    }
+  );
 
   const updateAllLines = (lines: DraftStockOutLine[]) => {
-    itemId && setAllDraftLines({ ...allDraftLines, [itemId]: lines });
-    setIsDirty(true);
+    if (itemId === 'new') {
+      newItemId.current = lines[0]?.item.id;
+    }
+
+    if (typeof itemId === 'string')
+      setAllDraftLines({ ...allDraftLines, [itemId]: lines });
   };
 
   const onSave = async () => {
@@ -82,7 +103,8 @@ export const PrescriptionLineEditView = () => {
 
     const flattenedLines = Object.values(allDraftLines).flat();
 
-    // needed since placeholders aren't being created for prescriptions yet, but still adding to array
+    // needed since placeholders aren't being created for prescriptions yet, but
+    // still adding to array
     const isOnHold = flattenedLines.some(
       ({ stockLine, location }) => stockLine?.onHold || location?.onHold
     );
@@ -97,15 +119,28 @@ export const PrescriptionLineEditView = () => {
           }
         : undefined;
 
-    await saveLines({ draftPrescriptionLines: flattenedLines, patch });
+    await saveLines({
+      draftPrescriptionLines: flattenedLines,
+      patch,
+    });
 
-    // if (!draft) return;
+    // For "NEW" items, navigate to newly-created item page
+    if (newItemId.current) {
+      const itemId = newItemId.current;
+      newItemId.current = undefined;
+      navigate(
+        RouteBuilder.create(AppRoute.Dispensary)
+          .addPart(AppRoute.Prescription)
+          .addPart(invoiceNumber ?? '')
+          .addPart(itemId)
+          .build()
+      );
+    }
+    setIsDirty(false);
   };
 
   if (isLoading || !itemId) return <BasicSpinner />;
   if (!data) return <NothingHere />;
-
-  console.log('allDraftLines', allDraftLines);
 
   return (
     <>
@@ -129,6 +164,7 @@ export const PrescriptionLineEditView = () => {
               items={items}
               draftLines={allDraftLines[itemId] ?? []}
               updateLines={updateAllLines}
+              setIsDirty={setIsDirty}
             />
           </>
         }
