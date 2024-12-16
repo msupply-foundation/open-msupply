@@ -47,9 +47,6 @@ export const ConfirmationModal = ({
             <Typography variant="h6">{title}</Typography>
           </Grid>
         </Grid>
-        <Grid item>
-          <Typography style={{ whiteSpace: 'pre-line' }}>{message}</Typography>
-        </Grid>
         {info && (
           <Grid item paddingY={1}>
             <Alert style={{ whiteSpace: 'pre-line' }} severity="info">
@@ -57,6 +54,9 @@ export const ConfirmationModal = ({
             </Alert>
           </Grid>
         )}
+        <Grid item>
+          <Typography style={{ whiteSpace: 'pre-line' }}>{message}</Typography>
+        </Grid>
         <Grid
           container
           gap={1}
