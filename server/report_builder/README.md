@@ -326,7 +326,7 @@ Alternatively wasm functions can be built externally using any compatible langua
 
 #### Logging in wasm functions
 
-Console errors, infos, and logs in wasm functions are propagated up into the server. These can be saved to file, or logged to the server terminal for easy debugging.
+Console errors, infos, and logs in wasm functions are propagated up into the server under a info! macro callback. These can be saved to file, or logged to the server terminal for easy debugging.
 
 Log destination is configured in the base.yaml file under logging.
 
