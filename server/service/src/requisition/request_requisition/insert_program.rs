@@ -205,23 +205,25 @@ fn generate(
         Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
     )?;
 
-    let supplier_store = StoreRepository::new(connection)
-        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&other_party_id)))?;
+    let store = StoreRepository::new(connection)
+        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&ctx.store_id)))?;
 
-    let indicator_values = match supplier_store {
-        Some(supplier_store) => {
-            if supplier_store.name_row.is_supplier {
-                generate_program_indicator_values(IndicatorGenerationInput {
-                    store_id: &ctx.store_id,
-                    period_id: &period_id,
-                    program_indicators,
-                    other_party_id: &other_party_id,
-                })
-            } else {
-                vec![]
-            }
-        }
-        None => vec![],
+    let should_generate_indicators: bool =
+        if let Some(supplying_store_id) = store.and_then(|s| s.name_row.supplying_store_id) {
+            supplying_store_id == other_party_id
+        } else {
+            false
+        };
+
+    let indicator_values = if should_generate_indicators {
+        generate_program_indicator_values(IndicatorGenerationInput {
+            store_id: &ctx.store_id,
+            period_id: &period_id,
+            program_indicators,
+            other_party_id: &other_party_id,
+        })
+    } else {
+        vec![]
     };
 
     Ok(GenerateResult {
