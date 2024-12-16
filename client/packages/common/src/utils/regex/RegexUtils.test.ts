@@ -112,3 +112,27 @@ describe('formatTemplateString', () => {
     );
   });
 });
+
+describe('Check if email is valid', () => {
+  it('rejects empty space in email', () => {
+    expect(RegexUtils.checkEmailIsValid('t est@email.com')).toBeFalsy;
+    expect(RegexUtils.checkEmailIsValid(' test@email.com')).toBeFalsy;
+    expect(RegexUtils.checkEmailIsValid('test@email.com ')).toBeFalsy;
+  });
+  it('rejects email with no @ symbol', () => {
+    expect(RegexUtils.checkEmailIsValid('testemail.com')).toBeFalsy;
+  });
+  it('rejects email with no domain', () => {
+    expect(RegexUtils.checkEmailIsValid('test@email')).toBeFalsy;
+    expect(RegexUtils.checkEmailIsValid('test@email.')).toBeFalsy;
+  });
+  it('rejects empty string before @ symbol', () => {
+    expect(RegexUtils.checkEmailIsValid('@email.com')).toBeFalsy;
+  });
+  it('rejects blank email', () => {
+    expect(RegexUtils.checkEmailIsValid('')).toBeFalsy;
+  });
+  it('accepts correctly formatted email', () => {
+    expect(RegexUtils.checkEmailIsValid('test@email.com')).toBeTruthy;
+  });
+});
