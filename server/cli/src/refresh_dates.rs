@@ -118,7 +118,6 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("asset", "warranty_end"),
         ("rnr_form_line", "expiry_date"),
         ("vaccination", "vaccination_date"),
-        ("diagnosis", "valid_till"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
