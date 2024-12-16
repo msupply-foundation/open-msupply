@@ -76,3 +76,11 @@ mutation configureNameProperties($input: [ConfigureNamePropertyInput!]!) {
     }
   }
 }
+
+mutation insertContactForm($input: InsertContactFormInput!, $storeId: String!) {
+  insertContactForm(input: $input, storeId: $storeId) {
+    ... on InsertResponse { 
+      id
+    }
+  }
+}

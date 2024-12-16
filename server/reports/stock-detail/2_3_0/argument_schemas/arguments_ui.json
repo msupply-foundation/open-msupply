@@ -9,30 +9,7 @@
         "useDebounce": false
       }
     },
-    {
-      "type": "Control",
-      "scope": "#/properties/monthlyConsumptionLookBackPeriod",
-      "label": "T#report.AMC-lookback",
-      "options": {
-        "readonly": true
-      }
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/monthsOverstock",
-      "label": "T#label.max-months-of-stock",
-      "options": {
-        "readonly": true
-      }
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/monthsUnderstock",
-      "label": "T#label.min-months-of-stock",
-      "options": {
-        "readonly": true
-      }
-    },
+
     {
       "type": "Control",
       "scope": "#/properties/sort",

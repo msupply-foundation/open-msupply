@@ -22,6 +22,7 @@ interface SettingTextAreaProps {
   /** Info text displayed next to the settings label */
   infoText?: string;
   title: string;
+  visible: boolean;
 }
 
 export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
@@ -31,6 +32,7 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
   onToggle,
   infoText,
   title,
+  visible,
 }) => {
   const t = useTranslation();
   const [value, setValue] = React.useState(defaultValue);
@@ -46,7 +48,7 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
     onToggle?.(checked);
   };
 
-  return (
+  return visible ? (
     <>
       <Setting
         infoText={infoText}
@@ -96,5 +98,5 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
         </Grid>
       )}
     </>
-  );
+  ) : null;
 };

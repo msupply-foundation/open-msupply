@@ -151,7 +151,7 @@ impl ItemStats {
             available_stock_on_hand: row.available_stock_on_hand,
             item_id: requisition_line.item_row.id.clone(),
             item_name: requisition_line.item_row.name.clone(),
-            // TODO: Implement total consumption
+            // TODO: Implement total consumption & total_stock_on_hand
             total_consumption: 0.0,
         }
     }

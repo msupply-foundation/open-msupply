@@ -223,6 +223,18 @@ impl CannotEditRequisition {
     }
 }
 
+pub struct OrderingTooManyItems(pub i32);
+#[Object]
+impl OrderingTooManyItems {
+    pub async fn description(&self) -> &str {
+        "Ordering too many items"
+    }
+
+    pub async fn max_items_in_emergency_order(&self) -> i32 {
+        self.0
+    }
+}
+
 pub struct CannotEditStocktake;
 #[Object]
 impl CannotEditStocktake {

@@ -52,6 +52,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("rnr_form", "finalised_datetime"),
         ("vaccination", "created_datetime"),
         ("invoice", "backdated_datetime"),
+        ("contact_form", "created_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -88,6 +89,7 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("asset_log", "log_datetime"),
         ("sync_file_reference", "retry_at"),
         ("migration_fragment_log", "datetime"),
+        ("system_log", "datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {

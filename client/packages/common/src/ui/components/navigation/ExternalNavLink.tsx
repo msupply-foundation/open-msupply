@@ -3,7 +3,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Tooltip,
   ListItemButton,
   Box,
   ListItemProps,
@@ -59,44 +58,42 @@ export const ExternalNavLink: FC<ExternalNavLinkProps> = props => {
   );
 
   return (
-    <Tooltip title={text || ''}>
-      <StyledListItem to={to}>
-        <ListItemButton
-          sx={{
-            ...getListItemCommonStyles(),
-            '&.MuiListItemButton-root:hover': {
-              backgroundColor: 'transparent',
-            },
-            '& .MuiTypography-root': {
-              textOverflow: 'ellipsis',
-              overflow: 'hidden',
-              whiteSpace: 'nowrap',
-            },
-          }}
-          disableGutters
-          component={CustomLink}
-        >
-          <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
-          <Box className="navLinkText">
-            <Box width={10} />
-            <ListItemText
-              primary={
-                <>
-                  {text}
-                  <ExternalLinkIcon
-                    sx={{
-                      height: '14px',
-                      marginLeft: 1,
-                      strokeWidth: '1px',
-                      width: '14px',
-                    }}
-                  />
-                </>
-              }
-            />
-          </Box>
-        </ListItemButton>
-      </StyledListItem>
-    </Tooltip>
+    <StyledListItem to={to}>
+      <ListItemButton
+        sx={{
+          ...getListItemCommonStyles(),
+          '&.MuiListItemButton-root:hover': {
+            backgroundColor: 'transparent',
+          },
+          '& .MuiTypography-root': {
+            textOverflow: 'ellipsis',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+          },
+        }}
+        disableGutters
+        component={CustomLink}
+      >
+        <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
+        <Box className="navLinkText">
+          <Box width={10} />
+          <ListItemText
+            primary={
+              <>
+                {text}
+                <ExternalLinkIcon
+                  sx={{
+                    height: '14px',
+                    marginLeft: 1,
+                    strokeWidth: '1px',
+                    width: '14px',
+                  }}
+                />
+              </>
+            }
+          />
+        </Box>
+      </ListItemButton>
+    </StyledListItem>
   );
 };
