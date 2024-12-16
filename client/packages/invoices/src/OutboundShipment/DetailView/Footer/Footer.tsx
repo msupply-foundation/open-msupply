@@ -84,7 +84,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     {
       label: t('button.return-lines'),
       icon: <ArrowLeftIcon />,
-      onClick: () => onReturnLines?.(selectedIds),
+      onClick: () => onReturnLines(selectedIds),
     },
   ];
 
