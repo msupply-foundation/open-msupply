@@ -43,7 +43,7 @@ const STORE_PREFERENCE_1: (&str, &str) = (
         "consolidateBatches": false,
         "editPrescribedQuantityOnPrescription": false,
         "chooseDiagnosisOnPrescription": false,
-        "useConsumptionAndStockFromCustomersForInternalOrders": false,
+        "useConsumptionAndStockFromCustomersForInternalOrders": true,
         "alertIfDispensingSameVaccine": false,
         "monthlyConsumptionEnforceLookBackPeriod": false,
         "usesVaccineModule": false,
@@ -65,7 +65,9 @@ const STORE_PREFERENCE_1: (&str, &str) = (
         "boxPrefix": "",
         "boxPercentageSpace": 0,
         "omSupplyUsesProgramModule": true,
-        "stocktakeFrequency": 1.34
+        "stocktakeFrequency": 1.34,
+        "keepRequisitionLinesWithZeroQuantity": true,
+        "canLinkRequistionToSupplierInvoice": false
     }
 }"#,
 );
@@ -131,7 +133,9 @@ const STORE_PREFERENCE_2: (&str, &str) = (
         "monthsItemsExpire": 3,
         "boxPrefix": "",
         "boxPercentageSpace": 0,
-        "stocktakeFrequency": 1
+        "stocktakeFrequency": 1,
+        "keepRequisitionLinesWithZeroQuantity": false,
+        "canLinkRequistionToSupplierInvoice": true
     }
 }"#,
 );
@@ -157,6 +161,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 months_items_expire: 2.12,
                 stocktake_frequency: 1.34,
                 extra_fields_in_requisition: false,
+                keep_requisition_lines_with_zero_requested_quantity_on_finalised: true,
+                use_consumption_and_stock_from_customers_for_internal_orders: true,
+                manually_link_internal_order_to_inbound_shipment: false,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -179,6 +186,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 months_items_expire: 3.0,
                 stocktake_frequency: 1.0,
                 extra_fields_in_requisition: true,
+                keep_requisition_lines_with_zero_requested_quantity_on_finalised: false,
+                use_consumption_and_stock_from_customers_for_internal_orders: false,
+                manually_link_internal_order_to_inbound_shipment: true,
             },
         ),
     ]

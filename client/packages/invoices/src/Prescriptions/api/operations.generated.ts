@@ -26,6 +26,14 @@ export type PrescriptionByNumberQueryVariables = Types.Exact<{
 
 export type PrescriptionByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, clinicianId?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, currencyRate: number, prescriptionDate?: string | null, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, invoiceId: string, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string } } | null }> }, patient?: { __typename: 'PatientNode', id: string, name: string, code: string, isDeceased: boolean } | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
+export type PrescriptionByIdQueryVariables = Types.Exact<{
+  invoiceId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type PrescriptionByIdQuery = { __typename: 'Queries', invoice: { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, clinicianId?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, currencyRate: number, prescriptionDate?: string | null, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, invoiceId: string, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string } } | null }> }, patient?: { __typename: 'PatientNode', id: string, name: string, code: string, isDeceased: boolean } | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+
 export type InsertPrescriptionMutationVariables = Types.Exact<{
   id: Types.Scalars['String']['input'];
   patientId: Types.Scalars['String']['input'];
@@ -153,6 +161,31 @@ export const PrescriptionByNumberDocument = gql`
     storeId: $storeId
     type: PRESCRIPTION
   ) {
+    __typename
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+    ... on InvoiceNode {
+      ...PrescriptionRow
+    }
+  }
+}
+    ${PrescriptionRowFragmentDoc}`;
+export const PrescriptionByIdDocument = gql`
+    query prescriptionById($invoiceId: String!, $storeId: String!) {
+  invoice(id: $invoiceId, storeId: $storeId) {
     __typename
     ... on NodeError {
       __typename
@@ -423,6 +456,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     prescriptionByNumber(variables: PrescriptionByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PrescriptionByNumberQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PrescriptionByNumberQuery>(PrescriptionByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'prescriptionByNumber', 'query', variables);
+    },
+    prescriptionById(variables: PrescriptionByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PrescriptionByIdQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PrescriptionByIdQuery>(PrescriptionByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'prescriptionById', 'query', variables);
     },
     insertPrescription(variables: InsertPrescriptionMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertPrescriptionMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertPrescriptionMutation>(InsertPrescriptionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPrescription', 'mutation', variables);

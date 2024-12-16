@@ -12,9 +12,13 @@ import {
   useIntlUtils,
   useDisabledNotificationToast,
   UNDEFINED_STRING_VALUE,
+  noOtherVariants,
+  mapKeys,
+  mapValues,
 } from '@openmsupply-client/common';
 import { getNextRequestStatus, getStatusTranslation } from '../../../utils';
 import { useRequest } from '../../api';
+import { useRequestRequisitionLineErrorContext } from '../../context';
 
 const getStatusOptions = (
   currentStatus: RequisitionNodeStatus,
@@ -69,15 +73,18 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, update, comment, lines } = useRequest.document.fields([
+  const { id, status, comment, lines } = useRequest.document.fields([
+    'id',
     'status',
     'comment',
     'lines',
   ]);
+  const { mutateAsync: update } = useRequest.document.update();
   const { success, error } = useNotification();
   const t = useTranslation();
   const { user } = useAuthContext();
   const { getLocalisedFullName } = useIntlUtils();
+  const errorsContext = useRequestRequisitionLineErrorContext();
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),
@@ -106,14 +113,59 @@ const useStatusChangeButton = () => {
     })}`;
   };
 
+  const mapStructuredErrors = (result: Awaited<ReturnType<typeof update>>) => {
+    if (result.__typename === 'RequisitionNode') {
+      return undefined;
+    }
+
+    const { error } = result;
+
+    switch (error.__typename) {
+      case 'RequisitionReasonsNotProvided': {
+        const ids = mapValues(
+          mapKeys(lines.nodes, line => line?.id),
+          'id'
+        );
+        const mappedErrors = mapKeys(
+          error.errors,
+          line => ids[line.requisitionLine.id]
+        );
+        errorsContext.setErrors(mappedErrors);
+        return t('error.reasons-not-provided-program-requisition');
+      }
+      case 'OrderingTooManyItems':
+        return t('error.ordering-too-many-items', {
+          count: error.maxItemsInEmergencyOrder,
+        });
+      case 'OtherPartyNotASupplier':
+        return t('error.other-party-not-a-supplier');
+      case 'CannotEditRequisition':
+        return t('error.cannot-edit-requisition');
+      case 'OtherPartyNotVisible':
+        return t('error.other-party-not-visible');
+      case 'RecordNotFound':
+        return t('messages.record-not-found');
+      default:
+        return noOtherVariants(error);
+    }
+  };
+
   const onConfirmStatusChange = async () => {
     if (!selectedOption) return null;
+    let result;
     try {
-      await update({
+      result = await update({
+        id,
         status: selectedOption.value,
         comment: getUpdatedComment(),
       });
-      success(t('messages.saved'))();
+      const errorMessage = mapStructuredErrors(result);
+
+      if (errorMessage) {
+        error(errorMessage)();
+      } else {
+        success(t('messages.saved'))();
+      }
     } catch (e) {
       error(t('messages.could-not-save'))();
     }
@@ -143,15 +195,13 @@ export const StatusChangeButton = () => {
   const isDisabled = useRequest.utils.isDisabled();
   const { userHasPermission } = useAuthContext();
   const t = useTranslation();
-  const cantSend =
-    lines?.totalCount === 0 ||
-    lines?.nodes.every(line => line.requestedQuantity === 0);
+  const cantSend = lines?.totalCount === 0;
 
   const showPermissionDenied = useDisabledNotificationToast(
     t('auth.permission-denied')
   );
   const showCantSend = useDisabledNotificationToast(
-    t('messages.cant-send-order', { ns: 'replenishment' })
+    t('messages.cant-send-order')
   );
 
   if (!selectedOption) return null;

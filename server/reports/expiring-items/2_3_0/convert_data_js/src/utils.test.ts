@@ -52,12 +52,20 @@ describe("days until expired is added correctly", () => {
 describe("calculate expected usage", () => {
   it("returns undefined if either are undefined", () => {
     expect(calculateExpectedUsage(undefined, undefined)).toBe(undefined);
-    expect(calculateExpectedUsage(undefined, 1)).toBe(undefined);
+    expect(
+      calculateExpectedUsage(undefined, inputData.stockLines.nodes[0])
+    ).toBe(undefined);
     expect(calculateExpectedUsage(1, undefined)).toBe(undefined);
   });
 
   it("returns expected usage if both defined", () => {
-    expect(calculateExpectedUsage(20, 500)).toBe(333);
+    expect(calculateExpectedUsage(20, inputData.stockLines.nodes[1])).toBe(13);
+  });
+
+  it("returns total stock if expected usage > total stock", () => {
+    expect(calculateExpectedUsage(1000, inputData.stockLines.nodes[0])).toBe(
+      1000
+    );
   });
 });
 
@@ -79,18 +87,22 @@ describe("calculate stock at risk ", () => {
   it("returns stock at risk as all stock minus what we will consume before expiry date", () => {
     expect(calculateStockAtRisk(2, 100, 10, 60)).toBe(180);
   });
-});
 
-describe("test round days to integer", () => {
-  it("returns undefined if undefined", () => {
-    expect(roundDaysToInteger(undefined)).toBe(undefined);
+  it("returns 0 if will consume more than total stock within expiry date", () => {
+    expect(calculateStockAtRisk(1, 1, 3, 30)).toBe(0);
   });
 
-  it("returns rounded value if defined", () => {
-    expect(roundDaysToInteger(2.1)).toBe(2);
-    expect(roundDaysToInteger(2.11)).toBe(2);
-    expect(roundDaysToInteger(0.123)).toBe(0);
-    expect(roundDaysToInteger(2)).toBe(2);
+  describe("test round days to integer", () => {
+    it("returns undefined if undefined", () => {
+      expect(roundDaysToInteger(undefined)).toBe(undefined);
+    });
+
+    it("returns rounded value if defined", () => {
+      expect(roundDaysToInteger(2.1)).toBe(2);
+      expect(roundDaysToInteger(2.11)).toBe(2);
+      expect(roundDaysToInteger(0.123)).toBe(0);
+      expect(roundDaysToInteger(2)).toBe(2);
+    });
   });
 });
 

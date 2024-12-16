@@ -12,6 +12,8 @@ use crate::{
     ProgramRequisitionSettingsRow, ProgramRow, StorageConnection,
 };
 
+use super::{ProgramFilter, ProgramRepository};
+
 pub type ProgramRequisitionSettingsJoin =
     (ProgramRequisitionSettingsRow, ProgramRow, MasterListRow);
 
@@ -26,6 +28,7 @@ pub struct ProgramRequisitionSettings {
 pub struct ProgramRequisitionSettingsFilter {
     pub name_tag: Option<NameTagFilter>,
     pub master_list: Option<MasterListFilter>,
+    pub program: Option<ProgramFilter>,
 }
 
 pub struct ProgramRequisitionSettingsRepository<'a> {
@@ -53,6 +56,7 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
         if let Some(ProgramRequisitionSettingsFilter {
             name_tag,
             master_list,
+            program,
         }) = filter
         {
             if name_tag.is_some() {
@@ -67,6 +71,13 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
                     .select(master_list_dsl::id)
                     .nullable();
                 query = query.filter(program_dsl::master_list_id.eq_any(master_list_ids));
+            }
+
+            if program.is_some() {
+                let program_ids =
+                    ProgramRepository::create_filtered_query(program).select(program_dsl::id);
+
+                query = query.filter(program_dsl::id.eq_any(program_ids));
             }
         }
 
@@ -104,6 +115,11 @@ impl ProgramRequisitionSettingsFilter {
 
     pub fn master_list(mut self, filter: MasterListFilter) -> Self {
         self.master_list = Some(filter);
+        self
+    }
+
+    pub fn program(mut self, filter: ProgramFilter) -> Self {
+        self.program = Some(filter);
         self
     }
 }

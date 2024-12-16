@@ -36,6 +36,14 @@ const createDraftFromItem = (
     isCreated: true,
     itemStats: item.stats,
     itemName: item.name,
+    requisitionNumber: request.requisitionNumber,
+    initialStockOnHandUnits: 0,
+    incomingUnits: 0,
+    outgoingUnits: 0,
+    lossInUnits: 0,
+    additionInUnits: 0,
+    daysOutOfStock: 0,
+    expiringUnits: 0,
   };
 };
 
@@ -52,7 +60,9 @@ const createDraftFromRequestLine = (
   itemStats: line.itemStats,
 });
 
-export const useDraftRequisitionLine = (item: ItemWithStatsFragment | null) => {
+export const useDraftRequisitionLine = (
+  item?: ItemWithStatsFragment | null
+) => {
   const { lines } = useRequest.line.list();
   const { data } = useRequest.document.get();
   const { mutateAsync: save, isLoading } = useRequest.line.save();
@@ -83,23 +93,35 @@ export const useDraftRequisitionLine = (item: ItemWithStatsFragment | null) => {
   return { draft, isLoading, save: () => draft && save(draft), update };
 };
 
-export const useNextRequestLine = (
-  currentItem: ItemWithStatsFragment | null
+export const usePreviousNextRequestLine = (
+  lines?: RequestLineFragment[],
+  currentItem?: ItemWithStatsFragment | null
 ) => {
-  const { lines } = useRequest.line.list();
-
-  const nextState: {
-    hasNext: boolean;
-    next: null | ItemWithStatsFragment;
-  } = { hasNext: true, next: null };
-  const idx = lines.findIndex(l => l.item.id === currentItem?.id);
-  const next = lines[idx + 1];
-  if (!next) {
-    nextState.hasNext = false;
-    return nextState;
+  if (!lines) {
+    return { hasNext: false, next: null, hasPrevious: false, previous: null };
   }
 
-  nextState.next = next.item;
+  const state: {
+    hasPrevious: boolean;
+    previous: null | ItemWithStatsFragment;
+    hasNext: boolean;
+    next: null | ItemWithStatsFragment;
+  } = { hasNext: true, next: null, hasPrevious: true, previous: null };
+  const idx = lines.findIndex(l => l.item.id === currentItem?.id);
+  const previous = lines[idx - 1];
+  const next = lines[idx + 1];
 
-  return nextState;
+  if (!previous) {
+    state.hasPrevious = false;
+  } else {
+    state.previous = previous.item;
+  }
+
+  if (!next) {
+    state.hasNext = false;
+  } else {
+    state.next = next.item;
+  }
+
+  return state;
 };

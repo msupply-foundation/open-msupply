@@ -133,6 +133,7 @@ use crate::{
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
+    category_row::{CategoryRow, CategoryRowRepository},
     item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
     reason_option_row::{ReasonOptionRow, ReasonOptionRowRepository},
     vaccine_course::{
@@ -244,6 +245,7 @@ pub struct MockData {
     pub indicator_lines: Vec<IndicatorLineRow>,
     pub indicator_columns: Vec<IndicatorColumnRow>,
     pub indicator_values: Vec<IndicatorValueRow>,
+    pub categories: Vec<CategoryRow>,
     pub options: Vec<ReasonOptionRow>,
 }
 
@@ -325,6 +327,7 @@ pub struct MockDataInserts {
     pub indicator_lines: bool,
     pub indicator_columns: bool,
     pub indicator_values: bool,
+    pub categories: bool,
     pub options: bool,
 }
 
@@ -395,6 +398,7 @@ impl MockDataInserts {
             indicator_lines: true,
             indicator_columns: true,
             indicator_values: true,
+            categories: true,
             options: true,
         }
     }
@@ -704,7 +708,6 @@ impl MockDataInserts {
         self.program_enrolments = true;
         self
     }
-
     pub fn program_indicators(mut self) -> Self {
         self.program_indicators = true;
         self
@@ -712,6 +715,11 @@ impl MockDataInserts {
 
     pub fn indicator_values(mut self) -> Self {
         self.indicator_values = true;
+        self
+    }
+
+    pub fn categories(mut self) -> Self {
+        self.categories = true;
         self
     }
 
@@ -1321,6 +1329,12 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.categories {
+            let repo = CategoryRowRepository::new(connection);
+            for row in &mock_data.categories {
+                repo.upsert_one(row).unwrap();
+            }
+        }
 
         if inserts.options {
             let repo = ReasonOptionRowRepository::new(connection);
@@ -1401,6 +1415,7 @@ impl MockData {
             mut indicator_lines,
             mut indicator_columns,
             mut indicator_values,
+            mut categories,
             mut options,
         } = other;
 
@@ -1471,6 +1486,7 @@ impl MockData {
         self.indicator_lines.append(&mut indicator_lines);
         self.indicator_columns.append(&mut indicator_columns);
         self.indicator_values.append(&mut indicator_values);
+        self.categories.append(&mut categories);
         self.options.append(&mut options);
         self
     }
