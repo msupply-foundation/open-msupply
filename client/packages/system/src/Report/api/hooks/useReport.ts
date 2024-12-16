@@ -4,7 +4,6 @@ import {
   useQuery,
   useTranslation,
 } from '@openmsupply-client/common';
-import { ReportRowFragment } from '../operations.generated';
 import { useReportGraphQL } from '../useReportGraphQL';
 import { REPORT } from './keys';
 
@@ -15,21 +14,39 @@ export const useReport = (id: string) => {
   const t = useTranslation();
 
   const queryKey = [REPORT, storeId, id];
-  const queryFn = async (): Promise<ReportRowFragment> => {
-    const result = await reportApi.report({
-      storeId,
-      userLanguage: language,
-      id,
-    });
+  const queryFn = async () => {
+    try {
+      const result = await reportApi.report({
+        storeId,
+        userLanguage: language,
+        id,
+      });
 
-    if (result.report.__typename == 'ReportNode') {
-      return result.report;
-    } else {
-      error(t('report.error-translating'))();
-      throw new Error('Could not translate report');
+      let report = result.report;
+
+      if (report.__typename === 'ReportNode') {
+        return report;
+      }
+
+      if (report.__typename === 'QueryReportError') {
+        let errorMessage;
+        switch (report.error.__typename) {
+          case 'FailedTranslation':
+            errorMessage = t('report.error-translating', {
+              key: report.error.description,
+            });
+            break;
+          // TODO add never exhaustive error handling if adding more error types to QueryReportError
+          // default:
+          //   noOtherVariants(report.error);
+        }
+        error(errorMessage)();
+        console.error(errorMessage);
+      }
+    } catch (e) {
+      console.error(e);
     }
   };
-
   return useQuery({
     queryKey,
     queryFn,
