@@ -222,10 +222,10 @@ fn generate(
 
     let indicator_values = match customer_store {
         Some(_) => generate_program_indicator_values(IndicatorGenerationInput {
-            store_id: &ctx.store_id,
-            period_id: &period_id,
+            store_id: ctx.store_id.clone(),
+            period_id,
             program_indicators,
-            other_party_id: &other_party_id,
+            other_party_id,
         }),
         None => vec![],
     };

@@ -217,10 +217,10 @@ fn generate(
 
     let indicator_values = if should_generate_indicators {
         generate_program_indicator_values(IndicatorGenerationInput {
-            store_id: &ctx.store_id,
-            period_id: &period_id,
+            store_id: ctx.store_id.clone(),
+            period_id,
             program_indicators,
-            other_party_id: &other_party_id,
+            other_party_id,
         })
     } else {
         vec![]
