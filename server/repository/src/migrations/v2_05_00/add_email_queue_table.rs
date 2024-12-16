@@ -42,7 +42,7 @@ impl MigrationFragment for Migrate {
                     updated_at TIMESTAMP NOT NULL,
                     sent_at TIMESTAMP,
                     retries INTEGER NOT NULL DEFAULT 0,
-                    error TEXT,
+                    error TEXT
                 );
             "#
         )?;
