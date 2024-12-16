@@ -8,6 +8,7 @@ import {
   LoadingButton,
   MailIcon,
   useNotification,
+  RegexUtils,
 } from '@openmsupply-client/common';
 import { useFeedbackForm } from '../api/hooks/help/useFeedbackForm';
 
@@ -20,7 +21,6 @@ export const FeedbackForm = () => {
     saveFeedback,
     draft,
     isValidInput,
-    checkEmailIsValid,
     debounceValidation,
     emailError,
   } = useFeedbackForm();
@@ -37,7 +37,7 @@ export const FeedbackForm = () => {
     }
   };
 
-  const isValidEmail = checkEmailIsValid(draft.replyEmail);
+  const isValidEmail = RegexUtils.checkEmailIsValid(draft.replyEmail);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const email = e.target.value;

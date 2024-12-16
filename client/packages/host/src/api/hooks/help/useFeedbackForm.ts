@@ -7,6 +7,7 @@ import {
   useMutation,
   useDebounceCallback,
   useTranslation,
+  RegexUtils,
 } from '@openmsupply-client/common';
 
 type ContactFormInput = Pick<InsertContactFormInput, 'replyEmail' | 'body'>;
@@ -31,14 +32,9 @@ export function useFeedbackForm() {
     setDraft(defaultDraft);
   };
 
-  const checkEmailIsValid = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
   const debounceValidation = useDebounceCallback(
     (email: string) => {
-      if (!checkEmailIsValid(email))
+      if (!RegexUtils.checkEmailIsValid(email))
         return setEmailError(t('messages.error-not-valid-email'));
       return setEmailError('');
     },
@@ -47,7 +43,9 @@ export function useFeedbackForm() {
   );
 
   const isValidInput =
-    !!draft.replyEmail && !!draft.body && checkEmailIsValid(draft.replyEmail);
+    !!draft.replyEmail &&
+    !!draft.body &&
+    RegexUtils.checkEmailIsValid(draft.replyEmail);
 
   return {
     updateDraft,
@@ -55,7 +53,6 @@ export function useFeedbackForm() {
     saveFeedback: insert,
     draft,
     isValidInput,
-    checkEmailIsValid,
     debounceValidation,
     emailError,
   };
