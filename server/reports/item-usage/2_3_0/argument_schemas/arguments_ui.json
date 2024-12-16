@@ -25,7 +25,7 @@
     {
       "type": "Control",
       "scope": "#/properties/sort",
-      "label": "Sort by:",
+      "label": "T#report.sort-by",
       "options": {
         "show": [
           ["name", "name"],
@@ -46,7 +46,7 @@
     {
       "type": "Control",
       "scope": "#/properties/dir",
-      "label": "Sort direction"
+      "label": "T#report.sort-direction"
     }
   ]
 }

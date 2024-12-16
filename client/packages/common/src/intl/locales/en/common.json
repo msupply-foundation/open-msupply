@@ -1623,6 +1623,8 @@
   "report.item-code-or-name": "Item Code or Name",
   "report.AMC-lookback": "AMC Lookback Period",
   "report.error-translating": "Error generating translation for key {{key}}",
+  "report.sort-by": "Sort by",
+  "report.sort-direction": "Sort direction",
   "reports": "Reports",
   "returns": "Returns",
   "saving": "Saving…",
