@@ -14,7 +14,7 @@ impl MigrationFragment for Migrate {
             CREATE TABLE diagnosis (
                 id TEXT NOT NULL PRIMARY KEY,
                 code TEXT NOT NULL,
-                description NOT NULL,
+                description TEXT NOT NULL,
                 notes TEXT,
                 valid_till DATE
             );
