@@ -18,7 +18,7 @@ use crate::{
     localisations::{Localisations, TranslationError},
     service_provider::ServiceContext,
     static_files::{StaticFileCategory, StaticFileService},
-    translate_report_arugment_schema, ListError,
+    ListError,
 };
 
 use super::{
@@ -28,6 +28,7 @@ use super::{
     },
     html_printing::html_to_pdf,
     qr_code::qr_code_svg,
+    utils::translate_report_arugment_schema,
 };
 
 pub enum PrintFormat {

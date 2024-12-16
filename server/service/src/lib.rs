@@ -1,12 +1,8 @@
 // json! hits recursion limit in integration test (central_server_configurations), recursion_limit attribute must be top level
 #![cfg_attr(feature = "integration_test", recursion_limit = "256")]
-use json_translate::crawl_and_translate;
-use localisations::{Localisations, TranslationError};
 use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository};
 use repository::location::{LocationFilter, LocationRepository};
-use repository::{
-    EqualFilter, FormSchemaJson, Pagination, PaginationOption, Report, DEFAULT_PAGINATION_LIMIT,
-};
+use repository::{EqualFilter, Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
 use repository::{RepositoryError, StorageConnection};
 use service_provider::ServiceContext;
 use std::convert::TryInto;
@@ -322,36 +318,4 @@ fn check_item_variant_exists(
     let variant = ItemVariantRowRepository::new(connection).find_one_by_id(item_variant_id)?;
 
     return Ok(variant);
-}
-
-pub(crate) fn translate_report_arugment_schema(
-    Report {
-        report_row,
-        argument_schema,
-    }: Report,
-    translation_service: &Box<Localisations>,
-    user_language: &str,
-) -> Result<Report, TranslationError> {
-    let Some(argument_schema) = argument_schema else {
-        return Ok(Report {
-            report_row,
-            argument_schema: None,
-        });
-    };
-
-    let mut json_schema = argument_schema.json_schema;
-    crawl_and_translate(&mut json_schema, translation_service, user_language)?;
-    let mut ui_schema = argument_schema.ui_schema;
-    crawl_and_translate(&mut ui_schema, translation_service, user_language)?;
-
-    let argument_schema = Some(FormSchemaJson {
-        json_schema,
-        ui_schema,
-        ..argument_schema
-    });
-
-    Ok(Report {
-        report_row,
-        argument_schema,
-    })
 }
