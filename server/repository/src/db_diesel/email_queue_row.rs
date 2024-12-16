@@ -25,8 +25,8 @@ table! {
 pub enum EmailQueueStatus {
     Queued,
     Sent,
-    Errored,
-    Failed,
+    Errored, // Errored will be re-tried
+    Failed,  // Failed will NOT be re-tried
 }
 
 impl Default for EmailQueueStatus {
