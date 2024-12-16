@@ -229,6 +229,7 @@ export const PrescriptionLineEditForm: React.FC<
             <ModalLabel label={t('label.directions')} />
             <BasicTextInput
               value={note}
+              disabled={disabled}
               onChange={e => {
                 updateNotes(e.target.value);
               }}
@@ -242,15 +243,18 @@ export const PrescriptionLineEditForm: React.FC<
             />
           </ModalRow>
           <Divider margin={10} />
-          <StockOutAlerts
-            allocationAlerts={allocationAlerts}
-            showZeroQuantityConfirmation={showZeroQuantityConfirmation}
-            isAutoAllocated={isAutoAllocated}
-          />
+          {!disabled && (
+            <StockOutAlerts
+              allocationAlerts={allocationAlerts}
+              showZeroQuantityConfirmation={showZeroQuantityConfirmation}
+              isAutoAllocated={isAutoAllocated}
+            />
+          )}
           <Grid container>
             <ModalLabel label={t('label.issue')} />
             <NumericTextInput
               autoFocus
+              disabled={disabled}
               value={issueQuantity}
               onChange={handleIssueQuantityChange}
               min={0}
@@ -279,6 +283,7 @@ export const PrescriptionLineEditForm: React.FC<
                 <Box marginLeft={1} />
                 <Select
                   sx={{ width: 110 }}
+                  disabled={disabled}
                   options={packSizeController.options}
                   value={packSizeController.selected?.value ?? ''}
                   onChange={e => {
