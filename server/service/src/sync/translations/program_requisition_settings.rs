@@ -9,7 +9,7 @@ use serde::Deserialize;
 use std::collections::HashMap;
 
 use crate::sync::{
-    sync_serde::empty_str_or_i32,
+    sync_serde::{empty_str_as_option, empty_str_or_i32},
     translations::{name_tag::NameTagTranslation, period_schedule::PeriodScheduleTranslation},
 };
 
@@ -34,6 +34,9 @@ pub struct LegacyListMasterRow {
 struct LegacyProgramSettings {
     #[serde(rename = "storeTags")]
     store_tags: Option<HashMap<String, LegacyProgramSettingsStoreTag>>,
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(rename = "elmisCode")]
+    elmis_code: Option<String>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -189,6 +192,7 @@ fn generate_requisition_program(
         name: master_list.description.clone(),
         context_id: context_row.id.clone(),
         is_immunisation: master_list.is_immunisation.unwrap_or(false),
+        elmis_code: program_settings.elmis_code.clone(),
     };
 
     let mut program_requisition_settings_rows = Vec::new();
