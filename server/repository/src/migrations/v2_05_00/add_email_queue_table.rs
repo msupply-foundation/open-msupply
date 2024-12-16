@@ -16,7 +16,7 @@ impl MigrationFragment for Migrate {
                     'QUEUED',
                     'SENT',
                     'ERRORED',
-                    'FAILED',
+                    'FAILED'
                 );
                 "#
             )?
