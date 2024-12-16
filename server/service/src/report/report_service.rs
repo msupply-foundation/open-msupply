@@ -339,21 +339,13 @@ fn query_reports(
         app_version,
     );
 
-    let filter = ReportFilter::new().id(EqualFilter::equal_any(
-        reports_to_show_meta_data
-            .into_iter()
-            .map(|r| r.id)
-            .collect(),
-    ));
+    let filter = ReportFilter::new().id(EqualFilter::equal_any(reports_to_show_meta_data));
 
     let reports = repo.query(Some(filter), sort)?;
     Ok(reports)
 }
 
-fn report_filter_method(
-    reports: Vec<ReportMetaDataRow>,
-    app_version: Version,
-) -> Vec<ReportMetaDataRow> {
+fn report_filter_method(reports: Vec<ReportMetaDataRow>, app_version: Version) -> Vec<String> {
     let reports_with_compatible_versions: Vec<ReportMetaDataRow> = reports
         .into_iter()
         .filter(|r| {
@@ -367,7 +359,7 @@ fn report_filter_method(
         .collect();
     codes.dedup();
 
-    let mut reports_to_show: Vec<ReportMetaDataRow> = vec![];
+    let mut reports_to_show: Vec<String> = vec![];
     for code in codes {
         let reports_of_code: Vec<ReportMetaDataRow> = reports_with_compatible_versions
             .clone()
@@ -381,10 +373,10 @@ fn report_filter_method(
             .collect();
         if !custom_reports_of_code.is_empty() {
             if let Some(report) = find_latest_report(custom_reports_of_code) {
-                reports_to_show.push(report);
+                reports_to_show.push(report.id);
             }
         } else if let Some(report) = find_latest_report(reports_of_code) {
-            reports_to_show.push(report);
+            reports_to_show.push(report.id);
         }
     }
     reports_to_show
@@ -1151,27 +1143,57 @@ mod report_filter_test {
         let mut app_version = Version::from_str("2.3.00");
         let mut result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().version, "2.3.5");
+        let mut report = reports
+            .clone()
+            .into_iter()
+            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
+            .next()
+            .unwrap();
+        assert_eq!(report.version, "2.3.5");
 
         app_version = Version::from_str("2.4.00");
         result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().version, "2.3.5");
+        report = reports
+            .clone()
+            .into_iter()
+            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
+            .next()
+            .unwrap();
+        assert_eq!(report.version, "2.3.5");
 
         app_version = Version::from_str("2.8.00");
         result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().version, "2.8.3");
+        report = reports
+            .clone()
+            .into_iter()
+            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
+            .next()
+            .unwrap();
+        assert_eq!(report.version, "2.8.3");
 
         app_version = Version::from_str("3.2.00");
         result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().version, "3.0.1");
+        report = reports
+            .clone()
+            .into_iter()
+            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
+            .next()
+            .unwrap();
+        assert_eq!(report.version, "3.0.1");
 
         app_version = Version::from_str("4.5.00");
-        result = report_filter_method(reports, app_version);
+        result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().version, "3.5.1");
+        report = reports
+            .clone()
+            .into_iter()
+            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
+            .next()
+            .unwrap();
+        assert_eq!(report.version, "3.5.1");
     }
 
     #[actix_rt::test]
@@ -1194,26 +1216,56 @@ mod report_filter_test {
         let mut app_version = Version::from_str("2.3.00");
         let mut result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().version, "2.3.0");
+        let mut report = reports
+            .clone()
+            .into_iter()
+            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
+            .next()
+            .unwrap();
+        assert_eq!(report.version, "2.3.0");
 
         app_version = Version::from_str("2.4.00");
         result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().version, "2.3.0");
+        report = reports
+            .clone()
+            .into_iter()
+            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
+            .next()
+            .unwrap();
+        assert_eq!(report.version, "2.3.0");
 
         app_version = Version::from_str("2.8.00");
         result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().version, "2.8.2");
+        report = reports
+            .clone()
+            .into_iter()
+            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
+            .next()
+            .unwrap();
+        assert_eq!(report.version, "2.8.2");
 
         app_version = Version::from_str("3.2.00");
         result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().version, "2.8.2");
+        report = reports
+            .clone()
+            .into_iter()
+            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
+            .next()
+            .unwrap();
+        assert_eq!(report.version, "2.8.2");
 
         app_version = Version::from_str("4.5.00");
-        result = report_filter_method(reports, app_version);
+        result = report_filter_method(reports.clone(), app_version);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().unwrap().version, "2.8.2");
+        report = reports
+            .clone()
+            .into_iter()
+            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
+            .next()
+            .unwrap();
+        assert_eq!(report.version, "2.8.2");
     }
 }
