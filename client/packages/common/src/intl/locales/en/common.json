@@ -1598,7 +1598,7 @@
   "report.well-stocked": "Well stocked",
   "report.item-code-or-name": "Item Code or Name",
   "report.AMC-lookback": "AMC Lookback Period",
-  "report.error-translating": "Error generating translations",
+  "report.error-translating": "Error generating translation for key {{key}}",
   "reports": "Reports",
   "returns": "Returns",
   "saving": "Saving…",

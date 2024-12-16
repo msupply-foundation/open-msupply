@@ -271,9 +271,11 @@ impl ReportContext {
 
 fn map_report_error(error: GetReportError) -> Result<ReportResponse> {
     match error {
-        GetReportError::TranslationError(_) => {
+        GetReportError::TranslationError(error) => {
             return Ok(ReportResponse::Error(QueryReportError {
-                error: QueryReportErrorInterface::ReportTranslationError(FailedTranslation),
+                error: QueryReportErrorInterface::ReportTranslationError(FailedTranslation(
+                    error.to_string(),
+                )),
             }))
         }
         GetReportError::RepositoryError(error) => {
@@ -284,9 +286,11 @@ fn map_report_error(error: GetReportError) -> Result<ReportResponse> {
 
 fn map_reports_error(error: GetReportsError) -> Result<ReportsResponse> {
     match error {
-        GetReportsError::TranslationError(_) => {
+        GetReportsError::TranslationError(error) => {
             return Ok(ReportsResponse::Error(QueryReportsError {
-                error: QueryReportsErrorInterface::ReportsTranslationError(FailedTranslation),
+                error: QueryReportsErrorInterface::ReportsTranslationError(FailedTranslation(
+                    error.to_string(),
+                )),
             }))
         }
         GetReportsError::ListError(error) => return Err(list_error_to_gql_err(error)),

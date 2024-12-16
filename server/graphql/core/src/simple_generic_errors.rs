@@ -341,10 +341,10 @@ impl MasterListNotFoundForThisStore {
     }
 }
 
-pub struct FailedTranslation;
+pub struct FailedTranslation(pub String);
 #[Object]
 impl FailedTranslation {
-    pub async fn description(&self) -> &'static str {
-        "Translation failed."
+    pub async fn description(&self) -> String {
+        self.0.to_owned()
     }
 }
