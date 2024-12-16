@@ -324,6 +324,12 @@ Alternatively wasm functions can be built externally using any compatible langua
 
 > Note custom wasm data functions will be used if both custom functions and JS wasm function builder files are both specified
 
+#### Logging in wasm functions
+
+Console errors, infos, and logs in wasm functions are propagated up into the server. These can be saved to file, or logged to the server terminal for easy debugging.
+
+Log destination is configured in the base.yaml file under logging.
+
 ## Standard reports versioning
 
 Standard reports include versions for updates of reports. Open mSupply central will automatically sync all standard reports.
