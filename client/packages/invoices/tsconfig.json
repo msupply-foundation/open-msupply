@@ -1,4 +1,4 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["./src", "../common/src/ui/components/footer/ActionsFooter"]
+  "include": ["./src"]
 }
