@@ -3,7 +3,7 @@ import {
   Stack,
   useTranslation,
   Typography,
-  Button,
+  FlatButton,
 } from '@openmsupply-client/common';
 
 interface ActionFooter {
@@ -26,9 +26,8 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
   return (
     <Stack
       direction="row"
-      gap={8}
       alignItems="center"
-      height={80}
+      height={64}
       sx={{
         p: 4,
         mx: '-20px',
@@ -36,23 +35,21 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
       }}
     >
       <Typography
-        fontSize="16px"
         sx={{
+          pr: 1,
           fontWeight: 'bold',
         }}
       >
         {selectedRowCount} {t('label.selected')}
       </Typography>
       {actions.map(({ label, icon, onClick, disabled }) => (
-        <Button
+        <FlatButton
           key={label}
           startIcon={icon}
+          label={label}
           disabled={disabled}
           onClick={onClick}
-          size={'large'}
-        >
-          {label}
-        </Button>
+        />
       ))}
     </Stack>
   );
