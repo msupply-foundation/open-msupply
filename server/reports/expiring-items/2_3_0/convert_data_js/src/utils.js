@@ -10,7 +10,7 @@ const processStockLines = (nodes, sort, dir) => {
     if (!!expectedUsage) {
       line.expectedUsage = Math.min(
         expectedUsage,
-        totalNumberOfPacks ?? expectedUsage
+        line?.totalNumberOfPacks * line?.packSize ?? expectedUsage
       );
     }
     const stockAtRisk = calculateStockAtRisk(

@@ -3581,6 +3581,37 @@ export type ItemFilterInput = {
   type?: InputMaybe<EqualFilterItemTypeInput>;
 };
 
+export type ItemLedgerConnector = {
+  __typename: 'ItemLedgerConnector';
+  nodes: Array<ItemLedgerNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ItemLedgerNode = {
+  __typename: 'ItemLedgerNode';
+  balance: Scalars['Float']['output'];
+  batch?: Maybe<Scalars['String']['output']>;
+  costPricePerPack: Scalars['Float']['output'];
+  datetime: Scalars['DateTime']['output'];
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  invoiceNumber: Scalars['Int']['output'];
+  invoiceStatus: InvoiceNodeStatus;
+  invoiceType: InvoiceNodeType;
+  itemId: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  numberOfPacks: Scalars['Float']['output'];
+  packSize: Scalars['Float']['output'];
+  quantity: Scalars['Float']['output'];
+  reason?: Maybe<Scalars['String']['output']>;
+  sellPricePerPack: Scalars['Float']['output'];
+  stockLineId?: Maybe<Scalars['String']['output']>;
+  storeId: Scalars['String']['output'];
+  totalBeforeTax?: Maybe<Scalars['Float']['output']>;
+};
+
+export type ItemLedgerResponse = ItemLedgerConnector;
+
 export type ItemNode = {
   __typename: 'ItemNode';
   atcCategory: Scalars['String']['output'];
@@ -3667,7 +3698,6 @@ export type ItemStatsNode = {
   availableStockOnHand: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
   totalConsumption: Scalars['Float']['output'];
-  totalStockOnHand: Scalars['Float']['output'];
 };
 
 export type ItemVariantMutations = {
@@ -3756,6 +3786,7 @@ export type LedgerConnector = {
 };
 
 export type LedgerFilterInput = {
+  itemId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -5653,6 +5684,7 @@ export type Queries = {
   invoices: InvoicesResponse;
   isCentralServer: Scalars['Boolean']['output'];
   itemCounts: ItemCounts;
+  itemLedger: ItemLedgerResponse;
   itemPrice: ItemPriceResponse;
   itemVariantsConfigured: Scalars['Boolean']['output'];
   /** Query omSupply "item" entries */
@@ -6062,6 +6094,14 @@ export type QueriesInvoicesArgs = {
 
 export type QueriesItemCountsArgs = {
   lowStockThreshold?: InputMaybe<Scalars['Int']['input']>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesItemLedgerArgs = {
+  filter?: InputMaybe<LedgerFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<LedgerSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
