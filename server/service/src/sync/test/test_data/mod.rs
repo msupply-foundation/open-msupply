@@ -16,6 +16,7 @@ pub(crate) mod barcode;
 pub(crate) mod cold_storage_type;
 pub(crate) mod currency;
 pub(crate) mod demographic;
+pub(crate) mod diagnosis;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
 pub(crate) mod invoice;
@@ -69,6 +70,7 @@ pub(crate) mod vaccine_course_item;
 pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncomingRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut abbreviation::test_pull_upsert_records());
+    test_records.append(&mut diagnosis::test_pull_upsert_records());
     test_records.append(&mut user::test_pull_upsert_records());
     test_records.append(&mut user_permission::test_pull_upsert_records());
     test_records.append(&mut item::test_pull_upsert_records());
