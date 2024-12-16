@@ -1,9 +1,13 @@
 import React, { FC, memo } from 'react';
 import {
+  ActionsFooter,
+  ArrowLeftIcon,
   Box,
   ButtonWithIcon,
   StatusCrumbs,
   XCircleIcon,
+  DeleteIcon,
+  ZapIcon,
   useTranslation,
   AppFooterPortal,
   InvoiceNodeStatus,
@@ -13,7 +17,6 @@ import { getStatusTranslator, outboundStatuses } from '../../../utils';
 import { useOutbound, OutboundFragment } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
-import { ActionsFooter } from '../ActionsFooter';
 
 const createStatusLog = (invoice: OutboundFragment) => {
   const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
@@ -57,9 +60,33 @@ export const FooterComponent: FC<FooterComponentProps> = ({
   onReturnLines,
 }) => {
   const t = useTranslation();
-  const { data } = useOutbound.document.get();
   const { navigateUpOne } = useBreadcrumbs();
+
+  const { data } = useOutbound.document.get();
+  const isDisabled = useOutbound.utils.isDisabled();
+  const onDelete = useOutbound.line.deleteSelected();
+  const { onAllocate } = useOutbound.line.allocateSelected();
   const selectedIds = useOutbound.utils.selectedIds();
+
+  const actions = [
+    {
+      label: t('button.delete-lines'),
+      icon: <DeleteIcon />,
+      onClick: onDelete,
+      disabled: isDisabled,
+    },
+    {
+      label: t('button.return-lines'),
+      icon: <ZapIcon />,
+      onClick: onAllocate,
+      disabled: isDisabled,
+    },
+    {
+      label: t('button.return-lines'),
+      icon: <ArrowLeftIcon />,
+      onClick: () => onReturnLines?.(selectedIds),
+    },
+  ];
 
   return (
     <AppFooterPortal
@@ -67,10 +94,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
         <>
           {selectedIds.length !== 0 && (
             <ActionsFooter
-              showAllocate
-              showDelete
-              showReturnLines
-              onReturnLines={onReturnLines}
+              actions={actions}
               selectedRowCount={selectedIds.length}
             />
           )}

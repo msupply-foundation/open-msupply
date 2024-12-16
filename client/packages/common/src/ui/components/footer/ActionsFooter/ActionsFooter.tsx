@@ -2,13 +2,9 @@ import React, { FC, ReactElement, ReactNode } from 'react';
 import {
   Stack,
   useTranslation,
-  DeleteIcon,
-  ZapIcon,
   Typography,
   Button,
 } from '@openmsupply-client/common';
-import { useOutbound } from '../../api';
-import { ArrowLeftIcon } from '@mui/x-date-pickers';
 
 interface ActionFooter {
   label: string;
@@ -18,46 +14,15 @@ interface ActionFooter {
 }
 
 interface ActionsFooterProps {
+  actions: ActionFooter[];
   selectedRowCount: number;
-  onReturnLines?: (stockLineIds: string[]) => void;
-  showDelete?: boolean;
-  showAllocate?: boolean;
-  showReturnLines?: boolean;
 }
 
 export const ActionsFooter: FC<ActionsFooterProps> = ({
+  actions,
   selectedRowCount,
-  onReturnLines,
-  showDelete = false,
-  showAllocate = false,
-  showReturnLines = false,
 }): ReactElement => {
   const t = useTranslation();
-  const isDisabled = useOutbound.utils.isDisabled();
-  const onDelete = useOutbound.line.deleteSelected();
-  const { onAllocate } = useOutbound.line.allocateSelected();
-  const selectedIds = useOutbound.utils.selectedIds();
-
-  const actions = [
-    showDelete && {
-      label: t('button.delete-lines'),
-      icon: <DeleteIcon />,
-      onClick: onDelete,
-      disabled: isDisabled,
-    },
-    showAllocate && {
-      label: t('button.return-lines'),
-      icon: <ZapIcon />,
-      onClick: onAllocate,
-      disabled: isDisabled,
-    },
-    showReturnLines && {
-      label: t('button.return-lines'),
-      icon: <ArrowLeftIcon />,
-      onClick: () => onReturnLines?.(selectedIds),
-    },
-  ].filter(Boolean) as ActionFooter[];
-
   return (
     <Stack
       direction="row"
