@@ -1,19 +1,28 @@
 use repository::db_diesel::InvoiceLineType;
-use repository::{InvoiceLineRow, InvoiceRow, ItemRowRepository, RepositoryError};
+use repository::{
+    InvoiceLineRow, InvoiceRow, ItemRowRepository, RepositoryError, StorageConnection,
+};
 use util::uuid::uuid;
 
 use crate::service_provider::ServiceContext;
+use crate::store_preference::get_store_preferences;
 
 pub fn generate_empty_invoice_lines(
+    connection: &StorageConnection,
     ctx: &ServiceContext,
     invoice_row: &InvoiceRow,
     item_ids: Vec<String>,
 ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
     let mut result: Vec<InvoiceLineRow> = Vec::new();
+    let store_preferences = get_store_preferences(connection, &invoice_row.store_id)?;
 
     item_ids.into_iter().for_each(|item_id| {
         match ItemRowRepository::new(&ctx.connection).find_active_by_id(&item_id) {
             Ok(Some(item)) => {
+                let default_pack_size = match store_preferences.pack_to_one {
+                    true => 1.0,
+                    false => item.default_pack_size,
+                };
                 result.push(InvoiceLineRow {
                     id: uuid(),
                     invoice_id: invoice_row.id.clone(),
@@ -24,7 +33,7 @@ pub fn generate_empty_invoice_lines(
                     location_id: None,
                     batch: None,
                     expiry_date: None,
-                    pack_size: 1.0,
+                    pack_size: default_pack_size,
                     cost_price_per_pack: 0.0,
                     sell_price_per_pack: 0.0,
                     total_before_tax: 0.0,
