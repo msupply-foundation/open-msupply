@@ -1,6 +1,6 @@
 import React, { FC, memo } from 'react';
 import {
-  ActionButtonFooter,
+  Action,
   ActionsFooter,
   ArrowLeftIcon,
   Box,
@@ -69,7 +69,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
   const { onAllocate } = useOutbound.line.allocateSelected();
   const selectedIds = useOutbound.utils.selectedIds();
 
-  const actions: ActionButtonFooter[] = [
+  const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,

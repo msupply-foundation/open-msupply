@@ -6,7 +6,7 @@ import {
   FlatButton,
 } from '@openmsupply-client/common';
 
-export interface ActionButtonFooter {
+export interface Action {
   label: string;
   icon: ReactNode;
   onClick: () => void;
@@ -14,7 +14,7 @@ export interface ActionButtonFooter {
 }
 
 interface ActionsFooterProps {
-  actions: ActionButtonFooter[];
+  actions: Action[];
   selectedRowCount: number;
 }
 
