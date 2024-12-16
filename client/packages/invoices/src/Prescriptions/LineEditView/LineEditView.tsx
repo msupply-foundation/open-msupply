@@ -20,6 +20,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { PrescriptionLineEdit } from './PrescriptionLineEdit';
 import { DraftStockOutLine } from '../../types';
 import { Footer } from './Footer';
+import { NavBar } from './NavBar';
 
 export const PrescriptionLineEditView = () => {
   const { invoiceNumber, itemId } = useParams();
@@ -142,6 +143,9 @@ export const PrescriptionLineEditView = () => {
   if (isLoading || !itemId) return <BasicSpinner />;
   if (!data) return <NothingHere />;
 
+  const itemIdList = items.map(item => item.id);
+  if (status !== InvoiceNodeStatus.Verified) itemIdList.push('new');
+
   return (
     <>
       <AppBarButtons invoiceNumber={data?.invoiceNumber} />
@@ -161,10 +165,23 @@ export const PrescriptionLineEditView = () => {
           <>
             <PrescriptionLineEdit
               draft={{ item: currentItem }}
-              items={items}
+              // items={items}
               draftLines={allDraftLines[itemId] ?? []}
               updateLines={updateAllLines}
               setIsDirty={setIsDirty}
+            />
+            <NavBar
+              items={itemIdList}
+              currentItem={itemId}
+              setItem={itemId =>
+                navigate(
+                  RouteBuilder.create(AppRoute.Dispensary)
+                    .addPart(AppRoute.Prescription)
+                    .addPart(invoiceNumber ?? '')
+                    .addPart(itemId)
+                    .build()
+                )
+              }
             />
           </>
         }

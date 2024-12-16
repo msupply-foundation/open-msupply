@@ -9,12 +9,10 @@ import {
   TableProvider,
   createTableStore,
   createQueryParamsStore,
-  InvoiceLineNodeType,
-  useNotification,
   InvoiceNodeStatus,
   DateUtils,
 } from '@openmsupply-client/common';
-import { useDraftPrescriptionLines, usePreviousNextItem } from './hooks';
+import { useDraftPrescriptionLines } from './hooks';
 import { usePrescription } from '../api';
 import { Draft, DraftItem } from '../..';
 import {
@@ -28,11 +26,10 @@ import { DraftStockOutLine } from '../../types';
 import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 import { ItemRowFragment } from '@openmsupply-client/system';
-import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 
 interface PrescriptionLineEditModalProps {
   draft: Draft | null;
-  items: ItemRowFragment[];
+  // items: ItemRowFragment[];
   draftLines: DraftStockOutLine[];
   updateLines: (lines: DraftStockOutLine[]) => void;
   setIsDirty: (dirty: boolean) => void;
@@ -40,15 +37,15 @@ interface PrescriptionLineEditModalProps {
 
 export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   draft,
-  items,
+  // items,
   draftLines: draftPrescriptionLines,
   updateLines,
   setIsDirty,
 }) => {
   const item = !draft ? null : (draft.item ?? null);
   const isNew = item === undefined;
-  const t = useTranslation();
-  const { info } = useNotification();
+  // const t = useTranslation();
+  // const { info } = useNotification();
   const [currentItem, setCurrentItem] = useBufferState(item);
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
   const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
@@ -59,7 +56,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   } = usePrescription();
   const {
     status = InvoiceNodeStatus.New,
-    id: invoiceId = '',
+    // id: invoiceId = '',
     prescriptionDate,
   } = data ?? {};
   const {
@@ -74,17 +71,13 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     updateLines,
     DateUtils.getDateOrNull(prescriptionDate)
   );
-  const {
-    save: { saveLines, isSavingLines },
-  } = usePrescriptionLines();
 
   const packSizeController = usePackSizeController(draftPrescriptionLines);
-  // const { isDirty, setIsDirty } = useDirtyCheck();
 
-  const placeholder = draftPrescriptionLines?.find(
-    ({ type, numberOfPacks }) =>
-      type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks !== 0
-  );
+  // const placeholder = draftPrescriptionLines?.find(
+  //   ({ type, numberOfPacks }) =>
+  //     type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks !== 0
+  // );
 
   const onUpdateQuantity = (batchId: string, quantity: number) => {
     updateQuantity(batchId, quantity);
@@ -94,27 +87,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   const onUpdateNotes = (note: string) => {
     updateNotes(note);
     setIsAutoAllocated(false);
-  };
-
-  const onSave = async () => {
-    // needed since placeholders aren't being created for prescriptions yet, but still adding to array
-    const isOnHold = draftPrescriptionLines.some(
-      ({ stockLine, location }) => stockLine?.onHold || location?.onHold
-    );
-
-    const patch =
-      status !== InvoiceNodeStatus.Picked &&
-      draftPrescriptionLines.length >= 1 &&
-      !isOnHold
-        ? {
-            id: invoiceId,
-            status: InvoiceNodeStatus.Picked,
-          }
-        : undefined;
-
-    await saveLines({ draftPrescriptionLines, patch });
-
-    if (!draft) return;
   };
 
   const onAllocate = (
@@ -138,27 +110,27 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
 
   const canAutoAllocate = !!(currentItem && draftPrescriptionLines.length);
 
-  const handleSave = async (onSaved: () => boolean | void) => {
-    if (
-      getAllocatedQuantity(draftPrescriptionLines) === 0 &&
-      !showZeroQuantityConfirmation
-    ) {
-      setShowZeroQuantityConfirmation(true);
-      return;
-    }
+  // const handleSave = async (onSaved: () => boolean | void) => {
+  //   if (
+  //     getAllocatedQuantity(draftPrescriptionLines) === 0 &&
+  //     !showZeroQuantityConfirmation
+  //   ) {
+  //     setShowZeroQuantityConfirmation(true);
+  //     return;
+  //   }
 
-    try {
-      await onSave();
-      // setIsDirty(false);
-      if (!!placeholder) {
-        const infoSnack = info(t('message.placeholder-line'));
-        infoSnack();
-      }
-      return onSaved();
-    } catch (e) {
-      // console.error(e);
-    }
-  };
+  //   try {
+  //     await onSave();
+  //     // setIsDirty(false);
+  //     if (!!placeholder) {
+  //       const infoSnack = info(t('message.placeholder-line'));
+  //       infoSnack();
+  //     }
+  //     return onSaved();
+  //   } catch (e) {
+  //     // console.error(e);
+  //   }
+  // };
 
   const hasOnHold = draftPrescriptionLines.some(
     ({ stockLine }) =>
@@ -171,56 +143,38 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
       DateUtils.isExpired(new Date(stockLine?.expiryDate))
   );
 
-  const { hasNext, next, hasPrevious, previous } = usePreviousNextItem(
-    items,
-    currentItem?.id
-  );
-
   return (
-    <>
-      <Grid container gap={0.5}>
-        <PrescriptionLineEditForm
-          disabled={isNew || isDisabled}
-          packSizeController={packSizeController}
-          onChangeItem={(item: ItemRowFragment | null) => {
-            // if (status === InvoiceNodeStatus.New) setIsDirty(true);
-            setIsAutoAllocated(false);
-            setCurrentItem(item);
-          }}
-          item={currentItem}
-          allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
-          availableQuantity={sumAvailableQuantity(draftPrescriptionLines)}
-          onChangeQuantity={onAllocate}
-          canAutoAllocate={canAutoAllocate}
-          isAutoAllocated={isAutoAllocated}
-          updateNotes={onUpdateNotes}
-          draftPrescriptionLines={draftPrescriptionLines}
-          showZeroQuantityConfirmation={showZeroQuantityConfirmation}
-          hasOnHold={hasOnHold}
-          hasExpired={hasExpired}
-        />
-
-        <TableWrapper
-          canAutoAllocate={canAutoAllocate}
-          currentItem={currentItem}
-          isLoading={isLoading}
-          packSizeController={packSizeController}
-          updateQuantity={onUpdateQuantity}
-          draftPrescriptionLines={draftPrescriptionLines}
-          allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
-        />
-      </Grid>
-      {/* <Footer
-        hasNext={hasNext}
-        next={next}
-        hasPrevious={hasPrevious}
-        previous={previous}
-        invoiceNumber={data?.invoiceNumber}
-        loading={isSavingLines || isLoading}
-        isDirty={false}
-        handleSave={handleSave}
-      /> */}
-    </>
+    <Grid container gap={0.5}>
+      <PrescriptionLineEditForm
+        disabled={isNew || isDisabled}
+        packSizeController={packSizeController}
+        onChangeItem={(item: ItemRowFragment | null) => {
+          // if (status === InvoiceNodeStatus.New) setIsDirty(true);
+          setIsAutoAllocated(false);
+          setCurrentItem(item);
+        }}
+        item={currentItem}
+        allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
+        availableQuantity={sumAvailableQuantity(draftPrescriptionLines)}
+        onChangeQuantity={onAllocate}
+        canAutoAllocate={canAutoAllocate}
+        isAutoAllocated={isAutoAllocated}
+        updateNotes={onUpdateNotes}
+        draftPrescriptionLines={draftPrescriptionLines}
+        showZeroQuantityConfirmation={showZeroQuantityConfirmation}
+        hasOnHold={hasOnHold}
+        hasExpired={hasExpired}
+      />
+      <TableWrapper
+        canAutoAllocate={canAutoAllocate}
+        currentItem={currentItem}
+        isLoading={isLoading}
+        packSizeController={packSizeController}
+        updateQuantity={onUpdateQuantity}
+        draftPrescriptionLines={draftPrescriptionLines}
+        allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
+      />
+    </Grid>
   );
 };
 
