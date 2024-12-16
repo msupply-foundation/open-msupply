@@ -31,7 +31,7 @@ impl Migration for V2_05_00 {
             Box::new(abbreviation_create_table::Migrate),
             Box::new(remove_contact_form_site_id::Migrate),
             Box::new(item_direction_create_table::Migrate),
-            Box::new(add_contact_form_table::Migrate),
+            Box::new(add_email_queue_table::Migrate),
         ]
     }
 }
