@@ -9,9 +9,9 @@ import {
   MailIcon,
   useNotification,
 } from '@openmsupply-client/common';
-import { useFeedbackForm } from '../api/hooks/help/useFeedbackForm';
+import { useContactForm } from '../api/hooks/help/useContactForm';
 
-export const FeedbackForm = () => {
+export const ContactForm = () => {
   const t = useTranslation();
   const { success, error } = useNotification();
   const {
@@ -22,7 +22,7 @@ export const FeedbackForm = () => {
     isValidInput,
     debounceValidation,
     emailError,
-  } = useFeedbackForm();
+  } = useContactForm();
 
   const save = async () => {
     try {

@@ -1,6 +1,6 @@
 import { InsertContactFormInput } from '@common/types';
 import { useState } from 'react';
-import { useFeedbackFormGraphQL } from './useFeedbackFormGraphQL';
+import { useContactFormGraphQL } from './useContactFormGraphQL';
 import {
   FnUtils,
   isEmpty,
@@ -12,7 +12,7 @@ import {
 
 type ContactFormInput = Pick<InsertContactFormInput, 'replyEmail' | 'body'>;
 
-export function useFeedbackForm() {
+export function useContactForm() {
   const defaultDraft: ContactFormInput = {
     replyEmail: '',
     body: '',
@@ -59,7 +59,7 @@ export function useFeedbackForm() {
 }
 
 const useInsert = () => {
-  const { api, storeId } = useFeedbackFormGraphQL();
+  const { api, storeId } = useContactFormGraphQL();
 
   const mutationFn = async ({ replyEmail, body }: ContactFormInput) => {
     const apiResult = await api.insertContactForm({
