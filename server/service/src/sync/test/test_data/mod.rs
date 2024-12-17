@@ -14,6 +14,7 @@ pub(crate) mod asset_property;
 pub(crate) mod asset_type;
 pub(crate) mod barcode;
 pub(crate) mod cold_storage_type;
+pub(crate) mod contact_form;
 pub(crate) mod currency;
 pub(crate) mod demographic;
 pub(crate) mod indicator_attribute;
@@ -227,6 +228,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut vaccine_course_dose::test_v6_records());
     test_records.append(&mut vaccination::test_v6_records());
     test_records.append(&mut system_log::test_v6_records());
+    test_records.append(&mut contact_form::test_v6_records());
 
     test_records
 }
