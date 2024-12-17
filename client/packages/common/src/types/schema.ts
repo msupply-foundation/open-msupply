@@ -1077,6 +1077,11 @@ export type ConsumptionOptionsInput = {
   numberOfDataPoints?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export enum ContactFormNodeType {
+  Feedback = 'FEEDBACK',
+  Support = 'SUPPORT'
+}
+
 export type ContactTraceConnector = {
   __typename: 'ContactTraceConnector';
   nodes: Array<ContactTraceNode>;
@@ -2513,6 +2518,7 @@ export type InsertBarcodeResponse = BarcodeNode;
 
 export type InsertContactFormInput = {
   body: Scalars['String']['input'];
+  contactType: ContactFormNodeType;
   id: Scalars['String']['input'];
   replyEmail: Scalars['String']['input'];
 };
