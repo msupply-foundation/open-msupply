@@ -4,18 +4,21 @@ import {
   AppFooterPortal,
   DialogButton,
   InlineSpinner,
-  // useParams,
 } from '@openmsupply-client/common';
 
 interface FooterProps {
   isSaving: boolean;
   isDirty: boolean;
   handleSave: () => Promise<boolean | void>;
+  handleCancel: () => void;
 }
 
-export const Footer: FC<FooterProps> = ({ isSaving, isDirty, handleSave }) => {
-  // const { itemId } = useParams();
-
+export const Footer: FC<FooterProps> = ({
+  isSaving,
+  isDirty,
+  handleSave,
+  handleCancel,
+}) => {
   return (
     <AppFooterPortal
       Content={
@@ -36,16 +39,9 @@ export const Footer: FC<FooterProps> = ({ isSaving, isDirty, handleSave }) => {
               gap={2}
               marginLeft="auto"
             >
-              <DialogButton
-                variant="cancel"
-                // disabled={!hasPrevious}
-                onClick={() => {
-                  // TO-DO
-                }}
-              />
+              <DialogButton variant="cancel" onClick={handleCancel} />
               <DialogButton
                 variant={'save'}
-                // disabled={itemId === 'new' && !isDirty}
                 disabled={!isDirty}
                 onClick={handleSave}
               />
