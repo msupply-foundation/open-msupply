@@ -277,6 +277,7 @@
   "error.more-info": "More information",
   "error.name-program-duplicate": "Vaccine course name already exists for this program",
   "error.no-asset-create-permission": "You do not have permission to create a new asset.",
+  "error.no-asset-view-permission": "You do not have permission to view assets.",
   "error.no-customer-return-items": "No items have been added to this return.",
   "error.no-customer-returns": "There are no Customer Returns to display.",
   "error.no-data": "No data available",
