@@ -42,6 +42,7 @@ interface PrescriptionLineEditFormProps {
   ) => DraftStockOutLine[] | undefined;
   packSizeController: PackSizeController;
   disabled: boolean;
+  isNew: boolean;
   canAutoAllocate: boolean;
   isAutoAllocated: boolean;
   updateNotes: (note: string) => void;
@@ -61,6 +62,7 @@ export const PrescriptionLineEditForm: React.FC<
   packSizeController,
   availableQuantity,
   disabled,
+  isNew,
   canAutoAllocate,
   updateNotes,
   draftPrescriptionLines,
@@ -178,7 +180,7 @@ export const PrescriptionLineEditForm: React.FC<
           <StockItemSearchInput
             autoFocus={!item}
             openOnFocus={!item}
-            disabled={disabled}
+            disabled={!isNew || disabled}
             currentItemId={item?.id}
             onChange={onChangeItem}
             includeNonVisibleWithStockOnHand

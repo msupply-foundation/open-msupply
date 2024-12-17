@@ -8,7 +8,7 @@ import { ConfirmationModalContext, Location } from '@openmsupply-client/common';
  * navigate away from, or refresh the page, when there are unsaved changes.
  */
 export const useConfirmOnLeaving = (
-  isUnsaved: boolean,
+  isUnsaved?: boolean,
   customCheck?: (currentLocation: Location, nextLocation: Location) => boolean
 ) => {
   const t = useTranslation();

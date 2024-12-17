@@ -146,7 +146,8 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   return (
     <Grid container gap={0.5}>
       <PrescriptionLineEditForm
-        disabled={!isNew || isDisabled}
+        disabled={isDisabled}
+        isNew={isNew}
         packSizeController={packSizeController}
         onChangeItem={(item: ItemRowFragment | null) => {
           // if (status === InvoiceNodeStatus.New) setIsDirty(true);
