@@ -2228,6 +2228,11 @@ export type FailedToFetchReportData = PrintReportErrorInterface & {
   errors: Scalars['JSON']['output'];
 };
 
+export type FailedTranslation = QueryReportErrorInterface & QueryReportsErrorInterface & {
+  __typename: 'FailedTranslation';
+  description: Scalars['String']['output'];
+};
+
 export type FinaliseRnRFormInput = {
   id: Scalars['String']['input'];
 };
@@ -3581,6 +3586,37 @@ export type ItemFilterInput = {
   type?: InputMaybe<EqualFilterItemTypeInput>;
 };
 
+export type ItemLedgerConnector = {
+  __typename: 'ItemLedgerConnector';
+  nodes: Array<ItemLedgerNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ItemLedgerNode = {
+  __typename: 'ItemLedgerNode';
+  balance: Scalars['Float']['output'];
+  batch?: Maybe<Scalars['String']['output']>;
+  costPricePerPack: Scalars['Float']['output'];
+  datetime: Scalars['DateTime']['output'];
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  invoiceNumber: Scalars['Int']['output'];
+  invoiceStatus: InvoiceNodeStatus;
+  invoiceType: InvoiceNodeType;
+  itemId: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  numberOfPacks: Scalars['Float']['output'];
+  packSize: Scalars['Float']['output'];
+  quantity: Scalars['Float']['output'];
+  reason?: Maybe<Scalars['String']['output']>;
+  sellPricePerPack: Scalars['Float']['output'];
+  stockLineId?: Maybe<Scalars['String']['output']>;
+  storeId: Scalars['String']['output'];
+  totalBeforeTax?: Maybe<Scalars['Float']['output']>;
+};
+
+export type ItemLedgerResponse = ItemLedgerConnector;
+
 export type ItemNode = {
   __typename: 'ItemNode';
   atcCategory: Scalars['String']['output'];
@@ -3667,7 +3703,6 @@ export type ItemStatsNode = {
   availableStockOnHand: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
   totalConsumption: Scalars['Float']['output'];
-  totalStockOnHand: Scalars['Float']['output'];
 };
 
 export type ItemVariantMutations = {
@@ -3756,6 +3791,7 @@ export type LedgerConnector = {
 };
 
 export type LedgerFilterInput = {
+  itemId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -5653,6 +5689,7 @@ export type Queries = {
   invoices: InvoicesResponse;
   isCentralServer: Scalars['Boolean']['output'];
   itemCounts: ItemCounts;
+  itemLedger: ItemLedgerResponse;
   itemPrice: ItemPriceResponse;
   itemVariantsConfigured: Scalars['Boolean']['output'];
   /** Query omSupply "item" entries */
@@ -6066,6 +6103,14 @@ export type QueriesItemCountsArgs = {
 };
 
 
+export type QueriesItemLedgerArgs = {
+  filter?: InputMaybe<LedgerFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<LedgerSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesItemPriceArgs = {
   input: ItemPriceInput;
   storeId: Scalars['String']['input'];
@@ -6224,6 +6269,7 @@ export type QueriesRepacksByStockLineArgs = {
 export type QueriesReportArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
+  userLanguage: Scalars['String']['input'];
 };
 
 
@@ -6232,6 +6278,7 @@ export type QueriesReportsArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ReportSortInput>>;
   storeId: Scalars['String']['input'];
+  userLanguage: Scalars['String']['input'];
 };
 
 
@@ -6413,6 +6460,24 @@ export type QueriesVaccineCoursesArgs = {
   sort?: InputMaybe<Array<VaccineCourseSortInput>>;
 };
 
+export type QueryReportError = {
+  __typename: 'QueryReportError';
+  error: QueryReportErrorInterface;
+};
+
+export type QueryReportErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type QueryReportsError = {
+  __typename: 'QueryReportsError';
+  error: QueryReportsErrorInterface;
+};
+
+export type QueryReportsErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type ReasonOptionConnector = {
   __typename: 'ReasonOptionConnector';
   nodes: Array<ReasonOptionNode>;
@@ -6564,7 +6629,7 @@ export type ReportNode = {
   subContext?: Maybe<Scalars['String']['output']>;
 };
 
-export type ReportResponse = ReportNode;
+export type ReportResponse = QueryReportError | ReportNode;
 
 export enum ReportSortFieldInput {
   Id = 'id',
@@ -6581,7 +6646,7 @@ export type ReportSortInput = {
   key: ReportSortFieldInput;
 };
 
-export type ReportsResponse = ReportConnector;
+export type ReportsResponse = QueryReportsError | ReportConnector;
 
 export type RequestRequisitionCounts = {
   __typename: 'RequestRequisitionCounts';
