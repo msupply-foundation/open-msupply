@@ -6,6 +6,7 @@ use super::{
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    migrations::Version,
     schema_from_row, FormSchema, FormSchemaRow,
 };
 use crate::{EqualFilter, Sort, StringFilter};
@@ -19,6 +20,25 @@ use util::inline_init;
 pub struct Report {
     pub report_row: ReportRow,
     pub argument_schema: Option<FormSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ReportMetaData {
+    pub id: String,
+    pub is_custom: bool,
+    pub version: Version,
+    pub code: String,
+}
+
+impl ReportMetaData {
+    pub fn from_domain(report: ReportMetaDataRow) -> ReportMetaData {
+        ReportMetaData {
+            id: report.id,
+            is_custom: report.is_custom,
+            version: Version::from_str(&report.version),
+            code: report.code,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -140,7 +160,7 @@ impl<'a> ReportRepository<'a> {
         &self,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
-    ) -> Result<Vec<ReportMetaDataRow>, RepositoryError> {
+    ) -> Result<Vec<ReportMetaData>, RepositoryError> {
         let mut query = create_filtered_query(filter);
         if let Some(sort) = sort {
             match sort.key {
@@ -152,9 +172,14 @@ impl<'a> ReportRepository<'a> {
                 }
             }
         }
-        Ok(query
+
+        let result = query
             .select(ReportMetaDataRow::as_select())
-            .load::<ReportMetaDataRow>(self.connection.lock().connection())?)
+            .load::<ReportMetaDataRow>(self.connection.lock().connection())?;
+        Ok(result
+            .into_iter()
+            .map(ReportMetaData::from_domain)
+            .collect())
     }
 }
 
