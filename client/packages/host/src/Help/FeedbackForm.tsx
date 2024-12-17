@@ -14,12 +14,11 @@ import { useFeedbackForm } from '../api/hooks/help/useFeedbackForm';
 export const FeedbackForm = () => {
   const t = useTranslation();
   const { success, error } = useNotification();
-  const { updateDraft, resetDraft, draft } = useFeedbackForm();
+  const { updateDraft, resetDraft, saveFeedback, draft } = useFeedbackForm();
 
-  // save input email address and message to email queue on server
   const save = async () => {
     try {
-      // TODO: Call create() to create new mutation
+      saveFeedback(draft)
       const successSnack = success(t('messages.message-sent'));
       successSnack();
       resetDraft();
@@ -36,8 +35,8 @@ export const FeedbackForm = () => {
         labelWidth="200"
         Input={
           <BasicTextInput
-            value={draft.email}
-            onChange={e => updateDraft({ email: e.target.value })}
+            value={draft.replyEmail}
+            onChange={e => updateDraft({ replyEmail: e.target.value })}
             fullWidth
           />
         }
@@ -47,9 +46,9 @@ export const FeedbackForm = () => {
         labelWidth="200"
         Input={
           <TextArea
-            value={draft.message}
+            value={draft.body}
             onChange={e => {
-              updateDraft({ message: e.target.value });
+              updateDraft({ body: e.target.value });
             }}
             InputProps={{
               sx: {

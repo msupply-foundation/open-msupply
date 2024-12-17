@@ -1,5 +1,5 @@
 export * from './common';
-export * from './useJsonForms';
+export * from './useJsonFormsHandler';
 export * from './useDocumentFormData';
 export * from './components';
 

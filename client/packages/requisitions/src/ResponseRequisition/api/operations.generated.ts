@@ -3,10 +3,9 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { RequisitionReasonsNotProvidedErrorFragmentDoc, OrderTypeRowFragmentDoc } from '../../RequestRequisition/api/operations.generated';
+import { ItemRowFragmentDoc } from '../../../../system/src/Item/api/operations.generated';
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
-import { ItemRowFragmentDoc } from '../../../../system/src/Item/api/operations.generated';
-
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type UpdateResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];

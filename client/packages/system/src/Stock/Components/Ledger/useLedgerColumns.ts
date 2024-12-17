@@ -1,14 +1,15 @@
 import {
   ColumnFormat,
-  InvoiceNodeType,
-  LocaleKey,
   SortBy,
-  TypedTFunction,
   useColumns,
   useFormatDateTime,
   useTranslation,
 } from '@openmsupply-client/common';
 import { LedgerRowFragment } from '../../api';
+import {
+  getInvoiceLocalisationKey,
+  getNameValue,
+} from '@openmsupply-client/system';
 
 export enum ColumnKey {
   'DateTime' = 'datetime',
@@ -62,7 +63,8 @@ export const useLedgerColumns = (
       {
         key: ColumnKey.Type,
         label: 'label.type',
-        accessor: ({ rowData }) => t(getLocalisationKey(rowData.invoiceType)),
+        accessor: ({ rowData }) =>
+          t(getInvoiceLocalisationKey(rowData.invoiceType)),
         sortable: false,
       },
       {
@@ -88,31 +90,4 @@ export const useLedgerColumns = (
   );
 
   return { columns };
-};
-
-const getLocalisationKey = (type: InvoiceNodeType): LocaleKey => {
-  switch (type) {
-    case InvoiceNodeType.InboundShipment:
-      return 'inbound-shipment';
-    case InvoiceNodeType.OutboundShipment:
-      return 'outbound-shipment';
-    case InvoiceNodeType.CustomerReturn:
-      return 'customer-return';
-    case InvoiceNodeType.SupplierReturn:
-      return 'supplier-return';
-    case InvoiceNodeType.Prescription:
-      return 'prescription';
-    case InvoiceNodeType.InventoryAddition:
-      return 'inventory-addition';
-    case InvoiceNodeType.InventoryReduction:
-      return 'inventory-reduction';
-    case InvoiceNodeType.Repack:
-      return 'label.repack';
-  }
-};
-
-const getNameValue = (t: TypedTFunction<LocaleKey>, name: String) => {
-  if (name == 'repack') return t('label.repack');
-  if (name == 'Inventory adjustments') return t('inventory-adjustment');
-  return name;
 };
