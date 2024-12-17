@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import {
   Typography,
-  DialogButton,
   Grid,
-  useDialog,
   InlineSpinner,
   Box,
   useTranslation,
@@ -13,47 +11,43 @@ import {
   TableProvider,
   createTableStore,
   createQueryParamsStore,
-  useKeyboardHeightAdjustment,
   InvoiceLineNodeType,
   useNotification,
   InvoiceNodeStatus,
   DateUtils,
-  LoadingButton,
-  CheckIcon,
+  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
-import { useDraftPrescriptionLines, useNextItem } from './hooks';
-import { usePrescription } from '../../api';
-import { Draft, DraftItem } from '../../..';
+import { useDraftPrescriptionLines, usePreviousNextItem } from './hooks';
+import { usePrescription } from '../api';
+import { Draft, DraftItem } from '../..';
 import {
   PackSizeController,
   getAllocatedQuantity,
   sumAvailableQuantity,
   usePackSizeController,
   allocateQuantities,
-} from '../../../StockOut';
-import { DraftStockOutLine } from '../../../types';
+} from '../../StockOut';
+import { DraftStockOutLine } from '../../types';
 import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 import { ItemRowFragment } from '@openmsupply-client/system';
-import { usePrescriptionLines } from '../../api/hooks/usePrescriptionLines';
+import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
+import { Footer } from './Footer';
 
 interface PrescriptionLineEditModalProps {
-  isOpen: boolean;
-  onClose: () => void;
   draft: Draft | null;
   mode: ModalMode | null;
+  items: ItemRowFragment[];
 }
 
 export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
-  isOpen,
-  onClose,
   draft,
   mode,
+  items,
 }) => {
   const item = !draft ? null : (draft.item ?? null);
   const t = useTranslation();
   const { info } = useNotification();
-  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [currentItem, setCurrentItem] = useBufferState(item);
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
   const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
@@ -82,9 +76,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   } = usePrescriptionLines();
 
   const packSizeController = usePackSizeController(draftPrescriptionLines);
-  const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
-  const height = useKeyboardHeightAdjustment(700);
 
   const placeholder = draftPrescriptionLines?.find(
     ({ type, numberOfPacks }) =>
@@ -100,6 +92,8 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     updateNotes(note);
     setIsAutoAllocated(false);
   };
+
+  useConfirmOnLeaving(isDirty);
 
   const onSave = async () => {
     if (!isDirty) return;
@@ -143,8 +137,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   };
 
   const canAutoAllocate = !!(currentItem && draftPrescriptionLines.length);
-  const okNextDisabled =
-    (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
   const handleSave = async (onSaved: () => boolean | void) => {
     if (
@@ -168,23 +160,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     }
   };
 
-  const onNext = async () => {
-    const onSaved = () => {
-      if (mode === ModalMode.Update && next) {
-        setCurrentItem(next);
-        return true;
-      }
-      if (mode === ModalMode.Create) {
-        setCurrentItem(null);
-        return true;
-      }
-      onClose();
-    };
-
-    // Returning true here triggers the slide animation
-    return await handleSave(onSaved);
-  };
-
   const hasOnHold = draftPrescriptionLines.some(
     ({ stockLine }) =>
       (stockLine?.availableNumberOfPacks ?? 0) > 0 && !!stockLine?.onHold
@@ -196,36 +171,13 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
       DateUtils.isExpired(new Date(stockLine?.expiryDate))
   );
 
+  const { hasNext, next, hasPrevious, previous } = usePreviousNextItem(
+    items,
+    currentItem?.id
+  );
+
   return (
-    <Modal
-      title={t(
-        mode === ModalMode.Update ? 'heading.edit-item' : 'heading.add-item'
-      )}
-      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      nextButton={
-        <DialogButton
-          disabled={okNextDisabled}
-          variant="next-and-ok"
-          onClick={onNext}
-        />
-      }
-      okButton={
-        <LoadingButton
-          disabled={!currentItem}
-          isLoading={isSavingLines}
-          startIcon={<CheckIcon />}
-          loadingStyle={{ iconColor: 'secondary.main' }}
-          variant="contained"
-          color="secondary"
-          aria-label={t('button.ok')}
-          onClick={() => handleSave(onClose)}
-        >
-          {t('button.ok')}
-        </LoadingButton>
-      }
-      height={height}
-      width={1000}
-    >
+    <>
       <Grid container gap={0.5}>
         <PrescriptionLineEditForm
           disabled={mode === ModalMode.Update || isDisabled}
@@ -258,7 +210,17 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
           allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
         />
       </Grid>
-    </Modal>
+      <Footer
+        hasNext={hasNext}
+        next={next}
+        hasPrevious={hasPrevious}
+        previous={previous}
+        invoiceNumber={data?.invoiceNumber}
+        loading={isSavingLines || isLoading}
+        isDirty={isDirty}
+        handleSave={handleSave}
+      />
+    </>
   );
 };
 
@@ -306,19 +268,21 @@ const TableWrapper: React.FC<TableProps> = ({
     );
 
   return (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore({
-        initialSortBy: { key: 'expiryDate' },
-      })}
-    >
-      <PrescriptionLineEditTable
-        packSizeController={packSizeController}
-        onChange={updateQuantity}
-        rows={draftPrescriptionLines}
-        item={currentItem}
-        allocatedQuantity={allocatedQuantity}
-      />
-    </TableProvider>
+    <>
+      <TableProvider
+        createStore={createTableStore}
+        queryParamsStore={createQueryParamsStore({
+          initialSortBy: { key: 'expiryDate' },
+        })}
+      >
+        <PrescriptionLineEditTable
+          packSizeController={packSizeController}
+          onChange={updateQuantity}
+          rows={draftPrescriptionLines}
+          item={currentItem}
+          allocatedQuantity={allocatedQuantity}
+        />
+      </TableProvider>
+    </>
   );
 };

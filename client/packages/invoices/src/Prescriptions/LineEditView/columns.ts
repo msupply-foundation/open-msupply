@@ -8,8 +8,8 @@ import {
   NumberCell,
   useColumns,
 } from '@openmsupply-client/common';
-import { DraftStockOutLine } from '../../../types';
-import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
+import { DraftStockOutLine } from '../../types';
+import { PackQuantityCell, StockOutLineFragment } from '../../StockOut';
 
 export const usePrescriptionLineEditColumns = ({
   onChange,

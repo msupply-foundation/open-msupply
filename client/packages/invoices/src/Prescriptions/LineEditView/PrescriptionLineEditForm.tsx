@@ -19,16 +19,16 @@ import {
   StockItemSearchInput,
   ItemRowFragment,
 } from '@openmsupply-client/system';
-import { usePrescription } from '../../api';
-import { DraftItem } from '../../..';
-import { PackSizeController } from '../../../StockOut';
+import { usePrescription } from '../api';
+import { DraftItem } from '../..';
+import { PackSizeController } from '../../StockOut';
 import {
   StockOutAlert,
   StockOutAlerts,
   getAllocationAlerts,
-} from '../../../StockOut';
-import { DraftStockOutLine } from '../../../types';
-import { isA } from '../../../utils';
+} from '../../StockOut';
+import { DraftStockOutLine } from '../../types';
+import { isA } from '../../utils';
 
 interface PrescriptionLineEditFormProps {
   allocatedQuantity: number;

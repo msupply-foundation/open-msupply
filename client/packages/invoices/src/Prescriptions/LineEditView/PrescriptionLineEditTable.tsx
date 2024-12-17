@@ -10,9 +10,9 @@ import {
   Tooltip,
   NumUtils,
 } from '@openmsupply-client/common';
-import { DraftStockOutLine } from '../../../types';
-import { DraftItem } from '../../..';
-import { PackSizeController, shouldUpdatePlaceholder } from '../../../StockOut';
+import { DraftStockOutLine } from '../../types';
+import { DraftItem } from '../..';
+import { PackSizeController, shouldUpdatePlaceholder } from '../../StockOut';
 import { usePrescriptionLineEditRows } from './hooks';
 import { usePrescriptionLineEditColumns } from './columns';
 

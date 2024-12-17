@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from 'react';
 import { useTableStore, SortUtils } from '@openmsupply-client/common';
-import { isA } from '../../../../utils';
-import { DraftStockOutLine } from '../../../../types';
-import { PackSizeController } from '../../../../StockOut';
+import { isA } from '../../../utils';
+import { DraftStockOutLine } from '../../../types';
+import { PackSizeController } from '../../../StockOut';
 
 export const usePrescriptionLineEditRows = (
   rows: DraftStockOutLine[],
