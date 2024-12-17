@@ -9,7 +9,7 @@ import {
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { usePrescriptionColumn } from './columns';
-import { useExpansionColumns } from './PrescriptionLineEdit/columns';
+import { useExpansionColumns } from '../LineEditView/columns';
 import { StockOutItem } from '../../types';
 import { StockOutLineFragment } from '../../StockOut';
 
