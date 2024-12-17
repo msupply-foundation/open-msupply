@@ -39,7 +39,7 @@ const LocationListComponent: FC = () => {
   const t = useTranslation();
   const columns = useColumns<LocationRowFragment>(
     [
-      GenericColumnKey.Selection, // adds padding to the left not sure why
+      GenericColumnKey.Selection,
       'code',
       'name',
       {
