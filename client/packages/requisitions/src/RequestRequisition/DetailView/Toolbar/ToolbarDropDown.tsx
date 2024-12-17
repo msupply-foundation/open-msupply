@@ -22,7 +22,7 @@ export const ToolbarDropDown = ({ isDisabled }: ToolbarDropDownProps) => {
         onClick={onDelete}
         disabled={isDisabled}
       >
-        {t('button.delete-lines', { ns: 'distribution' })}
+        {t('button.delete-lines')}
       </DropdownMenuItem>
     </DropdownMenu>
   );

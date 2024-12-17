@@ -74,7 +74,7 @@ mod query {
         let (_, connection, connection_manager, _) =
             setup_all("test_program_indicator_query", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let service = service_provider.program_indicator_service;
 
         let result = service

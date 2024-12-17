@@ -252,7 +252,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "");
+        let service_provider = ServiceProvider::new(connection_manager);
         let ctx = service_provider.basic_context().unwrap();
 
         // dummy schema

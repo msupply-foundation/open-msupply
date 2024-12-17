@@ -5,8 +5,8 @@ function convert_data() {
   res.data.items.nodes = processItemLines(
     res.data,
     // assign default sort values
-    res?.arguments?.sort ?? "SOH",
-    res?.arguments?.dir ?? "desc"
+    res?.arguments?.sort ?? "name",
+    res?.arguments?.dir ?? "asc"
   );
   Host.outputString(JSON.stringify(res));
 }

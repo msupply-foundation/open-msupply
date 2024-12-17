@@ -9,8 +9,8 @@ query ExpiringItems(
       itemCodeOrName: { like: $itemCodeOrName }
       expiryDate: { beforeOrEqualTo: $expiryDate }
       hasPacksInStore: true
+      isActive: true
     }
-    sort: { key: itemName, desc: false }
     page: { first: 5000 }
   ) {
     ... on StockLineConnector {

@@ -98,6 +98,20 @@
       "item_id": "103"
     }
   ],
+  "stockOnOrder": [
+    {
+      "quantity": 5,
+      "item_id": "101"
+    },
+    {
+      "quantity": -2,
+      "item_id": "102"
+    },
+    {
+      "quantity": 1,
+      "item_id": "103"
+    }
+  ],
   "items": {
     "nodes": [
       {

@@ -1,3 +1,4 @@
+pub(crate) mod abbreviation;
 pub(crate) mod activity_log;
 pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
@@ -8,6 +9,7 @@ pub(crate) mod asset_log_reason;
 pub(crate) mod asset_property;
 pub(crate) mod asset_type;
 pub(crate) mod barcode;
+pub(crate) mod category;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
 pub(crate) mod cold_storage_type;
@@ -21,6 +23,7 @@ pub(crate) mod indicator_value;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
+pub(crate) mod item_direction;
 pub(crate) mod item_variant;
 pub(crate) mod location;
 pub(crate) mod location_movement;
@@ -53,6 +56,7 @@ pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
 pub(crate) mod sync_file_reference;
+pub(crate) mod system_log;
 pub(crate) mod temperature_breach;
 pub(crate) mod temperature_log;
 pub(crate) mod unit;
@@ -75,11 +79,14 @@ pub(crate) type SyncTranslators = Vec<Box<dyn SyncTranslation>>;
 pub(crate) fn all_translators() -> SyncTranslators {
     vec![
         // Central
+        abbreviation::boxed(),
+        item_direction::boxed(),
         user::boxed(),
         name::boxed(),
         name_tag::boxed(),
         name_tag_join::boxed(),
         unit::boxed(),
+        category::boxed(),
         item::boxed(),
         store::boxed(),
         master_list::boxed(),
@@ -152,6 +159,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Item Variant
         item_variant::boxed(),
         packaging_variant::boxed(),
+        // System log
+        system_log::boxed(),
     ]
 }
 
@@ -163,13 +172,17 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&str>
     let mut ts = TopologicalSort::<&str>::new();
     for translator in translators {
         let pull_deps = translator.pull_dependencies();
-        let table = translator.table_name();
+
         if pull_deps.is_empty() {
-            ts.insert(table);
+            for table_name in translator.table_names() {
+                ts.insert(table_name);
+            }
             continue;
         }
         for dep in pull_deps {
-            ts.add_dependency(dep, table);
+            for table_name in translator.table_names() {
+                ts.add_dependency(dep, table_name);
+            }
         }
     }
 
@@ -332,11 +345,23 @@ pub(crate) trait SyncTranslation {
     /// Returns information about which legacy tables need to be integrated first before this
     /// translation can run.
     fn pull_dependencies(&self) -> Vec<&str>;
-    fn table_name(&self) -> &str;
+
+    /// A single table name to match on, If there's just one table name to match on, use this function
+    fn table_name(&self) -> &str {
+        ""
+    }
+
+    /// If you need to match on more than one table_name with the same translator, use this one...
+    fn table_names(&self) -> Vec<&str> {
+        vec![self.table_name()]
+    }
+
     /// By default matching by table name
     /// used to determine if translation applies when remote site pulls sync records from central
     fn should_translate_from_sync_record(&self, row: &SyncBufferRow) -> bool {
-        self.table_name() == row.table_name
+        self.table_names()
+            .iter()
+            .any(|name| name == &row.table_name)
     }
 
     /// Translate an upsert record received from the central server(s)
