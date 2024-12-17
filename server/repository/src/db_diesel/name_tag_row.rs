@@ -1,4 +1,6 @@
-use super::{name_tag_row::name_tag::dsl as name_tag_dsl, StorageConnection};
+use super::{
+    name_link, name_oms_fields, name_tag_row::name_tag::dsl as name_tag_dsl, StorageConnection,
+};
 
 use crate::{repository_error::RepositoryError, Upsert};
 
@@ -10,6 +12,9 @@ table! {
         name -> Text,
     }
 }
+
+allow_tables_to_appear_in_same_query!(name_tag, name_link);
+allow_tables_to_appear_in_same_query!(name_tag, name_oms_fields);
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[diesel(table_name = name_tag)]

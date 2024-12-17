@@ -9,6 +9,7 @@ import {
   UpdateResponseRequisitionLineInput,
   InsertProgramResponseRequisitionInput,
   InsertResponseRequisitionLineInput,
+  UpdateIndicatorValueInput,
 } from '@openmsupply-client/common';
 import {
   ResponseFragment,
@@ -57,7 +58,7 @@ const responseParser = {
         return RequisitionSortFieldInput.OrderType;
       }
       case 'period': {
-        return RequisitionSortFieldInput.PeriodName;
+        return RequisitionSortFieldInput.PeriodStartDate;
       }
       case 'programName': {
         return RequisitionSortFieldInput.ProgramName;
@@ -213,19 +214,11 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to create requisition');
   },
-  update: async (
-    patch: Partial<ResponseFragment> & { id: string }
-  ): Promise<{ __typename: 'RequisitionNode'; id: string }> => {
+  update: async (patch: Partial<ResponseFragment> & { id: string }) => {
     const input = responseParser.toUpdate(patch);
     const result = (await sdk.updateResponse({ storeId, input })) || {};
 
-    const { updateResponseRequisition } = result;
-
-    if (updateResponseRequisition?.__typename === 'RequisitionNode') {
-      return updateResponseRequisition;
-    }
-
-    throw new Error('Unable to update requisition');
+    return result.updateResponseRequisition;
   },
   deleteResponses: async (requisitions: ResponseFragment[]) => {
     const deleteResponseRequisitions = requisitions.map(
@@ -281,11 +274,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
         input: responseParser.toUpdateLine(patch),
       })) || {};
 
-    if (
-      result?.updateResponseRequisitionLine.__typename === 'RequisitionLineNode'
-    ) {
-      return result.updateResponseRequisitionLine;
-    } else throw new Error('Could not update response line');
+    return result;
   },
   createOutboundFromResponse: async (responseId: string): Promise<number> => {
     const result =
@@ -317,5 +306,26 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
   programSettings: async () => {
     const result = await sdk.customerProgramSettings({ storeId });
     return result.customerProgramRequisitionSettings;
+  },
+  getIndicators: async (customerNameLinkId: string, periodId: string, programId: string) => {    
+    let result = await sdk.programIndicators({
+      storeId,
+      customerNameLinkId,
+      periodId,
+      programId
+    });
+
+    if (result?.programIndicators.__typename === 'ProgramIndicatorConnector') {
+      return result.programIndicators;
+    }
+  },
+  updateIndicatorValue: async (patch: UpdateIndicatorValueInput) => {
+    let result = await sdk.updateIndicatorValue({ storeId, input: patch });
+    
+    if (!!result?.updateIndicatorValue) {
+      return result.updateIndicatorValue;
+    }
+
+    throw new Error('Could not update indicator value');
   },
 });

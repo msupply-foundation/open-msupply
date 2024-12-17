@@ -7,6 +7,8 @@ use graphql_types::types::program_indicator::IndicatorValueNode;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::requisition::indicator_value::{UpdateIndicatorValue, UpdateIndicatorValueError};
 
+use super::errors::ValueTypeNotCorrect;
+
 #[derive(InputObject)]
 pub struct UpdateIndicatorValueInput {
     pub id: String,
@@ -18,6 +20,7 @@ pub struct UpdateIndicatorValueInput {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
+    ValueTypeNotCorrect(ValueTypeNotCorrect),
 }
 
 #[derive(SimpleObject)]
@@ -78,10 +81,14 @@ fn map_error(error: UpdateIndicatorValueError) -> Result<UpdateErrorInterface> {
         UpdateIndicatorValueError::IndicatorValueDoesNotExist => {
             return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
         }
+        UpdateIndicatorValueError::ValueTypeNotCorrect => {
+            return Ok(UpdateErrorInterface::ValueTypeNotCorrect(
+                ValueTypeNotCorrect,
+            ))
+        }
         // Standard graphql errors
         UpdateIndicatorValueError::NotThisStoreValue
         | UpdateIndicatorValueError::IndicatorColumnDoesNotExist
-        | UpdateIndicatorValueError::ValueNotCorrectType
         | UpdateIndicatorValueError::IndicatorLineDoesNotExist => BadUserInput(formatted_error),
         UpdateIndicatorValueError::DatabaseError(_) => InternalError(formatted_error),
     };

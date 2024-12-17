@@ -268,6 +268,13 @@ const Actions = () => {
       keywords: 'easter egg game',
       perform: showEasterEgg,
     },
+    {
+      id: 'navigation:help',
+      name: `${t('help')} (h)`,
+      keywords: 'help, docs, guide',
+      shortcut: ['h'],
+      perform: () => navigate(RouteBuilder.create(AppRoute.Help).build()),
+    },
   ];
 
   if (userHasPermission(UserPermission.ServerAdmin)) {

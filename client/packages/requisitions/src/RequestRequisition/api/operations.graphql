@@ -8,6 +8,7 @@ fragment ItemWithStats on ItemNode {
   stats(storeId: $storeId) {
     averageMonthlyConsumption
     availableStockOnHand
+    totalStockOnHand
     availableMonthsOfStockOnHand
     totalConsumption
   }
@@ -46,6 +47,14 @@ fragment RequestLine on RequisitionLineNode {
   suggestedQuantity
   comment
   itemName
+  requisitionNumber
+  initialStockOnHandUnits
+  incomingUnits
+  outgoingUnits
+  lossInUnits
+  additionInUnits
+  expiringUnits
+  daysOutOfStock
 
   itemStats {
     __typename
@@ -59,6 +68,9 @@ fragment RequestLine on RequisitionLineNode {
   }
   item {
     ...ItemWithStats
+  }
+  reason {
+    ...ReasonOptionRow
   }
 }
 
@@ -425,6 +437,22 @@ mutation insertProgramRequest(
   }
 }
 
+fragment RequisitionReasonNotProvidedError on RequisitionReasonNotProvided {
+  __typename
+  requisitionLine {
+    id
+  }
+  description
+}
+
+fragment RequisitionReasonsNotProvidedError on RequisitionReasonsNotProvided {
+  __typename
+  errors {
+    ...RequisitionReasonNotProvidedError
+  }
+  description
+}
+
 mutation updateRequest(
   $storeId: String!
   $input: UpdateRequestRequisitionInput!
@@ -450,6 +478,14 @@ mutation updateRequest(
         ... on OtherPartyNotASupplier {
           __typename
           description
+        }
+        ... on OrderingTooManyItems {
+          __typename
+          description
+          maxItemsInEmergencyOrder
+        }
+        ... on RequisitionReasonsNotProvided {
+          ...RequisitionReasonsNotProvidedError
         }
       }
     }
@@ -490,6 +526,16 @@ mutation deleteRequest(
   }
 }
 
+fragment OrderTypeRow on ProgramRequisitionOrderTypeNode {
+  id
+  name
+  availablePeriods {
+    id
+    name
+  }
+  isEmergency
+}
+
 fragment SupplierProgramSettings on SupplierProgramRequisitionSettingNode {
   programName
   programId
@@ -497,12 +543,7 @@ fragment SupplierProgramSettings on SupplierProgramRequisitionSettingNode {
     ...NameRow
   }
   orderTypes {
-    id
-    name
-    availablePeriods {
-      id
-      name
-    }
+    ...OrderTypeRow
   }
 }
 

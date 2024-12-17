@@ -103,7 +103,6 @@ pub async fn start_server(
 
     let service_provider = Data::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
-        &settings.server.base_dir.clone().unwrap(),
         processors_trigger,
         sync_trigger,
         site_is_initialise_trigger,

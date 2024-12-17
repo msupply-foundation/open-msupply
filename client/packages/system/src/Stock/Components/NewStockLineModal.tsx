@@ -94,7 +94,12 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
               disabled={!!draft.itemId}
               currentItemId={draft.itemId}
               onChange={newItem =>
-                newItem && updatePatch({ itemId: newItem.id, item: newItem })
+                newItem &&
+                updatePatch({
+                  itemId: newItem.id,
+                  item: newItem,
+                  packSize: newItem.defaultPackSize,
+                })
               }
             />
           </Grid>

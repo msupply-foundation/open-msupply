@@ -7,7 +7,7 @@ export const useNextItem = (
   const next: ItemRowFragment | null = null;
   const disabled = true;
 
-  const { items } = usePrescription.line.rows();
+  const { rows: items } = usePrescription();
 
   if (!items || !currentItemId) return { next, disabled };
 

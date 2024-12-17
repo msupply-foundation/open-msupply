@@ -10,6 +10,8 @@ pub fn mock_program_order_types_a() -> ProgramRequisitionOrderTypeRow {
         threshold_mos: 2.0,
         max_mos: 4.0,
         max_order_per_period: 1,
+        is_emergency: false,
+        max_items_in_emergency_order: 0,
     }
 }
 

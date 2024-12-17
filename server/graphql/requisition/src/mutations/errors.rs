@@ -50,3 +50,11 @@ impl LineDeleteError {
         "Failed to delete lines of requisition"
     }
 }
+
+pub struct ValueTypeNotCorrect;
+#[Object]
+impl ValueTypeNotCorrect {
+    pub async fn description(&self) -> &str {
+        "Value type for indicator value not correct"
+    }
+}

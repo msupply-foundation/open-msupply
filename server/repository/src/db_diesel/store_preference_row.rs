@@ -27,6 +27,9 @@ table! {
         months_items_expire -> Double,
         stocktake_frequency -> Double,
         extra_fields_in_requisition -> Bool,
+        keep_requisition_lines_with_zero_requested_quantity_on_finalised -> Bool,
+        use_consumption_and_stock_from_customers_for_internal_orders -> Bool,
+        manually_link_internal_order_to_inbound_shipment -> Bool,
     }
 }
 
@@ -62,6 +65,9 @@ pub struct StorePreferenceRow {
     pub months_items_expire: f64,
     pub stocktake_frequency: f64,
     pub extra_fields_in_requisition: bool,
+    pub keep_requisition_lines_with_zero_requested_quantity_on_finalised: bool,
+    pub use_consumption_and_stock_from_customers_for_internal_orders: bool,
+    pub manually_link_internal_order_to_inbound_shipment: bool,
 }
 
 pub struct StorePreferenceRowRepository<'a> {

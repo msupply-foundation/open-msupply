@@ -168,15 +168,7 @@ async fn initialise_from_central(
     info!("Finished database reset");
 
     let connection_manager = get_storage_connection_manager(&settings.database);
-    let app_data_folder = settings
-        .clone()
-        .server
-        .base_dir
-        .ok_or(anyhow!("based dir not set in yaml configurations"))?;
-    let service_provider = Arc::new(ServiceProvider::new(
-        connection_manager.clone(),
-        &app_data_folder,
-    ));
+    let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
 
     let sync_settings = settings
         .clone()
@@ -312,14 +304,7 @@ async fn main() -> anyhow::Result<()> {
             test_db::setup(&settings.database).await;
 
             let connection_manager = get_storage_connection_manager(&settings.database);
-            let hardware_id = settings
-                .server
-                .base_dir
-                .ok_or(anyhow!("based dir not set in yaml configurations"))?;
-            let service_provider = Arc::new(ServiceProvider::new(
-                connection_manager.clone(),
-                &hardware_id,
-            ));
+            let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
             let ctx = service_provider.basic_context()?;
 
             let (_, import_file, users_file) = export_paths(&name);
@@ -383,19 +368,12 @@ async fn main() -> anyhow::Result<()> {
         Action::RefreshDates { enable_sync } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let connection = connection_manager.connection()?;
-            let app_data_folder = settings
-                .server
-                .base_dir
-                .ok_or(anyhow!("based dir not set in yaml configurations"))?;
 
             info!("Refreshing dates");
             let result =
                 RefreshDatesRepository::new(&connection).refresh_dates(Utc::now().naive_utc())?;
 
-            let service_provider = Arc::new(ServiceProvider::new(
-                connection_manager.clone(),
-                &app_data_folder,
-            ));
+            let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
             let ctx = service_provider.basic_context()?;
             let service = &service_provider.settings;
 

@@ -171,7 +171,7 @@ mod test {
         asset_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.asset_service = Box::new(asset_service);
         service_provider
     }
