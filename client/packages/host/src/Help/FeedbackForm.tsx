@@ -30,7 +30,7 @@ export const FeedbackForm = () => {
     }
   };
 
-  const sendButtonIsDisabled = !draft.contactFormType || !draft.replyEmail;
+  const sendButtonIsDisabled = !draft.contactType || !draft.replyEmail;
 
   return (
     <>
@@ -40,8 +40,15 @@ export const FeedbackForm = () => {
         Input={
           <Select
             fullWidth
-            value={draft.contactFormType}
-            onChange={e => updateDraft({ contactFormType: e.target.value })}
+            value={draft.contactType}
+            // `as` not ideal, but needed for TS to accept the value
+            // OK to use here as we can guarantee the value will be one of the options
+            // (based on values defined in options array below)
+            onChange={e =>
+              updateDraft({
+                contactType: e.target.value as ContactFormNodeType,
+              })
+            }
             margin="normal"
             options={[
               {
