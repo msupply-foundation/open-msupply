@@ -26,6 +26,7 @@ export const useResponseColumns = () => {
   const { programName } = useResponse.document.fields(['programName']);
 
   const columnDefinitions: ColumnDescription<ResponseLineFragment>[] = [
+    GenericColumnKey.Selection,
     getCommentPopoverColumn(),
     [
       'itemCode',
@@ -273,7 +274,6 @@ export const useResponseColumns = () => {
     Cell: PackQuantityCell,
     accessor: ({ rowData }) => rowData.remainingQuantityToSupply,
   });
-  columnDefinitions.unshift(GenericColumnKey.Selection);
 
   const columns = useColumns<ResponseLineFragment>(
     columnDefinitions,
