@@ -253,7 +253,7 @@ Optional fields in the manifest json are marked as '// optional'
   "is_custom": false,
   // open mSupply needs to know the report version
   "version": "2.3.0",
-  // The code is a new field which is the unique identifier of a report group inclusive of all versions of that report.
+  // The code is the unique identifier of a report group inclusive of all versions of that report.
   // Each different version of a standard report will have the same code.
   // The code is required to identify reports of the same version where they will have different ids
   "code": "item-usage",
@@ -306,10 +306,16 @@ Standard reports in the reports dir can then be built into the generated json by
 ./target/debug/remote_server_cli build-standard-reports
 ```
 
+Reports can be upserted using
+
+```bash
+./target/debug/remote_server_cli upsert-reports-json
+```
+
 Because this command utilises the built cli, you will need to first run
 
 ```
-cargo run
+cargo build
 ```
 
 from the open-msupply/server dir.
@@ -326,11 +332,17 @@ Alternatively wasm functions can be built externally using any compatible langua
 
 ## Standard reports versioning
 
-Standard reports include versions for updates of reports. Open mSupply central will automatically sync all standard reports.
+Standard reports include a version parameter to control what reports are used and displayed on the front end.
+Report use is controlled by version and code parameters. OMS will only display one report per code.
+For a given code, priority is given first to custom reports of a code, and then standard reports if no custom reports exist. The report with the latest compatible version will be used for each report code.
+Version compatibility is measured by being less than or equal to the app major and minor version. Reports with the same major and minor versions but later patch versions are considered compatible with the app.
 
-2.4 release will include filtering checks to show only the most up to date report compatible with the remote site build of open mSupply.
+> eg: 2.4.12 version report will be compatible with a 2.4.2 app. But a 2.5.0 report will not be compatible.
 
-<!-- For future release - confirm this will occur -->
+In the case where there are custom reports, but none are compatible with the app version, the highest compatibly versioned standard report will be used.
+
+This system allows OMS to have multiple reports upserted (and later synced) to distributed instances of different versions, and be able to function with compatible reports.
+
 <!-- For example:
 
 for report_versions = [2.3.0, 2.3.5, 2.8.2, 2.8.3, 3.0.1, 3.5.1]
@@ -340,11 +352,18 @@ if remote omSupply.version = 2.8 selected report = 2.8.3
 if remote omSupply.version = 3.2 selected report = 3.0.1
 if remote omSupply.version = 4.5 selected report = 3.5.1 -->
 
-### Adding a new standard report version
+### Adding a new standard report version or custom report
 
-Add a new version dir within the directory for the report you are adding a new version to.
+The simplest way is to:
 
-> Note that the dir names are for developer convenience only. The name and version of each report read by omSupply is from the manifest.json file.
+- Copy the version dir of the report you want to make a custom or new standard report for, and paste it into the same location.
+- Bump the version number
+- Change the version dir name to match the version number.
+- Change the is_custom boolean to true if the report will be a custom report.
+
+> The dir names are for developer convenience only. The name and version of each report read by omSupply is from the manifest.json file.
+
+New report versions must be compatible with the matching major and minor versions of the OMS app.
 
 ## Developing standard reports
 
@@ -353,4 +372,4 @@ Reports can be built and tested directly from the 'open-msupply' repo, but devel
 
 Once changes are satisfactory, new reports can be moved directly into the OMS repo under a new version dir.
 
-Note that reports won't show up in OMS unless they are built into the generated json using the `build-standard-reports` command.
+> Reports won't show up in OMS unless they are built and upserted.
