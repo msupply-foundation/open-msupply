@@ -159,6 +159,8 @@ export const PrescriptionLineEditView = () => {
               .addPart(String(invoiceNumber))}
             enteredLineIds={enteredLineIds}
             showNew={status !== InvoiceNodeStatus.Verified}
+            isDirty={isDirty}
+            handleSaveNew={onSave}
           />
         }
         Right={
