@@ -5,6 +5,7 @@ import {
   RouteBuilder,
   useNavigate,
   useTranslation,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '../../api';
 
@@ -13,7 +14,9 @@ interface ListItemProps {
   items: ItemRowFragment[];
   route: RouteBuilder;
   enteredLineIds?: string[];
+  isDirty?: boolean;
   showNew?: boolean;
+  handleSaveNew?: () => void;
 }
 
 export const ListItems = ({
@@ -22,10 +25,18 @@ export const ListItems = ({
   route,
   enteredLineIds,
   showNew = false,
+  isDirty = false,
+  handleSaveNew = () => {},
 }: ListItemProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const value = items?.find(({ id }) => id === currentItemId) ?? null;
+
+  const showSaveConfirmation = useConfirmationModal({
+    onConfirm: handleSaveNew,
+    message: t('message.confirm-save-new'),
+    title: t('heading.save-new'),
+  });
 
   let options =
     items?.map(({ id, name }) => ({
@@ -41,7 +52,9 @@ export const ListItems = ({
       <ListOptions
         currentId={value?.id ?? 'new'}
         onClick={id => {
-          navigate(route.addPart(id).build());
+          if (currentItemId === 'new' && isDirty) {
+            showSaveConfirmation();
+          } else navigate(route.addPart(id).build());
         }}
         options={options}
         enteredLineIds={enteredLineIds}
