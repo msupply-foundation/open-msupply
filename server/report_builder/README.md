@@ -332,8 +332,8 @@ Alternatively wasm functions can be built externally using any compatible langua
 
 ## Standard reports versioning
 
-Standard reports include a version parameter to control what reports are used and displayed on the front end.
-Report use is controlled by version and code parameters. OMS will only display one report per code.
+Standard reports include a version parameter to control what reports are used and displayed by the front end.
+Report use is controlled by version and code parameters. One report will be used per code.
 For a given code, priority is given first to custom reports of a code, and then standard reports if no custom reports exist. The report with the latest compatible version will be used for each report code.
 Version compatibility is measured by being less than or equal to the app major and minor version. Reports with the same major and minor versions but later patch versions are considered compatible with the app.
 
