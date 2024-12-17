@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
+use graphql_core::generic_inputs::PrintReportSortInput;
 use print::{generate_report, generate_report_definition, PrintReportResponse};
 use reports::{
     report, reports, ReportFilterInput, ReportResponse, ReportSortInput, ReportsResponse,
