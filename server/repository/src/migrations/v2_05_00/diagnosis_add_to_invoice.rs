@@ -15,6 +15,14 @@ impl MigrationFragment for Migrate {
         "#
         )?;
 
+        // Retranslate all invoices on the next sync, to make sure we capture the diagnosis_id if populated.
+        sql!(
+            connection,
+            r#"
+            UPDATE sync_buffer SET integration_datetime = NULL WHERE table_name = 'invoice';
+        "#,
+        )?;
+
         Ok(())
     }
 }
