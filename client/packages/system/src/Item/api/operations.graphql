@@ -31,6 +31,7 @@ fragment StockLine on StockLineNode {
   sellPricePerPack
   storeId
   totalNumberOfPacks
+  itemVariantId
 }
 
 fragment ItemRow on ItemNode {
@@ -100,7 +101,6 @@ fragment ItemVariant on ItemVariantNode {
   __typename
   id
   name
-  dosesPerUnit
   itemId
   manufacturerId
   manufacturer(storeId: $storeId) {
@@ -423,6 +423,50 @@ mutation deleteBundledItem($storeId: String!, $input: DeleteBundledItemInput!) {
           id
         }
       }
+    }
+  }
+}
+
+fragment ItemLedger on ItemLedgerNode {
+  id
+  balance
+  batch
+  costPricePerPack
+  datetime
+  expiryDate
+  invoiceNumber
+  invoiceStatus
+  invoiceType
+  name
+  packSize
+  quantity
+  reason
+  sellPricePerPack
+  totalBeforeTax
+  numberOfPacks
+}
+
+query itemLedger(
+  $key: LedgerSortFieldInput!
+  $first: Int
+  $offset: Int
+  $desc: Boolean
+  $filter: LedgerFilterInput
+  $storeId: String!
+) {
+  itemLedger(
+    storeId: $storeId
+    filter: $filter
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+  ) {
+    ... on ItemLedgerConnector {
+      __typename
+      nodes {
+        __typename
+        ...ItemLedger
+      }
+      totalCount
     }
   }
 }

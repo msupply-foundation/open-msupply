@@ -18,7 +18,7 @@ mod delete {
         let (_, _, connection_manager, _) =
             setup_all("delete_vaccine_course_errors", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.vaccine_course_service;
 
@@ -33,7 +33,7 @@ mod delete {
         let (_, _, connection_manager, _) =
             setup_all("delete_vaccine_course_success", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.vaccine_course_service;
 

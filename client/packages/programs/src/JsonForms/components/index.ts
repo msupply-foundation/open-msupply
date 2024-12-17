@@ -10,3 +10,4 @@ export * from './Search/Search';
 export * from './ProgramEvent';
 export * from './HistoricEncounterData';
 export * from './BloodPressure';
+export * from './Prescription/Prescription';

@@ -15,7 +15,7 @@ mod query {
         let (_, _connection, connection_manager, _) =
             setup_all("asset_service_insert", MockDataInserts::none().stores()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let ctx = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();

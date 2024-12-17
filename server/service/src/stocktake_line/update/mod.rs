@@ -24,6 +24,7 @@ pub struct UpdateStocktakeLine {
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
+    pub item_variant_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -160,7 +161,7 @@ mod stocktake_line_test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -352,6 +353,7 @@ mod stocktake_line_test {
                 pack_size: None,
                 note: None,
                 inventory_adjustment_reason_id: None,
+                item_variant_id: None,
             }
         );
 

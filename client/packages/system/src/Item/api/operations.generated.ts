@@ -6,7 +6,7 @@ import { NameRowFragmentDoc } from '../../Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type ServiceItemRowFragment = { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null };
 
-export type StockLineFragment = { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null, doses: number } };
+export type StockLineFragment = { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, itemVariantId?: string | null, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null, doses: number } };
 
 export type ItemRowFragment = { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null };
 
@@ -24,9 +24,9 @@ export type BundledItemVariantFragment = { __typename: 'ItemVariantNode', id: st
 
 export type BundledItemFragment = { __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null };
 
-export type ItemVariantFragment = { __typename: 'ItemVariantNode', id: string, name: string, dosesPerUnit?: number | null, itemId: string, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, minTemperature: number, maxTemperature: number } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }>, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }>, bundlesWith: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }> };
+export type ItemVariantFragment = { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, minTemperature: number, maxTemperature: number } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }>, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }>, bundlesWith: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }> };
 
-export type ItemFragment = { __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: string, defaultPackSize: number, doses: number, isVaccine: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength?: string | null, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableStockOnHand: number, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null, doses: number } }> }, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number }, variants: Array<{ __typename: 'ItemVariantNode', id: string, name: string, dosesPerUnit?: number | null, itemId: string, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, minTemperature: number, maxTemperature: number } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }>, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }>, bundlesWith: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }> }> };
+export type ItemFragment = { __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: string, defaultPackSize: number, doses: number, isVaccine: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength?: string | null, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableStockOnHand: number, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, itemVariantId?: string | null, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null, doses: number } }> }, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number }, variants: Array<{ __typename: 'ItemVariantNode', id: string, name: string, itemId: string, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, minTemperature: number, maxTemperature: number } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }>, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }>, bundlesWith: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }> }> };
 
 export type ItemsWithStockLinesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -38,7 +38,7 @@ export type ItemsWithStockLinesQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemsWithStockLinesQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: string, defaultPackSize: number, doses: number, isVaccine: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength?: string | null, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableStockOnHand: number, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null, doses: number } }> }, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number }, variants: Array<{ __typename: 'ItemVariantNode', id: string, name: string, dosesPerUnit?: number | null, itemId: string, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, minTemperature: number, maxTemperature: number } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }>, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }>, bundlesWith: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }> }> }> } };
+export type ItemsWithStockLinesQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: string, defaultPackSize: number, doses: number, isVaccine: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength?: string | null, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableStockOnHand: number, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, itemVariantId?: string | null, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null, doses: number } }> }, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number }, variants: Array<{ __typename: 'ItemVariantNode', id: string, name: string, itemId: string, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, minTemperature: number, maxTemperature: number } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }>, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }>, bundlesWith: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }> }> }> } };
 
 export type ItemsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -84,7 +84,7 @@ export type ItemByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemByIdQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: string, defaultPackSize: number, doses: number, isVaccine: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength?: string | null, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number }, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null, doses: number } }> }, variants: Array<{ __typename: 'ItemVariantNode', id: string, name: string, dosesPerUnit?: number | null, itemId: string, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, minTemperature: number, maxTemperature: number } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }>, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }>, bundlesWith: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }> }> }> } };
+export type ItemByIdQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: string, defaultPackSize: number, doses: number, isVaccine: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength?: string | null, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number }, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, itemVariantId?: string | null, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null, doses: number } }> }, variants: Array<{ __typename: 'ItemVariantNode', id: string, name: string, itemId: string, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, minTemperature: number, maxTemperature: number } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }>, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }>, bundlesWith: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }> }> }> } };
 
 export type ItemVariantOptionFragment = { __typename: 'ItemVariantNode', id: string, label: string, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string }> };
 
@@ -110,7 +110,7 @@ export type GetHistoricalStockLinesQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetHistoricalStockLinesQuery = { __typename: 'Queries', historicalStockLines: { __typename: 'StockLineConnector', nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null, doses: number } }> } };
+export type GetHistoricalStockLinesQuery = { __typename: 'Queries', historicalStockLines: { __typename: 'StockLineConnector', nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, itemVariantId?: string | null, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null, doses: number } }> } };
 
 export type UpsertItemVariantMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -118,7 +118,7 @@ export type UpsertItemVariantMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpsertItemVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', itemVariant: { __typename: 'ItemVariantMutations', upsertItemVariant: { __typename: 'ItemVariantNode', id: string, name: string, dosesPerUnit?: number | null, itemId: string, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, minTemperature: number, maxTemperature: number } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }>, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }>, bundlesWith: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }> } | { __typename: 'UpsertItemVariantError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'UniqueValueViolation', description: string, field: Types.UniqueValueKey } } } } };
+export type UpsertItemVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', itemVariant: { __typename: 'ItemVariantMutations', upsertItemVariant: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, minTemperature: number, maxTemperature: number } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }>, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }>, bundlesWith: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }> } | { __typename: 'UpsertItemVariantError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'UniqueValueViolation', description: string, field: Types.UniqueValueKey } } } } };
 
 export type DeleteItemVariantMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -150,6 +150,20 @@ export type DeleteBundledItemMutationVariables = Types.Exact<{
 
 
 export type DeleteBundledItemMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', bundledItem: { __typename: 'BundledItemMutations', deleteBundledItem: { __typename: 'DeleteResponse', id: string } } } };
+
+export type ItemLedgerFragment = { __typename: 'ItemLedgerNode', id: string, balance: number, batch?: string | null, costPricePerPack: number, datetime: string, expiryDate?: string | null, invoiceNumber: number, invoiceStatus: Types.InvoiceNodeStatus, invoiceType: Types.InvoiceNodeType, name: string, packSize: number, quantity: number, reason?: string | null, sellPricePerPack: number, totalBeforeTax?: number | null, numberOfPacks: number };
+
+export type ItemLedgerQueryVariables = Types.Exact<{
+  key: Types.LedgerSortFieldInput;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.LedgerFilterInput>;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type ItemLedgerQuery = { __typename: 'Queries', itemLedger: { __typename: 'ItemLedgerConnector', totalCount: number, nodes: Array<{ __typename: 'ItemLedgerNode', id: string, balance: number, batch?: string | null, costPricePerPack: number, datetime: string, expiryDate?: string | null, invoiceNumber: number, invoiceStatus: Types.InvoiceNodeStatus, invoiceType: Types.InvoiceNodeType, name: string, packSize: number, quantity: number, reason?: string | null, sellPricePerPack: number, totalBeforeTax?: number | null, numberOfPacks: number }> } };
 
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
@@ -219,6 +233,7 @@ export const StockLineFragmentDoc = gql`
   sellPricePerPack
   storeId
   totalNumberOfPacks
+  itemVariantId
 }
     `;
 export const ColdStorageTypeFragmentDoc = gql`
@@ -266,7 +281,6 @@ export const ItemVariantFragmentDoc = gql`
   __typename
   id
   name
-  dosesPerUnit
   itemId
   manufacturerId
   manufacturer(storeId: $storeId) {
@@ -359,6 +373,26 @@ export const ItemVariantOptionFragmentDoc = gql`
   bundledItemVariants {
     id
   }
+}
+    `;
+export const ItemLedgerFragmentDoc = gql`
+    fragment ItemLedger on ItemLedgerNode {
+  id
+  balance
+  batch
+  costPricePerPack
+  datetime
+  expiryDate
+  invoiceNumber
+  invoiceStatus
+  invoiceType
+  name
+  packSize
+  quantity
+  reason
+  sellPricePerPack
+  totalBeforeTax
+  numberOfPacks
 }
     `;
 export const ItemsWithStockLinesDocument = gql`
@@ -571,6 +605,25 @@ export const DeleteBundledItemDocument = gql`
   }
 }
     `;
+export const ItemLedgerDocument = gql`
+    query itemLedger($key: LedgerSortFieldInput!, $first: Int, $offset: Int, $desc: Boolean, $filter: LedgerFilterInput, $storeId: String!) {
+  itemLedger(
+    storeId: $storeId
+    filter: $filter
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+  ) {
+    ... on ItemLedgerConnector {
+      __typename
+      nodes {
+        __typename
+        ...ItemLedger
+      }
+      totalCount
+    }
+  }
+}
+    ${ItemLedgerFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -617,6 +670,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     deleteBundledItem(variables: DeleteBundledItemMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteBundledItemMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteBundledItemMutation>(DeleteBundledItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteBundledItem', 'mutation', variables);
+    },
+    itemLedger(variables: ItemLedgerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemLedgerQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemLedgerQuery>(ItemLedgerDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemLedger', 'query', variables);
     }
   };
 }

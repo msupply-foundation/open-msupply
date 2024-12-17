@@ -6,15 +6,14 @@ use crate::{
         program_indicator::query::{program_indicators, ProgramIndicator},
         program_settings::get_customer_program_requisition_settings,
         query::get_requisition,
-        request_requisition::generate_requisition_lines,
     },
     service_provider::ServiceContext,
 };
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
-    MasterListLineFilter, MasterListLineRepository, NumberRowType, Pagination,
+    ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository, ItemFilter,
+    ItemRepository, MasterListLineFilter, MasterListLineRepository, NumberRowType, Pagination,
     ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError,
     Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
     StoreFilter, StoreRepository,
@@ -206,8 +205,7 @@ fn generate(
         .map(|line| line.item_id)
         .collect();
 
-    let requisition_lines =
-        generate_requisition_lines(ctx, &ctx.store_id, &requisition, program_item_ids)?;
+    let requisition_lines = generate_lines(ctx, &ctx.store_id, &requisition, program_item_ids)?;
 
     let program_indicators = program_indicators(
         connection,
@@ -234,6 +232,50 @@ fn generate(
         requisition_lines,
         indicator_values,
     })
+}
+
+fn generate_lines(
+    ctx: &ServiceContext,
+    store_id: &str,
+    requisition_row: &RequisitionRow,
+    item_ids: Vec<String>,
+) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
+    let items = ItemRepository::new(&ctx.connection).query_by_filter(
+        ItemFilter::new().id(EqualFilter::equal_any(item_ids)),
+        Some(store_id.to_string()),
+    )?;
+
+    let result = items
+        .into_iter()
+        .map(|item| {
+            RequisitionLineRow {
+                id: uuid(),
+                requisition_id: requisition_row.id.clone(),
+                item_link_id: item.item_row.id.clone(),
+                item_name: item.item_row.name.clone(),
+                snapshot_datetime: Some(Utc::now().naive_utc()),
+                // Default
+                suggested_quantity: 0.0,
+                available_stock_on_hand: 0.0,
+                average_monthly_consumption: 0.0,
+                comment: None,
+                supply_quantity: 0.0,
+                requested_quantity: 0.0,
+                approved_quantity: 0.0,
+                approval_comment: None,
+                initial_stock_on_hand_units: 0.0,
+                incoming_units: 0.0,
+                outgoing_units: 0.0,
+                loss_in_units: 0.0,
+                addition_in_units: 0.0,
+                expiring_units: 0.0,
+                days_out_of_stock: 0.0,
+                option_id: None,
+            }
+        })
+        .collect();
+
+    Ok(result)
 }
 
 fn generate_program_indicator_values(

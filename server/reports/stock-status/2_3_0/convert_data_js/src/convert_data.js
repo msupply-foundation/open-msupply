@@ -6,7 +6,7 @@ function convert_data() {
     res.data.items.nodes,
     // assign default sort values
     res?.arguments?.sort ?? "name",
-    res?.arguments?.dir ?? "desc"
+    res?.arguments?.dir ?? "asc"
   );
   Host.outputString(JSON.stringify(res));
 }

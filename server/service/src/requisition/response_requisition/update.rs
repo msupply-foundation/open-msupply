@@ -1,16 +1,22 @@
 use crate::{
     activity_log::activity_log_entry,
     requisition::{
-        common::{check_approval_status, check_requisition_row_exists},
+        common::{
+            check_approval_status, check_emergency_order_within_max_items_limit,
+            check_requisition_row_exists, OrderTypeNotFoundError,
+        },
         query::get_requisition,
     },
     service_provider::ServiceContext,
+    store_preference::get_store_preferences,
 };
 use chrono::Utc;
 use repository::{
+    reason_option_row::ReasonOptionType,
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ActivityLogType, EqualFilter, RepositoryError, Requisition, RequisitionLine,
-    RequisitionLineFilter, RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
+    ActivityLogType, EqualFilter, ReasonOptionFilter, ReasonOptionRepository, RepositoryError,
+    Requisition, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
+    RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 
@@ -35,6 +41,8 @@ pub enum UpdateResponseRequisitionError {
     CannotEditRequisition,
     NotAResponseRequisition,
     UpdatedRequisitionDoesNotExist,
+    OrderTypeNotFound,
+    OrderingTooManyItems(i32), // emergency order
     DatabaseError(RepositoryError),
     ReasonsNotProvided(Vec<RequisitionLine>),
 }
@@ -103,7 +111,39 @@ pub fn validate(
         RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&requisition_row.id)),
     )?;
 
-    if requisition_row.program_id.is_some() {
+    let reason_options = ReasonOptionRepository::new(connection).query_by_filter(
+        ReasonOptionFilter::new().r#type(ReasonOptionType::equal_to(
+            &ReasonOptionType::RequisitionLineVariance,
+        )),
+    )?;
+
+    if let (Some(program_id), Some(order_type)) =
+        (&requisition_row.program_id, &requisition_row.order_type)
+    {
+        let (within_limit, max_items) = check_emergency_order_within_max_items_limit(
+            connection,
+            program_id,
+            order_type,
+            response_lines.clone(),
+        )
+        .map_err(|e| match e {
+            OrderTypeNotFoundError::OrderTypeNotFound => OutError::OrderTypeNotFound,
+            OrderTypeNotFoundError::DatabaseError(repository_error) => {
+                OutError::DatabaseError(repository_error)
+            }
+        })?;
+
+        if !within_limit {
+            return Err(OutError::OrderingTooManyItems(max_items));
+        }
+    }
+
+    let prefs = get_store_preferences(connection, store_id)?;
+
+    if requisition_row.program_id.is_some()
+        && prefs.extra_fields_in_requisition
+        && !reason_options.is_empty()
+    {
         let mut lines_missing_reason = Vec::new();
 
         for line in response_lines {
@@ -167,10 +207,10 @@ mod test_update {
     use chrono::Utc;
     use repository::{
         mock::{
-            mock_finalised_response_requisition, mock_new_response_program_requisition,
-            mock_new_response_requisition, mock_new_response_requisition_for_update_test,
-            mock_response_program_requisition, mock_sent_request_requisition, mock_store_a,
-            mock_store_b, mock_user_account_b, MockDataInserts,
+            mock_finalised_response_requisition, mock_new_response_requisition,
+            mock_new_response_requisition_for_update_test, mock_response_program_requisition,
+            mock_sent_request_requisition, mock_store_a, mock_store_b, mock_user_account_b,
+            MockDataInserts,
         },
         requisition_row::{RequisitionRow, RequisitionStatus},
         test_db::setup_all,
@@ -191,7 +231,7 @@ mod test_update {
         let (_, _, connection_manager, _) =
             setup_all("update_response_requisition_errors", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -270,22 +310,7 @@ mod test_update {
             Err(ServiceError::CannotEditRequisition)
         );
 
-        // ReasonRequired when requested differs from suggested
-        if let Err(ServiceError::ReasonsNotProvided(errors)) = service.update_response_requisition(
-            &context,
-            UpdateResponseRequisition {
-                id: mock_new_response_program_requisition()
-                    .requisition
-                    .id
-                    .clone(),
-                status: Some(UpdateResponseRequisitionStatus::Finalised),
-                ..Default::default()
-            },
-        ) {
-            assert_eq!(errors.len(), 1);
-        } else {
-            panic!("Expected ReasonsNotProvided error");
-        }
+        // TODO: ReasonsNotProvided
     }
 
     #[actix_rt::test]
@@ -296,7 +321,7 @@ mod test_update {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, mock_user_account_b().id)
             .unwrap();

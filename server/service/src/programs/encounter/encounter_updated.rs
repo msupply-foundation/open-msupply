@@ -143,7 +143,7 @@ mod encounter_document_updated_test {
         let (_, _, connection_manager, _) =
             setup_all("test_encounter_deletion", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
 
         let patient = mock_patient();

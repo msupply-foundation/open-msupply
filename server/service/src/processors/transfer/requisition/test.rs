@@ -237,7 +237,7 @@ impl RequisitionTransferTester {
         thread_number: u32,
     ) -> RequisitionTransferTester {
         let request_requisition = inline_init(|r: &mut RequisitionRow| {
-            r.id = format!("{}_request_requisition", thread_number);
+            r.id = format!("{}_request_requisition_{}", thread_number, uuid());
             r.requisition_number = 3;
             r.name_link_id.clone_from(&response_store.name_link_id);
             r.store_id.clone_from(&request_store.id);
@@ -255,7 +255,7 @@ impl RequisitionTransferTester {
         });
 
         let request_requisition_line1 = inline_init(|r: &mut RequisitionLineRow| {
-            r.id = format!("{}_request_requisition_line_1", thread_number);
+            r.id = format!("{}_request_requisition_line_1_{}", thread_number, uuid());
             r.requisition_id.clone_from(&request_requisition.id);
             r.item_link_id.clone_from(&item1.id);
             r.requested_quantity = 2.0;
@@ -272,7 +272,7 @@ impl RequisitionTransferTester {
         });
 
         let request_requisition_line2 = inline_init(|r: &mut RequisitionLineRow| {
-            r.id = format!("{}_request_requisition_line_2", thread_number);
+            r.id = format!("{}_request_requisition_line_2_{}", thread_number, uuid());
             r.requisition_id.clone_from(&request_requisition.id);
             r.item_link_id.clone_from(&item2.id);
             r.requested_quantity = 10.0;

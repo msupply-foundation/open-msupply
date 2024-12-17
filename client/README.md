@@ -24,7 +24,7 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 `yarn start-remote` (using demo server API)
 
-`yarn start -- -- --env API_HOST='http://localhost:8001'` (using custom API url, see [config.ts for more info](./packages/config/src/config.ts))
+`yarn start API_HOST='http://localhost:8001'` (using custom API url, see [config.ts for more info](./packages/config/src/config.ts))
 
 - If there are feature flags in use, they are set as environment variables. For example:
 
