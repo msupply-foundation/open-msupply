@@ -35,6 +35,7 @@ pub mod document;
 pub mod document_registry;
 mod document_registry_config;
 mod document_registry_row;
+pub mod email_queue_row;
 pub mod encounter;
 pub mod encounter_row;
 mod filter_restriction;
