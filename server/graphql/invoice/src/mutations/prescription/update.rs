@@ -26,6 +26,7 @@ pub struct UpdateInput {
     pub prescription_date: Option<DateTime<Utc>>,
     pub comment: Option<String>,
     pub colour: Option<String>,
+    pub diagnosis_id: Option<String>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -98,6 +99,7 @@ impl UpdateInput {
             comment,
             colour,
             prescription_date,
+            diagnosis_id,
         } = self;
 
         ServiceInput {
@@ -108,6 +110,7 @@ impl UpdateInput {
             comment,
             colour,
             backdated_datetime: prescription_date.map(|date| date.naive_utc()),
+            diagnosis_id,
         }
     }
 }
@@ -363,6 +366,7 @@ mod test {
                     comment: Some("comment input".to_string()),
                     colour: Some("colour input".to_string()),
                     backdated_datetime: None,
+                    diagnosis_id: None,
                 }
             );
             Ok(Invoice {

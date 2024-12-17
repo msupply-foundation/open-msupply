@@ -32,6 +32,7 @@ pub struct UpdatePrescription {
     pub comment: Option<String>,
     pub colour: Option<String>,
     pub backdated_datetime: Option<NaiveDateTime>,
+    pub diagnosis_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -323,6 +324,7 @@ mod test {
                 comment: Some("test_comment".to_string()),
                 colour: Some("test_colour".to_string()),
                 backdated_datetime: None,
+                diagnosis_id: None,
             }
         }
 
@@ -346,6 +348,7 @@ mod test {
                     comment,
                     colour,
                     backdated_datetime: _,
+                    diagnosis_id: _,
                 } = get_update();
                 u.name_link_id = patient_id.unwrap();
                 u.clinician_link_id = clinician_id;

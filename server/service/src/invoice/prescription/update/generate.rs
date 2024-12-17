@@ -27,6 +27,7 @@ pub(crate) fn generate(
         comment: input_comment,
         colour: input_colour,
         backdated_datetime: backdated_datetime_input,
+        diagnosis_id,
     }: UpdatePrescription,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdatePrescriptionError> {
@@ -50,6 +51,7 @@ pub(crate) fn generate(
     update_invoice.clinician_link_id = input_clinician_id.or(update_invoice.clinician_link_id);
     update_invoice.comment = input_comment.or(update_invoice.comment);
     update_invoice.colour = input_colour.or(update_invoice.colour);
+    update_invoice.diagnosis_id = diagnosis_id.or(update_invoice.diagnosis_id);
 
     if let Some(status) = input_status.clone() {
         update_invoice.status = status.full_status()
@@ -228,6 +230,7 @@ mod test {
             currency_id: None,
             currency_rate: 0.0,
             original_shipment_id: None,
+            ..Default::default()
         };
 
         // Check that we can backdate to 3 days ago
