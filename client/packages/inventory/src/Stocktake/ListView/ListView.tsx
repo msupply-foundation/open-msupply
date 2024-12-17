@@ -47,7 +47,7 @@ export const StocktakeListView: FC = () => {
 
   const columns = useColumns<StocktakeRowFragment>(
     [
-      GenericColumnKey.Selection, // Adds padding to the left
+      GenericColumnKey.Selection,
       ['stocktakeNumber', { maxWidth: 75, sortable: false }],
       [
         'status',

@@ -273,7 +273,7 @@ export const useResponseColumns = () => {
     Cell: PackQuantityCell,
     accessor: ({ rowData }) => rowData.remainingQuantityToSupply,
   });
-  columnDefinitions.push(GenericColumnKey.Selection);
+  columnDefinitions.unshift(GenericColumnKey.Selection);
 
   const columns = useColumns<ResponseLineFragment>(
     columnDefinitions,

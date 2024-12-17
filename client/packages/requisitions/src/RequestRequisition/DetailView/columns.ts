@@ -250,7 +250,7 @@ export const useRequestColumns = () => {
       accessor: ({ rowData }) => rowData.linkedRequisitionLine?.approvalComment,
     });
   }
-  columnDefinitions.push(GenericColumnKey.Selection);
+  columnDefinitions.unshift(GenericColumnKey.Selection);
 
   const columns = useColumns<RequestLineFragment>(
     columnDefinitions,
