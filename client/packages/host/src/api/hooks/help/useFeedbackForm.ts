@@ -1,22 +1,19 @@
 import { ContactFormNodeType, InsertContactFormInput } from '@common/types';
 import { useState } from 'react';
 import { useFeedbackFormGraphQL } from './useFeedbackFormGraphQL';
-import {
-  FnUtils,
-  isEmpty,
-  useMutation,
-} from '@openmsupply-client/common';
+import { FnUtils, isEmpty, useMutation } from '@openmsupply-client/common';
 
-type ContactFormInput = Pick<InsertContactFormInput, 'replyEmail' | 'body' > & {contactFormType?: string};
+type ContactFormInput = Omit<InsertContactFormInput, 'id'>;
 
 export function useFeedbackForm() {
-  const defaultDraft: ContactFormInput = { 
-    replyEmail: '', 
+  const defaultDraft: ContactFormInput = {
+    replyEmail: '',
     body: '',
-  }
+    contactType: ContactFormNodeType.Feedback,
+  };
   const [draft, setDraft] = useState<ContactFormInput>(defaultDraft);
 
-  const { mutateAsync: insert } = useInsert()
+  const { mutateAsync: insert } = useInsert();
 
   const updateDraft = (newData: Partial<ContactFormInput>) => {
     const newDraft: ContactFormInput = { ...draft, ...newData };
@@ -38,35 +35,31 @@ export function useFeedbackForm() {
 const useInsert = () => {
   const { api, storeId } = useFeedbackFormGraphQL();
 
-  const mutationFn = async ({contactFormType, replyEmail, body}: ContactFormInput) => { 
-    let contactType;
-    if (contactFormType == ContactFormNodeType.Feedback) {
-      contactType = ContactFormNodeType.Feedback;
-    }
-    if (contactFormType == ContactFormNodeType.Support) {
-      contactType = ContactFormNodeType.Support;
-    }
-    if (contactType == undefined) {throw Error("contactType is undefined")} // this is ok as the front end will disable the send button if this is the case.
+  const mutationFn = async ({
+    contactType,
+    replyEmail,
+    body,
+  }: ContactFormInput) => {
     const apiResult = await api.insertContactForm({
-      storeId, 
-      input: { 
+      storeId,
+      input: {
         id: FnUtils.generateUUID(),
-        replyEmail, 
+        replyEmail,
         body,
-        contactType
-      }
-    })
+        contactType,
+      },
+    });
 
-    if(!isEmpty(apiResult)) { 
+    if (!isEmpty(apiResult)) {
       const result = apiResult.insertContactForm;
 
-      if (result.__typename === 'InsertResponse') { 
+      if (result.__typename === 'InsertResponse') {
         return result;
       }
     }
-  }
+  };
 
   return useMutation({
-    mutationFn
-  })
-}
+    mutationFn,
+  });
+};
