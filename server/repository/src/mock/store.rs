@@ -3,7 +3,7 @@ use util::inline_init;
 
 use crate::StoreRow;
 
-use super::mock_program_master_list_test;
+use super::{mock_name_store_b, mock_program_master_list_test};
 
 pub fn mock_store_a() -> StoreRow {
     inline_init(|s: &mut StoreRow| {
@@ -18,7 +18,7 @@ pub fn mock_store_a() -> StoreRow {
 pub fn mock_store_b() -> StoreRow {
     inline_init(|s: &mut StoreRow| {
         s.id = "store_b".to_string();
-        s.name_link_id = "name_store_b".to_string();
+        s.name_link_id = mock_name_store_b().id;
         s.code = "code".to_string();
         s.site_id = 2;
         s.created_date = NaiveDate::from_ymd_opt(2020, 1, 1);

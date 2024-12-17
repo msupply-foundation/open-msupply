@@ -5,7 +5,7 @@ use util::{
 
 use crate::{NameLinkRow, NameRow, NameRowType};
 
-use super::program_master_list_store;
+use super::{mock_store_b, program_master_list_store};
 
 pub fn mock_name_store_a() -> NameRow {
     inline_init(|r: &mut NameRow| {
@@ -104,6 +104,7 @@ pub fn mock_program_master_list_test() -> NameRow {
         r.code = String::from("program_master_list_test");
         r.is_supplier = true;
         r.is_customer = true;
+        r.supplying_store_id = Some(mock_store_b().id);
     })
 }
 
