@@ -1,22 +1,21 @@
 use async_graphql::*;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
-    generic_filters::EqualFilterStringInput,
+    pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 
-use graphql_types::types::InvoiceNodeType;
-use repository::{
-    ledger::{LedgerFilter, LedgerRow, LedgerSort, LedgerSortField},
-    EqualFilter,
-};
+use graphql_types::types::{InvoiceNodeStatus, InvoiceNodeType};
+use repository::{ledger::LedgerRow, PaginationOption};
 
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    ledger::get_ledger,
+    ledger::{get_item_ledger, ItemLedger},
     ListResult,
 };
+
+use super::{LedgerFilterInput, LedgerSortInput};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -29,28 +28,14 @@ pub enum LedgerSortFieldInput {
     StockLineId,
 }
 
-#[derive(InputObject)]
-pub struct LedgerSortInput {
-    /// Sort query result by `key`
-    key: LedgerSortFieldInput,
-    /// Sort query result is sorted descending or ascending (if not provided the
-    /// default is ascending)
-    desc: Option<bool>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct LedgerFilterInput {
-    pub stock_line_id: Option<EqualFilterStringInput>,
-    pub item_id: Option<EqualFilterStringInput>,
-}
-
 #[derive(PartialEq, Debug)]
-pub struct LedgerNode {
+pub struct ItemLedgerNode {
     ledger: LedgerRow,
+    balance: f64,
 }
 
 #[Object]
-impl LedgerNode {
+impl ItemLedgerNode {
     pub async fn id(&self) -> &String {
         &self.ledger.id
     }
@@ -84,26 +69,62 @@ impl LedgerNode {
         }
         &self.ledger.inventory_adjustment_reason
     }
+
+    pub async fn invoice_status(&self) -> InvoiceNodeStatus {
+        InvoiceNodeStatus::from_domain(&self.ledger.invoice_status)
+    }
+
+    pub async fn pack_size(&self) -> &f64 {
+        &self.ledger.pack_size
+    }
+
+    pub async fn expiry_date(&self) -> &Option<NaiveDate> {
+        &self.ledger.expiry_date
+    }
+
+    pub async fn batch(&self) -> &Option<String> {
+        &self.ledger.batch
+    }
+
+    pub async fn cost_price_per_pack(&self) -> &f64 {
+        &self.ledger.cost_price_per_pack
+    }
+
+    pub async fn sell_price_per_pack(&self) -> &f64 {
+        &self.ledger.sell_price_per_pack
+    }
+
+    pub async fn total_before_tax(&self) -> &Option<f64> {
+        &self.ledger.total_before_tax
+    }
+
+    pub async fn balance(&self) -> &f64 {
+        &self.balance
+    }
+
+    pub async fn number_of_packs(&self) -> &f64 {
+        &self.ledger.number_of_packs
+    }
 }
 
 #[derive(SimpleObject)]
-pub struct LedgerConnector {
+pub struct ItemLedgerConnector {
     total_count: u32,
-    nodes: Vec<LedgerNode>,
+    nodes: Vec<ItemLedgerNode>,
 }
 
 #[derive(Union)]
-pub enum LedgerResponse {
-    Response(LedgerConnector),
+pub enum ItemLedgerResponse {
+    Response(ItemLedgerConnector),
 }
 
-pub fn ledger(
+pub fn item_ledger(
     ctx: &Context<'_>,
     store_id: String,
-    // page: Option<PaginationInput>,
+    page: Option<PaginationInput>,
     filter: Option<LedgerFilterInput>,
     sort: Option<Vec<LedgerSortInput>>,
-) -> Result<LedgerResponse> {
+) -> Result<ItemLedgerResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -113,9 +134,10 @@ pub fn ledger(
     )?;
 
     let connection_manager = ctx.get_connection_manager();
-    let ledger = get_ledger(
+    let ledger = get_item_ledger(
         connection_manager,
-        None,
+        &store_id,
+        page.map(PaginationOption::from),
         filter.map(|filter| filter.to_domain()),
         // Currently only one sort option is supported, use the first from the list.
         sort.and_then(|mut sort_list| sort_list.pop())
@@ -123,54 +145,23 @@ pub fn ledger(
     )
     .map_err(StandardGraphqlError::from_list_error)?;
 
-    Ok(LedgerResponse::Response(LedgerConnector::from_domain(
-        ledger,
-    )))
+    Ok(ItemLedgerResponse::Response(
+        ItemLedgerConnector::from_domain(ledger),
+    ))
 }
 
-impl LedgerConnector {
-    pub fn from_domain(rows: ListResult<LedgerRow>) -> LedgerConnector {
-        LedgerConnector {
+impl ItemLedgerConnector {
+    pub fn from_domain(rows: ListResult<ItemLedger>) -> ItemLedgerConnector {
+        ItemLedgerConnector {
             total_count: rows.count,
             nodes: rows
                 .rows
                 .into_iter()
-                .map(|ledger| LedgerNode { ledger })
+                .map(|ledger| ItemLedgerNode {
+                    ledger: ledger.ledger,
+                    balance: ledger.balance,
+                })
                 .collect(),
-        }
-    }
-}
-impl LedgerFilterInput {
-    pub fn to_domain(self) -> LedgerFilter {
-        let LedgerFilterInput {
-            stock_line_id,
-            item_id,
-        } = self;
-
-        LedgerFilter {
-            stock_line_id: stock_line_id.map(EqualFilter::from),
-            item_id: item_id.map(EqualFilter::from),
-            store_id: None,
-        }
-    }
-}
-
-impl LedgerSortInput {
-    pub fn to_domain(self) -> LedgerSort {
-        use LedgerSortField as to;
-        use LedgerSortFieldInput as from;
-        let key = match self.key {
-            from::Datetime => to::Datetime,
-            from::Name => to::Name,
-            from::InvoiceType => to::InvoiceType,
-            from::Quantity => to::Quantity,
-            from::StockLineId => to::StockLineId,
-            from::ItemId => to::ItemId,
-        };
-
-        LedgerSort {
-            key,
-            desc: self.desc,
         }
     }
 }
