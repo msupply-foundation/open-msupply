@@ -98,6 +98,20 @@
       "item_id": "103"
     }
   ],
+  "stockOnOrder": [
+    {
+      "quantity": 5,
+      "item_id": "101"
+    },
+    {
+      "quantity": -2,
+      "item_id": "102"
+    },
+    {
+      "quantity": 1,
+      "item_id": "103"
+    }
+  ],
   "items": {
     "nodes": [
       {
@@ -107,7 +121,7 @@
         "stats": {
           "totalConsumption": 1200,
           "availableMonthsOfStockOnHand": 4.5,
-          "totalStockOnHand": 300.902,
+          "availableStockOnHand": 300.902,
           "averageMonthlyConsumption": 266.7
         },
         "someOtherKey": ""
@@ -120,7 +134,7 @@
         "stats": {
           "totalConsumption": 100,
           "availableMonthsOfStockOnHand": 4.5,
-          "totalStockOnHand": 200,
+          "availableStockOnHand": 200,
           "someNestedEmptyStringKey": ""
         },
         "someOtherOtherKey": ""

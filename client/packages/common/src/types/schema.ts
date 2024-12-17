@@ -2511,6 +2511,14 @@ export type InsertBarcodeInput = {
 
 export type InsertBarcodeResponse = BarcodeNode;
 
+export type InsertContactFormInput = {
+  body: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  replyEmail: Scalars['String']['input'];
+};
+
+export type InsertContactFormResponse = InsertResponse;
+
 export type InsertContactTraceInput = {
   /** Contact trace document data */
   data: Scalars['JSON']['input'];
@@ -3019,6 +3027,11 @@ export type InsertRequestRequisitionResponseWithId = {
   __typename: 'InsertRequestRequisitionResponseWithId';
   id: Scalars['String']['output'];
   response: InsertRequestRequisitionResponse;
+};
+
+export type InsertResponse = {
+  __typename: 'InsertResponse';
+  id: Scalars['String']['output'];
 };
 
 export type InsertResponseRequisitionError = {
@@ -3560,13 +3573,44 @@ export type ItemFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isVaccine?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Items that are visible in this store. This filter is void if `is_visible_or_on_hand` is true */
+  /** Items that are part of a masterlist which is visible in this store. This filter is void if `is_visible_or_on_hand` is true */
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Items that are visible in this store OR there is available stock of that item in this store */
+  /** Items that are part of a masterlist which is visible in this store OR there is available stock of that item in this store */
   isVisibleOrOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
 };
+
+export type ItemLedgerConnector = {
+  __typename: 'ItemLedgerConnector';
+  nodes: Array<ItemLedgerNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ItemLedgerNode = {
+  __typename: 'ItemLedgerNode';
+  balance: Scalars['Float']['output'];
+  batch?: Maybe<Scalars['String']['output']>;
+  costPricePerPack: Scalars['Float']['output'];
+  datetime: Scalars['DateTime']['output'];
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  invoiceNumber: Scalars['Int']['output'];
+  invoiceStatus: InvoiceNodeStatus;
+  invoiceType: InvoiceNodeType;
+  itemId: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  numberOfPacks: Scalars['Float']['output'];
+  packSize: Scalars['Float']['output'];
+  quantity: Scalars['Float']['output'];
+  reason?: Maybe<Scalars['String']['output']>;
+  sellPricePerPack: Scalars['Float']['output'];
+  stockLineId?: Maybe<Scalars['String']['output']>;
+  storeId: Scalars['String']['output'];
+  totalBeforeTax?: Maybe<Scalars['Float']['output']>;
+};
+
+export type ItemLedgerResponse = ItemLedgerConnector;
 
 export type ItemNode = {
   __typename: 'ItemNode';
@@ -3742,6 +3786,7 @@ export type LedgerConnector = {
 };
 
 export type LedgerFilterInput = {
+  itemId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -4039,6 +4084,7 @@ export type Mutations = {
   insertAsset: InsertAssetResponse;
   insertAssetLog: InsertAssetLogResponse;
   insertBarcode: InsertBarcodeResponse;
+  insertContactForm: InsertContactFormResponse;
   insertContactTrace: InsertContactTraceResponse;
   insertCustomerReturn: InsertCustomerReturnResponse;
   insertDocumentRegistry: InsertDocumentResponse;
@@ -4354,6 +4400,12 @@ export type MutationsInsertAssetLogArgs = {
 
 export type MutationsInsertBarcodeArgs = {
   input: InsertBarcodeInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertContactFormArgs = {
+  input: InsertContactFormInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5632,6 +5684,7 @@ export type Queries = {
   invoices: InvoicesResponse;
   isCentralServer: Scalars['Boolean']['output'];
   itemCounts: ItemCounts;
+  itemLedger: ItemLedgerResponse;
   itemPrice: ItemPriceResponse;
   itemVariantsConfigured: Scalars['Boolean']['output'];
   /** Query omSupply "item" entries */
@@ -6041,6 +6094,14 @@ export type QueriesInvoicesArgs = {
 
 export type QueriesItemCountsArgs = {
   lowStockThreshold?: InputMaybe<Scalars['Int']['input']>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesItemLedgerArgs = {
+  filter?: InputMaybe<LedgerFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<LedgerSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -7104,6 +7165,7 @@ export type StockLineFilterInput = {
   expiryDate?: InputMaybe<DateFilterInput>;
   hasPacksInStore?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isAvailable?: InputMaybe<Scalars['Boolean']['input']>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;

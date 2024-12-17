@@ -20,6 +20,7 @@ pub mod clinician;
 pub mod cold_chain;
 pub mod cold_storage_type;
 mod common_stock;
+pub mod contact_form;
 pub mod currency;
 pub mod cursor_controller;
 pub mod dashboard;
