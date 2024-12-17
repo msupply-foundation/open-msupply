@@ -17,6 +17,7 @@
       "options": {
         "show": [
           ["item.name", "item"],
+          ["batch", "batch"],
           ["item.code", "code"],
           ["expiryDate", "expiry date"],
           ["location.code", "location code"],
