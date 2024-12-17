@@ -144,7 +144,7 @@ fn generate(
         u.addition_in_units = updated_addition_in_units.unwrap_or(u.addition_in_units);
         u.expiring_units = updated_expiring_units.unwrap_or(u.expiring_units);
         u.days_out_of_stock = updated_days_out_of_stock.unwrap_or(u.days_out_of_stock);
-        u.option_id = updated_option_id.or(u.option_id);
+        u.option_id = updated_option_id;
 
         u
     });
@@ -165,9 +165,10 @@ impl From<RepositoryError> for UpdateResponseRequisitionLineError {
 mod test {
     use repository::{
         mock::{
-            mock_finalised_request_requisition_line, mock_new_response_requisition_test,
-            mock_response_program_requisition, mock_sent_request_requisition_line, mock_store_a,
-            mock_store_b, mock_user_account_b, MockDataInserts,
+            mock_finalised_request_requisition_line, mock_new_response_program_requisition,
+            mock_new_response_requisition_test, mock_option, mock_response_program_requisition,
+            mock_sent_request_requisition_line, mock_store_a, mock_store_b, mock_user_account_b,
+            MockDataInserts,
         },
         test_db::setup_all,
         RequisitionLineRowRepository, RequisitionRowRepository,
@@ -189,7 +190,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -250,7 +251,7 @@ mod test {
                 }),
             ),
             Err(ServiceError::CannotEditRequisition)
-        )
+        );
     }
 
     #[actix_rt::test]
@@ -261,7 +262,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, mock_user_account_b().id)
             .unwrap();
@@ -276,7 +277,7 @@ mod test {
                     id: test_line.id.clone(),
                     supply_quantity: Some(99.0),
                     comment: Some("comment".to_string()),
-                    requested_quantity: Some(99.0),
+                    requested_quantity: Some(5.0),
                     stock_on_hand: Some(99.0),
                     ..Default::default()
                 },
@@ -293,7 +294,7 @@ mod test {
             inline_edit(&test_line, |mut u| {
                 u.supply_quantity = 99.0;
                 u.comment = Some("comment".to_string());
-                u.requested_quantity = 99.0;
+                u.requested_quantity = 5.0;
                 u.initial_stock_on_hand_units = 0.0;
                 u.available_stock_on_hand = 99.0;
                 u
@@ -312,5 +313,22 @@ mod test {
                 u
             })
         );
+
+        // requested differs from suggested success if reason added
+        let test_line_2 = mock_new_response_program_requisition().lines[0].clone();
+        service
+            .update_response_requisition_line(
+                &context,
+                UpdateResponseRequisitionLine {
+                    id: test_line_2.id.clone(),
+                    supply_quantity: Some(99.0),
+                    comment: Some("comment".to_string()),
+                    requested_quantity: Some(99.0),
+                    stock_on_hand: Some(99.0),
+                    option_id: Some(mock_option().id),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
     }
 }

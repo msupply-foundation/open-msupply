@@ -289,7 +289,7 @@ mod test_logs {
         cold_chain_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.cold_chain_service = Box::new(cold_chain_service);
         service_provider
     }
@@ -546,7 +546,7 @@ mod test_breaches {
         cold_chain_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.cold_chain_service = Box::new(cold_chain_service);
         service_provider
     }
@@ -721,7 +721,7 @@ mod test_notifications {
         temperature_excursion_service: TestExcursionService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.cold_chain_service = Box::new(cold_chain_service);
         service_provider.temperature_excursion_service = Box::new(temperature_excursion_service);
         service_provider
@@ -930,7 +930,7 @@ mod test_sensor {
         sensor_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.sensor_service = Box::new(sensor_service);
         service_provider
     }

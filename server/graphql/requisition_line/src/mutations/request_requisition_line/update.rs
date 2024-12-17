@@ -20,6 +20,7 @@ pub struct UpdateInput {
     pub id: String,
     pub requested_quantity: Option<f64>,
     pub comment: Option<String>,
+    pub option_id: Option<String>,
 }
 
 #[derive(Interface)]
@@ -81,12 +82,14 @@ impl UpdateInput {
             id,
             requested_quantity,
             comment,
+            option_id,
         } = self;
 
         ServiceInput {
             id,
             requested_quantity,
             comment,
+            option_id,
         }
     }
 }
@@ -165,7 +168,7 @@ mod test {
         test_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.requisition_line_service = Box::new(test_service);
         service_provider
     }
@@ -328,7 +331,8 @@ mod test {
                 ServiceInput {
                     id: "update line id input".to_string(),
                     requested_quantity: Some(1.0),
-                    comment: Some("comment".to_string())
+                    comment: Some("comment".to_string()),
+                    option_id: None
                 }
             );
             Ok(RequisitionLine {

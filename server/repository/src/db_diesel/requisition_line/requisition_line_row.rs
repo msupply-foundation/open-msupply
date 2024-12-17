@@ -42,6 +42,7 @@ joinable!(requisition_line -> requisition (requisition_id));
 allow_tables_to_appear_in_same_query!(requisition_line, item_link);
 
 #[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
+#[diesel(treat_none_as_null = true)]
 #[diesel(table_name = requisition_line)]
 pub struct RequisitionLineRow {
     pub id: String,

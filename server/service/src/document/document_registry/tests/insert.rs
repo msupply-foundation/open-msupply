@@ -21,7 +21,7 @@ mod tests {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.document_registry_service;
         let context_id = context_program_a().id;

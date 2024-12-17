@@ -9,3 +9,5 @@ export const useStore = {
     list: Document.useStores,
   },
 };
+
+export * from './document';

@@ -195,6 +195,7 @@ export const NumericTextInput = React.forwardRef<
       noFormatting = false,
       fullWidth,
       endAdornment,
+      inputMode,
       ...props
     },
     ref
@@ -273,7 +274,7 @@ export const NumericTextInput = React.forwardRef<
           },
           ...sx,
         }}
-        inputMode="numeric"
+        inputMode={inputMode ?? 'numeric'}
         InputProps={{
           endAdornment: endAdornment ? (
             <InputAdornment position="end" sx={{ paddingBottom: '2px' }}>

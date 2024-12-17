@@ -28,13 +28,14 @@ export const useDraftPrescriptionLines = (
   item: DraftItem | null,
   date?: Date | null
 ): UseDraftPrescriptionLinesControl => {
-  const { id: invoiceId, status } = usePrescription.document.fields([
-    'id',
-    'status',
-  ]);
+  const {
+    query: { data: prescriptionData },
+  } = usePrescription();
+  const { id: invoiceId, status } = prescriptionData ?? {};
 
-  const { data: lines, isLoading: prescriptionLinesLoading } =
-    usePrescription.line.stockLines(item?.id ?? '');
+  const lines = prescriptionData?.lines.nodes.filter(
+    line => item?.id === line.item.id
+  );
   const { data, isLoading } = useHistoricalStockLines({
     itemId: item?.id ?? '',
     datetime: date ? date.toISOString() : undefined,
@@ -73,7 +74,7 @@ export const useDraftPrescriptionLines = (
           const invoiceLine = lines?.find(
             ({ stockLine }) => stockLine?.id === batch.id
           );
-          if (invoiceLine) {
+          if (invoiceLine && invoiceId && status) {
             return createDraftStockOutLine({
               invoiceLine,
               invoiceId,
@@ -83,7 +84,7 @@ export const useDraftPrescriptionLines = (
           } else {
             return createDraftStockOutLineFromStockLine({
               stockLine: batch,
-              invoiceId,
+              invoiceId: invoiceId ?? '',
             });
           }
         })
@@ -103,7 +104,7 @@ export const useDraftPrescriptionLines = (
           if (!!placeholderItem) placeholder.item = placeholderItem;
           rows.push(
             createDraftStockOutLine({
-              invoiceId,
+              invoiceId: invoiceId ?? '',
               invoiceLine: placeholder,
               invoiceStatus: status,
             })
@@ -116,7 +117,7 @@ export const useDraftPrescriptionLines = (
 
       return rows;
     });
-  }, [data, lines, item, invoiceId]);
+  }, [data, item, prescriptionData]);
 
   const onChangeRowQuantity = useCallback(
     (batchId: string, value: number) => {
@@ -136,7 +137,7 @@ export const useDraftPrescriptionLines = (
 
   return {
     draftStockOutLines,
-    isLoading: isLoading || prescriptionLinesLoading,
+    isLoading,
     setDraftStockOutLines,
     updateQuantity: onChangeRowQuantity,
     updateNotes: onUpdateNote,

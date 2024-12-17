@@ -117,7 +117,7 @@ mod test {
         let (_, _, connection_manager, _) =
             setup_all("insert_stock_out_line_errors", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
             .context(mock_store_b().id, "".to_string())
             .unwrap();
@@ -284,7 +284,7 @@ mod test {
                 .unwrap()
         };
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
             .context(mock_store_c().id, "".to_string())
             .unwrap();
@@ -472,7 +472,7 @@ mod test {
         let (_, connection, connection_manager, _) =
             setup_all("insert_stock_out_line_back_dated", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_b().id, "".to_string())
             .unwrap();

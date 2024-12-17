@@ -241,9 +241,9 @@ export const StockDistribution: React.FC<StockDistributionProps> = ({
   return (
     <Box
       sx={{
-        paddingLeft: 4,
-        paddingRight: 4,
-        paddingTop: 4,
+        paddingLeft: 2,
+        paddingRight: 2,
+        paddingTop: 2,
         paddingBottom: 2,
       }}
     >
