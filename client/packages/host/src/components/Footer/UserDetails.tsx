@@ -13,6 +13,8 @@ import {
   RouteBuilder,
   PowerIcon,
   TextWithLabelRow,
+  UNDEFINED_STRING_VALUE,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly } from '@common/types';
@@ -23,6 +25,8 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { hide, PaperClickPopover } = usePaperClickPopover();
   const { isLoading } = useUserDetails(token);
   const t = useTranslation();
+  const { getLocalisedFullName } = useIntlUtils();
+  const LABEL_WIDTH = 80;
 
   const handleLogout = () => {
     navigate(RouteBuilder.create(AppRoute.Login).build());
@@ -39,7 +43,6 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
     <FlatButton
       startIcon={<PowerIcon fontSize="small" color="primary" />}
       label={t('logout')}
-      disabled={false}
       onClick={async () => {
         hide();
         showConfirmation();
@@ -58,7 +61,9 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
       placement="top"
       width={300}
       Content={
-        <PaperPopoverSection label={`${user.firstName} ${user.lastName}`}>
+        <PaperPopoverSection
+          label={getLocalisedFullName(user.firstName, user.lastName)}
+        >
           {isLoading ? (
             <CircularProgress size={12} />
           ) : (
@@ -79,28 +84,56 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
-                  width: 150,
                 }}
                 labelProps={{
-                  sx: { textAlign: 'left', width: 80, lineHeight: 1.5 },
+                  sx: {
+                    textAlign: 'left',
+                    width: LABEL_WIDTH,
+                    lineHeight: 1.5,
+                  },
                 }}
                 showToolTip={true}
+                sx={{ overflow: 'hidden' }}
               />
               <TextWithLabelRow
                 label={t('label.email')}
-                text={user.email ?? ''}
+                text={user.email ?? UNDEFINED_STRING_VALUE}
                 textProps={{
                   textAlign: 'left',
                   lineHeight: 1.5,
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
-                  width: 180,
                 }}
                 labelProps={{
-                  sx: { textAlign: 'left', width: 45, lineHeight: 1.5 },
+                  sx: {
+                    textAlign: 'left',
+                    width: LABEL_WIDTH,
+                    lineHeight: 1.5,
+                  },
                 }}
                 showToolTip={true}
+                sx={{ overflow: 'hidden' }}
+              />
+              <TextWithLabelRow
+                label={t('label.job-title')}
+                text={user.jobTitle ?? UNDEFINED_STRING_VALUE}
+                textProps={{
+                  textAlign: 'left',
+                  lineHeight: 1.5,
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                }}
+                labelProps={{
+                  sx: {
+                    textAlign: 'left',
+                    width: LABEL_WIDTH,
+                    lineHeight: 1.5,
+                  },
+                }}
+                showToolTip={true}
+                sx={{ overflow: 'hidden' }}
               />
             </Box>
           )}
