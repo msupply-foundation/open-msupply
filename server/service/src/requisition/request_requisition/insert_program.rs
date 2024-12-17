@@ -19,7 +19,8 @@ use repository::{
     ActivityLogType, EqualFilter, IndicatorValueRowRepository, MasterListLineFilter,
     MasterListLineRepository, NumberRowType, Pagination, ProgramIndicatorFilter,
     ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError, Requisition,
-    RequisitionLineRowRepository, RequisitionRowRepository, StoreFilter, StoreRepository,
+    RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection, StoreFilter,
+    StoreRepository,
 };
 
 use super::generate_requisition_lines;
@@ -205,17 +206,11 @@ fn generate(
         Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
     )?;
 
-    let store = StoreRepository::new(connection)
-        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&ctx.store_id)))?;
-
-    let should_generate_indicators: bool =
-        if let Some(supplying_store_id) = store.and_then(|s| s.name_row.supplying_store_id) {
-            supplying_store_id == other_party_id
-        } else {
-            false
-        };
-
-    let indicator_values = if should_generate_indicators {
+    let indicator_values = if should_generate_indicators(ShouldGenerateIndicatorsInput {
+        connection,
+        store_id: &ctx.store_id,
+        other_party_id: &other_party_id,
+    })? {
         generate_program_indicator_values(IndicatorGenerationInput {
             store_id: ctx.store_id.clone(),
             period_id,
@@ -233,6 +228,32 @@ fn generate(
     })
 }
 
+pub struct ShouldGenerateIndicatorsInput<'a> {
+    pub connection: &'a StorageConnection,
+    pub store_id: &'a str,
+    pub other_party_id: &'a str,
+}
+
+pub fn should_generate_indicators(
+    input: ShouldGenerateIndicatorsInput,
+) -> Result<bool, RepositoryError> {
+    let store = StoreRepository::new(input.connection)
+        .query_one(StoreFilter::new().id(EqualFilter::equal_to(input.store_id)))?;
+
+    let supplying_store: Option<repository::Store> =
+        if let Some(supplying_store_id) = store.and_then(|s| s.name_row.supplying_store_id) {
+            StoreRepository::new(input.connection)
+                .query_one(StoreFilter::new().id(EqualFilter::equal_to(&supplying_store_id)))?
+        } else {
+            None
+        };
+
+    if let Some(supplying_store) = supplying_store {
+        return Ok(supplying_store.name_row.id == input.other_party_id);
+    }
+    Ok(false)
+}
+
 impl From<RepositoryError> for InsertProgramRequestRequisitionError {
     fn from(error: RepositoryError) -> Self {
         InsertProgramRequestRequisitionError::DatabaseError(error)
@@ -243,16 +264,17 @@ impl From<RepositoryError> for InsertProgramRequestRequisitionError {
 mod test_insert {
     use crate::{
         requisition::request_requisition::{
-            InsertProgramRequestRequisition, InsertProgramRequestRequisitionError as ServiceError,
+            insert_program::should_generate_indicators, InsertProgramRequestRequisition,
+            InsertProgramRequestRequisitionError as ServiceError, ShouldGenerateIndicatorsInput,
         },
         service_provider::ServiceProvider,
     };
     use repository::{
         indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
         mock::{
-            mock_indicator_column_b, mock_name_store_b, mock_period, mock_program_a,
-            mock_program_order_types_a, mock_request_draft_requisition, mock_user_account_a,
-            program_master_list_store, MockData, MockDataInserts,
+            mock_name_store_a, mock_name_store_b, mock_period, mock_program_a,
+            mock_program_order_types_a, mock_program_order_types_b, mock_request_draft_requisition,
+            mock_user_account_a, program_master_list_store, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         EqualFilter, NameRow, RequisitionLineFilter, RequisitionLineRepository,
@@ -379,18 +401,99 @@ mod test_insert {
             ),
             Err(ServiceError::MaxOrdersReachedForPeriod)
         );
+    }
 
+    #[actix_rt::test]
+    async fn insert_generated_indicator_values() {
+        let (_, connection, connection_manager, _) =
+            setup_all("insert_generated_indicator_values", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(program_master_list_store().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.requisition_service;
+
+        let result = service
+            .insert_program_request_requisition(
+                &context,
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "new_program_request_requisition_2".to_string();
+                    r.other_party_id.clone_from(&mock_name_store_b().id);
+                    r.program_order_type_id = mock_program_order_types_a().id;
+                    r.period_id = mock_period().id;
+                }),
+            )
+            .unwrap();
+        let new_row = RequisitionRowRepository::new(&connection)
+            .find_one_by_id(&result.requisition_row.id)
+            .unwrap()
+            .unwrap();
+        let requisition_lines = RequisitionLineRepository::new(&connection)
+            .query_by_filter(
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&new_row.id)),
+            )
+            .unwrap();
+
+        assert_eq!(new_row.id, "new_program_request_requisition_2");
+        assert_eq!(requisition_lines.len(), 1);
+    }
+
+    #[actix_rt::test]
+    async fn test_should_add_indicator_values() {
+        let (_, connection, connection_manager, _) =
+            setup_all("test_should_add_indicator_values", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(program_master_list_store().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.requisition_service;
+
+        // assert should generate when other party id is typical store name row supplier
+        assert_eq!(
+            should_generate_indicators(ShouldGenerateIndicatorsInput {
+                connection: &connection,
+                store_id: &program_master_list_store().id,
+                other_party_id: &mock_name_store_b().id,
+            })
+            .unwrap(),
+            true
+        );
+
+        // assert should not generate when other party is not typoical store name row supplier
+        assert_eq!(
+            should_generate_indicators(ShouldGenerateIndicatorsInput {
+                connection: &connection,
+                store_id: &program_master_list_store().id,
+                other_party_id: &mock_name_store_a().id,
+            })
+            .unwrap(),
+            false
+        );
+
+        service
+            .insert_program_request_requisition(
+                &context,
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "new_program_request_requisition_3".to_string();
+                    r.other_party_id.clone_from(&mock_name_store_b().id);
+                    r.program_order_type_id = mock_program_order_types_b().id;
+                    r.period_id = mock_period().id;
+                }),
+            )
+            .unwrap();
+
+        // check active_program_indicators added
         let filter = IndicatorValueFilter::new()
             .store_id(EqualFilter::equal_to(&program_master_list_store().id))
-            .customer_name_link_id(EqualFilter::equal_to(&program_master_list_store().id))
-            .indicator_column_id(EqualFilter::equal_to(&mock_indicator_column_b().id));
+            .customer_name_link_id(EqualFilter::equal_to(&mock_name_store_b().id))
+            .period_id(EqualFilter::equal_to(&mock_period().id));
 
         let values = IndicatorValueRepository::new(&connection)
             .query_by_filter(filter)
             .unwrap();
-        assert_eq!(
-            values.first().unwrap().value,
-            "test default value".to_string()
-        )
+
+        assert_eq!(values.len(), 4);
     }
 }
