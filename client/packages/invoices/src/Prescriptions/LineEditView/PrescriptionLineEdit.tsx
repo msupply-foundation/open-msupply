@@ -29,7 +29,6 @@ import { ItemRowFragment } from '@openmsupply-client/system';
 
 interface PrescriptionLineEditModalProps {
   draft: Draft | null;
-  // items: ItemRowFragment[];
   draftLines: DraftStockOutLine[];
   updateLines: (lines: DraftStockOutLine[]) => void;
   setIsDirty: (dirty: boolean) => void;
@@ -37,15 +36,12 @@ interface PrescriptionLineEditModalProps {
 
 export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   draft,
-  // items,
   draftLines: draftPrescriptionLines,
   updateLines,
   setIsDirty,
 }) => {
   const item = !draft ? null : (draft.item ?? null);
   const isNew = item === null;
-  // const t = useTranslation();
-  // const { info } = useNotification();
   const [currentItem, setCurrentItem] = useBufferState(item);
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
   const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
@@ -54,18 +50,8 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     query: { data },
     isDisabled,
   } = usePrescription();
-  const {
-    status = InvoiceNodeStatus.New,
-    // id: invoiceId = '',
-    prescriptionDate,
-  } = data ?? {};
-  const {
-    // draftStockOutLines: draftPrescriptionLines,
-    updateQuantity,
-    // setDraftStockOutLines,
-    isLoading,
-    updateNotes,
-  } = useDraftPrescriptionLines(
+  const { status = InvoiceNodeStatus.New, prescriptionDate } = data ?? {};
+  const { updateQuantity, isLoading, updateNotes } = useDraftPrescriptionLines(
     currentItem,
     draftPrescriptionLines,
     updateLines,
@@ -100,7 +86,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     )(newVal, packSize);
     setIsDirty(true);
     updateLines(newAllocateQuantities ?? draftPrescriptionLines);
-    // setDraftStockOutLines(newAllocateQuantities ?? draftPrescriptionLines);
     setIsAutoAllocated(autoAllocated);
     if (showZeroQuantityConfirmation && newVal !== 0)
       setShowZeroQuantityConfirmation(false);
@@ -150,7 +135,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
         isNew={isNew}
         packSizeController={packSizeController}
         onChangeItem={(item: ItemRowFragment | null) => {
-          // if (status === InvoiceNodeStatus.New) setIsDirty(true);
           setIsAutoAllocated(false);
           setCurrentItem(item);
         }}
