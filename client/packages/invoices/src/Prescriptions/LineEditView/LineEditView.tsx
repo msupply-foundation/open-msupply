@@ -186,7 +186,19 @@ export const PrescriptionLineEditView = () => {
           </>
         }
       />
-      <Footer isSaving={isSavingLines} isDirty={isDirty} handleSave={onSave} />
+      <Footer
+        isSaving={isSavingLines}
+        isDirty={isDirty}
+        handleSave={onSave}
+        handleCancel={() =>
+          navigate(
+            RouteBuilder.create(AppRoute.Dispensary)
+              .addPart(AppRoute.Prescription)
+              .addPart(String(invoiceNumber))
+              .build()
+          )
+        }
+      />
     </>
   );
 };
