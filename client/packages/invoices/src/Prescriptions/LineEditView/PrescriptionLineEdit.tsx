@@ -43,7 +43,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   setIsDirty,
 }) => {
   const item = !draft ? null : (draft.item ?? null);
-  const isNew = item === undefined;
+  const isNew = item === null;
   // const t = useTranslation();
   // const { info } = useNotification();
   const [currentItem, setCurrentItem] = useBufferState(item);
@@ -146,7 +146,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   return (
     <Grid container gap={0.5}>
       <PrescriptionLineEditForm
-        disabled={isNew || isDisabled}
+        disabled={!isNew || isDisabled}
         packSizeController={packSizeController}
         onChangeItem={(item: ItemRowFragment | null) => {
           // if (status === InvoiceNodeStatus.New) setIsDirty(true);
