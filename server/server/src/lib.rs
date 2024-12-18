@@ -106,6 +106,7 @@ pub async fn start_server(
         processors_trigger,
         sync_trigger,
         site_is_initialise_trigger,
+        settings.mail.clone(),
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
     let certificates = Certificates::try_load(&settings.server).unwrap();

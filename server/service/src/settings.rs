@@ -11,6 +11,7 @@ pub struct Settings {
     pub sync: Option<SyncSettings>,
     pub logging: Option<LoggingSettings>,
     pub backup: Option<BackupSettings>,
+    pub mail: Option<MailSettings>,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -142,4 +143,14 @@ pub struct LabelPrinterSettingNode {
     pub label_height: i32,
     pub label_width: i32,
     pub port: u16,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct MailSettings {
+    pub port: u16,
+    pub host: String,
+    pub starttls: bool, //SmtpTransport::starttls_relay(host) vs SmtpTransport::builder_dangerous(host).port(port)
+    pub username: String,
+    pub password: String,
+    pub from: String,
 }
