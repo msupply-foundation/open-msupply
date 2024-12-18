@@ -209,36 +209,6 @@ export const PrescriptionLineEditForm: React.FC<
           />
         </Grid>
       </AccordionPanelSection>
-      {item && (
-        <>
-          <AccordionPanelSection
-            title="Quantity"
-            closedSummary={t('label.available-quantity', {
-              number: availableQuantity.toFixed(0),
-            })}
-          >
-            <Grid item display="flex">
-              <Typography>
-                {t('label.available-quantity', {
-                  number: availableQuantity.toFixed(0),
-                })}
-              </Typography>
-            </Grid>
-            <Grid
-              style={{ display: 'flex' }}
-              justifyContent="flex-end"
-              flex={1}
-            >
-              <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
-              <BasicTextInput
-                disabled
-                sx={{ width: 150 }}
-                value={item?.unitName}
-              />
-            </Grid>
-          </AccordionPanelSection>
-        </>
-      )}
       {item && canAutoAllocate ? (
         <>
           <AccordionPanelSection
@@ -336,6 +306,36 @@ export const PrescriptionLineEditForm: React.FC<
         </>
       ) : (
         <Box height={100} />
+      )}
+      {item && (
+        <>
+          <AccordionPanelSection
+            title="Quantity"
+            closedSummary={t('label.available-quantity', {
+              number: availableQuantity.toFixed(0),
+            })}
+          >
+            <Grid item display="flex">
+              <Typography>
+                {t('label.available-quantity', {
+                  number: availableQuantity.toFixed(0),
+                })}
+              </Typography>
+            </Grid>
+            <Grid
+              style={{ display: 'flex' }}
+              justifyContent="flex-end"
+              flex={1}
+            >
+              <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
+              <BasicTextInput
+                disabled
+                sx={{ width: 150 }}
+                value={item?.unitName}
+              />
+            </Grid>
+          </AccordionPanelSection>
+        </>
       )}
     </Grid>
   );
