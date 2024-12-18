@@ -42,6 +42,7 @@ interface PrescriptionLineEditFormProps {
   ) => DraftStockOutLine[] | undefined;
   packSizeController: PackSizeController;
   disabled: boolean;
+  isNew: boolean;
   canAutoAllocate: boolean;
   isAutoAllocated: boolean;
   updateNotes: (note: string) => void;
@@ -61,6 +62,7 @@ export const PrescriptionLineEditForm: React.FC<
   packSizeController,
   availableQuantity,
   disabled,
+  isNew,
   canAutoAllocate,
   updateNotes,
   draftPrescriptionLines,
@@ -167,6 +169,14 @@ export const PrescriptionLineEditForm: React.FC<
   const note = prescriptionLineWithNote?.note ?? '';
 
   useEffect(() => {
+    const newIssueQuantity = Math.round(
+      allocatedQuantity /
+        Math.abs(Number(packSizeController.selected?.value || 1))
+    );
+    if (newIssueQuantity !== issueQuantity) setIssueQuantity(newIssueQuantity);
+  }, [item?.id]);
+
+  useEffect(() => {
     if (!isAutoAllocated) updateIssueQuantity(allocatedQuantity);
   }, [packSizeController.selected?.value, allocatedQuantity]);
 
@@ -178,7 +188,7 @@ export const PrescriptionLineEditForm: React.FC<
           <StockItemSearchInput
             autoFocus={!item}
             openOnFocus={!item}
-            disabled={disabled}
+            disabled={!isNew || disabled}
             currentItemId={item?.id}
             onChange={onChangeItem}
             includeNonVisibleWithStockOnHand
@@ -229,6 +239,7 @@ export const PrescriptionLineEditForm: React.FC<
             <ModalLabel label={t('label.directions')} />
             <BasicTextInput
               value={note}
+              disabled={disabled}
               onChange={e => {
                 updateNotes(e.target.value);
               }}
@@ -242,15 +253,18 @@ export const PrescriptionLineEditForm: React.FC<
             />
           </ModalRow>
           <Divider margin={10} />
-          <StockOutAlerts
-            allocationAlerts={allocationAlerts}
-            showZeroQuantityConfirmation={showZeroQuantityConfirmation}
-            isAutoAllocated={isAutoAllocated}
-          />
+          {!disabled && (
+            <StockOutAlerts
+              allocationAlerts={allocationAlerts}
+              showZeroQuantityConfirmation={showZeroQuantityConfirmation}
+              isAutoAllocated={isAutoAllocated}
+            />
+          )}
           <Grid container>
             <ModalLabel label={t('label.issue')} />
             <NumericTextInput
               autoFocus
+              disabled={disabled}
               value={issueQuantity}
               onChange={handleIssueQuantityChange}
               min={0}
@@ -279,6 +293,7 @@ export const PrescriptionLineEditForm: React.FC<
                 <Box marginLeft={1} />
                 <Select
                   sx={{ width: 110 }}
+                  disabled={disabled}
                   options={packSizeController.options}
                   value={packSizeController.selected?.value ?? ''}
                   onChange={e => {
