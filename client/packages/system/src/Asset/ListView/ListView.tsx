@@ -41,6 +41,7 @@ const AssetListComponent: FC = () => {
   const importModalController = useToggle();
 
   const columnDescriptions: ColumnDescription<AssetCatalogueItemFragment>[] = [
+    ...(isCentralServer ? [GenericColumnKey.Selection] : []),
     {
       key: 'subCatalogue',
       label: 'label.sub-catalogue',
@@ -80,7 +81,6 @@ const AssetListComponent: FC = () => {
     },
   ];
 
-  if (isCentralServer) columnDescriptions.unshift(GenericColumnKey.Selection);
   const columns = useColumns<AssetCatalogueItemFragment>(
     columnDescriptions,
     {
