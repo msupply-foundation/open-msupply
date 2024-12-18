@@ -35,6 +35,7 @@ export const usePrescriptionColumn = ({
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
+    GenericColumnKey.Selection,
     [
       getNotePopoverColumn(t('label.directions')),
       {
@@ -288,7 +289,6 @@ export const usePrescriptionColumn = ({
       },
     },
     expansionColumn,
-    GenericColumnKey.Selection,
   ];
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
