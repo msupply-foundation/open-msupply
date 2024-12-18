@@ -1,5 +1,5 @@
 use repository::{
-    contact_form_row::{ContactFormRow, ContactFormRowRepository},
+    contact_form_row::{ContactFormRow, ContactFormRowRepository, ContactType},
     RepositoryError, TransactionError,
 };
 mod generate;
@@ -23,6 +23,7 @@ pub enum InsertContactFormError {
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct InsertContactForm {
     pub id: String,
+    pub contact_type: ContactType,
     pub reply_email: String,
     pub body: String,
 }

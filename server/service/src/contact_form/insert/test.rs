@@ -3,6 +3,7 @@ mod insert {
     use repository::mock::{mock_store_a, mock_user_account_a, MockDataInserts};
     use repository::test_db::setup_all;
 
+    use crate::contact_form::insert::ContactType::Feedback;
     use crate::contact_form::insert::{InsertContactForm, InsertContactFormError};
     use crate::service_provider::ServiceProvider;
 
@@ -22,7 +23,8 @@ mod insert {
 
         let input: InsertContactForm = InsertContactForm {
             id: "test_id".to_string(),
-            reply_email: "somee@mail.com".to_string(),
+            contact_type: Feedback,
+            reply_email: "some@email.com".to_string(),
             body: "body".to_string(),
             ..Default::default()
         };
