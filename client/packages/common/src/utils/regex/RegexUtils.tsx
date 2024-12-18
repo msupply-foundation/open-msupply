@@ -69,4 +69,11 @@ export const RegexUtils = {
   removeEmptyLines: (input: string): string => {
     return input.replace(/(^\W*$\n)/gm, '');
   },
+
+  /* Checks that email has no white space, contains an '@' symbol, contains a domain
+   */
+  checkEmailIsValid: (email: string) => {
+    const emailRegex = /^[^\s@]+@(?!\.)(?!.*\.{2})[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  },
 };
