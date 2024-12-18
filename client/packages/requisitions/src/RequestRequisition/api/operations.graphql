@@ -8,7 +8,6 @@ fragment ItemWithStats on ItemNode {
   stats(storeId: $storeId) {
     averageMonthlyConsumption
     availableStockOnHand
-    totalStockOnHand
     availableMonthsOfStockOnHand
     totalConsumption
   }

@@ -24,7 +24,7 @@
       <tr>
         <td>{{stockLine.item.code}}</td>
         <td>{{stockLine.item.name}}</td>
-        <td>{{stockLine.batch}}</td>
+        <td>{{stockLine.batch | default(value='')}}</td>
         <td>
           {%if stockLine.expiryDate %}
           {{stockLine.expiryDate | date(format="%d/%m/%Y")}}
@@ -39,7 +39,7 @@
         <td>{{
           stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)  
         }}</td>
-        <td>{{stockLine.supplierName}}</td>    
+        <td>{{stockLine.supplierName | default(value='')}}</td>    
       </tr>
       {% endfor %}
     </tbody>

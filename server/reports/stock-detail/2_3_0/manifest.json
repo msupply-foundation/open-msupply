@@ -11,5 +11,6 @@
   "arguments": {
     "schema": "argument_schemas/arguments.json",
     "ui": "argument_schemas/arguments_ui.json"
-  }
+  },
+  "convert_data": "convert_data_js"
 }
