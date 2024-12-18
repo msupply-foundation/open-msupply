@@ -166,8 +166,7 @@ export const PrescriptionLineEditView = () => {
         Right={
           <>
             <PrescriptionLineEdit
-              draft={{ item: currentItem }}
-              // items={items}
+              item={currentItem ?? null}
               draftLines={allDraftLines[itemId] ?? []}
               updateLines={updateAllLines}
               setIsDirty={setIsDirty}

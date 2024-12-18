@@ -1,22 +1,13 @@
 import React, { useState } from 'react';
 import {
-  Typography,
   Grid,
-  InlineSpinner,
-  Box,
-  useTranslation,
   useBufferState,
-  TableProvider,
-  createTableStore,
-  createQueryParamsStore,
   InvoiceNodeStatus,
   DateUtils,
 } from '@openmsupply-client/common';
 import { useDraftPrescriptionLines } from './hooks';
 import { usePrescription } from '../api';
-import { Draft, DraftItem } from '../..';
 import {
-  PackSizeController,
   getAllocatedQuantity,
   sumAvailableQuantity,
   usePackSizeController,
@@ -24,23 +15,21 @@ import {
 } from '../../StockOut';
 import { DraftStockOutLine } from '../../types';
 import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
-import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 import { ItemRowFragment } from '@openmsupply-client/system';
 
 interface PrescriptionLineEditModalProps {
-  draft: Draft | null;
+  item: ItemRowFragment | null;
   draftLines: DraftStockOutLine[];
   updateLines: (lines: DraftStockOutLine[]) => void;
   setIsDirty: (dirty: boolean) => void;
 }
 
 export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
-  draft,
+  item,
   draftLines: draftPrescriptionLines,
   updateLines,
   setIsDirty,
 }) => {
-  const item = !draft ? null : (draft.item ?? null);
   const isNew = item === null;
   const [currentItem, setCurrentItem] = useBufferState(item);
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
@@ -149,79 +138,9 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
         showZeroQuantityConfirmation={showZeroQuantityConfirmation}
         hasOnHold={hasOnHold}
         hasExpired={hasExpired}
-      />
-      <TableWrapper
-        canAutoAllocate={canAutoAllocate}
-        currentItem={currentItem}
         isLoading={isLoading}
-        packSizeController={packSizeController}
         updateQuantity={onUpdateQuantity}
-        draftPrescriptionLines={draftPrescriptionLines}
-        allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
       />
     </Grid>
-  );
-};
-
-interface TableProps {
-  canAutoAllocate: boolean;
-  currentItem: DraftItem | null;
-  isLoading: boolean;
-  packSizeController: PackSizeController;
-  updateQuantity: (batchId: string, updateQuantity: number) => void;
-  draftPrescriptionLines: DraftStockOutLine[];
-  allocatedQuantity: number;
-}
-
-const TableWrapper: React.FC<TableProps> = ({
-  canAutoAllocate,
-  currentItem,
-  isLoading,
-  packSizeController,
-  updateQuantity,
-  draftPrescriptionLines,
-  allocatedQuantity,
-}) => {
-  const t = useTranslation();
-
-  if (!currentItem) return null;
-
-  if (isLoading)
-    return (
-      <Box
-        display="flex"
-        flex={1}
-        height={400}
-        justifyContent="center"
-        alignItems="center"
-      >
-        <InlineSpinner />
-      </Box>
-    );
-
-  if (!canAutoAllocate)
-    return (
-      <Box sx={{ margin: 'auto' }}>
-        <Typography>{t('messages.no-stock-available')}</Typography>
-      </Box>
-    );
-
-  return (
-    <>
-      <TableProvider
-        createStore={createTableStore}
-        queryParamsStore={createQueryParamsStore({
-          initialSortBy: { key: 'expiryDate' },
-        })}
-      >
-        <PrescriptionLineEditTable
-          packSizeController={packSizeController}
-          onChange={updateQuantity}
-          rows={draftPrescriptionLines}
-          item={currentItem}
-          allocatedQuantity={allocatedQuantity}
-        />
-      </TableProvider>
-    </>
   );
 };
