@@ -24,7 +24,6 @@ import { StockOutItem } from '../../types';
 export const PrescriptionDetailView: FC = () => {
   const {
     query: { data, loading },
-    isDisabled,
   } = usePrescription();
   const t = useTranslation();
   const navigate = useNavigate();
@@ -54,12 +53,7 @@ export const PrescriptionDetailView: FC = () => {
 
   const tabs = [
     {
-      Component: (
-        <ContentArea
-          onRowClick={!isDisabled ? onRowClick : null}
-          onAddItem={onAddItem}
-        />
-      ),
+      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
       value: 'Details',
     },
     {
