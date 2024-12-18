@@ -112,27 +112,33 @@ pub fn generate_aggregate_indicator_values(
 ) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
     let mut indicator_values = vec![];
 
+    let values = IndicatorValueRepository::new(input.connection).query_by_filter(
+        IndicatorValueFilter::new()
+            .period_id(EqualFilter::equal_to(&input.period_id))
+            .store_id(EqualFilter::equal_any(input.customer_store_ids.clone())),
+    )?;
+
     for program_indicator in input.program_indicators {
         for line in program_indicator.lines {
-            for column in line.columns {
+            for column in line.columns.clone() {
                 let aggregate = match column.value_type {
                     Some(IndicatorValueType::String) => column.default_value.clone(),
                     None => line.line.default_value.clone(),
                     Some(IndicatorValueType::Number) => {
-                        let values: Vec<String> = IndicatorValueRepository::new(input.connection)
-                            .query_by_filter(
-                                IndicatorValueFilter::new()
-                                    .indicator_column_id(EqualFilter::equal_to(&column.id))
-                                    .indicator_line_id(EqualFilter::equal_to(&line.line.id))
-                                    .store_id(EqualFilter::equal_any(
-                                        input.customer_store_ids.clone(),
-                                    )),
-                            )?
+                        let values_of_indicator: Vec<String> = values
+                            .clone()
                             .into_iter()
-                            .map(|v| v.value)
+                            .filter_map(|v| {
+                                match v.indicator_column_id == column.id
+                                    && v.indicator_line_id == line.line.id
+                                {
+                                    true => Some(v.value),
+                                    false => None,
+                                }
+                            })
                             .collect();
 
-                        let value_sum: Option<i32> = values
+                        let value_sum: Option<i32> = values_of_indicator
                             .into_iter()
                             .map(|value| value.parse::<i32>())
                             .collect::<Result<Vec<_>, _>>()
