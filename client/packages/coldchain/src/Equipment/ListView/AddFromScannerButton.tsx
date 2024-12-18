@@ -114,22 +114,24 @@ export const AddFromScannerButtonComponent = () => {
   const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     const permission = UserPermission.AssetQuery;
 
-    if (userHasPermission(permission)) {
-      if (!isConnected) {
-        show(e);
-        return;
+    if (!userHasPermission(permission)) {
+      info(t('error.no-asset-view-permission'))();
+      return;
+    }
+    if (!isConnected) {
+      show(e);
+      return;
+    }
+    buttonRef.current?.blur();
+    if (isScanning) {
+      stopScan();
+    } else {
+      try {
+        await startScanning(handleScanResult);
+      } catch (e) {
+        error(t('error.unable-to-start-scanning', { error: e }))();
       }
-      buttonRef.current?.blur();
-      if (isScanning) {
-        stopScan();
-      } else {
-        try {
-          await startScanning(handleScanResult);
-        } catch (e) {
-          error(t('error.unable-to-start-scanning', { error: e }))();
-        }
-      }
-    } else info(t('error.no-asset-view-permission'))();
+    }
   };
 
   //   stop scanning when the component unloads
