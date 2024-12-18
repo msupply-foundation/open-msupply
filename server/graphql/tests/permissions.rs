@@ -248,7 +248,7 @@ mod permission_tests {
             TestData {
                 name: "reports",
                 query: r#"query Query {
-                reports(storeId: "") {
+                reports(storeId: "", userLanguage: "") {
                   ... on ReportConnector {
                     nodes {
                       id
