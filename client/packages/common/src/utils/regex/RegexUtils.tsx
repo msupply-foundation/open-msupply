@@ -73,7 +73,7 @@ export const RegexUtils = {
   /* Checks that email has no white space, contains an '@' symbol, contains a domain
    */
   checkEmailIsValid: (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\s@]+@(?!\.)(?!.*\.{2})[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   },
 };
