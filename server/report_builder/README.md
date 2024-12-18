@@ -362,3 +362,32 @@ Reports can be built and tested directly from the 'open-msupply' repo, but devel
 Once changes are satisfactory, new reports can be moved directly into the OMS repo under a new version dir.
 
 Note that reports won't show up in OMS unless they are built into the generated json using the `build-standard-reports` command.
+
+## Localising JSON form fields
+
+Fields in UI schema can be translated our inbuilt translating function.
+
+Translations are invoked by adding by adding a identifying text key `T#` before a value in the json or ui schema.
+A translating function will step through the serialised json Value searching instances of this identifier. It will then strip it from the string, and translate the remaining string value.
+
+For example:
+
+```
+{
+"key": "T#label.value"
+}
+```
+
+becomes
+
+```
+{
+"key": "value"
+}
+```
+
+Where value is the translated value of 'label.value' in our `common.json` translation json in the front end.
+
+The "label" of the ui schema controls the text displayed in the front end report filtering modal.
+
+This function could also be used on any other serialised json value such as patient json schema.

@@ -4,15 +4,16 @@
     {
       "type": "Control",
       "scope": "#/properties/itemCodeOrName",
-      "label": "Item Code or Name",
+      "label": "T#report.item-code-or-name",
       "options": {
         "useDebounce": false
       }
     },
+
     {
       "type": "Control",
       "scope": "#/properties/sort",
-      "label": "Sort by:",
+      "label": "T#report.sort-by",
       "options": {
         "show": [
           ["item.name", "item"],
@@ -29,7 +30,7 @@
     {
       "type": "Control",
       "scope": "#/properties/dir",
-      "label": "Sort direction"
+      "label": "T#report.sort-direction"
     }
   ]
 }

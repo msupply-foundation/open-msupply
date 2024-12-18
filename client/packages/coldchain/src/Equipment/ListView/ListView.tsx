@@ -16,6 +16,7 @@ import {
   DotCell,
   RouteBuilder,
   ColumnFormat,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { Toolbar } from './Toolbar';
@@ -52,7 +53,7 @@ const AssetListComponent: FC = () => {
 
   const columnsToCreate: ColumnDescription<AssetRowFragment>[] = [];
   if (isCentralServer)
-    columnsToCreate.push({
+    columnsToCreate.push(GenericColumnKey.Selection, {
       key: 'store',
       label: 'label.store',
       accessor: ({ rowData }) => rowData.store?.code,
@@ -121,8 +122,7 @@ const AssetListComponent: FC = () => {
       key: 'notes',
       label: 'label.notes',
       sortable: false,
-    },
-    'selection'
+    }
   );
 
   const columns = useColumns(
