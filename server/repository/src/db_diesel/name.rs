@@ -60,6 +60,7 @@ pub struct NameFilter {
     pub address2: Option<StringFilter>,
     pub country: Option<StringFilter>,
     pub email: Option<StringFilter>,
+    pub supplying_store_id: Option<EqualFilter<String>>,
 
     pub code_or_name: Option<StringFilter>,
 }
@@ -201,6 +202,7 @@ impl<'a> NameRepository<'a> {
                 country,
                 email,
                 code_or_name,
+                supplying_store_id,
             } = f;
 
             // or filter need to be applied before and filters
@@ -223,6 +225,7 @@ impl<'a> NameRepository<'a> {
             apply_string_filter!(query, address2, name_dsl::address2);
             apply_string_filter!(query, country, name_dsl::country);
             apply_string_filter!(query, email, name_dsl::email);
+            apply_equal_filter!(query, supplying_store_id, name_dsl::supplying_store_id);
 
             if let Some(is_customer) = is_customer {
                 query = query.filter(name_store_join_dsl::name_is_customer.eq(is_customer));
@@ -361,6 +364,11 @@ impl NameFilter {
 
     pub fn code_or_name(mut self, filter: StringFilter) -> Self {
         self.code_or_name = Some(filter);
+        self
+    }
+
+    pub fn supplying_store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.supplying_store_id = Some(filter);
         self
     }
 }
