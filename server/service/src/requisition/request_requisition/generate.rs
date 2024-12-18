@@ -1,8 +1,13 @@
 use chrono::Utc;
-use repository::{EqualFilter, RepositoryError, RequisitionLineRow, RequisitionRow};
+use repository::indicator_value::{IndicatorValueFilter, IndicatorValueRepository};
+use repository::{
+    EqualFilter, IndicatorValueRow, IndicatorValueType, RepositoryError, RequisitionLineRow,
+    RequisitionRow, StorageConnection,
+};
 use util::uuid::uuid;
 
 use crate::item_stats::{get_item_stats, ItemStatsFilter};
+use crate::requisition::program_indicator::query::ProgramIndicator;
 use crate::service_provider::ServiceContext;
 
 pub struct GenerateSuggestedQuantity {
@@ -91,4 +96,76 @@ pub fn generate_requisition_lines(
         .collect();
 
     Ok(result)
+}
+
+pub struct AggregateInternalOrderIndicatorGenerationInput<'a> {
+    pub connection: &'a StorageConnection,
+    pub store_id: String,
+    pub period_id: String,
+    pub program_indicators: Vec<ProgramIndicator>,
+    pub other_party_id: String,
+    pub customer_store_ids: Vec<String>,
+}
+
+pub fn generate_aggregate_indicator_values(
+    input: AggregateInternalOrderIndicatorGenerationInput,
+) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
+    let mut indicator_values = vec![];
+
+    for program_indicator in input.program_indicators {
+        for line in program_indicator.lines {
+            for column in line.columns {
+                let aggregate = match column.value_type {
+                    Some(IndicatorValueType::String) => column.default_value.clone(),
+                    None => line.line.default_value.clone(),
+                    Some(IndicatorValueType::Number) => {
+                        let values: Vec<String> = IndicatorValueRepository::new(input.connection)
+                            .query_by_filter(
+                                IndicatorValueFilter::new()
+                                    .indicator_column_id(EqualFilter::equal_to(&column.id))
+                                    .indicator_line_id(EqualFilter::equal_to(&line.line.id))
+                                    .store_id(EqualFilter::equal_any(
+                                        input.customer_store_ids.clone(),
+                                    )),
+                            )?
+                            .into_iter()
+                            .map(|v| v.value)
+                            .collect();
+
+                        let value_sum: Option<i32> = values
+                            .into_iter()
+                            .map(|value| value.parse::<i32>())
+                            .collect::<Result<Vec<_>, _>>()
+                            .map_err(|err| RepositoryError::DBError {
+                                msg: "Unable to parse number indicator value".to_string(),
+                                extra: format!("{}", err),
+                            })?
+                            .into_iter()
+                            .reduce(|x, y| x + y);
+
+                        if let Some(value_sum) = value_sum {
+                            value_sum.to_string()
+                        } else {
+                            column.default_value.clone()
+                        }
+                    }
+                };
+
+                let indicator_value = IndicatorValueRow {
+                    id: uuid(),
+                    customer_name_link_id: input.other_party_id.to_string(),
+                    store_id: input.store_id.to_string(),
+                    period_id: input.period_id.to_string(),
+                    indicator_line_id: line.line.id.to_string(),
+                    indicator_column_id: column.id.to_string(),
+                    // TODO Refactor to only one value query
+                    value: aggregate,
+                };
+
+                indicator_values.push(indicator_value);
+            }
+        }
+    }
+
+    Ok(indicator_values)
 }
