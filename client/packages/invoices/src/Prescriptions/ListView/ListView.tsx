@@ -13,6 +13,7 @@ import {
   useToggle,
   useUrlQueryParams,
   ColumnFormat,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
 import { usePrescriptionList, usePrescription } from '../api';
@@ -62,6 +63,7 @@ const PrescriptionListViewComponent: FC = () => {
 
   const columns = useColumns<PrescriptionRowFragment>(
     [
+      GenericColumnKey.Selection,
       [getNameAndColorColumn(), { setter: update }],
       [
         'status',
@@ -85,7 +87,6 @@ const PrescriptionListViewComponent: FC = () => {
         sortable: true,
       },
       ['comment'],
-      'selection',
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]

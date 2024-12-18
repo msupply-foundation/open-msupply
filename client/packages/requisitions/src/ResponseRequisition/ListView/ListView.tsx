@@ -14,6 +14,7 @@ import {
   ColumnDescription,
   TooltipTextCell,
   useToggle,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -70,6 +71,7 @@ export const ResponseRequisitionListView: FC = () => {
     data?.nodes.some(row => row.period);
 
   const columnDefinitions: ColumnDescription<ResponseRowFragment>[] = [
+    GenericColumnKey.Selection,
     [
       getNameAndColorColumn(),
       { setter: ({ id, colour }) => onUpdate({ id, colour }) },
@@ -133,7 +135,7 @@ export const ResponseRequisitionListView: FC = () => {
   }
   columnDefinitions.push(
     ['comment', { minWidth: 350, Cell: TooltipTextCell }],
-    ['selection']
+    
   );
 
   const columns = useColumns<ResponseRowFragment>(
