@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Grid,
   useBufferState,
   InvoiceNodeStatus,
   DateUtils,
@@ -17,14 +16,14 @@ import { DraftStockOutLine } from '../../types';
 import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
 import { ItemRowFragment } from '@openmsupply-client/system';
 
-interface PrescriptionLineEditModalProps {
+interface PrescriptionLineEditProps {
   item: ItemRowFragment | null;
   draftLines: DraftStockOutLine[];
   updateLines: (lines: DraftStockOutLine[]) => void;
   setIsDirty: (dirty: boolean) => void;
 }
 
-export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
+export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
   item,
   draftLines: draftPrescriptionLines,
   updateLines,
@@ -118,29 +117,27 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   );
 
   return (
-    <Grid container gap={0.5}>
-      <PrescriptionLineEditForm
-        disabled={isDisabled}
-        isNew={isNew}
-        packSizeController={packSizeController}
-        onChangeItem={(item: ItemRowFragment | null) => {
-          setIsAutoAllocated(false);
-          setCurrentItem(item);
-        }}
-        item={currentItem}
-        allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
-        availableQuantity={sumAvailableQuantity(draftPrescriptionLines)}
-        onChangeQuantity={onAllocate}
-        canAutoAllocate={canAutoAllocate}
-        isAutoAllocated={isAutoAllocated}
-        updateNotes={onUpdateNotes}
-        draftPrescriptionLines={draftPrescriptionLines}
-        showZeroQuantityConfirmation={showZeroQuantityConfirmation}
-        hasOnHold={hasOnHold}
-        hasExpired={hasExpired}
-        isLoading={isLoading}
-        updateQuantity={onUpdateQuantity}
-      />
-    </Grid>
+    <PrescriptionLineEditForm
+      disabled={isDisabled}
+      isNew={isNew}
+      packSizeController={packSizeController}
+      onChangeItem={(item: ItemRowFragment | null) => {
+        setIsAutoAllocated(false);
+        setCurrentItem(item);
+      }}
+      item={currentItem}
+      allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
+      availableQuantity={sumAvailableQuantity(draftPrescriptionLines)}
+      onChangeQuantity={onAllocate}
+      canAutoAllocate={canAutoAllocate}
+      isAutoAllocated={isAutoAllocated}
+      updateNotes={onUpdateNotes}
+      draftPrescriptionLines={draftPrescriptionLines}
+      showZeroQuantityConfirmation={showZeroQuantityConfirmation}
+      hasOnHold={hasOnHold}
+      hasExpired={hasExpired}
+      isLoading={isLoading}
+      updateQuantity={onUpdateQuantity}
+    />
   );
 };

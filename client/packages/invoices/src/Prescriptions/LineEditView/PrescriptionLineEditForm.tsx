@@ -241,7 +241,10 @@ export const PrescriptionLineEditForm: React.FC<
       )}
       {item && canAutoAllocate ? (
         <>
-          <AccordionPanelSection title={t('label.directions')}>
+          <AccordionPanelSection
+            title={t('label.directions')}
+            closedSummary={note}
+          >
             <BasicTextInput
               value={note}
               disabled={disabled}
