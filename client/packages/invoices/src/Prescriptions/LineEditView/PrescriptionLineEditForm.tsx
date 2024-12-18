@@ -169,6 +169,14 @@ export const PrescriptionLineEditForm: React.FC<
   const note = prescriptionLineWithNote?.note ?? '';
 
   useEffect(() => {
+    const newIssueQuantity = Math.round(
+      allocatedQuantity /
+        Math.abs(Number(packSizeController.selected?.value || 1))
+    );
+    if (newIssueQuantity !== issueQuantity) setIssueQuantity(newIssueQuantity);
+  }, [item?.id]);
+
+  useEffect(() => {
     if (!isAutoAllocated) updateIssueQuantity(allocatedQuantity);
   }, [packSizeController.selected?.value, allocatedQuantity]);
 

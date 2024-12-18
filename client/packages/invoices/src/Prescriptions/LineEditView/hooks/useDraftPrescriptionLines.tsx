@@ -47,6 +47,10 @@ export const useDraftPrescriptionLines = (
     }
 
     if (!data) return;
+    if (draftLines.length > 0)
+      // Draft lines already in state from previous rendering
+      return;
+
     // Stock lines (data.nodes) are coming from availableStockLines from
     // itemNode these are filtered by totalNumberOfPacks > 0 but it's possible
     // to issue all of the packs from the batch in picked status, need to make
@@ -59,7 +63,6 @@ export const useDraftPrescriptionLines = (
     const noStockLines = stockLines.length == 0;
 
     if (noStockLines || !item) {
-      // return setDraftStockOutLines([]);
       return updateDraftLines([]);
     }
 
