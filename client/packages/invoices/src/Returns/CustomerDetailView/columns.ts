@@ -36,6 +36,7 @@ export const useCustomerReturnColumns = ({
   const columns: ColumnDescription<
     CustomerReturnLineFragment | CustomerReturnItem
   >[] = [
+    GenericColumnKey.Selection,
     [
       'itemCode',
       {
@@ -177,7 +178,6 @@ export const useCustomerReturnColumns = ({
       },
     ],
     expansionColumn,
-    GenericColumnKey.Selection,
   ];
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
