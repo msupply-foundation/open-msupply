@@ -31,7 +31,7 @@ const getStatusOptions = (
     {
       value: RequisitionNodeStatus.Finalised,
       label: getButtonLabel(RequisitionNodeStatus.Finalised),
-      isDisabled: true,
+      isDisabled: false,
     },
   ];
 
@@ -62,11 +62,10 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = (requisition: ResponseFragment) => {
-  const { id, lines, status, shipments } = useResponse.document.fields([
+  const { id, lines, status } = useResponse.document.fields([
     'id',
     'lines',
     'status',
-    'shipments',
   ]);
   const { mutateAsync: save } = useResponse.document.update();
 
@@ -79,8 +78,6 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
     () => getStatusOptions(status, getButtonLabel(t)),
     [status, t]
   );
-
-  const isDisabled = useResponse.utils.isDisabled();
 
   const notFullySuppliedLines = requisition.lines.nodes.filter(
     line => line.remainingQuantityToSupply > 0
@@ -128,7 +125,7 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
     if (!selectedOption) return null;
     let result;
     try {
-      result = await save({ id, status: selectedOption.value });
+      result = await save({ id });
       const errorMessage = mapStructuredErrors(result);
 
       if (errorMessage) {
@@ -141,32 +138,30 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
     }
   };
 
-  const confirmationTitle =
-    selectedOption?.value === RequisitionNodeStatus.Finalised &&
+  const confirmation =
     notFullySuppliedLines > 0
-      ? t('heading.confirm-finalise')
-      : t('heading.are-you-sure');
-
-  const confirmationMessage =
-    notFullySuppliedLines > 0
-      ? t('messages.confirm-not-fully-supplied', {
-          count: notFullySuppliedLines,
-        })
-      : t('messages.confirm-status-as', {
-          status: selectedOption?.value
-            ? getStatusTranslation(selectedOption?.value)
-            : '',
-        });
-
-  const confirmationInfo =
-    shipments?.totalCount === 0 && !isDisabled
-      ? t('info.no-shipment')
-      : undefined;
+      ? {
+          title: t('heading.confirm-finalise'),
+          message: t('messages.confirm-not-fully-supplied', {
+            count: notFullySuppliedLines,
+          }),
+          info: t('info.no-shipment'),
+        }
+      : {
+          title: t('heading.are-you-sure'),
+          message: t('messages.confirm-status-as', {
+            status: selectedOption?.value
+              ? getStatusTranslation(selectedOption?.value)
+              : '',
+          }),
+          info: undefined,
+        };
 
   const getConfirmation = useConfirmationModal({
-    title: confirmationTitle,
-    message: confirmationMessage,
-    info: confirmationInfo,
+    title: confirmation.title,
+    message: confirmation.message,
+    info: confirmation.info,
+    buttonLabel: t('button.continue'),
     onConfirm: onConfirmStatusChange,
   });
 

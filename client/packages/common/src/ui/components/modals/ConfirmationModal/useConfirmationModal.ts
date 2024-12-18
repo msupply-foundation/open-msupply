@@ -9,6 +9,7 @@ export const useConfirmationModal = ({
   onConfirm,
   message,
   info,
+  buttonLabel = 'OK',
   title,
   onCancel,
   iconType = 'help',
@@ -21,6 +22,7 @@ export const useConfirmationModal = ({
     setOnConfirm,
     setOnCancel,
     setTitle,
+    setButtonLabel,
   } = useContext(ConfirmationModalContext);
 
   const trigger = (
@@ -32,6 +34,7 @@ export const useConfirmationModal = ({
     setTitle(paramPatch?.title ?? title);
     setOnCancel(paramPatch?.onCancel ?? onCancel);
     setIconType(iconType);
+    setButtonLabel(buttonLabel);
     setOpen(true);
   };
 
@@ -45,5 +48,6 @@ export const useConfirmationModal = ({
     setTitle,
     setOpen,
     iconType,
+    buttonLabel,
   ]);
 };
