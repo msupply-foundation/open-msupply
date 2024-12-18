@@ -3,24 +3,25 @@ import {
   Grid,
   BasicTextInput,
   ModalLabel,
-  ModalRow,
   Select,
   useTranslation,
   NumericTextInput,
-  Divider,
   Box,
   Typography,
   useFormatNumber,
   useDebounceCallback,
   InputLabel,
   useDebouncedValueCallback,
+  TableProvider,
+  createTableStore,
+  createQueryParamsStore,
+  InlineSpinner,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
   ItemRowFragment,
 } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
-import { DraftItem } from '../..';
 import { PackSizeController } from '../../StockOut';
 import {
   StockOutAlert,
@@ -29,11 +30,13 @@ import {
 } from '../../StockOut';
 import { DraftStockOutLine } from '../../types';
 import { isA } from '../../utils';
+import { AccordionPanelSection } from './PanelSection';
+import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 
 interface PrescriptionLineEditFormProps {
   allocatedQuantity: number;
   availableQuantity: number;
-  item: DraftItem | null;
+  item: ItemRowFragment | null;
   onChangeItem: (newItem: ItemRowFragment | null) => void;
   onChangeQuantity: (
     quantity: number,
@@ -50,6 +53,8 @@ interface PrescriptionLineEditFormProps {
   showZeroQuantityConfirmation: boolean;
   hasOnHold: boolean;
   hasExpired: boolean;
+  isLoading: boolean;
+  updateQuantity: (batchId: string, updateQuantity: number) => void;
 }
 
 export const PrescriptionLineEditForm: React.FC<
@@ -70,6 +75,8 @@ export const PrescriptionLineEditForm: React.FC<
   isAutoAllocated,
   hasOnHold,
   hasExpired,
+  isLoading,
+  updateQuantity,
 }) => {
   const t = useTranslation();
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
@@ -182,8 +189,10 @@ export const PrescriptionLineEditForm: React.FC<
 
   return (
     <Grid container gap="4px">
-      <ModalRow>
-        <ModalLabel label={t('label.item', { count: 1 })} />
+      <AccordionPanelSection
+        title={t('label.item', { count: 1 })}
+        closedSummary={item?.name}
+      >
         <Grid item flex={1}>
           <StockItemSearchInput
             autoFocus={!item}
@@ -199,25 +208,22 @@ export const PrescriptionLineEditForm: React.FC<
             }
           />
         </Grid>
-      </ModalRow>
+      </AccordionPanelSection>
       {item && (
         <>
-          <ModalRow>
-            <ModalLabel label="" />
+          <AccordionPanelSection
+            title="Quantity"
+            closedSummary={t('label.available-quantity', {
+              number: availableQuantity.toFixed(0),
+            })}
+          >
             <Grid item display="flex">
-              <Typography
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                }}
-              >
+              <Typography>
                 {t('label.available-quantity', {
                   number: availableQuantity.toFixed(0),
                 })}
               </Typography>
             </Grid>
-
             <Grid
               style={{ display: 'flex' }}
               justifyContent="flex-end"
@@ -230,13 +236,12 @@ export const PrescriptionLineEditForm: React.FC<
                 value={item?.unitName}
               />
             </Grid>
-          </ModalRow>
+          </AccordionPanelSection>
         </>
       )}
       {item && canAutoAllocate ? (
         <>
-          <ModalRow>
-            <ModalLabel label={t('label.directions')} />
+          <AccordionPanelSection title={t('label.directions')}>
             <BasicTextInput
               value={note}
               disabled={disabled}
@@ -245,14 +250,13 @@ export const PrescriptionLineEditForm: React.FC<
               }}
               InputProps={{
                 sx: {
-                  backgroundColor: theme => theme.palette.background.menu,
+                  // backgroundColor: theme => theme.palette.background.menu,
                 },
               }}
               fullWidth
               style={{ flex: 1 }}
             />
-          </ModalRow>
-          <Divider margin={10} />
+          </AccordionPanelSection>
           {!disabled && (
             <StockOutAlerts
               allocationAlerts={allocationAlerts}
@@ -260,70 +264,139 @@ export const PrescriptionLineEditForm: React.FC<
               isAutoAllocated={isAutoAllocated}
             />
           )}
-          <Grid container>
-            <ModalLabel label={t('label.issue')} />
-            <NumericTextInput
-              autoFocus
-              disabled={disabled}
-              value={issueQuantity}
-              onChange={handleIssueQuantityChange}
-              min={0}
-            />
-
-            <Box marginLeft={1} />
-
-            {packSizeController.options.length ? (
-              <>
-                <Grid
-                  item
-                  alignItems="center"
-                  display="flex"
-                  justifyContent="flex-start"
-                  style={{ minWidth: 125 }}
-                >
-                  <InputLabel sx={{ fontSize: '12px' }}>
-                    {packSizeController.selected?.value === -1
-                      ? `${t('label.unit-plural', {
-                          unit: item?.unitName,
-                          count: issueQuantity,
-                        })} ${t('label.in-packs-of')}`
-                      : t('label.in-packs-of')}
-                  </InputLabel>
-                </Grid>
-                <Box marginLeft={1} />
-                <Select
-                  sx={{ width: 110 }}
-                  disabled={disabled}
-                  options={packSizeController.options}
-                  value={packSizeController.selected?.value ?? ''}
-                  onChange={e => {
-                    const { value } = e.target;
-                    onChangePackSize(Number(value));
-                  }}
-                />
-                {packSizeController.selected?.value !== -1 && (
+          <AccordionPanelSection title={t('label.quantity')}>
+            <Grid container>
+              <ModalLabel label={t('label.issue')} />
+              <NumericTextInput
+                autoFocus
+                disabled={disabled}
+                value={issueQuantity}
+                onChange={handleIssueQuantityChange}
+                min={0}
+              />
+              {packSizeController.options.length ? (
+                <>
                   <Grid
                     item
                     alignItems="center"
                     display="flex"
                     justifyContent="flex-start"
+                    style={{ minWidth: 125 }}
                   >
-                    <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
-                      {t('label.unit-plural', {
-                        count: packSizeController.selected?.value,
-                        unit: item?.unitName,
-                      })}
+                    <InputLabel sx={{ fontSize: '12px' }}>
+                      {packSizeController.selected?.value === -1
+                        ? `${t('label.unit-plural', {
+                            unit: item?.unitName,
+                            count: issueQuantity,
+                          })} ${t('label.in-packs-of')}`
+                        : t('label.in-packs-of')}
                     </InputLabel>
                   </Grid>
-                )}
-                <Box marginLeft="auto" />
-              </>
-            ) : null}
-          </Grid>
+                  <Select
+                    sx={{ width: 110 }}
+                    disabled={disabled}
+                    options={packSizeController.options}
+                    value={packSizeController.selected?.value ?? ''}
+                    onChange={e => {
+                      const { value } = e.target;
+                      onChangePackSize(Number(value));
+                    }}
+                  />
+                  {packSizeController.selected?.value !== -1 && (
+                    <Grid
+                      item
+                      alignItems="center"
+                      display="flex"
+                      justifyContent="flex-start"
+                    >
+                      <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
+                        {t('label.unit-plural', {
+                          count: packSizeController.selected?.value,
+                          unit: item?.unitName,
+                        })}
+                      </InputLabel>
+                    </Grid>
+                  )}
+                </>
+              ) : null}
+            </Grid>
+            <TableWrapper
+              canAutoAllocate={canAutoAllocate}
+              currentItem={item}
+              isLoading={isLoading}
+              packSizeController={packSizeController}
+              updateQuantity={updateQuantity}
+              draftPrescriptionLines={draftPrescriptionLines}
+              allocatedQuantity={allocatedQuantity}
+            />
+          </AccordionPanelSection>
         </>
       ) : (
         <Box height={100} />
       )}
     </Grid>
+  );
+};
+
+interface TableProps {
+  canAutoAllocate: boolean;
+  currentItem: ItemRowFragment | null;
+  isLoading: boolean;
+  packSizeController: PackSizeController;
+  updateQuantity: (batchId: string, updateQuantity: number) => void;
+  draftPrescriptionLines: DraftStockOutLine[];
+  allocatedQuantity: number;
+}
+
+const TableWrapper: React.FC<TableProps> = ({
+  canAutoAllocate,
+  currentItem,
+  isLoading,
+  packSizeController,
+  updateQuantity,
+  draftPrescriptionLines,
+  allocatedQuantity,
+}) => {
+  const t = useTranslation();
+
+  if (!currentItem) return null;
+
+  if (isLoading)
+    return (
+      <Box
+        display="flex"
+        flex={1}
+        height={400}
+        justifyContent="center"
+        alignItems="center"
+      >
+        <InlineSpinner />
+      </Box>
+    );
+
+  if (!canAutoAllocate)
+    return (
+      <Box sx={{ margin: 'auto' }}>
+        <Typography>{t('messages.no-stock-available')}</Typography>
+      </Box>
+    );
+
+  return (
+    <>
+      <TableProvider
+        createStore={createTableStore}
+        queryParamsStore={createQueryParamsStore({
+          initialSortBy: { key: 'expiryDate' },
+        })}
+      >
+        <PrescriptionLineEditTable
+          packSizeController={packSizeController}
+          onChange={updateQuantity}
+          rows={draftPrescriptionLines}
+          item={currentItem}
+          allocatedQuantity={allocatedQuantity}
+        />
+      </TableProvider>
+    </>
   );
 };
