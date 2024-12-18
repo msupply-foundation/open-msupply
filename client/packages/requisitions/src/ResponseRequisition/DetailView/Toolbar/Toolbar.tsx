@@ -15,27 +15,20 @@ import { CustomerSearchInput } from '@openmsupply-client/system';
 
 import { useResponse } from '../../api';
 import { getApprovalStatusKey } from '../../../utils';
-import { ToolbarDropDown } from './ToolbarDropDown';
+// import { ToolbarDropDown } from './ToolbarDropDown';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
   const isDisabled = useResponse.utils.isDisabled();
   const { itemFilter, setItemFilter } = useResponse.line.list();
 
-  const {
-    approvalStatus,
-    otherParty,
-    theirReference,
-    shipments,
-    update,
-    linkedRequisition,
-  } = useResponse.document.fields([
-    'approvalStatus',
-    'otherParty',
-    'theirReference',
-    'shipments',
-    'linkedRequisition',
-  ]);
+  const { approvalStatus, otherParty, theirReference, shipments, update } =
+    useResponse.document.fields([
+      'approvalStatus',
+      'otherParty',
+      'theirReference',
+      'shipments',
+    ]);
   const noLinkedShipments = (shipments?.totalCount ?? 0) === 0;
   const showInfo = noLinkedShipments && !isDisabled;
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
@@ -106,10 +99,6 @@ export const Toolbar: FC = () => {
             setItemFilter(newValue);
           }}
           debounceTime={0}
-        />
-        <ToolbarDropDown
-          isDisabled={isDisabled}
-          hasLinkedRequisition={!!linkedRequisition}
         />
       </Grid>
     </AppBarContentPortal>
