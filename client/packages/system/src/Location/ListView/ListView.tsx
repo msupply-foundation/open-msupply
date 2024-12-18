@@ -8,6 +8,7 @@ import {
   NothingHere,
   useTranslation,
   useUrlQueryParams,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { useLocation, LocationRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -38,6 +39,7 @@ const LocationListComponent: FC = () => {
   const t = useTranslation();
   const columns = useColumns<LocationRowFragment>(
     [
+      GenericColumnKey.Selection,
       'code',
       'name',
       {
@@ -50,7 +52,6 @@ const LocationListComponent: FC = () => {
         width: 200,
         sortable: false,
       },
-      'selection',
     ],
     {
       onChangeSortBy: updateSortQuery,

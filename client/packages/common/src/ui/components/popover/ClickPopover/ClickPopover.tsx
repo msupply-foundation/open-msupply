@@ -31,7 +31,7 @@ export const ClickPopover: React.FC<PropsWithChildren<ClickPopoverProps>> = ({
           color="primary"
           onClick={hide}
           size="small"
-          style={{ position: 'absolute', right: 0, top: 0 }}
+          style={{ position: 'absolute', right: 4, top: 4 }}
         >
           <CloseIcon />
         </IconButton>

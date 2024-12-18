@@ -50,6 +50,7 @@ export const useRequestColumns = () => {
   const { getError } = useRequestRequisitionLineErrorContext();
 
   const columnDefinitions: ColumnDescription<RequestLineFragment>[] = [
+    GenericColumnKey.Selection,
     getCommentPopoverColumn(),
     [
       'itemCode',
@@ -250,7 +251,6 @@ export const useRequestColumns = () => {
       accessor: ({ rowData }) => rowData.linkedRequisitionLine?.approvalComment,
     });
   }
-  columnDefinitions.push(GenericColumnKey.Selection);
 
   const columns = useColumns<RequestLineFragment>(
     columnDefinitions,
