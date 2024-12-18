@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Alert, Grid, Typography } from '@mui/material';
+import { Grid, Typography } from '@mui/material';
 import { BasicModal } from '../BasicModal';
 import { AlertIcon, HelpIcon, InfoIcon } from '@common/icons';
 import { DialogButton, LoadingButton } from '../../buttons';
+import { Alert } from '@common/components';
 
 interface ConfirmationModalProps {
   open: boolean;
@@ -14,6 +15,7 @@ interface ConfirmationModalProps {
   message: string;
   info?: string | undefined;
   iconType?: 'alert' | 'info' | 'help';
+  buttonLabel?: string | undefined;
 }
 
 const iconLookup = {
@@ -32,6 +34,7 @@ export const ConfirmationModal = ({
   info,
   onCancel,
   iconType = 'alert',
+  buttonLabel,
 }: ConfirmationModalProps) => {
   const [loading, setLoading] = useState(false);
   const Icon = iconLookup[iconType];
@@ -88,7 +91,7 @@ export const ConfirmationModal = ({
                 onCancel();
               }}
             >
-              OK
+              {buttonLabel}
             </LoadingButton>
           </Grid>
         </Grid>
