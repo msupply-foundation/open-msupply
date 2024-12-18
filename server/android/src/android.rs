@@ -64,6 +64,8 @@ pub mod android {
                     .with_directory(files_dir.to_string_lossy().to_string()),
             ),
             backup: None,
+            // Email sending not supported on Android // TODO: do we need to?
+            mail: None,
         };
 
         logging_init(settings.logging.clone(), None);
