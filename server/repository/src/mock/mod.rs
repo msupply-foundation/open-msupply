@@ -735,7 +735,6 @@ impl MockDataInserts {
     }
 
     pub fn contact_form(mut self) -> Self {
-        self.stores = true;
         self.contact_form = true;
         self
     }
