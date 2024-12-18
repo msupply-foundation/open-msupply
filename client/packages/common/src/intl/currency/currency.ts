@@ -98,6 +98,7 @@ const getPatterns = (locale: string) => {
 export type Currencies =
   | 'USD'
   | 'EUR'
+  | 'CDF'
   | 'NZD'
   | 'DJF'
   | 'QAR'
@@ -106,7 +107,9 @@ export type Currencies =
   | 'PGK'
   | 'COP'
   | 'SBD'
-  | 'KMF';
+  | 'KMF'
+  | 'XAF'
+  | 'XOF';
 
 export const currencyOptions = (locale: string, code?: Currencies) => {
   switch (code) {
@@ -128,6 +131,36 @@ export const currencyOptions = (locale: string, code?: Currencies) => {
         ...getPatterns(locale),
         symbol: 'DJF',
         precision: 0,
+        format,
+      };
+    case 'XOF':
+      return {
+        // eslint-disable-next-line no-irregular-whitespace
+        // separator: " " decimal = ","
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'XOF',
+        precision: 0,
+        format,
+      };
+    case 'XAF':
+      return {
+        // eslint-disable-next-line no-irregular-whitespace
+        // separator: " " decimal = ","
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'XAF',
+        precision: 0,
+        format,
+      };
+    case 'CDF':
+      return {
+        // eslint-disable-next-line no-irregular-whitespace
+        // separator: " " decimal = ","
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'CDF',
+        precision: 2,
         format,
       };
     case 'QAR':

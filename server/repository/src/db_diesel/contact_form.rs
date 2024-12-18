@@ -5,7 +5,6 @@ pub struct ContactForm {
     pub contact_form_row: ContactFormRow,
     pub user_row: UserAccountRow,
     pub store_row: StoreRow,
-    // TODO site_row
 }
 
 pub struct ContactFormRepository<'a> {

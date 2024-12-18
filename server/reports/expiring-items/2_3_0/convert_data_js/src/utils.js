@@ -6,15 +6,9 @@ const processStockLines = (nodes, sort, dir) => {
       return;
     }
     const daysUntilExpiredFloat = calculateDaysUntilExpired(line?.expiryDate);
-    const expectedUsage = calculateExpectedUsage(
-      daysUntilExpiredFloat,
-      line?.item?.stats?.averageMonthlyConsumption
-    );
+    const expectedUsage = calculateExpectedUsage(daysUntilExpiredFloat, line);
     if (!!expectedUsage) {
-      line.expectedUsage = Math.min(
-        expectedUsage,
-        totalNumberOfPacks ?? expectedUsage
-      );
+      line.expectedUsage = expectedUsage;
     }
     const stockAtRisk = calculateStockAtRisk(
       line?.packSize,
@@ -44,16 +38,17 @@ const calculateDaysUntilExpired = (expiryDateString) => {
   return daysUntilExpired;
 };
 
-const calculateExpectedUsage = (
-  daysUntilExpired,
-  averageMonthlyConsumption
-) => {
+const calculateExpectedUsage = (daysUntilExpired, line) => {
+  let averageMonthlyConsumption = line?.item?.stats?.averageMonthlyConsumption;
+  let totalStock = line?.totalNumberOfPacks * line?.packSize;
+
   let expectedUsage = undefined;
-  if (!!daysUntilExpired && !!averageMonthlyConsumption) {
+  if (!!daysUntilExpired && !!averageMonthlyConsumption && !!totalStock) {
     if (daysUntilExpired >= 0) {
-      expectedUsage = Math.round(
+      const usage = Math.round(
         daysUntilExpired * (averageMonthlyConsumption / 30)
       );
+      expectedUsage = Math.min(usage, totalStock ?? usage);
     }
   }
   return expectedUsage;
