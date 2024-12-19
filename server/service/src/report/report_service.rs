@@ -660,7 +660,7 @@ fn generate_report(
         templates.insert(resource.0.clone(), string_value);
     }
     tera.add_raw_templates(templates.iter()).map_err(|err| {
-        ReportError::DocGenerationError(format!("Failed to add templates: {}", err))
+        ReportError::DocGenerationError(format!("Failed to add templates: {:?}", err))
     })?;
 
     let document = tera

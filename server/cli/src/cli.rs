@@ -454,6 +454,7 @@ async fn main() -> anyhow::Result<()> {
                         .convert_data
                         .and_then(|cd| format!("{version_dir}/{cd}").into());
                     let custom_wasm_function = manifest.custom_wasm_function;
+                    let query_default = manifest.query_default;
 
                     let args = BuildArgs {
                         dir: format!("{version_dir}/src"),
@@ -462,7 +463,7 @@ async fn main() -> anyhow::Result<()> {
                         header: manifest.header,
                         footer: manifest.footer,
                         query_gql: graphql_query,
-                        query_default: None,
+                        query_default: query_default,
                         query_sql: sql_queries,
                         convert_data,
                         custom_wasm_function,
@@ -635,17 +636,27 @@ fn run_yarn_install(directory: &str) -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    let status = Command::new("yarn")
-        .args(["install", "--cwd", &convert_dir, "--no-lockfile"])
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .status()?;
+    let node_modules_path = Path::new(&convert_dir).join("node_modules");
 
-    println!("status {:?}", status);
+    if !node_modules_path.exists() {
+        let status = Command::new("yarn")
+            .args([
+                "install",
+                "--cwd",
+                &convert_dir,
+                "--no-lockfile",
+                "--check-files",
+            ])
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .status()?;
 
-    if !status.success() {
-        eprintln!("Error: `yarn install` failed");
-        return Err("Failed to run yarn install".into());
+        if !status.success() {
+            println!("Error: `yarn install` failed");
+            return Err("Failed to run yarn install".into());
+        }
+    } else {
+        println!("Dependencies up to date");
     }
 
     Ok(())
@@ -667,6 +678,7 @@ pub struct Manifest {
     pub test_arguments: Option<TestReportArguments>,
     pub convert_data: Option<String>,
     pub custom_wasm_function: Option<String>,
+    pub query_default: Option<String>,
 }
 
 #[derive(serde::Deserialize, Clone)]
