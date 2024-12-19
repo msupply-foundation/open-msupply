@@ -15,7 +15,6 @@ use std::{cmp::Ordering, collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
 
 use crate::{
-    get_default_pagination,
     localisations::{Localisations, TranslationError},
     service_provider::ServiceContext,
     static_files::{StaticFileCategory, StaticFileService},
@@ -370,14 +369,26 @@ fn query_reports(
         .r#type(ReportType::OmSupply.equal_to());
 
     let reports_to_show_meta_data = report_filter_method(
-        repo.query_meta_data(Some(filter.clone()), None)?,
+        repo.query_meta_data(Some(filter.clone()), None)
+            .map_err(|err| GetReportsError::ListError(ListError::DatabaseError(err)))?,
         app_version,
     );
 
     let filter = ReportFilter::new().id(EqualFilter::equal_any(reports_to_show_meta_data));
 
-    let reports = repo.query(Some(filter), sort)?;
-    Ok(reports)
+    let reports = repo
+        .query(Some(filter), sort)
+        .map_err(|err| GetReportsError::ListError(ListError::DatabaseError(err)))?;
+
+    let reports = reports
+        .into_iter()
+        .map(|r| {
+            translate_report_arugment_schema(r, translation_service, &user_language)
+                .map_err(GetReportsError::TranslationError)
+        })
+        .collect::<Result<Vec<Report>, GetReportsError>>();
+
+    reports
 }
 
 fn report_filter_method(reports: Vec<ReportMetaData>, app_version: Version) -> Vec<String> {
@@ -1161,7 +1172,7 @@ mod report_filter_test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let ctx = service_provider.basic_context().unwrap();
 
         // test standard reports
@@ -1234,7 +1245,7 @@ mod report_filter_test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let ctx = service_provider.basic_context().unwrap();
 
         // test standard reports
