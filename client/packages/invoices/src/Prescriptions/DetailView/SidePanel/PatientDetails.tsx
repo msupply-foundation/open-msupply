@@ -5,10 +5,11 @@ import {
   PanelLabel,
   PanelRow,
   useTranslation,
-  BufferedTextArea,
   useBufferState,
+  Autocomplete,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../../api';
+import { useDiagnosisOptions } from '../../api/hooks/useDiagnosisOptions';
 
 export const PatientDetailsComponent = () => {
   const t = useTranslation();
@@ -18,25 +19,31 @@ export const PatientDetailsComponent = () => {
     isDisabled,
     update: { update },
   } = usePrescription();
-  const { comment } = data ?? {};
-  const [commentBuffer, setCommentBuffer] = useBufferState(comment ?? '');
+  const { diagnosis } = data ?? {};
 
-  const pricing = data?.pricing;
-  if (!pricing) return null;
+  const {
+    query: { data: diagnosisOptions },
+  } = useDiagnosisOptions();
 
   return (
     <DetailPanelSection title={t('heading.patient-details')}>
       <Grid container gap={0.5}>
         <>
           <PanelRow style={{ marginTop: 12 }}>
-            <PanelLabel>{t('heading.comment')}</PanelLabel>
-            <BufferedTextArea
-              disabled={isDisabled}
-              onChange={e => {
-                setCommentBuffer(e.target.value);
-                update({ comment: e.target.value });
+            <PanelLabel>{t('heading.diagnosis')}</PanelLabel>
+            <Autocomplete
+              fullWidth
+              clearable
+              options={diagnosisOptions ?? []}
+              value={{
+                label: diagnosis?.description ?? '',
+                value: diagnosis?.id ?? '',
+                id: diagnosis?.id ?? '',
               }}
-              value={commentBuffer}
+              onChange={(_e, selected) =>
+                update({ diagnosisId: selected?.value })
+              }
+              disabled={isDisabled}
             />
           </PanelRow>
         </>

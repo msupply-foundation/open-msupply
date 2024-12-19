@@ -1828,6 +1828,13 @@ export type DemographicSortInput = {
 
 export type DemographicsResponse = DemographicConnector;
 
+export type DiagnosisNode = {
+  __typename: 'DiagnosisNode';
+  code: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+};
+
 export type DisplaySettingNode = {
   __typename: 'DisplaySettingNode';
   hash: Scalars['String']['output'];
@@ -2860,6 +2867,7 @@ export type InsertPluginDataInput = {
 export type InsertPluginDataResponse = PluginDataNode;
 
 export type InsertPrescriptionInput = {
+  diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
 };
@@ -3408,6 +3416,8 @@ export type InvoiceNode = {
   currency?: Maybe<CurrencyNode>;
   currencyRate: Scalars['Float']['output'];
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
+  diagnosis?: Maybe<DiagnosisNode>;
+  diagnosisId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   invoiceNumber: Scalars['Int']['output'];
   lines: InvoiceLineConnector;
@@ -3667,7 +3677,6 @@ export type ItemStatsNode = {
   availableStockOnHand: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
   totalConsumption: Scalars['Float']['output'];
-  totalStockOnHand: Scalars['Float']['output'];
 };
 
 export type ItemVariantMutations = {
@@ -5574,6 +5583,7 @@ export type Queries = {
    */
   activeProgramEvents: ProgramEventResponse;
   activityLogs: ActivityLogResponse;
+  allActiveDiagnoses: Array<DiagnosisNode>;
   apiVersion: Scalars['String']['output'];
   assetCatalogueItem: AssetCatalogueItemResponse;
   assetCatalogueItems: AssetCatalogueItemsResponse;
@@ -8216,6 +8226,7 @@ export type UpdatePrescriptionInput = {
   clinicianId?: InputMaybe<Scalars['String']['input']>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId?: InputMaybe<Scalars['String']['input']>;
   prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
