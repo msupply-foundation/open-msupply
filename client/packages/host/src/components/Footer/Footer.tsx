@@ -19,11 +19,12 @@ import {
 import { StoreSelector } from './StoreSelector';
 import { LanguageSelector } from './LanguageSelector';
 import { FacilityEditModal, useName } from '@openmsupply-client/system';
+import { UserDetails } from './UserDetails';
 
 export const Footer: React.FC = () => {
   const { user, store } = useAuthContext();
   const t = useTranslation();
-  const { currentLanguageName } = useIntlUtils();
+  const { currentLanguageName, getLocalisedFullName } = useIntlUtils();
   const isCentralServer = useIsCentralServerApi();
   const { isOpen, onClose, onOpen } = useEditModal();
   const theme = useTheme();
@@ -77,10 +78,16 @@ export const Footer: React.FC = () => {
       {user ? (
         <>
           <Divider />
-          <PaddedCell>
-            <UserIcon sx={iconStyles} />
-            <Typography sx={textStyles}>{user.name}</Typography>
-          </PaddedCell>
+          <UserDetails>
+            <PaddedCell>
+              <UserIcon sx={iconStyles} />
+              <Tooltip
+                title={getLocalisedFullName(user.firstName, user.lastName)}
+              >
+                <Typography sx={textStyles}>{user.name}</Typography>
+              </Tooltip>
+            </PaddedCell>
+          </UserDetails>
         </>
       ) : null}
       <Divider />

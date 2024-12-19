@@ -36,6 +36,7 @@ mod program_indicator;
 mod program_order_types;
 mod program_requisition_settings;
 mod property;
+mod reports;
 mod rnr_form;
 mod sensor;
 mod stock_line;
@@ -102,6 +103,7 @@ pub use program_indicator::*;
 pub use program_order_types::*;
 pub use program_requisition_settings::*;
 pub use property::*;
+pub use reports::*;
 pub use rnr_form::*;
 pub use sensor::*;
 pub use stock_line::*;
@@ -160,10 +162,10 @@ use crate::{
     ProgramEnrolmentRowRepository, ProgramIndicatorRow, ProgramIndicatorRowRepository,
     ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
-    ProgramRowRepository, PropertyRow, PropertyRowRepository, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, ReturnReasonRow,
-    ReturnReasonRowRepository, RnRFormLineRow, RnRFormLineRowRepository, RnRFormRow,
-    RnRFormRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
+    ProgramRowRepository, PropertyRow, PropertyRowRepository, ReportRowRepository,
+    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository,
+    ReturnReasonRow, ReturnReasonRowRepository, RnRFormLineRow, RnRFormLineRowRepository,
+    RnRFormRow, RnRFormRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
     StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
     SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow,
     TemperatureBreachConfigRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
@@ -251,6 +253,7 @@ pub struct MockData {
     pub categories: Vec<CategoryRow>,
     pub options: Vec<ReasonOptionRow>,
     pub contact_form: Vec<ContactFormRow>,
+    pub reports: Vec<crate::ReportRow>,
 }
 
 impl MockData {
@@ -334,6 +337,7 @@ pub struct MockDataInserts {
     pub categories: bool,
     pub options: bool,
     pub contact_form: bool,
+    pub reports: bool,
 }
 
 impl MockDataInserts {
@@ -406,6 +410,7 @@ impl MockDataInserts {
             categories: true,
             options: true,
             contact_form: true,
+            reports: true,
         }
     }
 
@@ -738,6 +743,11 @@ impl MockDataInserts {
         self.contact_form = true;
         self
     }
+
+    pub fn reports(mut self) -> Self {
+        self.reports = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -830,6 +840,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             indicator_values: mock_indicator_values(),
             options: mock_options(),
             contact_form: mock_contact_form(),
+            reports: mock_reports(),
             ..Default::default()
         },
     );
@@ -1361,6 +1372,13 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
+        if inserts.reports {
+            let repo = ReportRowRepository::new(connection);
+            for row in &mock_data.reports {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1437,6 +1455,7 @@ impl MockData {
             mut categories,
             mut options,
             mut contact_form,
+            mut reports,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1509,6 +1528,7 @@ impl MockData {
         self.categories.append(&mut categories);
         self.options.append(&mut options);
         self.contact_form.append(&mut contact_form);
+        self.reports.append(&mut reports);
         self
     }
 }
