@@ -5,7 +5,6 @@ import {
   PanelLabel,
   PanelRow,
   useTranslation,
-  useBufferState,
   Autocomplete,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../../api';
