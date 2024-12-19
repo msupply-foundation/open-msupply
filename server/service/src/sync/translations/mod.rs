@@ -15,6 +15,7 @@ pub(crate) mod clinician_store_join;
 pub(crate) mod cold_storage_type;
 pub(crate) mod currency;
 pub(crate) mod demographic;
+pub(crate) mod diagnosis;
 pub(crate) mod document;
 pub(crate) mod document_registry;
 pub(crate) mod form_schema;
@@ -80,6 +81,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
     vec![
         // Central
         abbreviation::boxed(),
+        diagnosis::boxed(),
         item_direction::boxed(),
         user::boxed(),
         name::boxed(),

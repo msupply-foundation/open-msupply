@@ -31,7 +31,7 @@
         <td>{{item.code}}</td>
         <td>{{item.name}}</td>
         <td class="status"> 
-          {% if SOH == 0 and AMC == 0 %}
+          {% if SOH == 0 and AMC > 0 %}
             <span class="out-of-stock">{{t(k="report.out-of-stock", f="Out of Stock")}}</span>
           {% elif AMC == 0 %}
             <span class="no-consumption">{{t(k="report.no-consumption", f="No consumption")}}</span>
