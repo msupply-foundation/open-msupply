@@ -7,7 +7,7 @@ import {
   useBreadcrumbs,
   useParams,
 } from '@openmsupply-client/common';
-import { useResponse } from '../../api';
+import { ResponseFragment, useResponse } from '../../api';
 import { ListItems } from '@openmsupply-client/system';
 import { ResponseLineEdit } from './ResponseLineEdit';
 import { AppRoute } from '@openmsupply-client/config';
@@ -15,13 +15,29 @@ import { useDraftRequisitionLine, usePreviousNextResponseLine } from './hooks';
 import { AppBarButtons } from './AppBarButtons';
 import { PageLayout } from '../PageLayout';
 
-export const ResponseLineEditPage = () => {
+export const ReponseLineEditPage = () => {
   const { itemId } = useParams();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { data, isLoading } = useResponse.document.get();
+
+  if (isLoading || !itemId) return <BasicSpinner />;
+  if (!data) return <NothingHere />;
+
+  return <ResponseLineEditPageInner requisition={data} itemId={itemId} />;
+};
+
+const ResponseLineEditPageInner = ({
+  itemId,
+  requisition,
+}: {
+  itemId: string;
+  requisition: ResponseFragment;
+}) => {
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+
   const lines =
-    data?.lines.nodes.sort((a, b) => a.item.name.localeCompare(b.item.name)) ??
-    [];
+    requisition.lines.nodes.sort((a, b) =>
+      a.item.name.localeCompare(b.item.name)
+    ) ?? [];
   const currentItem = lines.find(l => l.item.id === itemId)?.item;
   const { draft, update, save } = useDraftRequisitionLine(currentItem);
   const { hasNext, next, hasPrevious, previous } = usePreviousNextResponseLine(
@@ -38,12 +54,9 @@ export const ResponseLineEditPage = () => {
     });
   }, [currentItem]);
 
-  if (isLoading) return <BasicSpinner />;
-  if (!data) return <NothingHere />;
-
   return (
     <>
-      <AppBarButtons requisitionNumber={data?.requisitionNumber} />
+      <AppBarButtons requisitionNumber={requisition.requisitionNumber} />
       <DetailContainer>
         <PageLayout
           Left={
@@ -53,7 +66,7 @@ export const ResponseLineEditPage = () => {
                 items={lines.map(l => l.item)}
                 route={RouteBuilder.create(AppRoute.Distribution)
                   .addPart(AppRoute.CustomerRequisition)
-                  .addPart(String(data?.requisitionNumber))}
+                  .addPart(String(requisition.requisitionNumber))}
                 enteredLineIds={enteredLineIds}
               />
             </>
@@ -62,7 +75,7 @@ export const ResponseLineEditPage = () => {
             <>
               <ResponseLineEdit
                 item={currentItem}
-                hasLinkedRequisition={!!data?.linkedRequisition}
+                hasLinkedRequisition={!!requisition.linkedRequisition}
                 draft={draft}
                 update={update}
                 save={save}
@@ -70,7 +83,7 @@ export const ResponseLineEditPage = () => {
                 next={next}
                 hasPrevious={hasPrevious}
                 previous={previous}
-                isProgram={!!data?.programName}
+                isProgram={!!requisition.programName}
               />
             </>
           }
