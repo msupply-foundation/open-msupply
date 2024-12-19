@@ -17,6 +17,7 @@ import {
   AssetLogStatusInput,
   UserPermission,
   useAuthContext,
+  RegexUtils,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useAssets } from '../api';
@@ -70,8 +71,7 @@ export const AddFromScannerButtonComponent = () => {
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
       const { gs1 } = result;
-
-      if (!gs1) {
+      if (!gs1 || RegexUtils.isLikelyId(result.content)) {
         // try to fetch the asset by id, as it could be an id from our own barcode
         const { content: id } = result;
         const asset = await fetchAsset(id).catch(() => {});

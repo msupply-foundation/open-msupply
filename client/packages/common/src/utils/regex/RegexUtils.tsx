@@ -76,4 +76,12 @@ export const RegexUtils = {
     const emailRegex = /^[^\s@]+@(?!\.)(?!.*\.{2})[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   },
+
+  /* Checks a string to see if it's likely to be an ID */
+  isLikelyId: (input: string) => {
+    if (!input) return false;
+    if (input.length < 32) return false; // Too small for an mSupply ID
+    if (input.length > 36) return false; // Too large for a UUID
+    return /^([a-f\d]+-?)*$/i.test(input);
+  },
 };

@@ -149,3 +149,28 @@ describe('Check if email is valid', () => {
     expect(RegexUtils.checkEmailIsValid('test@email.domain.com')).toBeTruthy();
   });
 });
+
+describe('Check if isLikelyId', () => {
+  it('rejects empty space in id', () => {
+    expect(RegexUtils.isLikelyId('Some string')).toBeFalsy();
+  });
+  it('rejects something too small to be an id', () => {
+    expect(RegexUtils.isLikelyId('ABC')).toBeFalsy();
+  });
+  it('accepts UUID format', () => {
+    expect(
+      RegexUtils.isLikelyId('c8bc3bde-08c1-4b5e-b7f3-79163e61870e')
+    ).toBeTruthy();
+    expect(
+      RegexUtils.isLikelyId('01920ced-3e04-7ddf-95e2-683c8b880cd5')
+    ).toBeTruthy();
+  });
+  it('accepts mSupply format', () => {
+    expect(
+      RegexUtils.isLikelyId('8D967C2618BE4D78B3A6FAD6C1C8FF25')
+    ).toBeTruthy();
+    expect(
+      RegexUtils.isLikelyId('1E31B3575A284B7DB27EE755102446FE')
+    ).toBeTruthy();
+  });
+});
