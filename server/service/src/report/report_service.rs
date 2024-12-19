@@ -555,7 +555,7 @@ fn generate_report(
         templates.insert(resource.0.clone(), string_value);
     }
     tera.add_raw_templates(templates.iter()).map_err(|err| {
-        ReportError::DocGenerationError(format!("Failed to add templates: {}", err))
+        ReportError::DocGenerationError(format!("Failed to add templates: {:?}", err))
     })?;
 
     let document = tera
@@ -996,8 +996,7 @@ mod report_generation_test {
         let (_, connection, connection_manager, _) =
             setup_all("test_report_translations", MockDataInserts::none()).await;
 
-        let translation_service =
-            ServiceProvider::new(connection_manager).translations_service;
+        let translation_service = ServiceProvider::new(connection_manager).translations_service;
 
         let mut templates = HashMap::new();
         templates.insert("test.html".to_string(), tera_template);
