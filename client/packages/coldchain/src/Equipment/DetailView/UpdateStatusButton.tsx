@@ -54,7 +54,7 @@ export const UpdateStatusButtonComponent = ({
 
   const onUpdateStatus = () => {
     if (userHasPermission(permission)) {
-      showDialog;
+      showDialog();
     } else info(t('error.no-asset-edit-permission'))();
   };
 
