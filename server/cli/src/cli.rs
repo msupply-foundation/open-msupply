@@ -454,6 +454,7 @@ async fn main() -> anyhow::Result<()> {
                         .convert_data
                         .and_then(|cd| format!("{version_dir}/{cd}").into());
                     let custom_wasm_function = manifest.custom_wasm_function;
+                    let query_default = manifest.query_default;
 
                     let args = BuildArgs {
                         dir: format!("{version_dir}/src"),
@@ -462,7 +463,7 @@ async fn main() -> anyhow::Result<()> {
                         header: manifest.header,
                         footer: manifest.footer,
                         query_gql: graphql_query,
-                        query_default: None,
+                        query_default: query_default,
                         query_sql: sql_queries,
                         convert_data,
                         custom_wasm_function,
@@ -677,6 +678,7 @@ pub struct Manifest {
     pub test_arguments: Option<TestReportArguments>,
     pub convert_data: Option<String>,
     pub custom_wasm_function: Option<String>,
+    pub query_default: Option<String>,
 }
 
 #[derive(serde::Deserialize, Clone)]
