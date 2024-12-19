@@ -197,7 +197,6 @@ const useUpdate = (id: string) => {
   const { prescriptionApi, storeId, queryClient } = usePrescriptionGraphQL();
 
   const mutationFn = async (patch: RecordPatch<PrescriptionRowFragment>) => {
-    console.log('patch', patch);
     const input: UpdatePrescriptionInput = {
       ...patch,
       id,
