@@ -19,10 +19,9 @@ This requires a couple of steps.
 
 Currently, we support only 1 Android architecture (64bit);
 
-| rust target             | android ABI |
-| aarch64-linux-android   | arm64-v8a   |
+| rust target | android ABI |
+| aarch64-linux-android | arm64-v8a |
 | ----------------------- | ----------- |
-
 
 To add the required build targets to Rust run:
 
@@ -41,7 +40,30 @@ echo "export NDK_BIN=~/Library/Android/sdk/ndk/26.1.10909125/toolchains/llvm/pre
 Open a new terminal and validate that `$NDK_BIN` is set correctly: `ls $NDK_BIN` (this should give a list of files starting with aarch64 and armv7a)
 Note, which linker Rust should use is defined in `server/android/.cargo/config.toml`, under [target.*].
 
-You can now use `yarn build:server` from this directory, this builds the `libremote_server_lib.so` binaries and relocate them to `app/src/main/jniLibs`.
+### Java Installation
+
+In your terminal, run `java --version` to check if you have it installed. As at 19/12/2024 version `17.0.7-tem` is tested and works with our setup
+
+- install [SDK man](https://sdkman.io/) through your terminal by running `curl -s "https://get.sdkman.io" | bash`
+- Open a new terminal
+
+Install Java: Run `sdk install java 17.0.7-tem`
+
+Then set the defaults using the following commands:
+
+- `sdk use java 17.0.7-tem`
+- `sdk default java 17.0.7-tem`
+
+Go to Android Studio settings -> Build -> Build Settings
+
+- Change Gradle JDK to 17.0.7-tem
+  ![omSupply Gradle JDK](./doc/omSupply_android_gradle_jdk.png)
+
+You may also see prompts in Android Studio to sync - keep an eye out for these and run the sync as needed
+
+## Running Android Studio
+
+You can now use `yarn build:server` from the `server/android/` directory, this builds the `libremote_server_lib.so` binaries and relocate them to `app/src/main/jniLibs`.
 Please see `client/packages/android/app/src/main/java/org/openmsupply/client/RemoteServer.java` for more details of how these libs are loaded.
 It's important to note that web app is bundled in the remote server binary, and web app needs to be built from `client` directory with `yarn build` command, so it's best to use `yarn android:build:server` from client directory as it does both (builds web app and then build android remote server).
 
@@ -76,7 +98,7 @@ yarn android:build:debug
 yarn android:build:release
 ```
 
-### Know script issues
+### Known script issues
 
 When building apk `properties.local` files is required (it can be empty). Also can sometime get a lock on gradle build, can run `find ~/.gradle -type f -name "*.lock" -delete` to fix it
 
