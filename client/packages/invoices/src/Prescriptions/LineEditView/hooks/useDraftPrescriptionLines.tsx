@@ -18,7 +18,7 @@ import {
 
 export interface UseDraftPrescriptionLinesControl {
   updateNotes: (note: string) => void;
-  updateQuantity: (batchId: string, quantity: number) => void;
+  updateQuantity: (batchId: string, packs: number) => void;
   isLoading: boolean;
 }
 
@@ -117,8 +117,8 @@ export const useDraftPrescriptionLines = (
   }, [data, item, prescriptionData]);
 
   const onChangeRowQuantity = useCallback(
-    (batchId: string, value: number) => {
-      updateDraftLines(issueStock(draftLines, batchId, value));
+    (batchId: string, packs: number) => {
+      updateDraftLines(issueStock(draftLines, batchId, packs));
     },
     [draftLines]
   );

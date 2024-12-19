@@ -46,6 +46,15 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
     DateUtils.getDateOrNull(prescriptionDate)
   );
 
+  console.log(
+    'Draft lines',
+    draftPrescriptionLines.map(({ itemName, numberOfPacks, packSize }) => ({
+      itemName,
+      numberOfPacks,
+      packSize,
+    }))
+  );
+
   const packSizeController = usePackSizeController(draftPrescriptionLines);
 
   // const placeholder = draftPrescriptionLines?.find(
@@ -53,8 +62,8 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
   //     type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks !== 0
   // );
 
-  const onUpdateQuantity = (batchId: string, quantity: number) => {
-    updateQuantity(batchId, quantity);
+  const onUpdateQuantity = (batchId: string, packs: number) => {
+    updateQuantity(batchId, packs);
     setIsAutoAllocated(false);
   };
 
@@ -64,18 +73,18 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
   };
 
   const onAllocate = (
-    newVal: number,
+    numPacks: number,
     packSize: number | null,
     autoAllocated = false
   ) => {
     const newAllocateQuantities = allocateQuantities(
       status,
       draftPrescriptionLines
-    )(newVal, packSize);
+    )(numPacks, packSize);
     setIsDirty(true);
     updateLines(newAllocateQuantities ?? draftPrescriptionLines);
     setIsAutoAllocated(autoAllocated);
-    if (showZeroQuantityConfirmation && newVal !== 0)
+    if (showZeroQuantityConfirmation && numPacks !== 0)
       setShowZeroQuantityConfirmation(false);
 
     return newAllocateQuantities;
@@ -126,8 +135,8 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
         setCurrentItem(item);
       }}
       item={currentItem}
-      allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
-      availableQuantity={sumAvailableQuantity(draftPrescriptionLines)}
+      allocatedUnits={getAllocatedQuantity(draftPrescriptionLines)}
+      availableUnits={sumAvailableQuantity(draftPrescriptionLines)}
       onChangeQuantity={onAllocate}
       canAutoAllocate={canAutoAllocate}
       isAutoAllocated={isAutoAllocated}

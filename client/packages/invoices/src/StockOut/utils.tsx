@@ -157,7 +157,7 @@ export const getAllocatedQuantity = (draftStockOutLines: DraftStockOutLine[]) =>
 export const issueStock = (
   draftStockOutLines: DraftStockOutLine[],
   idToIssue: string,
-  value: number
+  packs: number
 ) => {
   const foundRowIdx = draftStockOutLines.findIndex(
     ({ id }) => id === idToIssue
@@ -168,7 +168,7 @@ export const issueStock = (
   const newDraftStockOutLines = [...draftStockOutLines];
   newDraftStockOutLines[foundRowIdx] = {
     ...foundRow,
-    numberOfPacks: value,
+    numberOfPacks: packs,
     isUpdated: true,
   };
 
