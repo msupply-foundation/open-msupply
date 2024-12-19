@@ -2,7 +2,7 @@
   "is_custom": false,
   "version": "2.3.0",
   "code": "repack",
-  "context": "OUTBOUND_SHIPMENT",
+  "context": "REPACK",
   "sub_context": "picklist",
   "name": "repack",
   "queries": {

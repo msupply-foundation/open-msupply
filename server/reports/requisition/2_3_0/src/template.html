@@ -14,7 +14,7 @@
     <tr>
       <td>{{ data.requisition.otherParty.address1}}<br>{{ data.requisition.otherParty.address2}}<br>{{ data.requisition.otherParty.country}}</td>
       <td class="align_right">
-        {{t(k="report.confirmed-date"m f="Confirmed date")}}: {{ data.requisition.createdDatetime | date(format="%m/%d/%Y") }}
+        {{t(k="report.confirmed-date", f="Confirmed date")}}: {{ data.requisition.createdDatetime | date(format="%d/%m/%Y") }}
       </td>
     </tr>
   </table>
@@ -22,7 +22,7 @@
   <table class="header_date_section">
     <tr>
       <td></td>
-      <td class="align_right">{{t(k="report.printed-date",f="Printed date")}}: {{ now() | date(format="%m/%d/%Y") }}</td>
+      <td class="align_right">{{t(k="report.printed-date",f="Printed date")}}: {{ now() | date(format="%d/%m/%Y") }}</td>
     </tr>
 
     <tr>
