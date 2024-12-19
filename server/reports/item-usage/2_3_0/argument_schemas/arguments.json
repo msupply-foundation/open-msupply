@@ -19,7 +19,6 @@
           "description": "sort by",
           "type": "string",
           "enum": [
-            "name",
             "code",
             "SOH",
             "MOS",

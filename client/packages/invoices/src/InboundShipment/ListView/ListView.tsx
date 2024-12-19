@@ -13,6 +13,7 @@ import {
   useToggle,
   useUrlQueryParams,
   TooltipTextCell,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -60,6 +61,7 @@ export const InboundListView: FC = () => {
 
   const columns = useColumns<InboundRowFragment>(
     [
+      GenericColumnKey.Selection,
       [getNameAndColorColumn(), { setter: onUpdate }],
       [
         'status',
@@ -85,7 +87,6 @@ export const InboundListView: FC = () => {
           accessor: ({ rowData }) => rowData.pricing.totalAfterTax,
         },
       ],
-      'selection',
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
