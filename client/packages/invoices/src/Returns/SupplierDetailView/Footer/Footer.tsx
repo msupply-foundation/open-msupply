@@ -8,6 +8,9 @@ import {
   AppFooterPortal,
   useBreadcrumbs,
   InvoiceNodeStatus,
+  Action,
+  DeleteIcon,
+  ActionsFooter,
 } from '@openmsupply-client/common';
 import {
   getStatusTranslator,
@@ -49,40 +52,64 @@ const createStatusLog = (invoice: SupplierReturnRowFragment) => {
 
 export const FooterComponent: FC = () => {
   const t = useTranslation();
-  const { data } = useReturns.document.supplierReturn();
+  const { data, bufferedState } = useReturns.document.supplierReturn();
   const { navigateUpOne } = useBreadcrumbs();
+  const { id } = bufferedState ?? { id: '' };
+  const { selectedIds, ...onDelete } =
+    useReturns.lines.deleteSelectedSupplierLines({
+      returnId: id,
+    });
+  const isDisabled = useReturns.utils.supplierIsDisabled();
+
+  const actions: Action[] = [
+    {
+      label: t('button.delete-lines'),
+      icon: <DeleteIcon />,
+      onClick: onDelete.onDelete,
+      disabled: isDisabled,
+    },
+  ];
 
   return (
     <AppFooterPortal
       Content={
-        data && (
-          <Box
-            gap={2}
-            display="flex"
-            flexDirection="row"
-            alignItems="center"
-            height={64}
-          >
-            <OnHoldButton />
-            <StatusCrumbs
-              statuses={supplierReturnStatuses}
-              statusLog={createStatusLog(data)}
-              statusFormatter={getStatusTranslator(t)}
+        <>
+          {' '}
+          {selectedIds.length !== 0 && (
+            <ActionsFooter
+              actions={actions}
+              selectedRowCount={selectedIds.length}
             />
-            <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-              <ButtonWithIcon
-                shrinkThreshold="lg"
-                Icon={<XCircleIcon />}
-                label={t('button.close')}
-                color="secondary"
-                sx={{ fontSize: '12px' }}
-                onClick={() => navigateUpOne()}
+          )}
+          {data && selectedIds.length === 0 && (
+            <Box
+              gap={2}
+              display="flex"
+              flexDirection="row"
+              alignItems="center"
+              height={64}
+            >
+              <OnHoldButton />
+              <StatusCrumbs
+                statuses={supplierReturnStatuses}
+                statusLog={createStatusLog(data)}
+                statusFormatter={getStatusTranslator(t)}
               />
+              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+                <ButtonWithIcon
+                  shrinkThreshold="lg"
+                  Icon={<XCircleIcon />}
+                  label={t('button.close')}
+                  color="secondary"
+                  sx={{ fontSize: '12px' }}
+                  onClick={() => navigateUpOne()}
+                />
 
-              <StatusChangeButton />
+                <StatusChangeButton />
+              </Box>
             </Box>
-          </Box>
-        )
+          )}
+        </>
       }
     />
   );
