@@ -5,7 +5,6 @@ import {
   DashboardIcon,
   Divider,
   List,
-  PowerIcon,
   Theme,
   IconButton,
   styled,
@@ -15,9 +14,6 @@ import {
   useIsMediumScreen,
   useAuthContext,
   EnvUtils,
-  UserPermission,
-  RouteBuilder,
-  useConfirmationModal,
   ReportsIcon,
   useHostContext,
   HelpIcon,
@@ -36,7 +32,6 @@ import {
 import { AppDrawerIcon } from './AppDrawerIcon';
 import { SyncNavLink } from './SyncNavLink';
 import { ColdChainNav } from '../Navigation/ColdChainNav';
-import { useNavigate } from 'react-router-dom';
 
 const ToolbarIconContainer = styled(Box)({
   display: 'flex',
@@ -145,9 +140,8 @@ export const AppDrawer: React.FC = () => {
   const t = useTranslation();
   const isMediumScreen = useIsMediumScreen();
   const drawer = useDrawer();
-  const { logout, userHasPermission, store } = useAuthContext();
+  const { store } = useAuthContext();
   const { fullScreen } = useHostContext();
-  const navigate = useNavigate();
 
   React.useEffect(() => {
     if (drawer.hasUserSet) return;
@@ -172,17 +166,6 @@ export const AppDrawer: React.FC = () => {
     drawer.open();
     drawer.setHoverOpen(true);
   };
-
-  const handleLogout = () => {
-    navigate(RouteBuilder.create(AppRoute.Login).build());
-    logout();
-  };
-
-  const showConfirmation = useConfirmationModal({
-    onConfirm: handleLogout,
-    message: t('messages.logout-confirm'),
-    title: t('heading.logout-confirm'),
-  });
 
   return (
     <StyledDrawer
@@ -231,18 +214,11 @@ export const AppDrawer: React.FC = () => {
             to={AppRoute.Settings}
             icon={<SettingsIcon fontSize="small" color="primary" />}
             text={t('settings')}
-            visible={userHasPermission(UserPermission.ServerAdmin)}
           />
           <AppNavLink
             to={AppRoute.Help}
             icon={<HelpIcon fontSize="small" color="primary" />}
             text={t('help')}
-          />
-          <AppNavLink
-            to={'#'}
-            icon={<PowerIcon fontSize="small" color="primary" />}
-            text={t('logout')}
-            onClick={() => showConfirmation({})}
           />
         </List>
       </LowerListContainer>

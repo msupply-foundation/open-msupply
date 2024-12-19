@@ -13,9 +13,10 @@ import {
   useToggle,
   useUrlQueryParams,
   ColumnFormat,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
-import { usePrescription } from '../api';
+import { usePrescriptionList, usePrescription } from '../api';
 import { PrescriptionRowFragment } from '../api/operations.generated';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -31,24 +32,39 @@ const useDisablePrescriptionRows = (rows?: PrescriptionRowFragment[]) => {
 };
 
 const PrescriptionListViewComponent: FC = () => {
-  const { mutate: onUpdate } = usePrescription.document.update();
+  const {
+    update: { update },
+  } = usePrescription();
   const t = useTranslation();
   const {
     updateSortQuery,
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
+  } = useUrlQueryParams({
+    filters: [{ key: 'otherPartyName' }],
+    initialSort: { key: 'prescriptionDatetime', dir: 'desc' },
+  });
   const navigate = useNavigate();
   const modalController = useToggle();
 
-  const { data, isError, isLoading } = usePrescription.document.list();
+  const listParams = {
+    sortBy,
+    first,
+    offset,
+    filterBy: filter.filterBy,
+  };
+
+  const {
+    query: { data, isError, isLoading },
+  } = usePrescriptionList(listParams);
   const pagination = { page, first, offset };
   useDisablePrescriptionRows(data?.nodes);
 
   const columns = useColumns<PrescriptionRowFragment>(
     [
-      [getNameAndColorColumn(), { setter: onUpdate }],
+      GenericColumnKey.Selection,
+      [getNameAndColorColumn(), { setter: update }],
       [
         'status',
         {
@@ -71,7 +87,6 @@ const PrescriptionListViewComponent: FC = () => {
         sortable: true,
       },
       ['comment'],
-      'selection',
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
@@ -79,9 +94,11 @@ const PrescriptionListViewComponent: FC = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
-      <AppBarButtons modalController={modalController} />
-
+      <Toolbar filter={filter} listParams={listParams} />
+      <AppBarButtons
+        modalController={modalController}
+        listParams={listParams}
+      />
       <DataTable
         id="prescription-list"
         enableColumnSelection

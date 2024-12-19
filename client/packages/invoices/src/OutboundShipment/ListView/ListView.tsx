@@ -13,6 +13,7 @@ import {
   useToggle,
   useUrlQueryParams,
   TooltipTextCell,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -53,6 +54,7 @@ const OutboundShipmentListViewComponent: FC = () => {
 
   const columns = useColumns<OutboundRowFragment>(
     [
+      GenericColumnKey.Selection,
       [getNameAndColorColumn(), { setter: onUpdate }],
       [
         'status',
@@ -86,7 +88,6 @@ const OutboundShipmentListViewComponent: FC = () => {
           width: 125,
         },
       ],
-      'selection',
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]

@@ -45,6 +45,7 @@ export const useOutboundColumns = ({
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
 
   const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
+    GenericColumnKey.Selection,
     [
       notePopoverColumn,
       {
@@ -281,7 +282,6 @@ export const useOutboundColumns = ({
       },
     },
     expansionColumn,
-    GenericColumnKey.Selection,
   ];
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);

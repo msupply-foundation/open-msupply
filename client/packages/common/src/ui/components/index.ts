@@ -48,6 +48,7 @@ export * from './panels';
 export * from './popover';
 export * from './charts';
 export * from './steppers';
+export * from './footer';
 
 export {
   Accordion,

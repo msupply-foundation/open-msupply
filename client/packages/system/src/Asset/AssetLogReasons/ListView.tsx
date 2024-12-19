@@ -10,6 +10,7 @@ import {
   useUrlQueryParams,
   useEditModal,
   InsertAssetLogReasonInput,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { AssetLogReasonFragment, useAssetData } from '../api';
 import { Toolbar } from './Toolbar';
@@ -34,6 +35,7 @@ const AssetListComponent: FC = () => {
 
   const columns = useColumns<AssetLogReasonFragment>(
     [
+      GenericColumnKey.Selection,
       {
         key: 'status',
         label: 'label.status',
@@ -45,7 +47,6 @@ const AssetListComponent: FC = () => {
         label: 'label.reason',
         sortable: false,
       },
-      'selection',
     ],
     {
       sortBy,

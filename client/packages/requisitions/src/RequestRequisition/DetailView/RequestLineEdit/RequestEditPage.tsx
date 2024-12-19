@@ -17,6 +17,7 @@ import { RequestLineEdit } from './RequestLineEdit';
 
 export const RequestLineEditPage = () => {
   const { requisitionNumber, itemId } = useParams();
+  const { data, isLoading: requestIsLoading } = useRequest.document.get();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { lines } = useRequest.line.list();
   const currentItem = lines?.find(l => l.item.id === itemId)?.item;
@@ -38,7 +39,7 @@ export const RequestLineEditPage = () => {
     });
   }, [currentItem]);
 
-  if (isLoading) return <BasicSpinner />;
+  if (isLoading || requestIsLoading) return <BasicSpinner />;
   if (!lines) return <NothingHere />;
 
   return (
@@ -69,6 +70,7 @@ export const RequestLineEditPage = () => {
                 next={next}
                 hasPrevious={hasPrevious}
                 previous={previous}
+                isProgram={!!data?.programName}
               />
             </>
           }
