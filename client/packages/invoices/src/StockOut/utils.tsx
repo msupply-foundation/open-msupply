@@ -1,4 +1,4 @@
-import { FnUtils, SortUtils } from '@common/utils';
+import { FnUtils, NumUtils, SortUtils } from '@common/utils';
 import { NumberInputCell, CellProps } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../types';
 import { InvoiceLineNodeType, InvoiceNodeStatus } from '@common/types';
@@ -149,9 +149,12 @@ export const sumAvailableQuantity = (
 };
 
 export const getAllocatedQuantity = (draftStockOutLines: DraftStockOutLine[]) =>
-  draftStockOutLines.reduce(
-    (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
-    0
+  NumUtils.round(
+    draftStockOutLines.reduce(
+      (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
+      0
+    ),
+    3
   );
 
 export const issueStock = (

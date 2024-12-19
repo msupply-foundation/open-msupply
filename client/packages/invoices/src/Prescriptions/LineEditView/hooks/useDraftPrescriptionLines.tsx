@@ -42,10 +42,6 @@ export const useDraftPrescriptionLines = (
   });
 
   useEffect(() => {
-    if (!item) {
-      // return setDraftStockOutLines([]);
-    }
-
     if (!data) return;
     if (draftLines.length > 0)
       // Draft lines already in state from previous rendering

@@ -14,6 +14,10 @@ import {
   createTableStore,
   createQueryParamsStore,
   InlineSpinner,
+  TypedTFunction,
+  LocaleKey,
+  NumUtils,
+  ItemNode,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -91,18 +95,12 @@ export const PrescriptionLineEditForm: React.FC<
   //   allocate(newAllocatedQuantity, newPackSize);
   // };
 
-  const updateIssueQuantity = (quantity: number) => {
-    setIssueUnitQuantity(quantity);
-  };
-
   const debouncedSetAllocationAlerts = useDebounceCallback(
     warning => setAllocationAlerts(warning),
     []
   );
 
   const allocate = (numPacks: number, packSize: number) => {
-    console.log('numPacks', numPacks);
-    console.log('packSize', packSize);
     const newAllocateQuantities = onChangeQuantity(
       numPacks,
       packSize === -1 ? null : packSize,
@@ -140,7 +138,7 @@ export const PrescriptionLineEditForm: React.FC<
       });
     }
     debouncedSetAllocationAlerts(alerts);
-    updateIssueQuantity(allocatedQuantity);
+    setIssueUnitQuantity(allocatedQuantity);
   };
 
   // using a debounced value for the allocation. In the scenario where
@@ -183,7 +181,7 @@ export const PrescriptionLineEditForm: React.FC<
   }, [item?.id]);
 
   useEffect(() => {
-    if (!isAutoAllocated) updateIssueQuantity(allocatedUnits);
+    if (!isAutoAllocated) setIssueUnitQuantity(allocatedUnits);
   }, [packSizeController.selected?.value, allocatedUnits]);
 
   return (
@@ -227,6 +225,7 @@ export const PrescriptionLineEditForm: React.FC<
           )}
           <AccordionPanelSection
             title={t('label.quantity')}
+            closedSummary={summarise(draftPrescriptionLines, t)}
             defaultExpanded={isNew}
             key={item?.id ?? 'new'}
           >
@@ -362,4 +361,40 @@ const TableWrapper: React.FC<TableProps> = ({
       </TableProvider>
     </>
   );
+};
+
+const summarise = (
+  lines: DraftStockOutLine[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  // Count how many of each pack size
+  const counts: Record<number, { unitName: string; count: number }> = {};
+  lines.forEach(({ packSize, numberOfPacks, stockLine }) => {
+    if (numberOfPacks === 0) return;
+    if (counts[packSize]) {
+      counts[packSize].count += packSize * numberOfPacks;
+    } else {
+      counts[packSize] = {
+        unitName: (stockLine?.item as ItemNode)?.unitName ?? 'unit',
+        count: NumUtils.round(packSize * numberOfPacks),
+      };
+    }
+  });
+
+  // Summarise counts in words
+  const summary: string[] = [];
+  Object.entries(counts).forEach(([size, { unitName, count }]) => {
+    const unitWord = t('label.unit-plural', {
+      count,
+      unit: unitName,
+    });
+    if (Number(size) > 1) {
+      const packs = NumUtils.round(count / Number(size), 3);
+      summary.push(t('label.packs-of-size', { packs, count, size, unitWord }));
+    } else {
+      summary.push(t('label.packs-of-1', { count, unitWord }));
+    }
+  });
+
+  return summary.join('\n');
 };
