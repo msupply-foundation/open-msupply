@@ -31,7 +31,7 @@ const getStatusOptions = (
     {
       value: RequisitionNodeStatus.Finalised,
       label: getButtonLabel(RequisitionNodeStatus.Finalised),
-      isDisabled: false,
+      isDisabled: true,
     },
   ];
 
@@ -125,7 +125,7 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
     if (!selectedOption) return null;
     let result;
     try {
-      result = await save({ id });
+      result = await save({ id, status: selectedOption.value });
       const errorMessage = mapStructuredErrors(result);
 
       if (errorMessage) {
