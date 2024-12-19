@@ -9,7 +9,7 @@ export const useConfirmationModal = ({
   onConfirm,
   message,
   info,
-  buttonLabel = 'OK',
+  buttonLabel,
   title,
   onCancel,
   iconType = 'help',

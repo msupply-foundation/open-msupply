@@ -4,6 +4,7 @@ import { BasicModal } from '../BasicModal';
 import { AlertIcon, HelpIcon, InfoIcon } from '@common/icons';
 import { DialogButton, LoadingButton } from '../../buttons';
 import { Alert } from '@common/components';
+import { useTranslation } from '@openmsupply-client/common';
 
 interface ConfirmationModalProps {
   open: boolean;
@@ -38,6 +39,7 @@ export const ConfirmationModal = ({
 }: ConfirmationModalProps) => {
   const [loading, setLoading] = useState(false);
   const Icon = iconLookup[iconType];
+  const t = useTranslation();
 
   return (
     <BasicModal width={width} height={height} open={open}>
@@ -91,7 +93,7 @@ export const ConfirmationModal = ({
                 onCancel();
               }}
             >
-              {buttonLabel}
+              {buttonLabel ? buttonLabel : t('button.ok')}
             </LoadingButton>
           </Grid>
         </Grid>
