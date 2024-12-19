@@ -132,6 +132,7 @@ pub enum Resource {
     MutateImmunisationProgram,
     // contact form
     MutateContactForm,
+    NoPermissionRequired,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -578,6 +579,10 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::QueryVaccineCourse,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::NoPermissionRequired,
         PermissionDSL::NoPermissionRequired,
     );
 
