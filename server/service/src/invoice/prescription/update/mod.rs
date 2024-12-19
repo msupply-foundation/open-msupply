@@ -8,6 +8,7 @@ use crate::{
     activity_log::{activity_log_entry, log_type_from_invoice_status},
     invoice::query::get_invoice,
     service_provider::ServiceContext,
+    NullableUpdate,
 };
 
 mod generate;
@@ -32,7 +33,7 @@ pub struct UpdatePrescription {
     pub comment: Option<String>,
     pub colour: Option<String>,
     pub backdated_datetime: Option<NaiveDateTime>,
-    pub diagnosis_id: Option<String>,
+    pub diagnosis_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]

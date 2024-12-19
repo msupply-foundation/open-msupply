@@ -8226,7 +8226,7 @@ export type UpdatePrescriptionInput = {
   clinicianId?: InputMaybe<Scalars['String']['input']>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
-  diagnosisId?: InputMaybe<Scalars['String']['input']>;
+  diagnosisId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   patientId?: InputMaybe<Scalars['String']['input']>;
   prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;

@@ -1,5 +1,6 @@
 use async_graphql::*;
 use chrono::{DateTime, Utc};
+use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::{
     CannotReverseInvoiceStatus, InvalidStockSelection, NodeError, RecordNotFound,
 };
@@ -13,6 +14,7 @@ use service::invoice::prescription::{
     UpdatePrescription as ServiceInput, UpdatePrescriptionError as ServiceError,
     UpdatePrescriptionStatus,
 };
+use service::NullableUpdate;
 
 use crate::mutations::outbound_shipment::error::InvoiceIsNotEditable;
 
@@ -26,7 +28,7 @@ pub struct UpdateInput {
     pub prescription_date: Option<DateTime<Utc>>,
     pub comment: Option<String>,
     pub colour: Option<String>,
-    pub diagnosis_id: Option<String>,
+    pub diagnosis_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -110,7 +112,9 @@ impl UpdateInput {
             comment,
             colour,
             backdated_datetime: prescription_date.map(|date| date.naive_utc()),
-            diagnosis_id,
+            diagnosis_id: diagnosis_id.map(|diagnosis_id| NullableUpdate {
+                value: diagnosis_id.value,
+            }),
         }
     }
 }
