@@ -8,16 +8,16 @@ use lettre::{
 // It provides a is_permanent method to check if the error is permanent or temporary.
 #[derive(Debug)]
 pub enum EmailSendError {
-    AddressError(String),
-    MessageBuildError(lettre::error::Error),
+    AddressError,
+    MessageBuildError,
     SmtpError(lettre::transport::smtp::Error),
 }
 
 impl EmailSendError {
     pub fn is_permanent(&self) -> bool {
         match self {
-            EmailSendError::AddressError(_) => true,
-            EmailSendError::MessageBuildError(_) => true,
+            EmailSendError::AddressError => true,
+            EmailSendError::MessageBuildError => true,
             EmailSendError::SmtpError(e) => e.is_permanent(),
         }
     }
@@ -39,14 +39,14 @@ pub fn send_email(
 ) -> Result<(), EmailSendError> {
     let to: Mailbox = to
         .parse()
-        .map_err(|e: AddressError| EmailSendError::AddressError(e.to_string()))?;
+        .map_err(|_e: AddressError| EmailSendError::AddressError)?;
 
     let message = Message::builder()
         .to(to)
         .from(from)
         .subject(subject)
         .multipart(MultiPart::alternative_plain_html(text_body, html_body))
-        .map_err(|e| EmailSendError::MessageBuildError(e))?;
+        .map_err(|_e| EmailSendError::MessageBuildError)?;
 
     mailer
         .send(&message)
