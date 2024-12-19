@@ -59,7 +59,11 @@ export const AccordionPanelSection: React.FC<
           <Typography>
             <strong>{title}</strong>
           </Typography>
-          {!open && <Typography>{closedSummary}</Typography>}
+          {!open && (
+            <Typography sx={{ whiteSpace: 'pre-wrap' }}>
+              {closedSummary}
+            </Typography>
+          )}
         </Box>
       </AccordionSummary>
       <AccordionDetails>{children}</AccordionDetails>

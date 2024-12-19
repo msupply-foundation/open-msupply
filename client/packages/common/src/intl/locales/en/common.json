@@ -899,6 +899,8 @@
   "label.packs-of_one": "pack of",
   "label.packs-of_other": "packs of",
   "label.packs-to-repack": "Number of packs to repack",
+  "label.packs-of-1": "{{count}} {{unitWord}} in packs of 1",
+  "label.packs-of-size": "{{packs}} packs of {{size}} {{unitWord}} ({{count}} units)",
   "label.past": "Past",
   "label.patient": "Patient",
   "label.patient-details": "Patient Details",

@@ -6,6 +6,7 @@ import {
   ExpiryDateCell,
   // LocationCell,
   NumberCell,
+  NumUtils,
   useColumns,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../types';
@@ -15,10 +16,12 @@ export const usePrescriptionLineEditColumns = ({
   onChange,
   // unit,
 }: {
-  onChange: (key: string, quantity: number) => void;
+  onChange: (key: string, numPacks: number) => void;
   unit: string;
 }) => {
-  const columns: ColumnDescription<DraftStockOutLine>[] = [
+  const columns: ColumnDescription<
+    DraftStockOutLine & { unitQuantity?: number }
+  >[] = [
     [
       'expiryDate',
       {
@@ -101,13 +104,13 @@ export const usePrescriptionLineEditColumns = ({
       key: 'unitQuantity',
       align: ColumnAlign.Right,
       width: 120,
-      setter: ({ packSize, id, numberOfPacks }) => {
-        console.log('number of packs', numberOfPacks);
-        onChange(id, (numberOfPacks ?? 0) * (packSize ?? 1));
-        // onChange(id, (numberOfPacks ?? 0) * (packSize ?? 1));
-      },
+      setter: ({ packSize, id, unitQuantity }) =>
+        onChange(id, (unitQuantity ?? 0) / (packSize ?? 1)),
       accessor: ({ rowData }) =>
-        (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
+        NumUtils.round(
+          (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
+          3
+        ),
     },
   ];
 
@@ -135,7 +138,7 @@ export const usePrescriptionLineEditColumns = ({
 //     [
 //       'unitQuantity',
 //       {
-//         accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
+//         accessor: ({ rowData }) => rowData. rowData.numberOfPacks,
 //       },
 //     ],
 //   ]);
