@@ -4,14 +4,13 @@ use graphql_core::simple_generic_errors::FailedTranslation;
 use graphql_core::standard_graphql_error::{list_error_to_gql_err, StandardGraphqlError};
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, StringFilterInput},
-    pagination::PaginationInput,
     standard_graphql_error::validate_auth,
 };
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::FormSchemaNode;
 use repository::{
-    ContextType as ReportContextDomain, EqualFilter, PaginationOption, Report, ReportFilter,
-    ReportSort, ReportSortField, StringFilter,
+    ContextType as ReportContextDomain, EqualFilter, Report, ReportFilter, ReportSort,
+    ReportSortField, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 use service::report::report_service::{GetReportError, GetReportsError};
@@ -173,7 +172,6 @@ pub fn reports(
     ctx: &Context<'_>,
     store_id: String,
     user_language: String,
-    page: Option<PaginationInput>,
     filter: Option<ReportFilterInput>,
     sort: Option<Vec<ReportSortInput>>,
 ) -> Result<ReportsResponse> {
@@ -193,7 +191,6 @@ pub fn reports(
         &service_context,
         &translation_service,
         user_language,
-        page.map(PaginationOption::from),
         filter.map(|f| f.to_domain()),
         sort.and_then(|mut sort_list| sort_list.pop())
             .map(|sort| sort.to_domain()),
@@ -216,6 +213,8 @@ impl ReportFilterInput {
                 .context
                 .map(|t| map_filter!(t, ReportContext::to_domain)),
             sub_context: self.sub_context.map(EqualFilter::from),
+            code: None,
+            is_custom: None,
         }
     }
 }

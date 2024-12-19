@@ -434,10 +434,10 @@ async fn main() -> anyhow::Result<()> {
                     let version = manifest.version;
                     let id_version = str::replace(&version, ".", "_");
 
-                    let id = format!("{code}_{id_version}");
                     let context = manifest.context;
                     let report_name = manifest.name;
                     let is_custom = manifest.is_custom;
+                    let id = format!("{code}_{id_version}_{is_custom}");
                     let sub_context = manifest.sub_context;
                     let arguments_path = manifest
                         .arguments
