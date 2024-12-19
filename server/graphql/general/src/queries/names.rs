@@ -74,6 +74,9 @@ pub struct NameFilterInput {
 
     /// Search filter across name or code
     pub code_or_name: Option<StringFilterInput>,
+
+    /// Search for stores by supplying store id
+    pub supplying_store_id: Option<EqualFilterStringInput>,
 }
 
 #[derive(SimpleObject)]
@@ -149,6 +152,7 @@ impl NameFilterInput {
             country,
             email,
             code_or_name,
+            supplying_store_id,
         } = self;
 
         NameFilter {
@@ -170,6 +174,7 @@ impl NameFilterInput {
             address2: address2.map(StringFilter::from),
             country: country.map(StringFilter::from),
             email: email.map(StringFilter::from),
+            supplying_store_id: supplying_store_id.map(EqualFilter::from),
         }
     }
 }

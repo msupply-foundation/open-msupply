@@ -26,6 +26,22 @@ pub fn mock_indicator_column_b() -> IndicatorColumnRow {
     }
 }
 
+pub fn mock_indicator_column_c() -> IndicatorColumnRow {
+    IndicatorColumnRow {
+        id: "indicator_column_b".to_owned(),
+        program_indicator_id: mock_program_indicator_a().id,
+        column_number: 2,
+        header: "Some column B".to_owned(),
+        value_type: Some(IndicatorValueType::Number),
+        default_value: "1".to_owned(),
+        is_active: true,
+    }
+}
+
 pub fn mock_indicator_columns() -> Vec<IndicatorColumnRow> {
-    vec![mock_indicator_column_a(), mock_indicator_column_b()]
+    vec![
+        mock_indicator_column_a(),
+        mock_indicator_column_b(),
+        mock_indicator_column_c(),
+    ]
 }
