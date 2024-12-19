@@ -39,9 +39,14 @@ export const PatientDetailsComponent = () => {
                 value: diagnosis?.id ?? '',
                 id: diagnosis?.id ?? '',
               }}
-              onChange={(_e, selected) =>
-                update({ diagnosisId: selected?.value })
-              }
+              onChange={(_e, selected) => {
+                if (selected) {
+                  update({ diagnosisId: selected.value });
+                } else {
+                  // Updated value needs to be null for nullable input to work correctly
+                  update({ diagnosisId: null });
+                }
+              }}
               disabled={isDisabled}
             />
           </PanelRow>
