@@ -61,7 +61,7 @@ const UIComponent = (props: ControlProps) => {
 
   useEffect(() => {
     if (!data) return;
-    const dob = DateUtils.getDateOrNull(data.dateOfBirth);
+    const dob = DateUtils.getNaiveDate(data.dateOfBirth);
     setDoB(dob);
     if (dob === null) {
       setAge(undefined);
@@ -73,8 +73,6 @@ const UIComponent = (props: ControlProps) => {
   if (!props.visible) {
     return null;
   }
-
-  const { months, days } = DateUtils.ageInMonthsAndDays(dob ?? '');
 
   return (
     <DetailInputWithLabelRow
@@ -115,8 +113,7 @@ const UIComponent = (props: ControlProps) => {
             </Box>
           ) : (
             <Typography fontSize="85%" whiteSpace="nowrap">
-              {months > 0 && t('label.age-months-and', { count: months })}
-              {t('label.age-days', { count: days })}
+              {formatDateTime.getDisplayAge(dob)}
             </Typography>
           )}
         </Box>

@@ -39,6 +39,7 @@ import { RequireAuthentication } from './components/Navigation/RequireAuthentica
 import { QueryErrorHandler } from './QueryErrorHandler';
 import { Sync } from './components/Sync';
 import { EasterEggModalProvider } from './components';
+import { Help } from './Help/Help';
 
 const NotifyOnLogin = () => {
   const { success } = useNotification();
@@ -160,6 +161,12 @@ export const Site: FC = () => {
                         .addWildCard()
                         .build()}
                       element={<Settings />}
+                    />
+                    <Route
+                      path={RouteBuilder.create(AppRoute.Help)
+                        .addWildCard()
+                        .build()}
+                      element={<Help />}
                     />
                     <Route
                       path={RouteBuilder.create(AppRoute.Sync)

@@ -111,7 +111,7 @@ const getButtonProps = (
       return {
         icon: <ArrowLeftIcon />,
         labelKey: 'button.previous',
-        variant: 'outlined',
+        variant: 'contained',
       };
   }
 };

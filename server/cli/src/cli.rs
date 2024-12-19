@@ -168,15 +168,7 @@ async fn initialise_from_central(
     info!("Finished database reset");
 
     let connection_manager = get_storage_connection_manager(&settings.database);
-    let app_data_folder = settings
-        .clone()
-        .server
-        .base_dir
-        .ok_or(anyhow!("based dir not set in yaml configurations"))?;
-    let service_provider = Arc::new(ServiceProvider::new(
-        connection_manager.clone(),
-        &app_data_folder,
-    ));
+    let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
 
     let sync_settings = settings
         .clone()
@@ -312,14 +304,7 @@ async fn main() -> anyhow::Result<()> {
             test_db::setup(&settings.database).await;
 
             let connection_manager = get_storage_connection_manager(&settings.database);
-            let hardware_id = settings
-                .server
-                .base_dir
-                .ok_or(anyhow!("based dir not set in yaml configurations"))?;
-            let service_provider = Arc::new(ServiceProvider::new(
-                connection_manager.clone(),
-                &hardware_id,
-            ));
+            let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
             let ctx = service_provider.basic_context()?;
 
             let (_, import_file, users_file) = export_paths(&name);
@@ -383,19 +368,12 @@ async fn main() -> anyhow::Result<()> {
         Action::RefreshDates { enable_sync } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let connection = connection_manager.connection()?;
-            let app_data_folder = settings
-                .server
-                .base_dir
-                .ok_or(anyhow!("based dir not set in yaml configurations"))?;
 
             info!("Refreshing dates");
             let result =
                 RefreshDatesRepository::new(&connection).refresh_dates(Utc::now().naive_utc())?;
 
-            let service_provider = Arc::new(ServiceProvider::new(
-                connection_manager.clone(),
-                &app_data_folder,
-            ));
+            let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
             let ctx = service_provider.basic_context()?;
             let service = &service_provider.settings;
 
@@ -441,10 +419,16 @@ async fn main() -> anyhow::Result<()> {
                     // read manifest file
 
                     let manifest_file = fs::File::open(format!("{version_dir}/manifest.json"))
-                        .expect("file should open read only");
+                        .expect(&format!(
+                            "manifest file should open read only in report {:?} {:?}",
+                            name, version_dir
+                        ));
 
-                    let manifest: Manifest = serde_json::from_reader(manifest_file)
-                        .expect("manifest json not formatted correctly");
+                    let manifest: Manifest =
+                        serde_json::from_reader(manifest_file).expect(&format!(
+                            "manifest json not formatted correctly {:?} {:?}",
+                            name, version_dir
+                        ));
                     let code = manifest.code;
 
                     let version = manifest.version;
@@ -496,9 +480,9 @@ async fn main() -> anyhow::Result<()> {
 
                     let form_schema_json = match (arguments_path, arguments_ui_path) {
                         (Some(_), None) | (None, Some(_)) => {
-                            return Err(anyhow!(
-                                "When arguments path are specified both paths must be present"
-                            ))
+                            return Err(anyhow!(format!(
+                                "When arguments_path is specified arguments_ui_path must be specified too in report {:?} {:?}", name, version_dir
+                            )))
                         }
                         (Some(arguments_path), Some(arguments_ui_path)) => {
                             Some(schema_from_row(FormSchemaRow {
@@ -554,9 +538,11 @@ async fn main() -> anyhow::Result<()> {
             let json_file = fs::File::open(
                 json_path.unwrap_or(format!("{generated_dir}/standard_reports.json")),
             )
-            .expect("{generated_dir}/standard_reports.json not found");
+            .expect(&format!(
+                "{generated_dir}/standard_reports.json not found for report",
+            ));
             let reports_data: ReportsData =
-                serde_json::from_reader(json_file).expect("json incorrectly formatted");
+                serde_json::from_reader(json_file).expect("json incorrectly formatted for report");
 
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;

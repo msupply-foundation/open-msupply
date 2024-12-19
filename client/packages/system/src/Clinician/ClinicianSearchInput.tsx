@@ -9,6 +9,7 @@ interface ClinicianSearchInputProps {
   width?: number;
   clinicianValue: Clinician | null | undefined;
   disabled?: boolean;
+  fullWidth?: boolean;
 }
 
 export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
@@ -16,6 +17,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
   width = 250,
   clinicianValue,
   disabled,
+  fullWidth,
 }) => {
   const { data } = useClinicians.document.list({});
   const { getLocalisedFullName } = useIntlUtils();
@@ -53,6 +55,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
       )}
       sx={{ minWidth: width }}
       disabled={disabled}
+      fullWidth={fullWidth}
     />
   );
 };

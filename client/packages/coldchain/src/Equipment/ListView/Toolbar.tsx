@@ -66,11 +66,11 @@ export const Toolbar = () => {
       urlParameter: 'functionalStatus',
       options: [
         {
-          label: t('status.decommissioned', { ns: 'coldchain' }),
+          label: t('status.decommissioned'),
           value: AssetLogStatusInput.Decommissioned,
         },
         {
-          label: t('status.functioning', { ns: 'coldchain' }),
+          label: t('status.functioning'),
           value: AssetLogStatusInput.Functioning,
         },
         {
@@ -80,15 +80,15 @@ export const Toolbar = () => {
           value: AssetLogStatusInput.FunctioningButNeedsAttention,
         },
         {
-          label: t('status.not-functioning', { ns: 'coldchain' }),
+          label: t('status.not-functioning'),
           value: AssetLogStatusInput.NotFunctioning,
         },
         {
-          label: t('status.not-in-use', { ns: 'coldchain' }),
+          label: t('status.not-in-use'),
           value: AssetLogStatusInput.NotInUse,
         },
         {
-          label: t('status.unserviceable', { ns: 'coldchain' }),
+          label: t('status.unserviceable'),
           value: AssetLogStatusInput.Unserviceable,
         },
       ],

@@ -17,7 +17,7 @@ import {
   PatientModal,
   SaveDocumentMutation,
   useDocumentDataAccessor,
-  useJsonForms,
+  useJsonFormsHandler,
   usePatientModalStore,
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
@@ -61,7 +61,7 @@ export const ProgramDetailModal: FC = () => {
     handleSave
   );
   const { JsonForm, isLoading, isSaving, saveData, isDirty, validationError } =
-    useJsonForms(
+  useJsonFormsHandler(
       {
         documentName: document?.name,
         patientId,

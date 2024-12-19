@@ -15,7 +15,8 @@ use std::{cmp::Ordering, collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
 
 use crate::{
-    localisations::Localisations,
+    get_default_pagination,
+    localisations::{Localisations, TranslationError},
     service_provider::ServiceContext,
     static_files::{StaticFileCategory, StaticFileService},
     ListError,
@@ -28,6 +29,7 @@ use super::{
     },
     html_printing::html_to_pdf,
     qr_code::qr_code_svg,
+    utils::translate_report_arugment_schema,
 };
 
 pub enum PrintFormat {
@@ -82,17 +84,25 @@ pub struct GeneratedReport {
 }
 
 pub trait ReportServiceTrait: Sync + Send {
-    fn get_report(&self, ctx: &ServiceContext, id: &str) -> Result<Report, RepositoryError> {
-        get_report(ctx, id)
+    fn get_report(
+        &self,
+        ctx: &ServiceContext,
+        translation_service: &Box<Localisations>,
+        user_language: String,
+        id: &str,
+    ) -> Result<Report, GetReportError> {
+        get_report(ctx, translation_service, user_language, id)
     }
 
     fn query_reports(
         &self,
         ctx: &ServiceContext,
+        translation_service: &Box<Localisations>,
+        user_language: String,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
-    ) -> Result<Vec<Report>, ListError> {
-        query_reports(ctx, filter, sort)
+    ) -> Result<Vec<Report>, GetReportsError> {
+        query_reports(ctx, translation_service, user_language, filter, sort)
     }
 
     /// Loads a report definition by id and resolves it
@@ -315,18 +325,43 @@ impl ReportServiceTrait for ReportService {}
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
 
-fn get_report(ctx: &ServiceContext, id: &str) -> Result<Report, RepositoryError> {
-    ReportRepository::new(&ctx.connection)
-        .query_by_filter(ReportFilter::new().id(EqualFilter::equal_to(id)))?
+#[derive(Debug)]
+pub enum GetReportError {
+    TranslationError(TranslationError),
+    RepositoryError(RepositoryError),
+}
+
+fn get_report(
+    ctx: &ServiceContext,
+    translation_service: &Box<Localisations>,
+    user_language: String,
+    id: &str,
+) -> Result<Report, GetReportError> {
+    let report = ReportRepository::new(&ctx.connection)
+        .query_by_filter(ReportFilter::new().id(EqualFilter::equal_to(id)))
+        .map_err(|e| GetReportError::RepositoryError(e))?
         .pop()
-        .ok_or(RepositoryError::NotFound)
+        .ok_or(GetReportError::RepositoryError(RepositoryError::NotFound))?;
+
+    let report = translate_report_arugment_schema(report, translation_service, &user_language)
+        .map_err(GetReportError::TranslationError)?;
+
+    Ok(report)
+}
+
+#[derive(Debug)]
+pub enum GetReportsError {
+    TranslationError(TranslationError),
+    ListError(ListError),
 }
 
 fn query_reports(
     ctx: &ServiceContext,
+    translation_service: &Box<Localisations>,
+    user_language: String,
     filter: Option<ReportFilter>,
     sort: Option<ReportSort>,
-) -> Result<Vec<Report>, ListError> {
+) -> Result<Vec<Report>, GetReportsError> {
     let app_version: Version = Version::from_package_json();
 
     let repo = ReportRepository::new(&ctx.connection);
@@ -896,7 +931,7 @@ mod report_service_test {
         })
         .unwrap();
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context("store_id".to_string(), "".to_string())
             .unwrap();
@@ -1055,8 +1090,7 @@ mod report_generation_test {
         let (_, connection, connection_manager, _) =
             setup_all("test_report_translations", MockDataInserts::none()).await;
 
-        let translation_service =
-            ServiceProvider::new(connection_manager, "app_data").translations_service;
+        let translation_service = ServiceProvider::new(connection_manager).translations_service;
 
         let mut templates = HashMap::new();
         templates.insert("test.html".to_string(), tera_template);

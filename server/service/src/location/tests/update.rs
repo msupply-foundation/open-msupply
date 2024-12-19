@@ -20,7 +20,7 @@ mod query {
 
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -78,7 +78,7 @@ mod query {
 
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();

@@ -6,7 +6,7 @@ use crate::{
 use super::{initialise_transfer_sites, SyncIntegrationTransferContext};
 
 #[actix_rt::test]
-async fn integration_sync_return_transfers_normal() {
+async fn integration_sync_transfer_return_normal() {
     // util::init_logger(util::LogLevel::Info);
 
     let SyncIntegrationTransferContext {
@@ -166,7 +166,7 @@ async fn integration_sync_return_transfers_normal() {
 }
 
 #[actix_rt::test]
-async fn integration_sync_return_transfers_delete() {
+async fn integration_sync_transfer_return_delete() {
     // util::init_logger(util::LogLevel::Info);
 
     let SyncIntegrationTransferContext {
@@ -272,7 +272,7 @@ async fn integration_sync_return_transfers_delete() {
 }
 
 #[actix_rt::test]
-async fn integration_sync_return_transfers_initialise() {
+async fn integration_sync_transfer_return_initialise() {
     // util::init_logger(util::LogLevel::Info);
     let identifier = "return_transfers_initialise";
 

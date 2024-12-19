@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from '@common/intl';
 import { Box, Typography, NewValueBar } from '@openmsupply-client/common';
-import { ItemRowFragment } from 'packages/system/src';
+import { ItemRowFragment } from '@openmsupply-client/system';
 
 export interface ResponseStoreStatsProps {
   item?: ItemRowFragment;

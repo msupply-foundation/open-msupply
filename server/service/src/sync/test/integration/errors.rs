@@ -27,7 +27,7 @@ mod tests {
         settings: &SyncSettings,
         hardware_id: &str,
     ) -> Synchroniser {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         struct TestService1(String);
         impl AppDataServiceTrait for TestService1 {
             fn get_hardware_id(&self) -> Result<String, Error> {
