@@ -211,8 +211,10 @@ impl EmailServiceTrait for EmailService {
 #[cfg(feature = "email-tests")]
 mod email_test {
 
+    use crate::processors::ProcessorsTrigger;
     use crate::service_provider::ServiceProvider;
-    use crate::test_utils::get_test_settings;
+    use crate::settings::MailSettings;
+    use crate::sync::synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger};
     use repository::mock::MockDataInserts;
     use repository::test_db::setup_all;
 
@@ -221,7 +223,20 @@ mod email_test {
         let (_, _, connection_manager, _) =
             setup_all("test_email_connection", MockDataInserts::none()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, get_test_settings(""));
+        let service_provider = ServiceProvider::new_with_triggers(
+            connection_manager,
+            ProcessorsTrigger::new_void(),
+            SyncTrigger::new_void(),
+            SiteIsInitialisedTrigger::new_void(),
+            Some(MailSettings {
+                port: 1025,
+                host: "localhost".to_string(),
+                starttls: false,
+                username: "".to_string(),
+                password: "".to_string(),
+                from: "no-reply@msupply.foundation".to_string(),
+            }),
+        );
         let email_service = service_provider.email_service;
         let test = email_service.test_connection().unwrap();
         assert!(test);
