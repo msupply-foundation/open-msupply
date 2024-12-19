@@ -43,11 +43,21 @@ pub fn program_master_list_store() -> StoreRow {
     })
 }
 
+pub fn program_master_list_store_b() -> StoreRow {
+    inline_init(|s: &mut StoreRow| {
+        s.id = "program_master_list_store_b".to_string();
+        s.name_link_id = mock_program_master_list_test().id;
+        s.code = mock_program_master_list_test().code;
+        s.created_date = NaiveDate::from_ymd_opt(2020, 1, 1);
+    })
+}
+
 pub fn mock_stores() -> Vec<StoreRow> {
     vec![
         mock_store_a(),
         mock_store_b(),
         mock_store_c(),
         program_master_list_store(),
+        program_master_list_store_b(),
     ]
 }
