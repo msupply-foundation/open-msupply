@@ -26,6 +26,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             code: "TestLocationCode".to_string(),
             on_hold: false,
             store_id: store_id.to_string(),
+            cold_storage_type_id: None,
         };
         let currency_row = CurrencyRow {
             id: uuid(),
@@ -70,6 +71,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             sell_price_per_pack: Some(0.0),
             note: None,
             inventory_adjustment_reason_id: None,
+            item_variant_id: None,
         };
         result.push(TestStepData {
             central_upsert: json!({"item": [{

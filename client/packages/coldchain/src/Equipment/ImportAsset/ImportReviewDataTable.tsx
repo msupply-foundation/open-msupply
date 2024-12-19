@@ -3,16 +3,19 @@ import {
   ColumnDescription,
   ColumnFormat,
   DataTable,
+  DotCell,
   Grid,
   NothingHere,
-  Pagination,
   SearchBar,
   TooltipTextCell,
   useColumns,
   useIsCentralServerApi,
   useTranslation,
+  useUserPreferencePagination,
+  useWindowDimensions,
 } from '@openmsupply-client/common';
 import { ImportRow } from './EquipmentImportModal';
+import { Status } from '../Components';
 
 interface ImportReviewDataTableProps {
   importRows: ImportRow[];
@@ -24,30 +27,18 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
 }) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
-  const [pagination, setPagination] = useState<Pagination>({
-    page: 0,
-    first: 20,
-    offset: 0,
-  });
+  const { height } = useWindowDimensions();
+
+  const { pagination, updateUserPreferencePagination } =
+    useUserPreferencePagination();
+
   const [searchString, setSearchString] = useState<string>(() => '');
-  const columnDescriptions: ColumnDescription<ImportRow>[] = [
-    {
-      key: 'assetNumber',
-      width: 70,
-      sortable: false,
-      label: 'label.asset-number',
-    },
-    {
-      key: 'catalogueItemCode',
-      width: 50,
-      sortable: false,
-      label: 'label.catalogue-item-code',
-    },
-  ];
+  const columnDescriptions: ColumnDescription<ImportRow>[] = [];
+
   if (isCentralServer) {
     columnDescriptions.push({
       key: 'store',
-      width: 50,
+      width: 80,
       sortable: false,
       label: 'label.store',
       accessor: ({ rowData }) => rowData.store?.code,
@@ -56,25 +47,58 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
 
   columnDescriptions.push(
     {
-      key: 'serialNumber',
-      width: 100,
+      key: 'assetNumber',
+      width: 90,
       sortable: false,
-      label: 'label.serial',
-      Cell: TooltipTextCell,
+      label: 'label.asset-number',
+    },
+    {
+      key: 'catalogueItemCode',
+      sortable: false,
+      label: 'label.catalogue-item-code',
     },
     {
       key: 'installationDate',
-      width: 100,
       sortable: false,
       label: 'label.installation-date',
       format: ColumnFormat.Date,
     },
     {
       key: 'replacementDate',
-      width: 100,
       sortable: false,
       label: 'label.replacement-date',
       format: ColumnFormat.Date,
+    },
+    {
+      key: 'warrantyStart',
+      sortable: false,
+      label: 'label.warranty-start-date',
+      Cell: TooltipTextCell,
+    },
+    {
+      key: 'warrantyEnd',
+      sortable: false,
+      label: 'label.warranty-end-date',
+      Cell: TooltipTextCell,
+    },
+    {
+      key: 'serialNumber',
+      sortable: false,
+      label: 'label.serial',
+      Cell: TooltipTextCell,
+    },
+    {
+      key: 'status',
+      sortable: false,
+      label: 'label.status',
+      Cell: ({ rowData }) => <Status status={rowData.status} />,
+    },
+    {
+      key: 'needsReplacement',
+      sortable: false,
+      label: 'label.needs-replacement',
+      Cell: DotCell,
+      accessor: ({ rowData }) => !!rowData.needsReplacement,
     },
     {
       key: 'notes',
@@ -110,28 +134,25 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     return (
       row.assetNumber.includes(searchString) ||
       (row.catalogueItemCode && row.catalogueItemCode.includes(searchString)) ||
-      row.errorMessage.includes(searchString) ||
+      row.errorMessage?.includes(searchString) ||
       row.id === searchString
     );
   });
+
   const currentEquipmentPage = filteredEquipment.slice(
     pagination.offset,
     pagination.offset + pagination.first
   );
 
   return (
-    <Grid flexDirection="column" display="flex" gap={0}>
+    <Grid flexDirection="column" display="flex" gap={0} height={height * 0.5}>
       <SearchBar
         placeholder={t('messages.search')}
         value={searchString}
         debounceTime={300}
         onChange={newValue => {
           setSearchString(newValue);
-          setPagination({
-            first: pagination.first,
-            offset: 0,
-            page: 0,
-          });
+          updateUserPreferencePagination(0);
         }}
       />
       <DataTable
@@ -139,13 +160,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
           ...pagination,
           total: filteredEquipment.length,
         }}
-        onChangePage={page => {
-          setPagination({
-            first: pagination.first,
-            offset: pagination.first * page,
-            page: page,
-          });
-        }}
+        onChangePage={updateUserPreferencePagination}
         columns={columns}
         data={currentEquipmentPage}
         noDataElement={<NothingHere body={t('error.asset-not-found')} />}

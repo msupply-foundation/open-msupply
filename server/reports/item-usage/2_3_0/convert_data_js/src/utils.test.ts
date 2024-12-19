@@ -149,3 +149,10 @@ describe("calculate MOS", () => {
     ).toBe(4.5);
   });
 });
+
+describe("calculate stockOnOrder", () => {
+  it("return  0 when calculate quantity input is negative", () => {
+    // covers possible negative cases such as where invoice line stock is greater than requisition line stock
+    expect(calculateQuantity(inputData.stockOnOrder, "102")).toBe(0);
+  });
+});

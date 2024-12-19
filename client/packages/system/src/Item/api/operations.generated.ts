@@ -151,6 +151,20 @@ export type DeleteBundledItemMutationVariables = Types.Exact<{
 
 export type DeleteBundledItemMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', bundledItem: { __typename: 'BundledItemMutations', deleteBundledItem: { __typename: 'DeleteResponse', id: string } } } };
 
+export type ItemLedgerFragment = { __typename: 'ItemLedgerNode', id: string, balance: number, batch?: string | null, costPricePerPack: number, datetime: string, expiryDate?: string | null, invoiceNumber: number, invoiceStatus: Types.InvoiceNodeStatus, invoiceType: Types.InvoiceNodeType, name: string, packSize: number, quantity: number, reason?: string | null, sellPricePerPack: number, totalBeforeTax?: number | null, numberOfPacks: number };
+
+export type ItemLedgerQueryVariables = Types.Exact<{
+  key: Types.LedgerSortFieldInput;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.LedgerFilterInput>;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type ItemLedgerQuery = { __typename: 'Queries', itemLedger: { __typename: 'ItemLedgerConnector', totalCount: number, nodes: Array<{ __typename: 'ItemLedgerNode', id: string, balance: number, batch?: string | null, costPricePerPack: number, datetime: string, expiryDate?: string | null, invoiceNumber: number, invoiceStatus: Types.InvoiceNodeStatus, invoiceType: Types.InvoiceNodeType, name: string, packSize: number, quantity: number, reason?: string | null, sellPricePerPack: number, totalBeforeTax?: number | null, numberOfPacks: number }> } };
+
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
   __typename
@@ -359,6 +373,26 @@ export const ItemVariantOptionFragmentDoc = gql`
   bundledItemVariants {
     id
   }
+}
+    `;
+export const ItemLedgerFragmentDoc = gql`
+    fragment ItemLedger on ItemLedgerNode {
+  id
+  balance
+  batch
+  costPricePerPack
+  datetime
+  expiryDate
+  invoiceNumber
+  invoiceStatus
+  invoiceType
+  name
+  packSize
+  quantity
+  reason
+  sellPricePerPack
+  totalBeforeTax
+  numberOfPacks
 }
     `;
 export const ItemsWithStockLinesDocument = gql`
@@ -571,6 +605,25 @@ export const DeleteBundledItemDocument = gql`
   }
 }
     `;
+export const ItemLedgerDocument = gql`
+    query itemLedger($key: LedgerSortFieldInput!, $first: Int, $offset: Int, $desc: Boolean, $filter: LedgerFilterInput, $storeId: String!) {
+  itemLedger(
+    storeId: $storeId
+    filter: $filter
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+  ) {
+    ... on ItemLedgerConnector {
+      __typename
+      nodes {
+        __typename
+        ...ItemLedger
+      }
+      totalCount
+    }
+  }
+}
+    ${ItemLedgerFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -617,6 +670,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     deleteBundledItem(variables: DeleteBundledItemMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteBundledItemMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteBundledItemMutation>(DeleteBundledItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteBundledItem', 'mutation', variables);
+    },
+    itemLedger(variables: ItemLedgerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemLedgerQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemLedgerQuery>(ItemLedgerDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemLedger', 'query', variables);
     }
   };
 }

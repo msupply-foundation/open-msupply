@@ -40,7 +40,7 @@ pub struct Requisition {
     pub requisition_row: RequisitionRow,
     pub name_row: NameRow,
     pub store_row: StoreRow,
-    pub program_name: Option<String>,
+    pub program: Option<ProgramRow>,
     pub period: Option<PeriodRow>,
 }
 
@@ -117,8 +117,8 @@ impl<'a> RequisitionRepository<'a> {
                 RequisitionSortField::OrderType => {
                     apply_sort_no_case!(query, sort, requisition_dsl::order_type);
                 }
-                RequisitionSortField::PeriodName => {
-                    apply_sort_no_case!(query, sort, period_dsl::name);
+                RequisitionSortField::PeriodStartDate => {
+                    apply_sort!(query, sort, period_dsl::start_date);
                 }
                 RequisitionSortField::ProgramName => {
                     apply_sort_no_case!(query, sort, program_dsl::name);
@@ -237,13 +237,13 @@ fn create_filtered_query(
 }
 
 fn to_domain(
-    (requisition_row, (_, name_row), store_row, program_row, period_row): RequisitionJoin,
+    (requisition_row, (_, name_row), store_row, program, period_row): RequisitionJoin,
 ) -> Requisition {
     Requisition {
         requisition_row,
         name_row,
         store_row,
-        program_name: program_row.map(|program_row| program_row.name),
+        program,
         period: period_row,
     }
 }

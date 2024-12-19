@@ -30,9 +30,11 @@ const queryParamsStoreContext = createContext<QueryParamsState<any>>({} as any);
 export const createQueryParamsStore = <T extends RecordWithId>({
   initialSortBy,
   initialFilterBy,
+  initialRowsPerPage,
 }: {
   initialSortBy: SortRule<T>;
   initialFilterBy?: FilterBy;
+  initialRowsPerPage?: number;
 }) => {
   const setFilterBy =
     (set: StoreApi<QueryParamsState<T>>['setState']) =>
@@ -45,7 +47,7 @@ export const createQueryParamsStore = <T extends RecordWithId>({
 
   return create<QueryParamsState<T>>((set, get) => ({
     pagination: {
-      first: 20,
+      first: initialRowsPerPage ?? 20,
       offset: 0,
       page: 0,
       onChangeFirst: (first: number) => {

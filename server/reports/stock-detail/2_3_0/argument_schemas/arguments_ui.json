@@ -4,42 +4,20 @@
     {
       "type": "Control",
       "scope": "#/properties/itemCodeOrName",
-      "label": "Item Code or Name",
+      "label": "T#report.item-code-or-name",
       "options": {
         "useDebounce": false
       }
     },
-    {
-      "type": "Control",
-      "scope": "#/properties/monthlyConsumptionLookBackPeriod",
-      "label": "AMC Lookback Period",
-      "options": {
-        "readonly": true
-      }
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/monthsOverstock",
-      "label": "Target MOS",
-      "options": {
-        "readonly": true
-      }
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/monthsUnderstock",
-      "label": "Reorder threshold MOS",
-      "options": {
-        "readonly": true
-      }
-    },
+
     {
       "type": "Control",
       "scope": "#/properties/sort",
-      "label": "Sort by:",
+      "label": "T#report.sort-by",
       "options": {
         "show": [
           ["item.name", "item"],
+          ["batch", "batch"],
           ["item.code", "code"],
           ["expiryDate", "expiry date"],
           ["location.code", "location code"],
@@ -52,7 +30,7 @@
     {
       "type": "Control",
       "scope": "#/properties/dir",
-      "label": "Sort direction"
+      "label": "T#report.sort-direction"
     }
   ]
 }

@@ -326,9 +326,17 @@ Report generations includes the ability to use custom wasm functions to further 
 OMS includes building of JS wasm functions by adding a "convert_data" dir in the version dir.
 See [the extism-js docs](https://github.com/extism/js-pdk) for more details on how to build wasm functions with js within OMS.
 
+`make sure extism-js version 1.3.0 and above is installed`, otherwise you may get `uncreacheable error` as per this [comment](https://github.com/msupply-foundation/open-msupply/issues/5312#issuecomment-2489548208)
+
 Alternatively wasm functions can be built externally using any compatible language using extism-PDK ([see wasm docs for more details](https://webassembly.org/getting-started/developers-guide/)), and added as a custom wasm function.
 
 > Note custom wasm data functions will be used if both custom functions and JS wasm function builder files are both specified
+
+#### Logging in wasm functions
+
+Console errors, infos, and logs in wasm functions are propagated up into the server under a info! macro callback. These can be saved to file, or logged to the server terminal for easy debugging.
+
+Log destination is configured in the base.yaml file under logging.
 
 ## Standard reports versioning
 
@@ -372,4 +380,33 @@ Reports can be built and tested directly from the 'open-msupply' repo, but devel
 
 Once changes are satisfactory, new reports can be moved directly into the OMS repo under a new version dir.
 
-> Reports won't show up in OMS unless they are built and upserted.
+> reports won't show up in OMS unless they are built into the generated json using the `build-standard-reports` command, and then upserted with the `upsert-reports-json` command.
+
+## Localising JSON form fields
+
+Fields in UI schema can be translated our inbuilt translating function.
+
+Translations are invoked by adding by adding a identifying text key `T#` before a value in the json or ui schema.
+A translating function will step through the serialised json Value searching instances of this identifier. It will then strip it from the string, and translate the remaining string value.
+
+For example:
+
+```
+{
+"key": "T#label.value"
+}
+```
+
+becomes
+
+```
+{
+"key": "value"
+}
+```
+
+Where value is the translated value of 'label.value' in our `common.json` translation json in the front end.
+
+The "label" of the ui schema controls the text displayed in the front end report filtering modal.
+
+This function could also be used on any other serialised json value such as patient json schema.
