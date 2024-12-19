@@ -71,6 +71,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
   const onUpdateNotes = (note: string) => {
     updateNotes(note);
     setIsAutoAllocated(false);
+    setIsDirty(true);
   };
 
   const onAllocate = (
