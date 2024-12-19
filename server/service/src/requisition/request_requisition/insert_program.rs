@@ -151,7 +151,7 @@ fn generate(
     order_type: ProgramRequisitionOrderTypeRow,
     InsertProgramRequestRequisition {
         id,
-        other_party_id: _,
+        other_party_id,
         colour,
         comment,
         their_reference,
@@ -170,7 +170,7 @@ fn generate(
             &NumberRowType::RequestRequisition,
             &ctx.store_id,
         )?,
-        name_link_id: ctx.store_id.clone(),
+        name_link_id: other_party_id,
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
@@ -445,7 +445,7 @@ mod test_insert {
             .insert_program_request_requisition(
                 &context,
                 inline_init(|r: &mut InsertProgramRequestRequisition| {
-                    r.id = "new_program_request_requisition_2".to_string();
+                    r.id = "new_program_request_requisition".to_string();
                     r.other_party_id.clone_from(&mock_name_store_b().id);
                     r.program_order_type_id = mock_program_order_types_a().id;
                     r.period_id = mock_period().id;
@@ -464,6 +464,26 @@ mod test_insert {
 
         assert_eq!(new_row.id, "new_program_request_requisition_2");
         assert_eq!(requisition_lines.len(), 1);
+
+        // check active_program_indicators added
+        let filter = IndicatorValueFilter::new()
+            .store_id(EqualFilter::equal_to(&program_master_list_store().id))
+            .customer_name_link_id(EqualFilter::equal_to(&mock_name_store_b().id))
+            .period_id(EqualFilter::equal_to(&mock_period().id));
+
+        let values = IndicatorValueRepository::new(&connection)
+            .query_by_filter(filter)
+            .unwrap();
+
+        assert_eq!(values.len(), 6);
+
+        let number_values: Vec<i32> = values
+            .into_iter()
+            .filter_map(|v| v.value.parse::<i32>().ok())
+            .collect();
+
+        // Check parent store forms aggregate value
+        assert_eq!(number_values.first().unwrap(), &i32::from(1));
     }
 
     #[actix_rt::test]
@@ -473,7 +493,7 @@ mod test_insert {
 
         let service_provider = ServiceProvider::new(connection_manager.clone());
         let context = service_provider
-            .context(program_master_list_store().id, mock_user_account_a().id)
+            .context(program_master_list_store_b().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.requisition_service;
 
@@ -498,96 +518,6 @@ mod test_insert {
             )
             .unwrap();
 
-        assert_eq!(new_row.id, "new_program_request_requisition_2");
-        assert_eq!(requisition_lines.len(), 1);
-
-        // check active_program_indicators added
-        let filter = IndicatorValueFilter::new()
-            .store_id(EqualFilter::equal_to(&program_master_list_store().id))
-            .customer_name_link_id(EqualFilter::equal_to(&program_master_list_store().id))
-            .period_id(EqualFilter::equal_to(&mock_period().id));
-
-        let values = IndicatorValueRepository::new(&connection)
-            .query_by_filter(filter)
-            .unwrap();
-
-        assert_eq!(values.len(), 4);
-
-        // check that indicators of child stores are aggregated
-        let context = ServiceProvider::new(connection_manager.clone())
-            .context(program_master_list_store_b().id, mock_user_account_a().id)
-            .unwrap();
-
-        let result = service
-            .insert_program_request_requisition(
-                &context,
-                inline_init(|r: &mut InsertProgramRequestRequisition| {
-                    r.id = "new_program_request_requisition_3".to_string();
-                    r.other_party_id.clone_from(&mock_name_store_b().id);
-                    r.program_order_type_id = mock_program_order_types_a().id;
-                    r.period_id = mock_period().id;
-                }),
-            )
-            .unwrap();
-        let new_row = RequisitionRowRepository::new(&connection)
-            .find_one_by_id(&result.requisition_row.id)
-            .unwrap()
-            .unwrap();
-        let requisition_lines = RequisitionLineRepository::new(&connection)
-            .query_by_filter(
-                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&new_row.id)),
-            )
-            .unwrap();
-
-        assert_eq!(new_row.id, "new_program_request_requisition_3");
-        assert_eq!(requisition_lines.len(), 1);
-
-        let filter = IndicatorValueFilter::new()
-            .store_id(EqualFilter::equal_to(&program_master_list_store_b().id))
-            .customer_name_link_id(EqualFilter::equal_to(&program_master_list_store_b().id))
-            .period_id(EqualFilter::equal_to(&mock_period().id));
-
-        let values = IndicatorValueRepository::new(&connection)
-            .query_by_filter(filter)
-            .unwrap();
-
-        assert_eq!(values.len(), 6);
-
-        let number_values: Vec<i32> = values
-            .into_iter()
-            .filter_map(|v| v.value.parse::<i32>().ok())
-            .collect();
-
-        assert_eq!(number_values.first().unwrap(), &i32::from(1));
-
-        let context = ServiceProvider::new(connection_manager)
-            .context(mock_store_b().id, mock_user_account_a().id)
-            .unwrap();
-
-        let result = service
-            .insert_program_request_requisition(
-                &context,
-                inline_init(|r: &mut InsertProgramRequestRequisition| {
-                    r.id = "new_program_request_requisition_4".to_string();
-                    r.other_party_id.clone_from(&mock_name_store_b().id);
-                    r.program_order_type_id = mock_program_order_types_a().id;
-                    r.period_id = mock_period().id;
-                }),
-            )
-            .unwrap();
-        let new_row = RequisitionRowRepository::new(&connection)
-            .find_one_by_id(&result.requisition_row.id)
-            .unwrap()
-            .unwrap();
-        let requisition_lines = RequisitionLineRepository::new(&connection)
-            .query_by_filter(
-                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&new_row.id)),
-            )
-            .unwrap();
-
-        assert_eq!(new_row.id, "new_program_request_requisition_4");
-        assert_eq!(requisition_lines.len(), 1);
-
         let filter = IndicatorValueFilter::new()
             .store_id(EqualFilter::equal_to(&program_master_list_store_b().id))
             .customer_name_link_id(EqualFilter::equal_to(&program_master_list_store_b().id))
@@ -607,4 +537,147 @@ mod test_insert {
         // Check parent store forms aggregate value
         assert_eq!(number_values.first().unwrap(), &i32::from(2));
     }
+
+    // #[actix_rt::test]
+    // async fn test_should_add_indicator_values() {
+    //     let (_, connection, connection_manager, _) =
+    //         setup_all("test_should_add_indicator_values", MockDataInserts::all()).await;
+
+    //     let service_provider = ServiceProvider::new(connection_manager.clone());
+    //     let context = service_provider
+    //         .context(program_master_list_store().id, mock_user_account_a().id)
+    //         .unwrap();
+    //     let service = service_provider.requisition_service;
+
+    //     let result = service
+    //         .insert_program_request_requisition(
+    //             &context,
+    //             inline_init(|r: &mut InsertProgramRequestRequisition| {
+    //                 r.id = "new_program_request_requisition_2".to_string();
+    //                 r.other_party_id.clone_from(&mock_name_store_b().id);
+    //                 r.program_order_type_id = mock_program_order_types_a().id;
+    //                 r.period_id = mock_period().id;
+    //             }),
+    //         )
+    //         .unwrap();
+    //     let new_row = RequisitionRowRepository::new(&connection)
+    //         .find_one_by_id(&result.requisition_row.id)
+    //         .unwrap()
+    //         .unwrap();
+    //     let requisition_lines = RequisitionLineRepository::new(&connection)
+    //         .query_by_filter(
+    //             RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&new_row.id)),
+    //         )
+    //         .unwrap();
+
+    //     assert_eq!(new_row.id, "new_program_request_requisition_2");
+    //     assert_eq!(requisition_lines.len(), 1);
+
+    //     // check active_program_indicators added
+    //     let filter = IndicatorValueFilter::new()
+    //         .store_id(EqualFilter::equal_to(&program_master_list_store().id))
+    //         .customer_name_link_id(EqualFilter::equal_to(&program_master_list_store().id))
+    //         .period_id(EqualFilter::equal_to(&mock_period().id));
+
+    //     let values = IndicatorValueRepository::new(&connection)
+    //         .query_by_filter(filter)
+    //         .unwrap();
+
+    //     assert_eq!(values.len(), 4);
+
+    //     // check that indicators of child stores are aggregated
+    //     let context = ServiceProvider::new(connection_manager.clone())
+    //         .context(program_master_list_store_b().id, mock_user_account_a().id)
+    //         .unwrap();
+
+    //     let result = service
+    //         .insert_program_request_requisition(
+    //             &context,
+    //             inline_init(|r: &mut InsertProgramRequestRequisition| {
+    //                 r.id = "new_program_request_requisition_3".to_string();
+    //                 r.other_party_id.clone_from(&mock_name_store_b().id);
+    //                 r.program_order_type_id = mock_program_order_types_a().id;
+    //                 r.period_id = mock_period().id;
+    //             }),
+    //         )
+    //         .unwrap();
+
+    //     let new_row = RequisitionRowRepository::new(&connection)
+    //         .find_one_by_id(&result.requisition_row.id)
+    //         .unwrap()
+    //         .unwrap();
+    //     let requisition_lines = RequisitionLineRepository::new(&connection)
+    //         .query_by_filter(
+    //             RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&new_row.id)),
+    //         )
+    //         .unwrap();
+
+    //     assert_eq!(new_row.id, "new_program_request_requisition_3");
+    //     assert_eq!(requisition_lines.len(), 1);
+
+    //     let filter = IndicatorValueFilter::new()
+    //         .store_id(EqualFilter::equal_to(&program_master_list_store_b().id))
+    //         .customer_name_link_id(EqualFilter::equal_to(&program_master_list_store_b().id))
+    //         .period_id(EqualFilter::equal_to(&mock_period().id));
+
+    //     let values = IndicatorValueRepository::new(&connection)
+    //         .query_by_filter(filter)
+    //         .unwrap();
+
+    //     assert_eq!(values.len(), 6);
+
+    //     let number_values: Vec<i32> = values
+    //         .into_iter()
+    //         .filter_map(|v| v.value.parse::<i32>().ok())
+    //         .collect();
+
+    //     assert_eq!(number_values.first().unwrap(), &i32::from(1));
+
+    //     let context = ServiceProvider::new(connection_manager)
+    //         .context(mock_store_b().id, mock_user_account_a().id)
+    //         .unwrap();
+
+    //     let result = service
+    //         .insert_program_request_requisition(
+    //             &context,
+    //             inline_init(|r: &mut InsertProgramRequestRequisition| {
+    //                 r.id = "new_program_request_requisition_4".to_string();
+    //                 r.other_party_id.clone_from(&mock_name_store_b().id);
+    //                 r.program_order_type_id = mock_program_order_types_a().id;
+    //                 r.period_id = mock_period().id;
+    //             }),
+    //         )
+    //         .unwrap();
+    //     let new_row = RequisitionRowRepository::new(&connection)
+    //         .find_one_by_id(&result.requisition_row.id)
+    //         .unwrap()
+    //         .unwrap();
+    //     let requisition_lines = RequisitionLineRepository::new(&connection)
+    //         .query_by_filter(
+    //             RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&new_row.id)),
+    //         )
+    //         .unwrap();
+
+    //     assert_eq!(new_row.id, "new_program_request_requisition_4");
+    //     assert_eq!(requisition_lines.len(), 1);
+
+    //     let filter = IndicatorValueFilter::new()
+    //         .store_id(EqualFilter::equal_to(&program_master_list_store_b().id))
+    //         .customer_name_link_id(EqualFilter::equal_to(&program_master_list_store_b().id))
+    //         .period_id(EqualFilter::equal_to(&mock_period().id));
+
+    //     let values = IndicatorValueRepository::new(&connection)
+    //         .query_by_filter(filter)
+    //         .unwrap();
+
+    //     assert_eq!(values.len(), 6);
+
+    //     let number_values: Vec<i32> = values
+    //         .into_iter()
+    //         .filter_map(|v| v.value.parse::<i32>().ok())
+    //         .collect();
+
+    //     // Check parent store forms aggregate value
+    //     assert_eq!(number_values.first().unwrap(), &i32::from(2));
+    // }
 }

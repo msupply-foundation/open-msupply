@@ -28,7 +28,7 @@ pub fn mock_indicator_column_b() -> IndicatorColumnRow {
 
 pub fn mock_indicator_column_c() -> IndicatorColumnRow {
     IndicatorColumnRow {
-        id: "indicator_column_b".to_owned(),
+        id: "indicator_column_c".to_owned(),
         program_indicator_id: mock_program_indicator_a().id,
         column_number: 2,
         header: "Some column B".to_owned(),

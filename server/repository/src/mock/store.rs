@@ -3,7 +3,10 @@ use util::inline_init;
 
 use crate::StoreRow;
 
-use super::{mock_name_store_b, mock_program_master_list_test};
+use super::{
+    mock_name_customer_a, mock_name_customer_b, mock_name_store_b, mock_program_master_list_test,
+    mock_program_master_list_test_b,
+};
 
 pub fn mock_store_a() -> StoreRow {
     inline_init(|s: &mut StoreRow| {
@@ -46,8 +49,26 @@ pub fn program_master_list_store() -> StoreRow {
 pub fn program_master_list_store_b() -> StoreRow {
     inline_init(|s: &mut StoreRow| {
         s.id = "program_master_list_store_b".to_string();
-        s.name_link_id = mock_program_master_list_test().id;
-        s.code = mock_program_master_list_test().code;
+        s.name_link_id = mock_program_master_list_test_b().id;
+        s.code = mock_program_master_list_test_b().code;
+        s.created_date = NaiveDate::from_ymd_opt(2020, 1, 1);
+    })
+}
+
+pub fn mock_customer_store_a() -> StoreRow {
+    inline_init(|s: &mut StoreRow| {
+        s.id = "mock_customer_store_a".to_string();
+        s.name_link_id = mock_name_customer_b().id;
+        s.code = mock_name_customer_b().code;
+        s.created_date = NaiveDate::from_ymd_opt(2020, 1, 1);
+    })
+}
+
+pub fn mock_customer_store_b() -> StoreRow {
+    inline_init(|s: &mut StoreRow| {
+        s.id = "mock_customer_store_b".to_string();
+        s.name_link_id = mock_name_customer_b().id;
+        s.code = mock_name_customer_b().code;
         s.created_date = NaiveDate::from_ymd_opt(2020, 1, 1);
     })
 }
@@ -59,5 +80,7 @@ pub fn mock_stores() -> Vec<StoreRow> {
         mock_store_c(),
         program_master_list_store(),
         program_master_list_store_b(),
+        mock_customer_store_a(),
+        mock_customer_store_b(),
     ]
 }
