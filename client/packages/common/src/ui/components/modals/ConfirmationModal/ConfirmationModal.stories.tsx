@@ -26,6 +26,7 @@ const Template: StoryFn = () => {
         }}
         onCancel={modalControl.toggleOff}
         message={'This will delete all your data.'}
+        info={'Some extra context here'}
       />
     </Grid>
   );
@@ -47,6 +48,7 @@ const Loading: StoryFn = () => {
         }}
         onCancel={modalControl.toggleOff}
         message={'This will delete all your data.'}
+        info={'a short info message'}
       />
     </Grid>
   );
@@ -56,6 +58,7 @@ const UseConfirmationModalHook: StoryFn = () => {
   const getConfirmation = useConfirmationModal({
     title: 'Are you sure?',
     message: 'This will delete all your data.',
+    info: 'Some extra context here, this is probably the typical length of an info message that a user will see',
     onConfirm: () => alert('confirmed!'),
   });
 
