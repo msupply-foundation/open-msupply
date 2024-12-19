@@ -13,6 +13,8 @@ import {
   TooltipTextCell,
   useNavigate,
   RouteBuilder,
+  CurrencyCell,
+  ExpiryDateCell,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -53,72 +55,82 @@ const StockListComponent: FC = () => {
   const pluginColumns = usePluginColumns<StockLineRowFragment>({
     type: 'Stock',
   });
-  const packSizeAndUnitColumns: ColumnDescription<StockLineRowFragment>[] = [
-    [
-      'itemUnit',
-      {
-        accessor: ({ rowData }) => rowData.item.unitName,
-        sortable: false,
-        Cell: TooltipTextCell,
-        width: 75,
-      },
-    ],
-    ['packSize', { Cell: TooltipTextCell, width: 125 }],
-  ];
 
   const columnDefinitions: ColumnDescription<StockLineRowFragment>[] = [
-    [
-      'itemCode',
-      {
-        accessor: ({ rowData }) => rowData.item.code,
-        Cell: TooltipTextCell,
-        width: 100,
-      },
-    ],
-    [
-      'itemName',
-      {
-        accessor: ({ rowData }) => rowData.item.name,
-        Cell: TooltipTextCell,
-        width: 350,
-      },
-    ],
+    {
+      key: 'itemCode',
+      accessor: ({ rowData }) => rowData.item.code,
+      label: 'label.code',
+      Cell: TooltipTextCell,
+      width: 100,
+    },
+    {
+      key: 'itemName',
+      accessor: ({ rowData }) => rowData.item.name,
+      label: 'label.name',
+      Cell: TooltipTextCell,
+      width: 350,
+    },
     // TODO:: Add a column for the master list name
-    ['batch', { Cell: TooltipTextCell, width: 100 }],
-    [
-      'expiryDate',
-      {
-        accessor: ({ rowData }) => DateUtils.getNaiveDate(rowData.expiryDate),
-        width: 110,
-      },
-    ],
-    [
-      'location',
-      {
-        Cell: TooltipTextCell,
-        width: 100,
-        accessor: ({ rowData }) => rowData.location?.code,
-      },
-    ],
-    ...packSizeAndUnitColumns,
-    [
-      'numberOfPacks',
-      {
-        accessor: ({ rowData }) => rowData.totalNumberOfPacks,
-        width: 150,
-      },
-    ],
-    [
-      'stockOnHand',
-      {
-        accessor: ({ rowData }) =>
-          rowData.totalNumberOfPacks * rowData.packSize,
-        label: 'label.soh',
-        description: 'description.soh',
-        sortable: false,
-        width: 125,
-      },
-    ],
+    { key: 'batch', label: 'label.batch', Cell: TooltipTextCell, width: 100 },
+    {
+      key: 'expiryDate',
+      label: 'label.expiry',
+      accessor: ({ rowData }) => DateUtils.getNaiveDate(rowData.expiryDate),
+      Cell: ExpiryDateCell,
+      width: 110,
+    },
+    {
+      key: 'location',
+      label: 'label.location',
+      Cell: TooltipTextCell,
+      width: 100,
+      accessor: ({ rowData }) => rowData.location?.code,
+    },
+    {
+      key: 'itemUnit',
+      label: 'label.unit',
+      accessor: ({ rowData }) => rowData.item.unitName,
+      sortable: false,
+      Cell: TooltipTextCell,
+      width: 75,
+    },
+    {
+      key: 'packSize',
+      label: 'label.pack-size',
+      Cell: TooltipTextCell,
+      width: 125,
+    },
+    {
+      key: 'numberOfPacks',
+      label: 'label.num-packs',
+      accessor: ({ rowData }) => rowData.totalNumberOfPacks,
+      width: 125,
+    },
+    {
+      key: 'stockOnHand',
+      label: 'label.soh',
+      accessor: ({ rowData }) => rowData.totalNumberOfPacks * rowData.packSize,
+      description: 'description.soh',
+      sortable: false,
+      width: 125,
+    },
+    {
+      key: 'costPricePerPack',
+      label: 'label.pack-cost-price',
+      description: 'description.pack-cost',
+      Cell: CurrencyCell,
+      width: 125,
+    },
+    {
+      key: 'totalValue',
+      label: 'label.total',
+      accessor: ({ rowData }) =>
+        rowData.totalNumberOfPacks * rowData.costPricePerPack,
+      Cell: CurrencyCell,
+      description: 'description.total-cost',
+      width: 125,
+    },
     {
       key: 'supplierName',
       label: 'label.supplier',

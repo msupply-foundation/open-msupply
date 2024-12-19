@@ -19,7 +19,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   useEncounter,
-  useJsonForms,
+  useJsonFormsHandler,
   EncounterFragment,
   useDocumentDataAccessor,
   EncounterSchema,
@@ -171,7 +171,7 @@ export const DetailView: FC = () => {
     isSaving,
     validationError,
     revert,
-  } = useJsonForms(
+  } = useJsonFormsHandler(
     {
       documentName: encounter?.document?.name,
       patientId: encounter?.patient?.id,
@@ -192,12 +192,14 @@ export const DetailView: FC = () => {
     updateEncounter({ status: EncounterNodeStatus.Deleted });
     setDeleteRequest(true);
   };
+
   useEffect(() => {
     if (!deleteRequest) return;
     if (
       (data as Record<string, JsonData>)['status'] ===
       EncounterNodeStatus.Deleted
     ) {
+      setDeleteRequest(false);
       (async () => {
         const result = await saveData(true);
         if (!result) return;

@@ -14,6 +14,7 @@ import {
   useUrlQueryParams,
   ColumnDescription,
   TooltipTextCell,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -59,6 +60,7 @@ export const RequestRequisitionListView: FC = () => {
   const { requireSupplierAuthorisation } = useRequest.utils.preferences();
 
   const columnDefinitions: ColumnDescription<RequestRowFragment>[] = [
+    GenericColumnKey.Selection,
     [getNameAndColorColumn(), { setter: onUpdate }],
     {
       key: 'requisitionNumber',
@@ -102,7 +104,7 @@ export const RequestRequisitionListView: FC = () => {
           getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
       },
     ],
-    ['comment', { width: '100%', Cell: TooltipTextCell }]
+    ['comment', { width: '100%', Cell: TooltipTextCell, sortable: false }]
   );
 
   if (requireSupplierAuthorisation) {
@@ -115,8 +117,6 @@ export const RequestRequisitionListView: FC = () => {
         t(getApprovalStatusKey(rowData.linkedRequisition?.approvalStatus)),
     });
   }
-
-  columnDefinitions.push('selection');
 
   const columns = useColumns<RequestRowFragment>(
     columnDefinitions,

@@ -57,6 +57,7 @@ pub struct StockLineFilter {
     pub has_packs_in_store: Option<bool>,
     pub location: Option<LocationFilter>,
     pub master_list: Option<MasterListFilter>,
+    pub is_active: Option<bool>,
 }
 
 pub type StockLineSort = Sort<StockLineSortField>;
@@ -191,6 +192,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
             has_packs_in_store,
             location,
             master_list,
+            is_active,
         } = f;
 
         apply_equal_filter!(query, id, stock_line_dsl::id);
@@ -198,6 +200,10 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
         apply_equal_filter!(query, location_id, stock_line_dsl::location_id);
         apply_date_filter!(query, expiry_date, stock_line_dsl::expiry_date);
         apply_equal_filter!(query, store_id, stock_line_dsl::store_id);
+
+        if let Some(is_active) = is_active {
+            query = query.filter(item_dsl::is_active.eq(is_active));
+        }
 
         query = match has_packs_in_store {
             Some(true) => query.filter(stock_line_dsl::total_number_of_packs.gt(0.0)),

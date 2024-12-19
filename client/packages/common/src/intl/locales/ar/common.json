@@ -66,5 +66,13 @@
   "breadcrumb.item": "#{{id}}",
   "button.cancel": "إلغاء",
   "button.initialise": "تهيئة",
-  "button.add-item": "أضف منتج"
+  "button.add-item": "أضف منتج",
+  "assets": "أجهزة",
+  "button.more": "مزيد",
+  "button.new-inbound-shipment": "شحنة واردة جديدة",
+  "button.hiv": "HIV",
+  "button.create-new": "إنشاء جديد",
+  "button.manage-asset-log-reasons": "إدارة أسباب سجل الأجهزة",
+  "button.new-asset": "جهاز جديد",
+  "button.new-catalogue-item": "منتج جديد في الكتالوج"
 }
