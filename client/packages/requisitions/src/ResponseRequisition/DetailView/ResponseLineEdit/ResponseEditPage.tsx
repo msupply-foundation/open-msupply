@@ -38,7 +38,7 @@ export const ResponseLineEditPage = () => {
     });
   }, [currentItem]);
 
-  if (isLoading || !currentItem) return <BasicSpinner />;
+  if (isLoading) return <BasicSpinner />;
   if (!data) return <NothingHere />;
 
   return (
