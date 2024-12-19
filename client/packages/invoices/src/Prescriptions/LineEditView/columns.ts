@@ -23,7 +23,7 @@ export const usePrescriptionLineEditColumns = ({
       'expiryDate',
       {
         Cell: ExpiryDateCell,
-        width: 100,
+        width: 80,
       },
     ],
     [
@@ -64,6 +64,7 @@ export const usePrescriptionLineEditColumns = ({
     //   width: 85,
     //   accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
     // },
+    ['packSize', { width: 90 }],
     {
       Cell: NumberCell,
       label: 'label.in-stock-units',
@@ -84,7 +85,7 @@ export const usePrescriptionLineEditColumns = ({
         (rowData.stockLine?.availableNumberOfPacks ?? 0) *
         (rowData.stockLine?.packSize ?? 1),
     },
-    // ['packSize', { width: 90 }],
+
     // [
     //   'unitQuantity',
     //   {
@@ -100,8 +101,11 @@ export const usePrescriptionLineEditColumns = ({
       key: 'unitQuantity',
       align: ColumnAlign.Right,
       width: 120,
-      setter: ({ packSize, id, numberOfPacks }) =>
-        onChange(id, (numberOfPacks ?? 0) * (packSize ?? 1)),
+      setter: ({ packSize, id, numberOfPacks }) => {
+        console.log('number of packs', numberOfPacks);
+        onChange(id, (numberOfPacks ?? 0) * (packSize ?? 1));
+        // onChange(id, (numberOfPacks ?? 0) * (packSize ?? 1));
+      },
       accessor: ({ rowData }) =>
         (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
     },

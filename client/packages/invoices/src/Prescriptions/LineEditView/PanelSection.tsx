@@ -39,6 +39,7 @@ const StyledAccordion = styled(Accordion)(({ theme }) => ({
     borderColor: theme.palette.gray.main,
     backgroundColor: theme.palette.background.white,
   },
+  height: 'fit-content',
 }));
 
 export interface DetailPanelSectionProps {
@@ -51,7 +52,6 @@ export const AccordionPanelSection: React.FC<
   PropsWithChildren<DetailPanelSectionProps>
 > = ({ children, title, closedSummary, defaultExpanded = true }) => {
   const [open, setOpen] = useState(defaultExpanded);
-
   return (
     <StyledAccordion expanded={open} onChange={() => setOpen(!open)}>
       <AccordionSummary expandIcon={<ChevronDownIcon />}>

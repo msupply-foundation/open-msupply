@@ -187,10 +187,18 @@ export const PrescriptionLineEditForm: React.FC<
   }, [packSizeController.selected?.value, allocatedUnits]);
 
   return (
-    <Grid container gap="4px">
+    <Grid
+      container
+      gap="4px"
+      sx={{ minHeight: 200, display: 'flex', flexDirection: 'column' }}
+    >
       <AccordionPanelSection
+        // Adding a random key forces a remount when changing items, so the
+        // expanded state resets when switching items
+        key={Math.random()}
         title={t('label.item', { count: 1 })}
         closedSummary={item?.name}
+        defaultExpanded={isNew}
       >
         <Grid item flex={1}>
           <StockItemSearchInput
@@ -208,7 +216,7 @@ export const PrescriptionLineEditForm: React.FC<
           />
         </Grid>
       </AccordionPanelSection>
-      {item && canAutoAllocate ? (
+      {item && (
         <>
           {!disabled && (
             <StockOutAlerts
@@ -217,7 +225,11 @@ export const PrescriptionLineEditForm: React.FC<
               isAutoAllocated={isAutoAllocated}
             />
           )}
-          <AccordionPanelSection title={t('label.quantity')}>
+          <AccordionPanelSection
+            title={t('label.quantity')}
+            defaultExpanded={isNew}
+            key={item?.id ?? 'new'}
+          >
             <Grid
               container
               alignItems="center"
@@ -260,25 +272,31 @@ export const PrescriptionLineEditForm: React.FC<
             />
           </AccordionPanelSection>
         </>
-      ) : (
-        <Box height={100} />
       )}
-      <AccordionPanelSection title={t('label.directions')} closedSummary={note}>
-        <BasicTextInput
-          value={note}
-          disabled={disabled}
-          onChange={e => {
-            updateNotes(e.target.value);
-          }}
-          InputProps={{
-            sx: {
-              // backgroundColor: theme => theme.palette.background.menu,
-            },
-          }}
-          fullWidth
-          style={{ flex: 1 }}
-        />
-      </AccordionPanelSection>
+      {item && (
+        <AccordionPanelSection
+          title={t('label.directions')}
+          closedSummary={note}
+          defaultExpanded={isNew || !note}
+          key={item?.id ?? 'new'}
+        >
+          <BasicTextInput
+            value={note}
+            disabled={disabled}
+            onChange={e => {
+              updateNotes(e.target.value);
+            }}
+            InputProps={{
+              sx: {
+                // backgroundColor: theme => theme.palette.background.menu,
+              },
+            }}
+            fullWidth
+            style={{ flex: 1 }}
+          />
+        </AccordionPanelSection>
+      )}
+      {/* {!item && <Box height={100} />} */}
     </Grid>
   );
 };

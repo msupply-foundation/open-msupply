@@ -63,6 +63,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
   // );
 
   const onUpdateQuantity = (batchId: string, packs: number) => {
+    console.log(batchId, packs);
     updateQuantity(batchId, packs);
     setIsAutoAllocated(false);
   };
