@@ -11,7 +11,7 @@ export const useDeleteSelectedCustomerReturnLines = ({
   returnId,
 }: {
   returnId: string;
-}): (() => void) => {
+}): { onDelete: () => void; selectedIds: string[] } => {
   const { items, lines } = useCustomerReturnRows();
   const isDisabled = useCustomerReturnIsDisabled();
   const t = useTranslation();
@@ -61,5 +61,8 @@ export const useDeleteSelectedCustomerReturnLines = ({
     },
   });
 
-  return confirmAndDelete;
+  return {
+    onDelete: confirmAndDelete,
+    selectedIds: selectedRows.map(row => row.id),
+  };
 };
