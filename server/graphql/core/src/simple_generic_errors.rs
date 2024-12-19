@@ -352,3 +352,11 @@ impl MasterListNotFoundForThisStore {
         "Master list not found (might not be visible to this store)"
     }
 }
+
+pub struct FailedTranslation(pub String);
+#[Object]
+impl FailedTranslation {
+    pub async fn description(&self) -> String {
+        self.0.to_owned()
+    }
+}

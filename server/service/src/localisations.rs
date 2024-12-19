@@ -12,8 +12,8 @@ use rust_embed::RustEmbed;
 pub struct EmbeddedLocalisations;
 
 #[derive(Debug, Error)]
-#[error("No translation found and fallback is missing")]
-pub struct TranslationError;
+#[error("No translation found and fallback is missing for key {0}")]
+pub struct TranslationError(String);
 // struct to manage translations
 #[derive(Clone)]
 pub struct Localisations {
@@ -95,7 +95,7 @@ impl Localisations {
                 None => continue,
             }
         }
-        fallback.ok_or(TranslationError)
+        fallback.ok_or(TranslationError(key))
     }
 
     pub fn get_translation_function(&self, current_language: Option<String>) -> impl Function {
@@ -148,9 +148,9 @@ impl Localisations {
 }
 
 pub struct GetTranslation {
-    namespace: Option<String>,
-    fallback: Option<String>,
-    key: String,
+    pub(crate) namespace: Option<String>,
+    pub(crate) fallback: Option<String>,
+    pub(crate) key: String,
 }
 
 #[cfg(test)]
