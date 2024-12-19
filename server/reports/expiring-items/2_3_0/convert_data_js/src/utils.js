@@ -8,10 +8,7 @@ const processStockLines = (nodes, sort, dir) => {
     const daysUntilExpiredFloat = calculateDaysUntilExpired(line?.expiryDate);
     const expectedUsage = calculateExpectedUsage(daysUntilExpiredFloat, line);
     if (!!expectedUsage) {
-      line.expectedUsage = Math.min(
-        expectedUsage,
-        totalNumberOfPacks ?? expectedUsage
-      );
+      line.expectedUsage = expectedUsage;
     }
     const stockAtRisk = calculateStockAtRisk(
       line?.packSize,

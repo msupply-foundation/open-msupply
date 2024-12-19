@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 
 mod abbreviation_create_table;
 mod add_contact_form_table;
+mod add_email_queue_table;
 mod add_emergency_orders;
 mod diagnosis_add_to_invoice;
 mod diagnosis_create_table;
@@ -33,6 +34,7 @@ impl Migration for V2_05_00 {
             Box::new(remove_contact_form_site_id::Migrate),
             Box::new(item_direction_create_table::Migrate),
             Box::new(diagnosis_create_table::Migrate),
+            Box::new(add_email_queue_table::Migrate),
             Box::new(diagnosis_add_to_invoice::Migrate),
         ]
     }

@@ -33,6 +33,7 @@ pub mod invoice;
 pub mod invoice_line;
 pub mod item;
 pub mod item_stats;
+pub mod json_translate;
 pub mod label_printer_settings_service;
 pub mod ledger;
 pub mod localisations;

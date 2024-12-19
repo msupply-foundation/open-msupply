@@ -4,7 +4,7 @@
     {
       "type": "Control",
       "scope": "#/properties/itemCode",
-      "label": "Item Code",
+      "label": "T#report.item-code",
       "options": {
         "useDebounce": false
       }
@@ -12,7 +12,7 @@
     {
       "type": "Control",
       "scope": "#/properties/itemName",
-      "label": "Item Name",
+      "label": "T#report.item-name",
       "options": {
         "useDebounce": false
       }
@@ -20,7 +20,7 @@
     {
       "type": "Control",
       "scope": "#/properties/monthlyConsumptionLookBackPeriod",
-      "label": "AMC Lookback Period",
+      "label": "T#report.AMC-lookback",
       "options": {
         "readonly": true
       }
@@ -28,7 +28,7 @@
     {
       "type": "Control",
       "scope": "#/properties/monthsOverstock",
-      "label": "Target MOS",
+      "label": "T#label.max-months-of-stock",
       "options": {
         "readonly": true
       }
@@ -36,7 +36,7 @@
     {
       "type": "Control",
       "scope": "#/properties/monthsUnderstock",
-      "label": "Reorder threshold MOS",
+      "label": "T#label.min-months-of-stock",
       "options": {
         "readonly": true
       }
@@ -44,7 +44,7 @@
     {
       "type": "Control",
       "scope": "#/properties/sort",
-      "label": "Sort by:",
+      "label": "T#report.sort-by",
       "options": {
         "show": [
           ["name", "item"],
@@ -55,7 +55,7 @@
     {
       "type": "Control",
       "scope": "#/properties/dir",
-      "label": "Sort direction"
+      "label": "T#report.sort-direction"
     }
   ]
 }
