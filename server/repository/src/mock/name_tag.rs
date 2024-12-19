@@ -33,17 +33,17 @@ pub fn mock_name_tag_join_1() -> NameTagJoinRow {
 
 pub fn mock_name_tag_join_2() -> NameTagJoinRow {
     NameTagJoinRow {
-        id: "master_list_name_tag".to_string(),
+        id: "master_list_name_tag_b".to_string(),
         name_link_id: mock_program_master_list_test_b().id,
-        name_tag_id: mock_name_tag_1().id,
+        name_tag_id: mock_name_tag_2().id,
     }
 }
 
 pub fn mock_name_tag_join_3() -> NameTagJoinRow {
     NameTagJoinRow {
-        id: "master_list_name_tag".to_string(),
+        id: "mock_store_name_tag_b".to_string(),
         name_link_id: mock_name_store_b().id,
-        name_tag_id: mock_name_tag_1().id,
+        name_tag_id: mock_name_tag_3().id,
     }
 }
 
