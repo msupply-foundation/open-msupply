@@ -1170,5 +1170,8 @@
   "description.rnr-adjustments": "Ajustes realizados para este artigo durante este período (mediante tomada de inventário ou Ajustes de Inventário)",
   "button.next": "Próximo(a)",
   "button.previous": "Anterior",
-  "error.duplicate-item-variant-name": "Já existe uma variante com este mesmo nome para este artigo"
+  "error.duplicate-item-variant-name": "Já existe uma variante com este mesmo nome para este artigo",
+  "button.print-asset-label": "Imprimir a etiqueta de Ativo",
+  "description.pack-cost": "Preço de custo por pacote",
+  "button.send": "Enviar"
 }
