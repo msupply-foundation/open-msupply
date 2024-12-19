@@ -9,16 +9,24 @@ import {
   MailIcon,
   useNotification,
 } from '@openmsupply-client/common';
-import { useFeedbackForm } from '../api/hooks/help/useFeedbackForm';
+import { useContactForm } from '../api/hooks/help/useContactForm';
 
-export const FeedbackForm = () => {
+export const ContactForm = () => {
   const t = useTranslation();
   const { success, error } = useNotification();
-  const { updateDraft, resetDraft, saveFeedback, draft } = useFeedbackForm();
+  const {
+    updateDraft,
+    resetDraft,
+    saveFeedback,
+    draft,
+    isValidInput,
+    debounceValidation,
+    emailError,
+  } = useContactForm();
 
   const save = async () => {
     try {
-      saveFeedback(draft)
+      saveFeedback(draft);
       const successSnack = success(t('messages.message-sent'));
       successSnack();
       resetDraft();
@@ -26,6 +34,12 @@ export const FeedbackForm = () => {
       const errorSnack = error(t('messages.message-not-sent'));
       errorSnack();
     }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const email = e.target.value;
+    updateDraft({ replyEmail: email });
+    debounceValidation(email);
   };
 
   return (
@@ -36,8 +50,10 @@ export const FeedbackForm = () => {
         Input={
           <BasicTextInput
             value={draft.replyEmail}
-            onChange={e => updateDraft({ replyEmail: e.target.value })}
+            onChange={handleChange}
             fullWidth
+            helperText={emailError}
+            error={!!emailError}
           />
         }
       />
@@ -66,7 +82,7 @@ export const FeedbackForm = () => {
           type="submit"
           variant="contained"
           sx={{ fontSize: '12px' }}
-          disabled={false}
+          disabled={!isValidInput}
           onClick={save}
         >
           {t('button.send')}

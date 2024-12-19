@@ -14,6 +14,7 @@ import {
   ColumnDataSetter,
   useTableStore,
   TooltipTextCell,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -61,6 +62,7 @@ const SupplierReturnListViewComponent: FC = () => {
 
   const columns = useColumns<SupplierReturnRowFragment>(
     [
+      GenericColumnKey.Selection,
       [getNameAndColorColumn(), { setter: onUpdateColour }],
       [
         'status',
@@ -82,7 +84,6 @@ const SupplierReturnListViewComponent: FC = () => {
           width: 150,
         },
       ],
-      'selection',
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]

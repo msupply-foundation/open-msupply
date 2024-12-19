@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   BasicSpinner,
   useNotification,
@@ -13,7 +13,6 @@ import {
   useIsCentralServerApi,
   Switch,
   AutocompleteWithPagination,
-  usePagination,
   useStringFilter,
   ArrayUtils,
   useDebounceCallback,
@@ -39,9 +38,8 @@ interface CreateAssetModalProps {
 }
 
 const mapCatalogueItem = (catalogueItem: AssetCatalogueItemFragment) => ({
+  ...catalogueItem,
   label: `${catalogueItem.code} ${catalogueItem.assetType?.name} ${catalogueItem.manufacturer} ${catalogueItem.model}`,
-  value: catalogueItem.id,
-  id: catalogueItem.id,
 });
 
 const mapCatalogueItems = (catalogueItems: AssetCatalogueItemFragment[]) =>
@@ -92,8 +90,8 @@ export const CreateAssetModal = ({
     useAssetData.utils.types({
       categoryId: { equalTo: draft.categoryId ?? '' },
     });
-  const { pagination, onPageChange } = usePagination(RECORDS_PER_PAGE);
   const { filter, onFilter } = useStringFilter('search');
+
   const {
     data: catalogueItemData,
     isFetching,
@@ -101,8 +99,12 @@ export const CreateAssetModal = ({
   } = useAssetData.document.infiniteList({
     filter,
     categoryId: draft.categoryId,
-    pagination,
+    rowsPerPage: RECORDS_PER_PAGE,
   });
+
+  const pageNumber =
+    catalogueItemData?.pages[catalogueItemData?.pages.length - 1]?.pageNumber ??
+    0;
 
   const { mutateAsync: save } = useAssets.document.insert();
   const { insertLog, invalidateQueries } = useAssets.log.insert();
@@ -119,7 +121,7 @@ export const CreateAssetModal = ({
 
   const catalogueItems = ArrayUtils.flatMap(
     catalogueItemData?.pages,
-    page => page?.nodes ?? []
+    page => page.data?.nodes ?? []
   );
 
   const selectedCatalogueItem = catalogueItems.find(
@@ -151,7 +153,6 @@ export const CreateAssetModal = ({
 
   const debounceOnFilter = useDebounceCallback(
     (searchText: string) => {
-      onPageChange(0); // Reset pagination when searching for a new item
       onFilter(searchText);
     },
     [onFilter],
@@ -174,16 +175,6 @@ export const CreateAssetModal = ({
       error(t(parseInsertError(e)))();
     }
   };
-
-  // when the pagination changes, fetch the next page
-  useEffect(() => {
-    fetchNextPage({ pageParam: pagination.page });
-  }, [fetchNextPage, pagination.page]);
-
-  // reset the catalogue item pagination when the category changes
-  useEffect(() => {
-    onPageChange(0);
-  }, [draft.categoryId, onPageChange]);
 
   return (
     <Modal
@@ -242,26 +233,29 @@ export const CreateAssetModal = ({
               label={t('label.catalogue-item')}
               Input={
                 <AutocompleteWithPagination
-                  value={
-                    !!selectedCatalogueItem
-                      ? mapCatalogueItem(selectedCatalogueItem)
-                      : null
+                  pages={catalogueItemData?.pages ?? []}
+                  pageNumber={pageNumber}
+                  rowsPerPage={RECORDS_PER_PAGE}
+                  totalRows={
+                    catalogueItemData?.pages?.[0]?.data.totalCount ?? 0
                   }
+                  value={selectedCatalogueItem}
+                  mapOptions={mapCatalogueItems}
                   isOptionEqualToValue={option =>
-                    option.value === selectedCatalogueItem?.id
+                    option.id === selectedCatalogueItem?.id
                   }
-                  options={mapCatalogueItems(catalogueItems)}
                   width="100%"
                   sx={{ width: '100%' }}
-                  onChange={(_event, selected) =>
-                    updateDraft({ catalogueItemId: selected?.value ?? '' })
+                  getOptionLabel={option =>
+                    `${option.code} ${option.assetType?.name} ${option.manufacturer} ${option.model}`
                   }
-                  pagination={{
-                    ...pagination,
-                    total: catalogueItemData?.pages?.[0]?.totalCount ?? 0,
-                  }}
+                  onChange={(_event, selected) =>
+                    updateDraft({ catalogueItemId: selected?.id ?? '' })
+                  }
                   paginationDebounce={DEBOUNCE_TIMEOUT}
-                  onPageChange={onPageChange}
+                  onPageChange={pageNumber =>
+                    fetchNextPage({ pageParam: pageNumber })
+                  }
                   loading={isFetching}
                   onInputChange={(reason, value) => {
                     if (reason?.type === 'change') debounceOnFilter(value);
