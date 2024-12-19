@@ -34,10 +34,9 @@ const ResponseLineEditPageInner = ({
 }) => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
 
-  const lines =
-    requisition.lines.nodes.sort((a, b) =>
-      a.item.name.localeCompare(b.item.name)
-    ) ?? [];
+  const lines = requisition.lines.nodes.sort((a, b) =>
+    a.item.name.localeCompare(b.item.name)
+  );
   const currentItem = lines.find(l => l.item.id === itemId)?.item;
   const { draft, update, save } = useDraftRequisitionLine(currentItem);
   const { hasNext, next, hasPrevious, previous } = usePreviousNextResponseLine(
