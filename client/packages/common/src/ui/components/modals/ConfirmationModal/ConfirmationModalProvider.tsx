@@ -39,7 +39,7 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
       setTitle: (title: string) => setState(state => ({ ...state, title })),
       setIconType: (iconType: IconType) =>
         setState(state => ({ ...state, iconType })),
-      setButtonLabel: (buttonLabel: string) =>
+      setButtonLabel: (buttonLabel: string | undefined) =>
         setState(state => ({ ...state, buttonLabel })),
       setOnConfirm: (
         onConfirm: (() => Promise<void>) | (() => void) | undefined
