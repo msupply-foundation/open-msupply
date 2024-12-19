@@ -14,6 +14,8 @@ import {
   InsertAssetLogInput,
   FnUtils,
   ClickableStepper,
+  UserPermission,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { StatusTab } from './StatusTab';
 import { UploadTab } from './UploadTab';
@@ -43,9 +45,18 @@ export const UpdateStatusButtonComponent = ({
   const { currentTab, onChangeTab } = useTabs(Tabs.Status);
   const t = useTranslation();
   const { Modal, hideDialog, showDialog } = useDialog({ onClose });
-  const { error, success } = useNotification();
+  const { error, success, info } = useNotification();
   const [draft, setDraft] = useState<Partial<Draft>>(getEmptyAssetLog(''));
   const { insertLog, invalidateQueries } = useAssets.log.insert();
+
+  const permission = UserPermission.AssetMutate;
+  const { userHasPermission } = useAuthContext();
+
+  const onUpdateStatus = () => {
+    if (userHasPermission(permission)) {
+      showDialog;
+    } else info(t('error.no-asset-edit-permission'))();
+  };
 
   const onNext = useDebounceCallback(() => {
     onChangeTab(Tabs.Upload);
@@ -188,7 +199,7 @@ export const UpdateStatusButtonComponent = ({
       <ButtonWithIcon
         Icon={<PlusCircleIcon />}
         label={t('button.update-status')}
-        onClick={showDialog}
+        onClick={onUpdateStatus}
       />
     </>
   );
