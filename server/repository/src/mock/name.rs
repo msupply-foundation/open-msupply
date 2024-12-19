@@ -108,6 +108,17 @@ pub fn mock_program_master_list_test() -> NameRow {
     })
 }
 
+pub fn mock_program_master_list_test_b() -> NameRow {
+    inline_init(|r: &mut NameRow| {
+        r.id = String::from("program_master_list_test_b");
+        r.name = String::from("program_master_list_test_b");
+        r.code = String::from("program_master_list_test_b");
+        r.is_supplier = true;
+        r.is_customer = true;
+        r.supplying_store_id = Some(mock_store_b().id);
+    })
+}
+
 pub fn mock_name_repack() -> NameRow {
     inline_init(|r: &mut NameRow| {
         r.id = REPACK_NAME_CODE.to_string();
@@ -177,6 +188,7 @@ pub fn mock_names() -> Vec<NameRow> {
         mock_patient(),
         mock_patient_b(),
         mock_program_master_list_test(),
+        mock_program_master_list_test_b(),
         mock_merged_patient(),
     ]
 }

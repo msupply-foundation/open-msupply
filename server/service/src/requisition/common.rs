@@ -118,6 +118,8 @@ pub fn generate_program_indicator_values(
 ) -> Vec<IndicatorValueRow> {
     let mut indicator_values = vec![];
 
+    println!("making indicators");
+
     for program_indicator in input.program_indicators {
         for line in program_indicator.lines {
             for column in line.columns {
@@ -140,6 +142,8 @@ pub fn generate_program_indicator_values(
             }
         }
     }
+
+    println!("indicator values {:?}", indicator_values.len());
 
     indicator_values
 }

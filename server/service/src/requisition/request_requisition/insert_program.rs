@@ -111,6 +111,8 @@ fn validate(
 
     let program_settings = get_supplier_program_requisition_settings(ctx, &ctx.store_id)?;
 
+    println!("program settings{:?}", program_settings);
+
     let (program_setting, order_type) = program_settings
         .iter()
         .find_map(|setting| {
@@ -149,7 +151,7 @@ fn generate(
     order_type: ProgramRequisitionOrderTypeRow,
     InsertProgramRequestRequisition {
         id,
-        other_party_id,
+        other_party_id: _,
         colour,
         comment,
         their_reference,
@@ -168,7 +170,7 @@ fn generate(
             &NumberRowType::RequestRequisition,
             &ctx.store_id,
         )?,
-        name_link_id: other_party_id.clone(),
+        name_link_id: ctx.store_id.clone(),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
@@ -214,7 +216,6 @@ fn generate(
             store_id: ctx.store_id.clone(),
             period_id,
             program_indicators,
-            other_party_id,
             connection,
         })?;
 
@@ -230,7 +231,6 @@ pub struct InternalOrderIndicatorGenerationInput<'a> {
     pub store_id: String,
     pub period_id: String,
     pub program_indicators: Vec<ProgramIndicator>,
-    pub other_party_id: String,
 }
 
 fn generate_internal_order_indicators(
@@ -247,6 +247,11 @@ fn generate_internal_order_indicators(
         .map(|s| s.store_row.and_then(|s| Some(s.id)))
         .filter_map(|id| id)
         .collect::<Vec<String>>();
+
+    println!(
+        "Stores with multiple {:?}",
+        stores_with_store_as_supplier_ids.len()
+    );
 
     if stores_with_store_as_supplier_ids.len() > 0 {
         return Ok(generate_aggregate_indicator_values(
@@ -292,10 +297,11 @@ mod test_insert {
         service_provider::ServiceProvider,
     };
     use repository::{
+        indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
         mock::{
             mock_name_store_b, mock_period, mock_program_a, mock_program_order_types_a,
-            mock_request_draft_requisition, mock_user_account_a, program_master_list_store,
-            MockData, MockDataInserts,
+            mock_request_draft_requisition, mock_store_b, mock_user_account_a,
+            program_master_list_store, program_master_list_store_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         EqualFilter, NameRow, RequisitionLineFilter, RequisitionLineRepository,
@@ -460,61 +466,145 @@ mod test_insert {
         assert_eq!(requisition_lines.len(), 1);
     }
 
-    // #[actix_rt::test]
-    // async fn test_should_add_indicator_values() {
-    //     let (_, connection, connection_manager, _) =
-    //         setup_all("test_should_add_indicator_values", MockDataInserts::all()).await;
+    #[actix_rt::test]
+    async fn test_should_add_indicator_values() {
+        let (_, connection, connection_manager, _) =
+            setup_all("test_should_add_indicator_values", MockDataInserts::all()).await;
 
-    //     let service_provider = ServiceProvider::new(connection_manager);
-    //     let context = service_provider
-    //         .context(program_master_list_store().id, mock_user_account_a().id)
-    //         .unwrap();
-    //     let service = service_provider.requisition_service;
+        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let context = service_provider
+            .context(program_master_list_store().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.requisition_service;
 
-    // // assert should generate when other party id is typical store name row supplier
-    // assert_eq!(
-    //     should_generate_indicators(ShouldGenerateIndicatorsInput {
-    //         connection: &connection,
-    //         store_id: &program_master_list_store().id,
-    //         other_party_id: &mock_name_store_b().id,
-    //     })
-    //     .unwrap(),
-    //     true
-    // );
+        let result = service
+            .insert_program_request_requisition(
+                &context,
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "new_program_request_requisition_2".to_string();
+                    r.other_party_id.clone_from(&mock_name_store_b().id);
+                    r.program_order_type_id = mock_program_order_types_a().id;
+                    r.period_id = mock_period().id;
+                }),
+            )
+            .unwrap();
+        let new_row = RequisitionRowRepository::new(&connection)
+            .find_one_by_id(&result.requisition_row.id)
+            .unwrap()
+            .unwrap();
+        let requisition_lines = RequisitionLineRepository::new(&connection)
+            .query_by_filter(
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&new_row.id)),
+            )
+            .unwrap();
 
-    // // assert should not generate when other party is not typoical store name row supplier
-    // assert_eq!(
-    //     should_generate_indicators(ShouldGenerateIndicatorsInput {
-    //         connection: &connection,
-    //         store_id: &program_master_list_store().id,
-    //         other_party_id: &mock_name_store_a().id,
-    //     })
-    //     .unwrap(),
-    //     false
-    // );
+        assert_eq!(new_row.id, "new_program_request_requisition_2");
+        assert_eq!(requisition_lines.len(), 1);
 
-    // service
-    //     .insert_program_request_requisition(
-    //         &context,
-    //         inline_init(|r: &mut InsertProgramRequestRequisition| {
-    //             r.id = "new_program_request_requisition_3".to_string();
-    //             r.other_party_id.clone_from(&mock_name_store_c().id);
-    //             r.program_order_type_id = mock_program_order_types_a().id;
-    //             r.period_id = mock_period().id;
-    //         }),
-    //     )
-    //     .unwrap();
+        // check active_program_indicators added
+        let filter = IndicatorValueFilter::new()
+            .store_id(EqualFilter::equal_to(&program_master_list_store().id))
+            .customer_name_link_id(EqualFilter::equal_to(&program_master_list_store().id))
+            .period_id(EqualFilter::equal_to(&mock_period().id));
 
-    // // check active_program_indicators added
-    // let filter = IndicatorValueFilter::new()
-    //     .store_id(EqualFilter::equal_to(&program_master_list_store().id))
-    //     .customer_name_link_id(EqualFilter::equal_to(&mock_name_store_c().id))
-    //     .period_id(EqualFilter::equal_to(&mock_period().id));
+        let values = IndicatorValueRepository::new(&connection)
+            .query_by_filter(filter)
+            .unwrap();
 
-    // let values = IndicatorValueRepository::new(&connection)
-    //     .query_by_filter(filter)
-    //     .unwrap();
+        assert_eq!(values.len(), 4);
 
-    // assert_eq!(values.len(), 4);
-    // }
+        // check that indicators of child stores are aggregated
+        let context = ServiceProvider::new(connection_manager.clone())
+            .context(program_master_list_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        let result = service
+            .insert_program_request_requisition(
+                &context,
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "new_program_request_requisition_3".to_string();
+                    r.other_party_id.clone_from(&mock_name_store_b().id);
+                    r.program_order_type_id = mock_program_order_types_a().id;
+                    r.period_id = mock_period().id;
+                }),
+            )
+            .unwrap();
+        let new_row = RequisitionRowRepository::new(&connection)
+            .find_one_by_id(&result.requisition_row.id)
+            .unwrap()
+            .unwrap();
+        let requisition_lines = RequisitionLineRepository::new(&connection)
+            .query_by_filter(
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&new_row.id)),
+            )
+            .unwrap();
+
+        assert_eq!(new_row.id, "new_program_request_requisition_3");
+        assert_eq!(requisition_lines.len(), 1);
+
+        let filter = IndicatorValueFilter::new()
+            .store_id(EqualFilter::equal_to(&program_master_list_store_b().id))
+            .customer_name_link_id(EqualFilter::equal_to(&program_master_list_store_b().id))
+            .period_id(EqualFilter::equal_to(&mock_period().id));
+
+        let values = IndicatorValueRepository::new(&connection)
+            .query_by_filter(filter)
+            .unwrap();
+
+        assert_eq!(values.len(), 6);
+
+        let number_values: Vec<i32> = values
+            .into_iter()
+            .filter_map(|v| v.value.parse::<i32>().ok())
+            .collect();
+
+        assert_eq!(number_values.first().unwrap(), &i32::from(1));
+
+        let context = ServiceProvider::new(connection_manager)
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        let result = service
+            .insert_program_request_requisition(
+                &context,
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "new_program_request_requisition_4".to_string();
+                    r.other_party_id.clone_from(&mock_name_store_b().id);
+                    r.program_order_type_id = mock_program_order_types_a().id;
+                    r.period_id = mock_period().id;
+                }),
+            )
+            .unwrap();
+        let new_row = RequisitionRowRepository::new(&connection)
+            .find_one_by_id(&result.requisition_row.id)
+            .unwrap()
+            .unwrap();
+        let requisition_lines = RequisitionLineRepository::new(&connection)
+            .query_by_filter(
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&new_row.id)),
+            )
+            .unwrap();
+
+        assert_eq!(new_row.id, "new_program_request_requisition_4");
+        assert_eq!(requisition_lines.len(), 1);
+
+        let filter = IndicatorValueFilter::new()
+            .store_id(EqualFilter::equal_to(&program_master_list_store_b().id))
+            .customer_name_link_id(EqualFilter::equal_to(&program_master_list_store_b().id))
+            .period_id(EqualFilter::equal_to(&mock_period().id));
+
+        let values = IndicatorValueRepository::new(&connection)
+            .query_by_filter(filter)
+            .unwrap();
+
+        assert_eq!(values.len(), 6);
+
+        let number_values: Vec<i32> = values
+            .into_iter()
+            .filter_map(|v| v.value.parse::<i32>().ok())
+            .collect();
+
+        // Check parent store forms aggregate value
+        assert_eq!(number_values.first().unwrap(), &i32::from(2));
+    }
 }
