@@ -44,25 +44,10 @@ pub fn mock_indicator_line_c() -> IndicatorLineRow {
     }
 }
 
-pub fn mock_indicator_line_d() -> IndicatorLineRow {
-    IndicatorLineRow {
-        id: "indicator_line_row_d".to_owned(),
-        code: "ird".to_owned(),
-        program_indicator_id: mock_program_indicator_a().id,
-        line_number: 2,
-        description: "Some line D".to_owned(),
-        value_type: Some(IndicatorValueType::Number),
-        default_value: "123".to_owned(),
-        is_required: false,
-        is_active: false,
-    }
-}
-
 pub fn mock_indicator_lines() -> Vec<IndicatorLineRow> {
     vec![
         mock_indicator_line_a(),
         mock_indicator_line_b(),
         mock_indicator_line_c(),
-        // mock_indicator_line_d(),
     ]
 }

@@ -236,7 +236,7 @@ pub struct InternalOrderIndicatorGenerationInput<'a> {
 fn generate_internal_order_indicators(
     input: InternalOrderIndicatorGenerationInput,
 ) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
-    let stores_with_store_as_supplier_ids: Vec<String> = NameRepository::new(input.connection)
+    let customer_store_ids: Vec<String> = NameRepository::new(input.connection)
         .query(
             &input.store_id,
             Pagination::all(),
@@ -248,19 +248,16 @@ fn generate_internal_order_indicators(
         .filter_map(|id| id)
         .collect::<Vec<String>>();
 
-    println!(
-        "Stores with multiple {:?}",
-        stores_with_store_as_supplier_ids.len()
-    );
+    println!("Stores with multiple {:?}", customer_store_ids.len());
 
-    if stores_with_store_as_supplier_ids.len() > 0 {
+    if customer_store_ids.len() > 0 {
         return Ok(generate_aggregate_indicator_values(
             AggregateInternalOrderIndicatorGenerationInput {
                 store_id: input.store_id.clone(),
                 period_id: input.period_id,
                 program_indicators: input.program_indicators,
                 other_party_id: input.store_id.clone(),
-                customer_store_ids: stores_with_store_as_supplier_ids,
+                customer_store_ids: customer_store_ids,
                 connection: input.connection,
             },
         )?);
