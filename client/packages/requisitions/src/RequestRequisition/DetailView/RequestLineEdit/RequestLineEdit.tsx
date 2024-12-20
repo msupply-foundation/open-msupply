@@ -187,9 +187,15 @@ export const RequestLineEdit = ({
         </Box>
         <Box>
           {/* Right column content */}
-          <Box display="flex" flexDirection="row">
+          <Box
+            display="flex"
+            flexDirection="row"
+            justifyContent="flex-end"
+            paddingBottom={1}
+            paddingRight={2.5}
+          >
             {isPacksEnabled && (
-              <Box display="flex" justifyContent="flex-end" alignItems="center">
+              <Box display="flex">
                 <Switch
                   label={t('label.units')}
                   checked={isPacks}
