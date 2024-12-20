@@ -226,7 +226,8 @@ fn generate(
             period_id,
             program_indicators,
             other_party_id,
-        }),
+            connection,
+        })?,
         None => vec![],
     };
 
