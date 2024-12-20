@@ -13,6 +13,7 @@ pub(crate) mod category;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
 pub(crate) mod cold_storage_type;
+pub(crate) mod contact_form;
 pub(crate) mod currency;
 pub(crate) mod demographic;
 pub(crate) mod diagnosis;
@@ -126,6 +127,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         user_permission::boxed(),
         document::boxed(),
         currency::boxed(),
+        contact_form::boxed(),
         // Cold chain
         sensor::boxed(),
         temperature_breach::boxed(),
