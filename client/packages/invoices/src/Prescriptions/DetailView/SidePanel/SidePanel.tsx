@@ -15,6 +15,7 @@ import { usePrescription } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { PricingSection } from './PricingSection';
 import { canDeleteInvoice } from '../../../utils';
+import { PatientDetails } from './PatientDetails';
 
 export const SidePanelComponent = () => {
   const t = useTranslation();
@@ -74,6 +75,7 @@ export const SidePanelComponent = () => {
     >
       <AdditionalInfoSection />
       <PricingSection />
+      <PatientDetails />
     </DetailPanelPortal>
   );
 };
