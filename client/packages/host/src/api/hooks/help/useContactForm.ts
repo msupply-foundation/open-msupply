@@ -1,17 +1,29 @@
 import { ContactFormNodeType, InsertContactFormInput } from '@common/types';
 import { useState } from 'react';
-import { useFeedbackFormGraphQL } from './useFeedbackFormGraphQL';
-import { FnUtils, isEmpty, useMutation } from '@openmsupply-client/common';
+import { useContactFormGraphQL } from './useContactFormGraphQL';
+import {
+  FnUtils,
+  isEmpty,
+  useMutation,
+  useDebounceCallback,
+  useTranslation,
+  RegexUtils,
+} from '@openmsupply-client/common';
 
-type ContactFormInput = Omit<InsertContactFormInput, 'id'>;
+type ContactFormInput = Pick<
+  InsertContactFormInput,
+  'contactType' | 'replyEmail' | 'body'
+>;
 
-export function useFeedbackForm() {
+export function useContactForm() {
   const defaultDraft: ContactFormInput = {
     replyEmail: '',
     body: '',
     contactType: ContactFormNodeType.Feedback,
   };
   const [draft, setDraft] = useState<ContactFormInput>(defaultDraft);
+  const [emailError, setEmailError] = useState('');
+  const t = useTranslation();
 
   const { mutateAsync: insert } = useInsert();
 
@@ -24,16 +36,34 @@ export function useFeedbackForm() {
     setDraft(defaultDraft);
   };
 
+  const debounceValidation = useDebounceCallback(
+    (email: string) => {
+      if (!RegexUtils.checkEmailIsValid(email))
+        return setEmailError(t('messages.error-not-valid-email'));
+      return setEmailError('');
+    },
+    [setEmailError],
+    100
+  );
+
+  const isValidInput =
+    !!draft.replyEmail &&
+    !!draft.body &&
+    RegexUtils.checkEmailIsValid(draft.replyEmail);
+
   return {
     updateDraft,
     resetDraft,
     saveFeedback: insert,
     draft,
+    isValidInput,
+    debounceValidation,
+    emailError,
   };
 }
 
 const useInsert = () => {
-  const { api, storeId } = useFeedbackFormGraphQL();
+  const { api, storeId } = useContactFormGraphQL();
 
   const mutationFn = async ({
     contactType,

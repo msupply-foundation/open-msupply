@@ -19,7 +19,6 @@ mod insert {
         let service = service_provider.contact_form_service;
 
         let store_id = &mock_store_a().id;
-        let user_id = mock_user_account_a().id;
 
         let input: InsertContactForm = InsertContactForm {
             id: "test_id".to_string(),
@@ -129,7 +128,6 @@ mod insert {
             .unwrap();
 
         let store_id = &mock_store_a().id;
-        let user_id = mock_user_account_a().id;
 
         // Success - Create Contact Form
         let result = service_provider

@@ -11,6 +11,7 @@
           "description": "sort by",
           "type": "string",
           "enum": [
+            "batch",
             "item.name",
             "item.code",
             "expiryDate",

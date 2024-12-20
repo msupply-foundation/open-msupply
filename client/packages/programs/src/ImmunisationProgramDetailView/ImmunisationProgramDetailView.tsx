@@ -17,6 +17,7 @@ import {
   NothingHere,
   useEditModal,
   UNDEFINED_STRING_VALUE,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -56,6 +57,7 @@ export const ProgramComponent: FC = () => {
 
   const columns = useColumns<VaccineCourseFragment>(
     [
+      GenericColumnKey.Selection,
       { key: 'name', label: 'label.name' },
       {
         key: 'demographicIndicator',
@@ -72,7 +74,6 @@ export const ProgramComponent: FC = () => {
         label: 'label.doses',
         accessor: ({ rowData }) => rowData?.vaccineCourseDoses?.length ?? 0,
       },
-      'selection',
     ],
     {
       onChangeSortBy: updateSortQuery,

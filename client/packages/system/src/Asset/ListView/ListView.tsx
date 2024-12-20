@@ -11,6 +11,7 @@ import {
   useToggle,
   useIsCentralServerApi,
   ColumnDescription,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { AssetCatalogueItemFragment, useAssetData } from '../api';
 import { Toolbar } from './Toolbar';
@@ -40,6 +41,7 @@ const AssetListComponent: FC = () => {
   const importModalController = useToggle();
 
   const columnDescriptions: ColumnDescription<AssetCatalogueItemFragment>[] = [
+    ...(isCentralServer ? [GenericColumnKey.Selection] : []),
     {
       key: 'subCatalogue',
       label: 'label.sub-catalogue',
@@ -79,7 +81,6 @@ const AssetListComponent: FC = () => {
     },
   ];
 
-  if (isCentralServer) columnDescriptions.push('selection');
   const columns = useColumns<AssetCatalogueItemFragment>(
     columnDescriptions,
     {

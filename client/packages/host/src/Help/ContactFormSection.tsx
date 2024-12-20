@@ -1,12 +1,8 @@
-import {
-  Grid,
-  Typography,
-  useTranslation,
-} from '@openmsupply-client/common';
+import { Grid, Typography, useTranslation } from '@openmsupply-client/common';
 import React from 'react';
-import { FeedbackForm } from './FeedbackForm';
+import { ContactForm } from './ContactForm';
 
-export const FeedbackSection = () => {
+export const ContactFormSection = () => {
   const t = useTranslation();
   return (
     <Grid
@@ -20,7 +16,7 @@ export const FeedbackSection = () => {
       <Typography variant="h5" style={{ paddingBottom: 10 }}>
         {t('heading.contact-us')}
       </Typography>
-      <FeedbackForm />
+      <ContactForm />
     </Grid>
   );
 };

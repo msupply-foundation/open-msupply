@@ -14,8 +14,10 @@ pub(crate) mod asset_property;
 pub(crate) mod asset_type;
 pub(crate) mod barcode;
 pub(crate) mod cold_storage_type;
+pub(crate) mod contact_form;
 pub(crate) mod currency;
 pub(crate) mod demographic;
+pub(crate) mod diagnosis;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
 pub(crate) mod invoice;
@@ -69,6 +71,7 @@ pub(crate) mod vaccine_course_item;
 pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncomingRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut abbreviation::test_pull_upsert_records());
+    test_records.append(&mut diagnosis::test_pull_upsert_records());
     test_records.append(&mut user::test_pull_upsert_records());
     test_records.append(&mut user_permission::test_pull_upsert_records());
     test_records.append(&mut item::test_pull_upsert_records());
@@ -112,6 +115,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut item_variant::test_pull_upsert_records());
     test_records.append(&mut packaging_variant::test_pull_upsert_records());
     test_records.append(&mut system_log::test_pull_upsert_records());
+    test_records.append(&mut contact_form::test_pull_upsert_records());
 
     test_records
 }
@@ -227,6 +231,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut vaccine_course_dose::test_v6_records());
     test_records.append(&mut vaccination::test_v6_records());
     test_records.append(&mut system_log::test_v6_records());
+    test_records.append(&mut contact_form::test_v6_records());
 
     test_records
 }
