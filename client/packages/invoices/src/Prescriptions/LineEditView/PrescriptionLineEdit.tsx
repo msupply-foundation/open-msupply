@@ -46,21 +46,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
     DateUtils.getDateOrNull(prescriptionDate)
   );
 
-  console.log(
-    'Draft lines',
-    draftPrescriptionLines.map(({ itemName, numberOfPacks, packSize }) => ({
-      itemName,
-      numberOfPacks,
-      packSize,
-    }))
-  );
-
   const packSizeController = usePackSizeController(draftPrescriptionLines);
-
-  // const placeholder = draftPrescriptionLines?.find(
-  //   ({ type, numberOfPacks }) =>
-  //     type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks !== 0
-  // );
 
   const onUpdateQuantity = (batchId: string, packs: number) => {
     updateQuantity(batchId, packs);
