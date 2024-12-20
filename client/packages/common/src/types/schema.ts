@@ -2233,6 +2233,11 @@ export type FailedToFetchReportData = PrintReportErrorInterface & {
   errors: Scalars['JSON']['output'];
 };
 
+export type FailedTranslation = QueryReportErrorInterface & QueryReportsErrorInterface & {
+  __typename: 'FailedTranslation';
+  description: Scalars['String']['output'];
+};
+
 export type FinaliseRnRFormInput = {
   id: Scalars['String']['input'];
 };
@@ -6270,6 +6275,7 @@ export type QueriesRepacksByStockLineArgs = {
 export type QueriesReportArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
+  userLanguage: Scalars['String']['input'];
 };
 
 
@@ -6278,6 +6284,7 @@ export type QueriesReportsArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ReportSortInput>>;
   storeId: Scalars['String']['input'];
+  userLanguage: Scalars['String']['input'];
 };
 
 
@@ -6459,6 +6466,24 @@ export type QueriesVaccineCoursesArgs = {
   sort?: InputMaybe<Array<VaccineCourseSortInput>>;
 };
 
+export type QueryReportError = {
+  __typename: 'QueryReportError';
+  error: QueryReportErrorInterface;
+};
+
+export type QueryReportErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type QueryReportsError = {
+  __typename: 'QueryReportsError';
+  error: QueryReportsErrorInterface;
+};
+
+export type QueryReportsErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type ReasonOptionConnector = {
   __typename: 'ReasonOptionConnector';
   nodes: Array<ReasonOptionNode>;
@@ -6610,7 +6635,7 @@ export type ReportNode = {
   subContext?: Maybe<Scalars['String']['output']>;
 };
 
-export type ReportResponse = ReportNode;
+export type ReportResponse = QueryReportError | ReportNode;
 
 export enum ReportSortFieldInput {
   Id = 'id',
@@ -6627,7 +6652,7 @@ export type ReportSortInput = {
   key: ReportSortFieldInput;
 };
 
-export type ReportsResponse = ReportConnector;
+export type ReportsResponse = QueryReportsError | ReportConnector;
 
 export type RequestRequisitionCounts = {
   __typename: 'RequestRequisitionCounts';

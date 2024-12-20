@@ -1,6 +1,6 @@
 use repository::{
-    ContextType, FormSchemaJson, FormSchemaRowRepository, ReportRow, ReportRowRepository,
-    StorageConnection,
+    ContextType, EqualFilter, FormSchemaJson, FormSchemaRowRepository, ReportFilter,
+    ReportRepository, ReportRow, ReportRowRepository, StorageConnection,
 };
 use rust_embed::RustEmbed;
 use thiserror::Error;
@@ -42,32 +42,30 @@ impl StandardReports {
     ) -> Result<(), anyhow::Error> {
         let mut num_std_reports = 0;
         for report in reports_data.reports {
-            num_std_reports += 1;
-            let existing_report = ReportRowRepository::new(con)
-                .find_one_by_code_and_version(&report.code, &report.version)?;
+            let existing_report_count = ReportRepository::new(con).count(Some(
+                ReportFilter::new().id(EqualFilter::equal_to(&report.id)),
+            ))?;
 
-            // Use the existing ID if already defined for that report
-            let id = existing_report.map_or_else(|| report.clone().id, |r| r.id.clone());
-            info!("Upserting Report {} v{}", report.code, report.version);
-
-            if let Some(form_schema_json) = &report.form_schema {
-                // TODO: Look up existing json schema and use it's ID to be safe...
-                FormSchemaRowRepository::new(con).upsert_one(form_schema_json)?;
+            if existing_report_count == 0 {
+                if let Some(form_schema_json) = &report.form_schema {
+                    // TODO: Look up existing json schema and use it's ID to be safe...
+                    FormSchemaRowRepository::new(con).upsert_one(form_schema_json)?;
+                }
+                ReportRowRepository::new(con).upsert_one(&ReportRow {
+                    id: report.id,
+                    name: report.name,
+                    r#type: repository::ReportType::OmSupply,
+                    template: serde_json::to_string_pretty(&report.template)?,
+                    context: report.context,
+                    sub_context: report.sub_context,
+                    argument_schema_id: report.argument_schema_id,
+                    comment: report.comment,
+                    is_custom: report.is_custom,
+                    version: report.version,
+                    code: report.code,
+                })?;
+                num_std_reports += 1;
             }
-
-            ReportRowRepository::new(con).upsert_one(&ReportRow {
-                id,
-                name: report.name,
-                r#type: repository::ReportType::OmSupply,
-                template: serde_json::to_string_pretty(&report.template)?,
-                context: report.context,
-                sub_context: report.sub_context,
-                argument_schema_id: report.argument_schema_id,
-                comment: report.comment,
-                is_custom: report.is_custom,
-                version: report.version,
-                code: report.code,
-            })?;
         }
         info!("Upserted {} standard reports", num_std_reports);
         Ok(())

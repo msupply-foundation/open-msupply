@@ -93,6 +93,26 @@ impl Default for ReportRow {
     }
 }
 
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Selectable)]
+#[diesel(table_name = report)]
+pub struct ReportMetaDataRow {
+    pub id: String,
+    pub is_custom: bool,
+    pub version: String,
+    pub code: String,
+}
+
+impl Default for ReportMetaDataRow {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            is_custom: true,
+            version: Default::default(),
+            code: Default::default(),
+        }
+    }
+}
+
 pub struct ReportRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -105,19 +125,6 @@ impl<'a> ReportRowRepository<'a> {
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ReportRow>, RepositoryError> {
         let result = report_dsl::report
             .filter(report_dsl::id.eq(id))
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
-    }
-
-    pub fn find_one_by_code_and_version(
-        &self,
-        code: &str,
-        version: &str,
-    ) -> Result<Option<ReportRow>, RepositoryError> {
-        let result = report_dsl::report
-            .filter(report_dsl::code.eq(code))
-            .filter(report_dsl::version.eq(version))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
