@@ -1,8 +1,7 @@
 use crate::IndicatorValueRow;
 
 use super::{
-    mock_indicator_column_a, mock_indicator_column_c, mock_indicator_line_a, mock_period,
-    mock_store_a, mock_store_b,
+    mock_indicator_column_a, mock_indicator_line_a, mock_period, mock_store_a, mock_store_b,
 };
 
 pub fn mock_indicator_value_a() -> IndicatorValueRow {
@@ -14,30 +13,6 @@ pub fn mock_indicator_value_a() -> IndicatorValueRow {
         indicator_line_id: mock_indicator_line_a().id,
         indicator_column_id: mock_indicator_column_a().id,
         value: String::from("test_value"),
-    }
-}
-
-pub fn mock_indicator_value_b() -> IndicatorValueRow {
-    IndicatorValueRow {
-        id: String::from("id_b"),
-        customer_name_link_id: mock_store_b().name_link_id,
-        store_id: mock_store_a().id,
-        period_id: mock_period().id,
-        indicator_line_id: mock_indicator_line_a().id,
-        indicator_column_id: mock_indicator_column_c().id,
-        value: String::from("1"),
-    }
-}
-
-pub fn mock_indicator_value_c() -> IndicatorValueRow {
-    IndicatorValueRow {
-        id: String::from("id_c"),
-        customer_name_link_id: mock_store_b().name_link_id,
-        store_id: mock_store_a().id,
-        period_id: mock_period().id,
-        indicator_line_id: mock_indicator_line_a().id,
-        indicator_column_id: mock_indicator_column_c().id,
-        value: String::from("1"),
     }
 }
 
