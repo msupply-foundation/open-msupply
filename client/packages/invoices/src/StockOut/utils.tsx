@@ -180,7 +180,11 @@ export const issueStock = (
 
 export const allocateQuantities =
   (status: InvoiceNodeStatus, draftStockOutLines: DraftStockOutLine[]) =>
-  (newValue: number, issuePackSize: number | null) => {
+  (
+    newValue: number,
+    issuePackSize: number | null,
+    allowPartialPacks: boolean = false
+  ) => {
     // if invalid quantity entered, don't allocate
     if (newValue < 0 || Number.isNaN(newValue)) {
       return;
@@ -227,6 +231,7 @@ export const allocateQuantities =
       validBatches,
       newDraftStockOutLines,
       toAllocate,
+      allowPartialPacks,
     });
 
     // if there is still a quantity to allocate, run through all stock lines again
@@ -237,6 +242,7 @@ export const allocateQuantities =
         newDraftStockOutLines,
         toAllocate,
         roundUp: true,
+        allowPartialPacks,
       });
     }
 
@@ -289,11 +295,13 @@ const allocateToBatches = ({
   newDraftStockOutLines,
   toAllocate,
   roundUp = false,
+  allowPartialPacks,
 }: {
   validBatches: DraftStockOutLine[];
   newDraftStockOutLines: DraftStockOutLine[];
   toAllocate: number;
   roundUp?: boolean;
+  allowPartialPacks: boolean;
 }) => {
   validBatches.forEach(batch => {
     const draftStockOutLineIdx = newDraftStockOutLines.findIndex(
@@ -314,9 +322,11 @@ const allocateToBatches = ({
     const unitsToAllocate = Math.min(toAllocate, availableUnits);
     const numberOfPacksToAllocate =
       unitsToAllocate / draftStockOutLine.packSize;
-    const allocatedNumberOfPacks = roundUp
-      ? Math.ceil(numberOfPacksToAllocate)
-      : Math.floor(numberOfPacksToAllocate);
+    const allocatedNumberOfPacks = allowPartialPacks
+      ? numberOfPacksToAllocate
+      : roundUp
+        ? Math.ceil(numberOfPacksToAllocate)
+        : Math.floor(numberOfPacksToAllocate);
 
     toAllocate -= allocatedNumberOfPacks * draftStockOutLine.packSize;
 

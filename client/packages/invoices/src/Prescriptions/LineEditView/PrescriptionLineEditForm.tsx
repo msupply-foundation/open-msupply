@@ -137,6 +137,13 @@ export const PrescriptionLineEditForm: React.FC<
         severity: 'warning',
       });
     }
+    if (NumUtils.round(numPacks) !== numPacks) {
+      const nearestAbove = Math.ceil(numPacks) * packSize;
+      alerts.push({
+        message: t('messages.partial-pack-warning', { nearestAbove }),
+        severity: 'warning',
+      });
+    }
     debouncedSetAllocationAlerts(alerts);
     setIssueUnitQuantity(allocatedQuantity);
   };
