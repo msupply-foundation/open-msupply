@@ -7,7 +7,7 @@ import {
   useBreadcrumbs,
   useParams,
 } from '@openmsupply-client/common';
-import { useResponse } from '../../api';
+import { ResponseFragment, useResponse } from '../../api';
 import { ListItems } from '@openmsupply-client/system';
 import { ResponseLineEdit } from './ResponseLineEdit';
 import { AppRoute } from '@openmsupply-client/config';
@@ -15,14 +15,31 @@ import { useDraftRequisitionLine, usePreviousNextResponseLine } from './hooks';
 import { AppBarButtons } from './AppBarButtons';
 import { PageLayout } from '../PageLayout';
 
+interface ResponseLineEditPageInnerProps {
+  itemId: string;
+  requisition: ResponseFragment;
+}
+
 export const ResponseLineEditPage = () => {
   const { itemId } = useParams();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { data, isLoading } = useResponse.document.get();
-  const lines =
-    data?.lines.nodes.sort((a, b) => a.item.name.localeCompare(b.item.name)) ??
-    [];
-  const currentItem = lines.find(l => l.item.id === itemId)?.item;
+
+  if (isLoading || !itemId) return <BasicSpinner />;
+  if (!data) return <NothingHere />;
+
+  return <ResponseLineEditPageInner requisition={data} itemId={itemId} />;
+};
+
+const ResponseLineEditPageInner = ({
+  itemId,
+  requisition,
+}: ResponseLineEditPageInnerProps) => {
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+
+  const lines = requisition.lines.nodes.sort((a, b) =>
+    a.item.name.localeCompare(b.item.name)
+  );
+  const currentItem = lines.find(line => line.item.id === itemId)?.item;
   const { draft, update, save } = useDraftRequisitionLine(currentItem);
   const { hasNext, next, hasPrevious, previous } = usePreviousNextResponseLine(
     lines,
@@ -38,22 +55,19 @@ export const ResponseLineEditPage = () => {
     });
   }, [currentItem]);
 
-  if (isLoading || !currentItem) return <BasicSpinner />;
-  if (!data) return <NothingHere />;
-
   return (
     <>
-      <AppBarButtons requisitionNumber={data?.requisitionNumber} />
+      <AppBarButtons requisitionNumber={requisition.requisitionNumber} />
       <DetailContainer>
         <PageLayout
           Left={
             <>
               <ListItems
                 currentItemId={itemId}
-                items={lines.map(l => l.item)}
+                items={lines.map(line => line.item)}
                 route={RouteBuilder.create(AppRoute.Distribution)
                   .addPart(AppRoute.CustomerRequisition)
-                  .addPart(String(data?.requisitionNumber))}
+                  .addPart(String(requisition.requisitionNumber))}
                 enteredLineIds={enteredLineIds}
               />
             </>
@@ -62,7 +76,7 @@ export const ResponseLineEditPage = () => {
             <>
               <ResponseLineEdit
                 item={currentItem}
-                hasLinkedRequisition={!!data?.linkedRequisition}
+                hasLinkedRequisition={!!requisition.linkedRequisition}
                 draft={draft}
                 update={update}
                 save={save}
@@ -70,7 +84,7 @@ export const ResponseLineEditPage = () => {
                 next={next}
                 hasPrevious={hasPrevious}
                 previous={previous}
-                isProgram={!!data?.programName}
+                isProgram={!!requisition.programName}
               />
             </>
           }
