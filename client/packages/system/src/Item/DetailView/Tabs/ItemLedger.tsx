@@ -98,7 +98,6 @@ const ItemLedgerTable = ({
       },
       {
         key: 'numberOfPacks',
-        label: 'label.num-packs',
         sortable: false,
       },
       {
