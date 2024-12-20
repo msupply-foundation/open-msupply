@@ -36,7 +36,7 @@ interface RequestLineEditProps {
   isProgram: boolean;
   isPacksEnabled: boolean;
   isPacks: boolean;
-  setIsPacks: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsPacks: (isPacks: boolean) => void;
 }
 
 export const RequestLineEdit = ({
