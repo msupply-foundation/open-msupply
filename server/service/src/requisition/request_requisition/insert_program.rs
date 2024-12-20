@@ -321,9 +321,9 @@ mod test_insert {
     }
 
     #[actix_rt::test]
-    async fn insert_program_request_requisition_success() {
+    async fn insert_program_request_requisition_success_service() {
         let (_, connection, connection_manager, _) = setup_all(
-            "insert_program_request_requisition_success",
+            "insert_program_request_requisition_success_service",
             MockDataInserts::all(),
         )
         .await;

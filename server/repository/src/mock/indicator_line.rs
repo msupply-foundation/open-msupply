@@ -24,7 +24,7 @@ pub fn mock_indicator_line_b() -> IndicatorLineRow {
         line_number: 1,
         description: "Some line B".to_owned(),
         value_type: Some(IndicatorValueType::String),
-        default_value: "abc".to_owned(),
+        default_value: "".to_owned(),
         is_required: false,
         is_active: true,
     }

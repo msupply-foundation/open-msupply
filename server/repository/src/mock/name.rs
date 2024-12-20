@@ -5,8 +5,6 @@ use util::{
 
 use crate::{NameLinkRow, NameRow, NameRowType};
 
-use super::{mock_store_b, program_master_list_store, program_master_list_store_b};
-
 pub fn mock_name_store_a() -> NameRow {
     inline_init(|r: &mut NameRow| {
         r.id = String::from("name_store_a");
@@ -75,17 +73,6 @@ pub fn mock_name_customer_a() -> NameRow {
         r.name = String::from("name_customer_a");
         r.code = String::from("name_customer_a");
         r.is_customer = true;
-        r.supplying_store_id = Some(program_master_list_store_b().id);
-    })
-}
-
-pub fn mock_name_customer_b() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("name_customer_b");
-        r.name = String::from("name_customer_b");
-        r.code = String::from("name_customer_b");
-        r.is_customer = true;
-        r.supplying_store_id = Some(program_master_list_store_b().id);
     })
 }
 
@@ -115,18 +102,6 @@ pub fn mock_program_master_list_test() -> NameRow {
         r.code = String::from("program_master_list_test");
         r.is_supplier = true;
         r.is_customer = true;
-        r.supplying_store_id = Some(mock_store_b().id);
-    })
-}
-
-pub fn mock_program_master_list_test_b() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("program_master_list_test_b");
-        r.name = String::from("program_master_list_test_b");
-        r.code = String::from("program_master_list_test_b");
-        r.is_supplier = true;
-        r.is_customer = true;
-        r.supplying_store_id = Some(mock_store_b().id);
     })
 }
 
@@ -177,13 +152,6 @@ pub fn mock_merged_patient_name_link() -> NameLinkRow {
     }
 }
 
-pub fn mock_customer_store_name_link() -> NameLinkRow {
-    NameLinkRow {
-        id: program_master_list_store().id,
-        name_id: mock_name_store_a().id,
-    }
-}
-
 pub fn mock_names() -> Vec<NameRow> {
     vec![
         mock_name_a(),
@@ -199,14 +167,10 @@ pub fn mock_names() -> Vec<NameRow> {
         mock_patient(),
         mock_patient_b(),
         mock_program_master_list_test(),
-        mock_program_master_list_test_b(),
         mock_merged_patient(),
     ]
 }
 
 pub fn mock_name_links() -> Vec<NameLinkRow> {
-    vec![
-        mock_merged_patient_name_link(),
-        mock_customer_store_name_link(),
-    ]
+    vec![mock_merged_patient_name_link()]
 }
