@@ -29,6 +29,7 @@ export const useInboundShipmentColumns = () => {
 
   const columns = useColumns<InboundLineFragment | InboundItem>(
     [
+      GenericColumnKey.Selection,
       [
         getNotePopoverColumn(),
         {
@@ -224,7 +225,6 @@ export const useInboundShipmentColumns = () => {
         sortable: false,
       },
       getRowExpandColumn(),
-      GenericColumnKey.Selection,
     ],
     { sortBy, onChangeSortBy: updateSortQuery },
     [sortBy, updateSortQuery]
