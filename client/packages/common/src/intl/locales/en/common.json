@@ -1459,6 +1459,7 @@
   "messages.only-closed-periods-visible": "Note: only closed periods are shown",
   "messages.outbound-shipment-created-on": "Outbound shipment created on {{date}}",
   "messages.over-allocated": "Due to the pack sizes available a total quantity of {{quantity}} has been allocated rather than {{issueQuantity}}",
+  "messages.partial-pack-warning": "You have issued a non-whole number of packs. Are you sure you are able to do this? If not, you will need to issue {{nearestAbove}} units to issue in whole packs.",
   "messages.patient-data-required-for-search": "Please enter patient information",
   "messages.patients-create": "Click [Create new] to add a new patient with the details you entered on the previous tab, or click an existing patient below to view their details.",
   "messages.patients-found_few": "{{count}} patients found matching the supplied details",

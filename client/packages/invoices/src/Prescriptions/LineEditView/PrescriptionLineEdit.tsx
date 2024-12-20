@@ -82,7 +82,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
     const newAllocateQuantities = allocateQuantities(
       status,
       draftPrescriptionLines
-    )(numPacks, packSize);
+    )(numPacks, packSize, true);
     setIsDirty(true);
     updateLines(newAllocateQuantities ?? draftPrescriptionLines);
     setIsAutoAllocated(autoAllocated);
@@ -93,28 +93,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
   };
 
   const canAutoAllocate = !!(currentItem && draftPrescriptionLines.length);
-
-  // const handleSave = async (onSaved: () => boolean | void) => {
-  //   if (
-  //     getAllocatedQuantity(draftPrescriptionLines) === 0 &&
-  //     !showZeroQuantityConfirmation
-  //   ) {
-  //     setShowZeroQuantityConfirmation(true);
-  //     return;
-  //   }
-
-  //   try {
-  //     await onSave();
-  //     // setIsDirty(false);
-  //     if (!!placeholder) {
-  //       const infoSnack = info(t('message.placeholder-line'));
-  //       infoSnack();
-  //     }
-  //     return onSaved();
-  //   } catch (e) {
-  //     // console.error(e);
-  //   }
-  // };
 
   const hasOnHold = draftPrescriptionLines.some(
     ({ stockLine }) =>
