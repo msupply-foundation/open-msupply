@@ -203,7 +203,7 @@ export const PrescriptionLineEditForm: React.FC<
         key={Math.random()}
         title={t('label.item', { count: 1 })}
         closedSummary={item?.name}
-        defaultExpanded={isNew}
+        defaultExpanded={isNew && !disabled}
       >
         <Grid item flex={1}>
           <StockItemSearchInput
@@ -233,7 +233,7 @@ export const PrescriptionLineEditForm: React.FC<
           <AccordionPanelSection
             title={t('label.quantity')}
             closedSummary={summarise(draftPrescriptionLines, t)}
-            defaultExpanded={isNew}
+            defaultExpanded={isNew && !disabled}
             key={item?.id ?? 'new'}
           >
             <Grid
@@ -283,7 +283,7 @@ export const PrescriptionLineEditForm: React.FC<
         <AccordionPanelSection
           title={t('label.directions')}
           closedSummary={note}
-          defaultExpanded={isNew || !note}
+          defaultExpanded={(isNew || !note) && !disabled}
           key={item?.id ?? 'new'}
         >
           <BasicTextInput
