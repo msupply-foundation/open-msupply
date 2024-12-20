@@ -7,8 +7,8 @@ export const GradientStops = () => {
   const theme = useTheme();
   return (
     <>
-      <stop stop-color={theme.palette.programs.iconGradientStart} />
-      <stop offset="1" stop-color={theme.palette.programs.iconGradientStop} />
+      <stop stopColor={theme.palette.programs.iconGradientStart} />
+      <stop offset="1" stopColor={theme.palette.programs.iconGradientStop} />
     </>
   );
 };

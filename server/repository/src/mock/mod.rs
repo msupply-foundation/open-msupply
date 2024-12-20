@@ -6,6 +6,7 @@ pub mod asset_log;
 mod barcode;
 mod clinician;
 pub mod common;
+mod contact_form;
 mod context;
 mod currency;
 mod demographic;
@@ -35,6 +36,7 @@ mod program_indicator;
 mod program_order_types;
 mod program_requisition_settings;
 mod property;
+mod reports;
 mod rnr_form;
 mod sensor;
 mod stock_line;
@@ -71,6 +73,7 @@ pub use asset_log::*;
 pub use barcode::*;
 pub use clinician::*;
 use common::*;
+pub use contact_form::*;
 pub use context::*;
 pub use currency::*;
 pub use demographic::*;
@@ -100,6 +103,7 @@ pub use program_indicator::*;
 pub use program_order_types::*;
 pub use program_requisition_settings::*;
 pub use property::*;
+pub use reports::*;
 pub use rnr_form::*;
 pub use sensor::*;
 pub use stock_line::*;
@@ -134,6 +138,7 @@ use crate::{
         asset_row::{AssetRow, AssetRowRepository},
     },
     category_row::{CategoryRow, CategoryRowRepository},
+    contact_form_row::{ContactFormRow, ContactFormRowRepository},
     item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
     reason_option_row::{ReasonOptionRow, ReasonOptionRowRepository},
     vaccine_course::{
@@ -157,10 +162,10 @@ use crate::{
     ProgramEnrolmentRowRepository, ProgramIndicatorRow, ProgramIndicatorRowRepository,
     ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
-    ProgramRowRepository, PropertyRow, PropertyRowRepository, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, ReturnReasonRow,
-    ReturnReasonRowRepository, RnRFormLineRow, RnRFormLineRowRepository, RnRFormRow,
-    RnRFormRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
+    ProgramRowRepository, PropertyRow, PropertyRowRepository, ReportRowRepository,
+    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository,
+    ReturnReasonRow, ReturnReasonRowRepository, RnRFormLineRow, RnRFormLineRowRepository,
+    RnRFormRow, RnRFormRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
     StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
     SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow,
     TemperatureBreachConfigRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
@@ -247,6 +252,8 @@ pub struct MockData {
     pub indicator_values: Vec<IndicatorValueRow>,
     pub categories: Vec<CategoryRow>,
     pub options: Vec<ReasonOptionRow>,
+    pub contact_form: Vec<ContactFormRow>,
+    pub reports: Vec<crate::ReportRow>,
 }
 
 impl MockData {
@@ -329,6 +336,8 @@ pub struct MockDataInserts {
     pub indicator_values: bool,
     pub categories: bool,
     pub options: bool,
+    pub contact_form: bool,
+    pub reports: bool,
 }
 
 impl MockDataInserts {
@@ -400,6 +409,8 @@ impl MockDataInserts {
             indicator_values: true,
             categories: true,
             options: true,
+            contact_form: true,
+            reports: true,
         }
     }
 
@@ -727,6 +738,16 @@ impl MockDataInserts {
         self.options = true;
         self
     }
+
+    pub fn contact_form(mut self) -> Self {
+        self.contact_form = true;
+        self
+    }
+
+    pub fn reports(mut self) -> Self {
+        self.reports = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -818,6 +839,8 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             indicator_columns: mock_indicator_columns(),
             indicator_values: mock_indicator_values(),
             options: mock_options(),
+            contact_form: mock_contact_form(),
+            reports: mock_reports(),
             ..Default::default()
         },
     );
@@ -1342,6 +1365,20 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
+        if inserts.contact_form {
+            let repo = ContactFormRowRepository::new(connection);
+            for row in &mock_data.contact_form {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.reports {
+            let repo = ReportRowRepository::new(connection);
+            for row in &mock_data.reports {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1417,6 +1454,8 @@ impl MockData {
             mut indicator_values,
             mut categories,
             mut options,
+            mut contact_form,
+            mut reports,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1488,6 +1527,8 @@ impl MockData {
         self.indicator_values.append(&mut indicator_values);
         self.categories.append(&mut categories);
         self.options.append(&mut options);
+        self.contact_form.append(&mut contact_form);
+        self.reports.append(&mut reports);
         self
     }
 }
