@@ -72,10 +72,10 @@ export const HeaderCell = <T extends RecordWithId>({
         {sortable ? (
           <div>
             {t('label.click-to-sort')}
-            {` ${columnLabel}`}
+            {` ${columnLabel.toLocaleLowerCase()}`}
           </div>
         ) : (
-          columnLabel
+          !description && columnLabel
         )}
       </>
     );
