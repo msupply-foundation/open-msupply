@@ -2,11 +2,11 @@ import { useEffect, useMemo } from 'react';
 import { useTableStore, SortUtils } from '@openmsupply-client/common';
 import { isA } from '../../../utils';
 import { DraftStockOutLine } from '../../../types';
-import { PackSizeController } from '../../../StockOut';
+// import { PackSizeController } from '../../../StockOut';
 
 export const usePrescriptionLineEditRows = (
-  rows: DraftStockOutLine[],
-  packSizeController: PackSizeController
+  rows: DraftStockOutLine[]
+  // packSizeController: PackSizeController
 ) => {
   const tableStore = useTableStore();
 
@@ -20,12 +20,12 @@ export const usePrescriptionLineEditRows = (
     wrongPackSizeRows,
     onHoldRows,
     noStockRows,
-    placeholderRow,
+    // placeholderRow,
   } = useMemo(() => {
-    const placeholderRow = rows.find(isA.placeholderLine);
-    const isRequestedPackSize = (packSize: number) =>
-      packSizeController.selected?.value === -1 ||
-      packSize === packSizeController.selected?.value;
+    // const placeholderRow = rows.find(isA.placeholderLine);
+    // const isRequestedPackSize = (packSize: number) =>
+    //   packSizeController.selected?.value === -1 ||
+    //   packSize === packSizeController.selected?.value;
 
     const rowsWithoutPlaceholder = rows
       .filter(line => !isA.placeholderLine(line))
@@ -47,10 +47,10 @@ export const usePrescriptionLineEditRows = (
         return;
       }
 
-      if (!isRequestedPackSize(row.packSize)) {
-        wrongPackSizeRows.push(row);
-        return;
-      }
+      // if (!isRequestedPackSize(row.packSize)) {
+      //   wrongPackSizeRows.push(row);
+      //   return;
+      // }
 
       allocatableRows.push(row);
     });
@@ -60,9 +60,9 @@ export const usePrescriptionLineEditRows = (
       onHoldRows,
       noStockRows,
       wrongPackSizeRows,
-      placeholderRow,
+      // placeholderRow,
     };
-  }, [rows, packSizeController.selected?.value]);
+  }, [rows]);
 
   const orderedRows = useMemo(() => {
     return [
@@ -88,6 +88,6 @@ export const usePrescriptionLineEditRows = (
     onHoldRows,
     noStockRows,
     wrongPackSizeRows,
-    placeholderRow,
+    // placeholderRow,
   };
 };
