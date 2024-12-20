@@ -244,8 +244,7 @@ fn generate_internal_order_indicators(
             None,
         )?
         .into_iter()
-        .map(|s| s.store_row.and_then(|s| Some(s.id)))
-        .filter_map(|id| id)
+        .filter_map(|s| s.store_row.map(|s| s.id))
         .collect::<Vec<String>>();
 
     println!("Stores with multiple {:?}", customer_store_ids.len());
