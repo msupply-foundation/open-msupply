@@ -75,7 +75,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     format: ColumnFormat.Integer,
     align: ColumnAlign.Right,
     description: 'description.pack-quantity',
-    label: 'label.num-packs',
+    label: 'label.pack-quantity',
     width: 100,
     Cell: NumberCell,
   },
@@ -191,7 +191,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   },
   quantity: {
     description: 'description.pack-quantity',
-    label: 'label.num-packs',
+    label: 'label.pack-quantity',
     key: 'quantity',
     width: 100,
     align: ColumnAlign.Right,
