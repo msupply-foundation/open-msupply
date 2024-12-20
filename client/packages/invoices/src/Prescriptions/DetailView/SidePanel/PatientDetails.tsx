@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import {
   Grid,
   DetailPanelSection,
@@ -20,9 +20,22 @@ export const PatientDetailsComponent = () => {
   } = usePrescription();
   const { diagnosis } = data ?? {};
 
+  const [selected, setSelected] = useState<Option | null>();
+
+  type Option = { id: string; value: string; label: string };
+
   const {
     query: { data: diagnosisOptions },
   } = useDiagnosisOptions();
+
+  const displayValue =
+    selected === undefined
+      ? {
+          label: diagnosis?.description ?? '',
+          value: diagnosis?.id ?? '',
+          id: diagnosis?.id ?? '',
+        }
+      : selected;
 
   return (
     <DetailPanelSection title={t('heading.patient-details')}>
@@ -34,12 +47,9 @@ export const PatientDetailsComponent = () => {
               fullWidth
               clearable
               options={diagnosisOptions ?? []}
-              value={{
-                label: diagnosis?.description ?? '',
-                value: diagnosis?.id ?? '',
-                id: diagnosis?.id ?? '',
-              }}
+              value={displayValue}
               onChange={(_e, selected) => {
+                setSelected(selected);
                 if (selected) {
                   update({ diagnosisId: selected.value });
                 } else {
