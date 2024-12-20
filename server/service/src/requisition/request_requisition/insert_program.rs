@@ -6,7 +6,7 @@ use crate::{
             check_requisition_row_exists, generate_program_indicator_values,
             IndicatorGenerationInput,
         },
-        program_indicator::query::{program_indicators, ProgramIndicator},
+        program_indicator::query::program_indicators,
         program_settings::get_supplier_program_requisition_settings,
         query::get_requisition,
         response_requisition::GenerateResult,
@@ -16,17 +16,13 @@ use crate::{
 use chrono::{NaiveDate, Utc};
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
-    MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository, NumberRowType,
-    Pagination, ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow,
-    RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
-    StorageConnection,
+    ActivityLogType, EqualFilter, IndicatorValueRowRepository, MasterListLineFilter,
+    MasterListLineRepository, NumberRowType, Pagination, ProgramIndicatorFilter,
+    ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError, Requisition,
+    RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
 };
 
-use super::{
-    generate_aggregate_indicator_values, generate_requisition_lines,
-    AggregateInternalOrderIndicatorGenerationInput,
-};
+use super::generate_requisition_lines;
 
 #[derive(Debug, PartialEq)]
 pub enum InsertProgramRequestRequisitionError {
@@ -170,7 +166,8 @@ fn generate(
             &NumberRowType::RequestRequisition,
             &ctx.store_id,
         )?,
-        name_link_id: other_party_id,
+        // TODO change to customer_id
+        name_link_id: other_party_id.clone(),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
@@ -211,65 +208,19 @@ fn generate(
         Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
     )?;
 
-    let indicator_values =
-        generate_internal_order_indicators(InternalOrderIndicatorGenerationInput {
-            store_id: ctx.store_id.clone(),
-            period_id,
-            program_indicators,
-            connection,
-        })?;
+    let indicator_values = generate_program_indicator_values(IndicatorGenerationInput {
+        store_id: ctx.store_id.clone(),
+        period_id,
+        program_indicators,
+        connection,
+        other_party_id,
+    })?;
 
     Ok(GenerateResult {
         requisition,
         requisition_lines,
         indicator_values,
     })
-}
-
-pub struct InternalOrderIndicatorGenerationInput<'a> {
-    pub connection: &'a StorageConnection,
-    pub store_id: String,
-    pub period_id: String,
-    pub program_indicators: Vec<ProgramIndicator>,
-}
-
-fn generate_internal_order_indicators(
-    input: InternalOrderIndicatorGenerationInput,
-) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
-    let customer_store_ids: Vec<String> = NameRepository::new(input.connection)
-        .query(
-            &input.store_id,
-            Pagination::all(),
-            Some(NameFilter::new().supplying_store_id(EqualFilter::equal_to(&input.store_id))),
-            None,
-        )?
-        .into_iter()
-        .filter_map(|s| s.store_row.map(|s| s.id))
-        .collect::<Vec<String>>();
-
-    println!("Stores with multiple {:?}", customer_store_ids.len());
-
-    if customer_store_ids.len() > 0 {
-        return Ok(generate_aggregate_indicator_values(
-            AggregateInternalOrderIndicatorGenerationInput {
-                store_id: input.store_id.clone(),
-                period_id: input.period_id,
-                program_indicators: input.program_indicators,
-                other_party_id: input.store_id.clone(),
-                customer_store_ids: customer_store_ids,
-                connection: input.connection,
-            },
-        )?);
-    } else {
-        return Ok(generate_program_indicator_values(
-            IndicatorGenerationInput {
-                store_id: input.store_id.clone(),
-                period_id: input.period_id,
-                program_indicators: input.program_indicators,
-                other_party_id: input.store_id,
-            },
-        ));
-    }
 }
 
 pub struct ShouldGenerateIndicatorsInput<'a> {
@@ -296,8 +247,8 @@ mod test_insert {
         indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
         mock::{
             mock_name_store_b, mock_period, mock_program_a, mock_program_order_types_a,
-            mock_request_draft_requisition, mock_store_b, mock_user_account_a,
-            program_master_list_store, program_master_list_store_b, MockData, MockDataInserts,
+            mock_request_draft_requisition, mock_user_account_a, program_master_list_store,
+            program_master_list_store_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         EqualFilter, NameRow, RequisitionLineFilter, RequisitionLineRepository,
