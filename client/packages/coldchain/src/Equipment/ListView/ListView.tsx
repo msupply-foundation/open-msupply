@@ -51,9 +51,11 @@ const AssetListComponent: FC = () => {
     AppRoute.Equipment
   );
 
-  const columnsToCreate: ColumnDescription<AssetRowFragment>[] = [];
+  const columnsToCreate: ColumnDescription<AssetRowFragment>[] = [
+    GenericColumnKey.Selection,
+  ];
   if (isCentralServer)
-    columnsToCreate.push(GenericColumnKey.Selection, {
+    columnsToCreate.push({
       key: 'store',
       label: 'label.store',
       accessor: ({ rowData }) => rowData.store?.code,
