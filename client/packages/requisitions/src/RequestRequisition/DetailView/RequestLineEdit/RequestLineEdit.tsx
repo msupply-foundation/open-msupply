@@ -12,6 +12,7 @@ import {
   NumUtils,
   Popover,
   ReasonOptionNodeType,
+  Switch,
   TextArea,
   useAuthContext,
   useToggle,
@@ -33,6 +34,9 @@ interface RequestLineEditProps {
   hasPrevious: boolean;
   previous: ItemRowFragment | null;
   isProgram: boolean;
+  isPacksEnabled: boolean;
+  isPacks: boolean;
+  setIsPacks: (isPacks: boolean) => void;
 }
 
 export const RequestLineEdit = ({
@@ -44,6 +48,9 @@ export const RequestLineEdit = ({
   hasPrevious,
   previous,
   isProgram,
+  isPacksEnabled,
+  isPacks,
+  setIsPacks,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { isOn, toggle } = useToggle();
@@ -180,12 +187,35 @@ export const RequestLineEdit = ({
         </Box>
         <Box>
           {/* Right column content */}
+          <Box
+            display="flex"
+            flexDirection="row"
+            justifyContent="flex-end"
+            paddingBottom={1}
+            paddingRight={2.5}
+          >
+            {isPacksEnabled && (
+              <Box display="flex">
+                <Switch
+                  label={t('label.units')}
+                  checked={isPacks}
+                  onChange={(_event, checked) => setIsPacks(checked)}
+                  size="small"
+                />
+                <Box paddingLeft={2} paddingRight={2}>
+                  {t('label.packs')}
+                </Box>
+              </Box>
+            )}
+          </Box>
+
           <Box display="flex" flexDirection="row">
             <InputWithLabelRow
               Input={
                 <NumericTextInput
                   width={INPUT_WIDTH}
                   value={draft?.requestedQuantity}
+                  disabled={isPacks}
                   onChange={value => {
                     if (draft?.suggestedQuantity === value) {
                       update({
@@ -231,6 +261,49 @@ export const RequestLineEdit = ({
               )}
             </Box>
           </Box>
+          <Box display="flex" flexDirection="row">
+            {isPacksEnabled && (
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    autoFocus
+                    disabled={!isPacks}
+                    value={NumUtils.round(
+                      (draft?.requestedQuantity ?? 0) /
+                        (draft?.defaultPackSize ?? 1),
+                      2
+                    )}
+                    decimalLimit={2}
+                    width={100}
+                    onChange={quantity => {
+                      update({
+                        requestedQuantity:
+                          (quantity ?? 0) * (draft?.defaultPackSize ?? 0),
+                      });
+                    }}
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                sx={{ marginBottom: 1 }}
+                label={t('label.requested-packs')}
+              />
+            )}
+          </Box>
+          {isPacksEnabled ? (
+            <InputWithLabelRow
+              Input={
+                <NumericTextInput
+                  width={INPUT_WIDTH}
+                  value={draft?.defaultPackSize}
+                  disabled
+                />
+              }
+              labelWidth={LABEL_WIDTH}
+              label={t('label.default-pack-size')}
+              sx={{ marginBottom: 1 }}
+            />
+          ) : null}
+
           <InputWithLabelRow
             Input={
               <NumericTextInput

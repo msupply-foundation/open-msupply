@@ -149,7 +149,7 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
         accessor: ({ rowData }) => rowData.item.unitName,
       },
     ],
-    'packSize',
+    ['packSize', { Cell: NumberCell }],
     'numberOfPacks',
     [
       'unitQuantity',

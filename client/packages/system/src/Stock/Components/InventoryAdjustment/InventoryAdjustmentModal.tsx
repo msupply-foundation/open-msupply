@@ -107,7 +107,7 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
           flex={1}
         >
           <TextWithLabelRow
-            label={t('label.num-packs')}
+            label={t('label.pack-quantity')}
             text={String(stockLine.totalNumberOfPacks)}
             textProps={{ textAlign: 'end' }}
             labelProps={{ sx: { textWrap: 'wrap' } }}
