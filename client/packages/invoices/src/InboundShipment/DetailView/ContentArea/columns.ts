@@ -209,15 +209,8 @@ export const useInboundShipmentColumns = () => {
         Cell: CurrencyCell,
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
-            let totalCostPrice = 0;
-            let totalUnits = 0;
-
-            for (const line of rowData.lines) {
-              totalCostPrice += line.costPricePerPack * line.numberOfPacks;
-              totalUnits += line.numberOfPacks * line.packSize;
-            }
-
-            return totalCostPrice / totalUnits;
+            const { lines } = rowData;
+            return ArrayUtils.getUnitCostPrice(lines);
           } else {
             return getSellPrice(rowData);
           }
