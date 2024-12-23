@@ -5,7 +5,7 @@ from helpers import cold_storage_type_id_lookup
 def changelog_stmt(record_id, table_name):
     # Thank you to whoever set the default value of cursor in ChangeLog to properly generate the next value!
     # nextval('changelog_cursor_seq'::regclass)
-    return f"INSERT INTO changelog (record_id, table_name, row_action) VALUES ('{record_id}', '{table_name}', 'UPSERT');"
+    return f"INSERT INTO changelog (record_id, table_name, row_action) VALUES ('{record_id}', '{table_name}', 'UPSERT');\n"
 
 
 def item_link_stmt(item_id):
@@ -123,25 +123,31 @@ def upsert_vaccine_packaging_variant_stmt(packaging_variant_id, item_variant_id,
     if volume_per_unit == "":
         volume_per_unit = 0
 
-    return f"INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('{packaging_variant_id}', '{item_variant_id}', '{packaging_name}', {packaging_level}, {volume_per_unit}) ON CONFLICT DO NOTHING;\n"
+    insert_statement = f"INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('{packaging_variant_id}', '{item_variant_id}', '{packaging_name}', {packaging_level}, {volume_per_unit}) ON CONFLICT DO NOTHING;\n"
+
+    return insert_statement + changelog_stmt(packaging_variant_id, 'packaging_variant')
+
+    
 
     
 def upsert_diluent_packaging_variant_stmt(packaging_variant_id, item_variant_id, row, packaging_level):  
     packaging_name = get_packaging_variant_name(packaging_level)
     volume_per_unit = 0
     if packaging_level == 1:
-        volume_per_unit= row["DiluentPrimaryVolume"]
+        volume_per_unit= float(row["DiluentPrimaryVolume"]) / 1000
     elif packaging_level == 2:
-        volume_per_unit= row["DiluentSecondaryVolume"]
+        volume_per_unit= float(row["DiluentSecondaryVolume"]) / 1000
     elif packaging_level == 3:
-        volume_per_unit= row["DiluentTertiaryVolume"]
+        volume_per_unit= float(row["DiluentTertiaryVolume"]) / 1000
     else:
         volume_per_unit = 0
 
     if volume_per_unit == "":
         volume_per_unit = 0
 
-    return f"INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('{packaging_variant_id}', '{item_variant_id}', '{packaging_name}', {packaging_level}, {volume_per_unit}) ON CONFLICT DO NOTHING;\n"
+    insert_statement = f"INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('{packaging_variant_id}', '{item_variant_id}', '{packaging_name}', {packaging_level}, {volume_per_unit}) ON CONFLICT DO NOTHING;\n"
+
+    return insert_statement + changelog_stmt(packaging_variant_id, 'packaging_variant')
 
     
 
