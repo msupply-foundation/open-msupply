@@ -177,10 +177,6 @@ pub fn get_requisition_item_information(
             }
         }
 
-        if amc == 0.0 {
-            amc = average_amc_of_all_customers;
-        }
-
         item_info.insert(
             customer.id.clone(),
             RequisitionItemInformation {
