@@ -13,6 +13,7 @@ use repository::{
     RequisitionLineRepository, RequisitionRepository, RequisitionType, StorageConnection,
     StoreFilter, StoreRepository,
 };
+use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
 // TODO: MOVE TO PLUGIN
 #[derive(Debug, PartialEq, Clone)]
@@ -120,15 +121,19 @@ pub fn get_requisition_item_information(
         program_id.to_string(),
         PeriodFilter::new().period_schedule_id(EqualFilter::equal_to(&period.period_schedule_id)),
     )?;
-    let look_back_period = store_preferences.monthly_consumption_look_back_period;
-    let look_back_date = period
-        .end_date
-        .checked_sub_signed(chrono::Duration::days(look_back_period as i64));
+    let look_back_date = period.end_date.checked_sub_signed(chrono::Duration::days(
+        (6.0 * NUMBER_OF_DAYS_IN_A_MONTH) as i64,
+    ));
     periods_for_schedule.retain(|p| {
         p.period_row.end_date <= period.end_date
             && p.period_row.end_date >= look_back_date.unwrap_or(period.end_date)
     });
     periods_for_schedule.sort_by(|a, b| a.period_row.end_date.cmp(&b.period_row.end_date));
+    let average_amc_of_all_customers = item_info
+        .values()
+        .map(|info| info.amc_in_units)
+        .sum::<f64>()
+        / item_info.len() as f64;
 
     for customer in customers_without_requisitions {
         // AMC: When a store has no AMC for an item line for a program and a
@@ -172,6 +177,10 @@ pub fn get_requisition_item_information(
             }
         }
 
+        if amc == 0.0 {
+            amc = average_amc_of_all_customers;
+        }
+
         item_info.insert(
             customer.id.clone(),
             RequisitionItemInformation {
@@ -182,6 +191,13 @@ pub fn get_requisition_item_information(
                 date_range,
             },
         );
+    }
+
+    for info in item_info.values_mut() {
+        if info.amc_in_units == 0.0 {
+            info.amc_in_units = average_amc_of_all_customers;
+            info.date_range = None;
+        }
     }
 
     let area_amc = item_info.values().map(|info| info.amc_in_units).sum();
