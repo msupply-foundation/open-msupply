@@ -25,6 +25,7 @@ mod insert {
             contact_type: Feedback,
             reply_email: "some@email.com".to_string(),
             body: "body".to_string(),
+            ..Default::default()
         };
 
         // EmailIsNotValid - no @ or domain
@@ -36,7 +37,7 @@ mod insert {
                     id: "test_id".to_string(),
                     reply_email: "not_an_email".to_string(),
                     body: "body".to_string(),
-                    contact_type: Feedback,
+                    ..Default::default()
                 },
             ),
             Err(InsertContactFormError::EmailIsInvalid)
@@ -51,7 +52,7 @@ mod insert {
                     id: "test_id".to_string(),
                     reply_email: "not_an_email.com".to_string(),
                     body: "body".to_string(),
-                    contact_type: Feedback,
+                    ..Default::default()
                 },
             ),
             Err(InsertContactFormError::EmailIsInvalid)
@@ -66,7 +67,7 @@ mod insert {
                     id: "test_id".to_string(),
                     reply_email: "not_an_email@com".to_string(),
                     body: "body".to_string(),
-                    contact_type: Feedback,
+                    ..Default::default()
                 },
             ),
             Err(InsertContactFormError::EmailIsInvalid)
@@ -81,7 +82,7 @@ mod insert {
                     id: "test_id".to_string(),
                     reply_email: "".to_string(),
                     body: "body".to_string(),
-                    contact_type: Feedback,
+                    ..Default::default()
                 },
             ),
             Err(InsertContactFormError::EmailNotProvided)
@@ -96,7 +97,7 @@ mod insert {
                     id: "test_id".to_string(),
                     reply_email: "abcd@eda.ca".to_string(),
                     body: "".to_string(),
-                    contact_type: Feedback,
+                    ..Default::default()
                 },
             ),
             Err(InsertContactFormError::MessageNotProvided)
@@ -138,7 +139,7 @@ mod insert {
                     id: "test_id".to_string(),
                     reply_email: "test_email@msupply.foundation".to_string(),
                     body: "body".to_string(),
-                    contact_type: Feedback,
+                    ..Default::default()
                 },
             )
             .unwrap();
