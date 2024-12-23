@@ -36,6 +36,7 @@ mod insert {
                     id: "test_id".to_string(),
                     reply_email: "not_an_email".to_string(),
                     body: "body".to_string(),
+                    contact_type: Feedback,
                 },
             ),
             Err(InsertContactFormError::EmailIsInvalid)
@@ -50,6 +51,7 @@ mod insert {
                     id: "test_id".to_string(),
                     reply_email: "not_an_email.com".to_string(),
                     body: "body".to_string(),
+                    contact_type: Feedback,
                 },
             ),
             Err(InsertContactFormError::EmailIsInvalid)
@@ -64,6 +66,7 @@ mod insert {
                     id: "test_id".to_string(),
                     reply_email: "not_an_email@com".to_string(),
                     body: "body".to_string(),
+                    contact_type: Feedback,
                 },
             ),
             Err(InsertContactFormError::EmailIsInvalid)
@@ -78,6 +81,7 @@ mod insert {
                     id: "test_id".to_string(),
                     reply_email: "".to_string(),
                     body: "body".to_string(),
+                    contact_type: Feedback,
                 },
             ),
             Err(InsertContactFormError::EmailNotProvided)
@@ -92,6 +96,7 @@ mod insert {
                     id: "test_id".to_string(),
                     reply_email: "abcd@eda.ca".to_string(),
                     body: "".to_string(),
+                    contact_type: Feedback,
                 },
             ),
             Err(InsertContactFormError::MessageNotProvided)
@@ -133,6 +138,7 @@ mod insert {
                     id: "test_id".to_string(),
                     reply_email: "test_email@msupply.foundation".to_string(),
                     body: "body".to_string(),
+                    contact_type: Feedback,
                 },
             )
             .unwrap();
