@@ -28,6 +28,7 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
       direction="row"
       alignItems="center"
       height={64}
+      gap={4}
       sx={{
         p: 4,
         mx: '-20px',
