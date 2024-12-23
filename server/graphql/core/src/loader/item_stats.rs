@@ -1,3 +1,5 @@
+use crate::standard_graphql_error::StandardGraphqlError;
+
 use super::IdPair;
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
@@ -44,12 +46,16 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
             IdPair::get_all_secondary_ids(loader_inputs),
         ));
 
-        let item_stats = self.service_provider.item_stats_service.get_item_stats(
-            &service_context,
-            &store_id,
-            amc_lookback_months,
-            Some(filter),
-        )?;
+        let item_stats = self
+            .service_provider
+            .item_stats_service
+            .get_item_stats(
+                &service_context,
+                &store_id,
+                amc_lookback_months,
+                Some(filter),
+            )
+            .map_err(|e| StandardGraphqlError::from_error(&e))?;
 
         Ok(item_stats
             .into_iter()

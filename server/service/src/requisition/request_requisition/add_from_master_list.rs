@@ -1,6 +1,8 @@
 use crate::{
+    backend_plugin::plugin_provider::PluginError,
     requisition::common::{check_requisition_row_exists, get_lines_for_requisition},
     service_provider::ServiceContext,
+    PluginOrRepositoryError,
 };
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
@@ -25,6 +27,7 @@ pub enum AddFromMasterListError {
     CannotEditRequisition,
     MasterListNotFoundForThisStore,
     NotARequestRequisition,
+    PluginError(PluginError),
     DatabaseError(RepositoryError),
 }
 
@@ -89,7 +92,7 @@ fn generate(
     store_id: &str,
     requisition_row: RequisitionRow,
     input: &AddFromMasterList,
-) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
+) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
     let requisition_lines =
         get_lines_for_requisition(&ctx.connection, &input.request_requisition_id)?;
 
@@ -136,6 +139,17 @@ pub fn check_master_list_for_store(
 impl From<RepositoryError> for AddFromMasterListError {
     fn from(error: RepositoryError) -> Self {
         AddFromMasterListError::DatabaseError(error)
+    }
+}
+
+impl From<PluginOrRepositoryError> for AddFromMasterListError {
+    fn from(error: PluginOrRepositoryError) -> Self {
+        use AddFromMasterListError as to;
+        use PluginOrRepositoryError as from;
+        match error {
+            from::RepositoryError(repository_error) => repository_error.into(),
+            from::PluginError(plugin_error) => to::PluginError(plugin_error),
+        }
     }
 }
 
