@@ -190,9 +190,9 @@ mod graphql {
                 store_id: _,
                 order_type: _,
                 a_shipment_has_been_created: _,
-                period_id,
-                elmis_code,
-                program_id,
+                period_id: _,
+                elmis_code: _,
+                program_id: _,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
