@@ -1,11 +1,13 @@
 // json! hits recursion limit in integration test (central_server_configurations), recursion_limit attribute must be top level
 #![cfg_attr(feature = "integration_test", recursion_limit = "256")]
+use backend_plugin::plugin_provider::PluginError;
 use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository};
 use repository::location::{LocationFilter, LocationRepository};
 use repository::{EqualFilter, Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
 use repository::{RepositoryError, StorageConnection};
 use service_provider::ServiceContext;
 use std::convert::TryInto;
+use thiserror::Error;
 
 pub mod activity_log;
 pub mod apis;
@@ -14,6 +16,7 @@ pub mod app_data;
 pub mod asset;
 pub mod auth;
 pub mod auth_data;
+pub mod backend_plugin;
 pub mod barcode;
 pub mod catalogue;
 pub mod clinician;
@@ -110,6 +113,8 @@ pub enum SingleRecordError {
     NotFound(String),
 }
 
+#[derive(Debug)]
+
 pub enum WithDBError<T> {
     DatabaseError(RepositoryError),
     Error(T),
@@ -141,6 +146,14 @@ impl From<RepositoryError> for SingleRecordError {
     fn from(error: RepositoryError) -> Self {
         SingleRecordError::DatabaseError(error)
     }
+}
+
+#[derive(Debug, Error, PartialEq)]
+pub enum PluginOrRepositoryError {
+    #[error(transparent)]
+    RepositoryError(#[from] RepositoryError),
+    #[error(transparent)]
+    PluginError(#[from] PluginError),
 }
 
 // Batch mutation helpers

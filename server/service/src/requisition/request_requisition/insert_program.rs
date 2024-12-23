@@ -1,11 +1,13 @@
 use crate::{
     activity_log::activity_log_entry,
+    backend_plugin::plugin_provider::PluginError,
     number::next_number,
     requisition::{
         common::check_requisition_row_exists,
         program_settings::get_supplier_program_requisition_settings, query::get_requisition,
     },
     service_provider::ServiceContext,
+    PluginOrRepositoryError,
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
@@ -27,6 +29,7 @@ pub enum InsertProgramRequestRequisitionError {
     MaxOrdersReachedForPeriod,
     // Internal
     NewlyCreatedRequisitionDoesNotExist,
+    PluginError(PluginError),
     DatabaseError(RepositoryError),
 }
 
@@ -135,7 +138,7 @@ fn generate(
         program_order_type_id: _,
         period_id,
     }: InsertProgramRequestRequisition,
-) -> Result<(RequisitionRow, Vec<RequisitionLineRow>), RepositoryError> {
+) -> Result<(RequisitionRow, Vec<RequisitionLineRow>), PluginOrRepositoryError> {
     let connection = &ctx.connection;
 
     let requisition = RequisitionRow {
@@ -186,6 +189,17 @@ fn generate(
 impl From<RepositoryError> for InsertProgramRequestRequisitionError {
     fn from(error: RepositoryError) -> Self {
         InsertProgramRequestRequisitionError::DatabaseError(error)
+    }
+}
+
+impl From<PluginOrRepositoryError> for InsertProgramRequestRequisitionError {
+    fn from(error: PluginOrRepositoryError) -> Self {
+        use InsertProgramRequestRequisitionError as to;
+        use PluginOrRepositoryError as from;
+        match error {
+            from::RepositoryError(repository_error) => repository_error.into(),
+            from::PluginError(plugin_error) => to::PluginError(plugin_error),
+        }
     }
 }
 
