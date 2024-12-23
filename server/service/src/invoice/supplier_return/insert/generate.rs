@@ -66,6 +66,7 @@ pub fn generate(
         requisition_id: None,
         clinician_link_id: None,
         backdated_datetime: None,
+        diagnosis_id: None,
     };
 
     let lines_with_packs: Vec<&SupplierReturnLineInput> = supplier_return_lines

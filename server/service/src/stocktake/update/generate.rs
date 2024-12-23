@@ -566,6 +566,7 @@ pub fn generate(
         clinician_link_id: None,
         original_shipment_id: None,
         backdated_datetime: None,
+        diagnosis_id: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {

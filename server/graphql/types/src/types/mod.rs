@@ -70,6 +70,9 @@ pub use self::clinician::*;
 pub mod barcode;
 pub use self::barcode::*;
 
+pub mod diagnosis;
+pub use self::diagnosis::*;
+
 pub mod store_preference;
 pub use self::store_preference::*;
 
