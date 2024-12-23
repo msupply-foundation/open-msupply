@@ -61,7 +61,8 @@ export const RequestLineEdit = ({
   const showItemInformation =
     store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders &&
     extraFields &&
-    !!draft?.itemInformation;
+    !!draft?.itemInformation &&
+    isProgram;
   const itemInformationSorted = draft?.itemInformation
     ?.sort((a, b) => b.amcInUnits - a.amcInUnits)
     .sort((a, b) => b.stockInUnits - a.stockInUnits);
