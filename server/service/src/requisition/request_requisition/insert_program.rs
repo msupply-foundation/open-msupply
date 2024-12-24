@@ -19,7 +19,7 @@ use repository::{
     ActivityLogType, EqualFilter, IndicatorValueRowRepository, MasterListLineFilter,
     MasterListLineRepository, NumberRowType, Pagination, ProgramIndicatorFilter,
     ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError, Requisition,
-    RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection, StoreRowRepository,
+    RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
 };
 
 use super::generate_requisition_lines;

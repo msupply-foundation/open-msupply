@@ -26,6 +26,7 @@ mod query {
             master_list_id: None,
             context_id: IMMUNISATION_CONTEXT_ID.to_string(),
             is_immunisation: true,
+            elmis_code: None,
         };
 
         ProgramRowRepository::new(&context.connection)
@@ -60,6 +61,7 @@ mod query {
             master_list_id: None,
             context_id: IMMUNISATION_CONTEXT_ID.to_string(),
             is_immunisation: true,
+            elmis_code: None,
         };
         let program_insert_b = ProgramRow {
             id: "program_id_b".to_owned(),
@@ -67,6 +69,7 @@ mod query {
             master_list_id: None,
             context_id: IMMUNISATION_CONTEXT_ID.to_string(),
             is_immunisation: true,
+            elmis_code: None,
         };
 
         let repo = ProgramRowRepository::new(&context.connection);
