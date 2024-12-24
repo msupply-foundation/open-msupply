@@ -495,44 +495,6 @@ query customerProgramSettings($storeId: String!) {
   }
 }
 
-fragment ProgramIndicator on ProgramIndicatorNode {
-  code
-  lineAndColumns {
-    ...IndicatorLineWithColumns
-  }
-  id
-}
-fragment IndicatorLineRow on IndicatorLineRowNode {
-  id
-  code
-  lineNumber
-  name
-  valueType
-}
-fragment IndicatorColumn on IndicatorColumnNode {
-  columnNumber
-  name
-  valueType
-  value(
-    periodId: $periodId
-    customerNameLinkId: $customerNameLinkId
-    storeId: $storeId
-  ) {
-    ...IndicatorValue
-  }
-}
-fragment IndicatorValue on IndicatorValueNode {
-  id
-  value
-}
-fragment IndicatorLineWithColumns on IndicatorLineNode {
-  columns {
-    ...IndicatorColumn
-  }
-  line {
-    ...IndicatorLineRow
-  }
-}
 query programIndicators(
   $customerNameLinkId: String!
   $periodId: String!
