@@ -20,6 +20,7 @@ pub struct ProgramFilter {
     pub context_id: Option<EqualFilter<String>>,
     pub is_immunisation: Option<bool>,
     pub exists_for_store_id: Option<EqualFilter<String>>,
+    pub elmis_code: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -96,11 +97,13 @@ impl<'a> ProgramRepository<'a> {
                 context_id,
                 is_immunisation,
                 exists_for_store_id,
+                elmis_code,
             } = f;
 
             apply_equal_filter!(query, id, program_dsl::id);
             apply_string_filter!(query, name, program_dsl::name);
             apply_equal_filter!(query, context_id, program_dsl::context_id);
+            apply_equal_filter!(query, elmis_code, program_dsl::elmis_code);
             if let Some(is_immunisation) = is_immunisation {
                 query = query.filter(program_dsl::is_immunisation.eq(is_immunisation));
             }
@@ -157,6 +160,11 @@ impl ProgramFilter {
 
     pub fn is_immunisation(mut self, filter: bool) -> Self {
         self.is_immunisation = Some(filter);
+        self
+    }
+
+    pub fn elmis_code(mut self, filter: EqualFilter<String>) -> Self {
+        self.elmis_code = Some(filter);
         self
     }
 }

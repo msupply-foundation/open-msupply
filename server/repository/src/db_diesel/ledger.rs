@@ -1,9 +1,11 @@
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     EqualFilter, InvoiceType, Pagination, RepositoryError, Sort,
 };
 
-use super::{ledger::ledger::dsl as ledger_dsl, DBType, InvoiceStatus, StorageConnection};
+use super::{
+    ledger::ledger::dsl as ledger_dsl, DBType, DatetimeFilter, InvoiceStatus, StorageConnection,
+};
 
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -61,6 +63,7 @@ pub struct LedgerFilter {
     pub stock_line_id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
+    pub datetime: Option<DatetimeFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -93,6 +96,11 @@ impl LedgerFilter {
 
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.store_id = Some(filter);
+        self
+    }
+
+    pub fn datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.datetime = Some(filter);
         self
     }
 }
@@ -175,11 +183,13 @@ fn create_filtered_query(filter: Option<LedgerFilter>) -> BoxedLedgerQuery {
             stock_line_id,
             item_id,
             store_id,
+            datetime,
         } = f;
 
         apply_equal_filter!(query, stock_line_id, ledger_dsl::stock_line_id);
         apply_equal_filter!(query, item_id, ledger_dsl::item_id);
         apply_equal_filter!(query, store_id, ledger_dsl::store_id);
+        apply_date_time_filter!(query, datetime, ledger_dsl::datetime);
     }
 
     query

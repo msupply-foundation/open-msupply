@@ -1,12 +1,13 @@
 use repository::{
     ledger::{LedgerFilter, LedgerRepository, LedgerRow, LedgerSort, LedgerSortField},
-    EqualFilter, Pagination, PaginationOption, StorageConnectionManager,
+    EqualFilter, Pagination, PaginationOption, StorageConnection, StorageConnectionManager,
 };
 
 use crate::{get_default_pagination_unlimited, i64_to_u32, usize_to_u32};
 
 use super::{ListError, ListResult};
 
+#[derive(Debug)]
 pub struct ItemLedger {
     pub ledger: LedgerRow,
     pub balance: f64,
@@ -30,14 +31,13 @@ pub fn get_ledger(
 }
 
 pub fn get_item_ledger(
-    connection_manager: &StorageConnectionManager,
+    connection: &StorageConnection,
     store_id: &str,
     pagination: Option<PaginationOption>,
     filter: Option<LedgerFilter>,
     sort: Option<LedgerSort>,
 ) -> Result<ListResult<ItemLedger>, ListError> {
     let pagination = get_default_pagination_unlimited(pagination);
-    let connection = connection_manager.connection()?;
     let repository = LedgerRepository::new(&connection);
     let filter = filter
         .unwrap_or_default()
