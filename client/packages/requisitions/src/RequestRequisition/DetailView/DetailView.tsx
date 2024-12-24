@@ -13,6 +13,7 @@ import {
   BasicModal,
   Box,
   FnUtils,
+  IndicatorLineRowNode,
 } from '@openmsupply-client/common';
 import {
   ItemRowWithStatsFragment,
@@ -20,7 +21,12 @@ import {
   StockItemSearchInput,
   ItemRowFragment,
 } from '@openmsupply-client/system';
-import { RequestLineFragment, useRequest } from '../api';
+import {
+  ProgramIndicatorFragment,
+  RequestFragment,
+  RequestLineFragment,
+  useRequest,
+} from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -28,6 +34,7 @@ import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
 import { RequestRequisitionLineErrorProvider } from '../context';
+import { IndicatorsTab } from './IndicatorsTab';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
@@ -36,6 +43,13 @@ export const DetailView: FC = () => {
   const isDisabled = useRequest.utils.isDisabled();
   const { mutateAsync } = useRequest.line.insert();
   const { onOpen, onClose, isOpen } = useEditModal<ItemRowWithStatsFragment>();
+  const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
+    useRequest.document.indicators(
+      data?.otherPartyId ?? '',
+      data?.period?.id ?? '',
+      data?.program?.id ?? '',
+      !!data
+    );
 
   const onRowClick = useCallback((line: RequestLineFragment) => {
     navigate(
@@ -46,6 +60,26 @@ export const DetailView: FC = () => {
         .build()
     );
   }, []);
+
+  const onProgramIndicatorClick = useCallback(
+    (
+      programIndicator?: ProgramIndicatorFragment,
+      indicatorLine?: IndicatorLineRowNode,
+      request?: RequestFragment
+    ) => {
+      if (!request || !indicatorLine) return;
+      navigate(
+        RouteBuilder.create(AppRoute.Replenishment)
+          .addPart(AppRoute.InternalOrder)
+          .addPart(String(request.requisitionNumber))
+          .addPart(AppRoute.Indicators)
+          .addPart(String(programIndicator?.code))
+          .addPart(String(indicatorLine.id))
+          .build()
+      );
+    },
+    []
+  );
 
   if (isLoading) return <DetailViewSkeleton />;
 
@@ -64,6 +98,24 @@ export const DetailView: FC = () => {
       value: 'Log',
     },
   ];
+
+  if (
+    data?.programName &&
+    !!data?.otherParty.store &&
+    programIndicators?.totalCount !== 0
+  ) {
+    tabs.push({
+      Component: (
+        <IndicatorsTab
+          onClick={onProgramIndicatorClick}
+          isLoading={isLoading || isProgramIndicatorsLoading}
+          request={data}
+          indicators={programIndicators?.nodes}
+        />
+      ),
+      value: t('label.indicators'),
+    });
+  }
 
   return !!data ? (
     <RequestRequisitionLineErrorProvider>
