@@ -45,6 +45,7 @@ export const useSaveInboundLines = () => {
           case 'NotAnInboundShipment':
           case 'RecordNotFound':
           case 'ForeignKeyError':
+          case 'TransferredShipment':
             return { errorMessage: t('error.something-wrong') };
 
           default:
