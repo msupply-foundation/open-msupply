@@ -8,12 +8,11 @@ use actix_web::{
 };
 
 use base64::{prelude::BASE64_STANDARD, Engine};
+use repository::{PluginType, PluginVariantType};
 use serde::Deserialize;
 use serde_json::json;
 use service::{
-    backend_plugin::plugin_provider::{
-        BindPluginInput, PluginInstance, PluginType, PluginVariantType,
-    },
+    backend_plugin::plugin_provider::{BindPluginInput, PluginInstance},
     settings::Settings,
     static_files::{StaticFileCategory, StaticFileService},
 };
