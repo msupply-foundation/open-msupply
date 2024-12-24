@@ -4,7 +4,8 @@ import { useRequestApi } from '../utils/useRequestApi';
 export const useIndicators = (
   customerNameLinkId: string,
   periodId: string,
-  programId: string
+  programId: string,
+  enabled: boolean
 ) => {
   const api = useRequestApi();
   return useQuery(
@@ -13,6 +14,7 @@ export const useIndicators = (
     {
       refetchOnMount: false,
       cacheTime: 0,
+      enabled,
     }
   );
 };
