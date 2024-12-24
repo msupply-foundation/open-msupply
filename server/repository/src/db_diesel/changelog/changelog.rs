@@ -59,6 +59,7 @@ pub enum RowActionType {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
+    BackendPlugin,
     Number,
     Location,
     LocationMovement,
@@ -128,6 +129,7 @@ pub(crate) enum ChangeLogSyncStyle {
 impl ChangelogTableName {
     pub(crate) fn sync_style(&self) -> ChangeLogSyncStyle {
         match self {
+            ChangelogTableName::BackendPlugin => ChangeLogSyncStyle::Central,
             ChangelogTableName::Number => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Location => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::LocationMovement => ChangeLogSyncStyle::Legacy,
