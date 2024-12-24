@@ -1,5 +1,8 @@
 use crate::{
-    invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
+    invoice::{
+        check_invoice_exists, check_invoice_is_editable, check_invoice_is_linked,
+        check_invoice_type, check_store,
+    },
     invoice_line::{
         stock_in_line::check_batch,
         validate::{
@@ -39,6 +42,9 @@ pub fn validate(
     }
     if !check_line_not_associated_with_stocktake(connection, &line.id, store_id.to_string()) {
         return Err(LineUsedInStocktake);
+    }
+    if !check_invoice_is_linked(&invoice) {
+        return Err(TransferredShipment);
     }
 
     Ok((invoice, line))

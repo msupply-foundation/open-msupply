@@ -6281,7 +6281,6 @@ export type QueriesReportArgs = {
 
 export type QueriesReportsArgs = {
   filter?: InputMaybe<ReportFilterInput>;
-  page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ReportSortInput>>;
   storeId: Scalars['String']['input'];
   userLanguage: Scalars['String']['input'];
@@ -7785,6 +7784,11 @@ export type TokenExpired = RefreshTokenErrorInterface & {
 
 export type TransferredRequisition = DeleteResponseRequisitionErrorInterface & {
   __typename: 'TransferredRequisition';
+  description: Scalars['String']['output'];
+};
+
+export type TransferredShipment = DeleteInboundShipmentLineErrorInterface & {
+  __typename: 'TransferredShipment';
   description: Scalars['String']['output'];
 };
 

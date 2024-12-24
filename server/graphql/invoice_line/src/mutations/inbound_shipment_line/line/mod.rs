@@ -11,3 +11,11 @@ impl BatchIsReserved {
         "Batch is already reserved/issued"
     }
 }
+
+pub struct TransferredShipment;
+#[Object]
+impl TransferredShipment {
+    pub async fn description(&self) -> &str {
+        "Cannot delete an inbound shipment transferred from another store"
+    }
+}

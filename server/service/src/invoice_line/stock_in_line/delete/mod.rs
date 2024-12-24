@@ -56,6 +56,7 @@ pub enum DeleteStockInLineError {
     BatchIsReserved,
     NotThisInvoiceLine(String),
     LineUsedInStocktake,
+    TransferredShipment,
 }
 
 impl From<RepositoryError> for DeleteStockInLineError {
