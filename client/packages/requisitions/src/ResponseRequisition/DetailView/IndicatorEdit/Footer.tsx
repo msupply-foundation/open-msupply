@@ -8,7 +8,7 @@ import {
   useParams,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { IndicatorLineRowFragment } from '../../api';
+import { IndicatorLineRowFragment } from '../../../RequestRequisition/api';
 
 interface FooterProps {
   hasNext: boolean;

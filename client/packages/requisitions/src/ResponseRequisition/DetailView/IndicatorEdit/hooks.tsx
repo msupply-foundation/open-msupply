@@ -1,10 +1,10 @@
 import { useState } from 'react';
+import { useResponse } from '../../api';
+import { useDebounceCallback } from '@common/hooks';
 import {
   IndicatorLineRowFragment,
   IndicatorValueFragment,
-  useResponse,
-} from '../../api';
-import { useDebounceCallback } from '@common/hooks';
+} from '../../../RequestRequisition/api';
 
 export const usePreviousNextIndicatorLine = (
   lines?: IndicatorLineRowFragment[],

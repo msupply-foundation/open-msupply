@@ -4,7 +4,7 @@ import {
   RouteBuilder,
   useNavigate,
 } from '@openmsupply-client/common';
-import { IndicatorLineRowFragment } from '../../api';
+import { IndicatorLineRowFragment } from '../../../RequestRequisition/api';
 
 interface ListIndicatorLineProps {
   currentIndicatorLineId?: string | null;
