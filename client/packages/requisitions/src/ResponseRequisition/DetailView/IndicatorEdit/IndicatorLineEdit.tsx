@@ -10,11 +10,11 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
+import { useDraftIndicatorValue } from './hooks';
 import {
   IndicatorLineRowFragment,
   IndicatorLineWithColumnsFragment,
-} from '../../api';
-import { useDraftIndicatorValue } from './hooks';
+} from '../../../RequestRequisition/api';
 
 interface IndicatorLineEditProps {
   requisitionNumber: number;
