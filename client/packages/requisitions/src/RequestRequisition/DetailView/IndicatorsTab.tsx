@@ -9,24 +9,26 @@ import {
   PlusCircleIcon,
   useTranslation,
 } from '@openmsupply-client/common';
-import { ResponseFragment } from '../../ResponseRequisition/api';
-import { ProgramIndicatorFragment } from '../../RequestRequisition/api';
+import {
+  ProgramIndicatorFragment,
+  RequestFragment,
+} from '../../RequestRequisition/api';
 
 interface IndicatorTabProps {
   onClick: (
     programIndicator?: ProgramIndicatorFragment,
     indicatorLine?: IndicatorLineRowNode,
-    response?: ResponseFragment
+    request?: RequestFragment
   ) => void;
   isLoading: boolean;
-  response?: ResponseFragment;
+  request?: RequestFragment;
   indicators?: ProgramIndicatorFragment[];
 }
 
 export const IndicatorsTab = ({
   onClick,
   isLoading,
-  response,
+  request,
   indicators,
 }: IndicatorTabProps) => {
   const t = useTranslation();
@@ -64,7 +66,7 @@ export const IndicatorsTab = ({
             key={code}
             label={t(`button.${code.toLowerCase()}` as LocaleKey)}
             Icon={<PlusCircleIcon />}
-            onClick={() => onClick(groupIndicators[0], firstLine, response)}
+            onClick={() => onClick(groupIndicators[0], firstLine, request)}
           />
         );
       })}

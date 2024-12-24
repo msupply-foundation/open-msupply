@@ -10,11 +10,11 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useDraftIndicatorValue } from './hooks';
 import {
   IndicatorLineRowFragment,
   IndicatorLineWithColumnsFragment,
-} from '../../../RequestRequisition/api';
+} from '../../api';
+import { useDraftIndicatorValue } from './hooks';
 
 interface IndicatorLineEditProps {
   requisitionNumber: number;
@@ -45,7 +45,7 @@ const InputWithLabel = ({
   const { error } = useNotification();
   const errorHandler = useCallback(
     (res: any) => {
-      // probably shouldn't be any, but UpdateIndicatorValueResponse doesn't have res.error.__typename
+      // probably shouldn't be any, but UpdateIndicatorValue doesn't have res.error.__typename
       if (res.__typename === 'UpdateIndicatorValueError') {
         if (res.error.__typename === 'RecordNotFound') {
           error(t('messages.record-not-found'))();

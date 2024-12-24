@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useResponse } from '../../api';
-import { useDebounceCallback } from '@common/hooks';
 import {
   IndicatorLineRowFragment,
   IndicatorValueFragment,
-} from '../../../RequestRequisition/api';
+  useRequest,
+} from '../../api';
+import { useDebounceCallback } from '@common/hooks';
 
 export const usePreviousNextIndicatorLine = (
   lines?: IndicatorLineRowFragment[],
@@ -42,8 +42,7 @@ export const usePreviousNextIndicatorLine = (
 export const useDraftIndicatorValue = (
   indicatorValue: IndicatorValueFragment
 ) => {
-  const { mutateAsync, isLoading } =
-    useResponse.document.updateIndicatorValue();
+  const { mutateAsync, isLoading } = useRequest.document.updateIndicatorValue();
   const [draft, setDraft] = useState<IndicatorValueFragment>(indicatorValue);
   const save = useDebounceCallback(
     (patch: Partial<IndicatorValueFragment>) =>

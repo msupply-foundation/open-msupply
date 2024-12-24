@@ -5,15 +5,16 @@ import {
   DialogButton,
   RouteBuilder,
   useNavigate,
+  useParams,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
+import { IndicatorLineRowFragment } from '../../api';
 
 interface FooterProps {
   hasNext: boolean;
-  next: ItemRowFragment | null;
+  next: IndicatorLineRowFragment | null;
   hasPrevious: boolean;
-  previous: ItemRowFragment | null;
+  previous: IndicatorLineRowFragment | null;
   requisitionNumber?: number;
 }
 
@@ -25,6 +26,7 @@ export const Footer = ({
   requisitionNumber,
 }: FooterProps) => {
   const navigate = useNavigate();
+  const { programIndicatorCode } = useParams();
 
   return (
     <AppFooterPortal
@@ -48,9 +50,11 @@ export const Footer = ({
               disabled={!hasPrevious}
               onClick={() =>
                 navigate(
-                  RouteBuilder.create(AppRoute.Distribution)
-                    .addPart(AppRoute.CustomerRequisition)
+                  RouteBuilder.create(AppRoute.Replenishment)
+                    .addPart(AppRoute.InternalOrder)
                     .addPart(String(requisitionNumber))
+                    .addPart(AppRoute.Indicators)
+                    .addPart(String(programIndicatorCode))
                     .addPart(String(previous?.id))
                     .build()
                 )
@@ -61,9 +65,11 @@ export const Footer = ({
               disabled={!hasNext}
               onClick={() =>
                 navigate(
-                  RouteBuilder.create(AppRoute.Distribution)
-                    .addPart(AppRoute.CustomerRequisition)
+                  RouteBuilder.create(AppRoute.Replenishment)
+                    .addPart(AppRoute.InternalOrder)
                     .addPart(String(requisitionNumber))
+                    .addPart(AppRoute.Indicators)
+                    .addPart(String(programIndicatorCode))
                     .addPart(String(next?.id))
                     .build()
                 )
