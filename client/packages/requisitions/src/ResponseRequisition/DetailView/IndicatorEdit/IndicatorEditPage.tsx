@@ -9,12 +9,12 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useResponse } from '../../api';
-import { PageLayout } from '../../../PageLayout';
-import { ListIndicatorLines } from './ListIndicators';
+import { PageLayout } from '../../../common/PageLayout';
 import { AppRoute } from '@openmsupply-client/config';
 import { AppBarButtons } from '../ResponseLineEdit/AppBarButtons';
 import { usePreviousNextIndicatorLine } from './hooks';
 import { IndicatorLineEdit } from './IndicatorLineEdit';
+import { ListIndicatorLines } from '../../../common';
 
 export const IndicatorEditPage = () => {
   const t = useTranslation();
