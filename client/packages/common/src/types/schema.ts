@@ -4898,6 +4898,8 @@ export type NameFilterInput = {
   phone?: InputMaybe<StringFilterInput>;
   /** Code of the store if store is linked to name */
   storeCode?: InputMaybe<StringFilterInput>;
+  /** Search for stores by supplying store id */
+  supplyingStoreId?: InputMaybe<EqualFilterStringInput>;
   /** Filter by the name type */
   type?: InputMaybe<EqualFilterTypeInput>;
 };
@@ -6275,7 +6277,6 @@ export type QueriesReportArgs = {
 
 export type QueriesReportsArgs = {
   filter?: InputMaybe<ReportFilterInput>;
-  page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ReportSortInput>>;
   storeId: Scalars['String']['input'];
   userLanguage: Scalars['String']['input'];
