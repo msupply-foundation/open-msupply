@@ -210,7 +210,7 @@ export const useInboundShipmentColumns = () => {
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
-            return ArrayUtils.getUnitCostPrice(lines);
+            return ArrayUtils.getAveragePrice(lines, 'costPricePerPack');
           } else {
             return getCostPrice(rowData);
           }

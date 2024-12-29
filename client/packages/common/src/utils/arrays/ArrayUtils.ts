@@ -60,22 +60,24 @@ export const ArrayUtils = {
     return obj;
   },
 
-  getUnitCostPrice: (
-    arr: {
-      costPricePerPack: number;
+  getAveragePrice: <
+    T extends {
       numberOfPacks: number;
       packSize: number;
-    }[]
+    },
+    K extends keyof T,
+  >(
+    arr: T[],
+    key: K
   ) => {
-    let totalCostPrice = 0;
+    let totalPrice = 0;
     let totalUnits = 0;
     arr.forEach(entity => {
-      totalCostPrice += entity.costPricePerPack * entity.numberOfPacks;
+      totalPrice += Number(entity[key]) * entity.numberOfPacks;
       totalUnits += entity.numberOfPacks * entity.packSize;
     });
-    const averageCost = Number.isNaN(totalCostPrice / totalUnits)
-      ? 0
-      : Number(totalCostPrice / totalUnits);
-    return averageCost;
+    const averageCost = totalPrice / totalUnits;
+
+    return Number.isNaN(averageCost) ? 0 : averageCost;
   },
 };
