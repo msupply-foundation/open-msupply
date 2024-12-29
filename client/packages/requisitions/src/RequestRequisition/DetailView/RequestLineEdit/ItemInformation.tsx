@@ -57,11 +57,19 @@ const ItemInformation = ({
     ],
 
     {
-      key: 'losses',
+      key: 'adjustments',
       label: 'label.adjustments',
       sortable: false,
       accessor: ({ rowData }) => rowData.adjustmentsInUnits,
       width: 110,
+      align: ColumnAlign.Right,
+    },
+    {
+      key: 'outgoing',
+      label: 'label.outgoing',
+      sortable: false,
+      accessor: ({ rowData }) => rowData.outgoingInUnits,
+      width: 100,
       align: ColumnAlign.Right,
     },
     {
