@@ -48,7 +48,12 @@ export const ItemVariantsTab = ({
       </AppBarButtonsPortal>
       <Box flex={1} marginX={2}>
         {itemVariants.length === 0 ? (
-          <NothingHere body={t('messages.no-item-variants')} />
+          <>
+            <NothingHere
+              body={t('messages.no-item-variants')}
+              onCreate={() => onOpen()}
+            />
+          </>
         ) : (
           itemVariants.map(v => (
             <ItemVariant
