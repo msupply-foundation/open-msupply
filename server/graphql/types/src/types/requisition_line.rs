@@ -391,6 +391,10 @@ impl RequisitionItemInformationNode {
             .map(|naive_date| DateTime::<Utc>::from_naive_utc_and_offset(naive_date, Utc))
     }
 
+    pub async fn outgoing_in_units(&self) -> f64 {
+        self.requisition_item_information.outgoing_in_units
+    }
+
     pub async fn name(&self, ctx: &Context<'_>, store_id: String) -> Result<NameNode> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
