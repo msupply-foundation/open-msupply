@@ -15,7 +15,6 @@ import {
   RouteBuilder,
   CurrencyCell,
   ExpiryDateCell,
-  NumberCell,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -102,12 +101,13 @@ const StockListComponent: FC = () => {
       Cell: TooltipTextCell,
       width: 125,
     },
-    {
-      key: 'numberOfPacks',
-      Cell: NumberCell,
-      accessor: ({ rowData }) => rowData.totalNumberOfPacks,
-      width: 125,
-    },
+    [
+      'numberOfPacks',
+      {
+        accessor: ({ rowData }) => rowData.totalNumberOfPacks,
+        width: 125,
+      },
+    ],
     [
       'stockOnHand',
       {

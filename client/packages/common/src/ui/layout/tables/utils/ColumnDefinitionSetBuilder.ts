@@ -77,7 +77,6 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     align: ColumnAlign.Left,
     width: 100,
   },
-
   numberOfPacks: {
     key: 'numberOfPacks',
     format: ColumnFormat.Integer,
