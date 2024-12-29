@@ -224,16 +224,8 @@ export const useOutboundColumns = ({
       Cell: CurrencyCell,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
-          // Multiple lines, so we need to calculate the average price per unit
-          let totalSellPrice = 0;
-          let totalUnits = 0;
-
-          for (const line of rowData.lines) {
-            totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
-            totalUnits += line.numberOfPacks * line.packSize;
-          }
-
-          return totalSellPrice / totalUnits;
+          const { lines } = rowData;
+          return ArrayUtils.getAveragePrice(lines, 'sellPricePerPack');
         } else {
           if (isDefaultPlaceholderRow(rowData)) return undefined;
           return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
