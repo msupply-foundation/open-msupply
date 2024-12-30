@@ -13,7 +13,6 @@ import {
   BasicModal,
   Box,
   FnUtils,
-  IndicatorLineRowNode,
 } from '@openmsupply-client/common';
 import {
   ItemRowWithStatsFragment,
@@ -21,12 +20,7 @@ import {
   StockItemSearchInput,
   ItemRowFragment,
 } from '@openmsupply-client/system';
-import {
-  ProgramIndicatorFragment,
-  RequestFragment,
-  RequestLineFragment,
-  useRequest,
-} from '../api';
+import { RequestLineFragment, useRequest } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -35,6 +29,7 @@ import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
 import { RequestRequisitionLineErrorProvider } from '../context';
 import { IndicatorsTab } from './IndicatorsTab';
+import { buildIndicatorEditRoute } from './utils';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
@@ -63,19 +58,18 @@ export const DetailView: FC = () => {
 
   const onProgramIndicatorClick = useCallback(
     (
-      programIndicator?: ProgramIndicatorFragment,
-      indicatorLine?: IndicatorLineRowNode,
-      request?: RequestFragment
+      requisitionNumber?: number,
+      programIndicatorCode?: string,
+      indicatorId?: string
     ) => {
-      if (!request || !indicatorLine) return;
+      if (!requisitionNumber || !programIndicatorCode || !indicatorId) return;
+
       navigate(
-        RouteBuilder.create(AppRoute.Replenishment)
-          .addPart(AppRoute.InternalOrder)
-          .addPart(String(request.requisitionNumber))
-          .addPart(AppRoute.Indicators)
-          .addPart(String(programIndicator?.code))
-          .addPart(String(indicatorLine.id))
-          .build()
+        buildIndicatorEditRoute(
+          requisitionNumber,
+          programIndicatorCode,
+          indicatorId
+        )
       );
     },
     []

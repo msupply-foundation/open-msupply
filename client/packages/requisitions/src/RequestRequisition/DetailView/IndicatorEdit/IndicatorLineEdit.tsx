@@ -15,7 +15,6 @@ import {
   IndicatorLineWithColumnsFragment,
 } from '../../api';
 import { useDraftIndicatorValue } from './hooks';
-
 interface IndicatorLineEditProps {
   requisitionNumber: number;
   hasNext: boolean;
@@ -30,9 +29,11 @@ const INPUT_WIDTH = 185;
 const LABEL_WIDTH = '150px';
 
 const InputWithLabel = ({
+  autoFocus,
   data,
   disabled,
 }: {
+  autoFocus: boolean;
   data: IndicatorColumnNode;
   disabled: boolean;
 }) => {
@@ -43,11 +44,12 @@ const InputWithLabel = ({
   const { draft, update } = useDraftIndicatorValue(data.value);
   const t = useTranslation();
   const { error } = useNotification();
+
   const errorHandler = useCallback(
     (res: any) => {
       // probably shouldn't be any, but UpdateIndicatorValue doesn't have res.error.__typename
-      if (res.__typename === 'UpdateIndicatorValueError') {
-        if (res.error.__typename === 'RecordNotFound') {
+      if (res?.__typename === 'UpdateIndicatorValueError') {
+        if (res?.error?.__typename === 'RecordNotFound') {
           error(t('messages.record-not-found'))();
         } else {
           error(t('error.value-type-not-correct'))();
@@ -56,6 +58,12 @@ const InputWithLabel = ({
     },
     [t]
   );
+
+  const sharedProps = {
+    disabled,
+    autoFocus,
+  };
+
   const inputComponent =
     data.valueType === IndicatorValueTypeNode.Number ? (
       <NumericTextInput
@@ -65,8 +73,7 @@ const InputWithLabel = ({
           const newValue = isNaN(Number(v)) ? 0 : v;
           update({ value: String(newValue) }).then(errorHandler);
         }}
-        disabled={disabled}
-        autoFocus
+        {...sharedProps}
       />
     ) : (
       <BasicTextInput
@@ -75,8 +82,7 @@ const InputWithLabel = ({
         onChange={e => {
           update({ value: e.target.value }).then(errorHandler);
         }}
-        disabled={disabled}
-        autoFocus
+        {...sharedProps}
       />
     );
 
@@ -106,11 +112,14 @@ export const IndicatorLineEdit = ({
   return (
     <>
       <Box display="flex" flexDirection="column">
-        {columns?.map(c => {
-          return (
-            <InputWithLabel key={c.value?.id} data={c} disabled={disabled} />
-          );
-        })}
+        {columns?.map((c, i) => (
+          <InputWithLabel
+            key={c.value?.id}
+            data={c}
+            disabled={disabled}
+            autoFocus={i === 0}
+          />
+        ))}
       </Box>
       <Box>
         <Footer
