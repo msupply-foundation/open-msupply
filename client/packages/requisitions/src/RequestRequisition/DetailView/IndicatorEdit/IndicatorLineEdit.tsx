@@ -48,8 +48,8 @@ const InputWithLabel = ({
   const errorHandler = useCallback(
     (res: any) => {
       // probably shouldn't be any, but UpdateIndicatorValue doesn't have res.error.__typename
-      if (res?.__typename === 'UpdateIndicatorValueError') {
-        if (res?.error?.__typename === 'RecordNotFound') {
+      if (res.__typename === 'UpdateIndicatorValueError') {
+        if (res.error?.__typename === 'RecordNotFound') {
           error(t('messages.record-not-found'))();
         } else {
           error(t('error.value-type-not-correct'))();
