@@ -1672,7 +1672,7 @@
   "sync-status.pull-v6": "Télécharger V6",
   "sync-status.push": "Envoi",
   "sync-status.push-v6": "Envoyer V6",
-  "table.select-unselect-all-columns": "Sélectionner / désélectionner toutes les colonnes",
+  "table.select-unselect-all-rows": "Sélectionner / désélectionner toutes les lignes",
   "table.show-columns": "Montrer / cacher les colonnes",
   "template.requisition-sent": "Autorisé par {{name}}{{job}}. Courriel: {{email}} et Téléphone: {{phone}}.",
   "text.months": "Mois",
