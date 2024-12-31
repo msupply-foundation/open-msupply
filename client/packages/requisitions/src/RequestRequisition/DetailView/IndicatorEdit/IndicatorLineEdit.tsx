@@ -7,14 +7,17 @@ import {
   IndicatorValueTypeNode,
   InputWithLabelRow,
   NumericTextInput,
+  useAuthContext,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
 import {
+  CustomerIndicatorInfoFragment,
   IndicatorLineRowFragment,
   IndicatorLineWithColumnsFragment,
 } from '../../api';
 import { useDraftIndicatorValue } from './hooks';
+import { CustomerIndicatorInfoView } from './CustomerIndicatorInfo';
 
 interface IndicatorLineEditProps {
   requisitionNumber: number;
@@ -24,6 +27,7 @@ interface IndicatorLineEditProps {
   previous: IndicatorLineRowFragment | null;
   currentLine?: IndicatorLineWithColumnsFragment | null;
   disabled: boolean;
+  customerInfos?: CustomerIndicatorInfoFragment[] | null;
 }
 
 const INPUT_WIDTH = 185;
@@ -98,10 +102,12 @@ export const IndicatorLineEdit = ({
   previous,
   currentLine,
   disabled,
+  customerInfos,
 }: IndicatorLineEditProps) => {
   const columns = currentLine?.columns
     .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
     .sort((a, b) => a.columnNumber - b.columnNumber);
+  const { store } = useAuthContext();
 
   return (
     <>
@@ -112,6 +118,10 @@ export const IndicatorLineEdit = ({
           );
         })}
       </Box>
+      <CustomerIndicatorInfoView
+        customerInfos={customerInfos}
+        storeNameId={store?.nameId}
+      />
       <Box>
         <Footer
           hasNext={hasNext}
