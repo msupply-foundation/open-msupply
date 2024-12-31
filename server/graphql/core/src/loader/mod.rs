@@ -12,6 +12,7 @@ mod cold_storage_type;
 mod demographic;
 mod document;
 mod document_registry;
+mod indicator_column;
 mod inventory_adjustment_reason;
 mod invoice;
 mod invoice_line;
@@ -32,6 +33,7 @@ mod program_enrolment;
 mod program_indicator_value;
 mod reason_option;
 mod requisition;
+mod requisition_indicator_information;
 mod requisition_line;
 mod requisition_supply_status;
 mod return_reason;
@@ -65,6 +67,7 @@ pub use cold_storage_type::*;
 pub use demographic::*;
 pub use document::*;
 pub use document_registry::*;
+pub use indicator_column::*;
 pub use inventory_adjustment_reason::*;
 pub use invoice::*;
 pub use invoice_line::*;
@@ -85,6 +88,7 @@ pub use program_enrolment::*;
 pub use program_indicator_value::*;
 pub use reason_option::ReasonOptionLoader;
 pub use requisition::*;
+pub use requisition_indicator_information::*;
 pub use requisition_line::*;
 pub use requisition_supply_status::*;
 pub use return_reason::*;
@@ -101,6 +105,7 @@ pub use vaccine_course::*;
 pub use vaccine_course_by_program::*;
 pub use vaccine_course_dose_by_vaccine_course::*;
 pub use vaccine_course_item_by_vaccine_course::*;
+
 #[derive(Debug, Clone)]
 /// Sometimes loaders need to take an extra parameter, like store_id or requisition_id
 /// And in some cases even further parameter is required (lookback date for ItemStats)
