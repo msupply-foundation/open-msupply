@@ -5,6 +5,7 @@ use graphql_core::{
     generic_filters::EqualFilterStringInput,
     loader::{
         IndicatorValueLoader, IndicatorValueLoaderInput, IndicatorValuePayload, ProgramByIdLoader,
+        RequisitionIndicatorInfoLoader, RequisitionIndicatorInfoLoaderInput,
     },
     ContextExt,
 };
@@ -14,7 +15,9 @@ use repository::{
 };
 use service::requisition::program_indicator::query::{IndicatorLine, ProgramIndicator};
 
-use super::program_node::ProgramNode;
+use super::{
+    program_node::ProgramNode, requisition_indicator_info::CustomerIndicatorInformationNode,
+};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -104,6 +107,28 @@ impl ProgramIndicatorNode {
             .into_iter()
             .map(IndicatorLineNode::from_domain)
             .collect()
+    }
+
+    pub async fn customer_indicator_info(
+        &self,
+        ctx: &Context<'_>,
+        period_id: String,
+        store_id: String,
+    ) -> Result<Vec<CustomerIndicatorInformationNode>, Error> {
+        let loader = ctx.get_loader::<DataLoader<RequisitionIndicatorInfoLoader>>();
+
+        let result = loader
+            .load_one(RequisitionIndicatorInfoLoaderInput::new(
+                &store_id,
+                &self.program_indicator.program_indicator.program_id,
+                period_id,
+            ))
+            .await?;
+
+        Ok(result
+            .into_iter()
+            .flat_map(CustomerIndicatorInformationNode::from_vec)
+            .collect())
     }
 }
 
