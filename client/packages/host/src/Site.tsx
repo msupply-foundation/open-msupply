@@ -37,7 +37,6 @@ import {
 } from './routers';
 import { RequireAuthentication } from './components/Navigation/RequireAuthentication';
 import { QueryErrorHandler } from './QueryErrorHandler';
-// import { Sync } from './components/Sync';
 import { EasterEggModalProvider } from './components';
 import { Help } from './Help/Help';
 import { SyncModalProvider } from './components/Sync';
