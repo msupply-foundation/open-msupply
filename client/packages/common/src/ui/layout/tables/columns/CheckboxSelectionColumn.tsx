@@ -38,7 +38,7 @@ export const getCheckboxSelectionColumn = <
   sortable: false,
   align: ColumnAlign.Left,
   width: 60,
-  label: 'table.select-unselect-all-columns',
+  label: 'table.select-unselect-all-rows',
   Header: () => {
     const { toggleAll, allSelected, someSelected } = useTableStore(state => {
       const allSelected =
