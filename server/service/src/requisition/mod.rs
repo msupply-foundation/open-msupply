@@ -30,6 +30,7 @@ use repository::{
     requisition_row::RequisitionType, Invoice, PaginationOption, RepositoryError, Requisition,
     RequisitionFilter, RequisitionLine, RequisitionSort,
 };
+use request_requisition::{get_indicator_information, CustomerIndicatorInformation};
 use response_requisition::{
     batch_response_requisition, delete_response_requisition, BatchResponseRequisition,
     BatchResponseRequisitionResult, DeleteResponseRequisition, DeleteResponseRequisitionError,
@@ -209,6 +210,16 @@ pub trait RequisitionServiceTrait: Sync + Send {
         store_id: &str,
     ) -> Result<Vec<CustomerProgramSettings>, RepositoryError> {
         get_customer_program_requisition_settings(ctx, store_id)
+    }
+
+    fn get_indicator_information(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        period_id: &str,
+        program_id: &str,
+    ) -> Result<Vec<CustomerIndicatorInformation>, RepositoryError> {
+        get_indicator_information(ctx, store_id, period_id, program_id)
     }
 }
 
