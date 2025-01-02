@@ -4,6 +4,7 @@ import {
   ListOptions,
   RouteBuilder,
   useNavigate,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '../../api';
 
@@ -12,6 +13,7 @@ interface ListItemProps {
   items: ItemRowFragment[];
   route: RouteBuilder;
   enteredLineIds?: string[];
+  showNew?: boolean;
 }
 
 export const ListItems = ({
@@ -19,9 +21,20 @@ export const ListItems = ({
   items,
   route,
   enteredLineIds,
+  showNew = false,
 }: ListItemProps) => {
+  const t = useTranslation();
   const navigate = useNavigate();
   const value = items?.find(({ id }) => id === currentItemId) ?? null;
+
+  let options =
+    items?.map(({ id, name }) => ({
+      id,
+      value: name,
+    })) ?? [];
+  if (showNew) {
+    options.push({ id: 'new', value: t('label.new-item') });
+  }
 
   return (
     <Tooltip title={value?.name}>
@@ -30,12 +43,7 @@ export const ListItems = ({
         onClick={id => {
           navigate(route.addPart(id).build());
         }}
-        options={
-          items?.map(({ id, name }) => ({
-            id,
-            value: name,
-          })) ?? []
-        }
+        options={options}
         enteredLineIds={enteredLineIds}
       />
     </Tooltip>
