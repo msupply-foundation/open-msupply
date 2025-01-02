@@ -52,7 +52,7 @@ const ItemInformation = ({
       {
         sortable: false,
         accessor: ({ rowData }) => rowData.stockInUnits,
-        width: 100,
+        width: 80,
       },
     ],
 
@@ -69,7 +69,7 @@ const ItemInformation = ({
       label: 'label.outgoing',
       sortable: false,
       accessor: ({ rowData }) => rowData.outgoingInUnits,
-      width: 100,
+      width: 90,
       align: ColumnAlign.Right,
     },
     {
@@ -95,7 +95,15 @@ export const ItemInformationView = ({
   itemInformation,
   storeNameId,
 }: ItemInformationProps) => (
-  <Box maxHeight={200} width="100%" borderRadius={3} overflow="auto">
+  <Box
+    width="100%"
+    borderRadius={3}
+    sx={{
+      display: 'flex',
+      flex: '1 1 0%',
+      overflowY: 'auto',
+    }}
+  >
     <TableProvider createStore={createTableStore}>
       <ItemInformation
         itemInformation={itemInformation}
