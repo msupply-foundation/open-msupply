@@ -64,9 +64,9 @@ export const RequestLineEdit = ({
     !!draft?.itemInformation &&
     isProgram;
   const itemInformationSorted = draft?.itemInformation
-    ?.sort((a, b) => b.amcInUnits - a.amcInUnits)
+    ?.sort((a, b) => a.name.name.localeCompare(b.name.name))
+    .sort((a, b) => b.amcInUnits - a.amcInUnits)
     .sort((a, b) => b.stockInUnits - a.stockInUnits);
-
   return (
     <Box display="flex" flexDirection="column" padding={2}>
       <Box display="flex" justifyContent="space-between">
@@ -365,7 +365,7 @@ export const RequestLineEdit = ({
         </Box>
       </Box>
       {showItemInformation && (
-        <Box paddingTop={1} maxHeight={200} width={650}>
+        <Box paddingTop={1} maxHeight={200} width="100%" display="flex">
           <ItemInformationView
             itemInformation={itemInformationSorted}
             storeNameId={store?.nameId}
