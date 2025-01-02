@@ -7,6 +7,7 @@
   "approval-status.denied": "Denied",
   "approval-status.none": "None",
   "approval-status.pending": "Pending",
+  "label.new-item": "New Item",
   "assets": "Assets",
   "auth.alert-title": "Authentication Error",
   "auth.no-store-assigned": "You are not assigned to any stores. Please login as a different user, or contact your administrator.",
