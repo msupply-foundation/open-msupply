@@ -3,6 +3,7 @@ import {
   BasicSpinner,
   DetailContainer,
   NothingHere,
+  RequisitionNodeStatus,
   RouteBuilder,
   useBreadcrumbs,
   useParams,
@@ -19,6 +20,7 @@ export const ResponseLineEditPage = () => {
   const { itemId } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { data, isLoading } = useResponse.document.get();
+  const { mutateAsync } = useResponse.line.insert();
   const lines =
     data?.lines.nodes.sort((a, b) => a.item.name.localeCompare(b.item.name)) ??
     [];
@@ -31,6 +33,7 @@ export const ResponseLineEditPage = () => {
   const enteredLineIds = lines
     .filter(line => line.supplyQuantity !== 0)
     .map(line => line.item.id);
+  const isProgram = !!data?.programName;
 
   useEffect(() => {
     setCustomBreadcrumbs({
@@ -38,7 +41,7 @@ export const ResponseLineEditPage = () => {
     });
   }, [currentItem]);
 
-  if (isLoading || !currentItem) return <BasicSpinner />;
+  if (isLoading) return <BasicSpinner />;
   if (!data) return <NothingHere />;
 
   return (
@@ -55,13 +58,15 @@ export const ResponseLineEditPage = () => {
                   .addPart(AppRoute.CustomerRequisition)
                   .addPart(String(data?.requisitionNumber))}
                 enteredLineIds={enteredLineIds}
+                showNew={
+                  data?.status !== RequisitionNodeStatus.Finalised && !isProgram
+                }
               />
             </>
           }
           Right={
             <>
               <ResponseLineEdit
-                item={currentItem}
                 hasLinkedRequisition={!!data?.linkedRequisition}
                 draft={draft}
                 update={update}
@@ -70,7 +75,11 @@ export const ResponseLineEditPage = () => {
                 next={next}
                 hasPrevious={hasPrevious}
                 previous={previous}
-                isProgram={!!data?.programName}
+                isProgram={!!isProgram}
+                lines={lines}
+                requisitionNumber={data.requisitionNumber}
+                requisitionId={data.id}
+                insert={mutateAsync}
               />
             </>
           }
