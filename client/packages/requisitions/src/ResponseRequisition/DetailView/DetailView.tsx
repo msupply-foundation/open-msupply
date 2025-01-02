@@ -7,20 +7,12 @@ import {
   useTranslation,
   AlertModal,
   RouteBuilder,
-  useEditModal,
   createQueryParamsStore,
   DetailTabs,
-  BasicModal,
-  Box,
-  FnUtils,
   IndicatorLineRowNode,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import {
-  ActivityLogList,
-  ItemRowFragment,
-  StockItemSearchInput,
-} from '@openmsupply-client/system';
+import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar/Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -34,14 +26,13 @@ import {
 } from '../api';
 import { IndicatorsTab } from './IndicatorsTab';
 import { ResponseRequisitionLineErrorProvider } from '../context';
+import { buildItemEditRoute } from '../utils';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { data, isLoading } = useResponse.document.get();
   const isDisabled = useResponse.utils.isDisabled();
-  const { onOpen, isOpen, onClose } = useEditModal<ItemRowFragment>();
-  const { mutateAsync } = useResponse.line.insert();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useResponse.document.indicators(
       data?.otherPartyId ?? '',
@@ -51,13 +42,7 @@ export const DetailView: FC = () => {
     );
 
   const onRowClick = useCallback((line: ResponseLineFragment) => {
-    navigate(
-      RouteBuilder.create(AppRoute.Distribution)
-        .addPart(AppRoute.CustomerRequisition)
-        .addPart(String(line.requisitionNumber))
-        .addPart(String(line.item.id))
-        .build()
-    );
+    navigate(buildItemEditRoute(line.requisitionNumber, line.item.id));
   }, []);
 
   const onProgramIndicatorClick = useCallback(
@@ -66,7 +51,6 @@ export const DetailView: FC = () => {
       indicatorLine?: IndicatorLineRowNode,
       response?: ResponseFragment
     ) => {
-      // TODO: Snack?
       if (!response || !indicatorLine) return;
       navigate(
         RouteBuilder.create(AppRoute.Distribution)
@@ -81,13 +65,17 @@ export const DetailView: FC = () => {
     []
   );
 
+  const onAddItem = () => {
+    navigate(buildItemEditRoute(data?.requisitionNumber, 'new'));
+  };
+
   if (isLoading) return <DetailViewSkeleton />;
 
   const tabs = [
     {
       Component: (
         <ContentArea
-          onAddItem={() => onOpen(null)}
+          onAddItem={onAddItem}
           onRowClick={!isDisabled ? onRowClick : null}
           disableAddLine={
             isDisabled || !!data?.linkedRequisition || !!data?.programName
@@ -114,7 +102,6 @@ export const DetailView: FC = () => {
           isLoading={isLoading || isProgramIndicatorsLoading}
           response={data}
           indicators={programIndicators?.nodes}
-          // disabled={isDisabled}
         />
       ),
       value: t('label.indicators'),
@@ -133,41 +120,13 @@ export const DetailView: FC = () => {
           isDisabled={isDisabled}
           hasLinkedRequisition={!!data.linkedRequisition}
           isProgram={!!data.programName}
-          onAddItem={() => onOpen(null)}
+          onAddItem={onAddItem}
         />
         <Toolbar />
         <DetailTabs tabs={tabs} />
 
         <Footer />
         <SidePanel />
-        {isOpen && (
-          <BasicModal open={isOpen} onClose={onClose} height={500} width={800}>
-            <Box padding={2}>
-              <StockItemSearchInput
-                onChange={(newItem: ItemRowFragment | null) => {
-                  if (newItem) {
-                    mutateAsync({
-                      id: FnUtils.generateUUID(),
-                      requisitionId: data.id,
-                      itemId: newItem.id,
-                    });
-                    navigate(
-                      RouteBuilder.create(AppRoute.Distribution)
-                        .addPart(AppRoute.CustomerRequisition)
-                        .addPart(String(data.requisitionNumber))
-                        .addPart(String(newItem.id))
-                        .build()
-                    );
-                  }
-                }}
-                openOnFocus={true}
-                extraFilter={item =>
-                  !data.lines.nodes.some(line => line.item.id === item.id)
-                }
-              />
-            </Box>
-          </BasicModal>
-        )}
       </TableProvider>
     </ResponseRequisitionLineErrorProvider>
   ) : (
