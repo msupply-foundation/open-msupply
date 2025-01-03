@@ -3708,6 +3708,8 @@ export type ItemStatsNode = {
   availableMonthsOfStockOnHand?: Maybe<Scalars['Float']['output']>;
   availableStockOnHand: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
+  monthsOfStockOnHand?: Maybe<Scalars['Float']['output']>;
+  stockOnHand: Scalars['Float']['output'];
   totalConsumption: Scalars['Float']['output'];
 };
 
@@ -6281,7 +6283,6 @@ export type QueriesReportArgs = {
 
 export type QueriesReportsArgs = {
   filter?: InputMaybe<ReportFilterInput>;
-  page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ReportSortInput>>;
   storeId: Scalars['String']['input'];
   userLanguage: Scalars['String']['input'];
