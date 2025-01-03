@@ -47,7 +47,7 @@ fragment itemInformation on RequisitionItemInformationNode {
     id
     name
   }
-  outgoingInUnits
+  outgoingUnits
   dateRange
   stockInUnits
 }
