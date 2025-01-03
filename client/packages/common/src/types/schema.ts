@@ -6707,7 +6707,7 @@ export type RequisitionItemInformationNode = {
   dateRange?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   name: NameNode;
-  outgoingInUnits: Scalars['Float']['output'];
+  outgoingUnits: Scalars['Float']['output'];
   stockInUnits: Scalars['Float']['output'];
 };
 

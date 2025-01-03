@@ -22,7 +22,7 @@ pub struct RequisitionItemInformation {
     pub amc_in_units: f64, // Area AMC for store
     pub stock_in_units: f64,
     pub adjustments_in_units: f64,
-    pub outgoing_in_units: f64,
+    pub outgoing_units: f64,
     pub date_range: Option<NaiveDateTime>, // Period end date for store and requisition creation date for customers
 }
 
@@ -99,11 +99,11 @@ pub fn get_requisition_item_information(
                 id: customer_id.clone(),
                 amc_in_units: line.average_monthly_consumption,
                 stock_in_units: line.available_stock_on_hand
-                    + (line.average_monthly_consumption / 30.0),
+                    + (line.average_monthly_consumption / NUMBER_OF_DAYS_IN_A_MONTH),
                 adjustments_in_units: line.addition_in_units + line.incoming_units
                     - line.outgoing_units
                     - line.loss_in_units,
-                outgoing_in_units: line.outgoing_units,
+                outgoing_units: line.outgoing_units,
                 date_range: Some(requisition_line.requisition_row.created_datetime),
             });
     }
@@ -174,7 +174,7 @@ pub fn get_requisition_item_information(
                 amc = requisition_line
                     .requisition_line_row
                     .average_monthly_consumption;
-                date_range = Some(requisition_line.requisition_row.created_datetime);
+                date_range = Some(period.period_row.end_date.into());
                 break;
             }
         }
@@ -186,7 +186,7 @@ pub fn get_requisition_item_information(
                 amc_in_units: amc,
                 stock_in_units: 0.0,
                 adjustments_in_units: 0.0,
-                outgoing_in_units: 0.0,
+                outgoing_units: 0.0,
                 date_range,
             },
         );
@@ -347,7 +347,7 @@ fn get_store_information(
         amc_in_units: area_amc,
         stock_in_units: ledger.map_or(0.0, |l| l.balance),
         adjustments_in_units: additions_in_units + losses_in_units + adjustments_in_units,
-        outgoing_in_units: losses_in_units,
+        outgoing_units: losses_in_units,
         date_range: end_date.and_hms_opt(0, 0, 0),
     })
 }

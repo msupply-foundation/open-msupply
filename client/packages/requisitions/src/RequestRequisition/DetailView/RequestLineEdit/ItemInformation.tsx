@@ -37,11 +37,10 @@ const ItemInformation = ({
     ],
 
     {
-      key: 'monthlyConsumption',
+      key: 'amcInUnits',
       label: 'label.amc',
       description: 'messages.requisition-item-information-amc',
       sortable: false,
-      accessor: ({ rowData }) => rowData.amcInUnits,
       width: 80,
       align: ColumnAlign.Right,
       Cell: TooltipTextCell,
@@ -57,18 +56,16 @@ const ItemInformation = ({
     ],
 
     {
-      key: 'adjustments',
+      key: 'adjustmentsInUnits',
       label: 'label.adjustments',
       sortable: false,
-      accessor: ({ rowData }) => rowData.adjustmentsInUnits,
       width: 110,
       align: ColumnAlign.Right,
     },
     {
-      key: 'outgoing',
+      key: 'outgoingUnits',
       label: 'label.outgoing',
       sortable: false,
-      accessor: ({ rowData }) => rowData.outgoingInUnits,
       width: 90,
       align: ColumnAlign.Right,
     },
@@ -77,7 +74,6 @@ const ItemInformation = ({
       label: 'label.date-range',
       sortable: false,
       format: ColumnFormat.Date,
-      accessor: ({ rowData }) => rowData.dateRange,
     },
   ]);
 
