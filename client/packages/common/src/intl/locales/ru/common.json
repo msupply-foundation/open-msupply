@@ -1469,7 +1469,7 @@
   "sync-status.pull-v6": "Принимаем V6",
   "sync-status.push": "Отправляем",
   "sync-status.push-v6": "Отправляем V6",
-  "table.select-unselect-all-columns": "Выделить / снять выделение всех колонок",
+  "table.select-unselect-all-rows": "Выбрать/отменить выбор всех строк",
   "table.show-columns": "Показать / скрыть колонки",
   "template.requisition-sent": "Одобрено {{name}}{{job}}. Почта: {{email}} и номер телефона: {{phone}}.",
   "text.months": "Месяцы",
