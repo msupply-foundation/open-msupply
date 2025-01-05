@@ -47,11 +47,12 @@ export const IndicatorEditPage = () => {
   const lines = populatedLines.map(l => l.line);
   const currentLine = lines.find(l => l.id === programIndicatorLineId);
   const sortedLines = lines.sort((a, b) => a.lineNumber - b.lineNumber);
-  const currentLineCustomerInfos = indicators
-    ?.map(indicator => indicator.customerIndicatorInfo)
-    ?.find(customerInfo =>
-      customerInfo?.every(info => info.lineId === programIndicatorLineId)
-    );
+  const customerInfos = indicators?.map(
+    indicator => indicator.customerIndicatorInfo
+  );
+  const currentLineCustomerInfos = customerInfos?.flatMap(customerInfo =>
+    customerInfo?.filter(info => info?.lineId === currentLine?.id)
+  );
 
   const { hasNext, next, hasPrevious, previous } = usePreviousNextIndicatorLine(
     sortedLines,
