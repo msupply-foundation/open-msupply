@@ -1,4 +1,5 @@
 fragment ReportRow on ReportNode {
+  __typename
   context
   id
   name
@@ -45,7 +46,6 @@ query reports(
     __typename
     ... on ReportConnector {
       nodes {
-        __typename
         ...ReportRow
       }
       totalCount
