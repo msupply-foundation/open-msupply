@@ -30,6 +30,9 @@ export const AppNavSection: FC<
               '& div > ul > li.MuiListItem-root': {
                 width: 165,
                 '& .MuiTypography-root': {
+                  maxWidth: 140,
+                },
+                '& .selected .MuiTypography-root': {
                   maxWidth: 135,
                 },
               },

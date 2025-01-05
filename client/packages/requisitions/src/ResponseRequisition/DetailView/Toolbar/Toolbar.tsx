@@ -8,7 +8,6 @@ import {
   SearchBar,
   Typography,
   BufferedTextInput,
-  Alert,
   Tooltip,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
@@ -26,7 +25,6 @@ export const Toolbar: FC = () => {
     approvalStatus,
     otherParty,
     theirReference,
-    shipments,
     update,
     linkedRequisition,
   } = useResponse.document.fields([
@@ -36,8 +34,7 @@ export const Toolbar: FC = () => {
     'shipments',
     'linkedRequisition',
   ]);
-  const noLinkedShipments = (shipments?.totalCount ?? 0) === 0;
-  const showInfo = noLinkedShipments && !isDisabled;
+
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
 
   return (
@@ -93,11 +90,6 @@ export const Toolbar: FC = () => {
               )}
             </Box>
           </Box>
-          {showInfo && (
-            <Box padding={2}>
-              <Alert severity="info">{t('info.no-shipment')}</Alert>
-            </Box>
-          )}
         </Grid>
         <SearchBar
           placeholder={t('placeholder.filter-items')}
