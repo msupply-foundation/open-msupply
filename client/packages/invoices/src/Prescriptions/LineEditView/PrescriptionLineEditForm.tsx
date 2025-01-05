@@ -86,15 +86,6 @@ export const PrescriptionLineEditForm: React.FC<
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
 
-  // const onChangePackSize = (newPackSize: number) => {
-  //   const packSize = newPackSize === -1 ? 1 : newPackSize;
-  //   const newAllocatedQuantity =
-  //     newPackSize === 0 ? 0 : Math.round(allocatedQuantity / packSize);
-
-  //   packSizeController.setPackSize(newPackSize);
-  //   allocate(newAllocatedQuantity, newPackSize);
-  // };
-
   const debouncedSetAllocationAlerts = useDebounceCallback(
     warning => setAllocationAlerts(warning),
     []
@@ -103,7 +94,7 @@ export const PrescriptionLineEditForm: React.FC<
   const allocate = (numPacks: number, packSize: number) => {
     const newAllocateQuantities = onChangeQuantity(
       numPacks,
-      packSize === -1 ? null : packSize,
+      null, // No pack size for auto-allocation
       true
     );
     const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
