@@ -616,6 +616,7 @@ fragment IndicatorValue on IndicatorValueNode {
 fragment CustomerIndicatorInfo on CustomerIndicatorInformationNode {
   __typename
   id
+  datetime
   customer(storeId: $storeId) {
     __typename
     id
@@ -626,7 +627,6 @@ fragment CustomerIndicatorInfo on CustomerIndicatorInformationNode {
     column {
       ...CustomerColumn
     }
-    datetime
     value
   }
   lineId
