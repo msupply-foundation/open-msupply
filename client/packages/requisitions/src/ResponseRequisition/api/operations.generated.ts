@@ -2,11 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import {
-  RequisitionReasonsNotProvidedErrorFragmentDoc,
-  OrderTypeRowFragmentDoc,
-  ProgramIndicatorFragmentDoc,
-} from '../../../../requisitions/src/RequestRequisition/api/operations.generated';
+import { RequisitionReasonsNotProvidedErrorFragmentDoc, OrderTypeRowFragmentDoc, ProgramIndicatorFragmentDoc } from '../../RequestRequisition/api/operations.generated';
 import { ItemRowFragmentDoc } from '../../../../system/src/Item/api/operations.generated';
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
