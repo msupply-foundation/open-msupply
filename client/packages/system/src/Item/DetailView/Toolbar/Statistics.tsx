@@ -24,7 +24,7 @@ export const Statistics = () => {
         stats={[
           {
             label: t('label.units'),
-            value: formatNumber.round(stats.availableStockOnHand),
+            value: formatNumber.round(stats.stockOnHand),
           },
         ]}
         title={t('title.stock-on-hand')}
@@ -38,7 +38,7 @@ export const Statistics = () => {
             value: formatNumber.round(stats.averageMonthlyConsumption, 2),
           },
         ]}
-        title={t('title.amc')}
+        title={t('title.average-monthly-consumption')}
         width={300}
       />
       <StatsPanel
@@ -46,10 +46,7 @@ export const Statistics = () => {
         stats={[
           {
             label: t('text.months'),
-            value: formatNumber.round(
-              stats?.availableMonthsOfStockOnHand ?? 0,
-              2
-            ),
+            value: formatNumber.round(stats?.monthsOfStockOnHand ?? 0, 2),
           },
         ]}
         title={t('title.months-of-stock')}

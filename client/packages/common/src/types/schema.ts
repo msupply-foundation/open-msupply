@@ -3708,6 +3708,8 @@ export type ItemStatsNode = {
   availableMonthsOfStockOnHand?: Maybe<Scalars['Float']['output']>;
   availableStockOnHand: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
+  monthsOfStockOnHand?: Maybe<Scalars['Float']['output']>;
+  stockOnHand: Scalars['Float']['output'];
   totalConsumption: Scalars['Float']['output'];
 };
 

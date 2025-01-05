@@ -112,7 +112,7 @@ export const useRequestColumns = () => {
     columnDefinitions.push({
       key: 'monthsOfStock',
       label: 'label.months-of-stock',
-      description: 'description.months-of-stock',
+      description: 'description.available-months-of-stock',
       align: ColumnAlign.Right,
       width: 150,
       Cell: PackQuantityCell,

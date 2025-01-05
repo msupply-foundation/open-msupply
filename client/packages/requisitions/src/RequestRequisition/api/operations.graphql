@@ -10,6 +10,8 @@ fragment ItemWithStats on ItemNode {
     availableStockOnHand
     availableMonthsOfStockOnHand
     totalConsumption
+    stockOnHand
+    monthsOfStockOnHand
   }
 }
 
