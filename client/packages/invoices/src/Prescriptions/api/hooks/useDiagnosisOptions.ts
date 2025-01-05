@@ -15,7 +15,7 @@ export const useDiagnosisOptions = () => {
     }[]
   > => {
     const query = await prescriptionApi.activeDiagnoses({});
-    const nodes = query?.allActiveDiagnoses;
+    const nodes = query.allActiveDiagnoses ?? [];
 
     return nodes.map((node: DiagnosisNode) => ({
       label: node.description,
