@@ -43,6 +43,10 @@ impl CustomerIndicatorInformationNode {
         )
     }
 
+    pub async fn datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(self.customer_indicators.datetime, Utc)
+    }
+
     pub async fn line_id(&self) -> &str {
         &self.customer_indicators.indicator_line_id
     }
@@ -102,12 +106,5 @@ impl RequisitionIndicatorInformationNode {
 
     pub async fn value(&self) -> &str {
         &self.requisition_indicator_information.value
-    }
-
-    pub async fn datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_naive_utc_and_offset(
-            self.requisition_indicator_information.datetime,
-            Utc,
-        )
     }
 }
