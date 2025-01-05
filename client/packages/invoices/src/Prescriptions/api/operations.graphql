@@ -405,8 +405,8 @@ fragment diagnosis on DiagnosisNode {
   description
 }
 
-query activeDiagnoses {
-  allActiveDiagnoses {
+query diagnosesActive {
+  diagnosesActive {
     ...diagnosis
   }
 }

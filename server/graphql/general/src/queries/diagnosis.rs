@@ -5,7 +5,7 @@ use graphql_types::types::DiagnosisNode;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::diagnosis::get_all_active_diagnoses;
 
-pub fn all_active_diagnoses(ctx: &Context<'_>) -> Result<Vec<DiagnosisNode>> {
+pub fn diagnoses_active(ctx: &Context<'_>) -> Result<Vec<DiagnosisNode>> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
