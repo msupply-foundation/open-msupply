@@ -1,6 +1,5 @@
 import React, { memo, useState } from 'react';
 import {
-  Grid,
   DetailPanelSection,
   PanelLabel,
   PanelRow,
@@ -39,29 +38,25 @@ export const PatientDetailsComponent = () => {
 
   return (
     <DetailPanelSection title={t('heading.patient-details')}>
-      <Grid container gap={0.5}>
-        <>
-          <PanelRow style={{ marginTop: 12 }}>
-            <PanelLabel>{t('heading.diagnosis')}</PanelLabel>
-            <Autocomplete
-              fullWidth
-              clearable
-              options={diagnosisOptions ?? []}
-              value={displayValue}
-              onChange={(_e, selected) => {
-                setSelected(selected);
-                if (selected) {
-                  update({ diagnosisId: selected.value });
-                } else {
-                  // Updated value needs to be null for nullable input to work correctly
-                  update({ diagnosisId: null });
-                }
-              }}
-              disabled={isDisabled}
-            />
-          </PanelRow>
-        </>
-      </Grid>
+      <PanelRow style={{ marginTop: 12 }}>
+        <PanelLabel>{t('heading.diagnosis')}</PanelLabel>
+        <Autocomplete
+          fullWidth
+          clearable
+          options={diagnosisOptions ?? []}
+          value={displayValue}
+          onChange={(_e, selected) => {
+            setSelected(selected);
+            if (selected) {
+              update({ diagnosisId: selected.value });
+            } else {
+              // Updated value needs to be null for nullable input to work correctly
+              update({ diagnosisId: null });
+            }
+          }}
+          disabled={isDisabled}
+        />
+      </PanelRow>
     </DetailPanelSection>
   );
 };
