@@ -12,6 +12,7 @@ import {
   NumUtils,
   Popover,
   ReasonOptionNodeType,
+  Switch,
   TextArea,
   useAuthContext,
   useToggle,
@@ -19,6 +20,7 @@ import {
 import { DraftRequestLine } from './hooks';
 import { Footer } from './Footer';
 import { RequestStats } from './ItemCharts/RequestStats';
+import { ItemInformationView } from './ItemInformation';
 
 const INPUT_WIDTH = 100;
 const LABEL_WIDTH = '150px';
@@ -33,6 +35,9 @@ interface RequestLineEditProps {
   hasPrevious: boolean;
   previous: ItemRowFragment | null;
   isProgram: boolean;
+  isPacksEnabled: boolean;
+  isPacks: boolean;
+  setIsPacks: (isPacks: boolean) => void;
 }
 
 export const RequestLineEdit = ({
@@ -44,16 +49,26 @@ export const RequestLineEdit = ({
   hasPrevious,
   previous,
   isProgram,
+  isPacksEnabled,
+  isPacks,
+  setIsPacks,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { isOn, toggle } = useToggle();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const { store } = useAuthContext();
-  const useConsumptionData =
-    store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
-
+  const extraFields = store?.preferences?.extraFieldsInRequisition;
+  const showItemInformation =
+    store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders &&
+    extraFields &&
+    !!draft?.itemInformation &&
+    isProgram;
+  const itemInformationSorted = draft?.itemInformation
+    ?.sort((a, b) => a.name.name.localeCompare(b.name.name))
+    .sort((a, b) => b.amcInUnits - a.amcInUnits)
+    .sort((a, b) => b.stockInUnits - a.stockInUnits);
   return (
-    <Box>
+    <Box display="flex" flexDirection="column" padding={2}>
       <Box display="flex" justifyContent="space-between">
         <Box paddingLeft={4} paddingRight={7}>
           {/* Left column content */}
@@ -70,7 +85,7 @@ export const RequestLineEdit = ({
             label={t('label.stock-on-hand')}
             sx={{ marginBottom: 1 }}
           />
-          {isProgram && useConsumptionData && (
+          {isProgram && extraFields && (
             <>
               <InputWithLabelRow
                 Input={
@@ -162,7 +177,7 @@ export const RequestLineEdit = ({
             label={t('label.amc')}
             sx={{ marginBottom: 1 }}
           />
-          {isProgram && useConsumptionData && (
+          {isProgram && extraFields && (
             <InputWithLabelRow
               Input={
                 <NumericTextInput
@@ -180,12 +195,35 @@ export const RequestLineEdit = ({
         </Box>
         <Box>
           {/* Right column content */}
+          <Box
+            display="flex"
+            flexDirection="row"
+            justifyContent="flex-end"
+            paddingBottom={1}
+            paddingRight={2.5}
+          >
+            {isPacksEnabled && (
+              <Box display="flex">
+                <Switch
+                  label={t('label.units')}
+                  checked={isPacks}
+                  onChange={(_event, checked) => setIsPacks(checked)}
+                  size="small"
+                />
+                <Box paddingLeft={2} paddingRight={2}>
+                  {t('label.packs')}
+                </Box>
+              </Box>
+            )}
+          </Box>
+
           <Box display="flex" flexDirection="row">
             <InputWithLabelRow
               Input={
                 <NumericTextInput
                   width={INPUT_WIDTH}
                   value={draft?.requestedQuantity}
+                  disabled={isPacks}
                   onChange={value => {
                     if (draft?.suggestedQuantity === value) {
                       update({
@@ -231,6 +269,49 @@ export const RequestLineEdit = ({
               )}
             </Box>
           </Box>
+          <Box display="flex" flexDirection="row">
+            {isPacksEnabled && (
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    autoFocus
+                    disabled={!isPacks}
+                    value={NumUtils.round(
+                      (draft?.requestedQuantity ?? 0) /
+                        (draft?.defaultPackSize ?? 1),
+                      2
+                    )}
+                    decimalLimit={2}
+                    width={100}
+                    onChange={quantity => {
+                      update({
+                        requestedQuantity:
+                          (quantity ?? 0) * (draft?.defaultPackSize ?? 0),
+                      });
+                    }}
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                sx={{ marginBottom: 1 }}
+                label={t('label.requested-packs')}
+              />
+            )}
+          </Box>
+          {isPacksEnabled ? (
+            <InputWithLabelRow
+              Input={
+                <NumericTextInput
+                  width={INPUT_WIDTH}
+                  value={draft?.defaultPackSize}
+                  disabled
+                />
+              }
+              labelWidth={LABEL_WIDTH}
+              label={t('label.default-pack-size')}
+              sx={{ marginBottom: 1 }}
+            />
+          ) : null}
+
           <InputWithLabelRow
             Input={
               <NumericTextInput
@@ -243,7 +324,7 @@ export const RequestLineEdit = ({
             label={t('label.suggested-quantity')}
             sx={{ marginBottom: 1 }}
           />
-          {isProgram && useConsumptionData && (
+          {isProgram && extraFields && (
             <InputWithLabelRow
               Input={
                 <ReasonOptionsSearchInput
@@ -283,6 +364,14 @@ export const RequestLineEdit = ({
           />
         </Box>
       </Box>
+      {showItemInformation && (
+        <Box paddingTop={1} maxHeight={200} width="100%" display="flex">
+          <ItemInformationView
+            itemInformation={itemInformationSorted}
+            storeNameId={store?.nameId}
+          />
+        </Box>
+      )}
       <Box>
         <Footer
           hasNext={hasNext}
