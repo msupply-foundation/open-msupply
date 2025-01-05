@@ -8,6 +8,8 @@ import {
 export const useConfirmationModal = ({
   onConfirm,
   message,
+  info,
+  buttonLabel,
   title,
   onCancel,
   iconType = 'help',
@@ -16,19 +18,23 @@ export const useConfirmationModal = ({
     setIconType,
     setOpen,
     setMessage,
+    setInfo,
     setOnConfirm,
     setOnCancel,
     setTitle,
+    setButtonLabel,
   } = useContext(ConfirmationModalContext);
 
   const trigger = (
     paramPatch?: Partial<PartialBy<ConfirmationModalState, 'open'>>
   ) => {
     setMessage(paramPatch?.message ?? message);
+    setInfo(paramPatch?.info ?? info);
     setOnConfirm(paramPatch?.onConfirm ?? onConfirm);
     setTitle(paramPatch?.title ?? title);
     setOnCancel(paramPatch?.onCancel ?? onCancel);
     setIconType(iconType);
+    setButtonLabel(buttonLabel);
     setOpen(true);
   };
 
@@ -37,9 +43,11 @@ export const useConfirmationModal = ({
     onConfirm,
     title,
     setMessage,
+    setInfo,
     setOnConfirm,
     setTitle,
     setOpen,
     iconType,
+    buttonLabel,
   ]);
 };
