@@ -118,10 +118,15 @@ export const IndicatorLineEdit = ({
           );
         })}
       </Box>
-      <CustomerIndicatorInfoView
-        customerInfos={customerInfos}
-        storeNameId={store?.nameId}
-      />
+      {store?.preferences
+        .useConsumptionAndStockFromCustomersForInternalOrders && (
+        <Box paddingTop={1} maxHeight={200} width="100%" display="flex">
+          <CustomerIndicatorInfoView
+            customerInfos={customerInfos}
+            storeNameId={store?.nameId}
+          />
+        </Box>
+      )}
       <Box>
         <Footer
           hasNext={hasNext}
