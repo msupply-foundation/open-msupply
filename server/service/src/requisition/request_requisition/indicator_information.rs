@@ -14,13 +14,13 @@ use crate::{
 pub struct IndicatorInformation {
     pub column_id: String,
     pub value: String,
-    pub datetime: NaiveDateTime,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct CustomerIndicatorInformation {
     pub id: String, // customer id
     pub indicator_line_id: String,
+    pub datetime: NaiveDateTime,
     pub indicator_information: Vec<IndicatorInformation>,
 }
 
@@ -99,10 +99,10 @@ pub fn get_indicator_information(
             indicator_values.push(CustomerIndicatorInformation {
                 id: value.customer_name_link_id.clone(),
                 indicator_line_id: value.indicator_line_id.clone(),
+                datetime: period.end_date.into(),
                 indicator_information: vec![IndicatorInformation {
                     column_id: value.indicator_column_id.clone(),
                     value: value.value,
-                    datetime: period.end_date.into(),
                 }],
             });
         }
@@ -112,13 +112,13 @@ pub fn get_indicator_information(
                 for column in line.columns.iter() {
                     indicator_information.push(IndicatorInformation {
                         column_id: column.id.clone(),
-                        value: "0".to_string(),
-                        datetime: period.end_date.into(),
+                        value: "".to_string(),
                     });
                 }
                 indicator_values.push(CustomerIndicatorInformation {
                     id: customer_id.clone(),
                     indicator_line_id: line.line.id.clone(),
+                    datetime: period.end_date.into(),
                     indicator_information,
                 });
             }
