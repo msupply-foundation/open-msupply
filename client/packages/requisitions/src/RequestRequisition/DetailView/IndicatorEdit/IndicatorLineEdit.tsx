@@ -121,10 +121,7 @@ export const IndicatorLineEdit = ({
       {store?.preferences
         .useConsumptionAndStockFromCustomersForInternalOrders && (
         <Box paddingTop={1} maxHeight={200} width="100%" display="flex">
-          <CustomerIndicatorInfoView
-            customerInfos={customerInfos}
-            storeNameId={store?.nameId}
-          />
+          <CustomerIndicatorInfoView customerInfos={customerInfos} />
         </Box>
       )}
       <Box>

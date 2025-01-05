@@ -1,6 +1,8 @@
 import React from 'react';
 import {
   Box,
+  ColumnDescription,
+  ColumnFormat,
   createTableStore,
   DataTable,
   TableProvider,
@@ -11,23 +13,68 @@ import { CustomerIndicatorInfoFragment } from '../../api';
 
 interface CustomerIndicatorInfoProps {
   customerInfos?: CustomerIndicatorInfoFragment[] | null;
-  storeNameId?: string;
 }
+
+enum ColumnName {
+  Comment = 'Comment',
+  Value = 'Value',
+}
+
+const columnNameToLocal = (columnName: string) => {
+  switch (columnName) {
+    case ColumnName.Comment:
+      return 'label.comment';
+    case ColumnName.Value:
+      return 'label.value';
+    default:
+      return columnName;
+  }
+};
 
 const CustomerIndicatorInfo = ({
   customerInfos,
 }: CustomerIndicatorInfoProps) => {
-  const columns = useColumns<CustomerIndicatorInfoFragment>([
+  const columnNames = customerInfos?.[0]?.indicatorInformation?.map(
+    indicatorInfo => indicatorInfo.column.name
+  );
+
+  const columnDefinitions: ColumnDescription<CustomerIndicatorInfoFragment>[] =
     [
-      'name',
-      {
+      [
+        'name',
+        {
+          sortable: false,
+          accessor: ({ rowData }) => rowData?.customer.name,
+          width: 300,
+          Cell: TooltipTextCell,
+        },
+      ],
+    ];
+
+  if (columnNames) {
+    columnNames.forEach(columnName => {
+      columnDefinitions.push({
+        key: columnName,
+        label: columnNameToLocal(columnName),
         sortable: false,
-        accessor: ({ rowData }) => rowData?.customer.name,
-        width: 240,
-        Cell: TooltipTextCell,
-      },
-    ],
-  ]);
+        accessor: ({ rowData }) => {
+          const indicator = rowData?.indicatorInformation?.find(
+            indicatorInfo => indicatorInfo.column.name === columnName
+          );
+          return indicator?.value;
+        },
+      });
+    });
+  }
+
+  columnDefinitions.push({
+    key: 'datetime',
+    label: 'label.date',
+    sortable: false,
+    format: ColumnFormat.Date,
+  });
+
+  const columns = useColumns<CustomerIndicatorInfoFragment>(columnDefinitions);
 
   return (
     <DataTable
@@ -41,7 +88,6 @@ const CustomerIndicatorInfo = ({
 
 export const CustomerIndicatorInfoView = ({
   customerInfos,
-  storeNameId,
 }: CustomerIndicatorInfoProps) => (
   <Box
     width="100%"
@@ -53,10 +99,7 @@ export const CustomerIndicatorInfoView = ({
     }}
   >
     <TableProvider createStore={createTableStore}>
-      <CustomerIndicatorInfo
-        customerInfos={customerInfos}
-        storeNameId={storeNameId}
-      />
+      <CustomerIndicatorInfo customerInfos={customerInfos} />
     </TableProvider>
   </Box>
 );
