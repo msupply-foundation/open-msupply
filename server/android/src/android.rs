@@ -64,7 +64,7 @@ pub mod android {
                     .with_directory(files_dir.to_string_lossy().to_string()),
             ),
             backup: None,
-            // Email sending not supported on Android // TODO: do we need to?
+            // Not supporting mail sending on Android - so cannot be Central Server (does it need to be?)
             mail: None,
         };
 

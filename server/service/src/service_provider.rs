@@ -176,17 +176,17 @@ pub struct ServiceContext {
 
 impl ServiceProvider {
     // TODO we should really use `new` with processors_trigger, we constructs ServiceProvider manually in tests though
-    // and it would be a bit of refactor, ideally setup_all and setup_all_with_data will return an instance of ServiceProvider
-    // {make an issue}
-    // USED ONLY IN TESTS
+    // and it would be a bit of refactor
+    // Should update tests to use `setup_all_with_data_and_service_provider` instead
+
+    // Used in tests, and for the CLI & test_connection tool
     pub fn new(connection_manager: StorageConnectionManager) -> Self {
         ServiceProvider::new_with_triggers(
             connection_manager,
             ProcessorsTrigger::new_void(),
             SyncTrigger::new_void(),
             SiteIsInitialisedTrigger::new_void(),
-            // TODO FIX LATER-- PLUS CLI/TEST CONNECTION
-            None,
+            None, // Mail not required for test/CLI setups
         )
     }
 
