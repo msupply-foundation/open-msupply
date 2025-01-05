@@ -67,7 +67,7 @@ export const IndicatorEditPage = () => {
       },
       [2, 3]
     );
-  }, [programIndicatorLineId]);
+  }, [programIndicatorLineId, programIndicators]);
 
   if (isLoading || isProgramIndicatorsLoading) {
     return <BasicSpinner />;
