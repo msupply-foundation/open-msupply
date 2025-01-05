@@ -6,7 +6,6 @@ import {
   TableProvider,
   TooltipTextCell,
   useColumns,
-  useTranslation,
 } from '@openmsupply-client/common';
 import { CustomerIndicatorInfoFragment } from '../../api';
 
@@ -17,19 +16,13 @@ interface CustomerIndicatorInfoProps {
 
 const CustomerIndicatorInfo = ({
   customerInfos,
-  storeNameId,
 }: CustomerIndicatorInfoProps) => {
-  const t = useTranslation();
-
   const columns = useColumns<CustomerIndicatorInfoFragment>([
     [
       'name',
       {
         sortable: false,
-        accessor: ({ rowData }) =>
-          rowData.id === storeNameId
-            ? `(${t('label.this-store')}) ${rowData?.id}`
-            : rowData?.customer.name,
+        accessor: ({ rowData }) => rowData?.customer.name,
         width: 240,
         Cell: TooltipTextCell,
       },
@@ -50,7 +43,15 @@ export const CustomerIndicatorInfoView = ({
   customerInfos,
   storeNameId,
 }: CustomerIndicatorInfoProps) => (
-  <Box maxHeight={200} width="100%" borderRadius={3} overflow="auto">
+  <Box
+    width="100%"
+    borderRadius={3}
+    sx={{
+      display: 'flex',
+      flex: '1 1 0%',
+      overflowY: 'auto',
+    }}
+  >
     <TableProvider createStore={createTableStore}>
       <CustomerIndicatorInfo
         customerInfos={customerInfos}
