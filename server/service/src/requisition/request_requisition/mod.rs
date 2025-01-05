@@ -24,3 +24,5 @@ pub use self::add_from_master_list::*;
 
 mod indicator_information;
 pub use self::indicator_information::*;
+mod requisition_item_info;
+pub use self::requisition_item_info::*;

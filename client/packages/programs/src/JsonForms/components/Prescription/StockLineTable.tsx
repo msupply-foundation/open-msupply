@@ -54,7 +54,7 @@ export const StockLineTable = ({
       {
         width: '55px',
         key: 'numberOfPacks',
-        label: 'label.amount',
+        label: 'label.num-packs',
         accessor: ({ rowData }) => rowData.numberOfPacks,
         setter: handleUpdateDraft,
         Cell: PackQuantityCell,

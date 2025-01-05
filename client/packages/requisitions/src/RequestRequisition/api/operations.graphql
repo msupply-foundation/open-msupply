@@ -10,6 +10,8 @@ fragment ItemWithStats on ItemNode {
     availableStockOnHand
     availableMonthsOfStockOnHand
     totalConsumption
+    stockOnHand
+    monthsOfStockOnHand
   }
 }
 
@@ -43,6 +45,19 @@ fragment RequestRow on RequisitionNode {
   orderType
 }
 
+fragment itemInformation on RequisitionItemInformationNode {
+  id
+  adjustmentsInUnits
+  amcInUnits
+  name(storeId: $storeId) {
+    id
+    name
+  }
+  outgoingUnits
+  dateRange
+  stockInUnits
+}
+
 fragment RequestLine on RequisitionLineNode {
   id
   itemId
@@ -68,6 +83,10 @@ fragment RequestLine on RequisitionLineNode {
   linkedRequisitionLine {
     approvedQuantity
     approvalComment
+  }
+  itemInformation {
+    __typename
+    ...itemInformation
   }
   item {
     ...ItemWithStats
