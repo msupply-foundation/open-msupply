@@ -61,7 +61,6 @@ pub struct NameFilter {
     pub address2: Option<StringFilter>,
     pub country: Option<StringFilter>,
     pub email: Option<StringFilter>,
-    pub supplying_store_id: Option<EqualFilter<String>>,
 
     pub code_or_name: Option<StringFilter>,
 }
