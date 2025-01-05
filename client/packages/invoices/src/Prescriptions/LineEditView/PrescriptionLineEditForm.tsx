@@ -172,8 +172,13 @@ export const PrescriptionLineEditForm: React.FC<
     const quantity = inputUnitQuantity === undefined ? 0 : inputUnitQuantity;
     setIssueUnitQuantity(quantity);
 
-    const numPacks = quantity / (packSizeController.selected?.value ?? 1);
-    debouncedAllocate(numPacks, Number(packSizeController.selected?.value));
+    const packSize =
+      packSizeController.selected?.value !== -1
+        ? (packSizeController.selected?.value ?? 1)
+        : 1;
+
+    const numPacks = quantity / packSize;
+    debouncedAllocate(numPacks, Number(packSize));
   };
 
   const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);
@@ -191,6 +196,8 @@ export const PrescriptionLineEditForm: React.FC<
     if (!isAutoAllocated) setIssueUnitQuantity(allocatedUnits);
   }, [packSizeController.selected?.value, allocatedUnits]);
 
+  const key = item?.id ?? 'new';
+
   return (
     <Grid
       container
@@ -198,9 +205,9 @@ export const PrescriptionLineEditForm: React.FC<
       sx={{ minHeight: 200, display: 'flex', flexDirection: 'column' }}
     >
       <AccordionPanelSection
-        // Adding a random key forces a remount when changing items, so the
-        // expanded state resets when switching items
-        key={Math.random()}
+        // Key ensures component will reload when switching item, but not when
+        // making other changes within item (e.g. quantity)
+        key={key + '_item_search'}
         title={t('label.item', { count: 1 })}
         closedSummary={item?.name}
         defaultExpanded={isNew && !disabled}
@@ -234,7 +241,7 @@ export const PrescriptionLineEditForm: React.FC<
             title={t('label.quantity')}
             closedSummary={summarise(draftPrescriptionLines, t)}
             defaultExpanded={isNew && !disabled}
-            key={item?.id ?? 'new'}
+            key={key + '_quantity'}
           >
             <Grid
               container

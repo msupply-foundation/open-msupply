@@ -4,11 +4,6 @@ import {
   Box,
   DataTable,
   useTranslation,
-  // TableCell,
-  // styled,
-  // useFormatNumber,
-  // Tooltip,
-  // NumUtils,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../types';
 import { DraftItem } from '../..';
