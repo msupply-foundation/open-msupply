@@ -5631,7 +5631,6 @@ export type Queries = {
    */
   activeProgramEvents: ProgramEventResponse;
   activityLogs: ActivityLogResponse;
-  allActiveDiagnoses: Array<DiagnosisNode>;
   apiVersion: Scalars['String']['output'];
   assetCatalogueItem: AssetCatalogueItemResponse;
   assetCatalogueItems: AssetCatalogueItemsResponse;
@@ -5665,6 +5664,7 @@ export type Queries = {
   demographicProjectionByBaseYear: DemographicProjectionResponse;
   demographicProjections: DemographicProjectionsResponse;
   demographics: DemographicsResponse;
+  diagnosesActive: Array<DiagnosisNode>;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
   documentHistory: DocumentHistoryResponse;

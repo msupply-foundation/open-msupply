@@ -6,7 +6,7 @@ pub mod types;
 pub use self::queries::sync_status::*;
 use self::queries::*;
 
-use diagnosis::all_active_diagnoses;
+use diagnosis::diagnoses_active;
 use graphql_core::pagination::PaginationInput;
 use service::sync::CentralServerConfig;
 
@@ -423,8 +423,8 @@ impl GeneralQueries {
         cold_storage_types(ctx, store_id, page, filter, sort)
     }
 
-    pub async fn all_active_diagnoses(&self, ctx: &Context<'_>) -> Result<Vec<DiagnosisNode>> {
-        all_active_diagnoses(ctx)
+    pub async fn diagnoses_active(&self, ctx: &Context<'_>) -> Result<Vec<DiagnosisNode>> {
+        diagnoses_active(ctx)
     }
 }
 

@@ -71,10 +71,10 @@ export type HistoricalStockLineFragment = { __typename: 'StockLineNode', id: str
 
 export type DiagnosisFragment = { __typename: 'DiagnosisNode', id: string, code: string, description: string };
 
-export type ActiveDiagnosesQueryVariables = Types.Exact<{ [key: string]: never; }>;
+export type DiagnosesActiveQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type ActiveDiagnosesQuery = { __typename: 'Queries', allActiveDiagnoses: Array<{ __typename: 'DiagnosisNode', id: string, code: string, description: string }> };
+export type DiagnosesActiveQuery = { __typename: 'Queries', diagnosesActive: Array<{ __typename: 'DiagnosisNode', id: string, code: string, description: string }> };
 
 export const PrescriptionRowFragmentDoc = gql`
     fragment PrescriptionRow on InvoiceNode {
@@ -463,9 +463,9 @@ export const DeletePrescriptionLinesDocument = gql`
   }
 }
     `;
-export const ActiveDiagnosesDocument = gql`
-    query activeDiagnoses {
-  allActiveDiagnoses {
+export const DiagnosesActiveDocument = gql`
+    query diagnosesActive {
+  diagnosesActive {
     ...diagnosis
   }
 }
@@ -499,8 +499,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     deletePrescriptionLines(variables: DeletePrescriptionLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeletePrescriptionLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionLinesMutation>(DeletePrescriptionLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptionLines', 'mutation', variables);
     },
-    activeDiagnoses(variables?: ActiveDiagnosesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ActiveDiagnosesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ActiveDiagnosesQuery>(ActiveDiagnosesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'activeDiagnoses', 'query', variables);
+    diagnosesActive(variables?: DiagnosesActiveQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DiagnosesActiveQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DiagnosesActiveQuery>(DiagnosesActiveDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'diagnosesActive', 'query', variables);
     }
   };
 }
