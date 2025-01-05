@@ -1229,6 +1229,7 @@ export type CustomerAndOrderTypeNode = {
 export type CustomerIndicatorInformationNode = {
   __typename: 'CustomerIndicatorInformationNode';
   customer: NameNode;
+  datetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
   indicatorInformation: Array<RequisitionIndicatorInformationNode>;
   lineId: Scalars['String']['output'];
@@ -6726,7 +6727,6 @@ export type RequisitionFilterInput = {
 export type RequisitionIndicatorInformationNode = {
   __typename: 'RequisitionIndicatorInformationNode';
   column: IndicatorColumnNode;
-  datetime: Scalars['DateTime']['output'];
   value: Scalars['String']['output'];
 };
 

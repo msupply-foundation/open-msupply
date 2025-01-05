@@ -131,7 +131,7 @@ export type SupplierProgramSettingsQueryVariables = Types.Exact<{
 
 export type SupplierProgramSettingsQuery = { __typename: 'Queries', supplierProgramRequisitionSettings: Array<{ __typename: 'SupplierProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> };
 
-export type ProgramIndicatorFragment = { __typename: 'ProgramIndicatorNode', code?: string | null, id: string, lineAndColumns: Array<{ __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null } }>, customerIndicatorInfo: Array<{ __typename: 'CustomerIndicatorInformationNode', id: string, lineId: string, customer: { __typename: 'NameNode', id: string, name: string }, indicatorInformation: Array<{ __typename: 'RequisitionIndicatorInformationNode', datetime: string, value: string, column: { __typename: 'IndicatorColumnNode', columnNumber: number, name: string } }> }> };
+export type ProgramIndicatorFragment = { __typename: 'ProgramIndicatorNode', code?: string | null, id: string, lineAndColumns: Array<{ __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null } }>, customerIndicatorInfo: Array<{ __typename: 'CustomerIndicatorInformationNode', id: string, datetime: string, lineId: string, customer: { __typename: 'NameNode', id: string, name: string }, indicatorInformation: Array<{ __typename: 'RequisitionIndicatorInformationNode', value: string, column: { __typename: 'IndicatorColumnNode', columnNumber: number, name: string } }> }> };
 
 export type IndicatorLineRowFragment = { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null };
 
@@ -139,7 +139,7 @@ export type IndicatorColumnFragment = { __typename: 'IndicatorColumnNode', colum
 
 export type IndicatorValueFragment = { __typename: 'IndicatorValueNode', id: string, value: string };
 
-export type CustomerIndicatorInfoFragment = { __typename: 'CustomerIndicatorInformationNode', id: string, lineId: string, customer: { __typename: 'NameNode', id: string, name: string }, indicatorInformation: Array<{ __typename: 'RequisitionIndicatorInformationNode', datetime: string, value: string, column: { __typename: 'IndicatorColumnNode', columnNumber: number, name: string } }> };
+export type CustomerIndicatorInfoFragment = { __typename: 'CustomerIndicatorInformationNode', id: string, datetime: string, lineId: string, customer: { __typename: 'NameNode', id: string, name: string }, indicatorInformation: Array<{ __typename: 'RequisitionIndicatorInformationNode', value: string, column: { __typename: 'IndicatorColumnNode', columnNumber: number, name: string } }> };
 
 export type CustomerColumnFragment = { __typename: 'IndicatorColumnNode', columnNumber: number, name: string };
 
@@ -153,7 +153,7 @@ export type ProgramIndicatorsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ProgramIndicatorsQuery = { __typename: 'Queries', programIndicators: { __typename: 'ProgramIndicatorConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramIndicatorNode', code?: string | null, id: string, lineAndColumns: Array<{ __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null } }>, customerIndicatorInfo: Array<{ __typename: 'CustomerIndicatorInformationNode', id: string, lineId: string, customer: { __typename: 'NameNode', id: string, name: string }, indicatorInformation: Array<{ __typename: 'RequisitionIndicatorInformationNode', datetime: string, value: string, column: { __typename: 'IndicatorColumnNode', columnNumber: number, name: string } }> }> }> } };
+export type ProgramIndicatorsQuery = { __typename: 'Queries', programIndicators: { __typename: 'ProgramIndicatorConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramIndicatorNode', code?: string | null, id: string, lineAndColumns: Array<{ __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null } }>, customerIndicatorInfo: Array<{ __typename: 'CustomerIndicatorInformationNode', id: string, datetime: string, lineId: string, customer: { __typename: 'NameNode', id: string, name: string }, indicatorInformation: Array<{ __typename: 'RequisitionIndicatorInformationNode', value: string, column: { __typename: 'IndicatorColumnNode', columnNumber: number, name: string } }> }> }> } };
 
 export type UpdateIndicatorValueMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -440,6 +440,7 @@ export const CustomerIndicatorInfoFragmentDoc = gql`
     fragment CustomerIndicatorInfo on CustomerIndicatorInformationNode {
   __typename
   id
+  datetime
   customer(storeId: $storeId) {
     __typename
     id
@@ -450,7 +451,6 @@ export const CustomerIndicatorInfoFragmentDoc = gql`
     column {
       ...CustomerColumn
     }
-    datetime
     value
   }
   lineId
