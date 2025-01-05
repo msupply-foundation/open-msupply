@@ -3,6 +3,8 @@ import { Grid, Typography } from '@mui/material';
 import { BasicModal } from '../BasicModal';
 import { AlertIcon, HelpIcon, InfoIcon } from '@common/icons';
 import { DialogButton, LoadingButton } from '../../buttons';
+import { Alert } from '@common/components';
+import { useTranslation } from '@openmsupply-client/common';
 
 interface ConfirmationModalProps {
   open: boolean;
@@ -12,7 +14,9 @@ interface ConfirmationModalProps {
   onCancel: () => void;
   title: string;
   message: string;
+  info?: string | undefined;
   iconType?: 'alert' | 'info' | 'help';
+  buttonLabel?: string | undefined;
 }
 
 const iconLookup = {
@@ -28,11 +32,14 @@ export const ConfirmationModal = ({
   onConfirm,
   title,
   message,
+  info,
   onCancel,
   iconType = 'alert',
+  buttonLabel,
 }: ConfirmationModalProps) => {
   const [loading, setLoading] = useState(false);
   const Icon = iconLookup[iconType];
+  const t = useTranslation();
 
   return (
     <BasicModal width={width} height={height} open={open}>
@@ -45,6 +52,13 @@ export const ConfirmationModal = ({
             <Typography variant="h6">{title}</Typography>
           </Grid>
         </Grid>
+        {info && (
+          <Grid item paddingY={1}>
+            <Alert style={{ whiteSpace: 'pre-line' }} severity="info">
+              {info}
+            </Alert>
+          </Grid>
+        )}
         <Grid item>
           <Typography style={{ whiteSpace: 'pre-line' }}>{message}</Typography>
         </Grid>
@@ -79,7 +93,7 @@ export const ConfirmationModal = ({
                 onCancel();
               }}
             >
-              OK
+              {buttonLabel ? buttonLabel : t('button.ok')}
             </LoadingButton>
           </Grid>
         </Grid>

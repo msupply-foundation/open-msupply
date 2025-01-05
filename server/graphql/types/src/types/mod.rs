@@ -118,6 +118,8 @@ pub use self::reason_option::*;
 pub mod cold_storage_type;
 pub use self::cold_storage_type::*;
 
+mod requisition_item_information;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

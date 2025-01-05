@@ -138,26 +138,30 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
     }
   };
 
-  const confirmationTitle =
-    selectedOption?.value === RequisitionNodeStatus.Finalised &&
+  const confirmation =
     notFullySuppliedLines > 0
-      ? t('heading.confirm-finalise')
-      : t('heading.are-you-sure');
-
-  const confirmationMessage =
-    notFullySuppliedLines > 0
-      ? t('messages.confirm-not-fully-supplied', {
-          count: notFullySuppliedLines,
-        })
-      : t('messages.confirm-status-as', {
-          status: selectedOption?.value
-            ? getStatusTranslation(selectedOption?.value)
-            : '',
-        });
+      ? {
+          title: t('heading.confirm-finalise'),
+          message: t('messages.confirm-not-fully-supplied', {
+            count: notFullySuppliedLines,
+          }),
+          info: t('info.no-shipment'),
+        }
+      : {
+          title: t('heading.are-you-sure'),
+          message: t('messages.confirm-status-as', {
+            status: selectedOption?.value
+              ? getStatusTranslation(selectedOption?.value)
+              : '',
+          }),
+          info: undefined,
+        };
 
   const getConfirmation = useConfirmationModal({
-    title: confirmationTitle,
-    message: confirmationMessage,
+    title: confirmation.title,
+    message: confirmation.message,
+    info: confirmation.info,
+    buttonLabel: t('button.continue'),
     onConfirm: onConfirmStatusChange,
   });
 
