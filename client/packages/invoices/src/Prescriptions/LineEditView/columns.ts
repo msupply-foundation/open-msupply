@@ -1,20 +1,16 @@
 import {
-  // CheckCell,
-  // Column,
   ColumnAlign,
   ColumnDescription,
   ExpiryDateCell,
-  // LocationCell,
   NumberCell,
   NumUtils,
   useColumns,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../types';
-import { PackQuantityCell } from '../../StockOut';
+import { UnitQuantityCell } from '../../StockOut';
 
 export const usePrescriptionLineEditColumns = ({
   onChange,
-  // unit,
 }: {
   onChange: (key: string, numPacks: number) => void;
   unit: string;
@@ -35,38 +31,6 @@ export const usePrescriptionLineEditColumns = ({
         accessor: ({ rowData }) => rowData.stockLine?.batch,
       },
     ],
-    // [
-    //   'location',
-    //   {
-    //     accessor: ({ rowData }) => rowData.location?.code,
-    //     width: 100,
-    //     Cell: LocationCell,
-    //   },
-    // ],
-    // {
-    //   label: 'label.on-hold',
-    //   key: 'onHold',
-    //   Cell: CheckCell,
-    //   accessor: ({ rowData }) => rowData.stockLine?.onHold,
-    //   align: ColumnAlign.Center,
-    //   width: 70,
-    // },
-    // {
-    //   Cell: NumberCell,
-    //   label: 'label.in-store',
-    //   key: 'totalNumberOfPacks',
-    //   align: ColumnAlign.Right,
-    //   width: 80,
-    //   accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks,
-    // },
-    // {
-    //   Cell: NumberCell,
-    //   label: 'label.available-packs',
-    //   key: 'availableNumberOfPacks',
-    //   align: ColumnAlign.Right,
-    //   width: 85,
-    //   accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
-    // },
     ['packSize', { width: 90 }],
     {
       Cell: NumberCell,
@@ -88,18 +52,8 @@ export const usePrescriptionLineEditColumns = ({
         (rowData.stockLine?.availableNumberOfPacks ?? 0) *
         (rowData.stockLine?.packSize ?? 1),
     },
-
-    // [
-    //   'unitQuantity',
-    //   {
-    //     label: 'label.unit-quantity-issued',
-    //     labelProps: { unit },
-    //     accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
-    //     width: 120,
-    //   },
-    // ],
     {
-      Cell: PackQuantityCell,
+      Cell: UnitQuantityCell,
       label: 'label.units-issued',
       key: 'unitQuantity',
       align: ColumnAlign.Right,
@@ -116,29 +70,3 @@ export const usePrescriptionLineEditColumns = ({
 
   return useColumns(columns, {}, [onChange]);
 };
-
-// export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
-//   useColumns([
-//     'batch',
-//     'expiryDate',
-//     [
-//       'location',
-//       {
-//         accessor: ({ rowData }) => rowData.location?.code,
-//       },
-//     ],
-//     [
-//       'itemUnit',
-//       {
-//         accessor: ({ rowData }) => rowData.item?.unitName,
-//       },
-//     ],
-//     'numberOfPacks',
-//     'packSize',
-//     [
-//       'unitQuantity',
-//       {
-//         accessor: ({ rowData }) => rowData. rowData.numberOfPacks,
-//       },
-//     ],
-//   ]);

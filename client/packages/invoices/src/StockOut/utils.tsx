@@ -398,6 +398,19 @@ export const PackQuantityCell = (props: CellProps<DraftStockOutLine>) => (
   />
 );
 
+export const UnitQuantityCell = (props: CellProps<DraftStockOutLine>) => (
+  <NumberInputCell
+    {...props}
+    max={
+      (props.rowData.stockLine?.availableNumberOfPacks ?? 0) *
+      (props.rowData.stockLine?.packSize ?? 1)
+    }
+    id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
+    decimalLimit={2}
+    min={0}
+  />
+);
+
 export const updateNotes = (
   draftStockOutLines: DraftStockOutLine[],
   note: string
