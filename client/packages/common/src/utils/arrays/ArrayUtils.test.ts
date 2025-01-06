@@ -105,8 +105,8 @@ describe('ArrayUtils', () => {
         packSize: 1,
       },
     ];
-    expect(ArrayUtils.getUnitCostPrice(arr1)).toBe(2);
-    expect(ArrayUtils.getUnitCostPrice(arr2)).toBe(2);
-    expect(ArrayUtils.getUnitCostPrice(arr3)).toBe(0);
+    expect(ArrayUtils.getAveragePrice(arr1, 'costPricePerPack')).toBe(2);
+    expect(ArrayUtils.getAveragePrice(arr2, 'costPricePerPack')).toBe(2);
+    expect(ArrayUtils.getAveragePrice(arr3, 'costPricePerPack')).toBe(0);
   });
 });
