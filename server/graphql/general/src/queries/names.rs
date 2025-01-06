@@ -75,7 +75,6 @@ pub struct NameFilterInput {
     /// Search filter across name or code
     pub code_or_name: Option<StringFilterInput>,
 
-    /// Search for stores by supplying store id
     pub supplying_store_id: Option<EqualFilterStringInput>,
 }
 

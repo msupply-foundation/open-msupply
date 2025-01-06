@@ -1226,20 +1226,6 @@ export type CustomerAndOrderTypeNode = {
   orderTypes: Array<ProgramRequisitionOrderTypeNode>;
 };
 
-export type CustomerIndicatorInformationNode = {
-  __typename: 'CustomerIndicatorInformationNode';
-  customer: NameNode;
-  datetime: Scalars['DateTime']['output'];
-  id: Scalars['String']['output'];
-  indicatorInformation: Array<RequisitionIndicatorInformationNode>;
-  lineId: Scalars['String']['output'];
-};
-
-
-export type CustomerIndicatorInformationNodeCustomerArgs = {
-  storeId: Scalars['String']['input'];
-};
-
 export type CustomerProgramRequisitionSettingNode = {
   __typename: 'CustomerProgramRequisitionSettingNode';
   customerAndOrderTypes: Array<CustomerAndOrderTypeNode>;
@@ -1846,6 +1832,13 @@ export type DemographicSortInput = {
 };
 
 export type DemographicsResponse = DemographicConnector;
+
+export type DiagnosisNode = {
+  __typename: 'DiagnosisNode';
+  code: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+};
 
 export type DisplaySettingNode = {
   __typename: 'DisplaySettingNode';
@@ -2885,6 +2878,7 @@ export type InsertPluginDataInput = {
 export type InsertPluginDataResponse = PluginDataNode;
 
 export type InsertPrescriptionInput = {
+  diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
 };
@@ -3433,6 +3427,8 @@ export type InvoiceNode = {
   currency?: Maybe<CurrencyNode>;
   currencyRate: Scalars['Float']['output'];
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
+  diagnosis?: Maybe<DiagnosisNode>;
+  diagnosisId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   invoiceNumber: Scalars['Int']['output'];
   lines: InvoiceLineConnector;
@@ -4920,7 +4916,6 @@ export type NameFilterInput = {
   phone?: InputMaybe<StringFilterInput>;
   /** Code of the store if store is linked to name */
   storeCode?: InputMaybe<StringFilterInput>;
-  /** Search for stores by supplying store id */
   supplyingStoreId?: InputMaybe<EqualFilterStringInput>;
   /** Filter by the name type */
   type?: InputMaybe<EqualFilterTypeInput>;
@@ -5555,16 +5550,9 @@ export type ProgramIndicatorFilterInput = {
 export type ProgramIndicatorNode = {
   __typename: 'ProgramIndicatorNode';
   code?: Maybe<Scalars['String']['output']>;
-  customerIndicatorInfo: Array<CustomerIndicatorInformationNode>;
   id: Scalars['String']['output'];
   lineAndColumns: Array<IndicatorLineNode>;
   program: ProgramNode;
-};
-
-
-export type ProgramIndicatorNodeCustomerIndicatorInfoArgs = {
-  periodId: Scalars['String']['input'];
-  storeId: Scalars['String']['input'];
 };
 
 export type ProgramIndicatorResponse = ProgramIndicatorConnector;
@@ -5676,6 +5664,7 @@ export type Queries = {
   demographicProjectionByBaseYear: DemographicProjectionResponse;
   demographicProjections: DemographicProjectionsResponse;
   demographics: DemographicsResponse;
+  diagnosesActive: Array<DiagnosisNode>;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
   documentHistory: DocumentHistoryResponse;
@@ -6722,12 +6711,6 @@ export type RequisitionFilterInput = {
   theirReference?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterRequisitionTypeInput>;
   userId?: InputMaybe<EqualFilterStringInput>;
-};
-
-export type RequisitionIndicatorInformationNode = {
-  __typename: 'RequisitionIndicatorInformationNode';
-  column: IndicatorColumnNode;
-  value: Scalars['String']['output'];
 };
 
 export type RequisitionItemInformationNode = {
@@ -8336,6 +8319,7 @@ export type UpdatePrescriptionInput = {
   clinicianId?: InputMaybe<Scalars['String']['input']>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  diagnosisId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   patientId?: InputMaybe<Scalars['String']['input']>;
   prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;

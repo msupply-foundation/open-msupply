@@ -25,6 +25,7 @@ pub mod currency;
 pub mod cursor_controller;
 pub mod dashboard;
 pub mod demographic;
+pub mod diagnosis;
 pub mod display_settings_service;
 pub mod document;
 pub mod inventory_adjustment_reason;

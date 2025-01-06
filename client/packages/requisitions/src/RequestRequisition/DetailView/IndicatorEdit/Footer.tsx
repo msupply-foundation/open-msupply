@@ -1,14 +1,7 @@
 import React from 'react';
-import {
-  Box,
-  AppFooterPortal,
-  DialogButton,
-  RouteBuilder,
-  useNavigate,
-  useParams,
-} from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
+import { Box, AppFooterPortal, DialogButton } from '@openmsupply-client/common';
 import { IndicatorLineRowFragment } from '../../api';
+import { useIndicatorNavigation } from './hooks';
 
 interface FooterProps {
   hasNext: boolean;
@@ -25,8 +18,9 @@ export const Footer = ({
   previous,
   requisitionNumber,
 }: FooterProps) => {
-  const navigate = useNavigate();
-  const { programIndicatorCode } = useParams();
+  const navigateTo = useIndicatorNavigation(requisitionNumber);
+  const navigateToNext = () => navigateTo(next?.id);
+  const navigateToPrevious = () => navigateTo(previous?.id);
 
   return (
     <AppFooterPortal
@@ -48,32 +42,12 @@ export const Footer = ({
             <DialogButton
               variant="previous"
               disabled={!hasPrevious}
-              onClick={() =>
-                navigate(
-                  RouteBuilder.create(AppRoute.Replenishment)
-                    .addPart(AppRoute.InternalOrder)
-                    .addPart(String(requisitionNumber))
-                    .addPart(AppRoute.Indicators)
-                    .addPart(String(programIndicatorCode))
-                    .addPart(String(previous?.id))
-                    .build()
-                )
-              }
+              onClick={navigateToPrevious}
             />
             <DialogButton
               variant="next"
               disabled={!hasNext}
-              onClick={() =>
-                navigate(
-                  RouteBuilder.create(AppRoute.Replenishment)
-                    .addPart(AppRoute.InternalOrder)
-                    .addPart(String(requisitionNumber))
-                    .addPart(AppRoute.Indicators)
-                    .addPart(String(programIndicatorCode))
-                    .addPart(String(next?.id))
-                    .build()
-                )
-              }
+              onClick={navigateToNext}
             />
           </Box>
         </Box>
