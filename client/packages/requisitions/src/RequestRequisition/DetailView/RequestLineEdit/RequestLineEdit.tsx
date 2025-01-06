@@ -20,6 +20,7 @@ import {
 import { DraftRequestLine } from './hooks';
 import { Footer } from './Footer';
 import { RequestStats } from './ItemCharts/RequestStats';
+import { ItemInformationView } from './ItemInformation';
 
 const INPUT_WIDTH = 100;
 const LABEL_WIDTH = '150px';
@@ -56,11 +57,18 @@ export const RequestLineEdit = ({
   const { isOn, toggle } = useToggle();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const { store } = useAuthContext();
-  const useConsumptionData =
-    store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
-
+  const extraFields = store?.preferences?.extraFieldsInRequisition;
+  const showItemInformation =
+    store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders &&
+    extraFields &&
+    !!draft?.itemInformation &&
+    isProgram;
+  const itemInformationSorted = draft?.itemInformation
+    ?.sort((a, b) => a.name.name.localeCompare(b.name.name))
+    .sort((a, b) => b.amcInUnits - a.amcInUnits)
+    .sort((a, b) => b.stockInUnits - a.stockInUnits);
   return (
-    <Box>
+    <Box display="flex" flexDirection="column" padding={2}>
       <Box display="flex" justifyContent="space-between">
         <Box paddingLeft={4} paddingRight={7}>
           {/* Left column content */}
@@ -77,7 +85,7 @@ export const RequestLineEdit = ({
             label={t('label.stock-on-hand')}
             sx={{ marginBottom: 1 }}
           />
-          {isProgram && useConsumptionData && (
+          {isProgram && extraFields && (
             <>
               <InputWithLabelRow
                 Input={
@@ -169,7 +177,7 @@ export const RequestLineEdit = ({
             label={t('label.amc')}
             sx={{ marginBottom: 1 }}
           />
-          {isProgram && useConsumptionData && (
+          {isProgram && extraFields && (
             <InputWithLabelRow
               Input={
                 <NumericTextInput
@@ -316,7 +324,7 @@ export const RequestLineEdit = ({
             label={t('label.suggested-quantity')}
             sx={{ marginBottom: 1 }}
           />
-          {isProgram && useConsumptionData && (
+          {isProgram && extraFields && (
             <InputWithLabelRow
               Input={
                 <ReasonOptionsSearchInput
@@ -356,6 +364,14 @@ export const RequestLineEdit = ({
           />
         </Box>
       </Box>
+      {showItemInformation && (
+        <Box paddingTop={1} maxHeight={200} width="100%" display="flex">
+          <ItemInformationView
+            itemInformation={itemInformationSorted}
+            storeNameId={store?.nameId}
+          />
+        </Box>
+      )}
       <Box>
         <Footer
           hasNext={hasNext}

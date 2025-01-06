@@ -6,13 +6,14 @@ pub mod types;
 pub use self::queries::sync_status::*;
 use self::queries::*;
 
+use diagnosis::diagnoses_active;
 use graphql_core::pagination::PaginationInput;
 use service::sync::CentralServerConfig;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
-    CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, MasterListFilterInput,
-    StorePreferenceNode,
+    CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, DiagnosisNode,
+    MasterListFilterInput, StorePreferenceNode,
 };
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
@@ -420,6 +421,10 @@ impl GeneralQueries {
         sort: Option<Vec<ColdStorageTypeSortInput>>,
     ) -> Result<ColdStorageTypesResponse> {
         cold_storage_types(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn diagnoses_active(&self, ctx: &Context<'_>) -> Result<Vec<DiagnosisNode>> {
+        diagnoses_active(ctx)
     }
 }
 
