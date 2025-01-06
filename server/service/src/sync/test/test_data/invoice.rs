@@ -139,6 +139,7 @@ fn transact_1_pull_record() -> TestSyncIncomingRecord {
             clinician_link_id: None,
             original_shipment_id: None,
             backdated_datetime: None,
+            diagnosis_id: None,
         },
     )
 }
@@ -193,6 +194,7 @@ fn transact_1_push_record() -> TestSyncOutgoingRecord {
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
             currency_rate: 1.32,
             backdated_datetime: None,
+            diagnosis_id: None,
         }),
     }
 }
@@ -311,6 +313,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             clinician_link_id: None,
             original_shipment_id: None,
             backdated_datetime: None,
+            diagnosis_id: None,
         },
     )
 }
@@ -360,6 +363,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: 1.0,
             backdated_datetime: None,
+            diagnosis_id: None,
         }),
     }
 }
@@ -512,6 +516,7 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             clinician_link_id: None,
             original_shipment_id: None,
             backdated_datetime: None,
+            diagnosis_id: None,
         },
     )
 }
@@ -586,6 +591,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: 1.0,
             backdated_datetime: None,
+            diagnosis_id: None,
         }),
     }
 }
@@ -720,6 +726,7 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             clinician_link_id: None,
             original_shipment_id: None,
             backdated_datetime: None,
+            diagnosis_id: None,
         },
     )
 }
@@ -775,6 +782,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
             currency_rate: 1.0,
             backdated_datetime: None,
+            diagnosis_id: None,
         }),
     }
 }
@@ -909,6 +917,7 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             clinician_link_id: None,
             original_shipment_id: None,
             backdated_datetime: None,
+            diagnosis_id: None,
         },
     )
 }
@@ -964,6 +973,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
             currency_rate: 1.0,
             backdated_datetime: None,
+            diagnosis_id: None,
         }),
     }
 }
@@ -989,7 +999,7 @@ const PRESCRIPTION_1: (&str, &str) = (
       "currency_ID": "AUSTRALIAN_DOLLARS",
       "currency_rate": 1,
       "custom_data": null,
-      "diagnosis_ID": "",
+      "diagnosis_ID": "503E901E00534F1797DF4F29E12F907D",
       "donor_default_id": "",
       "encounter_id": "",
       "entry_date": "2021-07-30",
@@ -1094,6 +1104,7 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             clinician_link_id: None,
             original_shipment_id: None,
             backdated_datetime: None,
+            diagnosis_id: Some("503E901E00534F1797DF4F29E12F907D".to_string()),
         },
     )
 }
@@ -1148,6 +1159,7 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: 1.0,
             backdated_datetime: None,
+            diagnosis_id: Some("503E901E00534F1797DF4F29E12F907D".to_string()),
         }),
     }
 }

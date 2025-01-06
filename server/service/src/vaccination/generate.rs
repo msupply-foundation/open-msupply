@@ -23,6 +23,7 @@ pub fn generate_create_prescription(
     let create_prescription = InsertPrescription {
         id: prescription_id.clone(),
         patient_id,
+        diagnosis_id: None,
     };
 
     let number_of_packs =
@@ -58,6 +59,7 @@ pub fn generate_create_prescription(
         patient_id: None,
         colour: None,
         backdated_datetime: None,
+        diagnosis_id: None,
     };
 
     CreatePrescription {

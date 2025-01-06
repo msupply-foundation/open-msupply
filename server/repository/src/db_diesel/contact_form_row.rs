@@ -37,8 +37,8 @@ pub struct ContactFormRow {
     pub reply_email: String,
     pub body: String,
     pub created_datetime: NaiveDateTime,
-    pub store_id: String,
     pub user_id: String,
+    pub store_id: String,
     pub contact_type: ContactType,
 }
 
