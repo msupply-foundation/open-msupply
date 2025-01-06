@@ -11,12 +11,14 @@ import { useStocktake } from '../api';
 export const FooterComponent: FC = () => {
   const t = useTranslation();
 
-  const { selectedRows, ...onDelete } = useStocktake.document.deleteSelected();
+  const { selectedRows, confirmAndDelete } =
+    useStocktake.document.deleteSelected();
+
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
-      onClick: onDelete.confirmAndDelete,
+      onClick: confirmAndDelete,
     },
   ];
 

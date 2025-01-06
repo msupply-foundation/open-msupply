@@ -11,12 +11,13 @@ import { useAssets } from '../api';
 export const FooterComponent: FC = () => {
   const t = useTranslation();
 
-  const { selectedRows, ...onDelete } = useAssets.document.deleteAssets();
+  const { selectedRows, confirmAndDelete } = useAssets.document.deleteAssets();
+
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
-      onClick: onDelete.confirmAndDelete,
+      onClick: confirmAndDelete,
     },
   ];
 

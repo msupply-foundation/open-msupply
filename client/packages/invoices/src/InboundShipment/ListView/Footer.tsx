@@ -11,12 +11,13 @@ import { useInbound } from '../api';
 export const FooterComponent: FC = () => {
   const t = useTranslation();
 
-  const { selectedRows, ...onDelete } = useInbound.document.deleteRows();
+  const { selectedRows, confirmAndDelete } = useInbound.document.deleteRows();
+
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
-      onClick: onDelete.confirmAndDelete,
+      onClick: confirmAndDelete,
     },
   ];
 
