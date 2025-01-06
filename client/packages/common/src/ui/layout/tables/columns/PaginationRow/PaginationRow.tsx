@@ -51,6 +51,8 @@ export const PaginationRow: FC<PaginationRowProps> = ({
   };
 
   const t = useTranslation();
+
+  // Is this now needed since the actions footer shows number of selected lines?
   const getNumberSelectedLabel = () =>
     !!numberSelected && `(${numberSelected} ${t('label.selected')})`;
 
