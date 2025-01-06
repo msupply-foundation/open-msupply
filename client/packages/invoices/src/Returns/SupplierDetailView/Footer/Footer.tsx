@@ -52,9 +52,9 @@ const createStatusLog = (invoice: SupplierReturnRowFragment) => {
 
 export const FooterComponent: FC = () => {
   const t = useTranslation();
-  const { data, bufferedState } = useReturns.document.supplierReturn();
+  const { data } = useReturns.document.supplierReturn();
   const { navigateUpOne } = useBreadcrumbs();
-  const { id } = bufferedState ?? { id: '' };
+  const { id } = data ?? { id: '' };
   const { selectedIds, ...onDelete } =
     useReturns.lines.deleteSelectedSupplierLines({
       returnId: id,

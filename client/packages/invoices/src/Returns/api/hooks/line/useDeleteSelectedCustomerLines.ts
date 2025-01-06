@@ -7,18 +7,18 @@ import { useCustomerReturnRows } from './useCustomerReturnRows';
 import { useCustomerReturnIsDisabled } from '../utils/useCustomerReturnIsDisabled';
 import { useReturns } from '../..';
 
-interface DeleteSelectedCustomerReturnLinesOutputProps {
+interface DeleteSelectedCustomerReturnLinesOutput {
   onDelete: () => void;
   selectedIds: string[];
 }
 
-interface DeleteSelectedCustomerReturnLinesProps {
+interface DeleteSelectedCustomerReturnLines {
   returnId: string;
 }
 
 export const useDeleteSelectedCustomerReturnLines = ({
   returnId,
-}: DeleteSelectedCustomerReturnLinesProps): DeleteSelectedCustomerReturnLinesOutputProps => {
+}: DeleteSelectedCustomerReturnLines): DeleteSelectedCustomerReturnLinesOutput => {
   const { items, lines } = useCustomerReturnRows();
   const isDisabled = useCustomerReturnIsDisabled();
   const t = useTranslation();
