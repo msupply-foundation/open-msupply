@@ -26,6 +26,7 @@ import { Footer } from './Footer';
 import { RequestStats } from './ItemCharts/RequestStats';
 import { RequestLineFragment } from '../../api';
 import { buildItemEditRoute } from '../utils';
+import { ItemInformationView } from './ItemInformation';
 
 const INPUT_WIDTH = 100;
 const LABEL_WIDTH = '150px';
@@ -75,8 +76,18 @@ export const RequestLineEdit = ({
     store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
   const isNew = !draft?.id;
 
+  const extraFields = store?.preferences?.extraFieldsInRequisition;
+  const showItemInformation =
+    store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders &&
+    extraFields &&
+    !!draft?.itemInformation &&
+    isProgram;
+  const itemInformationSorted = draft?.itemInformation
+    ?.sort((a, b) => a.name.name.localeCompare(b.name.name))
+    .sort((a, b) => b.amcInUnits - a.amcInUnits)
+    .sort((a, b) => b.stockInUnits - a.stockInUnits);
   return (
-    <Box>
+    <Box display="flex" flexDirection="column" padding={2}>
       <Box display="flex" justifyContent="space-between">
         {isNew ? (
           <Box width="100%">
@@ -394,6 +405,14 @@ export const RequestLineEdit = ({
           </>
         )}
       </Box>
+      {showItemInformation && (
+        <Box paddingTop={1} maxHeight={200} width="100%" display="flex">
+          <ItemInformationView
+            itemInformation={itemInformationSorted}
+            storeNameId={store?.nameId}
+          />
+        </Box>
+      )}
       <Box>
         <Footer
           hasNext={hasNext}
