@@ -65,7 +65,7 @@ pub fn get_indicator_information(
         None => return Ok(vec![]),
     };
 
-    let mut indicator_values = vec![];
+    let mut indicator_values: Vec<CustomerIndicatorInformation> = vec![];
 
     for program_indicator in program_indicators {
         let indicator_line_ids: Vec<String> = program_indicator
@@ -96,25 +96,63 @@ pub fn get_indicator_information(
             .collect();
 
         for value in values {
-            indicator_values.push(CustomerIndicatorInformation {
-                id: value.customer_name_link_id.clone(),
-                indicator_line_id: value.indicator_line_id.clone(),
-                datetime: period.end_date.into(),
-                indicator_information: vec![IndicatorInformation {
-                    column_id: value.indicator_column_id.clone(),
-                    value: value.value,
-                }],
+            let entry = indicator_values.iter_mut().find(|entry| {
+                entry.id == value.customer_name_link_id
+                    && entry.indicator_line_id == value.indicator_line_id
             });
-        }
-        for customer_id in customers_without_values {
-            for line in program_indicator.lines.iter() {
-                let mut indicator_information = vec![];
-                for column in line.columns.iter() {
-                    indicator_information.push(IndicatorInformation {
-                        column_id: column.id.clone(),
-                        value: "".to_string(),
+
+            match entry {
+                Some(entry) => {
+                    let indicator_info = entry
+                        .indicator_information
+                        .iter_mut()
+                        .find(|info| info.column_id == value.indicator_column_id);
+
+                    match indicator_info {
+                        Some(info) => {
+                            if let Ok(num) = value.value.parse::<f64>() {
+                                if let Ok(existing_num) = info.value.parse::<f64>() {
+                                    info.value = (existing_num + num).to_string();
+                                } else {
+                                    info.value = num.to_string();
+                                }
+                            } else {
+                                info.value = value.value.to_string();
+                            }
+                        }
+                        None => {
+                            entry.indicator_information.push(IndicatorInformation {
+                                column_id: value.indicator_column_id.clone(),
+                                value: value.value.clone(),
+                            });
+                        }
+                    }
+                }
+                None => {
+                    indicator_values.push(CustomerIndicatorInformation {
+                        id: value.customer_name_link_id.clone(),
+                        indicator_line_id: value.indicator_line_id.clone(),
+                        datetime: period.end_date.into(),
+                        indicator_information: vec![IndicatorInformation {
+                            column_id: value.indicator_column_id.clone(),
+                            value: value.value.clone(),
+                        }],
                     });
                 }
+            }
+        }
+
+        for customer_id in customers_without_values {
+            for line in program_indicator.lines.iter() {
+                let indicator_information: Vec<IndicatorInformation> = line
+                    .columns
+                    .iter()
+                    .map(|column| IndicatorInformation {
+                        column_id: column.id.clone(),
+                        value: "".to_string(),
+                    })
+                    .collect();
+
                 indicator_values.push(CustomerIndicatorInformation {
                     id: customer_id.clone(),
                     indicator_line_id: line.line.id.clone(),
