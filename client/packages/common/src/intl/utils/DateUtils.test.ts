@@ -18,6 +18,7 @@ describe('getDisplayAge', () => {
   const hookResult = renderHookWithProvider(() => useFormatDateTime());
   const { getDisplayAge } = hookResult.result.current;
   const today = new Date();
+
   it('returns age in years when patient is over 1 year or 1 year old', () => {
     const dob = DateUtils.addYears(today, -9);
     const result = getDisplayAge(dob);
@@ -26,9 +27,12 @@ describe('getDisplayAge', () => {
 
   it('returns age in months and days when patient is less than 1 year old', () => {
     const threeMonthsAgo = DateUtils.addMonths(today, -3);
+    const dayOffset =
+      DateUtils.getDaysInMonth(today) -
+      DateUtils.getDaysInMonth(threeMonthsAgo);
     const dob = DateUtils.addDays(threeMonthsAgo, -2);
     const result = getDisplayAge(dob);
-    expect(result).toBe('3 months, 3 days');
+    expect(result).toBe(`3 months, ${2 + dayOffset} days`);
   });
 
   it('returns age in days when patient is less than 1 month old', () => {

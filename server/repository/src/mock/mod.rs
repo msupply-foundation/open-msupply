@@ -6,6 +6,7 @@ pub mod asset_log;
 mod barcode;
 mod clinician;
 pub mod common;
+mod contact_form;
 mod context;
 mod currency;
 mod demographic;
@@ -72,6 +73,7 @@ pub use asset_log::*;
 pub use barcode::*;
 pub use clinician::*;
 use common::*;
+pub use contact_form::*;
 pub use context::*;
 pub use currency::*;
 pub use demographic::*;
@@ -136,6 +138,7 @@ use crate::{
         asset_row::{AssetRow, AssetRowRepository},
     },
     category_row::{CategoryRow, CategoryRowRepository},
+    contact_form_row::{ContactFormRow, ContactFormRowRepository},
     item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
     reason_option_row::{ReasonOptionRow, ReasonOptionRowRepository},
     vaccine_course::{
@@ -249,6 +252,7 @@ pub struct MockData {
     pub indicator_values: Vec<IndicatorValueRow>,
     pub categories: Vec<CategoryRow>,
     pub options: Vec<ReasonOptionRow>,
+    pub contact_form: Vec<ContactFormRow>,
     pub reports: Vec<crate::ReportRow>,
 }
 
@@ -332,6 +336,7 @@ pub struct MockDataInserts {
     pub indicator_values: bool,
     pub categories: bool,
     pub options: bool,
+    pub contact_form: bool,
     pub reports: bool,
 }
 
@@ -404,6 +409,7 @@ impl MockDataInserts {
             indicator_values: true,
             categories: true,
             options: true,
+            contact_form: true,
             reports: true,
         }
     }
@@ -733,6 +739,11 @@ impl MockDataInserts {
         self
     }
 
+    pub fn contact_form(mut self) -> Self {
+        self.contact_form = true;
+        self
+    }
+
     pub fn reports(mut self) -> Self {
         self.reports = true;
         self
@@ -828,6 +839,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             indicator_columns: mock_indicator_columns(),
             indicator_values: mock_indicator_values(),
             options: mock_options(),
+            contact_form: mock_contact_form(),
             reports: mock_reports(),
             ..Default::default()
         },
@@ -1354,6 +1366,13 @@ pub fn insert_mock_data(
             }
         }
 
+        if inserts.contact_form {
+            let repo = ContactFormRowRepository::new(connection);
+            for row in &mock_data.contact_form {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
         if inserts.reports {
             let repo = ReportRowRepository::new(connection);
             for row in &mock_data.reports {
@@ -1435,6 +1454,7 @@ impl MockData {
             mut indicator_values,
             mut categories,
             mut options,
+            mut contact_form,
             mut reports,
         } = other;
 
@@ -1507,6 +1527,7 @@ impl MockData {
         self.indicator_values.append(&mut indicator_values);
         self.categories.append(&mut categories);
         self.options.append(&mut options);
+        self.contact_form.append(&mut contact_form);
         self.reports.append(&mut reports);
         self
     }

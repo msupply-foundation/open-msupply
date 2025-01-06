@@ -1077,6 +1077,11 @@ export type ConsumptionOptionsInput = {
   numberOfDataPoints?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export enum ContactFormNodeType {
+  Feedback = 'FEEDBACK',
+  Support = 'SUPPORT'
+}
+
 export type ContactTraceConnector = {
   __typename: 'ContactTraceConnector';
   nodes: Array<ContactTraceNode>;
@@ -1828,6 +1833,13 @@ export type DemographicSortInput = {
 
 export type DemographicsResponse = DemographicConnector;
 
+export type DiagnosisNode = {
+  __typename: 'DiagnosisNode';
+  code: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+};
+
 export type DisplaySettingNode = {
   __typename: 'DisplaySettingNode';
   hash: Scalars['String']['output'];
@@ -2518,6 +2530,7 @@ export type InsertBarcodeResponse = BarcodeNode;
 
 export type InsertContactFormInput = {
   body: Scalars['String']['input'];
+  contactType: ContactFormNodeType;
   id: Scalars['String']['input'];
   replyEmail: Scalars['String']['input'];
 };
@@ -2865,6 +2878,7 @@ export type InsertPluginDataInput = {
 export type InsertPluginDataResponse = PluginDataNode;
 
 export type InsertPrescriptionInput = {
+  diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
 };
@@ -3413,6 +3427,8 @@ export type InvoiceNode = {
   currency?: Maybe<CurrencyNode>;
   currencyRate: Scalars['Float']['output'];
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
+  diagnosis?: Maybe<DiagnosisNode>;
+  diagnosisId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   invoiceNumber: Scalars['Int']['output'];
   lines: InvoiceLineConnector;
@@ -3702,6 +3718,8 @@ export type ItemStatsNode = {
   availableMonthsOfStockOnHand?: Maybe<Scalars['Float']['output']>;
   availableStockOnHand: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
+  monthsOfStockOnHand?: Maybe<Scalars['Float']['output']>;
+  stockOnHand: Scalars['Float']['output'];
   totalConsumption: Scalars['Float']['output'];
 };
 
@@ -4898,7 +4916,6 @@ export type NameFilterInput = {
   phone?: InputMaybe<StringFilterInput>;
   /** Code of the store if store is linked to name */
   storeCode?: InputMaybe<StringFilterInput>;
-  /** Search for stores by supplying store id */
   supplyingStoreId?: InputMaybe<EqualFilterStringInput>;
   /** Filter by the name type */
   type?: InputMaybe<EqualFilterTypeInput>;
@@ -5512,6 +5529,7 @@ export type ProgramEventSortInput = {
 
 export type ProgramFilterInput = {
   contextId?: InputMaybe<EqualFilterStringInput>;
+  elmisCode?: InputMaybe<EqualFilterStringInput>;
   existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isImmunisation?: InputMaybe<Scalars['Boolean']['input']>;
@@ -5551,6 +5569,7 @@ export type ProgramIndicatorSortInput = {
 
 export type ProgramNode = {
   __typename: 'ProgramNode';
+  elmisCode?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   isImmunisation: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
@@ -5645,6 +5664,7 @@ export type Queries = {
   demographicProjectionByBaseYear: DemographicProjectionResponse;
   demographicProjections: DemographicProjectionsResponse;
   demographics: DemographicsResponse;
+  diagnosesActive: Array<DiagnosisNode>;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
   documentHistory: DocumentHistoryResponse;
@@ -6693,6 +6713,22 @@ export type RequisitionFilterInput = {
   userId?: InputMaybe<EqualFilterStringInput>;
 };
 
+export type RequisitionItemInformationNode = {
+  __typename: 'RequisitionItemInformationNode';
+  adjustmentsInUnits: Scalars['Float']['output'];
+  amcInUnits: Scalars['Float']['output'];
+  dateRange?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['String']['output'];
+  name: NameNode;
+  outgoingUnits: Scalars['Float']['output'];
+  stockInUnits: Scalars['Float']['output'];
+};
+
+
+export type RequisitionItemInformationNodeNameArgs = {
+  storeId: Scalars['String']['input'];
+};
+
 export type RequisitionLineChartError = {
   __typename: 'RequisitionLineChartError';
   error: RequisitionLineChartErrorInterface;
@@ -6729,6 +6765,7 @@ export type RequisitionLineNode = {
   initialStockOnHandUnits: Scalars['Float']['output'];
   item: ItemNode;
   itemId: Scalars['String']['output'];
+  itemInformation?: Maybe<Array<RequisitionItemInformationNode>>;
   itemName: Scalars['String']['output'];
   /**
    * For request requisition: snapshot stats (when requisition was created)
@@ -8282,6 +8319,7 @@ export type UpdatePrescriptionInput = {
   clinicianId?: InputMaybe<Scalars['String']['input']>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  diagnosisId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   patientId?: InputMaybe<Scalars['String']['input']>;
   prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
