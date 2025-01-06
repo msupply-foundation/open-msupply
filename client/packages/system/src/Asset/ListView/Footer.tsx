@@ -13,12 +13,13 @@ export const FooterComponent: FC = () => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
 
-  const { selectedRows, ...onDelete } = useAssetData.document.delete();
+  const { selectedRows, confirmAndDelete } = useAssetData.document.delete();
+
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
-      onClick: onDelete.confirmAndDelete,
+      onClick: confirmAndDelete,
     },
   ];
 

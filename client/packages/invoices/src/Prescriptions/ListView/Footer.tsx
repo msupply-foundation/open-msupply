@@ -33,6 +33,7 @@ export const FooterComponent: FC<{ listParams: ListParams }> = ({
       }),
     },
   });
+
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
