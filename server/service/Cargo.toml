@@ -62,6 +62,7 @@ extism = { workspace = true }
 base64 = "0.22.1"
 regex = { workspace = true }
 lettre = "0.11.11"
+nanohtml2text = "0.1"
 
 
 [dev-dependencies]
