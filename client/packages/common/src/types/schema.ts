@@ -1226,6 +1226,20 @@ export type CustomerAndOrderTypeNode = {
   orderTypes: Array<ProgramRequisitionOrderTypeNode>;
 };
 
+export type CustomerIndicatorInformationNode = {
+  __typename: 'CustomerIndicatorInformationNode';
+  customer: NameNode;
+  datetime: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  indicatorInformation: Array<RequisitionIndicatorInformationNode>;
+  lineId: Scalars['String']['output'];
+};
+
+
+export type CustomerIndicatorInformationNodeCustomerArgs = {
+  storeId: Scalars['String']['input'];
+};
+
 export type CustomerProgramRequisitionSettingNode = {
   __typename: 'CustomerProgramRequisitionSettingNode';
   customerAndOrderTypes: Array<CustomerAndOrderTypeNode>;
@@ -5550,9 +5564,16 @@ export type ProgramIndicatorFilterInput = {
 export type ProgramIndicatorNode = {
   __typename: 'ProgramIndicatorNode';
   code?: Maybe<Scalars['String']['output']>;
+  customerIndicatorInfo: Array<CustomerIndicatorInformationNode>;
   id: Scalars['String']['output'];
   lineAndColumns: Array<IndicatorLineNode>;
   program: ProgramNode;
+};
+
+
+export type ProgramIndicatorNodeCustomerIndicatorInfoArgs = {
+  periodId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
 };
 
 export type ProgramIndicatorResponse = ProgramIndicatorConnector;
@@ -6711,6 +6732,12 @@ export type RequisitionFilterInput = {
   theirReference?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterRequisitionTypeInput>;
   userId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type RequisitionIndicatorInformationNode = {
+  __typename: 'RequisitionIndicatorInformationNode';
+  column: IndicatorColumnNode;
+  value: Scalars['String']['output'];
 };
 
 export type RequisitionItemInformationNode = {
