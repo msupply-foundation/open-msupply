@@ -21,7 +21,6 @@ export const useSaveInboundLines = () => {
       const allResults = [
         ...(result.batchInboundShipment.insertInboundShipmentLines || []),
         ...(result.batchInboundShipment.updateInboundShipmentLines || []),
-        ...(result.batchInboundShipment.deleteInboundShipmentLines || []),
         ...(result.batchInboundShipment.insertInboundShipmentServiceLines ||
           []),
         ...(result.batchInboundShipment.updateInboundShipmentServiceLines ||
@@ -45,7 +44,6 @@ export const useSaveInboundLines = () => {
           case 'NotAnInboundShipment':
           case 'RecordNotFound':
           case 'ForeignKeyError':
-          case 'TransferredShipment':
             return { errorMessage: t('error.something-wrong') };
 
           default:
