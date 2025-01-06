@@ -1,0 +1,27 @@
+{% extends "base.html" %} {% block content %}
+
+<h4>Feedback submission</h4>
+<p style="font-size: 14px; line-height: 160%">
+  User: {{username}}
+</p>
+<p style="font-size: 14px; line-height: 160%">
+  Reply email: {{reply_email}}
+</p>
+<p style="font-size: 14px; line-height: 160%">
+  Submitted at: {{submission_time}}
+</p>
+<p style="font-size: 14px; line-height: 160%">
+  Store: {{store_name}}
+</p>
+<p style="font-size: 14px; line-height: 160%">
+  Site ID: {{site_id}}
+</p>
+
+<br></br>
+
+<p style="line-height: 160%">Message:</p>
+<p style="line-height: 160%">
+  <em> {{body}} </em>
+</p>
+
+{% endblock content %}
