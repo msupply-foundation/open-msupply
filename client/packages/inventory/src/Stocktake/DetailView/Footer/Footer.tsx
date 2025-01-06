@@ -10,7 +10,6 @@ import {
   Action,
   DeleteIcon,
   useEditModal,
-  useNotification,
   ActionsFooter,
 } from '@openmsupply-client/common';
 import { stocktakeStatuses, getStocktakeTranslator } from '../../../utils';
@@ -29,7 +28,6 @@ const createStatusLog = (stocktake: StocktakeFragment) => {
 
 export const Footer = () => {
   const t = useTranslation();
-  const { info } = useNotification();
   const { data: stocktake } = useStocktake.document.get();
   const isDisabled = useStocktake.utils.isDisabled();
   const onDelete = useStocktake.line.deleteSelected();
@@ -38,42 +36,18 @@ export const Footer = () => {
   const changeLocationModal = useEditModal();
 
   const selectedRows = useStocktake.utils.selectedRows();
-  console.log(selectedRows);
-
-  // Is this check needed now that actions only appear when lines are selected?
-  const checkSelected = () => {
-    if (!selectedRows.length) {
-      const selectRowsSnack = info(t('messages.no-lines-selected'));
-      selectRowsSnack();
-      return;
-    }
-    if (isDisabled) {
-      const isLockedSnack = info(t('error.is-locked'));
-      isLockedSnack();
-      return;
-    }
-    return true;
-  };
-
-  const openReduceToZeroModal = () => {
-    if (checkSelected()) reduceModal.onOpen();
-  };
-
-  const openChangeLocationModal = () => {
-    if (checkSelected()) changeLocationModal.onOpen();
-  };
 
   const actions: Action[] = [
     {
       label: t('button.change-location'),
       icon: <ArrowRightIcon />,
-      onClick: openChangeLocationModal,
+      onClick: changeLocationModal.onOpen,
       disabled: isDisabled,
     },
     {
       label: t('button.reduce-lines-to-zero'),
       icon: <RewindIcon />,
-      onClick: openReduceToZeroModal,
+      onClick: reduceModal.onOpen,
       disabled: isDisabled,
     },
     {
