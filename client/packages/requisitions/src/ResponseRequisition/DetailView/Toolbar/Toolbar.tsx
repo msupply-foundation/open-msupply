@@ -15,7 +15,6 @@ import { CustomerSearchInput } from '@openmsupply-client/system';
 
 import { useResponse } from '../../api';
 import { getApprovalStatusKey } from '../../../utils';
-// import { ToolbarDropDown } from './ToolbarDropDown';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
