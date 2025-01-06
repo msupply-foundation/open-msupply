@@ -101,13 +101,13 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
                 ForeignKey::InvoiceId,
             )))
         }
+        ServiceError::BatchIsReserved => {
+            return Ok(DeleteErrorInterface::BatchIsReserved(BatchIsReserved {}))
+        }
         ServiceError::TransferredShipment => {
             return Ok(DeleteErrorInterface::TransferredShipment(
                 TransferredShipment {},
             ))
-        }
-        ServiceError::BatchIsReserved => {
-            return Ok(DeleteErrorInterface::BatchIsReserved(BatchIsReserved {}))
         }
         // Standard Graphql Errors
         ServiceError::NotThisInvoiceLine(_)
@@ -317,7 +317,7 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::TransferredShipment)));
 
         let expected = json!({
-            "deleteResponseRequisition": {
+            "deleteInboundShipmentLine": {
               "error": {
                 "__typename": "TransferredShipment"
               }

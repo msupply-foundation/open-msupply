@@ -424,6 +424,64 @@ pub fn mock_inbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
     ]
 }
 
+pub fn mock_inbound_shipment_linked_transfer_line_a() -> InvoiceLineRow {
+    InvoiceLineRow {
+        id: String::from("inbound_shipment_linked_transfer_line_a"),
+        invoice_id: String::from("inbound_shipment_linked_transfer"),
+        item_link_id: String::from("item_a"),
+        location_id: None,
+        item_name: String::from("Item A"),
+        item_code: String::from("item_a_code"),
+        stock_line_id: Some(String::from("stock_line_si_d_siline_a")),
+        batch: Some(String::from("item_a_si_d_siline_a")),
+        expiry_date: None,
+        pack_size: 1.0,
+        cost_price_per_pack: 2.0,
+        sell_price_per_pack: 18.0,
+        total_before_tax: 14.0,
+        total_after_tax: 14.0,
+        tax_percentage: None,
+        r#type: InvoiceLineType::StockIn,
+        number_of_packs: 7.0,
+        ..Default::default()
+    }
+}
+
+pub fn mock_inbound_shipment_linked_transfer_line_b() -> InvoiceLineRow {
+    InvoiceLineRow {
+        id: String::from("inbound_shipment_linked_transfer_line_b"),
+        invoice_id: String::from("inbound_shipment_linked_transfer"),
+        item_link_id: String::from("item_b"),
+        location_id: Some("location_1".to_owned()),
+        item_name: String::from("Item B"),
+        item_code: String::from("item_b_code"),
+        stock_line_id: Some(String::from("stock_line_si_d_siline_b")),
+        batch: Some(String::from("item_b_si_c_siline_d")),
+        expiry_date: Some(NaiveDate::from_ymd_opt(2020, 8, 11).unwrap()),
+        pack_size: 3.0,
+        cost_price_per_pack: 45.0,
+        sell_price_per_pack: 34.0,
+        total_before_tax: 270.0,
+        total_after_tax: 270.0,
+        tax_percentage: None,
+        r#type: InvoiceLineType::StockIn,
+        number_of_packs: 2.0,
+        ..Default::default()
+    }
+}
+
+pub fn mock_inbound_shipment_linked_transfer_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mock_inbound_shipment_linked_transfer_line_a =
+        mock_inbound_shipment_linked_transfer_line_a();
+    let mock_inbound_shipment_linked_transfer_line_b =
+        mock_inbound_shipment_linked_transfer_line_b();
+
+    vec![
+        mock_inbound_shipment_linked_transfer_line_a,
+        mock_inbound_shipment_linked_transfer_line_b,
+    ]
+}
+
 pub fn mock_prescription_a_invoice_line_a() -> InvoiceLineRow {
     inline_init(|l: &mut InvoiceLineRow| {
         l.id = "prescription_a_invoice_line_a".to_string();
@@ -592,6 +650,8 @@ pub fn mock_inbound_shipment_invoice_lines() -> Vec<InvoiceLineRow> {
     mock_inbound_shipment_invoice_lines.extend(mock_inbound_shipment_c_invoice_lines());
     mock_inbound_shipment_invoice_lines.extend(mock_inbound_shipment_d_invoice_lines());
     mock_inbound_shipment_invoice_lines
+        .extend(mock_inbound_shipment_linked_transfer_invoice_lines());
+    mock_inbound_shipment_invoice_lines
 }
 
 pub fn mock_invoice_lines() -> Vec<InvoiceLineRow> {
@@ -599,6 +659,7 @@ pub fn mock_invoice_lines() -> Vec<InvoiceLineRow> {
 
     mock_invoice_lines.extend(mock_outbound_shipment_invoice_lines());
     mock_invoice_lines.extend(mock_inbound_shipment_invoice_lines());
+    mock_invoice_lines.extend(mock_inbound_shipment_linked_transfer_invoice_lines());
     mock_invoice_lines.extend(mock_prescription_a_invoice_lines());
     mock_invoice_lines.extend(mock_supplier_return_a_invoice_lines());
     mock_invoice_lines.extend(mock_supplier_return_b_invoice_lines());

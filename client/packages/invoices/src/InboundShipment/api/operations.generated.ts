@@ -425,6 +425,10 @@ export const DeleteInboundShipmentLinesDocument = gql`
               __typename
               description
             }
+            ... on TransferredShipment {
+              __typename
+              description
+            }
             ... on CannotEditInvoice {
               __typename
               description

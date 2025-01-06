@@ -82,9 +82,9 @@ mod test {
     use repository::{
         mock::{
             mock_customer_return_a, mock_customer_return_a_invoice_line_a,
-            mock_customer_return_a_invoice_line_b, mock_item_a, mock_name_store_b, mock_store_a,
-            mock_store_b, mock_supplier_return_b_invoice_line_a, mock_user_account_a, MockData,
-            MockDataInserts,
+            mock_customer_return_a_invoice_line_b, mock_inbound_shipment_linked_transfer_line_b,
+            mock_item_a, mock_name_store_b, mock_store_a, mock_store_b,
+            mock_supplier_return_b_invoice_line_a, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
@@ -183,6 +183,18 @@ mod test {
                 },
             ),
             Err(ServiceError::BatchIsReserved)
+        );
+
+        // // TransferredShipment
+        assert_eq!(
+            delete_stock_in_line(
+                &context,
+                DeleteStockInLine {
+                    id: mock_inbound_shipment_linked_transfer_line_b().id, //'id' doesn't exist -not an object?
+                    r#type: StockInType::InboundShipment,
+                },
+            ),
+            Err(ServiceError::TransferredShipment)
         );
 
         // NotThisStoreInvoice
