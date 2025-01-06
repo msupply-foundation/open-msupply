@@ -63,6 +63,9 @@ impl InvoiceLineFilterInput {
                 .invoice_status
                 .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
             stock_line_id: self.stock_line_id.map(EqualFilter::from),
+            picked_datetime: None,
+            delivered_datetime: None,
+            verified_datetime: None,
         }
     }
 }
@@ -87,6 +90,9 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
                 .invoice_status
                 .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
             stock_line_id: f.stock_line_id.map(EqualFilter::from),
+            picked_datetime: None,
+            delivered_datetime: None,
+            verified_datetime: None,
         }
     }
 }
