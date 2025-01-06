@@ -4,7 +4,10 @@ use crate::{
 };
 
 // TODO create joinable with tables that contain site_id
-use super::contact_form_row::contact_form::dsl::*;
+use super::{
+    contact_form_row::contact_form::dsl::*, name_link_row::name_link, name_row::name,
+    store_row::store, user_row::user_account,
+};
 
 use chrono::NaiveDateTime;
 use diesel_derive_enum::DbEnum;
@@ -24,9 +27,13 @@ table! {
     }
 }
 
-// joinable!(contact_form -> user (user_id));
+joinable!(contact_form -> store (store_id));
+joinable!(contact_form -> user_account (user_id));
 
-// allow_tables_to_appear_in_same_query!(contact_form, name_link);
+allow_tables_to_appear_in_same_query!(contact_form, store);
+allow_tables_to_appear_in_same_query!(contact_form, user_account);
+allow_tables_to_appear_in_same_query!(contact_form, name);
+allow_tables_to_appear_in_same_query!(contact_form, name_link);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
