@@ -76,8 +76,8 @@ export const ArrayUtils = {
       totalPrice += Number(entity[key]) * entity.numberOfPacks;
       totalUnits += entity.numberOfPacks * entity.packSize;
     });
-    const averageCost = totalPrice / totalUnits;
+    const averagePrice = totalPrice / totalUnits;
 
-    return Number.isNaN(averageCost) ? 0 : averageCost;
+    return Number.isNaN(averagePrice) ? 0 : averagePrice;
   },
 };
