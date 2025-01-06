@@ -113,6 +113,15 @@ impl EmailServiceTrait for EmailService {
     }
 
     fn send_queued_emails(&self, ctx: &ServiceContext) -> Result<usize, EmailServiceError> {
+        let repo = EmailQueueRowRepository::new(&ctx.connection);
+        let queued_emails = repo.un_sent()?;
+
+        if queued_emails.is_empty() {
+            return Ok(0);
+        }
+
+        log::info!("Found {} queued emails", queued_emails.len());
+
         let mail_service = match &self.service {
             None => {
                 return Err(EmailServiceError::NotConfigured);
@@ -122,8 +131,6 @@ impl EmailServiceTrait for EmailService {
 
         log::debug!("Sending queued emails");
 
-        let repo = EmailQueueRowRepository::new(&ctx.connection);
-        let queued_emails = repo.un_sent()?;
         let mut error_count = 0;
         let mut sent_count = 0;
 
