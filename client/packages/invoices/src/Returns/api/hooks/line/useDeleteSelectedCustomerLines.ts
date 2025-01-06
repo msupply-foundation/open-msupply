@@ -8,7 +8,7 @@ import { useCustomerReturnIsDisabled } from '../utils/useCustomerReturnIsDisable
 import { useReturns } from '../..';
 
 interface DeleteSelectedCustomerReturnLinesOutput {
-  onDelete: () => void;
+  confirmAndDelete: () => void;
   selectedIds: string[];
 }
 
@@ -69,7 +69,7 @@ export const useDeleteSelectedCustomerReturnLines = ({
   });
 
   return {
-    onDelete: confirmAndDelete,
+    confirmAndDelete,
     selectedIds: selectedRows.map(row => row.id),
   };
 };

@@ -7,18 +7,18 @@ import { useReturns } from '../..';
 import { useSupplierReturnRows } from './useSupplierReturnRows';
 import { useSupplierReturnIsDisabled } from '../utils/useSupplierReturnIsDisabled';
 
-interface DeleteSelectedSupplierLinesOutputProps {
-  onDelete: () => void;
+interface DeleteSelectedSupplierLinesOutput {
+  confirmAndDelete: () => void;
   selectedIds: string[];
 }
 
-interface DeleteSelectedSupplierLinesProps {
+interface DeleteSelectedSupplierLines {
   returnId: string;
 }
 
 export const useDeleteSelectedSupplierReturnLines = ({
   returnId,
-}: DeleteSelectedSupplierLinesProps): DeleteSelectedSupplierLinesOutputProps => {
+}: DeleteSelectedSupplierLines): DeleteSelectedSupplierLinesOutput => {
   const { items, lines } = useSupplierReturnRows();
   const isDisabled = useSupplierReturnIsDisabled();
   const t = useTranslation();
@@ -66,7 +66,7 @@ export const useDeleteSelectedSupplierReturnLines = ({
   });
 
   return {
-    onDelete: confirmAndDelete,
+    confirmAndDelete,
     selectedIds: selectedRows.map(row => row.id),
   };
 };

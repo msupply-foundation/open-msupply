@@ -32,13 +32,13 @@ interface FooterProps {
 export const Footer: FC<FooterProps> = ({ isDisabled }) => {
   const { data } = useRequest.document.get();
   const t = useTranslation();
-  const { selectedRows, ...onDelete } = useRequest.line.delete();
+  const { selectedRows, confirmAndDelete } = useRequest.line.delete();
 
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
-      onClick: onDelete.confirmAndDelete,
+      onClick: confirmAndDelete,
       disabled: isDisabled,
     },
   ];
