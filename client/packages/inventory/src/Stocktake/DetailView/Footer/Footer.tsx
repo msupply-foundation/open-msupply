@@ -74,6 +74,7 @@ export const Footer = () => {
       label: t('button.reduce-lines-to-zero'),
       icon: <RewindIcon />,
       onClick: openReduceToZeroModal,
+      disabled: isDisabled,
     },
     {
       label: t('button.delete-lines'),
