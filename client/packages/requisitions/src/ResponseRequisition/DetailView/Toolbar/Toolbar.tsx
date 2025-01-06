@@ -8,7 +8,6 @@ import {
   SearchBar,
   Typography,
   BufferedTextInput,
-  Alert,
   Tooltip,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
@@ -85,11 +84,6 @@ export const Toolbar: FC = () => {
               )}
             </Box>
           </Box>
-          {showInfo && (
-            <Box padding={2}>
-              <Alert severity="info">{t('info.no-shipment')}</Alert>
-            </Box>
-          )}
         </Grid>
         <SearchBar
           placeholder={t('placeholder.filter-items')}

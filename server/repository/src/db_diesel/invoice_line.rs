@@ -1,17 +1,19 @@
 use super::{
     invoice_line::invoice_stats::dsl as invoice_stats_dsl,
-    invoice_line_row::{invoice_line, invoice_line::dsl as invoice_line_dsl},
-    invoice_row::{invoice, invoice::dsl as invoice_dsl},
-    item_link_row::{item_link, item_link::dsl as item_link_dsl},
-    item_row::{item, item::dsl as item_dsl},
-    location_row::{location, location::dsl as location_dsl},
-    stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
-    DBType, InvoiceLineRow, InvoiceLineType, InvoiceRow, LocationRow, StorageConnection,
+    invoice_line_row::invoice_line::{self, dsl as invoice_line_dsl},
+    invoice_row::invoice::{self, dsl as invoice_dsl},
+    item_link_row::item_link::{self, dsl as item_link_dsl},
+    item_row::item::{self, dsl as item_dsl},
+    location_row::location::{self, dsl as location_dsl},
+    stock_line_row::stock_line::{self, dsl as stock_line_dsl},
+    DBType, DatetimeFilter, InvoiceLineRow, InvoiceLineType, InvoiceRow, LocationRow,
+    StorageConnection,
 };
 
 use crate::{
     diesel_macros::{
-        apply_equal_filter, apply_sort, apply_sort_asc_nulls_last, apply_sort_no_case,
+        apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_last,
+        apply_sort_no_case,
     },
     repository_error::RepositoryError,
     EqualFilter, InvoiceStatus, InvoiceType, ItemLinkRow, ItemRow, Pagination, Sort, StockLineRow,
@@ -88,6 +90,9 @@ pub struct InvoiceLineFilter {
     pub invoice_type: Option<EqualFilter<InvoiceType>>,
     pub invoice_status: Option<EqualFilter<InvoiceStatus>>,
     pub stock_line_id: Option<EqualFilter<String>>,
+    pub picked_datetime: Option<DatetimeFilter>,
+    pub delivered_datetime: Option<DatetimeFilter>,
+    pub verified_datetime: Option<DatetimeFilter>,
 }
 
 impl InvoiceLineFilter {
@@ -147,6 +152,21 @@ impl InvoiceLineFilter {
 
     pub fn stock_line_id(mut self, filter: EqualFilter<String>) -> Self {
         self.stock_line_id = Some(filter);
+        self
+    }
+
+    pub fn picked_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.picked_datetime = Some(filter);
+        self
+    }
+
+    pub fn verified_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.verified_datetime = Some(filter);
+        self
+    }
+
+    pub fn delivered_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.delivered_datetime = Some(filter);
         self
     }
 }
@@ -277,6 +297,9 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
             invoice_type,
             invoice_status,
             stock_line_id,
+            picked_datetime,
+            delivered_datetime,
+            verified_datetime,
         } = f;
 
         apply_equal_filter!(query, id, invoice_line_dsl::id);
@@ -290,6 +313,9 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         apply_equal_filter!(query, invoice_type, invoice_dsl::type_);
         apply_equal_filter!(query, invoice_status, invoice_dsl::status);
         apply_equal_filter!(query, stock_line_id, stock_line_dsl::id);
+        apply_date_time_filter!(query, picked_datetime, invoice_dsl::picked_datetime);
+        apply_date_time_filter!(query, delivered_datetime, invoice_dsl::delivered_datetime);
+        apply_date_time_filter!(query, verified_datetime, invoice_dsl::verified_datetime);
     }
 
     query

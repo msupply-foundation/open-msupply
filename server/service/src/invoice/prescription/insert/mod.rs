@@ -14,6 +14,7 @@ use validate::validate;
 pub struct InsertPrescription {
     pub id: String,
     pub patient_id: String,
+    pub diagnosis_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -82,7 +83,7 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceRowRepository, NameRow, NameStoreJoinRow, NameRowType,
+        InvoiceRowRepository, NameRow, NameRowType, NameStoreJoinRow,
     };
     use util::{inline_edit, inline_init};
 

@@ -14,19 +14,33 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
   const [confirmationModalState, setState] = useState<ConfirmationModalState>({
     open: false,
     message: '',
+    info: '',
     title: '',
     iconType: 'help',
+    buttonLabel: '',
   });
-  const { open, message, title, iconType, onConfirm, onCancel } =
-    confirmationModalState;
+  const {
+    open,
+    message,
+    info,
+    buttonLabel,
+    title,
+    iconType,
+    onConfirm,
+    onCancel,
+  } = confirmationModalState;
 
   const confirmationModalController: ConfirmationModalControllerState = useMemo(
     () => ({
-      setIconType: (iconType: IconType) =>
-        setState(state => ({ ...state, iconType })),
       setMessage: (message: string) =>
         setState(state => ({ ...state, message })),
+      setInfo: (info: string | undefined) =>
+        setState(state => ({ ...state, info })),
       setTitle: (title: string) => setState(state => ({ ...state, title })),
+      setIconType: (iconType: IconType) =>
+        setState(state => ({ ...state, iconType })),
+      setButtonLabel: (buttonLabel: string | undefined) =>
+        setState(state => ({ ...state, buttonLabel })),
       setOnConfirm: (
         onConfirm: (() => Promise<void>) | (() => void) | undefined
       ) => setState(state => ({ ...state, onConfirm })),
@@ -46,6 +60,7 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
       <ConfirmationModal
         open={open}
         message={message}
+        info={info}
         title={title}
         onConfirm={onConfirm}
         onCancel={() => {
@@ -53,6 +68,7 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
           onCancel && onCancel();
         }}
         iconType={iconType}
+        buttonLabel={buttonLabel}
       />
     </ConfirmationModalContext.Provider>
   );
