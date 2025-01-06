@@ -114,7 +114,6 @@ export const QuantityTableComponent: FC<TableProps> = ({
       {
         Cell: NumberOfPacksCell,
         width: 100,
-        label: 'label.num-packs',
         setter: updateDraftLine,
       },
     ],
@@ -181,7 +180,6 @@ export const PricingTableComponent: FC<TableProps> = ({
       'numberOfPacks',
       {
         width: 100,
-        label: 'label.num-packs',
       },
     ],
     [
