@@ -1,4 +1,4 @@
-use service::service_provider::ServiceProvider;
+use service::{service_provider::ServiceProvider, sync::CentralServerConfig};
 use std::{sync::Arc, time::Duration};
 use tokio::task::JoinHandle;
 
@@ -20,16 +20,19 @@ async fn scheduled_task_runner(service_provider: Arc<ServiceProvider>, period: D
     loop {
         interval.tick().await;
         log::debug!("Processing Scheduled Tasks");
-        let send_emails = service_provider
-            .email_service
-            .send_queued_emails(&service_context);
-        match send_emails {
-            Ok(num) => {
-                if num > 0 {
-                    log::info!("Sent {} queued emails", num);
+        if CentralServerConfig::is_central_server() {
+            // Email sending is only supported on the central server
+            let send_emails = service_provider
+                .email_service
+                .send_queued_emails(&service_context);
+            match send_emails {
+                Ok(num) => {
+                    if num > 0 {
+                        log::info!("Sent {} queued emails", num);
+                    }
                 }
-            }
-            Err(error) => log::error!("Error sending queued emails: {:?}", error),
-        };
+                Err(error) => log::error!("Error sending queued emails: {:?}", error),
+            };
+        }
     }
 }
