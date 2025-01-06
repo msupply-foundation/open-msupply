@@ -70,5 +70,7 @@ pub use self::generate_supplier_return_lines::*;
 pub mod return_reason;
 pub use self::return_reason::*;
 
+pub mod diagnosis;
+
 #[cfg(test)]
 mod tests;

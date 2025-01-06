@@ -55,7 +55,7 @@ export const useResponseColumns = () => {
       width: 130,
     },
     [
-      'stockOnHand',
+      'availableStockOnHand',
       {
         label: 'label.our-soh',
         description: 'description.our-soh',

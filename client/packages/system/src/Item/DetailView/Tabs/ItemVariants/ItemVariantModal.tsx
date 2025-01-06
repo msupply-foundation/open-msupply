@@ -110,6 +110,7 @@ const ItemVariantForm = ({
           labelWidth="200"
           Input={
             <BasicTextInput
+              autoFocus
               value={variant.name}
               onChange={event => {
                 updateVariant({ name: event.target.value });
