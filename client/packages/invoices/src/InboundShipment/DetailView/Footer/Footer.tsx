@@ -74,15 +74,15 @@ export const FooterComponent: FC<FooterComponentProps> = ({
 
   const actions: Action[] = [
     {
-      label: t('button.replenishment-return-lines'),
-      icon: <ArrowLeftIcon />,
-      onClick: () => onReturnLines(selectedLines),
-    },
-    {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: onDelete,
       disabled: isDisabled,
+    },
+    {
+      label: t('button.replenishment-return-lines'),
+      icon: <ArrowLeftIcon />,
+      onClick: () => onReturnLines(selectedLines),
     },
     {
       label: t('button.zero-line-quantity'),
