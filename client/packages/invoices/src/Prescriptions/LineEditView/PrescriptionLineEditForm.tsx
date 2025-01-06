@@ -94,7 +94,7 @@ export const PrescriptionLineEditForm: React.FC<
   const allocate = (numPacks: number, packSize: number) => {
     const newAllocateQuantities = onChangeQuantity(
       numPacks,
-      null, // No pack size for auto-allocation
+      packSize === -1 || packSize === 1 ? null : packSize,
       true
     );
     const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
@@ -181,6 +181,7 @@ export const PrescriptionLineEditForm: React.FC<
     );
     if (newIssueQuantity !== issueUnitQuantity)
       setIssueUnitQuantity(newIssueQuantity);
+    setAllocationAlerts([]);
   }, [item?.id]);
 
   useEffect(() => {
