@@ -20,15 +20,12 @@ export const Toolbar: FC = () => {
   const isDisabled = useResponse.utils.isDisabled();
   const { itemFilter, setItemFilter } = useResponse.line.list();
 
-  const { approvalStatus, otherParty, theirReference, shipments, update } =
+  const { approvalStatus, otherParty, theirReference, update } =
     useResponse.document.fields([
       'approvalStatus',
       'otherParty',
       'theirReference',
-      'shipments',
     ]);
-  const noLinkedShipments = (shipments?.totalCount ?? 0) === 0;
-  const showInfo = noLinkedShipments && !isDisabled;
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
 
   return (
