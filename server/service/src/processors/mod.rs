@@ -1,8 +1,12 @@
+use crate::activity_log::system_log_entry;
+use repository::system_log_row::SystemLogType;
+use repository::{RepositoryError, StorageConnection};
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::mpsc::{self, Receiver, Sender};
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
+use util::format_error;
 
 use crate::service_provider::ServiceProvider;
 
@@ -146,6 +150,16 @@ impl ProcessorsTrigger {
             await_process_queue: mpsc::channel(1).0,
         }
     }
+}
+
+fn log_system_error(
+    connection: &StorageConnection,
+    error: &impl std::error::Error,
+) -> Result<(), RepositoryError> {
+    let error_message = format_error(error);
+    log::error!("{}", error_message);
+    system_log_entry(connection, SystemLogType::ProcessorError, &error_message)?;
+    Ok(())
 }
 
 #[cfg(test)]
