@@ -4,7 +4,9 @@ import {
   IndicatorValueFragment,
   useRequest,
 } from '../../api';
-import { useDebounceCallback } from '@common/hooks';
+import { useDebounceCallback, useNotification } from '@common/hooks';
+import { useNavigate, useParams } from '@openmsupply-client/common';
+import { buildIndicatorEditRoute } from '../utils';
 
 export const usePreviousNextIndicatorLine = (
   lines?: IndicatorLineRowFragment[],
@@ -43,10 +45,11 @@ export const useDraftIndicatorValue = (
   indicatorValue: IndicatorValueFragment
 ) => {
   const { mutateAsync, isLoading } = useRequest.document.updateIndicatorValue();
+  const { error } = useNotification();
   const [draft, setDraft] = useState<IndicatorValueFragment>(indicatorValue);
   const save = useDebounceCallback(
     (patch: Partial<IndicatorValueFragment>) =>
-      mutateAsync({ ...draft, ...patch }),
+      mutateAsync({ ...draft, ...patch }).catch(e => error(e.message)()),
     [],
     500
   );
@@ -58,4 +61,21 @@ export const useDraftIndicatorValue = (
   };
 
   return { draft, isLoading, update };
+};
+
+export const useIndicatorNavigation = (requisitionNumber?: number) => {
+  const navigate = useNavigate();
+  const { programIndicatorCode } = useParams();
+
+  return (indicatorId: string | undefined) => {
+    if (!requisitionNumber || !programIndicatorCode || !indicatorId) return;
+
+    navigate(
+      buildIndicatorEditRoute(
+        requisitionNumber,
+        programIndicatorCode,
+        indicatorId
+      )
+    );
+  };
 };

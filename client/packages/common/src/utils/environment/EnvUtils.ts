@@ -98,7 +98,7 @@ const mapRoute = (route: string): RouteMapping => {
     case inRoute(AppRoute.RnRForms):
       return { title: 'r-and-r-forms', docs: '/replenishment/r-and-r-forms/' };
     default:
-      return { title: undefined, docs: '/introduction/' };
+      return { title: undefined, docs: '/introduction/introduction' };
   }
 };
 

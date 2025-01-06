@@ -3,7 +3,6 @@ import {
   Box,
   ButtonWithIcon,
   DataTableSkeleton,
-  IndicatorLineRowNode,
   LocaleKey,
   NothingHere,
   PlusCircleIcon,
@@ -16,9 +15,9 @@ import {
 
 interface IndicatorTabProps {
   onClick: (
-    programIndicator?: ProgramIndicatorFragment,
-    indicatorLine?: IndicatorLineRowNode,
-    request?: RequestFragment
+    requisitionNumber?: number,
+    programIndicatorCode?: string,
+    indicatorId?: string
   ) => void;
   isLoading: boolean;
   request?: RequestFragment;
@@ -66,7 +65,13 @@ export const IndicatorsTab = ({
             key={code}
             label={t(`button.${code.toLowerCase()}` as LocaleKey)}
             Icon={<PlusCircleIcon />}
-            onClick={() => onClick(groupIndicators[0], firstLine, request)}
+            onClick={() =>
+              onClick(
+                request?.requisitionNumber,
+                groupIndicators[0]?.code ?? undefined,
+                firstLine?.id
+              )
+            }
           />
         );
       })}
