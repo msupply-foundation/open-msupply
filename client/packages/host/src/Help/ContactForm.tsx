@@ -8,6 +8,8 @@ import {
   LoadingButton,
   MailIcon,
   useNotification,
+  Select,
+  ContactFormNodeType,
 } from '@openmsupply-client/common';
 import { useContactForm } from '../api/hooks/help/useContactForm';
 
@@ -44,6 +46,35 @@ export const ContactForm = () => {
 
   return (
     <>
+      <InputWithLabelRow
+        label={t('label.reason-for-contacting')}
+        labelWidth="200"
+        Input={
+          <Select
+            fullWidth
+            value={draft.contactType}
+            // `as` not ideal, but needed for TS to accept the value
+            // OK to use here as we can guarantee the value will be one of the options
+            // (based on values defined in options array below)
+            onChange={e =>
+              updateDraft({
+                contactType: e.target.value as ContactFormNodeType,
+              })
+            }
+            margin="normal"
+            options={[
+              {
+                label: t('label.feedback'),
+                value: ContactFormNodeType.Feedback,
+              },
+              {
+                label: t('label.support'),
+                value: ContactFormNodeType.Support,
+              },
+            ]}
+          />
+        }
+      />
       <InputWithLabelRow
         label={t('label.your-email-address')}
         labelWidth="200"

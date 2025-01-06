@@ -70,7 +70,7 @@ impl<'a> DiagnosisRepository<'a> {
                     false => {
                         query = query.filter(
                             diagnosis::valid_till
-                                .lt(today)
+                                .le(today)
                                 .and(diagnosis::valid_till.is_not_null()),
                         )
                     }

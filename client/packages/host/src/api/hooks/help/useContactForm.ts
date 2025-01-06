@@ -1,4 +1,4 @@
-import { InsertContactFormInput } from '@common/types';
+import { ContactFormNodeType, InsertContactFormInput } from '@common/types';
 import { useState } from 'react';
 import { useContactFormGraphQL } from './useContactFormGraphQL';
 import {
@@ -10,12 +10,16 @@ import {
   RegexUtils,
 } from '@openmsupply-client/common';
 
-type ContactFormInput = Pick<InsertContactFormInput, 'replyEmail' | 'body'>;
+type ContactFormInput = Pick<
+  InsertContactFormInput,
+  'contactType' | 'replyEmail' | 'body'
+>;
 
 export function useContactForm() {
   const defaultDraft: ContactFormInput = {
     replyEmail: '',
     body: '',
+    contactType: ContactFormNodeType.Feedback,
   };
   const [draft, setDraft] = useState<ContactFormInput>(defaultDraft);
   const [emailError, setEmailError] = useState('');
@@ -61,13 +65,18 @@ export function useContactForm() {
 const useInsert = () => {
   const { api, storeId } = useContactFormGraphQL();
 
-  const mutationFn = async ({ replyEmail, body }: ContactFormInput) => {
+  const mutationFn = async ({
+    contactType,
+    replyEmail,
+    body,
+  }: ContactFormInput) => {
     const apiResult = await api.insertContactForm({
       storeId,
       input: {
         id: FnUtils.generateUUID(),
         replyEmail,
         body,
+        contactType,
       },
     });
 

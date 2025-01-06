@@ -176,6 +176,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
           >
             <ListItemText
               primary={text}
+              className={selected ? 'selected' : ''}
               sx={{
                 '& .MuiTypography-root': {
                   fontWeight:

@@ -54,6 +54,7 @@ pub struct NameFilter {
     pub is_visible: Option<bool>,
     pub is_system_name: Option<bool>,
     pub r#type: Option<EqualFilter<NameType>>,
+    pub supplying_store_id: Option<EqualFilter<String>>,
 
     pub phone: Option<StringFilter>,
     pub address1: Option<StringFilter>,

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BasicSpinner,
   DetailContainer,
@@ -27,6 +27,8 @@ export const RequestLineEditPage = () => {
     lines,
     currentItem
   );
+  const isPacksEnabled = !!draft?.defaultPackSize;
+  const [isPacks, setIsPacks] = useState(isPacksEnabled);
   const enteredLineIds = lines
     ? lines
         .filter(line => line.requestedQuantity !== 0)
@@ -71,6 +73,9 @@ export const RequestLineEditPage = () => {
                 hasPrevious={hasPrevious}
                 previous={previous}
                 isProgram={!!data?.programName}
+                isPacksEnabled={isPacksEnabled}
+                isPacks={isPacks}
+                setIsPacks={setIsPacks}
               />
             </>
           }

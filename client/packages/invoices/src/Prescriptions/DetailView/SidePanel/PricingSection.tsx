@@ -22,7 +22,7 @@ export const PricingSectionComponent = () => {
   if (!pricing) return null;
 
   return (
-    <DetailPanelSection title={t('heading.dispensary-details')}>
+    <DetailPanelSection title={t('heading.pricing')}>
       <Grid container gap={0.5}>
         <>
           <PanelRow style={{ marginTop: 12 }}>
