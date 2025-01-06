@@ -115,7 +115,6 @@ impl EmailServiceTrait for EmailService {
     fn send_queued_emails(&self, ctx: &ServiceContext) -> Result<usize, EmailServiceError> {
         let mail_service = match &self.service {
             None => {
-                log::error!("Email settings not configured");
                 return Err(EmailServiceError::NotConfigured);
             }
             Some(mail_service) => mail_service,
