@@ -26,6 +26,7 @@ import { EquipmentImportModal } from '../ImportAsset';
 import { Status } from '../Components';
 import { AssetRowFragment } from '../api/operations.generated';
 import { AppRoute } from '@openmsupply-client/config';
+import { Footer } from './Footer';
 
 const StatusCell = ({ rowData }: { rowData: AssetRowFragment }) => {
   return <Status status={rowData.statusLog?.status} />;
@@ -161,6 +162,7 @@ const AssetListComponent: FC = () => {
         noDataElement={<NothingHere body={t('error.no-items-to-display')} />}
         enableColumnSelection
       />
+      <Footer />
     </>
   );
 };
