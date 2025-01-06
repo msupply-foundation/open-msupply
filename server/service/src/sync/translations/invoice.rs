@@ -4,8 +4,8 @@ use crate::sync::{
         empty_str_as_option_string, naive_time, zero_date_as_option,
     },
     translations::{
-        clinician::ClinicianTranslation, currency::CurrencyTranslation, name::NameTranslation,
-        store::StoreTranslation,
+        clinician::ClinicianTranslation, currency::CurrencyTranslation,
+        diagnosis::DiagnosisTranslation, name::NameTranslation, store::StoreTranslation,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -186,6 +186,11 @@ pub struct LegacyTransactRow {
     #[serde(rename = "om_backdated_datetime")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub backdated_datetime: Option<NaiveDateTime>,
+
+    #[serde(default)]
+    #[serde(rename = "diagnosis_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub diagnosis_id: Option<String>,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -241,6 +246,7 @@ impl SyncTranslation for InvoiceTranslation {
             StoreTranslation.table_name(),
             ClinicianTranslation.table_name(),
             CurrencyTranslation.table_name(),
+            DiagnosisTranslation.table_name(),
         ]
     }
 
@@ -334,6 +340,7 @@ impl SyncTranslation for InvoiceTranslation {
             transport_reference: data.transport_reference,
             original_shipment_id: data.original_shipment_id,
             backdated_datetime: mapping.backdated_datetime,
+            diagnosis_id: data.diagnosis_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -394,6 +401,7 @@ impl SyncTranslation for InvoiceTranslation {
                     currency_rate,
                     original_shipment_id,
                     backdated_datetime,
+                    diagnosis_id,
                 },
             name_row,
             clinician_row,
@@ -462,6 +470,7 @@ impl SyncTranslation for InvoiceTranslation {
             clinician_id: clinician_row.map(|row| row.id),
             original_shipment_id,
             backdated_datetime,
+            diagnosis_id,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;

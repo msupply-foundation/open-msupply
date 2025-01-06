@@ -14,22 +14,29 @@ interface ButtonProps {
 }
 
 const StyledButton = styled(MuiButton, {
-  shouldForwardProp: prop => prop !== 'isRtl',
-})<{ isRtl: boolean }>(({ isRtl }) => ({
-  fontWeight: 700,
-  marginLeft: 5,
-  marginRight: 5,
-  textTransform: 'none' as Property.TextTransform,
-  '& .MuiButton-startIcon': isRtl
-    ? {
+  shouldForwardProp: prop => prop !== 'shrink' && prop !== 'isRtl',
+})<{ isRtl: boolean }>(({ isRtl, color, theme }) => {
+  const iconColor = theme.palette.primary.main;
+  return {
+    fontWeight: 700,
+    marginLeft: 5,
+    marginRight: 5,
+    textTransform: 'none' as Property.TextTransform,
+    color: color === 'primary' ? 'black' : color,
+    isRtl,
+
+    '& .MuiButton-startIcon': {
+      color: color === 'primary' ? iconColor : color,
+      isRtl: {
         marginRight: -4,
         marginLeft: 8,
-      }
-    : {},
-}));
+      },
+    },
+  };
+});
 
 export const FlatButton: React.FC<ButtonProps> = ({
-  color,
+  color = 'primary',
   endIcon,
   label,
   onClick,
