@@ -55,7 +55,7 @@ export const FooterComponent: FC = () => {
   const { data } = useReturns.document.supplierReturn();
   const { navigateUpOne } = useBreadcrumbs();
   const { id } = data ?? { id: '' };
-  const { selectedIds, ...onDelete } =
+  const { selectedIds, confirmAndDelete } =
     useReturns.lines.deleteSelectedSupplierLines({
       returnId: id,
     });
@@ -65,7 +65,7 @@ export const FooterComponent: FC = () => {
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
-      onClick: onDelete.onDelete,
+      onClick: confirmAndDelete,
       disabled: isDisabled,
     },
   ];
