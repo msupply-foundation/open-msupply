@@ -39,6 +39,12 @@ export const Footer = () => {
 
   const actions: Action[] = [
     {
+      label: t('button.delete-lines'),
+      icon: <DeleteIcon />,
+      onClick: onDelete,
+      disabled: isDisabled,
+    },
+    {
       label: t('button.change-location'),
       icon: <ArrowRightIcon />,
       onClick: changeLocationModal.onOpen,
@@ -48,12 +54,6 @@ export const Footer = () => {
       label: t('button.reduce-lines-to-zero'),
       icon: <RewindIcon />,
       onClick: reduceModal.onOpen,
-      disabled: isDisabled,
-    },
-    {
-      label: t('button.delete-lines'),
-      icon: <DeleteIcon />,
-      onClick: onDelete,
       disabled: isDisabled,
     },
   ];
