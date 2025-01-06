@@ -2,6 +2,8 @@ import csv
 import re
 import json
 
+###### THIS SCRIPT WAS USED TO GENERATE ITEM CODES FOR VACCINE ITEMS IT IS NOT INTENDED TO BE RUN AGAIN ######
+
 item_variants_file_path = 'gaps_item_variants.csv'
 
 code_lookup = {}
