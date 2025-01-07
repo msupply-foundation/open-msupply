@@ -28,18 +28,18 @@ actix-cors = "0.7.0"
 actix-web = { version = "4.7.0", features = ["rustls-0_23"] }
 actix-files.workspace = true
 anyhow.workspace = true
-config = "0.12.0"
+config = "0.15.4"
 chrono = { workspace = true }
 thiserror = { workspace = true }
 log = { workspace = true }
 log-panics = { workspace = true }
 
-rustls = { version = "0.23.10", default-features = false, features = ["ring"] }
+rustls = { version = "0.23.20", default-features = false, features = ["ring"] }
 rustls-pemfile = "2.1.2"
 serde = { workspace = true }
 tokio = { workspace = true }
 clap = { workspace = true }
-rust-embed = "6.4.0"
+rust-embed = "8.5.0"
 mime_guess = "2.0.4"
 futures = { workspace = true }
 simple-log = { workspace = true }
