@@ -280,7 +280,9 @@ fn generate_program_indicator_values(
                 let value = match column.value_type {
                     Some(IndicatorValueType::String) => column.default_value.clone(),
                     Some(IndicatorValueType::Number) => {
-                        if store_pref.use_consumption_and_stock_from_customers_for_internal_orders {
+                        if store_pref.use_consumption_and_stock_from_customers_for_internal_orders
+                            && !customer_store_ids.is_empty()
+                        {
                             let sum: f64 = values
                                 .iter()
                                 .filter(|v| {
