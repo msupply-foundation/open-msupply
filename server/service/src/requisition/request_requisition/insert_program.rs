@@ -266,7 +266,7 @@ fn generate_program_indicator_values(
             .period_id(EqualFilter::equal_to(period_id))
             .indicator_line_id(EqualFilter::equal_any(indicator_line_ids))
             .indicator_column_id(EqualFilter::equal_any(indicator_column_ids))
-            .customer_name_link_id(EqualFilter::equal_any(customer_name_ids.clone())),
+            .customer_name_id(EqualFilter::equal_any(customer_name_ids.clone())),
     )?;
 
     let mut indicator_values = vec![];
