@@ -7,7 +7,7 @@ import {
   Theme,
 } from '@mui/material';
 
-const translateColor = (theme: Theme, color?: string) => {
+export const translateColor = (theme: Theme, color?: string) => {
   switch (color) {
     case 'error':
       return theme.palette.error.main;
@@ -44,30 +44,30 @@ export const StyledBaseButton = styled(MuiButton)(({
   const iconColor = getIconColor();
 
   return {
+    '&.MuiButton-contained': { fontWeight: 600 },
     '&.MuiButton-outlined': {
       backgroundColor: 'white',
-      color: color === 'primary' ? 'black' : color,
+      color:
+        color === 'primary'
+          ? theme.mixins.button.textColor
+          : translateColor(theme, color),
       '& .MuiButton-startIcon': {
-        color: color === 'primary' ? translateColor(theme, color) : color,
+        color: color === 'primary' ? translateColor(theme, color) : undefined,
       },
     },
-
-    borderRadius: 24,
-    fontWeight: 700,
-    height: style?.height ?? 40,
-    textTransform: 'none' as Property.TextTransform,
-    boxShadow: theme.shadows[2],
-
-    minWidth: '115px',
-
     border: 'none',
-
+    borderRadius: 24,
+    boxShadow: theme.shadows[2],
+    fontSize: '0.875rem',
+    height: style?.height ?? 40,
+    minWidth: '115px',
+    textTransform: 'none' as Property.TextTransform,
     '&:hover': {
       border: 'none',
       color: hoverColor,
       backgroundColor: hoverBgColor,
       '& .MuiButton-startIcon': {
-        color: color === 'primary' ? iconColor : color,
+        color: color === 'primary' ? iconColor : undefined,
       },
     },
   };

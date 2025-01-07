@@ -92,9 +92,8 @@ export const ConfirmationModal = ({
                 }
                 onCancel();
               }}
-            >
-              {buttonLabel ? buttonLabel : t('button.ok')}
-            </LoadingButton>
+              label={buttonLabel ? buttonLabel : t('button.ok')}
+            />
           </Grid>
         </Grid>
       </Grid>
