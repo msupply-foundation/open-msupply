@@ -1,5 +1,6 @@
 use repository::{contact_form::ContactForm, contact_form_row::ContactType};
 use tera::{Context, Tera};
+use util::constants::{FEEDBACK_EMAIL, SUPPORT_EMAIL};
 
 use crate::{
     email::{
@@ -12,19 +13,15 @@ use nanohtml2text::html2text;
 
 use super::{ContactFormProcessor, ProcessContactFormError};
 
-const DESCRIPTION: &str = "Adds a feedback email to the queue from feedback contact forms";
+const DESCRIPTION: &str = "Adds an email to the queue from a contact form";
 
-pub(crate) struct QueueFeedbackEmailProcessor;
+pub(crate) struct QueueContactEmailProcessor;
 
-impl ContactFormProcessor for QueueFeedbackEmailProcessor {
+impl ContactFormProcessor for QueueContactEmailProcessor {
     fn get_description(&self) -> String {
         DESCRIPTION.to_string()
     }
 
-    /// Feedback email will be queued when:
-    ///
-    /// - Form is of type Feedback
-    ///
     /// Only runs once because contact form is create only
     /// Changelog will only be processed once
     fn try_process_record(
@@ -32,21 +29,14 @@ impl ContactFormProcessor for QueueFeedbackEmailProcessor {
         ctx: &ServiceContext,
         contact_form: &ContactForm,
     ) -> Result<Option<String>, ProcessContactFormError> {
-        if !matches!(
-            contact_form.contact_form_row.contact_type,
-            ContactType::Feedback
-        ) {
-            return Ok(None);
-        }
-
         // TODO... consts?
-        let email = create_feedback_email("feedback@msupply.foundation".to_string(), contact_form);
+        let email = create_email(contact_form);
 
         let email = match email {
             Ok(email) => email,
             Err(e) => {
                 log::error!(
-                    "Error creating feedback email for contact form {}: {:?}",
+                    "Error creating for contact form {}: {:?}",
                     contact_form.contact_form_row.id,
                     e
                 );
@@ -59,13 +49,13 @@ impl ContactFormProcessor for QueueFeedbackEmailProcessor {
         match enqueue {
             Ok(_) => {
                 log::info!(
-                    "Queued feedback email for contact form {}",
+                    "Queued email for contact form {}",
                     contact_form.contact_form_row.id
                 );
             }
             Err(e) => {
                 log::error!(
-                    "Error queueing feedback email for contact form {}: {:?}",
+                    "Error queueing email for contact form {}: {:?}",
                     contact_form.contact_form_row.id,
                     e
                 );
@@ -83,10 +73,7 @@ impl ContactFormProcessor for QueueFeedbackEmailProcessor {
     }
 }
 
-fn create_feedback_email(
-    to: String,
-    contact_form: &ContactForm,
-) -> Result<EnqueueEmailData, EmailServiceError> {
+fn create_email(contact_form: &ContactForm) -> Result<EnqueueEmailData, EmailServiceError> {
     let ContactForm {
         contact_form_row,
         user_row,
@@ -94,17 +81,9 @@ fn create_feedback_email(
         name_row,
     } = &contact_form;
 
-    let subject = format!("Feedback from {}", user_row.username);
-    let template_name = "feedback.html";
-
-    let submission_time = contact_form_row
-        .created_datetime
-        .format("%H:%M %d-%m-%Y")
-        .to_string();
-    let store_name = format!("{} ({})", name_row.name, store_row.code);
-
+    let template_name = "contact.html";
     let base_html_template = include_str!("../../email/base.html");
-    let html_template = include_str!("templates/feedback.html");
+    let html_template = include_str!("templates/contact.html");
 
     let mut tera = Tera::default();
     tera.add_raw_templates(vec![
@@ -113,6 +92,12 @@ fn create_feedback_email(
     ])
     .unwrap();
 
+    let submission_time = contact_form_row
+        .created_datetime
+        .format("%H:%M %d-%m-%Y")
+        .to_string();
+    let store_name = format!("{} ({})", name_row.name, store_row.code);
+
     let mut context = Context::new();
     context.insert("username", &user_row.username);
     context.insert("reply_email", &contact_form_row.reply_email);
@@ -120,6 +105,15 @@ fn create_feedback_email(
     context.insert("store_name", &store_name);
     context.insert("site_id", &store_row.site_id);
     context.insert("body", &contact_form_row.body);
+
+    match contact_form_row.contact_type {
+        ContactType::Feedback => {
+            context.insert("contact_type", "Feedback Submission");
+        }
+        ContactType::Support => {
+            context.insert("contact_type", "Support Request");
+        }
+    }
 
     let html_body = tera.render(template_name, &context);
     let html_body = match html_body {
@@ -130,8 +124,17 @@ fn create_feedback_email(
         }
     };
 
+    let to_address = match contact_form_row.contact_type {
+        ContactType::Feedback => FEEDBACK_EMAIL.to_string(),
+        ContactType::Support => SUPPORT_EMAIL.to_string(),
+    };
+    let subject = match contact_form_row.contact_type {
+        ContactType::Feedback => format!("Feedback from {}", user_row.username),
+        ContactType::Support => format!("Support request from {}", user_row.username),
+    };
+
     let email = EnqueueEmailData {
-        to_address: to,
+        to_address,
         subject,
         html_body: html_body.clone(),
         text_body: html2text(&html_body),

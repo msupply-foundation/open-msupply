@@ -12,9 +12,9 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
 };
 
-mod queue_feedback_email;
+mod queue_email;
 
-use queue_feedback_email::QueueFeedbackEmailProcessor;
+use queue_email::QueueContactEmailProcessor;
 
 #[derive(Error, Debug)]
 pub(crate) enum ProcessContactFormError {
@@ -33,7 +33,7 @@ pub(crate) fn process_contact_forms(
 ) -> Result<(), ProcessContactFormError> {
     use ProcessContactFormError as Error;
     let processors: Vec<Box<dyn ContactFormProcessor>> = vec![
-        Box::new(QueueFeedbackEmailProcessor),
+        Box::new(QueueContactEmailProcessor),
         // Box::new(QueueSupportEmailProcessor),
     ];
 
@@ -123,7 +123,6 @@ trait ContactFormProcessor {
         Ok(result)
     }
 
-    /// Caller MUST guarantee that source invoice.name_id is a store active on this site
     fn try_process_record(
         &self,
         ctx: &ServiceContext,
