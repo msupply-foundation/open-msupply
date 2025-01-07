@@ -32,6 +32,7 @@ pub fn enqueue_email(
         retries: 0,
         updated_at: Utc::now().naive_utc(),
         status: EmailQueueStatus::Queued,
+        retry_at: None,
     };
 
     repo.upsert_one(&email_queue_row)

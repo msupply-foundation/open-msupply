@@ -49,3 +49,5 @@
 #   username: ""
 #   password: ""
 #   from: "no-reply@msupply.foundation"
+##  Can make this smaller for testing emails
+#   interval: 60 # in seconds
