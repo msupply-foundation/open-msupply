@@ -191,7 +191,7 @@ mod test {
             delete_stock_in_line(
                 &context,
                 DeleteStockInLine {
-                    id: mock_transferred_inbound_shipment_a_line_b().id, //'id' doesn't exist -not an object?
+                    id: mock_transferred_inbound_shipment_a_line_b().id,
                     r#type: StockInType::InboundShipment,
                 },
             ),

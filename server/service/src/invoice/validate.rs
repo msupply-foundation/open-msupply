@@ -10,11 +10,8 @@ pub fn check_invoice_type(invoice: &InvoiceRow, r#type: InvoiceType) -> bool {
     false
 }
 
-pub fn check_invoice_is_linked(invoice: &InvoiceRow) -> bool {
-    if invoice.linked_invoice_id.is_none() {
-        return true;
-    }
-    false
+pub fn check_invoice_is_not_linked(invoice: &InvoiceRow) -> bool {
+    invoice.linked_invoice_id.is_none()
 }
 
 pub fn check_store(invoice: &InvoiceRow, store_id: &str) -> bool {
