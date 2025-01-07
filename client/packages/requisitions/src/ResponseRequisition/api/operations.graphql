@@ -496,7 +496,7 @@ query customerProgramSettings($storeId: String!) {
 }
 
 query programIndicators(
-  $customerNameLinkId: String!
+  $customerNameId: String!
   $periodId: String!
   $storeId: String!
   $programId: String!
