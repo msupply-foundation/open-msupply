@@ -47,5 +47,5 @@ export const useDeleteResponseLines = () => {
     },
   });
 
-  return confirmAndDelete;
+  return { selectedRows, confirmAndDelete };
 };
