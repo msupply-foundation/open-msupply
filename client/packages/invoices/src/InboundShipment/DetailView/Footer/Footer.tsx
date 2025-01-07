@@ -83,6 +83,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       label: t('button.replenishment-return-lines'),
       icon: <ArrowLeftIcon />,
       onClick: () => onReturnLines(selectedLines),
+      shouldShrink: false,
     },
     {
       label: t('button.zero-line-quantity'),

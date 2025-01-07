@@ -11,6 +11,7 @@ export interface Action {
   icon: ReactNode;
   onClick: () => void;
   disabled?: boolean;
+  shouldShrink?: boolean;
 }
 
 interface ActionsFooterProps {
@@ -43,13 +44,14 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
       >
         {selectedRowCount} {t('label.selected')}
       </Typography>
-      {actions.map(({ label, icon, onClick, disabled }) => (
+      {actions.map(({ label, icon, onClick, disabled, shouldShrink }) => (
         <FlatButton
           key={label}
           startIcon={icon}
           label={label}
           disabled={disabled}
           onClick={onClick}
+          shouldShrink={shouldShrink}
         />
       ))}
     </Stack>
