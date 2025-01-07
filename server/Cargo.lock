@@ -8258,14 +8258,15 @@ checksum = "1de1d4f81173b03af4c0cbed3c898f6bff5b870e4a7f5d6f4057d62a7a4b686e"
 
 [[package]]
 name = "simple-log"
-version = "1.9.0"
+version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94263a9019c994147d7dc572aa1b3bce100bbdf5b5e3a8a446a025c80ecba169"
+checksum = "947f8c2d912e08925082b695d3d9a49534c1f728108f3c02c35e3fc85964a0b9"
 dependencies = [
  "log",
  "log4rs",
  "once_cell",
  "serde",
+ "winnow 0.6.22",
 ]
 
 [[package]]
