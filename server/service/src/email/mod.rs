@@ -11,8 +11,9 @@ use lettre::{
 use repository::email_queue_row::{EmailQueueRowRepository, EmailQueueStatus};
 use std::time::Duration;
 
-use repository::RepositoryError;
+use repository::{ActivityLogType, RepositoryError};
 
+use crate::activity_log::system_activity_log_entry;
 use crate::email::send::send_email;
 use crate::service_provider::ServiceContext;
 use crate::settings::MailSettings;
@@ -155,6 +156,13 @@ impl EmailServiceTrait for EmailService {
                     email.updated_at = Utc::now().naive_utc();
                     repo.upsert_one(&email)?;
                     sent_count += 1;
+
+                    system_activity_log_entry(
+                        &ctx.connection,
+                        ActivityLogType::EmailSent,
+                        &ctx.store_id,
+                        &email.id,
+                    )?;
                 }
                 Err(send_error) => {
                     // Failed to send

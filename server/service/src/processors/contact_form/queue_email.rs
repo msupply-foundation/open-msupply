@@ -1,8 +1,9 @@
-use repository::{contact_form::ContactForm, contact_form_row::ContactType};
+use repository::{contact_form::ContactForm, contact_form_row::ContactType, ActivityLogType};
 use tera::{Context, Tera};
 use util::constants::{FEEDBACK_EMAIL, SUPPORT_EMAIL};
 
 use crate::{
+    activity_log::system_activity_log_entry,
     email::{
         enqueue::{enqueue_email, EnqueueEmailData},
         EmailServiceError,
@@ -46,12 +47,13 @@ impl ContactFormProcessor for QueueContactEmailProcessor {
 
         // add email to queue
         let enqueue = enqueue_email(ctx, email);
-        match enqueue {
-            Ok(_) => {
+        let email = match enqueue {
+            Ok(email) => {
                 log::info!(
                     "Queued email for contact form {}",
                     contact_form.contact_form_row.id
                 );
+                email
             }
             Err(e) => {
                 log::error!(
@@ -59,15 +61,17 @@ impl ContactFormProcessor for QueueContactEmailProcessor {
                     contact_form.contact_form_row.id,
                     e
                 );
+                return Ok(None);
             }
-        }
+        };
 
-        // system_activity_log_entry(
-        //     connection,
-        //     ActivityLogType::EmailQueued,
-        //     &new_inbound_invoice.store_id,
-        //     &new_inbound_invoice.id,
-        // )?;
+        system_activity_log_entry(
+            &ctx.connection,
+            ActivityLogType::EmailQueued,
+            &ctx.store_id,
+            &email.id,
+        )
+        .map_err(ProcessContactFormError::DatabaseError)?;
 
         Ok(Some("success".to_string()))
     }
@@ -94,7 +98,7 @@ fn create_email(contact_form: &ContactForm) -> Result<EnqueueEmailData, EmailSer
 
     let submission_time = contact_form_row
         .created_datetime
-        .format("%H:%M %d-%m-%Y")
+        .format("%H:%M %d-%m-%Y (UTC)")
         .to_string();
     let store_name = format!("{} ({})", name_row.name, store_row.code);
 
