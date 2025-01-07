@@ -131,8 +131,8 @@ mod test {
             mock_store_a, mock_store_b, mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
-        EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
-        InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository, Upsert,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
+        InvoiceType, StockLineRow, StockLineRowRepository, Upsert,
     };
     use util::{inline_edit, inline_init};
 
@@ -146,7 +146,6 @@ mod test {
             },
             InsertStockOutLine,
         },
-        item_stats::ItemStatsFilter,
         service_provider::ServiceProvider,
     };
 
@@ -651,15 +650,7 @@ mod test {
 
         let item_stats_service = service_provider.item_stats_service;
         let stats = item_stats_service
-            .get_item_stats(
-                &context,
-                &context.store_id,
-                None,
-                Some(
-                    ItemStatsFilter::new()
-                        .item_id(EqualFilter::equal_to(mock_item_a().id.as_str())),
-                ),
-            )
+            .get_item_stats(&context, &context.store_id, None, vec![mock_item_a().id])
             .unwrap();
         let stats = stats.first().unwrap();
         assert_eq!(
@@ -681,15 +672,7 @@ mod test {
             .unwrap();
 
         let stats = item_stats_service
-            .get_item_stats(
-                &context,
-                &context.store_id,
-                None,
-                Some(
-                    ItemStatsFilter::new()
-                        .item_id(EqualFilter::equal_to(mock_item_a().id.as_str())),
-                ),
-            )
+            .get_item_stats(&context, &context.store_id, None, vec![mock_item_a().id])
             .unwrap();
         let stats = stats.first().unwrap();
         assert_eq!(
