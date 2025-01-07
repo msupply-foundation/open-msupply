@@ -350,13 +350,13 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
     return result.supplierProgramRequisitionSettings;
   },
   getIndicators: async (
-    customerNameLinkId: string,
+    customerNameId: string,
     periodId: string,
     programId: string
   ) => {
     let result = await sdk.programIndicators({
       storeId,
-      customerNameLinkId,
+      customerNameId,
       periodId,
       programId,
     });

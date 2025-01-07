@@ -2,7 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { RequisitionReasonsNotProvidedErrorFragmentDoc, OrderTypeRowFragmentDoc } from '../../RequestRequisition/api/operations.generated';
+import { RequisitionReasonsNotProvidedErrorFragmentDoc, OrderTypeRowFragmentDoc, ProgramIndicatorFragmentDoc } from '../../RequestRequisition/api/operations.generated';
 import { ItemRowFragmentDoc } from '../../../../system/src/Item/api/operations.generated';
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
@@ -119,16 +119,6 @@ export type CustomerProgramSettingsQueryVariables = Types.Exact<{
 
 
 export type CustomerProgramSettingsQuery = { __typename: 'Queries', customerProgramRequisitionSettings: Array<{ __typename: 'CustomerProgramRequisitionSettingNode', programName: string, programId: string, customerAndOrderTypes: Array<{ __typename: 'CustomerAndOrderTypeNode', customer: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> }> };
-
-export type ProgramIndicatorFragment = { __typename: 'ProgramIndicatorNode', code?: string | null, id: string, lineAndColumns: Array<{ __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null } }> };
-
-export type IndicatorLineRowFragment = { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null };
-
-export type IndicatorColumnFragment = { __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null };
-
-export type IndicatorValueFragment = { __typename: 'IndicatorValueNode', id: string, value: string };
-
-export type IndicatorLineWithColumnsFragment = { __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null } };
 
 export type ProgramIndicatorsQueryVariables = Types.Exact<{
   customerNameId: Types.Scalars['String']['input'];
@@ -317,51 +307,6 @@ export const CustomerProgramSettingsFragmentDoc = gql`
 }
     ${NameRowFragmentDoc}
 ${OrderTypeRowFragmentDoc}`;
-export const IndicatorValueFragmentDoc = gql`
-    fragment IndicatorValue on IndicatorValueNode {
-  id
-  value
-}
-    `;
-export const IndicatorColumnFragmentDoc = gql`
-    fragment IndicatorColumn on IndicatorColumnNode {
-  columnNumber
-  name
-  valueType
-  value(periodId: $periodId, customerNameId: $customerNameId, storeId: $storeId) {
-    ...IndicatorValue
-  }
-}
-    ${IndicatorValueFragmentDoc}`;
-export const IndicatorLineRowFragmentDoc = gql`
-    fragment IndicatorLineRow on IndicatorLineRowNode {
-  id
-  code
-  lineNumber
-  name
-  valueType
-}
-    `;
-export const IndicatorLineWithColumnsFragmentDoc = gql`
-    fragment IndicatorLineWithColumns on IndicatorLineNode {
-  columns {
-    ...IndicatorColumn
-  }
-  line {
-    ...IndicatorLineRow
-  }
-}
-    ${IndicatorColumnFragmentDoc}
-${IndicatorLineRowFragmentDoc}`;
-export const ProgramIndicatorFragmentDoc = gql`
-    fragment ProgramIndicator on ProgramIndicatorNode {
-  code
-  lineAndColumns {
-    ...IndicatorLineWithColumns
-  }
-  id
-}
-    ${IndicatorLineWithColumnsFragmentDoc}`;
 export const UpdateResponseDocument = gql`
     mutation updateResponse($storeId: String!, $input: UpdateResponseRequisitionInput!) {
   updateResponseRequisition(input: $input, storeId: $storeId) {
