@@ -26,6 +26,7 @@ pub(crate) struct ServiceTestContext {
     pub(crate) connection_manager: StorageConnectionManager,
     #[allow(dead_code)]
     pub(crate) service_context: ServiceContext,
+    pub(crate) settings: Settings,
 }
 
 // TODO use this method in service tests
@@ -38,20 +39,22 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         setup_all_with_data(db_name, inserts, extra_mock_data).await;
 
     let (processors_trigger, processors) = Processors::init();
-    let (file_sync_trigger, _) = FileSyncDriver::init(&Settings {
+    let settings = Settings {
         server: ServerSettings {
             port: 0,
             danger_allow_http: false,
             debug_no_access_control: false,
             cors_origins: vec![],
-            base_dir: None,
+            base_dir: Some("test_output".to_string()),
             machine_uid: None,
         },
         database: db_settings,
         sync: None,
         logging: None,
         backup: None,
-    });
+    };
+
+    let (file_sync_trigger, _) = FileSyncDriver::init(&settings);
     let (sync_trigger, _) = SynchroniserDriver::init(file_sync_trigger);
     let (site_is_initialise_trigger, _) = SiteIsInitialisedCallback::init();
 
@@ -72,6 +75,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         processors_task,
         connection_manager,
         service_context,
+        settings,
     }
 }
 
