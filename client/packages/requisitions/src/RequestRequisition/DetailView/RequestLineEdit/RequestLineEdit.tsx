@@ -78,10 +78,7 @@ export const RequestLineEdit = ({
 
   const extraFields = store?.preferences?.extraFieldsInRequisition;
   const showItemInformation =
-    store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders &&
-    extraFields &&
-    !!draft?.itemInformation &&
-    isProgram;
+    useConsumptionData && extraFields && !!draft?.itemInformation && isProgram;
   const itemInformationSorted = draft?.itemInformation
     ?.sort((a, b) => a.name.name.localeCompare(b.name.name))
     .sort((a, b) => b.amcInUnits - a.amcInUnits)
@@ -125,7 +122,7 @@ export const RequestLineEdit = ({
                 label={t('label.stock-on-hand')}
                 sx={{ marginBottom: 1 }}
               />
-              {isProgram && useConsumptionData && (
+              {isProgram && extraFields && (
                 <>
                   <InputWithLabelRow
                     Input={
@@ -217,7 +214,7 @@ export const RequestLineEdit = ({
                 label={t('label.amc')}
                 sx={{ marginBottom: 1 }}
               />
-              {isProgram && useConsumptionData && (
+              {isProgram && extraFields && (
                 <InputWithLabelRow
                   Input={
                     <NumericTextInput
@@ -363,7 +360,7 @@ export const RequestLineEdit = ({
                 label={t('label.suggested-quantity')}
                 sx={{ marginBottom: 1 }}
               />
-              {isProgram && useConsumptionData && (
+              {isProgram && extraFields && (
                 <InputWithLabelRow
                   Input={
                     <ReasonOptionsSearchInput
