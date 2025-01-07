@@ -146,7 +146,7 @@ export type CustomerColumnFragment = { __typename: 'IndicatorColumnNode', column
 export type IndicatorLineWithColumnsFragment = { __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null } };
 
 export type ProgramIndicatorsQueryVariables = Types.Exact<{
-  customerNameLinkId: Types.Scalars['String']['input'];
+  customerNameId: Types.Scalars['String']['input'];
   periodId: Types.Scalars['String']['input'];
   storeId: Types.Scalars['String']['input'];
   programId: Types.Scalars['String']['input'];
@@ -400,11 +400,7 @@ export const IndicatorColumnFragmentDoc = gql`
   columnNumber
   name
   valueType
-  value(
-    periodId: $periodId
-    customerNameLinkId: $customerNameLinkId
-    storeId: $storeId
-  ) {
+  value(periodId: $periodId, customerNameId: $customerNameId, storeId: $storeId) {
     ...IndicatorValue
   }
 }
@@ -814,7 +810,7 @@ export const SupplierProgramSettingsDocument = gql`
 }
     ${SupplierProgramSettingsFragmentDoc}`;
 export const ProgramIndicatorsDocument = gql`
-    query programIndicators($customerNameLinkId: String!, $periodId: String!, $storeId: String!, $programId: String!) {
+    query programIndicators($customerNameId: String!, $periodId: String!, $storeId: String!, $programId: String!) {
   programIndicators(storeId: $storeId, filter: {programId: {equalTo: $programId}}) {
     ... on ProgramIndicatorConnector {
       __typename

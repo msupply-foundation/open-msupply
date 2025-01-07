@@ -121,7 +121,7 @@ export type CustomerProgramSettingsQueryVariables = Types.Exact<{
 export type CustomerProgramSettingsQuery = { __typename: 'Queries', customerProgramRequisitionSettings: Array<{ __typename: 'CustomerProgramRequisitionSettingNode', programName: string, programId: string, customerAndOrderTypes: Array<{ __typename: 'CustomerAndOrderTypeNode', customer: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> }> };
 
 export type ProgramIndicatorsQueryVariables = Types.Exact<{
-  customerNameLinkId: Types.Scalars['String']['input'];
+  customerNameId: Types.Scalars['String']['input'];
   periodId: Types.Scalars['String']['input'];
   storeId: Types.Scalars['String']['input'];
   programId: Types.Scalars['String']['input'];
@@ -622,7 +622,7 @@ export const CustomerProgramSettingsDocument = gql`
 }
     ${CustomerProgramSettingsFragmentDoc}`;
 export const ProgramIndicatorsDocument = gql`
-    query programIndicators($customerNameLinkId: String!, $periodId: String!, $storeId: String!, $programId: String!) {
+    query programIndicators($customerNameId: String!, $periodId: String!, $storeId: String!, $programId: String!) {
   programIndicators(storeId: $storeId, filter: {programId: {equalTo: $programId}}) {
     ... on ProgramIndicatorConnector {
       __typename

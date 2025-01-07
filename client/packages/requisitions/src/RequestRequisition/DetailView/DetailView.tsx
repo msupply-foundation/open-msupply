@@ -127,7 +127,7 @@ export const DetailView: FC = () => {
 
         <DetailTabs tabs={tabs} />
 
-        <Footer />
+        <Footer isDisabled={isDisabled} />
         <SidePanel />
         {isOpen && (
           <BasicModal open={isOpen} onClose={onClose} height={500} width={800}>
