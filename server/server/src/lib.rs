@@ -289,7 +289,10 @@ pub async fn start_server(
     let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
 
     // Scheduled tasks
-    let scheduled_task_handle = spawn_scheduled_task_runner(service_provider.clone().into_inner());
+    let scheduled_task_handle = spawn_scheduled_task_runner(
+        service_provider.clone().into_inner(),
+        settings.mail.clone().map(|m| m.interval).unwrap_or(60),
+    );
 
     let closure_settings = settings.clone();
     let mut http_server = HttpServer::new(move || {

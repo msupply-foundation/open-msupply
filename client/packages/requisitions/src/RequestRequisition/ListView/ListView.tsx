@@ -24,6 +24,7 @@ import {
   getRequisitionTranslator,
   isRequestDisabled,
 } from '../../utils';
+import { Footer } from './Footer';
 
 const useDisableRequestRows = (rows?: RequestRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -152,6 +153,7 @@ export const RequestRequisitionListView: FC = () => {
           />
         }
       />
+      <Footer />
     </>
   );
 };

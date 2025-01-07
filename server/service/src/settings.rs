@@ -153,4 +153,5 @@ pub struct MailSettings {
     pub username: String,
     pub password: String,
     pub from: String,
+    pub interval: u64,
 }

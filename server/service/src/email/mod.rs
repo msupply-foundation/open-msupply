@@ -21,6 +21,7 @@ pub mod enqueue;
 pub mod send;
 
 pub static MAX_RETRIES: i32 = 3;
+pub static RETRY_DELAY_SECS: u64 = 900; // 15 mins - Doubles each retry
 pub static TIMEOUT_MS: u64 = 30_000; // 30 seconds
 
 pub trait EmailServiceTrait: Send + Sync {
@@ -113,9 +114,17 @@ impl EmailServiceTrait for EmailService {
     }
 
     fn send_queued_emails(&self, ctx: &ServiceContext) -> Result<usize, EmailServiceError> {
+        let repo = EmailQueueRowRepository::new(&ctx.connection);
+        let queued_emails = repo.un_sent()?;
+
+        if queued_emails.is_empty() {
+            return Ok(0);
+        }
+
+        log::info!("Found {} queued emails", queued_emails.len());
+
         let mail_service = match &self.service {
             None => {
-                log::error!("Email settings not configured");
                 return Err(EmailServiceError::NotConfigured);
             }
             Some(mail_service) => mail_service,
@@ -123,8 +132,6 @@ impl EmailServiceTrait for EmailService {
 
         log::debug!("Sending queued emails");
 
-        let repo = EmailQueueRowRepository::new(&ctx.connection);
-        let queued_emails = repo.un_sent()?;
         let mut error_count = 0;
         let mut sent_count = 0;
 
@@ -183,6 +190,13 @@ impl EmailServiceTrait for EmailService {
                         );
                         email.error = Some(format!("{:?}", send_error));
                         email.status = EmailQueueStatus::Errored;
+
+                        email.retry_at = Some(
+                            Utc::now().naive_utc()
+                                + Duration::from_secs(
+                                    RETRY_DELAY_SECS * u64::pow(2, email.retries as u32),
+                                ),
+                        );
                         email.retries += 1;
                     }
 
