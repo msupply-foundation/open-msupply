@@ -9,7 +9,8 @@ export interface SyncModalControllerState extends SyncModalState {
   setOpen: (open: boolean) => void;
 }
 
-export const SyncModalContext = createContext<SyncModalControllerState>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  {} as any
-);
+export const SyncModalContext = createContext<SyncModalControllerState>({
+  setState: () => {},
+  setOpen: () => {},
+  open: false,
+});
