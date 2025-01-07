@@ -67,7 +67,6 @@ export const PrescriptionLineEditForm: React.FC<
   onChangeQuantity,
   item,
   packSizeController,
-  // availableUnits,
   disabled,
   isNew,
   canAutoAllocate,
@@ -290,11 +289,6 @@ export const PrescriptionLineEditForm: React.FC<
             disabled={disabled}
             onChange={e => {
               updateNotes(e.target.value);
-            }}
-            InputProps={{
-              sx: {
-                // backgroundColor: theme => theme.palette.background.menu,
-              },
             }}
             fullWidth
             style={{ flex: 1 }}
