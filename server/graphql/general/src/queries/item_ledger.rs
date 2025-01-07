@@ -133,9 +133,8 @@ pub fn item_ledger(
         },
     )?;
 
-    let connection_manager = ctx.get_connection_manager();
     let ledger = get_item_ledger(
-        connection_manager,
+        &ctx.get_connection_manager().connection()?,
         &store_id,
         page.map(PaginationOption::from),
         filter.map(|filter| filter.to_domain()),

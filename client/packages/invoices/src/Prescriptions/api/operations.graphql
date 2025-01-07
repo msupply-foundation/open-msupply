@@ -61,6 +61,13 @@ fragment PrescriptionRow on InvoiceNode {
   }
 
   currencyRate
+
+  diagnosisId
+  diagnosis {
+    id
+    code
+    description
+  }
 }
 
 query prescriptions(
@@ -390,4 +397,16 @@ fragment historicalStockLine on StockLineNode {
   id
   availableNumberOfPacks
   packSize
+}
+
+fragment diagnosis on DiagnosisNode {
+  id
+  code
+  description
+}
+
+query diagnosesActive {
+  diagnosesActive {
+    ...diagnosis
+  }
 }

@@ -8,6 +8,7 @@ import {
   useQuery,
   useUrlQueryParams,
   usePatchState,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import {
   InsertPrescriptionMutationVariables,
@@ -200,6 +201,7 @@ const useUpdate = (id: string) => {
       ...patch,
       id,
       status: mapStatus(patch),
+      diagnosisId: setNullableInput('diagnosisId', patch),
     };
     const result =
       (await prescriptionApi.upsertPrescription({
