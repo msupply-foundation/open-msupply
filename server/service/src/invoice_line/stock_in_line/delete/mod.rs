@@ -56,6 +56,7 @@ pub enum DeleteStockInLineError {
     BatchIsReserved,
     NotThisInvoiceLine(String),
     LineUsedInStocktake,
+    TransferredShipment,
 }
 
 impl From<RepositoryError> for DeleteStockInLineError {
@@ -82,7 +83,8 @@ mod test {
         mock::{
             mock_customer_return_a, mock_customer_return_a_invoice_line_a,
             mock_customer_return_a_invoice_line_b, mock_item_a, mock_name_store_b, mock_store_a,
-            mock_store_b, mock_supplier_return_b_invoice_line_a, mock_user_account_a, MockData,
+            mock_store_b, mock_supplier_return_b_invoice_line_a,
+            mock_transferred_inbound_shipment_a_line_b, mock_user_account_a, MockData,
             MockDataInserts,
         },
         test_db::setup_all_with_data,
@@ -182,6 +184,18 @@ mod test {
                 },
             ),
             Err(ServiceError::BatchIsReserved)
+        );
+
+        // // TransferredShipment
+        assert_eq!(
+            delete_stock_in_line(
+                &context,
+                DeleteStockInLine {
+                    id: mock_transferred_inbound_shipment_a_line_b().id,
+                    r#type: StockInType::InboundShipment,
+                },
+            ),
+            Err(ServiceError::TransferredShipment)
         );
 
         // NotThisStoreInvoice

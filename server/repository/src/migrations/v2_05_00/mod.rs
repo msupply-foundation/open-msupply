@@ -4,6 +4,7 @@ mod abbreviation_create_table;
 mod add_contact_form_table;
 mod add_elmis_code_to_program;
 mod add_email_queue_table;
+mod add_email_retry_at;
 mod add_emergency_orders;
 mod diagnosis_add_to_invoice;
 mod diagnosis_create_table;
@@ -38,6 +39,7 @@ impl Migration for V2_05_00 {
             Box::new(add_email_queue_table::Migrate),
             Box::new(add_elmis_code_to_program::Migrate),
             Box::new(diagnosis_add_to_invoice::Migrate),
+            Box::new(add_email_retry_at::Migrate),
         ]
     }
 }

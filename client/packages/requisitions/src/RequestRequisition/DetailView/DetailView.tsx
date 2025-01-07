@@ -19,17 +19,44 @@ import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
 import { RequestRequisitionLineErrorProvider } from '../context';
-import { buildItemEditRoute } from './utils';
+import { IndicatorsTab } from './IndicatorsTab';
+import { buildIndicatorEditRoute, buildItemEditRoute } from './utils';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { data, isLoading } = useRequest.document.get();
   const isDisabled = useRequest.utils.isDisabled();
+  const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
+    useRequest.document.indicators(
+      data?.otherPartyId ?? '',
+      data?.period?.id ?? '',
+      data?.program?.id ?? '',
+      !!data
+    );
 
   const onRowClick = useCallback((line: RequestLineFragment) => {
     navigate(buildItemEditRoute(line.requisitionNumber, line.item.id));
   }, []);
+
+  const onProgramIndicatorClick = useCallback(
+    (
+      requisitionNumber?: number,
+      programIndicatorCode?: string,
+      indicatorId?: string
+    ) => {
+      if (!requisitionNumber || !programIndicatorCode || !indicatorId) return;
+
+      navigate(
+        buildIndicatorEditRoute(
+          requisitionNumber,
+          programIndicatorCode,
+          indicatorId
+        )
+      );
+    },
+    []
+  );
 
   if (isLoading) return <DetailViewSkeleton />;
 
@@ -52,6 +79,24 @@ export const DetailView: FC = () => {
     },
   ];
 
+  if (
+    data?.programName &&
+    !!data?.otherParty.store &&
+    programIndicators?.totalCount !== 0
+  ) {
+    tabs.push({
+      Component: (
+        <IndicatorsTab
+          onClick={onProgramIndicatorClick}
+          isLoading={isLoading || isProgramIndicatorsLoading}
+          request={data}
+          indicators={programIndicators?.nodes}
+        />
+      ),
+      value: t('label.indicators'),
+    });
+  }
+
   return !!data ? (
     <RequestRequisitionLineErrorProvider>
       <TableProvider
@@ -65,7 +110,7 @@ export const DetailView: FC = () => {
 
         <DetailTabs tabs={tabs} />
 
-        <Footer />
+        <Footer isDisabled={isDisabled} />
         <SidePanel />
       </TableProvider>
     </RequestRequisitionLineErrorProvider>
