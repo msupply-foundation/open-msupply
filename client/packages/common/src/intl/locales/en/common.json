@@ -979,6 +979,7 @@
   "label.select-rows-to-allocate-them": "Select rows to allocate them",
   "label.selected": "Selected",
   "label.sell-price": "Sell price",
+  "label.unit-sell-price": "Unit Sell Price",
   "label.sensor-name": "Sensor name",
   "label.sensor-type": "Sensor type",
   "label.sent": "Sent",
