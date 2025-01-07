@@ -5,6 +5,9 @@ import {
   RouteBuilder,
   useNavigate,
   useTranslation,
+  Box,
+  FlatButton,
+  PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '../../api';
 
@@ -32,20 +35,30 @@ export const ListItems = ({
       id,
       value: name,
     })) ?? [];
-  if (showNew) {
-    options.push({ id: 'new', value: t('label.new-item') });
-  }
 
   return (
     <Tooltip title={value?.name}>
-      <ListOptions
-        currentId={value?.id}
-        onClick={id => {
-          navigate(route.addPart(id).build());
-        }}
-        options={options}
-        enteredLineIds={enteredLineIds}
-      />
+      <>
+        <Box
+          sx={{ maxHeight: '90%', overflow: 'auto', scrollBehavior: 'smooth' }}
+        >
+          <ListOptions
+            currentId={value?.id}
+            onClick={id => {
+              navigate(route.addPart(id).build());
+            }}
+            options={options}
+            enteredLineIds={enteredLineIds}
+          />
+        </Box>
+        {showNew && (
+          <FlatButton
+            label={t('label.new-item')}
+            onClick={() => navigate(route.addPart('new').build())}
+            startIcon={<PlusCircleIcon />}
+          />
+        )}
+      </>
     </Tooltip>
   );
 };
