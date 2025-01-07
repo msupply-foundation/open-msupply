@@ -3,25 +3,25 @@ strip = true
 
 [workspace.dependencies]
 # dependencies used in graphql crates:
-actix-web = { version = "4.7.0", default-features = false, features = [
+actix-web = { version = "4.9.0", default-features = false, features = [
   "macros",
   "rustls",
 ] }
-actix-multipart = "0.6.1"
-anymap = "0.12"
-async-graphql = { version = "7.0.6", features = ["dataloader", "chrono"] }
-async-graphql-actix-web = "7.0.6"
-async-trait = "0.1.80"
-chrono = { version = "0.4.38", features = ["serde"] }
+actix-multipart = "0.7.2"
+anymap = "0.12.1"
+async-graphql = { version = "7.0.13", features = ["dataloader", "chrono"] }
+async-graphql-actix-web = "7.0.13"
+async-trait = "0.1.85"
+chrono = { version = "0.4.39", features = ["serde"] }
 clap = { version = "4.5.7", features = ["derive"] }
-futures = "0.3"
-futures-util = "0.3"
+futures = "0.3.31"
+futures-util = "0.3.31"
 httpmock = "0.7"
-log = "0.4"
-pretty_assertions = "1.4.0"
-rcgen = "0.13.1"
-regex = "1.10.5"
-reqwest = { version = "0.12", features = [
+log = "0.4.22"
+pretty_assertions = "1.4.1"
+rcgen = "0.13.2"
+regex = "1.11.1"
+reqwest = { version = "0.12.12", features = [
   "gzip",
   "json",
   "rustls-tls",
