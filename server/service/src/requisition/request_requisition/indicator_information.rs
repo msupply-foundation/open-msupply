@@ -86,7 +86,7 @@ pub fn get_indicator_information(
                 .period_id(EqualFilter::equal_to(period_id))
                 .indicator_line_id(EqualFilter::equal_any(indicator_line_ids.clone()))
                 .indicator_column_id(EqualFilter::equal_any(column_ids.clone()))
-                .customer_name_link_id(EqualFilter::equal_any(customer_ids.clone())),
+                .customer_name_id(EqualFilter::equal_any(customer_ids.clone())),
         )?;
 
         let customers_without_values: Vec<String> = customers
