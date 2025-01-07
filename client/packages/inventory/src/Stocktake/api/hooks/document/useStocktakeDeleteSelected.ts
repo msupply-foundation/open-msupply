@@ -41,5 +41,5 @@ export const useStocktakeDeleteSelected = () => {
     },
   });
 
-  return confirmAndDelete;
+  return { confirmAndDelete, selectedRows };
 };

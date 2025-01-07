@@ -1,9 +1,6 @@
 import React, { FC } from 'react';
 import {
-  DropdownMenu,
-  DropdownMenuItem,
   useTranslation,
-  DeleteIcon,
   AppBarContentPortal,
   FilterController,
   StocktakeNodeStatus,
@@ -12,7 +9,6 @@ import {
   InputLabel,
   Box,
 } from '@openmsupply-client/common';
-import { useStocktake } from '../api';
 
 type StatusOption = {
   label: string;
@@ -22,7 +18,6 @@ type StatusOption = {
 export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
-  const onDelete = useStocktake.document.deleteSelected();
   const t = useTranslation();
 
   const onFilterChange: AutocompleteOnChange<StatusOption> = (_, option) => {
@@ -57,11 +52,6 @@ export const Toolbar: FC<{
           onChange={onFilterChange}
         />
       </Box>
-      <DropdownMenu label={t('label.actions')}>
-        <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
-          {t('button.delete-lines')}
-        </DropdownMenuItem>
-      </DropdownMenu>
     </AppBarContentPortal>
   );
 };
