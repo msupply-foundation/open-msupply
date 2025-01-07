@@ -142,3 +142,95 @@ fn create_email(contact_form: &ContactForm) -> Result<EnqueueEmailData, EmailSer
 
     Ok(email)
 }
+
+#[cfg(test)]
+#[cfg(feature = "email-tests")]
+mod email_test {
+    use repository::{
+        contact_form::ContactForm,
+        contact_form_row::{ContactFormRow, ContactType},
+        email_queue_row::EmailQueueRowRepository,
+        mock::{mock_name_store_a, mock_store_a, mock_user_account_a, MockData, MockDataInserts},
+    };
+    use util::constants::SUPPORT_EMAIL;
+
+    use crate::{
+        processors::contact_form::{ContactFormProcessor, QueueContactEmailProcessor},
+        test_helpers::{
+            email_test::send_test_emails, setup_all_with_data_and_service_provider,
+            ServiceTestContext,
+        },
+    };
+
+    use super::create_email;
+
+    #[actix_rt::test]
+    async fn test_create_quote_confirmation_email() {
+        // This test pretty much just checks that the email renders without error
+
+        let contact_form = ContactForm {
+            contact_form_row: ContactFormRow {
+                reply_email: "reply@test.com".to_string(),
+                body: "Feedback message".to_string(),
+                contact_type: ContactType::Feedback,
+                ..Default::default()
+            },
+            user_row: mock_user_account_a(),
+            store_row: mock_store_a(),
+            name_row: mock_name_store_a(),
+        };
+
+        let email = create_email(&contact_form);
+
+        assert!(email.is_ok());
+
+        let email_body = email.unwrap().text_body;
+
+        assert!(email_body.contains("Feedback Submission"));
+        assert!(email_body.contains("Reply email: reply@test.com"));
+        assert!(email_body.contains("Store: Store A (code)"));
+        assert!(email_body.contains("Feedback message"));
+    }
+
+    #[actix_rt::test]
+    async fn send_contact_form_emails() {
+        let ServiceTestContext {
+            service_context,
+            service_provider,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "send_contact_form_emails",
+            MockDataInserts::all(),
+            MockData::default(),
+        )
+        .await;
+
+        let contact_form = ContactForm {
+            contact_form_row: ContactFormRow {
+                reply_email: "reply@test.com".to_string(),
+                body: "Some request for support".to_string(),
+                contact_type: ContactType::Support,
+                ..Default::default()
+            },
+            user_row: mock_user_account_a(),
+            store_row: mock_store_a(),
+            name_row: mock_name_store_a(),
+        };
+
+        QueueContactEmailProcessor
+            .try_process_record(&service_context, &contact_form)
+            .unwrap();
+
+        // Check that the email was queued
+        let repo = EmailQueueRowRepository::new(&service_context.connection);
+        let unsent = repo.un_sent().unwrap();
+
+        assert_eq!(unsent.len(), 1);
+        assert_eq!(unsent[0].to_address, SUPPORT_EMAIL);
+        assert!(unsent[0]
+            .subject
+            .contains("Support request from username_a"));
+
+        send_test_emails(&service_provider);
+    }
+}

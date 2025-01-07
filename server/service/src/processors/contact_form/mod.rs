@@ -32,10 +32,7 @@ pub(crate) fn process_contact_forms(
     service_provider: &ServiceProvider,
 ) -> Result<(), ProcessContactFormError> {
     use ProcessContactFormError as Error;
-    let processors: Vec<Box<dyn ContactFormProcessor>> = vec![
-        Box::new(QueueContactEmailProcessor),
-        // Box::new(QueueSupportEmailProcessor),
-    ];
+    let processors: Vec<Box<dyn ContactFormProcessor>> = vec![Box::new(QueueContactEmailProcessor)];
 
     let ctx = service_provider
         .basic_context()
@@ -43,8 +40,7 @@ pub(crate) fn process_contact_forms(
 
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
     let cursor_controller = CursorController::new(KeyType::ContactFormProcessorCursor);
-    // For transfers, changelog MUST be filtered by records where name_id is active store on this site
-    // this is the contract obligation for try_process_record in ProcessorTrait
+
     let filter = ChangelogFilter::new().table_name(ChangelogTableName::ContactForm.equal_to());
 
     loop {
