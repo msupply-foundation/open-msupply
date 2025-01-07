@@ -602,6 +602,7 @@ pub enum AuthError {
     InternalError(String),
 }
 
+#[derive(Debug)]
 pub struct ValidatedUserAuth {
     pub user_id: String,
     pub claims: OmSupplyClaim,
