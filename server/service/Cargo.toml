@@ -48,13 +48,13 @@ temperature-sensor = { git = "https://github.com/openmsupply/temperature-sensor.
 # plugin:
 hex = "0.4.3"
 pem = "3.0.4"
-rsa = { version = "0.9.6", features = ["sha2"] }
+rsa = { version = "0.9.7", features = ["sha2"] }
 sha2 = { workspace = true }
 walkdir = "2.5.0"
 x509-parser = { version = "0.16", features = ["verify"] }
 telnet = "0.2.1"
 tempfile = "3.10.1"
-scraper = "0.20.0"
+scraper = "0.22.0"
 umya-spreadsheet = "2.0.0"
 qrcode = "0.14"
 rust-embed = { version = "8.4.0", features = ["include-exclude"] }
