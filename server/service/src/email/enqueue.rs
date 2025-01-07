@@ -17,7 +17,7 @@ pub struct EnqueueEmailData {
 pub fn enqueue_email(
     ctx: &ServiceContext,
     email: EnqueueEmailData,
-) -> Result<(), EmailServiceError> {
+) -> Result<EmailQueueRow, EmailServiceError> {
     let repo = EmailQueueRowRepository::new(&ctx.connection);
 
     let email_queue_row = EmailQueueRow {
@@ -38,5 +38,5 @@ pub fn enqueue_email(
     repo.upsert_one(&email_queue_row)
         .map_err(|e| EmailServiceError::DatabaseError(e))?;
 
-    Ok(())
+    Ok(email_queue_row)
 }

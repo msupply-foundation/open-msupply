@@ -85,6 +85,8 @@ pub enum ActivityLogType {
     DemographicIndicatorUpdated,
     DemographicProjectionCreated,
     DemographicProjectionUpdated,
+    EmailQueued,
+    EmailSent,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]

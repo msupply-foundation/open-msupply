@@ -108,7 +108,6 @@ trait ContactFormProcessor {
     ) -> Result<Option<String>, ProcessContactFormError> {
         let result = ctx
             .connection
-            // TODO is this right? or do i need to pass conn thru?
             .transaction_sync(|_| self.try_process_record(ctx, contact_form))
             .map_err(ProcessContactFormError::from)?;
 
