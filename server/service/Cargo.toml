@@ -21,7 +21,7 @@ rand = { workspace = true }
 actix-web = { workspace = true }
 actix-files = { workspace = true }
 actix-multipart = { workspace = true }
-jsonschema = "0.18.0"
+jsonschema = "0.28.1"
 jsonwebtoken = "9.3.0"
 log = { workspace = true }
 reqwest = { workspace = true }
