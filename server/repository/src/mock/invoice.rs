@@ -368,9 +368,9 @@ pub fn mock_unique_number_inbound_shipment() -> InvoiceRow {
     })
 }
 
-pub fn mock_inbound_shipment_linked_transfer() -> InvoiceRow {
+pub fn mock_transferred_inbound_shipment_a() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
-        r.id = String::from("inbound_shipment_linked_transfer");
+        r.id = String::from("transferred_inbound_shipment_a");
         r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_b");
         r.invoice_number = 9;
@@ -547,7 +547,7 @@ pub fn mock_inbound_shipments() -> Vec<InvoiceRow> {
         mock_inbound_shipment_e(),
         mock_empty_draft_inbound_shipment(),
         mock_unique_number_inbound_shipment(),
-        mock_inbound_shipment_linked_transfer(),
+        mock_transferred_inbound_shipment_a(),
     ]
 }
 
