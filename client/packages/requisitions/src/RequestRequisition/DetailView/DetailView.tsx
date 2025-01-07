@@ -28,6 +28,8 @@ import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
 import { RequestRequisitionLineErrorProvider } from '../context';
+import { IndicatorsTab } from './IndicatorsTab';
+import { buildIndicatorEditRoute } from './utils';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
@@ -36,6 +38,13 @@ export const DetailView: FC = () => {
   const isDisabled = useRequest.utils.isDisabled();
   const { mutateAsync } = useRequest.line.insert();
   const { onOpen, onClose, isOpen } = useEditModal<ItemRowWithStatsFragment>();
+  const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
+    useRequest.document.indicators(
+      data?.otherPartyId ?? '',
+      data?.period?.id ?? '',
+      data?.program?.id ?? '',
+      !!data
+    );
 
   const onRowClick = useCallback((line: RequestLineFragment) => {
     navigate(
@@ -46,6 +55,25 @@ export const DetailView: FC = () => {
         .build()
     );
   }, []);
+
+  const onProgramIndicatorClick = useCallback(
+    (
+      requisitionNumber?: number,
+      programIndicatorCode?: string,
+      indicatorId?: string
+    ) => {
+      if (!requisitionNumber || !programIndicatorCode || !indicatorId) return;
+
+      navigate(
+        buildIndicatorEditRoute(
+          requisitionNumber,
+          programIndicatorCode,
+          indicatorId
+        )
+      );
+    },
+    []
+  );
 
   if (isLoading) return <DetailViewSkeleton />;
 
@@ -64,6 +92,24 @@ export const DetailView: FC = () => {
       value: 'Log',
     },
   ];
+
+  if (
+    data?.programName &&
+    !!data?.otherParty.store &&
+    programIndicators?.totalCount !== 0
+  ) {
+    tabs.push({
+      Component: (
+        <IndicatorsTab
+          onClick={onProgramIndicatorClick}
+          isLoading={isLoading || isProgramIndicatorsLoading}
+          request={data}
+          indicators={programIndicators?.nodes}
+        />
+      ),
+      value: t('label.indicators'),
+    });
+  }
 
   return !!data ? (
     <RequestRequisitionLineErrorProvider>

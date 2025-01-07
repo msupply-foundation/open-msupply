@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Box,
   AppFooterPortal,
@@ -8,7 +8,7 @@ import {
   useParams,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { IndicatorLineRowFragment } from '../../api';
+import { IndicatorLineRowFragment } from '../../../RequestRequisition/api';
 
 interface FooterProps {
   hasNext: boolean;
@@ -18,13 +18,13 @@ interface FooterProps {
   requisitionNumber?: number;
 }
 
-export const Footer: FC<FooterProps> = ({
+export const Footer = ({
   hasNext,
   next,
   hasPrevious,
   previous,
   requisitionNumber,
-}) => {
+}: FooterProps) => {
   const navigate = useNavigate();
   const { programIndicatorCode } = useParams();
 

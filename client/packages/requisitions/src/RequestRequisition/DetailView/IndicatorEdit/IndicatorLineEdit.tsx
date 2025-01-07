@@ -10,12 +10,11 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useDraftIndicatorValue } from './hooks';
 import {
   IndicatorLineRowFragment,
   IndicatorLineWithColumnsFragment,
-} from '../../../RequestRequisition/api';
-
+} from '../../api';
+import { useDraftIndicatorValue } from './hooks';
 interface IndicatorLineEditProps {
   requisitionNumber: number;
   hasNext: boolean;
@@ -45,11 +44,12 @@ const InputWithLabel = ({
   const { draft, update } = useDraftIndicatorValue(data.value);
   const t = useTranslation();
   const { error } = useNotification();
+
   const errorHandler = useCallback(
     (res: any) => {
-      // probably shouldn't be any, but UpdateIndicatorValueResponse doesn't have res.error.__typename
+      // probably shouldn't be any, but UpdateIndicatorValue doesn't have res.error.__typename
       if (res.__typename === 'UpdateIndicatorValueError') {
-        if (res.error.__typename === 'RecordNotFound') {
+        if (res.error?.__typename === 'RecordNotFound') {
           error(t('messages.record-not-found'))();
         } else {
           error(t('error.value-type-not-correct'))();
@@ -112,16 +112,14 @@ export const IndicatorLineEdit = ({
   return (
     <>
       <Box display="flex" flexDirection="column">
-        {columns?.map((c, i) => {
-          return (
-            <InputWithLabel
-              key={c.value?.id}
-              data={c}
-              disabled={disabled}
-              autoFocus={i === 0}
-            />
-          );
-        })}
+        {columns?.map((c, i) => (
+          <InputWithLabel
+            key={c.value?.id}
+            data={c}
+            disabled={disabled}
+            autoFocus={i === 0}
+          />
+        ))}
       </Box>
       <Box>
         <Footer

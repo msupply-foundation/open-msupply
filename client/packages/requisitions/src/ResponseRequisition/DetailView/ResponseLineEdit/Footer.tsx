@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Box,
   AppFooterPortal,
@@ -17,13 +17,13 @@ interface FooterProps {
   requisitionNumber?: number;
 }
 
-export const Footer: FC<FooterProps> = ({
+export const Footer = ({
   hasNext,
   next,
   hasPrevious,
   previous,
   requisitionNumber,
-}) => {
+}: FooterProps) => {
   const navigate = useNavigate();
 
   return (

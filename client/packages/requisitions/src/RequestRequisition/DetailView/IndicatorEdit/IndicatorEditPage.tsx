@@ -8,26 +8,26 @@ import {
   useParams,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useResponse } from '../../api';
 import { PageLayout } from '../../../common/PageLayout';
 import { AppRoute } from '@openmsupply-client/config';
-import { AppBarButtons } from '../ResponseLineEdit/AppBarButtons';
 import { usePreviousNextIndicatorLine } from './hooks';
 import { IndicatorLineEdit } from './IndicatorLineEdit';
-import { ListIndicatorLines } from '../../../common';
+import { useRequest } from '../..';
+import { AppBarButtons } from '../RequestLineEdit/AppBarButtons';
+import { ListIndicatorLines } from '../../../common/ListIndicators';
 
 export const IndicatorEditPage = () => {
   const t = useTranslation();
   const { programIndicatorLineId, programIndicatorCode } = useParams();
-  const { data: response, isLoading } = useResponse.document.get();
+  const { data: request, isLoading } = useRequest.document.get();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const isDisabled = useResponse.utils.isDisabled();
+  const isDisabled = useRequest.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
-    useResponse.document.indicators(
-      response?.otherPartyId ?? '',
-      response?.period?.id ?? '',
-      response?.program?.id ?? '',
-      !!response
+    useRequest.document.indicators(
+      request?.otherPartyId ?? '',
+      request?.period?.id ?? '',
+      request?.program?.id ?? '',
+      !!request
     );
 
   const indicators = programIndicators?.nodes.filter(
@@ -66,13 +66,13 @@ export const IndicatorEditPage = () => {
   if (isLoading || isProgramIndicatorsLoading) {
     return <BasicSpinner />;
   }
-  if (!response) {
+  if (!request) {
     return <NothingHere />;
   }
 
   return (
     <>
-      <AppBarButtons requisitionNumber={response?.requisitionNumber} />
+      <AppBarButtons requisitionNumber={request?.requisitionNumber} />
       <DetailContainer>
         <PageLayout
           Left={
@@ -80,9 +80,9 @@ export const IndicatorEditPage = () => {
               <ListIndicatorLines
                 currentIndicatorLineId={programIndicatorLineId ?? ''}
                 lines={sortedLines}
-                route={RouteBuilder.create(AppRoute.Distribution)
-                  .addPart(AppRoute.CustomerRequisition)
-                  .addPart(String(response?.requisitionNumber))
+                route={RouteBuilder.create(AppRoute.Replenishment)
+                  .addPart(AppRoute.InternalOrder)
+                  .addPart(String(request?.requisitionNumber))
                   .addPart(AppRoute.Indicators)
                   .addPart(String(programIndicatorCode))}
               />
@@ -96,7 +96,7 @@ export const IndicatorEditPage = () => {
                 next={next}
                 hasPrevious={hasPrevious}
                 previous={previous}
-                requisitionNumber={response?.requisitionNumber}
+                requisitionNumber={request?.requisitionNumber}
                 disabled={isDisabled}
               />
             </>

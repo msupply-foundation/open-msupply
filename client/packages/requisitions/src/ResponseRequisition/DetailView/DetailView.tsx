@@ -26,14 +26,10 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
-import {
-  useResponse,
-  ResponseLineFragment,
-  ResponseFragment,
-  ProgramIndicatorFragment,
-} from '../api';
+import { useResponse, ResponseLineFragment, ResponseFragment } from '../api';
 import { IndicatorsTab } from './IndicatorsTab';
 import { ResponseRequisitionLineErrorProvider } from '../context';
+import { ProgramIndicatorFragment } from '../../RequestRequisition/api';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
@@ -68,7 +64,6 @@ export const DetailView: FC = () => {
       indicatorLine?: IndicatorLineRowNode,
       response?: ResponseFragment
     ) => {
-      // TODO: Snack?
       if (!response || !indicatorLine) return;
       navigate(
         RouteBuilder.create(AppRoute.Distribution)
