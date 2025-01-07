@@ -77,7 +77,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       disabled: isDisabled,
     },
     {
-      label: t('button.return-lines'),
+      label: t('button.allocate-lines'),
       icon: <ZapIcon />,
       onClick: onAllocate,
       disabled: isDisabled,

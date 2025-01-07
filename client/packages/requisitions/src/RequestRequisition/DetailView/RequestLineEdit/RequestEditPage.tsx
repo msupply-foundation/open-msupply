@@ -12,7 +12,7 @@ import { useRequest } from '../../api';
 import { ListItems } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { useDraftRequisitionLine, usePreviousNextRequestLine } from './hooks';
-import { PageLayout } from '../../../PageLayout';
+import { PageLayout } from '../../../common/PageLayout';
 import { AppBarButtons } from './AppBarButtons';
 import { RequestLineEdit } from './RequestLineEdit';
 

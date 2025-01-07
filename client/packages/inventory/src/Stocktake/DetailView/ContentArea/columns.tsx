@@ -69,6 +69,7 @@ export const useStocktakeColumns = ({
   const columns: ColumnDescription<
     StocktakeLineFragment | StocktakeSummaryItem
   >[] = [
+    GenericColumnKey.Selection,
     [
       'itemCode',
       {
@@ -251,7 +252,6 @@ export const useStocktakeColumns = ({
         ]),
     },
     expandColumn,
-    GenericColumnKey.Selection,
   ];
 
   return useColumns(columns, { sortBy, onChangeSortBy }, [

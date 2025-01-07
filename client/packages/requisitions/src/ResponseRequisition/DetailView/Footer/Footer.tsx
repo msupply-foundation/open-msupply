@@ -5,6 +5,9 @@ import {
   useTranslation,
   AppFooterPortal,
   RequisitionNodeStatus,
+  Action,
+  DeleteIcon,
+  ActionsFooter,
 } from '@openmsupply-client/common';
 import { responseStatuses, getRequisitionTranslator } from '../../../utils';
 import { ResponseFragment, useResponse } from '../../api';
@@ -23,33 +26,59 @@ export const createStatusLog = (requisition: ResponseFragment) => {
   return statusLog;
 };
 
-export const Footer: FC = () => {
+interface FooterComponentProps {
+  isDisabled: boolean;
+  hasLinkedRequisition: boolean;
+}
+
+export const Footer: FC<FooterComponentProps> = ({
+  isDisabled,
+  hasLinkedRequisition,
+}: FooterComponentProps) => {
   const { data } = useResponse.document.get();
   const t = useTranslation();
+  const { selectedRows, confirmAndDelete } = useResponse.line.delete();
+
+  const actions: Action[] = [
+    {
+      label: t('button.delete-lines'),
+      icon: <DeleteIcon />,
+      onClick: confirmAndDelete,
+      disabled: isDisabled || hasLinkedRequisition,
+    },
+  ];
 
   return (
     <AppFooterPortal
       Content={
-        data && (
-          <Box
-            gap={2}
-            display="flex"
-            flexDirection="row"
-            alignItems="center"
-            height={64}
-          >
-            <StatusCrumbs
-              statuses={responseStatuses}
-              statusLog={createStatusLog(data)}
-              statusFormatter={getRequisitionTranslator(t)}
+        <>
+          {selectedRows.length !== 0 && (
+            <ActionsFooter
+              actions={actions}
+              selectedRowCount={selectedRows.length}
             />
+          )}
+          {data && selectedRows.length === 0 && (
+            <Box
+              gap={2}
+              display="flex"
+              flexDirection="row"
+              alignItems="center"
+              height={64}
+            >
+              <StatusCrumbs
+                statuses={responseStatuses}
+                statusLog={createStatusLog(data)}
+                statusFormatter={getRequisitionTranslator(t)}
+              />
 
-            <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-              <CreateShipmentButton />
-              <StatusChangeButton requisition={data} />
+              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+                <CreateShipmentButton />
+                <StatusChangeButton requisition={data} />
+              </Box>
             </Box>
-          </Box>
-        )
+          )}
+        </>
       }
     />
   );

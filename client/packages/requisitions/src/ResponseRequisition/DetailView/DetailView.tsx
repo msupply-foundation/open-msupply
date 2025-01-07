@@ -18,15 +18,11 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
-import {
-  useResponse,
-  ResponseLineFragment,
-  ResponseFragment,
-  ProgramIndicatorFragment,
-} from '../api';
+import { useResponse, ResponseLineFragment, ResponseFragment } from '../api';
 import { IndicatorsTab } from './IndicatorsTab';
 import { ResponseRequisitionLineErrorProvider } from '../context';
 import { buildItemEditRoute } from '../utils';
+import { ProgramIndicatorFragment } from '../../RequestRequisition/api';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
@@ -40,7 +36,9 @@ export const DetailView: FC = () => {
       data?.program?.id ?? '',
       !!data
     );
-
+  const { linkedRequisition } = useResponse.document.fields([
+    'linkedRequisition',
+  ]);
   const onRowClick = useCallback((line: ResponseLineFragment) => {
     navigate(buildItemEditRoute(line.requisitionNumber, line.item.id));
   }, []);
@@ -125,7 +123,10 @@ export const DetailView: FC = () => {
         <Toolbar />
         <DetailTabs tabs={tabs} />
 
-        <Footer />
+        <Footer
+          isDisabled={isDisabled}
+          hasLinkedRequisition={!!linkedRequisition}
+        />
         <SidePanel />
       </TableProvider>
     </ResponseRequisitionLineErrorProvider>

@@ -1,1 +1,3 @@
-export * from './Sync';
+export * from './SyncModal';
+export * from './useSyncModal';
+export * from './SyncModalProvider';

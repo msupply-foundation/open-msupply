@@ -45,5 +45,5 @@ export const useAssetsDelete = () => {
     },
   });
 
-  return confirmAndDelete;
+  return { confirmAndDelete, selectedRows };
 };

@@ -9,6 +9,7 @@ import {
   RequisitionSortFieldInput,
   InsertProgramRequestRequisitionInput,
   RequisitionFilterInput,
+  UpdateIndicatorValueInput,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './../DetailView/RequestLineEdit/hooks';
 import {
@@ -347,5 +348,30 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
   programSettings: async () => {
     const result = await sdk.supplierProgramSettings({ storeId });
     return result.supplierProgramRequisitionSettings;
+  },
+  getIndicators: async (
+    customerNameId: string,
+    periodId: string,
+    programId: string
+  ) => {
+    let result = await sdk.programIndicators({
+      storeId,
+      customerNameId,
+      periodId,
+      programId,
+    });
+
+    if (result?.programIndicators.__typename === 'ProgramIndicatorConnector') {
+      return result.programIndicators;
+    }
+  },
+  updateIndicatorValue: async (patch: UpdateIndicatorValueInput) => {
+    let result = await sdk.updateIndicatorValue({ storeId, input: patch });
+
+    if (!!result?.updateIndicatorValue) {
+      return result.updateIndicatorValue;
+    }
+
+    throw new Error('Could not update indicator value');
   },
 });
