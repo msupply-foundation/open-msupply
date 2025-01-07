@@ -41,4 +41,8 @@ impl ProgramNode {
                 .collect()
         }))
     }
+
+    pub async fn elmis_code(&self) -> Option<String> {
+        self.program_row.elmis_code.clone()
+    }
 }
