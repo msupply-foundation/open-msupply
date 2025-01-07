@@ -40,7 +40,7 @@ export const NavBar: React.FC<NavBarProps> = ({
       display="flex"
       alignItems="center"
       justifyContent="space-between"
-      sx={{ marginTop: 2 }}
+      sx={{ marginTop: 2, marginBottom: 3 }}
     >
       <ButtonWithIcon
         label={t('button.previous')}
