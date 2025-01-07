@@ -1,14 +1,15 @@
 use super::patient::PatientNode;
 use super::{
-    ClinicianNode, CurrencyNode, InvoiceLineConnector, NameNode, RequisitionNode, UserNode,
+    ClinicianNode, CurrencyNode, DiagnosisNode, InvoiceLineConnector, NameNode, RequisitionNode,
+    UserNode,
 };
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 
 use graphql_core::loader::{
-    ClinicianLoader, ClinicianLoaderInput, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader,
-    NameByIdLoaderInput, PatientLoader, UserLoader,
+    ClinicianLoader, ClinicianLoaderInput, DiagnosisLoader, InvoiceByIdLoader,
+    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, PatientLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -366,6 +367,22 @@ impl InvoiceNode {
             .load_one(original_shipment_id.to_string())
             .await?
             .map(InvoiceNode::from_domain))
+    }
+
+    pub async fn diagnosis_id(&self) -> &Option<String> {
+        &self.row().diagnosis_id
+    }
+
+    pub async fn diagnosis(&self, ctx: &Context<'_>) -> Result<Option<DiagnosisNode>> {
+        let Some(diagnosis_id) = &self.row().diagnosis_id else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<DiagnosisLoader>>();
+        Ok(loader
+            .load_one(diagnosis_id.to_string())
+            .await?
+            .map(DiagnosisNode::from_domain))
     }
 }
 
