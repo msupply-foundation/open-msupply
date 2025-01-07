@@ -424,10 +424,10 @@ pub fn mock_inbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
     ]
 }
 
-pub fn mock_inbound_shipment_linked_transfer_line_a() -> InvoiceLineRow {
+pub fn mock_transferred_inbound_shipment_a_line_a() -> InvoiceLineRow {
     InvoiceLineRow {
-        id: String::from("inbound_shipment_linked_transfer_line_a"),
-        invoice_id: String::from("inbound_shipment_linked_transfer"),
+        id: String::from("transferred_inbound_shipment_a_line_a"),
+        invoice_id: String::from("transferred_inbound_shipment_a"),
         item_link_id: String::from("item_a"),
         location_id: None,
         item_name: String::from("Item A"),
@@ -447,10 +447,10 @@ pub fn mock_inbound_shipment_linked_transfer_line_a() -> InvoiceLineRow {
     }
 }
 
-pub fn mock_inbound_shipment_linked_transfer_line_b() -> InvoiceLineRow {
+pub fn mock_transferred_inbound_shipment_a_line_b() -> InvoiceLineRow {
     InvoiceLineRow {
-        id: String::from("inbound_shipment_linked_transfer_line_b"),
-        invoice_id: String::from("inbound_shipment_linked_transfer"),
+        id: String::from("transferred_inbound_shipment_a_line_b"),
+        invoice_id: String::from("transferred_inbound_shipment_a"),
         item_link_id: String::from("item_b"),
         location_id: Some("location_1".to_owned()),
         item_name: String::from("Item B"),
@@ -470,15 +470,13 @@ pub fn mock_inbound_shipment_linked_transfer_line_b() -> InvoiceLineRow {
     }
 }
 
-pub fn mock_inbound_shipment_linked_transfer_invoice_lines() -> Vec<InvoiceLineRow> {
-    let mock_inbound_shipment_linked_transfer_line_a =
-        mock_inbound_shipment_linked_transfer_line_a();
-    let mock_inbound_shipment_linked_transfer_line_b =
-        mock_inbound_shipment_linked_transfer_line_b();
+pub fn mock_transferred_inbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mock_transferred_inbound_shipment_a_line_a = mock_transferred_inbound_shipment_a_line_a();
+    let mock_transferred_inbound_shipment_a_line_b = mock_transferred_inbound_shipment_a_line_b();
 
     vec![
-        mock_inbound_shipment_linked_transfer_line_a,
-        mock_inbound_shipment_linked_transfer_line_b,
+        mock_transferred_inbound_shipment_a_line_a,
+        mock_transferred_inbound_shipment_a_line_b,
     ]
 }
 
@@ -649,8 +647,7 @@ pub fn mock_inbound_shipment_invoice_lines() -> Vec<InvoiceLineRow> {
     mock_inbound_shipment_invoice_lines.extend(mock_inbound_shipment_b_invoice_lines());
     mock_inbound_shipment_invoice_lines.extend(mock_inbound_shipment_c_invoice_lines());
     mock_inbound_shipment_invoice_lines.extend(mock_inbound_shipment_d_invoice_lines());
-    mock_inbound_shipment_invoice_lines
-        .extend(mock_inbound_shipment_linked_transfer_invoice_lines());
+    mock_inbound_shipment_invoice_lines.extend(mock_transferred_inbound_shipment_a_invoice_lines());
     mock_inbound_shipment_invoice_lines
 }
 
@@ -659,7 +656,6 @@ pub fn mock_invoice_lines() -> Vec<InvoiceLineRow> {
 
     mock_invoice_lines.extend(mock_outbound_shipment_invoice_lines());
     mock_invoice_lines.extend(mock_inbound_shipment_invoice_lines());
-    mock_invoice_lines.extend(mock_inbound_shipment_linked_transfer_invoice_lines());
     mock_invoice_lines.extend(mock_prescription_a_invoice_lines());
     mock_invoice_lines.extend(mock_supplier_return_a_invoice_lines());
     mock_invoice_lines.extend(mock_supplier_return_b_invoice_lines());
