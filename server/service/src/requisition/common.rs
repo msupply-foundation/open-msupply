@@ -3,9 +3,9 @@ use repository::{
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
 use repository::{
-    ApprovalStatusType, EqualFilter, ProgramFilter, ProgramRequisitionOrderTypeRowRepository,
-    ProgramRequisitionSettingsFilter, ProgramRequisitionSettingsRepository, Requisition,
-    RequisitionFilter, RequisitionRepository,
+    ApprovalStatusType, EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueType,
+    ProgramFilter, ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
+    ProgramRequisitionSettingsRepository, Requisition, RequisitionFilter, RequisitionRepository,
 };
 use util::inline_edit;
 
@@ -95,6 +95,27 @@ pub fn check_emergency_order_within_max_items_limit(
         line_count <= order_type.max_items_in_emergency_order as usize,
         order_type.max_items_in_emergency_order,
     ))
+}
+
+pub(crate) fn indicator_value_type<'a>(
+    line: &'a IndicatorLineRow,
+    column: &'a IndicatorColumnRow,
+) -> &'a Option<IndicatorValueType> {
+    if column.value_type == None {
+        &line.value_type
+    } else {
+        &column.value_type
+    }
+}
+
+pub(crate) fn default_indicator_value(
+    line: &IndicatorLineRow,
+    column: &IndicatorColumnRow,
+) -> String {
+    match column.value_type {
+        Some(_) => column.default_value.clone(),
+        None => line.default_value.clone(),
+    }
 }
 
 impl From<RepositoryError> for OrderTypeNotFoundError {

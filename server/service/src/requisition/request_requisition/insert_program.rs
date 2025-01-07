@@ -2,7 +2,7 @@ use crate::{
     activity_log::activity_log_entry,
     number::next_number,
     requisition::{
-        common::check_requisition_row_exists,
+        common::{check_requisition_row_exists, default_indicator_value, indicator_value_type},
         program_indicator::query::{program_indicators, ProgramIndicator},
         program_settings::get_supplier_program_requisition_settings,
         query::get_requisition,
@@ -264,7 +264,7 @@ fn generate_program_indicator_values(
         })
         .collect::<Vec<String>>();
 
-    let values = IndicatorValueRepository::new(connection).query_by_filter(
+    let customer_values = IndicatorValueRepository::new(connection).query_by_filter(
         IndicatorValueFilter::new()
             .period_id(EqualFilter::equal_to(period_id))
             .indicator_line_id(EqualFilter::equal_any(indicator_line_ids))
@@ -277,46 +277,22 @@ fn generate_program_indicator_values(
     for program_indicator in program_indicators {
         for line in program_indicator.lines {
             for column in line.columns.clone() {
-                let value = match column.value_type {
-                    Some(IndicatorValueType::String) => column.default_value.clone(),
-                    Some(IndicatorValueType::Number) => {
-                        if store_pref.use_consumption_and_stock_from_customers_for_internal_orders
-                            && !customer_store_ids.is_empty()
-                        {
-                            let sum: f64 = values
-                                .iter()
-                                .filter(|v| {
-                                    v.indicator_line_id == line.line.id
-                                        && v.indicator_column_id == column.id
-                                })
-                                .map(|v| v.value.parse::<f64>().unwrap_or_default())
-                                .sum();
-                            sum.to_string()
-                        } else {
-                            column.default_value.clone()
-                        }
-                    }
-                    None => match line.line.value_type {
-                        Some(IndicatorValueType::String) => line.line.default_value.clone(),
-                        Some(IndicatorValueType::Number) => {
-                            if store_pref
-                                .use_consumption_and_stock_from_customers_for_internal_orders
-                            {
-                                let sum: f64 = values
-                                    .iter()
-                                    .filter(|v| {
-                                        v.indicator_line_id == line.line.id
-                                            && v.indicator_column_id == column.id
-                                    })
-                                    .map(|v| v.value.parse::<f64>().unwrap_or_default())
-                                    .sum();
-                                sum.to_string()
-                            } else {
-                                line.line.default_value.clone()
-                            }
-                        }
-                        None => line.line.default_value.clone(),
-                    },
+                let value_type = indicator_value_type(&line.line, &column);
+                let value = if store_pref
+                    .use_consumption_and_stock_from_customers_for_internal_orders
+                    && value_type == &Some(IndicatorValueType::Number)
+                {
+                    customer_values
+                        .iter()
+                        .filter(|v| {
+                            v.indicator_line_id == line.line.id
+                                && v.indicator_column_id == column.id
+                        })
+                        .map(|v| v.value.parse::<f64>().unwrap_or_default())
+                        .sum::<f64>()
+                        .to_string()
+                } else {
+                    default_indicator_value(&line.line, &column)
                 };
 
                 let indicator_value = IndicatorValueRow {
