@@ -72,11 +72,9 @@ pub fn insert_program_request_requisition(
                 requisition_line_repo.upsert_one(&requisition_line)?;
             }
 
-            if !indicator_values.is_empty() {
-                let indicator_value_repo = IndicatorValueRowRepository::new(connection);
-                for indicator_value in indicator_values {
-                    indicator_value_repo.upsert_one(&indicator_value)?;
-                }
+            let indicator_value_repo = IndicatorValueRowRepository::new(connection);
+            for indicator_value in indicator_values {
+                indicator_value_repo.upsert_one(&indicator_value)?;
             }
 
             activity_log_entry(
@@ -165,7 +163,6 @@ fn generate(
             &NumberRowType::RequestRequisition,
             &ctx.store_id,
         )?,
-        // TODO change to customer_id
         name_link_id: other_party_id.clone(),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Request,
