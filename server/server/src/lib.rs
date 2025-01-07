@@ -23,6 +23,7 @@ use repository::{get_storage_connection_manager, migrations::migrate};
 
 use service::{
     auth_data::AuthData,
+    backend_plugin::plugin_provider::PluginContext,
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
@@ -37,6 +38,7 @@ use service::{
 
 use actix_web::{web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
+use upload_plugin::config_upload_plugin;
 
 mod authentication;
 pub mod certs;
@@ -51,6 +53,7 @@ pub mod static_files;
 pub mod support;
 mod upload_fridge_tag;
 pub use self::logging::*;
+mod upload_plugin;
 
 pub mod print;
 mod sync_on_central;
@@ -138,6 +141,13 @@ pub async fn start_server(
             .update_log_level(&service_context, settings.logging.clone().unwrap().level)
             .unwrap();
     }
+
+    // PLUGIN CONTEXT
+
+    PluginContext {
+        service_provider: service_provider.clone(),
+    }
+    .bind();
 
     // SET LOG CALLBACK FOR WASM FUNCTIONS
     info!("Setting wasm function log callback..");
@@ -306,6 +316,7 @@ pub async fn start_server(
             .configure(config_print)
             // Needs to be last to capture all unmatches routes
             .configure(config_serve_frontend)
+            .configure(config_upload_plugin)
     })
     .disable_signals();
 
