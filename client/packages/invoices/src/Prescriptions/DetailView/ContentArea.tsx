@@ -38,7 +38,6 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
       <DataTable
         id="prescription-detail"
         onRowClick={onRowClick}
-        // ExpandContent={Expand}
         columns={columns}
         data={rows}
         enableColumnSelection
