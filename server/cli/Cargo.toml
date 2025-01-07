@@ -37,6 +37,7 @@ serde_json = { workspace = true }
 simple-log = { workspace = true }
 tokio = { workspace = true }
 reqwest = { workspace = true }
+base64 = { workspace = true }
 
 simple_logger = { version = "5.0", features = ["colors"] }
 egui = { version = "0.27" }

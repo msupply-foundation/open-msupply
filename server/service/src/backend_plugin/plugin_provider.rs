@@ -4,8 +4,8 @@ use actix_web::web::Data;
 
 use base64::{prelude::BASE64_STANDARD, Engine};
 
-use repository::{PluginType, PluginVariantType};
-use serde::Serialize;
+use repository::{BackendPluginRow, PluginType, PluginTypes, PluginVariantType};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::{backend_plugin::boajs, service_provider::ServiceProvider};
@@ -21,9 +21,15 @@ pub struct PluginError {
 }
 
 pub struct Plugin {
-    r#type: PluginType,
+    types: PluginTypes,
     code: String,
     instance: Arc<PluginInstance>,
+}
+
+impl Plugin {
+    fn has_type(&self, r#type: &PluginType) -> bool {
+        self.types.0.contains(r#type)
+    }
 }
 pub enum PluginInstance {
     BoaJs(Vec<u8>),
@@ -66,7 +72,7 @@ impl PluginContext {
 pub(crate) fn call_plugin<I, O>(input: I, name: &str, plugin: &PluginInstance) -> PluginResult<O>
 where
     I: Serialize,
-    O: serde::de::DeserializeOwned,
+    O: DeserializeOwned,
 {
     let result = match plugin {
         PluginInstance::BoaJs(bundle) => {
@@ -80,13 +86,9 @@ where
     })
 }
 
-// TODO temporary used to show example
-pub struct BindPluginInput {
-    pub bundle_base64: String,
-    pub variant_type: PluginVariantType,
-    pub r#type: PluginType,
-    // Identifier
-    pub code: String,
+#[derive(Serialize, Deserialize)]
+pub struct PluginBundle {
+    pub backend_plugins: Vec<BackendPluginRow>,
 }
 
 impl PluginInstance {
@@ -94,9 +96,7 @@ impl PluginInstance {
         let plugin_instance = {
             let plugins = PLUGINS.read().unwrap();
 
-            let plugin = plugins
-                .iter()
-                .find(|Plugin { r#type: p_type, .. }| p_type == &r#type);
+            let plugin = plugins.iter().find(|p| p.has_type(&r#type));
 
             plugin.map(|p| p.instance.clone())
         };
@@ -105,12 +105,13 @@ impl PluginInstance {
     }
 
     pub fn bind(
-        BindPluginInput {
+        BackendPluginRow {
             bundle_base64,
             variant_type,
-            r#type,
+            types,
             code,
-        }: BindPluginInput,
+            ..
+        }: BackendPluginRow,
     ) {
         let plugin_bundle = BASE64_STANDARD.decode(bundle_base64).unwrap();
 
@@ -128,7 +129,7 @@ impl PluginInstance {
         // Add plugin with this code
         (*plugins).push(Plugin {
             code,
-            r#type,
+            types,
             instance,
         });
     }

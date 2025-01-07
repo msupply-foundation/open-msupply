@@ -11,6 +11,7 @@ path = "src/lib.rs"
 repository = { path = "../../repository" }
 service = { path = "../../service" }
 graphql_core = { path = "../core" }
+util = { path = "../../util" }
 
 
 actix-web = { workspace = true }
