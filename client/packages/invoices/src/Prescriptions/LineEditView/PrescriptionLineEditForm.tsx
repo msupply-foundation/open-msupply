@@ -2,25 +2,28 @@ import React, { useEffect, useState } from 'react';
 import {
   Grid,
   BasicTextInput,
-  ModalLabel,
-  ModalRow,
-  Select,
   useTranslation,
   NumericTextInput,
-  Divider,
   Box,
   Typography,
   useFormatNumber,
   useDebounceCallback,
   InputLabel,
   useDebouncedValueCallback,
+  TableProvider,
+  createTableStore,
+  createQueryParamsStore,
+  InlineSpinner,
+  TypedTFunction,
+  LocaleKey,
+  NumUtils,
+  ItemNode,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
   ItemRowFragment,
 } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
-import { DraftItem } from '../..';
 import { PackSizeController } from '../../StockOut';
 import {
   StockOutAlert,
@@ -29,11 +32,13 @@ import {
 } from '../../StockOut';
 import { DraftStockOutLine } from '../../types';
 import { isA } from '../../utils';
+import { AccordionPanelSection } from './PanelSection';
+import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 
 interface PrescriptionLineEditFormProps {
-  allocatedQuantity: number;
-  availableQuantity: number;
-  item: DraftItem | null;
+  allocatedUnits: number;
+  availableUnits: number;
+  item: ItemRowFragment | null;
   onChangeItem: (newItem: ItemRowFragment | null) => void;
   onChangeQuantity: (
     quantity: number,
@@ -50,17 +55,18 @@ interface PrescriptionLineEditFormProps {
   showZeroQuantityConfirmation: boolean;
   hasOnHold: boolean;
   hasExpired: boolean;
+  isLoading: boolean;
+  updateQuantity: (batchId: string, updateQuantity: number) => void;
 }
 
 export const PrescriptionLineEditForm: React.FC<
   PrescriptionLineEditFormProps
 > = ({
-  allocatedQuantity,
+  allocatedUnits,
   onChangeItem,
   onChangeQuantity,
   item,
   packSizeController,
-  availableQuantity,
   disabled,
   isNew,
   canAutoAllocate,
@@ -70,39 +76,24 @@ export const PrescriptionLineEditForm: React.FC<
   isAutoAllocated,
   hasOnHold,
   hasExpired,
+  isLoading,
+  updateQuantity,
 }) => {
   const t = useTranslation();
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
-  const [issueQuantity, setIssueQuantity] = useState(0);
+  const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
-
-  const onChangePackSize = (newPackSize: number) => {
-    const packSize = newPackSize === -1 ? 1 : newPackSize;
-    const newAllocatedQuantity =
-      newPackSize === 0 ? 0 : Math.round(allocatedQuantity / packSize);
-
-    packSizeController.setPackSize(newPackSize);
-    allocate(newAllocatedQuantity, newPackSize);
-  };
-
-  const updateIssueQuantity = (quantity: number) => {
-    setIssueQuantity(
-      Math.round(
-        quantity / Math.abs(Number(packSizeController.selected?.value || 1))
-      )
-    );
-  };
 
   const debouncedSetAllocationAlerts = useDebounceCallback(
     warning => setAllocationAlerts(warning),
     []
   );
 
-  const allocate = (quantity: number, packSize: number) => {
+  const allocate = (numPacks: number, packSize: number) => {
     const newAllocateQuantities = onChangeQuantity(
-      quantity,
-      packSize === -1 ? null : packSize,
+      numPacks,
+      packSize === -1 || packSize === 1 ? null : packSize,
       true
     );
     const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
@@ -116,9 +107,9 @@ export const PrescriptionLineEditForm: React.FC<
       ? 'warning.cannot-create-placeholder-units'
       : 'warning.cannot-create-placeholder-packs';
     const hasRequestedOverAvailable =
-      quantity > allocatedQuantity && newAllocateQuantities !== undefined;
+      numPacks > allocatedQuantity && newAllocateQuantities !== undefined;
     const alerts = getAllocationAlerts(
-      quantity * (packSize === -1 ? 1 : packSize),
+      numPacks * (packSize === -1 ? 1 : packSize),
       // suppress the allocation warning if the user has requested more than the available amount of stock
       hasRequestedOverAvailable ? 0 : allocatedQuantity,
       placeholderLine?.numberOfPacks ?? 0,
@@ -131,13 +122,20 @@ export const PrescriptionLineEditForm: React.FC<
       alerts.push({
         message: t(messageKey, {
           allocatedQuantity: format(allocatedQuantity),
-          requestedQuantity: format(quantity),
+          requestedQuantity: format(numPacks),
         }),
         severity: 'warning',
       });
     }
+    if (NumUtils.round(numPacks) !== numPacks) {
+      const nearestAbove = Math.ceil(numPacks) * packSize;
+      alerts.push({
+        message: t('messages.partial-pack-warning', { nearestAbove }),
+        severity: 'warning',
+      });
+    }
     debouncedSetAllocationAlerts(alerts);
-    updateIssueQuantity(allocatedQuantity);
+    setIssueUnitQuantity(allocatedQuantity);
   };
 
   // using a debounced value for the allocation. In the scenario where
@@ -147,22 +145,30 @@ export const PrescriptionLineEditForm: React.FC<
   // See https://github.com/msupply-foundation/open-msupply/issues/2727
   // and https://github.com/msupply-foundation/open-msupply/issues/3532
   const debouncedAllocate = useDebouncedValueCallback(
-    (quantity, packSize) => {
-      allocate(quantity, packSize);
+    (numPacks, packSize) => {
+      allocate(numPacks, packSize);
     },
     [],
     500,
     [draftPrescriptionLines] // this is needed to prevent a captured enclosure of onChangeQuantity
   );
 
-  const handleIssueQuantityChange = (inputQuantity?: number) => {
-    // this method is also called onBlur... check that there actually has been a change
-    // in quantity (to prevent triggering auto allocation if only focus has moved)
-    if (inputQuantity === issueQuantity) return;
+  const handleIssueQuantityChange = (inputUnitQuantity?: number) => {
+    // this method is also called onBlur... check that there actually has been a
+    // change in quantity (to prevent triggering auto allocation if only focus
+    // has moved)
+    if (inputUnitQuantity === issueUnitQuantity) return;
 
-    const quantity = inputQuantity === undefined ? 0 : inputQuantity;
-    setIssueQuantity(quantity);
-    debouncedAllocate(quantity, Number(packSizeController.selected?.value));
+    const quantity = inputUnitQuantity === undefined ? 0 : inputUnitQuantity;
+    setIssueUnitQuantity(quantity);
+
+    const packSize =
+      packSizeController.selected?.value !== -1
+        ? (packSizeController.selected?.value ?? 1)
+        : 1;
+
+    const numPacks = quantity / packSize;
+    debouncedAllocate(numPacks, Number(packSize));
   };
 
   const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);
@@ -170,20 +176,33 @@ export const PrescriptionLineEditForm: React.FC<
 
   useEffect(() => {
     const newIssueQuantity = Math.round(
-      allocatedQuantity /
-        Math.abs(Number(packSizeController.selected?.value || 1))
+      allocatedUnits / Math.abs(Number(packSizeController.selected?.value || 1))
     );
-    if (newIssueQuantity !== issueQuantity) setIssueQuantity(newIssueQuantity);
+    if (newIssueQuantity !== issueUnitQuantity)
+      setIssueUnitQuantity(newIssueQuantity);
+    setAllocationAlerts([]);
   }, [item?.id]);
 
   useEffect(() => {
-    if (!isAutoAllocated) updateIssueQuantity(allocatedQuantity);
-  }, [packSizeController.selected?.value, allocatedQuantity]);
+    if (!isAutoAllocated) setIssueUnitQuantity(allocatedUnits);
+  }, [packSizeController.selected?.value, allocatedUnits]);
+
+  const key = item?.id ?? 'new';
 
   return (
-    <Grid container gap="4px">
-      <ModalRow>
-        <ModalLabel label={t('label.item', { count: 1 })} />
+    <Grid
+      container
+      gap="4px"
+      sx={{ minHeight: 200, display: 'flex', flexDirection: 'column' }}
+    >
+      <AccordionPanelSection
+        // Key ensures component will reload when switching item, but not when
+        // making other changes within item (e.g. quantity)
+        key={key + '_item_search'}
+        title={t('label.item', { count: 1 })}
+        closedSummary={item?.name}
+        defaultExpanded={isNew && !disabled}
+      >
         <Grid item flex={1}>
           <StockItemSearchInput
             autoFocus={!item}
@@ -199,60 +218,9 @@ export const PrescriptionLineEditForm: React.FC<
             }
           />
         </Grid>
-      </ModalRow>
+      </AccordionPanelSection>
       {item && (
         <>
-          <ModalRow>
-            <ModalLabel label="" />
-            <Grid item display="flex">
-              <Typography
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                }}
-              >
-                {t('label.available-quantity', {
-                  number: availableQuantity.toFixed(0),
-                })}
-              </Typography>
-            </Grid>
-
-            <Grid
-              style={{ display: 'flex' }}
-              justifyContent="flex-end"
-              flex={1}
-            >
-              <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
-              <BasicTextInput
-                disabled
-                sx={{ width: 150 }}
-                value={item?.unitName}
-              />
-            </Grid>
-          </ModalRow>
-        </>
-      )}
-      {item && canAutoAllocate ? (
-        <>
-          <ModalRow>
-            <ModalLabel label={t('label.directions')} />
-            <BasicTextInput
-              value={note}
-              disabled={disabled}
-              onChange={e => {
-                updateNotes(e.target.value);
-              }}
-              InputProps={{
-                sx: {
-                  backgroundColor: theme => theme.palette.background.menu,
-                },
-              }}
-              fullWidth
-              style={{ flex: 1 }}
-            />
-          </ModalRow>
-          <Divider margin={10} />
           {!disabled && (
             <StockOutAlerts
               allocationAlerts={allocationAlerts}
@@ -260,70 +228,173 @@ export const PrescriptionLineEditForm: React.FC<
               isAutoAllocated={isAutoAllocated}
             />
           )}
-          <Grid container>
-            <ModalLabel label={t('label.issue')} />
-            <NumericTextInput
-              autoFocus
-              disabled={disabled}
-              value={issueQuantity}
-              onChange={handleIssueQuantityChange}
-              min={0}
-            />
-
-            <Box marginLeft={1} />
-
-            {packSizeController.options.length ? (
-              <>
-                <Grid
-                  item
-                  alignItems="center"
-                  display="flex"
-                  justifyContent="flex-start"
-                  style={{ minWidth: 125 }}
-                >
-                  <InputLabel sx={{ fontSize: '12px' }}>
-                    {packSizeController.selected?.value === -1
-                      ? `${t('label.unit-plural', {
-                          unit: item?.unitName,
-                          count: issueQuantity,
-                        })} ${t('label.in-packs-of')}`
-                      : t('label.in-packs-of')}
-                  </InputLabel>
-                </Grid>
-                <Box marginLeft={1} />
-                <Select
-                  sx={{ width: 110 }}
+          <AccordionPanelSection
+            title={t('label.quantity')}
+            closedSummary={summarise(draftPrescriptionLines, t)}
+            defaultExpanded={isNew && !disabled}
+            key={key + '_quantity'}
+          >
+            <Grid
+              container
+              alignItems="center"
+              display="flex"
+              flexDirection="row"
+              justifyContent="flex-start"
+              gap={1}
+            >
+              <Grid item>
+                <InputLabel style={{ fontSize: 12 }}>
+                  {t('label.issue')}
+                </InputLabel>
+              </Grid>
+              <Grid item>
+                <NumericTextInput
+                  autoFocus
                   disabled={disabled}
-                  options={packSizeController.options}
-                  value={packSizeController.selected?.value ?? ''}
-                  onChange={e => {
-                    const { value } = e.target;
-                    onChangePackSize(Number(value));
-                  }}
+                  value={issueUnitQuantity}
+                  onChange={handleIssueQuantityChange}
+                  min={0}
                 />
-                {packSizeController.selected?.value !== -1 && (
-                  <Grid
-                    item
-                    alignItems="center"
-                    display="flex"
-                    justifyContent="flex-start"
-                  >
-                    <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
-                      {t('label.unit-plural', {
-                        count: packSizeController.selected?.value,
-                        unit: item?.unitName,
-                      })}
-                    </InputLabel>
-                  </Grid>
-                )}
-                <Box marginLeft="auto" />
-              </>
-            ) : null}
-          </Grid>
+              </Grid>
+              <Grid item>
+                <InputLabel style={{ fontSize: 12 }}>
+                  {t('label.unit-plural', {
+                    count: issueUnitQuantity,
+                    unit: item?.unitName,
+                  })}
+                </InputLabel>
+              </Grid>
+            </Grid>
+            <TableWrapper
+              canAutoAllocate={canAutoAllocate}
+              currentItem={item}
+              isLoading={isLoading}
+              packSizeController={packSizeController}
+              updateQuantity={updateQuantity}
+              draftPrescriptionLines={draftPrescriptionLines}
+              allocatedUnits={allocatedUnits}
+            />
+          </AccordionPanelSection>
         </>
-      ) : (
-        <Box height={100} />
       )}
+      {item && (
+        <AccordionPanelSection
+          title={t('label.directions')}
+          closedSummary={note}
+          defaultExpanded={(isNew || !note) && !disabled}
+          key={item?.id ?? 'new'}
+        >
+          <BasicTextInput
+            value={note}
+            disabled={disabled}
+            onChange={e => {
+              updateNotes(e.target.value);
+            }}
+            fullWidth
+            style={{ flex: 1 }}
+          />
+        </AccordionPanelSection>
+      )}
+      {/* {!item && <Box height={100} />} */}
     </Grid>
   );
+};
+
+interface TableProps {
+  canAutoAllocate: boolean;
+  currentItem: ItemRowFragment | null;
+  isLoading: boolean;
+  packSizeController: PackSizeController;
+  updateQuantity: (batchId: string, updateQuantity: number) => void;
+  draftPrescriptionLines: DraftStockOutLine[];
+  allocatedUnits: number;
+}
+
+const TableWrapper: React.FC<TableProps> = ({
+  canAutoAllocate,
+  currentItem,
+  isLoading,
+  // packSizeController,
+  updateQuantity,
+  draftPrescriptionLines,
+  allocatedUnits,
+}) => {
+  const t = useTranslation();
+
+  if (!currentItem) return null;
+
+  if (isLoading)
+    return (
+      <Box
+        display="flex"
+        flex={1}
+        height={400}
+        justifyContent="center"
+        alignItems="center"
+      >
+        <InlineSpinner />
+      </Box>
+    );
+
+  if (!canAutoAllocate)
+    return (
+      <Box sx={{ margin: 'auto' }}>
+        <Typography>{t('messages.no-stock-available')}</Typography>
+      </Box>
+    );
+
+  return (
+    <>
+      <TableProvider
+        createStore={createTableStore}
+        queryParamsStore={createQueryParamsStore({
+          initialSortBy: { key: 'expiryDate' },
+        })}
+      >
+        <PrescriptionLineEditTable
+          // packSizeController={packSizeController}
+          onChange={updateQuantity}
+          rows={draftPrescriptionLines}
+          item={currentItem}
+          allocatedUnits={allocatedUnits}
+        />
+      </TableProvider>
+    </>
+  );
+};
+
+const summarise = (
+  lines: DraftStockOutLine[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  // Count how many of each pack size
+  const counts: Record<number, { unitName: string; count: number }> = {};
+  lines.forEach(({ packSize, numberOfPacks, stockLine }) => {
+    if (numberOfPacks === 0) return;
+    if (counts[packSize]) {
+      counts[packSize].count += packSize * numberOfPacks;
+    } else {
+      counts[packSize] = {
+        unitName: (stockLine?.item as ItemNode)?.unitName ?? 'unit',
+        count: NumUtils.round(packSize * numberOfPacks),
+      };
+    }
+  });
+
+  // Summarise counts in words
+  const summary: string[] = [];
+  Object.entries(counts).forEach(([size, { unitName, count }]) => {
+    const unitWord = t('label.unit-plural', {
+      count,
+      unit: unitName,
+    });
+    if (Number(size) > 1) {
+      const packs = NumUtils.round(count / Number(size), 3);
+      summary.push(t('label.packs-of-size', { packs, count, size, unitWord }));
+    } else {
+      summary.push(t('label.packs-of-1', { count, unitWord }));
+    }
+  });
+
+  return summary.join('\n');
 };

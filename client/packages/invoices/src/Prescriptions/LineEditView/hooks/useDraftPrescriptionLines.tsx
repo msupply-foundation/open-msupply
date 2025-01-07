@@ -18,7 +18,7 @@ import {
 
 export interface UseDraftPrescriptionLinesControl {
   updateNotes: (note: string) => void;
-  updateQuantity: (batchId: string, quantity: number) => void;
+  updateQuantity: (batchId: string, packs: number) => void;
   isLoading: boolean;
 }
 
@@ -42,14 +42,7 @@ export const useDraftPrescriptionLines = (
   });
 
   useEffect(() => {
-    if (!item) {
-      // return setDraftStockOutLines([]);
-    }
-
     if (!data) return;
-    if (draftLines.length > 0)
-      // Draft lines already in state from previous rendering
-      return;
 
     // Stock lines (data.nodes) are coming from availableStockLines from
     // itemNode these are filtered by totalNumberOfPacks > 0 but it's possible
@@ -120,8 +113,8 @@ export const useDraftPrescriptionLines = (
   }, [data, item, prescriptionData]);
 
   const onChangeRowQuantity = useCallback(
-    (batchId: string, value: number) => {
-      updateDraftLines(issueStock(draftLines, batchId, value));
+    (batchId: string, packs: number) => {
+      updateDraftLines(issueStock(draftLines, batchId, packs));
     },
     [draftLines]
   );
