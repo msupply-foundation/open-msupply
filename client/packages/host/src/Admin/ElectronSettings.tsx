@@ -154,9 +154,8 @@ export const ElectronSettings = () => {
                   <LoadingButton
                     onClick={startDeviceScan}
                     isLoading={isScanning}
-                  >
-                    {t('label.detect-scanners')}
-                  </LoadingButton>
+                    label={t('label.detect-scanners')}
+                  />
                 </Box>
               </Box>
             }

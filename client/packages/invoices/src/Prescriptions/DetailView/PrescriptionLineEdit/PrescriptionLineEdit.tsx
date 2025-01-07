@@ -219,9 +219,8 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
           color="secondary"
           aria-label={t('button.ok')}
           onClick={() => handleSave(onClose)}
-        >
-          {t('button.ok')}
-        </LoadingButton>
+          label={t('button.ok')}
+        />
       }
       height={height}
       width={1000}

@@ -58,9 +58,10 @@ export const Footer: FC<FooterProps> = ({
               disabled={disabled}
               isLoading={isSaving}
               onClick={showSaveConfirmation}
-            >
-              {inputData?.isCreating ? t('button.create') : t('button.save')}
-            </LoadingButton>
+              label={
+                inputData?.isCreating ? t('button.create') : t('button.save')
+              }
+            />
           </Box>
         </Box>
       }
