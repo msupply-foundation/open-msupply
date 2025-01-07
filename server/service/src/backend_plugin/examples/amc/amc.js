@@ -1,5 +1,5 @@
 // To upload to server (from this dir):
-// curl --form files='@amc.js' --form "config={};type=application/json" 'http://localhost:8000/plugin?type=AMC&variant-type=BOAJS&code=amc_check'
+// curl --form files='@amc.js' --form "config={};type=application/json" 'http://localhost:8000/plugin?type=AMC&variant-type=BOA_JS&code=amc_check'
 
 // TODO type sharing and type sharing
 
