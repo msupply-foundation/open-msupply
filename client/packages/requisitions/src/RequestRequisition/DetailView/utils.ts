@@ -13,3 +13,13 @@ export const buildIndicatorEditRoute = (
     .addPart(programIndicatorCode)
     .addPart(indicatorId)
     .build();
+
+export const buildItemEditRoute = (
+  requisitionNumber?: number,
+  itemId?: string
+) =>
+  RouteBuilder.create(AppRoute.Replenishment)
+    .addPart(AppRoute.InternalOrder)
+    .addPart(String(requisitionNumber))
+    .addPart(String(itemId))
+    .build();
