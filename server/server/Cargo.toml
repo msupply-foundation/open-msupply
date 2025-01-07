@@ -59,7 +59,7 @@ httpmock = { workspace = true }
 winres = "0.1"
 
 [target.'cfg(not(target_os = "android"))'.dependencies]
-astro-dnssd = { version = "0.3.2" }
+astro-dnssd = { version = "0.3.4" }
 
 [features]
 default = ["sqlite", "dep:machine-uid"]
