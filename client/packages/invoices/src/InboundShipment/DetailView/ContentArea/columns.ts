@@ -38,7 +38,9 @@ export const useInboundShipmentColumns = () => {
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const getSellPrice = (row: InboundLineFragment) =>
-    isInboundPlaceholderRow(row) ? 0 : row.sellPricePerPack;
+    isInboundPlaceholderRow(row)
+      ? 0
+      : getTotalCost(row) / (row.numberOfPacks * row.packSize);
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const columns = useColumns<InboundLineFragment | InboundItem>(
@@ -216,7 +218,7 @@ export const useInboundShipmentColumns = () => {
         },
       ],
       {
-        label: 'label.cost-price',
+        label: 'label.cost-per-unit',
         key: 'costPricePerUnit',
         align: ColumnAlign.Right,
         width: 120,
