@@ -119,12 +119,12 @@ export const SyncModal = ({
         if (e.key === 'Escape') onCancel();
       }}
     >
-      <Grid style={{ padding: 15 }} justifyContent="center">
+      <Grid sx={{ padding: 2, paddingBottom: 5 }} justifyContent="center">
         <IconButton
           icon={<CloseIcon />}
           color="primary"
           onClick={onCancel}
-          sx={{ position: 'absolute', right: 8, top: 8 }}
+          sx={{ position: 'absolute', right: 0, top: 0, padding: 2 }}
           label={t('button.close')}
         />
 
@@ -133,19 +133,13 @@ export const SyncModal = ({
           container
           flexDirection="column"
           justifyContent="flex-start"
-          style={{ padding: '15 15 50 15', minWidth: 650 }}
+          sx={{ padding: 2, paddingBottom: 6, minWidth: 650 }}
           flexWrap="nowrap"
         >
-          <Typography
-            variant="h5"
-            color="primary"
-            style={{ paddingBottom: 10 }}
-          >
+          <Typography variant="h5" color="primary" sx={{ paddingBottom: 1.25 }}>
             {t('heading.synchronise-status')}
           </Typography>
-          <Typography
-            style={{ paddingBottom: 15, fontSize: 12, maxWidth: 650 }}
-          >
+          <Typography sx={{ paddingBottom: 2, fontSize: 12, maxWidth: 650 }}>
             {t('sync-info.summary')
               .split('\n')
               .map(line => (
