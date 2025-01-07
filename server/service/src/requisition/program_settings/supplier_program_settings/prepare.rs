@@ -34,8 +34,6 @@ pub(super) fn prepare_supplier_program_settings(
     let settings =
         ProgramRequisitionSettingsRepository::new(&ctx.connection).query(Some(filter))?;
 
-    println!("settings {:?}", settings.len());
-
     // Shouldn't try query everything else (early return)
     if settings.is_empty() {
         return Ok(None);
