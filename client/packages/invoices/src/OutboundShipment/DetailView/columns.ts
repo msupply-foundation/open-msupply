@@ -218,7 +218,7 @@ export const useOutboundColumns = ({
       },
     ],
     {
-      label: 'label.sell-price',
+      label: 'label.unit-sell-price',
       key: 'sellPricePerUnit',
       align: ColumnAlign.Right,
       Cell: CurrencyCell,
