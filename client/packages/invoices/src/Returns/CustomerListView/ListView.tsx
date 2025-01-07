@@ -20,6 +20,7 @@ import { getStatusTranslator, isInboundListItemDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { CustomerReturnRowFragment, useReturns } from '../api';
+import { Footer } from './Footer';
 
 const CustomerReturnListViewComponent: FC = () => {
   const t = useTranslation();
@@ -113,6 +114,7 @@ const CustomerReturnListViewComponent: FC = () => {
           navigate(String(row.invoiceNumber));
         }}
       />
+      <Footer />
     </>
   );
 };
