@@ -5,16 +5,11 @@ import {
   FilterController,
   Box,
   FilterMenu,
-  DropdownMenu,
-  DropdownMenuItem,
-  DeleteIcon,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
-import { useOutbound } from '../api';
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
   const t = useTranslation();
-  const onDelete = useOutbound.document.deleteRows();
 
   return (
     <AppBarContentPortal
@@ -59,11 +54,6 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
           ]}
         />
       </Box>
-      <DropdownMenu label={t('label.actions')}>
-        <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
-          {t('button.delete-lines')}
-        </DropdownMenuItem>
-      </DropdownMenu>
     </AppBarContentPortal>
   );
 };

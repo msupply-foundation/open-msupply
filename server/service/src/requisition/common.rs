@@ -1,18 +1,13 @@
 use repository::{
-    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
-    ApprovalStatusType, EqualFilter, IndicatorValueRow, IndicatorValueType, NameFilter,
-    NameRepository, Pagination, ProgramFilter, ProgramRequisitionOrderTypeRowRepository,
-    ProgramRequisitionSettingsFilter, ProgramRequisitionSettingsRepository, Requisition,
-    RequisitionFilter, RequisitionRepository,
-};
-use repository::{
     requisition_row::RequisitionRow, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
+use repository::{
+    ApprovalStatusType, EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueType,
+    ProgramFilter, ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
+    ProgramRequisitionSettingsRepository, Requisition, RequisitionFilter, RequisitionRepository,
+};
 use util::inline_edit;
-use util::uuid::uuid;
-
-use super::program_indicator::query::ProgramIndicator;
 
 pub fn check_requisition_row_exists(
     connection: &StorageConnection,
@@ -102,96 +97,29 @@ pub fn check_emergency_order_within_max_items_limit(
     ))
 }
 
+pub(crate) fn indicator_value_type<'a>(
+    line: &'a IndicatorLineRow,
+    column: &'a IndicatorColumnRow,
+) -> &'a Option<IndicatorValueType> {
+    if column.value_type.is_none() {
+        &line.value_type
+    } else {
+        &column.value_type
+    }
+}
+
+pub(crate) fn default_indicator_value(
+    line: &IndicatorLineRow,
+    column: &IndicatorColumnRow,
+) -> String {
+    match column.value_type {
+        Some(_) => column.default_value.clone(),
+        None => line.default_value.clone(),
+    }
+}
+
 impl From<RepositoryError> for OrderTypeNotFoundError {
     fn from(error: RepositoryError) -> Self {
         Self::DatabaseError(error)
     }
-}
-
-pub struct IndicatorGenerationInput<'a> {
-    pub connection: &'a StorageConnection,
-    pub store_id: String,
-    pub period_id: String,
-    pub program_indicators: Vec<ProgramIndicator>,
-    pub other_party_id: String,
-}
-
-pub fn generate_program_indicator_values(
-    input: IndicatorGenerationInput,
-) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
-    let customer_store_ids: Vec<String> = NameRepository::new(input.connection)
-        .query(
-            &input.store_id,
-            Pagination::all(),
-            Some(NameFilter::new().supplying_store_id(EqualFilter::equal_to(&input.store_id))),
-            None,
-        )?
-        .into_iter()
-        .filter_map(|s| s.store_row.map(|s| s.id))
-        .collect::<Vec<String>>();
-
-    let values = IndicatorValueRepository::new(input.connection).query_by_filter(
-        IndicatorValueFilter::new()
-            .period_id(EqualFilter::equal_to(&input.period_id))
-            .store_id(EqualFilter::equal_any(customer_store_ids.clone())),
-    )?;
-
-    let mut indicator_values = vec![];
-
-    for program_indicator in input.program_indicators {
-        for line in program_indicator.lines {
-            for column in line.clone().columns {
-                let value = match column.value_type {
-                    Some(IndicatorValueType::String) => column.default_value,
-                    Some(IndicatorValueType::Number) => {
-                        let values_of_indicator: Vec<String> = values
-                            .clone()
-                            .into_iter()
-                            .filter_map(|v: IndicatorValueRow| {
-                                match v.indicator_column_id == column.id
-                                    && v.indicator_line_id == line.line.id
-                                {
-                                    true => Some(v.value),
-                                    false => None,
-                                }
-                            })
-                            .collect();
-
-                        let value_sum: Option<i32> = values_of_indicator
-                            .clone()
-                            .into_iter()
-                            .map(|value| value.parse::<i32>())
-                            .collect::<Result<Vec<_>, _>>()
-                            .map_err(|err| RepositoryError::DBError {
-                                msg: "Unable to parse number indicator value".to_string(),
-                                extra: format!("{}", err),
-                            })?
-                            .into_iter()
-                            .reduce(|x, y| x + y);
-
-                        if let Some(value_sum) = value_sum {
-                            value_sum.to_string()
-                        } else {
-                            column.default_value.clone()
-                        }
-                    }
-                    None => line.line.default_value.clone(),
-                };
-
-                let indicator_value = IndicatorValueRow {
-                    id: uuid(),
-                    customer_name_link_id: input.other_party_id.to_string(),
-                    store_id: input.store_id.to_string(),
-                    period_id: input.period_id.to_string(),
-                    indicator_line_id: line.line.id.to_string(),
-                    indicator_column_id: column.id.to_string(),
-                    value: value,
-                };
-
-                indicator_values.push(indicator_value);
-            }
-        }
-    }
-
-    Ok(indicator_values)
 }
