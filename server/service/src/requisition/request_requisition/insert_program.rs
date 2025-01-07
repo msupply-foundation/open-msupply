@@ -227,7 +227,7 @@ fn generate_program_indicator_values(
     customer_name_id: &str,
 ) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
     let store_pref = get_store_preferences(connection, store_id)?;
-    let customer_store_ids: Vec<String> = NameRepository::new(connection)
+    let customer_name_ids: Vec<String> = NameRepository::new(connection)
         .query(
             store_id,
             Pagination::all(),
@@ -266,7 +266,7 @@ fn generate_program_indicator_values(
             .period_id(EqualFilter::equal_to(period_id))
             .indicator_line_id(EqualFilter::equal_any(indicator_line_ids))
             .indicator_column_id(EqualFilter::equal_any(indicator_column_ids))
-            .store_id(EqualFilter::equal_any(customer_store_ids.clone())),
+            .customer_name_link_id(EqualFilter::equal_any(customer_name_ids.clone())),
     )?;
 
     let mut indicator_values = vec![];
@@ -278,6 +278,7 @@ fn generate_program_indicator_values(
                 let value = if store_pref
                     .use_consumption_and_stock_from_customers_for_internal_orders
                     && value_type == &Some(IndicatorValueType::Number)
+                    && !customer_name_ids.is_empty()
                 {
                     customer_values
                         .iter()
