@@ -7,13 +7,11 @@ import {
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../types';
 import { DraftItem } from '../..';
-// import { shouldUpdatePlaceholder } from '../../StockOut';
 import { usePrescriptionLineEditRows } from './hooks';
 import { usePrescriptionLineEditColumns } from './columns';
 
 export interface PrescriptionLineEditTableProps {
   onChange: (key: string, value: number) => void;
-  // packSizeController: PackSizeController;
   rows: DraftStockOutLine[];
   item: DraftItem | null;
   allocatedUnits: number;
