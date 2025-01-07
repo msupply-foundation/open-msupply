@@ -267,7 +267,7 @@ cargo test --features postgres
   For install instructions visit: https://github.com/mailhog/MailHog
 
 ```bash
-cargo test --features=email-tests --package service --lib -- email::email_test --nocapture
+cargo test --features=email-tests --package service --lib -- email_test --nocapture
 ```
 
 - To run sync integration test
