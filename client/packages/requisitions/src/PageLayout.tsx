@@ -9,11 +9,7 @@ interface PageLayoutProps {
 export const PageLayout = ({ Left, Right }: PageLayoutProps) => {
   return (
     <Grid container spacing={2} direction="row" sx={{ maxHeight: '100%' }}>
-      <Grid
-        item
-        xs={4}
-        sx={{ maxHeight: '100%', overflow: 'auto', scrollBehavior: 'smooth' }}
-      >
+      <Grid item xs={4}>
         {Left}
       </Grid>
       <Grid item xs={6}>
