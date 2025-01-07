@@ -77,7 +77,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: onDelete,
-      disabled: isDisabled,
+      disabled: isDisabled || !isManuallyCreated,
     },
     {
       label: t('button.replenishment-return-lines'),

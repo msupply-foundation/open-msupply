@@ -21,7 +21,6 @@ export const useSaveInboundLines = () => {
       const allResults = [
         ...(result.batchInboundShipment.insertInboundShipmentLines || []),
         ...(result.batchInboundShipment.updateInboundShipmentLines || []),
-        ...(result.batchInboundShipment.deleteInboundShipmentLines || []),
         ...(result.batchInboundShipment.insertInboundShipmentServiceLines ||
           []),
         ...(result.batchInboundShipment.updateInboundShipmentServiceLines ||
