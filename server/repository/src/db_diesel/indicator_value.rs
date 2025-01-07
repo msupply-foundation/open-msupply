@@ -22,6 +22,7 @@ pub struct IndicatorValueFilter {
     pub indicator_line_id: Option<EqualFilter<String>>,
     pub indicator_column_id: Option<EqualFilter<String>>,
 }
+
 impl IndicatorValueFilter {
     pub fn new() -> IndicatorValueFilter {
         Self::default()
