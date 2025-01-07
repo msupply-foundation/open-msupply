@@ -2382,7 +2382,7 @@ export type IndicatorColumnNode = {
 
 
 export type IndicatorColumnNodeValueArgs = {
-  customerNameLinkId: Scalars['String']['input'];
+  customerNameId: Scalars['String']['input'];
   periodId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
