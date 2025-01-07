@@ -38,10 +38,8 @@ export const ListItems = ({
 
   return (
     <Tooltip title={value?.name}>
-      <>
-        <Box
-          sx={{ maxHeight: '90%', overflow: 'auto', scrollBehavior: 'smooth' }}
-        >
+      <Box display="flex" flexDirection="column" height="100%">
+        <Box sx={{ flexGrowY: 1, overflow: 'auto', scrollBehavior: 'smooth' }}>
           <ListOptions
             currentId={value?.id}
             onClick={id => {
@@ -56,9 +54,15 @@ export const ListItems = ({
             label={t('label.new-item')}
             onClick={() => navigate(route.addPart('new').build())}
             startIcon={<PlusCircleIcon />}
+            sx={{
+              position: 'sticky',
+              bottom: 0,
+              padding: '1em',
+              justifyContent: 'flex-start',
+            }}
           />
         )}
-      </>
+      </Box>
     </Tooltip>
   );
 };
