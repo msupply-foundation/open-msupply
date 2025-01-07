@@ -61,6 +61,7 @@ rust-embed = { version = "8.4.0", features = ["include-exclude"] }
 extism = { workspace = true }
 base64 = "0.22.1"
 regex = { workspace = true }
+lettre = "0.11.11"
 
 
 [dev-dependencies]
@@ -77,6 +78,7 @@ integration_test = ["repository/integration_test"]
 sqlite = ["repository/sqlite"]
 memory = ["repository/sqlite"]
 postgres = ["repository/postgres"]
+email-tests = []
 
 [lints]
 workspace = true

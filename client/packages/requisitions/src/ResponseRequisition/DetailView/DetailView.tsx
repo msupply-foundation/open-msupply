@@ -49,7 +49,9 @@ export const DetailView: FC = () => {
       data?.program?.id ?? '',
       !!data
     );
-
+  const { linkedRequisition } = useResponse.document.fields([
+    'linkedRequisition',
+  ]);
   const onRowClick = useCallback((line: ResponseLineFragment) => {
     navigate(
       RouteBuilder.create(AppRoute.Distribution)
@@ -138,7 +140,10 @@ export const DetailView: FC = () => {
         <Toolbar />
         <DetailTabs tabs={tabs} />
 
-        <Footer />
+        <Footer
+          isDisabled={isDisabled}
+          hasLinkedRequisition={!!linkedRequisition}
+        />
         <SidePanel />
         {isOpen && (
           <BasicModal open={isOpen} onClose={onClose} height={500} width={800}>

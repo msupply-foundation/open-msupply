@@ -17,6 +17,7 @@ import { AssetCatalogueItemFragment, useAssetData } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { AssetCatalogueItemImportModal } from '../ImportCatalogueItem';
+import { Footer } from './Footer';
 
 const AssetListComponent: FC = () => {
   const isCentralServer = useIsCentralServerApi();
@@ -110,6 +111,7 @@ const AssetListComponent: FC = () => {
         noDataElement={<NothingHere body={t('error.no-items')} />}
         enableColumnSelection
       />
+      <Footer />
     </>
   );
 };

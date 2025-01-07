@@ -5,15 +5,10 @@ import {
   InputWithLabelRow,
   Grid,
   useTranslation,
-  DropdownMenu,
-  DropdownMenuItem,
-  DeleteIcon,
   DateTimePickerInput,
   Formatter,
   DateUtils,
   useConfirmationModal,
-  useTableStore,
-  useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { PatientSearchInput } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
@@ -30,14 +25,6 @@ export const Toolbar: FC = () => {
   const { id, patient, clinician, prescriptionDate, createdDatetime } =
     data ?? {};
 
-  const selectedRows =
-    useTableStore(state => {
-      return items
-        ?.filter(({ id }) => state.rowState[id]?.isSelected)
-        .map(({ lines }) => lines.flat())
-        .flat();
-    }) || [];
-
   const {
     delete: { deleteLines },
   } = usePrescriptionLines();
@@ -49,20 +36,6 @@ export const Toolbar: FC = () => {
   };
 
   const t = useTranslation();
-
-  const confirmAndDelete = useDeleteConfirmation({
-    selectedRows,
-    deleteAction: () => deleteLines(selectedRows),
-    canDelete: !isDisabled,
-    messages: {
-      confirmMessage: t('messages.confirm-delete-lines', {
-        count: selectedRows.length,
-      }),
-      deleteSuccess: t('messages.deleted-lines', {
-        count: selectedRows.length,
-      }),
-    },
-  });
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
@@ -178,17 +151,7 @@ export const Toolbar: FC = () => {
           gap={1}
           justifyContent="flex-end"
           alignItems="center"
-        >
-          <DropdownMenu label={t('label.actions')}>
-            <DropdownMenuItem
-              IconComponent={DeleteIcon}
-              onClick={confirmAndDelete}
-              disabled={isDisabled}
-            >
-              {t('button.delete-lines')}
-            </DropdownMenuItem>
-          </DropdownMenu>
-        </Grid>
+        ></Grid>
       </Grid>
     </AppBarContentPortal>
   );
