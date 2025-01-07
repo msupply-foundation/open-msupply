@@ -69,7 +69,11 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
       status,
       draftPrescriptionLines
     )(numPacks, packSize, true);
-    setIsDirty(true);
+
+    // Don't make saveable (isDirty) if item is new and has no auto-allocatable
+    // stock
+    if (!(!item && newAllocateQuantities?.every(el => el.numberOfPacks === 0)))
+      setIsDirty(true);
     updateLines(newAllocateQuantities ?? draftPrescriptionLines);
     setIsAutoAllocated(autoAllocated);
     if (showZeroQuantityConfirmation && numPacks !== 0)

@@ -43,9 +43,6 @@ export const useDraftPrescriptionLines = (
 
   useEffect(() => {
     if (!data) return;
-    if (draftLines.length > 0)
-      // Draft lines already in state from previous rendering
-      return;
 
     // Stock lines (data.nodes) are coming from availableStockLines from
     // itemNode these are filtered by totalNumberOfPacks > 0 but it's possible
