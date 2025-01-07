@@ -6,15 +6,13 @@ pub fn spawn_scheduled_task_runner(
     service_provider: Arc<ServiceProvider>,
     interval_secs: u64,
 ) -> JoinHandle<()> {
-    let period: Duration = Duration::from_secs(interval_secs);
-
     tokio::spawn(async move {
-        scheduled_task_runner(service_provider, period).await;
+        scheduled_task_runner(service_provider, interval_secs).await;
     })
 }
 
-async fn scheduled_task_runner(service_provider: Arc<ServiceProvider>, period: Duration) {
-    let mut interval = actix_web::rt::time::interval(period);
+async fn scheduled_task_runner(service_provider: Arc<ServiceProvider>, interval_secs: u64) {
+    let mut interval = actix_web::rt::time::interval(Duration::from_secs(interval_secs));
     let service_context = service_provider.basic_context().unwrap();
 
     loop {
