@@ -1,4 +1,5 @@
-use jsonschema::JSONSchema;
+use actix_multipart::form;
+use jsonschema::{validator_for, Validator};
 use repository::{
     Document, DocumentFilter, DocumentRepository, DocumentSort, EqualFilter,
     FormSchemaRowRepository, Pagination, PaginationOption, RepositoryError, StorageConnection,
@@ -19,7 +20,7 @@ pub enum DocumentInsertError {
     NotAllowedToMutateDocument,
     InvalidParent(String),
     /// Input document doesn't match the provided json schema
-    InvalidDataSchema(Vec<String>),
+    InvalidDataSchema(String),
     DataSchemaDoesNotExist,
     DatabaseError(RepositoryError),
     InternalError(String),
@@ -175,7 +176,7 @@ impl From<RepositoryError> for DocumentInsertError {
 fn json_validator(
     connection: &StorageConnection,
     doc: &RawDocument,
-) -> Result<Option<JSONSchema>, DocumentInsertError> {
+) -> Result<Option<Validator>, DocumentInsertError> {
     let form_schema_id = match &doc.form_schema_id {
         Some(schema_id) => schema_id,
         None => return Ok(None),
@@ -185,7 +186,7 @@ fn json_validator(
     let schema = schema_repo
         .find_one_by_id(form_schema_id)?
         .ok_or(DocumentInsertError::DataSchemaDoesNotExist)?;
-    let compiled = match JSONSchema::compile(&schema.json_schema) {
+    let compiled = match validator_for(&schema.json_schema) {
         Ok(v) => Ok(v),
         Err(err) => Err(DocumentInsertError::InternalError(format!(
             "Invalid json schema: {}",
@@ -195,11 +196,10 @@ fn json_validator(
     Ok(Some(compiled))
 }
 
-fn validate_json(validator: &JSONSchema, data: &serde_json::Value) -> Result<(), Vec<String>> {
-    validator.validate(data).map_err(|errors| {
-        let errors: Vec<String> = errors.map(|err| format!("{}", err)).collect();
-        errors
-    })
+fn validate_json(validator: &Validator, data: &serde_json::Value) -> Result<(), String> {
+    validator
+        .validate(data)
+        .map_err(|error| format!("Invalid json data: {:?}", error))
 }
 
 // Returns Some invalid parent or None
