@@ -3,7 +3,6 @@ use crate::{
     StorageConnection, Upsert,
 };
 
-// TODO create joinable with tables that contain site_id
 use super::{
     contact_form_row::contact_form::dsl::*, name_link_row::name_link, name_row::name,
     store_row::store, user_row::user_account,
