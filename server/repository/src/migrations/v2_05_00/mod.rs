@@ -6,6 +6,7 @@ mod add_elmis_code_to_program;
 mod add_email_queue_table;
 mod add_email_retry_at;
 mod add_emergency_orders;
+mod diagnosis_add_to_invoice;
 mod diagnosis_create_table;
 mod item_direction_create_table;
 mod new_store_preferences;
@@ -37,6 +38,7 @@ impl Migration for V2_05_00 {
             Box::new(diagnosis_create_table::Migrate),
             Box::new(add_email_queue_table::Migrate),
             Box::new(add_elmis_code_to_program::Migrate),
+            Box::new(diagnosis_add_to_invoice::Migrate),
             Box::new(add_email_retry_at::Migrate),
         ]
     }
