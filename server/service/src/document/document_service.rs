@@ -1,4 +1,3 @@
-use actix_multipart::form;
 use jsonschema::{validator_for, Validator};
 use repository::{
     Document, DocumentFilter, DocumentRepository, DocumentSort, EqualFilter,
