@@ -220,13 +220,13 @@ impl IndicatorColumnNode {
         ctx: &Context<'_>,
         period_id: String,
         store_id: String,
-        customer_name_link_id: String,
+        customer_name_id: String,
     ) -> Result<Option<IndicatorValueNode>, Error> {
         let loader = ctx.get_loader::<DataLoader<IndicatorValueLoader>>();
         let payload = IndicatorValuePayload {
             period_id,
             store_id,
-            customer_name_link_id,
+            customer_name_id,
         };
 
         let result = loader

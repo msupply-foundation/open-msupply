@@ -93,6 +93,7 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("email_queue", "created_at"),
         ("email_queue", "updated_at"),
         ("email_queue", "sent_at"),
+        ("email_queue", "retry_at"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {

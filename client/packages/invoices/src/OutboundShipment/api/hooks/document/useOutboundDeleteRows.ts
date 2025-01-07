@@ -50,5 +50,5 @@ export const useOutboundDeleteRows = () => {
     },
   });
 
-  return confirmAndDelete;
+  return { confirmAndDelete, selectedRows };
 };

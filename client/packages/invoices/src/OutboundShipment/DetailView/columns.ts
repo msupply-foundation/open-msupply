@@ -218,7 +218,7 @@ export const useOutboundColumns = ({
       },
     ],
     {
-      label: 'label.unit-price',
+      label: 'label.unit-sell-price',
       key: 'sellPricePerUnit',
       align: ColumnAlign.Right,
       Cell: CurrencyCell,
@@ -252,8 +252,8 @@ export const useOutboundColumns = ({
       },
     },
     {
-      label: 'label.line-total',
-      key: 'lineTotal',
+      label: 'label.total',
+      key: 'total',
       align: ColumnAlign.Right,
       Cell: CurrencyCell,
       accessor: ({ rowData }) => {

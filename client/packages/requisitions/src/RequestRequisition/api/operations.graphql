@@ -603,7 +603,7 @@ fragment IndicatorColumn on IndicatorColumnNode {
   valueType
   value(
     periodId: $periodId
-    customerNameLinkId: $customerNameLinkId
+    customerNameId: $customerNameId
     storeId: $storeId
   ) {
     ...IndicatorValue
@@ -648,7 +648,7 @@ fragment IndicatorLineWithColumns on IndicatorLineNode {
 }
 
 query programIndicators(
-  $customerNameLinkId: String!
+  $customerNameId: String!
   $periodId: String!
   $storeId: String!
   $programId: String!

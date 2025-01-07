@@ -20,6 +20,7 @@ import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { useOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
+import { Footer } from './Footer';
 
 const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -117,6 +118,7 @@ const OutboundShipmentListViewComponent: FC = () => {
           navigate(String(row.invoiceNumber));
         }}
       />
+      <Footer />
     </>
   );
 };
