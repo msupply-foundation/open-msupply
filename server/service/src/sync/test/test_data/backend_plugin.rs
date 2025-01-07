@@ -1,4 +1,4 @@
-use repository::BackendPluginRow;
+use repository::{BackendPluginRow, PluginType, PluginTypes, PluginVariantType};
 use serde_json::json;
 
 // Data in this file is used in "test_backend_plugin_translation" and "test_sync_pull_and_push"
@@ -12,7 +12,7 @@ const BACKEND_PLUGIN: (&str, &str) = (
         "id":  "backend_plugin",
         "bundle_base64": "bundle_base64",
         "code": "code",
-        "type": "AMC",
+        "types": ["AMC"],
         "variant_type": "BOA_JS"
     }"#,
 );
@@ -22,8 +22,8 @@ fn backend_plugin() -> BackendPluginRow {
         id: BACKEND_PLUGIN.0.to_string(),
         code: "code".to_string(),
         bundle_base64: "bundle_base64".to_string(),
-        r#type: repository::PluginType::Amc,
-        variant_type: repository::PluginVariantType::BoaJs,
+        types: PluginTypes(vec![PluginType::Amc]),
+        variant_type: PluginVariantType::BoaJs,
     }
 }
 

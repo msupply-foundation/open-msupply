@@ -12,9 +12,6 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                CREATE TYPE plugin_type AS ENUM (
-                    'AMC'
-                );
                 CREATE TYPE plugin_variant_type AS ENUM (
                     'BOA_JS'
                 );
@@ -22,12 +19,13 @@ impl MigrationFragment for Migrate {
             )?
         }
 
-        let (plugin_type, variant_type) = if cfg!(feature = "postgres") {
-            ("plugin_type", "plugin_variant_type")
+        let variant_type = if cfg!(feature = "postgres") {
+            "plugin_variant_type"
         } else {
-            ("TEXT", "TEXT")
+            "TEXT"
         };
 
+        // Types type safety is controlled by repository layer
         sql!(
             connection,
             r#"
@@ -35,7 +33,7 @@ impl MigrationFragment for Migrate {
                     id TEXT NOT NULL PRIMARY KEY,
                     code TEXT NOT NULL,
                     bundle_base64 TEXT NOT NULL,
-                    type {plugin_type} NOT NULL,
+                    types TEXT NOT NULL,
                     variant_type {variant_type} NOT NULL
                 );
             "#
