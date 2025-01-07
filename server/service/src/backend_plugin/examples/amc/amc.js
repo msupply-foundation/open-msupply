@@ -8,13 +8,11 @@ const DAY_LOOKBACK = 800;
 const DAYS_IN_MONTH = 30;
 
 let plugins = {
-  average_monthly_consumption: ({ store_id, filter }) => {
-    const item_ids = filter.item_id.equal_any;
-
+  average_monthly_consumption: ({ store_id, item_ids }) => {
     const now = new Date();
     now.setDate(now.getDate() - DAY_LOOKBACK);
 
-    const sql_date = now.toJSON().split('T')[0];
+    const sql_date = now.toJSON().split("T")[0];
     const sql_item_ids = '"' + item_ids.join('","') + '"';
 
     // Sqlite only
@@ -34,7 +32,8 @@ let plugins = {
 
     sql_result.forEach(({ item_id, consumption }) => {
       response[item_id] = {
-        average_monthly_consumption: consumption / (DAY_LOOKBACK / DAYS_IN_MONTH),
+        average_monthly_consumption:
+          consumption / (DAY_LOOKBACK / DAYS_IN_MONTH),
       };
     });
 
