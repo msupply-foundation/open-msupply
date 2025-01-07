@@ -30,7 +30,6 @@ impl ContactFormProcessor for QueueContactEmailProcessor {
         ctx: &ServiceContext,
         contact_form: &ContactForm,
     ) -> Result<Option<String>, ProcessContactFormError> {
-        // TODO... consts?
         let email = create_email(contact_form);
 
         let email = match email {
