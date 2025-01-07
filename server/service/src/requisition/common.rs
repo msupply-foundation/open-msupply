@@ -101,7 +101,7 @@ pub(crate) fn indicator_value_type<'a>(
     line: &'a IndicatorLineRow,
     column: &'a IndicatorColumnRow,
 ) -> &'a Option<IndicatorValueType> {
-    if column.value_type == None {
+    if column.value_type.is_none() {
         &line.value_type
     } else {
         &column.value_type
