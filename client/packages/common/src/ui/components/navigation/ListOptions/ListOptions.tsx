@@ -56,7 +56,7 @@ export const ListOptions = ({
         maxHeight: height * 0.6,
         overflow: 'auto',
         scrollBehavior: 'smooth',
-        // position: 'fixed',
+        position: 'fixed',
       }}
     >
       {options?.map((option, _) => (
