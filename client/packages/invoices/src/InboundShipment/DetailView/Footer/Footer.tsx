@@ -90,6 +90,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       icon: <RewindIcon />,
       onClick: onZeroQuantities,
       disabled: isDisabled,
+      shouldShrink: false,
     },
   ];
 
