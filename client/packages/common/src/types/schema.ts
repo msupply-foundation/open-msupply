@@ -7847,6 +7847,11 @@ export type TransferredRequisition = DeleteResponseRequisitionErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type TransferredShipment = DeleteInboundShipmentLineErrorInterface & {
+  __typename: 'TransferredShipment';
+  description: Scalars['String']['output'];
+};
+
 export type UnallocatedLineForItemAlreadyExists = InsertOutboundShipmentUnallocatedLineErrorInterface & {
   __typename: 'UnallocatedLineForItemAlreadyExists';
   description: Scalars['String']['output'];

@@ -174,9 +174,8 @@ export const SyncModal = ({
               sx={{ fontSize: '12px' }}
               disabled={false}
               onClick={sync}
-            >
-              {t('button.sync-now')}
-            </LoadingButton>
+              label={t('button.sync-now')}
+            />
             <ShowStatus
               isSyncing={isLoading}
               isUpdatingUser={updateUserIsLoading}
