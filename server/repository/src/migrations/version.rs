@@ -139,19 +139,25 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
-    fn parsing_version_panic1() {
-        Version::from_str("10.11");
+    fn parsing_version_poorly_formatted_1() {
+        let version = Version::from_str("10.11");
+        assert!(version.major == 10);
+        assert!(version.minor == 11);
+        assert!(version.patch == 0);
     }
     #[test]
-    #[should_panic]
-    fn parsing_version_panic2() {
-        Version::from_str("10.11.99RC1");
+    fn parsing_version_poorly_formatted_2() {
+        let version = Version::from_str("10.11.99RC1");
+        assert!(version.major == 10);
+        assert!(version.minor == 11);
+        assert!(version.patch == 0);
     }
     #[test]
-    #[should_panic]
-    fn parsing_version_panic3() {
-        Version::from_str("10.11b.99");
+    fn parsing_version_poorly_formatted_3() {
+        let version = Version::from_str("10.11b.99");
+        assert!(version.major == 10);
+        assert!(version.minor == 0);
+        assert!(version.patch == 99);
     }
 
     #[test]
