@@ -18,6 +18,20 @@ import { isInboundPlaceholderRow } from '../../../utils';
 const getUnitQuantity = (row: InboundLineFragment) =>
   row.packSize * row.numberOfPacks;
 
+const getTotalCost = (row: InboundLineFragment) =>
+  row.numberOfPacks * row.costPricePerPack;
+
+const calculateRowTotalCost = (rowData: InboundLineFragment | InboundItem) => {
+  if ('lines' in rowData) {
+    return rowData.lines.reduce(
+      (acc, line) => acc + line.numberOfPacks * line.costPricePerPack,
+      0
+    );
+  } else {
+    return getTotalCost(rowData);
+  }
+};
+
 export const useInboundShipmentColumns = () => {
   const {
     updateSortQuery,
@@ -217,6 +231,15 @@ export const useInboundShipmentColumns = () => {
         },
         sortable: false,
       },
+      {
+        label: 'label.total',
+        key: 'total',
+        align: ColumnAlign.Right,
+        width: 120,
+        Cell: CurrencyCell,
+        accessor: ({ rowData }) => calculateRowTotalCost(rowData),
+        getSortValue: rowData => calculateRowTotalCost(rowData),
+      },
       getRowExpandColumn(),
     ],
     { sortBy, onChangeSortBy: updateSortQuery },
@@ -243,6 +266,14 @@ export const useExpansionColumns = (): Column<InboundLineFragment>[] => {
       {
         label: 'label.cost',
         accessor: ({ rowData }) => rowData.costPricePerPack,
+        Cell: CurrencyCell,
+      },
+    ],
+    [
+      'lineTotal',
+      {
+        label: 'label.line-total',
+        accessor: ({ rowData }) => getTotalCost(rowData),
         Cell: CurrencyCell,
       },
     ],

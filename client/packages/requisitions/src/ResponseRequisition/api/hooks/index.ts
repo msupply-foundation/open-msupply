@@ -23,7 +23,7 @@ export const useResponse = {
     delete: Lines.useDeleteResponseLines,
     save: Lines.useSaveResponseLines,
     insert: Lines.useInsertResponseLines,
-    updateIndicators: Lines.useUpdateIndicatorLine,
+    updateIndicators: Lines.useUpdateLine,
   },
   utils: {
     api: Utils.useResponseApi,
