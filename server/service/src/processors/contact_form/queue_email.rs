@@ -1,4 +1,8 @@
-use repository::{contact_form::ContactForm, contact_form_row::ContactType, StorageConnection};
+use repository::{
+    contact_form::{ContactForm, ContactFormFilter, ContactFormRepository},
+    contact_form_row::ContactType,
+    ChangelogRow, EqualFilter, StorageConnection,
+};
 use tera::{Context, Tera};
 use util::constants::{FEEDBACK_EMAIL, SUPPORT_EMAIL};
 
@@ -8,7 +12,7 @@ use crate::email::{
 };
 use nanohtml2text::html2text;
 
-use super::{ContactFormProcessor, ProcessContactFormError};
+use super::{ContactFormProcessor, ProcessCentralRecordsError};
 
 const DESCRIPTION: &str = "Adds an email to the queue from a contact form";
 
@@ -24,9 +28,19 @@ impl ContactFormProcessor for QueueContactEmailProcessor {
     fn try_process_record(
         &self,
         connection: &StorageConnection,
-        contact_form: &ContactForm,
-    ) -> Result<Option<String>, ProcessContactFormError> {
-        let email = create_email(contact_form);
+        changelog: &ChangelogRow,
+    ) -> Result<Option<String>, ProcessCentralRecordsError> {
+        let filter = ContactFormFilter::new().id(EqualFilter::equal_to(&changelog.record_id));
+
+        let contact_form = ContactFormRepository::new(connection)
+            .query_one(filter)
+            .map_err(ProcessCentralRecordsError::DatabaseError)?
+            .ok_or(ProcessCentralRecordsError::RecordNotFound(
+                "Contact Form".to_string(),
+                changelog.record_id.clone(),
+            ))?;
+
+        let email = create_email(&contact_form);
 
         let email = match email {
             Ok(email) => email,
@@ -36,7 +50,7 @@ impl ContactFormProcessor for QueueContactEmailProcessor {
                     contact_form.contact_form_row.id,
                     e
                 );
-                return Err(ProcessContactFormError::EmailServiceError(e));
+                return Err(ProcessCentralRecordsError::EmailServiceError(e));
             }
         };
 

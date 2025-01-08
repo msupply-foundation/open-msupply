@@ -285,10 +285,7 @@ impl Synchroniser {
             .trigger_requisition_transfer_processors();
         ctx.processors_trigger.trigger_invoice_transfer_processors();
 
-        if CentralServerConfig::is_central_server() {
-            ctx.processors_trigger
-                .trigger_contact_form_to_email_processors();
-        }
+        ctx.processors_trigger.trigger_central_only_processors();
 
         Ok(())
     }
