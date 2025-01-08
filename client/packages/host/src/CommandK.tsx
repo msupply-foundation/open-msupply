@@ -24,6 +24,7 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { Action } from 'kbar/lib/types';
 import { useEasterEggModal } from './components/EasterEggModal';
+import { useSyncModal } from './components/Sync';
 
 const CustomKBarSearch = styled(KBarSearch)(({ theme }) => ({
   width: 500,
@@ -90,6 +91,7 @@ const Actions = () => {
   const t = useTranslation();
   const { store, logout, user, userHasPermission } = useAuthContext();
   const showEasterEgg = useEasterEggModal();
+  const showSync = useSyncModal();
   const confirmLogout = useConfirmationModal({
     onConfirm: () => {
       logout();
@@ -274,6 +276,13 @@ const Actions = () => {
       keywords: 'help, docs, guide',
       shortcut: ['h'],
       perform: () => navigate(RouteBuilder.create(AppRoute.Help).build()),
+    },
+    {
+      id: 'action:sync',
+      name: `${t('sync')} (Alt+Control+S)`,
+      keywords: 'sync',
+      shortcut: ['Alt+Control+KeyS'],
+      perform: showSync,
     },
   ];
 
