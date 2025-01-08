@@ -34,12 +34,22 @@ export const StyledBaseButton = styled(MuiButton)(({
       ? translateColor(theme, color)
       : theme.palette.background.white;
 
+  const getIconColor = () =>
+    variant === 'outlined'
+      ? theme.palette.primary.contrastText
+      : translateColor(theme, color);
+
   const hoverBgColor = getHoverBgColor();
   const hoverColor = getHoverColor();
+  const iconColor = getIconColor();
 
   return {
     '&.MuiButton-outlined': {
       backgroundColor: 'white',
+      color: color === 'primary' ? 'black' : color,
+      '& .MuiButton-startIcon': {
+        color: color === 'primary' ? translateColor(theme, color) : color,
+      },
     },
 
     borderRadius: 24,
@@ -56,6 +66,9 @@ export const StyledBaseButton = styled(MuiButton)(({
       border: 'none',
       color: hoverColor,
       backgroundColor: hoverBgColor,
+      '& .MuiButton-startIcon': {
+        color: color === 'primary' ? iconColor : color,
+      },
     },
   };
 });

@@ -44,5 +44,5 @@ export const useDeleteSelectedRequisitions = () => {
       cantDelete: t('messages.cant-delete-requisitions'),
     },
   });
-  return confirmAndDelete;
+  return { confirmAndDelete, selectedRows };
 };

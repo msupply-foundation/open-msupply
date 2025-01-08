@@ -43,5 +43,17 @@ export const useColumnDisplayState = <T extends RecordWithId>(
     });
   };
 
-  return { columnDisplayState, toggleColumn };
+  const showAllColumns = () => {
+    const newState = Object.fromEntries(
+      Object.keys(columnDisplayState).map(key => [key, true])
+    );
+
+    setColumnDisplayState(newState);
+    setHiddenColsStorage({
+      ...hiddenColsStorage,
+      [tableId]: Object.keys(newState).filter(key => !newState[key]),
+    });
+  };
+
+  return { columnDisplayState, showAllColumns, toggleColumn };
 };

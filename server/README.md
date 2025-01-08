@@ -109,9 +109,8 @@ From version 2.0 omSupply would require both legacy and omSupply central server 
 - Configure one site to be central server by checking `Site is open mSupply central server` and entering the URL with which remote sites can reach this site in the field `This site url`
 - `cargo run` twice but change port, database and sync settings in yaml file or overwrite with env variables
 
-For example, two sites running locally from the same repo, __central__ and __test__, for __central__ site `Site is open mSupply central server` is checked and `This site url` is http://localhost:2055.
-Comment out all sync settings in yaml and can start  __central__ with `APP__SERVER__PORT=2055 APP__DATABASE__DATABASE_NAME="central_test" cargo run` front end would be started with `yarn start -- -- --env API_HOST='http://localhost:2055' --port 3005` (--port is for webpack port), and then start  __test__ with `cargo run` and `yarn && yarn start-local` from respective folders. The first site would be initialised with `central` site credentials first, and second sites with  __test__ credentials,  __test__ site would sync with both legacy mSupply and omSupply central server (this  __central__ site), and __central__ site would synchronise with legacy mSupply server only
-
+For example, two sites running locally from the same repo, **central** and **test**, for **central** site `Site is open mSupply central server` is checked and `This site url` is http://localhost:2055.
+Comment out all sync settings in yaml and can start **central** with `APP__SERVER__PORT=2055 APP__DATABASE__DATABASE_NAME="central_test" cargo run` front end would be started with `yarn start -- -- --env API_HOST='http://localhost:2055' --port 3005` (--port is for webpack port), and then start **test** with `cargo run` and `yarn && yarn start-local` from respective folders. The first site would be initialised with `central` site credentials first, and second sites with **test** credentials, **test** site would sync with both legacy mSupply and omSupply central server (this **central** site), and **central** site would synchronise with legacy mSupply server only
 
 ### Start server in watch mode
 
@@ -211,7 +210,7 @@ If you want to ensure all your changes have been written to the main sqlite data
 
 `note`: yaml configurations are likely to be deprecated to .env, thus documentations is limited for .yaml.
 
-In `configurations` folder you'll find `.yaml` config files, there is `base`, `local` (will overwrite/expand `base` in dev mode), `production` (will overwrite/expand other configs when `APP__ENVIRONMENT=production ).
+In `configurations` folder you'll find `.yaml` config files, there is `base`, `local` (will overwrite/expand `base` in dev mode), `production` (will overwrite/expand other configs when `APP\_\_ENVIRONMENT=production ).
 
 You can use env variable to overwrite any configurations, can use dot notation with `__` (two underscore) to specify nested value. Env vars configuration overrides start with `APP__`.
 
@@ -261,6 +260,14 @@ Devs should run both postgres and sqlite test before publishing PR
 cargo test
 # Use postgres
 cargo test --features postgres
+```
+
+- To run email tests:
+  Start mailhog (or similar email capture service).
+  For install instructions visit: https://github.com/mailhog/MailHog
+
+```bash
+cargo test --features=email-tests --package service --lib -- email::email_test --nocapture
 ```
 
 - To run sync integration test

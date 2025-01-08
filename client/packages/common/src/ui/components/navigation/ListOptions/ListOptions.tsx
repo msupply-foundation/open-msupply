@@ -30,6 +30,7 @@ export const ListOptions = ({
   enteredLineIds,
 }: ListProps) => {
   const { height } = useWindowDimensions();
+
   const startIcon = (
     <CheckIcon
       style={{

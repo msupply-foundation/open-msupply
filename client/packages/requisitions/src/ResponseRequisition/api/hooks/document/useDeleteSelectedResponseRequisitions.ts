@@ -59,5 +59,5 @@ export const useDeleteSelectedResponseRequisitions = () => {
       cantDelete: (err: Error) => err.message,
     },
   });
-  return confirmAndDelete;
+  return { confirmAndDelete, selectedRows };
 };

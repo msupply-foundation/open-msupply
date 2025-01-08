@@ -10,6 +10,8 @@ fragment ItemWithStats on ItemNode {
     availableStockOnHand
     availableMonthsOfStockOnHand
     totalConsumption
+    stockOnHand
+    monthsOfStockOnHand
   }
 }
 
@@ -32,11 +34,28 @@ fragment RequestRow on RequisitionNode {
   }
   programName
   period {
+    id
     name
     startDate
     endDate
   }
+  program {
+    id
+  }
   orderType
+}
+
+fragment itemInformation on RequisitionItemInformationNode {
+  id
+  adjustmentsInUnits
+  amcInUnits
+  name(storeId: $storeId) {
+    id
+    name
+  }
+  outgoingUnits
+  dateRange
+  stockInUnits
 }
 
 fragment RequestLine on RequisitionLineNode {
@@ -64,6 +83,10 @@ fragment RequestLine on RequisitionLineNode {
   linkedRequisitionLine {
     approvedQuantity
     approvalComment
+  }
+  itemInformation {
+    __typename
+    ...itemInformation
   }
   item {
     ...ItemWithStats
@@ -105,6 +128,10 @@ fragment Request on RequisitionNode {
     }
   }
 
+  program {
+    id
+  }
+
   shipments {
     __typename
     totalCount
@@ -139,6 +166,7 @@ fragment Request on RequisitionNode {
   }
   programName
   period {
+    id
     name
     startDate
     endDate
@@ -549,5 +577,92 @@ fragment SupplierProgramSettings on SupplierProgramRequisitionSettingNode {
 query supplierProgramSettings($storeId: String!) {
   supplierProgramRequisitionSettings(storeId: $storeId) {
     ...SupplierProgramSettings
+  }
+}
+
+fragment ProgramIndicator on ProgramIndicatorNode {
+  code
+  lineAndColumns {
+    ...IndicatorLineWithColumns
+  }
+  id
+}
+fragment IndicatorLineRow on IndicatorLineRowNode {
+  id
+  code
+  lineNumber
+  name
+  valueType
+}
+fragment IndicatorColumn on IndicatorColumnNode {
+  columnNumber
+  name
+  valueType
+  value(
+    periodId: $periodId
+    customerNameId: $customerNameId
+    storeId: $storeId
+  ) {
+    ...IndicatorValue
+  }
+}
+fragment IndicatorValue on IndicatorValueNode {
+  id
+  value
+}
+
+fragment IndicatorLineWithColumns on IndicatorLineNode {
+  columns {
+    ...IndicatorColumn
+  }
+  line {
+    ...IndicatorLineRow
+  }
+}
+
+query programIndicators(
+  $customerNameId: String!
+  $periodId: String!
+  $storeId: String!
+  $programId: String!
+) {
+  programIndicators(
+    storeId: $storeId
+    filter: { programId: { equalTo: $programId } }
+  ) {
+    ... on ProgramIndicatorConnector {
+      __typename
+      nodes {
+        ...ProgramIndicator
+      }
+      totalCount
+    }
+  }
+}
+
+mutation updateIndicatorValue(
+  $storeId: String!
+  $input: UpdateIndicatorValueInput!
+) {
+  updateIndicatorValue(input: $input, storeId: $storeId) {
+    __typename
+    ... on IndicatorValueNode {
+      id
+      value
+    }
+    ... on UpdateIndicatorValueError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on ValueTypeNotCorrect {
+          __typename
+          description
+        }
+      }
+    }
   }
 }

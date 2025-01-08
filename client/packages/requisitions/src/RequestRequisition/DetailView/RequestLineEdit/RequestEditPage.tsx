@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BasicSpinner,
   DetailContainer,
   NothingHere,
+  RequisitionNodeStatus,
   RouteBuilder,
   useBreadcrumbs,
   useParams,
@@ -11,7 +12,7 @@ import { useRequest } from '../../api';
 import { ListItems } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { useDraftRequisitionLine, usePreviousNextRequestLine } from './hooks';
-import { PageLayout } from '../../../PageLayout';
+import { PageLayout } from '../../../common/PageLayout';
 import { AppBarButtons } from './AppBarButtons';
 import { RequestLineEdit } from './RequestLineEdit';
 
@@ -19,6 +20,7 @@ export const RequestLineEditPage = () => {
   const { requisitionNumber, itemId } = useParams();
   const { data, isLoading: requestIsLoading } = useRequest.document.get();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const { mutateAsync } = useRequest.line.insert();
   const { lines } = useRequest.line.list();
   const currentItem = lines?.find(l => l.item.id === itemId)?.item;
   const { draft, save, update, isLoading } =
@@ -27,11 +29,14 @@ export const RequestLineEditPage = () => {
     lines,
     currentItem
   );
+  const isPacksEnabled = !!draft?.defaultPackSize;
+  const [isPacks, setIsPacks] = useState(isPacksEnabled);
   const enteredLineIds = lines
     ? lines
         .filter(line => line.requestedQuantity !== 0)
         .map(line => line.item.id)
     : [];
+  const isProgram = !!data?.programName;
 
   useEffect(() => {
     setCustomBreadcrumbs({
@@ -56,6 +61,9 @@ export const RequestLineEditPage = () => {
                   .addPart(AppRoute.InternalOrder)
                   .addPart(String(requisitionNumber))}
                 enteredLineIds={enteredLineIds}
+                showNew={
+                  data?.status !== RequisitionNodeStatus.Sent && !isProgram
+                }
               />
             </>
           }
@@ -70,7 +78,14 @@ export const RequestLineEditPage = () => {
                 next={next}
                 hasPrevious={hasPrevious}
                 previous={previous}
-                isProgram={!!data?.programName}
+                isProgram={isProgram}
+                isPacksEnabled={isPacksEnabled}
+                isPacks={isPacks}
+                setIsPacks={setIsPacks}
+                insert={mutateAsync}
+                requisitionId={data?.id ?? ''}
+                requisitionNumber={data?.requisitionNumber}
+                lines={lines}
               />
             </>
           }
