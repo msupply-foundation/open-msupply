@@ -7,7 +7,9 @@ use repository::{
     RequisitionsInPeriodFilter, RequisitionsInPeriodRepository,
 };
 
-use crate::service_provider::ServiceContext;
+use crate::{
+    requisition::program_settings::common::get_program_ids, service_provider::ServiceContext,
+};
 
 pub(super) struct PrepareProgramSettings {
     pub(super) settings: Vec<ProgramRequisitionSettings>,
@@ -45,7 +47,7 @@ pub(super) fn prepare_supplier_program_settings(
         .map(|s| s.program_settings_row.id.clone())
         .collect();
 
-    let program_ids: Vec<String> = settings.iter().map(|s| s.program_row.id.clone()).collect();
+    let program_ids = get_program_ids(&ctx.connection, &settings)?;
 
     let order_types = ProgramRequisitionOrderTypeRowRepository::new(&ctx.connection)
         .find_many_by_program_requisition_settings_ids(&program_requisition_settings_ids)?;
