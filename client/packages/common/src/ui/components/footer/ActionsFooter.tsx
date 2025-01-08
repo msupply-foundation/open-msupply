@@ -44,14 +44,14 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
       >
         {selectedRowCount} {t('label.selected')}
       </Typography>
-      {actions.map(({ label, icon, onClick, disabled, shouldShrink }) => (
+      {actions.map(({ label, icon, onClick, disabled }) => (
         <FlatButton
           key={label}
           startIcon={icon}
           label={label}
           disabled={disabled}
           onClick={onClick}
-          shouldShrink={shouldShrink}
+          shouldShrink={true}
         />
       ))}
     </Stack>

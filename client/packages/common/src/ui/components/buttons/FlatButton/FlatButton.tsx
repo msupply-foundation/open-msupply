@@ -48,7 +48,7 @@ export const FlatButton: React.FC<ButtonProps> = ({
   sx,
   name,
   disabled = false,
-  shouldShrink = true,
+  shouldShrink = false,
   shrinkThreshold = 'md',
 }) => {
   const { isRtl } = useIntlUtils();
