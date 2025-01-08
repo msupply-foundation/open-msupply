@@ -81,11 +81,13 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       icon: <ZapIcon />,
       onClick: onAllocate,
       disabled: isDisabled,
+      shouldShrink: false,
     },
     {
       label: t('button.return-lines'),
       icon: <ArrowLeftIcon />,
       onClick: () => onReturnLines(selectedIds),
+      shouldShrink: false,
     },
   ];
 

@@ -368,6 +368,27 @@ pub fn mock_unique_number_inbound_shipment() -> InvoiceRow {
     })
 }
 
+pub fn mock_transferred_inbound_shipment_a() -> InvoiceRow {
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = String::from("transferred_inbound_shipment_a");
+        r.name_link_id = String::from("name_store_a");
+        r.store_id = String::from("store_b");
+        r.invoice_number = 9;
+        r.r#type = InvoiceType::InboundShipment;
+        r.status = InvoiceStatus::Delivered;
+        r.comment = Some("Sort comment test Ac".to_owned());
+        r.their_reference = Some(String::from(""));
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
+            .unwrap()
+            .and_hms_milli_opt(20, 30, 0, 0)
+            .unwrap();
+        r.delivered_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
+            .unwrap()
+            .and_hms_milli_opt(21, 30, 0, 0);
+        r.linked_invoice_id = Some(String::from("store_a"));
+    })
+}
+
 pub fn mock_outbound_shipment_line_a() -> InvoiceLineRow {
     inline_init(|r: &mut InvoiceLineRow| {
         r.id = String::from("outbound_shipment_line_a");
@@ -526,6 +547,7 @@ pub fn mock_inbound_shipments() -> Vec<InvoiceRow> {
         mock_inbound_shipment_e(),
         mock_empty_draft_inbound_shipment(),
         mock_unique_number_inbound_shipment(),
+        mock_transferred_inbound_shipment_a(),
     ]
 }
 
