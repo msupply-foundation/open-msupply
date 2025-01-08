@@ -4,6 +4,7 @@ use repository::{
     StorageConnection,
 };
 
+/// This function is called when a line is updated on an invoice. It will update the picked date if appropriate.
 pub fn update_picked_date(
     connection: &StorageConnection,
     invoice: &InvoiceRow,
