@@ -44,14 +44,15 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
       >
         {selectedRowCount} {t('label.selected')}
       </Typography>
-      {actions.map(({ label, icon, onClick, disabled }) => (
+      {actions.map(({ label, icon, onClick, disabled, shouldShrink }) => (
         <FlatButton
           key={label}
           startIcon={icon}
           label={label}
           disabled={disabled}
           onClick={onClick}
-          shouldShrink={true}
+          // Flatbutton doesn't shrink by default but we want it to for certain buttons in actions footer
+          shouldShrink={shouldShrink ?? true}
         />
       ))}
     </Stack>
