@@ -34,6 +34,7 @@ pub struct LegacyListMasterRow {
 struct LegacyProgramSettings {
     #[serde(rename = "storeTags")]
     store_tags: Option<HashMap<String, LegacyProgramSettingsStoreTag>>,
+    #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "elmisCode")]
     elmis_code: Option<String>,
