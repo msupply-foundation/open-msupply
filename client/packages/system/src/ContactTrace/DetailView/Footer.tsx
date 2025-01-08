@@ -80,9 +80,8 @@ export const Footer: FC<FooterProps> = ({
               isLoading={isSaving}
               onClick={() => onSave()}
               startIcon={<CheckIcon />}
-            >
-              {t('button.save')}
-            </LoadingButton>
+              label={t('button.save')}
+            />
           </Box>
 
           <Modal

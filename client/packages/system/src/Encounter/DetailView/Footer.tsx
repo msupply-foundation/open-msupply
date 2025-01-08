@@ -115,9 +115,8 @@ export const Footer: FC<FooterProps> = ({
               isLoading={isSaving}
               onClick={onSave}
               startIcon={<SaveIcon />}
-            >
-              {t('button.save')}
-            </LoadingButton>
+              label={t('button.save')}
+            />
           </Box>
 
           <Modal

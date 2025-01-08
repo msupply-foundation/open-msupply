@@ -78,9 +78,8 @@ export const AppBarButtonsComponent = ({
           variant="outlined"
           onClick={csvExport}
           disabled={EnvUtils.platform === Platform.Android}
-        >
-          {t('button.export')}
-        </LoadingButton>
+          label={t('button.export')}
+        />
       </Grid>
     </AppBarButtonsPortal>
   );

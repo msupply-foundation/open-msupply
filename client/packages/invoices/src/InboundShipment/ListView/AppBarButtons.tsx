@@ -60,9 +60,8 @@ export const AppBarButtons: FC<{
           onClick={csvExport}
           isLoading={isLoading}
           disabled={EnvUtils.platform === Platform.Android}
-        >
-          {t('button.export', { ns: 'common' })}
-        </LoadingButton>
+          label={t('button.export')}
+        />
       </Grid>
       <SupplierSearchModal
         open={modalController.isOn}
