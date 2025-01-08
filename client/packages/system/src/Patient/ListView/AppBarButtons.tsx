@@ -55,7 +55,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
           variant="outlined"
           onClick={csvExport}
           isLoading={isLoading}
-          label={t('button.export', { ns: 'common' })}
+          label={t('button.export')}
         />
       </Grid>
 
