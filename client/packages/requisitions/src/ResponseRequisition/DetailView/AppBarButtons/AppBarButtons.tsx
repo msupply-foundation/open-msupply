@@ -23,7 +23,7 @@ interface AppBarButtonProps {
   isDisabled: boolean;
   hasLinkedRequisition: boolean;
   isProgram: boolean;
-  onAddItem: (newState: boolean) => void;
+  onAddItem: () => void;
 }
 
 export const AppBarButtonsComponent = ({
@@ -53,7 +53,7 @@ export const AppBarButtonsComponent = ({
           disabled={disableAddButton}
           label={t('button.add-item')}
           Icon={<PlusCircleIcon />}
-          onClick={() => onAddItem(true)}
+          onClick={onAddItem}
         />
 
         <SupplyRequestedQuantityButton />
