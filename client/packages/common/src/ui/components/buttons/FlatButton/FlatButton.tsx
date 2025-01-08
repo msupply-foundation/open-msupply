@@ -22,7 +22,7 @@ const StyledButton = styled(MuiButton, {
     marginLeft: 5,
     marginRight: 5,
     textTransform: 'none' as Property.TextTransform,
-    color: color === 'primary' ? theme.mixins.button.textColor : color,
+    color: color === 'primary' ? theme.mixins.button.textColor : undefined,
     isRtl,
 
     '& .MuiButton-startIcon': {
