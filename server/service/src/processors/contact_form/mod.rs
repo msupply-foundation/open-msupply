@@ -1,7 +1,7 @@
 use repository::{
     contact_form::{ContactForm, ContactFormFilter, ContactFormRepository},
     ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, KeyType,
-    RepositoryError, TransactionError,
+    RepositoryError, StorageConnection, TransactionError,
 };
 use thiserror::Error;
 
@@ -108,7 +108,7 @@ trait ContactFormProcessor {
     ) -> Result<Option<String>, ProcessContactFormError> {
         let result = ctx
             .connection
-            .transaction_sync(|_| self.try_process_record(ctx, contact_form))
+            .transaction_sync(|_| self.try_process_record(&ctx.connection, contact_form))
             .map_err(ProcessContactFormError::from)?;
 
         if let Some(result) = &result {
@@ -120,7 +120,7 @@ trait ContactFormProcessor {
 
     fn try_process_record(
         &self,
-        ctx: &ServiceContext,
+        connection: &StorageConnection,
         contact_form: &ContactForm,
     ) -> Result<Option<String>, ProcessContactFormError>;
 }

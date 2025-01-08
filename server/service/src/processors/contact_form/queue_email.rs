@@ -1,13 +1,10 @@
-use repository::{contact_form::ContactForm, contact_form_row::ContactType};
+use repository::{contact_form::ContactForm, contact_form_row::ContactType, StorageConnection};
 use tera::{Context, Tera};
 use util::constants::{FEEDBACK_EMAIL, SUPPORT_EMAIL};
 
-use crate::{
-    email::{
-        enqueue::{enqueue_email, EnqueueEmailData},
-        EmailServiceError,
-    },
-    service_provider::ServiceContext,
+use crate::email::{
+    enqueue::{enqueue_email, EnqueueEmailData},
+    EmailServiceError,
 };
 use nanohtml2text::html2text;
 
@@ -26,7 +23,7 @@ impl ContactFormProcessor for QueueContactEmailProcessor {
     /// Changelog will only be processed once
     fn try_process_record(
         &self,
-        ctx: &ServiceContext,
+        connection: &StorageConnection,
         contact_form: &ContactForm,
     ) -> Result<Option<String>, ProcessContactFormError> {
         let email = create_email(contact_form);
@@ -44,7 +41,7 @@ impl ContactFormProcessor for QueueContactEmailProcessor {
         };
 
         // add email to queue
-        let enqueue = enqueue_email(ctx, email);
+        let enqueue = enqueue_email(connection, email);
         match enqueue {
             Ok(email) => {
                 log::info!(
