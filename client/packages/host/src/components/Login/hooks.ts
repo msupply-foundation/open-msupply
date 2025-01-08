@@ -8,6 +8,7 @@ import {
   useInitialisationStatus,
   useLocation,
   useNavigate,
+  useIsGaps,
 } from '@openmsupply-client/common';
 
 interface LoginForm {
@@ -41,9 +42,10 @@ export const useLoginForm = (
   const { data: initStatus } = useInitialisationStatus();
   const navigate = useNavigate();
   const location = useLocation();
+  const isGaps = useIsGaps();
   const { mostRecentUsername, login, isLoggingIn } = useAuthContext();
   const { password, setPassword, setUsername, username, error, setError } =
-    state;
+    state;  
 
   const onLogin = async () => {
     setError();
@@ -53,9 +55,9 @@ export const useLoginForm = (
     if (!token) return;
 
     // navigate back, if redirected by the <RequireAuthentication /> component
-    // or to the dashboard as a default
+    // or to the dashboard or cold-chain/sensors for GAPS only enabled store, as a default
     const state = location.state as State | undefined;
-    const from = state?.from?.pathname || `/${AppRoute.Dashboard}`;
+    const from = state?.from?.pathname || ( !isGaps ? `/${AppRoute.Dashboard}` : `/${AppRoute.Coldchain}/${AppRoute.Sensors}`);
     navigate(from, { replace: true });
   };
 
