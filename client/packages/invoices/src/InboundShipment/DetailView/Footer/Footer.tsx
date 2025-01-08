@@ -80,7 +80,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       disabled: isDisabled,
     },
     {
-      label: t('button.replenishment-return-lines'),
+      label: t('button.return-lines'),
       icon: <ArrowLeftIcon />,
       onClick: () => onReturnLines(selectedLines),
       shouldShrink: false,
