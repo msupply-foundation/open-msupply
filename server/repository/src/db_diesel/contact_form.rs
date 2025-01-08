@@ -54,6 +54,13 @@ impl<'a> ContactFormRepository<'a> {
         ContactFormRepository { connection }
     }
 
+    pub fn query_one(
+        &self,
+        filter: ContactFormFilter,
+    ) -> Result<Option<ContactForm>, RepositoryError> {
+        Ok(self.query_by_filter(filter)?.pop())
+    }
+
     pub fn query_by_filter(
         &self,
         filter: ContactFormFilter,

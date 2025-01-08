@@ -1,6 +1,5 @@
 use repository::{
-    contact_form::{ContactForm, ContactFormFilter, ContactFormRepository},
-    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, KeyType,
+    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, KeyType,
     RepositoryError, StorageConnection, TransactionError,
 };
 use thiserror::Error;
@@ -17,9 +16,9 @@ mod queue_email;
 use queue_email::QueueContactEmailProcessor;
 
 #[derive(Error, Debug)]
-pub(crate) enum ProcessContactFormError {
-    #[error("Contact form not found: {0:?}")]
-    ContactFormNotFound(String),
+pub(crate) enum ProcessCentralRecordsError {
+    #[error("{0:?} not found: {1:?}")]
+    RecordNotFound(String, String),
     #[error("{0:?}")]
     DatabaseError(RepositoryError),
     #[error("{0:?}")]
@@ -28,10 +27,10 @@ pub(crate) enum ProcessContactFormError {
 
 const CHANGELOG_BATCH_SIZE: u32 = 20;
 
-pub(crate) fn process_contact_forms(
+pub(crate) fn process_central_records(
     service_provider: &ServiceProvider,
-) -> Result<(), ProcessContactFormError> {
-    use ProcessContactFormError as Error;
+) -> Result<(), ProcessCentralRecordsError> {
+    use ProcessCentralRecordsError as Error;
     let processors: Vec<Box<dyn ContactFormProcessor>> = vec![Box::new(QueueContactEmailProcessor)];
 
     let ctx = service_provider
@@ -41,6 +40,7 @@ pub(crate) fn process_contact_forms(
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
     let cursor_controller = CursorController::new(KeyType::ContactFormProcessorCursor);
 
+    // Only process the changelogs we care about
     let filter = ChangelogFilter::new().table_name(ChangelogTableName::ContactForm.equal_to());
 
     loop {
@@ -57,9 +57,12 @@ pub(crate) fn process_contact_forms(
         }
 
         for log in logs {
-            let result = process_change_log(&ctx, &log, &processors);
-            if let Err(e) = result {
-                log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
+            // Try record against all of the processors
+            for processor in processors.iter() {
+                let result = processor.try_process_record_common(&ctx, &log);
+                if let Err(e) = result {
+                    log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
+                }
             }
 
             cursor_controller
@@ -70,33 +73,6 @@ pub(crate) fn process_contact_forms(
 
     Ok(())
 }
-fn process_change_log(
-    ctx: &ServiceContext,
-    log: &ChangelogRow,
-    processors: &[Box<dyn ContactFormProcessor>],
-) -> Result<(), ProcessContactFormError> {
-    use ProcessContactFormError as Error;
-    let connection = &ctx.connection;
-
-    let filter = ContactFormFilter::new().id(EqualFilter::equal_to(&log.record_id));
-
-    let contact_forms = ContactFormRepository::new(connection)
-        .query_by_filter(filter)
-        .map_err(Error::DatabaseError)?;
-
-    let contact_form = contact_forms
-        .first()
-        .ok_or(Error::ContactFormNotFound(log.record_id.clone()))?;
-
-    // Try record against all of the processors
-    for processor in processors.iter() {
-        let result = processor.try_process_record_common(&ctx, &contact_form);
-        if let Err(e) = result {
-            log_system_error(connection, &e).map_err(Error::DatabaseError)?;
-        }
-    }
-    Ok(())
-}
 
 trait ContactFormProcessor {
     fn get_description(&self) -> String;
@@ -104,12 +80,12 @@ trait ContactFormProcessor {
     fn try_process_record_common(
         &self,
         ctx: &ServiceContext,
-        contact_form: &ContactForm,
-    ) -> Result<Option<String>, ProcessContactFormError> {
+        changelog: &ChangelogRow,
+    ) -> Result<Option<String>, ProcessCentralRecordsError> {
         let result = ctx
             .connection
-            .transaction_sync(|_| self.try_process_record(&ctx.connection, contact_form))
-            .map_err(ProcessContactFormError::from)?;
+            .transaction_sync(|connection| self.try_process_record(connection, changelog))
+            .map_err(ProcessCentralRecordsError::from)?;
 
         if let Some(result) = &result {
             log::info!("{} - {}", self.get_description(), result);
@@ -121,15 +97,15 @@ trait ContactFormProcessor {
     fn try_process_record(
         &self,
         connection: &StorageConnection,
-        contact_form: &ContactForm,
-    ) -> Result<Option<String>, ProcessContactFormError>;
+        changelog: &ChangelogRow,
+    ) -> Result<Option<String>, ProcessCentralRecordsError>;
 }
 
-impl From<TransactionError<ProcessContactFormError>> for ProcessContactFormError {
-    fn from(error: TransactionError<ProcessContactFormError>) -> Self {
+impl From<TransactionError<ProcessCentralRecordsError>> for ProcessCentralRecordsError {
+    fn from(error: TransactionError<ProcessCentralRecordsError>) -> Self {
         match error {
             TransactionError::Transaction { msg, level } => {
-                ProcessContactFormError::DatabaseError(RepositoryError::TransactionError {
+                ProcessCentralRecordsError::DatabaseError(RepositoryError::TransactionError {
                     msg,
                     level,
                 })

@@ -1,4 +1,5 @@
 use crate::activity_log::system_log_entry;
+use crate::sync::CentralServerConfig;
 use repository::system_log_row::SystemLogType;
 use repository::{RepositoryError, StorageConnection};
 use std::sync::Arc;
@@ -15,7 +16,7 @@ use self::transfer::requisition::ProcessRequisitionTransfersError;
 use self::transfer::{
     invoice::process_invoice_transfers, requisition::process_requisition_transfers,
 };
-use contact_form::{process_contact_forms, ProcessContactFormError};
+use contact_form::{process_central_records, ProcessCentralRecordsError};
 
 mod contact_form;
 #[cfg(test)]
@@ -45,8 +46,8 @@ enum ProcessorsError {
     InvoiceTransfer(ProcessInvoiceTransfersError),
     #[error("Error in requisition transfer processor ({0})")]
     RequisitionTransfer(ProcessRequisitionTransfersError),
-    #[error("Error in contact form processor ({0})")]
-    ContactFormToEmail(ProcessContactFormError),
+    #[error("Error in central record processor ({0})")]
+    ProcessCentralRecord(ProcessCentralRecordsError),
     #[error("Error when waiting for the process queue to be processed")]
     AwaitProcessQueue(()),
 }
@@ -103,7 +104,7 @@ impl Processors {
                         process_invoice_transfers(&service_provider).map_err(ProcessorsError::InvoiceTransfer)
                     },
                     Some(_) = contact_form_to_email.recv() => {
-                        process_contact_forms(&service_provider).map_err(ProcessorsError::ContactFormToEmail)
+                        process_central_records(&service_provider).map_err(ProcessorsError::ProcessCentralRecord)
                     },
                     Some(sender) = await_process_queue.recv() => {
                         sender.send(()).map_err(ProcessorsError::AwaitProcessQueue)
@@ -136,9 +137,11 @@ impl ProcessorsTrigger {
         }
     }
 
-    pub(crate) fn trigger_contact_form_to_email_processors(&self) {
-        if let Err(error) = self.contact_form_to_email.try_send(()) {
-            log::error!("Problem triggering contact form processor {:#?}", error)
+    pub(crate) fn trigger_central_only_processors(&self) {
+        if CentralServerConfig::is_central_server() {
+            if let Err(error) = self.contact_form_to_email.try_send(()) {
+                log::error!("Problem triggering contact form processor {:#?}", error)
+            }
         }
     }
 
