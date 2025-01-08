@@ -33,7 +33,6 @@ import {
   ClinicianAutocompleteOption,
   ClinicianSearchInput,
 } from '../../Clinician';
-import { PatientTabValue } from '../PatientView/PatientView';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers';
 import Badge from '@mui/material/Badge';
 
@@ -230,23 +229,13 @@ export const CreateEncounterModal: FC = () => {
                 error(t('error.encounter-not-created'))();
                 return;
               }
-              const startDatetime = new Date(draft?.startDatetime ?? 0);
-              if (DateUtils.addHours(startDatetime, 1).getTime() > Date.now()) {
-                navigate(
-                  RouteBuilder.create(AppRoute.Dispensary)
-                    .addPart(AppRoute.Patients)
-                    .addPart(patientId)
-                    .addQuery({ tab: PatientTabValue.Encounters })
-                    .build()
-                );
-              } else {
-                navigate(
-                  RouteBuilder.create(AppRoute.Dispensary)
-                    .addPart(AppRoute.Encounter)
-                    .addPart(id)
-                    .build()
-                );
-              }
+
+              navigate(
+                RouteBuilder.create(AppRoute.Dispensary)
+                  .addPart(AppRoute.Encounter)
+                  .addPart(id)
+                  .build()
+              );
             }
             reset();
           }}
