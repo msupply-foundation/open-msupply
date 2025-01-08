@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   DataTable,
+  NumUtils,
   TableProvider,
   createTableStore,
   useColumns,
@@ -48,13 +49,14 @@ export const StockLineTable = ({
       {
         width: '90px',
         key: 'available',
-        label: 'label.available',
-        accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
+        label: 'label.available-units',
+        accessor: ({ rowData }) =>
+          NumUtils.round(rowData.stockLine?.availableNumberOfPacks ?? 0, 2),
       },
       {
         width: '55px',
         key: 'numberOfPacks',
-        label: 'label.num-packs',
+        label: 'label.units-issued',
         accessor: ({ rowData }) => rowData.numberOfPacks,
         setter: handleUpdateDraft,
         Cell: PackQuantityCell,

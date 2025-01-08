@@ -1,13 +1,12 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Box,
   AppFooterPortal,
   DialogButton,
-  RouteBuilder,
   useNavigate,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
-import { AppRoute } from '@openmsupply-client/config';
+import { buildItemEditRoute } from '../../utils';
 
 interface FooterProps {
   hasNext: boolean;
@@ -17,13 +16,13 @@ interface FooterProps {
   requisitionNumber?: number;
 }
 
-export const Footer: FC<FooterProps> = ({
+export const Footer = ({
   hasNext,
   next,
   hasPrevious,
   previous,
   requisitionNumber,
-}) => {
+}: FooterProps) => {
   const navigate = useNavigate();
 
   return (
@@ -47,26 +46,14 @@ export const Footer: FC<FooterProps> = ({
               variant="previous"
               disabled={!hasPrevious}
               onClick={() =>
-                navigate(
-                  RouteBuilder.create(AppRoute.Distribution)
-                    .addPart(AppRoute.CustomerRequisition)
-                    .addPart(String(requisitionNumber))
-                    .addPart(String(previous?.id))
-                    .build()
-                )
+                navigate(buildItemEditRoute(requisitionNumber, previous?.id))
               }
             />
             <DialogButton
               variant="next"
               disabled={!hasNext}
               onClick={() =>
-                navigate(
-                  RouteBuilder.create(AppRoute.Distribution)
-                    .addPart(AppRoute.CustomerRequisition)
-                    .addPart(String(requisitionNumber))
-                    .addPart(String(next?.id))
-                    .build()
-                )
+                navigate(buildItemEditRoute(requisitionNumber, next?.id))
               }
             />
           </Box>
