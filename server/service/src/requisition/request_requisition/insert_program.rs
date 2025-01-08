@@ -19,7 +19,7 @@ use repository::{
     IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
     NumberRowType, Pagination, ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow,
     RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
-    StorageConnection,
+    StorageConnection, StoreRowRepository,
 };
 use util::uuid::uuid;
 
@@ -204,12 +204,17 @@ fn generate(
         Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
     )?;
 
+    let customer_name_id = StoreRowRepository::new(connection)
+        .find_one_by_id(&ctx.user_id.clone())?
+        .ok_or(RepositoryError::NotFound)?
+        .name_link_id;
+
     let indicator_values = generate_program_indicator_values(
         connection,
         &ctx.store_id,
         &period_id,
         program_indicators,
-        &other_party_id,
+        &customer_name_id,
     )?;
 
     Ok(GenerateResult {
