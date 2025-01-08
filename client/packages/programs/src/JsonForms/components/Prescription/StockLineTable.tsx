@@ -71,6 +71,10 @@ export const StockLineTable = ({
             3
           ),
         setter: row => {
+          // Using `as` to allow for the `unitQuantity` field, which doesn't
+          // natively exist on DraftStockOutLine. This is preferable to using
+          // the `numberOfPacks` field, which would be misleading and need to be
+          // overwritten with the correct packs value here.
           const stockLine = { ...row } as Partial<DraftStockOutLine> & {
             id: string;
             unitQuantity: number;
