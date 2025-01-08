@@ -162,9 +162,8 @@ export const Login = () => {
           variant="outlined"
           endIcon={<ArrowRightIcon />}
           disabled={!isValid}
-        >
-          {t('button.login')}
-        </LoadingButton>
+          label={t('button.login')}
+        />
       }
       ErrorMessage={
         error &&

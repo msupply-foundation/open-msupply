@@ -1,6 +1,7 @@
 import React, { PropsWithChildren, useState, useEffect } from 'react';
 
 import {
+  CloseIcon,
   DateUtils,
   Formatter,
   Grid,
@@ -16,13 +17,22 @@ import {
 import { useSync } from '@openmsupply-client/system';
 import { SyncProgress } from '../SyncProgress';
 import { ServerInfo } from './ServerInfo';
+import { BasicModal, IconButton } from '@common/components';
 
 const STATUS_POLLING_INTERVAL = 1000;
 
-const useHostSync = () => {
+interface SyncModalProps {
+  open: boolean;
+  width?: number;
+  height?: number;
+  onCancel: () => void;
+}
+
+const useHostSync = (enabled: boolean) => {
   // Polling whenever Sync page is opened
   const { syncStatus, numberOfRecordsInPushQueue } = useSync.utils.syncInfo(
-    STATUS_POLLING_INTERVAL
+    STATUS_POLLING_INTERVAL,
+    enabled
   );
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { allowSleep, keepAwake } = useNativeClient();
@@ -69,7 +79,12 @@ const useHostSync = () => {
   };
 };
 
-export const Sync = () => {
+export const SyncModal = ({
+  onCancel,
+  open,
+  width = 800,
+  height = 500,
+}: SyncModalProps) => {
   const t = useTranslation();
   const {
     syncStatus,
@@ -79,7 +94,7 @@ export const Sync = () => {
     numberOfRecordsInPushQueue,
     isLoading,
     onManualSync,
-  } = useHostSync();
+  } = useHostSync(open);
   const { updateUserIsLoading, updateUser } = useAuthContext();
 
   const sync = async () => {
@@ -96,63 +111,80 @@ export const Sync = () => {
   );
 
   return (
-    <Grid style={{ padding: 15 }} justifyContent="center">
-      <ServerInfo />
-      <Grid
-        container
-        flexDirection="column"
-        justifyContent="flex-start"
-        style={{ padding: '15 15 50 15', minWidth: 650 }}
-        flexWrap="nowrap"
-      >
-        <Typography variant="h5" color="primary" style={{ paddingBottom: 10 }}>
-          {t('heading.synchronise-status')}
-        </Typography>
-        <Typography style={{ paddingBottom: 15, fontSize: 12, maxWidth: 650 }}>
-          {t('sync-info.summary')
-            .split('\n')
-            .map(line => (
-              <div>{line}</div>
-            ))}
-        </Typography>
-        <Row title={t('sync-info.number-to-push')}>
-          <Typography>{numberOfRecordsInPushQueue}</Typography>
-        </Row>
-        <Row title={t('sync-info.last-sync-start')}>
-          <FormattedSyncDate date={latestSyncStart} />
-        </Row>
-        <Row title={t('sync-info.last-sync-finish')}>
-          <FormattedSyncDate date={latestSyncFinish} />
-        </Row>
-        <Row title={t('sync-info.last-sync-duration')}>
-          <Grid display="flex" container gap={1}>
-            <Grid item flex={0} style={{ whiteSpace: 'nowrap' }}>
-              {DateUtils.formatDuration(durationAsDate)}
+    <BasicModal
+      width={width}
+      height={height}
+      open={open}
+      onKeyDown={e => {
+        if (e.key === 'Escape') onCancel();
+      }}
+    >
+      <Grid sx={{ padding: 2, paddingBottom: 5 }} justifyContent="center">
+        <IconButton
+          icon={<CloseIcon />}
+          color="primary"
+          onClick={onCancel}
+          sx={{ position: 'absolute', right: 0, top: 0, padding: 2 }}
+          label={t('button.close')}
+        />
+
+        <ServerInfo />
+        <Grid
+          container
+          flexDirection="column"
+          justifyContent="flex-start"
+          sx={{ padding: 2, paddingBottom: 6, minWidth: 650 }}
+          flexWrap="nowrap"
+        >
+          <Typography variant="h5" color="primary" sx={{ paddingBottom: 1.25 }}>
+            {t('heading.synchronise-status')}
+          </Typography>
+          <Typography sx={{ paddingBottom: 2, fontSize: 12, maxWidth: 650 }}>
+            {t('sync-info.summary')
+              .split('\n')
+              .map(line => (
+                <div>{line}</div>
+              ))}
+          </Typography>
+          <Row title={t('sync-info.number-to-push')}>
+            <Typography>{numberOfRecordsInPushQueue}</Typography>
+          </Row>
+          <Row title={t('sync-info.last-sync-start')}>
+            <FormattedSyncDate date={latestSyncStart} />
+          </Row>
+          <Row title={t('sync-info.last-sync-finish')}>
+            <FormattedSyncDate date={latestSyncFinish} />
+          </Row>
+          <Row title={t('sync-info.last-sync-duration')}>
+            <Grid display="flex" container gap={1}>
+              <Grid item flex={0} style={{ whiteSpace: 'nowrap' }}>
+                {DateUtils.formatDuration(durationAsDate)}
+              </Grid>
             </Grid>
-          </Grid>
-        </Row>
-        <Row title={t('sync-info.last-successful-sync')}>
-          <FormattedSyncDate date={latestSuccessfulSyncDate} />
-        </Row>
-        <Row>
-          <LoadingButton
-            isLoading={isLoading || updateUserIsLoading}
-            startIcon={<RadioIcon />}
-            variant="contained"
-            sx={{ fontSize: '12px' }}
-            disabled={false}
-            onClick={sync}
-          >
-            {t('button.sync-now')}
-          </LoadingButton>
-          <ShowStatus
-            isSyncing={isLoading}
-            isUpdatingUser={updateUserIsLoading}
-          />
-        </Row>
+          </Row>
+          <Row title={t('sync-info.last-successful-sync')}>
+            <FormattedSyncDate date={latestSuccessfulSyncDate} />
+          </Row>
+          <Row>
+            <LoadingButton
+              autoFocus
+              isLoading={isLoading || updateUserIsLoading}
+              startIcon={<RadioIcon />}
+              variant="contained"
+              sx={{ fontSize: '12px' }}
+              disabled={false}
+              onClick={sync}
+              label={t('button.sync-now')}
+            />
+            <ShowStatus
+              isSyncing={isLoading}
+              isUpdatingUser={updateUserIsLoading}
+            />
+          </Row>
+        </Grid>
+        <SyncProgress syncStatus={syncStatus} isOperational={true} />
       </Grid>
-      <SyncProgress syncStatus={syncStatus} isOperational={true} />
-    </Grid>
+    </BasicModal>
   );
 };
 

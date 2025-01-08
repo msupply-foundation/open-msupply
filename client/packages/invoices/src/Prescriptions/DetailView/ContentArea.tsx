@@ -5,11 +5,9 @@ import {
   useUrlQueryParams,
   Box,
   DataTable,
-  MiniTable,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { usePrescriptionColumn } from './columns';
-import { useExpansionColumns } from './PrescriptionLineEdit/columns';
 import { StockOutItem } from '../../types';
 import { StockOutLineFragment } from '../../StockOut';
 
@@ -17,18 +15,6 @@ interface ContentAreaProps {
   onAddItem: () => void;
   onRowClick?: null | ((rowData: StockOutLineFragment | StockOutItem) => void);
 }
-
-const Expand: FC<{
-  rowData: StockOutLineFragment | StockOutItem;
-}> = ({ rowData }) => {
-  const expandoColumns = useExpansionColumns();
-
-  if ('lines' in rowData && rowData.lines.length > 1) {
-    return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
-  } else {
-    return null;
-  }
-};
 
 export const ContentAreaComponent: FC<ContentAreaProps> = ({
   onAddItem,
@@ -52,7 +38,6 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
       <DataTable
         id="prescription-detail"
         onRowClick={onRowClick}
-        ExpandContent={Expand}
         columns={columns}
         data={rows}
         enableColumnSelection

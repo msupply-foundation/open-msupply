@@ -19,6 +19,7 @@ import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getStatusTranslator, isInboundListItemDisabled } from '../../utils';
 import { useInbound, InboundRowFragment } from '../api';
+import { Footer } from './Footer';
 
 const useDisableInboundRows = (rows?: InboundRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -116,6 +117,7 @@ export const InboundListView: FC = () => {
         }
         enableColumnSelection
       />
+      <Footer />
     </>
   );
 };

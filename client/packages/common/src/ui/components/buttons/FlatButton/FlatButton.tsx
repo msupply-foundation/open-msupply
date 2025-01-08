@@ -18,11 +18,11 @@ const StyledButton = styled(MuiButton, {
 })<{ isRtl: boolean }>(({ isRtl, color, theme }) => {
   const iconColor = theme.palette.primary.main;
   return {
-    fontWeight: 700,
+    fontSize: '0.875rem',
     marginLeft: 5,
     marginRight: 5,
     textTransform: 'none' as Property.TextTransform,
-    color: color === 'primary' ? 'black' : color,
+    color: color === 'primary' ? theme.mixins.button.textColor : undefined,
     isRtl,
 
     '& .MuiButton-startIcon': {

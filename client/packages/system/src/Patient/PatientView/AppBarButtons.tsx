@@ -53,9 +53,8 @@ export const AppBarButtons: FC<{
             variant="outlined"
             startIcon={<PrinterIcon />}
             isLoading={isPrinting}
-          >
-            {t('button.print')}
-          </LoadingButton>
+            label={t('button.print')}
+          />
         </ReportSelector>
       </Grid>
     </AppBarButtonsPortal>

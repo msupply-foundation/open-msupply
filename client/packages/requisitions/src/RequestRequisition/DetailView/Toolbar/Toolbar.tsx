@@ -12,7 +12,6 @@ import {
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { useHideOverStocked, useRequest } from '../../api';
-import { ToolbarDropDown } from './ToolbarDropDown';
 
 export const Toolbar: FC = () => {
   const { on, toggle } = useHideOverStocked();
@@ -96,7 +95,6 @@ export const Toolbar: FC = () => {
             }}
             debounceTime={0}
           />
-          <ToolbarDropDown isDisabled={isDisabled} />
         </Grid>
       </Grid>
     </AppBarContentPortal>
