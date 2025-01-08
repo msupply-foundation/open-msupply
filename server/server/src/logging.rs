@@ -30,7 +30,7 @@ pub fn logging_init(settings: Option<LoggingSettings>, level: Option<Level>) {
             .build(),
     };
 
-    simple_log::new(config).expect("Cannot determine log level");
+    simple_log::new(config).expect("Unable to initialise logger");
 }
 
 fn file_logger(settings: &LoggingSettings) -> LogConfigBuilder {
