@@ -79,8 +79,6 @@ pub enum ActivityLogNodeType {
     DemographicIndicatorUpdated,
     DemographicProjectionCreated,
     DemographicProjectionUpdated,
-    EmailQueued,
-    EmailSent,
 }
 
 #[Object]
@@ -215,8 +213,6 @@ impl ActivityLogNodeType {
             from::DemographicIndicatorUpdated => to::DemographicIndicatorUpdated,
             from::DemographicProjectionCreated => to::DemographicProjectionCreated,
             from::DemographicProjectionUpdated => to::DemographicProjectionUpdated,
-            from::EmailQueued => to::EmailQueued,
-            from::EmailSent => to::EmailSent,
         }
     }
 
@@ -281,8 +277,6 @@ impl ActivityLogNodeType {
             from::DemographicIndicatorUpdated => to::DemographicIndicatorUpdated,
             from::DemographicProjectionCreated => to::DemographicProjectionCreated,
             from::DemographicProjectionUpdated => to::DemographicProjectionUpdated,
-            from::EmailQueued => to::EmailQueued,
-            from::EmailSent => to::EmailSent,
         }
     }
 }

@@ -1,9 +1,8 @@
-use repository::{contact_form::ContactForm, contact_form_row::ContactType, ActivityLogType};
+use repository::{contact_form::ContactForm, contact_form_row::ContactType};
 use tera::{Context, Tera};
 use util::constants::{FEEDBACK_EMAIL, SUPPORT_EMAIL};
 
 use crate::{
-    activity_log::system_activity_log_entry,
     email::{
         enqueue::{enqueue_email, EnqueueEmailData},
         EmailServiceError,
@@ -46,13 +45,13 @@ impl ContactFormProcessor for QueueContactEmailProcessor {
 
         // add email to queue
         let enqueue = enqueue_email(ctx, email);
-        let email = match enqueue {
+        match enqueue {
             Ok(email) => {
                 log::info!(
-                    "Queued email for contact form {}",
+                    "Queued email {} for contact form {}",
+                    email.id,
                     contact_form.contact_form_row.id
                 );
-                email
             }
             Err(e) => {
                 log::error!(
@@ -63,14 +62,6 @@ impl ContactFormProcessor for QueueContactEmailProcessor {
                 return Ok(None);
             }
         };
-
-        system_activity_log_entry(
-            &ctx.connection,
-            ActivityLogType::EmailQueued,
-            &ctx.store_id,
-            &email.id,
-        )
-        .map_err(ProcessContactFormError::DatabaseError)?;
 
         Ok(Some("success".to_string()))
     }
@@ -176,6 +167,7 @@ mod email_test {
                 reply_email: "reply@test.com".to_string(),
                 body: "Feedback message".to_string(),
                 contact_type: ContactType::Feedback,
+                user_id: mock_user_account_a().id,
                 ..Default::default()
             },
             user_row: mock_user_account_a(),
