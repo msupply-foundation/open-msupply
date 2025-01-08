@@ -4,6 +4,9 @@ import {
   AppFooterPortal,
   RequisitionNodeStatus,
   useTranslation,
+  DeleteIcon,
+  Action,
+  ActionsFooter,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { getRequisitionTranslator, requestStatuses } from '../../../utils';
@@ -22,32 +25,54 @@ export const createStatusLog = (requisition: RequestFragment) => {
   return statusLog;
 };
 
-export const Footer: FC = () => {
+interface FooterProps {
+  isDisabled: boolean;
+}
+
+export const Footer: FC<FooterProps> = ({ isDisabled }) => {
   const { data } = useRequest.document.get();
   const t = useTranslation();
+  const { selectedRows, confirmAndDelete } = useRequest.line.delete();
+
+  const actions: Action[] = [
+    {
+      label: t('button.delete-lines'),
+      icon: <DeleteIcon />,
+      onClick: confirmAndDelete,
+      disabled: isDisabled,
+    },
+  ];
 
   return (
     <AppFooterPortal
       Content={
-        data && (
-          <Box
-            gap={2}
-            display="flex"
-            flexDirection="row"
-            alignItems="center"
-            height={64}
-          >
-            <StatusCrumbs
-              statuses={requestStatuses}
-              statusLog={createStatusLog(data)}
-              statusFormatter={getRequisitionTranslator(t)}
+        <>
+          {selectedRows.length !== 0 && (
+            <ActionsFooter
+              actions={actions}
+              selectedRowCount={selectedRows.length}
             />
+          )}
+          {data && selectedRows.length === 0 && (
+            <Box
+              gap={2}
+              display="flex"
+              flexDirection="row"
+              alignItems="center"
+              height={64}
+            >
+              <StatusCrumbs
+                statuses={requestStatuses}
+                statusLog={createStatusLog(data)}
+                statusFormatter={getRequisitionTranslator(t)}
+              />
 
-            <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-              <StatusChangeButton />
+              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+                <StatusChangeButton />
+              </Box>
             </Box>
-          </Box>
-        )
+          )}
+        </>
       }
     />
   );

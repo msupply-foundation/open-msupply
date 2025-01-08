@@ -40,6 +40,7 @@ export type GenerateReportQuery = { __typename: 'Queries', generateReport: { __t
 
 export const ReportRowFragmentDoc = gql`
     fragment ReportRow on ReportNode {
+  __typename
   context
   id
   name
@@ -82,7 +83,6 @@ export const ReportsDocument = gql`
     __typename
     ... on ReportConnector {
       nodes {
-        __typename
         ...ReportRow
       }
       totalCount

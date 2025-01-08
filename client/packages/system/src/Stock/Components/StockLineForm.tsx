@@ -105,7 +105,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
           gap={1}
         >
           <StyledInputRow
-            label={t('label.num-packs')}
+            label={t('label.pack-quantity')}
             Input={
               <NumericTextInput
                 autoFocus

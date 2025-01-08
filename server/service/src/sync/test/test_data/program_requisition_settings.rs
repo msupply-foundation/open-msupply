@@ -27,7 +27,7 @@ const MASTER_LIST_WITH_PROGRAM_1: (&str, &str) = (
     "isProgram": true,
     "inactive": false,
     "programSettings": {
-        "elmisCode": "",
+        "elmisCode": "elmis",
         "storeTags": {
             "NewProgramTag1": {
                 "orderTypes": [
@@ -133,6 +133,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     master_list_id: Some(MASTER_LIST_WITH_PROGRAM_1.0.to_owned()),
                     context_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                     is_immunisation: false,
+                    elmis_code: Some("elmis".to_owned()),
                 }),
                 IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_1().id,
@@ -226,6 +227,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     master_list_id: Some(MASTER_LIST_WITH_PROGRAM_2.0.to_owned()),
                     context_id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
                     is_immunisation: true,
+                    elmis_code: None,
                 }),
                 IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned() + &mock_name_tag_1().id,

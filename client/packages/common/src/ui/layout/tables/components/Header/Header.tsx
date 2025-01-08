@@ -75,7 +75,7 @@ export const HeaderCell = <T extends RecordWithId>({
             {` ${columnLabel}`}
           </div>
         ) : (
-          columnLabel
+          !description && columnLabel
         )}
       </>
     );

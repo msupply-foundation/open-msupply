@@ -7,19 +7,10 @@ import {
   RouteBuilder,
   useNavigate,
   useTranslation,
-  useEditModal,
   createQueryParamsStore,
   DetailTabs,
-  BasicModal,
-  Box,
-  FnUtils,
 } from '@openmsupply-client/common';
-import {
-  ItemRowWithStatsFragment,
-  ActivityLogList,
-  StockItemSearchInput,
-  ItemRowFragment,
-} from '@openmsupply-client/system';
+import { ActivityLogList } from '@openmsupply-client/system';
 import { RequestLineFragment, useRequest } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -28,33 +19,56 @@ import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
 import { RequestRequisitionLineErrorProvider } from '../context';
+import { IndicatorsTab } from './IndicatorsTab';
+import { buildIndicatorEditRoute, buildItemEditRoute } from './utils';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { data, isLoading } = useRequest.document.get();
   const isDisabled = useRequest.utils.isDisabled();
-  const { mutateAsync } = useRequest.line.insert();
-  const { onOpen, onClose, isOpen } = useEditModal<ItemRowWithStatsFragment>();
+  const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
+    useRequest.document.indicators(
+      data?.otherPartyId ?? '',
+      data?.period?.id ?? '',
+      data?.program?.id ?? '',
+      !!data
+    );
 
   const onRowClick = useCallback((line: RequestLineFragment) => {
-    navigate(
-      RouteBuilder.create(AppRoute.Replenishment)
-        .addPart(AppRoute.InternalOrder)
-        .addPart(String(line.requisitionNumber))
-        .addPart(String(line.item.id))
-        .build()
-    );
+    navigate(buildItemEditRoute(line.requisitionNumber, line.item.id));
   }, []);
+
+  const onProgramIndicatorClick = useCallback(
+    (
+      requisitionNumber?: number,
+      programIndicatorCode?: string,
+      indicatorId?: string
+    ) => {
+      if (!requisitionNumber || !programIndicatorCode || !indicatorId) return;
+
+      navigate(
+        buildIndicatorEditRoute(
+          requisitionNumber,
+          programIndicatorCode,
+          indicatorId
+        )
+      );
+    },
+    []
+  );
 
   if (isLoading) return <DetailViewSkeleton />;
 
+  const onAddItem = () => {
+    navigate(buildItemEditRoute(data?.requisitionNumber, 'new'));
+  };
   const tabs = [
     {
       Component: (
         <ContentArea
           onRowClick={!isDisabled ? onRowClick : null}
-          onAddItem={() => onOpen(null)}
+          onAddItem={onAddItem}
         />
       ),
       value: 'Details',
@@ -65,6 +79,24 @@ export const DetailView: FC = () => {
     },
   ];
 
+  if (
+    data?.programName &&
+    !!data?.otherParty.store &&
+    programIndicators?.totalCount !== 0
+  ) {
+    tabs.push({
+      Component: (
+        <IndicatorsTab
+          onClick={onProgramIndicatorClick}
+          isLoading={isLoading || isProgramIndicatorsLoading}
+          request={data}
+          indicators={programIndicators?.nodes}
+        />
+      ),
+      value: t('label.indicators'),
+    });
+  }
+
   return !!data ? (
     <RequestRequisitionLineErrorProvider>
       <TableProvider
@@ -73,44 +105,13 @@ export const DetailView: FC = () => {
           initialSortBy: { key: 'itemName' },
         })}
       >
-        <AppBarButtons
-          isDisabled={!data || isDisabled}
-          onAddItem={() => onOpen(null)}
-        />
+        <AppBarButtons isDisabled={!data || isDisabled} onAddItem={onAddItem} />
         <Toolbar />
 
         <DetailTabs tabs={tabs} />
 
-        <Footer />
+        <Footer isDisabled={isDisabled} />
         <SidePanel />
-        {isOpen && (
-          <BasicModal open={isOpen} onClose={onClose} height={500} width={800}>
-            <Box padding={2}>
-              <StockItemSearchInput
-                onChange={(newItem: ItemRowFragment | null) => {
-                  if (newItem) {
-                    mutateAsync({
-                      id: FnUtils.generateUUID(),
-                      requisitionId: data.id,
-                      itemId: newItem.id,
-                    });
-                    navigate(
-                      RouteBuilder.create(AppRoute.Replenishment)
-                        .addPart(AppRoute.InternalOrder)
-                        .addPart(String(data.requisitionNumber))
-                        .addPart(String(newItem.id))
-                        .build()
-                    );
-                  }
-                }}
-                openOnFocus={true}
-                extraFilter={item =>
-                  !data.lines.nodes.some(line => line.item.id === item.id)
-                }
-              />
-            </Box>
-          </BasicModal>
-        )}
       </TableProvider>
     </RequestRequisitionLineErrorProvider>
   ) : (
