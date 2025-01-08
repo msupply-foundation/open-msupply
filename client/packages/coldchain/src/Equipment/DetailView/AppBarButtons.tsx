@@ -65,9 +65,8 @@ export const AppBarButtonsComponent = () => {
           startIcon={<PrinterIcon />}
           isLoading={isPrinting}
           onClick={onClick}
-        >
-          {t('button.print-asset-label')}
-        </LoadingButton>
+          label={t('button.print-asset-label')}
+        />
       </Grid>
       <DisabledNotification />
     </AppBarButtonsPortal>

@@ -115,9 +115,8 @@ export const ContactForm = () => {
           sx={{ fontSize: '12px' }}
           disabled={!isValidInput}
           onClick={save}
-        >
-          {t('button.send')}
-        </LoadingButton>
+          label={t('button.send')}
+        />
       </Grid>
     </>
   );
