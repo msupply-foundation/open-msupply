@@ -139,9 +139,8 @@ export const LabelPrinterSettings = () => {
           isLoading={isTesting}
           onClick={test}
           disabled={isInvalid}
-        >
-          {t('button.test')}
-        </LoadingButton>
+          label={t('button.test')}
+        />
         <ButtonWithIcon
           Icon={<SaveIcon />}
           label={t('button.save')}

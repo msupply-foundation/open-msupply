@@ -24,6 +24,9 @@ export const useRequest = {
     update: Document.useUpdateRequest,
 
     fields: Document.useRequestFields,
+
+    indicators: Document.useIndicators,
+    updateIndicatorValue: Document.useUpdateIndicatorValue,
   },
   line: {
     insert: Lines.useInsertRequestLines,

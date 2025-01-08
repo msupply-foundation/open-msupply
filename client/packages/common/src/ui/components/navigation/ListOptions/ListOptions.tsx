@@ -1,3 +1,4 @@
+import { useWindowDimensions } from '@common/hooks';
 import { CheckIcon, ChevronDownIcon } from '@common/icons';
 import {
   List,
@@ -28,6 +29,8 @@ export const ListOptions = ({
   currentId,
   enteredLineIds,
 }: ListProps) => {
+  const { height } = useWindowDimensions();
+
   const startIcon = (
     <CheckIcon
       style={{
@@ -48,7 +51,14 @@ export const ListOptions = ({
   );
 
   return (
-    <List sx={{}}>
+    <List
+      sx={{
+        padding: 0,
+        overflow: 'auto',
+        scrollBehavior: 'smooth',
+        maxHeight: height - 200,
+      }}
+    >
       {options?.map((option, _) => (
         <React.Fragment key={option.id}>
           <ListItem
