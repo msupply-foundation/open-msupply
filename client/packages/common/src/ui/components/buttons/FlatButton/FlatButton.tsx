@@ -18,7 +18,7 @@ interface ButtonProps {
 
 const StyledButton = styled(MuiButton, {
   shouldForwardProp: prop => prop !== 'shrink' && prop !== 'isRtl',
-})<{ isRtl: boolean; shrink: boolean }>(({ isRtl, color, theme }) => {
+})<{ isRtl: boolean; shrink: boolean }>(({ isRtl, color, theme, disabled }) => {
   const iconColor = theme.palette.primary.main;
 
   return {
@@ -30,7 +30,7 @@ const StyledButton = styled(MuiButton, {
     isRtl,
 
     '& .MuiButton-startIcon, .MuiSvgIcon-root': {
-      color: color === 'primary' ? iconColor : color,
+      color: color === 'primary' && !disabled ? iconColor : color,
       isRtl: {
         marginRight: -4,
         marginLeft: 8,
