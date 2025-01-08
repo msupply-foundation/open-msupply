@@ -2,7 +2,7 @@ use crate::{
     activity_log::activity_log_entry,
     number::next_number,
     requisition::{
-        common::check_requisition_row_exists,
+        common::{check_requisition_row_exists, default_indicator_value},
         program_indicator::query::{program_indicators, ProgramIndicator},
         program_settings::get_customer_program_requisition_settings,
         query::get_requisition,
@@ -281,7 +281,7 @@ fn generate_lines(
 fn generate_program_indicator_values(
     store_id: &str,
     period_id: &str,
-    other_party_id: &str,
+    customer_name_id: &str,
     program_indicators: Vec<ProgramIndicator>,
 ) -> Vec<IndicatorValueRow> {
     let mut indicator_values = vec![];
@@ -289,19 +289,14 @@ fn generate_program_indicator_values(
     for program_indicator in program_indicators {
         for line in program_indicator.lines {
             for column in line.columns {
-                let value = match column.value_type {
-                    Some(_) => column.default_value.clone(),
-                    None => line.line.default_value.clone(),
-                };
-
                 let indicator_value = IndicatorValueRow {
                     id: uuid(),
-                    customer_name_link_id: other_party_id.to_string(),
+                    customer_name_link_id: customer_name_id.to_string(),
                     store_id: store_id.to_string(),
                     period_id: period_id.to_string(),
+                    value: default_indicator_value(&line.line, &column),
                     indicator_line_id: line.line.id.to_string(),
                     indicator_column_id: column.id.to_string(),
-                    value,
                 };
 
                 indicator_values.push(indicator_value);
