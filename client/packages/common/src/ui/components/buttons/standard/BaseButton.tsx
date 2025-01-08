@@ -49,7 +49,7 @@ export const StyledBaseButton = styled(MuiButton)(({
       backgroundColor: 'white',
       color:
         color === 'primary'
-          ? theme.mixins.button.textColor
+          ? theme.mixins.button?.textColor
           : translateColor(theme, color),
       '& .MuiButton-startIcon': {
         color: color === 'primary' ? translateColor(theme, color) : undefined,

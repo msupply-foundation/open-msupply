@@ -51,7 +51,6 @@ export const ShrinkableBaseButton = React.forwardRef<
     // On small screens, if the button shouldShrink, then
     // only display a centred icon, with no text.
     const shrink = isShrinkThreshold && shouldShrink;
-    // const startIcon = shrink ? null : Icon;
     const centredIcon = shrink ? startIcon : null;
     const text = shrink ? null : label;
 
