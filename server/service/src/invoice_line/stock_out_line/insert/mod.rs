@@ -1,4 +1,7 @@
-use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
+use crate::{
+    invoice::update_picked_date::update_picked_date, invoice_line::query::get_invoice_line,
+    service_provider::ServiceContext, WithDBError,
+};
 use chrono::NaiveDate;
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
 
@@ -73,9 +76,10 @@ pub fn insert_stock_out_line(
         .connection
         .transaction_sync(|connection| {
             let (item, invoice, batch) = validate(&connection, &input, &ctx.store_id)?;
-            let (new_line, update_batch) = generate(ctx, input, item, batch, invoice)?;
+            let (new_line, update_batch) = generate(ctx, input, item, batch, invoice.clone())?;
             InvoiceLineRowRepository::new(connection).upsert_one(&new_line)?;
             StockLineRowRepository::new(connection).upsert_one(&update_batch)?;
+            update_picked_date(&connection, &invoice)?;
             get_invoice_line(ctx, &new_line.id)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedLineDoesNotExist)
