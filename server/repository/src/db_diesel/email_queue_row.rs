@@ -23,6 +23,7 @@ table! {
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+#[PgType = "email_queue_status_enum"]
 pub enum EmailQueueStatus {
     Queued,
     Sent,
