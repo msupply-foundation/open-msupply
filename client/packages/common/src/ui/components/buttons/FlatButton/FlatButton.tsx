@@ -20,15 +20,16 @@ const StyledButton = styled(MuiButton, {
   shouldForwardProp: prop => prop !== 'shrink' && prop !== 'isRtl',
 })<{ isRtl: boolean; shrink: boolean }>(({ isRtl, color, theme }) => {
   const iconColor = theme.palette.primary.main;
+
   return {
-    fontWeight: 700,
+    fontWeight: 500,
     marginLeft: 5,
     marginRight: 5,
     textTransform: 'none' as Property.TextTransform,
     color: color === 'primary' ? 'black' : color,
     isRtl,
 
-    '& .MuiButton-startIcon': {
+    '& .MuiButton-startIcon, .MuiSvgIcon-root': {
       color: color === 'primary' ? iconColor : color,
       isRtl: {
         marginRight: -4,
