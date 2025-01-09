@@ -283,10 +283,15 @@ fn generate_program_indicator_values(
                     customer_values
                         .iter()
                         .filter(|v| {
-                            v.indicator_line_id == line.line.id
-                                && v.indicator_column_id == column.id
+                            v.indicator_value_row.indicator_line_id == line.line.id
+                                && v.indicator_value_row.indicator_column_id == column.id
                         })
-                        .map(|v| v.value.parse::<f64>().unwrap_or_default())
+                        .map(|v| {
+                            v.indicator_value_row
+                                .value
+                                .parse::<f64>()
+                                .unwrap_or_default()
+                        })
                         .sum::<f64>()
                         .to_string()
                 } else {
