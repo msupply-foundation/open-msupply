@@ -64,7 +64,6 @@ export const ResponseRequisitionListView: FC = () => {
   });
   const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, page, first, offset };
-  console.log('params at list view', queryParams);
   const { data, isError, isLoading } = useResponse.document.list(queryParams);
   const { authoriseResponseRequisitions } = useResponse.utils.preferences();
   useDisableResponseRows(data?.nodes);
