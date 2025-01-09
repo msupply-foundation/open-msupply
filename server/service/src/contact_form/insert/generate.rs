@@ -1,18 +1,18 @@
 use chrono::Utc;
-use repository::contact_form_row::ContactFormRow;
+use repository::{contact_form_row::ContactFormRow, UserAccountRow};
 
 use super::InsertContactForm;
 
 pub struct GenerateInput {
     pub store_id: String,
-    pub user_id: String,
+    pub user: UserAccountRow,
     pub insert_input: InsertContactForm,
 }
 
 pub fn generate(
     GenerateInput {
         store_id,
-        user_id,
+        user,
         insert_input,
     }: GenerateInput,
 ) -> ContactFormRow {
@@ -28,7 +28,8 @@ pub fn generate(
     ContactFormRow {
         id,
         store_id,
-        user_id,
+        user_id: user.id,
+        username: user.username,
         created_datetime: now,
         contact_type,
         reply_email,

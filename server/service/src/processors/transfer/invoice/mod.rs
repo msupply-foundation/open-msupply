@@ -1,16 +1,18 @@
 use crate::{
     cursor_controller::CursorController,
-    processors::transfer::{
-        get_linked_original_shipment, get_requisition_and_linked_requisition,
-        invoice::{
-            assign_invoice_number::AssignInvoiceNumberProcessor,
-            create_inbound_invoice::CreateInboundInvoiceProcessor,
-            delete_inbound_invoice::DeleteInboundInvoiceProcessor,
-            link_outbound_invoice::LinkOutboundInvoiceProcessor,
-            update_inbound_invoice::UpdateInboundInvoiceProcessor,
-            update_outbound_invoice_status::UpdateOutboundInvoiceStatusProcessor,
-        },
+    processors::{
         log_system_error,
+        transfer::{
+            get_linked_original_shipment, get_requisition_and_linked_requisition,
+            invoice::{
+                assign_invoice_number::AssignInvoiceNumberProcessor,
+                create_inbound_invoice::CreateInboundInvoiceProcessor,
+                delete_inbound_invoice::DeleteInboundInvoiceProcessor,
+                link_outbound_invoice::LinkOutboundInvoiceProcessor,
+                update_inbound_invoice::UpdateInboundInvoiceProcessor,
+                update_outbound_invoice_status::UpdateOutboundInvoiceStatusProcessor,
+            },
+        },
     },
     service_provider::ServiceProvider,
     sync::{ActiveStoresOnSite, GetActiveStoresOnSiteError},
