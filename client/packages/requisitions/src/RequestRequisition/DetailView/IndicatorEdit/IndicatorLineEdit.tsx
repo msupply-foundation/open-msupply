@@ -12,7 +12,6 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import {
-  CustomerIndicatorInfoFragment,
   IndicatorLineRowFragment,
   IndicatorLineWithColumnsFragment,
 } from '../../api';
@@ -27,7 +26,6 @@ interface IndicatorLineEditProps {
   previous: IndicatorLineRowFragment | null;
   currentLine?: IndicatorLineWithColumnsFragment | null;
   disabled: boolean;
-  customerInfos?: CustomerIndicatorInfoFragment[] | null;
 }
 
 const INPUT_WIDTH = 185;
@@ -109,17 +107,17 @@ export const IndicatorLineEdit = ({
   previous,
   currentLine,
   disabled,
-  customerInfos,
 }: IndicatorLineEditProps) => {
-  const columns = currentLine?.columns
-    .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
-    .sort((a, b) => a.columnNumber - b.columnNumber);
+  const columns =
+    currentLine?.columns
+      .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
+      .sort((a, b) => a.columnNumber - b.columnNumber) || [];
   const { store } = useAuthContext();
 
   return (
     <>
       <Box display="flex" flexDirection="column">
-        {columns?.map((c, i) => (
+        {columns.map((c, i) => (
           <InputWithLabel
             key={c.value?.id}
             data={c}
@@ -131,7 +129,10 @@ export const IndicatorLineEdit = ({
       {store?.preferences
         .useConsumptionAndStockFromCustomersForInternalOrders && (
         <Box paddingTop={1} maxHeight={200} width="100%" display="flex">
-          <CustomerIndicatorInfoView customerInfos={customerInfos} />
+          <CustomerIndicatorInfoView
+            columns={columns}
+            customerInfos={currentLine?.customerIndicatorInfo || []}
+          />
         </Box>
       )}
       <Box>

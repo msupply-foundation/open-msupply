@@ -216,11 +216,11 @@ pub trait RequisitionServiceTrait: Sync + Send {
     fn get_indicator_information(
         &self,
         ctx: &ServiceContext,
+        line_ids: Vec<String>,
         store_id: &str,
         period_id: &str,
-        program_id: &str,
     ) -> Result<Vec<CustomerIndicatorInformation>, RepositoryError> {
-        get_indicator_information(ctx, store_id, period_id, program_id)
+        get_indicator_information(ctx, line_ids, store_id, period_id)
     }
 
     fn get_requisition_item_information(
