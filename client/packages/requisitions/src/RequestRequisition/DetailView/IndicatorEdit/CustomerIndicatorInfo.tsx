@@ -13,27 +13,12 @@ import {
   CustomerIndicatorInfoFragment,
   IndicatorColumnFragment,
 } from '../../api';
+import { indicatorColumnNameToLocal } from '../../../utils';
 
 interface CustomerIndicatorInfoProps {
   columns: IndicatorColumnFragment[];
   customerInfos: CustomerIndicatorInfoFragment[];
 }
-
-enum ColumnName {
-  Comment = 'Comment',
-  Value = 'Value',
-}
-
-const columnNameToLocal = (columnName: string) => {
-  switch (columnName) {
-    case ColumnName.Comment:
-      return 'label.comment';
-    case ColumnName.Value:
-      return 'label.value';
-    default:
-      return columnName;
-  }
-};
 
 const CustomerIndicatorInfo = ({
   columns,
@@ -55,7 +40,7 @@ const CustomerIndicatorInfo = ({
   columns.forEach(({ name, id }) => {
     columnDefinitions.push({
       key: name,
-      label: columnNameToLocal(name),
+      label: indicatorColumnNameToLocal(name),
       sortable: false,
       accessor: ({ rowData }) => {
         const indicator = rowData?.indicatorInformation?.find(
