@@ -218,10 +218,10 @@ fn generate(
         .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&other_party_id)))?;
 
     let indicator_values = match customer_store {
-        Some(customer_store) => generate_program_indicator_values(
+        Some(_) => generate_program_indicator_values(
             &ctx.store_id,
             &period_id,
-            &customer_store.name_row.id,
+            &other_party_id,
             program_indicators,
         ),
         None => vec![],
