@@ -19,7 +19,7 @@ use repository::{
     IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
     NumberRowType, Pagination, ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow,
     RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
-    StorageConnection, StoreRowRepository,
+    StorageConnection, StoreFilter, StoreRepository,
 };
 use util::uuid::uuid;
 
