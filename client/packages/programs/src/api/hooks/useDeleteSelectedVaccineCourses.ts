@@ -51,5 +51,5 @@ export const useDeleteSelectedVaccineCourses = () => {
     },
   });
 
-  return confirmAndDelete;
+  return { confirmAndDelete, selectedRows };
 };
