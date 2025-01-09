@@ -152,9 +152,10 @@ fn create_email(contact_form: &ContactForm) -> Result<EnqueueEmailData, EmailSer
 mod email_test {
     use repository::{
         contact_form::ContactForm,
-        contact_form_row::{ContactFormRow, ContactType},
+        contact_form_row::{ContactFormRow, ContactFormRowRepository, ContactType},
         email_queue_row::EmailQueueRowRepository,
         mock::{mock_name_store_a, mock_store_a, mock_user_account_a, MockData, MockDataInserts},
+        ChangelogRow,
     };
     use util::constants::SUPPORT_EMAIL;
 
@@ -180,7 +181,6 @@ mod email_test {
                 user_id: mock_user_account_a().id,
                 ..Default::default()
             },
-            user_row: mock_user_account_a(),
             store_row: mock_store_a(),
             name_row: mock_name_store_a(),
         };
@@ -200,7 +200,7 @@ mod email_test {
     #[actix_rt::test]
     async fn send_contact_form_emails() {
         let ServiceTestContext {
-            service_context,
+            connection,
             service_provider,
             ..
         } = setup_all_with_data_and_service_provider(
@@ -210,24 +210,29 @@ mod email_test {
         )
         .await;
 
-        let contact_form = ContactForm {
-            contact_form_row: ContactFormRow {
+        ContactFormRowRepository::new(&connection)
+            .upsert_one(&ContactFormRow {
+                id: "contact_form_id".to_string(),
                 reply_email: "reply@test.com".to_string(),
                 body: "Some request for support".to_string(),
+                username: "username_a".to_string(),
                 contact_type: ContactType::Support,
+                store_id: mock_store_a().id,
                 ..Default::default()
-            },
-            user_row: mock_user_account_a(),
-            store_row: mock_store_a(),
-            name_row: mock_name_store_a(),
+            })
+            .unwrap();
+
+        let changelog = ChangelogRow {
+            record_id: "contact_form_id".to_string(),
+            ..Default::default()
         };
 
         QueueContactEmailProcessor
-            .try_process_record(&service_context, &contact_form)
+            .try_process_record(&connection, &changelog)
             .unwrap();
 
         // Check that the email was queued
-        let repo = EmailQueueRowRepository::new(&service_context.connection);
+        let repo = EmailQueueRowRepository::new(&connection);
         let unsent = repo.un_sent().unwrap();
 
         assert_eq!(unsent.len(), 1);
