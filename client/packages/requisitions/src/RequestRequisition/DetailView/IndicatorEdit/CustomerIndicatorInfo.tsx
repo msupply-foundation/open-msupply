@@ -9,10 +9,14 @@ import {
   TooltipTextCell,
   useColumns,
 } from '@openmsupply-client/common';
-import { CustomerIndicatorInfoFragment } from '../../api';
+import {
+  CustomerIndicatorInfoFragment,
+  IndicatorColumnFragment,
+} from '../../api';
 
 interface CustomerIndicatorInfoProps {
-  customerInfos?: CustomerIndicatorInfoFragment[] | null;
+  columns: IndicatorColumnFragment[];
+  customerInfos: CustomerIndicatorInfoFragment[];
 }
 
 enum ColumnName {
@@ -32,12 +36,9 @@ const columnNameToLocal = (columnName: string) => {
 };
 
 const CustomerIndicatorInfo = ({
+  columns,
   customerInfos,
 }: CustomerIndicatorInfoProps) => {
-  const columnNames = customerInfos?.[0]?.indicatorInformation?.map(
-    indicatorInfo => indicatorInfo.column.name
-  );
-
   const columnDefinitions: ColumnDescription<CustomerIndicatorInfoFragment>[] =
     [
       [
@@ -51,21 +52,19 @@ const CustomerIndicatorInfo = ({
       ],
     ];
 
-  if (columnNames) {
-    columnNames.forEach(columnName => {
-      columnDefinitions.push({
-        key: columnName,
-        label: columnNameToLocal(columnName),
-        sortable: false,
-        accessor: ({ rowData }) => {
-          const indicator = rowData?.indicatorInformation?.find(
-            indicatorInfo => indicatorInfo.column.name === columnName
-          );
-          return indicator?.value;
-        },
-      });
+  columns.forEach(({ name, id }) => {
+    columnDefinitions.push({
+      key: name,
+      label: columnNameToLocal(name),
+      sortable: false,
+      accessor: ({ rowData }) => {
+        const indicator = rowData?.indicatorInformation?.find(
+          ({ columnId }) => columnId == id
+        );
+        return indicator?.value || '';
+      },
     });
-  }
+  });
 
   columnDefinitions.push({
     key: 'datetime',
@@ -74,19 +73,21 @@ const CustomerIndicatorInfo = ({
     format: ColumnFormat.Date,
   });
 
-  const columns = useColumns<CustomerIndicatorInfoFragment>(columnDefinitions);
+  const tableColumns =
+    useColumns<CustomerIndicatorInfoFragment>(columnDefinitions);
 
   return (
     <DataTable
       id="item-information"
-      columns={columns}
-      data={customerInfos ?? []}
+      columns={tableColumns}
+      data={customerInfos}
       dense
     />
   );
 };
 
 export const CustomerIndicatorInfoView = ({
+  columns,
   customerInfos,
 }: CustomerIndicatorInfoProps) => (
   <Box
@@ -99,7 +100,7 @@ export const CustomerIndicatorInfoView = ({
     }}
   >
     <TableProvider createStore={createTableStore}>
-      <CustomerIndicatorInfo customerInfos={customerInfos} />
+      <CustomerIndicatorInfo columns={columns} customerInfos={customerInfos} />
     </TableProvider>
   </Box>
 );

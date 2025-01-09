@@ -47,12 +47,6 @@ export const IndicatorEditPage = () => {
   const lines = populatedLines.map(l => l.line);
   const currentLine = lines.find(l => l.id === programIndicatorLineId);
   const sortedLines = lines.sort((a, b) => a.lineNumber - b.lineNumber);
-  const customerInfos = indicators?.map(
-    indicator => indicator.customerIndicatorInfo
-  );
-  const currentLineCustomerInfos = customerInfos?.flatMap(customerInfo =>
-    customerInfo?.filter(info => info?.lineId === currentLine?.id)
-  );
 
   const { hasNext, next, hasPrevious, previous } = usePreviousNextIndicatorLine(
     sortedLines,
@@ -104,7 +98,6 @@ export const IndicatorEditPage = () => {
                 previous={previous}
                 requisitionNumber={request?.requisitionNumber}
                 disabled={isDisabled}
-                customerInfos={currentLineCustomerInfos}
               />
             </>
           }

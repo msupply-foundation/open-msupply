@@ -586,9 +586,6 @@ fragment ProgramIndicator on ProgramIndicatorNode {
     ...IndicatorLineWithColumns
   }
   id
-  customerIndicatorInfo(periodId: $periodId, storeId: $storeId) {
-    ...CustomerIndicatorInfo
-  }
 }
 fragment IndicatorLineRow on IndicatorLineRowNode {
   id
@@ -598,6 +595,7 @@ fragment IndicatorLineRow on IndicatorLineRowNode {
   valueType
 }
 fragment IndicatorColumn on IndicatorColumnNode {
+  id
   columnNumber
   name
   valueType
@@ -615,8 +613,8 @@ fragment IndicatorValue on IndicatorValueNode {
 }
 fragment CustomerIndicatorInfo on CustomerIndicatorInformationNode {
   __typename
-  id
   datetime
+  id
   customer(storeId: $storeId) {
     __typename
     id
@@ -624,12 +622,9 @@ fragment CustomerIndicatorInfo on CustomerIndicatorInformationNode {
   }
   indicatorInformation {
     __typename
-    column {
-      ...CustomerColumn
-    }
+    columnId
     value
   }
-  lineId
 }
 
 fragment CustomerColumn on IndicatorColumnNode {
@@ -644,6 +639,9 @@ fragment IndicatorLineWithColumns on IndicatorLineNode {
   }
   line {
     ...IndicatorLineRow
+  }
+  customerIndicatorInfo(periodId: $periodId, storeId: $storeId) {
+    ...CustomerIndicatorInfo
   }
 }
 
