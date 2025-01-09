@@ -1,0 +1,58 @@
+name: Sort JSON on Pull Requests
+
+on:
+  pull_request:
+    paths:
+      - "**/*.json" # Trigger only for locale json changes
+      # - "client/packages/common/src/intl/locales/**/*.json" # Trigger only for locale json changes
+
+permissions:
+  contents: write
+
+jobs:
+  sort-json:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup cache for jq
+        uses: actions/cache@v3
+        with:
+          path: /usr/bin/jq
+          key: jq-cache
+
+      - name: Install jq if not cached
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          else
+            echo "jq is already installed, skipping installation."
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Sort translation files
+        run: |
+          TRANSLATION_FILES=($(find ./files/ -type f -name "*.json"))
+          for file in "${TRANSLATION_FILES[@]}"; do
+            echo "Sorting $file..."
+            jq --sort-keys . "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
+          done
+
+      - name: Commit and push changes
+        run: |
+          git fetch origin
+          git checkout ${{ github.head_ref }} || git checkout -b ${{ github.head_ref }} origin/${{ github.head_ref }}
+          # Check for changes
+          if [ "$(git status --porcelain)" ]; then
+            echo "Changes detected, committing..."
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit -m "chore: sorted JSON files"
+            git push https://x-access-token:${{ secrets.PAT }}@github.com/${{ github.repository }} HEAD:${{ github.head_ref }}
+          else
+            echo 'No changes to commit.'
+          fi
