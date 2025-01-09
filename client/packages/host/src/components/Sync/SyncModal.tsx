@@ -16,7 +16,6 @@ import {
 } from '@openmsupply-client/common';
 import { useSync } from '@openmsupply-client/system';
 import { SyncProgress } from '../SyncProgress';
-import { ServerInfo } from './ServerInfo';
 import { BasicModal, IconButton } from '@common/components';
 
 const STATUS_POLLING_INTERVAL = 1000;
@@ -128,7 +127,6 @@ export const SyncModal = ({
           label={t('button.close')}
         />
 
-        <ServerInfo />
         <Grid
           container
           flexDirection="column"
