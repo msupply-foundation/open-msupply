@@ -2382,7 +2382,7 @@ export type IndicatorColumnNode = {
 
 
 export type IndicatorColumnNodeValueArgs = {
-  customerNameLinkId: Scalars['String']['input'];
+  customerNameId: Scalars['String']['input'];
   periodId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
@@ -7817,6 +7817,11 @@ export type TokenExpired = RefreshTokenErrorInterface & {
 
 export type TransferredRequisition = DeleteResponseRequisitionErrorInterface & {
   __typename: 'TransferredRequisition';
+  description: Scalars['String']['output'];
+};
+
+export type TransferredShipment = DeleteInboundShipmentLineErrorInterface & {
+  __typename: 'TransferredShipment';
   description: Scalars['String']['output'];
 };
 

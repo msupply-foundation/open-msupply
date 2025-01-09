@@ -56,9 +56,8 @@ export const AppBarButtonsComponent = () => {
             variant="outlined"
             startIcon={<PrinterIcon />}
             isLoading={isPrinting}
-          >
-            {t('button.print')}
-          </LoadingButton>
+            label={t('button.print')}
+          />
         </ReportSelector>
 
         <ReportSelector
@@ -71,9 +70,8 @@ export const AppBarButtonsComponent = () => {
             variant="outlined"
             disabled={EnvUtils.platform === Platform.Android}
             isLoading={isPrinting}
-          >
-            {t('button.export')}
-          </LoadingButton>
+            label={t('button.export')}
+          />
         </ReportSelector>
         {OpenButton}
       </Grid>
