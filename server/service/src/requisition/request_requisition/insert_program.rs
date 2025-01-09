@@ -204,10 +204,12 @@ fn generate(
         Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
     )?;
 
-    let customer_name_id = StoreRowRepository::new(connection)
-        .find_one_by_id(&ctx.user_id.clone())?
+    let customer_name_id = StoreRepository::new(connection)
+        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(&ctx.store_id)))?
+        .pop()
         .ok_or(RepositoryError::NotFound)?
-        .name_link_id;
+        .name_row
+        .id;
 
     let indicator_values = generate_program_indicator_values(
         connection,
