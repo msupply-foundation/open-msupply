@@ -72,7 +72,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
 
   const selectedLines = useOutbound.utils.selectedLines();
 
-  const selectedUnallocatedLines = selectedLines
+  const selectedUnallocatedEmptyLines = selectedLines
     .filter(
       ({ type, numberOfPacks }) =>
         type === 'UNALLOCATED_STOCK' && numberOfPacks === 0
@@ -83,13 +83,13 @@ export const FooterComponent: FC<FooterComponentProps> = ({
   const getConfirmation = useConfirmationModal({
     onConfirm: onAllocate,
     title: t('heading.are-you-sure'),
-    message: t('messages.lines-not-allocated', {
-      count: selectedUnallocatedLines.length,
+    message: t('messages.empty-unallocated-lines', {
+      count: selectedUnallocatedEmptyLines.length,
     }),
   });
 
   const confirmAllocate = () => {
-    if (selectedUnallocatedLines.length !== 0) {
+    if (selectedUnallocatedEmptyLines.length !== 0) {
       getConfirmation();
     } else onAllocate();
   };
