@@ -567,7 +567,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b1967c14-ac80-459f-909a-462cc7a32ee4', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f3d2ac1b-f642-43c2-a9b9-4816f64eb789', '0024fb29-1fe5-4d33-8b82-bbcb019ebf99', 'Tertiary', 3, 0.046800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f3d2ac1b-f642-43c2-a9b9-4816f64eb789', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('99a7a9b1-d199-49bc-ae71-6db5f98bf146', 'Dengue Tetravalent (live, attenuated) - two vial set (active + excipient) - 5 doses', 'GAPS-DEN-VS-5', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 5, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('99a7a9b1-d199-49bc-ae71-6db5f98bf146', 'Dengue (live, attenuated) - two vial set (active + excipient) - 5 doses', 'GAPS-DEN-VS-5', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 5, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('99a7a9b1-d199-49bc-ae71-6db5f98bf146', '99a7a9b1-d199-49bc-ae71-6db5f98bf146') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('99a7a9b1-d199-49bc-ae71-6db5f98bf146', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_99a7a9b1-d199-49bc-ae71-6db5f98bf146', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '99a7a9b1-d199-49bc-ae71-6db5f98bf146') ON CONFLICT DO NOTHING;
@@ -1047,7 +1047,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('32ac02e9-9c7e-4698-be79-79050df8e86c', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('5db930cc-5872-4830-96c0-2dd31c0336a4', 'fddebda5-9889-4c6f-8ec6-fe151e749f41', 'Tertiary', 3, 0.062270) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5db930cc-5872-4830-96c0-2dd31c0336a4', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('cbdcc3cc-486a-4028-be56-53dee2ab00e3', 'Diphtheria-Tetanus-Pertussis (whole cell)-Hepatitis B-Haemophilus influenzae type b - vial - 10 doses', 'GAPS-DTWwP13-V-10', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 10, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('cbdcc3cc-486a-4028-be56-53dee2ab00e3', 'DTwP-HepB+Hib - vial - 10 doses', 'GAPS-DTWwP13-V-10', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 10, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('cbdcc3cc-486a-4028-be56-53dee2ab00e3', 'cbdcc3cc-486a-4028-be56-53dee2ab00e3') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cbdcc3cc-486a-4028-be56-53dee2ab00e3', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_cbdcc3cc-486a-4028-be56-53dee2ab00e3', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'cbdcc3cc-486a-4028-be56-53dee2ab00e3') ON CONFLICT DO NOTHING;
@@ -1099,7 +1099,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3fb1b806-8527-4ca5-b415-02c6eb94c844', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('42f44761-7b71-421f-b9c7-5eebc86be1fc', '3ac9af69-f709-49b8-bf4e-11a091090e6d', 'Tertiary', 3, 0.171475) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('42f44761-7b71-421f-b9c7-5eebc86be1fc', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('a195a87b-f017-46ae-9c10-a229d756ec53', 'Diphtheria-Tetanus-Pertussis (whole cell)-Hepatitis B-Haemophilus influenzae type b - vial - 2 doses', 'GAPS-DTWwP13-V-2', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 2, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('a195a87b-f017-46ae-9c10-a229d756ec53', 'DTwP-HepB+Hib - vial - 2 doses', 'GAPS-DTWwP13-V-2', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 2, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('a195a87b-f017-46ae-9c10-a229d756ec53', 'a195a87b-f017-46ae-9c10-a229d756ec53') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a195a87b-f017-46ae-9c10-a229d756ec53', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_a195a87b-f017-46ae-9c10-a229d756ec53', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'a195a87b-f017-46ae-9c10-a229d756ec53') ON CONFLICT DO NOTHING;
@@ -1119,7 +1119,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f5df308c-2a4c-4f0a-a5d4-3f3c2f78587e', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7cc988fd-13c3-4c36-803d-4771f5ac3c3e', 'b87766c0-5cd8-4b37-83b7-980b14c49ee1', 'Tertiary', 3, 0.086400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7cc988fd-13c3-4c36-803d-4771f5ac3c3e', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('1edcabab-9f74-4b7d-8d71-edf9343aefd5', 'Diphtheria-Tetanus-Pertussis (whole cell)-Hepatitis B-Haemophilus influenzae type b - vial - 5 doses', 'GAPS-DTWwP13-V-5', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 5, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('1edcabab-9f74-4b7d-8d71-edf9343aefd5', 'DTwP-HepB+Hib - vial - 5 doses', 'GAPS-DTWwP13-V-5', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 5, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('1edcabab-9f74-4b7d-8d71-edf9343aefd5', '1edcabab-9f74-4b7d-8d71-edf9343aefd5') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1edcabab-9f74-4b7d-8d71-edf9343aefd5', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_1edcabab-9f74-4b7d-8d71-edf9343aefd5', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '1edcabab-9f74-4b7d-8d71-edf9343aefd5') ON CONFLICT DO NOTHING;
@@ -1147,7 +1147,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('59d3481c-cfa9-4c5c-95f5-a2dfe6c55db2', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('9247a61c-e48d-4fb7-a715-bfc1ff240602', '6cb38352-5891-41aa-a45f-8f0bdb363efa', 'Tertiary', 3, 0.103800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9247a61c-e48d-4fb7-a715-bfc1ff240602', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('9e370848-75e9-4a34-9fb4-7b4f55c01c8a', 'Diphtheria-Tetanus-Pertussis (whole cell)-Hepatitis B-Haemophilus influenzae type b - vial + ampoule - 1 dose', 'GAPS-DTWwP13-VA-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('9e370848-75e9-4a34-9fb4-7b4f55c01c8a', 'DTwP-HepB+Hib - vial + ampoule - 1 dose', 'GAPS-DTWwP13-VA-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('9e370848-75e9-4a34-9fb4-7b4f55c01c8a', '9e370848-75e9-4a34-9fb4-7b4f55c01c8a') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9e370848-75e9-4a34-9fb4-7b4f55c01c8a', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_9e370848-75e9-4a34-9fb4-7b4f55c01c8a', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '9e370848-75e9-4a34-9fb4-7b4f55c01c8a') ON CONFLICT DO NOTHING;
@@ -1159,7 +1159,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('98c9b757-4e74-4f28-b4fd-b92cca073325', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7c44dec9-b87d-4893-9828-561a4a2e00be', 'ac90202f-00e1-4284-891c-590776af8d3e', 'Tertiary', 3, 0.147600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7c44dec9-b87d-4893-9828-561a4a2e00be', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('67b02242-2e3c-465f-b480-743bb0e12404', 'Diphtheria-Tetanus-Pertussis (whole cell)-Hepatitis B-Haemophilus influenzae type b - vial + ampoule - 10 doses', 'GAPS-DTWwP13-VA-10', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 10, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('67b02242-2e3c-465f-b480-743bb0e12404', 'DTwP-HepB+Hib - vial + ampoule - 10 doses', 'GAPS-DTWwP13-VA-10', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 10, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('67b02242-2e3c-465f-b480-743bb0e12404', '67b02242-2e3c-465f-b480-743bb0e12404') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('67b02242-2e3c-465f-b480-743bb0e12404', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_67b02242-2e3c-465f-b480-743bb0e12404', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '67b02242-2e3c-465f-b480-743bb0e12404') ON CONFLICT DO NOTHING;
@@ -1171,7 +1171,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b469a2f8-11b2-4a1d-865d-8e5c31a0c1a1', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('728b59d0-263c-4076-8643-8a6b68142848', 'f426e007-b4d0-4c71-be53-b60a92949606', 'Tertiary', 3, 1.968000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('728b59d0-263c-4076-8643-8a6b68142848', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('f7a1ea06-c669-45ed-930d-c095d5e68905', 'Diphtheria-Tetanus-Pertussis (whole cell)-Hepatitis B-Haemophilus influenzae type b - vial + ampoule - 2 doses', 'GAPS-DTWwP13-VA-2', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 2, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('f7a1ea06-c669-45ed-930d-c095d5e68905', 'DTwP-HepB+Hib - vial + ampoule - 2 doses', 'GAPS-DTWwP13-VA-2', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 2, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('f7a1ea06-c669-45ed-930d-c095d5e68905', 'f7a1ea06-c669-45ed-930d-c095d5e68905') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f7a1ea06-c669-45ed-930d-c095d5e68905', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_f7a1ea06-c669-45ed-930d-c095d5e68905', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'f7a1ea06-c669-45ed-930d-c095d5e68905') ON CONFLICT DO NOTHING;
@@ -1819,7 +1819,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1f51861c-a5b9-4e21-8089-a140f9bb64e1', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('bcc6ae5a-538a-4530-b05d-6a74dcbd6cc0', '607cb940-2b3d-4a6c-b95d-3ca8be99b6ac', 'Tertiary', 3, 0.072201) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bcc6ae5a-538a-4530-b05d-6a74dcbd6cc0', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('be34e3f9-ad56-457a-9544-725331177ff3', 'Japanese Encephalitis Vaccine (Inactivated) - vial - 1 dose', 'GAPS-JAP-V-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('be34e3f9-ad56-457a-9544-725331177ff3', 'JE_liq Vaccine (Inactivated) - vial - 1 dose', 'GAPS-JAP-V-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('be34e3f9-ad56-457a-9544-725331177ff3', 'be34e3f9-ad56-457a-9544-725331177ff3') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('be34e3f9-ad56-457a-9544-725331177ff3', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_be34e3f9-ad56-457a-9544-725331177ff3', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'be34e3f9-ad56-457a-9544-725331177ff3') ON CONFLICT DO NOTHING;
@@ -1831,7 +1831,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4b6888f0-1264-4c97-a613-9bf30cfdeb4d', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('dade5d53-1c8b-4ff3-9b2e-d19c3c09e558', '41dd23e4-7822-40d0-a529-8f1e3b7d4abb', 'Tertiary', 3, 0.093082) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dade5d53-1c8b-4ff3-9b2e-d19c3c09e558', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('52bb54a4-25a8-4cfd-b51f-b239e1e000c1', 'Japanese Encephalitis Vaccine (Inactivated) - vial - 5 doses', 'GAPS-JAP-V-5', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 5, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('52bb54a4-25a8-4cfd-b51f-b239e1e000c1', 'JE_liq Vaccine (Inactivated) - vial - 5 doses', 'GAPS-JAP-V-5', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 5, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('52bb54a4-25a8-4cfd-b51f-b239e1e000c1', '52bb54a4-25a8-4cfd-b51f-b239e1e000c1') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('52bb54a4-25a8-4cfd-b51f-b239e1e000c1', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_52bb54a4-25a8-4cfd-b51f-b239e1e000c1', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '52bb54a4-25a8-4cfd-b51f-b239e1e000c1') ON CONFLICT DO NOTHING;
@@ -1843,7 +1843,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cb3a7851-5203-411e-a824-221b3751df6f', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('447d5b85-bcf0-4784-96e6-9580bf4c086d', 'ea73610b-8606-4f3b-b24a-aabc9e26d702', 'Tertiary', 3, 0.097900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('447d5b85-bcf0-4784-96e6-9580bf4c086d', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('5ee9aa69-a3c9-4db6-b8a0-2b22bbef3c50', 'Japanese Encephalitis Vaccine (live, attenuated) - two vial set (active + excipient) - 1 dose', 'GAPS-JAP-VS-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('5ee9aa69-a3c9-4db6-b8a0-2b22bbef3c50', 'JE_lyo Vaccine (live, attenuated) - two vial set (active + excipient) - 1 dose', 'GAPS-JAP-VS-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('5ee9aa69-a3c9-4db6-b8a0-2b22bbef3c50', '5ee9aa69-a3c9-4db6-b8a0-2b22bbef3c50') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5ee9aa69-a3c9-4db6-b8a0-2b22bbef3c50', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_5ee9aa69-a3c9-4db6-b8a0-2b22bbef3c50', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '5ee9aa69-a3c9-4db6-b8a0-2b22bbef3c50') ON CONFLICT DO NOTHING;
@@ -1855,7 +1855,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('78cf7bc9-e342-4d77-9bf8-bd852b14811a', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('34b4e8f0-23b2-4560-8ed2-1b8ff3e41311', '63527bea-f164-413e-ad87-724b586b144c', 'Tertiary', 3, 0.197100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('34b4e8f0-23b2-4560-8ed2-1b8ff3e41311', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('8ec115ac-c76d-48df-851d-849ba82f417d', 'Japanese Encephalitis Vaccine (live, attenuated) - two vial set (active + excipient) - 1 dose Diluent', 'GAPS-JAP-VS-1_DIL', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'False', 0, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('8ec115ac-c76d-48df-851d-849ba82f417d', 'JE_lyo Vaccine (live, attenuated) - two vial set (active + excipient) - 1 dose Diluent', 'GAPS-JAP-VS-1_DIL', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'False', 0, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('8ec115ac-c76d-48df-851d-849ba82f417d', '8ec115ac-c76d-48df-851d-849ba82f417d') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8ec115ac-c76d-48df-851d-849ba82f417d', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_8ec115ac-c76d-48df-851d-849ba82f417d', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '8ec115ac-c76d-48df-851d-849ba82f417d') ON CONFLICT DO NOTHING;
@@ -1869,7 +1869,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f6e7a2c3-8caf-42b6-8130-36cadb60b19a', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('798300e5-3e6f-4ff6-83fb-41ba833a924e', '63527bea-f164-413e-ad87-724b586b144c', '7e0b49ed-a6dc-4e2f-97a8-6b67bd152edb', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('798300e5-3e6f-4ff6-83fb-41ba833a924e', 'bundled_item', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('721d1a74-4311-495f-a043-a15c8060bdd8', 'Japanese Encephalitis Vaccine (live, attenuated) - two vial set (active + excipient) - 4 doses', 'GAPS-JAP-VS-4', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 4, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('721d1a74-4311-495f-a043-a15c8060bdd8', 'JE_lyo Vaccine (live, attenuated) - two vial set (active + excipient) - 4 doses', 'GAPS-JAP-VS-4', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 4, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('721d1a74-4311-495f-a043-a15c8060bdd8', '721d1a74-4311-495f-a043-a15c8060bdd8') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('721d1a74-4311-495f-a043-a15c8060bdd8', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_721d1a74-4311-495f-a043-a15c8060bdd8', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '721d1a74-4311-495f-a043-a15c8060bdd8') ON CONFLICT DO NOTHING;
@@ -1881,7 +1881,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c8064705-317c-408b-bf7d-b4feb76d6d74', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('01b47a81-67ad-4402-bde8-ccc5a0aa9927', 'b46e2fb3-3227-49c4-8f3a-bb420a26e262', 'Tertiary', 3, 0.050293) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('01b47a81-67ad-4402-bde8-ccc5a0aa9927', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('f1a111c0-22d5-4711-8585-69b0ef36c6fd', 'Japanese Encephalitis Vaccine (live, attenuated) - two vial set (active + excipient) - 4 doses Diluent', 'GAPS-JAP-VS-4_DIL', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'False', 0, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('f1a111c0-22d5-4711-8585-69b0ef36c6fd', 'JE_lyo Vaccine (live, attenuated) - two vial set (active + excipient) - 4 doses Diluent', 'GAPS-JAP-VS-4_DIL', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'False', 0, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('f1a111c0-22d5-4711-8585-69b0ef36c6fd', 'f1a111c0-22d5-4711-8585-69b0ef36c6fd') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f1a111c0-22d5-4711-8585-69b0ef36c6fd', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_f1a111c0-22d5-4711-8585-69b0ef36c6fd', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'f1a111c0-22d5-4711-8585-69b0ef36c6fd') ON CONFLICT DO NOTHING;
@@ -1895,7 +1895,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fc659ecc-2464-4485-9313-335cd830b595', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('d04c1528-3d1c-493e-98ac-e18e5737c39c', 'b46e2fb3-3227-49c4-8f3a-bb420a26e262', '1b29e771-dc55-4208-a34b-8fce2766c561', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d04c1528-3d1c-493e-98ac-e18e5737c39c', 'bundled_item', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('532dddfb-8da2-45b1-b4d8-05c4f8583860', 'Japanese Encephalitis Vaccine (live, attenuated) - two vial set (active + excipient) - 5 doses', 'GAPS-JAP-VS-5', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 5, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('532dddfb-8da2-45b1-b4d8-05c4f8583860', 'JE_lyo Vaccine (live, attenuated) - two vial set (active + excipient) - 5 doses', 'GAPS-JAP-VS-5', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 5, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('532dddfb-8da2-45b1-b4d8-05c4f8583860', '532dddfb-8da2-45b1-b4d8-05c4f8583860') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('532dddfb-8da2-45b1-b4d8-05c4f8583860', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_532dddfb-8da2-45b1-b4d8-05c4f8583860', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '532dddfb-8da2-45b1-b4d8-05c4f8583860') ON CONFLICT DO NOTHING;
@@ -1907,7 +1907,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d191e12a-173f-4176-bec8-c5258c0dbb4f', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('048f6d1a-cabb-4d22-895e-5ca33e8d07e3', 'f0f137d2-4127-4f7b-bc82-e4afc9059200', 'Tertiary', 3, 0.197100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('048f6d1a-cabb-4d22-895e-5ca33e8d07e3', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('d11151d7-10ec-4200-abd2-0fa5e224a5b4', 'Japanese Encephalitis Vaccine (live, attenuated) - two vial set (active + excipient) - 5 doses Diluent', 'GAPS-JAP-VS-5_DIL', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'False', 0, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('d11151d7-10ec-4200-abd2-0fa5e224a5b4', 'JE_lyo Vaccine (live, attenuated) - two vial set (active + excipient) - 5 doses Diluent', 'GAPS-JAP-VS-5_DIL', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'False', 0, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('d11151d7-10ec-4200-abd2-0fa5e224a5b4', 'd11151d7-10ec-4200-abd2-0fa5e224a5b4') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d11151d7-10ec-4200-abd2-0fa5e224a5b4', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_d11151d7-10ec-4200-abd2-0fa5e224a5b4', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'd11151d7-10ec-4200-abd2-0fa5e224a5b4') ON CONFLICT DO NOTHING;
@@ -2475,7 +2475,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('25bb29c8-9317-4f8c-ba3a-ac41a6a446fe', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('2d91b75d-65b7-49ba-ae95-6a99c393eec5', '886ffcf2-2a49-4380-adf6-b89a77a2b63a', '346e0028-94a7-47bb-9a08-08bcadf7ca10', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2d91b75d-65b7-49ba-ae95-6a99c393eec5', 'bundled_item', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('814ffc9e-5fb3-4c53-83d3-0d47218e3df0', 'Menigococcal ACYWX (Polysaccharide conjugate) - vial + ampoule - 1 dose', 'GAPS-MEN-X-VA-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('814ffc9e-5fb3-4c53-83d3-0d47218e3df0', 'Men-ACYW (Polysaccharide conjugate) - vial + ampoule - 1 dose', 'GAPS-MEN-X-VA-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('814ffc9e-5fb3-4c53-83d3-0d47218e3df0', '814ffc9e-5fb3-4c53-83d3-0d47218e3df0') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('814ffc9e-5fb3-4c53-83d3-0d47218e3df0', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_814ffc9e-5fb3-4c53-83d3-0d47218e3df0', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '814ffc9e-5fb3-4c53-83d3-0d47218e3df0') ON CONFLICT DO NOTHING;
@@ -2487,7 +2487,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5cda98c7-2497-43ed-8cd2-b4679bb68b5f', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('96766be6-ec3d-492d-adb7-07eb1604e2f1', 'b3b09a90-fb67-453e-aade-1fdfb603aa0b', 'Tertiary', 3, 0.020220) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('96766be6-ec3d-492d-adb7-07eb1604e2f1', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('19367323-916e-40bf-92e9-205f6cc232ac', 'Menigococcal ACYWX (Polysaccharide conjugate) - vial + ampoule - 5 doses', 'GAPS-MEN-X-VA-5', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 5, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('19367323-916e-40bf-92e9-205f6cc232ac', 'Men-ACYW (Polysaccharide conjugate) - vial + ampoule - 5 doses', 'GAPS-MEN-X-VA-5', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 5, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('19367323-916e-40bf-92e9-205f6cc232ac', '19367323-916e-40bf-92e9-205f6cc232ac') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('19367323-916e-40bf-92e9-205f6cc232ac', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_19367323-916e-40bf-92e9-205f6cc232ac', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '19367323-916e-40bf-92e9-205f6cc232ac') ON CONFLICT DO NOTHING;
@@ -2499,7 +2499,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c235d6ee-3c0e-4ef4-b28e-f404f9489c1d', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('738aa6cb-1b5e-4da5-8fd9-b29304e8935f', 'd7e8c693-d4e2-4109-927f-b2b90752b020', 'Tertiary', 3, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('738aa6cb-1b5e-4da5-8fd9-b29304e8935f', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('a131ad63-6c35-4548-8152-1a784bde38aa', 'Meningococcal A Conjugate - vial + ampoule - 10 doses', 'GAPS-MEN-A-VA-10', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 10, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('a131ad63-6c35-4548-8152-1a784bde38aa', 'Men-A Conjugate - vial + ampoule - 10 doses', 'GAPS-MEN-A-VA-10', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 10, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('a131ad63-6c35-4548-8152-1a784bde38aa', 'a131ad63-6c35-4548-8152-1a784bde38aa') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a131ad63-6c35-4548-8152-1a784bde38aa', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_a131ad63-6c35-4548-8152-1a784bde38aa', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'a131ad63-6c35-4548-8152-1a784bde38aa') ON CONFLICT DO NOTHING;
@@ -2511,7 +2511,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0c505b65-2124-4b9a-82e5-ebb99302c141', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3810e23c-8d0a-4bbe-9a0b-1c6ce86ae923', 'a8a2ec0f-20ba-4b70-b033-418be9752d42', 'Tertiary', 3, 0.098400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3810e23c-8d0a-4bbe-9a0b-1c6ce86ae923', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('abb979af-7a17-4c3f-900a-61bffed48f12', 'Meningococcal A Conjugate - vial + ampoule - 10 doses Diluent', 'GAPS-MEN-A-VA-10_DIL', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'False', 0, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('abb979af-7a17-4c3f-900a-61bffed48f12', 'Men-A Conjugate - vial + ampoule - 10 doses Diluent', 'GAPS-MEN-A-VA-10_DIL', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'False', 0, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('abb979af-7a17-4c3f-900a-61bffed48f12', 'abb979af-7a17-4c3f-900a-61bffed48f12') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('abb979af-7a17-4c3f-900a-61bffed48f12', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_abb979af-7a17-4c3f-900a-61bffed48f12', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'abb979af-7a17-4c3f-900a-61bffed48f12') ON CONFLICT DO NOTHING;
@@ -2525,7 +2525,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ff635e1a-8763-4d28-b982-3d51f1b6ea38', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('30c03cd3-fda0-42c5-ae83-af6b0951c9d7', 'a8a2ec0f-20ba-4b70-b033-418be9752d42', 'ebb73de2-9053-42a9-b89d-c43b6d9cc21e', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('30c03cd3-fda0-42c5-ae83-af6b0951c9d7', 'bundled_item', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('d0e826ef-0007-41a7-a35e-7742692a92f0', 'Meningococcal A Conjugate (paediatric) - vial + ampoule - 10 doses', 'GAPS-MEN10-VA-10', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 10, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('d0e826ef-0007-41a7-a35e-7742692a92f0', 'Men-A Conjugate (paediatric) - vial + ampoule - 10 doses', 'GAPS-MEN10-VA-10', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 10, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('d0e826ef-0007-41a7-a35e-7742692a92f0', 'd0e826ef-0007-41a7-a35e-7742692a92f0') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d0e826ef-0007-41a7-a35e-7742692a92f0', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_d0e826ef-0007-41a7-a35e-7742692a92f0', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'd0e826ef-0007-41a7-a35e-7742692a92f0') ON CONFLICT DO NOTHING;
@@ -2537,7 +2537,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cdf03099-da02-4f43-af0e-009a79cdb075', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1da65d89-fb4e-48f7-97f9-686c5ff11a2d', 'f7c390aa-6d6d-4e96-b33f-0f7712732006', 'Tertiary', 3, 0.098400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1da65d89-fb4e-48f7-97f9-686c5ff11a2d', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('15fe01c0-9168-4011-9fa8-c16219d750e2', 'Meningococcal A Conjugate (paediatric) - vial + ampoule - 10 doses Diluent', 'GAPS-MEN10-VA-10_DIL', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'False', 0, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('15fe01c0-9168-4011-9fa8-c16219d750e2', 'Men-A Conjugate (paediatric) - vial + ampoule - 10 doses Diluent', 'GAPS-MEN10-VA-10_DIL', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'False', 0, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('15fe01c0-9168-4011-9fa8-c16219d750e2', '15fe01c0-9168-4011-9fa8-c16219d750e2') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('15fe01c0-9168-4011-9fa8-c16219d750e2', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_15fe01c0-9168-4011-9fa8-c16219d750e2', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '15fe01c0-9168-4011-9fa8-c16219d750e2') ON CONFLICT DO NOTHING;
@@ -2551,7 +2551,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d443bd90-7f8d-4d53-9d81-4383a42e8043', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('2b6f1120-e587-4ff8-9237-049d9737b235', 'f7c390aa-6d6d-4e96-b33f-0f7712732006', '606786cb-f999-4a8a-aacd-e0228ecf796f', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2b6f1120-e587-4ff8-9237-049d9737b235', 'bundled_item', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('a2bc7a45-a1ae-4e89-9449-79f83532d00d', 'Meningococcal A+C - two vial set (active + excipient) - 10 doses', 'GAPS-MEN-VS-10', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 10, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('a2bc7a45-a1ae-4e89-9449-79f83532d00d', 'Men-A+C - two vial set (active + excipient) - 10 doses', 'GAPS-MEN-VS-10', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 10, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('a2bc7a45-a1ae-4e89-9449-79f83532d00d', 'a2bc7a45-a1ae-4e89-9449-79f83532d00d') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a2bc7a45-a1ae-4e89-9449-79f83532d00d', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_a2bc7a45-a1ae-4e89-9449-79f83532d00d', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'a2bc7a45-a1ae-4e89-9449-79f83532d00d') ON CONFLICT DO NOTHING;
@@ -2563,7 +2563,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('73515a62-31c2-493a-919d-e5dc4ff97956', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('12f3b88c-5792-4711-bc4f-fd20071d6621', '5de04da7-3b82-4b46-8b06-9ebec3f5649a', 'Tertiary', 3, 0.023100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('12f3b88c-5792-4711-bc4f-fd20071d6621', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('289f32a1-14b7-4001-a6b9-ebdf5906b59c', 'Meningococcal A+C - two vial set (active + excipient) - 10 doses Diluent', 'GAPS-MEN-VS-10_DIL', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'False', 0, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('289f32a1-14b7-4001-a6b9-ebdf5906b59c', 'Men-A+C - two vial set (active + excipient) - 10 doses Diluent', 'GAPS-MEN-VS-10_DIL', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'False', 0, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('289f32a1-14b7-4001-a6b9-ebdf5906b59c', '289f32a1-14b7-4001-a6b9-ebdf5906b59c') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('289f32a1-14b7-4001-a6b9-ebdf5906b59c', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_289f32a1-14b7-4001-a6b9-ebdf5906b59c', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '289f32a1-14b7-4001-a6b9-ebdf5906b59c') ON CONFLICT DO NOTHING;
@@ -2577,7 +2577,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9d8b7e6d-fe21-4eff-9837-c76ceb673a4e', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('af3a2c08-ffc6-407d-abee-1aa1c30b70d5', '5de04da7-3b82-4b46-8b06-9ebec3f5649a', 'f74aacb2-b560-46d9-bc6d-f3834b982011', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('af3a2c08-ffc6-407d-abee-1aa1c30b70d5', 'bundled_item', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('2c7a5853-4b9d-4a49-9385-2c2209ad62e2', 'Meningococcal ACYW-135 (conjugate vaccine) - two vial set (active + active) - 1 dose', 'GAPS-MEN-VS-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('2c7a5853-4b9d-4a49-9385-2c2209ad62e2', 'Men-ACYW-135 (conjugate vaccine) - two vial set (active + active) - 1 dose', 'GAPS-MEN-VS-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('2c7a5853-4b9d-4a49-9385-2c2209ad62e2', '2c7a5853-4b9d-4a49-9385-2c2209ad62e2') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2c7a5853-4b9d-4a49-9385-2c2209ad62e2', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_2c7a5853-4b9d-4a49-9385-2c2209ad62e2', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '2c7a5853-4b9d-4a49-9385-2c2209ad62e2') ON CONFLICT DO NOTHING;
@@ -2589,7 +2589,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3a773f79-fa7e-4807-94a3-c8dcb2bb27cb', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('271009bb-415b-42a7-b5f7-2864a9fc46a7', '65f19002-a4ca-442c-8061-c7dd3c371127', 'Tertiary', 3, 0.032063) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('271009bb-415b-42a7-b5f7-2864a9fc46a7', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('9fdd0f4c-2697-42eb-be4c-4e70b60645f9', 'Meningococcal ACYW-135 (conjugate vaccine) - vial - 1 dose', 'GAPS-MEN-V-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('9fdd0f4c-2697-42eb-be4c-4e70b60645f9', 'Men-ACYW-135 (conjugate vaccine) - vial - 1 dose', 'GAPS-MEN-V-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('9fdd0f4c-2697-42eb-be4c-4e70b60645f9', '9fdd0f4c-2697-42eb-be4c-4e70b60645f9') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9fdd0f4c-2697-42eb-be4c-4e70b60645f9', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_9fdd0f4c-2697-42eb-be4c-4e70b60645f9', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '9fdd0f4c-2697-42eb-be4c-4e70b60645f9') ON CONFLICT DO NOTHING;
@@ -2601,7 +2601,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('eea2e751-f64c-499e-a6de-c6302e5c0933', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b4800b5b-c35a-46e3-bbdd-8e9e704ee469', '6252f9f3-b97c-40dc-855c-76cc66f0e14c', 'Tertiary', 3, 0.128015) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b4800b5b-c35a-46e3-bbdd-8e9e704ee469', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('31206074-06c2-44a8-8e61-becc90de2882', 'Meningococcal ACYW-135 (conjugate vaccine) - vial + ampoule - 1 dose', 'GAPS-MEN-VA-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('31206074-06c2-44a8-8e61-becc90de2882', 'Men-ACYW-135 (conjugate vaccine) - vial + ampoule - 1 dose', 'GAPS-MEN-VA-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('31206074-06c2-44a8-8e61-becc90de2882', '31206074-06c2-44a8-8e61-becc90de2882') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('31206074-06c2-44a8-8e61-becc90de2882', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_31206074-06c2-44a8-8e61-becc90de2882', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '31206074-06c2-44a8-8e61-becc90de2882') ON CONFLICT DO NOTHING;
@@ -2613,7 +2613,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('677a4851-f799-492e-af0c-d4ea108a5d6c', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('490449d4-87ba-4570-86eb-d6e4a617b7dd', 'b8583bac-81e3-4af1-9ed9-e7ac2ab4caf9', 'Tertiary', 3, 0.015416) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('490449d4-87ba-4570-86eb-d6e4a617b7dd', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('c559f2fa-c228-4d35-997a-cf1746dcb1fb', 'Meningococcal ACYW-135 (conjugate vaccine) - vial + ampoule - 1 dose Diluent', 'GAPS-MEN-VA-1_DIL', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'False', 0, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('c559f2fa-c228-4d35-997a-cf1746dcb1fb', 'Men-ACYW-135 (conjugate vaccine) - vial + ampoule - 1 dose Diluent', 'GAPS-MEN-VA-1_DIL', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'False', 0, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('c559f2fa-c228-4d35-997a-cf1746dcb1fb', 'c559f2fa-c228-4d35-997a-cf1746dcb1fb') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c559f2fa-c228-4d35-997a-cf1746dcb1fb', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_c559f2fa-c228-4d35-997a-cf1746dcb1fb', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'c559f2fa-c228-4d35-997a-cf1746dcb1fb') ON CONFLICT DO NOTHING;
@@ -2627,7 +2627,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c932a80f-af52-419d-a6f0-4c7ed13639c2', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('b5b8620a-b4d9-4a2d-bedc-687c8ee377fc', 'b8583bac-81e3-4af1-9ed9-e7ac2ab4caf9', 'afca82d3-f312-4aae-b102-a5e92337856f', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b5b8620a-b4d9-4a2d-bedc-687c8ee377fc', 'bundled_item', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('12cd8eda-2718-4b71-9c28-7d0056f536cb', 'Meningococcal ACYW-135 (polysaccharide) - two vial set (active + excipient) - 10 doses', 'GAPS-MEN14-VS-10', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 10, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('12cd8eda-2718-4b71-9c28-7d0056f536cb', 'Men-ACYW-135 (polysaccharide) - two vial set (active + excipient) - 10 doses', 'GAPS-MEN14-VS-10', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 10, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('12cd8eda-2718-4b71-9c28-7d0056f536cb', '12cd8eda-2718-4b71-9c28-7d0056f536cb') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('12cd8eda-2718-4b71-9c28-7d0056f536cb', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_12cd8eda-2718-4b71-9c28-7d0056f536cb', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '12cd8eda-2718-4b71-9c28-7d0056f536cb') ON CONFLICT DO NOTHING;
@@ -2639,7 +2639,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d4988998-966e-4bda-90d9-3adef2b30eac', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('362af316-9899-4d12-b26f-f9297f341f96', '3c476ed0-d622-4c4b-9f06-7ae69993eb94', 'Tertiary', 3, 0.122557) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('362af316-9899-4d12-b26f-f9297f341f96', 'packaging_variant', 'UPSERT');
-INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('df005884-a40b-4353-8d65-ae693a076b83', 'Meningococcal ACYW-135 Tetanus Toxoid (conjugate vaccine) - vial - 1 dose', 'GAPS-MEN-TT-V-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
+INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('df005884-a40b-4353-8d65-ae693a076b83', 'Men-ACYW-135 Tetanus Toxoid (conjugate vaccine) - vial - 1 dose', 'GAPS-MEN-TT-V-1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 1, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('df005884-a40b-4353-8d65-ae693a076b83', 'df005884-a40b-4353-8d65-ae693a076b83') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('df005884-a40b-4353-8d65-ae693a076b83', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_df005884-a40b-4353-8d65-ae693a076b83', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'df005884-a40b-4353-8d65-ae693a076b83') ON CONFLICT DO NOTHING;
