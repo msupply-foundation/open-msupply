@@ -1,6 +1,8 @@
 use super::{version::Version, Migration, MigrationFragment};
 
+mod add_example_table;
 mod add_index_to_sync_buffer;
+
 use crate::StorageConnection;
 
 pub(crate) struct V2_06_00;
@@ -15,7 +17,10 @@ impl Migration for V2_06_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_index_to_sync_buffer::Migrate)]
+        vec![
+            Box::new(add_example_table::Migrate),
+            Box::new(add_index_to_sync_buffer::Migrate),
+        ]
     }
 }
 
