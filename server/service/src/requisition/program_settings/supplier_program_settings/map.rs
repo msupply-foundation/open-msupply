@@ -52,7 +52,14 @@ pub(super) fn map_supplier_program_settings(
                 .iter()
                 .filter(|s| {
                     s.program.id == program_setting.program_row.id
-                        || s.program.elmis_code == program_setting.program_row.elmis_code
+                        || s.program.elmis_code.as_ref().map_or(false, |elmis_code| {
+                            elmis_code
+                                == program_setting
+                                    .program_row
+                                    .elmis_code
+                                    .as_ref()
+                                    .unwrap_or(&"".to_string())
+                        })
                 })
                 .cloned()
                 .collect();
