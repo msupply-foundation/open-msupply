@@ -1,7 +1,6 @@
 use chrono::Utc;
 use repository::{
-    InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, RepositoryError,
-    StorageConnection,
+    InvoiceRow, InvoiceRowRepository, InvoiceStatus, RepositoryError, StorageConnection,
 };
 
 /// This function is called when a line is updated on an invoice. It will update the picked date if appropriate.
