@@ -50,7 +50,7 @@ const ResponseLineEditPageInner = ({
   const enteredLineIds = lines
     .filter(line => line.supplyQuantity !== 0)
     .map(line => line.item.id);
-  const isProgram = !!requisition?.programName;
+  const isProgram = !!requisition.programName;
 
   useEffect(() => {
     setCustomBreadcrumbs({
