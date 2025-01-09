@@ -134,11 +134,11 @@ def upsert_diluent_packaging_variant_stmt(packaging_variant_id, item_variant_id,
     packaging_name = get_packaging_variant_name(packaging_level)
     volume_per_unit = 0
     if packaging_level == 1:
-        volume_per_unit= float(row["DiluentPrimaryVolume"]) / 1000
+        volume_per_unit= float(row["DiluentPrimaryVolume"])
     elif packaging_level == 2:
-        volume_per_unit= float(row["DiluentSecondaryVolume"]) / 1000
+        volume_per_unit= float(row["DiluentSecondaryVolume"])
     elif packaging_level == 3:
-        volume_per_unit= float(row["DiluentTertiaryVolume"]) / 1000
+        volume_per_unit= float(row["DiluentTertiaryVolume"])
     else:
         volume_per_unit = 0
 
