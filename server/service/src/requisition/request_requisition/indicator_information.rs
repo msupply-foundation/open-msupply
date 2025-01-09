@@ -1,14 +1,13 @@
+use std::collections::HashMap;
+
 use chrono::NaiveDateTime;
 use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
-    EqualFilter, NameFilter, NameRepository, Pagination, PeriodRowRepository,
-    ProgramIndicatorFilter, RepositoryError,
+    EqualFilter, IndicatorValueRow, NameFilter, NameRepository, Pagination, PeriodRowRepository,
+    RepositoryError,
 };
 
-use crate::{
-    requisition::program_indicator::query::program_indicators, service_provider::ServiceContext,
-    store_preference::get_store_preferences,
-};
+use crate::{service_provider::ServiceContext, store_preference::get_store_preferences};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct IndicatorInformation {
@@ -16,9 +15,17 @@ pub struct IndicatorInformation {
     pub value: String,
 }
 
+impl IndicatorInformation {
+    fn from_value(value: &IndicatorValueRow) -> Self {
+        Self {
+            column_id: value.indicator_column_id.clone(),
+            value: value.value.clone(),
+        }
+    }
+}
 #[derive(Debug, Clone, PartialEq)]
 pub struct CustomerIndicatorInformation {
-    pub id: String, // customer id
+    pub customer_id: String, // customer id
     pub indicator_line_id: String,
     pub datetime: NaiveDateTime,
     pub indicator_information: Vec<IndicatorInformation>,
@@ -26,9 +33,9 @@ pub struct CustomerIndicatorInformation {
 
 pub fn get_indicator_information(
     ctx: &ServiceContext,
+    line_ids: Vec<String>,
     store_id: &str,
     period_id: &str,
-    program_id: &str,
 ) -> Result<Vec<CustomerIndicatorInformation>, RepositoryError> {
     let connection = &ctx.connection;
     let store_preferences = get_store_preferences(connection, store_id)?;
@@ -52,12 +59,6 @@ pub fn get_indicator_information(
 
     let customer_ids: Vec<String> = customers.iter().map(|c| c.name_row.id.clone()).collect();
 
-    let program_indicators = program_indicators(
-        connection,
-        Pagination::all(),
-        None,
-        Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(program_id))),
-    )?;
     let period = PeriodRowRepository::new(connection).find_one_by_id(period_id)?;
 
     let period = match period {
@@ -65,103 +66,56 @@ pub fn get_indicator_information(
         None => return Ok(vec![]),
     };
 
-    let mut indicator_values: Vec<CustomerIndicatorInformation> = vec![];
+    let values = IndicatorValueRepository::new(connection).query_by_filter(
+        IndicatorValueFilter::new()
+            .store_id(EqualFilter::equal_to(store_id))
+            .period_id(EqualFilter::equal_to(period_id))
+            .indicator_line_id(EqualFilter::equal_any(line_ids.clone()))
+            .customer_name_id(EqualFilter::equal_any(customer_ids.clone())),
+    )?;
 
-    for program_indicator in program_indicators {
-        let indicator_line_ids: Vec<String> = program_indicator
-            .lines
-            .iter()
-            .map(|line| line.line.id.clone())
-            .collect();
+    let mut result: Vec<CustomerIndicatorInformation> = vec![];
 
-        let column_ids: Vec<String> = program_indicator
-            .lines
-            .iter()
-            .flat_map(|line| line.columns.iter().map(|column| column.id.clone()))
-            .collect();
+    for line_id in line_ids {
+        let line_values = values.iter().filter(|v| v.indicator_line_id == line_id);
+        for customer_id in customer_ids.clone() {
+            let customer_line_values = line_values
+                .clone()
+                .filter(|v| v.customer_name_link_id == *customer_id)
+                .map(IndicatorInformation::from_value)
+                .collect();
 
-        let values = IndicatorValueRepository::new(connection).query_by_filter(
-            IndicatorValueFilter::new()
-                .store_id(EqualFilter::equal_to(store_id))
-                .period_id(EqualFilter::equal_to(period_id))
-                .indicator_line_id(EqualFilter::equal_any(indicator_line_ids.clone()))
-                .indicator_column_id(EqualFilter::equal_any(column_ids.clone()))
-                .customer_name_id(EqualFilter::equal_any(customer_ids.clone())),
-        )?;
-
-        let customers_without_values: Vec<String> = customers
-            .iter()
-            .map(|c| c.name_row.id.clone())
-            .filter(|c| !values.iter().any(|v| v.customer_name_link_id == *c))
-            .collect();
-
-        for value in values {
-            let entry = indicator_values.iter_mut().find(|entry| {
-                entry.id == value.customer_name_link_id
-                    && entry.indicator_line_id == value.indicator_line_id
-            });
-
-            match entry {
-                Some(entry) => {
-                    let indicator_info = entry
-                        .indicator_information
-                        .iter_mut()
-                        .find(|info| info.column_id == value.indicator_column_id);
-
-                    match indicator_info {
-                        Some(info) => {
-                            if let Ok(num) = value.value.parse::<f64>() {
-                                if let Ok(existing_num) = info.value.parse::<f64>() {
-                                    info.value = (existing_num + num).to_string();
-                                } else {
-                                    info.value = num.to_string();
-                                }
-                            } else {
-                                info.value = value.value.to_string();
-                            }
-                        }
-                        None => {
-                            entry.indicator_information.push(IndicatorInformation {
-                                column_id: value.indicator_column_id.clone(),
-                                value: value.value.clone(),
-                            });
-                        }
-                    }
-                }
-                None => {
-                    indicator_values.push(CustomerIndicatorInformation {
-                        id: value.customer_name_link_id.clone(),
-                        indicator_line_id: value.indicator_line_id.clone(),
-                        datetime: period.end_date.into(),
-                        indicator_information: vec![IndicatorInformation {
-                            column_id: value.indicator_column_id.clone(),
-                            value: value.value.clone(),
-                        }],
-                    });
-                }
-            }
-        }
-
-        for customer_id in customers_without_values {
-            for line in program_indicator.lines.iter() {
-                let indicator_information: Vec<IndicatorInformation> = line
-                    .columns
-                    .iter()
-                    .map(|column| IndicatorInformation {
-                        column_id: column.id.clone(),
-                        value: "".to_string(),
-                    })
-                    .collect();
-
-                indicator_values.push(CustomerIndicatorInformation {
-                    id: customer_id.clone(),
-                    indicator_line_id: line.line.id.clone(),
-                    datetime: period.end_date.into(),
-                    indicator_information,
-                });
-            }
+            result.push(CustomerIndicatorInformation {
+                customer_id,
+                indicator_line_id: line_id.clone(),
+                datetime: period.end_date.into(),
+                indicator_information: sum_values_by_column(customer_line_values),
+            })
         }
     }
+    Ok(result)
+}
 
-    Ok(indicator_values)
+fn sum_values_by_column(values: Vec<IndicatorInformation>) -> Vec<IndicatorInformation> {
+    let mut summed_values: HashMap<String /* column_id */, String /* value */> = HashMap::new();
+    values
+        .into_iter()
+        .for_each(|IndicatorInformation { column_id, value }| {
+            summed_values
+                .entry(column_id)
+                .and_modify(|value_entry| {
+                    *value_entry = match (value.parse::<f64>(), value_entry.parse::<f64>()) {
+                        (Ok(one), Ok(two)) => (one + two).to_string(),
+                        (Ok(one), Err(_)) => one.to_string(),
+                        (Err(_), Ok(two)) => two.to_string(),
+                        (Err(_), Err(_)) => value.clone(),
+                    }
+                })
+                .or_insert(value);
+        });
+
+    summed_values
+        .into_iter()
+        .map(|(column_id, value)| IndicatorInformation { column_id, value })
+        .collect()
 }
