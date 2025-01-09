@@ -135,34 +135,31 @@ export const ProgramComponent: FC = () => {
       />
       <AppFooterPortal
         Content={
-          <>
-            {selectedRows.length !== 0 && (
-              <ActionsFooter
-                actions={actions}
-                selectedRowCount={selectedRows.length}
+          selectedRows.length ? (
+            <ActionsFooter
+              actions={actions}
+              selectedRowCount={selectedRows.length}
+            />
+          ) : (
+            <Box
+              flex={1}
+              display="flex"
+              flexDirection="row"
+              justifyContent="flex-end"
+              alignItems="center"
+              gap={2}
+              height={64}
+            >
+              <ButtonWithIcon
+                shrinkThreshold="lg"
+                Icon={<CloseIcon />}
+                label={t('button.close')}
+                color="secondary"
+                sx={{ fontSize: '12px' }}
+                onClick={navigateUpOne}
               />
-            )}
-            {data && selectedRows.length == 0 && (
-              <Box
-                flex={1}
-                display="flex"
-                flexDirection="row"
-                justifyContent="flex-end"
-                alignItems="center"
-                gap={2}
-                height={64}
-              >
-                <ButtonWithIcon
-                  shrinkThreshold="lg"
-                  Icon={<CloseIcon />}
-                  label={t('button.close')}
-                  color="secondary"
-                  sx={{ fontSize: '12px' }}
-                  onClick={navigateUpOne}
-                />
-              </Box>
-            )}
-          </>
+            </Box>
+          )
         }
       />
     </>
