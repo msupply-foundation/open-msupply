@@ -25,6 +25,32 @@ const expansionColumn = getRowExpandColumn<
   StockOutLineFragment | StockOutItem
 >();
 
+export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
+  useColumns([
+    'batch',
+    'expiryDate',
+    [
+      'location',
+      {
+        accessor: ({ rowData }) => rowData.location?.code,
+      },
+    ],
+    [
+      'itemUnit',
+      {
+        accessor: ({ rowData }) => rowData.item?.unitName,
+      },
+    ],
+    'numberOfPacks',
+    'packSize',
+    [
+      'unitQuantity',
+      {
+        accessor: ({ rowData }) => rowData.numberOfPacks,
+      },
+    ],
+  ]);
+
 export const usePrescriptionColumn = ({
   sortBy,
   onChangeSortBy,
@@ -35,6 +61,7 @@ export const usePrescriptionColumn = ({
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
+    GenericColumnKey.Selection,
     [
       getNotePopoverColumn(t('label.directions')),
       {
@@ -288,7 +315,6 @@ export const usePrescriptionColumn = ({
       },
     },
     expansionColumn,
-    GenericColumnKey.Selection,
   ];
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);

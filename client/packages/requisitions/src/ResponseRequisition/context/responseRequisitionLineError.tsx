@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
-import { RequisitionReasonNotProvidedErrorFragment } from '../api';
 import { PropsWithChildrenOnly, RecordWithId } from '@common/types';
+import { RequisitionReasonNotProvidedErrorFragment } from '../../RequestRequisition/api';
 
 export type ResponseRequisitionLineError =
   RequisitionReasonNotProvidedErrorFragment;

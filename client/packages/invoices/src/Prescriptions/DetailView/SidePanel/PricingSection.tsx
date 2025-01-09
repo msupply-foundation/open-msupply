@@ -14,10 +14,15 @@ export const PricingSectionComponent = () => {
   const t = useTranslation();
   const c = useFormatCurrency();
 
-  const { pricing } = usePrescription.document.fields('pricing');
+  const {
+    query: { data },
+  } = usePrescription();
+
+  const pricing = data?.pricing;
+  if (!pricing) return null;
 
   return (
-    <DetailPanelSection title={t('heading.dispensary-details')}>
+    <DetailPanelSection title={t('heading.pricing')}>
       <Grid container gap={0.5}>
         <>
           <PanelRow style={{ marginTop: 12 }}>

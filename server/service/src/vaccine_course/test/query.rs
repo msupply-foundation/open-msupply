@@ -17,7 +17,7 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("test_vaccine_course_single_record", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.vaccine_course_service;
 
@@ -55,7 +55,7 @@ mod query {
         let (_, connection, connection_manager, _) =
             setup_all("test_vaccine_course_filter", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.vaccine_course_service;
 

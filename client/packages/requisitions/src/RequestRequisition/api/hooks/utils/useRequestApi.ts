@@ -13,6 +13,7 @@ export const useRequestApi = () => {
     chartData: (lineId: string) => [...keys.base(), storeId, lineId] as const,
     programSettings: () =>
       [...keys.base(), 'programSettings', storeId] as const,
+    indicators: () => [...keys.base(), 'indicators', storeId] as const,
   };
 
   const { client } = useGql();

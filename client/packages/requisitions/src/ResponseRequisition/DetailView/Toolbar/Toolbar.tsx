@@ -8,36 +8,24 @@ import {
   SearchBar,
   Typography,
   BufferedTextInput,
-  Alert,
   Tooltip,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
 import { useResponse } from '../../api';
 import { getApprovalStatusKey } from '../../../utils';
-import { ToolbarDropDown } from './ToolbarDropDown';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
   const isDisabled = useResponse.utils.isDisabled();
   const { itemFilter, setItemFilter } = useResponse.line.list();
 
-  const {
-    approvalStatus,
-    otherParty,
-    theirReference,
-    shipments,
-    update,
-    linkedRequisition,
-  } = useResponse.document.fields([
-    'approvalStatus',
-    'otherParty',
-    'theirReference',
-    'shipments',
-    'linkedRequisition',
-  ]);
-  const noLinkedShipments = (shipments?.totalCount ?? 0) === 0;
-  const showInfo = noLinkedShipments && !isDisabled;
+  const { approvalStatus, otherParty, theirReference, update } =
+    useResponse.document.fields([
+      'approvalStatus',
+      'otherParty',
+      'theirReference',
+    ]);
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
 
   return (
@@ -93,11 +81,6 @@ export const Toolbar: FC = () => {
               )}
             </Box>
           </Box>
-          {showInfo && (
-            <Box padding={2}>
-              <Alert severity="info">{t('info.no-shipment')}</Alert>
-            </Box>
-          )}
         </Grid>
         <SearchBar
           placeholder={t('placeholder.filter-items')}
@@ -106,10 +89,6 @@ export const Toolbar: FC = () => {
             setItemFilter(newValue);
           }}
           debounceTime={0}
-        />
-        <ToolbarDropDown
-          isDisabled={isDisabled}
-          hasLinkedRequisition={!!linkedRequisition}
         />
       </Grid>
     </AppBarContentPortal>

@@ -6,7 +6,7 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
-use crate::service_provider::ServiceContext;
+use crate::{requisition::common::indicator_value_type, service_provider::ServiceContext};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct UpdateIndicatorValue {
@@ -74,20 +74,12 @@ fn validate(
         .pop()
         .ok_or(OutError::IndicatorColumnDoesNotExist)?;
 
-    if let Some(column_value_type) = indicator_column.value_type {
-        if column_value_type == IndicatorValueType::Number {
-            match input.value.parse::<f64>() {
-                Ok(_) => {}
-                Err(_) => return Err(OutError::ValueTypeNotCorrect),
-            }
-        }
-    } else if let Some(line_value_type) = indicator_line.value_type {
-        if line_value_type == IndicatorValueType::Number {
-            match input.value.parse::<f64>() {
-                Ok(_) => {}
-                Err(_) => return Err(OutError::ValueTypeNotCorrect),
-            }
-        }
+    if let Some(IndicatorValueType::Number) =
+        indicator_value_type(&indicator_line, &indicator_column)
+    {
+        if input.value.parse::<f64>().is_err() {
+            return Err(OutError::ValueTypeNotCorrect);
+        };
     }
 
     Ok(indicator_value_row)
@@ -181,7 +173,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -237,7 +229,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();

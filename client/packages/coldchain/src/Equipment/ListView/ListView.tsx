@@ -16,6 +16,7 @@ import {
   DotCell,
   RouteBuilder,
   ColumnFormat,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { Toolbar } from './Toolbar';
@@ -25,6 +26,7 @@ import { EquipmentImportModal } from '../ImportAsset';
 import { Status } from '../Components';
 import { AssetRowFragment } from '../api/operations.generated';
 import { AppRoute } from '@openmsupply-client/config';
+import { Footer } from './Footer';
 
 const StatusCell = ({ rowData }: { rowData: AssetRowFragment }) => {
   return <Status status={rowData.statusLog?.status} />;
@@ -50,7 +52,9 @@ const AssetListComponent: FC = () => {
     AppRoute.Equipment
   );
 
-  const columnsToCreate: ColumnDescription<AssetRowFragment>[] = [];
+  const columnsToCreate: ColumnDescription<AssetRowFragment>[] = [
+    GenericColumnKey.Selection,
+  ];
   if (isCentralServer)
     columnsToCreate.push({
       key: 'store',
@@ -121,8 +125,7 @@ const AssetListComponent: FC = () => {
       key: 'notes',
       label: 'label.notes',
       sortable: false,
-    },
-    'selection'
+    }
   );
 
   const columns = useColumns(
@@ -161,6 +164,7 @@ const AssetListComponent: FC = () => {
         noDataElement={<NothingHere body={t('error.no-items-to-display')} />}
         enableColumnSelection
       />
+      <Footer />
     </>
   );
 };

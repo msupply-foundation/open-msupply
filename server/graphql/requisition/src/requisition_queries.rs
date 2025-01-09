@@ -32,7 +32,7 @@ pub enum RequisitionSortFieldInput {
     TheirReference,
     OrderType,
     ProgramName,
-    PeriodName,
+    PeriodStartDate,
 }
 
 #[derive(InputObject)]
@@ -206,7 +206,7 @@ impl RequisitionSortInput {
             from::TheirReference => to::TheirReference,
             from::OrderType => to::OrderType,
             from::ProgramName => to::ProgramName,
-            from::PeriodName => to::PeriodName,
+            from::PeriodStartDate => to::PeriodStartDate,
         };
 
         RequisitionSort {
@@ -241,6 +241,9 @@ impl RequisitionFilterInput {
             store_id: None,
             order_type: self.order_type.map(EqualFilter::from),
             a_shipment_has_been_created: self.a_shipment_has_been_created,
+            elmis_code: None,
+            period_id: None,
+            program_id: None,
         }
     }
 }

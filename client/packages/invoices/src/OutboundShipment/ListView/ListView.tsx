@@ -13,12 +13,14 @@ import {
   useToggle,
   useUrlQueryParams,
   TooltipTextCell,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { useOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
+import { Footer } from './Footer';
 
 const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -53,6 +55,7 @@ const OutboundShipmentListViewComponent: FC = () => {
 
   const columns = useColumns<OutboundRowFragment>(
     [
+      GenericColumnKey.Selection,
       [getNameAndColorColumn(), { setter: onUpdate }],
       [
         'status',
@@ -86,7 +89,6 @@ const OutboundShipmentListViewComponent: FC = () => {
           width: 125,
         },
       ],
-      'selection',
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
@@ -116,6 +118,7 @@ const OutboundShipmentListViewComponent: FC = () => {
           navigate(String(row.invoiceNumber));
         }}
       />
+      <Footer />
     </>
   );
 };

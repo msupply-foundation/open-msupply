@@ -77,4 +77,4 @@ output_file.write("COMMIT;\n")
 
 # save the generated ids to a file
 with open(id_lookup_file, 'w') as file:
-    json.dump(id_lookup, file)
+    json.dump(id_lookup, file, indent=1)

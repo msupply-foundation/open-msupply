@@ -21,8 +21,6 @@ pub struct InsertRequestRequisitionLine {
     pub id: String,
     pub item_id: String,
     pub requisition_id: String,
-    pub requested_quantity: Option<f64>,
-    pub comment: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -114,8 +112,6 @@ fn generate(
         id,
         requisition_id: _,
         item_id,
-        requested_quantity,
-        comment,
     }: InsertRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, OutError> {
     let mut new_requisition_line =
@@ -123,9 +119,7 @@ fn generate(
             .pop()
             .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
 
-    new_requisition_line.requested_quantity = requested_quantity.unwrap_or(0.0);
     new_requisition_line.id = id;
-    new_requisition_line.comment = comment.or(new_requisition_line.comment);
 
     Ok(new_requisition_line)
 }
@@ -166,7 +160,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -284,7 +278,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -299,8 +293,6 @@ mod test {
                         .id,
                     id: "new requisition line id".to_string(),
                     item_id: test_item_stats::item2().id,
-                    requested_quantity: Some(20.0),
-                    comment: Some("comment".to_string()),
                 },
             )
             .unwrap();
@@ -313,12 +305,10 @@ mod test {
         assert_eq!(
             line,
             inline_edit(&line, |mut u| {
-                u.requested_quantity = 20.0;
                 u.available_stock_on_hand = test_item_stats::item_2_soh();
                 u.average_monthly_consumption = test_item_stats::item2_amc_3_months();
                 u.suggested_quantity =
                     test_item_stats::item2_amc_3_months() * 10.0 - test_item_stats::item_2_soh();
-                u.comment = Some("comment".to_string());
                 u
             })
         );
@@ -330,12 +320,9 @@ mod test {
                 r.requisition_id = mock_request_draft_requisition().id;
                 r.id = "new requisition line id2".to_string();
                 r.item_id = mock_item_c().id;
-                r.requested_quantity = Some(20.0);
             }),
         );
 
         assert!(result.is_ok());
-
-        // TODO test suggested = 0 (where MOS is above MIN_MOS)
     }
 }

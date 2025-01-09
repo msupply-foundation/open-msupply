@@ -117,8 +117,8 @@ impl<'a> RequisitionRepository<'a> {
                 RequisitionSortField::OrderType => {
                     apply_sort_no_case!(query, sort, requisition_dsl::order_type);
                 }
-                RequisitionSortField::PeriodName => {
-                    apply_sort_no_case!(query, sort, period_dsl::name);
+                RequisitionSortField::PeriodStartDate => {
+                    apply_sort!(query, sort, period_dsl::start_date);
                 }
                 RequisitionSortField::ProgramName => {
                     apply_sort_no_case!(query, sort, program_dsl::name);
@@ -181,6 +181,9 @@ fn create_filtered_query(
         linked_requisition_id,
         order_type,
         a_shipment_has_been_created,
+        elmis_code,
+        period_id,
+        program_id,
     }) = filter
     {
         apply_equal_filter!(query, id, requisition_dsl::id);
@@ -219,6 +222,9 @@ fn create_filtered_query(
 
         apply_equal_filter!(query, store_id, requisition_dsl::store_id);
         apply_equal_filter!(query, order_type, requisition_dsl::order_type);
+        apply_equal_filter!(query, elmis_code, program_dsl::elmis_code);
+        apply_equal_filter!(query, period_id, period_dsl::id);
+        apply_equal_filter!(query, program_id, program_dsl::id);
 
         if let Some(a_shipment_has_been_created) = a_shipment_has_been_created {
             let requisition_ids = invoice_dsl::invoice

@@ -6,13 +6,14 @@ pub mod types;
 pub use self::queries::sync_status::*;
 use self::queries::*;
 
+use diagnosis::diagnoses_active;
 use graphql_core::pagination::PaginationInput;
 use service::sync::CentralServerConfig;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
-    CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, MasterListFilterInput,
-    StorePreferenceNode,
+    CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, DiagnosisNode,
+    MasterListFilterInput, StorePreferenceNode,
 };
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
@@ -165,6 +166,18 @@ impl GeneralQueries {
         sort: Option<Vec<LedgerSortInput>>,
     ) -> Result<LedgerResponse> {
         ledger(ctx, store_id, filter, sort)
+    }
+
+    pub async fn item_ledger(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<LedgerFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<LedgerSortInput>>,
+    ) -> Result<ItemLedgerResponse> {
+        item_ledger(ctx, store_id, page, filter, sort)
     }
 
     pub async fn invoice_counts(
@@ -408,6 +421,10 @@ impl GeneralQueries {
         sort: Option<Vec<ColdStorageTypeSortInput>>,
     ) -> Result<ColdStorageTypesResponse> {
         cold_storage_types(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn diagnoses_active(&self, ctx: &Context<'_>) -> Result<Vec<DiagnosisNode>> {
+        diagnoses_active(ctx)
     }
 }
 

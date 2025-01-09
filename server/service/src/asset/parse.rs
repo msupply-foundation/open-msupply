@@ -81,11 +81,12 @@ fn create_draft_asset_from_gs1(ctx: &ServiceContext, gs1: GS1) -> Result<Asset, 
         gs1.serial_number().unwrap_or_default()
     ));
 
-    let (warranty_start, warranty_end) =
-        gs1.warranty_dates().ok_or(AssetFromGs1Error::ParseError)?;
+    let warranty_option = gs1.warranty_dates();
 
-    asset.warranty_start = Some(warranty_start);
-    asset.warranty_end = Some(warranty_end);
+    if let Some((warranty_start, warranty_end)) = warranty_option {
+        asset.warranty_start = Some(warranty_start);
+        asset.warranty_end = Some(warranty_end);
+    }
 
     if let Some(part_number) = gs1.part_number() {
         asset.catalogue_item_id = lookup_asset_catalogue_id_by_pqs_code(ctx, &part_number)?;
@@ -128,7 +129,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let ctx = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -166,7 +167,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let ctx = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();

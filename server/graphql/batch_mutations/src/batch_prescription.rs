@@ -301,7 +301,7 @@ mod test {
         test_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.invoice_service = Box::new(test_service);
         service_provider
     }
@@ -493,6 +493,7 @@ mod test {
                     input: InsertPrescription {
                         id: "id1".to_string(),
                         patient_id: "id2".to_string(),
+                        diagnosis_id: None,
                     },
                     result: Err(InsertPrescriptionError::PatientDoesNotExist),
                 }],

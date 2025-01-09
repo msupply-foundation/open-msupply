@@ -18,6 +18,7 @@ table! {
         name -> Text,
         context_id -> Text,
         is_immunisation -> Bool,
+        elmis_code -> Nullable<Text>,
     }
 }
 
@@ -34,6 +35,7 @@ pub struct ProgramRow {
     pub name: String,
     pub context_id: String,
     pub is_immunisation: bool,
+    pub elmis_code: Option<String>,
 }
 
 pub struct ProgramRowRepository<'a> {

@@ -30,6 +30,7 @@ export const ListOptions = ({
   enteredLineIds,
 }: ListProps) => {
   const { height } = useWindowDimensions();
+
   const startIcon = (
     <CheckIcon
       style={{
@@ -53,9 +54,9 @@ export const ListOptions = ({
     <List
       sx={{
         padding: 0,
-        maxHeight: height * 0.6,
         overflow: 'auto',
         scrollBehavior: 'smooth',
+        maxHeight: height - 200,
       }}
     >
       {options?.map((option, _) => (

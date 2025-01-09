@@ -12,12 +12,14 @@ import {
   NothingHere,
   useUrlQueryParams,
   ColumnFormat,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getStocktakeTranslator, isStocktakeDisabled } from '../../utils';
 import { StocktakeRowFragment } from '../api/operations.generated';
 import { useStocktake } from '../api';
+import { Footer } from './Footer';
 
 const useDisableStocktakeRows = (rows?: StocktakeRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -46,6 +48,7 @@ export const StocktakeListView: FC = () => {
 
   const columns = useColumns<StocktakeRowFragment>(
     [
+      GenericColumnKey.Selection,
       ['stocktakeNumber', { maxWidth: 75, sortable: false }],
       [
         'status',
@@ -57,7 +60,6 @@ export const StocktakeListView: FC = () => {
       ['createdDatetime', { format: ColumnFormat.Date }],
       ['stocktakeDate', { sortable: false }],
       ['comment', { sortable: false }],
-      'selection',
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
@@ -86,6 +88,7 @@ export const StocktakeListView: FC = () => {
           />
         }
       />
+      <Footer />
     </>
   );
 };

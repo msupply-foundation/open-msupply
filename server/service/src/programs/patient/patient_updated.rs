@@ -1,8 +1,7 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
-    EqualFilter, GenderType, NameRow, NameRowRepository, NameStoreJoinFilter,
-    NameStoreJoinRepository, NameStoreJoinRow, NameRowType, Patient, RepositoryError,
-    StorageConnection,
+    EqualFilter, GenderType, NameRow, NameRowRepository, NameRowType, NameStoreJoinFilter,
+    NameStoreJoinRepository, NameStoreJoinRow, Patient, RepositoryError, StorageConnection,
 };
 use std::str::FromStr;
 use util::uuid::uuid;
@@ -287,7 +286,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "");
+        let service_provider = ServiceProvider::new(connection_manager);
         let ctx = service_provider.basic_context().unwrap();
 
         let service = &service_provider.patient_service;

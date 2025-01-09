@@ -14,6 +14,7 @@ use service::invoice::prescription::{
 pub struct InsertInput {
     pub id: String,
     pub patient_id: String,
+    pub diagnosis_id: Option<String>,
 }
 
 #[derive(Union)]
@@ -43,9 +44,17 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
 
 impl InsertInput {
     pub fn to_domain(self) -> ServiceInput {
-        let InsertInput { id, patient_id } = self;
+        let InsertInput {
+            id,
+            patient_id,
+            diagnosis_id,
+        } = self;
 
-        ServiceInput { id, patient_id }
+        ServiceInput {
+            id,
+            patient_id,
+            diagnosis_id,
+        }
     }
 }
 
@@ -115,7 +124,7 @@ mod test {
         test_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.invoice_service = Box::new(test_service);
         service_provider
     }
@@ -202,6 +211,7 @@ mod test {
                 ServiceInput {
                     id: "id input".to_string(),
                     patient_id: "patient input".to_string(),
+                    ..Default::default()
                 }
             );
             Ok(Invoice {

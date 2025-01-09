@@ -21,6 +21,7 @@ use graphql::{
 use log::info;
 use repository::{get_storage_connection_manager, migrations::migrate};
 
+use scheduled_tasks::spawn_scheduled_task_runner;
 use service::{
     auth_data::AuthData,
     plugin::validation::ValidatedPluginBucket,
@@ -46,6 +47,7 @@ pub mod cors;
 pub mod environment;
 mod logging;
 pub mod middleware;
+mod scheduled_tasks;
 mod serve_frontend;
 pub mod static_files;
 pub mod support;
@@ -103,10 +105,10 @@ pub async fn start_server(
 
     let service_provider = Data::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
-        &settings.server.base_dir.clone().unwrap(),
         processors_trigger,
         sync_trigger,
         site_is_initialise_trigger,
+        settings.mail.clone(),
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
     let certificates = Certificates::try_load(&settings.server).unwrap();
@@ -115,8 +117,9 @@ pub async fn start_server(
     let auth = auth_data(&settings.server, token_bucket, token_secret, &certificates);
     info!("Initialising server context..done");
 
-    // LOGGING
     let service_context = service_provider.basic_context().unwrap();
+
+    // LOGGING
     let log_service = &service_provider.log_service;
     info!("Checking log settings..");
     let log_level = log_service.get_log_level(&service_context).unwrap();
@@ -285,6 +288,12 @@ pub async fn start_server(
     );
     let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
 
+    // Scheduled tasks
+    let scheduled_task_handle = spawn_scheduled_task_runner(
+        service_provider.clone().into_inner(),
+        settings.mail.clone().map(|m| m.interval).unwrap_or(60),
+    );
+
     let closure_settings = settings.clone();
     let mut http_server = HttpServer::new(move || {
         App::new()
@@ -333,7 +342,9 @@ pub async fn start_server(
         Some(_) = off_switch.recv() => {},
         _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
         _ = file_sync_task => unreachable!("File sync unexpectedly stopped"),
-        result = processors_task => unreachable!("Processor terminated ({:?})", result)
+        result = processors_task => unreachable!("Processor terminated ({:?})", result),
+        scheduled_error = scheduled_task_handle => unreachable!("Scheduled task stopped unexpectedly: {:?}", scheduled_error),
+
     };
 
     server_handle.stop(true).await;

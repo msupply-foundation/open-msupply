@@ -15,18 +15,20 @@ import { usePrescription } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { PricingSection } from './PricingSection';
 import { canDeleteInvoice } from '../../../utils';
+import { PatientDetails } from './PatientDetails';
 
 export const SidePanelComponent = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { success } = useNotification();
-  const { data } = usePrescription.document.get();
-  const { mutateAsync } = usePrescription.document.delete();
+  const {
+    query: { data },
+    delete: { deletePrescription },
+  } = usePrescription();
   const canDelete = data ? canDeleteInvoice(data) : false;
 
   const deleteAction = async () => {
-    if (!data) return;
-    await mutateAsync([data]);
+    await deletePrescription();
     navigate(
       RouteBuilder.create(AppRoute.Dispensary)
         .addPart(AppRoute.Prescription)
@@ -73,6 +75,7 @@ export const SidePanelComponent = () => {
     >
       <AdditionalInfoSection />
       <PricingSection />
+      <PatientDetails />
     </DetailPanelPortal>
   );
 };

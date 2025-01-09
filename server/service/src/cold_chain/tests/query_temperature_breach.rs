@@ -15,7 +15,7 @@ mod query {
         let (_, connection, connection_manager, _) =
             setup_all("test_cold_chain_service_pagination", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let service = service_provider.cold_chain_service;
 
         assert_eq!(
@@ -53,7 +53,7 @@ mod query {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.cold_chain_service;
 
@@ -78,7 +78,7 @@ mod query {
         let (_, connection, connection_manager, _) =
             setup_all("test_temperature_breach_filter", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let service = service_provider.cold_chain_service;
 
         let result = service
@@ -129,7 +129,7 @@ mod query {
         let (mock_data, connection, connection_manager, _) =
             setup_all("test_temperature_breach_sort", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let service = service_provider.cold_chain_service;
         // Test StartDatetime sort with default sort order
         let result = service

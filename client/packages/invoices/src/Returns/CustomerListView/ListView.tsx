@@ -14,11 +14,13 @@ import {
   ColumnDataSetter,
   useTableStore,
   TooltipTextCell,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isInboundListItemDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { CustomerReturnRowFragment, useReturns } from '../api';
+import { Footer } from './Footer';
 
 const CustomerReturnListViewComponent: FC = () => {
   const t = useTranslation();
@@ -61,6 +63,7 @@ const CustomerReturnListViewComponent: FC = () => {
 
   const columns = useColumns<CustomerReturnRowFragment>(
     [
+      GenericColumnKey.Selection,
       [getNameAndColorColumn(), { setter: onUpdateColour }],
       [
         'status',
@@ -82,7 +85,6 @@ const CustomerReturnListViewComponent: FC = () => {
           width: 125,
         },
       ],
-      'selection',
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
@@ -112,6 +114,7 @@ const CustomerReturnListViewComponent: FC = () => {
           navigate(String(row.invoiceNumber));
         }}
       />
+      <Footer />
     </>
   );
 };

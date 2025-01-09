@@ -19,7 +19,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   useEncounter,
-  useJsonForms,
+  useJsonFormsHandler,
   EncounterFragment,
   useDocumentDataAccessor,
   EncounterSchema,
@@ -171,7 +171,7 @@ export const DetailView: FC = () => {
     isSaving,
     validationError,
     revert,
-  } = useJsonForms(
+  } = useJsonFormsHandler(
     {
       documentName: encounter?.document?.name,
       patientId: encounter?.patient?.id,

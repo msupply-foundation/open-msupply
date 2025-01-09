@@ -9,9 +9,9 @@ import {
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { usePrescriptionColumn } from './columns';
-import { useExpansionColumns } from './PrescriptionLineEdit/columns';
 import { StockOutItem } from '../../types';
 import { StockOutLineFragment } from '../../StockOut';
+import { useExpansionColumns } from './columns';
 
 interface ContentAreaProps {
   onAddItem: () => void;
@@ -39,12 +39,11 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams();
-  const { rows } = usePrescription.line.rows();
+  const { isDisabled, rows } = usePrescription();
   const columns = usePrescriptionColumn({
     onChangeSortBy: updateSortQuery,
     sortBy,
   });
-  const isDisabled = usePrescription.utils.isDisabled();
 
   if (!rows) return null;
 
@@ -53,10 +52,10 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
       <DataTable
         id="prescription-detail"
         onRowClick={onRowClick}
-        ExpandContent={Expand}
         columns={columns}
         data={rows}
         enableColumnSelection
+        ExpandContent={Expand}
         noDataElement={
           <NothingHere
             body={t('error.no-prescriptions')}

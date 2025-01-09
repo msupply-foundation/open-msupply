@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
+use graphql_core::generic_inputs::PrintReportSortInput;
 use print::{generate_report, generate_report_definition, PrintReportResponse};
 use reports::{
     report, reports, ReportFilterInput, ReportResponse, ReportSortInput, ReportsResponse,
@@ -25,9 +25,10 @@ impl ReportQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
+        user_language: String,
         id: String,
     ) -> Result<ReportResponse> {
-        report(ctx, store_id, id)
+        report(ctx, store_id, user_language, id)
     }
 
     /// Queries a list of available reports
@@ -35,11 +36,11 @@ impl ReportQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        page: Option<PaginationInput>,
+        user_language: String,
         filter: Option<ReportFilterInput>,
         sort: Option<Vec<ReportSortInput>>,
     ) -> Result<ReportsResponse> {
-        reports(ctx, store_id, page, filter, sort)
+        reports(ctx, store_id, user_language, filter, sort)
     }
 
     /// Creates a generated report.
@@ -62,7 +63,17 @@ impl ReportQueries {
         sort: Option<PrintReportSortInput>,
         current_language: Option<String>,
     ) -> Result<PrintReportResponse> {
-        generate_report(ctx, store_id, report_id, data_id, arguments, format, sort, current_language).await
+        generate_report(
+            ctx,
+            store_id,
+            report_id,
+            data_id,
+            arguments,
+            format,
+            sort,
+            current_language,
+        )
+        .await
     }
 
     /// Can be used when developing reports, e.g. to generate a report that is not already in the
@@ -75,10 +86,20 @@ impl ReportQueries {
         #[graphql(desc = "The report definition to be generated")] report: serde_json::Value,
         data_id: Option<String>,
         arguments: Option<serde_json::Value>,
-        format: Option<PrintFormat>,        
+        format: Option<PrintFormat>,
         current_language: Option<String>,
     ) -> Result<PrintReportResponse> {
-        generate_report_definition(ctx, store_id, name, report, data_id, arguments, format, current_language).await
+        generate_report_definition(
+            ctx,
+            store_id,
+            name,
+            report,
+            data_id,
+            arguments,
+            format,
+            current_language,
+        )
+        .await
     }
 }
 
