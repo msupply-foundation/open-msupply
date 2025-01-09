@@ -249,6 +249,7 @@ mod email_test {
                 username: "".to_string(),
                 password: "".to_string(),
                 from: "no-reply@msupply.foundation".to_string(),
+                interval: 1,
             }),
         );
         let email_service = service_provider.email_service;

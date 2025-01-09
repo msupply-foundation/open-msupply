@@ -27,6 +27,7 @@ pub enum KeyType {
     RemoteSyncPushCursor,
     ShipmentTransferProcessorCursor,
     RequisitionTransferProcessorCursor,
+    ContactFormProcessorCursor,
 
     SettingsSyncUrl,
     SettingsSyncUsername,
