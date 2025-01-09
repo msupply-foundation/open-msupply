@@ -1,18 +1,7 @@
 import React from 'react';
-import {
-  AppBarContentPortal,
-  DeleteIcon,
-  DropdownMenu,
-  DropdownMenuItem,
-  Grid,
-  useTranslation,
-} from '@openmsupply-client/common';
-import { useDeleteSelectedVaccineCourses } from '../api';
+import { AppBarContentPortal, Grid } from '@openmsupply-client/common';
 
 export const Toolbar = () => {
-  const t = useTranslation();
-  const onDelete = useDeleteSelectedVaccineCourses();
-
   return (
     <AppBarContentPortal sx={{ width: '100%' }}>
       <Grid
@@ -22,15 +11,7 @@ export const Toolbar = () => {
           justifyContent: 'end',
           marginBottom: 1,
         }}
-      >
-        <Grid item>
-          <DropdownMenu label={t('label.actions')}>
-            <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
-              {t('button.delete-lines')}
-            </DropdownMenuItem>
-          </DropdownMenu>
-        </Grid>
-      </Grid>
+      ></Grid>
     </AppBarContentPortal>
   );
 };

@@ -16,14 +16,17 @@ use thiserror::Error;
 
 use crate::{
     cursor_controller::CursorController,
-    processors::transfer::{
-        get_requisition_and_linked_requisition, log_system_error,
-        requisition::{
-            assign_requisition_number::AssignRequisitionNumberProcessor,
-            create_response_requisition::CreateResponseRequisitionProcessor,
-            link_request_requisition::LinkRequestRequisitionProcessor,
-            update_request_requisition_approved_quantities::UpdateRequestRequisitionApprovedQuantitiesProcessor,
-            update_request_requisition_status::UpdateRequestRequisitionStatusProcessor,
+    processors::{
+        log_system_error,
+        transfer::{
+            get_requisition_and_linked_requisition,
+            requisition::{
+                assign_requisition_number::AssignRequisitionNumberProcessor,
+                create_response_requisition::CreateResponseRequisitionProcessor,
+                link_request_requisition::LinkRequestRequisitionProcessor,
+                update_request_requisition_approved_quantities::UpdateRequestRequisitionApprovedQuantitiesProcessor,
+                update_request_requisition_status::UpdateRequestRequisitionStatusProcessor,
+            },
         },
     },
     service_provider::ServiceProvider,
