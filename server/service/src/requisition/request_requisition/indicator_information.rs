@@ -77,12 +77,14 @@ pub fn get_indicator_information(
     let mut result: Vec<CustomerIndicatorInformation> = vec![];
 
     for line_id in line_ids {
-        let line_values = values.iter().filter(|v| v.indicator_line_id == line_id);
+        let line_values = values
+            .iter()
+            .filter(|v| v.indicator_value_row.indicator_line_id == line_id);
         for customer_id in customer_ids.clone() {
             let customer_line_values = line_values
                 .clone()
-                .filter(|v| v.customer_name_link_id == *customer_id)
-                .map(IndicatorInformation::from_value)
+                .filter(|v| v.name_row.id == *customer_id)
+                .map(|v| IndicatorInformation::from_value(&v.indicator_value_row))
                 .collect();
 
             result.push(CustomerIndicatorInformation {
