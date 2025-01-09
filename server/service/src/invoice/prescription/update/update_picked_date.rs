@@ -14,10 +14,6 @@ pub fn update_picked_date(
         return Ok(());
     }
 
-    if invoice.r#type != InvoiceType::Prescription {
-        return Ok(());
-    }
-
     // Use the invoice's backdated datetime if it's set, otherwise set the status to now
     let status_datetime = invoice.backdated_datetime.unwrap_or(Utc::now().naive_utc());
 

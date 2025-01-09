@@ -829,42 +829,5 @@ mod test {
             .unwrap();
 
         assert!(invoice.picked_datetime.is_none());
-
-        // 2. Check that pick date is NOT updated when lines are updated or added to a non-prescription invoice
-
-        // Create a non-prescription invoice with picked status
-        let stockout1 = InvoiceRow {
-            id: "stockout_invoice-1".to_string(),
-            invoice_number: 1,
-            name_link_id: mock_name_store_a().id,
-            r#type: InvoiceType::OutboundShipment,
-            store_id: context.store_id.clone(),
-            created_datetime: datetime,
-            picked_datetime: Some(datetime),
-            status: InvoiceStatus::Picked,
-            ..Default::default()
-        };
-
-        stockout1.upsert(&context.connection).unwrap();
-
-        let stock_out_line = InsertStockOutLine {
-            id: "stockout_invoice-1-1".to_string(),
-            r#type: StockOutType::OutboundShipment,
-            invoice_id: stockout1.id.clone(),
-            stock_line_id: mock_stock_line_b().id.clone(),
-            number_of_packs: 1.0,
-            ..Default::default()
-        };
-
-        invoice_line_service
-            .insert_stock_out_line(&context, stock_out_line)
-            .unwrap();
-
-        let invoice = invoice_row_repo
-            .find_one_by_id(&stockout1.id)
-            .unwrap()
-            .unwrap();
-        let inserted_picked_date = invoice.picked_datetime.unwrap();
-        assert_eq!(inserted_picked_date, datetime);
     }
 }
