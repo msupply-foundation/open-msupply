@@ -1,12 +1,16 @@
 use regex::Regex;
-use repository::{contact_form_row::ContactFormRowRepository, RepositoryError, StorageConnection};
+use repository::{
+    contact_form_row::ContactFormRowRepository, RepositoryError, StorageConnection, UserAccountRow,
+    UserAccountRowRepository,
+};
 
 use super::{InsertContactForm, InsertContactFormError};
 
 pub fn validate(
     input: &InsertContactForm,
     connection: &StorageConnection,
-) -> Result<(), InsertContactFormError> {
+    user_id: &str,
+) -> Result<UserAccountRow, InsertContactFormError> {
     if check_contact_form_record_exists(&input.id, connection)? {
         return Err(InsertContactFormError::ContactFormAlreadyExists);
     }
@@ -25,7 +29,14 @@ pub fn validate(
     if input.body.is_empty() {
         return Err(InsertContactFormError::MessageNotProvided);
     }
-    Ok(())
+
+    let user = UserAccountRowRepository::new(connection)
+        .find_one_by_id(user_id)?
+        .ok_or(InsertContactFormError::InternalError(
+            "User account not found".to_string(),
+        ))?;
+
+    Ok(user)
 }
 
 pub fn check_contact_form_record_exists(

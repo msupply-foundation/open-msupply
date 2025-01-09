@@ -21,6 +21,7 @@ table! {
         body -> Text,
         created_datetime -> Timestamp,
         user_id -> Text,
+        username -> Text,
         store_id -> Text,
         contact_type -> crate::db_diesel::contact_form_row::ContactTypeMapping,
     }
@@ -44,6 +45,7 @@ pub struct ContactFormRow {
     pub body: String,
     pub created_datetime: NaiveDateTime,
     pub user_id: String,
+    pub username: String,
     pub store_id: String,
     pub contact_type: ContactType,
 }
