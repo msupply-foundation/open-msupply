@@ -11,6 +11,7 @@ export interface Action {
   icon: ReactNode;
   onClick: () => void;
   disabled?: boolean;
+  shouldShrink?: boolean;
 }
 
 interface ActionsFooterProps {
@@ -28,6 +29,7 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
       direction="row"
       alignItems="center"
       height={64}
+      gap={4}
       sx={{
         p: 4,
         mx: '-20px',
@@ -42,13 +44,15 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
       >
         {selectedRowCount} {t('label.selected')}
       </Typography>
-      {actions.map(({ label, icon, onClick, disabled }) => (
+      {actions.map(({ label, icon, onClick, disabled, shouldShrink }) => (
         <FlatButton
           key={label}
           startIcon={icon}
           label={label}
           disabled={disabled}
           onClick={onClick}
+          // Flatbutton doesn't shrink by default but we want it to in actions footer
+          shouldShrink={shouldShrink ?? true}
         />
       ))}
     </Stack>

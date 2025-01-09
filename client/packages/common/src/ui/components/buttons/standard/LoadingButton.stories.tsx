@@ -13,9 +13,8 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
           isLoading={isLoading}
           endIcon={<ArrowRightIcon {...args} />}
           onClick={() => setIsLoading(true)}
-        >
-          Submit
-        </LoadingButton>
+          label="Submit"
+        />
       </Box>
       <Box>
         <FormControlLabel

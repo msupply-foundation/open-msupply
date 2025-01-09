@@ -4,6 +4,7 @@ import {
   ListView as RequestRequisitionListView,
   DetailView as RequestRequisitionDetailView,
   RequestLineEditPage,
+  IndicatorEditPage as RequestRequisitionIndicatorEditPage,
 } from './RequestRequisition';
 import {
   ListView as ResponseRequisitionListView,
@@ -32,6 +33,13 @@ const customerRequisitionLineRoute = RouteBuilder.create(
   .build();
 
 const indicatorLineRoute = RouteBuilder.create(AppRoute.CustomerRequisition)
+  .addPart(':requisitionNumber')
+  .addPart(AppRoute.Indicators)
+  .addPart(':programIndicatorCode')
+  .addPart(':programIndicatorLineId')
+  .build();
+
+const requestIndicatorLineRoute = RouteBuilder.create(AppRoute.InternalOrder)
   .addPart(':requisitionNumber')
   .addPart(AppRoute.Indicators)
   .addPart(':programIndicatorCode')
@@ -82,6 +90,10 @@ export const RequisitionService: FC = () => {
         element={<RequestRequisitionDetailView />}
       />
       <Route path={internalOrderLineRoute} element={<RequestLineEditPage />} />
+      <Route
+        path={requestIndicatorLineRoute}
+        element={<RequestRequisitionIndicatorEditPage />}
+      />
       <Route path={rnrFormsRoute} element={<RnRFormListView />} />
       <Route path={rnrFormRoute} element={<RnRFormDetailView />} />
     </Routes>
