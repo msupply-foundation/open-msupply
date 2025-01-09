@@ -7,8 +7,6 @@ import {
   useTranslation,
   useConfirmationModal,
   Box,
-  FlatButton,
-  PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '../../api';
 
@@ -65,19 +63,6 @@ export const ListItems = ({
             enteredLineIds={enteredLineIds}
           />
         </Box>
-        {showNew && (
-          <FlatButton
-            label={t('label.new-item')}
-            onClick={() => navigate(route.addPart('new').build())}
-            startIcon={<PlusCircleIcon />}
-            sx={{
-              position: 'sticky',
-              bottom: 0,
-              padding: '1em',
-              justifyContent: 'flex-start',
-            }}
-          />
-        )}
       </Box>
     </Tooltip>
   );
