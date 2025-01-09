@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useCallback } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -7,14 +7,10 @@ import {
   RouteBuilder,
   useNavigate,
   useTranslation,
-  useEditModal,
   createQueryParamsStore,
   DetailTabs,
 } from '@openmsupply-client/common';
-import {
-  ItemRowWithStatsFragment,
-  ActivityLogList,
-} from '@openmsupply-client/system';
+import { ActivityLogList } from '@openmsupply-client/system';
 import { RequestLineFragment, useRequest } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -22,31 +18,57 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
-import { RequestLineEdit } from './RequestLineEdit';
+import { RequestRequisitionLineErrorProvider } from '../context';
+import { IndicatorsTab } from './IndicatorsTab';
+import { buildIndicatorEditRoute, buildItemEditRoute } from './utils';
 
 export const DetailView: FC = () => {
-  const { data, isLoading } = useRequest.document.get();
-  const { onOpen, onClose, mode, entity, isOpen } =
-    useEditModal<ItemRowWithStatsFragment>();
-  const isDisabled = useRequest.utils.isDisabled();
-  const navigate = useNavigate();
   const t = useTranslation();
+  const navigate = useNavigate();
+  const { data, isLoading } = useRequest.document.get();
+  const isDisabled = useRequest.utils.isDisabled();
+  const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
+    useRequest.document.indicators(
+      data?.otherPartyId ?? '',
+      data?.period?.id ?? '',
+      data?.program?.id ?? '',
+      !!data
+    );
 
-  const onRowClick = React.useCallback(
-    (line: RequestLineFragment) => {
-      onOpen(line.item);
+  const onRowClick = useCallback((line: RequestLineFragment) => {
+    navigate(buildItemEditRoute(line.requisitionNumber, line.item.id));
+  }, []);
+
+  const onProgramIndicatorClick = useCallback(
+    (
+      requisitionNumber?: number,
+      programIndicatorCode?: string,
+      indicatorId?: string
+    ) => {
+      if (!requisitionNumber || !programIndicatorCode || !indicatorId) return;
+
+      navigate(
+        buildIndicatorEditRoute(
+          requisitionNumber,
+          programIndicatorCode,
+          indicatorId
+        )
+      );
     },
-    [onOpen]
+    []
   );
 
   if (isLoading) return <DetailViewSkeleton />;
 
+  const onAddItem = () => {
+    navigate(buildItemEditRoute(data?.requisitionNumber, 'new'));
+  };
   const tabs = [
     {
       Component: (
         <ContentArea
           onRowClick={!isDisabled ? onRowClick : null}
-          onAddItem={() => onOpen(null)}
+          onAddItem={onAddItem}
         />
       ),
       value: 'Details',
@@ -57,32 +79,41 @@ export const DetailView: FC = () => {
     },
   ];
 
-  return !!data ? (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore<RequestLineFragment>({
-        initialSortBy: { key: 'itemName' },
-      })}
-    >
-      <AppBarButtons
-        isDisabled={!data || isDisabled}
-        onAddItem={() => onOpen(null)}
-      />
-      <Toolbar />
-
-      <DetailTabs tabs={tabs} />
-
-      <Footer />
-      <SidePanel />
-      {isOpen && (
-        <RequestLineEdit
-          isOpen={isOpen}
-          onClose={onClose}
-          mode={mode}
-          item={entity}
+  if (
+    data?.programName &&
+    !!data?.otherParty.store &&
+    programIndicators?.totalCount !== 0
+  ) {
+    tabs.push({
+      Component: (
+        <IndicatorsTab
+          onClick={onProgramIndicatorClick}
+          isLoading={isLoading || isProgramIndicatorsLoading}
+          request={data}
+          indicators={programIndicators?.nodes}
         />
-      )}
-    </TableProvider>
+      ),
+      value: t('label.indicators'),
+    });
+  }
+
+  return !!data ? (
+    <RequestRequisitionLineErrorProvider>
+      <TableProvider
+        createStore={createTableStore}
+        queryParamsStore={createQueryParamsStore<RequestLineFragment>({
+          initialSortBy: { key: 'itemName' },
+        })}
+      >
+        <AppBarButtons isDisabled={!data || isDisabled} onAddItem={onAddItem} />
+        <Toolbar />
+
+        <DetailTabs tabs={tabs} />
+
+        <Footer isDisabled={isDisabled} />
+        <SidePanel />
+      </TableProvider>
+    </RequestRequisitionLineErrorProvider>
   ) : (
     <AlertModal
       open={true}

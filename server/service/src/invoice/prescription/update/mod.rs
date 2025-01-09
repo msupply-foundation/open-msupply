@@ -8,6 +8,7 @@ use crate::{
     activity_log::{activity_log_entry, log_type_from_invoice_status},
     invoice::query::get_invoice,
     service_provider::ServiceContext,
+    NullableUpdate,
 };
 
 mod generate;
@@ -32,6 +33,7 @@ pub struct UpdatePrescription {
     pub comment: Option<String>,
     pub colour: Option<String>,
     pub backdated_datetime: Option<NaiveDateTime>,
+    pub diagnosis_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -195,7 +197,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -307,7 +309,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -323,6 +325,7 @@ mod test {
                 comment: Some("test_comment".to_string()),
                 colour: Some("test_colour".to_string()),
                 backdated_datetime: None,
+                diagnosis_id: None,
             }
         }
 
@@ -346,6 +349,7 @@ mod test {
                     comment,
                     colour,
                     backdated_datetime: _,
+                    diagnosis_id: _,
                 } = get_update();
                 u.name_link_id = patient_id.unwrap();
                 u.clinician_link_id = clinician_id;

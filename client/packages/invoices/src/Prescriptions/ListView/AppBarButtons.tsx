@@ -18,17 +18,22 @@ import {
   RouteBuilder,
 } from '@openmsupply-client/common';
 import { PatientSearchModal } from '@openmsupply-client/system';
-import { usePrescription } from '../api';
+import { ListParams, usePrescriptionList, usePrescription } from '../api';
 import { prescriptionToCsv } from '../../utils';
 
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
-}> = ({ modalController }) => {
+  listParams: ListParams;
+}> = ({ modalController, listParams }) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { success, error } = useNotification();
-  const { mutateAsync: onCreate } = usePrescription.document.insert();
-  const { data, isLoading } = usePrescription.document.list();
+  const {
+    create: { create },
+  } = usePrescription();
+  const {
+    query: { data, isLoading },
+  } = usePrescriptionList(listParams);
 
   const csvExport = async () => {
     if (!data || !data?.nodes.length) {
@@ -55,7 +60,7 @@ export const AppBarButtonsComponent: FC<{
           onChange={async name => {
             modalController.toggleOff();
             try {
-              onCreate({
+              create({
                 id: FnUtils.generateUUID(),
                 patientId: name?.id,
               }).then(invoiceNumber => {
@@ -63,8 +68,7 @@ export const AppBarButtonsComponent: FC<{
                   RouteBuilder.create(AppRoute.Dispensary)
                     .addPart(AppRoute.Prescription)
                     .addPart(String(invoiceNumber))
-                    .build(),
-                  { replace: true }
+                    .build()
                 );
               });
             } catch (e) {
@@ -81,9 +85,8 @@ export const AppBarButtonsComponent: FC<{
           variant="outlined"
           onClick={csvExport}
           disabled={EnvUtils.platform === Platform.Android}
-        >
-          {t('button.export')}
-        </LoadingButton>
+          label={t('button.export')}
+        />
       </Grid>
     </AppBarButtonsPortal>
   );

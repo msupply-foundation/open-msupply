@@ -10,11 +10,11 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
+import { useDraftIndicatorValue } from './hooks';
 import {
   IndicatorLineRowFragment,
   IndicatorLineWithColumnsFragment,
-} from '../../api';
-import { useDraftIndicatorValue } from './hooks';
+} from '../../../RequestRequisition/api';
 
 interface IndicatorLineEditProps {
   requisitionNumber: number;
@@ -23,12 +23,21 @@ interface IndicatorLineEditProps {
   hasPrevious: boolean;
   previous: IndicatorLineRowFragment | null;
   currentLine?: IndicatorLineWithColumnsFragment | null;
+  disabled: boolean;
 }
 
 const INPUT_WIDTH = 185;
 const LABEL_WIDTH = '150px';
 
-const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
+const InputWithLabel = ({
+  autoFocus,
+  data,
+  disabled,
+}: {
+  autoFocus: boolean;
+  data: IndicatorColumnNode;
+  disabled: boolean;
+}) => {
   if (!data?.value) {
     return;
   }
@@ -49,6 +58,12 @@ const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
     },
     [t]
   );
+
+  const sharedProps = {
+    disabled,
+    autoFocus,
+  };
+
   const inputComponent =
     data.valueType === IndicatorValueTypeNode.Number ? (
       <NumericTextInput
@@ -58,7 +73,7 @@ const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
           const newValue = isNaN(Number(v)) ? 0 : v;
           update({ value: String(newValue) }).then(errorHandler);
         }}
-        autoFocus
+        {...sharedProps}
       />
     ) : (
       <BasicTextInput
@@ -67,7 +82,7 @@ const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
         onChange={e => {
           update({ value: e.target.value }).then(errorHandler);
         }}
-        autoFocus
+        {...sharedProps}
       />
     );
 
@@ -88,6 +103,7 @@ export const IndicatorLineEdit = ({
   hasPrevious,
   previous,
   currentLine,
+  disabled,
 }: IndicatorLineEditProps) => {
   const columns = currentLine?.columns
     .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
@@ -96,8 +112,15 @@ export const IndicatorLineEdit = ({
   return (
     <>
       <Box display="flex" flexDirection="column">
-        {columns?.map(c => {
-          return <InputWithLabel key={c.value?.id} data={c} />;
+        {columns?.map((c, i) => {
+          return (
+            <InputWithLabel
+              key={c.value?.id}
+              data={c}
+              disabled={disabled}
+              autoFocus={i === 0}
+            />
+          );
         })}
       </Box>
       <Box>

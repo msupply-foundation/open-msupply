@@ -2,10 +2,10 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     simple_generic_errors::{
-        CannotEditRequisition, OtherPartyNotASupplier, OtherPartyNotVisible, RecordNotFound,
+        CannotEditRequisition, OrderingTooManyItems, OtherPartyNotASupplier, OtherPartyNotVisible,
+        RecordNotFound,
     },
-    standard_graphql_error::validate_auth,
-    standard_graphql_error::StandardGraphqlError,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::RequisitionNode;
@@ -17,6 +17,8 @@ use service::{
         UpdateRequestRequisitionStatus,
     },
 };
+
+use crate::mutations::response_requisition::update::RequisitionReasonsNotProvided;
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateRequestRequisitionInput")]
@@ -45,6 +47,8 @@ pub enum UpdateErrorInterface {
     OtherPartyNotASupplier(OtherPartyNotASupplier),
     RecordNotFound(RecordNotFound),
     CannotEditRequisition(CannotEditRequisition),
+    OrderingTooManyItems(OrderingTooManyItems),
+    RequisitionReasonsNotProvided(RequisitionReasonsNotProvided),
 }
 
 #[derive(SimpleObject)]
@@ -152,8 +156,20 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 OtherPartyNotVisible,
             ))
         }
+        ServiceError::OrderingTooManyItems(max_order) => {
+            return Ok(UpdateErrorInterface::OrderingTooManyItems(
+                OrderingTooManyItems(max_order),
+            ))
+        }
+        ServiceError::ReasonsNotProvided(lines) => {
+            return Ok(UpdateErrorInterface::RequisitionReasonsNotProvided(
+                RequisitionReasonsNotProvided(lines),
+            ))
+        }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreRequisition | ServiceError::OrderTypeNotFound => {
+            BadUserInput(formatted_error)
+        }
         ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::OtherPartyIsNotAStore => BadUserInput(formatted_error),
@@ -218,7 +234,7 @@ mod test {
         test_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.requisition_service = Box::new(test_service);
         service_provider
     }

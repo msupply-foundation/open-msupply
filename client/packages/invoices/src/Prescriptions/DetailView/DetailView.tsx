@@ -2,7 +2,6 @@ import React, { FC, useCallback } from 'react';
 import {
   TableProvider,
   createTableStore,
-  useEditModal,
   DetailViewSkeleton,
   AlertModal,
   useNavigate,
@@ -10,50 +9,51 @@ import {
   useTranslation,
   createQueryParamsStore,
   DetailTabs,
-  ModalMode,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
-import { usePrescriptionIsDisabled } from '../api/hooks/utils/usePrescriptionIsDisabled';
-import { usePrescription } from '../api/hooks';
+import { usePrescription } from '../api';
 import { ContentArea } from './ContentArea';
 import { AppBarButtons } from './AppBarButton';
 import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
-import { Draft } from '../..';
 import { Footer } from './Footer';
-import { PrescriptionLineEdit } from './PrescriptionLineEdit/PrescriptionLineEdit';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
 export const PrescriptionDetailView: FC = () => {
-  const isDisabled = usePrescriptionIsDisabled();
-  const { entity, mode, onOpen, onClose, isOpen, setMode } =
-    useEditModal<Draft>();
-  const { data, isLoading } = usePrescription.document.get();
+  const {
+    query: { data, loading },
+  } = usePrescription();
   const t = useTranslation();
   const navigate = useNavigate();
   const onRowClick = useCallback(
     (item: StockOutLineFragment | StockOutItem) => {
-      onOpen({ item: toItemRow(item) });
+      navigate(
+        RouteBuilder.create(AppRoute.Dispensary)
+          .addPart(AppRoute.Prescription)
+          .addPart(String(data?.invoiceNumber))
+          .addPart(String(item.id))
+          .build()
+      );
     },
-    [toItemRow, onOpen]
+    [toItemRow, data]
   );
-  const onAddItem = (draft?: Draft) => {
-    onOpen(draft);
-    setMode(ModalMode.Create);
+  const onAddItem = () => {
+    navigate(
+      RouteBuilder.create(AppRoute.Dispensary)
+        .addPart(AppRoute.Prescription)
+        .addPart(String(data?.invoiceNumber))
+        .addPart(String('new'))
+        .build()
+    );
   };
 
-  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
+  if (loading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
     {
-      Component: (
-        <ContentArea
-          onRowClick={!isDisabled ? onRowClick : null}
-          onAddItem={onAddItem}
-        />
-      ),
+      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
       value: 'Details',
     },
     {
@@ -78,15 +78,6 @@ export const PrescriptionDetailView: FC = () => {
           })}
         >
           <AppBarButtons onAddItem={onAddItem} />
-          {isOpen && (
-            <PrescriptionLineEdit
-              draft={entity}
-              mode={mode}
-              isOpen={isOpen}
-              onClose={onClose}
-            />
-          )}
-
           <Toolbar />
           <DetailTabs tabs={tabs} />
           <Footer />

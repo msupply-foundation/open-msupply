@@ -1,4 +1,4 @@
-use super::BatchIsReserved;
+use super::{BatchIsReserved, TransferredShipment};
 use async_graphql::*;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
@@ -58,6 +58,7 @@ pub enum DeleteErrorInterface {
     ForeignKeyError(ForeignKeyError),
     CannotEditInvoice(CannotEditInvoice),
     BatchIsReserved(BatchIsReserved),
+    TransferredShipment(TransferredShipment),
 }
 
 impl DeleteInput {
@@ -102,6 +103,11 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         }
         ServiceError::BatchIsReserved => {
             return Ok(DeleteErrorInterface::BatchIsReserved(BatchIsReserved {}))
+        }
+        ServiceError::TransferredShipment => {
+            return Ok(DeleteErrorInterface::TransferredShipment(
+                TransferredShipment {},
+            ))
         }
         // Standard Graphql Errors
         ServiceError::NotThisInvoiceLine(_)
@@ -154,7 +160,7 @@ mod test {
         test_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.invoice_line_service = Box::new(test_service);
         service_provider
     }
@@ -304,6 +310,26 @@ mod test {
             &Some(empty_variables()),
             &expected_message,
             None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // TransferredShipment
+        let test_service = TestService(Box::new(|_| Err(ServiceError::TransferredShipment)));
+
+        let expected = json!({
+            "deleteInboundShipmentLine": {
+              "error": {
+                "__typename": "TransferredShipment"
+              }
+            }
+          }
+        );
+
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(empty_variables()),
+            &expected,
             Some(service_provider(test_service, &connection_manager))
         );
 

@@ -15,14 +15,18 @@ import {
   FnUtils,
   UserPermission,
   useCallbackWithPermission,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useReturns } from '../api';
 import { customerReturnsToCsv } from '../../utils';
+import { AppRoute } from 'packages/config/src';
 
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
+  const navigate = useNavigate();
   const t = useTranslation();
   const { success, error } = useNotification();
 
@@ -60,6 +64,13 @@ export const AppBarButtonsComponent: FC<{
               id: FnUtils.generateUUID(),
               customerId: name?.id,
               customerReturnLines: [],
+            }).then(invoiceNumber => {
+              navigate(
+                RouteBuilder.create(AppRoute.Distribution)
+                  .addPart(AppRoute.CustomerReturn)
+                  .addPart(String(invoiceNumber))
+                  .build()
+              );
             });
           } catch (e) {
             const errorSnack = error(
@@ -81,9 +92,8 @@ export const AppBarButtonsComponent: FC<{
           variant="outlined"
           onClick={csvExport}
           disabled={EnvUtils.platform === Platform.Android}
-        >
-          {t('button.export')}
-        </LoadingButton>
+          label={t('button.export')}
+        />
       </Grid>
     </AppBarButtonsPortal>
   );

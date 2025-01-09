@@ -13,13 +13,14 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 
 pub type Program = ProgramRow;
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, PartialEq, Debug)]
 pub struct ProgramFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
     pub context_id: Option<EqualFilter<String>>,
     pub is_immunisation: Option<bool>,
     pub exists_for_store_id: Option<EqualFilter<String>>,
+    pub elmis_code: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -39,7 +40,7 @@ impl<'a> ProgramRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<ProgramFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let query = Self::create_filtered_query(filter);
 
         Ok(query
             .count()
@@ -60,7 +61,7 @@ impl<'a> ProgramRepository<'a> {
         filter: Option<ProgramFilter>,
         sort: Option<ProgramSort>,
     ) -> Result<Vec<Program>, RepositoryError> {
-        let mut query = create_filtered_query(filter);
+        let mut query = Self::create_filtered_query(filter);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -85,55 +86,57 @@ impl<'a> ProgramRepository<'a> {
         let result = final_query.load::<Program>(self.connection.lock().connection())?;
         Ok(result)
     }
+
+    pub fn create_filtered_query(filter: Option<ProgramFilter>) -> BoxedUserProgramQuery {
+        let mut query = program_dsl::program.into_boxed();
+
+        if let Some(f) = filter {
+            let ProgramFilter {
+                id,
+                name,
+                context_id,
+                is_immunisation,
+                exists_for_store_id,
+                elmis_code,
+            } = f;
+
+            apply_equal_filter!(query, id, program_dsl::id);
+            apply_string_filter!(query, name, program_dsl::name);
+            apply_equal_filter!(query, context_id, program_dsl::context_id);
+            apply_equal_filter!(query, elmis_code, program_dsl::elmis_code);
+            if let Some(is_immunisation) = is_immunisation {
+                query = query.filter(program_dsl::is_immunisation.eq(is_immunisation));
+            }
+
+            if exists_for_store_id.is_some() {
+                let mut master_list_name_join_query = program_dsl::program
+                    .select(program_dsl::id)
+                    .distinct()
+                    .left_join(
+                        master_list::dsl::master_list.left_join(
+                            master_list_name_join::dsl::master_list_name_join
+                                .left_join(name_link::dsl::name_link.left_join(store::dsl::store)),
+                        ),
+                    )
+                    .into_boxed();
+
+                apply_equal_filter!(
+                    master_list_name_join_query,
+                    exists_for_store_id,
+                    store::dsl::id
+                );
+
+                query = query.filter(program_dsl::id.eq_any(master_list_name_join_query));
+            }
+        }
+
+        query = query.filter(program_dsl::id.ne("missing_program"));
+
+        query
+    }
 }
 
 type BoxedUserProgramQuery = IntoBoxed<'static, program::table, DBType>;
-
-fn create_filtered_query(filter: Option<ProgramFilter>) -> BoxedUserProgramQuery {
-    let mut query = program_dsl::program.into_boxed();
-
-    if let Some(f) = filter {
-        let ProgramFilter {
-            id,
-            name,
-            context_id,
-            is_immunisation,
-            exists_for_store_id,
-        } = f;
-
-        apply_equal_filter!(query, id, program_dsl::id);
-        apply_string_filter!(query, name, program_dsl::name);
-        apply_equal_filter!(query, context_id, program_dsl::context_id);
-        if let Some(is_immunisation) = is_immunisation {
-            query = query.filter(program_dsl::is_immunisation.eq(is_immunisation));
-        }
-
-        if exists_for_store_id.is_some() {
-            let mut master_list_name_join_query = program_dsl::program
-                .select(program_dsl::id)
-                .distinct()
-                .left_join(
-                    master_list::dsl::master_list.left_join(
-                        master_list_name_join::dsl::master_list_name_join
-                            .left_join(name_link::dsl::name_link.left_join(store::dsl::store)),
-                    ),
-                )
-                .into_boxed();
-
-            apply_equal_filter!(
-                master_list_name_join_query,
-                exists_for_store_id,
-                store::dsl::id
-            );
-
-            query = query.filter(program_dsl::id.eq_any(master_list_name_join_query));
-        }
-    }
-
-    query = query.filter(program_dsl::id.ne("missing_program"));
-
-    query
-}
 
 impl ProgramFilter {
     pub fn new() -> Self {
@@ -157,6 +160,11 @@ impl ProgramFilter {
 
     pub fn is_immunisation(mut self, filter: bool) -> Self {
         self.is_immunisation = Some(filter);
+        self
+    }
+
+    pub fn elmis_code(mut self, filter: EqualFilter<String>) -> Self {
+        self.elmis_code = Some(filter);
         self
     }
 }

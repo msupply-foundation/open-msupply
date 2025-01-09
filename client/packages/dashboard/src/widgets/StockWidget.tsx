@@ -84,8 +84,7 @@ export const StockWidget: React.FC = () => {
                 RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InternalOrder)
                   .addPart(String(requisitionNumber))
-                  .build(),
-                { replace: true }
+                  .build()
               );
             });
           }}

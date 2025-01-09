@@ -41,6 +41,7 @@ pub struct LedgerSortInput {
 #[derive(InputObject, Clone)]
 pub struct LedgerFilterInput {
     pub stock_line_id: Option<EqualFilterStringInput>,
+    pub item_id: Option<EqualFilterStringInput>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -114,7 +115,7 @@ pub fn ledger(
     let connection_manager = ctx.get_connection_manager();
     let ledger = get_ledger(
         connection_manager,
-        // page.map(PaginationOption::from),
+        None,
         filter.map(|filter| filter.to_domain()),
         // Currently only one sort option is supported, use the first from the list.
         sort.and_then(|mut sort_list| sort_list.pop())
@@ -141,10 +142,16 @@ impl LedgerConnector {
 }
 impl LedgerFilterInput {
     pub fn to_domain(self) -> LedgerFilter {
-        let LedgerFilterInput { stock_line_id } = self;
+        let LedgerFilterInput {
+            stock_line_id,
+            item_id,
+        } = self;
 
         LedgerFilter {
             stock_line_id: stock_line_id.map(EqualFilter::from),
+            item_id: item_id.map(EqualFilter::from),
+            store_id: None,
+            datetime: None,
         }
     }
 }

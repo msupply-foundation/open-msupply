@@ -58,7 +58,7 @@ const responseParser = {
         return RequisitionSortFieldInput.OrderType;
       }
       case 'period': {
-        return RequisitionSortFieldInput.PeriodName;
+        return RequisitionSortFieldInput.PeriodStartDate;
       }
       case 'programName': {
         return RequisitionSortFieldInput.ProgramName;
@@ -307,12 +307,16 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     const result = await sdk.customerProgramSettings({ storeId });
     return result.customerProgramRequisitionSettings;
   },
-  getIndicators: async (customerNameLinkId: string, periodId: string, programId: string) => {    
+  getIndicators: async (
+    customerNameId: string,
+    periodId: string,
+    programId: string
+  ) => {
     let result = await sdk.programIndicators({
       storeId,
-      customerNameLinkId,
+      customerNameId,
       periodId,
-      programId
+      programId,
     });
 
     if (result?.programIndicators.__typename === 'ProgramIndicatorConnector') {
@@ -321,7 +325,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
   },
   updateIndicatorValue: async (patch: UpdateIndicatorValueInput) => {
     let result = await sdk.updateIndicatorValue({ storeId, input: patch });
-    
+
     if (!!result?.updateIndicatorValue) {
       return result.updateIndicatorValue;
     }

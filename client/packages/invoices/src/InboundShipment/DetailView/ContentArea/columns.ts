@@ -18,17 +18,32 @@ import { isInboundPlaceholderRow } from '../../../utils';
 const getUnitQuantity = (row: InboundLineFragment) =>
   row.packSize * row.numberOfPacks;
 
+const getTotalCost = (row: InboundLineFragment) =>
+  row.numberOfPacks * row.costPricePerPack;
+
+const calculateRowTotalCost = (rowData: InboundLineFragment | InboundItem) => {
+  if ('lines' in rowData) {
+    return rowData.lines.reduce(
+      (acc, line) => acc + line.numberOfPacks * line.costPricePerPack,
+      0
+    );
+  } else {
+    return getTotalCost(rowData);
+  }
+};
+
 export const useInboundShipmentColumns = () => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
-  const getSellPrice = (row: InboundLineFragment) =>
-    isInboundPlaceholderRow(row) ? 0 : row.sellPricePerPack;
+  const getCostPrice = (row: InboundLineFragment) =>
+    isInboundPlaceholderRow(row) ? 0 : row.costPricePerPack;
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const columns = useColumns<InboundLineFragment | InboundItem>(
     [
+      GenericColumnKey.Selection,
       [
         getNotePopoverColumn(),
         {
@@ -208,23 +223,24 @@ export const useInboundShipmentColumns = () => {
         Cell: CurrencyCell,
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
-            let totalCostPrice = 0;
-            let totalUnits = 0;
-
-            for (const line of rowData.lines) {
-              totalCostPrice += line.costPricePerPack * line.numberOfPacks;
-              totalUnits += line.numberOfPacks * line.packSize;
-            }
-
-            return totalCostPrice / totalUnits;
+            const { lines } = rowData;
+            return ArrayUtils.getAveragePrice(lines, 'costPricePerPack');
           } else {
-            return getSellPrice(rowData);
+            return getCostPrice(rowData);
           }
         },
         sortable: false,
       },
+      {
+        label: 'label.total',
+        key: 'total',
+        align: ColumnAlign.Right,
+        width: 120,
+        Cell: CurrencyCell,
+        accessor: ({ rowData }) => calculateRowTotalCost(rowData),
+        getSortValue: rowData => calculateRowTotalCost(rowData),
+      },
       getRowExpandColumn(),
-      GenericColumnKey.Selection,
     ],
     { sortBy, onChangeSortBy: updateSortQuery },
     [sortBy, updateSortQuery]
@@ -250,6 +266,14 @@ export const useExpansionColumns = (): Column<InboundLineFragment>[] => {
       {
         label: 'label.cost',
         accessor: ({ rowData }) => rowData.costPricePerPack,
+        Cell: CurrencyCell,
+      },
+    ],
+    [
+      'lineTotal',
+      {
+        label: 'label.line-total',
+        accessor: ({ rowData }) => getTotalCost(rowData),
         Cell: CurrencyCell,
       },
     ],

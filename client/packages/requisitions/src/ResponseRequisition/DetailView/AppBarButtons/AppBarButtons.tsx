@@ -23,7 +23,7 @@ interface AppBarButtonProps {
   isDisabled: boolean;
   hasLinkedRequisition: boolean;
   isProgram: boolean;
-  onAddItem: (newState: boolean) => void;
+  onAddItem: () => void;
 }
 
 export const AppBarButtonsComponent = ({
@@ -53,7 +53,7 @@ export const AppBarButtonsComponent = ({
           disabled={disableAddButton}
           label={t('button.add-item')}
           Icon={<PlusCircleIcon />}
-          onClick={() => onAddItem(true)}
+          onClick={onAddItem}
         />
 
         <SupplyRequestedQuantityButton />
@@ -67,9 +67,8 @@ export const AppBarButtonsComponent = ({
             variant="outlined"
             startIcon={<PrinterIcon />}
             isLoading={isPrinting}
-          >
-            {t('button.print')}
-          </LoadingButton>
+            label={t('button.print')}
+          />
         </ReportSelector>
         {OpenButton}
       </Grid>

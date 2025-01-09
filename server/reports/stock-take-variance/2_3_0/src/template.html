@@ -1,0 +1,109 @@
+
+<style>
+  {% include "style.css" %}
+</style>
+
+<body>
+  {% set_global VvalueIncrease=0 %}
+  {% set_global VvalueDecrease=0 %}
+  {% set_global VnetVarience=0 %}
+  {% set_global Vnumofpackscounted=0 %}
+
+  <table class="center">
+    <tr>
+      <td width="200" class="borderline"><img src="{{data.store.logo}}"/></td>
+      <td class="borderline"><div class="name_centre">{{data.store.storeName}}
+      <br><span class="name_address"> {{data.store.name.address1}}</span>
+      <br><span class="name_address"> {{data.store.name.address2}}</span>
+    </div>
+      </td>
+      <td class="borderline"><div class="name_right"> {{t(k="report.stocktake-number",f="Stocktake Number")}} #: {{data.stocktake.stocktakeNumber}}</div></td>
+    </tr >
+   
+  </table>
+
+<table class="center">
+  <tr>
+    <td width="60" class="borderline"> <span class="table_header">{{t(k="report.item-code",f="Item code")}}</span></td>
+    <td class="borderline"><span class="table_header">{{t(k="report.item-name",f="Item name")}}</span></td>
+    <td class="borderline"><span class="table_header">{{t(k="label.batch",f="Batch")}}</span></td>
+    <td width="60" class="borderline"><span class="table_header">{{t(k="label.expiry",f="Expiry")}}</span></td>
+    <td width="50" class="borderline"><span class="table_header">{{t(k="report.pack-size",f="Pack size")}}</span></td>
+    <td width="60" class="borderline"><span class="table_header">{{t(k="report.cost-price-per-pack",f="Cost price (per pack)")}}</span></td>
+    <td width="60" class="borderline"><span class="table_header">{{t(k="report.snapshot-packs",f="Snapshot Packs")}}</span></td>
+    <td width="60" class="borderline"><span class="table_header">{{t(k="label.counted-num-of-packs",f="Counted Packs")}}</span></td>
+    <td width="60" class="borderline"><span class="table_header">{{t(k="report.variance-packs",f="Variance (packs)")}}</span></td>
+    <td width="60" class="borderline"><span class="table_header">{{t(k="report.variance-value",f="Variance (Value)")}}</span></td>
+    <td width="100"class="borderline"><span class="table_header">{{t(k="label.reason",f="Reason")}}</span></td>
+    <td width="100"class="borderline"><span class="table_header">{{t(k="label.comment",f="Comment")}}</span></td>
+  </tr>
+
+  {% for line in data.stocktakeLines.nodes -%}
+  <tr>
+    <td class="table_text">{{line.item.code}}</td>
+    <td class="table_text">{{line.item.name}}</td>
+    <td class="table_text">{{line.batch}}</td>
+    <td class="table_number">{{line.expiryDate}}</td>
+    <td class="table_number">{{line.packSize}}</td>
+    <td class="table_number">{{line.costPricePerPack}}</td>
+    <td class="table_number">{{line.snapshotNumberOfPacks}}</td>
+
+    {% if line.countedNumberOfPacks %}
+    {% set_global Vnumofpackscounted=line.countedNumberOfPacks %}
+    {% else %}
+    {% set_global Vnumofpackscounted=0 %}
+    {% endif %}
+
+    <td class="table_number">{{Vnumofpackscounted}}</td>
+
+    {% set Vvariance=Vnumofpackscounted - line.snapshotNumberOfPacks %}
+    {% set VvarianceValue=Vvariance * line.costPricePerPack %}
+    <td class="table_number">{{Vvariance}}</td>
+    <td class="table_number">{{VvarianceValue}}</td>
+
+    {% if line.inventoryAdjustmentReasonId %}
+    <td  class="table_text">{{line.inventoryAdjustmentReason.reason}}</td>
+    {% else %}
+    <td  class="table_text">N/A</td>
+    {% endif %}
+    <td  class="table_text">{{line.comment}}</td>
+
+    {% if VvarianceValue > 0 %}
+    {% set_global VvalueIncrease=VvalueIncrease + VvarianceValue  %}
+    {% else %}
+    {% set_global VvalueDecrease=VvalueDecrease + VvarianceValue  %}
+    {% endif %}
+
+  </tr>
+  {%- endfor %}
+  {% set_global VnetVarience=VvalueIncrease + VvalueDecrease %}
+
+  <tr>
+    <td colspan="12"  class="borderline" />
+  </tr>
+
+
+
+
+  <tr>
+    <td colspan="10" />
+    <td  class="borderline"><span class="table_text">{{t(k="report.net-increase",f="Net Increase")}}</span></td>
+    <td class="borderline"><span class="table_text">{{VvalueIncrease}}</span></td>
+  </tr>
+
+
+
+  <tr>
+    <td colspan="10" />
+    <td class="borderline"><span class="table_text">{{t(k="report.net-decrease",f="Net Decrease")}}</span></td>
+    <td class="borderline"><span class="table_text">{{VvalueDecrease}}</span></td>
+  </tr>
+
+  <tr>
+    <td colspan="10"  />
+    <td  class="borderline"><span class="table_text">{{t(k="report.net-variance",f="Net Variance")}}</span></td>
+    <td  class="borderline"><span class="table_text">{{VnetVarience}}</span></td>
+  </tr>
+</table>
+
+</body>

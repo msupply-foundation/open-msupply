@@ -130,6 +130,9 @@ pub enum Resource {
     MutateVaccineCourse,
     QueryVaccineCourse,
     MutateImmunisationProgram,
+    // contact form
+    MutateContactForm,
+    NoPermissionRequired,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -578,6 +581,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QueryVaccineCourse,
         PermissionDSL::NoPermissionRequired,
     );
+    map.insert(
+        Resource::NoPermissionRequired,
+        PermissionDSL::NoPermissionRequired,
+    );
+
+    // contact form
+    map.insert(Resource::MutateContactForm, PermissionDSL::HasStoreAccess);
 
     map
 }
@@ -1200,7 +1210,7 @@ mod permission_validation_test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let service_provider = ServiceProvider::new(connection_manager.clone());
         let context = service_provider
             .context("".to_string(), user_id.to_string())
             .unwrap();
@@ -1362,7 +1372,7 @@ mod permission_validation_test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let password = "pass";
 

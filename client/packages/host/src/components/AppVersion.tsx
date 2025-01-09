@@ -46,7 +46,7 @@ export const AppVersion: FC<AppVersionProps> = ({ SiteInfo, style }) => {
               </Typography>
             </Grid>
           </Grid>
-        )}{' '}
+        )}
       </Grid>
       <Grid padding={1} paddingTop={0}>
         {SiteInfo}

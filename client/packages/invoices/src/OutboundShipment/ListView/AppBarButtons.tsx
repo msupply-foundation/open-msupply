@@ -68,8 +68,7 @@ export const AppBarButtonsComponent: FC<{
                   RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.OutboundShipment)
                     .addPart(String(invoiceNumber))
-                    .build(),
-                  { replace: true }
+                    .build()
                 );
               });
             } catch (e) {
@@ -86,9 +85,8 @@ export const AppBarButtonsComponent: FC<{
           variant="outlined"
           onClick={csvExport}
           disabled={EnvUtils.platform === Platform.Android}
-        >
-          {t('button.export')}
-        </LoadingButton>
+          label={t('button.export')}
+        />
       </Grid>
     </AppBarButtonsPortal>
   );

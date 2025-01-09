@@ -17,7 +17,7 @@ mod query_catalogue_item {
     async fn catalogue_service_pagination() {
         let (_, _, connection_manager, _) =
             setup_all("test_catalogue_service_pagination", MockDataInserts::none()).await;
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.catalogue_service;
 
@@ -52,7 +52,7 @@ mod query_catalogue_item {
     async fn catalogue_service_filter() {
         let (_, _, connection_manager, _) =
             setup_all("test_catalogue_service_filter", MockDataInserts::none()).await;
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.catalogue_service;
 
@@ -299,7 +299,7 @@ mod query_catalogue_item {
     async fn catalogue_service_sort() {
         let (_, _, connection_manager, _) =
             setup_all("test_catalogue_service_sort", MockDataInserts::none()).await;
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.catalogue_service;
         // Test Name sort with default sort order

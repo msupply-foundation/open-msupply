@@ -3,6 +3,7 @@ import {
   BasicSpinner,
   DetailContainer,
   NothingHere,
+  RequisitionNodeStatus,
   RouteBuilder,
   useBreadcrumbs,
   useParams,
@@ -13,7 +14,7 @@ import { ResponseLineEdit } from './ResponseLineEdit';
 import { AppRoute } from '@openmsupply-client/config';
 import { useDraftRequisitionLine, usePreviousNextResponseLine } from './hooks';
 import { AppBarButtons } from './AppBarButtons';
-import { PageLayout } from '../PageLayout';
+import { PageLayout } from '../../../common/PageLayout';
 
 interface ResponseLineEditPageInnerProps {
   itemId: string;
@@ -35,6 +36,7 @@ const ResponseLineEditPageInner = ({
   requisition,
 }: ResponseLineEditPageInnerProps) => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const { mutateAsync } = useResponse.line.insert();
 
   const lines = requisition.lines.nodes.sort((a, b) =>
     a.item.name.localeCompare(b.item.name)
@@ -48,6 +50,7 @@ const ResponseLineEditPageInner = ({
   const enteredLineIds = lines
     .filter(line => line.supplyQuantity !== 0)
     .map(line => line.item.id);
+  const isProgram = !!requisition?.programName;
 
   useEffect(() => {
     setCustomBreadcrumbs({
@@ -69,13 +72,16 @@ const ResponseLineEditPageInner = ({
                   .addPart(AppRoute.CustomerRequisition)
                   .addPart(String(requisition.requisitionNumber))}
                 enteredLineIds={enteredLineIds}
+                showNew={
+                  requisition.status !== RequisitionNodeStatus.Finalised &&
+                  !isProgram
+                }
               />
             </>
           }
           Right={
             <>
               <ResponseLineEdit
-                item={currentItem}
                 hasLinkedRequisition={!!requisition.linkedRequisition}
                 draft={draft}
                 update={update}
@@ -84,7 +90,11 @@ const ResponseLineEditPageInner = ({
                 next={next}
                 hasPrevious={hasPrevious}
                 previous={previous}
-                isProgram={!!requisition.programName}
+                isProgram={!!isProgram}
+                lines={lines}
+                requisitionNumber={requisition.requisitionNumber}
+                requisitionId={requisition.id}
+                insert={mutateAsync}
               />
             </>
           }

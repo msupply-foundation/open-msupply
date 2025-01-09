@@ -50,9 +50,9 @@ export enum AppRoute {
 
   Messages = 'messages',
 
-  Sync = 'sync',
-
   Settings = 'settings',
+
+  Help = 'help',
 
   Logout = 'logout',
 

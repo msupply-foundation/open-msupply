@@ -112,6 +112,7 @@ pub enum ChangelogTableName {
     IndicatorValue,
     BundledItem,
     Item,
+    ContactForm,
     SystemLog,
 }
 
@@ -179,6 +180,7 @@ impl ChangelogTableName {
             ChangelogTableName::PackagingVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::IndicatorValue => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::BundledItem => ChangeLogSyncStyle::Central,
+            ChangelogTableName::ContactForm => ChangeLogSyncStyle::RemoteToCentral,
             ChangelogTableName::SystemLog => ChangeLogSyncStyle::RemoteToCentral, // System Log records won't be synced to remote site on initialisation
         }
     }
