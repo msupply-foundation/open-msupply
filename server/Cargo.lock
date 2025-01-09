@@ -5938,6 +5938,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "nanohtml2text"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d4bdc3645754d2da280343bd8f1eaa9acf56c4ed75b540c98c898b171a3d867"
+
+[[package]]
 name = "ndk"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8034,6 +8040,7 @@ dependencies = [
  "lettre",
  "log",
  "machine-uid",
+ "nanohtml2text",
  "pem",
  "pretty_assertions",
  "qrcode",

@@ -1,8 +1,13 @@
+use crate::activity_log::system_log_entry;
+use crate::sync::CentralServerConfig;
+use repository::system_log_row::SystemLogType;
+use repository::{RepositoryError, StorageConnection};
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::mpsc::{self, Receiver, Sender};
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
+use util::format_error;
 
 use crate::service_provider::ServiceProvider;
 
@@ -11,7 +16,9 @@ use self::transfer::requisition::ProcessRequisitionTransfersError;
 use self::transfer::{
     invoice::process_invoice_transfers, requisition::process_requisition_transfers,
 };
+use contact_form::{process_central_records, ProcessCentralRecordsError};
 
+mod contact_form;
 #[cfg(test)]
 mod test_helpers;
 pub(crate) mod transfer;
@@ -22,12 +29,14 @@ const CHANNEL_BUFFER_SIZE: usize = 30;
 pub struct ProcessorsTrigger {
     requisition_transfer: Sender<()>,
     invoice_transfer: Sender<()>,
+    contact_form_to_email: Sender<()>,
     await_process_queue: Sender<oneshot::Sender<()>>,
 }
 
 pub struct Processors {
     requisition_transfer: Receiver<()>,
     invoice_transfer: Receiver<()>,
+    contact_form_to_email: Receiver<()>,
     await_process_queue: Receiver<oneshot::Sender<()>>,
 }
 
@@ -37,6 +46,8 @@ enum ProcessorsError {
     InvoiceTransfer(ProcessInvoiceTransfersError),
     #[error("Error in requisition transfer processor ({0})")]
     RequisitionTransfer(ProcessRequisitionTransfersError),
+    #[error("Error in central record processor ({0})")]
+    ProcessCentralRecord(ProcessCentralRecordsError),
     #[error("Error when waiting for the process queue to be processed")]
     AwaitProcessQueue(()),
 }
@@ -49,17 +60,22 @@ impl Processors {
         let (invoice_transfer_sender, invoice_transfer_receiver) =
             mpsc::channel(CHANNEL_BUFFER_SIZE);
 
+        let (contact_form_to_email_sender, contact_form_to_email_receiver) =
+            mpsc::channel(CHANNEL_BUFFER_SIZE);
+
         let (request_check_sender, request_check_receiver) = mpsc::channel(CHANNEL_BUFFER_SIZE);
 
         (
             ProcessorsTrigger {
                 requisition_transfer: requisition_transfer_sender,
                 invoice_transfer: invoice_transfer_sender,
+                contact_form_to_email: contact_form_to_email_sender,
                 await_process_queue: request_check_sender,
             },
             Processors {
                 requisition_transfer: requisition_transfer_receiver,
                 invoice_transfer: invoice_transfer_receiver,
+                contact_form_to_email: contact_form_to_email_receiver,
                 await_process_queue: request_check_receiver,
             },
         )
@@ -69,6 +85,7 @@ impl Processors {
         let Processors {
             mut requisition_transfer,
             mut invoice_transfer,
+            mut contact_form_to_email,
             mut await_process_queue,
         } = self;
 
@@ -85,6 +102,9 @@ impl Processors {
                     },
                     Some(_) = invoice_transfer.recv() => {
                         process_invoice_transfers(&service_provider).map_err(ProcessorsError::InvoiceTransfer)
+                    },
+                    Some(_) = contact_form_to_email.recv() => {
+                        process_central_records(&service_provider).map_err(ProcessorsError::ProcessCentralRecord)
                     },
                     Some(sender) = await_process_queue.recv() => {
                         sender.send(()).map_err(ProcessorsError::AwaitProcessQueue)
@@ -117,6 +137,14 @@ impl ProcessorsTrigger {
         }
     }
 
+    pub(crate) fn trigger_central_only_processors(&self) {
+        if CentralServerConfig::is_central_server() {
+            if let Err(error) = self.contact_form_to_email.try_send(()) {
+                log::error!("Problem triggering contact form processor {:#?}", error)
+            }
+        }
+    }
+
     /// Waits till all current events in the processor queue are handled.
     /// Its guaranteed that all queued processor events that where in the queue before calling
     /// this method are handled when this method returns.
@@ -143,9 +171,20 @@ impl ProcessorsTrigger {
         ProcessorsTrigger {
             requisition_transfer: mpsc::channel(1).0,
             invoice_transfer: mpsc::channel(1).0,
+            contact_form_to_email: mpsc::channel(1).0,
             await_process_queue: mpsc::channel(1).0,
         }
     }
+}
+
+fn log_system_error(
+    connection: &StorageConnection,
+    error: &impl std::error::Error,
+) -> Result<(), RepositoryError> {
+    let error_message = format_error(error);
+    log::error!("{}", error_message);
+    system_log_entry(connection, SystemLogType::ProcessorError, &error_message)?;
+    Ok(())
 }
 
 #[cfg(test)]

@@ -1,4 +1,6 @@
-use super::{user_row::user_account::dsl as user_account_dsl, StorageConnection};
+use super::{
+    name_link_row::name_link, user_row::user_account::dsl as user_account_dsl, StorageConnection,
+};
 
 use crate::{lower, repository_error::RepositoryError, Upsert};
 
@@ -20,6 +22,8 @@ table! {
         last_successful_sync -> Nullable<Timestamp>,
     }
 }
+
+allow_tables_to_appear_in_same_query!(user_account, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(test, derive(strum::EnumIter))]
@@ -109,7 +113,6 @@ impl<'a> UserAccountRowRepository<'a> {
             },
         }
     }
-
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UserAccountRow>, RepositoryError> {
         let result = user_account_dsl::user_account

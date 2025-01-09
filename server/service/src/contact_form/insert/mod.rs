@@ -36,12 +36,12 @@ pub fn insert_contact_form(
     let new_contact_form = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&input, connection)?;
+            let user = validate(&input, connection, &ctx.user_id)?;
 
             //generate the data
             let new_contact_form = generate(GenerateInput {
                 store_id: store_id.to_string(),
-                user_id: ctx.user_id.clone(),
+                user,
                 insert_input: input.clone(),
             });
 
