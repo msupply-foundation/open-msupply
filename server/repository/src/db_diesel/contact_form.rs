@@ -10,15 +10,12 @@ use super::{
     name_link_row::name_link,
     name_row::name,
     store_row::store,
-    user_row::user_account,
     DBType, EqualFilter, NameLinkRow, NameRow, Pagination, StorageConnection, StoreRow,
-    UserAccountRow,
 };
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct ContactForm {
     pub contact_form_row: ContactFormRow,
-    pub user_row: UserAccountRow,
     pub store_row: StoreRow,
     pub name_row: NameRow,
 }
@@ -39,11 +36,7 @@ impl ContactFormFilter {
     }
 }
 
-pub type ContactFormJoin = (
-    ContactFormRow,
-    (StoreRow, (NameLinkRow, NameRow)),
-    UserAccountRow,
-);
+pub type ContactFormJoin = (ContactFormRow, (StoreRow, (NameLinkRow, NameRow)));
 
 pub struct ContactFormRepository<'a> {
     connection: &'a StorageConnection,
@@ -88,9 +81,8 @@ impl<'a> ContactFormRepository<'a> {
             .load::<ContactFormJoin>(self.connection.lock().connection())?
             .into_iter()
             .map(
-                |(contact_form_row, (store_row, (_, name_row)), user_row)| ContactForm {
+                |(contact_form_row, (store_row, (_, name_row)))| ContactForm {
                     contact_form_row,
-                    user_row,
                     store_row,
                     name_row,
                 },
@@ -104,11 +96,8 @@ impl<'a> ContactFormRepository<'a> {
 type BoxedContactFormQuery = IntoBoxed<
     'static,
     InnerJoin<
-        InnerJoin<
-            contact_form::table,
-            InnerJoin<store::table, InnerJoin<name_link::table, name::table>>,
-        >,
-        user_account::table,
+        contact_form::table,
+        InnerJoin<store::table, InnerJoin<name_link::table, name::table>>,
     >,
     DBType,
 >;
@@ -116,7 +105,8 @@ type BoxedContactFormQuery = IntoBoxed<
 fn create_filtered_query(filter: Option<ContactFormFilter>) -> BoxedContactFormQuery {
     let mut query = contact_form::table
         .inner_join(store::table.inner_join(name_link::table.inner_join(name::table)))
-        .inner_join(user_account::table)
+        // removed for now while user_accounts not available on central
+        // .inner_join(user_account::table)
         .into_boxed();
 
     if let Some(f) = filter {

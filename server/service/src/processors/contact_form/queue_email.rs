@@ -81,7 +81,6 @@ impl ContactFormProcessor for QueueContactEmailProcessor {
 fn create_email(contact_form: &ContactForm) -> Result<EnqueueEmailData, EmailServiceError> {
     let ContactForm {
         contact_form_row,
-        user_row,
         store_row,
         name_row,
     } = &contact_form;
@@ -104,7 +103,7 @@ fn create_email(contact_form: &ContactForm) -> Result<EnqueueEmailData, EmailSer
     let store_name = format!("{} ({})", name_row.name, store_row.code);
 
     let mut context = Context::new();
-    context.insert("username", &user_row.username);
+    context.insert("username", &contact_form_row.username);
     context.insert("reply_email", &contact_form_row.reply_email);
     context.insert("submission_time", &submission_time);
     context.insert("store_name", &store_name);
@@ -134,8 +133,8 @@ fn create_email(contact_form: &ContactForm) -> Result<EnqueueEmailData, EmailSer
         ContactType::Support => SUPPORT_EMAIL.to_string(),
     };
     let subject = match contact_form_row.contact_type {
-        ContactType::Feedback => format!("Feedback from {}", user_row.username),
-        ContactType::Support => format!("Support request from {}", user_row.username),
+        ContactType::Feedback => format!("Feedback from {}", contact_form_row.username),
+        ContactType::Support => format!("Support request from {}", contact_form_row.username),
     };
 
     let email = EnqueueEmailData {
