@@ -99,6 +99,7 @@ const ItemLedgerTable = ({
       {
         key: 'numberOfPacks',
         sortable: false,
+        label: 'label.num-packs',
       },
       {
         key: 'quantity',
