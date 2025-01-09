@@ -15,13 +15,13 @@ pub type RequisitionIndicatorInfoLoaderInputPayload = String;
 pub type RequisitionIndicatorInfoLoaderInput = IdPair<RequisitionIndicatorInfoLoaderInputPayload>;
 impl RequisitionIndicatorInfoLoaderInput {
     pub fn new(
+        line_id: &str,
         store_id: &str,
-        program_id: &str,
         payload: RequisitionIndicatorInfoLoaderInputPayload,
     ) -> Self {
         RequisitionIndicatorInfoLoaderInput {
-            primary_id: store_id.to_string(),
-            secondary_id: program_id.to_string(),
+            primary_id: line_id.to_string(),
+            secondary_id: store_id.to_string(),
             payload,
         }
     }
@@ -37,25 +37,33 @@ impl Loader<RequisitionIndicatorInfoLoaderInput> for RequisitionIndicatorInfoLoa
     ) -> Result<HashMap<RequisitionIndicatorInfoLoaderInput, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
 
-        let (store_id, program_id, period_id) = if let Some(loader_input) = loader_inputs.first() {
-            (
-                loader_input.primary_id.clone(),
-                loader_input.secondary_id.clone(),
-                loader_input.payload.clone(),
-            )
-        } else {
+        let (line_ids, _) = IdPair::extract_unique_ids(loader_inputs);
+
+        let Some(IdPair {
+            secondary_id: store_id,
+            payload: period_id,
+            ..
+        }) = loader_inputs.first()
+        else {
             return Ok(HashMap::new());
         };
 
-        let mut result = HashMap::new();
-
-        let indicator_info = self
+        let indicator_info_rows = self
             .service_provider
             .requisition_service
-            .get_indicator_information(&service_context, &store_id, &period_id, &program_id)?;
+            .get_indicator_information(&service_context, line_ids, &store_id, &period_id)?;
 
-        for loader_input in loader_inputs {
-            result.insert(loader_input.clone(), indicator_info.clone());
+        let mut result: HashMap<_, Self::Value> = HashMap::new();
+
+        for indicator_info in indicator_info_rows {
+            result
+                .entry(RequisitionIndicatorInfoLoaderInput::new(
+                    &indicator_info.indicator_line_id,
+                    store_id,
+                    period_id.to_string(),
+                ))
+                .or_default()
+                .push(indicator_info);
         }
 
         Ok(result)

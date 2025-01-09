@@ -108,28 +108,6 @@ impl ProgramIndicatorNode {
             .map(IndicatorLineNode::from_domain)
             .collect()
     }
-
-    pub async fn customer_indicator_info(
-        &self,
-        ctx: &Context<'_>,
-        period_id: String,
-        store_id: String,
-    ) -> Result<Vec<CustomerIndicatorInformationNode>, Error> {
-        let loader = ctx.get_loader::<DataLoader<RequisitionIndicatorInfoLoader>>();
-
-        let result = loader
-            .load_one(RequisitionIndicatorInfoLoaderInput::new(
-                &store_id,
-                &self.program_indicator.program_indicator.program_id,
-                period_id,
-            ))
-            .await?;
-
-        Ok(result
-            .into_iter()
-            .flat_map(CustomerIndicatorInformationNode::from_vec)
-            .collect())
-    }
 }
 
 pub struct IndicatorLineNode {
@@ -146,6 +124,27 @@ impl IndicatorLineNode {
 impl IndicatorLineNode {
     pub async fn line(&self) -> IndicatorLineRowNode {
         IndicatorLineRowNode::from_domain(self.line.line.clone())
+    }
+
+    pub async fn customer_indicator_info(
+        &self,
+        ctx: &Context<'_>,
+        period_id: String,
+        store_id: String,
+    ) -> Result<Vec<CustomerIndicatorInformationNode>, Error> {
+        let loader = ctx.get_loader::<DataLoader<RequisitionIndicatorInfoLoader>>();
+
+        let result = loader
+            .load_one(RequisitionIndicatorInfoLoaderInput::new(
+                &self.line.line.id,
+                &store_id,
+                period_id,
+            ))
+            .await?;
+
+        Ok(result
+            .map(CustomerIndicatorInformationNode::from_vec)
+            .unwrap_or_default())
     }
 
     pub async fn columns(&self) -> Vec<IndicatorColumnNode> {
@@ -205,6 +204,10 @@ pub struct IndicatorColumnNode {
 impl IndicatorColumnNode {
     pub async fn name(&self) -> &str {
         &self.column.header
+    }
+
+    pub async fn id(&self) -> &str {
+        &self.column.id
     }
 
     pub async fn value_type(&self) -> Option<IndicatorValueTypeNode> {

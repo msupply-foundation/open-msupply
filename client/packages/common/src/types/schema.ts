@@ -1229,10 +1229,10 @@ export type CustomerAndOrderTypeNode = {
 export type CustomerIndicatorInformationNode = {
   __typename: 'CustomerIndicatorInformationNode';
   customer: NameNode;
-  datetime: Scalars['DateTime']['output'];
+  /** Datetime should be null if no columns found */
+  datetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   indicatorInformation: Array<RequisitionIndicatorInformationNode>;
-  lineId: Scalars['String']['output'];
 };
 
 
@@ -2389,6 +2389,7 @@ export type InboundInvoiceCounts = {
 export type IndicatorColumnNode = {
   __typename: 'IndicatorColumnNode';
   columnNumber: Scalars['Int']['output'];
+  id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   value?: Maybe<IndicatorValueNode>;
   valueType?: Maybe<IndicatorValueTypeNode>;
@@ -2404,7 +2405,14 @@ export type IndicatorColumnNodeValueArgs = {
 export type IndicatorLineNode = {
   __typename: 'IndicatorLineNode';
   columns: Array<IndicatorColumnNode>;
+  customerIndicatorInfo: Array<CustomerIndicatorInformationNode>;
   line: IndicatorLineRowNode;
+};
+
+
+export type IndicatorLineNodeCustomerIndicatorInfoArgs = {
+  periodId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
 };
 
 export type IndicatorLineRowNode = {
@@ -5564,16 +5572,9 @@ export type ProgramIndicatorFilterInput = {
 export type ProgramIndicatorNode = {
   __typename: 'ProgramIndicatorNode';
   code?: Maybe<Scalars['String']['output']>;
-  customerIndicatorInfo: Array<CustomerIndicatorInformationNode>;
   id: Scalars['String']['output'];
   lineAndColumns: Array<IndicatorLineNode>;
   program: ProgramNode;
-};
-
-
-export type ProgramIndicatorNodeCustomerIndicatorInfoArgs = {
-  periodId: Scalars['String']['input'];
-  storeId: Scalars['String']['input'];
 };
 
 export type ProgramIndicatorResponse = ProgramIndicatorConnector;
@@ -6736,7 +6737,7 @@ export type RequisitionFilterInput = {
 
 export type RequisitionIndicatorInformationNode = {
   __typename: 'RequisitionIndicatorInformationNode';
-  column: IndicatorColumnNode;
+  columnId: Scalars['String']['output'];
   value: Scalars['String']['output'];
 };
 
