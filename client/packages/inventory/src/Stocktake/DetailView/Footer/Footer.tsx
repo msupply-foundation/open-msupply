@@ -49,12 +49,14 @@ export const Footer = () => {
       icon: <ArrowRightIcon />,
       onClick: changeLocationModal.onOpen,
       disabled: isDisabled,
+      shouldShrink: false,
     },
     {
       label: t('button.reduce-lines-to-zero'),
       icon: <RewindIcon />,
       onClick: reduceModal.onOpen,
       disabled: isDisabled,
+      shouldShrink: false,
     },
   ];
 

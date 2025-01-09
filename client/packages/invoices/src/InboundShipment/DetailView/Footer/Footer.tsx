@@ -77,18 +77,20 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: onDelete,
-      disabled: isDisabled,
+      disabled: isDisabled || !isManuallyCreated,
     },
     {
-      label: t('button.replenishment-return-lines'),
+      label: t('button.return-lines'),
       icon: <ArrowLeftIcon />,
       onClick: () => onReturnLines(selectedLines),
+      shouldShrink: false,
     },
     {
       label: t('button.zero-line-quantity'),
       icon: <RewindIcon />,
       onClick: onZeroQuantities,
       disabled: isDisabled,
+      shouldShrink: false,
     },
   ];
 

@@ -60,7 +60,8 @@ export const SplitButton = <T,>({
         />
 
         <ShrinkableBaseButton
-          shrink
+          shouldShrink={true}
+          shrinkThreshold="md"
           disabled={isDisabled}
           color={color}
           size="small"
@@ -76,9 +77,9 @@ export const SplitButton = <T,>({
             borderStartEndRadius: '24px',
             borderEndEndRadius: '24px',
           }}
-        >
-          <ChevronDownIcon />
-        </ShrinkableBaseButton>
+          label=""
+          startIcon={<ChevronDownIcon />}
+        />
         <Menu
           anchorEl={anchorEl}
           open={open}
