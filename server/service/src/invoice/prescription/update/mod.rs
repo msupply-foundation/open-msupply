@@ -12,7 +12,6 @@ use crate::{
 };
 
 mod generate;
-pub mod update_picked_date;
 mod validate;
 use generate::generate;
 use validate::validate;
