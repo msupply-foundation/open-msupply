@@ -35,3 +35,6 @@ pub const IMMUNISATION_CONTEXT_ID: &str = "Immunisation";
 /// Use this value for accurate average month length (i.e. when considered over
 /// a long time period)
 pub const DAYS_PER_MONTH: f64 = 365.25 / 12.0;
+
+pub const FEEDBACK_EMAIL: &str = "feedback@msupply.foundation";
+pub const SUPPORT_EMAIL: &str = "support@msupply.foundation";

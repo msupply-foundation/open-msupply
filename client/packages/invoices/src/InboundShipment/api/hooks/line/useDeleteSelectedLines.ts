@@ -56,6 +56,8 @@ export const useDeleteSelectedLines = (): (() => void) => {
               })
             );
             break;
+          case 'TransferredShipment':
+            throw Error(t('messages.cant-delete-transferred'));
           case 'CannotEditInvoice':
           case 'ForeignKeyError':
           case 'RecordNotFound':

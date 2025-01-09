@@ -11,6 +11,7 @@ mod diagnosis_create_table;
 mod item_direction_create_table;
 mod new_store_preferences;
 mod remove_contact_form_site_id;
+mod remove_contact_form_user_account_fk;
 mod remove_unique_description_on_tmp_breach;
 
 use crate::StorageConnection;
@@ -40,6 +41,7 @@ impl Migration for V2_05_00 {
             Box::new(add_elmis_code_to_program::Migrate),
             Box::new(diagnosis_add_to_invoice::Migrate),
             Box::new(add_email_retry_at::Migrate),
+            Box::new(remove_contact_form_user_account_fk::Migrate),
         ]
     }
 }
