@@ -4,6 +4,7 @@ import {
   DataTable,
   Grid,
   HeaderProps,
+  LocaleKey,
   NamePropertyNode,
   NothingHere,
   Pagination,
@@ -11,6 +12,7 @@ import {
   RecordWithId,
   SearchBar,
   TooltipTextCell,
+  translationExistsInLocale,
   Typography,
   useColumns,
   useTranslation,
@@ -26,7 +28,10 @@ const PropertyHeader = <T extends RecordWithId>({
   column,
 }: HeaderProps<T>): ReactElement => {
   const t = useTranslation();
-  const header = column.label === '' ? '' : t(column.label, column.labelProps);
+  const labelExistsInLocale = translationExistsInLocale(column.label);
+  const header = labelExistsInLocale
+    ? t(column.label as LocaleKey, column.labelProps)
+    : column.label;
   return (
     <Typography
       sx={{
