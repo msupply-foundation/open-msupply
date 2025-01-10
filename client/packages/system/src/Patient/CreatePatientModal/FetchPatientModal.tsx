@@ -123,7 +123,10 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
         </Stack>
 
         {error ? (
-          <ErrorWithDetails error="" details={error} />
+          <ErrorWithDetails
+            error={t('error.connection-error-central-server')}
+            details={error}
+          />
         ) : (
           <>
             {step === 'Linking' || step === 'Syncing' ? (

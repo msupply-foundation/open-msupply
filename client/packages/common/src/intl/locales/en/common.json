@@ -226,6 +226,7 @@
   "error.cce-asset-number-already-used": "CCE asset number already in use, please use another number",
   "error.code-no-match": "{{field}} not found in catalogue",
   "error.connection-error": "Unable to connect to server",
+  "error.connection-error-central-server": "Unable to connect to the central server",
   "error.connection-error-hint": "Check your network connection",
   "error.contact-trace-not-created": "Unable to create contact trace",
   "error.could-not-delete-immunisation-program": "Could not delete immunization program",
