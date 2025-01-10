@@ -1,10 +1,7 @@
-use std::{
-    future::Future,
-    time::{Duration, SystemTime},
-};
+use std::time::{Duration, SystemTime};
 
 use anyhow::Context;
-use reqwest::{Client, Response, StatusCode, Url};
+use reqwest::{Client, RequestBuilder, Response, StatusCode, Url};
 use serde::{Deserialize, Serialize};
 use tokio::task::JoinSet;
 
@@ -802,17 +799,16 @@ impl GqlTest {
             "variables": variables
         });
 
-        let response = with_retries(
-            (token, self.0.clone(), body),
-            |client, (token, url, body)| async move {
-                let mut client = client.post(url);
-                if let Some(token) = token {
-                    client = client.bearer_auth(token)
-                };
+        // let mut client = reqwest::Client::new().post(self.0.clone());
 
-                client.json(&body).send().await
-            },
-        )
+        let response = with_retries(|client| {
+            let mut client = client.post(self.0.clone());
+            if let Some(token) = token {
+                client = client.bearer_auth(token)
+            };
+
+            client.json(&body)
+        })
         .await?;
 
         let status = response.status();
@@ -839,20 +835,20 @@ impl GqlTest {
     }
 }
 
-async fn with_retries<F, Fut, D>(data: D, f: F) -> Result<Response, reqwest::Error>
+async fn with_retries<F>(f: F) -> Result<Response, reqwest::Error>
 where
-    Fut: Future<Output = Result<Response, reqwest::Error>> + Send + 'static,
-    F: Fn(Client, D) -> Fut,
-    D: Clone,
+    F: FnOnce(Client) -> RequestBuilder,
 {
     let mut max_retries = 10;
-    let result = loop {
-        let client = reqwest::Client::builder()
-            .connect_timeout(Duration::from_secs(1))
-            .build()
-            .unwrap();
+    let client = reqwest::Client::builder()
+        .connect_timeout(Duration::from_secs(1))
+        .build()
+        .unwrap();
 
-        let result = f(client, data.clone()).await;
+    let client = f(client);
+
+    let result = loop {
+        let result = client.try_clone().unwrap().send().await;
 
         let (status, is_connect_error) = match result.as_ref() {
             Ok(r) => (Some(r.status().clone()), false),
