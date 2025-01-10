@@ -5,7 +5,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { mapSyncError, useSync } from '../../Sync';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { usePatientApi } from '../api/hooks/utils/usePatientApi';
 
 export type Step = 'Start' | 'Linking' | 'Syncing' | 'Synced';
@@ -27,13 +27,18 @@ export const useFetchPatient = () => {
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { mutateAsync: getSyncStatus } = useSync.utils.mutateSyncStatus();
 
+  const hasErrored = useRef<boolean>();
+
   const pollTillSynced = useCallback(async () => {
     while (true) {
       const result = await getSyncStatus();
       if (result?.error) {
         const error = mapSyncError(t, result.error, 'error.unknown-sync-error');
+
         setError(error.error);
-        continue;
+        hasErrored.current = true;
+
+        break;
       }
 
       if (!result?.isSyncing) {
@@ -62,7 +67,7 @@ export const useFetchPatient = () => {
       await manualSync();
       await pollTillSynced();
       await queryClient.invalidateQueries(api.keys.list());
-      setStep('Synced');
+      if (!hasErrored.current) setStep('Synced');
     },
     [api.keys, linkPatientToStore, manualSync, queryClient, pollTillSynced, t]
   );
