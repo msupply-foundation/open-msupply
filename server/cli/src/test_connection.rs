@@ -11,6 +11,7 @@ use server::configuration;
 use service::{
     apis::login_v4::{LoginApiV4, LoginInputV4, LoginUserTypeV4},
     app_data::{AppDataService, AppDataServiceTrait},
+    email::{EmailService, EmailServiceError, EmailServiceTrait},
     service_provider::ServiceProvider,
     settings::is_develop,
     sync::{
@@ -84,6 +85,7 @@ async fn perform_tests(gui_tx: mpsc::Sender<GuiState>, args: Args, gui: bool) {
         Box::new(LoginTest),
         Box::new(SyncTest),
         Box::new(SyncV6Test),
+        Box::new(MailConnectionTest),
     ];
 
     let mut gui_state = GuiState::new(
@@ -336,6 +338,32 @@ impl Test for SyncV6Test {
             .map_err(|err| anyhow!("Failed to get site status from sync API V6: {:?}", err))?;
 
         Ok("Successfully connected to sync server V6".to_string())
+    }
+}
+
+struct MailConnectionTest;
+
+#[async_trait]
+impl Test for MailConnectionTest {
+    async fn run(&self, test_data: &mut TestData) -> Result<String> {
+        let config = test_data
+            .server_config
+            .as_ref()
+            .ok_or(anyhow!("No config loaded".to_string()))?;
+
+        info!("Testing mail connection");
+
+        let email_service = EmailService::new(config.mail.clone());
+
+        match email_service.test_connection() {
+            Ok(true) => Ok("Successfully connected to mail server".to_string()),
+            Ok(false) => Err(anyhow!("Failed to connect to mail server")),
+
+            Err(EmailServiceError::NotConfigured) => {
+                Ok("No mail settings found in configuration. Mail setup is only required on OMS Central server.".to_string())
+            }
+            Err(err) => Err(anyhow!("Failed to connect to mail server: {:?}", err)),
+        }
     }
 }
 
