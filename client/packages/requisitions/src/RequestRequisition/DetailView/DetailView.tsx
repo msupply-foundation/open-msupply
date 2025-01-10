@@ -37,8 +37,6 @@ export const DetailView: FC = () => {
       !!data
     );
 
-  console.log('other party id', data?.otherPartyId);
-
   const onRowClick = useCallback((line: RequestLineFragment) => {
     navigate(buildItemEditRoute(line.requisitionNumber, line.item.id));
   }, []);
