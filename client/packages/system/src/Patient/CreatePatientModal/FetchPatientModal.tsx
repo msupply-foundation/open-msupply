@@ -47,8 +47,6 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
     };
   }, [hideDialog, onClose, showDialog]);
 
-  console.log('error', error);
-
   const message = (() => {
     switch (step) {
       case 'Start':
