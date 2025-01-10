@@ -355,7 +355,7 @@ cargo run --bin test_connection --username [user] --password [pass]
 
 or build and run the binary. pass in `--features postgres` to run the postgres version.
 
-There is a command line output, or a GUI will open if you do not supply username and password parameters.
+There is a command line output, or a GUI will open if you do not supply a username parameter.
 
 # [Backup and Restore](cli/src/backup/README.md)
 
