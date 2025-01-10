@@ -384,6 +384,7 @@ impl GuiState {
                 ("Login".to_string(), TestState::Pending),
                 ("Sync V5".to_string(), TestState::Pending),
                 ("Sync V6".to_string(), TestState::Pending),
+                ("Mail connection".to_string(), TestState::Pending),
             ],
             username,
             password,
