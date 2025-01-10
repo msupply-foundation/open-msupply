@@ -6,8 +6,10 @@ use crate::{
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use chrono::Utc;
 use repository::{
-    ActivityLogType, ApprovalStatusType, EqualFilter, ItemRow, NumberRowType, RepositoryError,
-    Requisition, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
+    ActivityLogType, ApprovalStatusType, EqualFilter, IndicatorValueRow,
+    IndicatorValueRowRepository, ItemRow, NumberRowType, RepositoryError, Requisition,
+    RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
     RequisitionRowRepository, RequisitionStatus, RequisitionType, StorageConnection, StoreFilter,
     StoreRepository,
 };
@@ -93,6 +95,32 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
 
         for line in new_requisition_lines.iter() {
             requisition_line_row_repository.upsert_one(line)?;
+        }
+
+        let customer_name_id = StoreRepository::new(connection)
+            .query_by_filter(
+                StoreFilter::new().id(EqualFilter::equal_to(&request_requisition.store_row.id)),
+            )?
+            .pop()
+            .ok_or(RepositoryError::NotFound)?
+            .name_row
+            .id;
+
+        let generate_indicator_value_input = GenerateTransferIndicatorInput {
+            connection,
+            customer_store_id: request_requisition.store_row.id.clone(),
+            supplier_store_id: record_for_processing.other_party_store_id.clone(),
+            customer_name_id,
+            period_id: request_requisition.period.clone().and_then(|p| Some(p.id)),
+        };
+
+        let new_indicator_values =
+            generate_response_requisition_indicator_values(generate_indicator_value_input)?;
+
+        let indicator_value_repository = IndicatorValueRowRepository::new(connection);
+
+        for value in new_indicator_values.iter() {
+            indicator_value_repository.upsert_one(value)?;
         }
 
         let result = format!(
@@ -241,4 +269,53 @@ fn generate_response_requisition_lines(
         .collect();
 
     Ok(response_lines)
+}
+
+struct GenerateTransferIndicatorInput<'a> {
+    connection: &'a StorageConnection,
+    customer_store_id: String,
+    supplier_store_id: String,
+    customer_name_id: String,
+    period_id: Option<String>,
+}
+
+fn generate_response_requisition_indicator_values(
+    input: GenerateTransferIndicatorInput,
+) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
+    if let Some(period_id) = input.period_id {
+        let filter = IndicatorValueFilter::new()
+            .store_id(EqualFilter::equal_to(&input.customer_store_id))
+            .customer_name_id(EqualFilter::equal_to(&input.customer_name_id))
+            .period_id(EqualFilter::equal_to(&period_id));
+
+        let supplier_store_id = input.supplier_store_id.clone();
+
+        let request_indicator_values =
+            IndicatorValueRepository::new(input.connection).query_by_filter(filter)?;
+
+        let response_indicator_values = request_indicator_values
+            .into_iter()
+            .map(
+                |IndicatorValueRow {
+                     id: _,
+                     customer_name_link_id,
+                     store_id: _,
+                     period_id,
+                     indicator_line_id,
+                     indicator_column_id,
+                     value,
+                 }| IndicatorValueRow {
+                    id: uuid(),
+                    customer_name_link_id: customer_name_link_id,
+                    store_id: supplier_store_id.clone(),
+                    period_id: period_id,
+                    indicator_line_id: indicator_line_id,
+                    indicator_column_id: indicator_column_id,
+                    value: value,
+                },
+            )
+            .collect();
+        return Ok(response_indicator_values);
+    }
+    Ok(vec![])
 }
