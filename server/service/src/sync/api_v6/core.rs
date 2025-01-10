@@ -1,6 +1,7 @@
 use reqwest::Client;
 use thiserror::Error;
 use url::ParseError;
+use util::{with_retries, WithRetries};
 
 use super::*;
 
@@ -60,7 +61,14 @@ impl SyncApiV6 {
             sync_v6_version: *sync_v6_version,
         };
 
-        let result = Client::new().post(url.clone()).json(&request).send().await;
+        let result = with_retries(
+            WithRetries {
+                retries: 3,
+                timeout_seconds: 2,
+            },
+            |client| client.post(url.clone()).json(&request),
+        )
+        .await;
 
         let error = match response_or_err(result).await {
             Ok(SyncPullResponseV6::Data(data)) => return Ok(data),
@@ -91,7 +99,14 @@ impl SyncApiV6 {
             sync_v6_version: *sync_v6_version,
         };
 
-        let result = Client::new().post(url.clone()).json(&request).send().await;
+        let result = with_retries(
+            WithRetries {
+                retries: 3,
+                timeout_seconds: 2,
+            },
+            |client| client.post(url.clone()).json(&request),
+        )
+        .await;
 
         let error = match response_or_err(result).await {
             Ok(SyncPushResponseV6::Data(data)) => return Ok(data),
