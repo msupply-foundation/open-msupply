@@ -350,18 +350,12 @@ This tool is mostly intended for support, to confirm everything is configured co
 You can run the `test_connection` tool with:
 
 ```bash
-cargo run --bin test_connection
+cargo run --bin test_connection --username [user] --password [pass]
 ```
 
 or build and run the binary. pass in `--features postgres` to run the postgres version.
-Parameters are available too:
 
-- `--gui` will show the GUI version
-- `--username [user]` to specify a username to login to oms with
-- `--password [pass]` to specify the password for login test
-- `--server_uuid [uuid]` to specify the hardware id
-
-There is both a command line output, or a GUI output if you prefer.
+There is a command line output, or a GUI will open if you do not supply username and password parameters.
 
 # [Backup and Restore](cli/src/backup/README.md)
 
