@@ -47,6 +47,8 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
     };
   }, [hideDialog, onClose, showDialog]);
 
+  console.log('error', error);
+
   const message = (() => {
     switch (step) {
       case 'Start':
@@ -123,10 +125,7 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
         </Stack>
 
         {error ? (
-          <ErrorWithDetails
-            error={t('error.connection-error-central-server')}
-            details={''}
-          />
+          <ErrorWithDetails error={error} details={''} />
         ) : (
           <>
             {step === 'Linking' || step === 'Syncing' ? (
