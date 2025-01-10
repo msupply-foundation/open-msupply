@@ -802,13 +802,18 @@ impl GqlTest {
             "variables": variables
         });
 
-        let mut client = reqwest::Client::new().post(self.0.clone());
+        let response = with_retries(
+            (token, self.0.clone(), body),
+            |client, (token, url, body)| async move {
+                let mut client = client.post(url);
+                if let Some(token) = token {
+                    client = client.bearer_auth(token)
+                };
 
-        if let Some(token) = token {
-            client = client.bearer_auth(token)
-        };
-
-        let response = client.json(&body).send().await?;
+                client.json(&body).send().await
+            },
+        )
+        .await?;
 
         let status = response.status();
         let text_result = response.text().await?;
@@ -832,4 +837,36 @@ impl GqlTest {
 
         Ok(result)
     }
+}
+
+async fn with_retries<F, Fut, D>(data: D, f: F) -> Result<Response, reqwest::Error>
+where
+    Fut: Future<Output = Result<Response, reqwest::Error>> + Send + 'static,
+    F: Fn(Client, D) -> Fut,
+    D: Clone,
+{
+    let mut max_retries = 10;
+    let result = loop {
+        let client = reqwest::Client::builder()
+            .connect_timeout(Duration::from_secs(1))
+            .build()
+            .unwrap();
+
+        let result = f(client, data.clone()).await;
+
+        let (status, is_connect_error) = match result.as_ref() {
+            Ok(r) => (Some(r.status().clone()), false),
+            Err(e) => (e.status().clone(), e.is_connect()),
+        };
+
+        if (is_connect_error || status == Some(StatusCode::REQUEST_TIMEOUT)) && max_retries > 0 {
+            println!("waiting {}", max_retries);
+            max_retries = max_retries - 1;
+            continue;
+        }
+
+        break result;
+    };
+
+    result
 }
