@@ -343,6 +343,26 @@ cargo run --bin remote_server_cli -- backup
 cargo run --bin remote_server_cli -- restore -b D2024_08_22T05_05_16 -s
 ```
 
+# Config check tool
+
+This tool is mostly intended for support, to confirm everything is configured correctly. It checks things like the database connection, and connecting to central servers for sync.
+
+You can run the `test_connection` tool with:
+
+```bash
+cargo run --bin test_connection
+```
+
+or build and run the binary. pass in `--features postgres` to run the postgres version.
+Parameters are available too:
+
+- `--gui` will show the GUI version
+- `--username [user]` to specify a username to login to oms with
+- `--password [pass]` to specify the password for login test
+- `--server_uuid [uuid]` to specify the hardware id
+
+There is both a command line output, or a GUI output if you prefer.
+
 # [Backup and Restore](cli/src/backup/README.md)
 
 # Discovery
