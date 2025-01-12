@@ -59,7 +59,6 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
   return user ? (
     <PaperClickPopover
       placement="top"
-      width={300}
       Content={
         <PaperPopoverSection
           label={getLocalisedFullName(user.firstName, user.lastName)}
