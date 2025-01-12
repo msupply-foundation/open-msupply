@@ -80,7 +80,7 @@ export const DistributionWidget: React.FC = () => {
           flex={1}
           flexDirection="column"
         >
-          <Grid item>
+          <Grid>
             <StatsPanel
               error={outboundCountError as ApiException}
               isError={isOutboundCountError}
@@ -101,7 +101,7 @@ export const DistributionWidget: React.FC = () => {
                 .build()}
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <StatsPanel
               error={requisitionCountError as ApiException}
               isError={isRequisitionCountError}
@@ -123,7 +123,6 @@ export const DistributionWidget: React.FC = () => {
             />
           </Grid>
           <Grid
-            item
             flex={1}
             container
             justifyContent="flex-end"

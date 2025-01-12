@@ -35,7 +35,7 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
           label={t('label.item', { count: 1 })}
           justifyContent="flex-end"
         />
-        <Grid item flex={1}>
+        <Grid flex={1}>
           <StockItemSearchInput
             autoFocus={!item}
             openOnFocus={!item}

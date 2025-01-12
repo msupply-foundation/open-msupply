@@ -43,7 +43,7 @@ export const RelatedDocumentsSection: FC = () => {
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
-      <Grid item direction="column" container gap={0.5}>
+      <Grid direction="column" container gap={0.5}>
         {!shipments?.totalCount && (
           <PanelLabel>{t('messages.no-shipments-yet')}</PanelLabel>
         )}
@@ -55,7 +55,7 @@ export const RelatedDocumentsSection: FC = () => {
             )}
             key={shipment.id}
           >
-            <Grid item>
+            <Grid>
               <RelatedDocumentsRow
                 key={shipment.id}
                 label={t('label.shipment')}

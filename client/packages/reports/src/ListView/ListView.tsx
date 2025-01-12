@@ -81,6 +81,7 @@ export const ListView = () => {
         sx={{
           backgroundColor: 'background.toolbar',
           paddingBottom: '32px',
+          width: '100%',
         }}
         justifyContent="space-evenly"
       >

@@ -155,7 +155,7 @@ export const SyncModal = ({
           </Row>
           <Row title={t('sync-info.last-sync-duration')}>
             <Grid display="flex" container gap={1}>
-              <Grid item flex={0} style={{ whiteSpace: 'nowrap' }}>
+              <Grid flex={0} style={{ whiteSpace: 'nowrap' }}>
                 {DateUtils.formatDuration(durationAsDate)}
               </Grid>
             </Grid>
@@ -192,10 +192,10 @@ interface RowProps {
 
 const Row: React.FC<PropsWithChildren<RowProps>> = ({ title, children }) => (
   <Grid container padding={1}>
-    <Grid item flex={1} flexBasis="40%">
+    <Grid flex={1} flexBasis="40%">
       <Typography fontWeight={700}>{title}</Typography>
     </Grid>
-    <Grid item flex={1} flexBasis="60%">
+    <Grid flex={1} flexBasis="60%">
       {children}
     </Grid>
   </Grid>
@@ -212,13 +212,11 @@ const FormattedSyncDate = ({ date }: { date: Date | null }) => {
   })} )`;
 
   return (
-    <Grid display="flex" container gap={1}>
-      <Grid item flex={0} style={{ whiteSpace: 'nowrap' }}>
+    <Grid display="flex" flexDirection="row" container gap={1}>
+      <Grid style={{ whiteSpace: 'nowrap' }}>
         {Formatter.sentenceCase(relativeDateTime(date))}
       </Grid>
-      <Grid item flex={1} style={{ whiteSpace: 'nowrap' }}>
-        {relativeTime}
-      </Grid>
+      <Grid style={{ whiteSpace: 'nowrap' }}>{relativeTime}</Grid>
     </Grid>
   );
 };

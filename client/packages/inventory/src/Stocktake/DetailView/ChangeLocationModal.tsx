@@ -34,10 +34,10 @@ export const ChangeLocationConfirmationModal = ({
       message={t('messages.confirm-change-location')}
       buttons={
         <>
-          <Grid item>
+          <Grid>
             <DialogButton variant="cancel" onClick={onCancel} />
           </Grid>
-          <Grid item>
+          <Grid>
             <DialogButton
               variant="ok"
               onClick={async () => {

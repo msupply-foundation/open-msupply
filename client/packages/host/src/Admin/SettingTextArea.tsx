@@ -62,7 +62,6 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
       {value.enabled && (
         <Grid container flexDirection="column" alignItems="flex-end">
           <Grid
-            item
             sx={{
               marginBottom: '5px',
               width: '100%',
@@ -86,7 +85,7 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
               }}
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <ButtonWithIcon
               Icon={<SaveIcon />}
               label={t('button.save')}

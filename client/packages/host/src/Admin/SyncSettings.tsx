@@ -109,7 +109,7 @@ const SyncSettingsForm = ({
           />
         }
       />
-      <Grid item justifyContent="flex-end" width="100%" display="flex">
+      <Grid justifyContent="flex-end" width="100%" display="flex">
         <LoadingButton
           isLoading={isSaving}
           startIcon={<SaveIcon />}
@@ -195,7 +195,7 @@ export const SyncSettings = ({}) => {
   return (
     <Grid container>
       {!syncSettings ? (
-        <Grid item justifyContent="center" width="100%" display="flex">
+        <Grid justifyContent="center" width="100%" display="flex">
           <CircularProgress size={20} />
         </Grid>
       ) : (

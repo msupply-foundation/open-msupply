@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
-import { Grid } from '@mui/material';
 import { PropsWithChildrenOnly } from '@common/types';
+import { Grid } from '@openmsupply-client/common';
 
 export const DetailContainer: FC<
   PropsWithChildrenOnly & { paddingTop?: number }

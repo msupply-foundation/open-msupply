@@ -18,7 +18,7 @@ export const NotFound: React.FC = () => {
       alignContent="center"
       sx={{ height: '100%' }}
     >
-      <Grid item display="flex" justifyContent="center">
+      <Grid display="flex" justifyContent="center">
         <Grow in timeout={1000}>
           <div>
             <UnhappyMan />

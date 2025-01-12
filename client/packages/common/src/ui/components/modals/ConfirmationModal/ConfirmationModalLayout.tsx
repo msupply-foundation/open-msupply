@@ -24,19 +24,17 @@ export const ConfirmationModalLayout = ({
     <BasicModal width={400} height={200} open={isOpen}>
       <Grid container gap={1} flex={1} padding={4} flexDirection="column">
         <Grid container gap={1} flexDirection="row">
-          <Grid item>
+          <Grid>
             <InfoIcon color="secondary" />
           </Grid>
-          <Grid item>
+          <Grid>
             <Typography variant="h6">{title}</Typography>
           </Grid>
         </Grid>
-        <Grid item>
+        <Grid>
           <Typography style={{ whiteSpace: 'pre-line' }}>{message}</Typography>
         </Grid>
-        <Grid item margin={2}>
-          {children}
-        </Grid>
+        <Grid margin={2}>{children}</Grid>
         <Grid
           container
           gap={1}
