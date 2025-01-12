@@ -119,7 +119,7 @@ export const AutocompleteList = <T,>({
         forcePopupIcon={false}
         options={mappedOptions}
         renderOption={optionRenderer}
-        componentsProps={{
+        slotProps={{
           paper: {
             sx: {
               backgroundColor: theme => theme.palette.background.toolbar,
