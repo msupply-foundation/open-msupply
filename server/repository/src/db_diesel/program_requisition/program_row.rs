@@ -1,4 +1,6 @@
 use super::program_row::program::dsl as program_dsl;
+use chrono::NaiveDateTime;
+use program::deleted_datetime;
 
 use crate::{
     db_diesel::{
@@ -19,6 +21,7 @@ table! {
         context_id -> Text,
         is_immunisation -> Bool,
         elmis_code -> Nullable<Text>,
+        deleted_datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -36,6 +39,7 @@ pub struct ProgramRow {
     pub context_id: String,
     pub is_immunisation: bool,
     pub elmis_code: Option<String>,
+    pub deleted_datetime: Option<NaiveDateTime>,
 }
 
 pub struct ProgramRowRepository<'a> {
@@ -63,6 +67,13 @@ impl<'a> ProgramRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::update(program_dsl::program.filter(program_dsl::id.eq(id)))
+            .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 }
 
