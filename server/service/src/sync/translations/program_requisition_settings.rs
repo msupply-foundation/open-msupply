@@ -194,6 +194,7 @@ fn generate_requisition_program(
         context_id: context_row.id.clone(),
         is_immunisation: master_list.is_immunisation.unwrap_or(false),
         elmis_code: program_settings.elmis_code.clone(),
+        deleted_datetime: None,
     };
 
     let mut program_requisition_settings_rows = Vec::new();
