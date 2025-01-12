@@ -24,7 +24,7 @@ export const BasicTextInput = React.forwardRef<
     {
       sx,
       style,
-      InputProps,
+      slotProps,
       error,
       required,
       textAlign,
@@ -73,27 +73,28 @@ export const BasicTextInput = React.forwardRef<
           ].flat()}
           variant="standard"
           size="small"
-          InputProps={{
-            disableInjectingGlobalStyles: true,
-            disableUnderline: error ? true : false,
-            ...InputProps,
-            sx: {
-              border: theme =>
-                error ? `2px solid ${theme.palette.error.main}` : 'none',
-              backgroundColor: theme =>
-                props.disabled
-                  ? theme.palette.background.toolbar
-                  : theme.palette.background.menu,
-              borderRadius: '8px',
-              padding: '4px 8px',
-              ...InputProps?.sx,
+          slotProps={{
+            input: {
+              disableInjectingGlobalStyles: true,
+              disableUnderline: error ? true : false,
+              ...slotProps?.input,
+              sx: {
+                border: theme =>
+                  error ? `2px solid ${theme.palette.error.main}` : 'none',
+                backgroundColor: theme =>
+                  props.disabled
+                    ? theme.palette.background.toolbar
+                    : theme.palette.background.menu,
+                borderRadius: '8px',
+                padding: '4px 8px',
+              },
             },
+            htmlInput: {
+              style: props?.disabled ? { textOverflow: 'ellipsis' } : {},
+              inputMode: props?.disabled ? undefined : props.inputMode,
+            },
+            ...slotProps,
           }}
-          inputProps={
-            props.disabled
-              ? { style: { textOverflow: 'ellipsis' } }
-              : { inputMode: props.inputMode }
-          }
           {...props}
         />
         <Box width={2}>

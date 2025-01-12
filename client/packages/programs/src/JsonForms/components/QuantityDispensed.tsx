@@ -193,8 +193,10 @@ const UIComponent = (props: ControlProps) => {
         Input={
           <Box flexBasis="100%" display="flex" alignItems="center" gap={2}>
             <NumericTextInput
-              InputProps={{
-                sx: { '& .MuiInput-input': { textAlign: 'right' } },
+              slotProps={{
+                input: {
+                  sx: { '& .MuiInput-input': { textAlign: 'right' } },
+                },
               }}
               onChange={value => {
                 if (value !== undefined) {

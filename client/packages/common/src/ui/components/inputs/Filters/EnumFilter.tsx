@@ -35,9 +35,11 @@ export const EnumFilter: FC<{
     <Select
       options={options}
       placeholder={name}
-      InputProps={{
-        sx: {
-          width: FILTER_WIDTH,
+      slotProps={{
+        input: {
+          sx: {
+            width: FILTER_WIDTH,
+          },
         },
       }}
       sx={FilterLabelSx}
