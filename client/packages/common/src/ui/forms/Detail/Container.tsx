@@ -7,6 +7,7 @@ export const DetailContainer: FC<
 > = ({ children, paddingTop }) => (
   <Grid
     container
+    width="100%"
     gap={4}
     padding={4}
     paddingTop={paddingTop}
