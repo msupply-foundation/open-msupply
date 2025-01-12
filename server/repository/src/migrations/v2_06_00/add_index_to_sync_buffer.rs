@@ -11,7 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-             CREATE INDEX "index_sync_buffer_all" ON "sync_buffer" (action, table_name, integration_datetime, integration_error, source_site_id);
+             CREATE INDEX "index_sync_buffer_combined_index" ON "sync_buffer" (action, table_name, integration_datetime, source_site_id);
         "#
         )?;
 
