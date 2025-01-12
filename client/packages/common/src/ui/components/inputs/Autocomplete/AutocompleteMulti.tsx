@@ -92,7 +92,7 @@ export function AutocompleteMulti<
       multiple
       onChange={onChange}
       options={options}
-      componentsProps={{
+      slotProps={{
         paper: {
           elevation: 3,
           sx: {
