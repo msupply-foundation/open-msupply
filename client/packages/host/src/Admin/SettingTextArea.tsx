@@ -74,13 +74,15 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
               maxRows={10}
               minRows={10}
               style={{ padding: '0 0 0 50px' }}
-              inputProps={{
-                sx: {
-                  borderColor: 'gray.main',
-                  borderStyle: 'solid',
-                  borderWidth: '1px',
-                  borderRadius: '5px',
-                  padding: '3px',
+              slotProps={{
+                htmlInput: {
+                  sx: {
+                    borderColor: 'gray.main',
+                    borderStyle: 'solid',
+                    borderWidth: '1px',
+                    borderRadius: '5px',
+                    padding: '3px',
+                  },
                 },
               }}
             />

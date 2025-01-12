@@ -12,7 +12,7 @@ export type BufferedTextInputProps = BasicTextInputProps;
  */
 
 export const BufferedTextInput: FC<BufferedTextInputProps> = ({
-  InputProps,
+  slotProps,
   value,
   onChange,
   ...rest
@@ -23,7 +23,7 @@ export const BufferedTextInput: FC<BufferedTextInputProps> = ({
     <BasicTextInput
       {...rest}
       value={buffer}
-      InputProps={InputProps}
+      slotProps={slotProps}
       onChange={e => {
         setBuffer(e.target.value);
         onChange?.(e);

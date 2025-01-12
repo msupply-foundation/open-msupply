@@ -131,14 +131,14 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
             value={draft.name}
             onChange={e => onUpdate({ name: e.target.value })}
             label={t('label.name')}
-            InputLabelProps={{ shrink: true }}
+            slotProps={{ inputLabel: { shrink: true } }}
           />
           <BasicTextInput
             fullWidth
             value={draft.code}
             onChange={e => onUpdate({ code: e.target.value })}
             label={t('label.code')}
-            InputLabelProps={{ shrink: true }}
+            slotProps={{ inputLabel: { shrink: true } }}
           />
           <ColdStorageTypeInput
             value={draft.coldStorageType ?? null}

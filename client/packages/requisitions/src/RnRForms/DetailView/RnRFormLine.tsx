@@ -260,10 +260,12 @@ export const RnRFormLine = ({
         <BasicTextInput
           multiline
           sx={{ width: '200px', color: textColor }}
-          InputProps={{
-            sx: {
-              backgroundColor: theme.palette.background.default,
-              '& .MuiInput-input': { color: textColor },
+          slotProps={{
+            input: {
+              sx: {
+                backgroundColor: theme.palette.background.default,
+                '& .MuiInput-input': { color: textColor },
+              },
             },
           }}
           value={line.comment ?? ''}

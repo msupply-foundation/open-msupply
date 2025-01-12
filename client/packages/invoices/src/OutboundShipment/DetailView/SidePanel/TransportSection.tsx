@@ -32,9 +32,11 @@ export const TransportSectionComponent: FC = () => {
             update({ transportReference: e.target.value });
           }}
           value={referenceBuffer}
-          InputProps={{
-            style: {
-              backgroundColor: 'white',
+          slotProps={{
+            input: {
+              style: {
+                backgroundColor: 'white',
+              },
             },
           }}
         />

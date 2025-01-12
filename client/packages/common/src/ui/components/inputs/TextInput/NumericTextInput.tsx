@@ -180,7 +180,7 @@ export const NumericTextInput = React.forwardRef<
   (
     {
       sx,
-      InputProps,
+      slotProps,
       width = DEFAULT_NUMERIC_TEXT_INPUT_WIDTH,
       onChange = () => {},
       defaultValue,
@@ -275,13 +275,15 @@ export const NumericTextInput = React.forwardRef<
           ...sx,
         }}
         inputMode={inputMode ?? 'numeric'}
-        InputProps={{
-          endAdornment: endAdornment ? (
-            <InputAdornment position="end" sx={{ paddingBottom: '2px' }}>
-              {endAdornment}
-            </InputAdornment>
-          ) : undefined,
-          ...InputProps,
+        slotProps={{
+          input: {
+            endAdornment: endAdornment ? (
+              <InputAdornment position="end" sx={{ paddingBottom: '2px' }}>
+                {endAdornment}
+              </InputAdornment>
+            ) : undefined,
+          },
+          ...slotProps,
         }}
         onChange={e => {
           if (!isDirty) setIsDirty(true);

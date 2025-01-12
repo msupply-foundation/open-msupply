@@ -230,10 +230,12 @@ const UIComponent = (props: ControlProps) => {
           Input={
             <NumericTextInput
               disabled={true}
-              inputProps={{
-                value: event?.data ?? '',
-                error: !!errors,
-                helperText: errors,
+              slotProps={{
+                htmlInput: {
+                  value: event?.data ?? '',
+                  error: !!errors,
+                  helperText: errors,
+                },
               }}
             />
           }

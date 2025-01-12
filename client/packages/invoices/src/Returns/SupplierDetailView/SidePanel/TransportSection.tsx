@@ -34,9 +34,11 @@ export const TransportSectionComponent: FC = () => {
             debouncedUpdate({ id, transportReference });
           }}
           value={transportReference}
-          InputProps={{
-            style: {
-              backgroundColor: 'white',
+          slotProps={{
+            input: {
+              style: {
+                backgroundColor: 'white',
+              },
             },
           }}
         />

@@ -100,9 +100,11 @@ export const MultipleNumberInputCell = <T extends RecordWithId>({
           disabled={isDisabled}
           autoFocus={autoFocus}
           {...TextInputProps}
-          InputProps={{
-            sx: { '& .MuiInput-input': { textAlign: 'right' } },
-            ...TextInputProps?.InputProps,
+          slotProps={{
+            input: {
+              sx: { '& .MuiInput-input': { textAlign: 'right' } },
+              ...TextInputProps?.InputProps,
+            },
           }}
           onChange={num => {
             const newValue = num === undefined ? 0 : num;

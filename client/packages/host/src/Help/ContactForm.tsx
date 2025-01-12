@@ -97,9 +97,11 @@ export const ContactForm = () => {
             onChange={e => {
               updateDraft({ body: e.target.value });
             }}
-            InputProps={{
-              sx: {
-                backgroundColor: 'background.menu',
+            slotProps={{
+              input: {
+                sx: {
+                  backgroundColor: 'background.menu',
+                },
               },
             }}
             fullWidth
