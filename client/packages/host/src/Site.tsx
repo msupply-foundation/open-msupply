@@ -18,8 +18,9 @@ import {
   SnackbarProvider,
   BarcodeScannerProvider,
   DetailLoadingSkeleton,
+  useIsGapsStoreOnly
 } from '@openmsupply-client/common';
-import { AppDrawer, AppBar, Footer, NotFound } from './components';
+import { AppDrawer, AppBar, MobileAppDrawer, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
 import { AppRoute } from '@openmsupply-client/config';
 import { Settings } from './Admin/Settings';
@@ -63,6 +64,7 @@ export const Site: FC = () => {
   const getPageTitle = useGetPageTitle();
   const { setPageTitle } = useHostContext();
   const pageTitle = getPageTitle(location.pathname);
+  const isGaps = useIsGapsStoreOnly();
 
   useEffect(() => {
     setPageTitle(pageTitle);
@@ -74,13 +76,14 @@ export const Site: FC = () => {
         <CommandK>
           <SnackbarProvider maxSnack={3}>
             <BarcodeScannerProvider>
-              <AppDrawer />
+              {!isGaps && <AppDrawer />}                                          
               <Box
                 flex={1}
                 display="flex"
                 flexDirection="column"
                 overflow="hidden"
-              >
+              >                 
+                {isGaps && <MobileAppDrawer />}
                 <AppBar />
                 <NotifyOnLogin />
                 <Box display="flex" flex={1} overflow="auto">

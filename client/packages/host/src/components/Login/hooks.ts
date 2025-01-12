@@ -8,7 +8,7 @@ import {
   useInitialisationStatus,
   useLocation,
   useNavigate,
-  useIsGaps,
+  useIsGapsStoreOnly,
 } from '@openmsupply-client/common';
 
 interface LoginForm {
@@ -42,7 +42,7 @@ export const useLoginForm = (
   const { data: initStatus } = useInitialisationStatus();
   const navigate = useNavigate();
   const location = useLocation();
-  const isGaps = useIsGaps();
+  const isGaps = useIsGapsStoreOnly();
   const { mostRecentUsername, login, isLoggingIn } = useAuthContext();
   const { password, setPassword, setUsername, username, error, setError } =
     state;  

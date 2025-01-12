@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useMatch, Link } from 'react-router-dom';
-import { useDrawer } from '@common/hooks';
+import { useDrawer, useIsGapsStoreOnly } from '@common/hooks';
 import { ChevronDownIcon } from '@common/icons';
 
 const useSelectedNavMenuItem = (
@@ -88,6 +88,8 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   } = props;
   const drawer = useDrawer();
 
+  const isGaps = useIsGapsStoreOnly();
+
   const selected = useSelectedNavMenuItem(to, !!end, drawer.isOpen);
   const match = useMatch({ path: `${to}/*` });
   const isSelectedParentItem = inactive && !!match;
@@ -96,6 +98,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
     // reset the clicked nav path when navigating
     // otherwise the child menu remains open
     drawer.setClickedNavPath(undefined);
+    if (isGaps) drawer.close()
     if (onClick) onClick();
     drawer.onClick();
   };

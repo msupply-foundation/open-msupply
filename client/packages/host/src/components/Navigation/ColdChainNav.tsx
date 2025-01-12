@@ -8,6 +8,7 @@ import {
   AppNavSection,
   ThermometerIcon,
   UserStoreNodeFragment,
+  useIsGapsStoreOnly,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
@@ -22,9 +23,10 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
   );
   const t = useTranslation();
   const visible = store?.preferences.vaccineModule ?? false;
+  const isGaps = useIsGapsStoreOnly();
 
   return (
-    <AppNavSection isActive={isActive} to={AppRoute.Coldchain}>
+    <AppNavSection isActive={isGaps ? isGaps : isActive} to={AppRoute.Coldchain}>
       <AppNavLink
         visible={visible}
         end={false}
@@ -33,7 +35,7 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
         text={t('cold-chain')}
         inactive
       />
-      <Collapse in={isActive}>
+      <Collapse in={isGaps ? isGaps : isActive}>
         <List>
           <AppNavLink
             visible={visible}
