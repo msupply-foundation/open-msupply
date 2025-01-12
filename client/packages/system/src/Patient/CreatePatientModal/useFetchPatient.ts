@@ -27,7 +27,7 @@ export const useFetchPatient = () => {
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { mutateAsync: getSyncStatus } = useSync.utils.mutateSyncStatus();
 
-  const hasErrored = useRef<boolean>();
+  const hasErroredDuringSync = useRef<boolean>();
 
   const pollTillSynced = useCallback(async () => {
     while (true) {
@@ -36,7 +36,8 @@ export const useFetchPatient = () => {
         const error = mapSyncError(t, result.error, 'error.unknown-sync-error');
 
         setError(error.error);
-        hasErrored.current = true;
+        // Setting a ref here, as 'error' state not updated in time within the 'mutateAsync'
+        hasErroredDuringSync.current = true;
 
         break;
       }
@@ -67,7 +68,7 @@ export const useFetchPatient = () => {
       await manualSync();
       await pollTillSynced();
       await queryClient.invalidateQueries(api.keys.list());
-      if (!hasErrored.current) setStep('Synced');
+      if (!hasErroredDuringSync.current) setStep('Synced');
     },
     [api.keys, linkPatientToStore, manualSync, queryClient, pollTillSynced, t]
   );
