@@ -231,7 +231,7 @@ export const CreateEncounterModal: FC = () => {
                 return;
               }
               const startDatetime = new Date(draft?.startDatetime ?? 0);
-              if (DateUtils.addHours(startDatetime, 1).getTime() > Date.now()) {
+              if (startDatetime.getTime() > Date.now()) {
                 navigate(
                   RouteBuilder.create(AppRoute.Dispensary)
                     .addPart(AppRoute.Patients)
