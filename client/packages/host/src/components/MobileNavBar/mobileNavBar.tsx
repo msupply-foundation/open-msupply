@@ -80,7 +80,7 @@ const StyledDrawer = styled(Box, {
   },
 }));
 
-export const MobileAppDrawer = () => {  
+export const MobileNavBar = () => {  
   const drawer = useDrawer();
   const theme = useTheme();
   const t = useTranslation();

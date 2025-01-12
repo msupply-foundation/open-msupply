@@ -20,7 +20,7 @@ import {
   DetailLoadingSkeleton,
   useIsGapsStoreOnly
 } from '@openmsupply-client/common';
-import { AppDrawer, AppBar, MobileAppDrawer, Footer, NotFound } from './components';
+import { AppDrawer, AppBar, MobileNavBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
 import { AppRoute } from '@openmsupply-client/config';
 import { Settings } from './Admin/Settings';
@@ -83,7 +83,7 @@ export const Site: FC = () => {
                 flexDirection="column"
                 overflow="hidden"
               >                 
-                {isGaps && <MobileAppDrawer />}
+                {isGaps && <MobileNavBar />}
                 <AppBar />
                 <NotifyOnLogin />
                 <Box display="flex" flex={1} overflow="auto">

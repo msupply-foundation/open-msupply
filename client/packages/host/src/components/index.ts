@@ -8,4 +8,4 @@ export * from './Login';
 export * from './Initialise';
 export * from './AppVersion';
 export * from './EasterEggModal';
-export * from './MobileAppDrawer';
+export * from './MobileNavBar';
