@@ -80,7 +80,11 @@ const ItemVariant = ({
   const confirmAndDelete = useDeleteItemVariant({ itemId });
 
   const coldStorageValue = variant.coldStorageType
-    ? `${variant.coldStorageType.name} (${variant.coldStorageType.minTemperature}°C to ${variant.coldStorageType.maxTemperature}°C)`
+    ? t('label.cold-storage-temperature-range', {
+        coldStorageName: variant.coldStorageType.name,
+        minTemperature: variant.coldStorageType.minTemperature,
+        maxTemperature: variant.coldStorageType.maxTemperature,
+      })
     : null;
 
   return (
