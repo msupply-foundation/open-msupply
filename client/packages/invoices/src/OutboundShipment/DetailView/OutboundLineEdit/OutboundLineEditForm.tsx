@@ -164,7 +164,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     <Grid container gap="4px">
       <ModalRow>
         <ModalLabel label={t('label.item', { count: 1 })} />
-        <Grid item flex={1}>
+        <Grid flex={1}>
           <StockItemSearchInput
             autoFocus={!item}
             openOnFocus={!item}
@@ -183,7 +183,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
       {item && (
         <ModalRow>
           <ModalLabel label="" />
-          <Grid item display="flex">
+          <Grid display="flex">
             <Typography
               sx={{
                 display: 'flex',
@@ -239,7 +239,6 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                 />
                 {packSizeController.selected?.value !== -1 && (
                   <Grid
-                    item
                     alignItems="center"
                     display="flex"
                     justifyContent="flex-start"

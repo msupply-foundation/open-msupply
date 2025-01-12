@@ -188,7 +188,7 @@ const VaccinationForm = ({
         label={t('label.facility')}
         labelProps={{ sx: { alignSelf: 'start', marginTop: '3px' } }}
         Input={
-          <Grid item flex={1}>
+          <Grid flex={1}>
             <FacilitySearchInput
               onChange={facilityId =>
                 updateDraft({
@@ -217,7 +217,7 @@ const VaccinationForm = ({
         <InputWithLabelRow
           label={t('label.clinician')}
           Input={
-            <Grid item flex={1}>
+            <Grid flex={1}>
               <ClinicianSearchInput
                 onChange={clinician => {
                   updateDraft({

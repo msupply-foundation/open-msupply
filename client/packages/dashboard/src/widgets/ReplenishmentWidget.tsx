@@ -110,7 +110,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
           flex={1}
           flexDirection="column"
         >
-          <Grid item>
+          <Grid>
             <StatsPanel
               error={error as ApiException}
               isError={isError}
@@ -151,7 +151,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                 .build()}
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <StatsPanel
               error={requisitionCountError as ApiException}
               isError={isRequisitionCountError}
@@ -173,7 +173,6 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
             />
           </Grid>
           <Grid
-            item
             flex={1}
             container
             justifyContent="flex-end"

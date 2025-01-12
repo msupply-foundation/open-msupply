@@ -106,7 +106,7 @@ export const ContactForm = () => {
           />
         }
       />
-      <Grid item justifyContent="flex-end" width="100%" display="flex">
+      <Grid justifyContent="flex-end" width="100%" display="flex">
         <LoadingButton
           isLoading={false}
           startIcon={<MailIcon />}
