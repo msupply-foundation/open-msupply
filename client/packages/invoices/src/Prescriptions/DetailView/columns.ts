@@ -25,6 +25,32 @@ const expansionColumn = getRowExpandColumn<
   StockOutLineFragment | StockOutItem
 >();
 
+export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
+  useColumns([
+    'batch',
+    'expiryDate',
+    [
+      'location',
+      {
+        accessor: ({ rowData }) => rowData.location?.code,
+      },
+    ],
+    [
+      'itemUnit',
+      {
+        accessor: ({ rowData }) => rowData.item?.unitName,
+      },
+    ],
+    'numberOfPacks',
+    'packSize',
+    [
+      'unitQuantity',
+      {
+        accessor: ({ rowData }) => rowData.numberOfPacks,
+      },
+    ],
+  ]);
+
 export const usePrescriptionColumn = ({
   sortBy,
   onChangeSortBy,
