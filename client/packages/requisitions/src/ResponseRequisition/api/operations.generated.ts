@@ -2,7 +2,11 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { RequisitionReasonsNotProvidedErrorFragmentDoc, OrderTypeRowFragmentDoc, ProgramIndicatorFragmentDoc } from '../../RequestRequisition/api/operations.generated';
+import {
+  RequisitionReasonsNotProvidedErrorFragmentDoc,
+  OrderTypeRowFragmentDoc,
+  ProgramIndicatorFragmentDoc,
+} from '../../RequestRequisition/api/operations.generated';
 import { ItemRowFragmentDoc } from '../../../../system/src/Item/api/operations.generated';
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
@@ -128,7 +132,7 @@ export type ProgramIndicatorsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ProgramIndicatorsQuery = { __typename: 'Queries', programIndicators: { __typename: 'ProgramIndicatorConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramIndicatorNode', code?: string | null, id: string, lineAndColumns: Array<{ __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null } }> }> } };
+export type ProgramIndicatorsQuery = { __typename: 'Queries', programIndicators: { __typename: 'ProgramIndicatorConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramIndicatorNode', code?: string | null, id: string, lineAndColumns: Array<{ __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', id: string, columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null }, customerIndicatorInfo: Array<{ __typename: 'CustomerIndicatorInformationNode', datetime?: string | null, id: string, customer: { __typename: 'NameNode', id: string, name: string }, indicatorInformation: Array<{ __typename: 'RequisitionIndicatorInformationNode', columnId: string, value: string }> }> }> }> } };
 
 export type UpdateIndicatorValueMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
