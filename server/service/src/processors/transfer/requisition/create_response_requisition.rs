@@ -107,15 +107,16 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
             .id;
 
         let generate_indicator_value_input = GenerateTransferIndicatorInput {
-            connection,
             customer_store_id: request_requisition.store_row.id.clone(),
             supplier_store_id: record_for_processing.other_party_store_id.clone(),
             customer_name_id,
-            period_id: request_requisition.period.clone().and_then(|p| Some(p.id)),
+            period_id: request_requisition.period.clone().map(|p| p.id),
         };
 
-        let new_indicator_values =
-            generate_response_requisition_indicator_values(generate_indicator_value_input)?;
+        let new_indicator_values = generate_response_requisition_indicator_values(
+            connection,
+            generate_indicator_value_input,
+        )?;
 
         let indicator_value_repository = IndicatorValueRowRepository::new(connection);
 
@@ -271,8 +272,7 @@ fn generate_response_requisition_lines(
     Ok(response_lines)
 }
 
-struct GenerateTransferIndicatorInput<'a> {
-    connection: &'a StorageConnection,
+struct GenerateTransferIndicatorInput {
     customer_store_id: String,
     supplier_store_id: String,
     customer_name_id: String,
@@ -280,41 +280,28 @@ struct GenerateTransferIndicatorInput<'a> {
 }
 
 fn generate_response_requisition_indicator_values(
+    connection: &StorageConnection,
     input: GenerateTransferIndicatorInput,
 ) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
     if let Some(period_id) = input.period_id {
+        let supplier_store_id = input.supplier_store_id.clone();
         let filter = IndicatorValueFilter::new()
             .store_id(EqualFilter::equal_to(&input.customer_store_id))
             .customer_name_id(EqualFilter::equal_to(&input.customer_name_id))
             .period_id(EqualFilter::equal_to(&period_id));
 
-        let supplier_store_id = input.supplier_store_id.clone();
-
         let request_indicator_values =
-            IndicatorValueRepository::new(input.connection).query_by_filter(filter)?;
+            IndicatorValueRepository::new(connection).query_by_filter(filter)?;
 
         let response_indicator_values = request_indicator_values
             .into_iter()
-            .map(
-                |IndicatorValueRow {
-                     id: _,
-                     customer_name_link_id,
-                     store_id: _,
-                     period_id,
-                     indicator_line_id,
-                     indicator_column_id,
-                     value,
-                 }| IndicatorValueRow {
-                    id: uuid(),
-                    customer_name_link_id: customer_name_link_id,
-                    store_id: supplier_store_id.clone(),
-                    period_id: period_id,
-                    indicator_line_id: indicator_line_id,
-                    indicator_column_id: indicator_column_id,
-                    value: value,
-                },
-            )
+            .map(|v| IndicatorValueRow {
+                id: uuid(),
+                store_id: supplier_store_id.clone(),
+                ..v.indicator_value_row
+            })
             .collect();
+
         return Ok(response_indicator_values);
     }
     Ok(vec![])
