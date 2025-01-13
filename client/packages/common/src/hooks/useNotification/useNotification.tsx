@@ -54,25 +54,29 @@ export const useNotification = (): NotificationHook => {
       action,
       ...options,
     });
+
   const errorWithDetail = (message: string, options?: OptionsObject) => () =>
-    enqueueSnackbar(`${t('label.error-see-more')}:`, {
+    enqueueSnackbar(`${t('label.error-info-icon')}:`, {
       variant: 'error',
       action: key => actionWithDetail(key, message),
       persist: true,
       ...options,
     });
+
   const info = (message: string, options?: OptionsObject) => () =>
     enqueueSnackbar(message, {
       variant: 'info',
       action,
       ...options,
     });
+
   const success = (message: string, options?: OptionsObject) => () =>
     enqueueSnackbar(message, {
       variant: 'success',
       action,
       ...options,
     });
+
   const warning = (message: string, options?: OptionsObject) => () =>
     enqueueSnackbar(message, {
       variant: 'warning',
