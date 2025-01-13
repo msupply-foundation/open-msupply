@@ -2,7 +2,7 @@ on:
   workflow_dispatch:
     inputs:
       tags:
-        label: "v1.0.0-android-build"
+        description: "v1.0.0-android-build"
         required: true
         type: string
 name: Android Build
@@ -11,7 +11,9 @@ jobs:
   print-tag:
     runs-on: self-hosted
     timeout-minutes: 2
+    if: ${{ inputs.tags }}
     steps:
       - name: print tags
-      if: ${{ inputs.print_tags }}
-      run: echo  The tags are ${{ inputs.tags }}
+        run: echo "The tags are ${{ github.event.inputs.tags }}"
+    outputs:
+      tags: ${{ github.event.inputs.tags }}
