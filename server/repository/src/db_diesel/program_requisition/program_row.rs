@@ -80,22 +80,6 @@ impl<'a> ProgramRowRepository<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ProgramRowDelete(pub String);
-impl Delete for ProgramRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ProgramRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // TODO is this in changelog?
-    }
-
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ProgramRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}
-
 impl Upsert for ProgramRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         ProgramRowRepository::new(con).upsert_one(self)?;
