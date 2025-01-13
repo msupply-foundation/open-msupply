@@ -3,8 +3,8 @@ name: Android Build
 on:
   workflow_dispatch:
   push:
-  tags:
-    - "v*"
+    tags:
+      - "v*"
 
 jobs:
   get-and-print-tag:
