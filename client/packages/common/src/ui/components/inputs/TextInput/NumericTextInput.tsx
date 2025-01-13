@@ -263,7 +263,6 @@ export const NumericTextInput = React.forwardRef<
     const inputRegex = new RegExp(
       `^-?\\d*${RegexUtils.escapeChars(decimal)}?\\d*$`
     );
-    console.log('disabled: ', props.disabled);
 
     return (
       <BasicTextInput
