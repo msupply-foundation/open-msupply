@@ -96,21 +96,24 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
-      {...inputProps}
       autoFocus={autoFocus}
-      InputProps={{
-        ...props.InputProps,
-        disableUnderline: false,
-        endAdornment: (
-          <>
-            {isLoading || loading ? (
-              <CircularProgress color="primary" size={18} />
-            ) : null}
-            {props.InputProps.endAdornment}
-          </>
-        ),
+      slotProps={{
+        input: {
+          ...props.InputProps,
+          disableUnderline: false,
+          endAdornment: (
+            <>
+              {isLoading || loading ? (
+                <CircularProgress color="primary" size={18} />
+              ) : null}
+              {props.InputProps.endAdornment}
+            </>
+          ),
+        },
+        htmlInput: {
+          ...props?.inputProps,
+        },
       }}
-      sx={{ width }}
     />
   );
 
@@ -155,13 +158,15 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         },
       };
 
-  const CustomPopper: React.FC<PopperProps> = props => (
+  const CustomPopper = (props: PopperProps) => (
     <StyledPopper
       {...props}
       placement="bottom-start"
       style={{ minWidth: popperMinWidth, width: 'auto' }}
     />
   );
+
+  const popper = popperMinWidth ? CustomPopper : StyledPopper;
 
   useEffect(() => {
     setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
@@ -188,8 +193,12 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       renderOption={renderOption || DefaultRenderOption}
       onChange={onChange}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
-      PopperComponent={popperMinWidth ? CustomPopper : StyledPopper}
-      ListboxProps={listboxProps}
+      slotProps={{
+        listbox: {
+          ...listboxProps,
+        },
+        popper: popper,
+      }}
     />
   );
 }

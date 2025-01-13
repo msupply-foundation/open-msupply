@@ -46,6 +46,7 @@ export function AutocompleteMulti<
   options,
   renderInput,
   width = 'auto',
+  slotProps,
   inputProps,
   ...restOfAutocompleteProps
 }: PropsWithChildren<
@@ -54,11 +55,13 @@ export function AutocompleteMulti<
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
-      {...inputProps}
       autoFocus={autoFocus}
-      InputProps={{
-        disableUnderline: false,
-        ...props.InputProps,
+      slotProps={{
+        input: {
+          disableUnderline: false,
+          ...props?.InputProps,
+        },
+        ...slotProps,
       }}
       sx={{ width }}
     />
@@ -79,27 +82,26 @@ export function AutocompleteMulti<
   return (
     <MuiAutocomplete
       {...restOfAutocompleteProps}
-      ChipProps={
-        {
+      slotProps={{
+        chip: {
           sx: {
             backgroundColor: 'secondary.main',
             color: 'secondary.contrastText',
           },
-        } as ChipProps<ChipComponent>
-      }
-      defaultValue={defaultValue}
-      getOptionLabel={getOptionLabel || defaultGetOptionLabel}
-      multiple
-      onChange={onChange}
-      options={options}
-      slotProps={{
+        } as Partial<ChipProps<ChipComponent>>,
         paper: {
           elevation: 3,
           sx: {
             borderRadius: 4,
           },
         },
+        ...slotProps,
       }}
+      defaultValue={defaultValue}
+      getOptionLabel={getOptionLabel || defaultGetOptionLabel}
+      multiple
+      onChange={onChange}
+      options={options}
       renderInput={renderInput || defaultRenderInput}
       size="small"
       sx={{
