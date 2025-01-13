@@ -120,6 +120,7 @@ export const Toolbar: FC = () => {
               label={t('label.clinician')}
               Input={
                 <ClinicianSearchInput
+                  disabled={isDisabled}
                   onChange={async clinician => {
                     setClinicianValue(clinician ? clinician.value : null);
                     update({
