@@ -8,7 +8,7 @@ use crate::{
         name_link_row::name_link,
     },
     repository_error::RepositoryError,
-    StorageConnection, Upsert,
+    Delete, StorageConnection, Upsert,
 };
 
 use diesel::prelude::*;
@@ -64,6 +64,7 @@ impl<'a> ProgramRowRepository<'a> {
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ProgramRow>, RepositoryError> {
         let result = program_dsl::program
             .filter(program_dsl::id.eq(id))
+            .filter(deleted_datetime.is_null())
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -74,6 +75,22 @@ impl<'a> ProgramRowRepository<'a> {
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ProgramRowDelete(pub String);
+impl Delete for ProgramRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ProgramRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // TODO is this in changelog?
+    }
+
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ProgramRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
     }
 }
 

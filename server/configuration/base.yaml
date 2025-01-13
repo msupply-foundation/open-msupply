@@ -16,7 +16,7 @@ database:
   database_name: "omsupply-database"
 logging:
   #   one of: All | Console | File
-  mode: File
+  mode: All
   #   one of:  Off | Error | Warn | Info (default) | Debug | Trace
   level: Info
   directory: log

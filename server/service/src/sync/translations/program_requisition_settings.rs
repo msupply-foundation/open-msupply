@@ -2,7 +2,8 @@ use repository::{
     ContextRow, NameTagRowRepository, PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowDelete, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowDelete,
-    ProgramRequisitionSettingsRowRepository, ProgramRow, StorageConnection, SyncBufferRow,
+    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowDelete, ProgramRowRepository,
+    StorageConnection, SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -116,6 +117,10 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
                 ))
             });
 
+        if let Some(id) = deletes.program_id {
+            integration_operations.push(IntegrationOperation::delete(ProgramRowDelete(id)))
+        }
+
         integration_operations.push(IntegrationOperation::upsert(upserts.context_row));
         integration_operations.push(IntegrationOperation::upsert(upserts.program_row));
 
@@ -139,6 +144,7 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
 struct DeleteRequisitionProgram {
     pub program_requisition_settings_ids: Vec<String>,
     pub program_requisition_order_type_ids: Vec<String>,
+    pub program_id: Option<String>,
 }
 
 fn delete_requisition_program(
@@ -160,9 +166,14 @@ fn delete_requisition_program(
         .iter()
         .for_each(|order_type| program_requisition_order_type_ids.push(order_type.id.clone()));
 
+    let program_id = ProgramRowRepository::new(connection)
+        .find_one_by_id(&master_list.id)?
+        .and_then(|p| Some(p.id));
+
     Ok(DeleteRequisitionProgram {
         program_requisition_settings_ids,
         program_requisition_order_type_ids,
+        program_id,
     })
 }
 

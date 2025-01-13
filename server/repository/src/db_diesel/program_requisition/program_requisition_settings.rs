@@ -52,6 +52,7 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
                     .eq(program_dsl::master_list_id)),
             )
             .into_boxed();
+        query = query.filter(program_dsl::deleted_datetime.is_null());
 
         if let Some(ProgramRequisitionSettingsFilter {
             name_tag,
