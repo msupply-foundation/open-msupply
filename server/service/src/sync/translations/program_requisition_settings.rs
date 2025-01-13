@@ -2,8 +2,7 @@ use repository::{
     ContextRow, NameTagRowRepository, PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowDelete, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowDelete,
-    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowDelete, ProgramRowRepository,
-    StorageConnection, SyncBufferRow,
+    ProgramRequisitionSettingsRowRepository, ProgramRow, StorageConnection, SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -90,10 +89,6 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
-        if !data.is_program {
-            return Ok(PullTranslateResult::NotMatched);
-        }
-
         let upserts = generate_requisition_program(connection, data.clone())?;
         let deletes = delete_requisition_program(connection, data)?;
 
@@ -116,10 +111,6 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
                     ProgramRequisitionSettingsRowDelete(settings_id),
                 ))
             });
-
-        if let Some(id) = deletes.program_id {
-            integration_operations.push(IntegrationOperation::delete(ProgramRowDelete(id)))
-        }
 
         integration_operations.push(IntegrationOperation::upsert(upserts.context_row));
         integration_operations.push(IntegrationOperation::upsert(upserts.program_row));
@@ -144,7 +135,6 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
 struct DeleteRequisitionProgram {
     pub program_requisition_settings_ids: Vec<String>,
     pub program_requisition_order_type_ids: Vec<String>,
-    pub program_id: Option<String>,
 }
 
 fn delete_requisition_program(
@@ -166,14 +156,9 @@ fn delete_requisition_program(
         .iter()
         .for_each(|order_type| program_requisition_order_type_ids.push(order_type.id.clone()));
 
-    let program_id = ProgramRowRepository::new(connection)
-        .find_one_by_id(&master_list.id)?
-        .and_then(|p| Some(p.id));
-
     Ok(DeleteRequisitionProgram {
         program_requisition_settings_ids,
         program_requisition_order_type_ids,
-        program_id,
     })
 }
 
@@ -205,7 +190,11 @@ fn generate_requisition_program(
         context_id: context_row.id.clone(),
         is_immunisation: master_list.is_immunisation.unwrap_or(false),
         elmis_code: program_settings.elmis_code.clone(),
-        deleted_datetime: None,
+        deleted_datetime: if master_list.is_program {
+            None
+        } else {
+            Some(chrono::Utc::now().naive_utc())
+        },
     };
 
     let mut program_requisition_settings_rows = Vec::new();
