@@ -3,16 +3,15 @@ on:
     inputs:
       tags:
         label: "v1.0.0-android-build"
-
         required: true
         type: string
 name: Android Build
 
 jobs:
-  runs-on: self-hosted
-  timeout-minutes: 2
-  steps:
-    - print-tags:
-      name: print tags
+  print-tag:
+    runs-on: self-hosted
+    timeout-minutes: 2
+    steps:
+      - name: print tags
       if: ${{ inputs.print_tags }}
       run: echo  The tags are ${{ inputs.tags }}
