@@ -4,6 +4,7 @@ import {
   DetailContainer,
   NothingHere,
   RouteBuilder,
+  useAuthContext,
   useBreadcrumbs,
   useParams,
   useTranslation,
@@ -20,11 +21,12 @@ export const IndicatorEditPage = () => {
   const t = useTranslation();
   const { programIndicatorLineId, programIndicatorCode } = useParams();
   const { data: request, isLoading } = useRequest.document.get();
+  const { store } = useAuthContext();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const isDisabled = useRequest.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useRequest.document.indicators(
-      request?.otherPartyId ?? '',
+      store?.nameId ?? '',
       request?.period?.id ?? '',
       request?.program?.id ?? '',
       !!request
