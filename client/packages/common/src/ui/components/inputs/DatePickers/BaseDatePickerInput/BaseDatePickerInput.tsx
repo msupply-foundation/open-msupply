@@ -6,7 +6,7 @@ import {
   DesktopDatePicker,
 } from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
-import { BasicTextInput } from '../../TextInput';
+import { DeprecatedBasicTextInput } from '../../TextInput';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
 import {
   DateUtils,
@@ -20,7 +20,7 @@ const TextField = (params: TextFieldProps) => {
     ...params,
     variant: 'standard',
   };
-  return <BasicTextInput {...textInputProps} />;
+  return <DeprecatedBasicTextInput {...textInputProps} />;
 };
 
 export const getFormattedDateError = (
@@ -122,7 +122,7 @@ export const BaseDatePickerInput: FC<
         },
         textField: {
           error: !isInitialEntry && (!!error || !!internalError),
-          helperText: !isInitialEntry ? error ?? internalError ?? '' : '',
+          helperText: !isInitialEntry ? (error ?? internalError ?? '') : '',
           label,
           onBlur: () => setIsInitialEntry(false),
           ...textFieldProps,
