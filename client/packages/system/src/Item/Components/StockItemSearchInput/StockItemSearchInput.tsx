@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   useToggle,
   useFormatNumber,
@@ -7,6 +7,8 @@ import {
   defaultOptionMapper,
   useDebounceCallback,
   useStringFilter,
+  AutocompleteRenderInputParams,
+  BasicTextInput,
 } from '@openmsupply-client/common';
 import { useItemById, useItemStockOnHandInfinite } from '../../api';
 import { itemFilterOptions, StockItemSearchInputProps } from '../../utils';
@@ -27,6 +29,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   itemCategoryName,
 }) => {
   const { filter, onFilter } = useStringFilter('name');
+  const [search, setSearch] = useState('');
 
   const fullFilter = itemCategoryName
     ? { ...filter, categoryName: itemCategoryName }
@@ -82,6 +85,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       }
       noOptionsText={t('error.no-items')}
       onChange={(_, item) => onChange(item)}
+      // getOptionLabel={option => `${option.name}`}
       getOptionLabel={option => `${option.code}     ${option.name}`}
       renderOption={getItemOptionRenderer(
         t('label.units'),
@@ -91,7 +95,11 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       open={selectControl.isOn}
-      onInputChange={(_, value) => debounceOnFilter(value)}
+      onInputChange={(e, value) => {
+        if (e?.type === 'click') {
+          setSearch(value);
+        }
+      }}
       paginationDebounce={DEBOUNCE_TIMEOUT}
       onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
       mapOptions={items =>
@@ -100,6 +108,44 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
           'name'
         ).sort((a, b) => a.label.localeCompare(b.label))
       }
+      inputValue={search}
+      renderInput={(props: AutocompleteRenderInputParams) => {
+        // console.log(props.inputProps.value);
+        return (
+          <BasicTextInput
+            {...props}
+            value={search}
+            onChange={e => {
+              const searchA = e.target.value.split(
+                `${currentItem?.code}     `
+              )![1];
+              console.log(searchA);
+              //todoo hmmm
+
+              debounceOnFilter(
+                // todo
+                searchA
+              );
+              setSearch(e.target.value);
+            }}
+            // {...inputProps}
+            autoFocus={autoFocus}
+            InputProps={{
+              ...props.InputProps,
+              disableUnderline: false,
+              // endAdornment: (
+              // <>
+              //   {isLoading || loading ? (
+              //     <CircularProgress color="primary" size={18} />
+              //   ) : null}
+              //   {props.InputProps.endAdornment}
+              // </>
+              // ),
+            }}
+            sx={{ width }}
+          />
+        );
+      }}
     />
   );
 };
