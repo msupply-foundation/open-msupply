@@ -72,7 +72,6 @@ export function Autocomplete<T>({
   autoFocus = false,
   getOptionLabel,
   popperMinWidth,
-  inputProps,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
@@ -80,13 +79,20 @@ export function Autocomplete<T>({
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
-      {...inputProps}
       autoFocus={autoFocus}
-      InputProps={{
-        disableUnderline: false,
-        ...props.InputProps,
+      slotProps={{
+        input: {
+          disableUnderline: false,
+          sx: {
+            paddingLeft: 1,
+          },
+          ...props.InputProps,
+        },
+        inputLabel: { shrink: true },
+        htmlInput: {
+          ...props.inputProps,
+        },
       }}
-      InputLabelProps={{ shrink: true }}
       sx={{ minWidth: width }}
     />
   );
@@ -96,13 +102,14 @@ export function Autocomplete<T>({
     return (option as { label?: string }).label ?? '';
   };
 
-  const CustomPopper: React.FC<PopperProps> = props => (
+  const CustomPopper = (props: PopperProps) => (
     <StyledPopper
       {...props}
       placement="bottom-start"
       style={{ minWidth: popperMinWidth, width: 'auto' }}
     />
   );
+  const popper = popperMinWidth ? CustomPopper : StyledPopper;
 
   return (
     <MuiAutocomplete
@@ -125,7 +132,9 @@ export function Autocomplete<T>({
       renderOption={renderOption}
       onChange={onChange}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
-      PopperComponent={popperMinWidth ? CustomPopper : StyledPopper}
+      slots={{
+        popper: popper,
+      }}
     />
   );
 }

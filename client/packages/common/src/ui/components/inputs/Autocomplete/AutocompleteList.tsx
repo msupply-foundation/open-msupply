@@ -72,6 +72,25 @@ export const AutocompleteList = <T,>({
     ? getDefaultOptionRenderer<T>(optionKey)
     : renderOption;
 
+  const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
+    <BasicTextInput
+      {...props}
+      slotProps={{
+        input: {
+          disableUnderline: false,
+          sx: {
+            paddingLeft: 1,
+            minWidth: width,
+          },
+          ...props.InputProps,
+        },
+        inputLabel: { shrink: true },
+        htmlInput: { ...props?.inputProps },
+      }}
+      sx={{ minWidth: width }}
+    />
+  );
+
   let mappedOptions: T[] = [];
 
   if (optionKey) {
@@ -105,15 +124,7 @@ export const AutocompleteList = <T,>({
           },
         }}
         classes={{ noOptions: 'something' }}
-        ListboxProps={{
-          style: {
-            minHeight: height ? `${height}` : 'auto',
-            maxHeight: height ? `${height}` : 'auto',
-          },
-        }}
-        renderInput={
-          renderInput || (props => <BasicTextInput {...props} autoFocus />)
-        }
+        renderInput={renderInput || defaultRenderInput}
         filterOptions={filterOptions ?? createdFilterOptions}
         open
         forcePopupIcon={false}
@@ -124,6 +135,12 @@ export const AutocompleteList = <T,>({
             sx: {
               backgroundColor: theme => theme.palette.background.toolbar,
               minHeight: height ? `${height}` : 'auto',
+            },
+          },
+          listbox: {
+            style: {
+              minHeight: height ? `${height}` : 'auto',
+              maxHeight: height ? `${height}` : 'auto',
             },
           },
         }}
