@@ -1,7 +1,10 @@
-use chrono::Utc;
 use repository::{
     InvoiceRow, InvoiceRowRepository, InvoiceStatus, RepositoryError, StorageConnection,
 };
+
+use super::common::get_invoice_status_datetime;
+
+const MIN_PICKED_DATE_UPDATE_INTERVAL: i64 = 60;
 
 /// This function is called when a line is updated on an invoice. It will update the picked date if appropriate.
 pub fn update_picked_date(
@@ -13,8 +16,18 @@ pub fn update_picked_date(
         return Ok(());
     }
 
+    // Check if invoice was updated recently, if so we don't want to update the picked date again
+    if let Some(picked_datetime) = invoice.picked_datetime {
+        let now = chrono::Utc::now().naive_utc();
+        if now.signed_duration_since(picked_datetime).num_seconds()
+            < MIN_PICKED_DATE_UPDATE_INTERVAL
+        {
+            return Ok(());
+        }
+    }
+
     // Use the invoice's backdated datetime if it's set, otherwise set the status to now
-    let status_datetime = invoice.backdated_datetime.unwrap_or(Utc::now().naive_utc());
+    let status_datetime = get_invoice_status_datetime(invoice);
 
     let update = InvoiceRow {
         picked_datetime: Some(status_datetime),
