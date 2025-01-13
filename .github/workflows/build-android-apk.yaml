@@ -1,7 +1,8 @@
+name: Android Build
+
 on:
   workflow_dispatch:
-
-name: Android Build
+  push:
 
 jobs:
   get-and-print-tag:
