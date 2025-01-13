@@ -1,14 +1,14 @@
 use super::{version::Version, Migration, MigrationFragment};
 
+mod add_index_to_sync_buffer;
 mod add_program_deleted_datetime;
-
 use crate::StorageConnection;
 
 pub(crate) struct V2_06_00;
 
 impl Migration for V2_06_00 {
     fn version(&self) -> Version {
-        Version::from_str("2.5.0")
+        Version::from_str("2.6.0")
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
@@ -16,7 +16,10 @@ impl Migration for V2_06_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_program_deleted_datetime::Migrate)]
+        vec![
+            Box::new(add_index_to_sync_buffer::Migrate),
+            Box::new(add_program_deleted_datetime::Migrate),
+        ]
     }
 }
 
