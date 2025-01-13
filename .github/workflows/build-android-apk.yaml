@@ -1,19 +1,23 @@
 on:
   workflow_dispatch:
-    inputs:
-      tags:
-        description: "v1.0.0-android-build"
-        required: true
-        type: string
+
 name: Android Build
 
 jobs:
-  print-tag:
+  get-and-print-tag:
     runs-on: self-hosted
     timeout-minutes: 2
-    if: ${{ inputs.tags }}
     steps:
-      - name: print tags
-        run: echo "The tags are ${{ github.event.inputs.tags }}"
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get tag
+        id: tag
+        run: |
+          TAG=$(git describe --tags --abbrev=0)
+          echo "Latest tag: $TAG"
+
     outputs:
-      tags: ${{ github.event.inputs.tags }}
+      tag: ${{ steps.tag.outputs.TAG }}
