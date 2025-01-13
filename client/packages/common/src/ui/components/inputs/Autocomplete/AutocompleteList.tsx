@@ -12,6 +12,7 @@ import {
 import { AutocompleteOnChange, AutocompleteOptionRenderer } from './types';
 import { BasicTextInput } from '../TextInput';
 import { defaultOptionMapper, getDefaultOptionRenderer } from './utils';
+import { useTheme } from '@openmsupply-client/common';
 
 export type AutocompleteListProps<T> = {
   options: T[];
@@ -67,6 +68,7 @@ export const AutocompleteList = <T,>({
   getOptionDisabled,
   onInputChange,
 }: AutocompleteListProps<T>): JSX.Element => {
+  const theme = useTheme();
   const createdFilterOptions = createFilterOptions(filterOptionConfig);
   const optionRenderer = optionKey
     ? getDefaultOptionRenderer<T>(optionKey)
@@ -121,6 +123,10 @@ export const AutocompleteList = <T,>({
         sx={{
           '& .MuiAutocomplete-inputRoot': {
             width: width ? `${width}px` : 'auto',
+            background: theme.palette.background.drawer,
+            borderRadius: 2,
+            paddingTop: 0.5,
+            paddingBottom: 0.5,
           },
         }}
         classes={{ noOptions: 'something' }}

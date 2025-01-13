@@ -21,6 +21,7 @@ import type { AutocompleteProps } from './Autocomplete';
 import { StyledPopper } from './components';
 import { ArrayUtils } from '@common/utils';
 import { RecordWithId } from '@common/types';
+import { useTheme } from '@openmsupply-client/common';
 
 const LOADER_HIDE_TIMEOUT = 500;
 
@@ -67,6 +68,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   mapOptions,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteWithPaginationProps<T>>) {
+  const theme = useTheme();
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const [isLoading, setIsLoading] = useState(true);
   const lastOptions = useRef<T[]>([]);
@@ -101,6 +103,9 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         input: {
           ...props.InputProps,
           disableUnderline: false,
+          sx: {
+            paddingLeft: 1,
+          },
           endAdornment: (
             <>
               {isLoading || loading ? (
@@ -193,6 +198,12 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       renderOption={renderOption || DefaultRenderOption}
       onChange={onChange}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
+      sx={{
+        background: theme.palette.background.drawer,
+        borderRadius: 2,
+        paddingTop: 0.5,
+        paddingBottom: 0.5,
+      }}
       slotProps={{
         listbox: {
           ...listboxProps,

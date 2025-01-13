@@ -10,6 +10,7 @@ import {
   Grid,
   PlusCircleIcon,
   Typography,
+  useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
 import { getNameOptionRenderer } from '@openmsupply-client/system';
@@ -148,6 +149,7 @@ const LabelAndOptions = <T,>({
   renderOption,
   getOptionDisabled,
 }: Pick<AutocompleteProps<T>, 'optionKey' | 'autoFocus'> & Common<T>) => {
+  const theme = useTheme();
   const noOptionsDisplay = options.length == 0 &&
     !disabled &&
     !!labelNoOptions && <Typography>{labelNoOptions}</Typography>;
@@ -169,6 +171,10 @@ const LabelAndOptions = <T,>({
             value={value}
             disabled={disabled}
             onChange={(_, newValue) => set(newValue)}
+            sx={{
+              background: theme.palette.background.toolbar,
+              borderRadius: 2,
+            }}
           />
         )}
       </Grid>

@@ -161,7 +161,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   ]);
 
   return (
-    <Grid container gap="4px">
+    <Grid container gap="4px" width="100%">
       <ModalRow>
         <ModalLabel label={t('label.item', { count: 1 })} />
         <Grid flex={1}>
