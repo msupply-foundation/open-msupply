@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   AppBarContentPortal,
   Box,
@@ -12,7 +12,10 @@ import {
 } from '@openmsupply-client/common';
 import { PatientSearchInput } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
-import { ClinicianSearchInput } from '../../../../system/src/Clinician';
+import {
+  Clinician,
+  ClinicianSearchInput,
+} from '../../../../system/src/Clinician';
 import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 
 export const Toolbar: FC = () => {
@@ -24,6 +27,9 @@ export const Toolbar: FC = () => {
   } = usePrescription();
   const { id, patient, clinician, prescriptionDate, createdDatetime } =
     data ?? {};
+  const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
+    clinician ?? null
+  );
 
   const {
     delete: { deleteLines },
@@ -115,12 +121,13 @@ export const Toolbar: FC = () => {
               Input={
                 <ClinicianSearchInput
                   onChange={async clinician => {
-                    await update({
+                    setClinicianValue(clinician ? clinician.value : null);
+                    update({
                       id,
-                      clinicianId: clinician?.value?.id ?? undefined,
+                      clinicianId: clinician?.value?.id ?? null,
                     });
                   }}
-                  clinicianValue={clinician}
+                  clinicianValue={clinicianValue}
                 />
               }
             />

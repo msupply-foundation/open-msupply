@@ -4,6 +4,7 @@ use util::uuid::uuid;
 use crate::{
     invoice::{InsertPrescription, UpdatePrescription, UpdatePrescriptionStatus},
     invoice_line::stock_out_line::{InsertStockOutLine, StockOutType},
+    NullableUpdate,
 };
 
 #[derive(Debug)]
@@ -53,7 +54,9 @@ pub fn generate_create_prescription(
         id: prescription_id.clone(),
         status: Some(UpdatePrescriptionStatus::Verified),
         // Assign clinician here if one was chosen
-        clinician_id: clinician_id.clone(),
+        clinician_id: Some(NullableUpdate {
+            value: clinician_id.clone(),
+        }),
         comment: Some("Created via vaccination".to_string()),
         // Default
         patient_id: None,
