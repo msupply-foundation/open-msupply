@@ -1367,7 +1367,7 @@
   "messages.deleted-requisition_one": "Deleted {{count}} requisitions",
   "messages.deleted-requisitions_few": "Deleted {{count}} requisitions",
   "messages.deleted-requisitions_many": "Deleted {{count}} requisitions",
-  "messages.deleted-requisitions_one": "Deleted {{count}} order",
+  "messages.deleted-requisitions_one": "Deleted {{count}} requisition",
   "messages.deleted-requisitions_other": "Deleted {{count}} requisitions",
   "messages.deleted-returns_one": "Deleted 1 return",
   "messages.deleted-returns_other": "Deleted {{count}} returns",
