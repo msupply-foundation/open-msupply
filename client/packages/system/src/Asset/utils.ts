@@ -39,22 +39,22 @@ export const parseStatus = (
 ) => {
   switch (status) {
     case StatusType.Decommissioned: {
-      return t('status.decommissioned', { ns: 'coldchain' });
+      return t('status.decommissioned');
     }
     case StatusType.Functioning: {
-      return t('status.functioning', { ns: 'coldchain' });
+      return t('status.functioning');
     }
     case StatusType.FunctioningButNeedsAttention: {
-      return t('status.functioning-but-needs-attention', { ns: 'coldchain' });
+      return t('status.functioning-but-needs-attention');
     }
     case StatusType.NotFunctioning: {
-      return t('status.not-functioning', { ns: 'coldchain' });
+      return t('status.not-functioning');
     }
     case StatusType.NotInUse: {
-      return t('status.not-in-use', { ns: 'coldchain' });
+      return t('status.not-in-use');
     }
     case StatusType.Unserviceable: {
-      return t('status.unserviceable', { ns: 'coldchain' });
+      return t('status.unserviceable');
     }
   }
 };
@@ -65,22 +65,22 @@ const parseInputStatus = (
 ) => {
   switch (status) {
     case AssetLogStatusInput.Decommissioned: {
-      return t('status.decommissioned', { ns: 'coldchain' });
+      return t('status.decommissioned');
     }
     case AssetLogStatusInput.Functioning: {
-      return t('status.functioning', { ns: 'coldchain' });
+      return t('status.functioning');
     }
     case AssetLogStatusInput.FunctioningButNeedsAttention: {
-      return t('status.functioning-but-needs-attention', { ns: 'coldchain' });
+      return t('status.functioning-but-needs-attention');
     }
     case AssetLogStatusInput.NotFunctioning: {
-      return t('status.not-functioning', { ns: 'coldchain' });
+      return t('status.not-functioning');
     }
     case AssetLogStatusInput.NotInUse: {
-      return t('status.not-in-use', { ns: 'coldchain' });
+      return t('status.not-in-use');
     }
     case AssetLogStatusInput.Unserviceable: {
-      return t('status.unserviceable', { ns: 'coldchain' });
+      return t('status.unserviceable');
     }
   }
 };

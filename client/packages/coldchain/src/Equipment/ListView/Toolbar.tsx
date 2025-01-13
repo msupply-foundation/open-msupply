@@ -69,9 +69,7 @@ export const Toolbar = () => {
           value: AssetLogStatusInput.Functioning,
         },
         {
-          label: t('status.functioning-but-needs-attention', {
-            ns: 'coldchain',
-          }),
+          label: t('status.functioning-but-needs-attention'),
           value: AssetLogStatusInput.FunctioningButNeedsAttention,
         },
         {

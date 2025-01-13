@@ -186,7 +186,7 @@ const UIComponent = (props: ControlProps) => {
         label={
           options?.totalQuantityLabel
             ? options?.totalQuantityLabel
-            : t('label.total-quantity', { ns: 'programs' })
+            : t('label.total-quantity')
         }
         labelWidthPercentage={FORM_LABEL_WIDTH}
         inputAlignment={'start'}
