@@ -103,7 +103,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
           }}
         />
       ) : null}
-      <Widget title={t('replenishment', { ns: 'app' })}>
+      <Widget title={t('replenishment')}>
         <Grid
           container
           justifyContent="flex-start"
@@ -115,10 +115,10 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               error={error as ApiException}
               isError={isError}
               isLoading={isLoading}
-              title={t('inbound-shipment', { ns: 'app' })}
+              title={t('inbound-shipment')}
               stats={[
                 {
-                  label: t('label.today', { ns: 'dashboard' }),
+                  label: t('label.today'),
                   value: formatNumber.round(data?.today),
                   link: RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InboundShipment)
@@ -128,7 +128,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                     .build(),
                 },
                 {
-                  label: t('label.this-week', { ns: 'dashboard' }),
+                  label: t('label.this-week'),
                   value: formatNumber.round(data?.thisWeek),
                   link: RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InboundShipment)
@@ -138,7 +138,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                     .build(),
                 },
                 {
-                  label: t('label.inbound-not-delivered', { ns: 'dashboard' }),
+                  label: t('label.inbound-not-delivered'),
                   value: formatNumber.round(data?.notDelivered),
                   link: RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InboundShipment)
@@ -156,7 +156,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               error={requisitionCountError as ApiException}
               isError={isRequisitionCountError}
               isLoading={isRequisitionCountLoading}
-              title={t('internal-order', { ns: 'app' })}
+              title={t('internal-order')}
               stats={[
                 {
                   label: t('label.new'),

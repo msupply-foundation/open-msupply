@@ -73,7 +73,7 @@ export const DistributionWidget: React.FC = () => {
           }}
         />
       ) : null}
-      <Widget title={t('distribution', { ns: 'app' })}>
+      <Widget title={t('distribution')}>
         <Grid
           container
           justifyContent="flex-start"
@@ -106,7 +106,7 @@ export const DistributionWidget: React.FC = () => {
               error={requisitionCountError as ApiException}
               isError={isRequisitionCountError}
               isLoading={isRequisitionCountLoading}
-              title={t('customer-requisition', { ns: 'app' })}
+              title={t('customer-requisition')}
               stats={[
                 {
                   label: t('label.new'),
