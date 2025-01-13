@@ -14,8 +14,8 @@ export const PageLayout = ({ Left, Right }: PageLayoutProps) => {
       direction="row"
       sx={{ maxHeight: '100%', width: '100%' }}
     >
-      <Grid size={{ xs: 3 }}>{Left}</Grid>
-      <Grid size={{ xs: 9 }}>{Right}</Grid>
+      <Grid size={{ xs: 4 }}>{Left}</Grid>
+      <Grid size={{ xs: 5 }}>{Right}</Grid>
     </Grid>
   );
 };
