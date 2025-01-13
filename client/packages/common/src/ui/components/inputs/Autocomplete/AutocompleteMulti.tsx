@@ -9,6 +9,7 @@ import {
   ChipProps,
 } from '@mui/material';
 import { BasicTextInput } from '../TextInput';
+import { useTheme } from '@openmsupply-client/common';
 
 export interface AutocompleteMultiProps<
   T,
@@ -52,6 +53,7 @@ export function AutocompleteMulti<
 }: PropsWithChildren<
   AutocompleteMultiProps<T, true, DisableClearable, FreeSolo, ChipComponent>
 >): JSX.Element {
+  const theme = useTheme();
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
@@ -108,6 +110,8 @@ export function AutocompleteMulti<
         '& .MuiChip-deleteIcon': {
           fill: theme => theme.palette.secondary.contrastText,
         },
+        background: theme.palette.background.drawer,
+        borderRadius: 2,
       }}
     />
   );
