@@ -259,7 +259,8 @@ export const RequestLineEdit = ({
                   Input={
                     <NumericTextInput
                       width={INPUT_WIDTH}
-                      value={draft?.requestedQuantity}
+                      // value={draft?.requestedQuantity}
+                      value={Math.ceil(draft?.requestedQuantity)}
                       disabled={isPacks}
                       onChange={value => {
                         if (draft?.suggestedQuantity === value) {
@@ -352,7 +353,8 @@ export const RequestLineEdit = ({
                 Input={
                   <NumericTextInput
                     width={INPUT_WIDTH}
-                    value={draft?.suggestedQuantity}
+                    value={Math.round(draft?.suggestedQuantity * 100) / 100}
+                    // value={draft?.suggestedQuantity}
                     disabled
                   />
                 }
