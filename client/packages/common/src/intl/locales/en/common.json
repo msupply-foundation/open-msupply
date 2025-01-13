@@ -719,7 +719,7 @@
   "label.entered-by": "Entered by",
   "label.entered-on": "Entered on",
   "label.error-message": "Error message",
-  "label.error-see-more": "Click info icon to see error",
+  "label.error-info-icon": "Click info icon to see error",
   "label.event": "Event",
   "label.exit": "Exit",
   "label.expand": "Expand",
