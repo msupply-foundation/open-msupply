@@ -84,14 +84,15 @@ export const BasicTextInput = React.forwardRef<
                   props.disabled
                     ? theme.palette.background.toolbar
                     : theme.palette.background.menu,
-                borderRadius: '8px',
-                padding: '4px 8px',
+                borderRadius: 1,
+                padding: 0.5,
               },
               ...slotProps?.input,
             },
             htmlInput: {
               style: props?.disabled ? { textOverflow: 'ellipsis' } : {},
               inputMode: props?.disabled ? undefined : props.inputMode,
+              sx: { padding: 0.5 },
               ...slotProps?.htmlInput,
             },
             ...slotProps,

@@ -263,6 +263,7 @@ export const NumericTextInput = React.forwardRef<
     const inputRegex = new RegExp(
       `^-?\\d*${RegexUtils.escapeChars(decimal)}?\\d*$`
     );
+    console.log('disabled: ', props.disabled);
 
     return (
       <BasicTextInput
@@ -271,6 +272,11 @@ export const NumericTextInput = React.forwardRef<
           '& .MuiInput-input': {
             textAlign: 'right',
             width: fullWidth ? undefined : `${width}px`,
+            backgroundColor: theme =>
+              props.disabled
+                ? theme?.palette?.background?.toolbar
+                : theme?.palette?.background?.menu,
+            borderRadius: 2,
           },
           ...sx,
         }}
@@ -287,8 +293,8 @@ export const NumericTextInput = React.forwardRef<
                 props.disabled
                   ? theme.palette.background.toolbar
                   : theme.palette.background.menu,
-              padding: 0.5,
               borderRadius: 2,
+              padding: 0.5,
             },
           },
           ...slotProps,
