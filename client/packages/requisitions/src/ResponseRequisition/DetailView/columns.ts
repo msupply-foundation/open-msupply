@@ -61,7 +61,7 @@ export const useResponseColumns = () => {
         description: 'description.our-soh',
         sortable: false,
         Cell: PackQuantityCell,
-        accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
+        accessor: ({ rowData }) => rowData.itemStats.stockOnHand,
       },
     ],
   ];
