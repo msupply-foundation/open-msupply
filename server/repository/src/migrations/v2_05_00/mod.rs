@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 
 mod abbreviation_create_table;
+mod add_contact_form_processor_pg_enum_type;
 mod add_contact_form_table;
 mod add_elmis_code_to_program;
 mod add_email_queue_table;
@@ -42,6 +43,7 @@ impl Migration for V2_05_00 {
             Box::new(diagnosis_add_to_invoice::Migrate),
             Box::new(add_email_retry_at::Migrate),
             Box::new(remove_contact_form_user_account_fk::Migrate),
+            Box::new(add_contact_form_processor_pg_enum_type::Migrate),
         ]
     }
 }
