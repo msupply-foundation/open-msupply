@@ -7,6 +7,7 @@ import {
   IndicatorValueTypeNode,
   InputWithLabelRow,
   NumericTextInput,
+  useAuthContext,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -15,6 +16,9 @@ import {
   IndicatorLineWithColumnsFragment,
 } from '../../api';
 import { useDraftIndicatorValue } from './hooks';
+import { CustomerIndicatorInfoView } from './CustomerIndicatorInfo';
+import { indicatorColumnNameToLocal } from '../../../utils';
+
 interface IndicatorLineEditProps {
   requisitionNumber: number;
   hasNext: boolean;
@@ -90,7 +94,7 @@ const InputWithLabel = ({
     <InputWithLabelRow
       Input={inputComponent}
       labelWidth={LABEL_WIDTH}
-      label={data.name}
+      label={indicatorColumnNameToLocal(data.name)}
       sx={{ marginBottom: 1 }}
     />
   );
@@ -105,14 +109,16 @@ export const IndicatorLineEdit = ({
   currentLine,
   disabled,
 }: IndicatorLineEditProps) => {
-  const columns = currentLine?.columns
-    .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
-    .sort((a, b) => a.columnNumber - b.columnNumber);
+  const columns =
+    currentLine?.columns
+      .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
+      .sort((a, b) => a.columnNumber - b.columnNumber) || [];
+  const { store } = useAuthContext();
 
   return (
     <>
       <Box display="flex" flexDirection="column">
-        {columns?.map((c, i) => (
+        {columns.map((c, i) => (
           <InputWithLabel
             key={c.value?.id}
             data={c}
@@ -121,6 +127,15 @@ export const IndicatorLineEdit = ({
           />
         ))}
       </Box>
+      {store?.preferences
+        .useConsumptionAndStockFromCustomersForInternalOrders && (
+        <Box paddingTop={1} maxHeight={200} width="100%" display="flex">
+          <CustomerIndicatorInfoView
+            columns={columns}
+            customerInfos={currentLine?.customerIndicatorInfo || []}
+          />
+        </Box>
+      )}
       <Box>
         <Footer
           hasNext={hasNext}
