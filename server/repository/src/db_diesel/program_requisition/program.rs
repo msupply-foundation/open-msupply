@@ -84,7 +84,6 @@ impl<'a> ProgramRepository<'a> {
         // );
 
         let result = final_query.load::<Program>(self.connection.lock().connection())?;
-
         Ok(result)
     }
 
