@@ -282,6 +282,14 @@ export const NumericTextInput = React.forwardRef<
                 {endAdornment}
               </InputAdornment>
             ) : undefined,
+            sx: {
+              backgroundColor: theme =>
+                props.disabled
+                  ? theme.palette.background.toolbar
+                  : theme.palette.background.menu,
+              padding: 0.5,
+              borderRadius: 2,
+            },
           },
           ...slotProps,
         }}
