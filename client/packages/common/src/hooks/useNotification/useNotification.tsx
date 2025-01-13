@@ -44,14 +44,7 @@ export const useNotification = (): NotificationHook => {
           <InfoIcon style={{ color: '#fff' }} />
         </IconButton>
       </PaperClickPopover>
-      <IconButton
-        size="small"
-        onClick={() => {
-          closeSnackbar(key);
-        }}
-      >
-        <CloseIcon style={{ color: '#fff' }} />
-      </IconButton>
+      {action(key)}
     </>
   );
 
@@ -80,7 +73,6 @@ export const useNotification = (): NotificationHook => {
       action,
       ...options,
     });
-
   const warning = (message: string, options?: OptionsObject) => () =>
     enqueueSnackbar(message, {
       variant: 'warning',
