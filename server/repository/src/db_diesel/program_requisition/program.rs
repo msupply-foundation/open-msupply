@@ -78,17 +78,20 @@ impl<'a> ProgramRepository<'a> {
             .limit(pagination.limit as i64);
 
         // Debug diesel query
-        // println!(
-        //     "{}",
-        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
-        // );
+        println!(
+            "{}",
+            diesel::debug_query::<DBType, _>(&final_query).to_string()
+        );
 
         let result = final_query.load::<Program>(self.connection.lock().connection())?;
+
+        println!("{:?}", result);
         Ok(result)
     }
 
     pub fn create_filtered_query(filter: Option<ProgramFilter>) -> BoxedUserProgramQuery {
         let mut query = program_dsl::program.into_boxed();
+        query = query.filter(program_dsl::deleted_datetime.is_null());
 
         if let Some(f) = filter {
             let ProgramFilter {
