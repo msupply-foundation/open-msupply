@@ -16,7 +16,6 @@ import {
 } from './types';
 import { BasicTextInput } from '../TextInput';
 import { StyledPopper } from './components';
-import { useTheme } from '@openmsupply-client/common';
 
 export interface AutocompleteProps<T>
   extends Omit<
@@ -75,7 +74,6 @@ export function Autocomplete<T>({
   popperMinWidth,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
-  const theme = useTheme();
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
@@ -138,7 +136,7 @@ export function Autocomplete<T>({
         popper: popper,
       }}
       sx={{
-        background: theme.palette.background.drawer,
+        background: theme => theme.palette.background.drawer,
         borderRadius: 2,
         paddingTop: 0.5,
         paddingBottom: 0.5,

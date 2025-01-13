@@ -77,7 +77,6 @@ export const BasicTextInput = React.forwardRef<
             input: {
               disableInjectingGlobalStyles: true,
               disableUnderline: error ? true : false,
-              ...slotProps?.input,
               sx: {
                 border: theme =>
                   error ? `2px solid ${theme.palette.error.main}` : 'none',
@@ -88,10 +87,12 @@ export const BasicTextInput = React.forwardRef<
                 borderRadius: '8px',
                 padding: '4px 8px',
               },
+              ...slotProps?.input,
             },
             htmlInput: {
               style: props?.disabled ? { textOverflow: 'ellipsis' } : {},
               inputMode: props?.disabled ? undefined : props.inputMode,
+              ...slotProps?.htmlInput,
             },
             ...slotProps,
           }}
