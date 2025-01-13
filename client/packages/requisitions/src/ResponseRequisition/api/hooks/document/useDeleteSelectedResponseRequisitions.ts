@@ -50,7 +50,7 @@ export const useDeleteSelectedResponseRequisitions = () => {
       ({ status }) => status !== RequisitionNodeStatus.Finalised
     ),
     messages: {
-      confirmMessage: t('messages.confirm-delete-requisitions', {
+      confirmMessage: t('messages.confirm-delete-customer-requisitions', {
         count: selectedRows.length,
       }),
       deleteSuccess: t('messages.deleted-orders', {
