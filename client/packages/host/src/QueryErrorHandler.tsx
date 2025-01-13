@@ -10,7 +10,7 @@ import {
 
 export const QueryErrorHandler = () => {
   const client = useQueryClient();
-  const { error } = useNotification();
+  const { errorWithDetail } = useNotification();
   const t = useTranslation();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const location = useLocation();
@@ -19,7 +19,7 @@ export const QueryErrorHandler = () => {
 
   useEffect(() => {
     if (!!errorMessage && authError !== AuthError.Unauthenticated) {
-      error(errorMessage)();
+      errorWithDetail(errorMessage)();
     }
   }, [errorMessage]);
 
