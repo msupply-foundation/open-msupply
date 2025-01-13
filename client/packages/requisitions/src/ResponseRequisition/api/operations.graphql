@@ -86,7 +86,7 @@ fragment ResponseLine on RequisitionLineNode {
 
   itemStats {
     __typename
-    availableStockOnHand
+    stockOnHand
     availableMonthsOfStockOnHand
     averageMonthlyConsumption
   }
