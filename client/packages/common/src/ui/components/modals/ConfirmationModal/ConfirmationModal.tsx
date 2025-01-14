@@ -90,7 +90,6 @@ export const ConfirmationModal = ({
                   await result;
                   setLoading(false);
                 }
-                onCancel();
               }}
               label={buttonLabel ? buttonLabel : t('button.ok')}
             />
