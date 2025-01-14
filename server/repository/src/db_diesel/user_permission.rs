@@ -1,6 +1,6 @@
 use super::{
-    user_permission_row::{user_permission, user_permission::dsl as user_permission_dsl},
-    DBType, PermissionType, StorageConnection, UserPermissionRow,
+    user_permission_row::user_permission, DBType, PermissionType, StorageConnection,
+    UserPermissionRow,
 };
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
@@ -96,7 +96,7 @@ impl<'a> UserPermissionRepository<'a> {
 type BoxedUserPermissionQuery = IntoBoxed<'static, user_permission::table, DBType>;
 
 fn create_filtered_query(filter: Option<UserPermissionFilter>) -> BoxedUserPermissionQuery {
-    let mut query = user_permission_dsl::user_permission.into_boxed();
+    let mut query = user_permission::table.into_boxed();
 
     if let Some(f) = filter {
         let UserPermissionFilter {
@@ -107,14 +107,14 @@ fn create_filtered_query(filter: Option<UserPermissionFilter>) -> BoxedUserPermi
             has_context,
         } = f;
 
-        apply_equal_filter!(query, id, user_permission_dsl::id);
-        apply_equal_filter!(query, user_id, user_permission_dsl::user_id);
-        apply_equal_filter!(query, store_id, user_permission_dsl::store_id);
-        apply_equal_filter!(query, permission, user_permission_dsl::permission);
+        apply_equal_filter!(query, id, user_permission::id);
+        apply_equal_filter!(query, user_id, user_permission::user_id);
+        apply_equal_filter!(query, store_id, user_permission::store_id);
+        apply_equal_filter!(query, permission, user_permission::permission);
 
         query = match has_context {
-            Some(true) => query.filter(user_permission_dsl::context_id.is_not_null()),
-            Some(false) => query.filter(user_permission_dsl::context_id.is_null()),
+            Some(true) => query.filter(user_permission::context_id.is_not_null()),
+            Some(false) => query.filter(user_permission::context_id.is_null()),
             None => query,
         };
     }
