@@ -266,7 +266,7 @@ const Actions = () => {
     {
       id: 'action:easter-egg',
       name: `${t('easter-egg')}`,
-      shortcut: ['e', 'e'],
+      shortcut: ['$mod+Shift+KeyE'],
       keywords: 'easter egg game',
       perform: showEasterEgg,
     },
