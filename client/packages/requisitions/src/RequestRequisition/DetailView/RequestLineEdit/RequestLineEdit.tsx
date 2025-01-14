@@ -352,7 +352,7 @@ export const RequestLineEdit = ({
                 Input={
                   <NumericTextInput
                     width={INPUT_WIDTH}
-                    value={Math.round(draft?.suggestedQuantity * 100) / 100}
+                    value={NumUtils.round(draft?.suggestedQuantity, 2)}
                     disabled
                   />
                 }
