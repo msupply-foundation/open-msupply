@@ -1,9 +1,5 @@
 use super::{
-    inventory_adjustment_reason_row::{
-        inventory_adjustment_reason,
-        inventory_adjustment_reason::dsl as inventory_adjustment_reason_dsl,
-    },
-    DBType, StorageConnection,
+    inventory_adjustment_reason_row::inventory_adjustment_reason, DBType, StorageConnection,
 };
 use diesel::prelude::*;
 use util::inline_init;
@@ -73,13 +69,13 @@ impl<'a> InventoryAdjustmentReasonRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 InventoryAdjustmentReasonSortField::Id => {
-                    apply_sort_no_case!(query, sort, inventory_adjustment_reason_dsl::id)
+                    apply_sort_no_case!(query, sort, inventory_adjustment_reason::id)
                 }
                 InventoryAdjustmentReasonSortField::InventoryAdjustmentReasonType => {
-                    apply_sort_no_case!(query, sort, inventory_adjustment_reason_dsl::type_)
+                    apply_sort_no_case!(query, sort, inventory_adjustment_reason::type_)
                 }
                 InventoryAdjustmentReasonSortField::Reason => {
-                    apply_sort_no_case!(query, sort, inventory_adjustment_reason_dsl::reason)
+                    apply_sort_no_case!(query, sort, inventory_adjustment_reason::reason)
                 }
             }
         }
@@ -101,10 +97,10 @@ fn create_filtered_query(
     let mut query = inventory_adjustment_reason::table.into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, inventory_adjustment_reason_dsl::id);
-        apply_equal_filter!(query, filter.r#type, inventory_adjustment_reason_dsl::type_);
+        apply_equal_filter!(query, filter.id, inventory_adjustment_reason::id);
+        apply_equal_filter!(query, filter.r#type, inventory_adjustment_reason::type_);
         if let Some(value) = filter.is_active {
-            query = query.filter(inventory_adjustment_reason_dsl::is_active.eq(value));
+            query = query.filter(inventory_adjustment_reason::is_active.eq(value));
         }
     }
 

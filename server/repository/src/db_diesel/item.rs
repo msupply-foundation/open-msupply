@@ -1,15 +1,9 @@
 use super::{
-    category_row::category::dsl as category_dsl,
-    item_category_row::item_category_join,
-    item_link_row::item_link::dsl as item_link_dsl,
-    item_row::{item, item::dsl as item_dsl},
-    master_list_line_row::master_list_line::dsl as master_list_line_dsl,
-    master_list_name_join::master_list_name_join::dsl as master_list_name_join_dsl,
-    master_list_row::master_list::dsl as master_list_dsl,
-    stock_on_hand::stock_on_hand::dsl as stock_on_hand_dsl,
-    store_row::store::dsl as store_dsl,
-    unit_row::{unit, unit::dsl as unit_dsl},
-    DBType, ItemRow, ItemType, StorageConnection, UnitRow,
+    category_row::category::dsl as category_dsl, item_category_row::item_category_join,
+    item_link_row::item_link, item_row::item, master_list_line_row::master_list_line,
+    master_list_name_join::master_list_name_join, master_list_row::master_list,
+    stock_on_hand::stock_on_hand, store_row::store, unit_row::unit, DBType, ItemRow, ItemType,
+    StorageConnection, UnitRow,
 };
 
 use diesel::{
@@ -171,17 +165,17 @@ impl<'a> ItemRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 ItemSortField::Name => {
-                    apply_sort_no_case!(query, sort, item_dsl::name);
+                    apply_sort_no_case!(query, sort, item::name);
                 }
                 ItemSortField::Code => {
-                    apply_sort_no_case!(query, sort, item_dsl::code);
+                    apply_sort_no_case!(query, sort, item::code);
                 }
                 ItemSortField::Type => {
-                    apply_sort!(query, sort, item_dsl::type_);
+                    apply_sort!(query, sort, item::type_);
                 }
             }
         } else {
-            query = query.order(item_dsl::id.asc())
+            query = query.order(item::id.asc())
         }
 
         let final_query = query
@@ -208,7 +202,7 @@ fn to_domain((item_row, unit_row): ItemAndUnit) -> Item {
 type BoxedItemQuery = IntoBoxed<'static, LeftJoin<item::table, unit::table>, DBType>;
 
 fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedItemQuery {
-    let mut query = item_dsl::item.left_join(unit_dsl::unit).into_boxed();
+    let mut query = item::table.left_join(unit::table).into_boxed();
 
     if let Some(f) = filter {
         let ItemFilter {
@@ -227,21 +221,21 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
 
         // or filter need to be applied before and filters
         if code_or_name.is_some() {
-            apply_string_filter!(query, code_or_name.clone(), item_dsl::code);
-            apply_string_or_filter!(query, code_or_name, item_dsl::name);
+            apply_string_filter!(query, code_or_name.clone(), item::code);
+            apply_string_or_filter!(query, code_or_name, item::name);
         }
 
-        apply_equal_filter!(query, id, item_dsl::id);
-        apply_string_filter!(query, code, item_dsl::code);
-        apply_string_filter!(query, name, item_dsl::name);
-        apply_equal_filter!(query, r#type, item_dsl::type_);
+        apply_equal_filter!(query, id, item::id);
+        apply_string_filter!(query, code, item::code);
+        apply_string_filter!(query, name, item::name);
+        apply_equal_filter!(query, r#type, item::type_);
 
         if let Some(is_active) = is_active {
-            query = query.filter(item_dsl::is_active.eq(is_active));
+            query = query.filter(item::is_active.eq(is_active));
         }
 
         if let Some(is_vaccine) = is_vaccine {
-            query = query.filter(item_dsl::is_vaccine.eq(is_vaccine));
+            query = query.filter(item::is_vaccine.eq(is_vaccine));
         }
 
         if let Some(category_id) = category_id {
@@ -253,7 +247,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
                 .filter(item_category_join::category_id.eq(category_id.clone()))
                 .into_boxed();
 
-            query = query.filter(item_dsl::id.eq_any(item_ids_for_category_id));
+            query = query.filter(item::id.eq_any(item_ids_for_category_id));
         }
 
         if let Some(category_name) = category_name {
@@ -265,54 +259,50 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
                 .filter(category::name.eq(category_name.clone()))
                 .into_boxed();
 
-            query = query.filter(item_dsl::id.eq_any(item_ids_for_category_name));
+            query = query.filter(item::id.eq_any(item_ids_for_category_name));
         }
 
-        let visible_item_ids = item_link_dsl::item_link
-            .select(item_link_dsl::item_id)
+        let visible_item_ids = item_link::table
+            .select(item_link::item_id)
             .inner_join(
-                master_list_line_dsl::master_list_line
-                    .on(master_list_line_dsl::item_link_id.eq(item_link_dsl::id)),
+                master_list_line::table.on(master_list_line::item_link_id.eq(item_link::id)),
+            )
+            .inner_join(master_list::table.on(master_list::id.eq(master_list_line::master_list_id)))
+            .inner_join(
+                master_list_name_join::table
+                    .on(master_list_name_join::master_list_id.eq(master_list::id)),
             )
             .inner_join(
-                master_list_dsl::master_list
-                    .on(master_list_dsl::id.eq(master_list_line_dsl::master_list_id)),
+                store::table.on(store::name_link_id
+                    .eq(master_list_name_join::name_link_id)
+                    .and(store::id.eq(store_id.clone()))),
             )
-            .inner_join(
-                master_list_name_join_dsl::master_list_name_join
-                    .on(master_list_name_join_dsl::master_list_id.eq(master_list_dsl::id)),
-            )
-            .inner_join(
-                store_dsl::store.on(store_dsl::name_link_id
-                    .eq(master_list_name_join_dsl::name_link_id)
-                    .and(store_dsl::id.eq(store_id.clone()))),
-            )
-            .filter(store_dsl::id.eq(store_id.clone()))
+            .filter(store::id.eq(store_id.clone()))
             .into_boxed();
 
-        let item_ids_with_stock_on_hand = item_link_dsl::item_link
-            .select(item_link_dsl::item_id)
-            .inner_join(stock_on_hand_dsl::stock_on_hand)
+        let item_ids_with_stock_on_hand = item_link::table
+            .select(item_link::item_id)
+            .inner_join(stock_on_hand::table)
             .filter(
-                stock_on_hand_dsl::available_stock_on_hand
+                stock_on_hand::available_stock_on_hand
                     .gt(0.0)
-                    .and(stock_on_hand_dsl::store_id.eq(store_id.clone())),
+                    .and(stock_on_hand::store_id.eq(store_id.clone())),
             )
-            .group_by(item_link_dsl::item_id)
+            .group_by(item_link::item_id)
             .into_boxed();
 
         query = match (is_visible_or_on_hand, is_visible) {
             // visible items AND non-visible items with stock on hand
             (Some(true), _) => query.filter(
-                item_dsl::id
+                item::id
                     .eq_any(visible_item_ids)
-                    .or(item_dsl::id.eq_any(item_ids_with_stock_on_hand)),
+                    .or(item::id.eq_any(item_ids_with_stock_on_hand)),
             ),
             // visible items
-            (_, Some(true)) => query.filter(item_dsl::id.eq_any(visible_item_ids)),
+            (_, Some(true)) => query.filter(item::id.eq_any(visible_item_ids)),
 
             // invisible items
-            (_, Some(false)) => query.filter(item_dsl::id.ne_all(visible_item_ids)),
+            (_, Some(false)) => query.filter(item::id.ne_all(visible_item_ids)),
 
             // no visibility filters
             (_, _) => query,
