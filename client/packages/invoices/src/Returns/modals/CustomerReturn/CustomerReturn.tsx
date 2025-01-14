@@ -5,7 +5,6 @@ import {
   DialogButton,
   TableProvider,
   createTableStore,
-  useKeyboardHeightAdjustment,
   useTabs,
   ModalMode,
   Box,
@@ -61,7 +60,6 @@ export const CustomerReturnEditModal = ({
   const isDisabled = useReturns.utils.customerIsDisabled() && !isNewReturn;
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(700);
 
   const { lines, update, save, addDraftLine } = useDraftCustomerReturnLines({
     outboundShipmentLineIds,
@@ -151,7 +149,7 @@ export const CustomerReturnEditModal = ({
             : OkButton
         }
         nextButton={!isNewReturn ? OkAndNextButton : undefined}
-        height={height}
+        height={700}
         width={1024}
       >
         <Box ref={alertRef}>
