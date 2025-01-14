@@ -23,7 +23,7 @@ pub enum UpsertProgramEnrolmentError {
     /// Each patient can only be enrolled in a program once
     ProgramEnrolmentExists,
     ProgramDoesNotExist,
-    InvalidDataSchema(Vec<String>),
+    InvalidDataSchema(String),
     DocumentTypeDoesNotExit,
     DataSchemaDoesNotExist,
     InternalError(String),
@@ -195,10 +195,7 @@ fn validate(
     };
 
     let program_enrolment_json = validate_program_schema(input).map_err(|err| {
-        UpsertProgramEnrolmentError::InvalidDataSchema(vec![format!(
-            "Invalid program data: {}",
-            err
-        )])
+        UpsertProgramEnrolmentError::InvalidDataSchema(format!("Invalid program data: {}", err))
     })?;
 
     if input.parent.is_none()
