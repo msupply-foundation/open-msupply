@@ -1,7 +1,4 @@
-use super::{
-    return_reason_row::{return_reason, return_reason::dsl as return_reason_dsl},
-    DBType, StorageConnection,
-};
+use super::{return_reason_row::return_reason, DBType, StorageConnection};
 use diesel::prelude::*;
 
 use crate::{
@@ -64,10 +61,10 @@ impl<'a> ReturnReasonRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 ReturnReasonSortField::Id => {
-                    apply_sort_no_case!(query, sort, return_reason_dsl::id)
+                    apply_sort_no_case!(query, sort, return_reason::id)
                 }
                 ReturnReasonSortField::Reason => {
-                    apply_sort_no_case!(query, sort, return_reason_dsl::reason)
+                    apply_sort_no_case!(query, sort, return_reason::reason)
                 }
             }
         }
@@ -87,9 +84,9 @@ fn create_filtered_query(filter: Option<ReturnReasonFilter>) -> BoxedReturnQuery
     let mut query = return_reason::table.into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, return_reason_dsl::id);
+        apply_equal_filter!(query, filter.id, return_reason::id);
         if let Some(value) = filter.is_active {
-            query = query.filter(return_reason_dsl::is_active.eq(value));
+            query = query.filter(return_reason::is_active.eq(value));
         }
     }
 
