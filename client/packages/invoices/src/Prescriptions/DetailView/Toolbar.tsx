@@ -30,6 +30,11 @@ export const Toolbar: FC = () => {
   const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
     clinician ?? null
   );
+  const [dateValue, setDateValue] = useState(
+    DateUtils.getDateOrNull(prescriptionDate) ??
+      DateUtils.getDateOrNull(createdDatetime) ??
+      null
+  );
 
   const {
     delete: { deleteLines },
@@ -49,11 +54,18 @@ export const Toolbar: FC = () => {
   });
 
   const handleDateChange = async (newPrescriptionDate: Date | null) => {
+    const currentDateValue = dateValue; // Revert to this value if user cancels
+
     if (!newPrescriptionDate) return;
+    setDateValue(newPrescriptionDate);
 
-    const oldPrescriptionDate = DateUtils.getDateOrNull(prescriptionDate);
+    const oldPrescriptionDate = DateUtils.getDateOrNull(dateValue);
 
-    if (newPrescriptionDate === oldPrescriptionDate) return;
+    if (
+      newPrescriptionDate.toLocaleDateString() ===
+      oldPrescriptionDate?.toLocaleDateString()
+    )
+      return;
 
     if (!items || items.length === 0) {
       // If there are no lines, we can just update the prescription date
@@ -77,13 +89,9 @@ export const Toolbar: FC = () => {
           ),
         });
       },
+      onCancel: () => setDateValue(currentDateValue),
     });
   };
-
-  const defaultPrescriptionDate =
-    DateUtils.getDateOrNull(prescriptionDate) ??
-    DateUtils.getDateOrNull(createdDatetime) ??
-    new Date();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -139,14 +147,9 @@ export const Toolbar: FC = () => {
               Input={
                 <DateTimePickerInput
                   disabled={isDisabled}
-                  defaultValue={defaultPrescriptionDate}
-                  value={DateUtils.getDateOrNull(prescriptionDate)}
+                  value={DateUtils.getDateOrNull(dateValue) ?? new Date()}
                   format="P"
-                  // Using onAccept rather than onChange -- on mobile, onChange
-                  // is triggered when first opening the picker, which causes UI
-                  // conflict with the confirmation modal
-                  onAccept={handleDateChange}
-                  onChange={() => {}}
+                  onChange={handleDateChange}
                   maxDate={new Date()}
                 />
               }
