@@ -51,7 +51,8 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
           label={label}
           disabled={disabled}
           onClick={onClick}
-          shouldShrink={shouldShrink}
+          // Flatbutton doesn't shrink by default but we want it to in actions footer
+          shouldShrink={shouldShrink ?? true}
         />
       ))}
     </Stack>
