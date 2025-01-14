@@ -162,8 +162,8 @@ const Actions = () => {
     },
     {
       id: 'navigation:items',
-      name: `${t('cmdk.goto-items')} (Alt+i)`,
-      shortcut: ['Alt+KeyI'],
+      name: `${t('cmdk.goto-items')} (Alt+Shift+i)`,
+      shortcut: ['Alt+Shift+KeyI'],
       keywords: 'items',
       perform: () =>
         navigate(
@@ -222,8 +222,8 @@ const Actions = () => {
     },
     {
       id: 'navigation:stocktakes',
-      name: `${t('cmdk.goto-stocktakes')} (Alt+Shift+s)`,
-      shortcut: ['Alt+Shift+KeyS'],
+      name: `${t('cmdk.goto-stocktakes')} (Shift+s)`,
+      shortcut: ['Shift+KeyS'],
       keywords: 'stocktakes',
       perform: () =>
         navigate(
