@@ -6,6 +6,8 @@ import { Slide } from '../../ui/animations';
 import { BasicModal, ModalTitle } from '@common/components';
 import { useIntlUtils } from '@common/intl';
 import { SxProps, Theme } from '@mui/material';
+import { Capacitor } from '@capacitor/core';
+import { Keyboard } from '@capacitor/keyboard';
 
 type OkClickEvent = React.MouseEvent<HTMLButtonElement, MouseEvent>;
 
@@ -161,6 +163,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       isRtl,
       animationTimeout
     );
+    const [showActions, setShowActions] = useState(true);
 
     const defaultPreventedOnClick =
       (onClick: (e?: OkClickEvent) => Promise<boolean>) =>
@@ -215,6 +218,22 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       width: width ? Math.min(window.innerWidth - 50, width) : undefined,
     };
 
+    // Hide while keyboard is open fora bit more screen real estate
+    useEffect(() => {
+      if (!Capacitor.isPluginAvailable('Keyboard')) return;
+
+      Keyboard.addListener('keyboardDidShow', () => {
+        setShowActions(false);
+      });
+      Keyboard.addListener('keyboardDidHide', () => {
+        setShowActions(true);
+      });
+
+      return () => {
+        Keyboard.removeAllListeners();
+      };
+    }, []);
+
     return (
       <BasicModal
         open={open}
@@ -247,21 +266,23 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
               <div>{children}</div>
             )}
           </DialogContent>
-          <DialogActions
-            sx={{
-              justifyContent: 'center',
-              marginBottom: '30px',
-              marginTop: '30px',
-            }}
-          >
-            {cancelButton}
-            {deleteButton}
-            {saveButton}
-            {copyButton}
-            {WrappedOkButton}
-            {WrappedNextButton}
-            {reportSelector}
-          </DialogActions>
+          {showActions && (
+            <DialogActions
+              sx={{
+                justifyContent: 'center',
+                marginBottom: '30px',
+                marginTop: '30px',
+              }}
+            >
+              {cancelButton}
+              {deleteButton}
+              {saveButton}
+              {copyButton}
+              {WrappedOkButton}
+              {WrappedNextButton}
+              {reportSelector}
+            </DialogActions>
+          )}
         </form>
       </BasicModal>
     );
