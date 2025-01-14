@@ -5,7 +5,7 @@ import { TransitionProps } from '@mui/material/transitions';
 import { Slide } from '../../ui/animations';
 import { BasicModal, ModalTitle } from '@common/components';
 import { useIntlUtils } from '@common/intl';
-import { SxProps, Theme } from '@mui/material';
+import { SxProps, Theme, useMediaQuery } from '@mui/material';
 import { useKeyboardIsOpen } from '../useKeyboardIsOpen';
 
 type OkClickEvent = React.MouseEvent<HTMLButtonElement, MouseEvent>;
@@ -54,6 +54,7 @@ export interface DialogProps {
   animationTimeout?: number;
   disableBackdrop?: boolean;
   disableEscapeKey?: boolean;
+  disableMobileFullScreen?: boolean;
 }
 
 interface DialogState {
@@ -99,6 +100,7 @@ const useSlideAnimation = (isRtl: boolean, timeout: number) => {
  * @property {number} [animationTimeout=500] the timeout for the slide animation
  * @property {boolean} [disableBackdrop=false] (optional) disable clicking the backdrop to close the modal
  * @property {boolean} [disableEscape=false] (optional) disable pressing of the escape key to close the modal
+ * @property {boolean} [disableMobileFullScreen=false] (optional) disable modal entering fullscreen mode on smaller screens
  * @property {boolean} isOpen (optional) is the modal open
  * @property {function} onClose (optional) method to run on closing the modal
  * @return {DialogState} the dialog state. Properties are:
@@ -114,6 +116,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     animationTimeout = 500,
     disableBackdrop = true,
     disableEscapeKey = false,
+    disableMobileFullScreen = false,
   } = dialogProps ?? {};
   const [open, setOpen] = React.useState(false);
   const showDialog = useCallback(() => setOpen(true), []);
@@ -162,7 +165,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       isRtl,
       animationTimeout
     );
-    const hideActions = useKeyboardIsOpen();
+    const keyboardOpen = useKeyboardIsOpen();
+    const fullScreen = useMediaQuery('(max-height: 850px)');
 
     const defaultPreventedOnClick =
       (onClick: (e?: OkClickEvent) => Promise<boolean>) =>
@@ -226,6 +230,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         sx={sx}
         TransitionComponent={Transition}
         disableEscapeKeyDown={false}
+        fullScreen={disableMobileFullScreen ? false : fullScreen}
       >
         {title ? <ModalTitle title={title} /> : null}
         <form
@@ -249,23 +254,21 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
               <div>{children}</div>
             )}
           </DialogContent>
-          {!hideActions && (
-            <DialogActions
-              sx={{
-                justifyContent: 'center',
-                marginBottom: '30px',
-                marginTop: '30px',
-              }}
-            >
-              {cancelButton}
-              {deleteButton}
-              {saveButton}
-              {copyButton}
-              {WrappedOkButton}
-              {WrappedNextButton}
-              {reportSelector}
-            </DialogActions>
-          )}
+          <DialogActions
+            sx={{
+              justifyContent: 'center',
+              marginBottom: keyboardOpen ? '10px' : '30px',
+              marginTop: keyboardOpen ? '10px' : '30px',
+            }}
+          >
+            {cancelButton}
+            {deleteButton}
+            {saveButton}
+            {copyButton}
+            {WrappedOkButton}
+            {WrappedNextButton}
+            {reportSelector}
+          </DialogActions>
         </form>
       </BasicModal>
     );
