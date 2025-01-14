@@ -59,7 +59,7 @@ export const Toolbar: FC = () => {
     if (!newPrescriptionDate) return;
     setDateValue(newPrescriptionDate);
 
-    const oldPrescriptionDate = DateUtils.getDateOrNull(prescriptionDate);
+    const oldPrescriptionDate = DateUtils.getDateOrNull(dateValue);
 
     if (
       newPrescriptionDate.toLocaleDateString() ===
