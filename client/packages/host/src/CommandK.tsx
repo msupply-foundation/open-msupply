@@ -143,9 +143,9 @@ const Actions = () => {
     },
     {
       id: 'navigation:customers',
-      name: `${t('cmdk.goto-customers')} (g+c)`,
+      name: `${t('cmdk.goto-customers')} (Ctrl+c)`,
       keywords: 'customers',
-      shortcut: ['g', 'c'],
+      shortcut: ['$mod+KeyC'],
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Distribution)
@@ -198,9 +198,9 @@ const Actions = () => {
     },
     {
       id: 'navigation:suppliers',
-      name: `${t('cmdk.goto-suppliers')} (g+s)`,
+      name: `${t('cmdk.goto-suppliers')} (Ctrl+s)`,
       keywords: 'suppliers',
-      shortcut: ['g', 's'],
+      shortcut: ['$mod+KeyS'],
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Replenishment)
@@ -234,8 +234,8 @@ const Actions = () => {
     },
     {
       id: 'navigation:locations',
-      name: `${t('cmdk.goto-locations')} (g+l)`,
-      shortcut: ['g', 'l'],
+      name: `${t('cmdk.goto-locations')} (Alt+l)`,
+      shortcut: ['Alt+KeyL'],
       keywords: 'locations',
       perform: () =>
         navigate(
@@ -272,9 +272,9 @@ const Actions = () => {
     },
     {
       id: 'navigation:help',
-      name: `${t('help')} (h)`,
+      name: `${t('help')} (Alt+h)`,
       keywords: 'help, docs, guide',
-      shortcut: ['h'],
+      shortcut: ['Alt+KeyH'],
       perform: () => navigate(RouteBuilder.create(AppRoute.Help).build()),
     },
     {
