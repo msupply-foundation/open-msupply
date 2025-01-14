@@ -8349,7 +8349,7 @@ export type UpdatePrescriptionErrorInterface = {
 };
 
 export type UpdatePrescriptionInput = {
-  clinicianId?: InputMaybe<Scalars['String']['input']>;
+  clinicianId?: InputMaybe<NullableStringUpdate>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   diagnosisId?: InputMaybe<NullableStringUpdate>;
