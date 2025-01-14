@@ -336,7 +336,7 @@ mod test {
                     period4.clone(),
                 ],
                 period_schedules: vec![period_schedule1, period_schedule2],
-                name_tags: vec![name_tag1, name_tag2],
+                name_tags: vec![name_tag1.clone(), name_tag2.clone()],
                 name_tag_joins: vec![
                     name_tag_join1,
                     name_tag_join2,
@@ -385,7 +385,8 @@ mod test {
                     program_requisition_settings: ProgramRequisitionSettings {
                         program_settings_row: program_requisition_setting1.clone(),
                         program_row: program1.clone(),
-                        master_list: master_list1.clone()
+                        master_list: master_list1.clone(),
+                        name_tag_row: name_tag1.clone()
                     },
                     customer_and_order_types: vec![(
                         ProgramCustomer {
@@ -412,7 +413,8 @@ mod test {
                     program_requisition_settings: ProgramRequisitionSettings {
                         program_settings_row: program_requisition_setting2.clone(),
                         program_row: program2.clone(),
-                        master_list: master_list2.clone()
+                        master_list: master_list2.clone(),
+                        name_tag_row: name_tag2.clone()
                     },
                     customer_and_order_types: vec![(
                         ProgramCustomer {
@@ -436,7 +438,8 @@ mod test {
                     program_requisition_settings: ProgramRequisitionSettings {
                         program_settings_row: program_requisition_setting3.clone(),
                         program_row: program1.clone(),
-                        master_list: master_list1.clone()
+                        master_list: master_list1.clone(),
+                        name_tag_row: name_tag1.clone()
                     },
                     customer_and_order_types: vec![(
                         ProgramCustomer {
@@ -455,7 +458,8 @@ mod test {
                     program_requisition_settings: ProgramRequisitionSettings {
                         program_settings_row: program_requisition_setting4.clone(),
                         program_row: program2.clone(),
-                        master_list: master_list2.clone()
+                        master_list: master_list2.clone(),
+                        name_tag_row: name_tag2.clone()
                     },
                     customer_and_order_types: vec![(
                         ProgramCustomer {
