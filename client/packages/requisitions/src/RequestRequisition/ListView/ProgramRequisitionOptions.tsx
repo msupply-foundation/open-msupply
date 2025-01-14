@@ -200,6 +200,7 @@ export const ProgramRequisitionOptions = ({
       <LabelAndOptions
         {...programs}
         renderOption={ProgramOptionRenderer}
+        optionKey="programName"
         autoFocus={true}
       />
       <LabelAndOptions {...suppliers} optionKey="name" />
