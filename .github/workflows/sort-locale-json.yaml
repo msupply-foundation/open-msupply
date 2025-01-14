@@ -1,7 +1,7 @@
 name: Sort JSON on Pull Requests
 
 on:
-  pull_request:
+  push:
     paths:
       - "client/packages/common/src/intl/locales/**/*.json" # Trigger only for locale json changes
 
@@ -11,8 +11,6 @@ permissions:
 jobs:
   sort-json:
     runs-on: ubuntu-latest
-
-
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
