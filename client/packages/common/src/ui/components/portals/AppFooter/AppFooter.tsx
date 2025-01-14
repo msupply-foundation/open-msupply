@@ -1,7 +1,7 @@
 import { Box, BoxProps, Portal } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { FC, ReactNode, useEffect, useRef } from 'react';
-import { useHostContext } from '@common/hooks';
+import { useHostContext, useKeyboardIsOpen } from '@common/hooks';
 import { useIsCentralServerApi } from '@openmsupply-client/common';
 
 const Container = styled('div')(() => ({
@@ -17,6 +17,7 @@ const Container = styled('div')(() => ({
 export const AppFooter: FC = () => {
   const { setAppFooterRef, setAppSessionDetailsRef, fullScreen } =
     useHostContext();
+  const keyboardOpen = useKeyboardIsOpen();
   const appFooterRef = useRef(null);
   const appSessionDetailsRef = useRef(null);
   const isCentralServer = useIsCentralServerApi();
@@ -26,8 +27,10 @@ export const AppFooter: FC = () => {
     setAppSessionDetailsRef(appSessionDetailsRef);
   }, []);
 
+  const hideFooter = fullScreen || keyboardOpen;
+
   return (
-    <Box sx={{ display: fullScreen ? 'none' : undefined }}>
+    <Box sx={{ display: hideFooter ? 'none' : undefined }}>
       <Container ref={appFooterRef} style={{ flex: 0 }} />
       <Container
         ref={appSessionDetailsRef}
