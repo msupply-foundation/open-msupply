@@ -566,6 +566,7 @@ fragment OrderTypeRow on ProgramRequisitionOrderTypeNode {
 fragment SupplierProgramSettings on SupplierProgramRequisitionSettingNode {
   programName
   programId
+  tagName
   suppliers {
     ...NameRow
   }

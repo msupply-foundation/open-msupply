@@ -186,6 +186,7 @@ export const ProgramRequisitionOptions = ({
   const { programs, orderTypes, suppliers, periods, createOptions } =
     useProgramRequisitionOptions(programSettings);
   const t = useTranslation();
+  const ProgramOptionRenderer = getProgramOptionRenderer();
 
   return (
     <Grid
@@ -196,7 +197,12 @@ export const ProgramRequisitionOptions = ({
       justifyContent="center"
       alignItems="center"
     >
-      <LabelAndOptions {...programs} optionKey="programName" autoFocus={true} />
+      <LabelAndOptions
+        {...programs}
+        renderOption={ProgramOptionRenderer}
+        optionKey="programName"
+        autoFocus={true}
+      />
       <LabelAndOptions {...suppliers} optionKey="name" />
       <LabelAndOptions {...orderTypes} optionKey="name" />
       <LabelAndOptions {...periods} optionKey="name" />
@@ -217,3 +223,21 @@ export const ProgramRequisitionOptions = ({
     </Grid>
   );
 };
+
+const getProgramOptionRenderer =
+  (): AutocompleteOptionRenderer<SupplierProgramSettingsFragment> =>
+  (props, item) => (
+    <DefaultAutocompleteItemOption {...props} key={item.programId}>
+      <Box display="flex" flexDirection="row" gap={1} alignItems="center">
+        <Typography
+          overflow="hidden"
+          textOverflow="ellipsis"
+          sx={{
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {item.programName} ({item.tagName})
+        </Typography>
+      </Box>
+    </DefaultAutocompleteItemOption>
+  );

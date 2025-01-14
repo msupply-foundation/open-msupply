@@ -1246,6 +1246,7 @@ export type CustomerProgramRequisitionSettingNode = {
   masterList: MasterListNode;
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
+  tagName: Scalars['String']['output'];
 };
 
 export type CustomerReturnInput = {
@@ -7585,6 +7586,7 @@ export type SupplierProgramRequisitionSettingNode = {
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
   suppliers: Array<NameNode>;
+  tagName: Scalars['String']['output'];
 };
 
 export type SupplierReturnInput = {
