@@ -1,10 +1,7 @@
-use super::asset_catalogue_item_row::{
-    asset_catalogue_item, asset_catalogue_item::dsl as asset_catalogue_item_dsl,
-    AssetCatalogueItemRow,
-};
+use super::asset_catalogue_item_row::{asset_catalogue_item, AssetCatalogueItemRow};
 
 use crate::{
-    asset_class_row::asset_class::dsl as asset_class_dsl,
+    asset_class_row::asset_class,
     diesel_macros::{
         apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
@@ -78,23 +75,23 @@ impl<'a> AssetCatalogueItemRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 AssetCatalogueItemSortField::Catalogue => {
-                    apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::sub_catalogue)
+                    apply_sort_no_case!(query, sort, asset_catalogue_item::sub_catalogue)
                 }
                 AssetCatalogueItemSortField::Code => {
-                    apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::code)
+                    apply_sort_no_case!(query, sort, asset_catalogue_item::code)
                 }
                 AssetCatalogueItemSortField::Manufacturer => {
-                    apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::manufacturer)
+                    apply_sort_no_case!(query, sort, asset_catalogue_item::manufacturer)
                 }
                 AssetCatalogueItemSortField::Model => {
-                    apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::model)
+                    apply_sort_no_case!(query, sort, asset_catalogue_item::model)
                 }
             }
         } else {
-            query = query.order(asset_catalogue_item_dsl::id.asc())
+            query = query.order(asset_catalogue_item::id.asc())
         }
 
-        query = query.filter(asset_catalogue_item_dsl::deleted_datetime.is_null());
+        query = query.filter(asset_catalogue_item::deleted_datetime.is_null());
 
         // // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
@@ -115,8 +112,8 @@ pub fn to_domain(asset_catalogue_item_row: AssetCatalogueItemRow) -> AssetCatalo
 }
 
 fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAssetCatalogueItemQuery {
-    let mut query = asset_catalogue_item_dsl::asset_catalogue_item
-        .filter(asset_catalogue_item_dsl::deleted_datetime.is_null())
+    let mut query = asset_catalogue_item::table
+        .filter(asset_catalogue_item::deleted_datetime.is_null())
         .into_boxed();
 
     if let Some(f) = filter {
@@ -142,44 +139,29 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
                 .into_boxed();
             apply_string_filter!(sub_query, search.clone(), asset_type_dsl::name);
 
-            query =
-                query.filter(asset_catalogue_item_dsl::asset_catalogue_type_id.eq_any(sub_query));
-            apply_string_or_filter!(query, search.clone(), asset_catalogue_item_dsl::code);
-            apply_string_or_filter!(
-                query,
-                search.clone(),
-                asset_catalogue_item_dsl::manufacturer
-            );
-            apply_string_or_filter!(query, search, asset_catalogue_item_dsl::model);
+            query = query.filter(asset_catalogue_item::asset_catalogue_type_id.eq_any(sub_query));
+            apply_string_or_filter!(query, search.clone(), asset_catalogue_item::code);
+            apply_string_or_filter!(query, search.clone(), asset_catalogue_item::manufacturer);
+            apply_string_or_filter!(query, search, asset_catalogue_item::model);
         }
 
-        apply_equal_filter!(query, id, asset_catalogue_item_dsl::id);
-        apply_string_filter!(query, code, asset_catalogue_item_dsl::code);
-        apply_string_filter!(query, manufacturer, asset_catalogue_item_dsl::manufacturer);
-        apply_string_filter!(query, model, asset_catalogue_item_dsl::model);
-        apply_string_filter!(
-            query,
-            sub_catalogue,
-            asset_catalogue_item_dsl::sub_catalogue
-        );
-        apply_equal_filter!(
-            query,
-            category_id,
-            asset_catalogue_item_dsl::asset_category_id
-        );
-        apply_equal_filter!(query, class_id, asset_catalogue_item_dsl::asset_class_id);
+        apply_equal_filter!(query, id, asset_catalogue_item::id);
+        apply_string_filter!(query, code, asset_catalogue_item::code);
+        apply_string_filter!(query, manufacturer, asset_catalogue_item::manufacturer);
+        apply_string_filter!(query, model, asset_catalogue_item::model);
+        apply_string_filter!(query, sub_catalogue, asset_catalogue_item::sub_catalogue);
+        apply_equal_filter!(query, category_id, asset_catalogue_item::asset_category_id);
+        apply_equal_filter!(query, class_id, asset_catalogue_item::asset_class_id);
         apply_equal_filter!(
             query,
             type_id,
-            asset_catalogue_item_dsl::asset_catalogue_type_id
+            asset_catalogue_item::asset_catalogue_type_id
         );
 
         if let Some(class_filter) = class {
-            let mut sub_query = asset_class_dsl::asset_class
-                .select(asset_class_dsl::id)
-                .into_boxed();
-            apply_string_filter!(sub_query, Some(class_filter), asset_class_dsl::name);
-            query = query.filter(asset_catalogue_item_dsl::asset_class_id.eq_any(sub_query));
+            let mut sub_query = asset_class::table.select(asset_class::id).into_boxed();
+            apply_string_filter!(sub_query, Some(class_filter), asset_class::name);
+            query = query.filter(asset_catalogue_item::asset_class_id.eq_any(sub_query));
         }
 
         if let Some(r#type_filter) = r#type {
@@ -187,8 +169,7 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
                 .select(asset_type_dsl::id)
                 .into_boxed();
             apply_string_filter!(sub_query, Some(r#type_filter), asset_type_dsl::name);
-            query =
-                query.filter(asset_catalogue_item_dsl::asset_catalogue_type_id.eq_any(sub_query));
+            query = query.filter(asset_catalogue_item::asset_catalogue_type_id.eq_any(sub_query));
         }
 
         if let Some(category_filter) = category {
@@ -196,7 +177,7 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
                 .select(asset_category_dsl::id)
                 .into_boxed();
             apply_string_filter!(sub_query, Some(category_filter), asset_category_dsl::name);
-            query = query.filter(asset_catalogue_item_dsl::asset_category_id.eq_any(sub_query));
+            query = query.filter(asset_catalogue_item::asset_category_id.eq_any(sub_query));
         }
     }
     query
