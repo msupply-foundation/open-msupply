@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import Dialog, { DialogProps as MuiDialogProps } from '@mui/material/Dialog';
 import { useIntlUtils } from '@common/intl';
-import { SxProps, Theme } from '@mui/material';
+import { SxProps, Theme, useMediaQuery } from '@mui/material';
 
 interface DialogProps extends MuiDialogProps {
   height?: number;
@@ -17,11 +17,13 @@ export const BasicModal: FC<DialogProps> = ({
   ...dialogProps
 }) => {
   const { isRtl } = useIntlUtils();
+  const fullScreen = useMediaQuery('(max-height: 850px)');
   return (
     <Dialog
+      fullScreen={fullScreen}
       PaperProps={{
         sx: {
-          borderRadius: '20px',
+          borderRadius: fullScreen ? undefined : '20px',
           minHeight: `${height}px`,
           minWidth: `${width}px`,
           direction: isRtl ? 'rtl' : 'ltr',
