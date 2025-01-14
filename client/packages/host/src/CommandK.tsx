@@ -175,7 +175,7 @@ const Actions = () => {
     {
       id: 'navigation:customer-requisition',
       name: `${t('cmdk.goto-customer-requisition')} (Alt+r)`,
-      shortcut: ['Alt+KeyR'],
+      shortcut: ['Alt+Shift+KeyR'],
       keywords: 'distribution',
       perform: () =>
         navigate(
@@ -258,8 +258,8 @@ const Actions = () => {
     },
     {
       id: 'action:logout',
-      name: `${t('logout')}`,
-      shortcut: ['$mod+Shift+KeyL'],
+      name: `${t('logout')} (Ctrl+l)`,
+      shortcut: ['$mod+KeyL'],
       keywords: 'logout',
       perform: () => confirmLogout({}),
     },
