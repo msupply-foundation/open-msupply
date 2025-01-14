@@ -107,7 +107,7 @@
   "description.max-min-temperature": "قراءة درجة الحرارة القصوى أو الدنيا",
   "description.months-of-stock": "أشهر المخزون المتوفر",
   "description.number-of-shipments": "عدد التسليمات التي تم إنشاؤها من هذا الطلب",
-  "description.rnr-consumed-adjusted": "يعرض الاستهلاك المعدل ليأخذ في الاعتبار أيام النفاد. = (المستهلك × 30) / (30 - مدة النفاد)",
+  "description.rnr-consumed-adjusted": "يعرض الاستهلاك المعدل ليأخذ في الاعتبار أيام النفاد. = (المستهلك × (365.25/12)) / ((365.25/12) - مدة النفاد)",
   "description.rnr-losses": "سجل يدويًا خسائر هذا العنصر خلال الفترة",
   "description.soh": "المخزون المتوفر",
   "description.unit-quantity": "الكمية الإجمالية بعدد الوحدات",
