@@ -724,7 +724,6 @@ mod test {
     async fn update_stock_out_line_picked_date() {
         let (_, connection, connection_manager, _) =
             setup_all("update_stock_out_line_picked_date", MockDataInserts::all()).await;
-
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_b().id, "".to_string())
@@ -775,7 +774,7 @@ mod test {
         let inserted_picked_date = invoice.picked_datetime.unwrap();
         assert!(inserted_picked_date > prescription.picked_datetime.unwrap());
 
-        // update the stock out line to check that the picked date is updated
+        // update the stock out line again, check that the picked date is not updated as it's been updated recently
         let stock_out_line = UpdateStockOutLine {
             id: "prescription_invoice-0-1".to_string(),
             r#type: Some(StockOutType::Prescription),
@@ -793,7 +792,7 @@ mod test {
             .unwrap()
             .unwrap();
         let updated_picked_date = invoice.picked_datetime.unwrap();
-        assert!(updated_picked_date > inserted_picked_date);
+        assert_eq!(updated_picked_date, inserted_picked_date);
 
         // Make sure that the picked date is not updated if the invoice is not in picked status
         let prescription1 = InvoiceRow {
