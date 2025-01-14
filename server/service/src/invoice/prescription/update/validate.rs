@@ -27,8 +27,10 @@ pub fn validate(
     if !check_invoice_type(&invoice, InvoiceType::Prescription) {
         return Err(NotAPrescriptionInvoice);
     }
-    if !check_clinician_exists(connection, &patch.clinician_id)? {
-        return Err(ClinicianDoesNotExist);
+    if let Some(clinician_id) = &patch.clinician_id {
+        if !check_clinician_exists(connection, &clinician_id.value)? {
+            return Err(ClinicianDoesNotExist);
+        }
     }
     // Status check
     let status_changed = check_status_change(&invoice, patch.full_status());
