@@ -4,28 +4,38 @@ on:
   workflow_dispatch:
   push:
 
+
 jobs:
   get-and-print-tag:
     runs-on: self-hosted
-    timeout-minutes: 2
+    timeout-minutes: 30
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
-      - name: Get tag
-        id: tag
-        run: |
-          TAG=$(git describe --tags --abbrev=0)
-          echo "Latest tag: $TAG"
+    - name: Get tag
+      id: tag
+      run: |
+        TAG=$(git describe --tags --abbrev=0)
+        echo "Latest tag: $TAG"
+
+    - name: Get Properties
+      id: properties
+      run: |
+        cp "$HOME/android/local.properties" ./client/packages/android
+        cp "$HOME/android/release.keystore" ./client/packages/android/app
+
+    - name: Build Android App
+      run: cd client && yarn android:build:release
+
+    - name: Create the Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.tag.outputs.TAG }}.apk
+        path: ./client/packages\android\app\build\outputs\apk\release\
+        retention-days: 3
 
     outputs:
       tag: ${{ steps.tag.outputs.TAG }}
-
-  build-android:
-    runs-on: self-hosted
-    timeout-minutes: 10
-    steps:
-      - name: Build the App
-        run: cd ./client yarn android:build:release
