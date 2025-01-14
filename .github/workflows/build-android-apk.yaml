@@ -3,8 +3,6 @@ name: Android Build
 on:
   workflow_dispatch:
   push:
-    tags:
-      - "v*"
 
 jobs:
   get-and-print-tag:
@@ -24,3 +22,10 @@ jobs:
 
     outputs:
       tag: ${{ steps.tag.outputs.TAG }}
+
+  build-android:
+    runs-on: self-hosted
+    timeout-minutes: 10
+    steps:
+      - name: Build the App
+        run: cd ./client yarn android:build:release
