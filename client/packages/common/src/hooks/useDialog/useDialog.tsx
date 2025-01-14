@@ -257,8 +257,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
           <DialogActions
             sx={{
               justifyContent: 'center',
-              marginBottom: keyboardOpen ? '10px' : '30px',
-              marginTop: keyboardOpen ? '10px' : '30px',
+              marginBottom: keyboardOpen ? 0 : '30px',
+              marginTop: keyboardOpen ? 0 : '30px',
             }}
           >
             {cancelButton}
