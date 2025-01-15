@@ -1,10 +1,7 @@
-import { set } from 'lodash';
 import {
   BaseButton,
-  BasicTextInput,
   Box,
   DetailInputWithLabelRow,
-  FnUtils,
   NumericTextInput,
   RouteBuilder,
   Stack,
@@ -29,7 +26,7 @@ const PrescriptionComponent: FC = () => {
   const [hideScanner, setHideScanner] = React.useState(false);
   const [quantity, setQuantity] = React.useState<number>(1);
   const navigate = useNavigate();
-  const { innerWidth: width } = window;
+  const { innerWidth: width, innerHeight: height } = window;
   const { data: item, refetch, isLoading } = useItemById(barcodeData);
 
   useEffect(() => {
@@ -52,7 +49,7 @@ const PrescriptionComponent: FC = () => {
 
   return (
     <Box display="flex" flexDirection="column">
-      <Stack spacing={1} flexGrow={1}>
+      <Stack spacing={1}>
         {!hideScanner && (
           <>
             <Typography sx={{ textAlign: 'center' }} variant="body1">
@@ -61,11 +58,15 @@ const PrescriptionComponent: FC = () => {
             </Typography>
             <BarcodeScannerComponent
               width={width}
+              height={height - 200}
               onUpdate={(err, result) => {
                 if (result) {
                   setBarcodeData(result.getText());
                 } else {
                   setBarcodeData(undefined);
+                }
+                if (err) {
+                  console.error(err);
                 }
               }}
               onError={err => {
