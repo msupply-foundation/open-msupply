@@ -37,7 +37,7 @@ const ItemLedgerTable = ({
   const pagination = { page, first, offset };
 
   const { data, isLoading } = useItemLedger(itemId);
-  const { localisedTime } = useFormatDateTime();
+  const { localisedTime, localisedDate } = useFormatDateTime();
 
   const columns = useColumns<ItemLedgerFragment>(
     [
@@ -53,6 +53,7 @@ const ItemLedgerTable = ({
         label: 'label.date',
         format: ColumnFormat.Date,
         sortable: false,
+        accessor: ({ rowData }) => localisedDate(rowData.datetime),
       },
       {
         key: 'time',
