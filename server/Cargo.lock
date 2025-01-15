@@ -806,20 +806,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c07dab4369547dbe5114677b33fbbf724971019f3818172d59a97a61c774ffd"
 
 [[package]]
-name = "astro-dnssd"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e78b5030667e39ab9baa494b9c3c68a0e8b4ae523a25a733041025be706772d"
-dependencies = [
- "libc",
- "log",
- "pkg-config",
- "thiserror 1.0.69",
- "widestring",
- "winapi",
-]
-
-[[package]]
 name = "async-attributes"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7954,7 +7940,6 @@ dependencies = [
  "actix-web",
  "anyhow",
  "assert-json-diff",
- "astro-dnssd",
  "chrono",
  "clap",
  "config",

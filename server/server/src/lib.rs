@@ -58,8 +58,8 @@ pub mod print;
 mod sync_on_central;
 
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
-#[cfg(not(target_os = "android"))]
-mod discovery;
+// #[cfg(not(target_os = "android"))]
+// mod discovery;
 
 /// Starts the server
 ///
@@ -258,11 +258,11 @@ pub async fn start_server(
 
     // START DISCOVERY
     // Don't do discovery in android
-    #[cfg(not(target_os = "android"))]
-    {
-        info!("Starting server DNS-SD discovery",);
-        discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
-    }
+    // #[cfg(not(target_os = "android"))]
+    // {
+    //     info!("Starting server DNS-SD discovery",);
+    //     discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
+    // }
 
     info!("Starting discovery graphql server",);
     let closure_service_provider = service_provider.clone();
