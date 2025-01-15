@@ -16,7 +16,7 @@ import {
 } from './types';
 import { BasicTextInput } from '../TextInput';
 import { StyledPopper } from './components';
-import { useKeyboard } from '@common/hooks';
+import { useKeyboardContext } from '@common/hooks';
 
 export interface AutocompleteProps<T>
   extends Omit<
@@ -78,7 +78,7 @@ export function Autocomplete<T>({
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
-  const keyboard = useKeyboard();
+  const keyboard = useKeyboardContext();
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
