@@ -3,10 +3,11 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent, { DialogContentProps } from '@mui/material/DialogContent';
 import { TransitionProps } from '@mui/material/transitions';
 import { Slide } from '../../ui/animations';
-import { BasicModal, ModalTitle } from '@common/components';
-import { useIntlUtils } from '@common/intl';
+import { BasicModal, IconButton, ModalTitle } from '@common/components';
+import { useIntlUtils, useTranslation } from '@common/intl';
 import { SxProps, Theme, useMediaQuery } from '@mui/material';
-import { useKeyboard } from '../useKeyboard';
+import { useKeyboardContext } from '../useKeyboard';
+import { CloseIcon } from '@common/icons';
 
 type OkClickEvent = React.MouseEvent<HTMLButtonElement, MouseEvent>;
 
@@ -166,6 +167,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       animationTimeout
     );
     const { isOpen: keyboardIsOpen } = useKeyboardContext();
+    const isSmallerScreen = useMediaQuery('(max-height: 850px)');
+    const t = useTranslation();
 
     const defaultPreventedOnClick =
       (onClick: (e?: OkClickEvent) => Promise<boolean>) =>
@@ -220,6 +223,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       width: width ? Math.min(window.innerWidth - 50, width) : undefined,
     };
 
+    const fullScreen = isSmallerScreen && !disableMobileFullScreen;
+
     return (
       <BasicModal
         open={open}
@@ -229,8 +234,20 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         sx={sx}
         TransitionComponent={Transition}
         disableEscapeKeyDown={false}
-        fullScreen={disableMobileFullScreen ? false : fullScreen}
+        fullScreen={fullScreen}
       >
+        {fullScreen && (
+          <IconButton
+            icon={<CloseIcon />}
+            color="primary"
+            onClick={() => {
+              onClose && onClose();
+              hideDialog();
+            }}
+            sx={{ position: 'absolute', right: 0, top: 0, padding: 2 }}
+            label={t('button.close')}
+          />
+        )}
         {title ? <ModalTitle title={title} /> : null}
         <form
           style={{
