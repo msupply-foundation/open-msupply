@@ -16,6 +16,7 @@ type LoginLayoutProps = {
   ErrorMessage: React.ReactNode;
   SiteInfo: React.ReactNode;
   onLogin: () => Promise<void>;
+  mobile?: boolean;
 };
 
 export const LoginLayout = ({
@@ -25,6 +26,7 @@ export const LoginLayout = ({
   ErrorMessage,
   SiteInfo,
   onLogin,
+  mobile = true,
 }: LoginLayoutProps) => {
   const t = useTranslation();
 
@@ -36,6 +38,7 @@ export const LoginLayout = ({
 
   return (
     <Box display="flex" style={{ width: '100%' }}>
+      {!mobile && (
       <Box
         flex="1 0 50%"
         sx={{
@@ -67,6 +70,7 @@ export const LoginLayout = ({
             {t('login.heading')}
           </Typography>
         </Box>
+  
         <Box style={{ marginTop: 45 }}>
           <Typography
             sx={{
@@ -85,6 +89,7 @@ export const LoginLayout = ({
           </Typography>
         </Box>
       </Box>
+            )}
       <Box
         flex="1 0 50%"
         flexDirection="column"
