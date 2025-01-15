@@ -16,7 +16,7 @@ import {
   Box,
 } from '@mui/material';
 import { BasicTextInput } from '../TextInput';
-import { useDebounceCallback, useKeyboard } from '@common/hooks';
+import { useDebounceCallback, useKeyboardContext } from '@common/hooks';
 import type { AutocompleteProps } from './Autocomplete';
 import { StyledPopper } from './components';
 import { ArrayUtils } from '@common/utils';
@@ -71,7 +71,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const [isLoading, setIsLoading] = useState(true);
   const lastOptions = useRef<T[]>([]);
-  const keyboard = useKeyboard();
+  const keyboard = useKeyboardContext();
 
   const options = useMemo(() => {
     if (!pages) {
