@@ -16,7 +16,7 @@ import {
   Box,
 } from '@mui/material';
 import { BasicTextInput } from '../TextInput';
-import { useDebounceCallback } from '@common/hooks';
+import { useDebounceCallback, useKeyboard } from '@common/hooks';
 import type { AutocompleteProps } from './Autocomplete';
 import { StyledPopper } from './components';
 import { ArrayUtils } from '@common/utils';
@@ -65,11 +65,13 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   paginationDebounce,
   onPageChange,
   mapOptions,
+  open,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteWithPaginationProps<T>>) {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const [isLoading, setIsLoading] = useState(true);
   const lastOptions = useRef<T[]>([]);
+  const keyboard = useKeyboard();
 
   const options = useMemo(() => {
     if (!pages) {
@@ -190,6 +192,9 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
       PopperComponent={popperMinWidth ? CustomPopper : StyledPopper}
       ListboxProps={listboxProps}
+      // prevent the popper from opening before the keyboard is opened
+      // keyboard moves popper up & out of correct position
+      open={keyboard.isEnabled && !keyboard.isOpen ? false : open}
     />
   );
 }

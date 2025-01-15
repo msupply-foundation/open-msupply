@@ -16,6 +16,7 @@ import {
 } from './types';
 import { BasicTextInput } from '../TextInput';
 import { StyledPopper } from './components';
+import { useKeyboard } from '@common/hooks';
 
 export interface AutocompleteProps<T>
   extends Omit<
@@ -73,9 +74,11 @@ export function Autocomplete<T>({
   getOptionLabel,
   popperMinWidth,
   inputProps,
+  open,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
+  const keyboard = useKeyboard();
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
@@ -126,6 +129,9 @@ export function Autocomplete<T>({
       onChange={onChange}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
       PopperComponent={popperMinWidth ? CustomPopper : StyledPopper}
+      // prevent the popper from opening before the keyboard is opened
+      // keyboard moves popper up & out of correct position
+      open={keyboard.isEnabled && !keyboard.isOpen ? false : open}
     />
   );
 }
