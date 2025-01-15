@@ -18,6 +18,7 @@ import {
   SnackbarProvider,
   BarcodeScannerProvider,
   DetailLoadingSkeleton,
+  KeyboardProvider,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -76,146 +77,170 @@ export const Site: FC = () => {
           <CommandK>
             <SnackbarProvider maxSnack={3}>
               <BarcodeScannerProvider>
-                <AppDrawer />
-                <Box
-                  flex={1}
-                  display="flex"
-                  flexDirection="column"
-                  overflow="hidden"
-                >
-                  <AppBar />
-                  <NotifyOnLogin />
-                  <Box display="flex" flex={1} overflow="auto">
-                    <Routes>
-                      <Route
-                        path={RouteBuilder.create(AppRoute.Dashboard)
-                          .addWildCard()
-                          .build()}
-                        element={
-                          <React.Suspense fallback={<DetailLoadingSkeleton />}>
-                            <DashboardRouter />
-                          </React.Suspense>
-                        }
-                      />
-                      <Route
-                        path={RouteBuilder.create(AppRoute.Catalogue)
-                          .addWildCard()
-                          .build()}
-                        element={
-                          <React.Suspense fallback={<DetailLoadingSkeleton />}>
-                            <CatalogueRouter />
-                          </React.Suspense>
-                        }
-                      />
-                      <Route
-                        path={RouteBuilder.create(AppRoute.Distribution)
-                          .addWildCard()
-                          .build()}
-                        element={
-                          <React.Suspense fallback={<DetailLoadingSkeleton />}>
-                            <DistributionRouter />
-                          </React.Suspense>
-                        }
-                      />
-                      <Route
-                        path={RouteBuilder.create(AppRoute.Replenishment)
-                          .addWildCard()
-                          .build()}
-                        element={
-                          <React.Suspense fallback={<DetailLoadingSkeleton />}>
-                            <ReplenishmentRouter />
-                          </React.Suspense>
-                        }
-                      />
-                      <Route
-                        path={RouteBuilder.create(AppRoute.Inventory)
-                          .addWildCard()
-                          .build()}
-                        element={
-                          <React.Suspense fallback={<DetailLoadingSkeleton />}>
-                            <InventoryRouter />
-                          </React.Suspense>
-                        }
-                      />
-                      <Route
-                        path={RouteBuilder.create(AppRoute.Dispensary)
-                          .addWildCard()
-                          .build()}
-                        element={
-                          <React.Suspense fallback={<DetailLoadingSkeleton />}>
-                            <DispensaryRouter />
-                          </React.Suspense>
-                        }
-                      />
-                      <Route
-                        path={RouteBuilder.create(AppRoute.Coldchain)
-                          .addWildCard()
-                          .build()}
-                        element={
-                          <React.Suspense fallback={<DetailLoadingSkeleton />}>
-                            <ColdChainRouter />
-                          </React.Suspense>
-                        }
-                      />
-                      <Route
-                        path={RouteBuilder.create(AppRoute.Settings)
-                          .addWildCard()
-                          .build()}
-                        element={<Settings />}
-                      />
-                      <Route
-                        path={RouteBuilder.create(AppRoute.Help)
-                          .addWildCard()
-                          .build()}
-                        element={<Help />}
-                      />
-                      <Route
-                        path={RouteBuilder.create(AppRoute.Manage)
-                          .addWildCard()
-                          .build()}
-                        element={
-                          <React.Suspense fallback={<DetailLoadingSkeleton />}>
-                            <ManageRouter />
-                          </React.Suspense>
-                        }
-                      />
-                      <Route
-                        path={RouteBuilder.create(AppRoute.Programs)
-                          .addWildCard()
-                          .build()}
-                        element={
-                          <React.Suspense fallback={<DetailLoadingSkeleton />}>
-                            <ProgramsRouter />
-                          </React.Suspense>
-                        }
-                      />
-                      <Route
-                        path={RouteBuilder.create(AppRoute.Reports)
-                          .addWildCard()
-                          .build()}
-                        element={
-                          <React.Suspense fallback={<DetailLoadingSkeleton />}>
-                            <ReportsRouter />
-                          </React.Suspense>
-                        }
-                      />
-                      <Route
-                        path="/"
-                        element={
-                          <Navigate
-                            replace
-                            to={RouteBuilder.create(AppRoute.Dashboard).build()}
-                          />
-                        }
-                      />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
+                <KeyboardProvider>
+                  <AppDrawer />
+                  <Box
+                    flex={1}
+                    display="flex"
+                    flexDirection="column"
+                    overflow="hidden"
+                  >
+                    <AppBar />
+                    <NotifyOnLogin />
+                    <Box display="flex" flex={1} overflow="auto">
+                      <Routes>
+                        <Route
+                          path={RouteBuilder.create(AppRoute.Dashboard)
+                            .addWildCard()
+                            .build()}
+                          element={
+                            <React.Suspense
+                              fallback={<DetailLoadingSkeleton />}
+                            >
+                              <DashboardRouter />
+                            </React.Suspense>
+                          }
+                        />
+                        <Route
+                          path={RouteBuilder.create(AppRoute.Catalogue)
+                            .addWildCard()
+                            .build()}
+                          element={
+                            <React.Suspense
+                              fallback={<DetailLoadingSkeleton />}
+                            >
+                              <CatalogueRouter />
+                            </React.Suspense>
+                          }
+                        />
+                        <Route
+                          path={RouteBuilder.create(AppRoute.Distribution)
+                            .addWildCard()
+                            .build()}
+                          element={
+                            <React.Suspense
+                              fallback={<DetailLoadingSkeleton />}
+                            >
+                              <DistributionRouter />
+                            </React.Suspense>
+                          }
+                        />
+                        <Route
+                          path={RouteBuilder.create(AppRoute.Replenishment)
+                            .addWildCard()
+                            .build()}
+                          element={
+                            <React.Suspense
+                              fallback={<DetailLoadingSkeleton />}
+                            >
+                              <ReplenishmentRouter />
+                            </React.Suspense>
+                          }
+                        />
+                        <Route
+                          path={RouteBuilder.create(AppRoute.Inventory)
+                            .addWildCard()
+                            .build()}
+                          element={
+                            <React.Suspense
+                              fallback={<DetailLoadingSkeleton />}
+                            >
+                              <InventoryRouter />
+                            </React.Suspense>
+                          }
+                        />
+                        <Route
+                          path={RouteBuilder.create(AppRoute.Dispensary)
+                            .addWildCard()
+                            .build()}
+                          element={
+                            <React.Suspense
+                              fallback={<DetailLoadingSkeleton />}
+                            >
+                              <DispensaryRouter />
+                            </React.Suspense>
+                          }
+                        />
+                        <Route
+                          path={RouteBuilder.create(AppRoute.Coldchain)
+                            .addWildCard()
+                            .build()}
+                          element={
+                            <React.Suspense
+                              fallback={<DetailLoadingSkeleton />}
+                            >
+                              <ColdChainRouter />
+                            </React.Suspense>
+                          }
+                        />
+                        <Route
+                          path={RouteBuilder.create(AppRoute.Settings)
+                            .addWildCard()
+                            .build()}
+                          element={<Settings />}
+                        />
+                        <Route
+                          path={RouteBuilder.create(AppRoute.Help)
+                            .addWildCard()
+                            .build()}
+                          element={<Help />}
+                        />
+                        <Route
+                          path={RouteBuilder.create(AppRoute.Manage)
+                            .addWildCard()
+                            .build()}
+                          element={
+                            <React.Suspense
+                              fallback={<DetailLoadingSkeleton />}
+                            >
+                              <ManageRouter />
+                            </React.Suspense>
+                          }
+                        />
+                        <Route
+                          path={RouteBuilder.create(AppRoute.Programs)
+                            .addWildCard()
+                            .build()}
+                          element={
+                            <React.Suspense
+                              fallback={<DetailLoadingSkeleton />}
+                            >
+                              <ProgramsRouter />
+                            </React.Suspense>
+                          }
+                        />
+                        <Route
+                          path={RouteBuilder.create(AppRoute.Reports)
+                            .addWildCard()
+                            .build()}
+                          element={
+                            <React.Suspense
+                              fallback={<DetailLoadingSkeleton />}
+                            >
+                              <ReportsRouter />
+                            </React.Suspense>
+                          }
+                        />
+                        <Route
+                          path="/"
+                          element={
+                            <Navigate
+                              replace
+                              to={RouteBuilder.create(
+                                AppRoute.Dashboard
+                              ).build()}
+                            />
+                          }
+                        />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Box>
+                    <AppFooter />
+                    <AppFooterPortal SessionDetails={<Footer />} />
                   </Box>
-                  <AppFooter />
-                  <AppFooterPortal SessionDetails={<Footer />} />
-                </Box>
-                <DetailPanel />
-                <QueryErrorHandler />
+                  <DetailPanel />
+                  <QueryErrorHandler />
+                </KeyboardProvider>
               </BarcodeScannerProvider>
             </SnackbarProvider>
           </CommandK>
