@@ -16,7 +16,11 @@ import {
   Box,
 } from '@mui/material';
 import { BasicTextInput } from '../TextInput';
-import { useDebounceCallback, useKeyboardContext } from '@common/hooks';
+import {
+  useDebounceCallback,
+  useKeyboardContext,
+  useToggle,
+} from '@common/hooks';
 import type { AutocompleteProps } from './Autocomplete';
 import { StyledPopper } from './components';
 import { ArrayUtils } from '@common/utils';
@@ -66,12 +70,15 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   onPageChange,
   mapOptions,
   open,
+  onOpen,
+  onClose,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteWithPaginationProps<T>>) {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const [isLoading, setIsLoading] = useState(true);
   const lastOptions = useRef<T[]>([]);
   const keyboard = useKeyboardContext();
+  const keyboardSelectControl = useToggle();
 
   const options = useMemo(() => {
     if (!pages) {
@@ -169,6 +176,18 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
     setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
   }, [options]);
 
+  const getIsOpen = () => {
+    // Use passed in or default if not using android keyboard
+    if (!keyboard.isEnabled) return open;
+
+    // Keep popper closed until keyboard is open
+    // keyboard moves popper up & out of correct position
+    if (!keyboard.isOpen) return false;
+
+    // Use externally controlled `open` state if provided
+    return open ?? keyboardSelectControl.isOn;
+  };
+
   return (
     <MuiAutocomplete
       {...restOfAutocompleteProps}
@@ -192,9 +211,15 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
       PopperComponent={popperMinWidth ? CustomPopper : StyledPopper}
       ListboxProps={listboxProps}
-      // prevent the popper from opening before the keyboard is opened
-      // keyboard moves popper up & out of correct position
-      open={keyboard.isEnabled && !keyboard.isOpen ? false : open}
+      open={getIsOpen()}
+      onOpen={e => {
+        keyboard.isEnabled && keyboardSelectControl.toggleOn();
+        onOpen?.(e);
+      }}
+      onClose={(...args) => {
+        keyboard.isEnabled && keyboardSelectControl.toggleOff();
+        onClose?.(...args);
+      }}
     />
   );
 }
