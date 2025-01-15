@@ -14,7 +14,7 @@ const defaultKeyboardControl: KeyboardControl = {
 };
 
 const KeyboardContext = createRegisteredContext<KeyboardControl>(
-  'auth-context',
+  'keyboard-context',
   defaultKeyboardControl
 );
 
