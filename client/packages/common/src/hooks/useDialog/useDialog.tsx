@@ -165,8 +165,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       isRtl,
       animationTimeout
     );
-    const { isOpen: keyboardIsOpen } = useKeyboard();
-    const fullScreen = useMediaQuery('(max-height: 850px)');
+    const { isOpen: keyboardIsOpen } = useKeyboardContext();
 
     const defaultPreventedOnClick =
       (onClick: (e?: OkClickEvent) => Promise<boolean>) =>
