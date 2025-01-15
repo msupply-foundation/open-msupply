@@ -60,18 +60,22 @@ export const Footer = ({
 
   // Hide while keyboard is open fora bit more screen real estate
   useEffect(() => {
-    if (!Capacitor.isPluginAvailable('Keyboard')) return;
+    (async () => {
+      if (!Capacitor.isPluginAvailable('Keyboard')) return;
 
-    Keyboard.addListener('keyboardDidShow', () => {
-      setShowFooter(false);
-    });
-    Keyboard.addListener('keyboardDidHide', () => {
-      setShowFooter(true);
-    });
+      const showListener = await Keyboard.addListener('keyboardDidShow', () => {
+        setShowFooter(false);
+      });
+      const hideListener = await Keyboard.addListener('keyboardDidHide', () => {
+        setShowFooter(true);
+      });
 
-    return () => {
-      Keyboard.removeAllListeners();
-    };
+      // cleanup
+      return () => {
+        showListener.remove();
+        hideListener.remove();
+      };
+    })();
   }, []);
 
   return (
