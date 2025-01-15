@@ -6,18 +6,21 @@ export const useKeyboardIsOpen = () => {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (!Capacitor.isPluginAvailable('Keyboard')) return;
+    (async () => {
+      if (!Capacitor.isPluginAvailable('Keyboard')) return;
 
-    Keyboard.addListener('keyboardDidShow', () => {
-      setOpen(true);
-    });
-    Keyboard.addListener('keyboardDidHide', () => {
-      setOpen(false);
-    });
+      const showListener = await Keyboard.addListener('keyboardDidShow', () => {
+        setOpen(true);
+      });
+      const hideListener = await Keyboard.addListener('keyboardDidHide', () => {
+        setOpen(false);
+      });
 
-    return () => {
-      Keyboard.removeAllListeners();
-    };
+      return () => {
+        showListener.remove();
+        hideListener.remove();
+      };
+    })();
   }, []);
 
   return open;
