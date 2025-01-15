@@ -16,6 +16,7 @@
     "@openmsupply-client/config": "^0.0.0",
     "@openmsupply-client/system": "^0.0.0",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "react-qr-barcode-scanner": "^2.0.0"
   }
 }

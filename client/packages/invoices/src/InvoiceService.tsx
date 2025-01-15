@@ -14,6 +14,9 @@ import {
 import { PrescriptionListView, PrescriptionDetailView } from './Prescriptions';
 import { CustomerReturnDetailView } from './Returns/CustomerDetailView';
 import { PrescriptionLineEditView } from './Prescriptions/LineEditView';
+import { LandingPage } from './Prescriptions/MobileView';
+import { MobilePrescriptionView } from './Prescriptions/MobileView/MobilePrescriptionView';
+import { MobilePrescriptionScanView } from './Prescriptions/MobileView/MobilePrescriptionScanView';
 
 const InvoiceService: FC = () => {
   const outboundShipmentsRoute = RouteBuilder.create(
@@ -39,6 +42,23 @@ const InvoiceService: FC = () => {
     .build();
 
   const prescriptionLineRoute = RouteBuilder.create(AppRoute.Prescription)
+    .addPart(':invoiceNumber')
+    .addPart(':itemId')
+    .build();
+
+  const prescriptionMobileRoute = RouteBuilder.create(AppRoute.Mobile)
+    .addPart(AppRoute.Prescription)
+    .addPart(':invoiceNumber')
+    .build();
+
+  const prescriptionMobileScanRoute = RouteBuilder.create(AppRoute.Mobile)
+    .addPart(AppRoute.Prescription)
+    .addPart(':invoiceNumber')
+    .addPart('scan')
+    .build();
+
+  const prescriptionMobileLineRoute = RouteBuilder.create(AppRoute.Mobile)
+    .addPart(AppRoute.Prescription)
     .addPart(':invoiceNumber')
     .addPart(':itemId')
     .build();
@@ -74,8 +94,22 @@ const InvoiceService: FC = () => {
         path={inboundShipmentRoute}
         element={<InboundShipmentDetailView />}
       />
+      <Route
+        path={prescriptionMobileRoute}
+        element={<MobilePrescriptionView />}
+      />
+      <Route
+        path={prescriptionMobileScanRoute}
+        element={<MobilePrescriptionScanView />}
+      />
+      <Route
+        path={prescriptionMobileLineRoute}
+        element={<MobilePrescriptionView />}
+      />
+
       <Route path={prescriptionsRoute} element={<PrescriptionListView />} />
       <Route path={prescriptionRoute} element={<PrescriptionDetailView />} />
+
       <Route
         path={prescriptionLineRoute}
         element={<PrescriptionLineEditView />}
@@ -92,6 +126,8 @@ const InvoiceService: FC = () => {
         path={customerReturnRoute}
         element={<CustomerReturnDetailView />}
       />
+
+      <Route path="*" element={<LandingPage />} />
     </Routes>
   );
 };

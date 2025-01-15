@@ -16,6 +16,7 @@ export enum AppRoute {
   VaccineCard = 'vaccine-card',
   Prescription = 'prescription',
   CustomerReturn = 'customer-return',
+  Mobile = 'mobile',
 
   Coldchain = 'cold-chain',
   Sensors = 'sensors',

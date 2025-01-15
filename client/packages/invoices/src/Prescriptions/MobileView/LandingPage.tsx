@@ -1,15 +1,57 @@
-import { BaseButton, Box, Stack, Typography } from "packages/common/src";
-import React, { FC } from "react";
+import {
+  BaseButton,
+  Box,
+  FnUtils,
+  RouteBuilder,
+  Stack,
+  Typography,
+  useHostContext,
+  useNavigate,
+} from 'packages/common/src';
+import { AppRoute } from 'packages/config/src';
+import React, { FC, useEffect } from 'react';
 
 const LandingPageComponent: FC = () => {
+  const { fullScreen, setFullScreen } = useHostContext();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!fullScreen) {
+      setFullScreen(true);
+    }
+  }, [fullScreen]);
+
   return (
     <Stack spacing={5}>
-      <Typography variant="h3">mSupply Dispensing App</Typography>
+      <Typography sx={{ textAlign: 'center' }} variant="h3">
+        mSupply Dispensing App
+      </Typography>
       <Box display="flex" justifyContent="center">
-        <BaseButton variant="contained">Issue</BaseButton>
+        <BaseButton
+          onClick={() => {
+            const uuid = FnUtils.generateUUID();
+            console.log('UUID:', uuid);
+            navigate(
+              RouteBuilder.create(AppRoute.Dispensary)
+                .addPart(AppRoute.Mobile)
+                .addPart(AppRoute.Prescription)
+                .addPart(uuid)
+                .build()
+            );
+          }}
+          variant="contained"
+        >
+          Issue
+        </BaseButton>
       </Box>
       <Box display="flex" justifyContent="center">
-        <BaseButton>View Issues</BaseButton>
+        <BaseButton
+          onClick={() => {
+            alert('Not Implemented');
+          }}
+        >
+          View Issues
+        </BaseButton>
       </Box>
     </Stack>
   );
