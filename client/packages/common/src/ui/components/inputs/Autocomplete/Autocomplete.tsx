@@ -16,7 +16,7 @@ import {
 } from './types';
 import { BasicTextInput } from '../TextInput';
 import { StyledPopper } from './components';
-import { useKeyboardContext } from '@common/hooks';
+import { useKeyboardContext, useToggle } from '@common/hooks';
 
 export interface AutocompleteProps<T>
   extends Omit<
@@ -75,10 +75,14 @@ export function Autocomplete<T>({
   popperMinWidth,
   inputProps,
   open,
+  onOpen,
+  onClose,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const keyboard = useKeyboardContext();
+  // manage popper display when android keyboard appears
+  const keyboardSelectControl = useToggle();
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
@@ -107,6 +111,18 @@ export function Autocomplete<T>({
     />
   );
 
+  const getIsOpen = () => {
+    // Use passed in or default if not using android keyboard
+    if (!keyboard.isEnabled) return open;
+
+    // Keep popper closed until keyboard is open
+    // keyboard moves popper up & out of correct position
+    if (!keyboard.isOpen) return false;
+
+    // Use externally controlled `open` state if provided
+    return open ?? keyboardSelectControl.isOn;
+  };
+
   return (
     <MuiAutocomplete
       {...restOfAutocompleteProps}
@@ -129,9 +145,15 @@ export function Autocomplete<T>({
       onChange={onChange}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
       PopperComponent={popperMinWidth ? CustomPopper : StyledPopper}
-      // prevent the popper from opening before the keyboard is opened
-      // keyboard moves popper up & out of correct position
-      open={keyboard.isEnabled && !keyboard.isOpen ? false : open}
+      open={getIsOpen()}
+      onOpen={e => {
+        keyboard.isEnabled && keyboardSelectControl.toggleOn();
+        onOpen?.(e);
+      }}
+      onClose={(...args) => {
+        keyboard.isEnabled && keyboardSelectControl.toggleOff();
+        onClose?.(...args);
+      }}
     />
   );
 }
