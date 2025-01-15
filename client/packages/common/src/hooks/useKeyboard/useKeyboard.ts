@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { Keyboard } from '@capacitor/keyboard';
 import { Capacitor } from '@capacitor/core';
 
-export const useKeyboardIsOpen = () => {
-  const [open, setOpen] = useState(false);
+export const useKeyboard = () => {
+  const [isOpen, setOpen] = useState(false);
+  const isEnabled = Capacitor.isPluginAvailable('Keyboard');
 
   useEffect(() => {
     (async () => {
-      if (!Capacitor.isPluginAvailable('Keyboard')) return;
+      if (!isEnabled) return;
 
       const showListener = await Keyboard.addListener('keyboardDidShow', () => {
         setOpen(true);
@@ -23,5 +24,8 @@ export const useKeyboardIsOpen = () => {
     })();
   }, []);
 
-  return open;
+  return {
+    isOpen,
+    isEnabled,
+  };
 };

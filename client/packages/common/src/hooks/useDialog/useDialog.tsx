@@ -6,7 +6,7 @@ import { Slide } from '../../ui/animations';
 import { BasicModal, ModalTitle } from '@common/components';
 import { useIntlUtils } from '@common/intl';
 import { SxProps, Theme, useMediaQuery } from '@mui/material';
-import { useKeyboardIsOpen } from '../useKeyboardIsOpen';
+import { useKeyboard } from '../useKeyboard';
 
 type OkClickEvent = React.MouseEvent<HTMLButtonElement, MouseEvent>;
 
@@ -165,7 +165,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       isRtl,
       animationTimeout
     );
-    const keyboardOpen = useKeyboardIsOpen();
+    const { isOpen: keyboardIsOpen } = useKeyboard();
     const fullScreen = useMediaQuery('(max-height: 850px)');
 
     const defaultPreventedOnClick =
@@ -257,8 +257,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
           <DialogActions
             sx={{
               justifyContent: 'center',
-              marginBottom: keyboardOpen ? 0 : '30px',
-              marginTop: keyboardOpen ? 0 : '30px',
+              marginBottom: keyboardIsOpen ? 0 : '30px',
+              marginTop: keyboardIsOpen ? 0 : '30px',
             }}
           >
             {cancelButton}

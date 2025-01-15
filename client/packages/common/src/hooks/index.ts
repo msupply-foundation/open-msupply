@@ -23,7 +23,7 @@ export * from './useUrlQuery';
 export * from './useToggle';
 export * from './useWindowDimensions';
 export * from './useKeyboardHeightAdjustment';
-export * from './useKeyboardIsOpen';
+export * from './useKeyboard';
 export * from './useNativeClient';
 export * from './useWebClient';
 export * from './useInterval';
