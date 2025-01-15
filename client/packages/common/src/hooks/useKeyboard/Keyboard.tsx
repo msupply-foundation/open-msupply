@@ -32,14 +32,12 @@ export const KeyboardProvider = ({
     (async () => {
       if (!isEnabled) return;
 
-      const showListener = await Keyboard.addListener('keyboardDidShow', () => {
-        console.log('setting open');
-        setOpen(true);
-      });
-      const hideListener = await Keyboard.addListener('keyboardDidHide', () => {
-        console.log('setting closed');
-        setOpen(false);
-      });
+      const showListener = await Keyboard.addListener('keyboardDidShow', () =>
+        setOpen(true)
+      );
+      const hideListener = await Keyboard.addListener('keyboardDidHide', () =>
+        setOpen(false)
+      );
 
       return () => {
         showListener.remove();
