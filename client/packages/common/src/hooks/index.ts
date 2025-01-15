@@ -22,7 +22,6 @@ export * from './useQueryParams';
 export * from './useUrlQuery';
 export * from './useToggle';
 export * from './useWindowDimensions';
-export * from './useKeyboardHeightAdjustment';
 export * from './useKeyboard';
 export * from './useNativeClient';
 export * from './useWebClient';
