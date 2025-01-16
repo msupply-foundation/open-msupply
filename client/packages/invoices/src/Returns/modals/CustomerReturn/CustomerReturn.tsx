@@ -151,6 +151,7 @@ export const CustomerReturnEditModal = ({
         nextButton={!isNewReturn ? OkAndNextButton : undefined}
         height={700}
         width={1024}
+        fullWidthOnMobile
       >
         <Box ref={alertRef}>
           {returnId && (

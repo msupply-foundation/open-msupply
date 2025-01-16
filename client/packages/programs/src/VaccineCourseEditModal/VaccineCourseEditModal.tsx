@@ -222,10 +222,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         />
       }
       height={900}
-      sx={{
-        width: 1100,
-        maxWidth: 'unset',
-      }}
+      width={1100}
       slideAnimation={false}
     >
       {modalContent}

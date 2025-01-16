@@ -27,7 +27,10 @@ const NameListComponent: FC<{
   const { data, isError, isLoading } = useName.document.list(type);
   const pagination = { page, first, offset };
 
-  const { Modal, showDialog, hideDialog } = useDialog();
+  const { Modal, showDialog, hideDialog } = useDialog({
+    // should remove this if we ever make this modal editable
+    disableMobileFullScreen: true,
+  });
 
   const columns = useColumns<NameRowFragment>(
     [

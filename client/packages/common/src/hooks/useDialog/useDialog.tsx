@@ -47,6 +47,7 @@ export interface ModalProps {
   deleteButton?: JSX.Element;
   disableOkKeyBinding?: boolean;
   enableAutocomplete?: boolean;
+  fullWidthOnMobile?: boolean;
 }
 
 export interface DialogProps {
@@ -159,6 +160,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     enableAutocomplete,
     sx = {},
     deleteButton,
+    fullWidthOnMobile,
   }) => {
     // The slide animation is triggered by cloning the next button and wrapping the passed
     // on click with a trigger to slide.
@@ -255,6 +257,9 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
             flexDirection: 'column',
             flex: '1 1 auto',
             overflow: 'auto',
+            ...(fullWidthOnMobile
+              ? {}
+              : { width: dimensions.width, margin: '0 auto' }),
           }}
           {...formProps}
         >
