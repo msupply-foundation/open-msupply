@@ -1,4 +1,4 @@
-use super::program_row::{program, program::dsl as program_dsl};
+use super::program_row::program;
 use crate::{
     db_diesel::{master_list_row::master_list, store_row::store},
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
@@ -66,11 +66,11 @@ impl<'a> ProgramRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 ProgramSortField::Name => {
-                    apply_sort_no_case!(query, sort, program_dsl::name);
+                    apply_sort_no_case!(query, sort, program::name);
                 }
             }
         } else {
-            query = query.order(program_dsl::id.asc())
+            query = query.order(program::id.asc())
         }
 
         let final_query = query
@@ -88,7 +88,7 @@ impl<'a> ProgramRepository<'a> {
     }
 
     pub fn create_filtered_query(filter: Option<ProgramFilter>) -> BoxedUserProgramQuery {
-        let mut query = program_dsl::program.into_boxed();
+        let mut query = program::table.into_boxed();
 
         if let Some(f) = filter {
             let ProgramFilter {
@@ -100,22 +100,22 @@ impl<'a> ProgramRepository<'a> {
                 elmis_code,
             } = f;
 
-            apply_equal_filter!(query, id, program_dsl::id);
-            apply_string_filter!(query, name, program_dsl::name);
-            apply_equal_filter!(query, context_id, program_dsl::context_id);
-            apply_equal_filter!(query, elmis_code, program_dsl::elmis_code);
+            apply_equal_filter!(query, id, program::id);
+            apply_string_filter!(query, name, program::name);
+            apply_equal_filter!(query, context_id, program::context_id);
+            apply_equal_filter!(query, elmis_code, program::elmis_code);
             if let Some(is_immunisation) = is_immunisation {
-                query = query.filter(program_dsl::is_immunisation.eq(is_immunisation));
+                query = query.filter(program::is_immunisation.eq(is_immunisation));
             }
 
             if exists_for_store_id.is_some() {
-                let mut master_list_name_join_query = program_dsl::program
-                    .select(program_dsl::id)
+                let mut master_list_name_join_query = program::table
+                    .select(program::id)
                     .distinct()
                     .left_join(
-                        master_list::dsl::master_list.left_join(
-                            master_list_name_join::dsl::master_list_name_join
-                                .left_join(name_link::dsl::name_link.left_join(store::dsl::store)),
+                        master_list::table.left_join(
+                            master_list_name_join::table
+                                .left_join(name_link::table.left_join(store::table)),
                         ),
                     )
                     .into_boxed();
@@ -126,11 +126,11 @@ impl<'a> ProgramRepository<'a> {
                     store::dsl::id
                 );
 
-                query = query.filter(program_dsl::id.eq_any(master_list_name_join_query));
+                query = query.filter(program::id.eq_any(master_list_name_join_query));
             }
         }
 
-        query = query.filter(program_dsl::id.ne("missing_program"));
+        query = query.filter(program::id.ne("missing_program"));
 
         query
     }

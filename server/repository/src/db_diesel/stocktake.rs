@@ -1,7 +1,4 @@
-use super::{
-    stocktake_row::stocktake::{self, dsl as stocktake_dsl},
-    StocktakeRow, StocktakeStatus, StorageConnection,
-};
+use super::{stocktake_row::stocktake, StocktakeRow, StocktakeStatus, StorageConnection};
 
 use crate::{
     diesel_macros::{
@@ -107,7 +104,7 @@ pub type StocktakeSort = Sort<StocktakeSortField>;
 type BoxedStocktakeQuery = IntoBoxed<'static, stocktake::table, DBType>;
 
 fn create_filtered_query(filter: Option<StocktakeFilter>) -> BoxedStocktakeQuery {
-    let mut query = stocktake_dsl::stocktake.into_boxed();
+    let mut query = stocktake::table.into_boxed();
 
     if let Some(f) = filter {
         apply_equal_filter!(query, f.id, stocktake::id);
@@ -170,28 +167,28 @@ impl<'a> StocktakeRepository<'a> {
 
         if let Some(sort) = sort {
             match sort.key {
-                StocktakeSortField::Status => apply_sort!(query, sort, stocktake_dsl::status),
+                StocktakeSortField::Status => apply_sort!(query, sort, stocktake::status),
                 StocktakeSortField::CreatedDatetime => {
-                    apply_sort!(query, sort, stocktake_dsl::created_datetime)
+                    apply_sort!(query, sort, stocktake::created_datetime)
                 }
                 StocktakeSortField::FinalisedDatetime => {
-                    apply_sort!(query, sort, stocktake_dsl::finalised_datetime)
+                    apply_sort!(query, sort, stocktake::finalised_datetime)
                 }
                 StocktakeSortField::StocktakeNumber => {
-                    apply_sort!(query, sort, stocktake_dsl::stocktake_number)
+                    apply_sort!(query, sort, stocktake::stocktake_number)
                 }
                 StocktakeSortField::Comment => {
-                    apply_sort_no_case!(query, sort, stocktake_dsl::comment)
+                    apply_sort_no_case!(query, sort, stocktake::comment)
                 }
                 StocktakeSortField::Description => {
-                    apply_sort_no_case!(query, sort, stocktake_dsl::description)
+                    apply_sort_no_case!(query, sort, stocktake::description)
                 }
                 StocktakeSortField::StocktakeDate => {
-                    apply_sort!(query, sort, stocktake_dsl::stocktake_date)
+                    apply_sort!(query, sort, stocktake::stocktake_date)
                 }
             }
         } else {
-            query = query.order(stocktake_dsl::id.asc())
+            query = query.order(stocktake::id.asc())
         }
 
         let result = query
@@ -203,8 +200,8 @@ impl<'a> StocktakeRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, record_id: &str) -> Result<Option<Stocktake>, RepositoryError> {
-        Ok(stocktake_dsl::stocktake
-            .filter(stocktake_dsl::id.eq(record_id))
+        Ok(stocktake::table
+            .filter(stocktake::id.eq(record_id))
             .first::<Stocktake>(self.connection.lock().connection())
             .optional()?)
     }
