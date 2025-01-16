@@ -27,13 +27,16 @@ jobs:
         cp "$HOME/android/local.properties" ./client/packages/android
         cp "$HOME/android/release.keystore" ./client/packages/android/app
 
-    - name: Install Yarn
+    - name: Check Installs
       run: |
-        cd client
-        yarn install
+        which node
+        which nvm
+        which yarn
 
     - name: Build Android App
-      run: yarn android:build:release
+      run: |
+        cd client
+        yarn android:build:release
 
     - name: Create the Artifact
       uses: actions/upload-artifact@v4
