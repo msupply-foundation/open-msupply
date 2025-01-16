@@ -11,7 +11,8 @@ jobs:
     timeout-minutes: 30
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      run: echo "$HOME/.nvm/versions/node/v23.6.0/bin" >> $GITHUB_PATH
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -27,19 +28,11 @@ jobs:
         cp "$HOME/android/local.properties" ./client/packages/android
         cp "$HOME/android/release.keystore" ./client/packages/android/app
 
-    - name: Read .nvmrc
-      run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
-      id: nvm
-
-    - name: Use Node.js (.nvmrc)
-      uses: actions/setup-node@v1
-      with:
-          node-version: "${{ steps.nvm.outputs.NVMRC }}"
-
-    - name: Install dependencies
-      run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
-      env:
-          NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
+    - name: Check Installs
+      run: |
+        echo which node
+        echo which nvm
+        echo which yarn
 
     - name: Build Android App
       run: |
