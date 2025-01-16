@@ -25,6 +25,7 @@ import {
   UserPermission,
   EnvUtils,
   useDrawer,
+  Breadcrumbs
 } from '@openmsupply-client/common'
 import { AppRoute, ExternalURL, useExternalUrl } from 'packages/config/src/routes';
 import { SyncNavLink } from '../AppDrawer/SyncNavLink';import { ColdChainNav } from '../Navigation/ColdChainNav';
@@ -126,6 +127,7 @@ export const MobileNavBar = () => {
             {drawer.isOpen ? <CloseIcon /> : <MenuIcon /> }
           </IconButton>                          
         </Toolbar>
+        <Breadcrumbs />
         <Box sx={{ p: '10', pl: '25' }}>
           <AppDrawerIcon />
         </Box>        

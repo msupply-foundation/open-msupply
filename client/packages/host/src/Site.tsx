@@ -86,7 +86,7 @@ export const Site: FC = () => {
                   overflow="hidden"
                 >
                   {isGapsStore && <MobileNavBar />}
-                  <AppBar />
+                  {!isGapsStore && <AppBar />}
                   <NotifyOnLogin />
                   <Box display="flex" flex={1} overflow="auto">
                     <Routes>
