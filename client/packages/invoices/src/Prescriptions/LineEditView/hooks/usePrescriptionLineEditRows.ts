@@ -7,7 +7,6 @@ export const usePrescriptionLineEditRows = (
   rows: DraftStockOutLine[],
   isDisabled: boolean
 ) => {
-  console.log('rows', rows);
   const tableStore = useTableStore();
 
   const isOnHold = (row: DraftStockOutLine) =>
