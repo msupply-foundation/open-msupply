@@ -3,6 +3,7 @@ import {
   frontEndHostUrl,
   Grid,
   IconButton,
+  NativeMode,
   Typography,
   useNativeClient,
 } from '@openmsupply-client/common';
@@ -27,7 +28,7 @@ const RowWithLabel = ({
 );
 
 export const SiteInfo: FC<{ siteName?: string | null }> = ({ siteName }) => {
-  const { connectedServer, goBackToDiscovery } = useNativeClient();
+  const { connectedServer, goBackToDiscovery, mode } = useNativeClient();
   const t = useTranslation();
   if (!connectedServer) return null;
 
@@ -39,21 +40,23 @@ export const SiteInfo: FC<{ siteName?: string | null }> = ({ siteName }) => {
           contents={<Typography whiteSpace="nowrap">{siteName}</Typography>}
         />
       )}
-      <RowWithLabel
-        label={`${t('label.server')}:`}
-        contents={
-          <>
-            <Typography whiteSpace="nowrap">
-              {frontEndHostUrl(connectedServer)}
-            </Typography>
-            <IconButton
-              label={t('messages.change-server')}
-              icon={<EditIcon style={{ height: 16, width: 16 }} />}
-              onClick={() => goBackToDiscovery()}
-            />
-          </>
-        }
-      />
+      {mode === NativeMode.Client && (
+        <RowWithLabel
+          label={`${t('label.server')}:`}
+          contents={
+            <>
+              <Typography whiteSpace="nowrap">
+                {frontEndHostUrl(connectedServer)}
+              </Typography>
+              <IconButton
+                label={t('messages.change-server')}
+                icon={<EditIcon style={{ height: 16, width: 16 }} />}
+                onClick={() => goBackToDiscovery()}
+              />
+            </>
+          }
+        />
+      )}
     </>
   );
 };
