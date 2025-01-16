@@ -35,6 +35,8 @@ type NativeClientState = {
   discoveryTimedOut: boolean;
   isDiscovering: boolean;
   previousServer: FrontEndHost | null;
+  // User configuration mode for the app, client/server
+  mode: NativeMode;
   servers: FrontEndHost[];
 };
 
@@ -56,6 +58,7 @@ export const useNativeClient = ({
     discoveryTimedOut: false,
     isDiscovering: false,
     previousServer: null,
+    mode: NativeMode.None,
     servers: [],
   });
 
