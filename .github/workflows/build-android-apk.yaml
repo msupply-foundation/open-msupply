@@ -11,11 +11,10 @@ jobs:
     timeout-minutes: 30
     steps:
     - name: Checkout code
-      # run: |
-      #  echo "/opt/homebrew/bin/yarn:" >> $GITHUB_PATH
-      #  echo $HOME
-      #  echo $GITHUB_PATH
-      uses: actions/checkout@v4
+      run: |
+            export PATH="${PATH}:/opt/homebrew/bin/yarn"
+            echo $PATH
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
