@@ -3,7 +3,6 @@ name: Bug report
 about: Create a report for a bug or to help us improve
 title: A brief clear title describing the bug from a user's perspective
 labels: bug, needs triage, needs daily triage
-type: Bug
 assignees: ""
 ---
 
