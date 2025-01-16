@@ -1,0 +1,73 @@
+{% macro dateOrNA(datetime) %} 
+{% if datetime %}{{ datetime | date(format="%d/%m/%Y") }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
+{% endmacro input %}
+
+<div class="container">
+  <hr />
+  <table class="header_supplied_section">
+    <tr>
+      <td>{{t(k="report.requested-from", f="Requested from")}}:</td>
+      <td class="align_right">{{t(k="report.status", f="Status")}}: {{ data.requisition.status }}</td>
+    </tr>
+
+    <tr>
+      <td><b>{{ data.requisition.otherPartyName }}</b></td>
+      <td class="align_right">{{t(k="report.our-ref", f="Our ref")}}: {{ data.requisition.theirReference }}</td>
+    </tr>
+
+    <tr>
+      <td>{{ data.requisition.otherParty.address1}}<br>{{ data.requisition.otherParty.address2}}<br>{{ data.requisition.otherParty.country}}</td>
+      <td class="align_right">
+        {{t(k="report.confirmed-date", f="Confirmed date")}}: {{ self::dateOrNA(datetime=data.requisition.finalisedDatetime) }}
+      </td>
+    </tr>
+  </table>
+
+  <table class="header_date_section">
+    <tr>
+      <td></td>
+      <td class="align_right">{{t(k="report.printed-date",f="Printed date")}}: {{ now() | date(format="%d/%m/%Y") }}</td>
+    </tr>
+
+    <tr>
+      <td>{{t(k="report.requisition-category-message", f="Requisition Category: Category Value")}}</td>
+      <td id="date" class="align_right">{{t(k="report.authorized-by", f="Authorized by")}}:</td>
+    </tr>
+
+    <tr>
+      <td>{{t(k="report.comments", f="Comments")}}: {{ data.requisition.comment }}</td>
+      <td class="align_right">{{t(k="report.collected-by", f="Collected by")}}:</td>
+    </tr>
+  </table>
+
+  <table class="body_section" cellpadding="2" cellspacing="0">
+    <thead>
+      <tr class="body_column_label">
+        <th class="line_number" style="width: 5%">{{t(k="report.line", f="Line")}}</th>
+        <th class="item_code" style="width: 7%">{{t(k="report.item-code", f="Item code")}}</th>
+        <th class="item_name" style="width: 25%">{{t(k="report.item-name", f="Item name")}}</th>
+        <th class="quantity" style="width: 7%">{{t(k="report.stock-on-hand", f="Stock on hand")}}</th>
+        <th class="pack" style="width: 10%">{{t(k="report.AMC", f="AMC")}}</th>
+        <th class="batch" style="width: 8%">{{t(k="label.batch", f="batch")}}</th>
+        <th class="expiry" style="width: 8%">{{t(k="report.suggested-qty", f="Suggested Qty")}}</th>
+        <th class="sell_price" style="width: 7%">{{t(k="report.requested-qty", f="Requested Qty")}}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in data.requisition.lines.nodes -%}
+      <tr class="body_value">
+        <td class="line_number" style="width: 5%">{{ loop.index }}</td>
+        <td class="item_code" style="width: 7%">{{ line.item.code }}</td>
+        <td class="item_name" style="width: 25%">{{ line.item.name }}</td>
+        <td class="quantity" style="width: 8%">{{ line.itemStats.availableStockOnHand }}</td>
+        <td class="pack" style="width: 10%">{{ line.itemStats.averageMonthlyConsumption | round(precision=2) }}</td>
+        <td class="batch" style="width: 8%">
+          {{ data.requisition.maxMonthsOfStock * line.itemStats.averageMonthlyConsumption }}
+        </td>
+        <td class="batch" style="width: 8%">{{ line.suggestedQuantity }}</td>
+        <td class="expiry" style="width: 8%">{{ line.requestedQuantity }}</td>
+      </tr>
+      {%- endfor %}
+    </tbody>
+  </table>
+</div>
