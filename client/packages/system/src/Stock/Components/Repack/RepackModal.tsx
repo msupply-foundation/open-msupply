@@ -144,6 +144,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   return (
     <Modal
       width={900}
+      fullWidthOnMobile
       height={700}
       slideAnimation={false}
       title={t('title.repack-details')}

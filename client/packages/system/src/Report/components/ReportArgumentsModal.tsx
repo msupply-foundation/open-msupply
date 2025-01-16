@@ -68,7 +68,6 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
           }}
         />
       }
-      contentProps={{ sx: { margin: '0 auto' } }}
     >
       <>
         <Typography sx={{ mb: 2 }}>{t('message.arguments')}</Typography>

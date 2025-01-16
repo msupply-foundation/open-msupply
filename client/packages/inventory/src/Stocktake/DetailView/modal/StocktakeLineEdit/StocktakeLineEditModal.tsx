@@ -46,6 +46,7 @@ export const StocktakeLineEditModal: FC<
       }
       height={600}
       width={1125}
+      fullWidthOnMobile
     >
       <>{children}</>
     </Modal>
