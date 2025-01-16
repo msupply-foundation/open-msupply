@@ -273,6 +273,7 @@ export const PrescriptionLineEditForm: React.FC<
               updateQuantity={updateQuantity}
               draftPrescriptionLines={draftPrescriptionLines}
               allocatedUnits={allocatedUnits}
+              isDisabled={disabled}
             />
           </AccordionPanelSection>
         </>
@@ -308,6 +309,7 @@ interface TableProps {
   updateQuantity: (batchId: string, updateQuantity: number) => void;
   draftPrescriptionLines: DraftStockOutLine[];
   allocatedUnits: number;
+  isDisabled: boolean;
 }
 
 const TableWrapper: React.FC<TableProps> = ({
@@ -318,6 +320,7 @@ const TableWrapper: React.FC<TableProps> = ({
   updateQuantity,
   draftPrescriptionLines,
   allocatedUnits,
+  isDisabled,
 }) => {
   const t = useTranslation();
 
@@ -357,6 +360,7 @@ const TableWrapper: React.FC<TableProps> = ({
           rows={draftPrescriptionLines}
           item={currentItem}
           allocatedUnits={allocatedUnits}
+          isDisabled={isDisabled}
         />
       </TableProvider>
     </>
