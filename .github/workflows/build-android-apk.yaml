@@ -16,6 +16,14 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Check Yarn
+      run: |
+        which yarn
+        yarn --version
+
+    - name: Clear Yarn cache
+      run: yarn cache clean
+
     - name: Get tag
       id: tag
       run: |
@@ -27,13 +35,6 @@ jobs:
       run: |
         cp "$HOME/android/local.properties" ./client/packages/android
         cp "$HOME/android/release.keystore" ./client/packages/android/app
-
-    - name: Check Installs
-      run: |
-        which yarn
-        echo "$(yarn --version)"
-        echo "$(dirname $(which yarn))" >> $GITHUB_PATH
-
 
     - name: Build Android App
       run: |
