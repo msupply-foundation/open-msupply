@@ -19,7 +19,7 @@ const mapRoute = (route: string): RouteMapping => {
     case inRoute(AppRoute.Dashboard):
       return { title: 'dashboard', docs: '/getting_started/dashboard/' };
     case inRoute(AppRoute.Reports):
-      return { title: 'reports', docs: 'getting_started/report/' };
+      return { title: 'reports', docs: '/getting_started/report/' };
     case inRoute(AppRoute.OutboundShipment):
       return {
         title: 'outbound-shipments',
