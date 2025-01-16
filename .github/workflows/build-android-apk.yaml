@@ -12,8 +12,9 @@ jobs:
     steps:
     - name: Checkout code
       run: |
-       echo "/opt/homebrew/bin/yarn" >> $GITHUB_PATH
+       echo "/opt/homebrew/bin/yarn:" >> $GITHUB_PATH
        echo $HOME
+       echo $GITHUB_PATH
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
