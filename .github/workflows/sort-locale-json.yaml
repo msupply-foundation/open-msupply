@@ -21,6 +21,13 @@ jobs:
       with:
         fetch-depth: 0
 
+    -name: Echo branch
+    uses: actions/checkout@v3
+    run: |
+      echo ${{ github.ref }}
+      echo ${{ github.head_ref }}
+
+
     - name: Sort translation files
       uses: sergeysova/jq-action@v2
       with:
