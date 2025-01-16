@@ -138,6 +138,7 @@ export const PrescriptionLineEditView = () => {
       );
     }
     setIsDirty(false);
+    setAllDraftLines({});
   };
 
   if (isLoading || !itemId) return <BasicSpinner />;
