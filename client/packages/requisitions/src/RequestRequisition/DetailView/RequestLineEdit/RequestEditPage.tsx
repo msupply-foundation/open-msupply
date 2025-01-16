@@ -53,41 +53,37 @@ export const RequestLineEditPage = () => {
       <DetailContainer>
         <PageLayout
           Left={
-            <>
-              <ListItems
-                currentItemId={itemId}
-                items={lines?.map(l => l.item)}
-                route={RouteBuilder.create(AppRoute.Replenishment)
-                  .addPart(AppRoute.InternalOrder)
-                  .addPart(String(requisitionNumber))}
-                enteredLineIds={enteredLineIds}
-                showNew={
-                  data?.status !== RequisitionNodeStatus.Sent && !isProgram
-                }
-              />
-            </>
+            <ListItems
+              currentItemId={itemId}
+              items={lines?.map(l => l.item)}
+              route={RouteBuilder.create(AppRoute.Replenishment)
+                .addPart(AppRoute.InternalOrder)
+                .addPart(String(requisitionNumber))}
+              enteredLineIds={enteredLineIds}
+              showNew={
+                data?.status !== RequisitionNodeStatus.Sent && !isProgram
+              }
+            />
           }
           Right={
-            <>
-              <RequestLineEdit
-                item={currentItem}
-                draft={draft}
-                update={update}
-                save={save}
-                hasNext={hasNext}
-                next={next}
-                hasPrevious={hasPrevious}
-                previous={previous}
-                isProgram={isProgram}
-                isPacksEnabled={isPacksEnabled}
-                isPacks={isPacks}
-                setIsPacks={setIsPacks}
-                insert={mutateAsync}
-                requisitionId={data?.id ?? ''}
-                requisitionNumber={data?.requisitionNumber}
-                lines={lines}
-              />
-            </>
+            <RequestLineEdit
+              item={currentItem}
+              draft={draft}
+              update={update}
+              save={save}
+              hasNext={hasNext}
+              next={next}
+              hasPrevious={hasPrevious}
+              previous={previous}
+              isProgram={isProgram}
+              isPacksEnabled={isPacksEnabled}
+              isPacks={isPacks}
+              setIsPacks={setIsPacks}
+              insert={mutateAsync}
+              requisitionId={data?.id ?? ''}
+              requisitionNumber={data?.requisitionNumber}
+              lines={lines}
+            />
           }
         />
       </DetailContainer>
