@@ -395,7 +395,7 @@ export const RequestLineEdit = ({
                   />
                 }
                 sx={{ width: 275 }}
-                labelWidth={'75px'}
+                labelWidth={LABEL_WIDTH}
                 label={t('label.comment')}
               />
             </Box>
