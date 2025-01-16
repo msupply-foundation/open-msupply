@@ -64,39 +64,35 @@ const ResponseLineEditPageInner = ({
       <DetailContainer>
         <PageLayout
           Left={
-            <>
-              <ListItems
-                currentItemId={itemId}
-                items={lines.map(line => line.item)}
-                route={RouteBuilder.create(AppRoute.Distribution)
-                  .addPart(AppRoute.CustomerRequisition)
-                  .addPart(String(requisition.requisitionNumber))}
-                enteredLineIds={enteredLineIds}
-                showNew={
-                  requisition.status !== RequisitionNodeStatus.Finalised &&
-                  !isProgram
-                }
-              />
-            </>
+            <ListItems
+              currentItemId={itemId}
+              items={lines.map(line => line.item)}
+              route={RouteBuilder.create(AppRoute.Distribution)
+                .addPart(AppRoute.CustomerRequisition)
+                .addPart(String(requisition.requisitionNumber))}
+              enteredLineIds={enteredLineIds}
+              showNew={
+                requisition.status !== RequisitionNodeStatus.Finalised &&
+                !isProgram
+              }
+            />
           }
           Right={
-            <>
-              <ResponseLineEdit
-                hasLinkedRequisition={!!requisition.linkedRequisition}
-                draft={draft}
-                update={update}
-                save={save}
-                hasNext={hasNext}
-                next={next}
-                hasPrevious={hasPrevious}
-                previous={previous}
-                isProgram={!!isProgram}
-                lines={lines}
-                requisitionNumber={requisition.requisitionNumber}
-                requisitionId={requisition.id}
-                insert={mutateAsync}
-              />
-            </>
+            <ResponseLineEdit
+              hasLinkedRequisition={!!requisition.linkedRequisition}
+              draft={draft}
+              update={update}
+              save={save}
+              hasNext={hasNext}
+              next={next}
+              hasPrevious={hasPrevious}
+              previous={previous}
+              isProgram={!!isProgram}
+              lines={lines}
+              requisitionNumber={requisition.requisitionNumber}
+              requisitionId={requisition.id}
+              insert={mutateAsync}
+            />
           }
         />
       </DetailContainer>
