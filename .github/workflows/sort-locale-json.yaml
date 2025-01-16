@@ -1,9 +1,12 @@
 name: Sort JSON on Pull Requests
 
 on:
-  pull_request:
-    paths:
-      - "client/packages/common/src/intl/locales/**/*.json" # Trigger only for locale json changes
+  # pull_request:
+  #   paths:
+  #     - "client/packages/common/src/intl/locales/**/*.json" # Trigger only for locale json changes
+  push:
+    branches:
+      - '**'
 
 permissions:
   contents: write
