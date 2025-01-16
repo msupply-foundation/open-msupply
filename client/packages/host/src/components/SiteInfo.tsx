@@ -30,7 +30,6 @@ const RowWithLabel = ({
 export const SiteInfo: FC<{ siteName?: string | null }> = ({ siteName }) => {
   const { connectedServer, goBackToDiscovery, mode } = useNativeClient();
   const t = useTranslation();
-  console.log('connectedServer', connectedServer);
   if (!connectedServer) return null;
 
   return (
