@@ -30,9 +30,10 @@ jobs:
 
     - name: Check Installs
       run: |
-        echo which node
-        echo which nvm
-        echo which yarn
+        which yarn
+        echo "$(yarn --version)"
+        echo "$(dirname $(which yarn))" >> $GITHUB_PATH
+
 
     - name: Build Android App
       run: |
