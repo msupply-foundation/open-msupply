@@ -1,7 +1,4 @@
-use super::vaccine_course_item_row::{
-    vaccine_course_item::{self, dsl as vaccine_course_item_dsl},
-    VaccineCourseItemRow,
-};
+use super::vaccine_course_item_row::{vaccine_course_item, VaccineCourseItemRow};
 
 use diesel::{
     helper_types::{InnerJoin, IntoBoxed},
@@ -9,10 +6,7 @@ use diesel::{
 };
 
 use crate::{
-    db_diesel::{
-        item_link_row::{item_link, item_link::dsl as item_link_dsl},
-        item_row::{item, item::dsl as item_dsl},
-    },
+    db_diesel::{item_link_row::item_link, item_row::item},
     diesel_macros::apply_equal_filter,
     repository_error::RepositoryError,
     DBType, EqualFilter, ItemLinkRow, ItemRow, StorageConnection,
@@ -106,8 +100,8 @@ type BoxedVaccineCourseItemQuery = IntoBoxed<
 fn create_filtered_query(
     filter: Option<VaccineCourseItemFilter>,
 ) -> Result<BoxedVaccineCourseItemQuery, RepositoryError> {
-    let mut query = vaccine_course_item_dsl::vaccine_course_item
-        .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
+    let mut query = vaccine_course_item::table
+        .inner_join(item_link::table.inner_join(item::table))
         .into_boxed();
 
     if let Some(f) = filter {
@@ -117,16 +111,16 @@ fn create_filtered_query(
             item_link_id,
         } = f;
 
-        apply_equal_filter!(query, id, vaccine_course_item_dsl::id);
+        apply_equal_filter!(query, id, vaccine_course_item::id);
         apply_equal_filter!(
             query,
             vaccine_course_id,
-            vaccine_course_item_dsl::vaccine_course_id
+            vaccine_course_item::vaccine_course_id
         );
-        apply_equal_filter!(query, item_link_id, vaccine_course_item_dsl::item_link_id);
+        apply_equal_filter!(query, item_link_id, vaccine_course_item::item_link_id);
     }
 
-    query = query.filter(vaccine_course_item_dsl::deleted_datetime.is_null());
+    query = query.filter(vaccine_course_item::deleted_datetime.is_null());
 
     Ok(query)
 }

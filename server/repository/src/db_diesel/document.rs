@@ -4,10 +4,7 @@ use crate::diesel_macros::{
     apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
 };
 use crate::{
-    db_diesel::{
-        name_link_row::{name_link, name_link::dsl as name_link_dsl},
-        name_row::{name, name::dsl as name_dsl},
-    },
+    db_diesel::{name_link_row::name_link, name_row::name},
     NameLinkRow, NameRow,
 };
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
@@ -192,7 +189,7 @@ type BoxedDocumentQuery = IntoBoxed<
 
 fn create_latest_filtered_query(filter: Option<DocumentFilter>) -> BoxedDocumentQuery {
     let mut query = latest_document::dsl::latest_document
-        .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
+        .left_join(name_link::table.inner_join(name::table))
         .into_boxed();
 
     if let Some(f) = filter {
@@ -210,7 +207,7 @@ fn create_latest_filtered_query(filter: Option<DocumentFilter>) -> BoxedDocument
         apply_string_filter!(query, name, latest_document::dsl::name);
         apply_equal_filter!(query, r#type, latest_document::dsl::type_);
         apply_date_time_filter!(query, datetime, latest_document::dsl::datetime);
-        apply_equal_filter!(query, owner, name_dsl::id);
+        apply_equal_filter!(query, owner, name::id);
         apply_equal_filter!(query, context, latest_document::dsl::context_id);
         apply_string_filter!(query, data, latest_document::dsl::data);
     }
@@ -253,7 +250,7 @@ impl<'a> DocumentRepository<'a> {
     /// Get a specific document version
     pub fn find_one_by_id(&self, document_id: &str) -> Result<Option<Document>, RepositoryError> {
         let row: Option<DocumentJoin> = document::dsl::document
-            .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
+            .left_join(name_link::table.inner_join(name::table))
             .filter(document::dsl::id.eq(document_id))
             .first(self.connection.lock().connection())
             .optional()?;
@@ -290,7 +287,7 @@ impl<'a> DocumentRepository<'a> {
                     apply_sort!(query, sort, latest_document::dsl::type_)
                 }
                 DocumentSortField::Owner => {
-                    apply_sort!(query, sort, name_dsl::id)
+                    apply_sort!(query, sort, name::id)
                 }
                 DocumentSortField::Context => {
                     apply_sort!(query, sort, latest_document::dsl::context_id)
@@ -331,7 +328,7 @@ impl<'a> DocumentRepository<'a> {
         filter: Option<DocumentFilter>,
     ) -> Result<Vec<Document>, RepositoryError> {
         let mut query = document::dsl::document
-            .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
+            .left_join(name_link::table.inner_join(name::table))
             .into_boxed();
         if let Some(f) = filter {
             let DocumentFilter {
@@ -348,7 +345,7 @@ impl<'a> DocumentRepository<'a> {
             apply_string_filter!(query, name, document::dsl::name);
             apply_equal_filter!(query, r#type, document::dsl::type_);
             apply_date_time_filter!(query, datetime, document::dsl::datetime);
-            apply_equal_filter!(query, owner, name_dsl::id);
+            apply_equal_filter!(query, owner, name::id);
             apply_equal_filter!(query, context, document::dsl::context_id);
             apply_string_filter!(query, data, document::dsl::data);
         }
