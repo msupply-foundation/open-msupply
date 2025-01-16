@@ -7,7 +7,7 @@ fragment PrescriptionRow on InvoiceNode {
   verifiedDatetime
   id
   invoiceNumber
-  otherPartyId
+  patientId: otherPartyId
   otherPartyName
   clinicianId
   type

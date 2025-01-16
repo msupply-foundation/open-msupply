@@ -149,3 +149,19 @@ export const getApprovalStatusKey = (
       return noOtherVariants(approvalStatus);
   }
 };
+
+enum IndicatorColumnName {
+  Comment = 'Comment',
+  Value = 'Value',
+}
+
+export const indicatorColumnNameToLocal = (columnName: string) => {
+  switch (columnName) {
+    case IndicatorColumnName.Comment:
+      return 'label.comment';
+    case IndicatorColumnName.Value:
+      return 'label.value';
+    default:
+      return columnName;
+  }
+};

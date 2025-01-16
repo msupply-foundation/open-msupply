@@ -56,14 +56,16 @@ export const DetailView: FC = () => {
     setMode(ModalMode.Create);
   };
 
-  const onReturn = async (selectedIds: string[]) => {
+  const onReturn = async (selectedLines: StockOutLineFragment[]) => {
     if (!data || !canReturnOutboundLines(data)) {
       const cantReturnSnack = info(t('messages.cant-return-shipment'));
       cantReturnSnack();
-    } else if (!selectedIds.length) {
+    } else if (!selectedLines.length) {
       const selectLinesSnack = info(t('messages.select-rows-to-return'));
       selectLinesSnack();
     } else {
+      const selectedIds = selectedLines.map(line => line?.id ?? '');
+
       onOpenReturns(selectedIds);
       setReturnMode(ModalMode.Create);
     }
