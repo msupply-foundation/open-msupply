@@ -18,7 +18,7 @@ interface ListItemProps {
   isDirty?: boolean;
   showNew?: boolean;
   handleSaveNew?: () => void;
-  scrollRef?: React.MutableRefObject<HTMLLIElement | null>;
+  scrollRef: React.MutableRefObject<HTMLLIElement | null>;
 }
 
 export const ListItems = ({
