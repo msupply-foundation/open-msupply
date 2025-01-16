@@ -15,7 +15,7 @@
 
     <tr> 
         <td class="header_section_field_left">{{ data.invoice.otherParty.address1 }}</td> 
-        <td class="header_section_field_right">{{t(k="report.confirmed-date", f="Confirmed date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y") }}</td>
+        <td class="header_section_field_right">{{t(k="report.confirmed-date", f="Confirmed date")}}: {{ data.invoice.shippedDatetime | date(format="%d/%m/%Y") }}</td>
     </tr>
 
 </table>
@@ -33,7 +33,7 @@
 
     <tr> 
         <td class="header_section_field_left">{{t(k="report.created-date",f="Created date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y") }}</td>
-        <td class="header_section_field_right">{{t(k="report.shipped-date",f="Shipped date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y") }}</td>
+        <td class="header_section_field_right">{{t(k="report.shipped-date",f="Shipped date")}}: {{ data.invoice.shippedDatetime | date(format="%d/%m/%Y") }}</td>
     </tr> 
 </table>
 
