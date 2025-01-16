@@ -254,6 +254,7 @@ export const PrescriptionLineEditForm: React.FC<
                   value={issueUnitQuantity}
                   onChange={handleIssueQuantityChange}
                   min={0}
+                  decimalLimit={2}
                 />
               </Grid>
               <Grid item>
