@@ -48,6 +48,7 @@ interface RequestLineEditProps {
   requisitionNumber?: number;
   requisitionId: string;
   insert: (patch: InsertRequestRequisitionLineInput) => void;
+  scrollIntoView: () => void;
 }
 
 export const RequestLineEdit = ({
@@ -66,6 +67,7 @@ export const RequestLineEdit = ({
   requisitionNumber,
   requisitionId,
   insert,
+  scrollIntoView,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
@@ -417,6 +419,7 @@ export const RequestLineEdit = ({
           hasPrevious={hasPrevious}
           previous={previous}
           requisitionNumber={draft?.requisitionNumber}
+          scrollIntoView={scrollIntoView}
         />
       </Box>
     </Box>

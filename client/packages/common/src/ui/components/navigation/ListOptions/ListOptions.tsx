@@ -21,7 +21,7 @@ interface ListProps {
   options: ListOptionValues[];
   currentId?: string;
   enteredLineIds?: string[];
-  scrollRef?: React.MutableRefObject<HTMLLIElement | null>;
+  scrollRef: React.MutableRefObject<HTMLLIElement | null>;
 }
 
 export const ListOptions = ({
