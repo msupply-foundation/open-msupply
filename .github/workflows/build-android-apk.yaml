@@ -27,11 +27,19 @@ jobs:
         cp "$HOME/android/local.properties" ./client/packages/android
         cp "$HOME/android/release.keystore" ./client/packages/android/app
 
-    - name: Check Installs
-      run: |
-        which node
-        which nvm
-        which yarn
+    - name: Read .nvmrc
+      run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
+      id: nvm
+
+    - name: Use Node.js (.nvmrc)
+      uses: actions/setup-node@v1
+      with:
+          node-version: "${{ steps.nvm.outputs.NVMRC }}"
+
+    - name: Install dependencies
+      run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
+      env:
+          NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
     - name: Build Android App
       run: |
