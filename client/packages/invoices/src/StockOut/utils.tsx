@@ -407,8 +407,7 @@ export const UnitQuantityCell = (props: CellProps<DraftStockOutLine>) => (
     }
     id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
     min={0}
-    // We're not allowing non-integer values (decimalLimit=0), as you can only
-    // issue whole units
+    decimalLimit={2}
   />
 );
 
