@@ -11,11 +11,13 @@ pub fn update_picked_date(
     connection: &StorageConnection,
     invoice: &InvoiceRow,
 ) -> Result<(), RepositoryError> {
-    // We only want to update the picked date if the invoice is in the picked status and is a prescription
-    let (Some(picked_datetime), true) = (
-        invoice.picked_datetime,
-        invoice.status == InvoiceStatus::Picked,
-    ) else {
+    // We only want to update the picked date if the invoice is in the picked status
+    if invoice.status != InvoiceStatus::Picked {
+        return Ok(());
+    };
+
+    let Some(picked_datetime) = invoice.picked_datetime else {
+        // No picked date set, so we won't do anything, this shouldn't really happens as we just checked we are in picked status
         return Ok(());
     };
 
