@@ -28,15 +28,6 @@ jobs:
     - name: Add libpq to PATH
       run: echo "/opt/homebrew/opt/libpq/bin" >> $GITHUB_PATH
 
-    - name: Configure Rust
-      run: |
-        mkdir -p ~/.cargo
-        echo '[env]' >> ~/.cargo/config.toml
-        echo 'MACOSX_DEPLOYMENT_TARGET = "10.7"' >> ~/.cargo/config.toml
-        echo '' >> ~/.cargo/config.toml
-        echo '[target.aarch64-apple-darwin]' >> ~/.cargo/config.toml
-        echo 'rustflags = "-L /opt/homebrew/opt/libpq/lib"' >> ~/.cargo/config.toml
-
     - name: Read .nvmrc
       run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
       id: nvm
