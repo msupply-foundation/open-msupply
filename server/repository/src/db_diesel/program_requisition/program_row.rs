@@ -1,5 +1,3 @@
-use super::program_row::program::dsl as program_dsl;
-
 use crate::{
     db_diesel::{
         context_row::context, document::document, master_list_row::master_list,
@@ -48,9 +46,9 @@ impl<'a> ProgramRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &ProgramRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(program_dsl::program)
+        diesel::insert_into(program::table)
             .values(row)
-            .on_conflict(program_dsl::id)
+            .on_conflict(program::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -58,8 +56,8 @@ impl<'a> ProgramRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ProgramRow>, RepositoryError> {
-        let result = program_dsl::program
-            .filter(program_dsl::id.eq(id))
+        let result = program::table
+            .filter(program::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)

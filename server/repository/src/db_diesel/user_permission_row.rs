@@ -1,9 +1,6 @@
 use super::StorageConnection;
 
-use crate::{
-    db_diesel::user_permission_row::user_permission::dsl as user_permission_dsl,
-    repository_error::RepositoryError,
-};
+use crate::repository_error::RepositoryError;
 use crate::{Delete, Upsert};
 use diesel::prelude::*;
 
@@ -111,9 +108,9 @@ impl<'a> UserPermissionRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(user_permission_dsl::user_permission)
+        diesel::insert_into(user_permission::table)
             .values(row)
-            .on_conflict(user_permission_dsl::id)
+            .on_conflict(user_permission::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -121,23 +118,21 @@ impl<'a> UserPermissionRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<UserPermissionRow>, RepositoryError> {
-        let result = user_permission_dsl::user_permission
-            .filter(user_permission_dsl::id.eq(id))
+        let result = user_permission::table
+            .filter(user_permission::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete_by_user_id(&self, user_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(
-            user_permission_dsl::user_permission.filter(user_permission_dsl::user_id.eq(user_id)),
-        )
-        .execute(self.connection.lock().connection())?;
+        diesel::delete(user_permission::table.filter(user_permission::user_id.eq(user_id)))
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(user_permission_dsl::user_permission.filter(user_permission_dsl::id.eq(id)))
+        diesel::delete(user_permission::table.filter(user_permission::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
