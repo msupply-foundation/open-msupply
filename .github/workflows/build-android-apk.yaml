@@ -62,6 +62,9 @@ jobs:
         cp "$HOME/android/local.properties" ./client/packages/android
         cp "$HOME/android/release.keystore" ./client/packages/android/app
 
+    - name: Print config.toml contents
+      run: cat ~/.cargo/config.toml
+
     - name: Build Android App
       uses: borales/actions-yarn@v4
       with:
