@@ -7,7 +7,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
 use url::ParseError;
-use util::{with_retries, WithRetries};
+use util::{with_retries, RetrySeconds};
 
 use super::*;
 
@@ -128,24 +128,18 @@ impl SyncApiV5 {
             .join(route)
             .map_err(|error| self.api_error(route, error.into()))?;
 
-        let result = with_retries(
-            WithRetries {
-                retries: 3,
-                timeout_seconds: 2,
-            },
-            |client| {
-                client
-                    .get(url.clone())
-                    .headers(tuple_vec_to_header(vec![
-                        ("msupply-site-uuid", site_uuid),
-                        ("app-version", app_version),
-                        ("app-name", app_name),
-                        ("version", sync_version),
-                    ]))
-                    .basic_auth(username, Some(password_sha256))
-                    .query(query)
-            },
-        )
+        let result = with_retries(RetrySeconds::default(), |client| {
+            client
+                .get(url.clone())
+                .headers(tuple_vec_to_header(vec![
+                    ("msupply-site-uuid", site_uuid),
+                    ("app-version", app_version),
+                    ("app-name", app_name),
+                    ("version", sync_version),
+                ]))
+                .basic_auth(username, Some(password_sha256))
+                .query(query)
+        })
         .await;
 
         response_or_err(result)
@@ -172,26 +166,20 @@ impl SyncApiV5 {
             .join(route)
             .map_err(|error| self.api_error(route, error.into()))?;
 
-        let result = with_retries(
-            WithRetries {
-                retries: 3,
-                timeout_seconds: 2,
-            },
-            |client| {
-                client
-                    .post(url.clone())
-                    .headers(tuple_vec_to_header(vec![
-                        ("msupply-site-uuid", site_uuid),
-                        ("app-version", app_version),
-                        ("app-name", app_name),
-                        ("version", sync_version),
-                    ]))
-                    .basic_auth(username, Some(password_sha256))
-                    // Re unwrap, from to_string documentation:
-                    // Serialization can fail if T's implementation of Serialize decides to fail, or if T contains a map with non-string keys.
-                    .body(serde_json::to_string(&body).unwrap())
-            },
-        )
+        let result = with_retries(RetrySeconds::default(), |client| {
+            client
+                .post(url.clone())
+                .headers(tuple_vec_to_header(vec![
+                    ("msupply-site-uuid", site_uuid),
+                    ("app-version", app_version),
+                    ("app-name", app_name),
+                    ("version", sync_version),
+                ]))
+                .basic_auth(username, Some(password_sha256))
+                // Re unwrap, from to_string documentation:
+                // Serialization can fail if T's implementation of Serialize decides to fail, or if T contains a map with non-string keys.
+                .body(serde_json::to_string(&body).unwrap())
+        })
         .await;
 
         response_or_err(result)

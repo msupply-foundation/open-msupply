@@ -2,44 +2,41 @@ use std::time::Duration;
 
 use reqwest::*;
 
-pub struct WithRetries {
-    pub retries: u32,
-    pub timeout_seconds: u64,
+pub struct RetrySeconds(Vec<u64>);
+
+impl Default for RetrySeconds {
+    fn default() -> Self {
+        Self(vec![
+            /* first retry */ 2, /* second retry */ 5, /* third retry */ 10,
+        ])
+    }
 }
 
-pub async fn with_retries<F>(
-    WithRetries {
-        retries,
-        timeout_seconds,
-    }: WithRetries,
-    f: F,
-) -> Result<Response>
+pub async fn with_retries<F>(connection_timeouts: RetrySeconds, f: F) -> Result<Response>
 where
-    F: FnOnce(Client) -> RequestBuilder,
+    F: Fn(Client) -> RequestBuilder,
 {
-    let mut max_retries = retries;
-    let client = Client::builder()
-        .connect_timeout(Duration::from_secs(timeout_seconds))
-        .build()
-        .unwrap();
+    let mut index = 0;
+    loop {
+        let client = Client::builder()
+            .connect_timeout(Duration::from_secs(connection_timeouts.0[index]))
+            .build()
+            .unwrap();
 
-    let client = f(client);
-
-    let result = loop {
-        let result = client.try_clone().unwrap().send().await;
+        let result = f(client).send().await;
 
         let (status, is_connect_error) = match result.as_ref() {
             Ok(r) => (Some(r.status().clone()), false),
             Err(e) => (e.status().clone(), e.is_connect()),
         };
 
-        if (is_connect_error || status == Some(StatusCode::REQUEST_TIMEOUT)) && max_retries > 0 {
-            max_retries = max_retries - 1;
+        if (is_connect_error || status == Some(StatusCode::REQUEST_TIMEOUT))
+            && (index + 1) < connection_timeouts.0.len()
+        {
+            index += 1;
             continue;
         }
 
         break result;
-    };
-
-    result
+    }
 }
