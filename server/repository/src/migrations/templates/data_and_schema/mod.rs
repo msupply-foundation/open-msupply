@@ -36,8 +36,8 @@ impl Migration for V1_00_07 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        use self::activity_log::dsl as activity_log_dsl;
-        use self::invoice::dsl as invoice_dsl;
+        use self::activity_log;
+        use self::invoice;
 
         sql!(
             connection,
@@ -46,12 +46,12 @@ impl Migration for V1_00_07 {
         "#
         )?;
 
-        let invoice_ids = activity_log_dsl::activity_log
-            .select(activity_log_dsl::record_id)
+        let invoice_ids = activity_log::table
+            .select(activity_log::record_id)
             .filter(
-                activity_log_dsl::user_id
+                activity_log::user_id
                     .eq("om_admin")
-                    .and(activity_log_dsl::type_.eq(ActivityLogType::InvoiceCreated)),
+                    .and(activity_log::type_.eq(ActivityLogType::InvoiceCreated)),
             )
             .load::<Option<String>>(connection.lock().connection())?;
 
@@ -60,9 +60,9 @@ impl Migration for V1_00_07 {
                 continue;
             };
 
-            diesel::update(invoice_dsl::invoice)
-                .filter(invoice_dsl::id.eq(id))
-                .set(invoice_dsl::is_system_generated.eq(true))
+            diesel::update(invoice::table)
+                .filter(invoice::id.eq(id))
+                .set(invoice::is_system_generated.eq(true))
                 .execute(connection.lock().connection())?;
         }
 
@@ -91,7 +91,7 @@ async fn migration_1_00_07() {
     })
     .await;
 
-    use invoice::dsl as invoice_dsl;
+    use invoice;
 
     sql!(
         &connection,
@@ -199,9 +199,9 @@ async fn migration_1_00_07() {
     // e.g. assert_eq!(get_database_version(&connection), version);
 
     // Check data
-    let invoices = invoice_dsl::invoice
-        .select((invoice_dsl::id, invoice_dsl::is_system_generated))
-        .order_by(invoice_dsl::id.asc())
+    let invoices = invoice::table
+        .select((invoice::id, invoice::is_system_generated))
+        .order_by(invoice::id.asc())
         .load::<(String, bool)>(connection.lock().connection())
         .unwrap();
 
