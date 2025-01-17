@@ -6,19 +6,24 @@ use crate::{
     program_row::program,
     repository_error::RepositoryError,
     MasterListFilter, MasterListRepository, MasterListRow, NameTagFilter, NameTagRepository,
-    ProgramRequisitionSettingsRow, ProgramRow, StorageConnection,
+    NameTagRow, ProgramRequisitionSettingsRow, ProgramRow, StorageConnection,
 };
 
 use super::{ProgramFilter, ProgramRepository};
 
-pub type ProgramRequisitionSettingsJoin =
-    (ProgramRequisitionSettingsRow, ProgramRow, MasterListRow);
+pub type ProgramRequisitionSettingsJoin = (
+    ProgramRequisitionSettingsRow,
+    ProgramRow,
+    MasterListRow,
+    NameTagRow,
+);
 
 #[derive(Debug, PartialEq)]
 pub struct ProgramRequisitionSettings {
     pub program_settings_row: ProgramRequisitionSettingsRow,
     pub program_row: ProgramRow,
     pub master_list: MasterListRow,
+    pub name_tag_row: NameTagRow,
 }
 
 #[derive(Clone, PartialEq, Debug, Default)]
@@ -46,6 +51,7 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
             .inner_join(
                 master_list::table.on(master_list::id.nullable().eq(program::master_list_id)),
             )
+            .inner_join(name_tag_dsl::name_tag)
             .into_boxed();
 
         if let Some(ProgramRequisitionSettingsFilter {
@@ -88,10 +94,13 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
         Ok(result
             .into_iter()
             .map(
-                |(program_settings_row, program_row, master_list)| ProgramRequisitionSettings {
-                    program_settings_row,
-                    program_row,
-                    master_list,
+                |(program_settings_row, program_row, master_list, name_tag_row)| {
+                    ProgramRequisitionSettings {
+                        program_settings_row,
+                        program_row,
+                        master_list,
+                        name_tag_row,
+                    }
                 },
             )
             .collect())
@@ -177,7 +186,7 @@ mod test {
                 .periods()
                 .period_schedules(),
             MockData {
-                name_tags: vec![name_tag1],
+                name_tags: vec![name_tag1.clone()],
                 name_tag_joins: vec![name_tag_join1],
                 master_lists: vec![master_list.clone()],
                 contexts: vec![context],
@@ -201,7 +210,8 @@ mod test {
             Ok(vec![ProgramRequisitionSettings {
                 program_settings_row: program_requisition_setting.clone(),
                 program_row: program.clone(),
-                master_list: master_list.clone()
+                master_list: master_list.clone(),
+                name_tag_row: name_tag1.clone()
             }])
         );
         // TEST that program_requisition_settings can be queried by master list linked to a store
@@ -214,7 +224,8 @@ mod test {
             Ok(vec![ProgramRequisitionSettings {
                 program_settings_row: program_requisition_setting.clone(),
                 program_row: program.clone(),
-                master_list: master_list.clone()
+                master_list: master_list.clone(),
+                name_tag_row: name_tag1.clone()
             }])
         );
     }

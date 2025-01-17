@@ -27,6 +27,7 @@ interface IndicatorLineEditProps {
   previous: IndicatorLineRowFragment | null;
   currentLine?: IndicatorLineWithColumnsFragment | null;
   disabled: boolean;
+  scrollIntoView: () => void;
 }
 
 const INPUT_WIDTH = 185;
@@ -108,6 +109,7 @@ export const IndicatorLineEdit = ({
   previous,
   currentLine,
   disabled,
+  scrollIntoView,
 }: IndicatorLineEditProps) => {
   const columns =
     currentLine?.columns
@@ -143,6 +145,7 @@ export const IndicatorLineEdit = ({
           hasPrevious={hasPrevious}
           previous={previous}
           requisitionNumber={requisitionNumber}
+          scrollIntoView={scrollIntoView}
         />
       </Box>
     </>
