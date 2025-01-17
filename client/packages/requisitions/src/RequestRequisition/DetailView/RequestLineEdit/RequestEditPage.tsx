@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   BasicSpinner,
   DetailContainer,
@@ -38,6 +38,14 @@ export const RequestLineEditPage = () => {
     : [];
   const isProgram = !!data?.programName;
 
+  // This ref is attached to the currently selected list item, and is used to
+  // "scroll into view" when the Previous/Next buttons are clicked in the NavBar
+  const scrollRef = useRef<null | HTMLLIElement>(null);
+  const scrollSelectedItemIntoView = () =>
+    // Small time delay to allow the ref to change to the previous/next item in
+    // the list before scrolling to it
+    setTimeout(() => scrollRef.current?.scrollIntoView(), 100);
+
   useEffect(() => {
     setCustomBreadcrumbs({
       2: currentItem?.name || '',
@@ -63,6 +71,7 @@ export const RequestLineEditPage = () => {
               showNew={
                 data?.status !== RequisitionNodeStatus.Sent && !isProgram
               }
+              scrollRef={scrollRef}
             />
           }
           Right={
@@ -83,6 +92,7 @@ export const RequestLineEditPage = () => {
               requisitionId={data?.id ?? ''}
               requisitionNumber={data?.requisitionNumber}
               lines={lines}
+              scrollIntoView={scrollSelectedItemIntoView}
             />
           }
         />

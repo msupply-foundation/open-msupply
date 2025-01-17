@@ -18,6 +18,7 @@ interface ListItemProps {
   isDirty?: boolean;
   showNew?: boolean;
   handleSaveNew?: () => void;
+  scrollRef: React.MutableRefObject<HTMLLIElement | null>;
 }
 
 export const ListItems = ({
@@ -28,6 +29,7 @@ export const ListItems = ({
   showNew = false,
   isDirty = false,
   handleSaveNew = () => {},
+  scrollRef,
 }: ListItemProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
@@ -60,6 +62,7 @@ export const ListItems = ({
           }}
           options={options}
           enteredLineIds={enteredLineIds}
+          scrollRef={scrollRef}
         />
       </Box>
     </Tooltip>
