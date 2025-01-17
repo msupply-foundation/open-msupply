@@ -1,8 +1,7 @@
 use super::{
-    invoice_line::invoice_stats::dsl as invoice_stats_dsl, invoice_line_row::invoice_line,
-    invoice_row::invoice, item_link_row::item_link, item_row::item, location_row::location,
-    stock_line_row::stock_line, DBType, DatetimeFilter, InvoiceLineRow, InvoiceLineType,
-    InvoiceRow, LocationRow, StorageConnection,
+    invoice_line_row::invoice_line, invoice_row::invoice, item_link_row::item_link, item_row::item,
+    location_row::location, stock_line_row::stock_line, DBType, DatetimeFilter, InvoiceLineRow,
+    InvoiceLineType, InvoiceRow, LocationRow, StorageConnection,
 };
 
 use crate::{
@@ -249,8 +248,8 @@ impl<'a> InvoiceLineRepository<'a> {
 
     /// Calculates invoice line stats for a given invoice ids
     pub fn stats(&self, invoice_ids: &[String]) -> Result<Vec<PricingRow>, RepositoryError> {
-        let results: Vec<PricingRow> = invoice_stats_dsl::invoice_stats
-            .filter(invoice_stats_dsl::invoice_id.eq_any(invoice_ids))
+        let results: Vec<PricingRow> = invoice_stats::table
+            .filter(invoice_stats::invoice_id.eq_any(invoice_ids))
             .load(self.connection.lock().connection())?;
         Ok(results)
     }
