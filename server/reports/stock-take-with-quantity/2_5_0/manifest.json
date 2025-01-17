@@ -1,10 +1,10 @@
 {
   "is_custom": false,
-  "version": "2.3.0",
-  "code": "stock-take-without-quantity",
+  "version": "2.5.0",
+  "code": "stock-take-with-quantity",
   "context": "STOCKTAKE",
   "sub_context": "picklist",
-  "name": "stock-take-without-quantity",
+  "name": "stock-take-with-quantity",
   "queries": {},
   "arguments": {},
   "header": "header.html",
