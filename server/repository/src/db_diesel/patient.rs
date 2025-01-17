@@ -1,7 +1,4 @@
-use super::{
-    name_row::{name, name::dsl as name_dsl},
-    DBType, NameRow, StorageConnection,
-};
+use super::{name_row::name, DBType, NameRow, StorageConnection};
 
 use crate::{
     diesel_extensions::date_coalesce,
@@ -115,36 +112,36 @@ impl<'a> PatientRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 PatientSortField::Name => {
-                    apply_sort_no_case!(query, sort, name_dsl::name_);
+                    apply_sort_no_case!(query, sort, name::name_);
                 }
                 PatientSortField::Code => {
-                    apply_sort_no_case!(query, sort, name_dsl::code);
+                    apply_sort_no_case!(query, sort, name::code);
                 }
                 PatientSortField::FirstName => {
-                    apply_sort_no_case!(query, sort, name_dsl::first_name)
+                    apply_sort_no_case!(query, sort, name::first_name)
                 }
-                PatientSortField::LastName => apply_sort_no_case!(query, sort, name_dsl::last_name),
-                PatientSortField::Gender => apply_sort_no_case!(query, sort, name_dsl::gender),
+                PatientSortField::LastName => apply_sort_no_case!(query, sort, name::last_name),
+                PatientSortField::Gender => apply_sort_no_case!(query, sort, name::gender),
                 PatientSortField::DateOfBirth => {
-                    apply_sort_no_case!(query, sort, name_dsl::date_of_birth)
+                    apply_sort_no_case!(query, sort, name::date_of_birth)
                 }
-                PatientSortField::Phone => apply_sort_no_case!(query, sort, name_dsl::phone),
-                PatientSortField::Address1 => apply_sort_no_case!(query, sort, name_dsl::address1),
-                PatientSortField::Address2 => apply_sort_no_case!(query, sort, name_dsl::address2),
-                PatientSortField::Country => apply_sort_no_case!(query, sort, name_dsl::country),
-                PatientSortField::Email => apply_sort_no_case!(query, sort, name_dsl::email),
+                PatientSortField::Phone => apply_sort_no_case!(query, sort, name::phone),
+                PatientSortField::Address1 => apply_sort_no_case!(query, sort, name::address1),
+                PatientSortField::Address2 => apply_sort_no_case!(query, sort, name::address2),
+                PatientSortField::Country => apply_sort_no_case!(query, sort, name::country),
+                PatientSortField::Email => apply_sort_no_case!(query, sort, name::email),
                 PatientSortField::Code2 => {
-                    apply_sort_no_case!(query, sort, name_dsl::national_health_number)
+                    apply_sort_no_case!(query, sort, name::national_health_number)
                 }
                 PatientSortField::DateOfDeath => {
-                    apply_sort!(query, sort, name_dsl::date_of_death)
+                    apply_sort!(query, sort, name::date_of_death)
                 }
                 PatientSortField::CreatedDatetime => {
-                    apply_sort!(query, sort, name_dsl::created_datetime)
+                    apply_sort!(query, sort, name::created_datetime)
                 }
             }
         } else {
-            query = query.order(name_dsl::id.asc())
+            query = query.order(name::id.asc())
         }
 
         let final_query = query
@@ -169,7 +166,7 @@ impl<'a> PatientRepository<'a> {
         filter: Option<PatientFilter>,
         allowed_ctx: Option<&[String]>,
     ) -> BoxedNameQuery {
-        let mut query = name_dsl::name.into_boxed();
+        let mut query = name::table.into_boxed();
         // Note, below are some OR filters which needs to go first to work
         // TODO: able to make this more robust in Diesel 2?
         if let Some(f) = filter {
@@ -194,13 +191,9 @@ impl<'a> PatientRepository<'a> {
 
             // or filters need to be applied first
             if identifier.is_some() {
-                apply_string_filter!(query, identifier.clone(), name_dsl::code);
-                apply_string_or_filter!(
-                    query,
-                    identifier.clone(),
-                    name_dsl::national_health_number
-                );
-                apply_string_or_filter!(query, identifier.clone(), name_dsl::name_);
+                apply_string_filter!(query, identifier.clone(), name::code);
+                apply_string_or_filter!(query, identifier.clone(), name::national_health_number);
+                apply_string_or_filter!(query, identifier.clone(), name::name_);
 
                 let sub_query = ProgramEnrolmentRepository::create_filtered_query(Some(
                     ProgramEnrolmentFilter {
@@ -210,9 +203,9 @@ impl<'a> PatientRepository<'a> {
                         ..Default::default()
                     },
                 ))
-                .select(name_dsl::id);
+                .select(name::id);
 
-                query = query.or_filter(name_dsl::id.eq_any(sub_query))
+                query = query.or_filter(name::id.eq_any(sub_query))
             }
 
             if program_enrolment_name.is_some() {
@@ -224,45 +217,41 @@ impl<'a> PatientRepository<'a> {
                         ..Default::default()
                     },
                 ))
-                .select(name_dsl::id);
+                .select(name::id);
 
-                query = query.filter(name_dsl::id.eq_any(sub_query))
+                query = query.filter(name::id.eq_any(sub_query))
             }
 
-            apply_equal_filter!(query, id, name_dsl::id);
-            apply_string_filter!(query, code, name_dsl::code);
-            apply_string_filter!(
-                query,
-                national_health_number,
-                name_dsl::national_health_number
-            );
-            apply_string_filter!(query, name, name_dsl::name_);
+            apply_equal_filter!(query, id, name::id);
+            apply_string_filter!(query, code, name::code);
+            apply_string_filter!(query, national_health_number, name::national_health_number);
+            apply_string_filter!(query, name, name::name_);
 
-            apply_string_filter!(query, first_name, name_dsl::first_name);
-            apply_string_filter!(query, last_name, name_dsl::last_name);
-            apply_equal_filter!(query, gender, name_dsl::gender);
-            apply_date_filter!(query, date_of_birth, name_dsl::date_of_birth);
+            apply_string_filter!(query, first_name, name::first_name);
+            apply_string_filter!(query, last_name, name::last_name);
+            apply_equal_filter!(query, gender, name::gender);
+            apply_date_filter!(query, date_of_birth, name::date_of_birth);
             apply_date_filter!(
                 query,
                 date_of_death,
                 date_coalesce::coalesce(
-                    name_dsl::date_of_death,
+                    name::date_of_death,
                     NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
                 )
             );
-            apply_string_filter!(query, phone, name_dsl::phone);
-            apply_string_filter!(query, address1, name_dsl::address1);
-            apply_string_filter!(query, address2, name_dsl::address2);
-            apply_string_filter!(query, country, name_dsl::country);
-            apply_string_filter!(query, email, name_dsl::email);
+            apply_string_filter!(query, phone, name::phone);
+            apply_string_filter!(query, address1, name::address1);
+            apply_string_filter!(query, address2, name::address2);
+            apply_string_filter!(query, country, name::country);
+            apply_string_filter!(query, email, name::email);
         };
 
         // Only return active (not deleted) patients
-        query = query.filter(name_dsl::deleted_datetime.is_null());
+        query = query.filter(name::deleted_datetime.is_null());
         apply_equal_filter!(
             query,
             Some(NameRowType::equal_to(&NameRowType::Patient)),
-            name_dsl::type_
+            name::type_
         );
         query
     }

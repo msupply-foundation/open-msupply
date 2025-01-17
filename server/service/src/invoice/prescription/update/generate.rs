@@ -48,7 +48,10 @@ pub(crate) fn generate(
     set_new_status_datetime(&mut update_invoice, &input_status);
 
     update_invoice.name_link_id = input_patient_id.unwrap_or(update_invoice.name_link_id);
-    update_invoice.clinician_link_id = input_clinician_id.or(update_invoice.clinician_link_id);
+    // update_invoice.clinician_link_id = input_clinician_id.or(update_invoice.clinician_link_id);
+    if let Some(clinician_link_id) = input_clinician_id {
+        update_invoice.clinician_link_id = clinician_link_id.value;
+    }
     update_invoice.comment = input_comment.or(update_invoice.comment);
     update_invoice.colour = input_colour.or(update_invoice.colour);
     if let Some(diagnosis_id) = diagnosis_id {

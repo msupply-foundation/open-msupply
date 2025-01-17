@@ -1,7 +1,4 @@
-use super::{
-    activity_log_row::{activity_log, activity_log::dsl as activity_log_dsl},
-    ActivityLogRow, DBType, StorageConnection,
-};
+use super::{activity_log_row::activity_log, ActivityLogRow, DBType, StorageConnection};
 use diesel::prelude::*;
 
 use crate::{
@@ -69,20 +66,20 @@ impl<'a> ActivityLogRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 ActivityLogSortField::Id => {
-                    apply_sort_no_case!(query, sort, activity_log_dsl::id)
+                    apply_sort_no_case!(query, sort, activity_log::id)
                 }
                 ActivityLogSortField::ActivityLogType => {
-                    apply_sort_no_case!(query, sort, activity_log_dsl::type_)
+                    apply_sort_no_case!(query, sort, activity_log::type_)
                 }
                 ActivityLogSortField::UserId => {
-                    apply_sort_no_case!(query, sort, activity_log_dsl::user_id)
+                    apply_sort_no_case!(query, sort, activity_log::user_id)
                 }
                 ActivityLogSortField::RecordId => {
-                    apply_sort_no_case!(query, sort, activity_log_dsl::record_id)
+                    apply_sort_no_case!(query, sort, activity_log::record_id)
                 }
             }
         } else {
-            query = query.order(activity_log_dsl::datetime.asc())
+            query = query.order(activity_log::datetime.asc())
         }
 
         let result = query
@@ -100,11 +97,11 @@ fn create_filtered_query(filter: Option<ActivityLogFilter>) -> BoxedLogQuery {
     let mut query = activity_log::table.into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, activity_log_dsl::id);
-        apply_equal_filter!(query, filter.r#type, activity_log_dsl::type_);
-        apply_equal_filter!(query, filter.user_id, activity_log_dsl::user_id);
-        apply_equal_filter!(query, filter.store_id, activity_log_dsl::store_id);
-        apply_equal_filter!(query, filter.record_id, activity_log_dsl::record_id);
+        apply_equal_filter!(query, filter.id, activity_log::id);
+        apply_equal_filter!(query, filter.r#type, activity_log::type_);
+        apply_equal_filter!(query, filter.user_id, activity_log::user_id);
+        apply_equal_filter!(query, filter.store_id, activity_log::store_id);
+        apply_equal_filter!(query, filter.record_id, activity_log::record_id);
     }
 
     query

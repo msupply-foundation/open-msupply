@@ -1,11 +1,9 @@
 use std::collections::HashMap;
 
 use super::{
-    store_preference_row::store_preference::dsl as store_preference_dsl,
-    store_row::{store, store::dsl as store_dsl},
-    user_row::{user_account, user_account::dsl as user_dsl},
-    user_store_join_row::{user_store_join, user_store_join::dsl as user_store_join_dsl},
-    DBType, StorageConnection, StoreRow, UserAccountRow, UserStoreJoinRow,
+    store_preference_row::store_preference::dsl as store_preference_dsl, store_row::store,
+    user_row::user_account, user_store_join_row::user_store_join, DBType, StorageConnection,
+    StoreRow, UserAccountRow, UserStoreJoinRow,
 };
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
@@ -96,11 +94,11 @@ impl<'a> UserRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 UserSortField::Name => {
-                    apply_sort_no_case!(query, sort, user_dsl::username);
+                    apply_sort_no_case!(query, sort, user_account::username);
                 }
             }
         } else {
-            query = query.order(user_dsl::id.asc())
+            query = query.order(user_account::id.asc())
         }
 
         let final_query = query
@@ -140,13 +138,13 @@ fn to_domain(results: Vec<UserAndUserStoreJoin>) -> Vec<User> {
     user_map.into_values().collect()
 }
 
-// user_store_join_dsl::user_id.eq(user_dsl::id)
-type UserIdEqualToId = Eq<user_store_join_dsl::user_id, user_dsl::id>;
-// store_dsl::id.eq(store_id))
-type StoreIdEqualToId = Eq<store_dsl::id, user_store_join_dsl::store_id>;
+// user_store_join::user_id.eq(user_account::id)
+type UserIdEqualToId = Eq<user_store_join::user_id, user_account::id>;
+// store::id.eq(store_id))
+type StoreIdEqualToId = Eq<store::id, user_store_join::store_id>;
 // store_preference_dsl::id.eq(id))
-type IdEqualToId = Eq<store_preference_dsl::id, user_store_join_dsl::store_id>;
-// user_store_join.on(user_id.eq(user_dsl::id))
+type IdEqualToId = Eq<store_preference_dsl::id, user_store_join::store_id>;
+// user_store_join.on(user_id.eq(user_account::id))
 type OnUserStoreJoinToUserJoin = On<user_store_join::table, UserIdEqualToId>;
 // store.on(id.eq(store_id))
 type OnStoreJoinToUserStoreJoin = On<store::table, StoreIdEqualToId>;
@@ -166,14 +164,12 @@ type BoxedUserQuery = IntoBoxed<
 >;
 
 fn create_filtered_query(filter: Option<UserFilter>) -> BoxedUserQuery {
-    let mut query = user_dsl::user_account
-        .left_join(
-            user_store_join_dsl::user_store_join.on(user_store_join_dsl::user_id.eq(user_dsl::id)),
-        )
-        .left_join(store_dsl::store.on(store_dsl::id.eq(user_store_join_dsl::store_id)))
+    let mut query = user_account::table
+        .left_join(user_store_join::table.on(user_store_join::user_id.eq(user_account::id)))
+        .left_join(store::table.on(store::id.eq(user_store_join::store_id)))
         .left_join(
             store_preference_dsl::store_preference
-                .on(store_preference_dsl::id.eq(user_store_join_dsl::store_id)),
+                .on(store_preference_dsl::id.eq(user_store_join::store_id)),
         )
         .into_boxed();
 
@@ -186,11 +182,11 @@ fn create_filtered_query(filter: Option<UserFilter>) -> BoxedUserQuery {
             hashed_password,
         } = f;
 
-        apply_equal_filter!(query, id, user_dsl::id);
-        apply_string_filter!(query, username, user_dsl::username);
-        apply_equal_filter!(query, store_id, user_store_join_dsl::store_id);
-        apply_equal_filter!(query, site_id, store_dsl::site_id);
-        apply_equal_filter!(query, hashed_password, user_dsl::hashed_password);
+        apply_equal_filter!(query, id, user_account::id);
+        apply_string_filter!(query, username, user_account::username);
+        apply_equal_filter!(query, store_id, user_store_join::store_id);
+        apply_equal_filter!(query, site_id, store::site_id);
+        apply_equal_filter!(query, hashed_password, user_account::hashed_password);
     }
 
     query

@@ -1246,6 +1246,7 @@ export type CustomerProgramRequisitionSettingNode = {
   masterList: MasterListNode;
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
+  tagName: Scalars['String']['output'];
 };
 
 export type CustomerReturnInput = {
@@ -7585,6 +7586,7 @@ export type SupplierProgramRequisitionSettingNode = {
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
   suppliers: Array<NameNode>;
+  tagName: Scalars['String']['output'];
 };
 
 export type SupplierReturnInput = {
@@ -8349,7 +8351,7 @@ export type UpdatePrescriptionErrorInterface = {
 };
 
 export type UpdatePrescriptionInput = {
-  clinicianId?: InputMaybe<Scalars['String']['input']>;
+  clinicianId?: InputMaybe<NullableStringUpdate>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   diagnosisId?: InputMaybe<NullableStringUpdate>;

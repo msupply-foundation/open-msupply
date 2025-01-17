@@ -18,6 +18,8 @@ const mapRoute = (route: string): RouteMapping => {
   switch (true) {
     case inRoute(AppRoute.Dashboard):
       return { title: 'dashboard', docs: '/getting_started/dashboard/' };
+    case inRoute(AppRoute.Reports):
+      return { title: 'reports', docs: '/getting_started/report/' };
     case inRoute(AppRoute.OutboundShipment):
       return {
         title: 'outbound-shipments',
