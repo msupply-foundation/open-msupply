@@ -17,16 +17,13 @@ jobs:
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-        target: aarch64-linux-android
+        # target: aarch64-linux-android
 
     - name: Set up Homebrew
       uses: Homebrew/actions/setup-homebrew@master
 
     - name: Install libpq
       run: brew install libpq
-
-    - name: Add libpq to PATH
-      run: echo "/opt/homebrew/opt/libpq/bin" >> $GITHUB_PATH
 
     - name: Read .nvmrc
       run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
