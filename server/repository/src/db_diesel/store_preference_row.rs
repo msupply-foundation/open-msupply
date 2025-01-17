@@ -1,7 +1,4 @@
-use super::{
-    store_preference_row::store_preference::dsl as store_preference_dsl,
-    user_store_join_row::user_store_join, StorageConnection,
-};
+use super::{user_store_join_row::user_store_join, StorageConnection};
 
 use crate::{repository_error::RepositoryError, Upsert};
 
@@ -80,9 +77,9 @@ impl<'a> StorePreferenceRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(store_preference_dsl::store_preference)
+        diesel::insert_into(store_preference::table)
             .values(row)
-            .on_conflict(store_preference_dsl::id)
+            .on_conflict(store_preference::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -90,8 +87,8 @@ impl<'a> StorePreferenceRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<StorePreferenceRow>, RepositoryError> {
-        let result = store_preference_dsl::store_preference
-            .filter(store_preference_dsl::id.eq(id))
+        let result = store_preference::table
+            .filter(store_preference::id.eq(id))
             .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)
@@ -101,8 +98,8 @@ impl<'a> StorePreferenceRowRepository<'a> {
         &self,
         ids: &[String],
     ) -> Result<Vec<StorePreferenceRow>, RepositoryError> {
-        let result = store_preference_dsl::store_preference
-            .filter(store_preference_dsl::id.eq_any(ids))
+        let result = store_preference::table
+            .filter(store_preference::id.eq_any(ids))
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
