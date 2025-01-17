@@ -51,7 +51,7 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
             .inner_join(
                 master_list::table.on(master_list::id.nullable().eq(program::master_list_id)),
             )
-            .inner_join(name_tag_dsl::name_tag)
+            .inner_join(name_tag::table)
             .into_boxed();
 
         if let Some(ProgramRequisitionSettingsFilter {
