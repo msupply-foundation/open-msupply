@@ -55,7 +55,7 @@
         <td class="line_number" style="width: 5%">{{ loop.index }}</td>
         <td class="item_code" style="width: 7%">{{ line.item.code }}</td>
         <td class="item_name" style="width: 25%">{{ line.item.name }}</td>
-        <td class="quantity" style="width: 8%">{{ line.itemStats.availableStockOnHand }}</td>
+        <td class="quantity" style="width: 8%">{{ line.itemStats.stockOnHand }}</td>
         <td class="pack" style="width: 10%">{{ line.itemStats.averageMonthlyConsumption | round(precision=2) }}</td>
         <td class="batch" style="width: 8%">
           {{ data.requisition.maxMonthsOfStock * line.itemStats.averageMonthlyConsumption }}
