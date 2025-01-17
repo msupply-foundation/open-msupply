@@ -63,11 +63,11 @@
         <td class="number_columns" style="width: 5%">{{ loop.index }}</td>
         <td class="item_code" style="width: 7%">{{ line.item.code }}</td>
         <td class="item_name" style="width: 25%">{{ line.item.name }}</td>
-        <td class="number_columns" style="width: 8%">{{ line.itemStats.availableStockOnHand }}</td>
+        <td class="number_columns" style="width: 8%">{{ line.itemStats.stockOnHand }}</td>
         <td class="number_columns" style="width: 10%">{{
-        line.itemStats.averageMonthlyConsumption | round(precision=2) }}</td>
+          line.itemStats.averageMonthlyConsumption | round(precision=2) }}</td>
         <td class="number_columns" style="width: 8%">{{
-        line.itemStats.monthsOfStockOnHand | default(value=0) | round(precision=2) }}</td>
+          line.itemStats.monthsOfStockOnHand | default(value=0) | round(precision=2) }}</td>
         <td class="number_columns" style="width: 8%">{{ line.suggestedQuantity }}</td>
         <td class="number_columns" style="width: 8%">{{ line.requestedQuantity }}</td>
       </tr>
