@@ -11,15 +11,31 @@ jobs:
     timeout-minutes: 30
     steps:
     - name: Checkout code
-      run: |
-            export PATH="${PATH}:/opt/homebrew/bin/yarn"
-            echo $PATH
-    - uses: actions/checkout@v4
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
+    - name: Read .nvmrc
+      run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
+      id: nvm
+
+    - name: Use Node.js (.nvmrc)
+      uses: actions/setup-node@v1
+      with:
+        node-version: "${{ steps.nvm.outputs.NVMRC }}"
+
+    - name: Install deps
+      uses: borales/actions-yarn@v4
+      with:
+        cmd: install
+        dir: 'client'
+      env:
+       NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
+
     - name: Check Yarn
-      run: /opt/homebrew/bin/yarn --version
+      uses: borales/actions-yarn@v4
+      with:
+          cmd: --version
 
     - name: Clear Yarn cache
       run: /opt/homebrew/bin/yarn cache clean
@@ -37,9 +53,13 @@ jobs:
         cp "$HOME/android/release.keystore" ./client/packages/android/app
 
     - name: Build Android App
-      run: |
-        cd client
-        /opt/homebrew/bin/yarn android:build:release
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+    - uses: borales/actions-yarn@v4
+      with:
+        cmd: android:build:release
+        dir: 'client'
 
     - name: Create the Artifact
       uses: actions/upload-artifact@v4
