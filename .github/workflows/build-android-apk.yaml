@@ -10,10 +10,14 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 30
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
+
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        components: aarch64-linux-android-clang 
 
     - name: Read .nvmrc
       run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
@@ -53,11 +57,7 @@ jobs:
         cp "$HOME/android/release.keystore" ./client/packages/android/app
 
     - name: Build Android App
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        components: aarch64-linux-android-clang
-    - uses: borales/actions-yarn@v4
+      uses: borales/actions-yarn@v4
       with:
         cmd: android:build:release
         dir: 'client'
