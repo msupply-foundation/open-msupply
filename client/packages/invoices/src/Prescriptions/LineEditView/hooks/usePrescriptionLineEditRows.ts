@@ -3,7 +3,10 @@ import { useTableStore, SortUtils } from '@openmsupply-client/common';
 import { isA } from '../../../utils';
 import { DraftStockOutLine } from '../../../types';
 
-export const usePrescriptionLineEditRows = (rows: DraftStockOutLine[]) => {
+export const usePrescriptionLineEditRows = (
+  rows: DraftStockOutLine[],
+  isDisabled: boolean
+) => {
   const tableStore = useTableStore();
 
   const isOnHold = (row: DraftStockOutLine) =>
@@ -54,8 +57,9 @@ export const usePrescriptionLineEditRows = (rows: DraftStockOutLine[]) => {
   }, [allocatableRows, wrongPackSizeRows, onHoldRows, noStockRows]);
 
   const disabledRows = useMemo(() => {
+    if (isDisabled) return orderedRows;
     return [...wrongPackSizeRows, ...onHoldRows, ...noStockRows];
-  }, [wrongPackSizeRows, onHoldRows, noStockRows]);
+  }, [wrongPackSizeRows, onHoldRows, noStockRows, isDisabled]);
 
   useEffect(() => {
     tableStore.setDisabledRows(disabledRows.map(({ id }) => id));

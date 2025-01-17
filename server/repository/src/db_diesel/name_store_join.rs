@@ -1,8 +1,6 @@
 use super::{
-    name_link_row::{name_link, name_link::dsl as name_link_dsl},
-    name_row::{name, name::dsl as name_dsl},
-    name_store_join::name_store_join::dsl as name_store_join_dsl,
-    store_row::store,
+    name_link_row::name_link, name_row::name,
+    name_store_join::name_store_join::dsl as name_store_join_dsl, store_row::store,
     StorageConnection,
 };
 use crate::{
@@ -138,14 +136,14 @@ type BoxedNameStoreJoinQuery = IntoBoxed<
 
 fn create_filtered_query(filter: Option<NameStoreJoinFilter>) -> BoxedNameStoreJoinQuery {
     let mut query = name_store_join_dsl::name_store_join
-        .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
+        .inner_join(name_link::table.inner_join(name::table))
         .into_boxed();
 
     if let Some(f) = filter {
         let NameStoreJoinFilter { id, name_id } = f;
 
         apply_equal_filter!(query, id, name_store_join_dsl::id);
-        apply_equal_filter!(query, name_id, name_dsl::id);
+        apply_equal_filter!(query, name_id, name::id);
     }
 
     query

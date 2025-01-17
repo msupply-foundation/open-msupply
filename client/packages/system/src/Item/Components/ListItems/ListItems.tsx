@@ -18,6 +18,7 @@ interface ListItemProps {
   isDirty?: boolean;
   showNew?: boolean;
   handleSaveNew?: () => void;
+  scrollRef: React.MutableRefObject<HTMLLIElement | null>;
 }
 
 export const ListItems = ({
@@ -28,6 +29,7 @@ export const ListItems = ({
   showNew = false,
   isDirty = false,
   handleSaveNew = () => {},
+  scrollRef,
 }: ListItemProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
@@ -50,19 +52,18 @@ export const ListItems = ({
 
   return (
     <Tooltip title={value?.name}>
-      <Box display="flex" flexDirection="column" height="100%">
-        <Box sx={{ flexGrowY: 1, overflow: 'auto', scrollBehavior: 'smooth' }}>
-          <ListOptions
-            currentId={value?.id ?? 'new'}
-            onClick={id => {
-              if (currentItemId === 'new' && isDirty) {
-                showSaveConfirmation();
-              } else navigate(route.addPart(id).build());
-            }}
-            options={options}
-            enteredLineIds={enteredLineIds}
-          />
-        </Box>
+      <Box sx={{ flexGrowY: 1, overflow: 'auto', scrollBehavior: 'smooth' }}>
+        <ListOptions
+          currentId={value?.id ?? 'new'}
+          onClick={id => {
+            if (currentItemId === 'new' && isDirty) {
+              showSaveConfirmation();
+            } else navigate(route.addPart(id).build());
+          }}
+          options={options}
+          enteredLineIds={enteredLineIds}
+          scrollRef={scrollRef}
+        />
       </Box>
     </Tooltip>
   );
