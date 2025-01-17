@@ -122,14 +122,14 @@ export type DeleteRequestMutation = { __typename: 'Mutations', batchRequestRequi
 
 export type OrderTypeRowFragment = { __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> };
 
-export type SupplierProgramSettingsFragment = { __typename: 'SupplierProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> };
+export type SupplierProgramSettingsFragment = { __typename: 'SupplierProgramRequisitionSettingNode', programName: string, programId: string, tagName: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> };
 
 export type SupplierProgramSettingsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type SupplierProgramSettingsQuery = { __typename: 'Queries', supplierProgramRequisitionSettings: Array<{ __typename: 'SupplierProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> };
+export type SupplierProgramSettingsQuery = { __typename: 'Queries', supplierProgramRequisitionSettings: Array<{ __typename: 'SupplierProgramRequisitionSettingNode', programName: string, programId: string, tagName: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> };
 
 export type ProgramIndicatorFragment = { __typename: 'ProgramIndicatorNode', code?: string | null, id: string, lineAndColumns: Array<{ __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', id: string, columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null }, customerIndicatorInfo: Array<{ __typename: 'CustomerIndicatorInformationNode', datetime?: string | null, id: string, customer: { __typename: 'NameNode', id: string, name: string }, indicatorInformation: Array<{ __typename: 'RequisitionIndicatorInformationNode', columnId: string, value: string }> }> }> };
 
@@ -380,6 +380,7 @@ export const SupplierProgramSettingsFragmentDoc = gql`
     fragment SupplierProgramSettings on SupplierProgramRequisitionSettingNode {
   programName
   programId
+  tagName
   suppliers {
     ...NameRow
   }
