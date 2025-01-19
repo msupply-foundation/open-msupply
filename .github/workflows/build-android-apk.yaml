@@ -19,6 +19,9 @@ jobs:
     #     toolchain: stable
         # target: aarch64-linux-android
 
+    - name: Print config.toml contents
+      run: cat ~/.cargo/config.toml
+
     - name: Set up Homebrew
       uses: Homebrew/actions/setup-homebrew@master
 
@@ -49,6 +52,9 @@ jobs:
 
     - name: Clear Yarn cache
       run: /opt/homebrew/bin/yarn cache clean
+
+    - name: Print config.toml contents
+      run: cat ~/.cargo/config.toml
 
     - name: Get tag
       id: tag
