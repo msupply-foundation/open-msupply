@@ -233,7 +233,7 @@ mod test {
           "input": {
             "id": "n/a",
             "patientId": "n/a",
-            "clinicianId": "n/a",
+            "clinicianId": {"value": "n/a"},
             "comment": "n/a",
             "colour": "n/a"
           }
@@ -390,7 +390,7 @@ mod test {
           "input": {
             "id": "id input",
             "patientId": "patient_a",
-            "clinicianId": "some_clinician",
+            "clinicianId": {"value": "some_clinician"},
             "status": "PICKED",
             "comment": "comment input",
             "colour": "colour input"
