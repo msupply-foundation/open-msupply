@@ -77,8 +77,8 @@ jobs:
     - name: Create the Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ steps.tag.outputs.TAG }}.apk
-        path: ./client/packages\android\app\build\outputs\apk\release\
+        name: Open_mSupply_Android_${{ steps.tag.outputs.TAG }}
+        path: ./client/packages/android/app/build/outputs/apk/release/
         retention-days: 3
 
     outputs:
