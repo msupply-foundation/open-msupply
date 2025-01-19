@@ -8,7 +8,7 @@
         "stats": {
           "totalConsumption": 1200,
           "availableMonthsOfStockOnHand": 4.5,
-          "availableStockOnHand": 300.902,
+          "stockOnHand": 300.902,
           "averageMonthlyConsumption": 266.7
         },
         "monthConsumption": 200,
@@ -19,6 +19,7 @@
         "stockOnOrder": 5,
         "AMC12": 150.8,
         "AMC24": 250.8,
+        "AMCDefault": 0,
         "SOH": 300.9,
         "MOS": 4.5
       },
@@ -27,13 +28,14 @@
         "code": "ITEM001",
         "name": "Item A",
         "stats": {
-          "availableStockOnHand": 200,
+          "stockOnHand": 200,
           "totalConsumption": 100,
           "availableMonthsOfStockOnHand": 4.5
         },
         "stockOnOrder": 5,
         "AMC12": 150.8,
         "AMC24": 250.8,
+        "AMCDefault": 0,
         "SOH": 200,
         "MOS": 4.5,
         "expiringInSixMonths": 150,
