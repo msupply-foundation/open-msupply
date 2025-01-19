@@ -19,6 +19,10 @@ jobs:
         toolchain: stable
         target: aarch64-linux-android
 
+    - uses: nttld/setup-ndk@v1
+      with:
+       ndk-version: r22b
+       run: echo "export NDK_BIN=~/Library/Android/sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/darwin-x86_64/bin/" >> ~/.zshrc
 
     - name: Set up Homebrew
       uses: Homebrew/actions/setup-homebrew@master
@@ -28,9 +32,6 @@ jobs:
 
     - name: Add Targets
       run: rustup target add aarch64-linux-android
-
-    - name: Set up NDK
-      run: echo "export NDK_BIN=~/Library/Android/sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/darwin-x86_64/bin/" >> ~/.zshrc
 
     - name: Verify NDK
       run: ls $NDK_BIN
