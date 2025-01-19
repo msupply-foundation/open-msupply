@@ -19,8 +19,6 @@ jobs:
         toolchain: stable
         target: aarch64-linux-android
 
-    - name: Print config.toml contents
-      run: cat ~/.cargo/config.toml
 
     - name: Set up Homebrew
       uses: Homebrew/actions/setup-homebrew@master
@@ -33,6 +31,9 @@ jobs:
 
     - name: Set up NDK
       run: echo "export NDK_BIN=~/Library/Android/sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/darwin-x86_64/bin/" >> ~/.zshrc
+
+    - name: Verify NDK
+      run: ls $NDK_BIN
 
     - name: Read .nvmrc
       run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
