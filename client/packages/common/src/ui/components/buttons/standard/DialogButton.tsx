@@ -37,6 +37,7 @@ interface DialogButtonProps {
   color?: 'primary';
   type?: 'button' | 'submit' | 'reset';
   customLabel?: string;
+  shouldShrink?: boolean;
 }
 
 const getButtonProps = (
@@ -124,6 +125,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
   color,
   type,
   customLabel,
+  shouldShrink,
 }) => {
   const t = useTranslation();
   const { variant: buttonVariant, icon, labelKey } = getButtonProps(variant);
@@ -152,6 +154,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
             }
           : {}
       }
+      shouldShrink={shouldShrink}
     />
   );
 };
