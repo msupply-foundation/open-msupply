@@ -200,6 +200,7 @@ mod test {
             InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
+        NullableUpdate,
     };
 
     use crate::InvoiceMutations;
@@ -367,7 +368,9 @@ mod test {
                 ServiceInput {
                     id: "id input".to_string(),
                     patient_id: Some("patient_a".to_string()),
-                    clinician_id: Some("some_clinician".to_string()),
+                    clinician_id: Some(NullableUpdate {
+                        value: Some("some_clinician".to_string())
+                    }),
                     status: Some(UpdatePrescriptionStatus::Picked),
                     comment: Some("comment input".to_string()),
                     colour: Some("colour input".to_string()),
