@@ -7515,6 +7515,7 @@ export type StoreNodeNameArgs = {
 
 export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
+  defaultMonthlyConsumptionLookBackPeriod: Scalars['Int']['output'];
   extraFieldsInRequisition: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   issueInForeignCurrency: Scalars['Boolean']['output'];
