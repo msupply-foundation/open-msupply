@@ -19,10 +19,10 @@ jobs:
         toolchain: stable
         target: aarch64-linux-android
 
-    - uses: nttld/setup-ndk@v1
-      with:
-       ndk-version: r27
-       link-to-sdk: true
+    # - uses: nttld/setup-ndk@v1
+    #   with:
+    #    ndk-version: r27
+    #    link-to-sdk: true
 
     - name: Set up Homebrew
       uses: Homebrew/actions/setup-homebrew@master
@@ -47,17 +47,6 @@ jobs:
       env:
        NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
-    - name: Check Yarn
-      uses: borales/actions-yarn@v4
-      with:
-          cmd: --version
-
-    - name: Clear Yarn cache
-      run: /opt/homebrew/bin/yarn cache clean
-
-    - name: Print config.toml contents
-      run: cat ~/.cargo/config.toml
-
     - name: Get tag
       id: tag
       run: |
@@ -70,14 +59,14 @@ jobs:
         cp "$HOME/android/local.properties" ./client/packages/android
         cp "$HOME/android/release.keystore" ./client/packages/android/app
 
-    - name: Print config.toml contents
-      run: cat ~/.cargo/config.toml
-
     - name: Build Android App
       uses: borales/actions-yarn@v4
       with:
         cmd: android:build:release
         dir: 'client'
+      env: 
+       NDK_BIN: /Users/tmfmacmini/android/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/
+
 
     - name: Create the Artifact
       uses: actions/upload-artifact@v4
