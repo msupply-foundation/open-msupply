@@ -1,5 +1,6 @@
 use async_graphql::*;
 use repository::StorePreferenceRow;
+use util::constants::DEFAULT_AMC_LOOKBACK_MONTHS;
 
 // #[derive(Clone)]
 #[derive(PartialEq, Debug)]
@@ -41,6 +42,10 @@ impl StorePreferenceNode {
 
     pub async fn monthly_consumption_look_back_period(&self) -> &f64 {
         &self.store_preference.monthly_consumption_look_back_period
+    }
+
+    pub async fn default_monthly_consumption_look_back_period(&self) -> u32 {
+        DEFAULT_AMC_LOOKBACK_MONTHS
     }
 
     pub async fn months_lead_time(&self) -> &f64 {
