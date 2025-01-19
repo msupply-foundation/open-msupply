@@ -22,8 +22,8 @@ jobs:
     - name: Set up Homebrew
       uses: Homebrew/actions/setup-homebrew@master
 
-    - name: Install libpq
-      run: brew install libpq
+    # - name: Install libpq
+    #   run: brew install libpq
 
     - name: Read .nvmrc
       run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
