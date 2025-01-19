@@ -70,7 +70,7 @@ export const SidePanelComponent = () => {
               label={t('label.monthly-consumption-look-back-period')}
               decimalLimit={2}
               endAdornment={t('label.months')}
-              value={preferences?.monthlyConsumptionLookBackPeriod}
+              value={preferences?.monthlyConsumptionLookBackPeriod !== 0.0 ? preferences?.monthlyConsumptionLookBackPeriod : preferences?.defaultMonthlyConsumptionLookBackPeriod}
               disabled={true}
               fullWidth
             />
