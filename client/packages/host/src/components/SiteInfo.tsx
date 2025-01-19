@@ -1,6 +1,8 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   frontEndHostUrl,
+  getNativeAPI,
+  getPreference,
   Grid,
   IconButton,
   NativeMode,
@@ -28,8 +30,17 @@ const RowWithLabel = ({
 );
 
 export const SiteInfo: FC<{ siteName?: string | null }> = ({ siteName }) => {
-  const { connectedServer, goBackToDiscovery, mode } = useNativeClient();
   const t = useTranslation();
+  const nativeApi = getNativeAPI();
+  const [localMode, setLocalMode] = useState(NativeMode.None);
+  const { connectedServer, goBackToDiscovery } = useNativeClient();
+
+  useEffect(() => {
+    getPreference('mode', '"none"').then(setLocalMode);
+  }, []);
+
+  const renderServerRow = !nativeApi || localMode !== NativeMode.Server;
+
   if (!connectedServer) return null;
 
   return (
@@ -40,7 +51,7 @@ export const SiteInfo: FC<{ siteName?: string | null }> = ({ siteName }) => {
           contents={<Typography whiteSpace="nowrap">{siteName}</Typography>}
         />
       )}
-      {mode === NativeMode.Client && (
+      {renderServerRow && (
         <RowWithLabel
           label={`${t('label.server')}:`}
           contents={
