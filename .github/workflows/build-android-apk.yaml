@@ -14,10 +14,10 @@ jobs:
       with:
         fetch-depth: 0
 
-    # - uses: actions-rs/toolchain@v1
-    #   with:
-    #     toolchain: stable
-        # target: aarch64-linux-android
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: aarch64-linux-android
 
     - name: Print config.toml contents
       run: cat ~/.cargo/config.toml
@@ -25,8 +25,8 @@ jobs:
     - name: Set up Homebrew
       uses: Homebrew/actions/setup-homebrew@master
 
-    # - name: Install libpq
-    #   run: brew install libpq
+    - name: Install libpq
+      run: brew install libpq
 
     - name: Read .nvmrc
       run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
