@@ -14,9 +14,9 @@ jobs:
       with:
         fetch-depth: 0
 
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
+    # - uses: actions-rs/toolchain@v1
+    #   with:
+    #     toolchain: stable
         # target: aarch64-linux-android
 
     - name: Set up Homebrew
