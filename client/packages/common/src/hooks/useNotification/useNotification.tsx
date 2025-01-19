@@ -56,7 +56,7 @@ export const useNotification = (): NotificationHook => {
     });
 
   const errorWithDetail = (message: string, options?: OptionsObject) => () =>
-    enqueueSnackbar(`${t('label.error-info-icon')}:`, {
+    enqueueSnackbar(`${t('error.something-wrong-info-icon')}:`, {
       variant: 'error',
       action: key => actionWithDetail(key, message),
       persist: true,
