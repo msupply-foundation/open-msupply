@@ -13,6 +13,7 @@ import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { PrescriptionRowFragment } from '../operations.generated';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
 import { createInputObject, mapStatus } from './utils';
+import { HISTORIAL_STOCK_LINES } from 'packages/system/src/Item/api/keys';
 
 // Hook to manage prescription lines. Only has "save" and "delete"
 // functionality, as the query is done as part of the full prescription query
@@ -136,6 +137,7 @@ const useSaveLines = (id: string, invoiceNum: number) => {
         PRESCRIPTION_LINE,
         invoiceNum,
       ]);
+      queryClient.invalidateQueries([HISTORIAL_STOCK_LINES]);
     },
   });
 };
@@ -162,6 +164,7 @@ const useDeleteLines = (invoiceNum: number) => {
         PRESCRIPTION_LINE,
         invoiceNum,
       ]);
+      queryClient.invalidateQueries([HISTORIAL_STOCK_LINES]);
     },
   });
 };
