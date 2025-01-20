@@ -15,17 +15,6 @@ jobs:
       with:
         fetch-depth: 0
 
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        target: aarch64-linux-android
-
-    - name: Set up Homebrew
-      uses: Homebrew/actions/setup-homebrew@master
-
-    - name: Install libpq
-      run: brew install libpq
-
     - name: Read .nvmrc
       run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
       id: nvm
@@ -43,17 +32,17 @@ jobs:
       env:
        NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
-    - name: Get tag
-      id: tag
-      run: |
-        TAG=$(git describe --tags --abbrev=0)
-        echo "Latest tag: $TAG"
-
     - name: Get Properties
       id: properties
       run: |
         cp "$HOME/android/local.properties" ./client/packages/android
         cp "$HOME/android/release.keystore" ./client/packages/android/app
+
+    - name: Set Up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: aarch64-linux-android
 
     - name: Set Up Java
       uses: actions/setup-java@v4
@@ -67,7 +56,7 @@ jobs:
         cmd: android:build:release && pwd
         dir: 'client'
       env: 
-       NDK_BIN: ../../../../android/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/
+       NDK_BIN: /Users/tmfmacmini/android/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/
 
     - name: Create the Artifact
       uses: actions/upload-artifact@v4
