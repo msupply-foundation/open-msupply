@@ -28,7 +28,7 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
   const t = useTranslation();
   const { info } = useNotification();
 
-  const showDisabledButtonToastMessage = (disabledToastMessage: string) => {
+  const showDisabledActionToastMessage = (disabledToastMessage: string) => {
     return info(disabledToastMessage);
   };
 
@@ -61,11 +61,11 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
           shouldShrink,
           disabledToastMessage,
         }) => (
-          // Div needed to allow for "clicking" a disabled button
+          // Div needed to allow for "clicking" a disabled action button
           <div
             onClick={
               disabled
-                ? showDisabledButtonToastMessage(
+                ? showDisabledActionToastMessage(
                     disabledToastMessage ??
                       `${t('messages.cannot-perform-action')}`
                   )
