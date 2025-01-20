@@ -591,6 +591,7 @@
   "label.calculated-demand": "Calculated Demand",
   "label.cant-delete-disabled": "Can only delete lines when status is New",
   "label.cant-delete-disabled-requisition": "Can only delete lines when requisition is in Draft",
+  "label.cant-delete-disabled-internal-order": "Can only delete lines when internal order is in Draft",
   "label.cant-zero-quantity-disabled": "Quantities of lines can only be set to 0 when status is New",
   "label.catalogue-item": "Catalogue item",
   "label.catalogue-item-code": "Catalogue item code",
