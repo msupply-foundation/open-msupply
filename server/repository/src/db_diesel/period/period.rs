@@ -1,8 +1,4 @@
-use super::{
-    period_row::{period, period::dsl as period_dsl},
-    period_schedule_row::{period_schedule, period_schedule::dsl as period_schedule_dsl},
-    PeriodScheduleRow,
-};
+use super::{period_row::period, period_schedule_row::period_schedule, PeriodScheduleRow};
 use diesel::{
     dsl::{And, Eq, InnerJoin, IntoBoxed, LeftJoin, On},
     prelude::*,
@@ -11,7 +7,7 @@ use diesel::{
 use crate::{
     diesel_macros::{apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     repository_error::RepositoryError,
-    rnr_form_row::{rnr_form, rnr_form::dsl as rnr_form_dsl},
+    rnr_form_row::rnr_form,
     DBType, DateFilter, PeriodRow, RnRFormRow, StorageConnection,
 };
 
@@ -71,10 +67,10 @@ impl<'a> PeriodRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 PeriodSortField::Id => {
-                    apply_sort_no_case!(query, sort, period_dsl::id)
+                    apply_sort_no_case!(query, sort, period::id)
                 }
                 PeriodSortField::EndDate => {
-                    apply_sort!(query, sort, period_dsl::end_date)
+                    apply_sort!(query, sort, period::end_date)
                 }
             }
         };
@@ -93,12 +89,12 @@ fn to_domain((period_row, period_schedule_row, rnr_form_row): PeriodJoin) -> Per
     }
 }
 
-// rnr_form_dsl::period_id.eq(period_dsl::id)
-type PeriodIdEqualToId = Eq<rnr_form_dsl::period_id, period_dsl::id>;
-// rnr_form_dsl::store_id.eq(store_id)
-type StoreIdEqualToStr = Eq<rnr_form_dsl::store_id, String>;
-// rnr_form_dsl::program_id.eq(program_id)
-type ProgramIdEqualToStr = Eq<rnr_form_dsl::program_id, String>;
+// rnr_form::period_id.eq(period::id)
+type PeriodIdEqualToId = Eq<rnr_form::period_id, period::id>;
+// rnr_form::store_id.eq(store_id)
+type StoreIdEqualToStr = Eq<rnr_form::store_id, String>;
+// rnr_form::program_id.eq(program_id)
+type ProgramIdEqualToStr = Eq<rnr_form::program_id, String>;
 
 type OnRnrFormToPeriodJoin =
     On<rnr_form::table, And<And<PeriodIdEqualToId, StoreIdEqualToStr>, ProgramIdEqualToStr>>;
@@ -114,13 +110,13 @@ fn create_filtered_query(
     program_id: String,
     filter: Option<PeriodFilter>,
 ) -> BoxedPeriodQuery {
-    let mut query = period_dsl::period
-        .inner_join(period_schedule_dsl::period_schedule)
+    let mut query = period::table
+        .inner_join(period_schedule::table)
         .left_join(
-            rnr_form_dsl::rnr_form.on(rnr_form_dsl::period_id
-                .eq(period_dsl::id)
-                .and(rnr_form_dsl::store_id.eq(store_id))
-                .and(rnr_form_dsl::program_id.eq(program_id))),
+            rnr_form::table.on(rnr_form::period_id
+                .eq(period::id)
+                .and(rnr_form::store_id.eq(store_id))
+                .and(rnr_form::program_id.eq(program_id))),
         )
         .into_boxed();
 
@@ -132,11 +128,11 @@ fn create_filtered_query(
             rnr_form_program_id,
         } = filter;
 
-        apply_equal_filter!(query, id, period_dsl::id);
-        apply_equal_filter!(query, period_schedule_id, period_dsl::period_schedule_id);
-        apply_date_filter!(query, end_date, period_dsl::end_date);
+        apply_equal_filter!(query, id, period::id);
+        apply_equal_filter!(query, period_schedule_id, period::period_schedule_id);
+        apply_date_filter!(query, end_date, period::end_date);
 
-        apply_equal_filter!(query, rnr_form_program_id, rnr_form_dsl::program_id);
+        apply_equal_filter!(query, rnr_form_program_id, rnr_form::program_id);
     }
 
     query

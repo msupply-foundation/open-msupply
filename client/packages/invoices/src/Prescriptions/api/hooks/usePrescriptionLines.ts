@@ -116,6 +116,7 @@ const useSaveLines = (id: string, invoiceNum: number) => {
             {
               ...patch,
               status: mapStatus(patch),
+              clinicianId: setNullableInput('clinicianId', patch),
               diagnosisId: setNullableInput('diagnosisId', patch),
             },
           ]

@@ -1,27 +1,29 @@
 use diesel::prelude::*;
 
 use crate::{
-    db_diesel::{
-        master_list_row::master_list::dsl as master_list_dsl,
-        name_tag_row::name_tag::dsl as name_tag_dsl,
-    },
-    program_requisition_settings_row::program_requisition_settings::dsl as program_requisition_settings_dsl,
-    program_row::program::dsl as program_dsl,
+    db_diesel::{master_list_row::master_list, name_tag_row::name_tag},
+    program_requisition_settings_row::program_requisition_settings,
+    program_row::program,
     repository_error::RepositoryError,
     MasterListFilter, MasterListRepository, MasterListRow, NameTagFilter, NameTagRepository,
-    ProgramRequisitionSettingsRow, ProgramRow, StorageConnection,
+    NameTagRow, ProgramRequisitionSettingsRow, ProgramRow, StorageConnection,
 };
 
 use super::{ProgramFilter, ProgramRepository};
 
-pub type ProgramRequisitionSettingsJoin =
-    (ProgramRequisitionSettingsRow, ProgramRow, MasterListRow);
+pub type ProgramRequisitionSettingsJoin = (
+    ProgramRequisitionSettingsRow,
+    ProgramRow,
+    MasterListRow,
+    NameTagRow,
+);
 
 #[derive(Debug, PartialEq)]
 pub struct ProgramRequisitionSettings {
     pub program_settings_row: ProgramRequisitionSettingsRow,
     pub program_row: ProgramRow,
     pub master_list: MasterListRow,
+    pub name_tag_row: NameTagRow,
 }
 
 #[derive(Clone, PartialEq, Debug, Default)]
@@ -44,13 +46,12 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
         &self,
         filter: Option<ProgramRequisitionSettingsFilter>,
     ) -> Result<Vec<ProgramRequisitionSettings>, RepositoryError> {
-        let mut query = program_requisition_settings_dsl::program_requisition_settings
-            .inner_join(program_dsl::program)
+        let mut query = program_requisition_settings::table
+            .inner_join(program::table)
             .inner_join(
-                master_list_dsl::master_list.on(master_list_dsl::id
-                    .nullable()
-                    .eq(program_dsl::master_list_id)),
+                master_list::table.on(master_list::id.nullable().eq(program::master_list_id)),
             )
+            .inner_join(name_tag::table)
             .into_boxed();
 
         if let Some(ProgramRequisitionSettingsFilter {
@@ -61,23 +62,23 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
         {
             if name_tag.is_some() {
                 let name_tag_ids =
-                    NameTagRepository::create_filtered_query(name_tag).select(name_tag_dsl::id);
-                query = query
-                    .filter(program_requisition_settings_dsl::name_tag_id.eq_any(name_tag_ids));
+                    NameTagRepository::create_filtered_query(name_tag).select(name_tag::id);
+                query =
+                    query.filter(program_requisition_settings::name_tag_id.eq_any(name_tag_ids));
             }
 
             if master_list.is_some() {
                 let master_list_ids = MasterListRepository::create_filtered_query(master_list)
-                    .select(master_list_dsl::id)
+                    .select(master_list::id)
                     .nullable();
-                query = query.filter(program_dsl::master_list_id.eq_any(master_list_ids));
+                query = query.filter(program::master_list_id.eq_any(master_list_ids));
             }
 
             if program.is_some() {
                 let program_ids =
-                    ProgramRepository::create_filtered_query(program).select(program_dsl::id);
+                    ProgramRepository::create_filtered_query(program).select(program::id);
 
-                query = query.filter(program_dsl::id.eq_any(program_ids));
+                query = query.filter(program::id.eq_any(program_ids));
             }
         }
 
@@ -93,10 +94,13 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
         Ok(result
             .into_iter()
             .map(
-                |(program_settings_row, program_row, master_list)| ProgramRequisitionSettings {
-                    program_settings_row,
-                    program_row,
-                    master_list,
+                |(program_settings_row, program_row, master_list, name_tag_row)| {
+                    ProgramRequisitionSettings {
+                        program_settings_row,
+                        program_row,
+                        master_list,
+                        name_tag_row,
+                    }
                 },
             )
             .collect())
@@ -182,7 +186,7 @@ mod test {
                 .periods()
                 .period_schedules(),
             MockData {
-                name_tags: vec![name_tag1],
+                name_tags: vec![name_tag1.clone()],
                 name_tag_joins: vec![name_tag_join1],
                 master_lists: vec![master_list.clone()],
                 contexts: vec![context],
@@ -206,7 +210,8 @@ mod test {
             Ok(vec![ProgramRequisitionSettings {
                 program_settings_row: program_requisition_setting.clone(),
                 program_row: program.clone(),
-                master_list: master_list.clone()
+                master_list: master_list.clone(),
+                name_tag_row: name_tag1.clone()
             }])
         );
         // TEST that program_requisition_settings can be queried by master list linked to a store
@@ -219,7 +224,8 @@ mod test {
             Ok(vec![ProgramRequisitionSettings {
                 program_settings_row: program_requisition_setting.clone(),
                 program_row: program.clone(),
-                master_list: master_list.clone()
+                master_list: master_list.clone(),
+                name_tag_row: name_tag1.clone()
             }])
         );
     }
