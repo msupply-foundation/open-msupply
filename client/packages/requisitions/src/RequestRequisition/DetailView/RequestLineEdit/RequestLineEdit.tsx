@@ -48,6 +48,7 @@ interface RequestLineEditProps {
   requisitionNumber?: number;
   requisitionId: string;
   insert: (patch: InsertRequestRequisitionLineInput) => void;
+  scrollIntoView: () => void;
 }
 
 export const RequestLineEdit = ({
@@ -66,6 +67,7 @@ export const RequestLineEdit = ({
   requisitionNumber,
   requisitionId,
   insert,
+  scrollIntoView,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
@@ -75,10 +77,8 @@ export const RequestLineEdit = ({
   const useConsumptionData =
     store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
   const isNew = !draft?.id;
-
-  const extraFields = store?.preferences?.extraFieldsInRequisition;
   const showItemInformation =
-    useConsumptionData && extraFields && !!draft?.itemInformation && isProgram;
+    useConsumptionData && !!draft?.itemInformation && isProgram;
   const itemInformationSorted = draft?.itemInformation
     ?.sort((a, b) => a.name.name.localeCompare(b.name.name))
     .sort((a, b) => b.amcInUnits - a.amcInUnits)
@@ -122,7 +122,7 @@ export const RequestLineEdit = ({
                 label={t('label.stock-on-hand')}
                 sx={{ marginBottom: 1 }}
               />
-              {isProgram && extraFields && (
+              {isProgram && useConsumptionData && (
                 <>
                   <InputWithLabelRow
                     Input={
@@ -214,7 +214,7 @@ export const RequestLineEdit = ({
                 label={t('label.amc')}
                 sx={{ marginBottom: 1 }}
               />
-              {isProgram && extraFields && (
+              {isProgram && useConsumptionData && (
                 <InputWithLabelRow
                   Input={
                     <NumericTextInput
@@ -311,7 +311,6 @@ export const RequestLineEdit = ({
                   <InputWithLabelRow
                     Input={
                       <NumericTextInput
-                        autoFocus
                         disabled={!isPacks}
                         value={NumUtils.round(
                           (draft?.requestedQuantity ?? 0) /
@@ -320,12 +319,18 @@ export const RequestLineEdit = ({
                         )}
                         decimalLimit={2}
                         width={100}
-                        onChange={quantity => {
-                          update({
-                            requestedQuantity:
-                              (quantity ?? 0) * (draft?.defaultPackSize ?? 0),
-                          });
+                        onChange={value => {
+                          const newValue = (value ?? 0) * (draft?.defaultPackSize ?? 0);
+                          if (draft?.suggestedQuantity === newValue) {
+                            update({
+                              requestedQuantity: newValue,
+                              reason: null,
+                            });
+                          } else {
+                            update({ requestedQuantity: newValue });
+                          }
                         }}
+                        onBlur={save}
                       />
                     }
                     labelWidth={LABEL_WIDTH}
@@ -360,7 +365,7 @@ export const RequestLineEdit = ({
                 label={t('label.suggested-quantity')}
                 sx={{ marginBottom: 1 }}
               />
-              {isProgram && extraFields && (
+              {isProgram && useConsumptionData && (
                 <InputWithLabelRow
                   Input={
                     <ReasonOptionsSearchInput
@@ -395,7 +400,7 @@ export const RequestLineEdit = ({
                   />
                 }
                 sx={{ width: 275 }}
-                labelWidth={'75px'}
+                labelWidth={LABEL_WIDTH}
                 label={t('label.comment')}
               />
             </Box>
@@ -417,6 +422,7 @@ export const RequestLineEdit = ({
           hasPrevious={hasPrevious}
           previous={previous}
           requisitionNumber={draft?.requisitionNumber}
+          scrollIntoView={scrollIntoView}
         />
       </Box>
     </Box>
