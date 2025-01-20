@@ -145,7 +145,15 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   };
 
   return (
-    <Box display="flex" flex={1}>
+    <Box
+      display="flex"
+      flex={1}
+      sx={theme => ({
+        [theme.breakpoints.down('sm')]: {
+          flexDirection: 'column',
+        },
+      })}
+    >
       <Container>
         <Section heading={t('heading.asset-identification')}>
           {isCentralServer && (
@@ -263,12 +271,15 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
       <Box
         marginTop={4}
         marginBottom={4}
-        sx={{
+        sx={theme => ({
+          [theme.breakpoints.down('sm')]: {
+            display: 'none',
+          },
           borderColor: 'gray.light',
           borderWidth: 0,
           borderLeftWidth: 1,
           borderStyle: 'solid',
-        }}
+        })}
       ></Box>
       <Container>
         <Section heading={t('heading.functional-status')}>
