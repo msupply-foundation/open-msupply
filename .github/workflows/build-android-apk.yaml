@@ -53,7 +53,7 @@ jobs:
     - name: Build Android App
       uses: borales/actions-yarn@v4
       with:
-        cmd: android:build:release && pwd
+        cmd: android:build:release
         dir: 'client'
       env: 
        NDK_BIN: /Users/tmfmacmini/android/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/
