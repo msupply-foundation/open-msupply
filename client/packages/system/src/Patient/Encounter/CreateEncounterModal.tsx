@@ -296,6 +296,7 @@ export const CreateEncounterModal: FC = () => {
                           highlightedDays: getHighlightedDays(),
                         } as any,
                       }}
+                      showTime
                     />
                   }
                 />
