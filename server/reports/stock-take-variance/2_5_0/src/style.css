@@ -1,0 +1,81 @@
+body {
+  margin: 10px 5% 10px 5%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+th {
+  border: 1px dotted #181715;
+  border-collapse: collapse;
+}
+
+table.center {
+  margin-left: auto;
+  margin-right: auto;
+  width: 98%;
+  border-collapse: collapse; 
+
+}
+
+td.borderline {
+  border-bottom: 1px solid black;
+  
+}
+
+td.borderlineTopBottom {
+  border-bottom: 1px solid black;
+  border-top: 1px solid black;
+  
+}
+
+
+.Report_title {
+  text-align: center;
+  width: 100%;
+  height: 14px;
+  padding-top: 8px;
+  font-weight: bold; 
+  font-size: 12pt; 
+}
+
+
+.name_centre {
+  text-align: center;
+  font-weight: bold; 
+  font-size: 14pt; 
+}
+.name_address {
+  text-align: center;
+  font-weight: normal; 
+  font-size: 10pt; 
+}
+
+.name_right {
+  text-align: right;
+  font-weight: normal; 
+  font-size: 10pt; 
+}
+
+.table_header {
+  text-align: left;
+  font-weight: bold; 
+  font-size: 8pt; 
+}
+
+
+
+.table_text {
+  text-align: left;
+  font-weight: normal; 
+  font-size: 8pt; 
+}
+
+
+
+.table_number {
+  text-align: right;
+  font-weight: normal; 
+  font-size: 8pt; 
+}
+
+
+@media print{@page {size: landscape}}

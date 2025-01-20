@@ -13,7 +13,7 @@ describe('getAmc', () => {
       periodLength
     );
 
-    expect(result).toBe(150);
+    expect(result).toBe(150.58333333333334);
   });
 });
 

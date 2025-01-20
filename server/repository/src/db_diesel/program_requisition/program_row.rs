@@ -1,3 +1,6 @@
+use chrono::NaiveDateTime;
+use program::deleted_datetime;
+
 use crate::{
     db_diesel::{
         context_row::context, document::document, master_list_row::master_list,
@@ -17,6 +20,7 @@ table! {
         context_id -> Text,
         is_immunisation -> Bool,
         elmis_code -> Nullable<Text>,
+        deleted_datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -27,6 +31,8 @@ allow_tables_to_appear_in_same_query!(program, name_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default)]
 #[diesel(table_name = program)]
+#[diesel(treat_none_as_null = true)]
+
 pub struct ProgramRow {
     pub id: String, // Master list id
     pub master_list_id: Option<String>,
@@ -34,6 +40,7 @@ pub struct ProgramRow {
     pub context_id: String,
     pub is_immunisation: bool,
     pub elmis_code: Option<String>,
+    pub deleted_datetime: Option<NaiveDateTime>,
 }
 
 pub struct ProgramRowRepository<'a> {
@@ -58,9 +65,17 @@ impl<'a> ProgramRowRepository<'a> {
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ProgramRow>, RepositoryError> {
         let result = program::table
             .filter(program::id.eq(id))
+            .filter(deleted_datetime.is_null())
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::update(program::table.filter(program::id.eq(id)))
+            .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 }
 
