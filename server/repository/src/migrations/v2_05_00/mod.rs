@@ -14,6 +14,7 @@ mod new_store_preferences;
 mod remove_contact_form_site_id;
 mod remove_contact_form_user_account_fk;
 mod remove_unique_description_on_tmp_breach;
+mod remove_vaccination_user_account_fk;
 
 use crate::StorageConnection;
 
@@ -44,6 +45,7 @@ impl Migration for V2_05_00 {
             Box::new(add_email_retry_at::Migrate),
             Box::new(remove_contact_form_user_account_fk::Migrate),
             Box::new(add_contact_form_processor_pg_enum_type::Migrate),
+            Box::new(remove_vaccination_user_account_fk::Migrate),
         ]
     }
 }

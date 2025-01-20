@@ -16,13 +16,14 @@ export interface PrescriptionLineEditTableProps {
   item: DraftItem | null;
   allocatedUnits: number;
   batch?: string;
+  isDisabled: boolean;
 }
 
 export const PrescriptionLineEditTable: React.FC<
   PrescriptionLineEditTableProps
-> = ({ onChange, rows, item }) => {
+> = ({ onChange, rows, item, isDisabled }) => {
   const t = useTranslation();
-  const { orderedRows } = usePrescriptionLineEditRows(rows);
+  const { orderedRows } = usePrescriptionLineEditRows(rows, isDisabled);
   const onEditStockLine = (key: string, value: number) => {
     const num = Number.isNaN(value) ? 0 : value;
     onChange(key, num);
