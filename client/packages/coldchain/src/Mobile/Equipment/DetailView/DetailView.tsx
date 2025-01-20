@@ -15,6 +15,10 @@ import { SimpleLabelDisplay } from '../../Components/SimpleLabelDisplay';
 import { useAssets } from '../../../Equipment/api';
 import { Status } from 'packages/coldchain/src/Equipment/Components';
 
+import { AccordionPanelSection } from 'packages/invoices/src/Prescriptions/LineEditView/PanelSection';
+import { useEquipmentDetailView } from 'packages/coldchain/src/Equipment/DetailView';
+import { Summary } from 'packages/coldchain/src/Equipment/DetailView/Tabs';
+
 const ChevronUpIcon = (): JSX.Element => {
   return (
     <ChevronDownIcon
@@ -26,9 +30,22 @@ const ChevronUpIcon = (): JSX.Element => {
 };
 
 export const EquipmentDetailView: FC = () => {
-  const t = useTranslation();
+  const {
+    isLoading,
+    isLoadingLocations,
+    onChange,
+    draft,
+    locations,
+    data,
+    // isDirty,
+    // isSaving,
+    // showSaveConfirmation,
+    // navigate,
+    t,
+  } = useEquipmentDetailView();
+
   const theme = useTheme();
-  const { data, isLoading } = useAssets.document.get();
+
   const [isOpen, setIsOpen] = useState({
     summary: false,
     details: false,
@@ -37,7 +54,7 @@ export const EquipmentDetailView: FC = () => {
     log: false,
   });
 
-  if (isLoading) return <DetailFormSkeleton />;
+  if (isLoading && isLoadingLocations) return <DetailFormSkeleton />;
 
   if (!data) return <h1>{t('error.asset-not-found')}</h1>;
 
@@ -93,43 +110,9 @@ export const EquipmentDetailView: FC = () => {
         <Status status={data.statusLog?.status} />
       </Box>
 
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          background: theme.palette.background.drawer,
-          padding: '.25rem .75rem',
-          marginTop: '.5rem',
-          borderTopRightRadius: '10px',
-          borderTopLeftRadius: '10px',
-        }}
-      >
-        <Typography
-          sx={{
-            fontSize: '0.875rem',
-            fontWeight: 'bold',
-          }}
-        >
-          Summary
-        </Typography>
-        <IconButton
-          icon={isOpen.summary ? <ChevronUpIcon /> : <ChevronDownIcon />}
-          label=""
-          onClick={() => {
-            toggleCollapse('summary');
-          }}
-        />
-      </Box>
-      <Collapse
-        in={isOpen.summary}
-        sx={{
-          background: theme.palette.background.drawer,
-          borderBottomLeftRadius: '10px',
-          borderBottomRightRadius: '10px',
-        }}
-      >
-        <h1>Summary data here</h1>
-      </Collapse>
+      <AccordionPanelSection title="Summary" defaultExpanded={false}>
+        <Summary onChange={onChange} draft={draft} locations={locations} />
+      </AccordionPanelSection>
 
       <Box
         sx={{

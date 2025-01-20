@@ -32,7 +32,7 @@ import {
 import { DraftAsset } from '../types';
 import { Details } from './Tabs/Details';
 
-export const EquipmentDetailView = () => {
+export const useEquipmentDetailView = () => {
   const { storeId } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
   const { data, isLoading } = useAssets.document.get();
@@ -115,6 +115,36 @@ export const EquipmentDetailView = () => {
     }));
     locations.push(...assignedLocations);
   }
+
+  return {
+    isLoading,
+    isLoadingLocations,
+    onChange,
+    draft,
+    locations,
+    data,
+    isDirty,
+    isSaving,
+    showSaveConfirmation,
+    navigate,
+    t,
+  };
+};
+
+export const EquipmentDetailView = () => {
+  const {
+    isLoading,
+    isLoadingLocations,
+    onChange,
+    draft,
+    locations,
+    data,
+    isDirty,
+    isSaving,
+    showSaveConfirmation,
+    navigate,
+    t,
+  } = useEquipmentDetailView();
 
   if (isLoading || isLoadingLocations) return <DetailFormSkeleton />;
 
