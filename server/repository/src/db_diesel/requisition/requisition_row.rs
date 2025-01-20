@@ -1,7 +1,5 @@
 use std::any::Any;
 
-use super::requisition_row::requisition::dsl as requisition_dsl;
-
 use crate::db_diesel::{
     item_link_row::item_link, name_link_row::name_link, period::period_row::period,
     program_requisition::program_row::program, store_row::store, user_row::user_account,
@@ -147,9 +145,9 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &RequisitionRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(requisition_dsl::requisition)
+        diesel::insert_into(requisition::table)
             .values(row)
-            .on_conflict(requisition_dsl::id)
+            .on_conflict(requisition::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -181,15 +179,15 @@ impl<'a> RequisitionRowRepository<'a> {
 
         let change_log_id = self.insert_changelog(&requisition, RowActionType::Delete)?;
 
-        diesel::delete(requisition_dsl::requisition.filter(requisition_dsl::id.eq(requisition_id)))
+        diesel::delete(requisition::table.filter(requisition::id.eq(requisition_id)))
             .execute(self.connection.lock().connection())?;
 
         Ok(Some(change_log_id))
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<RequisitionRow>, RepositoryError> {
-        let result = requisition_dsl::requisition
-            .filter(requisition_dsl::id.eq(id))
+        let result = requisition::table
+            .filter(requisition::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -200,13 +198,13 @@ impl<'a> RequisitionRowRepository<'a> {
         r#type: RequisitionType,
         store_id: &str,
     ) -> Result<Option<i64>, RepositoryError> {
-        let result = requisition_dsl::requisition
+        let result = requisition::table
             .filter(
-                requisition_dsl::type_
+                requisition::type_
                     .eq(r#type)
-                    .and(requisition_dsl::store_id.eq(store_id)),
+                    .and(requisition::store_id.eq(store_id)),
             )
-            .select(max(requisition_dsl::requisition_number))
+            .select(max(requisition::requisition_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }
