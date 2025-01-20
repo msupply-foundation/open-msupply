@@ -64,10 +64,10 @@ jobs:
     - name: Build Android App
       uses: borales/actions-yarn@v4
       with:
-        cmd: android:build:release
+        cmd: android:build:release && pwd
         dir: 'client'
       env: 
-       NDK_BIN: ${{HOME}}/android/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/
+       NDK_BIN: ../../../../android/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/
 
     - name: Create the Artifact
       uses: actions/upload-artifact@v4
