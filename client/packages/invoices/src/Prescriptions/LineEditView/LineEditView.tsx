@@ -38,6 +38,14 @@ export const PrescriptionLineEditView = () => {
 
   const newItemId = useRef<string>();
 
+  // This ref is attached to the currently selected list item, and is used to
+  // "scroll into view" when the Previous/Next buttons are clicked in the NavBar
+  const scrollRef = useRef<null | HTMLLIElement>(null);
+  const scrollSelectedItemIntoView = () =>
+    // Small time delay to allow the ref to change to the previous/next item in
+    // the list before scrolling to it
+    setTimeout(() => scrollRef.current?.scrollIntoView(), 100);
+
   const { isDirty, setIsDirty } = useDirtyCheck();
 
   const lines =
@@ -138,6 +146,7 @@ export const PrescriptionLineEditView = () => {
       );
     }
     setIsDirty(false);
+    setAllDraftLines({});
   };
 
   if (isLoading || !itemId) return <BasicSpinner />;
@@ -161,6 +170,7 @@ export const PrescriptionLineEditView = () => {
             showNew={status !== InvoiceNodeStatus.Verified}
             isDirty={isDirty}
             handleSaveNew={onSave}
+            scrollRef={scrollRef}
           />
         }
         Right={
@@ -183,6 +193,7 @@ export const PrescriptionLineEditView = () => {
                     .build()
                 )
               }
+              scrollIntoView={scrollSelectedItemIntoView}
             />
           </>
         }

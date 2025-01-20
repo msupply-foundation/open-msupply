@@ -45,8 +45,8 @@
     <td class="table_text">{{line.batch}}</td>
     <td class="table_number">{{line.expiryDate}}</td>
     <td class="table_number">{{line.packSize}}</td>
-    <td class="table_number">{{line.costPricePerPack}}</td>
-    <td class="table_number">{{line.snapshotNumberOfPacks}}</td>
+    <td class="table_number">{{line.costPricePerPack | default(value=0)}}</td>
+    <td class="table_number">{{line.snapshotNumberOfPacks | round( precision=2)}}</td>
 
     {% if line.countedNumberOfPacks %}
     {% set_global Vnumofpackscounted=line.countedNumberOfPacks %}
@@ -57,9 +57,9 @@
     <td class="table_number">{{Vnumofpackscounted}}</td>
 
     {% set Vvariance=Vnumofpackscounted - line.snapshotNumberOfPacks %}
-    {% set VvarianceValue=Vvariance * line.costPricePerPack %}
-    <td class="table_number">{{Vvariance}}</td>
-    <td class="table_number">{{VvarianceValue}}</td>
+    {% set VvarianceValue=Vvariance * line.costPricePerPack | default(value=0) %}
+    <td class="table_number">{{Vvariance | round( precision=2)}}</td>
+    <td class="table_number">{{VvarianceValue | round( precision=2)}}</td>
 
     {% if line.inventoryAdjustmentReasonId %}
     <td  class="table_text">{{line.inventoryAdjustmentReason.reason}}</td>
@@ -88,7 +88,7 @@
   <tr>
     <td colspan="10" />
     <td  class="borderline"><span class="table_text">{{t(k="report.net-increase",f="Net Increase")}}</span></td>
-    <td class="borderline"><span class="table_text">{{VvalueIncrease}}</span></td>
+    <td class="borderline"><span class="table_text">{{VvalueIncrease | round( precision=2)}}</span></td>
   </tr>
 
 
@@ -96,13 +96,13 @@
   <tr>
     <td colspan="10" />
     <td class="borderline"><span class="table_text">{{t(k="report.net-decrease",f="Net Decrease")}}</span></td>
-    <td class="borderline"><span class="table_text">{{VvalueDecrease}}</span></td>
+    <td class="borderline"><span class="table_text">{{VvalueDecrease | round( precision=2)}}</span></td>
   </tr>
 
   <tr>
     <td colspan="10"  />
     <td  class="borderline"><span class="table_text">{{t(k="report.net-variance",f="Net Variance")}}</span></td>
-    <td  class="borderline"><span class="table_text">{{VnetVarience}}</span></td>
+    <td  class="borderline"><span class="table_text">{{VnetVarience | round( precision=2)}}</span></td>
   </tr>
 </table>
 

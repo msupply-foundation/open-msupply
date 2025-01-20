@@ -12,6 +12,7 @@ import {
   NumberCell,
   CurrencyCell,
   ColumnDescription,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -46,7 +47,11 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
     [
       'unitQuantity',
       {
-        accessor: ({ rowData }) => rowData.numberOfPacks,
+        accessor: ({ rowData }) =>
+          NumUtils.round(
+            (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
+            3
+          ),
       },
     ],
   ]);

@@ -24,7 +24,8 @@
           {% if stockLine.daysUntilExpired %}
             {% if stockLine.daysUntilExpired <= 0 %}
               <span class="expired">Expired</span>
-            {% elif stockLine.daysUntilExpired <= arguments.monthsItemsExpire * 30 %}
+            {% elif stockLine.daysUntilExpired <= arguments.monthsItemsExpire *
+            (365.25 / 12.0) %}
               <span class="soon">{{ stockLine.daysUntilExpired }}</span>
             {% else %}
                 <span class="all-good">{{ stockLine.daysUntilExpired }}</span>
