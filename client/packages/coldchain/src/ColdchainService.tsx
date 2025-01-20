@@ -6,6 +6,7 @@ import { ListView as MonitoringListView } from './Monitoring/ListView';
 import { EquipmentListView } from './Equipment/ListView';
 import { EquipmentDetailView } from './Equipment/DetailView';
 import { CardListView } from './Mobile/Equipment/CardListView';
+import { EquipmentDetailView as MobileEquipmentDetailView } from './Mobile/Equipment/DetailView/DetailView'
 
 export const ColdchainService: FC = () => {
   const monitoringRoute = RouteBuilder.create(AppRoute.Monitoring).build();
@@ -21,7 +22,7 @@ export const ColdchainService: FC = () => {
       <Route path={monitoringRoute} element={<MonitoringListView />} />
       <Route path={sensorRoute} element={<ListView />} />
       <Route path={equipmentListRoute} element={!isGaps ? <EquipmentListView /> : <CardListView />} />
-      <Route path={equipmentRoute} element={<EquipmentDetailView />} />
+      <Route path={equipmentRoute} element={!isGaps ? <EquipmentDetailView /> : <MobileEquipmentDetailView />} />
     </Routes>
   );
 };
