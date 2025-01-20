@@ -110,17 +110,29 @@ pub struct CheckExceededOrdersForPeriod<'a> {
 pub fn check_exceeded_max_orders_for_period(
     input: CheckExceededOrdersForPeriod,
 ) -> Result<bool, RepositoryError> {
-    let filter = RequisitionFilter::new()
-        .program_id(EqualFilter::equal_to(input.program_id))
-        .order_type(EqualFilter::equal_to(input.program_order_type_id))
-        .period_id(EqualFilter::equal_to(input.period_id))
-        .r#type(input.requisition_type.equal_to());
-    let current_emergency_orders =
-        RequisitionRepository::new(input.connection).count(Some(filter))?;
-    if current_emergency_orders >= i64::from(input.max_orders_per_period) {
-        return Ok(true);
+    let order_type = ProgramRequisitionOrderTypeRowRepository::new(input.connection)
+        .find_one_by_id(input.program_order_type_id)?;
+
+    // TODO add check which matches lower case as per in period_is_available function
+    match order_type {
+        Some(order_type) => {
+            let filter = RequisitionFilter::new()
+                .program_id(EqualFilter::equal_to(input.program_id))
+                .order_type(EqualFilter::equal_to(&order_type.name))
+                .period_id(EqualFilter::equal_to(input.period_id))
+                .r#type(input.requisition_type.equal_to());
+
+            let current_orders =
+                RequisitionRepository::new(input.connection).count(Some(filter))?;
+
+            println!("current orders len {:?}", current_orders);
+            if current_orders >= i64::from(input.max_orders_per_period) {
+                return Ok(true);
+            }
+            Ok(false)
+        }
+        None => return Err(RepositoryError::NotFound),
     }
-    Ok(false)
 }
 
 pub(crate) fn indicator_value_type<'a>(
