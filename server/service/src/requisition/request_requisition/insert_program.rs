@@ -21,9 +21,8 @@ use repository::{
     ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
     IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
     NumberRowType, Pagination, ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow,
-    RepositoryError, Requisition, RequisitionFilter, RequisitionLineRowRepository,
-    RequisitionRepository, RequisitionRowRepository, StorageConnection, StoreFilter,
-    StoreRepository,
+    RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
+    StorageConnection, StoreFilter, StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -139,6 +138,7 @@ fn validate(
         period_id: &input.period_id,
         program_order_type_id: &input.program_order_type_id,
         max_orders_per_period: i64::from(order_type.order_type.max_order_per_period),
+        requisition_type: RequisitionType::Response,
     })? == true
     {
         return Err(OutError::MaxOrdersReachedForPeriod);
