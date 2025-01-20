@@ -1,6 +1,4 @@
-use super::{
-    form_schema_row::form_schema, report_row::report::dsl as report_dsl, StorageConnection,
-};
+use super::{form_schema_row::form_schema, StorageConnection};
 
 use crate::repository_error::RepositoryError;
 use crate::{Delete, Upsert};
@@ -123,17 +121,17 @@ impl<'a> ReportRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ReportRow>, RepositoryError> {
-        let result = report_dsl::report
-            .filter(report_dsl::id.eq(id))
+        let result = report::table
+            .filter(report::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn upsert_one(&self, row: &ReportRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(report_dsl::report)
+        diesel::insert_into(report::table)
             .values(row)
-            .on_conflict(report_dsl::id)
+            .on_conflict(report::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -141,7 +139,7 @@ impl<'a> ReportRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(report_dsl::report.filter(report_dsl::id.eq(id)))
+        diesel::delete(report::table.filter(report::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

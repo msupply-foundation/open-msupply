@@ -31,9 +31,9 @@ impl Migration for V1_00_06 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        use self::invoice::dsl as invoice_dsl;
-        let invoices = invoice_dsl::invoice
-            .select((invoice_dsl::id, invoice_dsl::created_datetime))
+        use self::invoice;
+        let invoices = invoice::table
+            .select((invoice::id, invoice::created_datetime))
             .load::<(String, NaiveDateTime)>(connection.lock().connection())?;
 
         let duration_offset = Duration::days(1);
@@ -43,9 +43,9 @@ impl Migration for V1_00_06 {
                 .checked_add_signed(duration_offset)
                 .unwrap_or(datetime);
 
-            diesel::update(invoice_dsl::invoice)
-                .filter(invoice_dsl::id.eq(id))
-                .set(invoice_dsl::created_datetime.eq(new_datetime))
+            diesel::update(invoice::table)
+                .filter(invoice::id.eq(id))
+                .set(invoice::created_datetime.eq(new_datetime))
                 .execute(connection.lock().connection())?;
         }
 
@@ -74,7 +74,7 @@ async fn migration_1_00_06() {
     })
     .await;
 
-    use invoice::dsl as invoice_dsl;
+    use invoice;
 
     sql!(
         &connection,
@@ -149,9 +149,9 @@ async fn migration_1_00_06() {
     assert_eq!(1, 1);
 
     // Check data
-    let invoices = invoice_dsl::invoice
-        .select((invoice_dsl::id, invoice_dsl::created_datetime))
-        .order_by(invoice_dsl::id.asc())
+    let invoices = invoice::table
+        .select((invoice::id, invoice::created_datetime))
+        .order_by(invoice::id.asc())
         .load::<(String, NaiveDateTime)>(connection.lock().connection())
         .unwrap();
 

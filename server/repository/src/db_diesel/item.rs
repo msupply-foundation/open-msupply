@@ -1,9 +1,8 @@
 use super::{
-    category_row::category::dsl as category_dsl, item_category_row::item_category_join,
-    item_link_row::item_link, item_row::item, master_list_line_row::master_list_line,
-    master_list_name_join::master_list_name_join, master_list_row::master_list,
-    stock_on_hand::stock_on_hand, store_row::store, unit_row::unit, DBType, ItemRow, ItemType,
-    StorageConnection, UnitRow,
+    item_category_row::item_category_join, item_link_row::item_link, item_row::item,
+    master_list_line_row::master_list_line, master_list_name_join::master_list_name_join,
+    master_list_row::master_list, stock_on_hand::stock_on_hand, store_row::store, unit_row::unit,
+    DBType, ItemRow, ItemType, StorageConnection, UnitRow,
 };
 
 use diesel::{
@@ -253,9 +252,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
         if let Some(category_name) = category_name {
             let item_ids_for_category_name = item_category_join::table
                 .select(item_category_join::item_id)
-                .inner_join(
-                    category_dsl::category.on(category_dsl::id.eq(item_category_join::category_id)),
-                )
+                .inner_join(category::table.on(category::id.eq(item_category_join::category_id)))
                 .filter(category::name.eq(category_name.clone()))
                 .into_boxed();
 

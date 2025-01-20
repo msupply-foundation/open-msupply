@@ -62,11 +62,10 @@ async fn remove_sqlite_check_invoice() {
             status -> Text,
         }
     }
-    use invoice::dsl as invoice_dsl;
 
-    let invoices = invoice_dsl::invoice
-        .select((invoice_dsl::id, invoice_dsl::type_, invoice_dsl::status))
-        .order_by(invoice_dsl::id.asc())
+    let invoices = invoice::table
+        .select((invoice::id, invoice::type_, invoice::status))
+        .order_by(invoice::id.asc())
         .load::<(String, String, String)>(connection.lock().connection())
         .unwrap();
 
