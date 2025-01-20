@@ -43,6 +43,7 @@ export const Footer = () => {
       icon: <DeleteIcon />,
       onClick: onDelete,
       disabled: isDisabled,
+      disabledToastMessage: t('messages.cant-delete-generic'),
     },
     {
       label: t('button.change-location'),
@@ -50,6 +51,7 @@ export const Footer = () => {
       onClick: changeLocationModal.onOpen,
       disabled: isDisabled,
       shouldShrink: false,
+      disabledToastMessage: t('label.cant-change-location'),
     },
     {
       label: t('button.reduce-lines-to-zero'),
@@ -57,6 +59,7 @@ export const Footer = () => {
       onClick: reduceModal.onOpen,
       disabled: isDisabled,
       shouldShrink: false,
+      disabledToastMessage: t('label.cant-zero-stock-lines-disabled'),
     },
   ];
 
