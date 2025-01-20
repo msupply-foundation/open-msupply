@@ -1,7 +1,4 @@
-use super::{
-    plugin_data_row::{plugin_data, plugin_data::dsl as plugin_data_dsl},
-    StorageConnection,
-};
+use super::{plugin_data_row::plugin_data, StorageConnection};
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
@@ -68,20 +65,20 @@ impl<'a> PluginDataRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 PluginDataSortField::Id => {
-                    apply_sort_no_case!(query, sort, plugin_data_dsl::id);
+                    apply_sort_no_case!(query, sort, plugin_data::id);
                 }
                 PluginDataSortField::PluginName => {
-                    apply_sort_no_case!(query, sort, plugin_data_dsl::plugin_name);
+                    apply_sort_no_case!(query, sort, plugin_data::plugin_name);
                 }
                 PluginDataSortField::RelatedRecordId => {
-                    apply_sort_no_case!(query, sort, plugin_data_dsl::related_record_id);
+                    apply_sort_no_case!(query, sort, plugin_data::related_record_id);
                 }
                 PluginDataSortField::RelatedRecordType => {
-                    apply_sort_no_case!(query, sort, plugin_data_dsl::related_record_type);
+                    apply_sort_no_case!(query, sort, plugin_data::related_record_type);
                 }
             }
         } else {
-            query = query.order(plugin_data_dsl::plugin_name.asc());
+            query = query.order(plugin_data::plugin_name.asc());
         }
 
         let results = query
@@ -99,19 +96,19 @@ fn create_filtered_query(filter: Option<PluginDataFilter>) -> BoxedPluginQuery {
     let mut query = plugin_data::table.into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, plugin_data_dsl::id);
-        apply_equal_filter!(query, filter.plugin_name, plugin_data_dsl::plugin_name);
+        apply_equal_filter!(query, filter.id, plugin_data::id);
+        apply_equal_filter!(query, filter.plugin_name, plugin_data::plugin_name);
         apply_equal_filter!(
             query,
             filter.related_record_id,
-            plugin_data_dsl::related_record_id
+            plugin_data::related_record_id
         );
         apply_equal_filter!(
             query,
             filter.related_record_type,
-            plugin_data_dsl::related_record_type
+            plugin_data::related_record_type
         );
-        apply_equal_filter!(query, filter.store_id, plugin_data_dsl::store_id);
+        apply_equal_filter!(query, filter.store_id, plugin_data::store_id);
     }
 
     query

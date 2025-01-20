@@ -2,11 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import {
-  RequisitionReasonsNotProvidedErrorFragmentDoc,
-  OrderTypeRowFragmentDoc,
-  ProgramIndicatorFragmentDoc,
-} from '../../RequestRequisition/api/operations.generated';
+import { RequisitionReasonsNotProvidedErrorFragmentDoc, OrderTypeRowFragmentDoc, ProgramIndicatorFragmentDoc } from '../../RequestRequisition/api/operations.generated';
 import { ItemRowFragmentDoc } from '../../../../system/src/Item/api/operations.generated';
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
@@ -115,14 +111,14 @@ export type ResponseRequisitionStatsQueryVariables = Types.Exact<{
 
 export type ResponseRequisitionStatsQuery = { __typename: 'Queries', responseRequisitionStats: { __typename: 'RequisitionLineStatsError', error: { __typename: 'RecordNotFound', description: string } } | { __typename: 'ResponseRequisitionStatsNode', requestStoreStats: { __typename: 'RequestStoreStatsNode', averageMonthlyConsumption: number, stockOnHand: number, maxMonthsOfStock: number, suggestedQuantity: number }, responseStoreStats: { __typename: 'ResponseStoreStatsNode', incomingStock: number, otherRequestedQuantity: number, requestedQuantity: number, stockOnHand: number, stockOnOrder: number } } };
 
-export type CustomerProgramSettingsFragment = { __typename: 'CustomerProgramRequisitionSettingNode', programName: string, programId: string, customerAndOrderTypes: Array<{ __typename: 'CustomerAndOrderTypeNode', customer: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> };
+export type CustomerProgramSettingsFragment = { __typename: 'CustomerProgramRequisitionSettingNode', programName: string, tagName: string, programId: string, customerAndOrderTypes: Array<{ __typename: 'CustomerAndOrderTypeNode', customer: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> };
 
 export type CustomerProgramSettingsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type CustomerProgramSettingsQuery = { __typename: 'Queries', customerProgramRequisitionSettings: Array<{ __typename: 'CustomerProgramRequisitionSettingNode', programName: string, programId: string, customerAndOrderTypes: Array<{ __typename: 'CustomerAndOrderTypeNode', customer: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> }> };
+export type CustomerProgramSettingsQuery = { __typename: 'Queries', customerProgramRequisitionSettings: Array<{ __typename: 'CustomerProgramRequisitionSettingNode', programName: string, tagName: string, programId: string, customerAndOrderTypes: Array<{ __typename: 'CustomerAndOrderTypeNode', customer: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> }> };
 
 export type ProgramIndicatorsQueryVariables = Types.Exact<{
   customerNameId: Types.Scalars['String']['input'];
@@ -299,6 +295,7 @@ export const ResponseRowFragmentDoc = gql`
 export const CustomerProgramSettingsFragmentDoc = gql`
     fragment CustomerProgramSettings on CustomerProgramRequisitionSettingNode {
   programName
+  tagName
   programId
   customerAndOrderTypes {
     customer {

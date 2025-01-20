@@ -1,7 +1,4 @@
-use super::{
-    property_row::{property, property::dsl as property_dsl},
-    PropertyRow, StorageConnection,
-};
+use super::{property_row::property, PropertyRow, StorageConnection};
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_string_filter},
@@ -52,11 +49,11 @@ impl<'a> PropertyRepository<'a> {
     }
 
     pub fn create_filtered_query(filter: Option<PropertyFilter>) -> BoxedPropertyQuery {
-        let mut query = property_dsl::property.into_boxed();
+        let mut query = property::table.into_boxed();
 
         if let Some(filter) = filter {
-            apply_equal_filter!(query, filter.id, property_dsl::id);
-            apply_string_filter!(query, filter.key, property_dsl::key);
+            apply_equal_filter!(query, filter.id, property::id);
+            apply_string_filter!(query, filter.key, property::key);
         }
 
         query
