@@ -3,6 +3,7 @@ import {
   useBufferState,
   InvoiceNodeStatus,
   DateUtils,
+  FormErrors,
 } from '@openmsupply-client/common';
 import { useDraftPrescriptionLines } from './hooks';
 import { usePrescription } from '../api';
@@ -21,6 +22,7 @@ interface PrescriptionLineEditProps {
   draftLines: DraftStockOutLine[];
   updateLines: (lines: DraftStockOutLine[]) => void;
   setIsDirty: (dirty: boolean) => void;
+  formState: FormErrors;
 }
 
 export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
@@ -28,6 +30,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
   draftLines: draftPrescriptionLines,
   updateLines,
   setIsDirty,
+  formState,
 }) => {
   const isNew = item === null;
   const [currentItem, setCurrentItem] = useBufferState(item);
@@ -117,6 +120,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
       hasExpired={hasExpired}
       isLoading={isLoading}
       updateQuantity={onUpdateQuantity}
+      formState={formState}
     />
   );
 };

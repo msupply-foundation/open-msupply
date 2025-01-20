@@ -8,14 +8,14 @@ import {
 
 interface FooterProps {
   isSaving: boolean;
-  isDirty: boolean;
+  canSave: boolean;
   handleSave: () => Promise<boolean | void>;
   handleCancel: () => void;
 }
 
 export const Footer: FC<FooterProps> = ({
   isSaving,
-  isDirty,
+  canSave,
   handleSave,
   handleCancel,
 }) => {
@@ -42,7 +42,7 @@ export const Footer: FC<FooterProps> = ({
               <DialogButton variant="cancel" onClick={handleCancel} />
               <DialogButton
                 variant={'save'}
-                disabled={!isDirty}
+                disabled={!canSave}
                 onClick={handleSave}
               />
             </Box>

@@ -169,6 +169,8 @@ export type NumericTextInputProps = NumericInputProps &
   Omit<BasicTextInputProps, 'onChange'> & {
     onChange?: (value: number | undefined) => void;
     endAdornment?: string;
+    errorMessage?: string | null;
+    setError: (error: string) => void;
   };
 
 export const DEFAULT_NUMERIC_TEXT_INPUT_WIDTH = 75;
@@ -196,6 +198,9 @@ export const NumericTextInput = React.forwardRef<
       fullWidth,
       endAdornment,
       inputMode,
+      error,
+      errorMessage,
+      setError,
       ...props
     },
     ref
@@ -310,11 +315,11 @@ export const NumericTextInput = React.forwardRef<
 
           if (Number.isNaN(parsed)) return;
 
-          const constrained = constrain(parsed, decimalLimit, min, max);
-          setTextValue(
-            noFormatting ? String(constrained) : format(constrained)
-          );
-          onChange(constrained);
+          // const constrained = constrain(parsed, decimalLimit, min, max);
+          // setTextValue(
+          //   noFormatting ? String(constrained) : format(constrained)
+          // );
+          onChange(parsed);
         }}
         onKeyDown={e => {
           if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
@@ -324,12 +329,15 @@ export const NumericTextInput = React.forwardRef<
             (e.key === 'ArrowUp' ? step : -step) *
             (e.shiftKey ? multiplier : 1);
 
-          const newNum = constrain(
-            (value ?? Math.max(min, 0)) + change,
-            decimalLimit,
-            min,
-            max
-          );
+          const newNum = (value ?? 0) + change;
+
+          // const newNum = constrain(
+          //   (value ?? Math.max(min, 0)) + change,
+          //   decimalLimit,
+          //   min,
+          //   max
+          // );
+          if (newNum > max) setError('Too big');
           setTextValue(formatValue(newNum));
           onChange(newNum);
         }}
@@ -347,6 +355,8 @@ export const NumericTextInput = React.forwardRef<
         onFocus={e => e.target.select()}
         fullWidth={fullWidth}
         {...props}
+        helperText={errorMessage}
+        error={error}
         value={textValue}
       />
     );

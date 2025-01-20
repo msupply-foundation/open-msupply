@@ -34,6 +34,7 @@ import { DraftStockOutLine } from '../../types';
 import { isA } from '../../utils';
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
+import { FormErrors } from './useFormErrors';
 
 interface PrescriptionLineEditFormProps {
   allocatedUnits: number;
@@ -57,6 +58,7 @@ interface PrescriptionLineEditFormProps {
   hasExpired: boolean;
   isLoading: boolean;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
+  formState: FormErrors;
 }
 
 export const PrescriptionLineEditForm: React.FC<
@@ -78,12 +80,15 @@ export const PrescriptionLineEditForm: React.FC<
   hasExpired,
   isLoading,
   updateQuantity,
+  formState,
 }) => {
   const t = useTranslation();
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
   const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
+
+  console.log('formState', formState);
 
   const debouncedSetAllocationAlerts = useDebounceCallback(
     warning => setAllocationAlerts(warning),
@@ -254,7 +259,11 @@ export const PrescriptionLineEditForm: React.FC<
                   value={issueUnitQuantity}
                   onChange={handleIssueQuantityChange}
                   min={0}
+<<<<<<< Updated upstream
                   decimalLimit={2}
+=======
+                  errormessage={formState.getError('issueQuantity')}
+>>>>>>> Stashed changes
                 />
               </Grid>
               <Grid item>

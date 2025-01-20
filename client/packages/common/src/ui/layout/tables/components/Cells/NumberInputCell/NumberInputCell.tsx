@@ -28,6 +28,8 @@ export const NumberInputCell = <T extends RecordWithId>({
   width,
   endAdornment,
   error,
+  setError,
+  errorMessage,
 }: CellProps<T> &
   NumericInputProps & {
     id?: string;
@@ -67,6 +69,7 @@ export const NumberInputCell = <T extends RecordWithId>({
       width={width}
       endAdornment={endAdornment}
       error={error}
+      errorMessage="This is an error"
     />
   );
 };

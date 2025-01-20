@@ -7,6 +7,7 @@ import {
   RecordPatch,
   Alert,
   AlertColor,
+  FormErrors,
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 import { ReturnReasonsTable } from '../ReturnReasonsTable';
@@ -25,8 +26,8 @@ interface ReturnStepsProps {
   setZeroQuantityAlert: React.Dispatch<
     React.SetStateAction<AlertColor | undefined>
   >;
-
   returnId?: string;
+  formErrors: FormErrors;
 }
 
 export const ReturnSteps = ({
@@ -36,6 +37,7 @@ export const ReturnSteps = ({
   zeroQuantityAlert,
   setZeroQuantityAlert,
   returnId,
+  formErrors,
 }: ReturnStepsProps) => {
   const t = useTranslation();
   const isDisabled = useReturns.utils.supplierIsDisabled();
@@ -71,6 +73,7 @@ export const ReturnSteps = ({
             if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
             update(line);
           }}
+          formErrors={formErrors}
         />
       </TabPanel>
       <TabPanel value={Tabs.Reason}>

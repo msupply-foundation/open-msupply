@@ -10,8 +10,8 @@ import {
   useDirtyCheck,
   useNavigate,
   useParams,
+  useFormErrors,
 } from '@openmsupply-client/common';
-
 import { ItemRowFragment, ListItems } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PageLayout } from './PageLayout';
@@ -47,6 +47,9 @@ export const PrescriptionLineEditView = () => {
     setTimeout(() => scrollRef.current?.scrollIntoView(), 100);
 
   const { isDirty, setIsDirty } = useDirtyCheck();
+
+  const formErrorState = useFormErrors();
+  const { errorState, getError, setError, hasErrors } = formErrorState;
 
   const lines =
     data?.lines.nodes.sort((a, b) => a.id.localeCompare(b.id)) ?? [];
@@ -108,7 +111,7 @@ export const PrescriptionLineEditView = () => {
   };
 
   const onSave = async () => {
-    if (!isDirty) return;
+    if (!isDirty || hasErrors) return;
 
     const flattenedLines = Object.values(allDraftLines).flat();
 
@@ -180,6 +183,7 @@ export const PrescriptionLineEditView = () => {
               draftLines={allDraftLines[itemId] ?? []}
               updateLines={updateAllLines}
               setIsDirty={setIsDirty}
+              formState={formErrorState}
             />
             <NavBar
               items={itemIdList}
@@ -200,7 +204,7 @@ export const PrescriptionLineEditView = () => {
       />
       <Footer
         isSaving={isSavingLines}
-        isDirty={isDirty}
+        canSave={isDirty && !hasErrors}
         handleSave={onSave}
         handleCancel={() =>
           navigate(
