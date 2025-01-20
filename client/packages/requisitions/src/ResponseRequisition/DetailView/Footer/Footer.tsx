@@ -45,6 +45,7 @@ export const Footer: FC<FooterComponentProps> = ({
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
       disabled: isDisabled || hasLinkedRequisition,
+      disabledToastMessage: t('label.cant-delete-disabled-requisition'),
     },
   ];
 

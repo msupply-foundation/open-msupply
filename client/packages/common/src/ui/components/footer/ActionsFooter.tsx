@@ -61,6 +61,7 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
           shouldShrink,
           disabledToastMessage,
         }) => (
+          // Div needed to allow for "clicking" a disabled button
           <div
             onClick={
               disabled
