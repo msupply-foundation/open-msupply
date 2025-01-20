@@ -4,7 +4,10 @@ import {
   useTranslation,
   RouteBuilder,
   useNavigate,
-  BasicSpinner
+  BasicSpinner,
+  ButtonWithIcon,
+  TuneIcon,
+  QrCodeScannerIcon
 } from "@openmsupply-client/common";
 import { AppRoute } from '@openmsupply-client/config';
 import { Box, Typography, Card, CardContent, useTheme } from "@mui/material";
@@ -41,6 +44,26 @@ export const CardListView: FC = () => {
           width: '100%',
           flex: 1,
       }}>
+        <Box sx={{
+          width: '100%',
+          minHeight: '50px',
+          display: 'flex',
+          justifyContent: 'space-evenly',
+          padding: '.75rem',
+        }}>          
+            <ButtonWithIcon 
+              shouldShrink={false}
+              label={t("label.filters")}
+              onClick={() => {}}
+              Icon={<TuneIcon />}
+            />
+            <ButtonWithIcon 
+              shouldShrink={false}
+              label="Scan Asset"
+              onClick={() => {}}
+              Icon={<QrCodeScannerIcon />}
+            />          
+        </Box>
         <Box sx={{
           display: 'flex',
           flexDirection: "column",
