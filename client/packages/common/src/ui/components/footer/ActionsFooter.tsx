@@ -31,6 +31,16 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
   const showDisabledActionToastMessage = (disabledToastMessage: string) =>
     info(disabledToastMessage);
 
+  const handleDisabledClick = (
+    disabled?: boolean,
+    disabledToastMessage?: string
+  ) => {
+    if (!disabled) return undefined;
+    return showDisabledActionToastMessage(
+      disabledToastMessage ?? `${t('messages.cannot-perform-action')}`
+    );
+  };
+
   return (
     <Stack
       direction="row"
@@ -60,16 +70,7 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
           shouldShrink,
           disabledToastMessage,
         }) => (
-          <div
-            onClick={
-              disabled
-                ? showDisabledActionToastMessage(
-                    disabledToastMessage ??
-                      `${t('messages.cannot-perform-action')}`
-                  )
-                : undefined
-            }
-          >
+          <div onClick={handleDisabledClick(disabled, disabledToastMessage)}>
             <FlatButton
               key={label}
               startIcon={icon}
