@@ -28,9 +28,8 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
   const t = useTranslation();
   const { info } = useNotification();
 
-  const showDisabledActionToastMessage = (disabledToastMessage: string) => {
-    return info(disabledToastMessage);
-  };
+  const showDisabledActionToastMessage = (disabledToastMessage: string) =>
+    info(disabledToastMessage);
 
   return (
     <Stack
@@ -61,7 +60,6 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
           shouldShrink,
           disabledToastMessage,
         }) => (
-          // Div needed to allow for "clicking" a disabled action button
           <div
             onClick={
               disabled
