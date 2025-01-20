@@ -103,6 +103,7 @@ _Cons:_
 - Potentially more upfront effort right now
 - Create need for design convention on how to structure preferences. Should you make an individual pref for every little thing, or group them together into many keys in the same pref's JSON? How many is too many? If ever concurrent editing of same record with race on saving, bigger JSON means more data lost without merge strategy. We can nest - how much nesting is TOO FAR?
   - structs defining pref shape should at least provide some tacit guardrails; if your struct is crazy maybe the pref should be broken down!
+   - Requires dedicated code for configuration UI (as we don't know how pref might be structured)
 
 ### Option 2 - Add more preference tables like the current OMS `store_preference`
 
