@@ -1,11 +1,12 @@
 use repository::{
-    requisition_row::RequisitionRow, RepositoryError, RequisitionLine, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
+    program_requisition_order_type, ApprovalStatusType, EqualFilter, IndicatorColumnRow,
+    IndicatorLineRow, IndicatorValueType, ProgramFilter, ProgramRequisitionOrderTypeRowRepository,
+    ProgramRequisitionSettingsFilter, ProgramRequisitionSettingsRepository, Requisition,
+    RequisitionFilter, RequisitionRepository,
 };
 use repository::{
-    ApprovalStatusType, EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueType,
-    ProgramFilter, ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
-    ProgramRequisitionSettingsRepository, Requisition, RequisitionFilter, RequisitionRepository,
+    requisition_row::RequisitionRow, RepositoryError, RequisitionLine, RequisitionLineFilter,
+    RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 
@@ -95,6 +96,29 @@ pub fn check_emergency_order_within_max_items_limit(
         line_count <= order_type.max_items_in_emergency_order as usize,
         order_type.max_items_in_emergency_order,
     ))
+}
+
+pub struct CheckExceededOrdersForPeriod<'a> {
+    pub connection: &'a StorageConnection,
+    pub program_id: &'a str,
+    pub period_id: &'a str,
+    pub program_order_type_id: &'a str,
+    pub max_orders_per_period: i64,
+}
+
+pub fn check_exceeded_max_orders_for_period(
+    input: CheckExceededOrdersForPeriod,
+) -> Result<bool, RepositoryError> {
+    let filter = RequisitionFilter::new()
+        .program_id(EqualFilter::equal_to(input.program_id))
+        .order_type(EqualFilter::equal_to(input.program_order_type_id))
+        .period_id(EqualFilter::equal_to(input.period_id));
+    let current_emergency_orders =
+        RequisitionRepository::new(input.connection).count(Some(filter))?;
+    if current_emergency_orders >= i64::from(input.max_orders_per_period) {
+        return Ok(true);
+    }
+    Ok(false)
 }
 
 pub(crate) fn indicator_value_type<'a>(

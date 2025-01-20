@@ -2,7 +2,10 @@ use crate::{
     activity_log::activity_log_entry,
     number::next_number,
     requisition::{
-        common::{check_requisition_row_exists, default_indicator_value, indicator_value_type},
+        common::{
+            check_exceeded_max_orders_for_period, check_requisition_row_exists,
+            default_indicator_value, indicator_value_type, CheckExceededOrdersForPeriod,
+        },
         program_indicator::query::{program_indicators, ProgramIndicator},
         program_settings::get_supplier_program_requisition_settings,
         query::get_requisition,
@@ -18,8 +21,9 @@ use repository::{
     ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
     IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
     NumberRowType, Pagination, ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow,
-    RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
-    StorageConnection, StoreFilter, StoreRepository,
+    RepositoryError, Requisition, RequisitionFilter, RequisitionLineRowRepository,
+    RequisitionRepository, RequisitionRowRepository, StorageConnection, StoreFilter,
+    StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -127,6 +131,17 @@ fn validate(
         .any(|supplier| supplier.supplier.name_row.id == input.other_party_id)
     {
         return Err(OutError::SupplierNotValid);
+    }
+
+    if check_exceeded_max_orders_for_period(CheckExceededOrdersForPeriod {
+        connection,
+        program_id: &program_setting.program_requisition_settings.program_row.id,
+        period_id: &input.period_id,
+        program_order_type_id: &input.program_order_type_id,
+        max_orders_per_period: i64::from(order_type.order_type.max_order_per_period),
+    })? == true
+    {
+        return Err(OutError::MaxOrdersReachedForPeriod);
     }
 
     Ok((
