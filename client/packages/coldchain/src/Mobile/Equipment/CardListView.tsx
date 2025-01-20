@@ -10,7 +10,7 @@ import {
   QrCodeScannerIcon,
 } from "@openmsupply-client/common";
 import { AppRoute } from '@openmsupply-client/config';
-import { Box, Typography, Card, CardContent, useTheme } from "@mui/material";
+import { Box, Typography, Card, CardContent } from "@mui/material";
 import { Status } from '../../Equipment/Components';
 import { useAssets } from "../../Equipment/api";
 import { SimpleLabelDisplay } from "../Components/SimpleLabelDisplay";
