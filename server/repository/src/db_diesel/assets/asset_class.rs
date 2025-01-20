@@ -1,7 +1,4 @@
-use super::asset_class_row::{
-    asset_class::{self, dsl as asset_class_dsl},
-    AssetClassRow,
-};
+use super::asset_class_row::{asset_class, AssetClassRow};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -81,11 +78,11 @@ impl<'a> AssetClassRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 AssetClassSortField::Name => {
-                    apply_sort_no_case!(query, sort, asset_class_dsl::name);
+                    apply_sort_no_case!(query, sort, asset_class::name);
                 }
             }
         } else {
-            query = query.order(asset_class_dsl::id.asc())
+            query = query.order(asset_class::id.asc())
         }
 
         let final_query = query
@@ -111,13 +108,13 @@ fn to_domain(asset_class_row: AssetClassRow) -> AssetClassRow {
 type BoxedAssetClassQuery = IntoBoxed<'static, asset_class::table, DBType>;
 
 fn create_filtered_query(filter: Option<AssetClassFilter>) -> BoxedAssetClassQuery {
-    let mut query = asset_class_dsl::asset_class.into_boxed();
+    let mut query = asset_class::table.into_boxed();
 
     if let Some(f) = filter {
         let AssetClassFilter { id, name } = f;
 
-        apply_equal_filter!(query, id, asset_class_dsl::id);
-        apply_string_filter!(query, name, asset_class_dsl::name);
+        apply_equal_filter!(query, id, asset_class::id);
+        apply_string_filter!(query, name, asset_class::name);
     }
     query
 }

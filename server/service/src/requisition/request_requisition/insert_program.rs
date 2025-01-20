@@ -19,7 +19,7 @@ use repository::{
     IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
     NumberRowType, Pagination, ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow,
     RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
-    StorageConnection,
+    StorageConnection, StoreFilter, StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -204,12 +204,19 @@ fn generate(
         Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
     )?;
 
+    let customer_name_id = StoreRepository::new(connection)
+        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(&ctx.store_id)))?
+        .pop()
+        .ok_or(RepositoryError::NotFound)?
+        .name_row
+        .id;
+
     let indicator_values = generate_program_indicator_values(
         connection,
         &ctx.store_id,
         &period_id,
         program_indicators,
-        &other_party_id,
+        &customer_name_id,
     )?;
 
     Ok(GenerateResult {
@@ -283,10 +290,15 @@ fn generate_program_indicator_values(
                     customer_values
                         .iter()
                         .filter(|v| {
-                            v.indicator_line_id == line.line.id
-                                && v.indicator_column_id == column.id
+                            v.indicator_value_row.indicator_line_id == line.line.id
+                                && v.indicator_value_row.indicator_column_id == column.id
                         })
-                        .map(|v| v.value.parse::<f64>().unwrap_or_default())
+                        .map(|v| {
+                            v.indicator_value_row
+                                .value
+                                .parse::<f64>()
+                                .unwrap_or_default()
+                        })
                         .sum::<f64>()
                         .to_string()
                 } else {

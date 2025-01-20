@@ -566,6 +566,7 @@ fragment OrderTypeRow on ProgramRequisitionOrderTypeNode {
 fragment SupplierProgramSettings on SupplierProgramRequisitionSettingNode {
   programName
   programId
+  tagName
   suppliers {
     ...NameRow
   }
@@ -595,6 +596,7 @@ fragment IndicatorLineRow on IndicatorLineRowNode {
   valueType
 }
 fragment IndicatorColumn on IndicatorColumnNode {
+  id
   columnNumber
   name
   valueType
@@ -610,6 +612,27 @@ fragment IndicatorValue on IndicatorValueNode {
   id
   value
 }
+fragment CustomerIndicatorInfo on CustomerIndicatorInformationNode {
+  __typename
+  datetime
+  id
+  customer(storeId: $storeId) {
+    __typename
+    id
+    name
+  }
+  indicatorInformation {
+    __typename
+    columnId
+    value
+  }
+}
+
+fragment CustomerColumn on IndicatorColumnNode {
+  __typename
+  columnNumber
+  name
+}
 
 fragment IndicatorLineWithColumns on IndicatorLineNode {
   columns {
@@ -617,6 +640,9 @@ fragment IndicatorLineWithColumns on IndicatorLineNode {
   }
   line {
     ...IndicatorLineRow
+  }
+  customerIndicatorInfo(periodId: $periodId, storeId: $storeId) {
+    ...CustomerIndicatorInfo
   }
 }
 

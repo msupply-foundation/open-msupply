@@ -22,7 +22,7 @@ pub enum UpdateEncounterError {
     NotAllowedToMutateDocument,
     InvalidParentId,
     EncounterRowNotFound,
-    InvalidDataSchema(Vec<String>),
+    InvalidDataSchema(String),
     DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
@@ -157,8 +157,8 @@ fn validate(
     ),
     UpdateEncounterError,
 > {
-    let encounter = validate_encounter_schema(&input.data)
-        .map_err(|err| UpdateEncounterError::InvalidDataSchema(vec![err]))?;
+    let encounter =
+        validate_encounter_schema(&input.data).map_err(UpdateEncounterError::InvalidDataSchema)?;
 
     let clinician_row = if let Some(clinician_id) = encounter
         .encounter

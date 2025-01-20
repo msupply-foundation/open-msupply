@@ -1,9 +1,5 @@
-use super::super::user_row::user_account::dsl as user_account_dsl;
-use super::asset_log_row::{
-    asset_log, asset_log::dsl as asset_log_dsl, latest_asset_log::dsl as latest_asset_log_dsl,
-    AssetLogRow,
-};
-
+use super::super::user_row::user_account;
+use super::asset_log_row::{asset_log, latest_asset_log::dsl as latest_asset_log_dsl, AssetLogRow};
 use diesel::{dsl::IntoBoxed, prelude::*};
 use util::inline_init;
 
@@ -104,14 +100,14 @@ impl<'a> AssetLogRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 AssetLogSortField::LogDatetime => {
-                    apply_sort!(query, sort, asset_log_dsl::log_datetime);
+                    apply_sort!(query, sort, asset_log::log_datetime);
                 }
                 AssetLogSortField::Status => {
-                    apply_sort_no_case!(query, sort, asset_log_dsl::status);
+                    apply_sort_no_case!(query, sort, asset_log::status);
                 }
             }
         } else {
-            query = query.order(asset_log_dsl::id.asc())
+            query = query.order(asset_log::id.asc())
         }
 
         let final_query = query
@@ -149,7 +145,7 @@ fn to_domain(asset_log_row: AssetLogRow) -> AssetLog {
 type BoxedAssetLogQuery = IntoBoxed<'static, asset_log::table, DBType>;
 
 fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
-    let mut query = asset_log_dsl::asset_log.into_boxed();
+    let mut query = asset_log::table.into_boxed();
 
     if let Some(f) = filter {
         let AssetLogFilter {
@@ -161,19 +157,17 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
             reason_id,
         } = f;
 
-        apply_equal_filter!(query, id, asset_log_dsl::id);
-        apply_equal_filter!(query, status, asset_log_dsl::status);
-        apply_date_filter!(query, log_datetime, asset_log_dsl::log_datetime);
+        apply_equal_filter!(query, id, asset_log::id);
+        apply_equal_filter!(query, status, asset_log::status);
+        apply_date_filter!(query, log_datetime, asset_log::log_datetime);
 
-        apply_equal_filter!(query, asset_id, asset_log_dsl::asset_id);
-        apply_equal_filter!(query, reason_id, asset_log_dsl::reason_id);
+        apply_equal_filter!(query, asset_id, asset_log::asset_id);
+        apply_equal_filter!(query, reason_id, asset_log::reason_id);
 
         if let Some(user) = user {
-            let mut sub_query = user_account_dsl::user_account
-                .select(user_account_dsl::id)
-                .into_boxed();
-            apply_string_filter!(sub_query, Some(user), user_account_dsl::username);
-            query = query.filter(asset_log_dsl::user_id.eq_any(sub_query));
+            let mut sub_query = user_account::table.select(user_account::id).into_boxed();
+            apply_string_filter!(sub_query, Some(user), user_account::username);
+            query = query.filter(asset_log::user_id.eq_any(sub_query));
         }
     }
     query
