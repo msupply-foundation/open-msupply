@@ -9,7 +9,10 @@ import {
   Typography,
   IconButton,
   ChevronDownIcon,
-  useTheme
+  useTheme,
+  BasicTextInput,
+  DateTimePickerInput,
+  DateUtils
 } from "@openmsupply-client/common";
 import { SimpleLabelDisplay } from '../../Components/SimpleLabelDisplay'
 import { useAssets } from '../../../Equipment/api';
@@ -22,6 +25,36 @@ const ChevronUpIcon = (): JSX.Element => {
     }} />
   )
 }
+
+const Section = ({
+  children,
+  heading,
+}: {
+  children: React.ReactNode;
+  heading: string;
+}) => (
+  <Box
+    display="flex"
+    flexDirection="column"
+    padding={1}
+    sx={{ maxWidth: '400px', width: '100%', gap: 1 }}
+  >
+    <Heading>{heading}</Heading>
+    {children}
+  </Box>
+);
+
+const Heading = ({ children }: { children: React.ReactNode }) => (
+  <Typography
+    sx={{
+      textAlign: 'center',
+      fontSize: '20px',
+      fontWeight: 'bold',
+    }}
+  >
+    {children}
+  </Typography>
+);
 
 export const EquipmentDetailView: FC = () => {
   const t = useTranslation();
@@ -46,8 +79,7 @@ export const EquipmentDetailView: FC = () => {
         [tab]: !prev[tab].valueOf()
       }
     })
-  )
-  console.log(data);
+  );  
 
   return (
       <Box sx={{
@@ -87,6 +119,7 @@ export const EquipmentDetailView: FC = () => {
         <Box sx={{
           display: 'flex',
           justifyContent: 'space-between',
+          alignItems: 'center',
           background: theme.palette.background.drawer,
           padding: '.25rem .75rem',
           marginTop: '.5rem',
@@ -97,7 +130,7 @@ export const EquipmentDetailView: FC = () => {
             fontSize: "0.875rem",
             fontWeight: 'bold',
           }}>
-            Summary
+            {t("label.summary")}
           </Typography>
           <IconButton
             icon={isOpen.summary ? <ChevronUpIcon /> : <ChevronDownIcon />}
@@ -106,16 +139,84 @@ export const EquipmentDetailView: FC = () => {
           />
         </Box>
         <Collapse in={isOpen.summary} sx={{
-          background: theme.palette.background.drawer,
+          background: theme.palette.background.white,
           borderBottomLeftRadius: '10px',
           borderBottomRightRadius: '10px',
-        }}>
-            <h1>Summary data here</h1>
+        }}> 
+          <Section heading={t('heading.asset-identification')}>
+            <BasicTextInput
+              value={data.assetCategory?.name ?? ''}
+              label={t('label.category')}  
+              disabled            
+              fullWidth
+              
+            />
+            <BasicTextInput              
+              value={data.assetType?.name ?? ''}
+              label={t('label.type')}
+              disabled                
+              fullWidth
+            />
+            <BasicTextInput              
+              value={data.serialNumber ?? ''}
+              label={t('label.serial')}
+              fullWidth
+            />
+            <BasicTextInput
+              value={data.assetNumber ?? ''}
+              label={t('label.asset-number')}
+              fullWidth
+            />
+            <DateTimePickerInput              
+              format="P"              
+              value={DateUtils.getDateOrNull()}
+              textFieldProps={{ fullWidth: true }}
+              onChange={() => {}}
+              label={t('label.installation-date')}
+            />
+            <DateTimePickerInput              
+              format="P"              
+              value={DateUtils.getDateOrNull()}
+              textFieldProps={{ fullWidth: true }}
+              onChange={() => {}}
+              label={t('label.replacement-date')}
+            />
+            <DateTimePickerInput              
+              format="P"              
+              value={DateUtils.getDateOrNull()}
+              textFieldProps={{ fullWidth: true }}
+              onChange={() => {}}
+              label={t('label.warranty-start-date')}
+            />
+            <DateTimePickerInput              
+              format="P"              
+              value={DateUtils.getDateOrNull()}
+              textFieldProps={{ fullWidth: true }}
+              onChange={() => {}}
+              label={t('label.warranty-end-date')}
+            />
+          </Section>
+          <Section heading={t('heading.cold-chain')}>
+            <BasicTextInput              
+              value={"Cold Storage Location Autocomplete"}
+              label={t('label.cold-storage-location')}
+              fullWidth
+            />
+          </Section>
+          <Section heading={t('heading.functional-status')}>
+            <BasicTextInput              
+              value={"Functional status things here"}
+              label={t('label.cold-storage-location')}
+              fullWidth
+            />
+          </Section>    
+            
         </Collapse>
 
         <Box sx={{
           display: 'flex',
           justifyContent: 'space-between',
+          alignItems: 'center',
           background: theme.palette.background.drawer,
           padding: '.25rem .75rem',
           marginTop: '.5rem',
@@ -126,7 +227,7 @@ export const EquipmentDetailView: FC = () => {
             fontSize: "0.875rem",
             fontWeight: 'bold',
           }}>
-            Details
+            {t("label.details")}
           </Typography>
           <IconButton
             icon={isOpen.details ? <ChevronUpIcon /> : <ChevronDownIcon />}
@@ -145,6 +246,7 @@ export const EquipmentDetailView: FC = () => {
         <Box sx={{
           display: 'flex',
           justifyContent: 'space-between',
+          alignItems: 'center',
           background: theme.palette.background.drawer,
           padding: '.25rem .75rem',
           marginTop: '.5rem',
@@ -155,7 +257,7 @@ export const EquipmentDetailView: FC = () => {
             fontSize: "0.875rem",
             fontWeight: 'bold',
           }}>
-            Status History
+            {t("label.statushistory")}
           </Typography>
           <IconButton
             icon={isOpen.statusHistory ? <ChevronUpIcon /> : <ChevronDownIcon />}
@@ -174,6 +276,7 @@ export const EquipmentDetailView: FC = () => {
         <Box sx={{
           display: 'flex',
           justifyContent: 'space-between',
+          alignItems: 'center',
           background: theme.palette.background.drawer,
           padding: '.25rem .75rem',
           marginTop: '.5rem',
@@ -184,7 +287,7 @@ export const EquipmentDetailView: FC = () => {
             fontSize: "0.875rem",
             fontWeight: 'bold',
           }}>
-            Documents
+            {t("label.documents")}
           </Typography>
           <IconButton
             icon={isOpen.documents ? <ChevronUpIcon /> : <ChevronDownIcon />}
@@ -203,6 +306,7 @@ export const EquipmentDetailView: FC = () => {
         <Box sx={{
           display: 'flex',          
           justifyContent: 'space-between',
+          alignItems: 'center',
           background: theme.palette.background.drawer,
           padding: '.25rem .75rem',
           marginTop: '.5rem',
@@ -213,7 +317,7 @@ export const EquipmentDetailView: FC = () => {
             fontSize: "0.875rem",
             fontWeight: 'bold',
           }}>
-            Log
+            {t("label.log")}
           </Typography>
           <IconButton
             icon={isOpen.log ? <ChevronUpIcon /> : <ChevronDownIcon />}
