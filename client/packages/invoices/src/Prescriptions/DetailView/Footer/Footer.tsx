@@ -89,6 +89,7 @@ export const FooterComponent: FC = () => {
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
       disabled: isDisabled,
+      disabledToastMessage: t('messages.cant-delete-generic'),
     },
   ];
 
