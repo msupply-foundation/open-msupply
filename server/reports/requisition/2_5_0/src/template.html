@@ -1,3 +1,7 @@
+{% macro dateOrNA(datetime) %} 
+{% if datetime %}{{ datetime | date(format="%d/%m/%Y") }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
+{% endmacro input %}
+
 <div class="container">
   <hr />
   <table class="header_supplied_section">
@@ -14,7 +18,7 @@
     <tr>
       <td>{{ data.requisition.otherParty.address1}}<br>{{ data.requisition.otherParty.address2}}<br>{{ data.requisition.otherParty.country}}</td>
       <td class="align_right">
-        {{t(k="report.confirmed-date", f="Confirmed date")}}: {{ data.requisition.finalisedDatetime | date(format="%d/%m/%Y") }}
+        {{t(k="report.confirmed-date", f="Confirmed date")}}: {{ self::dateOrNA(datetime=data.requisition.finalisedDatetime) }}
       </td>
     </tr>
   </table>
