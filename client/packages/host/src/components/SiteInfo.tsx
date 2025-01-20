@@ -36,7 +36,7 @@ export const SiteInfo: FC<{ siteName?: string | null }> = ({ siteName }) => {
   const { connectedServer, goBackToDiscovery } = useNativeClient();
 
   useEffect(() => {
-    getPreference('mode', '"none"').then(setLocalMode);
+    getPreference('mode', NativeMode.None).then(setLocalMode);
   }, []);
 
   const renderServerRow = !nativeApi || localMode !== NativeMode.Server;
