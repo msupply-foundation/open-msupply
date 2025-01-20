@@ -114,6 +114,34 @@ _Cons:_
 
 - Some preferences might need more than one FK, e.g. user pref for a specific store or machine.
 
+### Option 3 - Similar to `properties` and `name_properties` structure
+
+With this option we'd define a list of `prefs` in the database that could be assigned, and what possible values they have e.g. float, int, boolean, controlled list.
+
+Each preference has a `unique_key` assigned, this key is used to assign the value to when serialising/deserialising to json.
+
+Each pref would record if it's relevent to apply at a global, store, or other level.
+
+In sync we'd sync a `preference_data` record for each store and one global (for now) could add user, or machine etc as needed in future. This would have a json payload similar to Option 1.
+
+There's nothing to stop us still deserialise them in a rust struct as needed
+
+This option would allow us to develop a preference editor UI similar to what we have with editing store/name properties.
+
+If you need some more complex type in your sync record, then it probably is worth creating a dedicated ui and management for this struct.
+
+_Pros:_
+
+- Re-uses an existing pattern
+- Clear path for creating a UI without lots of over head for adding a new pref
+- Can still deserialise to specific structs if needed
+- Could be used by plugins to add additional prefs as needed
+
+_Cons:_
+- Could be larger payload as prefs aren't broken down into different areas
+- Need to insert prefs into database rather than just adding to code? Maybe there's a code first way to achieve the same thing? Enums?
+
+
 ## Decision
 
 TBD
