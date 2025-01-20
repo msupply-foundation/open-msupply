@@ -1,12 +1,12 @@
 use repository::{
-    program_requisition_order_type, ApprovalStatusType, EqualFilter, IndicatorColumnRow,
-    IndicatorLineRow, IndicatorValueType, ProgramFilter, ProgramRequisitionOrderTypeRowRepository,
-    ProgramRequisitionSettingsFilter, ProgramRequisitionSettingsRepository, Requisition,
-    RequisitionFilter, RequisitionRepository,
-};
-use repository::{
     requisition_row::RequisitionRow, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
+};
+use repository::{
+    ApprovalStatusType, EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueType,
+    ProgramFilter, ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
+    ProgramRequisitionSettingsRepository, Requisition, RequisitionFilter, RequisitionRepository,
+    RequisitionType,
 };
 use util::inline_edit;
 
@@ -104,6 +104,7 @@ pub struct CheckExceededOrdersForPeriod<'a> {
     pub period_id: &'a str,
     pub program_order_type_id: &'a str,
     pub max_orders_per_period: i64,
+    pub requisition_type: RequisitionType,
 }
 
 pub fn check_exceeded_max_orders_for_period(
@@ -112,7 +113,8 @@ pub fn check_exceeded_max_orders_for_period(
     let filter = RequisitionFilter::new()
         .program_id(EqualFilter::equal_to(input.program_id))
         .order_type(EqualFilter::equal_to(input.program_order_type_id))
-        .period_id(EqualFilter::equal_to(input.period_id));
+        .period_id(EqualFilter::equal_to(input.period_id))
+        .r#type(input.requisition_type.equal_to());
     let current_emergency_orders =
         RequisitionRepository::new(input.connection).count(Some(filter))?;
     if current_emergency_orders >= i64::from(input.max_orders_per_period) {
