@@ -259,11 +259,8 @@ export const PrescriptionLineEditForm: React.FC<
                   value={issueUnitQuantity}
                   onChange={handleIssueQuantityChange}
                   min={0}
-<<<<<<< Updated upstream
                   decimalLimit={2}
-=======
-                  errormessage={formState.getError('issueQuantity')}
->>>>>>> Stashed changes
+                  errorMessage={formState.getError('issueQuantity')}
                 />
               </Grid>
               <Grid item>
