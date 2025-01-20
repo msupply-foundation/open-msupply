@@ -6,7 +6,8 @@ use repository::{
 };
 
 use crate::invoice::common::{
-    generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
+    generate_batches_total_number_of_packs_update, get_invoice_status_datetime,
+    InvoiceLineHasNoStockLine,
 };
 
 use super::{UpdatePrescription, UpdatePrescriptionError, UpdatePrescriptionStatus};
@@ -48,7 +49,10 @@ pub(crate) fn generate(
     set_new_status_datetime(&mut update_invoice, &input_status);
 
     update_invoice.name_link_id = input_patient_id.unwrap_or(update_invoice.name_link_id);
-    update_invoice.clinician_link_id = input_clinician_id.or(update_invoice.clinician_link_id);
+    // update_invoice.clinician_link_id = input_clinician_id.or(update_invoice.clinician_link_id);
+    if let Some(clinician_link_id) = input_clinician_id {
+        update_invoice.clinician_link_id = clinician_link_id.value;
+    }
     update_invoice.comment = input_comment.or(update_invoice.comment);
     update_invoice.colour = input_colour.or(update_invoice.colour);
     if let Some(diagnosis_id) = diagnosis_id {
@@ -134,7 +138,7 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, status: &Option<UpdatePresc
     }
 
     // Use the invoice's backdated datetime if it's set, otherwise set the status to now
-    let status_datetime = invoice.backdated_datetime.unwrap_or(Utc::now().naive_utc());
+    let status_datetime = get_invoice_status_datetime(invoice);
 
     match (&invoice.status, new_status) {
         (InvoiceStatus::Verified, _) => {}
