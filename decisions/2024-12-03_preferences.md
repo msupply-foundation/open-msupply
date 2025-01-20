@@ -1,4 +1,4 @@
-# Categorisation in Open mSupply
+# Preferences in Open mSupply
 
 - _Date_: 2024-12-03
 - _Deciders_: @Chris-Petty, @CarlosNZ, @jmbrunskill, @andreievg
@@ -103,7 +103,7 @@ _Cons:_
 - Potentially more upfront effort right now
 - Create need for design convention on how to structure preferences. Should you make an individual pref for every little thing, or group them together into many keys in the same pref's JSON? How many is too many? If ever concurrent editing of same record with race on saving, bigger JSON means more data lost without merge strategy. We can nest - how much nesting is TOO FAR?
   - structs defining pref shape should at least provide some tacit guardrails; if your struct is crazy maybe the pref should be broken down!
-   - Requires dedicated code for configuration UI (as we don't know how pref might be structured)
+  - Requires dedicated code for configuration UI (as we don't know how pref might be structured)
 
 ### Option 2 - Add more preference tables like the current OMS `store_preference`
 
@@ -139,9 +139,9 @@ _Pros:_
 - Could be used by plugins to add additional prefs as needed
 
 _Cons:_
+
 - Could be larger payload as prefs aren't broken down into different areas
 - Need to insert prefs into database rather than just adding to code? Maybe there's a code first way to achieve the same thing? Enums?
-
 
 ## Decision
 
