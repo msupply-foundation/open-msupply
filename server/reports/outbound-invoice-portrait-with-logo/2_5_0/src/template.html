@@ -2,6 +2,10 @@
     {% include "style.css" %}
 </style>
 
+{% macro dateOrNA(datetime) %} 
+{% if datetime %}{{ datetime | date(format="%d/%m/%Y") }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
+{% endmacro input %}
+
 <table class="header_supplied_section">
     <tr> 
         <td class="header_section_field_left"></td>
@@ -20,7 +24,7 @@
 
     <tr> 
         <td class="header_section_field_left">{{ data.invoice.otherParty.address1 }}</td> 
-        <td class="header_section_field_right">{{t(k="report.confirmed-date",f="Confirmed Date")}}: {{ data.invoice.pickedDatetime | date(format="%d/%m/%Y") }}</td>
+        <td class="header_section_field_right">{{t(k="report.confirmed-date",f="Confirmed Date")}}: {{ self::dateOrNA(datetime=data.invoice.pickedDatetime) }}</td>
     </tr>
 
 </table>
