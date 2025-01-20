@@ -28,8 +28,8 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
   const t = useTranslation();
   const { info } = useNotification();
 
-  const showDisabledButtonToastMessage = () => {
-    return info(`${t('messages.cannot-perform-action')}`);
+  const showDisabledButtonToastMessage = (disabledToastMessage: string) => {
+    return info(disabledToastMessage);
   };
 
   return (
@@ -52,19 +52,37 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
       >
         {selectedRowCount} {t('label.selected')}
       </Typography>
-      {actions.map(({ label, icon, onClick, disabled, shouldShrink }) => (
-        <div onClick={disabled ? showDisabledButtonToastMessage() : undefined}>
-          <FlatButton
-            key={label}
-            startIcon={icon}
-            label={label}
-            disabled={disabled}
-            onClick={onClick}
-            // Flatbutton doesn't shrink by default but we want it to in actions footer
-            shouldShrink={shouldShrink ?? true}
-          />
-        </div>
-      ))}
+      {actions.map(
+        ({
+          label,
+          icon,
+          onClick,
+          disabled,
+          shouldShrink,
+          disabledToastMessage,
+        }) => (
+          <div
+            onClick={
+              disabled
+                ? showDisabledButtonToastMessage(
+                    disabledToastMessage ??
+                      `${t('messages.cannot-perform-action')}`
+                  )
+                : undefined
+            }
+          >
+            <FlatButton
+              key={label}
+              startIcon={icon}
+              label={label}
+              disabled={disabled}
+              onClick={onClick}
+              // Flatbutton doesn't shrink by default but we want it to in actions footer
+              shouldShrink={shouldShrink ?? true}
+            />
+          </div>
+        )
+      )}
     </Stack>
   );
 };
