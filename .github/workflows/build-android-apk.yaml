@@ -15,8 +15,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Set up Rust
-      uses: actions-rs/toolchain@v1
+    - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
         target: aarch64-linux-android
@@ -44,6 +43,12 @@ jobs:
       env:
        NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
+    - name: Get tag
+      id: tag
+      run: |
+        TAG=$(git describe --tags --abbrev=0)
+        echo "Latest tag: $TAG"
+
     - name: Get Properties
       id: properties
       run: |
@@ -63,7 +68,6 @@ jobs:
         dir: 'client'
       env: 
        NDK_BIN: ~/android/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/
-       #Update this version when upgrading NDK on self-hosted machine
 
     - name: Create the Artifact
       uses: actions/upload-artifact@v4
@@ -71,3 +75,6 @@ jobs:
         name: Android_Build
         path: ./client/packages/android/app/build/outputs/apk/release/
         retention-days: 3
+
+    outputs:
+      tag: ${{ steps.tag.outputs.TAG }}
