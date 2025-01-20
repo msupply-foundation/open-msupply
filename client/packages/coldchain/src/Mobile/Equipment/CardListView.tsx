@@ -7,15 +7,15 @@ import {
   BasicSpinner,
   ButtonWithIcon,
   TuneIcon,
-  QrCodeScannerIcon
+  QrCodeScannerIcon,
 } from "@openmsupply-client/common";
 import { AppRoute } from '@openmsupply-client/config';
 import { Box, Typography, Card, CardContent, useTheme } from "@mui/material";
 import { Status } from '../../Equipment/Components';
 import { useAssets } from "../../Equipment/api";
+import { SimpleLabelDisplay } from "../Components/SimpleLabelDisplay";
 
 export const CardListView: FC = () => {
-    const theme = useTheme();
     const t = useTranslation();
     const navigate = useNavigate();
     const { data, isError, isLoading } = useAssets.document.list();
@@ -85,28 +85,14 @@ export const CardListView: FC = () => {
               onClick={() => {navigate(equipmentRoute.addPart(n.id).build())}}
             >
               <CardContent>
-                <Typography sx={{
-                  fontSize: theme.typography.subtitle2,
-                  fontWeight: 'bold',
-                }}>
-                  Manufacturer
-                </Typography>
-                <Typography sx={{
-                  fontSize: theme.typography.subtitle1,
-                }}>
-                  {n.catalogueItem?.manufacturer || "n/a"}
-                </Typography>
-                <Typography sx={{
-                fontSize: theme.typography.subtitle2,
-                fontWeight: 'bold',
-                }}>
-                  Type
-                </Typography>
-                <Typography sx={{
-                  fontSize: theme.typography.subtitle1,
-                }}>
-                  {n.assetType?.name || "n/a"}
-                </Typography>
+                <SimpleLabelDisplay
+                  label="Manufacturer"
+                  value={n.catalogueItem?.manufacturer || "n/a"}
+                />
+                <SimpleLabelDisplay
+                  label="Type"
+                  value={n.assetType?.name || "n/a"}
+                />
               </CardContent>
               <Box padding=".2em">
                 <Status status={n.statusLog?.status} />
