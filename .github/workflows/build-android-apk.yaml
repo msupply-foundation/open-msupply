@@ -15,6 +15,18 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: aarch64-linux-android
+
+    - name: Set up Homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+
+    - name: Install libpq
+      run: brew install libpq
+
     - name: Read .nvmrc
       run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
       id: nvm
@@ -37,18 +49,6 @@ jobs:
       run: |
         cp "$HOME/android/local.properties" ./client/packages/android
         cp "$HOME/android/release.keystore" ./client/packages/android/app
-
-    - name: Set Up Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        target: aarch64-linux-android
-
-    - name: Set up Homebrew
-      uses: Homebrew/actions/setup-homebrew@master
-
-    - name: Install libpq
-      run: brew install libpq
 
     - name: Set Up Java
       uses: actions/setup-java@v4
