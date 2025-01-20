@@ -346,7 +346,7 @@ fn get_store_information(
         id: store_name.id.clone(),
         amc_in_units: area_amc,
         stock_in_units: ledger.map_or(0.0, |l| l.balance),
-        adjustments_in_units: additions_in_units + losses_in_units + adjustments_in_units,
+        adjustments_in_units: additions_in_units - losses_in_units + adjustments_in_units,
         outgoing_units: losses_in_units,
         date_range: end_date.and_hms_opt(0, 0, 0),
     })

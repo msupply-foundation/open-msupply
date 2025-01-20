@@ -1,10 +1,7 @@
 use super::{
-    item_link_row::{item_link, item_link::dsl as item_link_dsl},
-    item_row::{item, item::dsl as item_dsl},
-    location_row::{location, location::dsl as location_dsl},
-    stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
-    stocktake_line_row::stocktake_line::{self, dsl as stocktake_line_dsl},
-    LocationRow, StockLineRow, StocktakeLineRow, StorageConnection,
+    item_link_row::item_link, item_row::item, location_row::location, stock_line_row::stock_line,
+    stocktake_line_row::stocktake_line, LocationRow, StockLineRow, StocktakeLineRow,
+    StorageConnection,
 };
 
 use diesel::{
@@ -123,26 +120,26 @@ impl<'a> StocktakeLineRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 StocktakeLineSortField::ItemName => {
-                    apply_sort_no_case!(query, sort, item_dsl::name);
+                    apply_sort_no_case!(query, sort, item::name);
                 }
                 StocktakeLineSortField::ItemCode => {
-                    apply_sort_no_case!(query, sort, item_dsl::code);
+                    apply_sort_no_case!(query, sort, item::code);
                 }
                 StocktakeLineSortField::Batch => {
-                    apply_sort_no_case!(query, sort, stocktake_line_dsl::batch);
+                    apply_sort_no_case!(query, sort, stocktake_line::batch);
                 }
                 StocktakeLineSortField::ExpiryDate => {
-                    apply_sort_asc_nulls_last!(query, sort, stocktake_line_dsl::expiry_date);
+                    apply_sort_asc_nulls_last!(query, sort, stocktake_line::expiry_date);
                 }
                 StocktakeLineSortField::PackSize => {
-                    apply_sort!(query, sort, stocktake_line_dsl::pack_size);
+                    apply_sort!(query, sort, stocktake_line::pack_size);
                 }
                 StocktakeLineSortField::LocationCode => {
-                    apply_sort_no_case!(query, sort, location_dsl::code);
+                    apply_sort_no_case!(query, sort, location::code);
                 }
             };
         } else {
-            query = query.order_by(stocktake_line_dsl::id.asc());
+            query = query.order_by(stocktake_line::id.asc());
         }
 
         let result = query
@@ -167,16 +164,16 @@ type BoxedStocktakeLineQuery = IntoBoxed<
 >;
 
 fn create_filtered_query(filter: Option<StocktakeLineFilter>) -> BoxedStocktakeLineQuery {
-    let mut query = stocktake_line_dsl::stocktake_line
-        .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
-        .left_join(stock_line_dsl::stock_line)
-        .left_join(location_dsl::location)
+    let mut query = stocktake_line::table
+        .inner_join(item_link::table.inner_join(item::table))
+        .left_join(stock_line::table)
+        .left_join(location::table)
         .into_boxed();
 
     if let Some(f) = filter {
-        apply_equal_filter!(query, f.id, stocktake_line_dsl::id);
-        apply_equal_filter!(query, f.stocktake_id, stocktake_line_dsl::stocktake_id);
-        apply_equal_filter!(query, f.location_id, stocktake_line_dsl::location_id);
+        apply_equal_filter!(query, f.id, stocktake_line::id);
+        apply_equal_filter!(query, f.stocktake_id, stocktake_line::stocktake_id);
+        apply_equal_filter!(query, f.location_id, stocktake_line::location_id);
     }
 
     query
@@ -207,7 +204,7 @@ fn apply_item_filter(
                 .unwrap_or_default(); // if there is a database issue, allow the filter to fail silently
             let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
 
-            return query.filter(item_dsl::id.eq_any(item_ids));
+            return query.filter(item::id.eq_any(item_ids));
         }
     }
     query

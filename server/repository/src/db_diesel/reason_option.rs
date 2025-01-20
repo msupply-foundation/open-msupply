@@ -1,7 +1,5 @@
 use super::{
-    reason_option_row::{
-        reason_option, reason_option::dsl as reason_option_dsl, ReasonOptionRow, ReasonOptionType,
-    },
+    reason_option_row::{reason_option, ReasonOptionRow, ReasonOptionType},
     DBType, StorageConnection,
 };
 use diesel::prelude::*;
@@ -67,10 +65,10 @@ impl<'a> ReasonOptionRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 ReasonOptionSortField::ReasonOptionType => {
-                    apply_sort_no_case!(query, sort, reason_option_dsl::type_)
+                    apply_sort_no_case!(query, sort, reason_option::type_)
                 }
                 ReasonOptionSortField::Reason => {
-                    apply_sort_no_case!(query, sort, reason_option_dsl::reason)
+                    apply_sort_no_case!(query, sort, reason_option::reason)
                 }
             }
         }
@@ -90,10 +88,10 @@ fn create_filtered_query(filter: Option<ReasonOptionFilter>) -> BoxedReasonOptio
     let mut query = reason_option::table.into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, reason_option_dsl::id);
-        apply_equal_filter!(query, filter.r#type, reason_option_dsl::type_);
+        apply_equal_filter!(query, filter.id, reason_option::id);
+        apply_equal_filter!(query, filter.r#type, reason_option::type_);
         if let Some(value) = filter.is_active {
-            query = query.filter(reason_option_dsl::is_active.eq(value));
+            query = query.filter(reason_option::is_active.eq(value));
         }
     }
 
