@@ -4,6 +4,7 @@ import {
   useTranslation,
   Typography,
   FlatButton,
+  useNotification,
 } from '@openmsupply-client/common';
 
 export interface Action {
@@ -12,6 +13,7 @@ export interface Action {
   onClick: () => void;
   disabled?: boolean;
   shouldShrink?: boolean;
+  disabledToastMessage?: string;
 }
 
 interface ActionsFooterProps {
@@ -24,6 +26,12 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
   selectedRowCount,
 }): ReactElement => {
   const t = useTranslation();
+  const { info } = useNotification();
+
+  const showDisabledButtonToastMessage = () => {
+    return info(`${t('messages.cannot-perform-action')}`);
+  };
+
   return (
     <Stack
       direction="row"
@@ -45,15 +53,17 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
         {selectedRowCount} {t('label.selected')}
       </Typography>
       {actions.map(({ label, icon, onClick, disabled, shouldShrink }) => (
-        <FlatButton
-          key={label}
-          startIcon={icon}
-          label={label}
-          disabled={disabled}
-          onClick={onClick}
-          // Flatbutton doesn't shrink by default but we want it to in actions footer
-          shouldShrink={shouldShrink ?? true}
-        />
+        <div onClick={disabled ? showDisabledButtonToastMessage() : undefined}>
+          <FlatButton
+            key={label}
+            startIcon={icon}
+            label={label}
+            disabled={disabled}
+            onClick={onClick}
+            // Flatbutton doesn't shrink by default but we want it to in actions footer
+            shouldShrink={shouldShrink ?? true}
+          />
+        </div>
       ))}
     </Stack>
   );
