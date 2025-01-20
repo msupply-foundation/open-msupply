@@ -8,7 +8,7 @@ use crate::{
         name_link_row::name_link,
     },
     repository_error::RepositoryError,
-    Delete, StorageConnection, Upsert,
+    StorageConnection, Upsert,
 };
 
 use diesel::prelude::*;
