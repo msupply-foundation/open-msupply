@@ -17,12 +17,14 @@ interface NavBarProps {
   items: string[];
   currentItem: string;
   setItem: (itemId: string) => void;
+  scrollIntoView: () => void;
 }
 
 export const NavBar: React.FC<NavBarProps> = ({
   items,
   currentItem,
   setItem,
+  scrollIntoView,
 }) => {
   const t = useTranslation();
   const currentIndex = items.findIndex(item => item === currentItem);
@@ -48,6 +50,7 @@ export const NavBar: React.FC<NavBarProps> = ({
         disabled={!hasPrevious}
         onClick={() => {
           setItem(items[currentIndex - 1] ?? '');
+          scrollIntoView();
         }}
       />
       <Typography>
@@ -60,6 +63,7 @@ export const NavBar: React.FC<NavBarProps> = ({
         disabled={!hasNext}
         onClick={() => {
           setItem(items[currentIndex + 1] ?? '');
+          scrollIntoView();
         }}
       />
     </Box>

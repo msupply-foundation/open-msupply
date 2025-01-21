@@ -1,7 +1,4 @@
-use super::{
-    currency_row::{currency, currency::dsl as currency_dsl},
-    CurrencyRow, DBType, StorageConnection,
-};
+use super::{currency_row::currency, CurrencyRow, DBType, StorageConnection};
 use diesel::prelude::*;
 
 use crate::{
@@ -63,17 +60,17 @@ impl<'a> CurrencyRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 CurrencySortField::Id => {
-                    apply_sort_no_case!(query, sort, currency_dsl::id)
+                    apply_sort_no_case!(query, sort, currency::id)
                 }
                 CurrencySortField::CurrencyCode => {
-                    apply_sort_no_case!(query, sort, currency_dsl::code)
+                    apply_sort_no_case!(query, sort, currency::code)
                 }
                 CurrencySortField::IsHomeCurrency => {
-                    apply_sort!(query, sort, currency_dsl::is_home_currency)
+                    apply_sort!(query, sort, currency::is_home_currency)
                 }
             }
         } else {
-            query = query.order(currency_dsl::code.asc())
+            query = query.order(currency::code.asc())
         }
 
         let result = query.load::<CurrencyRow>(self.connection.lock().connection())?;
@@ -88,16 +85,16 @@ fn create_filtered_query(filter: Option<CurrencyFilter>) -> BoxedLogQuery {
     let mut query = currency::table.into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, currency_dsl::id);
+        apply_equal_filter!(query, filter.id, currency::id);
 
         query = match filter.is_home_currency {
-            Some(true) => query.filter(currency_dsl::is_home_currency.eq(true)),
-            Some(false) => query.filter(currency_dsl::is_home_currency.eq(false)),
+            Some(true) => query.filter(currency::is_home_currency.eq(true)),
+            Some(false) => query.filter(currency::is_home_currency.eq(false)),
             None => query,
         };
 
         if let Some(is_active) = filter.is_active {
-            query = query.filter(currency_dsl::is_active.eq(is_active))
+            query = query.filter(currency::is_active.eq(is_active))
         }
     }
     query

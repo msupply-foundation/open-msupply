@@ -1,12 +1,7 @@
 use super::{
-    barcode_row::barcode::{self, dsl as barcode_dsl},
-    item_link_row::item_link::{self, dsl as item_link_dsl},
-    item_row::item::{self, dsl as item_dsl},
-    location_row::location::{self, dsl as location_dsl},
-    name_link_row::name_link::{self, dsl as name_link_dsl},
-    name_row::name::{self, dsl as name_dsl},
-    stock_line_row::stock_line::{self, dsl as stock_line_dsl},
-    DBType, LocationRow, MasterListFilter, MasterListLineFilter, StockLineRow, StorageConnection,
+    barcode_row::barcode, item_link_row::item_link, item_row::item, location_row::location,
+    name_link_row::name_link, name_row::name, stock_line_row::stock_line, DBType, LocationRow,
+    MasterListFilter, MasterListLineFilter, StockLineRow, StorageConnection,
 };
 
 use crate::{
@@ -112,33 +107,33 @@ impl<'a> StockLineRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 StockLineSortField::NumberOfPacks => {
-                    apply_sort!(query, sort, stock_line_dsl::total_number_of_packs);
+                    apply_sort!(query, sort, stock_line::total_number_of_packs);
                 }
                 StockLineSortField::ExpiryDate => {
                     // TODO: would prefer to have extra parameter on Sort.nulls_last
-                    apply_sort_asc_nulls_last!(query, sort, stock_line_dsl::expiry_date);
+                    apply_sort_asc_nulls_last!(query, sort, stock_line::expiry_date);
                 }
                 StockLineSortField::ItemCode => {
-                    apply_sort_no_case!(query, sort, item_dsl::code);
+                    apply_sort_no_case!(query, sort, item::code);
                 }
                 StockLineSortField::ItemName => {
-                    apply_sort_no_case!(query, sort, item_dsl::name);
+                    apply_sort_no_case!(query, sort, item::name);
                 }
                 StockLineSortField::Batch => {
-                    apply_sort_no_case!(query, sort, stock_line_dsl::batch);
+                    apply_sort_no_case!(query, sort, stock_line::batch);
                 }
                 StockLineSortField::PackSize => {
-                    apply_sort!(query, sort, stock_line_dsl::pack_size);
+                    apply_sort!(query, sort, stock_line::pack_size);
                 }
                 StockLineSortField::SupplierName => {
-                    apply_sort_no_case!(query, sort, name_dsl::name_);
+                    apply_sort_no_case!(query, sort, name::name_);
                 }
                 StockLineSortField::LocationCode => {
-                    apply_sort_no_case!(query, sort, location_dsl::code);
+                    apply_sort_no_case!(query, sort, location::code);
                 }
             }
         } else {
-            query = query.order(stock_line_dsl::id.asc())
+            query = query.order(stock_line::id.asc())
         }
 
         let final_query = query
@@ -173,11 +168,11 @@ type BoxedStockLineQuery = IntoBoxed<
 >;
 
 fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery {
-    let mut query = stock_line_dsl::stock_line
-        .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
-        .left_join(location_dsl::location)
-        .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
-        .left_join(barcode_dsl::barcode)
+    let mut query = stock_line::table
+        .inner_join(item_link::table.inner_join(item::table))
+        .left_join(location::table)
+        .left_join(name_link::table.inner_join(name::table))
+        .left_join(barcode::table)
         .into_boxed();
 
     if let Some(f) = filter {
@@ -195,32 +190,32 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
             is_active,
         } = f;
 
-        apply_equal_filter!(query, id, stock_line_dsl::id);
+        apply_equal_filter!(query, id, stock_line::id);
         apply_equal_filter!(query, item_id, item::id);
-        apply_equal_filter!(query, location_id, stock_line_dsl::location_id);
-        apply_date_filter!(query, expiry_date, stock_line_dsl::expiry_date);
-        apply_equal_filter!(query, store_id, stock_line_dsl::store_id);
+        apply_equal_filter!(query, location_id, stock_line::location_id);
+        apply_date_filter!(query, expiry_date, stock_line::expiry_date);
+        apply_equal_filter!(query, store_id, stock_line::store_id);
 
         if let Some(is_active) = is_active {
-            query = query.filter(item_dsl::is_active.eq(is_active));
+            query = query.filter(item::is_active.eq(is_active));
         }
 
         query = match has_packs_in_store {
-            Some(true) => query.filter(stock_line_dsl::total_number_of_packs.gt(0.0)),
-            Some(false) => query.filter(stock_line_dsl::total_number_of_packs.le(0.0)),
+            Some(true) => query.filter(stock_line::total_number_of_packs.gt(0.0)),
+            Some(false) => query.filter(stock_line::total_number_of_packs.le(0.0)),
             None => query,
         };
 
         query = match is_available {
-            Some(true) => query.filter(stock_line_dsl::available_number_of_packs.gt(0.0)),
-            Some(false) => query.filter(stock_line_dsl::available_number_of_packs.le(0.0)),
+            Some(true) => query.filter(stock_line::available_number_of_packs.gt(0.0)),
+            Some(false) => query.filter(stock_line::available_number_of_packs.le(0.0)),
             None => query,
         };
 
         if location.is_some() {
-            let location_ids = LocationRepository::create_filtered_query(location)
-                .select(location_dsl::id.nullable());
-            query = query.filter(stock_line_dsl::location_id.eq_any(location_ids));
+            let location_ids =
+                LocationRepository::create_filtered_query(location).select(location::id.nullable());
+            query = query.filter(stock_line::location_id.eq_any(location_ids));
         }
 
         if master_list.is_some() {
@@ -228,9 +223,9 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
                 MasterListLineFilter::new().master_list(master_list.unwrap()),
             ))
             .unwrap()
-            .select(item_dsl::id);
+            .select(item::id);
 
-            query = query.filter(item_dsl::id.eq_any(item_ids));
+            query = query.filter(item::id.eq_any(item_ids));
         }
     }
 

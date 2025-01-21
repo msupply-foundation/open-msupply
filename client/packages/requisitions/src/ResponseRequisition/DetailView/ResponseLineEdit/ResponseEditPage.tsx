@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   BasicSpinner,
   DetailContainer,
@@ -58,45 +58,52 @@ const ResponseLineEditPageInner = ({
     });
   }, [currentItem]);
 
+  // This ref is attached to the currently selected list item, and is used to
+  // "scroll into view" when the Previous/Next buttons are clicked in the NavBar
+  const scrollRef = useRef<null | HTMLLIElement>(null);
+  const scrollSelectedItemIntoView = () =>
+    // Small time delay to allow the ref to change to the previous/next item in
+    // the list before scrolling to it
+    setTimeout(() => scrollRef.current?.scrollIntoView(), 100);
+  const showNew =
+    requisition.status !== RequisitionNodeStatus.Finalised &&
+    !isProgram &&
+    !requisition.linkedRequisition;
+
   return (
     <>
       <AppBarButtons requisitionNumber={requisition.requisitionNumber} />
       <DetailContainer>
         <PageLayout
           Left={
-            <>
-              <ListItems
-                currentItemId={itemId}
-                items={lines.map(line => line.item)}
-                route={RouteBuilder.create(AppRoute.Distribution)
-                  .addPart(AppRoute.CustomerRequisition)
-                  .addPart(String(requisition.requisitionNumber))}
-                enteredLineIds={enteredLineIds}
-                showNew={
-                  requisition.status !== RequisitionNodeStatus.Finalised &&
-                  !isProgram
-                }
-              />
-            </>
+            <ListItems
+              currentItemId={itemId}
+              items={lines.map(line => line.item)}
+              route={RouteBuilder.create(AppRoute.Distribution)
+                .addPart(AppRoute.CustomerRequisition)
+                .addPart(String(requisition.requisitionNumber))}
+              enteredLineIds={enteredLineIds}
+              showNew={showNew}
+              scrollRef={scrollRef}
+            />
           }
           Right={
-            <>
-              <ResponseLineEdit
-                hasLinkedRequisition={!!requisition.linkedRequisition}
-                draft={draft}
-                update={update}
-                save={save}
-                hasNext={hasNext}
-                next={next}
-                hasPrevious={hasPrevious}
-                previous={previous}
-                isProgram={!!isProgram}
-                lines={lines}
-                requisitionNumber={requisition.requisitionNumber}
-                requisitionId={requisition.id}
-                insert={mutateAsync}
-              />
-            </>
+            <ResponseLineEdit
+              hasLinkedRequisition={!!requisition.linkedRequisition}
+              draft={draft}
+              update={update}
+              save={save}
+              hasNext={hasNext}
+              next={next}
+              hasPrevious={hasPrevious}
+              previous={previous}
+              isProgram={!!isProgram}
+              lines={lines}
+              requisitionNumber={requisition.requisitionNumber}
+              requisitionId={requisition.id}
+              insert={mutateAsync}
+              scrollIntoView={scrollSelectedItemIntoView}
+            />
           }
         />
       </DetailContainer>

@@ -24,7 +24,7 @@ pub struct UpdateInput {
     pub id: String,
     pub status: Option<UpdatePrescriptionStatusInput>,
     pub patient_id: Option<String>,
-    pub clinician_id: Option<String>,
+    pub clinician_id: Option<NullableUpdateInput<String>>,
     pub prescription_date: Option<DateTime<Utc>>,
     pub comment: Option<String>,
     pub colour: Option<String>,
@@ -108,7 +108,9 @@ impl UpdateInput {
             id,
             status: status.map(|status| status.to_domain()),
             patient_id,
-            clinician_id,
+            clinician_id: clinician_id.map(|clinician_id| NullableUpdate {
+                value: clinician_id.value,
+            }),
             comment,
             colour,
             backdated_datetime: prescription_date.map(|date| date.naive_utc()),
@@ -198,6 +200,7 @@ mod test {
             InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
+        NullableUpdate,
     };
 
     use crate::InvoiceMutations;
@@ -230,7 +233,7 @@ mod test {
           "input": {
             "id": "n/a",
             "patientId": "n/a",
-            "clinicianId": "n/a",
+            "clinicianId": {"value": "n/a"},
             "comment": "n/a",
             "colour": "n/a"
           }
@@ -365,7 +368,9 @@ mod test {
                 ServiceInput {
                     id: "id input".to_string(),
                     patient_id: Some("patient_a".to_string()),
-                    clinician_id: Some("some_clinician".to_string()),
+                    clinician_id: Some(NullableUpdate {
+                        value: Some("some_clinician".to_string())
+                    }),
                     status: Some(UpdatePrescriptionStatus::Picked),
                     comment: Some("comment input".to_string()),
                     colour: Some("colour input".to_string()),
@@ -385,7 +390,7 @@ mod test {
           "input": {
             "id": "id input",
             "patientId": "patient_a",
-            "clinicianId": "some_clinician",
+            "clinicianId": {"value": "some_clinician"},
             "status": "PICKED",
             "comment": "comment input",
             "colour": "colour input"

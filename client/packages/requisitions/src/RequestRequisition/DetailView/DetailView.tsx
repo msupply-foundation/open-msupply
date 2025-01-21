@@ -9,6 +9,7 @@ import {
   useTranslation,
   createQueryParamsStore,
   DetailTabs,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { RequestLineFragment, useRequest } from '../api';
@@ -26,10 +27,11 @@ export const DetailView: FC = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { data, isLoading } = useRequest.document.get();
+  const { store } = useAuthContext();
   const isDisabled = useRequest.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useRequest.document.indicators(
-      data?.otherPartyId ?? '',
+      store?.nameId ?? '',
       data?.period?.id ?? '',
       data?.program?.id ?? '',
       !!data
@@ -79,11 +81,13 @@ export const DetailView: FC = () => {
     },
   ];
 
-  if (
+  const showIndicatorTab =
     data?.programName &&
     !!data?.otherParty.store &&
-    programIndicators?.totalCount !== 0
-  ) {
+    programIndicators?.totalCount !== 0 &&
+    !data?.isEmergency;
+
+  if (showIndicatorTab) {
     tabs.push({
       Component: (
         <IndicatorsTab

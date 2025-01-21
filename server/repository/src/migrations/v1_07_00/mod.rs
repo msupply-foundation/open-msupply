@@ -244,10 +244,6 @@ async fn migration_1_07_00_merge() {
     use crate::test_db::*;
     use chrono::NaiveDateTime;
     use diesel::prelude::*;
-    use item_link::dsl as item_link_dsl;
-    use requisition_line::dsl as requisition_line_dsl;
-    use stock_movement::dsl as stock_movement_dsl;
-    use stock_on_hand::dsl as stock_on_hand_dsl;
 
     table! {
         item_link {
@@ -340,13 +336,13 @@ async fn migration_1_07_00_merge() {
 
     insert_merge_test_data(&connection);
 
-    let old_soh: Vec<StockOnHandRow> = stock_on_hand_dsl::stock_on_hand
-        .order(stock_on_hand_dsl::item_id.asc())
+    let old_soh: Vec<StockOnHandRow> = stock_on_hand::table
+        .order(stock_on_hand::item_id.asc())
         .load(connection.lock().connection())
         .unwrap();
 
-    let old_stock_movements: Vec<StockMovementRow> = stock_movement_dsl::stock_movement
-        .order(stock_movement_dsl::id.asc())
+    let old_stock_movements: Vec<StockMovementRow> = stock_movement::table
+        .order(stock_movement::id.asc())
         .load(connection.lock().connection())
         .unwrap();
 
@@ -371,22 +367,22 @@ async fn migration_1_07_00_merge() {
             item_id: "item4".to_string(),
         },
     ];
-    let migration_item_links: Vec<ItemLinkRow> = item_link_dsl::item_link
-        .order(item_link_dsl::id)
+    let migration_item_links: Vec<ItemLinkRow> = item_link::table
+        .order(item_link::id)
         .load(connection.lock().connection())
         .unwrap();
     assert_eq!(expected_item_links, migration_item_links);
 
     // Tests the view rewrite works correctly and implicitly that the stock_line.item_link_id got populated
-    let new_soh: Vec<StockOnHandRow> = stock_on_hand_dsl::stock_on_hand
-        .order(stock_on_hand_dsl::item_id.asc())
+    let new_soh: Vec<StockOnHandRow> = stock_on_hand::table
+        .order(stock_on_hand::item_id.asc())
         .load(connection.lock().connection())
         .unwrap();
     assert_eq!(old_soh, new_soh);
 
     // Tests the view rewrites work correctly and implicitly that the invoice_line.item_link_id got populated
-    let new_stock_movements: Vec<StockMovementRow> = stock_movement_dsl::stock_movement
-        .order(stock_movement_dsl::id.asc())
+    let new_stock_movements: Vec<StockMovementRow> = stock_movement::table
+        .order(stock_movement::id.asc())
         .load(connection.lock().connection())
         .unwrap();
     assert_eq!(old_stock_movements, new_stock_movements);
@@ -441,8 +437,8 @@ async fn migration_1_07_00_merge() {
             ..Default::default()
         },
     ];
-    let updated_requisition_lines: Vec<RequisitionLineRow> = requisition_line_dsl::requisition_line
-        .order(requisition_line_dsl::id.asc())
+    let updated_requisition_lines: Vec<RequisitionLineRow> = requisition_line::table
+        .order(requisition_line::id.asc())
         .load(connection.lock().connection())
         .unwrap();
 
