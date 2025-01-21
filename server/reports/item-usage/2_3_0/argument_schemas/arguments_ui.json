@@ -19,7 +19,9 @@
       "scope": "#/properties/monthlyConsumptionLookBackPeriod",
       "label": "T#report.AMC-lookback",
       "options": {
-        "readonly": true
+        "readonly": true,
+        "inputAlignment": "end",
+        "paddingRight": 25
       }
     },
     {
