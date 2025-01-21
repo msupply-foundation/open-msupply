@@ -29,7 +29,6 @@ pub(crate) fn start_discovery(protocol: Protocol, port: u16, hardware_id: String
             // This code is to test the panic handling. Uncomment the following lines to test.
             // let x: Option<String> = None;
             // let _y = x.unwrap();
-            // log::info!("Discovery registration result: {:?}", registration_result);
             registration_result
         });
 
