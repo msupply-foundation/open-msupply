@@ -51,7 +51,6 @@ export const CreateShipmentButtonComponent = () => {
 
   const onCreateShipment = () => {
     if (linesRemainingToSupply.totalCount > 0) {
-      useCallbackWithPermission;
       getConfirmation();
     } else {
       alert();
