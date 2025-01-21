@@ -117,15 +117,15 @@ enum Action {
 
         /// Path to the report
         #[clap(short, long)]
-        report_path: String,
+        report_path: PathBuf,
 
         /// Path to the arguments json form schema
         #[clap(long)]
-        arguments_path: Option<String>,
+        arguments_path: Option<PathBuf>,
 
         /// Path to the arguments json form UI schema
         #[clap(long)]
-        arguments_ui_path: Option<String>,
+        arguments_ui_path: Option<PathBuf>,
 
         /// Report name
         #[clap(short, long)]
@@ -148,7 +148,7 @@ enum Action {
     UpsertReportsJson {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long)]
-        json_path: Option<String>,
+        json_path: Option<PathBuf>,
     },
 }
 
@@ -661,11 +661,11 @@ fn run_yarn_install(directory: &PathBuf) -> Result<(), Box<dyn std::error::Error
             .status()?;
 
         if !status.success() {
-            println!("Error: `yarn install` failed");
+            info!("Error: `yarn install` failed");
             return Err("Failed to run yarn install".into());
         }
     } else {
-        println!("Dependencies up to date");
+        info!("Dependencies up to date");
     }
 
     Ok(())
