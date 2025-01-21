@@ -8,7 +8,7 @@ import {
   RnRFormNodeStatus,
   useNotification,
   useConfirmationModal,
-  useKeyboardContext,
+  useKeyboard,
 } from '@openmsupply-client/common';
 import { useRnRForm } from '../api';
 
@@ -21,7 +21,7 @@ export const Footer = ({
   linesUnconfirmed: boolean;
   unsavedChanges: boolean;
 }) => {
-  const keyboard = useKeyboardContext();
+  const keyboard = useKeyboard();
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
   const { error, info, success } = useNotification();

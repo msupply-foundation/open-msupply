@@ -16,15 +16,12 @@ import {
   Box,
 } from '@mui/material';
 import { BasicTextInput } from '../TextInput';
-import {
-  useDebounceCallback,
-  useKeyboardContext,
-  useToggle,
-} from '@common/hooks';
+import { useDebounceCallback } from '@common/hooks';
 import type { AutocompleteProps } from './Autocomplete';
 import { StyledPopper } from './components';
 import { ArrayUtils } from '@common/utils';
 import { RecordWithId } from '@common/types';
+import { useOpenStateWithKeyboard } from '@common/components';
 
 const LOADER_HIDE_TIMEOUT = 500;
 
@@ -69,16 +66,12 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   paginationDebounce,
   onPageChange,
   mapOptions,
-  open,
-  onOpen,
-  onClose,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteWithPaginationProps<T>>) {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const [isLoading, setIsLoading] = useState(true);
   const lastOptions = useRef<T[]>([]);
-  const keyboard = useKeyboardContext();
-  const keyboardSelectControl = useToggle();
+  const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
 
   const options = useMemo(() => {
     if (!pages) {
@@ -176,21 +169,10 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
     setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
   }, [options]);
 
-  const getIsOpen = () => {
-    // Use passed in or default if not using android keyboard
-    if (!keyboard.isEnabled) return open;
-
-    // Keep popper closed until keyboard is open
-    // keyboard moves popper up & out of correct position
-    if (!keyboard.isOpen) return false;
-
-    // Use externally controlled `open` state if provided
-    return open ?? keyboardSelectControl.isOn;
-  };
-
   return (
     <MuiAutocomplete
       {...restOfAutocompleteProps}
+      {...openOverrides}
       inputValue={inputValue}
       onInputChange={onInputChange}
       disabled={disabled}
@@ -211,15 +193,6 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
       PopperComponent={popperMinWidth ? CustomPopper : StyledPopper}
       ListboxProps={listboxProps}
-      open={getIsOpen()}
-      onOpen={e => {
-        keyboard.isEnabled && keyboardSelectControl.toggleOn();
-        onOpen?.(e);
-      }}
-      onClose={(...args) => {
-        keyboard.isEnabled && keyboardSelectControl.toggleOff();
-        onClose?.(...args);
-      }}
     />
   );
 }

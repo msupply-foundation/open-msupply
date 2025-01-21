@@ -6,8 +6,8 @@ import { Slide } from '../../ui/animations';
 import { BasicModal, IconButton, ModalTitle } from '@common/components';
 import { useIntlUtils, useTranslation } from '@common/intl';
 import { SxProps, Theme, useMediaQuery } from '@mui/material';
-import { useKeyboardContext } from '../useKeyboard';
 import { CloseIcon } from '@common/icons';
+import { useKeyboard } from '../useKeyboard';
 
 type OkClickEvent = React.MouseEvent<HTMLButtonElement, MouseEvent>;
 
@@ -168,7 +168,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       isRtl,
       animationTimeout
     );
-    const { isOpen: keyboardIsOpen } = useKeyboardContext();
+    const { isOpen: keyboardIsOpen } = useKeyboard();
     const isSmallerScreen = useMediaQuery('(max-height: 850px)');
     const t = useTranslation();
 
