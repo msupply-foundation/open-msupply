@@ -4,7 +4,6 @@ import {
   Box,
   ColumnAlign,
   DataTable,
-  DateUtils,
   Formatter,
   RecordPatch,
   TableProvider,
@@ -49,7 +48,7 @@ const IndicatorsDemographicsComponent = () => {
   const t = useTranslation();
 
   const { draft, setDraft } = useDemographicData.indicator.list(headerDraft);
-  const baseYear = headerDraft?.baseYear ?? DateUtils.getCurrentYear();
+  const baseYear = headerDraft?.baseYear ?? 2024; // TODO: Allow the user to select the base year for their projections
   const { data: projection, isLoading: isLoadingProjection } =
     useDemographicData.projection.get(baseYear);
 
