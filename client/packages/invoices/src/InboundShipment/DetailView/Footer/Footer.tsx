@@ -78,7 +78,11 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       icon: <DeleteIcon />,
       onClick: onDelete,
       disabled: isDisabled || !isManuallyCreated,
-      disabledToastMessage: t('messages.cant-delete-transferred'),
+      disabledToastMessage: !isManuallyCreated
+        ? t('messages.cant-delete-transferred')
+        : isDisabled
+          ? t('messages.cant-delete-generic')
+          : undefined,
     },
     {
       label: t('button.return-lines'),
