@@ -13,7 +13,7 @@ import { itemFilterOptions, StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
 const DEBOUNCE_TIMEOUT = 300;
-const ROWS_PER_PAGE = 17;
+const ROWS_PER_PAGE = 100;
 
 export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   onChange,
