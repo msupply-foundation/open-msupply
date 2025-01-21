@@ -249,20 +249,17 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
     // Then look for data conversion with js functions
     if let Some(convert_data) = &args.convert_data {
         if index.convert_data.is_none() {
-            let wasm: &String = &format!("{}/dist/plugin.wasm", convert_data);
-
-            let mut chars = convert_data.chars();
-            chars.next();
-            chars.next();
-
-            let dir = chars.as_str();
+            let wasm: PathBuf = convert_data.join("dist").join("plugin.wasm");
 
             Command::new("npm")
                 .arg("run")
                 .arg("build")
-                .current_dir(dir)
+                .current_dir(convert_data)
                 .status()
-                .expect(&format!("failed to build wasm plugin function at: {}", dir));
+                .expect(&format!(
+                    "failed to build wasm plugin function at: {}",
+                    convert_data.display()
+                ));
 
             let encoded = BASE64_STANDARD.encode(fs::read(wasm).unwrap());
 
@@ -275,14 +272,15 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
 
 pub fn build(args: BuildArgs) -> anyhow::Result<()> {
     let definition = build_report_definition(&args)?;
-    let output_path = args.output.unwrap_or("./generated/output.json".to_string());
-    let output_path = Path::new(&output_path);
+    let output_path = args
+        .output
+        .unwrap_or(PathBuf::new().join("generated").join("output.json"));
     fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
         "Invalid output path: {:?}",
         output_path
     )))?)?;
 
-    fs::write(output_path, serde_json::to_string_pretty(&definition)?).map_err(|_| {
+    fs::write(&output_path, serde_json::to_string_pretty(&definition)?).map_err(|_| {
         anyhow::Error::msg(format!(
             "Failed to write to {:?}. Does output dir exist?",
             output_path
