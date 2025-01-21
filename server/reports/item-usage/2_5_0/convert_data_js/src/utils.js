@@ -31,7 +31,7 @@ const processItemLines = (data, sort, dir) => {
     item.AMC24 = calculateQuantity(data.AMCTwentyFour, item.id);
     item.SOH = calculateStatValue(item?.stats?.stockOnHand);
     item.MOS = calculateStatValue(item?.stats?.availableMonthsOfStockOnHand);
-    item.AMCDefault = calculateStatValue(item?.stats?.averateMonthlyConsumption)
+    item.AMC = calculateStatValue(item?.stats?.averateMonthlyConsumption)
   });
   let cleanNodes = cleanUpNodes(data.items.nodes);
   let sortedNodes = sortNodes(cleanNodes, sort, dir);
