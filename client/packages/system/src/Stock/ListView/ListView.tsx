@@ -39,11 +39,14 @@ const StockListComponent: FC = () => {
         key: 'expiryDate',
         condition: 'between',
       },
+      {
+        key: 'masterList.name',
+      },
     ],
   });
   const navigate = useNavigate();
   const queryParams = {
-    filterBy,
+    filterBy: filterBy ?? undefined,
     offset,
     sortBy,
     first,
@@ -71,7 +74,14 @@ const StockListComponent: FC = () => {
       Cell: TooltipTextCell,
       width: 350,
     },
-    // TODO:: Add a column for the master list name
+    // TODO: Add back when design has been decided
+    // {
+    //   key: 'masterList',
+    //   label: 'label.master-list',
+    //   Cell: ChipTableCell,
+    //   width: 150,
+    //   accessor: ({ rowData }) => rowData.masterList.map(m => m.name),
+    // },
     { key: 'batch', label: 'label.batch', Cell: TooltipTextCell, width: 100 },
     {
       key: 'expiryDate',
