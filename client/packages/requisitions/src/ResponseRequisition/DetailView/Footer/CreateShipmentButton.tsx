@@ -7,6 +7,8 @@ import {
   useAlertModal,
   RouteBuilder,
   useNavigate,
+  useCallbackWithPermission,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { useResponse } from '../../api';
 import { AppRoute } from '@openmsupply-client/config/src';
@@ -49,17 +51,24 @@ export const CreateShipmentButtonComponent = () => {
 
   const onCreateShipment = () => {
     if (linesRemainingToSupply.totalCount > 0) {
+      useCallbackWithPermission;
       getConfirmation();
     } else {
       alert();
     }
   };
 
+  const handleClick = useCallbackWithPermission(
+    UserPermission.OutboundShipmentMutate,
+    onCreateShipment,
+    t('error.no-create-outbound-shipment-permission')
+  );
+
   return (
     <ButtonWithIcon
       Icon={<PlusCircleIcon />}
       label={t('button.create-shipment')}
-      onClick={onCreateShipment}
+      onClick={handleClick}
       disabled={isDisabled}
       color="secondary"
     />
