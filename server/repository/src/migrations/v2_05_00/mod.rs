@@ -7,6 +7,7 @@ mod add_elmis_code_to_program;
 mod add_email_queue_table;
 mod add_email_retry_at;
 mod add_emergency_orders;
+mod add_requisition_is_emergency;
 mod diagnosis_add_to_invoice;
 mod diagnosis_create_table;
 mod item_direction_create_table;
@@ -46,6 +47,7 @@ impl Migration for V2_05_00 {
             Box::new(remove_contact_form_user_account_fk::Migrate),
             Box::new(add_contact_form_processor_pg_enum_type::Migrate),
             Box::new(remove_vaccination_user_account_fk::Migrate),
+            Box::new(add_requisition_is_emergency::Migrate),
         ]
     }
 }
