@@ -1,3 +1,5 @@
+use std::panic;
+
 use crate::certs::Protocol;
 use {astro_dnssd::DNSServiceBuilder, std::collections::HashMap};
 
@@ -15,10 +17,29 @@ pub(crate) fn start_discovery(protocol: Protocol, port: u16, hardware_id: String
         text_record.insert(CLIENT_VERSION_KEY.to_string(), CLIENT_VERSION.to_string());
         text_record.insert(PROTOCOL_KEY.to_string(), protocol.to_string());
 
-        let registration_result = DNSServiceBuilder::new(SERVICE_NAME, port)
-            .with_txt_record(text_record.clone())
-            .with_name(NAME)
-            .register();
+        // Astro DNS has a unwrap in the code that seems to be None at times.
+        // To avoid crashing the server, we catch the panic here and log the error.
+        // Longer term, we should fix the unwrap in the Astro DNS code.
+        let result = panic::catch_unwind(|| {
+            let registration_result = DNSServiceBuilder::new(SERVICE_NAME, port)
+                .with_txt_record(text_record.clone())
+                .with_name(NAME)
+                .register();
+
+            // This code is to test the panic handling. Uncomment the following lines to test.
+            // let x: Option<String> = None;
+            // let _y = x.unwrap();
+            // log::info!("Discovery registration result: {:?}", registration_result);
+            registration_result
+        });
+
+        let registration_result = match result {
+            Ok(r) => r,
+            Err(e) => {
+                log::error!("Panic registering discovery: {:?}", e);
+                return;
+            }
+        };
 
         match registration_result {
             Ok(_service_handle) => futures::future::pending::<()>().await,
