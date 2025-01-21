@@ -377,3 +377,65 @@ describe('useIsGrouped', () => {
     expect(result.current.isGrouped).toBe(true);
   });
 });
+
+describe('Table Context - removing selected rows', () => {
+  const rows = ['a', 'b', 'c'];
+
+  it('removes selected state of a row', () => {
+    const { result } = renderHook<TableStore, unknown>(useStore);
+    const { removeSelectedRows, setRows, toggleSelected } = result.current;
+
+    act(() => {
+      setRows(rows);
+      toggleSelected('a');
+    });
+
+    expect(result.current.rowState['a']?.isSelected).toBe(true);
+
+    act(() => {
+      removeSelectedRows();
+    });
+
+    expect(result.current.rowState['a']?.isSelected).toBe(false);
+  });
+
+  it('removes selected state of multiple rows', () => {
+    const { result } = renderHook<TableStore, unknown>(useStore);
+    const { removeSelectedRows, setRows, toggleAll } = result.current;
+
+    act(() => {
+      setRows(rows);
+      toggleAll();
+    });
+
+    expect(result.current.rowState['a']?.isSelected).toBe(true);
+    expect(result.current.rowState['b']?.isSelected).toBe(true);
+    expect(result.current.rowState['c']?.isSelected).toBe(true);
+
+    act(() => {
+      removeSelectedRows();
+    });
+
+    expect(result.current.rowState['a']?.isSelected).toBe(false);
+    expect(result.current.rowState['b']?.isSelected).toBe(false);
+    expect(result.current.rowState['c']?.isSelected).toBe(false);
+  });
+
+  it('updates the amount of selected rows to zero', () => {
+    const { result } = renderHook<TableStore, unknown>(useStore);
+    const { removeSelectedRows, setRows, toggleSelected } = result.current;
+
+    act(() => {
+      setRows(rows);
+      toggleSelected('a');
+    });
+
+    expect(result.current.numberSelected).toBe(1);
+
+    act(() => {
+      removeSelectedRows();
+    });
+
+    expect(result.current.numberSelected).toBe(0);
+  });
+});
