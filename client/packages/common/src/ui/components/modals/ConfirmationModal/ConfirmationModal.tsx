@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Typography } from '@mui/material';
 import { BasicModal } from '../BasicModal';
-import { AlertIcon, HelpIcon, InfoIcon } from '@common/icons';
+import { AlertIcon, CheckIcon, HelpIcon, InfoIcon } from '@common/icons';
 import { DialogButton, LoadingButton } from '../../buttons';
 import { Alert } from '@common/components';
 import { useTranslation, Grid } from '@openmsupply-client/common';
@@ -82,6 +82,7 @@ export const ConfirmationModal = ({
             <LoadingButton
               autoFocus
               color="secondary"
+              startIcon={<CheckIcon />}
               isLoading={loading}
               onClick={async () => {
                 const result = onConfirm && onConfirm();
@@ -90,7 +91,6 @@ export const ConfirmationModal = ({
                   await result;
                   setLoading(false);
                 }
-                onCancel();
               }}
               label={buttonLabel ? buttonLabel : t('button.ok')}
             />

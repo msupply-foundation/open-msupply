@@ -1,7 +1,4 @@
-use super::{
-    demographic_projection_row::demographic_projection::dsl as demographic_projection_dsl,
-    StorageConnection,
-};
+use super::StorageConnection;
 
 use crate::repository_error::RepositoryError;
 
@@ -42,7 +39,7 @@ impl<'a> DemographicProjectionRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &DemographicProjectionRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(demographic_projection_dsl::demographic_projection)
+        diesel::insert_into(demographic_projection::table)
             .values(row)
             .on_conflict(demographic_projection::id)
             .do_update()
@@ -55,8 +52,8 @@ impl<'a> DemographicProjectionRowRepository<'a> {
         &self,
         demographic_projection_id: &str,
     ) -> Result<Option<DemographicProjectionRow>, RepositoryError> {
-        let result = demographic_projection_dsl::demographic_projection
-            .filter(demographic_projection_dsl::id.eq(demographic_projection_id))
+        let result = demographic_projection::table
+            .filter(demographic_projection::id.eq(demographic_projection_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)

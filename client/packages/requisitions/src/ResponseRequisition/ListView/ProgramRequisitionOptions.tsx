@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import {
   Autocomplete,
+  AutocompleteOptionRenderer,
   AutocompleteProps,
+  Box,
   ButtonWithIcon,
+  DefaultAutocompleteItemOption,
   Grid,
   PlusCircleIcon,
   Typography,
@@ -169,10 +172,23 @@ export const ProgramRequisitionOptions = ({
   const { programs, orderTypes, customers, periods, createOptions } =
     useProgramRequisitionOptions(programSettings);
   const t = useTranslation();
+  const ProgramOptionRenderer = getProgramOptionRenderer();
 
   return (
-    <Grid container paddingTop={2} display="flex" direction="column">
-      <LabelAndOptions {...programs} optionKey="programName" autoFocus={true} />
+    <Grid
+      container
+      paddingTop={2}
+      spacing="15"
+      direction="column"
+      justifyContent="center"
+      alignItems="center"
+    >
+      <LabelAndOptions
+        {...programs}
+        renderOption={ProgramOptionRenderer}
+        optionKey="programName"
+        autoFocus={true}
+      />
       <LabelAndOptions {...customers} optionKey="name" />
       <LabelAndOptions {...orderTypes} optionKey="name" />
       <LabelAndOptions {...periods} optionKey="name" />
@@ -193,3 +209,21 @@ export const ProgramRequisitionOptions = ({
     </Grid>
   );
 };
+
+const getProgramOptionRenderer =
+  (): AutocompleteOptionRenderer<CustomerProgramSettingsFragment> =>
+  (props, item) => (
+    <DefaultAutocompleteItemOption {...props} key={item.programId}>
+      <Box display="flex" flexDirection="row" gap={1} alignItems="center">
+        <Typography
+          overflow="hidden"
+          textOverflow="ellipsis"
+          sx={{
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {item.programName} ({item.tagName})
+        </Typography>
+      </Box>
+    </DefaultAutocompleteItemOption>
+  );

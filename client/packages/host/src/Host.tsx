@@ -75,31 +75,34 @@ const router = createBrowserRouter(
     <Route
       path="*"
       element={
-        <Viewport>
-          <ErrorAlert />
-          <BackButtonHandler />
-          <Box display="flex" style={{ minHeight: '100%' }}>
-            <Routes>
-              <Route
-                path={RouteBuilder.create(AppRoute.Initialise).build()}
-                element={<Initialise />}
-              />
-              <Route
-                path={RouteBuilder.create(AppRoute.Login).build()}
-                element={<Login />}
-              />
-              <Route
-                path={RouteBuilder.create(AppRoute.Discovery).build()}
-                element={<Discovery />}
-              />
-              <Route
-                path={RouteBuilder.create(AppRoute.Android).build()}
-                element={<Android />}
-              />
-              <Route path="*" element={<Site />} />
-            </Routes>
-          </Box>
-        </Viewport>
+        // Now need to apply additional error boundary inside the router
+        <ErrorBoundary Fallback={GenericErrorFallback}>
+          <Viewport>
+            <ErrorAlert />
+            <BackButtonHandler />
+            <Box display="flex" style={{ minHeight: '100%' }}>
+              <Routes>
+                <Route
+                  path={RouteBuilder.create(AppRoute.Initialise).build()}
+                  element={<Initialise />}
+                />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Login).build()}
+                  element={<Login />}
+                />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Discovery).build()}
+                  element={<Discovery />}
+                />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Android).build()}
+                  element={<Android />}
+                />
+                <Route path="*" element={<Site />} />
+              </Routes>
+            </Box>
+          </Viewport>
+        </ErrorBoundary>
       }
     />
   )
@@ -108,28 +111,28 @@ const router = createBrowserRouter(
 const Host = () => (
   <React.Suspense fallback={<div />}>
     <IntlProvider>
-      <React.Suspense fallback={<RandomLoader />}>
-        <ErrorBoundary Fallback={GenericErrorFallback}>
-          <QueryClientProvider client={queryClient}>
-            <GqlProvider
-              url={Environment.GRAPHQL_URL}
-              skipRequest={skipRequest}
-            >
-              <AuthProvider>
-                <Init />
-                <AppThemeProvider>
+      <AppThemeProvider>
+        <React.Suspense fallback={<RandomLoader />}>
+          <ErrorBoundary Fallback={GenericErrorFallback}>
+            <QueryClientProvider client={queryClient}>
+              <GqlProvider
+                url={Environment.GRAPHQL_URL}
+                skipRequest={skipRequest}
+              >
+                <AuthProvider>
+                  <Init />
                   <ConfirmationModalProvider>
                     <AlertModalProvider>
                       <RouterProvider router={router} />
                     </AlertModalProvider>
                   </ConfirmationModalProvider>
-                </AppThemeProvider>
-              </AuthProvider>
-              {/* <ReactQueryDevtools initialIsOpen /> */}
-            </GqlProvider>
-          </QueryClientProvider>
-        </ErrorBoundary>
-      </React.Suspense>
+                </AuthProvider>
+                {/* <ReactQueryDevtools initialIsOpen /> */}
+              </GqlProvider>
+            </QueryClientProvider>
+          </ErrorBoundary>
+        </React.Suspense>
+      </AppThemeProvider>
     </IntlProvider>
   </React.Suspense>
 );

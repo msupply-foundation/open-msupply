@@ -16,6 +16,7 @@ interface FooterProps {
   hasPrevious: boolean;
   previous: IndicatorLineRowFragment | null;
   requisitionNumber?: number;
+  scrollIntoView: () => void;
 }
 
 export const Footer = ({
@@ -24,6 +25,7 @@ export const Footer = ({
   hasPrevious,
   previous,
   requisitionNumber,
+  scrollIntoView,
 }: FooterProps) => {
   const navigate = useNavigate();
   const { programIndicatorCode } = useParams();
@@ -48,7 +50,7 @@ export const Footer = ({
             <DialogButton
               variant="previous"
               disabled={!hasPrevious}
-              onClick={() =>
+              onClick={() => {
                 navigate(
                   RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.CustomerRequisition)
@@ -57,13 +59,14 @@ export const Footer = ({
                     .addPart(String(programIndicatorCode))
                     .addPart(String(previous?.id))
                     .build()
-                )
-              }
+                );
+                scrollIntoView();
+              }}
             />
             <DialogButton
               variant="next"
               disabled={!hasNext}
-              onClick={() =>
+              onClick={() => {
                 navigate(
                   RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.CustomerRequisition)
@@ -72,8 +75,9 @@ export const Footer = ({
                     .addPart(String(programIndicatorCode))
                     .addPart(String(next?.id))
                     .build()
-                )
-              }
+                );
+                scrollIntoView();
+              }}
             />
           </Box>
         </Box>

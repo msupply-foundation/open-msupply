@@ -15,6 +15,7 @@ import {
   IndicatorLineRowFragment,
   IndicatorLineWithColumnsFragment,
 } from '../../../RequestRequisition/api';
+import { indicatorColumnNameToLocal } from '../../../utils';
 
 interface IndicatorLineEditProps {
   requisitionNumber: number;
@@ -24,6 +25,7 @@ interface IndicatorLineEditProps {
   previous: IndicatorLineRowFragment | null;
   currentLine?: IndicatorLineWithColumnsFragment | null;
   disabled: boolean;
+  scrollIntoView: () => void;
 }
 
 const INPUT_WIDTH = 185;
@@ -90,7 +92,7 @@ const InputWithLabel = ({
     <InputWithLabelRow
       Input={inputComponent}
       labelWidth={LABEL_WIDTH}
-      label={data.name}
+      label={indicatorColumnNameToLocal(data.name)}
       sx={{ marginBottom: 1 }}
     />
   );
@@ -104,6 +106,7 @@ export const IndicatorLineEdit = ({
   previous,
   currentLine,
   disabled,
+  scrollIntoView,
 }: IndicatorLineEditProps) => {
   const columns = currentLine?.columns
     .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
@@ -130,6 +133,7 @@ export const IndicatorLineEdit = ({
           hasPrevious={hasPrevious}
           previous={previous}
           requisitionNumber={requisitionNumber}
+          scrollIntoView={scrollIntoView}
         />
       </Box>
     </>

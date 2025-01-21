@@ -62,7 +62,10 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
         message={message}
         info={info}
         title={title}
-        onConfirm={onConfirm}
+        onConfirm={async () => {
+          onConfirm && (await onConfirm());
+          setState(state => ({ ...state, open: false }));
+        }}
         onCancel={() => {
           setState(state => ({ ...state, open: false }));
           onCancel && onCancel();
