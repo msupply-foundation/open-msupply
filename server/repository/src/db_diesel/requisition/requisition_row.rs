@@ -41,6 +41,7 @@ table! {
         program_id -> Nullable<Text>,
         period_id -> Nullable<Text>,
         order_type -> Nullable<Text>,
+        is_emergency -> Bool,
     }
 }
 
@@ -106,6 +107,7 @@ pub struct RequisitionRow {
     pub program_id: Option<String>,
     pub period_id: Option<String>,
     pub order_type: Option<String>,
+    pub is_emergency: bool,
 }
 
 impl Default for RequisitionRow {
@@ -133,6 +135,7 @@ impl Default for RequisitionRow {
             program_id: None,
             period_id: None,
             order_type: None,
+            is_emergency: false,
         }
     }
 }
