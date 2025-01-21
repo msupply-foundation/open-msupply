@@ -165,6 +165,7 @@ fn generate_response_requisition(
         program_id: request_requisition_row.program_id.clone(),
         period_id: request_requisition_row.period_id.clone(),
         order_type: request_requisition_row.order_type.clone(),
+        is_emergency: request_requisition_row.is_emergency,
         // Default
         user_id: None,
         approval_status: None,
