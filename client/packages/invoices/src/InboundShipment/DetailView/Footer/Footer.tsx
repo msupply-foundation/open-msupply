@@ -80,9 +80,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       disabled: isDisabled || !isManuallyCreated,
       disabledToastMessage: !isManuallyCreated
         ? t('messages.cant-delete-transferred')
-        : isDisabled
-          ? t('messages.cant-delete-generic')
-          : undefined,
+        : t('messages.cant-delete-generic'),
     },
     {
       label: t('button.return-lines'),
