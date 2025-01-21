@@ -31,7 +31,7 @@ export const AppBarButtons = ({
   const navigate = useNavigate();
   const { success, error } = useNotification();
   const { mutateAsync: onCreate } = useResponse.document.insert();
-  const { mutateAsync: onProgramCreate } = useResponse.document.insertProgram();
+  const { insert: onProgramCreate } = useResponse.document.insertProgram();
 
   const { mutateAsync, isLoading } = useResponse.document.listAll({
     key: 'createdDatetime',
@@ -72,13 +72,13 @@ export const AppBarButtons = ({
         isOpen={modalController.isOn}
         onClose={modalController.toggleOff}
         onCreate={async newRequisition => {
-          modalController.toggleOff();
           switch (newRequisition.type) {
             case NewRequisitionType.General:
               return onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId: newRequisition.name.id,
               }).then(({ requisitionNumber }) => {
+                modalController.toggleOff();
                 navigate(
                   RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.CustomerRequisition)
@@ -89,16 +89,19 @@ export const AppBarButtons = ({
             case NewRequisitionType.Program:
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { type: _, ...rest } = newRequisition;
-              return onProgramCreate({
+              return await onProgramCreate({
                 id: FnUtils.generateUUID(),
                 ...rest,
-              }).then(({ requisitionNumber }) => {
-                navigate(
-                  RouteBuilder.create(AppRoute.Distribution)
-                    .addPart(AppRoute.CustomerRequisition)
-                    .addPart(String(requisitionNumber))
-                    .build()
-                );
+              }).then((response) => {
+                if (response.__typename == "RequisitionNode") {
+                  modalController.toggleOff()
+                  navigate(
+                    RouteBuilder.create(AppRoute.Distribution)
+                      .addPart(AppRoute.CustomerRequisition)
+                      .addPart(String(response.requisitionNumber))
+                      .build()
+                  );
+                }
               });
           }
         }}
