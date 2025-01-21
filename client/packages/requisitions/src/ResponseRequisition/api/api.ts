@@ -196,23 +196,13 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
   },
   insertProgram: async (
     input: InsertProgramResponseRequisitionInput
-  ): Promise<{
-    __typename: 'RequisitionNode';
-    id: string;
-    requisitionNumber: number;
-  }> => {
+  )=> {
     const result = await sdk.insertProgramResponse({
       storeId,
       input,
     });
 
-    const { insertProgramResponseRequisition } = result || {};
-
-    if (insertProgramResponseRequisition?.__typename === 'RequisitionNode') {
-      return insertProgramResponseRequisition;
-    }
-
-    throw new Error('Unable to create requisition');
+    return result.insertProgramResponseRequisition;
   },
   update: async (patch: Partial<ResponseFragment> & { id: string }) => {
     const input = responseParser.toUpdate(patch);
