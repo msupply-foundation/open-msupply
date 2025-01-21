@@ -6,8 +6,6 @@ import {
   AutocompleteWithPagination as Autocomplete,
   defaultOptionMapper,
   useStringFilter,
-  AutocompleteRenderInputParams,
-  BasicTextInput,
   useDebouncedValueCallback,
 } from '@openmsupply-client/common';
 import { useItemById, useItemStockOnHandInfinite } from '../../api';
@@ -30,7 +28,20 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
 }) => {
   const { filter, onFilter } = useStringFilter('codeOrName');
   const [search, setSearch] = useState('');
-  const [searchCode, setSearchCode] = useState('');
+
+  // After an item is selected, input string is `item_code item_name` e.g. `1234 Item Name`.
+  // However, backend search filter only supports name OR code, not both in the same string.
+  // So, when backspacing, the code should be removed to filter by name only
+  // e.g. even though string shows `1234 Ite`, backend search string is `Ite`
+  // Until only code value remains, then search by that
+  const [selectedCode, setSelectedCode] = useState('');
+
+  const debounceOnFilter = useDebouncedValueCallback(
+    (searchText: string) =>
+      onFilter(searchText.replace(`${selectedCode} `, '')),
+    [onFilter],
+    DEBOUNCE_TIMEOUT
+  );
 
   const fullFilter = itemCategoryName
     ? { ...filter, categoryName: itemCategoryName }
@@ -53,12 +64,6 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const t = useTranslation();
   const formatNumber = useFormatNumber();
   const selectControl = useToggle();
-
-  const debounceOnFilter = useDebouncedValueCallback(
-    (searchText: string) => onFilter(searchText),
-    [onFilter],
-    DEBOUNCE_TIMEOUT
-  );
 
   useEffect(() => {
     // Using the Autocomplete openOnFocus prop, the popper is incorrectly
@@ -86,7 +91,9 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       }
       noOptionsText={t('error.no-items')}
       onChange={(_, item) => {
-        setSearchCode(item?.code ?? '');
+        // Set the search value when selecting/clearing an option
+        setSearch(item ? `${item.code} ${item.name}` : '');
+        setSelectedCode(item?.code ?? '');
         onChange(item);
       }}
       getOptionLabel={option => `${option.code} ${option.name}`}
@@ -98,12 +105,6 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       open={selectControl.isOn}
-      onInputChange={(e, value) => {
-        // Set the search value if selecting an option using mouse or keyboard
-        if (e?.type === 'click' || e?.type === 'keydown') {
-          setSearch(value);
-        }
-      }}
       paginationDebounce={DEBOUNCE_TIMEOUT}
       onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
       mapOptions={items =>
@@ -113,35 +114,15 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
         ).sort((a, b) => a.label.localeCompare(b.label))
       }
       inputValue={search}
-      renderInput={(props: AutocompleteRenderInputParams) => {
-        return (
-          <BasicTextInput
-            {...props}
-            value={search}
-            onChange={e => {
-              setSearch(e.target.value);
-              if (!!currentItem) {
-                onChange(null);
-              }
-              debounceOnFilter(e.target.value.replace(`${searchCode} `, ''));
-            }}
-            // {...inputProps}
-            autoFocus={autoFocus}
-            InputProps={{
-              ...props.InputProps,
-              disableUnderline: false,
-              // endAdornment: (
-              // <>
-              //   {isLoading || loading ? (
-              //     <CircularProgress color="primary" size={18} />
-              //   ) : null}
-              //   {props.InputProps.endAdornment}
-              // </>
-              // ),
-            }}
-            sx={{ width }}
-          />
-        );
+      inputProps={{
+        onChange: e => {
+          setSearch(e.target.value);
+          if (!!currentItem) {
+            // If changing input value after item was selected, we need to clear the selected item
+            onChange(null);
+          }
+          debounceOnFilter(e.target.value);
+        },
       }}
     />
   );
