@@ -30,8 +30,6 @@ import {
 } from './utils';
 import { HeaderData, Row } from '../types';
 
-const currentYear = new Date().getFullYear();
-
 const IndicatorsDemographicsComponent = () => {
   const {
     updateSortQuery,
@@ -195,11 +193,11 @@ const IndicatorsDemographicsComponent = () => {
       [nameColumn(), { setter }],
       [percentageColumn(), { setter }],
       [populationColumn(), { setter: handlePopulationChange }],
-      yearColumn(1, formatNumber.format),
-      yearColumn(2, formatNumber.format),
-      yearColumn(3, formatNumber.format),
-      yearColumn(4, formatNumber.format),
-      yearColumn(5, formatNumber.format),
+      yearColumn(1, formatNumber.format, t('label.year')),
+      yearColumn(2, formatNumber.format, t('label.year')),
+      yearColumn(3, formatNumber.format, t('label.year')),
+      yearColumn(4, formatNumber.format, t('label.year')),
+      yearColumn(5, formatNumber.format, t('label.year')),
     ],
     { sortBy, onChangeSortBy: updateSortQuery },
     [draft, indexPopulation, sortBy]
@@ -249,11 +247,15 @@ export const IndicatorsDemographics = () => (
   </TableProvider>
 );
 
-const yearColumn = (year: number, format: (n: number) => string) => ({
+const yearColumn = (
+  year: number,
+  format: (n: number) => string,
+  yearTranslation: string
+) => ({
   key: String(year),
   width: 150,
   align: ColumnAlign.Right,
-  label: `${currentYear + year}`,
+  label: `${yearTranslation} ${year}`,
   sortable: false,
   accessor: ({ rowData }: { rowData: Row }) => {
     // using a switch to appease typescript
