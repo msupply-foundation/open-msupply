@@ -22,6 +22,7 @@ import { Environment } from '@openmsupply-client/config';
 import { AppBarButtons } from './AppBarButton';
 import { JsonData } from '@openmsupply-client/programs';
 import { Toolbar } from './Toolbar';
+import { translationReportName } from '../utils';
 
 export const DetailView = () => {
   const { id } = useParams();
@@ -71,7 +72,9 @@ const DetailViewInner = ({
   >();
 
   useEffect(() => {
-    setCustomBreadcrumbs({ 1: report.name ?? '' });
+    setCustomBreadcrumbs({ 1: 
+                           t(`report.${translationReportName(report.name)}` as LocaleKey)
+      ?? '' });
 
     // Initial report generation
     if (!report.argumentSchema) {
