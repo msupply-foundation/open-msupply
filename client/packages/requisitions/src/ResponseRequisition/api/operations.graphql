@@ -191,6 +191,7 @@ fragment Response on RequisitionNode {
     id
   }
   orderType
+  isEmergency
 }
 query responseByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
