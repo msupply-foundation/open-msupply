@@ -259,7 +259,11 @@ export const RequestLineEdit = ({
                   Input={
                     <NumericTextInput
                       width={INPUT_WIDTH}
-                      value={Math.ceil(draft?.requestedQuantity)}
+                      value={
+                        isNaN(Number(draft?.requestedQuantity))
+                          ? 0
+                          : Math.ceil(draft?.requestedQuantity)
+                      }
                       disabled={isPacks}
                       onChange={value => {
                         if (draft?.suggestedQuantity === value) {
@@ -320,7 +324,8 @@ export const RequestLineEdit = ({
                         decimalLimit={2}
                         width={100}
                         onChange={value => {
-                          const newValue = (value ?? 0) * (draft?.defaultPackSize ?? 0);
+                          const newValue =
+                            (value ?? 0) * (draft?.defaultPackSize ?? 0);
                           if (draft?.suggestedQuantity === newValue) {
                             update({
                               requestedQuantity: newValue,
