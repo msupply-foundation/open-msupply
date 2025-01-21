@@ -1,0 +1,70 @@
+
+query requisitionQuery($storeId: String!, $dataId: String!) {
+  requisition(storeId: $storeId, id: $dataId) {
+  ... on RequisitionNode {
+      id
+      type
+      status
+      requisitionNumber
+      theirReference
+      createdDatetime
+      finalisedDatetime
+      comment
+      otherPartyName
+      maxMonthsOfStock
+      otherParty( 
+        storeId: $storeId
+    
+      ){
+        name
+        id
+        code
+        comment
+        country
+        address1
+        address2
+        phone
+        email
+      }
+      lines{
+        nodes{
+          supplyQuantity
+          suggestedQuantity
+          requestedQuantity
+          remainingQuantityToSupply
+          comment
+          item{
+            code
+            name
+          }
+          itemStats{
+            stockOnHand
+            averageMonthlyConsumption
+          }
+        }
+      }
+    }
+  }
+  store(id: $storeId){
+    ...on StoreNode{
+      code
+      storeName
+      logo
+      name(storeId: $storeId) {
+      ...on NameNode {
+        address1
+        address2
+        chargeCode
+        code
+        comment
+        country
+        email
+        name
+        phone
+        website
+        }
+      }
+    } 
+  }
+}
+
