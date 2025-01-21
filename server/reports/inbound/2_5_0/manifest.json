@@ -1,12 +1,12 @@
 {
   "is_custom": false,
-  "version": "2.3.0",
-  "code": "repack",
-  "context": "REPACK",
+  "version": "2.5.0",
+  "code": "inbound",
+  "context": "INBOUND_SHIPMENT",
   "sub_context": "picklist",
-  "name": "repack",
+  "name": "Inbound",
   "queries": {
-    "gql": "repack.graphql"
+    "gql": "inbound.graphql"
   },
   "arguments": {},
   "header": "header.html",

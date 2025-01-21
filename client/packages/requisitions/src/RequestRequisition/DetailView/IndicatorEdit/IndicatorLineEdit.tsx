@@ -116,6 +116,9 @@ export const IndicatorLineEdit = ({
       .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
       .sort((a, b) => a.columnNumber - b.columnNumber) || [];
   const { store } = useAuthContext();
+  const showInfo =
+    store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders &&
+    !!currentLine?.customerIndicatorInfo;
 
   return (
     <>
@@ -129,12 +132,11 @@ export const IndicatorLineEdit = ({
           />
         ))}
       </Box>
-      {store?.preferences
-        .useConsumptionAndStockFromCustomersForInternalOrders && (
+      {showInfo && (
         <Box paddingTop={1} maxHeight={200} width="100%" display="flex">
           <CustomerIndicatorInfoView
             columns={columns}
-            customerInfos={currentLine?.customerIndicatorInfo || []}
+            customerInfos={currentLine?.customerIndicatorInfo}
           />
         </Box>
       )}

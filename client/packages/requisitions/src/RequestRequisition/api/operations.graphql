@@ -172,6 +172,7 @@ fragment Request on RequisitionNode {
     endDate
   }
   orderType
+  isEmergency
 }
 
 fragment ConsumptionHistory on ConsumptionHistoryNode {
