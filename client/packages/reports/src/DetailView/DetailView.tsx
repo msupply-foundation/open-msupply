@@ -72,9 +72,9 @@ const DetailViewInner = ({
   >();
 
   useEffect(() => {
-    setCustomBreadcrumbs({ 1: 
-                           t(`report.${translationReportName(report.name)}` as LocaleKey)
-      ?? '' });
+    setCustomBreadcrumbs({
+      1: t(`report.${translationReportName(report.name)}` as LocaleKey) ?? '',
+    });
 
     // Initial report generation
     if (!report.argumentSchema) {
