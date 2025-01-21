@@ -93,29 +93,26 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
     return newOptions;
   }, [pages]);
 
-  const defaultRenderInput = (props: AutocompleteRenderInputParams) => {
-    // console.log(props.inputProps.value);
-    return (
-      <BasicTextInput
-        {...props}
-        {...inputProps}
-        autoFocus={autoFocus}
-        InputProps={{
-          ...props.InputProps,
-          disableUnderline: false,
-          endAdornment: (
-            <>
-              {isLoading || loading ? (
-                <CircularProgress color="primary" size={18} />
-              ) : null}
-              {props.InputProps.endAdornment}
-            </>
-          ),
-        }}
-        sx={{ width }}
-      />
-    );
-  };
+  const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
+    <BasicTextInput
+      {...props}
+      {...inputProps}
+      autoFocus={autoFocus}
+      InputProps={{
+        ...props.InputProps,
+        disableUnderline: false,
+        endAdornment: (
+          <>
+            {isLoading || loading ? (
+              <CircularProgress color="primary" size={18} />
+            ) : null}
+            {props.InputProps.endAdornment}
+          </>
+        ),
+      }}
+      sx={{ width }}
+    />
+  );
 
   const DefaultRenderOption: FC = (
     props: React.HTMLAttributes<HTMLLIElement>,
