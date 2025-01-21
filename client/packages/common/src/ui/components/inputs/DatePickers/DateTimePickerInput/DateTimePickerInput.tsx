@@ -1,18 +1,18 @@
 import React, { FC, useState } from 'react';
 import { DateTimePicker, DateTimePickerProps } from '@mui/x-date-pickers';
-import { BasicTextInput } from '../../TextInput/BasicTextInput';
 import { useAppTheme } from '@common/styles';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
 import { DateUtils, useIntlUtils, useTranslation } from '@common/intl';
 import { getFormattedDateError } from '../BaseDatePickerInput';
 import { useBufferState } from '@common/hooks';
+import { DeprecatedBasicTextInput } from '../../TextInput';
 
 const TextField = (params: TextFieldProps) => {
   const textInputProps: StandardTextFieldProps = {
     ...params,
     variant: 'standard',
   };
-  return <BasicTextInput {...textInputProps} />;
+  return <DeprecatedBasicTextInput {...textInputProps} />;
 };
 
 export const DateTimePickerInput: FC<
