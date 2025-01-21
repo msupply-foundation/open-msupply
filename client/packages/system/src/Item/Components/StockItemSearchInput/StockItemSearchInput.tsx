@@ -5,7 +5,6 @@ import {
   useTranslation,
   AutocompleteWithPagination as Autocomplete,
   defaultOptionMapper,
-  useDebounceCallback,
   useStringFilter,
   AutocompleteRenderInputParams,
   BasicTextInput,
@@ -31,6 +30,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
 }) => {
   const { filter, onFilter } = useStringFilter('codeOrName');
   const [search, setSearch] = useState('');
+  const [searchCode, setSearchCode] = useState('');
 
   const fullFilter = itemCategoryName
     ? { ...filter, categoryName: itemCategoryName }
@@ -85,7 +85,10 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
         currentItem ? { ...currentItem, label: currentItem.name ?? '' } : null
       }
       noOptionsText={t('error.no-items')}
-      onChange={(_, item) => onChange(item)}
+      onChange={(_, item) => {
+        setSearchCode(item?.code ?? '');
+        onChange(item);
+      }}
       getOptionLabel={option => `${option.code} ${option.name}`}
       renderOption={getItemOptionRenderer(
         t('label.units'),
@@ -100,7 +103,6 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
         if (e?.type === 'click' || e?.type === 'keydown') {
           setSearch(value);
         }
-        debounceOnFilter(search);
       }}
       paginationDebounce={DEBOUNCE_TIMEOUT}
       onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
@@ -121,7 +123,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
               if (!!currentItem) {
                 onChange(null);
               }
-              // debounceOnFilter(e.target.value); // maybe
+              debounceOnFilter(e.target.value.replace(`${searchCode} `, ''));
             }}
             // {...inputProps}
             autoFocus={autoFocus}
