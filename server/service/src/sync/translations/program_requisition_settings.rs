@@ -89,10 +89,6 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
-        if !data.is_program {
-            return Ok(PullTranslateResult::NotMatched);
-        }
-
         let upserts = generate_requisition_program(connection, data.clone())?;
         let deletes = delete_requisition_program(connection, data)?;
 
@@ -194,6 +190,11 @@ fn generate_requisition_program(
         context_id: context_row.id.clone(),
         is_immunisation: master_list.is_immunisation.unwrap_or(false),
         elmis_code: program_settings.elmis_code.clone(),
+        deleted_datetime: if master_list.is_program {
+            None
+        } else {
+            Some(chrono::Utc::now().naive_utc())
+        },
     };
 
     let mut program_requisition_settings_rows = Vec::new();

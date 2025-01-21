@@ -1,8 +1,5 @@
 use super::{
-    name_link_row::{name_link, name_link::dsl as name_link_dsl},
-    name_row::{name, name::dsl as name_dsl},
-    name_store_join::{name_store_join, name_store_join::dsl as name_store_join_dsl},
-    store_row::{store, store::dsl as store_dsl},
+    name_link_row::name_link, name_row::name, name_store_join::name_store_join, store_row::store,
     DBType, NameRow, NameStoreJoinRow, StorageConnection, StoreRow,
 };
 
@@ -133,19 +130,19 @@ impl<'a> NameRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 NameSortField::Name => {
-                    apply_sort_no_case!(query, sort, name_dsl::name_);
+                    apply_sort_no_case!(query, sort, name::name_);
                 }
                 NameSortField::Code => {
-                    apply_sort_no_case!(query, sort, name_dsl::code);
+                    apply_sort_no_case!(query, sort, name::code);
                 }
-                NameSortField::Phone => apply_sort_no_case!(query, sort, name_dsl::phone),
-                NameSortField::Address1 => apply_sort_no_case!(query, sort, name_dsl::address1),
-                NameSortField::Address2 => apply_sort_no_case!(query, sort, name_dsl::address2),
-                NameSortField::Country => apply_sort_no_case!(query, sort, name_dsl::country),
-                NameSortField::Email => apply_sort_no_case!(query, sort, name_dsl::email),
+                NameSortField::Phone => apply_sort_no_case!(query, sort, name::phone),
+                NameSortField::Address1 => apply_sort_no_case!(query, sort, name::address1),
+                NameSortField::Address2 => apply_sort_no_case!(query, sort, name::address2),
+                NameSortField::Country => apply_sort_no_case!(query, sort, name::country),
+                NameSortField::Email => apply_sort_no_case!(query, sort, name::email),
             }
         } else {
-            query = query.order(name_dsl::id.asc())
+            query = query.order(name::id.asc())
         }
 
         let final_query = query
@@ -168,18 +165,18 @@ impl<'a> NameRepository<'a> {
     /// Names will still be present in result even if name_store_join doesn't match store_id in parameters
     /// but it's considered invisible in subsequent filters.
     pub fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedNameQuery {
-        let mut query = name_dsl::name
+        let mut query = name::table
             .inner_join(
-                name_link_dsl::name_link
+                name_link::table
                     .left_join(
-                        name_store_join_dsl::name_store_join.on(name_store_join_dsl::name_link_id
-                            .eq(name_link_dsl::id)
-                            .and(name_store_join_dsl::store_id.eq(store_id.clone()))),
+                        name_store_join::table.on(name_store_join::name_link_id
+                            .eq(name_link::id)
+                            .and(name_store_join::store_id.eq(store_id.clone()))),
                     )
-                    .left_join(store_dsl::store),
+                    .left_join(store::table),
             )
             .inner_join(name_oms_fields_alias)
-            .filter(name_dsl::type_.ne(NameRowType::Patient))
+            .filter(name::type_.ne(NameRowType::Patient))
             .into_boxed();
 
         if let Some(f) = filter {
@@ -207,62 +204,62 @@ impl<'a> NameRepository<'a> {
 
             // or filter need to be applied before and filters
             if code_or_name.is_some() {
-                apply_string_filter!(query, code_or_name.clone(), name_dsl::code);
-                apply_string_or_filter!(query, code_or_name, name_dsl::name_);
+                apply_string_filter!(query, code_or_name.clone(), name::code);
+                apply_string_or_filter!(query, code_or_name, name::name_);
             }
 
-            apply_equal_filter!(query, id, name_dsl::id);
-            apply_string_filter!(query, code, name_dsl::code);
+            apply_equal_filter!(query, id, name::id);
+            apply_string_filter!(query, code, name::code);
 
-            apply_string_filter!(query, name, name_dsl::name_);
-            apply_string_filter!(query, store_code, store_dsl::code);
+            apply_string_filter!(query, name, name::name_);
+            apply_string_filter!(query, store_code, store::code);
 
             let r#type = r#type.map(|r| r.convert_filter::<NameRowType>());
-            apply_equal_filter!(query, r#type, name_dsl::type_);
+            apply_equal_filter!(query, r#type, name::type_);
 
-            apply_string_filter!(query, phone, name_dsl::phone);
-            apply_string_filter!(query, address1, name_dsl::address1);
-            apply_string_filter!(query, address2, name_dsl::address2);
-            apply_string_filter!(query, country, name_dsl::country);
-            apply_string_filter!(query, email, name_dsl::email);
-            apply_equal_filter!(query, supplying_store_id, name_dsl::supplying_store_id);
+            apply_string_filter!(query, phone, name::phone);
+            apply_string_filter!(query, address1, name::address1);
+            apply_string_filter!(query, address2, name::address2);
+            apply_string_filter!(query, country, name::country);
+            apply_string_filter!(query, email, name::email);
+            apply_equal_filter!(query, supplying_store_id, name::supplying_store_id);
 
             if let Some(is_customer) = is_customer {
-                query = query.filter(name_store_join_dsl::name_is_customer.eq(is_customer));
+                query = query.filter(name_store_join::name_is_customer.eq(is_customer));
             }
             if let Some(is_supplier) = is_supplier {
-                query = query.filter(name_store_join_dsl::name_is_supplier.eq(is_supplier));
+                query = query.filter(name_store_join::name_is_supplier.eq(is_supplier));
             }
             if let Some(is_manufacturer) = is_manufacturer {
-                query = query.filter(name_dsl::is_manufacturer.eq(is_manufacturer));
+                query = query.filter(name::is_manufacturer.eq(is_manufacturer));
             }
 
             query = match is_donor {
-                Some(bool) => query.filter(name_dsl::is_donor.eq(bool)),
+                Some(bool) => query.filter(name::is_donor.eq(bool)),
                 None => query,
             };
 
             query = match is_visible {
-                Some(true) => query.filter(name_store_join_dsl::id.is_not_null()),
-                Some(false) => query.filter(name_store_join_dsl::id.is_null()),
+                Some(true) => query.filter(name_store_join::id.is_not_null()),
+                Some(false) => query.filter(name_store_join::id.is_null()),
                 None => query,
             };
 
             query = match is_system_name {
-                Some(true) => query.filter(name_dsl::code.eq_any(SYSTEM_NAME_CODES)),
-                Some(false) => query.filter(name_dsl::code.ne_all(SYSTEM_NAME_CODES)),
+                Some(true) => query.filter(name::code.eq_any(SYSTEM_NAME_CODES)),
+                Some(false) => query.filter(name::code.ne_all(SYSTEM_NAME_CODES)),
                 None => query,
             };
 
             query = match is_store {
-                Some(true) => query.filter(store_dsl::id.is_not_null()),
-                Some(false) => query.filter(store_dsl::id.is_null()),
+                Some(true) => query.filter(store::id.is_not_null()),
+                Some(false) => query.filter(store::id.is_null()),
                 None => query,
             };
         };
 
         // Only return active (not deleted) names
-        query = query.filter(name_dsl::deleted_datetime.is_null());
+        query = query.filter(name::deleted_datetime.is_null());
         query
     }
 }
@@ -288,10 +285,10 @@ impl Name {
     }
 }
 
-// name_store_join_dsl::name_id.eq(name_dsl::id)
-type NameLinkIdEqualToId = Eq<name_store_join_dsl::name_link_id, name_link_dsl::id>;
-// name_store_join_dsl::store_id.eq(store_id)
-type StoreIdEqualToStr = Eq<name_store_join_dsl::store_id, String>;
+// name_store_join::name_id.eq(name::id)
+type NameLinkIdEqualToId = Eq<name_store_join::name_link_id, name_link::id>;
+// name_store_join::store_id.eq(store_id)
+type StoreIdEqualToStr = Eq<name_store_join::store_id, String>;
 type OnNameStoreJoinToNameLinkJoin =
     On<name_store_join::table, And<NameLinkIdEqualToId, StoreIdEqualToStr>>;
 

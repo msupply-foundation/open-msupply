@@ -1,7 +1,4 @@
-use super::{
-    inventory_adjustment_reason_row::inventory_adjustment_reason::dsl as inventory_adjustment_reason_dsl,
-    StorageConnection,
-};
+use super::StorageConnection;
 
 use crate::{repository_error::RepositoryError, Delete, Upsert};
 
@@ -57,9 +54,9 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &InventoryAdjustmentReasonRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
+        diesel::insert_into(inventory_adjustment_reason::table)
             .values(row)
-            .on_conflict(inventory_adjustment_reason_dsl::id)
+            .on_conflict(inventory_adjustment_reason::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -70,16 +67,16 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
         &self,
         id: &str,
     ) -> Result<Option<InventoryAdjustmentReasonRow>, RepositoryError> {
-        let result = inventory_adjustment_reason_dsl::inventory_adjustment_reason
-            .filter(inventory_adjustment_reason_dsl::id.eq(id))
+        let result = inventory_adjustment_reason::table
+            .filter(inventory_adjustment_reason::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, inventory_adjustment_reason_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
-            .filter(inventory_adjustment_reason_dsl::id.eq(inventory_adjustment_reason_id))
+        diesel::delete(inventory_adjustment_reason::table)
+            .filter(inventory_adjustment_reason::id.eq(inventory_adjustment_reason_id))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

@@ -1,7 +1,4 @@
-use super::{
-    location_row::location, sensor_row::sensor, store_row::store,
-    temperature_breach_row::temperature_breach::dsl as temperature_breach_dsl, StorageConnection,
-};
+use super::{location_row::location, sensor_row::sensor, store_row::store, StorageConnection};
 
 use crate::{repository_error::RepositoryError, Upsert};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
@@ -77,9 +74,9 @@ impl<'a> TemperatureBreachRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &TemperatureBreachRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(temperature_breach_dsl::temperature_breach)
+        diesel::insert_into(temperature_breach::table)
             .values(row)
-            .on_conflict(temperature_breach_dsl::id)
+            .on_conflict(temperature_breach::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -106,8 +103,8 @@ impl<'a> TemperatureBreachRowRepository<'a> {
         &self,
         id: &str,
     ) -> Result<Option<TemperatureBreachRow>, RepositoryError> {
-        let result = temperature_breach_dsl::temperature_breach
-            .filter(temperature_breach_dsl::id.eq(id))
+        let result = temperature_breach::table
+            .filter(temperature_breach::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -117,8 +114,8 @@ impl<'a> TemperatureBreachRowRepository<'a> {
         &self,
         ids: &[String],
     ) -> Result<Vec<TemperatureBreachRow>, RepositoryError> {
-        Ok(temperature_breach_dsl::temperature_breach
-            .filter(temperature_breach_dsl::id.eq_any(ids))
+        Ok(temperature_breach::table
+            .filter(temperature_breach::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
 }

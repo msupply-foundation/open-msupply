@@ -201,6 +201,7 @@ const useUpdate = (id: string) => {
       ...patch,
       id,
       status: mapStatus(patch),
+      clinicianId: setNullableInput('clinicianId', patch),
       diagnosisId: setNullableInput('diagnosisId', patch),
     };
     const result =

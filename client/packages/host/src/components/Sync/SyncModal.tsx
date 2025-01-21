@@ -140,8 +140,8 @@ export const SyncModal = ({
           <Typography sx={{ paddingBottom: 2, fontSize: 12, maxWidth: 650 }}>
             {t('sync-info.summary')
               .split('\n')
-              .map(line => (
-                <div>{line}</div>
+              .map((line, index) => (
+                <div key={index}>{line}</div>
               ))}
           </Typography>
           <Row title={t('sync-info.number-to-push')}>

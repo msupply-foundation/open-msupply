@@ -45,7 +45,7 @@ const ItemLedgerTable = ({
         key: 'type',
         label: 'label.type',
         accessor: ({ rowData }) =>
-          t(getInvoiceLocalisationKey(rowData.invoiceType)),
+          `${t(getInvoiceLocalisationKey(rowData.invoiceType))} #${rowData.invoiceNumber}`,
         sortable: false,
       },
       {
@@ -59,13 +59,6 @@ const ItemLedgerTable = ({
         label: 'label.time',
         accessor: ({ rowData }) => localisedTime(rowData.datetime),
         sortable: false,
-      },
-      {
-        key: 'number',
-        label: 'label.invoice-number',
-        accessor: ({ rowData }) => rowData.invoiceNumber,
-        sortable: false,
-        width: 90,
       },
       {
         key: 'name',
@@ -99,6 +92,7 @@ const ItemLedgerTable = ({
       {
         key: 'numberOfPacks',
         sortable: false,
+        label: 'label.num-packs',
       },
       {
         key: 'quantity',
