@@ -48,7 +48,8 @@
         <th class="item_name" style="width: 25%">{{t(k="report.item-name", f="Item name")}}</th>
         <th class="quantity" style="width: 7%">{{t(k="report.stock-on-hand", f="Stock on hand")}}</th>
         <th class="pack" style="width: 10%">{{t(k="report.AMC", f="AMC")}}</th>
-        <th class="batch" style="width: 8%">{{t(k="label.batch", f="batch")}}</th>
+        <th class="stock_to_order" style="width:
+        8%">{{t(k="report.stock-to-order", f="Stock to order")}}</th>
         <th class="expiry" style="width: 8%">{{t(k="report.suggested-qty", f="Suggested Qty")}}</th>
         <th class="sell_price" style="width: 7%">{{t(k="report.requested-qty", f="Requested Qty")}}</th>
       </tr>
@@ -61,7 +62,7 @@
         <td class="item_name" style="width: 25%">{{ line.item.name }}</td>
         <td class="quantity" style="width: 8%">{{ line.itemStats.availableStockOnHand }}</td>
         <td class="pack" style="width: 10%">{{ line.itemStats.averageMonthlyConsumption | round(precision=2) }}</td>
-        <td class="batch" style="width: 8%">
+        <td class="stock_to_order" style="width: 8%">
           {{ data.requisition.maxMonthsOfStock * line.itemStats.averageMonthlyConsumption }}
         </td>
         <td class="batch" style="width: 8%">{{ line.suggestedQuantity }}</td>
