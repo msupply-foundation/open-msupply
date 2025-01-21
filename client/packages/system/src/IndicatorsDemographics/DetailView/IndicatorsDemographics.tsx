@@ -253,8 +253,7 @@ const yearColumn = (year: number, format: (n: number) => string) => ({
   key: String(year),
   width: 150,
   align: ColumnAlign.Right,
-  label: undefined,
-  labelProps: { defaultValue: currentYear + year },
+  label: `${currentYear + year}`,
   sortable: false,
   accessor: ({ rowData }: { rowData: Row }) => {
     // using a switch to appease typescript
