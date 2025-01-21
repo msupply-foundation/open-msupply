@@ -1,9 +1,12 @@
-import React, { FC, ReactElement, ReactNode } from 'react';
+import React, { ReactElement, ReactNode } from 'react';
 import {
   Stack,
   useTranslation,
   Typography,
   FlatButton,
+  CloseIcon,
+  Box,
+  useTableStore,
 } from '@openmsupply-client/common';
 
 export interface Action {
@@ -19,42 +22,48 @@ interface ActionsFooterProps {
   selectedRowCount: number;
 }
 
-export const ActionsFooter: FC<ActionsFooterProps> = ({
+export function ActionsFooter({
   actions,
   selectedRowCount,
-}): ReactElement => {
+}: ActionsFooterProps): ReactElement {
   const t = useTranslation();
+  const { removeSelectedRows } = useTableStore();
+
   return (
     <Stack
+      p={4}
+      mx="-20px"
+      height={64}
       direction="row"
       alignItems="center"
-      height={64}
-      gap={4}
-      sx={{
-        p: 4,
-        mx: '-20px',
-        boxShadow: theme => `0 -5px 10px -5px ${theme.palette.grey[400]}`,
-      }}
+      justifyContent="space-between"
+      boxShadow={theme => `0 -5px 10px -5px ${theme.palette.grey[400]}`}
     >
-      <Typography
-        sx={{
-          pr: 1,
-          fontWeight: 'bold',
-        }}
-      >
-        {selectedRowCount} {t('label.selected')}
-      </Typography>
-      {actions.map(({ label, icon, onClick, disabled, shouldShrink }) => (
-        <FlatButton
-          key={label}
-          startIcon={icon}
-          label={label}
-          disabled={disabled}
-          onClick={onClick}
-          // Flatbutton doesn't shrink by default but we want it to in actions footer
-          shouldShrink={shouldShrink ?? true}
-        />
-      ))}
+      <Box gap={4} display="flex" alignItems="center">
+        <Typography
+          sx={{
+            pr: 1,
+            fontWeight: 'bold',
+          }}
+        >
+          {selectedRowCount} {t('label.selected')}
+        </Typography>
+        {actions.map(({ label, icon, onClick, disabled, shouldShrink }) => (
+          <FlatButton
+            key={label}
+            startIcon={icon}
+            label={label}
+            disabled={disabled}
+            onClick={onClick}
+            shouldShrink={shouldShrink ?? true}
+          />
+        ))}
+      </Box>
+      <FlatButton
+        startIcon={<CloseIcon />}
+        label={t('label.clear-selection')}
+        onClick={removeSelectedRows}
+      />
     </Stack>
   );
-};
+}

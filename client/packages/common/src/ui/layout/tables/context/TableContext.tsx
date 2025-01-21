@@ -36,6 +36,7 @@ export interface TableStore {
     shouldReset?: boolean
   ) => void;
   updateRowStyles: (ids: string[], style: AppSxProp) => void;
+  removeSelectedRows: () => void;
 }
 
 export const tableContext = createContext<UseBoundStore<StoreApi<TableStore>>>(
@@ -313,6 +314,30 @@ export const createTableStore = () =>
             }),
             state.rowState
           ),
+        };
+      });
+    },
+
+    removeSelectedRows: () => {
+      set(state => {
+        const newRowState: Record<string, RowState> = Object.keys(
+          state.rowState
+        ).reduce(
+          (newRowState, id) => ({
+            ...newRowState,
+            [id]: getRowState(state, id, { isSelected: false }),
+          }),
+          state.rowState
+        );
+
+        const numberSelected: number = Object.values(newRowState).filter(
+          ({ isSelected }) => isSelected
+        ).length;
+
+        return {
+          ...state,
+          numberSelected,
+          rowState: newRowState,
         };
       });
     },
