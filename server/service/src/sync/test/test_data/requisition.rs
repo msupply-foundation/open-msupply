@@ -84,6 +84,7 @@ fn requisition_request_pull_record() -> TestSyncIncomingRecord {
             program_id: None,
             period_id: None,
             order_type: None,
+            is_emergency: false,
         },
     )
 }
@@ -127,6 +128,7 @@ fn requisition_request_push_record() -> TestSyncOutgoingRecord {
             orderType: None,
             periodID: None,
             programID: None,
+            is_emergency: false,
         }),
     }
 }
@@ -159,7 +161,7 @@ const REQUISITION_RESPONSE: (&str, &str) = (
       "periodID": "641A3560C84A44BC9E6DDC01F3D75923",
       "programID": "F36DBBC6DBCA4528BDA2403CE07CB44F",
       "lastModifiedAt": 1594271180,
-      "is_emergency": false,
+      "is_emergency": true,
       "isRemoteOrder": false
     }"#,
 );
@@ -197,6 +199,7 @@ fn requisition_response_pull_record() -> TestSyncIncomingRecord {
             program_id: Some("missing_program".to_string()),
             period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             order_type: Some("Normal".to_string()),
+            is_emergency: true,
         },
     )
 }
@@ -240,6 +243,7 @@ fn requisition_response_push_record() -> TestSyncOutgoingRecord {
             orderType: Some("Normal".to_string()),
             periodID: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             programID: Some("missing_program".to_string()),
+            is_emergency: true,
         }),
     }
 }
@@ -322,6 +326,7 @@ fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
             program_id: None,
             period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             order_type: Some("Normal".to_string()),
+            is_emergency: false,
         },
     )
 }
@@ -370,6 +375,7 @@ fn requisition_om_fields_push_record() -> TestSyncOutgoingRecord {
             orderType: Some("Normal".to_string()),
             periodID: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             programID: None,
+            is_emergency: false,
         }),
     }
 }
@@ -447,6 +453,7 @@ fn program_requisition_request_pull_record() -> TestSyncIncomingRecord {
             program_id: Some("missing_program".to_string()),
             period_id: Some("772B3984DBA14A5F941ED0EF857FDB31".to_string()),
             order_type: Some("Normal".to_string()),
+            is_emergency: false,
         },
     )
 }
@@ -490,6 +497,7 @@ fn program_requisition_request_push_record() -> TestSyncOutgoingRecord {
             orderType: Some("Normal".to_string()),
             periodID: Some("772B3984DBA14A5F941ED0EF857FDB31".to_string()),
             programID: Some("missing_program".to_string()),
+            is_emergency: false,
         }),
     }
 }
