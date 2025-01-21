@@ -143,9 +143,9 @@ const Actions = () => {
     },
     {
       id: 'navigation:customers',
-      name: `${t('cmdk.goto-customers')} (Ctrl+c)`,
+      name: `${t('cmdk.goto-customers')} (Ctrl+alt+c)`,
       keywords: 'customers',
-      shortcut: ['$mod+KeyC'],
+      shortcut: ['$mod+Alt+KeyC'],
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Distribution)
