@@ -12,6 +12,7 @@ import {
   NumberCell,
   CurrencyCell,
   ColumnDescription,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -24,6 +25,36 @@ interface UsePrescriptionColumnOptions {
 const expansionColumn = getRowExpandColumn<
   StockOutLineFragment | StockOutItem
 >();
+
+export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
+  useColumns([
+    'batch',
+    'expiryDate',
+    [
+      'location',
+      {
+        accessor: ({ rowData }) => rowData.location?.code,
+      },
+    ],
+    [
+      'itemUnit',
+      {
+        accessor: ({ rowData }) => rowData.item?.unitName,
+      },
+    ],
+    'numberOfPacks',
+    'packSize',
+    [
+      'unitQuantity',
+      {
+        accessor: ({ rowData }) =>
+          NumUtils.round(
+            (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
+            3
+          ),
+      },
+    ],
+  ]);
 
 export const usePrescriptionColumn = ({
   sortBy,

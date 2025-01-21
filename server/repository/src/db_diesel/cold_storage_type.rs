@@ -1,8 +1,5 @@
 use super::{
-    cold_storage_type_row::cold_storage_type::{
-        self, dsl as cold_storage_type_dsl, max_temperature,
-    },
-    ColdStorageTypeRow, DBType, StorageConnection,
+    cold_storage_type_row::cold_storage_type, ColdStorageTypeRow, DBType, StorageConnection,
 };
 
 use diesel::{dsl::not, prelude::*};
@@ -66,14 +63,14 @@ impl<'a> ColdStorageTypeRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 ColdStorageTypeSortField::Id => {
-                    apply_sort_no_case!(query, sort, cold_storage_type_dsl::id)
+                    apply_sort_no_case!(query, sort, cold_storage_type::id)
                 }
                 ColdStorageTypeSortField::Name => {
-                    apply_sort!(query, sort, cold_storage_type_dsl::name)
+                    apply_sort!(query, sort, cold_storage_type::name)
                 }
             }
         } else {
-            query = query.order(cold_storage_type_dsl::name.desc())
+            query = query.order(cold_storage_type::name.desc())
         }
 
         // Debug diesel query
@@ -93,18 +90,18 @@ impl<'a> ColdStorageTypeRepository<'a> {
     pub fn create_filtered_query(
         filter: Option<ColdStorageTypeFilter>,
     ) -> BoxedColdStorageTypeQuery {
-        let mut query = cold_storage_type_dsl::cold_storage_type.into_boxed();
+        let mut query = cold_storage_type::table.into_boxed();
         // Any cold storage types that don't have temperature set (OdegC to 0degC default value) are invalid => filter out
 
-        query = query.filter(not(cold_storage_type_dsl::min_temperature
+        query = query.filter(not(cold_storage_type::min_temperature
             .eq(0.0)
-            .and(max_temperature.eq(0.0))));
+            .and(cold_storage_type::max_temperature.eq(0.0))));
 
         if let Some(f) = filter {
             let ColdStorageTypeFilter { id, name } = f;
 
-            apply_equal_filter!(query, id, cold_storage_type_dsl::id);
-            apply_equal_filter!(query, name, cold_storage_type_dsl::name);
+            apply_equal_filter!(query, id, cold_storage_type::id);
+            apply_equal_filter!(query, name, cold_storage_type::name);
         }
 
         query

@@ -1,7 +1,4 @@
-use super::{
-    demographic_row::{demographic, demographic::dsl as demographic_dsl},
-    DBType, StorageConnection,
-};
+use super::{demographic_row::demographic, DBType, StorageConnection};
 use diesel::prelude::*;
 
 use crate::{
@@ -61,14 +58,14 @@ impl<'a> DemographicRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 DemographicSortField::Id => {
-                    apply_sort_no_case!(query, sort, demographic_dsl::id)
+                    apply_sort_no_case!(query, sort, demographic::id)
                 }
                 DemographicSortField::Name => {
-                    apply_sort_no_case!(query, sort, demographic_dsl::name)
+                    apply_sort_no_case!(query, sort, demographic::name)
                 }
             }
         } else {
-            query = query.order(demographic_dsl::name.asc())
+            query = query.order(demographic::name.asc())
         }
 
         let final_query = query
@@ -87,8 +84,8 @@ fn create_filtered_query(filter: Option<DemographicFilter>) -> BoxedLogQuery {
     let mut query = demographic::table.into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, demographic_dsl::id);
-        apply_string_filter!(query, filter.name, demographic_dsl::name);
+        apply_equal_filter!(query, filter.id, demographic::id);
+        apply_string_filter!(query, filter.name, demographic::name);
     }
     query
 }

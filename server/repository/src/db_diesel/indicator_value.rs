@@ -28,6 +28,11 @@ pub struct IndicatorValueFilter {
     pub indicator_column_id: Option<EqualFilter<String>>,
 }
 
+pub struct IndicatorValue {
+    pub indicator_value_row: IndicatorValueRow,
+    pub name_row: NameRow,
+}
+
 type IndicatorValueJoin = (IndicatorValueRow, (NameLinkRow, NameRow));
 
 impl IndicatorValueFilter {
@@ -76,14 +81,14 @@ impl<'a> IndicatorValueRepository<'a> {
     pub fn query_one(
         &self,
         filter: IndicatorValueFilter,
-    ) -> Result<Option<IndicatorValueRow>, RepositoryError> {
+    ) -> Result<Option<IndicatorValue>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
         &self,
         filter: IndicatorValueFilter,
-    ) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
+    ) -> Result<Vec<IndicatorValue>, RepositoryError> {
         self.query(Pagination::all(), Some(filter))
     }
 
@@ -116,7 +121,7 @@ impl<'a> IndicatorValueRepository<'a> {
         &self,
         pagination: Pagination,
         filter: Option<IndicatorValueFilter>,
-    ) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
+    ) -> Result<Vec<IndicatorValue>, RepositoryError> {
         let query = Self::create_filtered_query(filter);
 
         // Debug diesel query
@@ -131,15 +136,10 @@ impl<'a> IndicatorValueRepository<'a> {
     }
 }
 
-fn to_domain((indicator_value_row, (name_link_row, _)): IndicatorValueJoin) -> IndicatorValueRow {
-    IndicatorValueRow {
-        id: indicator_value_row.id,
-        customer_name_link_id: name_link_row.id,
-        store_id: indicator_value_row.store_id,
-        period_id: indicator_value_row.period_id,
-        indicator_line_id: indicator_value_row.indicator_line_id,
-        indicator_column_id: indicator_value_row.indicator_column_id,
-        value: indicator_value_row.value,
+fn to_domain((indicator_value_row, (_, name_row)): IndicatorValueJoin) -> IndicatorValue {
+    IndicatorValue {
+        indicator_value_row,
+        name_row,
     }
 }
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   BasicSpinner,
   DetailContainer,
@@ -63,6 +63,14 @@ export const IndicatorEditPage = () => {
     );
   }, [programIndicatorLineId, programIndicators]);
 
+  // This ref is attached to the currently selected list item, and is used to
+  // "scroll into view" when the Previous/Next buttons are clicked in the NavBar
+  const scrollRef = useRef<null | HTMLLIElement>(null);
+  const scrollSelectedItemIntoView = () =>
+    // Small time delay to allow the ref to change to the previous/next item in
+    // the list before scrolling to it
+    setTimeout(() => scrollRef.current?.scrollIntoView(), 100);
+
   if (isLoading || isProgramIndicatorsLoading) {
     return <BasicSpinner />;
   }
@@ -85,6 +93,7 @@ export const IndicatorEditPage = () => {
                   .addPart(String(response?.requisitionNumber))
                   .addPart(AppRoute.Indicators)
                   .addPart(String(programIndicatorCode))}
+                scrollRef={scrollRef}
               />
             </>
           }
@@ -98,6 +107,7 @@ export const IndicatorEditPage = () => {
                 previous={previous}
                 requisitionNumber={response?.requisitionNumber}
                 disabled={isDisabled}
+                scrollIntoView={scrollSelectedItemIntoView}
               />
             </>
           }

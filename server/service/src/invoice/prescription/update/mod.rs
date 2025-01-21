@@ -29,7 +29,7 @@ pub struct UpdatePrescription {
     pub id: String,
     pub status: Option<UpdatePrescriptionStatus>,
     pub patient_id: Option<String>,
-    pub clinician_id: Option<String>,
+    pub clinician_id: Option<NullableUpdate<String>>,
     pub comment: Option<String>,
     pub colour: Option<String>,
     pub backdated_datetime: Option<NaiveDateTime>,

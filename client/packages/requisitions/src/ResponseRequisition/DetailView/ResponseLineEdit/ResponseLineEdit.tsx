@@ -45,6 +45,7 @@ interface ResponseLineEditProps {
   requisitionNumber?: number;
   requisitionId: string;
   insert: (patch: InsertResponseRequisitionLineInput) => void;
+  scrollIntoView: () => void;
 }
 
 export const ResponseLineEdit = ({
@@ -61,6 +62,7 @@ export const ResponseLineEdit = ({
   requisitionNumber,
   requisitionId,
   insert,
+  scrollIntoView,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
@@ -489,7 +491,7 @@ export const ResponseLineEdit = ({
                   />
                 }
                 sx={{ width: 275 }}
-                labelWidth={'75px'}
+                labelWidth={LABEL_WIDTH}
                 label={t('label.comment')}
               />
             </Box>
@@ -503,6 +505,7 @@ export const ResponseLineEdit = ({
           hasPrevious={hasPrevious}
           previous={previous}
           requisitionNumber={draft?.requisitionNumber}
+          scrollIntoView={scrollIntoView}
         />
       </Box>
     </Box>

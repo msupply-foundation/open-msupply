@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   BasicSpinner,
   DetailContainer,
@@ -38,6 +38,14 @@ export const RequestLineEditPage = () => {
     : [];
   const isProgram = !!data?.programName;
 
+  // This ref is attached to the currently selected list item, and is used to
+  // "scroll into view" when the Previous/Next buttons are clicked in the NavBar
+  const scrollRef = useRef<null | HTMLLIElement>(null);
+  const scrollSelectedItemIntoView = () =>
+    // Small time delay to allow the ref to change to the previous/next item in
+    // the list before scrolling to it
+    setTimeout(() => scrollRef.current?.scrollIntoView(), 100);
+
   useEffect(() => {
     setCustomBreadcrumbs({
       2: currentItem?.name || '',
@@ -53,41 +61,39 @@ export const RequestLineEditPage = () => {
       <DetailContainer>
         <PageLayout
           Left={
-            <>
-              <ListItems
-                currentItemId={itemId}
-                items={lines?.map(l => l.item)}
-                route={RouteBuilder.create(AppRoute.Replenishment)
-                  .addPart(AppRoute.InternalOrder)
-                  .addPart(String(requisitionNumber))}
-                enteredLineIds={enteredLineIds}
-                showNew={
-                  data?.status !== RequisitionNodeStatus.Sent && !isProgram
-                }
-              />
-            </>
+            <ListItems
+              currentItemId={itemId}
+              items={lines?.map(l => l.item)}
+              route={RouteBuilder.create(AppRoute.Replenishment)
+                .addPart(AppRoute.InternalOrder)
+                .addPart(String(requisitionNumber))}
+              enteredLineIds={enteredLineIds}
+              showNew={
+                data?.status !== RequisitionNodeStatus.Sent && !isProgram
+              }
+              scrollRef={scrollRef}
+            />
           }
           Right={
-            <>
-              <RequestLineEdit
-                item={currentItem}
-                draft={draft}
-                update={update}
-                save={save}
-                hasNext={hasNext}
-                next={next}
-                hasPrevious={hasPrevious}
-                previous={previous}
-                isProgram={isProgram}
-                isPacksEnabled={isPacksEnabled}
-                isPacks={isPacks}
-                setIsPacks={setIsPacks}
-                insert={mutateAsync}
-                requisitionId={data?.id ?? ''}
-                requisitionNumber={data?.requisitionNumber}
-                lines={lines}
-              />
-            </>
+            <RequestLineEdit
+              item={currentItem}
+              draft={draft}
+              update={update}
+              save={save}
+              hasNext={hasNext}
+              next={next}
+              hasPrevious={hasPrevious}
+              previous={previous}
+              isProgram={isProgram}
+              isPacksEnabled={isPacksEnabled}
+              isPacks={isPacks}
+              setIsPacks={setIsPacks}
+              insert={mutateAsync}
+              requisitionId={data?.id ?? ''}
+              requisitionNumber={data?.requisitionNumber}
+              lines={lines}
+              scrollIntoView={scrollSelectedItemIntoView}
+            />
           }
         />
       </DetailContainer>

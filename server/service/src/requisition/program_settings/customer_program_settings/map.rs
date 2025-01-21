@@ -19,7 +19,8 @@ pub(super) fn map_customer_program_settings(
                 .iter()
                 .filter(|(customer, _)| {
                     customer.program.id == program_setting.program_row.id
-                        || customer.program.elmis_code == program_setting.program_row.elmis_code
+                        || (customer.program.elmis_code == program_setting.program_row.elmis_code
+                            && customer.program.elmis_code.is_some())
                 })
                 .map(|(customer, requisitions_in_periods)| {
                     // Filter available periods for program settings for the customer

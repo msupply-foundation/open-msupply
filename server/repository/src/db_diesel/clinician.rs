@@ -1,8 +1,6 @@
 use super::{
-    clinician_link_row::clinician_link::dsl as clinician_link_dsl,
-    clinician_row::{clinician, clinician::dsl as clinician_dsl},
-    clinician_store_join_row::clinician_store_join::dsl as clinician_store_join_dsl,
-    DBType, StorageConnection,
+    clinician_link_row::clinician_link, clinician_row::clinician,
+    clinician_store_join_row::clinician_store_join, DBType, StorageConnection,
 };
 
 use crate::{
@@ -91,31 +89,31 @@ impl<'a> ClinicianRepository<'a> {
 
         if let Some(sort) = sort {
             match sort.key {
-                ClinicianSortField::Code => apply_sort_no_case!(query, sort, clinician_dsl::code),
+                ClinicianSortField::Code => apply_sort_no_case!(query, sort, clinician::code),
                 ClinicianSortField::FirstName => {
-                    apply_sort_no_case!(query, sort, clinician_dsl::first_name)
+                    apply_sort_no_case!(query, sort, clinician::first_name)
                 }
                 ClinicianSortField::LastName => {
-                    apply_sort_no_case!(query, sort, clinician_dsl::last_name)
+                    apply_sort_no_case!(query, sort, clinician::last_name)
                 }
                 ClinicianSortField::Initials => {
-                    apply_sort_no_case!(query, sort, clinician_dsl::initials)
+                    apply_sort_no_case!(query, sort, clinician::initials)
                 }
 
                 ClinicianSortField::Address1 => {
-                    apply_sort_no_case!(query, sort, clinician_dsl::address1)
+                    apply_sort_no_case!(query, sort, clinician::address1)
                 }
                 ClinicianSortField::Address2 => {
-                    apply_sort_no_case!(query, sort, clinician_dsl::address2)
+                    apply_sort_no_case!(query, sort, clinician::address2)
                 }
-                ClinicianSortField::Phone => apply_sort_no_case!(query, sort, clinician_dsl::phone),
+                ClinicianSortField::Phone => apply_sort_no_case!(query, sort, clinician::phone),
                 ClinicianSortField::Mobile => {
-                    apply_sort_no_case!(query, sort, clinician_dsl::mobile)
+                    apply_sort_no_case!(query, sort, clinician::mobile)
                 }
-                ClinicianSortField::Email => apply_sort_no_case!(query, sort, clinician_dsl::email),
+                ClinicianSortField::Email => apply_sort_no_case!(query, sort, clinician::email),
             }
         } else {
-            query = query.order(clinician_dsl::id.asc())
+            query = query.order(clinician::id.asc())
         }
 
         let final_query = query
@@ -137,7 +135,7 @@ impl<'a> ClinicianRepository<'a> {
 type BoxedClinicianQuery = IntoBoxed<'static, clinician::table, DBType>;
 
 fn create_filtered_query(store_id: String, filter: Option<ClinicianFilter>) -> BoxedClinicianQuery {
-    let mut query = clinician_dsl::clinician.into_boxed();
+    let mut query = clinician::table.into_boxed();
 
     if let Some(f) = filter {
         let ClinicianFilter {
@@ -153,25 +151,25 @@ fn create_filtered_query(store_id: String, filter: Option<ClinicianFilter>) -> B
             email,
         } = f;
 
-        apply_equal_filter!(query, id, clinician_dsl::id);
-        apply_string_filter!(query, code, clinician_dsl::code);
-        apply_string_filter!(query, first_name, clinician_dsl::first_name);
-        apply_string_filter!(query, last_name, clinician_dsl::last_name);
-        apply_string_filter!(query, initials, clinician_dsl::initials);
-        apply_string_filter!(query, address1, clinician_dsl::address1);
-        apply_string_filter!(query, address2, clinician_dsl::address2);
-        apply_string_filter!(query, phone, clinician_dsl::phone);
-        apply_string_filter!(query, mobile, clinician_dsl::mobile);
-        apply_string_filter!(query, email, clinician_dsl::email);
+        apply_equal_filter!(query, id, clinician::id);
+        apply_string_filter!(query, code, clinician::code);
+        apply_string_filter!(query, first_name, clinician::first_name);
+        apply_string_filter!(query, last_name, clinician::last_name);
+        apply_string_filter!(query, initials, clinician::initials);
+        apply_string_filter!(query, address1, clinician::address1);
+        apply_string_filter!(query, address2, clinician::address2);
+        apply_string_filter!(query, phone, clinician::phone);
+        apply_string_filter!(query, mobile, clinician::mobile);
+        apply_string_filter!(query, email, clinician::email);
     };
 
     // Restrict results to clinicians belonging to the store as specified in the
-    let sub_query = clinician_store_join_dsl::clinician_store_join
-        .inner_join(clinician_link_dsl::clinician_link)
-        .select(clinician_link_dsl::clinician_id)
-        .filter(clinician_store_join_dsl::store_id.eq(store_id.clone()));
+    let sub_query = clinician_store_join::table
+        .inner_join(clinician_link::table)
+        .select(clinician_link::clinician_id)
+        .filter(clinician_store_join::store_id.eq(store_id.clone()));
 
-    query = query.filter(clinician_dsl::id.eq_any(sub_query));
+    query = query.filter(clinician::id.eq_any(sub_query));
 
     query
 }
