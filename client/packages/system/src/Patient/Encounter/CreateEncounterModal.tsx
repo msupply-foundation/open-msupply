@@ -137,7 +137,11 @@ export const CreateEncounterModal: FC = () => {
   }, [createdDatetime, draft, storeId, user?.id, user?.name]);
   // set the startDatetime from the suggestedNextEncounter
   useEffect(() => {
-    // don't suggest date if there is already an encounter for this day
+    // don't suggest date if already selected
+    if (!!draft?.startDatetime) {
+      return;
+    }
+    // don't use suggested date if there is already an encounter for this day
     if (
       latestEncounter?.suggestedNextEncounter?.startDatetime &&
       latestEncounter?.startDatetime &&
@@ -146,20 +150,24 @@ export const CreateEncounterModal: FC = () => {
         new Date(latestEncounter.startDatetime)
       )
     ) {
+      setDraft({
+        ...currentOrNewDraft(),
+        startDatetime: new Date().toISOString(),
+      });
       return;
     }
     if (
       !latestEncounter?.suggestedNextEncounter ||
-      encounterRegistry?.encounter.documentType !== latestEncounter.type
+      encounterRegistry?.encounter.documentType !== latestEncounter.type ||
+      !suggestedNextInFuture
     ) {
-      return;
-    }
-    // don't suggest date if already selected
-    if (!!draft?.startDatetime) {
+      setDraft({
+        ...currentOrNewDraft(),
+        startDatetime: new Date().toISOString(),
+      });
       return;
     }
 
-    if (!suggestedNextInFuture) return;
     setDraft({
       ...currentOrNewDraft(),
       startDatetime: latestEncounter.suggestedNextEncounter?.startDatetime,
