@@ -22,15 +22,15 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
   const { urlQuery } = useUrlQuery();
   const t = useTranslation();
 
-  let {
-    monthlyConsumptionLookBackPeriod,
+  const {
+    monthlyConsumptionLookBackPeriod: lookbackPeriod,
     defaultMonthlyConsumptionLookBackPeriod,
     monthsOverstock,
     monthsUnderstock,
     monthsItemsExpire,
   } = store?.preferences ?? {};
 
-  monthlyConsumptionLookBackPeriod = monthlyConsumptionLookBackPeriod !== 0.0 ? monthlyConsumptionLookBackPeriod : defaultMonthlyConsumptionLookBackPeriod;
+  const monthlyConsumptionLookBackPeriod = lookbackPeriod !== 0.0 ? lookbackPeriod : defaultMonthlyConsumptionLookBackPeriod;
 
   const [data, setData] = useState<JsonData>({
     monthlyConsumptionLookBackPeriod,
