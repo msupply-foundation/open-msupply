@@ -40,7 +40,13 @@ const Container = ({ children }: { children: React.ReactNode }) => (
     flex={1}
     flexDirection="column"
     alignContent="center"
-    padding={4}
+    sx={theme => ({
+      [theme.breakpoints.down('sm')]: {
+        margin: 0,
+        padding: 0,
+      },
+      padding: 4,
+    })}
   >
     {children}
   </Box>
@@ -57,8 +63,15 @@ const Section = ({
     display="flex"
     flexDirection="column"
     padding={2}
-    paddingRight={4}
-    sx={{ maxWidth: '600px', width: '100%' }}
+    sx={theme => ({
+      [theme.breakpoints.down('sm')]: {
+        margin: 0,
+        padding: 0,
+      },
+      maxWidth: '600px',
+      width: '100%',
+      padding: 4,
+    })}
   >
     <Heading>{heading}</Heading>
     {children}
