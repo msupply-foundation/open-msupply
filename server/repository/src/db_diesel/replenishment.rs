@@ -1,4 +1,4 @@
-use super::{replenishment::replenishment::dsl as replenishment_dsl, StorageConnection};
+use super::StorageConnection;
 
 use crate::{
     diesel_macros::{apply_date_filter, apply_equal_filter},
@@ -69,7 +69,7 @@ impl<'a> ReplenishmentRepository<'a> {
         filter: Option<ReplenishmentFilter>,
     ) -> Result<Vec<ReplenishmentRow>, RepositoryError> {
         // Query Replenishment
-        let mut query = replenishment_dsl::replenishment.into_boxed();
+        let mut query = replenishment::table.into_boxed();
 
         if let Some(f) = filter {
             let ReplenishmentFilter {
@@ -78,9 +78,9 @@ impl<'a> ReplenishmentRepository<'a> {
                 store_id,
             } = f;
 
-            apply_equal_filter!(query, item_id, replenishment_dsl::item_id);
-            apply_equal_filter!(query, store_id, replenishment_dsl::store_id);
-            apply_date_filter!(query, date, replenishment_dsl::date);
+            apply_equal_filter!(query, item_id, replenishment::item_id);
+            apply_equal_filter!(query, store_id, replenishment::store_id);
+            apply_date_filter!(query, date, replenishment::date);
         }
 
         // Debug diesel query

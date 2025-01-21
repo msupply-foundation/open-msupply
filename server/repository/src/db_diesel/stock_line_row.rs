@@ -1,6 +1,6 @@
 use super::{
-    item_link_row::item_link, location_row::location, name_link_row::name_link,
-    stock_line_row::stock_line::dsl as stock_line_dsl, store_row::store, StorageConnection,
+    item_link_row::item_link, location_row::location, name_link_row::name_link, store_row::store,
+    StorageConnection,
 };
 
 use crate::{db_diesel::barcode_row::barcode, repository_error::RepositoryError, Delete, Upsert};
@@ -71,9 +71,9 @@ impl<'a> StockLineRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &StockLineRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(stock_line_dsl::stock_line)
+        diesel::insert_into(stock_line::table)
             .values(row)
-            .on_conflict(stock_line_dsl::id)
+            .on_conflict(stock_line::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -105,29 +105,29 @@ impl<'a> StockLineRowRepository<'a> {
             }
         };
 
-        diesel::delete(stock_line_dsl::stock_line.filter(stock_line_dsl::id.eq(id)))
+        diesel::delete(stock_line::table.filter(stock_line::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<StockLineRow>, RepositoryError> {
-        let result = stock_line_dsl::stock_line
-            .filter(stock_line_dsl::id.eq(id))
+        let result = stock_line::table
+            .filter(stock_line::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<StockLineRow>, RepositoryError> {
-        stock_line_dsl::stock_line
-            .filter(stock_line_dsl::id.eq_any(ids))
+        stock_line::table
+            .filter(stock_line::id.eq_any(ids))
             .load::<StockLineRow>(self.connection.lock().connection())
             .map_err(RepositoryError::from)
     }
 
     pub fn find_by_store_id(&self, store_id: &str) -> Result<Vec<StockLineRow>, RepositoryError> {
-        stock_line_dsl::stock_line
-            .filter(stock_line_dsl::store_id.eq(store_id))
+        stock_line::table
+            .filter(stock_line::store_id.eq(store_id))
             .load::<StockLineRow>(self.connection.lock().connection())
             .map_err(RepositoryError::from)
     }

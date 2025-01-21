@@ -13,7 +13,7 @@ util = { path = "../util" }
 clap = { workspace = true }
 chrono = { workspace = true }
 rand = { workspace = true }
-diesel = { version = "2.2.1", default-features = false, features = [
+diesel = { version = "2.2.6", default-features = false, features = [
     "r2d2",
     "numeric",
     "chrono",
@@ -23,9 +23,9 @@ diesel = { version = "2.2.1", default-features = false, features = [
 diesel-derive-enum = { version = "2.1.0", default-features = false }
 diesel_migrations = "2.2.0"
 futures-util = { workspace = true }
-libsqlite3-sys = { version = "0.28.0", features = ["bundled"], optional = true }
-# 0.31.0 depends on libsqlite3-sys 0.28.0
-rusqlite = "0.31.0"
+libsqlite3-sys = { version = "0.30.1", features = ["bundled"], optional = true }
+# 0.32.1 depends on libsqlite3-sys 0.30.1
+rusqlite = "0.32.1"
 regex = { workspace = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { workspace = true }

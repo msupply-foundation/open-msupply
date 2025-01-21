@@ -1226,12 +1226,27 @@ export type CustomerAndOrderTypeNode = {
   orderTypes: Array<ProgramRequisitionOrderTypeNode>;
 };
 
+export type CustomerIndicatorInformationNode = {
+  __typename: 'CustomerIndicatorInformationNode';
+  customer: NameNode;
+  /** Datetime should be null if no columns found */
+  datetime?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['String']['output'];
+  indicatorInformation: Array<RequisitionIndicatorInformationNode>;
+};
+
+
+export type CustomerIndicatorInformationNodeCustomerArgs = {
+  storeId: Scalars['String']['input'];
+};
+
 export type CustomerProgramRequisitionSettingNode = {
   __typename: 'CustomerProgramRequisitionSettingNode';
   customerAndOrderTypes: Array<CustomerAndOrderTypeNode>;
   masterList: MasterListNode;
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
+  tagName: Scalars['String']['output'];
 };
 
 export type CustomerReturnInput = {
@@ -2375,6 +2390,7 @@ export type InboundInvoiceCounts = {
 export type IndicatorColumnNode = {
   __typename: 'IndicatorColumnNode';
   columnNumber: Scalars['Int']['output'];
+  id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   value?: Maybe<IndicatorValueNode>;
   valueType?: Maybe<IndicatorValueTypeNode>;
@@ -2390,7 +2406,14 @@ export type IndicatorColumnNodeValueArgs = {
 export type IndicatorLineNode = {
   __typename: 'IndicatorLineNode';
   columns: Array<IndicatorColumnNode>;
+  customerIndicatorInfo: Array<CustomerIndicatorInformationNode>;
   line: IndicatorLineRowNode;
+};
+
+
+export type IndicatorLineNodeCustomerIndicatorInfoArgs = {
+  periodId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
 };
 
 export type IndicatorLineRowNode = {
@@ -6713,6 +6736,12 @@ export type RequisitionFilterInput = {
   userId?: InputMaybe<EqualFilterStringInput>;
 };
 
+export type RequisitionIndicatorInformationNode = {
+  __typename: 'RequisitionIndicatorInformationNode';
+  columnId: Scalars['String']['output'];
+  value: Scalars['String']['output'];
+};
+
 export type RequisitionItemInformationNode = {
   __typename: 'RequisitionItemInformationNode';
   adjustmentsInUnits: Scalars['Float']['output'];
@@ -6827,6 +6856,7 @@ export type RequisitionNode = {
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
+  isEmergency: Scalars['Boolean']['output'];
   lines: RequisitionLineConnector;
   /**
    * All lines that have not been supplied
@@ -7557,6 +7587,7 @@ export type SupplierProgramRequisitionSettingNode = {
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
   suppliers: Array<NameNode>;
+  tagName: Scalars['String']['output'];
 };
 
 export type SupplierReturnInput = {
@@ -8321,7 +8352,7 @@ export type UpdatePrescriptionErrorInterface = {
 };
 
 export type UpdatePrescriptionInput = {
-  clinicianId?: InputMaybe<Scalars['String']['input']>;
+  clinicianId?: InputMaybe<NullableStringUpdate>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   diagnosisId?: InputMaybe<NullableStringUpdate>;

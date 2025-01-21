@@ -1,6 +1,4 @@
-use super::{
-    document_registry_row::document_registry::dsl as document_registry_dsl, StorageConnection,
-};
+use super::StorageConnection;
 
 use crate::{db_diesel::form_schema_row::form_schema, RepositoryError, Upsert};
 
@@ -57,9 +55,9 @@ impl<'a> DocumentRegistryRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(document_registry_dsl::document_registry)
+        diesel::insert_into(document_registry::table)
             .values(row)
-            .on_conflict(document_registry_dsl::id)
+            .on_conflict(document_registry::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -67,8 +65,8 @@ impl<'a> DocumentRegistryRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<DocumentRegistryRow>, RepositoryError> {
-        Ok(document_registry_dsl::document_registry
-            .filter(document_registry_dsl::id.eq(id))
+        Ok(document_registry::table
+            .filter(document_registry::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?)
     }
@@ -77,14 +75,14 @@ impl<'a> DocumentRegistryRowRepository<'a> {
         &self,
         ids: &[String],
     ) -> Result<Vec<DocumentRegistryRow>, RepositoryError> {
-        Ok(document_registry_dsl::document_registry
-            .filter(document_registry_dsl::id.eq_any(ids))
+        Ok(document_registry::table
+            .filter(document_registry::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
 
     // pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
     //     diesel::delete(
-    //         document_registry_dsl::document_registry.filter(document_registry_dsl::id.eq(id)),
+    //         document_registry::table.filter(document_registry::id.eq(id)),
     //     )
     //     .execute(self.connection.lock().connection())?;
     //     Ok(())

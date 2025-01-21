@@ -13,7 +13,7 @@ export type ItemInformationFragment = { __typename: 'RequisitionItemInformationN
 
 export type RequestLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemName: string, requisitionNumber: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, itemInformation?: Array<{ __typename: 'RequisitionItemInformationNode', id: string, adjustmentsInUnits: number, amcInUnits: number, outgoingUnits: number, dateRange?: string | null, stockInUnits: number, name: { __typename: 'NameNode', id: string, name: string } }> | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number, stockOnHand: number, monthsOfStockOnHand?: number | null } }, reason?: { __typename: 'ReasonOptionNode', id: string, type: Types.ReasonOptionNodeType, reason: string, isActive: boolean } | null };
 
-export type RequestFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemName: string, requisitionNumber: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, itemInformation?: Array<{ __typename: 'RequisitionItemInformationNode', id: string, adjustmentsInUnits: number, amcInUnits: number, outgoingUnits: number, dateRange?: string | null, stockInUnits: number, name: { __typename: 'NameNode', id: string, name: string } }> | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number, stockOnHand: number, monthsOfStockOnHand?: number | null } }, reason?: { __typename: 'ReasonOptionNode', id: string, type: Types.ReasonOptionNodeType, reason: string, isActive: boolean } | null }> }, program?: { __typename: 'ProgramNode', id: string } | null, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } | null };
+export type RequestFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, isEmergency: boolean, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemName: string, requisitionNumber: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, itemInformation?: Array<{ __typename: 'RequisitionItemInformationNode', id: string, adjustmentsInUnits: number, amcInUnits: number, outgoingUnits: number, dateRange?: string | null, stockInUnits: number, name: { __typename: 'NameNode', id: string, name: string } }> | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number, stockOnHand: number, monthsOfStockOnHand?: number | null } }, reason?: { __typename: 'ReasonOptionNode', id: string, type: Types.ReasonOptionNodeType, reason: string, isActive: boolean } | null }> }, program?: { __typename: 'ProgramNode', id: string } | null, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } | null };
 
 export type ConsumptionHistoryFragment = { __typename: 'ConsumptionHistoryNode', averageMonthlyConsumption: number, consumption: number, date: string, isCurrent: boolean, isHistoric: boolean };
 
@@ -23,7 +23,7 @@ export type RequestByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type RequestByNumberQuery = { __typename: 'Queries', requisitionByNumber: { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemName: string, requisitionNumber: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, itemInformation?: Array<{ __typename: 'RequisitionItemInformationNode', id: string, adjustmentsInUnits: number, amcInUnits: number, outgoingUnits: number, dateRange?: string | null, stockInUnits: number, name: { __typename: 'NameNode', id: string, name: string } }> | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number, stockOnHand: number, monthsOfStockOnHand?: number | null } }, reason?: { __typename: 'ReasonOptionNode', id: string, type: Types.ReasonOptionNodeType, reason: string, isActive: boolean } | null }> }, program?: { __typename: 'ProgramNode', id: string } | null, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } | null } };
+export type RequestByNumberQuery = { __typename: 'Queries', requisitionByNumber: { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, isEmergency: boolean, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemName: string, requisitionNumber: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, itemInformation?: Array<{ __typename: 'RequisitionItemInformationNode', id: string, adjustmentsInUnits: number, amcInUnits: number, outgoingUnits: number, dateRange?: string | null, stockInUnits: number, name: { __typename: 'NameNode', id: string, name: string } }> | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number, stockOnHand: number, monthsOfStockOnHand?: number | null } }, reason?: { __typename: 'ReasonOptionNode', id: string, type: Types.ReasonOptionNodeType, reason: string, isActive: boolean } | null }> }, program?: { __typename: 'ProgramNode', id: string } | null, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } | null } };
 
 export type RequisitionLineChartQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -122,24 +122,28 @@ export type DeleteRequestMutation = { __typename: 'Mutations', batchRequestRequi
 
 export type OrderTypeRowFragment = { __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> };
 
-export type SupplierProgramSettingsFragment = { __typename: 'SupplierProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> };
+export type SupplierProgramSettingsFragment = { __typename: 'SupplierProgramRequisitionSettingNode', programName: string, programId: string, tagName: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> };
 
 export type SupplierProgramSettingsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type SupplierProgramSettingsQuery = { __typename: 'Queries', supplierProgramRequisitionSettings: Array<{ __typename: 'SupplierProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> };
+export type SupplierProgramSettingsQuery = { __typename: 'Queries', supplierProgramRequisitionSettings: Array<{ __typename: 'SupplierProgramRequisitionSettingNode', programName: string, programId: string, tagName: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, isEmergency: boolean, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> };
 
-export type ProgramIndicatorFragment = { __typename: 'ProgramIndicatorNode', code?: string | null, id: string, lineAndColumns: Array<{ __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null } }> };
+export type ProgramIndicatorFragment = { __typename: 'ProgramIndicatorNode', code?: string | null, id: string, lineAndColumns: Array<{ __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', id: string, columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null }, customerIndicatorInfo: Array<{ __typename: 'CustomerIndicatorInformationNode', datetime?: string | null, id: string, customer: { __typename: 'NameNode', id: string, name: string }, indicatorInformation: Array<{ __typename: 'RequisitionIndicatorInformationNode', columnId: string, value: string }> }> }> };
 
 export type IndicatorLineRowFragment = { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null };
 
-export type IndicatorColumnFragment = { __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null };
+export type IndicatorColumnFragment = { __typename: 'IndicatorColumnNode', id: string, columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null };
 
 export type IndicatorValueFragment = { __typename: 'IndicatorValueNode', id: string, value: string };
 
-export type IndicatorLineWithColumnsFragment = { __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null } };
+export type CustomerIndicatorInfoFragment = { __typename: 'CustomerIndicatorInformationNode', datetime?: string | null, id: string, customer: { __typename: 'NameNode', id: string, name: string }, indicatorInformation: Array<{ __typename: 'RequisitionIndicatorInformationNode', columnId: string, value: string }> };
+
+export type CustomerColumnFragment = { __typename: 'IndicatorColumnNode', columnNumber: number, name: string };
+
+export type IndicatorLineWithColumnsFragment = { __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', id: string, columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null }, customerIndicatorInfo: Array<{ __typename: 'CustomerIndicatorInformationNode', datetime?: string | null, id: string, customer: { __typename: 'NameNode', id: string, name: string }, indicatorInformation: Array<{ __typename: 'RequisitionIndicatorInformationNode', columnId: string, value: string }> }> };
 
 export type ProgramIndicatorsQueryVariables = Types.Exact<{
   customerNameId: Types.Scalars['String']['input'];
@@ -149,7 +153,7 @@ export type ProgramIndicatorsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ProgramIndicatorsQuery = { __typename: 'Queries', programIndicators: { __typename: 'ProgramIndicatorConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramIndicatorNode', code?: string | null, id: string, lineAndColumns: Array<{ __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null } }> }> } };
+export type ProgramIndicatorsQuery = { __typename: 'Queries', programIndicators: { __typename: 'ProgramIndicatorConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramIndicatorNode', code?: string | null, id: string, lineAndColumns: Array<{ __typename: 'IndicatorLineNode', columns: Array<{ __typename: 'IndicatorColumnNode', id: string, columnNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null, value?: { __typename: 'IndicatorValueNode', id: string, value: string } | null }>, line: { __typename: 'IndicatorLineRowNode', id: string, code: string, lineNumber: number, name: string, valueType?: Types.IndicatorValueTypeNode | null }, customerIndicatorInfo: Array<{ __typename: 'CustomerIndicatorInformationNode', datetime?: string | null, id: string, customer: { __typename: 'NameNode', id: string, name: string }, indicatorInformation: Array<{ __typename: 'RequisitionIndicatorInformationNode', columnId: string, value: string }> }> }> }> } };
 
 export type UpdateIndicatorValueMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -332,6 +336,7 @@ export const RequestFragmentDoc = gql`
     endDate
   }
   orderType
+  isEmergency
 }
     ${RequestLineFragmentDoc}`;
 export const ConsumptionHistoryFragmentDoc = gql`
@@ -376,6 +381,7 @@ export const SupplierProgramSettingsFragmentDoc = gql`
     fragment SupplierProgramSettings on SupplierProgramRequisitionSettingNode {
   programName
   programId
+  tagName
   suppliers {
     ...NameRow
   }
@@ -393,6 +399,7 @@ export const IndicatorValueFragmentDoc = gql`
     `;
 export const IndicatorColumnFragmentDoc = gql`
     fragment IndicatorColumn on IndicatorColumnNode {
+  id
   columnNumber
   name
   valueType
@@ -410,6 +417,23 @@ export const IndicatorLineRowFragmentDoc = gql`
   valueType
 }
     `;
+export const CustomerIndicatorInfoFragmentDoc = gql`
+    fragment CustomerIndicatorInfo on CustomerIndicatorInformationNode {
+  __typename
+  datetime
+  id
+  customer(storeId: $storeId) {
+    __typename
+    id
+    name
+  }
+  indicatorInformation {
+    __typename
+    columnId
+    value
+  }
+}
+    `;
 export const IndicatorLineWithColumnsFragmentDoc = gql`
     fragment IndicatorLineWithColumns on IndicatorLineNode {
   columns {
@@ -418,9 +442,13 @@ export const IndicatorLineWithColumnsFragmentDoc = gql`
   line {
     ...IndicatorLineRow
   }
+  customerIndicatorInfo(periodId: $periodId, storeId: $storeId) {
+    ...CustomerIndicatorInfo
+  }
 }
     ${IndicatorColumnFragmentDoc}
-${IndicatorLineRowFragmentDoc}`;
+${IndicatorLineRowFragmentDoc}
+${CustomerIndicatorInfoFragmentDoc}`;
 export const ProgramIndicatorFragmentDoc = gql`
     fragment ProgramIndicator on ProgramIndicatorNode {
   code
@@ -430,6 +458,13 @@ export const ProgramIndicatorFragmentDoc = gql`
   id
 }
     ${IndicatorLineWithColumnsFragmentDoc}`;
+export const CustomerColumnFragmentDoc = gql`
+    fragment CustomerColumn on IndicatorColumnNode {
+  __typename
+  columnNumber
+  name
+}
+    `;
 export const RequestByNumberDocument = gql`
     query requestByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
