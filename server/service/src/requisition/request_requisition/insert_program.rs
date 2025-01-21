@@ -177,6 +177,7 @@ fn generate(
         program_id: Some(program.id.clone()),
         period_id: Some(period_id.clone()),
         order_type: Some(order_type.name),
+        is_emergency: order_type.is_emergency,
         // Default
         sent_datetime: None,
         approval_status: None,
@@ -211,13 +212,17 @@ fn generate(
         .name_row
         .id;
 
-    let indicator_values = generate_program_indicator_values(
-        connection,
-        &ctx.store_id,
-        &period_id,
-        program_indicators,
-        &customer_name_id,
-    )?;
+    let indicator_values = if !order_type.is_emergency {
+        generate_program_indicator_values(
+            connection,
+            &ctx.store_id,
+            &period_id,
+            program_indicators,
+            &customer_name_id,
+        )?
+    } else {
+        vec![]
+    };
 
     Ok(GenerateResult {
         requisition,
