@@ -89,7 +89,7 @@ export const AppBarButtons = ({
             case NewRequisitionType.Program:
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { type: _, ...rest } = newRequisition;
-              return await onProgramCreate({
+              return onProgramCreate({
                 id: FnUtils.generateUUID(),
                 ...rest,
               }).then((response) => {
