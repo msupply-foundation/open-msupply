@@ -184,6 +184,7 @@ fn generate(
         program_id: Some(program.id.clone()),
         period_id: Some(period_id.clone()),
         order_type: Some(order_type.name),
+        is_emergency: order_type.is_emergency,
         // Default
         colour: None,
         comment: None,
@@ -207,12 +208,16 @@ fn generate(
 
     let requisition_lines = generate_lines(ctx, &ctx.store_id, &requisition, program_item_ids)?;
 
-    let program_indicators = program_indicators(
-        connection,
-        Pagination::all(),
-        None,
-        Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
-    )?;
+    let program_indicators = if !order_type.is_emergency {
+        program_indicators(
+            connection,
+            Pagination::all(),
+            None,
+            Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
+        )?
+    } else {
+        vec![]
+    };
 
     let customer_store = StoreRepository::new(connection)
         .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&other_party_id)))?;
