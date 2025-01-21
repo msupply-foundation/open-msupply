@@ -1,6 +1,6 @@
 import { useGql, useAuthContext, useQuery } from '@openmsupply-client/common';
 import { getSdk } from '../../operations.generated';
-import { HISTORIAL_STOCK_LINES } from '../../keys';
+import { HISTORICAL_STOCK_LINES } from '../../keys';
 
 export const useHistoricalStockLines = ({
   itemId,
@@ -14,7 +14,7 @@ export const useHistoricalStockLines = ({
   const { storeId } = useAuthContext();
 
   const key: string[] = [
-    HISTORIAL_STOCK_LINES,
+    HISTORICAL_STOCK_LINES,
     storeId,
     itemId,
     datetime ?? 'NO_DATETIME',
