@@ -1605,7 +1605,7 @@
   "reason.unknown": "Unknown",
   "replenishment": "Replenishment",
   "report.AMC-lookback": "AMC Lookback Period",
-  "report.amc-default": "AMC (lookback period)",
+  "report.amc": "AMC (lookback period)",
   "report.actual": "Actual",
   "report.actual-stock": "Actual stock",
   "report.amc-12-months": "AMC (12 months)",
