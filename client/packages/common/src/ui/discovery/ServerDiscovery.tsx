@@ -12,6 +12,7 @@ import {
 import { LoginIcon } from '@openmsupply-client/host/src/components/Login/LoginIcon';
 import { Theme } from '@common/styles';
 import { DiscoveredServers } from './DiscoveredServers';
+import { ManualServerConfig } from './ManualServerConfig';
 
 // TODO should this be disabled if native client doesn't exist ? (since it's navigable from host)
 
@@ -32,6 +33,8 @@ const isTimedOut = () => {
 };
 
 export const ServerDiscovery = () => {
+  const t = useTranslation();
+
   const {
     servers,
     discoveryTimedOut,
@@ -44,7 +47,7 @@ export const ServerDiscovery = () => {
     discovery: true,
     autoconnect: isAutoconnect(),
   });
-  const t = useTranslation();
+
   const discover = () => {
     stopDiscovery();
     startDiscovery();
@@ -145,6 +148,10 @@ export const ServerDiscovery = () => {
               />
             </Box>
           )}
+          <ManualServerConfig
+            connect={connectToServer}
+            previousServer={previousServer}
+          />
           <Box display="flex" flex={1} justifyContent="center">
             <DiscoveredServers
               servers={servers}
