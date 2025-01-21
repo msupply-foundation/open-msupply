@@ -9,13 +9,14 @@ import {
   useStringFilter,
   AutocompleteRenderInputParams,
   BasicTextInput,
+  useDebouncedValueCallback,
 } from '@openmsupply-client/common';
 import { useItemById, useItemStockOnHandInfinite } from '../../api';
 import { itemFilterOptions, StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
 const DEBOUNCE_TIMEOUT = 300;
-const ROWS_PER_PAGE = 100;
+const ROWS_PER_PAGE = 17;
 
 export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   onChange,
@@ -28,7 +29,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   includeNonVisibleWithStockOnHand = false,
   itemCategoryName,
 }) => {
-  const { filter, onFilter } = useStringFilter('name');
+  const { filter, onFilter } = useStringFilter('codeOrName');
   const [search, setSearch] = useState('');
 
   const fullFilter = itemCategoryName
@@ -53,7 +54,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const formatNumber = useFormatNumber();
   const selectControl = useToggle();
 
-  const debounceOnFilter = useDebounceCallback(
+  const debounceOnFilter = useDebouncedValueCallback(
     (searchText: string) => onFilter(searchText),
     [onFilter],
     DEBOUNCE_TIMEOUT
@@ -99,6 +100,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
         if (e?.type === 'click' || e?.type === 'keydown') {
           setSearch(value);
         }
+        debounceOnFilter(search);
       }}
       paginationDebounce={DEBOUNCE_TIMEOUT}
       onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
@@ -116,6 +118,10 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
             value={search}
             onChange={e => {
               setSearch(e.target.value);
+              if (!!currentItem) {
+                onChange(null);
+              }
+              // debounceOnFilter(e.target.value); // maybe
             }}
             // {...inputProps}
             autoFocus={autoFocus}
