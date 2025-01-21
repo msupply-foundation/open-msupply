@@ -284,6 +284,7 @@
   "error.no-asset-view-permission": "You do not have permission to view assets.",
   "error.no-customer-return-items": "No items have been added to this return.",
   "error.no-customer-returns": "There are no Customer Returns to display.",
+  "error.no-create-outbound-shipment-permission": "You do not have permission to create an Outbound Shipment",
   "error.no-data": "No data available",
   "error.no-immunisation-programs": "No Immunization programs found",
   "error.no-inbound-items": "No items have been added to this shipment.",
