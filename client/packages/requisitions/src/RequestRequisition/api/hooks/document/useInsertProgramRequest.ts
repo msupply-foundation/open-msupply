@@ -8,7 +8,7 @@ export const useInsertProgramRequest = () => {
   const { error } = useNotification();
 
   const { mutateAsync } = useMutation(api.insertProgram, {
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries(api.keys.base());
     },
   });
