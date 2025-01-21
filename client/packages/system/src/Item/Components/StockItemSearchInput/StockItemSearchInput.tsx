@@ -7,9 +7,15 @@ import {
   defaultOptionMapper,
   useStringFilter,
   useDebouncedValueCallback,
+  FilterOptionsState,
+  RegexUtils,
 } from '@openmsupply-client/common';
-import { useItemById, useItemStockOnHandInfinite } from '../../api';
-import { itemFilterOptions, StockItemSearchInputProps } from '../../utils';
+import {
+  ItemStockOnHandFragment,
+  useItemById,
+  useItemStockOnHandInfinite,
+} from '../../api';
+import { StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
 const DEBOUNCE_TIMEOUT = 300;
@@ -59,6 +65,19 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const formatNumber = useFormatNumber();
   const selectControl = useToggle();
 
+  const filterByNameAndCode = (
+    options: ItemStockOnHandFragment[],
+    state: FilterOptionsState<ItemStockOnHandFragment>
+  ) =>
+    options.filter(
+      option =>
+        RegexUtils.includes(state.inputValue, option.code) ||
+        RegexUtils.includes(
+          state.inputValue.replace(selectedCode ? `${selectedCode} ` : '', ''),
+          option.name
+        )
+    );
+
   useEffect(() => {
     // Using the Autocomplete openOnFocus prop, the popper is incorrectly
     // positioned when used within a Dialog. This is a workaround to fix the
@@ -78,15 +97,14 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       disabled={disabled}
       onOpen={selectControl.toggleOn}
       onClose={selectControl.toggleOff}
-      filterOptionConfig={itemFilterOptions}
       loading={isLoading || isFetchingNextPage}
       value={
         currentItem ? { ...currentItem, label: currentItem.name ?? '' } : null
       }
       noOptionsText={t('error.no-items')}
+      filterOptions={filterByNameAndCode}
       onChange={(_, item) => {
         // Set the search value when selecting/clearing an option
-        console.log('onchanging', item?.code);
         setSearch(item ? `${item.code} ${item.name}` : '');
         setSelectedCode(item?.code ?? '');
         onChange(item);
@@ -111,7 +129,8 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       inputValue={search}
       inputProps={{
         onChange: e => {
-          setSearch(e.target.value);
+          const { value } = e.target;
+          setSearch(value);
           if (!!currentItem) {
             // If changing input value after item was selected, we need to clear the selected item
             onChange(null);
@@ -122,7 +141,11 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
           // So, when backspacing, the code should be removed to filter by name only
           // e.g. even though string shows `1234 Ite`, backend search string is `Ite`
           // Until only code value remains, then search by that
-          debounceOnFilter(e.target.value.replace(`${selectedCode} `, ''));
+          const filterValue = selectedCode
+            ? value.replace(`${selectedCode} `, '')
+            : value;
+
+          debounceOnFilter(filterValue);
         },
       }}
     />
