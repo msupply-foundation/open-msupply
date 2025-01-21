@@ -193,14 +193,7 @@ export const ProgramRequisitionOptions = ({
   const ProgramOptionRenderer = getProgramOptionRenderer();
 
   return (
-    <Grid
-      container
-      paddingTop={2}
-      spacing="15"
-      direction="column"
-      justifyContent="center"
-      alignItems="center"
-    >
+    <Grid container paddingTop={2} direction="column">
       <LabelAndOptions
         {...programs}
         renderOption={ProgramOptionRenderer}
