@@ -29,16 +29,10 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const { filter, onFilter } = useStringFilter('codeOrName');
   const [search, setSearch] = useState('');
 
-  // After an item is selected, input string is `item_code item_name` e.g. `1234 Item Name`.
-  // However, backend search filter only supports name OR code, not both in the same string.
-  // So, when backspacing, the code should be removed to filter by name only
-  // e.g. even though string shows `1234 Ite`, backend search string is `Ite`
-  // Until only code value remains, then search by that
   const [selectedCode, setSelectedCode] = useState('');
 
   const debounceOnFilter = useDebouncedValueCallback(
-    (searchText: string) =>
-      onFilter(searchText.replace(`${selectedCode} `, '')),
+    (searchText: string) => onFilter(searchText),
     [onFilter],
     DEBOUNCE_TIMEOUT
   );
@@ -92,6 +86,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       noOptionsText={t('error.no-items')}
       onChange={(_, item) => {
         // Set the search value when selecting/clearing an option
+        console.log('onchanging', item?.code);
         setSearch(item ? `${item.code} ${item.name}` : '');
         setSelectedCode(item?.code ?? '');
         onChange(item);
@@ -121,7 +116,13 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
             // If changing input value after item was selected, we need to clear the selected item
             onChange(null);
           }
-          debounceOnFilter(e.target.value);
+
+          // After an item is selected, input string is `item_code item_name` e.g. `1234 Item Name`.
+          // However, backend search filter only supports name OR code, not both in the same string.
+          // So, when backspacing, the code should be removed to filter by name only
+          // e.g. even though string shows `1234 Ite`, backend search string is `Ite`
+          // Until only code value remains, then search by that
+          debounceOnFilter(e.target.value.replace(`${selectedCode} `, ''));
         },
       }}
     />
