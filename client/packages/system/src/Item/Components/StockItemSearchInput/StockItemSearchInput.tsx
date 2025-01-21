@@ -72,7 +72,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       option =>
         option.code.includes(state.inputValue) ||
         option.name.includes(
-          state.inputValue.replace(selectedCode ? `${selectedCode} ` : '', '')
+          getItemNameFilterValue(state.inputValue, selectedCode)
         )
     );
 
@@ -134,18 +134,18 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
             onChange(null);
           }
 
-          // After an item is selected, input string is `item_code item_name` e.g. `1234 Item Name`.
-          // However, backend search filter only supports name OR code, not both in the same string.
-          // So, when backspacing, the code should be removed to filter by name only
-          // e.g. even though string shows `1234 Ite`, backend search string is `Ite`
-          // Until only code value remains, then search by that
-          const filterValue = selectedCode
-            ? value.replace(`${selectedCode} `, '')
-            : value;
-
-          debounceOnFilter(filterValue);
+          debounceOnFilter(getItemNameFilterValue(value, selectedCode));
         },
       }}
     />
   );
 };
+
+// After an item is selected, input string is `item_code item_name` e.g. `1234 Item Name`.
+// However, backend search filter only supports name OR code, not both in the same string.
+// So, when backspacing, the code should be removed to filter by name only
+// e.g. even though string shows `1234 Ite`, backend search string is `Ite`
+// Until only code value remains, then search by that
+function getItemNameFilterValue(search: string, selectedCode: string): string {
+  return selectedCode ? search.replace(`${selectedCode} `, '') : search;
+}
