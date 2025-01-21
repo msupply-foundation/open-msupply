@@ -201,6 +201,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         borderRadius: 2,
         paddingTop: 0.5,
         paddingBottom: 0.5,
+        width,
       }}
       slots={{
         popper: popper,
