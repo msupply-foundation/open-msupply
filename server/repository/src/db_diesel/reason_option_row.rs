@@ -1,4 +1,4 @@
-use super::{reason_option_row::reason_option::dsl as reason_option_dsl, StorageConnection};
+use super::StorageConnection;
 
 use crate::{repository_error::RepositoryError, Upsert};
 
@@ -56,9 +56,9 @@ impl<'a> ReasonOptionRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &ReasonOptionRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(reason_option_dsl::reason_option)
+        diesel::insert_into(reason_option::table)
             .values(row)
-            .on_conflict(reason_option_dsl::id)
+            .on_conflict(reason_option::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -66,8 +66,8 @@ impl<'a> ReasonOptionRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ReasonOptionRow>, RepositoryError> {
-        let result = reason_option_dsl::reason_option
-            .filter(reason_option_dsl::id.eq(id))
+        let result = reason_option::table
+            .filter(reason_option::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)

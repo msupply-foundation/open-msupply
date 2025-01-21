@@ -1,4 +1,4 @@
-use super::{return_reason_row::return_reason::dsl as return_reason_dsl, StorageConnection};
+use super::StorageConnection;
 
 use crate::{repository_error::RepositoryError, Upsert};
 
@@ -30,9 +30,9 @@ impl<'a> ReturnReasonRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &ReturnReasonRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(return_reason_dsl::return_reason)
+        diesel::insert_into(return_reason::table)
             .values(row)
-            .on_conflict(return_reason_dsl::id)
+            .on_conflict(return_reason::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -40,16 +40,16 @@ impl<'a> ReturnReasonRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ReturnReasonRow>, RepositoryError> {
-        let result = return_reason_dsl::return_reason
-            .filter(return_reason_dsl::id.eq(id))
+        let result = return_reason::table
+            .filter(return_reason::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, return_reason_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(return_reason_dsl::return_reason)
-            .filter(return_reason_dsl::id.eq(return_reason_id))
+        diesel::delete(return_reason::table)
+            .filter(return_reason::id.eq(return_reason_id))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

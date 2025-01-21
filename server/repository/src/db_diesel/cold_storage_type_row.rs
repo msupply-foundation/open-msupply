@@ -1,6 +1,5 @@
-use super::{
-    cold_storage_type_row::cold_storage_type::dsl as cold_storage_type_dsl, StorageConnection,
-};
+use super::StorageConnection;
+
 use crate::{repository_error::RepositoryError, Upsert};
 
 use diesel::prelude::*;
@@ -35,9 +34,9 @@ impl<'a> ColdStorageTypeRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &ColdStorageTypeRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(cold_storage_type_dsl::cold_storage_type)
+        diesel::insert_into(cold_storage_type::table)
             .values(row)
-            .on_conflict(cold_storage_type_dsl::id)
+            .on_conflict(cold_storage_type::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -45,18 +44,16 @@ impl<'a> ColdStorageTypeRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ColdStorageTypeRow>, RepositoryError> {
-        let result = cold_storage_type_dsl::cold_storage_type
-            .filter(cold_storage_type_dsl::id.eq(id))
+        let result = cold_storage_type::table
+            .filter(cold_storage_type::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(
-            cold_storage_type_dsl::cold_storage_type.filter(cold_storage_type_dsl::id.eq(id)),
-        )
-        .execute(self.connection.lock().connection())?;
+        diesel::delete(cold_storage_type::table.filter(cold_storage_type::id.eq(id)))
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

@@ -1,6 +1,4 @@
-use super::asset_property_row::{
-    asset_property, asset_property::dsl as asset_property_dsl, AssetPropertyRow,
-};
+use super::asset_property_row::{asset_property, AssetPropertyRow};
 
 use crate::diesel_macros::apply_string_filter;
 use crate::StringFilter;
@@ -52,7 +50,7 @@ pub fn to_domain(asset_property_row: AssetPropertyRow) -> AssetPropertyRow {
 fn create_filtered_query(
     filter: Option<AssetPropertyFilter>,
 ) -> BoxedAssetCatalogueItemPropertyQuery {
-    let mut query = asset_property_dsl::asset_property.into_boxed();
+    let mut query = asset_property::table.into_boxed();
 
     if let Some(f) = filter {
         let AssetPropertyFilter {
@@ -64,16 +62,12 @@ fn create_filtered_query(
             asset_type_id,
         } = f;
 
-        apply_equal_filter!(query, id, asset_property_dsl::id);
-        apply_equal_filter!(query, key, asset_property_dsl::key);
-        apply_string_filter!(query, name, asset_property_dsl::name);
-        apply_equal_filter!(query, asset_class_id, asset_property_dsl::asset_class_id);
-        apply_equal_filter!(
-            query,
-            asset_category_id,
-            asset_property_dsl::asset_category_id
-        );
-        apply_equal_filter!(query, asset_type_id, asset_property_dsl::asset_type_id);
+        apply_equal_filter!(query, id, asset_property::id);
+        apply_equal_filter!(query, key, asset_property::key);
+        apply_string_filter!(query, name, asset_property::name);
+        apply_equal_filter!(query, asset_class_id, asset_property::asset_class_id);
+        apply_equal_filter!(query, asset_category_id, asset_property::asset_category_id);
+        apply_equal_filter!(query, asset_type_id, asset_property::asset_type_id);
     }
     query
 }

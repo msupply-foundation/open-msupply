@@ -1,9 +1,8 @@
 use crate::Upsert;
 
 use super::{
-    barcode_row::barcode::dsl as barcode_dsl, invoice_line_row::invoice_line,
-    item_link_row::item_link, item_row::item, name_link_row::name_link, RepositoryError,
-    StorageConnection,
+    invoice_line_row::invoice_line, item_link_row::item_link, item_row::item,
+    name_link_row::name_link, RepositoryError, StorageConnection,
 };
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
@@ -48,9 +47,9 @@ impl<'a> BarcodeRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &BarcodeRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(barcode_dsl::barcode)
+        diesel::insert_into(barcode::table)
             .values(row)
-            .on_conflict(barcode_dsl::id)
+            .on_conflict(barcode::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -75,16 +74,16 @@ impl<'a> BarcodeRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<BarcodeRow>, RepositoryError> {
-        let result = barcode_dsl::barcode
-            .filter(barcode_dsl::id.eq(id))
+        let result = barcode::table
+            .filter(barcode::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_many_by_item_id(&self, item_id: &str) -> Result<Vec<BarcodeRow>, RepositoryError> {
-        let result = barcode_dsl::barcode
-            .filter(barcode_dsl::item_id.eq(item_id))
+        let result = barcode::table
+            .filter(barcode::item_id.eq(item_id))
             .get_results(self.connection.lock().connection())?;
         Ok(result)
     }

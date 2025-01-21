@@ -55,16 +55,10 @@ export const useLedgerColumns = (
         description: 'description.unit-quantity',
       },
       {
-        key: ColumnKey.Number,
-        label: 'label.invoice-number',
-        accessor: ({ rowData }) => rowData.invoiceNumber,
-        sortable: false,
-      },
-      {
         key: ColumnKey.Type,
         label: 'label.type',
         accessor: ({ rowData }) =>
-          t(getInvoiceLocalisationKey(rowData.invoiceType)),
+          `${t(getInvoiceLocalisationKey(rowData.invoiceType))} #${rowData.invoiceNumber}`,
         sortable: false,
       },
       {
