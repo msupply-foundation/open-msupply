@@ -173,9 +173,7 @@ export const CreateEncounterModal: FC = () => {
   ]);
 
   const setStartDatetime = (date: Date | null): void => {
-    const startDatetime = DateUtils.formatRFC3339(
-      DateUtils.addCurrentTime(date)
-    );
+    const startDatetime = date?.toISOString();
     setDraft({
       ...currentOrNewDraft(),
       startDatetime,
