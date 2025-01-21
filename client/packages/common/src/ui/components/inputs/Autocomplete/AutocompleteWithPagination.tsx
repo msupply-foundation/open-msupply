@@ -170,8 +170,6 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
     setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
   }, [options]);
 
-  console.log(inputValue);
-
   return (
     <MuiAutocomplete
       {...restOfAutocompleteProps}
