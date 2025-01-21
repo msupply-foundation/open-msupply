@@ -48,7 +48,7 @@ pub fn create_requisition_shipment(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateRequisition,
+            resource: Resource::MutateOutboundShipment,
             store_id: Some(store_id.to_string()),
         },
     )?;
