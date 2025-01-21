@@ -85,8 +85,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       }
       noOptionsText={t('error.no-items')}
       onChange={(_, item) => onChange(item)}
-      // getOptionLabel={option => `${option.name}`}
-      getOptionLabel={option => `${option.code}     ${option.name}`}
+      getOptionLabel={option => `${option.code} ${option.name}`}
       renderOption={getItemOptionRenderer(
         t('label.units'),
         formatNumber.format
@@ -96,7 +95,8 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       open={selectControl.isOn}
       onInputChange={(e, value) => {
-        if (e?.type === 'click') {
+        // Set the search value if selecting an option using mouse or keyboard
+        if (e?.type === 'click' || e?.type === 'keydown') {
           setSearch(value);
         }
       }}
@@ -110,22 +110,11 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       }
       inputValue={search}
       renderInput={(props: AutocompleteRenderInputParams) => {
-        // console.log(props.inputProps.value);
         return (
           <BasicTextInput
             {...props}
             value={search}
             onChange={e => {
-              const searchA = e.target.value.split(
-                `${currentItem?.code}     `
-              )![1];
-              console.log(searchA);
-              //todoo hmmm
-
-              debounceOnFilter(
-                // todo
-                searchA
-              );
               setSearch(e.target.value);
             }}
             // {...inputProps}
