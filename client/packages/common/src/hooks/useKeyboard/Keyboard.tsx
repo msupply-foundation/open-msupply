@@ -9,13 +9,16 @@ interface KeyboardControl {
 
 export const useKeyboard = create<KeyboardControl>(set => {
   const isEnabled = Capacitor.isPluginAvailable('Keyboard');
-  Keyboard.addListener('keyboardDidShow', () =>
-    set({ isEnabled, isOpen: true })
-  );
 
-  Keyboard.addListener('keyboardDidHide', () =>
-    set({ isEnabled, isOpen: false })
-  );
+  if (isEnabled) {
+    Keyboard.addListener('keyboardDidShow', () =>
+      set({ isEnabled, isOpen: true })
+    );
+
+    Keyboard.addListener('keyboardDidHide', () =>
+      set({ isEnabled, isOpen: false })
+    );
+  }
 
   return {
     isEnabled,
