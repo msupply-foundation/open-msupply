@@ -99,9 +99,11 @@ export const createDraftStockOutLine = ({
   // This is because, once an invoice line is created (even in New Status), the available number of packs is reduced by the number of packs in the invoice line
   // After it is in picked status, the total number of packs is also reduced by the number of packs in the invoice line
   // Other statuses such as Shipped shouldn't show the stock line as available, so we don't need to adjust the available number of packs
-  // If the invoice is New, no adjustments are needed, as the stockLines shouldn't be updated yet
 
   const adjustTotalNumberOfPacks = invoiceStatus === InvoiceNodeStatus.Picked;
+
+  // console.log('invoiceLine.stockLine', invoiceLine?.stockLine);
+  // console.log('stockLine', stockLine);
 
   let adjustedStockLine = stockLine ? stockLine : invoiceLine?.stockLine;
   if (!!adjustedStockLine) {

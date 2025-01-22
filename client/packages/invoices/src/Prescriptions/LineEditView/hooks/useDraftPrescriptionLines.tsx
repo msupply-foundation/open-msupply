@@ -29,20 +29,26 @@ export const useDraftPrescriptionLines = (
   date?: Date | null
 ): UseDraftPrescriptionLinesControl => {
   const {
-    query: { data: prescriptionData },
+    query: { data: prescriptionData, loading: isPrescriptionLoading },
   } = usePrescription();
   const { id: invoiceId, status } = prescriptionData ?? {};
 
   const lines = prescriptionData?.lines.nodes.filter(
     line => item?.id === line.item.id
   );
-  const { data, isLoading } = useHistoricalStockLines({
-    itemId: item?.id ?? '',
-    datetime: date ? date.toISOString() : undefined,
-  });
+  const { data: stockLineData, isLoading: isStockLoading } =
+    useHistoricalStockLines({
+      itemId: item?.id ?? '',
+      datetime: date ? date.toISOString() : undefined,
+    });
+
+  console.log('stockLineData', stockLineData);
 
   useEffect(() => {
-    if (!data) return;
+    console.log('useEffect', stockLineData, item, prescriptionData);
+    if (!stockLineData) return;
+    // If we are still loading stock lines or prescription data, we might have stale data do nothing
+    if (isStockLoading || isPrescriptionLoading) return;
 
     // Stock lines (data.nodes) are coming from availableStockLines from
     // itemNode these are filtered by totalNumberOfPacks > 0 but it's possible
@@ -51,10 +57,16 @@ export const useDraftPrescriptionLines = (
     const invoiceLineStockLines = (lines ?? []).flatMap(l =>
       l.stockLine ? [l.stockLine] : []
     );
+
+    console.log('invoiceLineStockLines', invoiceLineStockLines);
+    console.log('stockLineData.nodes', stockLineData.nodes);
+
     const stockLines = uniqBy(
-      [...data.nodes, ...invoiceLineStockLines],
+      [...stockLineData.nodes, ...invoiceLineStockLines],
       'id'
     ).filter(stockLine => !stockLine.onHold); // Filter out on hold stock lines
+
+    console.log('combined stockLines', stockLines);
 
     const noStockLines = stockLines.length == 0;
 
@@ -110,7 +122,7 @@ export const useDraftPrescriptionLines = (
     }
 
     updateDraftLines(rows);
-  }, [data, item, prescriptionData]);
+  }, [stockLineData, item, prescriptionData]);
 
   const onChangeRowQuantity = useCallback(
     (batchId: string, packs: number) => {
@@ -127,7 +139,7 @@ export const useDraftPrescriptionLines = (
   );
 
   return {
-    isLoading,
+    isLoading: isStockLoading || isPrescriptionLoading,
     updateQuantity: onChangeRowQuantity,
     updateNotes: onUpdateNote,
   };
