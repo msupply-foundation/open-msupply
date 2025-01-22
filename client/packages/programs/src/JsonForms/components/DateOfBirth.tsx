@@ -61,7 +61,6 @@ const UIComponent = (props: ControlProps) => {
 
   useEffect(() => {
     if (!data) return;
-    const dob = DateUtils.getNaiveDate(data.dateOfBirth);
     setDoB(dob);
     if (dob === null) {
       setAge(undefined);
