@@ -1,5 +1,6 @@
-{% macro dateOrNA(datetime) %} 
-{% if datetime %}{{ datetime | date(format="%d/%m/%Y") }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
+{% macro dateOrNA(datetime) %}
+{% if datetime %}{{ datetime | date(format="%d/%m/%Y") }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif
+%}
 {% endmacro input %}
 
 <div class="container">
@@ -16,9 +17,11 @@
     </tr>
 
     <tr>
-      <td>{{ data.requisition.otherParty.address1}}<br>{{ data.requisition.otherParty.address2}}<br>{{ data.requisition.otherParty.country}}</td>
+      <td>{{ data.requisition.otherParty.address1}}<br>{{ data.requisition.otherParty.address2}}<br>{{
+        data.requisition.otherParty.country}}</td>
       <td class="align_right">
-        {{t(k="report.confirmed-date", f="Confirmed date")}}: {{ self::dateOrNA(datetime=data.requisition.finalisedDatetime) }}
+        {{t(k="report.confirmed-date", f="Confirmed date")}}: {{
+        self::dateOrNA(datetime=data.requisition.finalisedDatetime) }}
       </td>
     </tr>
   </table>
@@ -26,7 +29,8 @@
   <table class="header_date_section">
     <tr>
       <td></td>
-      <td class="align_right">{{t(k="report.printed-date",f="Printed date")}}: {{ now() | date(format="%d/%m/%Y") }}</td>
+      <td class="align_right">{{t(k="report.printed-date",f="Printed date")}}: {{ now() | date(format="%d/%m/%Y") }}
+      </td>
     </tr>
 
     <tr>
@@ -48,8 +52,7 @@
         <th class="item_name" style="width: 25%">{{t(k="report.item-name", f="Item name")}}</th>
         <th class="quantity" style="width: 7%">{{t(k="report.stock-on-hand", f="Stock on hand")}}</th>
         <th class="pack" style="width: 10%">{{t(k="report.AMC", f="AMC")}}</th>
-        <th class="stock_to_order" style="width:
-        8%">{{t(k="report.stock-to-order", f="Stock to order")}}</th>
+        <th class="mos" style="width: 8%">{{t(k="label.months-of-stock", f="MOS")}}</th>
         <th class="expiry" style="width: 8%">{{t(k="report.suggested-qty", f="Suggested Qty")}}</th>
         <th class="sell_price" style="width: 7%">{{t(k="report.requested-qty", f="Requested Qty")}}</th>
       </tr>
@@ -62,9 +65,7 @@
         <td class="item_name" style="width: 25%">{{ line.item.name }}</td>
         <td class="quantity" style="width: 8%">{{ line.itemStats.availableStockOnHand }}</td>
         <td class="pack" style="width: 10%">{{ line.itemStats.averageMonthlyConsumption | round(precision=2) }}</td>
-        <td class="stock_to_order" style="width: 8%">
-          {{ data.requisition.maxMonthsOfStock * line.itemStats.averageMonthlyConsumption }}
-        </td>
+        <td class="mos" style="width: 8%">{{ line.itemStats.monthsOfStockOnHand }}</td>
         <td class="batch" style="width: 8%">{{ line.suggestedQuantity }}</td>
         <td class="expiry" style="width: 8%">{{ line.requestedQuantity }}</td>
       </tr>
