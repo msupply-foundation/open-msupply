@@ -12,7 +12,7 @@ import { BaseButton, BasicTextInput } from '@common/components';
 import { Box } from '@mui/material';
 import { FnUtils } from '@common/utils';
 
-const DEFAULT_SERVER = 'http://127.0.0.1:8000';
+const DEFAULT_SERVER = 'https://127.0.0.1:8000';
 
 type ConnectToServer = ReturnType<typeof useNativeClient>['connectToServer'];
 
