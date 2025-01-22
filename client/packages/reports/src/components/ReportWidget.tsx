@@ -9,10 +9,9 @@ import {
   Grid,
   Typography,
   useTranslation,
-  LocaleKey,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { translationReportName } from '../utils';
+import { translateReportName } from '../utils';
 
 interface ReportWidgetProps {
   height?: number | string;
@@ -113,9 +112,7 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
                             paddingBottom: 2,
                           }}
                         >
-                          {t(
-                            `report.${translationReportName(report.name)}` as LocaleKey
-                          )}
+                          {translateReportName(t, report.name)}
                         </Typography>
                         <ChevronDownIcon
                           color="secondary"

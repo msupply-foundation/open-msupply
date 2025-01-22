@@ -23,7 +23,7 @@
         <td class="expiry-date">
           {% if stockLine.daysUntilExpired %}
             {% if stockLine.daysUntilExpired <= 0 %}
-              <span class="expired">{{t(k="label.expired", f="Expired")}}</span>
+              <span class="expired">{{t(k="report.expired", f="Expired")}}</span>
             {% elif stockLine.daysUntilExpired <= arguments.monthsItemsExpire * 30 %}
               <span class="soon">{{ stockLine.daysUntilExpired }}</span>
             {% else %}
