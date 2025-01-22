@@ -3,25 +3,25 @@ import { Capacitor } from '@capacitor/core';
 import { create } from 'zustand';
 
 interface KeyboardControl {
-  isOpen: boolean;
-  isEnabled: boolean;
+  keyboardIsOpen: boolean;
+  keyboardIsEnabled: boolean;
 }
 
 export const useKeyboard = create<KeyboardControl>(set => {
-  const isEnabled = Capacitor.isPluginAvailable('Keyboard');
+  const keyboardIsEnabled = Capacitor.isPluginAvailable('Keyboard');
 
-  if (isEnabled) {
+  if (keyboardIsEnabled) {
     Keyboard.addListener('keyboardDidShow', () =>
-      set({ isEnabled, isOpen: true })
+      set({ keyboardIsEnabled, keyboardIsOpen: true })
     );
 
     Keyboard.addListener('keyboardDidHide', () =>
-      set({ isEnabled, isOpen: false })
+      set({ keyboardIsEnabled, keyboardIsOpen: false })
     );
   }
 
   return {
-    isEnabled,
-    isOpen: false,
+    keyboardIsEnabled,
+    keyboardIsOpen: false,
   };
 });

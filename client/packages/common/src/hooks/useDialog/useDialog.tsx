@@ -166,7 +166,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       isRtl,
       animationTimeout
     );
-    const { isOpen: keyboardIsOpen } = useKeyboard();
+    const { keyboardIsOpen } = useKeyboard();
     const isSmallerScreen = useMediaQuery('(max-height: 850px)');
     const t = useTranslation();
 
