@@ -25,6 +25,7 @@ import {
 } from '@openmsupply-client/system';
 import { DraftAsset } from '../../types';
 import { formatLocationLabel } from '../DetailView';
+import { useIsGapsStoreOnly } from '@openmsupply-client/common';
 interface SummaryProps {
   draft?: DraftAsset;
   onChange: (patch: Partial<DraftAsset>) => void;
@@ -65,7 +66,7 @@ const Section = ({
     padding={2}
     sx={theme => ({
       [theme.breakpoints.down('sm')]: {
-        margin: 0,
+        margin: '0 0 15px 0',
         padding: 0,
       },
       maxWidth: '600px',
@@ -80,11 +81,16 @@ const Section = ({
 
 const Heading = ({ children }: { children: React.ReactNode }) => (
   <Typography
-    sx={{
+    sx={theme => ({
+      [theme.breakpoints.down('sm')]: {
+        marginLeft: '0',
+        textAlign: 'center',
+        fontSize: '16px!important',
+      },
       marginLeft: '158px',
-      fontSize: '20px',
+      fontSize: '20px!important',
       fontWeight: 'bold',
-    }}
+    })}
   >
     {children}
   </Typography>
@@ -93,35 +99,55 @@ const Heading = ({ children }: { children: React.ReactNode }) => (
 const Row = ({
   children,
   label,
+  isGaps,
 }: {
   children: React.ReactNode;
   label: string;
-}) => (
-  <Box paddingTop={1.5}>
-    <InputWithLabelRow
-      labelWidth="160px"
-      label={label}
-      labelProps={{
-        sx: {
-          fontSize: '16px',
-          paddingRight: 2,
-          textAlign: 'right',
-        },
-      }}
-      Input={
-        <Box sx={{}} flex={1}>
-          {children}
-        </Box>
-      }
-    />
-  </Box>
-);
+  isGaps: boolean;
+}) => {
+
+  if (!isGaps) return (
+    <Box paddingTop={1.5}>
+      <InputWithLabelRow
+        labelWidth="160px"
+        label={label}
+        labelProps={{
+          sx: {
+            fontSize: '16px',
+            paddingRight: 2,
+            textAlign: 'right',
+          },
+        }}
+        Input={
+          <Box sx={{}} flex={1}>
+            {children}
+          </Box>
+        }
+      />
+    </Box>);
+
+  return (
+    <Box paddingTop={1.5}>
+      <Typography
+        sx={{
+          fontSize: '1em',
+          fontWeight: 'bold',
+        }}
+      >
+        {label}
+      </Typography>
+      {children}
+    </Box>
+  )
+};
 
 export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
   const { storeId } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
+  const isGaps = useIsGapsStoreOnly();
+  console.log(isGaps);
 
   if (!draft) return null;
 
@@ -170,7 +196,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
       <Container>
         <Section heading={t('heading.asset-identification')}>
           {isCentralServer && (
-            <Row label={t('label.store')}>
+            <Row isGaps={isGaps} label={t('label.store')}>
               <StoreSearchInput
                 clearable
                 fullWidth
@@ -180,35 +206,35 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               />
             </Row>
           )}
-          <Row label={t('label.category')}>
+          <Row isGaps={isGaps} label={t('label.category')}>
             <BasicTextInput
               value={draft.assetCategory?.name ?? ''}
               disabled
               fullWidth
             />
           </Row>
-          <Row label={t('label.type')}>
+          <Row isGaps={isGaps} label={t('label.type')}>
             <BasicTextInput
               value={draft.assetType?.name ?? ''}
               disabled
               fullWidth
             />
           </Row>
-          <Row label={t('label.serial')}>
+          <Row isGaps={isGaps} label={t('label.serial')}>
             <BasicTextInput
               value={draft.serialNumber ?? ''}
               fullWidth
               onChange={e => onChange({ serialNumber: e.target.value })}
             />
           </Row>
-          <Row label={t('label.asset-number')}>
+          <Row isGaps={isGaps} label={t('label.asset-number')}>
             <BasicTextInput
               value={draft.assetNumber ?? ''}
               fullWidth
               onChange={e => onChange({ assetNumber: e.target.value })}
             />
           </Row>
-          <Row label={t('label.installation-date')}>
+          <Row isGaps={isGaps} label={t('label.installation-date')}>
             <DateTimePickerInput
               value={DateUtils.getDateOrNull(draft.installationDate)}
               format="P"
@@ -218,7 +244,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               textFieldProps={{ fullWidth: true }}
             />
           </Row>
-          <Row label={t('label.replacement-date')}>
+          <Row isGaps={isGaps} label={t('label.replacement-date')}>
             <DateTimePickerInput
               value={DateUtils.getDateOrNull(draft.replacementDate)}
               format="P"
@@ -228,7 +254,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               textFieldProps={{ fullWidth: true }}
             />
           </Row>
-          <Row label={t('label.warranty-start-date')}>
+          <Row isGaps={isGaps} label={t('label.warranty-start-date')}>
             <DateTimePickerInput
               value={DateUtils.getDateOrNull(draft.warrantyStart)}
               format="P"
@@ -238,7 +264,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               textFieldProps={{ fullWidth: true }}
             />
           </Row>
-          <Row label={t('label.warranty-end-date')}>
+          <Row isGaps={isGaps} label={t('label.warranty-end-date')}>
             <DateTimePickerInput
               value={DateUtils.getDateOrNull(draft.warrantyEnd)}
               format="P"
@@ -251,7 +277,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
         </Section>
         {(!isCentralServer || draft.storeId == storeId) && (
           <Section heading={t('heading.cold-chain')}>
-            <Row label={t('label.cold-storage-location')}>
+            <Row isGaps={isGaps} label={t('label.cold-storage-location')}>
               {locations ? (
                 <AutocompleteMulti
                   isOptionEqualToValue={(option, value) =>
@@ -296,26 +322,26 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
       ></Box>
       <Container>
         <Section heading={t('heading.functional-status')}>
-          <Row label={t('label.current-status')}>
+          <Row isGaps={isGaps} label={t('label.current-status')}>
             <Box display="flex">
               <Status status={draft.statusLog?.status} />
             </Box>
           </Row>
-          <Row label={t('label.last-updated')}>
+          <Row isGaps={isGaps} label={t('label.last-updated')}>
             <BasicTextInput
               value={localisedDate(draft.statusLog?.logDatetime)}
               disabled
               fullWidth
             />
           </Row>
-          <Row label={t('label.reason')}>
+          <Row isGaps={isGaps} label={t('label.reason')}>
             <BasicTextInput
               value={draft.statusLog?.reason?.reason ?? UNDEFINED_STRING_VALUE}
               disabled
               fullWidth
             />
           </Row>
-          <Row label={t('label.needs-replacement')}>
+          <Row isGaps={isGaps} label={t('label.needs-replacement')}>
             <Checkbox
               checked={Boolean(draft.needsReplacement)}
               onChange={e => onChange({ needsReplacement: e.target.checked })}
@@ -323,7 +349,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
           </Row>
         </Section>
         <Section heading={t('label.additional-info')}>
-          <Row label={t('label.notes')}>
+          <Row isGaps={isGaps} label={t('label.notes')}>
             <BasicTextInput
               value={draft.notes ?? ''}
               onChange={e => onChange({ notes: e.target.value })}
@@ -334,7 +360,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
           </Row>
         </Section>
         <Section heading={t('label.donor')}>
-          <Row label={t('label.donor')}>
+          <Row isGaps={isGaps} label={t('label.donor')}>
             <DonorSearchInput
               value={draft.donor as NameRowFragment} // Using as NameRowFragment is ok, because the comparison function is based on the id
               onChange={e => onChange({ donor: e, donorNameId: e?.id })}

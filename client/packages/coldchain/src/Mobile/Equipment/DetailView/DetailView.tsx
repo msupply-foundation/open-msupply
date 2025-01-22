@@ -3,7 +3,6 @@ import {
   Box,
   ButtonWithIcon,
   PrinterIcon,
-  useTranslation,
   DetailFormSkeleton,
   Collapse,
   Typography,
@@ -12,7 +11,6 @@ import {
   useTheme,
 } from '@openmsupply-client/common';
 import { SimpleLabelDisplay } from '../../Components/SimpleLabelDisplay';
-import { useAssets } from '../../../Equipment/api';
 import { Status } from 'packages/coldchain/src/Equipment/Components';
 
 import { AccordionPanelSection } from 'packages/invoices/src/Prescriptions/LineEditView/PanelSection';
@@ -88,7 +86,7 @@ export const EquipmentDetailView: FC = () => {
         <ButtonWithIcon
           shouldShrink={false}
           label={'Print QR code'}
-          onClick={() => {}}
+          onClick={() => { }}
           Icon={<PrinterIcon />}
         />
       </Box>
