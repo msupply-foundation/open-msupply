@@ -132,7 +132,6 @@ export const CreateStocktakeButton: React.FC<{
     isOpen: modalController.isOn,
     onClose,
     disableBackdrop: true,
-    disableMobileFullScreen: true,
   });
 
   const masterLists =
