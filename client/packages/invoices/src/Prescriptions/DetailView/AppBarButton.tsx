@@ -12,10 +12,12 @@ import { Draft } from '../..';
 
 interface AppBarButtonProps {
   onAddItem: (draft?: Draft) => void;
+  onViewHistory: (draft?: Draft) => void;
 }
 
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
+  onViewHistory,
 }) => {
   const { isDisabled } = usePrescription();
   const { OpenButton } = useDetailPanel();
@@ -23,6 +25,12 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        <ButtonWithIcon
+          disabled={isDisabled}
+          label={t('button.history')}
+          Icon={<PlusCircleIcon />}
+          onClick={() => onViewHistory()}
+        />
         <ButtonWithIcon
           disabled={isDisabled}
           label={t('button.add-item')}
