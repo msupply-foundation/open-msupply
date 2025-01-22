@@ -183,7 +183,7 @@
   "description.rnr-amc": "The Average Monthly Consumption is calculated using the Adjusted consumption value, using this R&R form and the previous two, if available",
   "description.rnr-approved-quantity": "The quantity approved to be ordered. Populated after the R&R form is finalised and authorized.",
   "description.rnr-consumed": "The quantity of this item distributed during this period (via Outbound Shipments or Prescriptions)",
-  "description.rnr-consumed-adjusted": "Shows the consumption adjusted to account for stock out days. =(Consumed x 30)/(30 - Stock out duration)",
+  "description.rnr-consumed-adjusted": "Shows the consumption adjusted to account for stock out days. =(Consumed x Days in period)/(Days in period - Stock out duration)",
   "description.rnr-final-balance": "Stock level at the end of the period. =Initial balance + Received - Consumed ± Adjustments",
   "description.rnr-initial-balance": "Stock on hand at the beginning of the period. This is taken from the previous R&R form, if available, or calculated using the stock on hand at the period start date.",
   "description.rnr-losses": "Manually record losses of this item during the period",
