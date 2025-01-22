@@ -182,7 +182,6 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
         }
         height={600}
         width={1024}
-        fullWidthOnMobile
         enableAutocomplete /* Required for previously entered batches to be remembered and suggested in future shipments */
       >
         {isLoading ? (
