@@ -1569,7 +1569,7 @@
   "reason.stored": "Almacenado",
   "reason.unknown": "Desconocido",
   "replenishment": "Rebastecimiento",
-  "report.AMC-lookback": "Período de retroceso de AMC",
+  "report.amc-lookback": "Período de retroceso de AMC",
   "report.actual": "Real",
   "report.actual-stock": "Stock real",
   "report.amc-12-months": "AMC (12 meses)",
