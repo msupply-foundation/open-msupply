@@ -259,20 +259,17 @@ export const RequestLineEdit = ({
                   Input={
                     <NumericTextInput
                       width={INPUT_WIDTH}
-                      value={
-                        isNaN(Number(draft?.requestedQuantity))
-                          ? 0
-                          : Math.ceil(draft?.requestedQuantity)
-                      }
+                      value={Math.ceil(draft?.requestedQuantity)}
                       disabled={isPacks}
                       onChange={value => {
-                        if (draft?.suggestedQuantity === value) {
+                        const newValue = isNaN(Number(value)) ? 0 : value;
+                        if (draft?.suggestedQuantity === newValue) {
                           update({
-                            requestedQuantity: value,
+                            requestedQuantity: newValue,
                             reason: null,
                           });
                         } else {
-                          update({ requestedQuantity: value });
+                          update({ requestedQuantity: newValue });
                         }
                       }}
                       onBlur={save}
