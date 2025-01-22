@@ -67,13 +67,14 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const filterByNameAndCode = (
     options: ItemStockOnHandFragment[],
     state: FilterOptionsState<ItemStockOnHandFragment>
-  ) =>
-    options.filter(
+  ) => {
+    const searchValue = state.inputValue.toLocaleLowerCase();
+    return options.filter(
       option =>
-        option.code.includes(state.inputValue) ||
-        option.name.includes(
-          getItemNameFilterValue(state.inputValue, selectedCode)
-        )
+        option.code.toLocaleLowerCase().includes(searchValue) ||
+        option.name
+          .toLocaleLowerCase()
+          .includes(getItemNameFilterValue(searchValue, selectedCode))
     );
 
   useEffect(() => {
