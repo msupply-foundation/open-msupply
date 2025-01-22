@@ -47,27 +47,29 @@
   <table class="body_section" cellpadding="2" cellspacing="0">
     <thead>
       <tr class="body_column_label">
-        <th class="line_number" style="width: 5%">{{t(k="report.line", f="Line")}}</th>
+        <th class="columns" style="width: 5%">{{t(k="report.line", f="Line")}}</th>
         <th class="item_code" style="width: 7%">{{t(k="report.item-code", f="Item code")}}</th>
         <th class="item_name" style="width: 25%">{{t(k="report.item-name", f="Item name")}}</th>
-        <th class="quantity" style="width: 7%">{{t(k="report.stock-on-hand", f="Stock on hand")}}</th>
-        <th class="pack" style="width: 10%">{{t(k="report.AMC", f="AMC")}}</th>
-        <th class="mos" style="width: 8%">{{t(k="label.months-of-stock", f="MOS")}}</th>
-        <th class="expiry" style="width: 8%">{{t(k="report.suggested-qty", f="Suggested Qty")}}</th>
-        <th class="sell_price" style="width: 7%">{{t(k="report.requested-qty", f="Requested Qty")}}</th>
+        <th class="columns" style="width: 7%">{{t(k="report.stock-on-hand", f="Stock on hand")}}</th>
+        <th class="columns" style="width: 10%">{{t(k="report.AMC", f="AMC")}}</th>
+        <th class="columns" style="width: 8%">{{t(k="label.months-of-stock", f="MOS")}}</th>
+        <th class="columns" style="width: 8%">{{t(k="report.suggested-qty", f="Suggested Qty")}}</th>
+        <th class="columns" style="width: 7%">{{t(k="report.requested-qty", f="Requested Qty")}}</th>
       </tr>
     </thead>
     <tbody>
       {% for line in data.requisition.lines.nodes -%}
       <tr class="body_value">
-        <td class="line_number" style="width: 5%">{{ loop.index }}</td>
+        <td class="columns" style="width: 5%">{{ loop.index }}</td>
         <td class="item_code" style="width: 7%">{{ line.item.code }}</td>
         <td class="item_name" style="width: 25%">{{ line.item.name }}</td>
-        <td class="quantity" style="width: 8%">{{ line.itemStats.availableStockOnHand }}</td>
-        <td class="pack" style="width: 10%">{{ line.itemStats.averageMonthlyConsumption | round(precision=2) }}</td>
-        <td class="mos" style="width: 8%">{{ line.itemStats.monthsOfStockOnHand }}</td>
-        <td class="batch" style="width: 8%">{{ line.suggestedQuantity }}</td>
-        <td class="expiry" style="width: 8%">{{ line.requestedQuantity }}</td>
+        <td class="columns" style="width: 8%">{{ line.itemStats.availableStockOnHand }}</td>
+        <td class="columns" style="width: 10%">{{
+        line.itemStats.averageMonthlyConsumption | round(precision=2) }}</td>
+        <td class="columns" style="width: 8%">{{
+        line.itemStats.monthsOfStockOnHand | default(value=0) | round(precision=2) }}</td>
+        <td class="columns" style="width: 8%">{{ line.suggestedQuantity }}</td>
+        <td class="columns" style="width: 8%">{{ line.requestedQuantity }}</td>
       </tr>
       {%- endfor %}
     </tbody>
