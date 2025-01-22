@@ -24,10 +24,19 @@ import { Footer } from './Footer';
 import { PrescriptionLineEdit } from './PrescriptionLineEdit/PrescriptionLineEdit';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
+import { HistoryModal } from './History/HistoryModal';
 
 export const PrescriptionDetailView: FC = () => {
   const { entity, mode, onOpen, onClose, isOpen, setMode } =
     useEditModal<Draft>();
+  const {
+    entity: historyEntity,
+    mode: historyMode,
+    onOpen: onOpenHistory,
+    onClose: onCloseHistory,
+    isOpen: isHistoryOpen,
+    setMode: setHistoryMode,
+  } = useEditModal<Draft>();
   const {
     query: { data, loading },
     isDisabled,
@@ -43,6 +52,10 @@ export const PrescriptionDetailView: FC = () => {
   const onAddItem = (draft?: Draft) => {
     onOpen(draft);
     setMode(ModalMode.Create);
+  };
+  const onViewHistory = (draft?: Draft) => {
+    onOpenHistory(draft);
+    setHistoryMode(ModalMode.Create);
   };
 
   if (loading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
@@ -78,7 +91,7 @@ export const PrescriptionDetailView: FC = () => {
             },
           })}
         >
-          <AppBarButtons onAddItem={onAddItem} />
+          <AppBarButtons onAddItem={onAddItem} onViewHistory={onViewHistory} />
           {isOpen && (
             <PrescriptionLineEdit
               draft={entity}
@@ -87,7 +100,14 @@ export const PrescriptionDetailView: FC = () => {
               onClose={onClose}
             />
           )}
-
+          {isHistoryOpen && (
+            <HistoryModal
+              draft={historyEntity}
+              mode={historyMode}
+              isOpen={isHistoryOpen}
+              onClose={onCloseHistory}
+            />
+          )}
           <Toolbar />
           <DetailTabs tabs={tabs} />
           <Footer />
