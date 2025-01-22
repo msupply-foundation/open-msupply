@@ -232,6 +232,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         id: patch.id,
         otherPartyId: patch.otherPartyId,
         storeId,
+        requisitionId: patch.requisitionId,
       })) || {};
 
     const { insertInboundShipment } = result;

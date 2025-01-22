@@ -56,6 +56,7 @@ export type DeleteInboundShipmentsMutation = { __typename: 'Mutations', batchInb
 export type InsertInboundShipmentMutationVariables = Types.Exact<{
   id: Types.Scalars['String']['input'];
   otherPartyId: Types.Scalars['String']['input'];
+  requisitionId?: Types.InputMaybe<Types.Scalars['String']['input']>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
@@ -384,10 +385,10 @@ export const DeleteInboundShipmentsDocument = gql`
 }
     `;
 export const InsertInboundShipmentDocument = gql`
-    mutation insertInboundShipment($id: String!, $otherPartyId: String!, $storeId: String!) {
+    mutation insertInboundShipment($id: String!, $otherPartyId: String!, $requisitionId: String, $storeId: String!) {
   insertInboundShipment(
     storeId: $storeId
-    input: {id: $id, otherPartyId: $otherPartyId}
+    input: {id: $id, otherPartyId: $otherPartyId, requisitionId: $requisitionId}
   ) {
     ... on InsertInboundShipmentError {
       __typename
