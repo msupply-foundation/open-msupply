@@ -1,7 +1,6 @@
 import React, { ReactElement, useEffect, useState } from 'react';
 import {
   ConnectionResult,
-  DEFAULT_LOCAL_SERVER,
   FrontEndHost,
   frontEndHostDisplay,
   useNativeClient,
@@ -10,35 +9,52 @@ import {
 import { useTranslation } from '@common/intl';
 import { BaseButton, BasicTextInput } from '@common/components';
 import { Box } from '@mui/material';
+import { FnUtils } from '@common/utils';
+
+const DEFAULT_SERVER = 'http://127.0.0.1:8000';
 
 type ConnectToServer = ReturnType<typeof useNativeClient>['connectToServer'];
 
 interface ManualServerConfigProps {
-  connect: ConnectToServer;
+  connectToServer: ConnectToServer;
   previousServer: FrontEndHost | null;
 }
 
+interface ParsedServer {
+  protocol: 'https' | 'http';
+  ip: string;
+  port: number;
+}
+
 export function ManualServerConfig({
-  connect,
+  connectToServer,
   previousServer,
 }: ManualServerConfigProps): ReactElement {
   const t = useTranslation();
   const { error } = useNotification();
-  const [serverValue, setServerValue] = useState<string>();
-
-  const defaultServer: FrontEndHost = {
-    ...DEFAULT_LOCAL_SERVER,
-    protocol: 'http',
-    path: 'login',
-  };
+  const [serverURL, setServerURL] = useState<string>();
 
   useEffect(() => {
     if (previousServer != null) {
-      setServerValue(frontEndHostDisplay(previousServer));
+      setServerURL(frontEndHostDisplay(previousServer));
     } else {
-      setServerValue(frontEndHostDisplay(defaultServer));
+      setServerURL(DEFAULT_SERVER);
     }
   }, [previousServer]);
+
+  function parseServerURL(value: string): ParsedServer | null {
+    try {
+      const url = new URL(value);
+      return {
+        protocol: url.protocol.replace(':', '') as 'https' | 'http',
+        ip: url.hostname,
+        port: Number(url.port),
+      };
+    } catch (e) {
+      console.error('Invalid server URL');
+      return null;
+    }
+  }
 
   async function handleConnectionResult(
     result: ConnectionResult
@@ -49,10 +65,20 @@ export function ManualServerConfig({
   }
 
   async function handleServerClick(): Promise<void> {
-    const serverConfig: FrontEndHost =
-      previousServer != null ? previousServer : defaultServer;
+    if (!serverURL) return;
+    const parsedServerDetails = parseServerURL(serverURL);
+    if (!parsedServerDetails) return;
+
+    const serverConfig: FrontEndHost = {
+      ...parsedServerDetails,
+      path: 'login',
+      isLocal: true,
+      clientVersion: 'unspecified',
+      hardwareId: FnUtils.generateUUID(),
+    };
+
     try {
-      const result = await connect(serverConfig);
+      const result = await connectToServer(serverConfig);
       await handleConnectionResult(result);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Unknown error';
@@ -69,8 +95,8 @@ export function ManualServerConfig({
       justifyContent="center"
     >
       <BasicTextInput
-        value={serverValue}
-        onChange={e => setServerValue(e.target.value)}
+        value={serverURL}
+        onChange={e => setServerURL(e.target.value)}
       />
       <BaseButton size="small" onClick={handleServerClick}>
         {t('button.connect')}
