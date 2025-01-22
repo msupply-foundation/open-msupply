@@ -16,6 +16,7 @@ import { Status } from 'packages/coldchain/src/Equipment/Components';
 import { AccordionPanelSection } from 'packages/invoices/src/Prescriptions/LineEditView/PanelSection';
 import { useEquipmentDetailView } from 'packages/coldchain/src/Equipment/DetailView';
 import { Summary } from 'packages/coldchain/src/Equipment/DetailView/Tabs';
+import { Footer } from './Footer';
 
 const ChevronUpIcon = (): JSX.Element => {
   return (
@@ -35,9 +36,9 @@ export const EquipmentDetailView: FC = () => {
     draft,
     locations,
     data,
-    // isDirty,
-    // isSaving,
-    // showSaveConfirmation,
+    isDirty,
+    isSaving,
+    showSaveConfirmation,
     // navigate,
     t,
   } = useEquipmentDetailView();
@@ -110,6 +111,11 @@ export const EquipmentDetailView: FC = () => {
 
       <AccordionPanelSection title="Summary" defaultExpanded={false}>
         <Summary onChange={onChange} draft={draft} locations={locations} />
+        <Footer
+          isDirty={isDirty}
+          isSaving={isSaving}
+          showSaveConfirmation={showSaveConfirmation}
+        />
       </AccordionPanelSection>
 
       <Box
