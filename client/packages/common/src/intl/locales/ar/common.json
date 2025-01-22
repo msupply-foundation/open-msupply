@@ -1549,7 +1549,7 @@
   "messages.zero-line-quantities_few": "تم ضبط كمية {{count}} خطوط إلى 0",
   "placeholder.filter-by-status": "تصفية حسب الحالة",
   "replenishment": "إعادة التعبئة",
-  "report.AMC-lookback": "فترة المراجعة لمتوسط الاستهلاك الشهري",
+  "report.amc-lookback": "فترة المراجعة لمتوسط الاستهلاك الشهري",
   "report.actual": "الفعلي",
   "report.entered-date": "تاريخ المدخل",
   "placeholder.filter-items": "تصفية العناصر",
