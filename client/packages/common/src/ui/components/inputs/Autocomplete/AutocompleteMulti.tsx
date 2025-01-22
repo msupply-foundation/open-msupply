@@ -61,6 +61,9 @@ export function AutocompleteMulti<
           disableUnderline: false,
           ...props?.InputProps,
         },
+        htmlInput: {
+          ...props.inputProps,
+        },
         ...slotProps,
       }}
       sx={{ width }}
@@ -105,12 +108,13 @@ export function AutocompleteMulti<
       renderInput={renderInput || defaultRenderInput}
       size="small"
       sx={{
+        background: theme => theme.palette.background.drawer,
+        borderRadius: 2,
+        paddingTop: 0.5,
+        paddingBottom: 0.5,
         '& .MuiChip-deleteIcon': {
-          fill: theme => theme.palette.secondary.contrastText,
-          background: theme => theme.palette.background.drawer,
+          fill: theme => theme.palette.background.drawer,
           borderRadius: 2,
-          paddingTop: 0.5,
-          paddingBottom: 0.5,
         },
       }}
     />
