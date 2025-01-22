@@ -17,7 +17,7 @@ const Container = styled('div')(() => ({
 export const AppFooter: FC = () => {
   const { setAppFooterRef, setAppSessionDetailsRef, fullScreen } =
     useHostContext();
-  const { isOpen: keyboardOpen } = useKeyboard();
+  const { keyboardIsOpen } = useKeyboard();
   const appFooterRef = useRef(null);
   const appSessionDetailsRef = useRef(null);
   const isCentralServer = useIsCentralServerApi();
@@ -27,7 +27,7 @@ export const AppFooter: FC = () => {
     setAppSessionDetailsRef(appSessionDetailsRef);
   }, []);
 
-  const hideFooter = fullScreen || keyboardOpen;
+  const hideFooter = fullScreen || keyboardIsOpen;
 
   return (
     <Box sx={{ display: hideFooter ? 'none' : undefined }}>

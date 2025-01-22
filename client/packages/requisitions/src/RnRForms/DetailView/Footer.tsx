@@ -21,7 +21,7 @@ export const Footer = ({
   linesUnconfirmed: boolean;
   unsavedChanges: boolean;
 }) => {
-  const keyboard = useKeyboard();
+  const { keyboardIsOpen } = useKeyboard();
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
   const { error, info, success } = useNotification();
@@ -57,7 +57,7 @@ export const Footer = ({
     showFinaliseConfirmation();
   };
 
-  const showFooter = !keyboard.isOpen;
+  const showFooter = !keyboardIsOpen;
 
   return (
     <AppFooterPortal
