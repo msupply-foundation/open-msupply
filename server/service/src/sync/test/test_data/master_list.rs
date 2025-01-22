@@ -4,6 +4,7 @@ use crate::sync::test::TestSyncIncomingRecord;
 
 const TABLE_NAME: &str = "list_master";
 
+//program settings not found
 const MASTER_LIST_1: (&str, &str) = (
     "87027C44835B48E6989376F42A58F7EA",
     r#"{
@@ -15,7 +16,8 @@ const MASTER_LIST_1: (&str, &str) = (
     "gets_new_items": false,
     "tags": null,
     "isProgram": false,
-    "programSettings": null,
+    "programSettings": {
+    "elmisCode": "elmis"},
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
@@ -36,7 +38,8 @@ const MASTER_LIST_2: (&str, &str) = (
     "gets_new_items": false,
     "tags": null,
     "isProgram": false,
-    "programSettings": null,
+    "programSettings": {
+    "elmisCode": "elmis"},
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
@@ -46,6 +49,7 @@ const MASTER_LIST_2: (&str, &str) = (
 }"#,
 );
 
+//program settings not found
 const DEFAULT_PRICE_LIST: (&str, &str) = (
     "4d9a615e-eebb-42ad-a806-e3854f7733ae",
     r#"{
@@ -57,7 +61,8 @@ const DEFAULT_PRICE_LIST: (&str, &str) = (
     "gets_new_items": false,
     "tags": null,
     "isProgram": false,
-    "programSettings": null,
+    "programSettings": {
+     "elmisCode": "elmis"},
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
@@ -68,6 +73,7 @@ const DEFAULT_PRICE_LIST: (&str, &str) = (
 }"#,
 );
 
+//program settings not found
 const DISCOUNT_LIST: (&str, &str) = (
     "4d9a615e-eebb-42ad-a806-e3854f7733a1",
     r#"{
@@ -79,7 +85,8 @@ const DISCOUNT_LIST: (&str, &str) = (
     "gets_new_items": false,
     "tags": null,
     "isProgram": false,
-    "programSettings": null,
+    "programSettings": {
+     "elmisCode": "elmis"},
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
