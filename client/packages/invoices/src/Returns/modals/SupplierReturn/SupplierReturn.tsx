@@ -5,7 +5,6 @@ import {
   DialogButton,
   TableProvider,
   createTableStore,
-  useKeyboardHeightAdjustment,
   useTabs,
   Box,
   ModalMode,
@@ -59,7 +58,6 @@ export const SupplierReturnEditModal = ({
   const isDisabled = useReturns.utils.supplierIsDisabled() && !isNewReturn;
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(600);
 
   const { lines, update, save } = useDraftSupplierReturnLines({
     supplierId,
@@ -149,8 +147,8 @@ export const SupplierReturnEditModal = ({
             : OkButton
         }
         nextButton={!isNewReturn ? OkAndNextButton : undefined}
-        height={height}
-        width={1024}
+        height={600}
+        width={1200}
       >
         <Box ref={alertRef}>
           {returnId && (
