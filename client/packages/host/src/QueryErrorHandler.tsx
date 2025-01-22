@@ -19,7 +19,7 @@ export const QueryErrorHandler = () => {
 
   useEffect(() => {
     if (!!errorMessage && authError !== AuthError.Unauthenticated) {
-      errorWithDetail(errorMessage)();
+      if (errorMessage.length > 100) errorWithDetail(errorMessage)();
     }
   }, [errorMessage]);
 
