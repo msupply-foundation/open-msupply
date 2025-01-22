@@ -8,6 +8,7 @@ query requisitionQuery($storeId: String!, $dataId: String!) {
       requisitionNumber
       theirReference
       createdDatetime
+      finalisedDatetime
       comment
       otherPartyName
       maxMonthsOfStock
@@ -40,14 +41,9 @@ query requisitionQuery($storeId: String!, $dataId: String!) {
             availableStockOnHand
             averageMonthlyConsumption
           }
-         
-          
         }
       }
-        
-      
     }
-   
   }
   store(id: $storeId){
     ...on StoreNode{
@@ -68,8 +64,7 @@ query requisitionQuery($storeId: String!, $dataId: String!) {
         website
         }
       }
-
+    } 
   }
-}
 }
 

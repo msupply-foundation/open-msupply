@@ -6856,6 +6856,7 @@ export type RequisitionNode = {
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
+  isEmergency: Scalars['Boolean']['output'];
   lines: RequisitionLineConnector;
   /**
    * All lines that have not been supplied

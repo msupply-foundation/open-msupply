@@ -173,9 +173,7 @@ export const CreateEncounterModal: FC = () => {
   ]);
 
   const setStartDatetime = (date: Date | null): void => {
-    const startDatetime = DateUtils.formatRFC3339(
-      DateUtils.addCurrentTime(date)
-    );
+    const startDatetime = date?.toISOString();
     setDraft({
       ...currentOrNewDraft(),
       startDatetime,
@@ -231,19 +229,23 @@ export const CreateEncounterModal: FC = () => {
                 return;
               }
               const startDatetime = new Date(draft?.startDatetime ?? 0);
-              if (DateUtils.addHours(startDatetime, 1).getTime() > Date.now()) {
+              const dateNow = Date.now();
+              if (
+                startDatetime.getTime() <=
+                DateUtils.addMinutes(dateNow, 5).getTime()
+              ) {
                 navigate(
                   RouteBuilder.create(AppRoute.Dispensary)
-                    .addPart(AppRoute.Patients)
-                    .addPart(patientId)
-                    .addQuery({ tab: PatientTabValue.Encounters })
+                    .addPart(AppRoute.Encounter)
+                    .addPart(id)
                     .build()
                 );
               } else {
                 navigate(
                   RouteBuilder.create(AppRoute.Dispensary)
-                    .addPart(AppRoute.Encounter)
-                    .addPart(id)
+                    .addPart(AppRoute.Patients)
+                    .addPart(patientId)
+                    .addQuery({ tab: PatientTabValue.Encounters })
                     .build()
                 );
               }
@@ -292,6 +294,7 @@ export const CreateEncounterModal: FC = () => {
                           highlightedDays: getHighlightedDays(),
                         } as any,
                       }}
+                      showTime
                     />
                   }
                 />

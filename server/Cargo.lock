@@ -9310,6 +9310,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "env_logger",
+ "reqwest",
  "sanitize-filename",
  "serde",
  "serde_json",

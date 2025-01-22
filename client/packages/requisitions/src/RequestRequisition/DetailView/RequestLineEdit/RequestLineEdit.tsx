@@ -311,7 +311,6 @@ export const RequestLineEdit = ({
                   <InputWithLabelRow
                     Input={
                       <NumericTextInput
-                        autoFocus
                         disabled={!isPacks}
                         value={NumUtils.round(
                           (draft?.requestedQuantity ?? 0) /
@@ -320,12 +319,18 @@ export const RequestLineEdit = ({
                         )}
                         decimalLimit={2}
                         width={100}
-                        onChange={quantity => {
-                          update({
-                            requestedQuantity:
-                              (quantity ?? 0) * (draft?.defaultPackSize ?? 0),
-                          });
+                        onChange={value => {
+                          const newValue = (value ?? 0) * (draft?.defaultPackSize ?? 0);
+                          if (draft?.suggestedQuantity === newValue) {
+                            update({
+                              requestedQuantity: newValue,
+                              reason: null,
+                            });
+                          } else {
+                            update({ requestedQuantity: newValue });
+                          }
                         }}
+                        onBlur={save}
                       />
                     }
                     labelWidth={LABEL_WIDTH}

@@ -72,6 +72,7 @@ export const FooterComponent: FC = () => {
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
       disabled: isDisabled,
+      disabledToastMessage: t('label.cant-delete-disabled'),
     },
   ];
 
