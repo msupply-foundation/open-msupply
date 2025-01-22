@@ -61,6 +61,9 @@ pub enum InsertInboundShipmentError {
     OtherPartyNotVisible,
     OtherPartyNotASupplier,
     CannotLinkARequisitionToInboundShipment,
+    RequisitionDoesNotExist,
+    InternalOrderDoesNotBelongToStore,
+    NotAnInternalOrder,
     // Internal error
     NewlyCreatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),

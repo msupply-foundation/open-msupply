@@ -116,6 +116,9 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         // Standard Graphql Errors
         ServiceError::InvoiceAlreadyExists
         | ServiceError::CannotLinkARequisitionToInboundShipment
+        | ServiceError::RequisitionDoesNotExist
+        | ServiceError::NotAnInternalOrder
+        | ServiceError::InternalOrderDoesNotBelongToStore
         | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::NewlyCreatedInvoiceDoesNotExist => InternalError(formatted_error),
