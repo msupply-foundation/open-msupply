@@ -8,6 +8,7 @@ import {
   useStringFilter,
   useDebouncedValueCallback,
   FilterOptionsState,
+  RegexUtils,
 } from '@openmsupply-client/common';
 import {
   ItemStockOnHandFragment,
@@ -67,16 +68,17 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const filterByNameAndCode = (
     options: ItemStockOnHandFragment[],
     state: FilterOptionsState<ItemStockOnHandFragment>
-  ) => {
-    const searchValue = state.inputValue.toLocaleLowerCase();
-    return options.filter(
-      option =>
-        option.code.toLocaleLowerCase().includes(searchValue) ||
-        option.name
-          .toLocaleLowerCase()
-          .includes(getItemNameFilterValue(searchValue, selectedCode))
-    );
-  };
+  ) =>
+    options.filter(option => {
+      const searchValue = RegexUtils.escapeChars(state.inputValue);
+      return (
+        RegexUtils.includes(searchValue, option.code) ||
+        RegexUtils.includes(
+          getItemNameFilterValue(searchValue, selectedCode),
+          option.name
+        )
+      );
+    });
 
   const getOptionLabel = (option: ItemStockOnHandFragment) =>
     `${option.code} ${option.name}`;
