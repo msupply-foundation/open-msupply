@@ -76,6 +76,10 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
           .toLocaleLowerCase()
           .includes(getItemNameFilterValue(searchValue, selectedCode))
     );
+  };
+
+  const getOptionLabel = (option: ItemStockOnHandFragment) =>
+    `${option.code} ${option.name}`;
 
   useEffect(() => {
     // Using the Autocomplete openOnFocus prop, the popper is incorrectly
@@ -104,11 +108,11 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       filterOptions={filterByNameAndCode}
       onChange={(_, item) => {
         // Set the search value when selecting/clearing an option
-        setSearch(item ? `${item.code} ${item.name}` : '');
+        setSearch(item ? getOptionLabel(item) : '');
         setSelectedCode(item?.code ?? '');
         onChange(item);
       }}
-      getOptionLabel={option => `${option.code} ${option.name}`}
+      getOptionLabel={getOptionLabel}
       renderOption={getItemOptionRenderer(
         t('label.units'),
         formatNumber.format
@@ -130,13 +134,9 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
         onChange: e => {
           const { value } = e.target;
           setSearch(value);
-          if (!!currentItem) {
-            // If changing input value after item was selected, we need to clear the selected item
-            onChange(null);
-          }
-
           debounceOnFilter(getItemNameFilterValue(value, selectedCode));
         },
+        onBlur: () => setSearch(currentItem ? getOptionLabel(currentItem) : ''),
       }}
     />
   );
