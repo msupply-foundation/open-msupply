@@ -5,6 +5,7 @@ import {
   frontEndHostDisplay,
   useNativeClient,
   useNotification,
+  setPreference,
 } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { BaseButton, BasicTextInput } from '@common/components';
@@ -17,6 +18,7 @@ type ConnectToServer = ReturnType<typeof useNativeClient>['connectToServer'];
 
 interface ManualServerConfigProps {
   connectToServer: ConnectToServer;
+  stopDiscovery: () => void;
   previousServer: FrontEndHost | null;
 }
 
@@ -28,6 +30,7 @@ interface ParsedServer {
 
 export function ManualServerConfig({
   connectToServer,
+  stopDiscovery,
   previousServer,
 }: ManualServerConfigProps): ReactElement {
   const t = useTranslation();
@@ -69,15 +72,21 @@ export function ManualServerConfig({
     const parsedServerDetails = parseServerURL(serverURL);
     if (!parsedServerDetails) return;
 
+    // Generate a new hardware ID because the existing one
+    // cannot be reused once the server goes offline
+    const hardwareId = FnUtils.generateUUID().toUpperCase();
+
     const serverConfig: FrontEndHost = {
       ...parsedServerDetails,
       path: 'login',
       isLocal: true,
       clientVersion: 'unspecified',
-      hardwareId: FnUtils.generateUUID(),
+      hardwareId,
     };
 
     try {
+      stopDiscovery();
+      await setPreference('manualServer', serverConfig);
       const result = await connectToServer(serverConfig);
       await handleConnectionResult(result);
     } catch (e) {

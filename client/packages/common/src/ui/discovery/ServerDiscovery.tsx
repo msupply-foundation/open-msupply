@@ -150,6 +150,7 @@ export const ServerDiscovery = () => {
           )}
           <ManualServerConfig
             connectToServer={connectToServer}
+            stopDiscovery={stopDiscovery}
             previousServer={previousServer}
           />
           <Box display="flex" flex={1} justifyContent="center">
