@@ -17,9 +17,11 @@
     {
       "type": "Control",
       "scope": "#/properties/monthlyConsumptionLookBackPeriod",
-      "label": "T#report.AMC-lookback",
+      "label": "T#report.amc-lookback",
       "options": {
-        "readonly": true
+        "readonly": true,
+        "inputAlignment": "end",
+        "paddingRight": 25
       }
     },
     {
