@@ -486,7 +486,7 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncOutgoingRecord {
     }
 }
 
-/// When invoice line was cancelled
+// When invoice line was cancelled
 const TRANS_LINE_NEGATIVE: (&str, &str) = (
     "1CC10911C7F64369B965181D78696837",
     r#"{        
@@ -535,7 +535,6 @@ const TRANS_LINE_NEGATIVE: (&str, &str) = (
         "sentQuantity": 0,
         "optionID": "",
         "isVVMPassed": "",
-        "program_ID": "",
         "prescribedQuantity": 0,
         "vaccine_vial_monitor_status_ID": "",
         "sent_pack_size": 0,
