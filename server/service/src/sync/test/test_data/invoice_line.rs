@@ -547,7 +547,7 @@ const TRANS_LINE_NEGATIVE: (&str, &str) = (
         "om_item_variant_id": null
     }"#,
 );
-fn trans_line_negative() -> TestSyncIncomingRecord {
+fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANS_LINE_NEGATIVE,
@@ -577,6 +577,35 @@ fn trans_line_negative() -> TestSyncIncomingRecord {
         },
     )
 }
+fn trans_line_negative_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
+        record_id: TRANS_LINE_NEGATIVE.0.to_string(),
+        push_data: json!(LegacyTransLineRow {
+            id: TRANS_LINE_NEGATIVE.0.to_string(),
+            invoice_id: "outbound_shipment_a".to_string(),
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            stock_line_id: Some(mock_stock_line_a().id),
+            location_id: None,
+            batch: None,
+            expiry_date: None,
+            pack_size: 1.0,
+            cost_price_per_pack: 200.0,
+            sell_price_per_pack: 200.0,
+            total_before_tax: Some(4000.0),
+            total_after_tax: Some(4000.0),
+            tax_percentage: None,
+            r#type: LegacyTransLineType::StockIn,
+            number_of_packs: 20.0,
+            note: None,
+            item_code: None,
+            option_id: None,
+            foreign_currency_price_before_tax: Some(200.0),
+            item_variant_id: None,
+        }),
+    }
+}
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
@@ -584,7 +613,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         trans_line_2_pull_record(),
         trans_line_om_fields_pull_record(),
         trans_line_om_fields_unset_tax_pull_record(),
-        trans_line_negative(),
+        trans_line_negative_pull_record(),
     ]
 }
 
@@ -602,5 +631,6 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
         trans_line_2_push_record(),
         trans_line_om_fields_push_record(),
         trans_line_om_fields_unset_tax_push_record(),
+        trans_line_negative_push_record(),
     ]
 }
