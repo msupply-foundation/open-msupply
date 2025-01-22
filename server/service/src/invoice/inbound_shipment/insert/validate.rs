@@ -1,4 +1,5 @@
 use crate::invoice::check_invoice_exists;
+use crate::store_preference::get_store_preferences;
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::Name;
 use repository::StorageConnection;
@@ -13,6 +14,14 @@ pub fn validate(
     use InsertInboundShipmentError::*;
     if (check_invoice_exists(&input.id, connection)?).is_some() {
         return Err(InvoiceAlreadyExists);
+    }
+
+    let store_pref = get_store_preferences(connection, store_id)?;
+
+    if input.requisition_id.is_some()
+        && !store_pref.manually_link_internal_order_to_inbound_shipment
+    {
+        return Err(CannotLinkARequisitionToInboundShipment);
     }
 
     let other_party = check_other_party(
