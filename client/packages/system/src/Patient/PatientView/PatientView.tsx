@@ -262,9 +262,7 @@ const PatientDetailView = ({
   }, [currentPatient]);
 
   const showSaveConfirmation = useConfirmationModal({
-    onConfirm: () => {
-      save();
-    },
+    onConfirm: save,
     message: t('messages.confirm-save-generic'),
     title: t('heading.are-you-sure'),
   });
