@@ -44,7 +44,7 @@ import { ContactTraceListView, CreateContactTraceModal } from '../ContactTrace';
 import defaultPatientSchema from './DefaultPatientSchema.json';
 import defaultPatientUISchema from './DefaultPatientUISchema.json';
 import { VaccinationCardsListView } from '../VaccinationCard/ListView';
-import { usePrescription } from 'packages/invoices/src/Prescriptions';
+import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
 
 const DEFAULT_SCHEMA: SchemaData = {
   formSchemaId: undefined,
