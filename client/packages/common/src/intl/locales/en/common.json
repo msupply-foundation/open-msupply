@@ -358,6 +358,7 @@
   "error.snapshot-total-mismatch": "The stock quantity is now different from when the stocktake was started because some of the stock has been issued in outbound shipments or prescriptions. Please delete the line and try again.",
   "error.soh-and-suggested-quantity-are-zero": "No Stock on Hand or Suggested Quantity values",
   "error.something-wrong": "Oops! Something's gone wrong.",
+  "error.something-wrong-info-icon": "Oops! Something's gone wrong. Click info icon to see error details.",
   "error.stocktake-has-stock-reduced-below-zero": "Stocktake cannot be finalised because stock has been reserved in new outbound shipments or prescriptions. The quantity cannot be reduced below zero.",
   "error.stocktake-not-found": "Stocktake not found",
   "error.stocktake-snapshot-total-mismatch": "Stocktake cannot be finalised. The stock quantity is now different from when the stocktake was started because some of the stock has been issued in outbound shipments or prescriptions. Please delete the line and try again.",
