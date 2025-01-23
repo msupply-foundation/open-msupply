@@ -27,6 +27,7 @@ table! {
         keep_requisition_lines_with_zero_requested_quantity_on_finalised -> Bool,
         use_consumption_and_stock_from_customers_for_internal_orders -> Bool,
         manually_link_internal_order_to_inbound_shipment -> Bool,
+        prescription_payments_enabled -> Bool,
     }
 }
 
@@ -65,6 +66,7 @@ pub struct StorePreferenceRow {
     pub keep_requisition_lines_with_zero_requested_quantity_on_finalised: bool,
     pub use_consumption_and_stock_from_customers_for_internal_orders: bool,
     pub manually_link_internal_order_to_inbound_shipment: bool,
+    pub prescription_payments_enabled: bool,
 }
 
 pub struct StorePreferenceRowRepository<'a> {
