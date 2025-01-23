@@ -57,12 +57,12 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   }, []);
 
   const onOk = () => {
-    // need to add a check whats the page that we're currently on
-    // if we're at precsriptions or in patient
     if (createNewPatient) {
       const urlSegments = location.pathname.split('/');
+
       if (urlSegments.includes(AppRoute.Patients))
         navigate(createNewPatient.id);
+
       if (urlSegments.includes(AppRoute.Prescription))
         navigate(
           RouteBuilder.create(AppRoute.Dispensary)
