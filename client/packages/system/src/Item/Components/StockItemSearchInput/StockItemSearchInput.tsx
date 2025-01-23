@@ -65,24 +65,6 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const formatNumber = useFormatNumber();
   const selectControl = useToggle();
 
-  const filterByNameAndCode = (
-    options: ItemStockOnHandFragment[],
-    state: FilterOptionsState<ItemStockOnHandFragment>
-  ) =>
-    options.filter(option => {
-      const searchValue = RegexUtils.escapeChars(state.inputValue);
-      return (
-        RegexUtils.includes(searchValue, option.code) ||
-        RegexUtils.includes(
-          getItemNameFilterValue(searchValue, selectedCode),
-          option.name
-        )
-      );
-    });
-
-  const getOptionLabel = (option: ItemStockOnHandFragment) =>
-    `${option.code} ${option.name}`;
-
   useEffect(() => {
     // Using the Autocomplete openOnFocus prop, the popper is incorrectly
     // positioned when used within a Dialog. This is a workaround to fix the
@@ -107,7 +89,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
         currentItem ? { ...currentItem, label: currentItem.name ?? '' } : null
       }
       noOptionsText={t('error.no-items')}
-      filterOptions={filterByNameAndCode}
+      filterOptions={filterByNameAndCode(selectedCode)}
       onChange={(_, item) => {
         // Set the search value when selecting/clearing an option
         setSearch(item ? getOptionLabel(item) : '');
@@ -151,4 +133,25 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
 // Until only code value remains, then search by that
 function getItemNameFilterValue(search: string, selectedCode: string): string {
   return selectedCode ? search.replace(`${selectedCode} `, '') : search;
+}
+
+function filterByNameAndCode(selectedCode: string) {
+  return (
+    options: ItemStockOnHandFragment[],
+    state: FilterOptionsState<ItemStockOnHandFragment>
+  ) =>
+    options.filter(option => {
+      const searchValue = RegexUtils.escapeChars(state.inputValue);
+      return (
+        RegexUtils.includes(searchValue, option.code) ||
+        RegexUtils.includes(
+          getItemNameFilterValue(searchValue, selectedCode),
+          option.name
+        )
+      );
+    });
+}
+
+function getOptionLabel(option: ItemStockOnHandFragment): string {
+  return `${option.code} ${option.name}`;
 }
