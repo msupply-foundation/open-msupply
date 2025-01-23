@@ -489,9 +489,9 @@ async fn main() -> anyhow::Result<()> {
 
                     let form_schema_json = match (arguments_path, arguments_ui_path) {
                         (Some(_), None) | (None, Some(_)) => {
-                            return Err(anyhow!(format!(
-                                "When arguments_path is specified arguments_ui_path must also be specified in report {:?} {:?}", name, version_dir
-                            )))
+                            return Err(anyhow!(
+                                "When arguments_path is specified arguments_ui_path must also be specified in report and vice versa {:?} {:?}", name, version_dir
+                            ))
                         }
                         (Some(arguments_path), Some(arguments_ui_path)) => {
                             Some(schema_from_row(FormSchemaRow {
