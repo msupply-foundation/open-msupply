@@ -61,13 +61,13 @@ const UIComponent = (props: ControlProps) => {
 
   useEffect(() => {
     if (!data) return;
-    const dob = DateUtils.getNaiveDate(data.dateOfBirth);
-    setDoB(dob);
-    if (dob === null) {
+    const naiveDoB = DateUtils.getNaiveDate(data.dateOfBirth);
+    setDoB(naiveDoB);
+    if (naiveDoB === null) {
       setAge(undefined);
       return;
     }
-    setAge(DateUtils.age(dob));
+    setAge(DateUtils.age(naiveDoB));
   }, [data]);
 
   if (!props.visible) {
@@ -84,7 +84,7 @@ const UIComponent = (props: ControlProps) => {
         <Box display="flex" alignItems="center" gap={FORM_GAP} width="100%">
           <BaseDatePickerInput
             // undefined is displayed as "now" and null as unset
-            value={DateUtils.getNaiveDate(dob)}
+            value={dob}
             onChange={onChangeDoB}
             format="P"
             width={135}

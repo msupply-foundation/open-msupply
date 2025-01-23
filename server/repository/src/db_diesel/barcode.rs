@@ -1,8 +1,6 @@
 use super::{
-    barcode_row::{barcode, barcode::dsl as barcode_dsl},
-    name_link_row::{name_link, name_link::dsl as name_link_dsl},
-    name_row::{name, name::dsl as name_dsl},
-    BarcodeRow, DBType, NameLinkRow, NameRow, StorageConnection,
+    barcode_row::barcode, name_link_row::name_link, name_row::name, BarcodeRow, DBType,
+    NameLinkRow, NameRow, StorageConnection,
 };
 use diesel::{
     helper_types::{InnerJoin, IntoBoxed, LeftJoin},
@@ -69,14 +67,14 @@ impl<'a> BarcodeRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 BarcodeSortField::Id => {
-                    apply_sort_no_case!(query, sort, barcode_dsl::id)
+                    apply_sort_no_case!(query, sort, barcode::id)
                 }
                 BarcodeSortField::Barcode => {
-                    apply_sort_no_case!(query, sort, barcode_dsl::gtin)
+                    apply_sort_no_case!(query, sort, barcode::gtin)
                 }
             }
         } else {
-            query = query.order(barcode_dsl::gtin.asc())
+            query = query.order(barcode::gtin.asc())
         }
 
         let result = query
@@ -92,15 +90,15 @@ type BoxedBarcodeQuery =
     IntoBoxed<'static, LeftJoin<barcode::table, InnerJoin<name_link::table, name::table>>, DBType>;
 
 fn create_filtered_query(filter: Option<BarcodeFilter>) -> BoxedBarcodeQuery {
-    let mut query = barcode_dsl::barcode
-        .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
+    let mut query = barcode::table
+        .left_join(name_link::table.inner_join(name::table))
         .into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, barcode_dsl::id);
-        apply_equal_filter!(query, filter.gtin, barcode_dsl::gtin);
-        apply_equal_filter!(query, filter.item_id, barcode_dsl::item_id);
-        apply_equal_filter!(query, filter.pack_size, barcode_dsl::pack_size);
+        apply_equal_filter!(query, filter.id, barcode::id);
+        apply_equal_filter!(query, filter.gtin, barcode::gtin);
+        apply_equal_filter!(query, filter.item_id, barcode::item_id);
+        apply_equal_filter!(query, filter.pack_size, barcode::pack_size);
     }
 
     query

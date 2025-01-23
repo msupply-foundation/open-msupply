@@ -1,7 +1,4 @@
-use super::{
-    sensor_row::{sensor, sensor::dsl as sensor_dsl},
-    DBType, SensorRow, StorageConnection,
-};
+use super::{sensor_row::sensor, DBType, SensorRow, StorageConnection};
 use diesel::prelude::*;
 
 use crate::{
@@ -65,17 +62,17 @@ impl<'a> SensorRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 SensorSortField::Id => {
-                    apply_sort_no_case!(query, sort, sensor_dsl::id)
+                    apply_sort_no_case!(query, sort, sensor::id)
                 }
                 SensorSortField::Serial => {
-                    apply_sort_no_case!(query, sort, sensor_dsl::serial)
+                    apply_sort_no_case!(query, sort, sensor::serial)
                 }
                 SensorSortField::Name => {
-                    apply_sort_no_case!(query, sort, sensor_dsl::name)
+                    apply_sort_no_case!(query, sort, sensor::name)
                 }
             }
         } else {
-            query = query.order(sensor_dsl::name.asc())
+            query = query.order(sensor::name.asc())
         }
 
         let result = query
@@ -90,15 +87,15 @@ impl<'a> SensorRepository<'a> {
         let mut query = sensor::table.into_boxed();
 
         if let Some(filter) = filter {
-            apply_equal_filter!(query, filter.id, sensor_dsl::id);
-            apply_string_filter!(query, filter.name, sensor_dsl::name);
-            apply_equal_filter!(query, filter.serial, sensor_dsl::serial);
+            apply_equal_filter!(query, filter.id, sensor::id);
+            apply_string_filter!(query, filter.name, sensor::name);
+            apply_equal_filter!(query, filter.serial, sensor::serial);
 
             if let Some(value) = filter.is_active {
-                query = query.filter(sensor_dsl::is_active.eq(value));
+                query = query.filter(sensor::is_active.eq(value));
             }
 
-            apply_equal_filter!(query, filter.store_id, sensor_dsl::store_id);
+            apply_equal_filter!(query, filter.store_id, sensor::store_id);
         }
 
         query

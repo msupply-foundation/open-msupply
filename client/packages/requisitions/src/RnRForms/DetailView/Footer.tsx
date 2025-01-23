@@ -1,6 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { Keyboard } from '@capacitor/keyboard';
-import { Capacitor } from '@capacitor/core';
+import React from 'react';
 import {
   Box,
   AppFooterPortal,
@@ -10,6 +8,7 @@ import {
   RnRFormNodeStatus,
   useNotification,
   useConfirmationModal,
+  useKeyboard,
 } from '@openmsupply-client/common';
 import { useRnRForm } from '../api';
 
@@ -22,7 +21,7 @@ export const Footer = ({
   linesUnconfirmed: boolean;
   unsavedChanges: boolean;
 }) => {
-  const [showFooter, setShowFooter] = useState(true);
+  const { keyboardIsOpen } = useKeyboard();
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
   const { error, info, success } = useNotification();
@@ -58,21 +57,7 @@ export const Footer = ({
     showFinaliseConfirmation();
   };
 
-  // Hide while keyboard is open fora bit more screen real estate
-  useEffect(() => {
-    if (!Capacitor.isPluginAvailable('Keyboard')) return;
-
-    Keyboard.addListener('keyboardDidShow', () => {
-      setShowFooter(false);
-    });
-    Keyboard.addListener('keyboardDidHide', () => {
-      setShowFooter(true);
-    });
-
-    return () => {
-      Keyboard.removeAllListeners();
-    };
-  }, []);
+  const showFooter = !keyboardIsOpen;
 
   return (
     <AppFooterPortal

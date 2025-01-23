@@ -1,9 +1,5 @@
 use super::{
-    contact_trace_row::{
-        contact_trace_name_link_view, contact_trace_name_link_view::dsl as contact_trace_dsl,
-    },
-    document::{document, document::dsl as document_dsl},
-    program_row::{program, program::dsl as program_dsl},
+    contact_trace_row::contact_trace_name_link_view, document::document, program_row::program,
     StorageConnection,
 };
 
@@ -64,9 +60,9 @@ type BoxedProgramQuery = IntoBoxed<
 >;
 
 fn create_filtered_query(filter: Option<ContactTraceFilter>) -> BoxedProgramQuery {
-    let mut query = contact_trace_dsl::contact_trace_name_link_view
-        .inner_join(document_dsl::document)
-        .inner_join(program_dsl::program)
+    let mut query = contact_trace_name_link_view::table
+        .inner_join(document::table)
+        .inner_join(program::table)
         .into_boxed();
 
     if let Some(f) = filter {
@@ -86,23 +82,31 @@ fn create_filtered_query(filter: Option<ContactTraceFilter>) -> BoxedProgramQuer
             date_of_birth,
         } = f;
 
-        apply_equal_filter!(query, id, contact_trace_dsl::id);
-        apply_date_time_filter!(query, datetime, contact_trace_dsl::datetime);
-        apply_equal_filter!(query, patient_id, contact_trace_dsl::patient_id);
+        apply_equal_filter!(query, id, contact_trace_name_link_view::id);
+        apply_date_time_filter!(query, datetime, contact_trace_name_link_view::datetime);
+        apply_equal_filter!(query, patient_id, contact_trace_name_link_view::patient_id);
         apply_equal_filter!(
             query,
             contact_patient_id,
-            contact_trace_dsl::contact_patient_id
+            contact_trace_name_link_view::contact_patient_id
         );
-        apply_equal_filter!(query, program_context_id, program_dsl::context_id);
-        apply_equal_filter!(query, program_id, contact_trace_dsl::program_id);
-        apply_string_filter!(query, r#type, document_dsl::type_);
-        apply_string_filter!(query, document_name, document_dsl::name);
-        apply_string_filter!(query, contact_trace_id, contact_trace_dsl::contact_trace_id);
-        apply_string_filter!(query, first_name, contact_trace_dsl::first_name);
-        apply_string_filter!(query, last_name, contact_trace_dsl::last_name);
-        apply_equal_filter!(query, gender, contact_trace_dsl::gender);
-        apply_date_filter!(query, date_of_birth, contact_trace_dsl::date_of_birth);
+        apply_equal_filter!(query, program_context_id, program::context_id);
+        apply_equal_filter!(query, program_id, contact_trace_name_link_view::program_id);
+        apply_string_filter!(query, r#type, document::type_);
+        apply_string_filter!(query, document_name, document::name);
+        apply_string_filter!(
+            query,
+            contact_trace_id,
+            contact_trace_name_link_view::contact_trace_id
+        );
+        apply_string_filter!(query, first_name, contact_trace_name_link_view::first_name);
+        apply_string_filter!(query, last_name, contact_trace_name_link_view::last_name);
+        apply_equal_filter!(query, gender, contact_trace_name_link_view::gender);
+        apply_date_filter!(
+            query,
+            date_of_birth,
+            contact_trace_name_link_view::date_of_birth
+        );
     }
     query
 }
@@ -142,32 +146,32 @@ impl<'a> ContactTraceRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 ContactTraceSortField::Datetime => {
-                    apply_sort!(query, sort, contact_trace_dsl::datetime)
+                    apply_sort!(query, sort, contact_trace_name_link_view::datetime)
                 }
                 ContactTraceSortField::ProgramId => {
-                    apply_sort!(query, sort, contact_trace_dsl::program_id)
+                    apply_sort!(query, sort, contact_trace_name_link_view::program_id)
                 }
                 ContactTraceSortField::PatientId => {
-                    apply_sort!(query, sort, contact_trace_dsl::patient_id)
+                    apply_sort!(query, sort, contact_trace_name_link_view::patient_id)
                 }
                 ContactTraceSortField::ContactTraceId => {
-                    apply_sort!(query, sort, contact_trace_dsl::contact_trace_id)
+                    apply_sort!(query, sort, contact_trace_name_link_view::contact_trace_id)
                 }
                 ContactTraceSortField::FirstName => {
-                    apply_sort!(query, sort, contact_trace_dsl::first_name)
+                    apply_sort!(query, sort, contact_trace_name_link_view::first_name)
                 }
                 ContactTraceSortField::LastName => {
-                    apply_sort!(query, sort, contact_trace_dsl::last_name)
+                    apply_sort!(query, sort, contact_trace_name_link_view::last_name)
                 }
                 ContactTraceSortField::Gender => {
-                    apply_sort_no_case!(query, sort, contact_trace_dsl::gender)
+                    apply_sort_no_case!(query, sort, contact_trace_name_link_view::gender)
                 }
                 ContactTraceSortField::DateOfBirth => {
-                    apply_sort_no_case!(query, sort, contact_trace_dsl::date_of_birth)
+                    apply_sort_no_case!(query, sort, contact_trace_name_link_view::date_of_birth)
                 }
             }
         } else {
-            query = query.order(contact_trace_dsl::patient_id.asc())
+            query = query.order(contact_trace_name_link_view::patient_id.asc())
         }
 
         let final_query = query

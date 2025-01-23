@@ -1,6 +1,6 @@
 use super::{
-    form_schema_row::{self, form_schema::dsl as form_schema_dsl},
-    report_row::report::{self, dsl as report_dsl},
+    form_schema_row::{self, form_schema},
+    report_row::report,
     ContextType, ReportMetaDataRow, ReportRow, ReportType, StorageConnection,
 };
 
@@ -141,10 +141,10 @@ impl<'a> ReportRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 ReportSortField::Id => {
-                    apply_sort_no_case!(query, sort, report_dsl::id);
+                    apply_sort_no_case!(query, sort, report::id);
                 }
                 ReportSortField::Name => {
-                    apply_sort_no_case!(query, sort, report_dsl::name);
+                    apply_sort_no_case!(query, sort, report::name);
                 }
             }
         }
@@ -165,10 +165,10 @@ impl<'a> ReportRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 ReportSortField::Id => {
-                    apply_sort_no_case!(query, sort, report_dsl::id);
+                    apply_sort_no_case!(query, sort, report::id);
                 }
                 ReportSortField::Name => {
-                    apply_sort_no_case!(query, sort, report_dsl::name);
+                    apply_sort_no_case!(query, sort, report::name);
                 }
             }
         }
@@ -187,9 +187,7 @@ type BoxedStoreQuery =
     IntoBoxed<'static, LeftJoin<report::table, form_schema_row::form_schema::table>, DBType>;
 
 fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
-    let mut query = report_dsl::report
-        .left_join(form_schema_dsl::form_schema)
-        .into_boxed();
+    let mut query = report::table.left_join(form_schema::table).into_boxed();
 
     if let Some(f) = filter {
         let ReportFilter {
@@ -202,14 +200,14 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
             is_custom,
         } = f;
 
-        apply_equal_filter!(query, id, report_dsl::id);
-        apply_string_filter!(query, name, report_dsl::name);
-        apply_equal_filter!(query, r#type, report_dsl::type_);
-        apply_equal_filter!(query, context, report_dsl::context);
-        apply_equal_filter!(query, sub_context, report_dsl::sub_context);
-        apply_equal_filter!(query, code, report_dsl::code);
+        apply_equal_filter!(query, id, report::id);
+        apply_string_filter!(query, name, report::name);
+        apply_equal_filter!(query, r#type, report::type_);
+        apply_equal_filter!(query, context, report::context);
+        apply_equal_filter!(query, sub_context, report::sub_context);
+        apply_equal_filter!(query, code, report::code);
         if let Some(is_custom) = is_custom {
-            query = query.filter(report_dsl::is_custom.eq(is_custom));
+            query = query.filter(report::is_custom.eq(is_custom));
         }
     }
 

@@ -1,7 +1,6 @@
 use super::{
     inventory_adjustment_reason_row::inventory_adjustment_reason, item_link_row::item_link,
-    location_row::location, stock_line_row::stock_line,
-    stocktake_line_row::stocktake_line::dsl as stocktake_line_dsl, stocktake_row::stocktake,
+    location_row::location, stock_line_row::stock_line, stocktake_row::stocktake,
     StorageConnection,
 };
 
@@ -83,9 +82,9 @@ impl<'a> StocktakeLineRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &StocktakeLineRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(stocktake_line_dsl::stocktake_line)
+        diesel::insert_into(stocktake_line::table)
             .values(row)
-            .on_conflict(stocktake_line_dsl::id)
+            .on_conflict(stocktake_line::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -124,14 +123,14 @@ impl<'a> StocktakeLineRowRepository<'a> {
             }
         };
 
-        diesel::delete(stocktake_line_dsl::stocktake_line.filter(stocktake_line_dsl::id.eq(id)))
+        diesel::delete(stocktake_line::table.filter(stocktake_line::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<StocktakeLineRow>, RepositoryError> {
-        let result = stocktake_line_dsl::stocktake_line
-            .filter(stocktake_line_dsl::id.eq(id))
+        let result = stocktake_line::table
+            .filter(stocktake_line::id.eq(id))
             .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)
@@ -141,8 +140,8 @@ impl<'a> StocktakeLineRowRepository<'a> {
         &self,
         ids: &[String],
     ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
-        let result = stocktake_line_dsl::stocktake_line
-            .filter(stocktake_line_dsl::id.eq_any(ids))
+        let result = stocktake_line::table
+            .filter(stocktake_line::id.eq_any(ids))
             .load(self.connection.lock().connection())?;
         Ok(result)
     }

@@ -54,7 +54,7 @@ export const useDraftPrescriptionLines = (
     const stockLines = uniqBy(
       [...data.nodes, ...invoiceLineStockLines],
       'id'
-   ).filter(stockLine => !stockLine.onHold ); // Filter out on hold stock lines
+    ).filter(stockLine => !stockLine.onHold); // Filter out on hold stock lines
 
     const noStockLines = stockLines.length == 0;
 
