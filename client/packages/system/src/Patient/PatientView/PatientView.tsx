@@ -14,7 +14,10 @@ import {
   BasicSpinner,
   DocumentRegistryCategoryNode,
   useNavigate,
+  // useSearchParams,
+  RouteBuilder,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { PatientSummary } from './PatientSummary';
@@ -98,6 +101,12 @@ const PatientDetailView = ({
     createNewPatient,
     setCreateNewPatient,
   } = usePatientStore();
+
+  const navigate = useNavigate();
+  // const [searchParams] = useSearchParams();
+  // const fromPrescription =
+  //   searchParams.get('previousPath') === AppRoute.Prescription;
+
   const patientId = usePatient.utils.id();
   const { data: currentPatient, isLoading: isCurrentPatientLoading } =
     usePatient.document.get(patientId);
@@ -107,8 +116,8 @@ const PatientDetailView = ({
         category: { equalTo: DocumentRegistryCategoryNode.Patient },
       },
     });
+
   const isLoading = isCurrentPatientLoading || isPatientRegistryLoading;
-  const navigate = useNavigate();
 
   const patientRegistry = patientRegistries?.nodes[0];
   const isCreatingPatient = !!createNewPatient;
@@ -231,7 +240,15 @@ const PatientDetailView = ({
   }, [isDirty, onEdit]);
 
   const showSaveConfirmation = useConfirmationModal({
-    onConfirm: save,
+    onConfirm: () => {
+      save();
+      navigate(
+        RouteBuilder.create(AppRoute.Dispensary)
+          .addPart(AppRoute.Prescription)
+          .addQuery({ patientId: 'random' })
+          .build()
+      );
+    },
     message: t('messages.confirm-save-generic'),
     title: t('heading.are-you-sure'),
   });
