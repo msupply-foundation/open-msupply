@@ -282,7 +282,7 @@ const REQUISITION_OM_FIELDS: (&str, &str) = (
       "om_sent_datetime": "2022-03-24T14:48:00",
       "om_finalised_datetime": "2022-03-25T14:48:00",
       "om_expected_delivery_date": "2022-03-26",
-      "om_max_months_of_stock": 9.856262833675565,
+      "om_max_months_of_stock": 9.85626283367557,
       "om_status": "NEW",
       "om_colour": "Colour" 
     }"#,
@@ -319,7 +319,7 @@ fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
             colour: Some("Colour".to_string()),
             comment: Some("From request requisition 3".to_string()),
             their_reference: Some("From request requisition 3".to_string()),
-            max_months_of_stock: 9.856262833675563,
+            max_months_of_stock: 9.85626283367557,
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
             approval_status: Some(ApprovalStatusType::Approved),
@@ -368,7 +368,7 @@ fn requisition_om_fields_push_record() -> TestSyncOutgoingRecord {
                     .unwrap()
             ),
             expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 3, 26).unwrap()),
-            max_months_of_stock: Some(9.856262833675565),
+            max_months_of_stock: Some(9.85626283367557),
             om_status: Some(RequisitionStatus::New),
             om_colour: Some("Colour".to_string()),
             approval_status: Some(LegacyAuthorisationStatus::Authorised),
