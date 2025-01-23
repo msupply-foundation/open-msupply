@@ -18,8 +18,12 @@ export const QueryErrorHandler = () => {
   const [authError] = useLocalStorage('/error/auth');
 
   useEffect(() => {
-    if (!!errorMessage && authError !== AuthError.Unauthenticated) {
-      if (errorMessage.length > 100) errorWithDetail(errorMessage)();
+    if (
+      !!errorMessage &&
+      errorMessage.length > 100 &&
+      authError !== AuthError.Unauthenticated
+    ) {
+      errorWithDetail(errorMessage)();
     }
   }, [errorMessage]);
 
