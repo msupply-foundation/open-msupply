@@ -243,7 +243,7 @@ export const PrescriptionLineEditForm: React.FC<
               gap={1}
             >
               <Grid item>
-                <InputLabel style={{ fontSize: 12 }}>
+                <InputLabel sx={{ fontSize: 12 }}>
                   {t('label.issue')}
                 </InputLabel>
               </Grid>
@@ -258,12 +258,26 @@ export const PrescriptionLineEditForm: React.FC<
                 />
               </Grid>
               <Grid item>
-                <InputLabel style={{ fontSize: 12 }}>
+                <InputLabel sx={{ fontSize: 12 }}>
                   {t('label.unit-plural', {
                     count: issueUnitQuantity,
                     unit: item?.unitName,
                   })}
                 </InputLabel>
+              </Grid>
+              <Grid item>
+                <InputLabel sx={{ fontSize: 12 }}>
+                  {t('label.prescribed-quantity')}
+                </InputLabel>
+              </Grid>
+              <Grid item>
+                <NumericTextInput
+                  autoFocus
+                  disabled={disabled}
+                  value={10}
+                  min={0}
+                  decimalLimit={2}
+                />
               </Grid>
             </Grid>
             <TableWrapper
@@ -293,7 +307,7 @@ export const PrescriptionLineEditForm: React.FC<
               updateNotes(e.target.value);
             }}
             fullWidth
-            style={{ flex: 1 }}
+            sx={{ flex: 1 }}
           />
         </AccordionPanelSection>
       )}
