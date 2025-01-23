@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import {
   useToggle,
   useFormatNumber,
@@ -65,6 +65,14 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const formatNumber = useFormatNumber();
   const selectControl = useToggle();
 
+  const filterOptions = useCallback(
+    (
+      options: ItemStockOnHandFragment[],
+      state: FilterOptionsState<ItemStockOnHandFragment>
+    ) => filterByNameAndCode(selectedCode)(options, state),
+    [selectedCode]
+  );
+
   useEffect(() => {
     // Using the Autocomplete openOnFocus prop, the popper is incorrectly
     // positioned when used within a Dialog. This is a workaround to fix the
@@ -89,7 +97,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
         currentItem ? { ...currentItem, label: currentItem.name ?? '' } : null
       }
       noOptionsText={t('error.no-items')}
-      filterOptions={filterByNameAndCode(selectedCode)}
+      filterOptions={filterOptions}
       onChange={(_, item) => {
         // Set the search value when selecting/clearing an option
         setSearch(item ? getOptionLabel(item) : '');
