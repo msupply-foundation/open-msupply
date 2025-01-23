@@ -32,7 +32,7 @@ export const Toolbar: FC = () => {
       }}
     >
       <Grid container gap={2} flexWrap="nowrap">
-        <Grid item display="flex" flex={1} flexDirection="column" gap={1}>
+        <Grid display="flex" flex={1} flexDirection="column" gap={1}>
           {otherParty && (
             <InputWithLabelRow
               label={t('label.supplier-name')}
@@ -60,7 +60,7 @@ export const Toolbar: FC = () => {
             }
           />
         </Grid>
-        <Grid item>
+        <Grid>
           {programName && (
             <Alert severity="info" sx={{ marginTop: 1, maxWidth: '378px' }}>
               {t('info.cannot-edit-program-requisition')}
@@ -69,14 +69,13 @@ export const Toolbar: FC = () => {
         </Grid>
       </Grid>
       <Grid
-        item
         display="flex"
         gap={1}
         alignItems="flex-end"
         justifyContent="flex-end"
         sx={{ marginTop: 1, flexWrap: 'wrap' }}
       >
-        <Grid item>
+        <Grid>
           <Switch
             label={t('label.hide-stock-over-minimum')}
             onChange={toggle}
@@ -86,7 +85,7 @@ export const Toolbar: FC = () => {
             labelSx={{ margin: '5px 0' }}
           />
         </Grid>
-        <Grid item display="flex" gap={1} alignItems="flex-end">
+        <Grid display="flex" gap={1} alignItems="flex-end">
           <SearchBar
             placeholder={t('placeholder.filter-items')}
             value={itemFilter}

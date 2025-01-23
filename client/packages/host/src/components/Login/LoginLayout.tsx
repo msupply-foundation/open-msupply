@@ -102,21 +102,19 @@ export const LoginLayout = ({
             alignItems: 'center',
           }}
         >
-          <Box style={{ width: 285 }}>
-            <form onSubmit={onLogin} onKeyDown={handleKeyDown}>
-              <Stack spacing={5}>
-                <Box display="flex" justifyContent="center">
-                  <LoginIcon />
-                </Box>
-                {UsernameInput}
-                {PasswordInput}
-                {ErrorMessage}
-                <Box display="flex" justifyContent="flex-end">
-                  {LoginButton}
-                </Box>
-              </Stack>
-            </form>
-          </Box>
+          <form onSubmit={onLogin} onKeyDown={handleKeyDown}>
+            <Stack spacing={5}>
+              <Box display="flex" justifyContent="center">
+                <LoginIcon />
+              </Box>
+              {UsernameInput}
+              {PasswordInput}
+              {ErrorMessage}
+              <Box display="flex" justifyContent="flex-end">
+                {LoginButton}
+              </Box>
+            </Stack>
+          </form>
         </Box>
         <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
       </Box>

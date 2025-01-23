@@ -1,22 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import {
-  Box,
-  StandardTextFieldProps,
-  TextField,
-  Typography,
-} from '@mui/material';
-
-export type BasicTextInputProps = StandardTextFieldProps & {
-  textAlign?: 'left' | 'center' | 'right';
-  focusOnRender?: boolean;
-};
+import { Box, TextField, Typography } from '@mui/material';
+import { BasicTextInputProps } from './BasicTextInput';
 
 /**
  * Very basic TextInput component with some simple styling applied where you can
  * build your input on top.
  */
 
-export const BasicTextInput = React.forwardRef<
+export const DeprecatedBasicTextInput = React.forwardRef<
   HTMLDivElement,
   BasicTextInputProps
 >(
@@ -24,7 +15,7 @@ export const BasicTextInput = React.forwardRef<
     {
       sx,
       style,
-      slotProps,
+      InputProps,
       error,
       required,
       textAlign,
@@ -73,30 +64,27 @@ export const BasicTextInput = React.forwardRef<
           ].flat()}
           variant="standard"
           size="small"
-          slotProps={{
-            input: {
-              disableInjectingGlobalStyles: true,
-              disableUnderline: error ? true : false,
-              sx: {
-                border: theme =>
-                  error ? `2px solid ${theme.palette.error.main}` : 'none',
-                backgroundColor: theme =>
-                  props.disabled
-                    ? theme.palette.background.toolbar
-                    : theme.palette.background.menu,
-                borderRadius: 1,
-                padding: 0.5,
-              },
-              ...slotProps?.input,
+          InputProps={{
+            disableInjectingGlobalStyles: true,
+            disableUnderline: error ? true : false,
+            ...InputProps,
+            sx: {
+              border: theme =>
+                error ? `2px solid ${theme.palette.error.main}` : 'none',
+              backgroundColor: theme =>
+                props.disabled
+                  ? theme.palette.background.toolbar
+                  : theme.palette.background.menu,
+              borderRadius: '8px',
+              padding: '4px 8px',
+              ...InputProps?.sx,
             },
-            htmlInput: {
-              style: props?.disabled ? { textOverflow: 'ellipsis' } : {},
-              inputMode: props?.disabled ? undefined : props.inputMode,
-              sx: { padding: 0.5 },
-              ...slotProps?.htmlInput,
-            },
-            ...slotProps,
           }}
+          inputProps={
+            props.disabled
+              ? { style: { textOverflow: 'ellipsis' } }
+              : { inputMode: props.inputMode }
+          }
           {...props}
         />
         <Box width={2}>

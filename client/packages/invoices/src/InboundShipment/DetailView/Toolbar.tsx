@@ -60,7 +60,7 @@ export const Toolbar: FC = () => {
         alignItems="flex-end"
         gap={1}
       >
-        <Grid item display="flex" flex={1}>
+        <Grid display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
             {otherParty && (
               <InputWithLabelRow
@@ -96,7 +96,6 @@ export const Toolbar: FC = () => {
           </Box>
         </Grid>
         <Grid
-          item
           display="flex"
           gap={1}
           justifyContent="flex-end"

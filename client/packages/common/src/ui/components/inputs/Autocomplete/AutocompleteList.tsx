@@ -78,6 +78,25 @@ export const AutocompleteList = <T,>({
     ? getDefaultOptionRenderer<T>(optionKey)
     : renderOption;
 
+  const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
+    <BasicTextInput
+      {...props}
+      slotProps={{
+        input: {
+          disableUnderline: false,
+          sx: {
+            paddingLeft: 1,
+            minWidth: width,
+          },
+          ...props.InputProps,
+        },
+        inputLabel: { shrink: true },
+        htmlInput: { ...props?.inputProps },
+      }}
+      sx={{ minWidth: width }}
+    />
+  );
+
   let mappedOptions: T[] = [];
 
   if (optionKey) {
@@ -109,27 +128,29 @@ export const AutocompleteList = <T,>({
         sx={{
           '& .MuiAutocomplete-inputRoot': {
             width: width ? `${width}px` : 'auto',
+            background: theme => theme.palette.background.drawer,
+            borderRadius: 2,
+            paddingTop: 0.5,
+            paddingBottom: 0.5,
           },
         }}
         classes={{ noOptions: 'something' }}
-        ListboxProps={{
-          style: {
-            minHeight: height ? `${height}` : 'auto',
-            maxHeight: height ? `${height}` : 'auto',
-          },
-        }}
-        renderInput={
-          renderInput || (props => <BasicTextInput {...props} autoFocus />)
-        }
+        renderInput={renderInput || defaultRenderInput}
         filterOptions={filterOptions ?? createdFilterOptions}
         forcePopupIcon={false}
         options={mappedOptions}
         renderOption={optionRenderer}
-        componentsProps={{
+        slotProps={{
           paper: {
             sx: {
               backgroundColor: theme => theme.palette.background.toolbar,
               minHeight: height ? `${height}` : 'auto',
+            },
+          },
+          listbox: {
+            style: {
+              minHeight: height ? `${height}` : 'auto',
+              maxHeight: height ? `${height}` : 'auto',
             },
           },
         }}

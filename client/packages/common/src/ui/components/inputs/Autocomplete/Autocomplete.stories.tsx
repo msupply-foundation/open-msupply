@@ -1,11 +1,12 @@
 import React from 'react';
-import { Grid, Paper, Typography } from '@mui/material';
+import { Paper, Typography } from '@mui/material';
 import { StoryFn } from '@storybook/react';
 import { styled } from '@mui/material/styles';
 import { Autocomplete } from './Autocomplete';
 import { AutocompleteList } from './AutocompleteList';
 import { AutocompleteMultiList, AutocompleteOption } from '.';
 import { AutocompleteWithPagination } from './AutocompleteWithPagination';
+import { Grid } from '@openmsupply-client/common';
 
 export default {
   title: 'Inputs/Autocomplete',
@@ -141,19 +142,19 @@ const longOptions = [
 // TODO: Currently the styles are broken for this only within storybook
 const BasicTemplate: StoryFn = ({ options }) => (
   <Grid container>
-    <Grid item>
+    <Grid>
       <StyledPaper>
         <Typography>Basic autocomplete</Typography>
         <Autocomplete options={options} width="300px" />
       </StyledPaper>
     </Grid>
-    <Grid item>
+    <Grid>
       <StyledPaper>
         <Typography>Auto Width Popper</Typography>
         <Autocomplete options={options} width="300px" popperMinWidth={300} />
       </StyledPaper>
     </Grid>
-    <Grid item>
+    <Grid>
       <StyledPaper>
         <Typography>Disabled</Typography>
         <Autocomplete
@@ -169,7 +170,7 @@ const BasicTemplate: StoryFn = ({ options }) => (
 
 const ListTemplate: StoryFn = () => (
   <Grid container>
-    <Grid item>
+    <Grid>
       <StyledPaper>
         <Typography>Autocomplete List</Typography>
         <AutocompleteList options={options} optionKey="label" />
@@ -182,7 +183,7 @@ const MultiListTemplate: StoryFn = () => {
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   return (
     <Grid container>
-      <Grid item>
+      <Grid>
         <Paper>
           <Typography fontWeight={700}>
             Multiple Option Autocomplete List
@@ -234,7 +235,7 @@ const AutocompleteWithPaginationTemplate: StoryFn = () => {
 
   return (
     <Grid container>
-      <Grid item>
+      <Grid>
         <Paper>
           <Typography fontWeight={700}>Autocomplete with Pagination</Typography>
           <div style={{ paddingBottom: 30 }}>

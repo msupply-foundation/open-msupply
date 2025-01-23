@@ -186,15 +186,17 @@ const UIComponent = (props: ControlProps) => {
         label={
           options?.totalQuantityLabel
             ? options?.totalQuantityLabel
-            : t('label.total-quantity', { ns: 'programs' })
+            : t('label.total-quantity')
         }
         labelWidthPercentage={FORM_LABEL_WIDTH}
         inputAlignment={'start'}
         Input={
           <Box flexBasis="100%" display="flex" alignItems="center" gap={2}>
             <NumericTextInput
-              InputProps={{
-                sx: { '& .MuiInput-input': { textAlign: 'right' } },
+              slotProps={{
+                input: {
+                  sx: { '& .MuiInput-input': { textAlign: 'right' } },
+                },
               }}
               onChange={value => {
                 if (value !== undefined) {

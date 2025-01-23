@@ -180,7 +180,7 @@ export const NumericTextInput = React.forwardRef<
   (
     {
       sx,
-      InputProps,
+      slotProps,
       width = DEFAULT_NUMERIC_TEXT_INPUT_WIDTH,
       onChange = () => {},
       defaultValue,
@@ -271,17 +271,32 @@ export const NumericTextInput = React.forwardRef<
           '& .MuiInput-input': {
             textAlign: 'right',
             width: fullWidth ? undefined : `${width}px`,
+            backgroundColor: theme =>
+              props.disabled
+                ? theme?.palette?.background?.toolbar
+                : theme?.palette?.background?.menu,
+            borderRadius: 2,
           },
           ...sx,
         }}
         inputMode={inputMode ?? 'numeric'}
-        InputProps={{
-          endAdornment: endAdornment ? (
-            <InputAdornment position="end" sx={{ paddingBottom: '2px' }}>
-              {endAdornment}
-            </InputAdornment>
-          ) : undefined,
-          ...InputProps,
+        slotProps={{
+          input: {
+            endAdornment: endAdornment ? (
+              <InputAdornment position="end" sx={{ paddingBottom: '2px' }}>
+                {endAdornment}
+              </InputAdornment>
+            ) : undefined,
+            sx: {
+              backgroundColor: theme =>
+                props.disabled
+                  ? theme.palette.background.toolbar
+                  : theme.palette.background.menu,
+              borderRadius: 2,
+              padding: 0.5,
+            },
+          },
+          ...slotProps,
         }}
         onChange={e => {
           if (!isDirty) setIsDirty(true);

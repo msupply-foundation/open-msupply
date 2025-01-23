@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { StoryFn, Meta } from '@storybook/react';
-import { Grid, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { DetailPanel, DetailPanelPortal } from './DetailPanel';
 import {
   ClockIcon,
@@ -10,6 +10,7 @@ import {
   RewindIcon,
   StoryProvider,
   useDetailPanel,
+  Grid,
 } from '@openmsupply-client/common';
 
 export default {
@@ -29,10 +30,8 @@ const Template: StoryFn<DetailPanelArgs> = args => {
   return (
     <StoryProvider>
       <Grid container>
-        <Grid item flex={1}>
-          {OpenButton}
-        </Grid>
-        <Grid item>
+        <Grid flex={1}>{OpenButton}</Grid>
+        <Grid>
           <DetailPanel />
           <DetailPanelPortal Actions={Actions}>{Sections}</DetailPanelPortal>
         </Grid>

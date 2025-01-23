@@ -203,7 +203,7 @@ export const PrescriptionLineEditForm: React.FC<
         closedSummary={item?.name}
         defaultExpanded={isNew && !disabled}
       >
-        <Grid item flex={1}>
+        <Grid flex={1}>
           <StockItemSearchInput
             autoFocus={!item}
             openOnFocus={!item}
@@ -242,12 +242,12 @@ export const PrescriptionLineEditForm: React.FC<
               justifyContent="flex-start"
               gap={1}
             >
-              <Grid item>
+              <Grid>
                 <InputLabel style={{ fontSize: 12 }}>
                   {t('label.issue')}
                 </InputLabel>
               </Grid>
-              <Grid item>
+              <Grid>
                 <NumericTextInput
                   autoFocus
                   disabled={disabled}
@@ -257,7 +257,7 @@ export const PrescriptionLineEditForm: React.FC<
                   decimalLimit={2}
                 />
               </Grid>
-              <Grid item>
+              <Grid>
                 <InputLabel style={{ fontSize: 12 }}>
                   {t('label.unit-plural', {
                     count: issueUnitQuantity,

@@ -240,8 +240,10 @@ const UIComponent = (props: ControlProps) => {
   }
 
   const inputProps = {
-    InputProps: {
-      sx: { width: '90px', '& .MuiInput-input': { textAlign: 'right' } },
+    slotProps: {
+      input: {
+        sx: { width: '90px', '& .MuiInput-input': { textAlign: 'right' } },
+      },
     },
     disabled: true,
     error: !!errors,

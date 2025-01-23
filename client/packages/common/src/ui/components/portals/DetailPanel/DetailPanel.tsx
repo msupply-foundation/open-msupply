@@ -5,7 +5,7 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { Box, Grid, Portal, Theme, Typography, styled } from '@mui/material';
+import { Box, Portal, Theme, Typography, styled } from '@mui/material';
 import {
   useDetailPanelStore,
   useHostContext,
@@ -16,6 +16,7 @@ import { FlatButton } from '../../buttons';
 import { CloseIcon } from '@common/icons';
 import { Divider } from '../../divider/Divider';
 import { LocalStorage } from '../../../../localStorage';
+import { Grid } from '@openmsupply-client/common';
 
 export interface DetailPanelPortalProps {
   Actions?: ReactNode;
@@ -98,7 +99,7 @@ export const DetailPanelPortal: FC<
   return (
     <Portal container={detailPanelRef.current}>
       <Grid container flexDirection="column" sx={{ height: '100%' }}>
-        <Grid item>
+        <Grid>
           <Box
             sx={{
               alignItems: 'center',
@@ -116,11 +117,11 @@ export const DetailPanelPortal: FC<
             />
           </Box>
         </Grid>
-        <Grid item flex={1} style={{ overflowY: 'scroll' }}>
+        <Grid flex={1} style={{ overflowY: 'scroll' }}>
           <Divider />
           {children}
         </Grid>
-        <Grid item>
+        <Grid>
           <Box>
             {Actions ? (
               <Box sx={{ marginBottom: 2 }}>

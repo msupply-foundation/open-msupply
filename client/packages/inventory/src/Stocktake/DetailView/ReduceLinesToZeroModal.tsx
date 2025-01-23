@@ -40,10 +40,10 @@ export const ReduceLinesToZeroConfirmationModal = ({
       message={t('messages.confirm-reduce-lines-to-zero')}
       buttons={
         <>
-          <Grid item>
+          <Grid>
             <DialogButton variant="cancel" onClick={onCancel} />
           </Grid>
-          <Grid item>
+          <Grid>
             <DialogButton
               variant="ok"
               disabled={reasonIsRequired && !reason}

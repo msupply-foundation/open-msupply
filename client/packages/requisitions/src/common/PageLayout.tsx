@@ -8,13 +8,14 @@ interface PageLayoutProps {
 
 export const PageLayout = ({ Left, Right }: PageLayoutProps) => {
   return (
-    <Grid container spacing={2} direction="row" sx={{ maxHeight: '100%' }}>
-      <Grid item xs={4}>
-        {Left}
-      </Grid>
-      <Grid item xs={6}>
-        {Right}
-      </Grid>
+    <Grid
+      container
+      spacing={2}
+      direction="row"
+      sx={{ maxHeight: '100%', width: '100%' }}
+    >
+      <Grid size={{ xs: 4 }}>{Left}</Grid>
+      <Grid size={{ xs: 5 }}>{Right}</Grid>
     </Grid>
   );
 };

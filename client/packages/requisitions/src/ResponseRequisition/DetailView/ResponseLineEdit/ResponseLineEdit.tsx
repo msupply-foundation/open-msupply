@@ -479,9 +479,12 @@ export const ResponseLineEdit = ({
                   <TextArea
                     value={draft?.comment ?? ''}
                     onChange={e => update({ comment: e.target.value })}
-                    InputProps={{
-                      sx: {
-                        backgroundColor: theme => theme.palette.background.menu,
+                    slotProps={{
+                      input: {
+                        sx: {
+                          backgroundColor: theme =>
+                            theme.palette.background.menu,
+                        },
                       },
                     }}
                     onBlur={save}
