@@ -6,7 +6,8 @@ use repository::{
 };
 
 use crate::invoice::common::{
-    generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
+    generate_batches_total_number_of_packs_update, get_invoice_status_datetime,
+    InvoiceLineHasNoStockLine,
 };
 
 use super::{UpdatePrescription, UpdatePrescriptionError, UpdatePrescriptionStatus};
@@ -137,7 +138,7 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, status: &Option<UpdatePresc
     }
 
     // Use the invoice's backdated datetime if it's set, otherwise set the status to now
-    let status_datetime = invoice.backdated_datetime.unwrap_or(Utc::now().naive_utc());
+    let status_datetime = get_invoice_status_datetime(invoice);
 
     match (&invoice.status, new_status) {
         (InvoiceStatus::Verified, _) => {}

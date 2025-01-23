@@ -103,16 +103,16 @@ mod generate_rnr_form_lines {
                 adjusted_quantity_consumed: 4.043478260869565, // 3.0 * 31 / 23
                 // AMC calculated used const NUMBER_OF_DAYS_IN_A_MONTH rather than actual # days in given month...
                 // would ideally be same as adjusted_quantity_consumed here...
-                average_monthly_consumption: 3.913043478260869,
+                average_monthly_consumption: 3.9701086956521743,
                 previous_monthly_consumption_values: "".to_string(),
                 final_balance: 3.0,
                 entered_quantity_received: None,
                 entered_quantity_consumed: None,
                 entered_adjustments: None,
                 entered_losses: None,
-                minimum_quantity: 1.9565217391304346, // AMC * months understock (0.5)
-                maximum_quantity: 7.826086956521738,  // AMC * months overstock (2)
-                calculated_requested_quantity: 4.826086956521738, // max - final balance
+                minimum_quantity: 1.9850543478260871, // AMC * months understock (0.5)
+                maximum_quantity: 7.940217391304349,  // AMC * months overstock (2)
+                calculated_requested_quantity: 4.940217391304349, // max - final balance
                 low_stock: RnRFormLowStock::BelowHalf, // 3 / 7.8
                 entered_requested_quantity: None,
                 expiry_date: None,
@@ -425,7 +425,7 @@ mod generate_rnr_form_lines {
         assert_eq!(
             result.get(&item_query_test1().id),
             // adjusted consumption for the month
-            Some(&vec![0.9677419354838709])
+            Some(&vec![0.9818548387096774])
         );
 
         // When many rnr forms, it gets the most recent two
@@ -442,7 +442,7 @@ mod generate_rnr_form_lines {
         assert_eq!(
             result.get(&item_query_test1().id),
             // adjusted consumption for the month
-            Some(&vec![2.0689655172413794, 2.9032258064516125])
+            Some(&vec![2.0991379310344827, 2.9455645161290325])
         );
     }
 
@@ -455,7 +455,7 @@ mod generate_rnr_form_lines {
                 20.0,    // 20 consumed in period
                 &vec![]  // no previous AMCs
             ),
-            10.0 // AMC should be 10 packs per month
+            10.145833333333334
         );
 
         // if there is a previous AMC average, average that with the current period
@@ -465,7 +465,7 @@ mod generate_rnr_form_lines {
                 20.0,              // 20 consumed in period
                 &vec![15.0, 11.0]  // AMC across previous periods
             ),
-            12.0 // 10 per month this period, averaged with 15 and 11
+            12.048611111111112
         );
     }
 

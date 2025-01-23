@@ -75,7 +75,6 @@ const NameListComponent: FC<{
       />
       <Modal
         title=""
-        sx={{ maxWidth: '90%' }}
         okButton={<DialogButton variant="ok" onClick={hideDialog} />}
         slideAnimation={false}
         Transition={Transition}

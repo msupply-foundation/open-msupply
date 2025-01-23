@@ -1,7 +1,4 @@
-use super::{
-    period_schedule_row::{period_schedule, period_schedule::dsl as period_schedule_dsl},
-    PeriodScheduleRow,
-};
+use super::{period_schedule_row::period_schedule, PeriodScheduleRow};
 use diesel::prelude::*;
 
 use crate::{
@@ -60,10 +57,10 @@ impl<'a> PeriodScheduleRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 PeriodScheduleSortField::Id => {
-                    apply_sort_no_case!(query, sort, period_schedule_dsl::id)
+                    apply_sort_no_case!(query, sort, period_schedule::id)
                 }
                 PeriodScheduleSortField::Name => {
-                    apply_sort_no_case!(query, sort, period_schedule_dsl::name)
+                    apply_sort_no_case!(query, sort, period_schedule::name)
                 }
             }
         };
@@ -80,8 +77,8 @@ fn create_filtered_query(filter: Option<PeriodScheduleFilter>) -> BoxedPeriodSch
     let mut query = period_schedule::table.into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, period_schedule_dsl::id);
-        apply_equal_filter!(query, filter.name, period_schedule_dsl::name);
+        apply_equal_filter!(query, filter.id, period_schedule::id);
+        apply_equal_filter!(query, filter.name, period_schedule::name);
     }
 
     query

@@ -12,6 +12,7 @@ import {
   useAuthContext,
   useFormatDateTime,
   useNativeClient,
+  useQueryClient,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useSync } from '@openmsupply-client/system';
@@ -38,6 +39,7 @@ const useHostSync = (enabled: boolean) => {
 
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!syncStatus) {
@@ -52,6 +54,7 @@ const useHostSync = (enabled: boolean) => {
       keepAwake();
     } else {
       allowSleep();
+      queryClient.invalidateQueries(); //refresh the page user is on after sync finishes
     }
   }, [syncStatus?.isSyncing]);
 
@@ -140,8 +143,8 @@ export const SyncModal = ({
           <Typography sx={{ paddingBottom: 2, fontSize: 12, maxWidth: 650 }}>
             {t('sync-info.summary')
               .split('\n')
-              .map(line => (
-                <div>{line}</div>
+              .map((line, index) => (
+                <div key={index}>{line}</div>
               ))}
           </Typography>
           <Row title={t('sync-info.number-to-push')}>
