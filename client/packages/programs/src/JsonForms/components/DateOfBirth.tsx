@@ -61,13 +61,13 @@ const UIComponent = (props: ControlProps) => {
 
   useEffect(() => {
     if (!data) return;
-    const dob = DateUtils.getNaiveDate(data.dateOfBirth);
-    setDoB(dob);
-    if (dob === null) {
+    const naiveDoB = DateUtils.getNaiveDate(data.dateOfBirth);
+    setDoB(naiveDoB);
+    if (naiveDoB === null) {
       setAge(undefined);
       return;
     }
-    setAge(DateUtils.age(dob));
+    setAge(DateUtils.age(naiveDoB));
   }, [data]);
 
   if (!props.visible) {
