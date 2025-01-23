@@ -34,6 +34,7 @@ export interface PatientSearchModalProps {
   open: boolean;
   onClose: () => void;
   onChange: (name: SearchInputPatient) => void;
+  openPatientModal: () => void;
 }
 
 export const basicFilterOptions = {
