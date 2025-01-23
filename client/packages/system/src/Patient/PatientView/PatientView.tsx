@@ -14,8 +14,9 @@ import {
   BasicSpinner,
   DocumentRegistryCategoryNode,
   useNavigate,
-  // useSearchParams,
+  useSearchParams,
   RouteBuilder,
+  FnUtils,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { usePatient } from '../api';
@@ -43,6 +44,7 @@ import { ContactTraceListView, CreateContactTraceModal } from '../ContactTrace';
 import defaultPatientSchema from './DefaultPatientSchema.json';
 import defaultPatientUISchema from './DefaultPatientUISchema.json';
 import { VaccinationCardsListView } from '../VaccinationCard/ListView';
+import { usePrescription } from 'packages/invoices/src/Prescriptions';
 
 const DEFAULT_SCHEMA: SchemaData = {
   formSchemaId: undefined,
@@ -103,9 +105,9 @@ const PatientDetailView = ({
   } = usePatientStore();
 
   const navigate = useNavigate();
-  // const [searchParams] = useSearchParams();
-  // const fromPrescription =
-  //   searchParams.get('previousPath') === AppRoute.Prescription;
+  const [searchParams] = useSearchParams();
+  const fromPrescription =
+    searchParams.get('previousPath') === AppRoute.Prescription;
 
   const patientId = usePatient.utils.id();
   const { data: currentPatient, isLoading: isCurrentPatientLoading } =
@@ -116,6 +118,9 @@ const PatientDetailView = ({
         category: { equalTo: DocumentRegistryCategoryNode.Patient },
       },
     });
+  const {
+    create: { create: createPrescription },
+  } = usePrescription();
 
   const isLoading = isCurrentPatientLoading || isPatientRegistryLoading;
 
@@ -239,15 +244,26 @@ const PatientDetailView = ({
     onEdit(isDirty);
   }, [isDirty, onEdit]);
 
+  useEffect(() => {
+    (async () => {
+      if (fromPrescription === true && currentPatient != null) {
+        const invoiceNumber = await createPrescription({
+          id: FnUtils.generateUUID(),
+          patientId: currentPatient.id,
+        });
+        navigate(
+          RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Prescription)
+            .addPart(String(invoiceNumber))
+            .build()
+        );
+      }
+    })();
+  }, [currentPatient]);
+
   const showSaveConfirmation = useConfirmationModal({
     onConfirm: () => {
       save();
-      navigate(
-        RouteBuilder.create(AppRoute.Dispensary)
-          .addPart(AppRoute.Prescription)
-          .addQuery({ patientId: 'random' })
-          .build()
-      );
     },
     message: t('messages.confirm-save-generic'),
     title: t('heading.are-you-sure'),

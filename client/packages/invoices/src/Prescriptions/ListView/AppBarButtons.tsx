@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   DownloadIcon,
@@ -18,7 +18,6 @@ import {
   RouteBuilder,
   useCallbackWithPermission,
   UserPermission,
-  useSearchParams,
 } from '@openmsupply-client/common';
 import {
   CreatePatientModal,
@@ -33,7 +32,6 @@ export const AppBarButtonsComponent: FC<{
 }> = ({ modalController, listParams }) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { success, error } = useNotification();
   const [patientModalOpen, setPatientModalOpen] = useState(false);
 
@@ -82,13 +80,6 @@ export const AppBarButtonsComponent: FC<{
     }
   }
 
-  useEffect(() => {
-    const patientId = searchParams.get('patientId');
-    if (patientId) {
-      handlePatientUpdate(patientId);
-    }
-  }, []);
-
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
@@ -102,8 +93,7 @@ export const AppBarButtonsComponent: FC<{
           onClose={modalController.toggleOff}
           onChange={async name => {
             modalController.toggleOff();
-            console.log('name', name);
-            // await handlePatientUpdate(name.id);
+            await handlePatientUpdate(name.id);
           }}
           openPatientModal={onCreatePatient}
         />
