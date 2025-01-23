@@ -59,27 +59,6 @@ export const AppBarButtonsComponent: FC<{
     success(t('success'))();
   };
 
-  async function handlePatientUpdate(patientId: string): Promise<void> {
-    try {
-      console.log('patientId', patientId);
-      const invoiceNumber = await create({
-        id: FnUtils.generateUUID(),
-        patientId,
-      });
-      navigate(
-        RouteBuilder.create(AppRoute.Dispensary)
-          .addPart(AppRoute.Prescription)
-          .addPart(String(invoiceNumber))
-          .build()
-      );
-    } catch (e) {
-      const errorSnack = error(
-        t('error.failed-to-create-prescription') + (e as Error).message
-      );
-      errorSnack();
-    }
-  }
-
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
@@ -93,7 +72,24 @@ export const AppBarButtonsComponent: FC<{
           onClose={modalController.toggleOff}
           onChange={async name => {
             modalController.toggleOff();
-            await handlePatientUpdate(name.id);
+            try {
+              create({
+                id: FnUtils.generateUUID(),
+                patientId: name?.id,
+              }).then(invoiceNumber => {
+                navigate(
+                  RouteBuilder.create(AppRoute.Dispensary)
+                    .addPart(AppRoute.Prescription)
+                    .addPart(String(invoiceNumber))
+                    .build()
+                );
+              });
+            } catch (e) {
+              const errorSnack = error(
+                t('error.failed-to-create-prescription') + (e as Error).message
+              );
+              errorSnack();
+            }
           }}
           openPatientModal={onCreatePatient}
         />
