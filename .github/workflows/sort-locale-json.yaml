@@ -1,9 +1,7 @@
 name: Sort JSON on Pull Requests
 
 on:
-  push:
-    branches:
-      - '4971-add-github-action-to-sort-json-files'
+  pull_request:
     paths:
       - "client/packages/common/src/intl/locales/**/*.json" # Trigger only for locale json changes
 
@@ -12,16 +10,21 @@ permissions:
 
 jobs:
   sort-json:
+    name: Sort Json
     runs-on: ubuntu-latest
-
-
+    steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
+      - name: Echo branch
+        run: |
+          echo ${{ github.ref }}
+          echo ${{ github.head_ref }}
+
       - name: Sort translation files
-        uses: sergeysova/jq-action@v2
+      - uses: sergeysova/jq-action@v2
         with:
           cmd: |
             TRANSLATION_FILES=($(find ./client/packages/common/src/intl/locales/ -type f -name "*.json"))
