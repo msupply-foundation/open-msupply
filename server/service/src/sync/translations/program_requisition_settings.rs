@@ -89,45 +89,49 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
-        let upserts = generate_requisition_program(connection, data.clone())?;
-        let deletes = delete_requisition_program(connection, data)?;
+        if !data.is_program {
+            return Ok(PullTranslateResult::NotMatched);
+        } else {
+            let upserts = generate_requisition_program(connection, data.clone())?;
 
-        let mut integration_operations = Vec::new();
+            let deletes = delete_requisition_program(connection, data)?;
 
-        deletes
-            .program_requisition_order_type_ids
-            .into_iter()
-            .for_each(|order_type_id| {
-                integration_operations.push(IntegrationOperation::delete(
-                    ProgramRequisitionOrderTypeRowDelete(order_type_id),
-                ))
-            });
+            let mut integration_operations = Vec::new();
 
-        deletes
-            .program_requisition_settings_ids
-            .into_iter()
-            .for_each(|settings_id| {
-                integration_operations.push(IntegrationOperation::delete(
-                    ProgramRequisitionSettingsRowDelete(settings_id),
-                ))
-            });
+            deletes
+                .program_requisition_order_type_ids
+                .into_iter()
+                .for_each(|order_type_id| {
+                    integration_operations.push(IntegrationOperation::delete(
+                        ProgramRequisitionOrderTypeRowDelete(order_type_id),
+                    ))
+                });
 
-        integration_operations.push(IntegrationOperation::upsert(upserts.context_row));
-        integration_operations.push(IntegrationOperation::upsert(upserts.program_row));
+            deletes
+                .program_requisition_settings_ids
+                .into_iter()
+                .for_each(|settings_id| {
+                    integration_operations.push(IntegrationOperation::delete(
+                        ProgramRequisitionSettingsRowDelete(settings_id),
+                    ))
+                });
 
-        upserts
-            .program_requisition_settings_rows
-            .into_iter()
-            .for_each(|u| integration_operations.push(IntegrationOperation::upsert(u)));
+            integration_operations.push(IntegrationOperation::upsert(upserts.context_row));
+            integration_operations.push(IntegrationOperation::upsert(upserts.program_row));
 
-        upserts
-            .program_requisition_order_type_rows
-            .into_iter()
-            .for_each(|u| integration_operations.push(IntegrationOperation::upsert(u)));
+            upserts
+                .program_requisition_settings_rows
+                .into_iter()
+                .for_each(|u| integration_operations.push(IntegrationOperation::upsert(u)));
 
-        Ok(PullTranslateResult::IntegrationOperations(
-            integration_operations,
-        ))
+            upserts
+                .program_requisition_order_type_rows
+                .into_iter()
+                .for_each(|u| integration_operations.push(IntegrationOperation::upsert(u)));
+            Ok(PullTranslateResult::IntegrationOperations(
+                integration_operations,
+            ))
+        }
     }
 }
 

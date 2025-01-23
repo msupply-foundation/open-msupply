@@ -4,7 +4,6 @@ use crate::sync::test::TestSyncIncomingRecord;
 
 const TABLE_NAME: &str = "list_master";
 
-//program settings not found
 const MASTER_LIST_1: (&str, &str) = (
     "87027C44835B48E6989376F42A58F7EA",
     r#"{
@@ -16,8 +15,7 @@ const MASTER_LIST_1: (&str, &str) = (
     "gets_new_items": false,
     "tags": null,
     "isProgram": false,
-    "programSettings": {
-    "elmisCode": "elmis"},
+    "programSettings": null,
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
@@ -38,8 +36,7 @@ const MASTER_LIST_2: (&str, &str) = (
     "gets_new_items": false,
     "tags": null,
     "isProgram": false,
-    "programSettings": {
-    "elmisCode": "elmis"},
+    "programSettings": null,
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
@@ -61,8 +58,7 @@ const DEFAULT_PRICE_LIST: (&str, &str) = (
     "gets_new_items": false,
     "tags": null,
     "isProgram": false,
-    "programSettings": {
-     "elmisCode": "elmis"},
+    "programSettings": null,
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
@@ -85,8 +81,7 @@ const DISCOUNT_LIST: (&str, &str) = (
     "gets_new_items": false,
     "tags": null,
     "isProgram": false,
-    "programSettings": {
-     "elmisCode": "elmis"},
+    "programSettings": null,
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
