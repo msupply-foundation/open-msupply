@@ -16,8 +16,7 @@ const MASTER_LIST_1: (&str, &str) = (
     "gets_new_items": false,
     "tags": null,
     "isProgram": false,
-    "programSettings": {
-    "elmisCode": "elmis"},
+    "programSettings": null,
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
@@ -38,8 +37,7 @@ const MASTER_LIST_2: (&str, &str) = (
     "gets_new_items": false,
     "tags": null,
     "isProgram": false,
-    "programSettings": {
-    "elmisCode": "elmis"},
+    "programSettings": null,
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
@@ -61,8 +59,7 @@ const DEFAULT_PRICE_LIST: (&str, &str) = (
     "gets_new_items": false,
     "tags": null,
     "isProgram": false,
-    "programSettings": {
-     "elmisCode": "elmis"},
+    "programSettings": null,
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
@@ -85,8 +82,7 @@ const DISCOUNT_LIST: (&str, &str) = (
     "gets_new_items": false,
     "tags": null,
     "isProgram": false,
-    "programSettings": {
-     "elmisCode": "elmis"},
+    "programSettings": null,
     "code": "",
     "isPatientList": false,
     "is_hiv": false,

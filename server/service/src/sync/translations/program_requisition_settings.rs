@@ -89,6 +89,10 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
+        if !data.is_program {
+            return Ok(PullTranslateResult::NotMatched);
+        }
+
         let upserts = generate_requisition_program(connection, data.clone())?;
         let deletes = delete_requisition_program(connection, data)?;
 
