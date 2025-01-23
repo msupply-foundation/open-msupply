@@ -1,0 +1,43 @@
+<style>
+    {
+        % include "stocktake-detail.css" %
+    }
+</style>
+<div class="container">
+    <div class="stocktake-wrapper">
+        <div class="main-table">
+            <div class="table-header">
+                <div class="row">
+                    <div class="bold col col-location">{{t(k="label.location", f="Location")}}</div>
+                    <div class="bold col col-item-code">{{t(k="label.code", f="Code")}}</div>
+                    <div class="bold col col-item-name">{{t(k="report.item-name", f="Item name")}}</div>
+                    <div class="bold col col-batch">{{t(k="label.batch", f="batch")}}</div>
+                    <div class="bold col col-expiry-date">{{t(k="label.expiry", f="Expiry")}}</div>
+                    <div class="bold col col-packsize">{{t(k="report.pack-size",f="Pack size")}}</div>
+                    <div class="bold col col-actual-stock">{{t(k="report.actual-stock",f="Actual Stock")}}</div>
+                </div>
+            </div>
+            <div class="table-body">
+                {% for line in data.stocktakeLines.nodes -%}
+                <div class="row">
+                    <div class="col col-location">
+                        {% if line.location.code %}
+                        {{ line.location.code }}
+                        {% endif %}
+                    </div>
+                    <div class="col col-item-code">{{ line.item.code }}</div>
+                    <div class="col col-item-name">{{ line.item.name }}</div>
+                    <div class="col col-batch">{{ line.batch }}</div>
+                    <div class="col col-expiry-date">
+                        {% if line.expiryDate %}
+                        {{ line.expiryDate | date(format="%d/%m/%Y") }}
+                        {% endif %}
+                    </div>
+                    <div class="col col-packsize">{{ line.packSize }}</div>
+                    <div class="col col-actual-stock">.....................</div>
+                </div>
+                {%- endfor %}
+            </div>
+        </div>
+    </div>
+</div>
