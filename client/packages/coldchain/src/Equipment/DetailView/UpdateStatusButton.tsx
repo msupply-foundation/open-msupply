@@ -197,6 +197,7 @@ export const UpdateStatusButtonComponent = ({
         </DetailContainer>
       </Modal>
       <ButtonWithIcon
+        shouldShrink={false}
         Icon={<PlusCircleIcon />}
         label={t('button.update-status')}
         onClick={onUpdateStatus}

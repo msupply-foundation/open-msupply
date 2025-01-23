@@ -12,6 +12,8 @@ import { AccordionPanelSection } from 'packages/invoices/src/Prescriptions/LineE
 import { useEquipmentDetailView } from 'packages/coldchain/src/Equipment/DetailView';
 import { Summary, Details } from 'packages/coldchain/src/Equipment/DetailView/Tabs';
 import { Footer } from './Footer';
+import { StatusLogs } from 'packages/coldchain/src/Equipment/DetailView/Tabs/StatusLogs';
+import { UpdateStatusButton } from 'packages/coldchain/src/Equipment/DetailView/UpdateStatusButton';
 
 export const EquipmentDetailView: FC = () => {
   const {
@@ -98,6 +100,11 @@ export const EquipmentDetailView: FC = () => {
             isSaving={isSaving}
             showSaveConfirmation={showSaveConfirmation}
           />
+        </AccordionPanelSection>
+
+        <AccordionPanelSection title="Status History" defaultExpanded={false}>
+          <UpdateStatusButton assetId={data?.id} />
+          {draft === undefined ? null : <StatusLogs assetId={draft.id} />}
         </AccordionPanelSection>
       </Box>
     </Box>
