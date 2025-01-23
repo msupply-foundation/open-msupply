@@ -13,6 +13,7 @@ import {
   DeleteIcon,
   Action,
   ActionsFooter,
+  usePluginElements,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, prescriptionStatuses } from '../../../utils';
 import { StatusChangeButton } from './StatusChangeButton';
@@ -83,6 +84,11 @@ export const FooterComponent: FC = () => {
     },
   });
 
+  const plugins = usePluginElements({
+    type: 'PrescriptionPaymentsForm',
+    data: data ?? undefined,
+  });
+
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
@@ -126,7 +132,7 @@ export const FooterComponent: FC = () => {
                   sx={{ fontSize: '12px' }}
                   onClick={() => navigateUpOne()}
                 />
-
+                {plugins}
                 <StatusChangeButton />
               </Box>
             </Box>
