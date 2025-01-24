@@ -396,6 +396,8 @@
   "error.v6-server-not-configured-hint": "Check the central server URL",
   "error.vaccine-course-update-failed": "Vaccine course failed to save",
   "error.value-type-not-correct": "Value type not correct",
+  "error.unable-to-create-requisition": "Unable to creare requisition",
+  "error.max-orders-reached-for-period": "Maximum requisitions for this period already created",
   "facilities": "Facilities",
   "filename.asset-categories": "asset-categories",
   "filename.asset-import-example": "Example Asset Item Import",

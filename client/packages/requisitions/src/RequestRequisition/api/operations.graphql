@@ -462,6 +462,16 @@ mutation insertProgramRequest(
       id
       requisitionNumber
     }
+    ... on InsertProgramRequestRequisitionError {
+      __typename
+      error {
+        description
+        ... on MaxOrdersReachedForPeriod {
+          __typename
+          description
+        }
+      }
+    }
   }
 }
 
