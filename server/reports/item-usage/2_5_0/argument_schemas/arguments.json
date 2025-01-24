@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "StockFilters": {
+      "properties": {
+        "itemCode": {
+          "description": "Item Code",
+          "type": "string"
+        },
+        "itemName": {
+          "description": "Item Name",
+          "type": "string"
+        },
+        "monthlyConsumptionLookBackPeriod": {
+          "description": "Average Monthly Consumption Look Back Period",
+          "type": "number"
+        },
+        "sort": {
+          "description": "sort by",
+          "type": "string",
+          "enum": [
+            "code",
+            "SOH",
+            "MOS",
+            "monthConsumption",
+            "lastMonthConsumption",
+            "twoMonthsAgoConsumption",
+            "expiringInSixMonths",
+            "expiringInTwelveMonths",
+            "stockOnOrder",
+            "AMC12",
+            "AMC24"
+          ]
+        },
+        "dir": {
+          "description": "sort by dir",
+          "type": "string",
+          "enum": ["asc", "desc"]
+        }
+      }
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/StockFilters"
+    }
+  ]
+}

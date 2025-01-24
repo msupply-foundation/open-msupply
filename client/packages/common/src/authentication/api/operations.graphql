@@ -12,6 +12,7 @@ fragment UserStoreNode on UserStoreNode {
     omProgramModule
     vaccineModule
     issueInForeignCurrency
+    # TODO standardise LookBack vs Lookback (lookback vs look_back)
     monthlyConsumptionLookBackPeriod
     monthsLeadTime
     monthsOverstock
