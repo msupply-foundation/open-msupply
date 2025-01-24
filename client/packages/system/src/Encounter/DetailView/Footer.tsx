@@ -28,6 +28,7 @@ interface FooterProps {
   isDisabled: boolean;
   isSaving: boolean;
   onCancel: () => void;
+  onChangeStatus: (status: EncounterNodeStatus) => void;
   onSave: () => void;
   encounter?: EncounterFragment;
 }
@@ -67,6 +68,7 @@ export const Footer: FC<FooterProps> = ({
   isDisabled,
   isSaving,
   onCancel,
+  onChangeStatus,
   onSave,
   encounter,
 }) => {
@@ -118,7 +120,12 @@ export const Footer: FC<FooterProps> = ({
               startIcon={<SaveIcon />}
               label={t('button.save')}
             />
-            <StatusChangeButton />
+            {encounter?.status && (
+              <StatusChangeButton
+                currentStatus={encounter.status}
+                onSave={onChangeStatus}
+              />
+            )}
           </Box>
 
           <Modal
