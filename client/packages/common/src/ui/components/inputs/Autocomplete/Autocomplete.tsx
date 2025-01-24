@@ -16,6 +16,7 @@ import {
 } from './types';
 import { BasicTextInput } from '../TextInput';
 import { StyledPopper } from './components';
+import { useOpenStateWithKeyboard } from './utils';
 
 export interface AutocompleteProps<T>
   extends Omit<
@@ -76,7 +77,7 @@ export function Autocomplete<T>({
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
-
+  const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
@@ -107,6 +108,7 @@ export function Autocomplete<T>({
   return (
     <MuiAutocomplete
       {...restOfAutocompleteProps}
+      {...openOverrides}
       inputValue={inputValue}
       onInputChange={onInputChange}
       disabled={disabled}

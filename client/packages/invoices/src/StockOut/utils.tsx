@@ -103,7 +103,12 @@ export const createDraftStockOutLine = ({
 
   const adjustTotalNumberOfPacks = invoiceStatus === InvoiceNodeStatus.Picked;
 
-  let adjustedStockLine = stockLine ? stockLine : invoiceLine?.stockLine;
+  // Note to future self, the stockLine spread here is important, if not spread you'll be modifying the passed in data which can affect the tanStack Query Cache, with unintended effects!
+  let adjustedStockLine = stockLine
+    ? { ...stockLine }
+    : invoiceLine?.stockLine
+      ? { ...invoiceLine?.stockLine }
+      : undefined;
   if (!!adjustedStockLine) {
     adjustedStockLine.availableNumberOfPacks =
       adjustedStockLine.availableNumberOfPacks + invoiceLine.numberOfPacks;
