@@ -46,7 +46,6 @@ const MASTER_LIST_2: (&str, &str) = (
 }"#,
 );
 
-//program settings not found
 const DEFAULT_PRICE_LIST: (&str, &str) = (
     "4d9a615e-eebb-42ad-a806-e3854f7733ae",
     r#"{
@@ -69,7 +68,6 @@ const DEFAULT_PRICE_LIST: (&str, &str) = (
 }"#,
 );
 
-//program settings not found
 const DISCOUNT_LIST: (&str, &str) = (
     "4d9a615e-eebb-42ad-a806-e3854f7733a1",
     r#"{
