@@ -19,6 +19,7 @@ pub struct InsertInboundShipment {
     pub comment: Option<String>,
     pub their_reference: Option<String>,
     pub colour: Option<String>,
+    pub requisition_id: Option<String>,
 }
 
 type OutError = InsertInboundShipmentError;
@@ -59,6 +60,10 @@ pub enum InsertInboundShipmentError {
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
     OtherPartyNotASupplier,
+    CannotLinkARequisitionToInboundShipment,
+    RequisitionDoesNotExist,
+    InternalOrderDoesNotBelongToStore,
+    NotAnInternalOrder,
     // Internal error
     NewlyCreatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
