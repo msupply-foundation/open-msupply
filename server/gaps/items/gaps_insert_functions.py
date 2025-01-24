@@ -12,8 +12,8 @@ def item_link_stmt(item_id):
     return f"INSERT INTO item_link (id, item_id) VALUES ('{item_id}', '{item_id}') ON CONFLICT DO NOTHING;\n"
 
 def upsert_item_stmt(item_id, row):
-    item_name = row['mSupply item name']
-    item_code = row['mSupply item code']
+    item_name = row['Item name']
+    item_code = row['Item code']
     ven_category = "NOT_ASSIGNED"
     item_type = "STOCK"
     legacy_record = ""
@@ -31,8 +31,8 @@ def upsert_item_stmt(item_id, row):
     return sql_statements
 
 def upsert_diluent_stmt(item_id, row):
-    item_name = row['mSupply item name'] + " Diluent"
-    item_code = row['mSupply item code'] + "_DIL"
+    item_name = row['Item name'] + " Diluent"
+    item_code = row['Item code'] + "_DIL"
     ven_category = "NOT_ASSIGNED"
     item_type = "STOCK"
     legacy_record = ""
@@ -134,11 +134,11 @@ def upsert_diluent_packaging_variant_stmt(packaging_variant_id, item_variant_id,
     packaging_name = get_packaging_variant_name(packaging_level)
     volume_per_unit = 0
     if packaging_level == 1:
-        volume_per_unit= float(row["DiluentPrimaryVolume"]) / 1000
+        volume_per_unit= float(row["DiluentPrimaryVolume"])
     elif packaging_level == 2:
-        volume_per_unit= float(row["DiluentSecondaryVolume"]) / 1000
+        volume_per_unit= float(row["DiluentSecondaryVolume"])
     elif packaging_level == 3:
-        volume_per_unit= float(row["DiluentTertiaryVolume"]) / 1000
+        volume_per_unit= float(row["DiluentTertiaryVolume"])
     else:
         volume_per_unit = 0
 

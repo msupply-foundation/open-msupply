@@ -23,9 +23,9 @@ def create_master_list():
 def get_or_generate_ids(lookup_hash, row):
     
     # item_variant_id
-    item_variant_lookup_id = row['mSupply Row Id']
+    item_variant_lookup_id = row['mSupply Row ID']
     if item_variant_lookup_id == '' or item_variant_lookup_id == None:
-        print("missing mSupply Row Id for row", row)
+        print("missing mSupply Row ID for row", row)
         exit(1)
     if item_variant_lookup_id not in lookup_hash:
         lookup_hash[item_variant_lookup_id] = str(uuid.uuid4())
@@ -34,14 +34,14 @@ def get_or_generate_ids(lookup_hash, row):
 
 
     # item_id 
-    item_code = row['mSupply item code']
+    item_code = row['Item code']
     if item_code not in lookup_hash:
         lookup_hash[item_code] = str(uuid.uuid4())
 
     item_id = lookup_hash[item_code]
 
     # diluent_id
-    diluent_item_code = row['mSupply item code'] + "_diluent"
+    diluent_item_code = row['Item code'] + "_diluent"
     if diluent_item_code not in lookup_hash:
         lookup_hash[diluent_item_code] = str(uuid.uuid4())
 
