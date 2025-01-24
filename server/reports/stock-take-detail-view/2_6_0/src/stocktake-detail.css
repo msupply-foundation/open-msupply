@@ -50,7 +50,6 @@
 
 .stocktake-wrapper .main-table .row .col-item-name {
     width: 25%;
-    overflow-wrap: break-word;
 }
 
 .stocktake-wrapper .main-table .row .col-batch {
@@ -58,14 +57,13 @@
 }
 
 .stocktake-wrapper .main-table .row .col-expiry-date {
-    width: 7.5%;
+    width: 6%;
     text-align: right;
     
 }
 
 .stocktake-wrapper .main-table .row .col-location {
     width: 7.5%;
-    overflow-wrap:;
 }
 
 .stocktake-wrapper .main-table .row .col-unit {
@@ -75,7 +73,6 @@
 .stocktake-wrapper .main-table .row .col-packsize {
     width: 6%;
     text-align: right;
-    overflow-wrap: unset;
 }
 
 .stocktake-wrapper .main-table .row .col-snapshot-packs {
@@ -94,5 +91,5 @@
 }
 
 .stocktake-wrapper .main-table .row .col-reason {
-    width: 5%;
+    width: 6.5%;
 }

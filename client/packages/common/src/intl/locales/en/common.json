@@ -945,6 +945,7 @@
   "label.quantity-to-return": "Quantity to Return",
   "label.ratio": "Ratio",
   "label.reason": "Reason",
+  "label.reason-adjustment": "Adjustment Reason",
   "label.reason-for-contacting": "Reason for contacting us",
   "label.record-stock-transaction": "Record stock transaction for past vaccination",
   "label.recorded-contact-differs": "Recorded Contact: {{recordedName}}",
