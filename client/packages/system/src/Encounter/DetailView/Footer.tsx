@@ -21,6 +21,7 @@ import {
   EncounterFragment,
 } from '@openmsupply-client/programs';
 import { encounterStatusTranslation } from '../utils';
+import { StatusChangeButton } from './StatusChangeButton';
 
 interface FooterProps {
   documentName?: string;
@@ -117,6 +118,7 @@ export const Footer: FC<FooterProps> = ({
               startIcon={<SaveIcon />}
               label={t('button.save')}
             />
+            <StatusChangeButton />
           </Box>
 
           <Modal
@@ -133,6 +135,7 @@ export const Footer: FC<FooterProps> = ({
                 gap={2}
               >
                 <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
+                  {/* // todo fix this */}
                   Document Edit History
                 </Typography>
                 {documentName ? (
