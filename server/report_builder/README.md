@@ -303,13 +303,13 @@ cargo build
 Standard reports in the reports dir can then be built into the generated json by running the following cli command:
 
 ```bash
-./target/debug/remote_server_cli build-standard-reports
+./target/debug/remote_server_cli build-reports
 ```
 
 Reports can be upserted using
 
 ```bash
-./target/debug/remote_server_cli upsert-reports-json
+./target/debug/remote_server_cli upsert-reports
 ```
 
 Because this command utilises the built cli, you will need to first run
@@ -380,7 +380,7 @@ Reports can be built and tested directly from the 'open-msupply' repo, but devel
 
 Once changes are satisfactory, new reports can be moved directly into the OMS repo under a new version dir.
 
-> reports won't show up in OMS unless they are built into the generated json using the `build-standard-reports` command, and then upserted with the `upsert-reports-json` command.
+> reports won't show up in OMS unless they are built into the generated json using the `build-reports` command, and then upserted with the `upsert-reports` command.
 
 ## Localising JSON form fields
 
