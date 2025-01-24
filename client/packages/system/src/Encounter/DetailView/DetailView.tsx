@@ -305,13 +305,13 @@ export const DetailView: FC = () => {
         />
       ) : (
         <>
-          <Toolbar
-            onChange={updateEncounter}
+          <Toolbar onChange={updateEncounter} encounter={encounter} />
+          {tabs.length > 0 ? <DetailTabs tabs={tabs} /> : JsonForm}
+          <SidePanel
             encounter={encounter}
+            onChange={updateEncounter}
             onDelete={onDelete}
           />
-          {tabs.length > 0 ? <DetailTabs tabs={tabs} /> : JsonForm}
-          <SidePanel encounter={encounter} onChange={updateEncounter} />
         </>
       )}
       <SaveAsVisitedModal />
