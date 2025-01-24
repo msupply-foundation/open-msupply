@@ -14,7 +14,6 @@ fragment UserStoreNode on UserStoreNode {
     issueInForeignCurrency
     # TODO standardise LookBack vs Lookback (lookback vs look_back)
     monthlyConsumptionLookBackPeriod
-    defaultMonthlyConsumptionLookBackPeriod
     monthsLeadTime
     monthsOverstock
     monthsUnderstock
