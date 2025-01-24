@@ -23,14 +23,12 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
   const t = useTranslation();
 
   const {
-    monthlyConsumptionLookBackPeriod: lookbackPeriod,
-    defaultMonthlyConsumptionLookBackPeriod,
+    monthlyConsumptionLookBackPeriod,
     monthsOverstock,
     monthsUnderstock,
     monthsItemsExpire,
   } = store?.preferences ?? {};
 
-  const monthlyConsumptionLookBackPeriod = lookbackPeriod !== 0.0 ? lookbackPeriod : defaultMonthlyConsumptionLookBackPeriod;
 
   const [data, setData] = useState<JsonData>({
     monthlyConsumptionLookBackPeriod,
