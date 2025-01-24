@@ -144,13 +144,13 @@ enum Action {
     /// User can specify max number of backup to keep, see example configuration file
     Backup,
     Restore(RestoreArguments),
-    BuildStandardReports {
+    BuildReports {
         /// Optional reports path. If supplied, this dir should be the same structure as per standard reports.
         /// Will generate a json of all reports within this directory
         #[clap(short, long)]
         path: Option<PathBuf>,
     },
-    UpsertReportsJson {
+    UpsertReports {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long)]
         json_path: Option<PathBuf>,
@@ -390,7 +390,7 @@ async fn main() -> anyhow::Result<()> {
             info!("Refresh data result: {:#?}", result);
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
-        Action::BuildStandardReports { path } => {
+        Action::BuildReports { path } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
             let base_reports_dir = match path.clone() {
@@ -558,7 +558,7 @@ async fn main() -> anyhow::Result<()> {
                 info!("All standard reports built")
             };
         }
-        Action::UpsertReportsJson { json_path } => {
+        Action::UpsertReports { json_path } => {
             let standard_reports_dir = Path::new("reports")
                 .join("generated")
                 .join("standard_reports.json");
