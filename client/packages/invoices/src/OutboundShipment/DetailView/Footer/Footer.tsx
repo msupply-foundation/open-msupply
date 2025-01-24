@@ -100,6 +100,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       icon: <DeleteIcon />,
       onClick: onDelete,
       disabled: isDisabled,
+      disabledToastMessage: t('messages.cant-delete-generic'),
     },
     {
       label: t('button.allocate-lines'),
@@ -107,6 +108,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       onClick: confirmAllocate,
       disabled: isDisabled,
       shouldShrink: false,
+      disabledToastMessage: t('label.no-unallocated-rows-selected'),
     },
     {
       label: t('button.return-lines'),

@@ -26,7 +26,7 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { isLoading } = useUserDetails(token);
   const t = useTranslation();
   const { getLocalisedFullName } = useIntlUtils();
-  const LABEL_WIDTH = 80;
+  const LABEL_WIDTH = 150;
 
   const handleLogout = () => {
     navigate(RouteBuilder.create(AppRoute.Login).build());
@@ -59,7 +59,6 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
   return user ? (
     <PaperClickPopover
       placement="top"
-      width={300}
       Content={
         <PaperPopoverSection
           label={getLocalisedFullName(user.firstName, user.lastName)}

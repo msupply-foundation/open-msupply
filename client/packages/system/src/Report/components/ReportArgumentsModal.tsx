@@ -71,9 +71,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
       }
     >
       <>
-        <Typography sx={{ mb: 2, maxWidth: 500 }}>
-          {t('message.arguments')}
-        </Typography>
+        <Typography sx={{ mb: 2 }}>{t('message.arguments')}</Typography>
         <JsonForm
           data={data}
           jsonSchema={report.argumentSchema.jsonSchema}

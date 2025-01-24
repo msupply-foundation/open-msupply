@@ -45,7 +45,7 @@
   "button.create-shipment": "Créer une livraison",
   "button.dashboard": "Tableau de bord",
   "button.delete": "Supprimer",
-  "button.delete-lines": "Supprimer les lignes sélectionnées",
+  "button.delete-lines": "Supprimer",
   "button.download": "Télécharger",
   "button.edit": "Modifier",
   "button.edit-linked-patient": "Modifier le patient associé",
@@ -1712,5 +1712,6 @@
   "warning.cannot-create-placeholder-units": "Il y a un total de {{allocatedQuantity}} unités disponibles. Impossible d'allouer toutes les {{requestedQuantity}} unités demandées.",
   "warning.caps-lock": "Avertissement: Verrouillage majuscule activé",
   "warning.field-not-parsed": "{{field}} non analysé",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
+  "button.continue": "Continuer"
 }

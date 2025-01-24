@@ -74,7 +74,7 @@ const NumberOfPacksToReturnReturnInputCell: React.FC<
   <NumberInputCell
     {...props}
     isRequired
-    max={props.rowData.availableNumberOfPacks}
+    max={Math.floor(props.rowData.availableNumberOfPacks)}
   />
 );
 

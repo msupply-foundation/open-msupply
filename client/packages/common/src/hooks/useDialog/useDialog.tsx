@@ -3,9 +3,11 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent, { DialogContentProps } from '@mui/material/DialogContent';
 import { TransitionProps } from '@mui/material/transitions';
 import { Slide } from '../../ui/animations';
-import { BasicModal, ModalTitle } from '@common/components';
-import { useIntlUtils } from '@common/intl';
-import { SxProps, Theme } from '@mui/material';
+import { BasicModal, IconButton, ModalTitle } from '@common/components';
+import { useIntlUtils, useTranslation } from '@common/intl';
+import { SxProps, Theme, useMediaQuery } from '@mui/material';
+import { CloseIcon } from '@common/icons';
+import { useKeyboard } from '../useKeyboard';
 
 type OkClickEvent = React.MouseEvent<HTMLButtonElement, MouseEvent>;
 
@@ -53,6 +55,7 @@ export interface DialogProps {
   animationTimeout?: number;
   disableBackdrop?: boolean;
   disableEscapeKey?: boolean;
+  disableMobileFullScreen?: boolean;
 }
 
 interface DialogState {
@@ -98,6 +101,7 @@ const useSlideAnimation = (isRtl: boolean, timeout: number) => {
  * @property {number} [animationTimeout=500] the timeout for the slide animation
  * @property {boolean} [disableBackdrop=false] (optional) disable clicking the backdrop to close the modal
  * @property {boolean} [disableEscape=false] (optional) disable pressing of the escape key to close the modal
+ * @property {boolean} [disableMobileFullScreen=false] (optional) disable modal entering fullscreen mode on smaller screens
  * @property {boolean} isOpen (optional) is the modal open
  * @property {function} onClose (optional) method to run on closing the modal
  * @return {DialogState} the dialog state. Properties are:
@@ -113,6 +117,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     animationTimeout = 500,
     disableBackdrop = true,
     disableEscapeKey = false,
+    disableMobileFullScreen = false,
   } = dialogProps ?? {};
   const [open, setOpen] = React.useState(false);
   const showDialog = useCallback(() => setOpen(true), []);
@@ -161,6 +166,9 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       isRtl,
       animationTimeout
     );
+    const { keyboardIsOpen } = useKeyboard();
+    const isSmallerScreen = useMediaQuery('(max-height: 850px)');
+    const t = useTranslation();
 
     const defaultPreventedOnClick =
       (onClick: (e?: OkClickEvent) => Promise<boolean>) =>
@@ -215,6 +223,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       width: width ? Math.min(window.innerWidth - 50, width) : undefined,
     };
 
+    const fullScreen = isSmallerScreen && !disableMobileFullScreen;
+
     return (
       <BasicModal
         open={open}
@@ -224,7 +234,20 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         sx={sx}
         TransitionComponent={Transition}
         disableEscapeKeyDown={false}
+        fullScreen={fullScreen}
       >
+        {fullScreen && (
+          <IconButton
+            icon={<CloseIcon />}
+            color="primary"
+            onClick={() => {
+              onClose && onClose();
+              hideDialog();
+            }}
+            sx={{ position: 'absolute', right: 0, top: 0, padding: 2 }}
+            label={t('button.close')}
+          />
+        )}
         {title ? <ModalTitle title={title} /> : null}
         <form
           style={{
@@ -232,6 +255,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
             flexDirection: 'column',
             flex: '1 1 auto',
             overflow: 'auto',
+            width: dimensions.width,
+            margin: '0 auto',
           }}
           {...formProps}
         >
@@ -250,8 +275,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
           <DialogActions
             sx={{
               justifyContent: 'center',
-              marginBottom: '30px',
-              marginTop: '30px',
+              marginBottom: keyboardIsOpen ? 0 : '30px',
+              marginTop: keyboardIsOpen ? 0 : '30px',
             }}
           >
             {cancelButton}
