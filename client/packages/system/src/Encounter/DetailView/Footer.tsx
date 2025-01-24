@@ -135,8 +135,7 @@ export const Footer: FC<FooterProps> = ({
                 gap={2}
               >
                 <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
-                  {/* // todo fix this */}
-                  Document Edit History
+                  {t('label.document-edit-history')}
                 </Typography>
                 {documentName ? (
                   <DocumentHistory documentName={documentName} />
