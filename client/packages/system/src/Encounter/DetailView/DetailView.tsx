@@ -81,11 +81,15 @@ const useSaveWithStatus = (
   };
 };
 
-const useSaveWithStatusChangeModal = (
+const useSaveWithStatusChange = (
   onSave: () => void,
   encounterData: EncounterSchema | undefined,
   updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>
-): { showDialog: () => void; SaveAsVisitedModal: React.FC } => {
+): {
+  showDialog: () => void;
+  SaveAsVisitedModal: React.FC;
+  saveWithStatusChange: (status: EncounterNodeStatus) => void;
+} => {
   const { Modal, hideDialog, showDialog } = useDialog({
     disableBackdrop: true,
   });
@@ -131,6 +135,7 @@ const useSaveWithStatusChangeModal = (
   return {
     showDialog,
     SaveAsVisitedModal,
+    saveWithStatusChange,
   };
 };
 
@@ -211,12 +216,15 @@ export const DetailView: FC = () => {
     }
   }, [deleteRequest, data]);
 
-  const { showDialog: showSaveAsVisitedDialog, SaveAsVisitedModal } =
-    useSaveWithStatusChangeModal(
-      saveData,
-      data as unknown as EncounterSchema,
-      updateEncounter
-    );
+  const {
+    showDialog: showSaveAsVisitedDialog,
+    SaveAsVisitedModal,
+    saveWithStatusChange,
+  } = useSaveWithStatusChange(
+    saveData,
+    data as unknown as EncounterSchema,
+    updateEncounter
+  );
   const dataStatus = data
     ? (data as Record<string, JsonData>)['status']
     : undefined;
@@ -316,6 +324,7 @@ export const DetailView: FC = () => {
             saveData();
           }
         }}
+        onChangeStatus={saveWithStatusChange}
         onCancel={revert}
         isSaving={isSaving}
         isDisabled={!isDirty || !!validationError}
