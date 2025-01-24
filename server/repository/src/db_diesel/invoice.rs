@@ -1,13 +1,8 @@
 use super::{
-    clinician_link_row::{clinician_link, clinician_link::dsl as clinician_link_dsl},
-    clinician_row::{clinician, clinician::dsl as clinician_dsl},
-    invoice_line_row::invoice_line::dsl as invoice_line_dsl,
-    invoice_row::{invoice, invoice::dsl as invoice_dsl},
-    name_link_row::{name_link, name_link::dsl as name_link_dsl},
-    name_row::{name, name::dsl as name_dsl},
-    store_row::{store, store::dsl as store_dsl},
-    ClinicianRow, DBType, InvoiceRow, InvoiceStatus, InvoiceType, NameRow, RepositoryError,
-    StorageConnection, StoreRow,
+    clinician_link_row::clinician_link, clinician_row::clinician, invoice_line_row::invoice_line,
+    invoice_row::invoice, name_link_row::name_link, name_row::name, store_row::store, ClinicianRow,
+    DBType, InvoiceRow, InvoiceStatus, InvoiceType, NameRow, RepositoryError, StorageConnection,
+    StoreRow,
 };
 
 use crate::{
@@ -124,57 +119,57 @@ impl<'a> InvoiceRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 InvoiceSortField::Type => {
-                    apply_sort!(query, sort, invoice_dsl::type_);
+                    apply_sort!(query, sort, invoice::type_);
                 }
                 InvoiceSortField::Status => {
-                    apply_sort!(query, sort, invoice_dsl::status);
+                    apply_sort!(query, sort, invoice::status);
                 }
                 InvoiceSortField::CreatedDatetime => {
-                    apply_sort!(query, sort, invoice_dsl::created_datetime);
+                    apply_sort!(query, sort, invoice::created_datetime);
                 }
                 InvoiceSortField::InvoiceDatetime => {
                     apply_sort!(
                         query,
                         sort,
                         datetime_coalesce::coalesce(
-                            invoice_dsl::backdated_datetime,
-                            invoice_dsl::created_datetime
+                            invoice::backdated_datetime,
+                            invoice::created_datetime
                         )
                     );
                 }
                 InvoiceSortField::AllocatedDatetime => {
-                    apply_sort!(query, sort, invoice_dsl::allocated_datetime);
+                    apply_sort!(query, sort, invoice::allocated_datetime);
                 }
                 InvoiceSortField::PickedDatetime => {
-                    apply_sort!(query, sort, invoice_dsl::picked_datetime);
+                    apply_sort!(query, sort, invoice::picked_datetime);
                 }
                 InvoiceSortField::ShippedDatetime => {
-                    apply_sort!(query, sort, invoice_dsl::shipped_datetime);
+                    apply_sort!(query, sort, invoice::shipped_datetime);
                 }
                 InvoiceSortField::DeliveredDatetime => {
-                    apply_sort!(query, sort, invoice_dsl::delivered_datetime);
+                    apply_sort!(query, sort, invoice::delivered_datetime);
                 }
                 InvoiceSortField::VerifiedDatetime => {
-                    apply_sort!(query, sort, invoice_dsl::verified_datetime);
+                    apply_sort!(query, sort, invoice::verified_datetime);
                 }
                 InvoiceSortField::OtherPartyName => {
-                    apply_sort_no_case!(query, sort, name_dsl::name_);
+                    apply_sort_no_case!(query, sort, name::name_);
                 }
                 InvoiceSortField::InvoiceNumber => {
-                    apply_sort!(query, sort, invoice_dsl::invoice_number);
+                    apply_sort!(query, sort, invoice::invoice_number);
                 }
                 InvoiceSortField::Comment => {
-                    apply_sort_no_case!(query, sort, invoice_dsl::comment);
+                    apply_sort_no_case!(query, sort, invoice::comment);
                 }
                 InvoiceSortField::TheirReference => {
-                    apply_sort_no_case!(query, sort, invoice_dsl::their_reference);
+                    apply_sort_no_case!(query, sort, invoice::their_reference);
                 }
                 InvoiceSortField::TransportReference => {
-                    apply_sort_no_case!(query, sort, invoice_dsl::transport_reference);
+                    apply_sort_no_case!(query, sort, invoice::transport_reference);
                 }
             }
         } else {
-            query = query.order(invoice_dsl::id.asc())
+            query = query.order(invoice::id.asc())
         }
 
         // Debug diesel query
@@ -189,11 +184,11 @@ impl<'a> InvoiceRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceJoin, RepositoryError> {
-        Ok(invoice_dsl::invoice
-            .filter(invoice_dsl::id.eq(record_id))
-            .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
-            .inner_join(store_dsl::store)
-            .left_join(clinician_link_dsl::clinician_link.inner_join(clinician_dsl::clinician))
+        Ok(invoice::table
+            .filter(invoice::id.eq(record_id))
+            .inner_join(name_link::table.inner_join(name::table))
+            .inner_join(store::table)
+            .left_join(clinician_link::table.inner_join(clinician::table))
             .first::<InvoiceJoin>(self.connection.lock().connection())?)
     }
 }
@@ -220,10 +215,10 @@ type BoxedInvoiceQuery = IntoBoxed<
 >;
 
 fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
-    let mut query = invoice_dsl::invoice
-        .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
-        .inner_join(store_dsl::store)
-        .left_join(clinician_link_dsl::clinician_link.inner_join(clinician_dsl::clinician))
+    let mut query = invoice::table
+        .inner_join(name_link::table.inner_join(name::table))
+        .inner_join(store::table)
+        .left_join(clinician_link::table.inner_join(clinician::table))
         .into_boxed();
 
     if let Some(f) = filter {
@@ -252,39 +247,39 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
             stock_line_id,
         } = f;
 
-        apply_equal_filter!(query, id, invoice_dsl::id);
-        apply_equal_filter!(query, invoice_number, invoice_dsl::invoice_number);
-        apply_equal_filter!(query, name_id, name_dsl::id);
-        apply_string_filter!(query, name, name_dsl::name_);
-        apply_equal_filter!(query, store_id, invoice_dsl::store_id);
-        apply_equal_filter!(query, their_reference, invoice_dsl::their_reference);
-        apply_equal_filter!(query, requisition_id, invoice_dsl::requisition_id);
-        apply_string_filter!(query, comment, invoice_dsl::comment);
-        apply_equal_filter!(query, linked_invoice_id, invoice_dsl::linked_invoice_id);
-        apply_equal_filter!(query, user_id, invoice_dsl::user_id);
-        apply_equal_filter!(query, transport_reference, invoice_dsl::transport_reference);
-        apply_equal_filter!(query, colour, invoice_dsl::colour);
+        apply_equal_filter!(query, id, invoice::id);
+        apply_equal_filter!(query, invoice_number, invoice::invoice_number);
+        apply_equal_filter!(query, name_id, name::id);
+        apply_string_filter!(query, name, name::name_);
+        apply_equal_filter!(query, store_id, invoice::store_id);
+        apply_equal_filter!(query, their_reference, invoice::their_reference);
+        apply_equal_filter!(query, requisition_id, invoice::requisition_id);
+        apply_string_filter!(query, comment, invoice::comment);
+        apply_equal_filter!(query, linked_invoice_id, invoice::linked_invoice_id);
+        apply_equal_filter!(query, user_id, invoice::user_id);
+        apply_equal_filter!(query, transport_reference, invoice::transport_reference);
+        apply_equal_filter!(query, colour, invoice::colour);
 
-        apply_equal_filter!(query, r#type, invoice_dsl::type_);
-        apply_equal_filter!(query, status, invoice_dsl::status);
+        apply_equal_filter!(query, r#type, invoice::type_);
+        apply_equal_filter!(query, status, invoice::status);
 
         if let Some(value) = on_hold {
-            query = query.filter(invoice_dsl::on_hold.eq(value));
+            query = query.filter(invoice::on_hold.eq(value));
         }
 
-        apply_date_time_filter!(query, created_datetime, invoice_dsl::created_datetime);
-        apply_date_time_filter!(query, allocated_datetime, invoice_dsl::allocated_datetime);
-        apply_date_time_filter!(query, picked_datetime, invoice_dsl::picked_datetime);
-        apply_date_time_filter!(query, shipped_datetime, invoice_dsl::shipped_datetime);
-        apply_date_time_filter!(query, delivered_datetime, invoice_dsl::delivered_datetime);
-        apply_date_time_filter!(query, verified_datetime, invoice_dsl::verified_datetime);
+        apply_date_time_filter!(query, created_datetime, invoice::created_datetime);
+        apply_date_time_filter!(query, allocated_datetime, invoice::allocated_datetime);
+        apply_date_time_filter!(query, picked_datetime, invoice::picked_datetime);
+        apply_date_time_filter!(query, shipped_datetime, invoice::shipped_datetime);
+        apply_date_time_filter!(query, delivered_datetime, invoice::delivered_datetime);
+        apply_date_time_filter!(query, verified_datetime, invoice::verified_datetime);
 
         if let Some(stock_line_id) = stock_line_id {
-            let invoice_line_query = invoice_line_dsl::invoice_line
-                .filter(invoice_line_dsl::stock_line_id.eq(stock_line_id))
-                .select(invoice_line_dsl::invoice_id);
+            let invoice_line_query = invoice_line::table
+                .filter(invoice_line::stock_line_id.eq(stock_line_id))
+                .select(invoice_line::invoice_id);
 
-            query = query.filter(invoice_dsl::id.eq_any(invoice_line_query));
+            query = query.filter(invoice::id.eq_any(invoice_line_query));
         }
     }
     query

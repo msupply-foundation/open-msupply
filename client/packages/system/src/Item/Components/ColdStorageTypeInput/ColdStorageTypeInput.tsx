@@ -1,5 +1,9 @@
 import React from 'react';
-import { Autocomplete, useBufferState } from '@openmsupply-client/common';
+import {
+  Autocomplete,
+  useBufferState,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { useColdStorageTypes } from '../../api/hooks/useColdStorageTypes';
 import { ColdStorageTypeFragment } from '../../api';
 
@@ -17,9 +21,6 @@ export interface ColdStorageTypeInputProps {
   clearable?: boolean;
 }
 
-const getOptionLabel = (coldStorageType: ColdStorageTypeFragment) =>
-  `${coldStorageType.name} (${coldStorageType.minTemperature}°C to ${coldStorageType.maxTemperature}°C)`;
-
 export const ColdStorageTypeInput = ({
   onChange,
   width = 250,
@@ -29,6 +30,14 @@ export const ColdStorageTypeInput = ({
 }: ColdStorageTypeInputProps) => {
   const { data, isLoading } = useColdStorageTypes();
   const [buffer, setBuffer] = useBufferState(value);
+  const t = useTranslation();
+
+  const getOptionLabel = (coldStorageType: ColdStorageTypeFragment) =>
+    t('label.cold-storage-temperature-range', {
+      coldStorageName: coldStorageType.name,
+      minTemperature: coldStorageType.minTemperature,
+      maxTemperature: coldStorageType.maxTemperature,
+    });
 
   return (
     <Autocomplete

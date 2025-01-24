@@ -1,18 +1,12 @@
 use super::{
-    clinician_link_row::{clinician_link, clinician_link::dsl as clinician_link_dsl},
-    clinician_row::{clinician, clinician::dsl as clinician_dsl},
-    name_link_row::{name_link, name_link::dsl as name_link_dsl},
-    name_row::{name, name::dsl as name_dsl},
-    vaccination_row::{vaccination, vaccination::dsl as vaccination_dsl},
-    DBType, RepositoryError, StorageConnection, VaccinationRow,
+    clinician_link_row::clinician_link, clinician_row::clinician, name_link_row::name_link,
+    name_row::name, vaccination_row::vaccination, DBType, RepositoryError, StorageConnection,
+    VaccinationRow,
 };
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort},
-    vaccine_course::vaccine_course_dose_row::{
-        vaccine_course_dose::{self, dsl as vaccine_course_dose_dsl},
-        VaccineCourseDoseRow,
-    },
+    vaccine_course::vaccine_course_dose_row::{vaccine_course_dose, VaccineCourseDoseRow},
     ClinicianLinkRow, ClinicianRow, EqualFilter, NameLinkRow, NameRow, Pagination, Sort,
 };
 
@@ -93,11 +87,11 @@ impl<'a> VaccinationRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 VaccinationSortField::CreatedDatetime => {
-                    apply_sort!(query, sort, vaccination_dsl::created_datetime);
+                    apply_sort!(query, sort, vaccination::created_datetime);
                 }
             }
         } else {
-            query = query.order(vaccination_dsl::created_datetime.asc())
+            query = query.order(vaccination::created_datetime.asc())
         }
 
         let result = query
@@ -133,10 +127,10 @@ type BoxedVaccinationQuery = IntoBoxed<
 >;
 
 fn create_filtered_query(filter: Option<VaccinationFilter>) -> BoxedVaccinationQuery {
-    let mut query = vaccination_dsl::vaccination
-        .left_join(clinician_link_dsl::clinician_link.inner_join(clinician_dsl::clinician))
-        .inner_join(vaccine_course_dose_dsl::vaccine_course_dose)
-        .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
+    let mut query = vaccination::table
+        .left_join(clinician_link::table.inner_join(clinician::table))
+        .inner_join(vaccine_course_dose::table)
+        .left_join(name_link::table.inner_join(name::table))
         .into_boxed();
 
     if let Some(f) = filter {
@@ -148,23 +142,23 @@ fn create_filtered_query(filter: Option<VaccinationFilter>) -> BoxedVaccinationQ
             vaccine_course_id,
         } = f;
 
-        apply_equal_filter!(query, id, vaccination_dsl::id);
-        apply_equal_filter!(query, store_id, vaccination_dsl::store_id);
+        apply_equal_filter!(query, id, vaccination::id);
+        apply_equal_filter!(query, store_id, vaccination::store_id);
         apply_equal_filter!(
             query,
             program_enrolment_id,
-            vaccination_dsl::program_enrolment_id
+            vaccination::program_enrolment_id
         );
         apply_equal_filter!(
             query,
             vaccine_course_dose_id,
-            vaccination_dsl::vaccine_course_dose_id
+            vaccination::vaccine_course_dose_id
         );
 
         apply_equal_filter!(
             query,
             vaccine_course_id,
-            vaccine_course_dose_dsl::vaccine_course_id
+            vaccine_course_dose::vaccine_course_id
         );
     }
     query

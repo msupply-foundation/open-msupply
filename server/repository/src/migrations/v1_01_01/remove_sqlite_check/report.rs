@@ -61,11 +61,10 @@ async fn remove_sqlite_check_report() {
             context -> Text,
         }
     }
-    use report::dsl as report_dsl;
 
-    let reports = report_dsl::report
-        .select((report_dsl::id, report_dsl::type_, report_dsl::context))
-        .order_by(report_dsl::id.asc())
+    let reports = report::table
+        .select((report::id, report::type_, report::context))
+        .order_by(report::id.asc())
         .load::<(String, String, String)>(connection.lock().connection())
         .unwrap();
 
