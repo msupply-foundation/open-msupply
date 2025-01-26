@@ -14,6 +14,7 @@ import { Summary, Details } from 'packages/coldchain/src/Equipment/DetailView/Ta
 import { Footer } from './Footer';
 import { StatusLogs } from 'packages/coldchain/src/Equipment/DetailView/Tabs/StatusLogs';
 import { UpdateStatusButton } from 'packages/coldchain/src/Equipment/DetailView/UpdateStatusButton';
+import { Documents } from 'packages/coldchain/src/Equipment/DetailView/Tabs/Documents';
 
 export const EquipmentDetailView: FC = () => {
   const {
@@ -106,6 +107,11 @@ export const EquipmentDetailView: FC = () => {
           <UpdateStatusButton assetId={data?.id} />
           {draft === undefined ? null : <StatusLogs assetId={draft.id} />}
         </AccordionPanelSection>
+
+        <AccordionPanelSection title="Documents" defaultExpanded={false}>
+          {draft === undefined ? null : <Documents draft={draft} />}
+        </AccordionPanelSection>
+
       </Box>
     </Box>
   );
