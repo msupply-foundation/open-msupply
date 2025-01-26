@@ -17,6 +17,12 @@ const Container = ({ children }: { children: React.ReactNode }) => (
     flex={1}
     flexDirection="column"
     alignContent="center"
+    sx={theme => ({
+      [theme.breakpoints.down('sm')]: {
+        padding: '1em',
+        paddingX: '1em',
+      },
+    })}
     padding={4}
     paddingX={10}
   >
@@ -99,30 +105,48 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
   };
 
   return (
-    <Box display="flex" flex={1}>
+    <Box
+      display="flex"
+      flex={1}
+      sx={theme => ({
+        [theme.breakpoints.down('sm')]: {
+          flexDirection: 'column',
+        }
+      })}
+    >
       <Container>
         <Heading text={t('heading.download-catalogue-documents')} />
         <FileList
           assetId={draft.id}
           files={[]}
-          removeFile={() => {}}
+          removeFile={() => { }}
           noFilesMessage={t('messages.no-documents-uploaded')}
         />
       </Container>
       <Box
         marginTop={4}
         marginBottom={4}
-        sx={{
+        sx={theme => ({
           borderColor: 'gray.light',
           borderWidth: 0,
           borderLeftWidth: 1,
           borderStyle: 'solid',
-        }}
+          [theme.breakpoints.down('sm')]: {
+            display: 'none',
+          }
+        })}
       ></Box>
       <Container>
         <Heading text={t('heading.upload-cce-documents')} />
         <Upload onUpload={onUpload} color="gray" />
-        <Box marginY={4} />
+        <Box
+          marginY={4}
+          sx={theme => ({
+            [theme.breakpoints.down('sm')]: {
+              marginY: '1em',
+            }
+          })}
+        />
         <Heading text={t('heading.download-cce-documents')} />
         <FileList
           assetId={draft.id}
