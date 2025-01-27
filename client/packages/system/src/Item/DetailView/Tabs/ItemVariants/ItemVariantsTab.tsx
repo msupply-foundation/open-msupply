@@ -48,7 +48,10 @@ export const ItemVariantsTab = ({
       </AppBarButtonsPortal>
       <Box flex={1} marginX={2}>
         {itemVariants.length === 0 ? (
-          <NothingHere body={t('messages.no-item-variants')} />
+          <NothingHere
+            body={t('messages.no-item-variants')}
+            onCreate={onOpen}
+          />
         ) : (
           itemVariants.map(v => (
             <ItemVariant
@@ -77,7 +80,11 @@ const ItemVariant = ({
   const confirmAndDelete = useDeleteItemVariant({ itemId });
 
   const coldStorageValue = variant.coldStorageType
-    ? `${variant.coldStorageType.name} (${variant.coldStorageType.minTemperature}°C to ${variant.coldStorageType.maxTemperature}°C)`
+    ? t('label.cold-storage-temperature-range', {
+        coldStorageName: variant.coldStorageType.name,
+        minTemperature: variant.coldStorageType.minTemperature,
+        maxTemperature: variant.coldStorageType.maxTemperature,
+      })
     : null;
 
   return (

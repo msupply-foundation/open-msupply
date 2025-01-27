@@ -61,7 +61,7 @@ export const ProgramDetailModal: FC = () => {
     handleSave
   );
   const { JsonForm, isLoading, isSaving, saveData, isDirty, validationError } =
-  useJsonFormsHandler(
+    useJsonFormsHandler(
       {
         documentName: document?.name,
         patientId,
@@ -120,9 +120,8 @@ export const ProgramDetailModal: FC = () => {
           }}
           startIcon={isCreating ? <SaveIcon /> : <CheckIcon />}
           sx={{ marginLeft: 2 }}
-        >
-          {isCreating ? t('button.save') : t('button.ok')}
-        </LoadingButton>
+          label={isCreating ? t('button.save') : t('button.ok')}
+        />
       }
       width={700}
     >

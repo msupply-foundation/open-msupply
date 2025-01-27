@@ -14,6 +14,7 @@ const CONTACT_FORM1: (&str, &str) = (
         "body": "Help description",
         "created_datetime": "2020-01-22T15:16:00",
         "user_id": "user1",
+        "username": "user1",
         "store_id": "store_a",
         "contact_type": "FEEDBACK"
     }"#,
@@ -26,6 +27,7 @@ fn contact_form1() -> ContactFormRow {
         body: "Help description".to_string(),
         created_datetime: Defaults::naive_date_time(),
         user_id: String::from("user1"),
+        username: String::from("user1"),
         store_id: "store_a".to_string(),
         contact_type: ContactType::Feedback,
     }

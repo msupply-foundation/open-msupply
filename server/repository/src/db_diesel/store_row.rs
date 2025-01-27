@@ -1,7 +1,4 @@
-use super::{
-    item_link_row::item_link, name_link_row::name_link, store_row::store::dsl as store_dsl,
-    StorageConnection,
-};
+use super::{item_link_row::item_link, name_link_row::name_link, StorageConnection};
 
 use crate::{repository_error::RepositoryError, Delete, Upsert};
 
@@ -58,9 +55,9 @@ impl<'a> StoreRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(store_dsl::store)
+        diesel::insert_into(store::table)
             .values(row)
-            .on_conflict(store_dsl::id)
+            .on_conflict(store::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -68,34 +65,34 @@ impl<'a> StoreRowRepository<'a> {
     }
 
     pub async fn insert_one(&self, store_row: &StoreRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(store_dsl::store)
+        diesel::insert_into(store::table)
             .values(store_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, store_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
-        let result = store_dsl::store
-            .filter(store_dsl::id.eq(store_id))
+        let result = store::table
+            .filter(store::id.eq(store_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StoreRow>, RepositoryError> {
-        let result = store_dsl::store
-            .filter(store_dsl::id.eq_any(ids))
+        let result = store::table
+            .filter(store::id.eq_any(ids))
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn all(&mut self) -> Result<Vec<StoreRow>, RepositoryError> {
-        let result = store_dsl::store.load(self.connection.lock().connection())?;
+        let result = store::table.load(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(store_dsl::store.filter(store_dsl::id.eq(id)))
+        diesel::delete(store::table.filter(store::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

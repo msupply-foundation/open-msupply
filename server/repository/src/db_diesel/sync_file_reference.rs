@@ -1,9 +1,4 @@
-use super::{
-    sync_file_reference_row::{
-        sync_file_reference, sync_file_reference::dsl as sync_file_reference_dsl,
-    },
-    StorageConnection,
-};
+use super::{sync_file_reference_row::sync_file_reference, StorageConnection};
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
@@ -70,14 +65,14 @@ impl<'a> SyncFileReferenceRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 SyncFileReferenceSortField::CreatedDateTime => {
-                    apply_sort_no_case!(query, sort, sync_file_reference_dsl::created_datetime)
+                    apply_sort_no_case!(query, sort, sync_file_reference::created_datetime)
                 }
                 SyncFileReferenceSortField::FileName => {
-                    apply_sort_no_case!(query, sort, sync_file_reference_dsl::file_name)
+                    apply_sort_no_case!(query, sort, sync_file_reference::file_name)
                 }
             }
         } else {
-            query = query.order(sync_file_reference_dsl::id.asc())
+            query = query.order(sync_file_reference::id.asc())
         }
 
         let result = query
@@ -94,19 +89,15 @@ impl<'a> SyncFileReferenceRepository<'a> {
         let mut query = sync_file_reference::table.into_boxed();
 
         if let Some(filter) = filter {
-            apply_equal_filter!(query, filter.id, sync_file_reference_dsl::id);
-            apply_equal_filter!(
-                query,
-                filter.table_name,
-                sync_file_reference_dsl::table_name
-            );
-            apply_equal_filter!(query, filter.record_id, sync_file_reference_dsl::record_id);
-            apply_equal_filter!(query, filter.mime_type, sync_file_reference_dsl::mime_type);
+            apply_equal_filter!(query, filter.id, sync_file_reference::id);
+            apply_equal_filter!(query, filter.table_name, sync_file_reference::table_name);
+            apply_equal_filter!(query, filter.record_id, sync_file_reference::record_id);
+            apply_equal_filter!(query, filter.mime_type, sync_file_reference::mime_type);
             if let Some(value) = filter.is_deleted {
                 if value {
-                    query = query.filter(sync_file_reference_dsl::deleted_datetime.is_not_null());
+                    query = query.filter(sync_file_reference::deleted_datetime.is_not_null());
                 } else {
-                    query = query.filter(sync_file_reference_dsl::deleted_datetime.is_null());
+                    query = query.filter(sync_file_reference::deleted_datetime.is_null());
                 }
             }
         }

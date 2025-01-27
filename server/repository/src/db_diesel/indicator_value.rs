@@ -1,13 +1,18 @@
 use super::{
     indicator_value_row::{indicator_value, IndicatorValueRow},
-    DBType, StorageConnection,
+    name_link_row::name_link,
+    name_row::name,
+    DBType, NameLinkRow, NameRow, StorageConnection,
 };
 
 use crate::{diesel_macros::apply_equal_filter, repository_error::RepositoryError};
 
 use crate::{EqualFilter, Pagination};
 
-use diesel::prelude::*;
+use diesel::{
+    dsl::{InnerJoin, IntoBoxed},
+    prelude::*,
+};
 
 pub struct IndicatorValueRepository<'a> {
     connection: &'a StorageConnection,
@@ -16,12 +21,20 @@ pub struct IndicatorValueRepository<'a> {
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct IndicatorValueFilter {
     pub id: Option<EqualFilter<String>>,
-    pub customer_name_link_id: Option<EqualFilter<String>>,
+    pub customer_name_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub period_id: Option<EqualFilter<String>>,
     pub indicator_line_id: Option<EqualFilter<String>>,
     pub indicator_column_id: Option<EqualFilter<String>>,
 }
+
+pub struct IndicatorValue {
+    pub indicator_value_row: IndicatorValueRow,
+    pub name_row: NameRow,
+}
+
+type IndicatorValueJoin = (IndicatorValueRow, (NameLinkRow, NameRow));
+
 impl IndicatorValueFilter {
     pub fn new() -> IndicatorValueFilter {
         Self::default()
@@ -30,8 +43,8 @@ impl IndicatorValueFilter {
         self.id = Some(filter);
         self
     }
-    pub fn customer_name_link_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.customer_name_link_id = Some(filter);
+    pub fn customer_name_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.customer_name_id = Some(filter);
         self
     }
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
@@ -68,27 +81,25 @@ impl<'a> IndicatorValueRepository<'a> {
     pub fn query_one(
         &self,
         filter: IndicatorValueFilter,
-    ) -> Result<Option<IndicatorValueRow>, RepositoryError> {
+    ) -> Result<Option<IndicatorValue>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
         &self,
         filter: IndicatorValueFilter,
-    ) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
+    ) -> Result<Vec<IndicatorValue>, RepositoryError> {
         self.query(Pagination::all(), Some(filter))
     }
 
     pub fn create_filtered_query(filter: Option<IndicatorValueFilter>) -> BoxedIndicatorQuery {
-        let mut query = indicator_value::table.into_boxed();
+        let mut query = indicator_value::table
+            .inner_join(name_link::table.inner_join(name::table))
+            .into_boxed();
 
         if let Some(f) = filter {
             apply_equal_filter!(query, f.id, indicator_value::id);
-            apply_equal_filter!(
-                query,
-                f.customer_name_link_id,
-                indicator_value::customer_name_link_id
-            );
+            apply_equal_filter!(query, f.customer_name_id, name::id);
             apply_equal_filter!(query, f.store_id, indicator_value::store_id);
             apply_equal_filter!(query, f.period_id, indicator_value::period_id);
             apply_equal_filter!(
@@ -110,7 +121,7 @@ impl<'a> IndicatorValueRepository<'a> {
         &self,
         pagination: Pagination,
         filter: Option<IndicatorValueFilter>,
-    ) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
+    ) -> Result<Vec<IndicatorValue>, RepositoryError> {
         let query = Self::create_filtered_query(filter);
 
         // Debug diesel query
@@ -119,9 +130,21 @@ impl<'a> IndicatorValueRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<IndicatorValueRow>(self.connection.lock().connection())?;
+            .load::<IndicatorValueJoin>(self.connection.lock().connection())?;
 
-        Ok(result)
+        Ok(result.into_iter().map(to_domain).collect())
     }
 }
-type BoxedIndicatorQuery = indicator_value::BoxedQuery<'static, DBType>;
+
+fn to_domain((indicator_value_row, (_, name_row)): IndicatorValueJoin) -> IndicatorValue {
+    IndicatorValue {
+        indicator_value_row,
+        name_row,
+    }
+}
+
+type BoxedIndicatorQuery = IntoBoxed<
+    'static,
+    InnerJoin<indicator_value::table, InnerJoin<name_link::table, name::table>>,
+    DBType,
+>;

@@ -55,13 +55,13 @@ export const useResponseColumns = () => {
       width: 130,
     },
     [
-      'stockOnHand',
+      'availableStockOnHand',
       {
         label: 'label.our-soh',
         description: 'description.our-soh',
         sortable: false,
         Cell: PackQuantityCell,
-        accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
+        accessor: ({ rowData }) => rowData.itemStats.stockOnHand,
       },
     ],
   ];

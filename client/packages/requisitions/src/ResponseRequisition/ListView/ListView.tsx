@@ -24,6 +24,7 @@ import {
   isResponseDisabled,
 } from '../../utils';
 import { useResponse, ResponseRowFragment } from '../api';
+import { Footer } from './Footer';
 
 const useDisableResponseRows = (rows?: ResponseRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -50,6 +51,7 @@ export const ResponseRequisitionListView: FC = () => {
     },
     filters: [
       { key: 'comment' },
+      { key: 'otherPartyName' },
       {
         key: 'status',
         condition: 'equalTo',
@@ -133,10 +135,7 @@ export const ResponseRequisitionListView: FC = () => {
         t(getApprovalStatusKey(rowData.approvalStatus)),
     });
   }
-  columnDefinitions.push(
-    ['comment', { minWidth: 350, Cell: TooltipTextCell }],
-    
-  );
+  columnDefinitions.push(['comment', { minWidth: 350, Cell: TooltipTextCell }]);
 
   const columns = useColumns<ResponseRowFragment>(
     columnDefinitions,
@@ -162,6 +161,8 @@ export const ResponseRequisitionListView: FC = () => {
         isLoading={isLoading}
         noDataElement={<NothingHere body={t('error.no-requisitions')} />}
       />
+
+      <Footer />
     </>
   );
 };
