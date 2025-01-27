@@ -219,7 +219,5 @@ export const useJsonFormsHandler = <R,>(
     error,
     validationError,
     formActions,
-    // exposing so we can hook into the confirmOnLeaving with external changes as well!
-    setIsDirty,
   };
 };
