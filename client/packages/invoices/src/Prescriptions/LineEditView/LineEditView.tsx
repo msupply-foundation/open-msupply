@@ -84,15 +84,17 @@ export const PrescriptionLineEditView = () => {
     'prescription-line-edit',
     // Need a custom checking method here, as we don't want to warn user when
     // switching to a different item within this page
-    (current, next) => {
-      if (!isDirty) return false;
+    {
+      customCheck: (current, next) => {
+        if (!isDirty) return false;
 
-      const currentPathParts = current.pathname.split('/');
-      const nextPathParts = next.pathname.split('/');
-      // Compare URLS, but don't include the last part, which is the ItemID
-      currentPathParts.pop();
-      nextPathParts.pop();
-      return !isEqual(currentPathParts, nextPathParts);
+        const currentPathParts = current.pathname.split('/');
+        const nextPathParts = next.pathname.split('/');
+        // Compare URLS, but don't include the last part, which is the ItemID
+        currentPathParts.pop();
+        nextPathParts.pop();
+        return !isEqual(currentPathParts, nextPathParts);
+      },
     }
   );
 
