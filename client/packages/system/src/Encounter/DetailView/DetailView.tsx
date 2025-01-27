@@ -101,6 +101,7 @@ const useSaveWithStatusChange = (
     updateEncounter
   );
 
+  // todo: should be confirmation modal? or at least show some kind of message bc ick
   const SaveAsVisitedModal = () => (
     <Modal
       title={t('messages.save-encounter-as-visited')}
