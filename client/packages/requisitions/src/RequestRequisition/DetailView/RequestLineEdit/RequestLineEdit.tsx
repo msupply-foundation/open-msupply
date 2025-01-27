@@ -262,13 +262,14 @@ export const RequestLineEdit = ({
                       value={Math.ceil(draft?.requestedQuantity)}
                       disabled={isPacks}
                       onChange={value => {
-                        if (draft?.suggestedQuantity === value) {
+                        const newValue = isNaN(Number(value)) ? 0 : value;
+                        if (draft?.suggestedQuantity === newValue) {
                           update({
-                            requestedQuantity: value,
+                            requestedQuantity: newValue,
                             reason: null,
                           });
                         } else {
-                          update({ requestedQuantity: value });
+                          update({ requestedQuantity: newValue });
                         }
                       }}
                       onBlur={save}
@@ -311,7 +312,6 @@ export const RequestLineEdit = ({
                   <InputWithLabelRow
                     Input={
                       <NumericTextInput
-                        autoFocus
                         disabled={!isPacks}
                         value={NumUtils.round(
                           (draft?.requestedQuantity ?? 0) /
@@ -320,12 +320,19 @@ export const RequestLineEdit = ({
                         )}
                         decimalLimit={2}
                         width={100}
-                        onChange={quantity => {
-                          update({
-                            requestedQuantity:
-                              (quantity ?? 0) * (draft?.defaultPackSize ?? 0),
-                          });
+                        onChange={value => {
+                          const newValue =
+                            (value ?? 0) * (draft?.defaultPackSize ?? 0);
+                          if (draft?.suggestedQuantity === newValue) {
+                            update({
+                              requestedQuantity: newValue,
+                              reason: null,
+                            });
+                          } else {
+                            update({ requestedQuantity: newValue });
+                          }
                         }}
+                        onBlur={save}
                       />
                     }
                     labelWidth={LABEL_WIDTH}

@@ -40,6 +40,7 @@ export const Footer: FC<FooterProps> = ({ isDisabled }) => {
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
       disabled: isDisabled,
+      disabledToastMessage: t('label.cant-delete-disabled-internal-order'),
     },
   ];
 

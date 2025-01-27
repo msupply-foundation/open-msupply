@@ -84,6 +84,7 @@ fn requisition_request_pull_record() -> TestSyncIncomingRecord {
             program_id: None,
             period_id: None,
             order_type: None,
+            is_emergency: false,
         },
     )
 }
@@ -119,7 +120,7 @@ fn requisition_request_push_record() -> TestSyncOutgoingRecord {
                     .unwrap()
             ),
             finalised_datetime: None,
-            max_months_of_stock: Some(5.0),
+            max_months_of_stock: Some(4.9281314168377826),
             om_status: Some(RequisitionStatus::Sent),
             om_colour: None,
             expected_delivery_date: None,
@@ -127,6 +128,7 @@ fn requisition_request_push_record() -> TestSyncOutgoingRecord {
             orderType: None,
             periodID: None,
             programID: None,
+            is_emergency: false,
         }),
     }
 }
@@ -159,7 +161,7 @@ const REQUISITION_RESPONSE: (&str, &str) = (
       "periodID": "641A3560C84A44BC9E6DDC01F3D75923",
       "programID": "F36DBBC6DBCA4528BDA2403CE07CB44F",
       "lastModifiedAt": 1594271180,
-      "is_emergency": false,
+      "is_emergency": true,
       "isRemoteOrder": false
     }"#,
 );
@@ -197,6 +199,7 @@ fn requisition_response_pull_record() -> TestSyncIncomingRecord {
             program_id: Some("missing_program".to_string()),
             period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             order_type: Some("Normal".to_string()),
+            is_emergency: true,
         },
     )
 }
@@ -240,6 +243,7 @@ fn requisition_response_push_record() -> TestSyncOutgoingRecord {
             orderType: Some("Normal".to_string()),
             periodID: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             programID: Some("missing_program".to_string()),
+            is_emergency: true,
         }),
     }
 }
@@ -278,7 +282,7 @@ const REQUISITION_OM_FIELDS: (&str, &str) = (
       "om_sent_datetime": "2022-03-24T14:48:00",
       "om_finalised_datetime": "2022-03-25T14:48:00",
       "om_expected_delivery_date": "2022-03-26",
-      "om_max_months_of_stock": 10.0,
+      "om_max_months_of_stock": 9.85626283367557,
       "om_status": "NEW",
       "om_colour": "Colour" 
     }"#,
@@ -315,13 +319,14 @@ fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
             colour: Some("Colour".to_string()),
             comment: Some("From request requisition 3".to_string()),
             their_reference: Some("From request requisition 3".to_string()),
-            max_months_of_stock: 10.0,
+            max_months_of_stock: 9.85626283367557,
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
             approval_status: Some(ApprovalStatusType::Approved),
             program_id: None,
             period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             order_type: Some("Normal".to_string()),
+            is_emergency: false,
         },
     )
 }
@@ -363,13 +368,14 @@ fn requisition_om_fields_push_record() -> TestSyncOutgoingRecord {
                     .unwrap()
             ),
             expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 3, 26).unwrap()),
-            max_months_of_stock: Some(10.0),
+            max_months_of_stock: Some(9.85626283367557),
             om_status: Some(RequisitionStatus::New),
             om_colour: Some("Colour".to_string()),
             approval_status: Some(LegacyAuthorisationStatus::Authorised),
             orderType: Some("Normal".to_string()),
             periodID: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             programID: None,
+            is_emergency: false,
         }),
     }
 }
@@ -447,6 +453,7 @@ fn program_requisition_request_pull_record() -> TestSyncIncomingRecord {
             program_id: Some("missing_program".to_string()),
             period_id: Some("772B3984DBA14A5F941ED0EF857FDB31".to_string()),
             order_type: Some("Normal".to_string()),
+            is_emergency: false,
         },
     )
 }
@@ -490,6 +497,7 @@ fn program_requisition_request_push_record() -> TestSyncOutgoingRecord {
             orderType: Some("Normal".to_string()),
             periodID: Some("772B3984DBA14A5F941ED0EF857FDB31".to_string()),
             programID: Some("missing_program".to_string()),
+            is_emergency: false,
         }),
     }
 }
