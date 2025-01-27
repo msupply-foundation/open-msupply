@@ -2,6 +2,10 @@
     {% include "style.css" %}
 </style>
 
+{% macro dateOrNA(datetime) %} 
+{% if datetime %}{{ datetime | date(format="%d/%m/%Y") }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
+{% endmacro input %}
+
 <table class="header_supplied_section">
     <tr> 
         <td class="header_section_field_left">{{t(k="report.received-from",f="Received from")}}:</td> 
@@ -33,7 +37,10 @@
 
     <tr> 
         <td class="header_section_field_left">{{t(k="report.created-date",f="Created date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y") }}</td>
-        <td class="header_section_field_right">{{t(k="report.shipped-date",f="Shipped date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y") }}</td>
+        <td
+        class="header_section_field_right">{{t(k="report.shipped-date",f="Shipped
+        date")}}: {{ self::dateOrNA(datetime=data.invoice.shippedDatetime)
+        }}</td>
     </tr> 
 </table>
 
@@ -44,7 +51,7 @@
             <th class="location_code" style="width: 80px;">{{t(k="label.location",f="Location")}}</th>
             <th class="item_name" style="width: 500px;">{{t(k="report.item-name", f="Item name")}}</th>
             <th class="quantity" style="width: 50px;">{{t(k="label.quantity",f="Quantity")}}</th>
-            <th class="pack" style="width: 50px;">{{t(k="label.pack",f="Pack")}}</th>
+            <th class="pack" style="width: 50px;">{{t(k="report.pack-size",f="Pack size")}}</th>
             <th class="batch" style="width: 50px;">{{t(k="label.batch", f="Batch")}}</th>
             <th class="expiry" style="width: 80px;">{{t(k="label.expiry",f="Expiry")}}</th>
             <th class="sell_price" style="width: 50px;">{{t(k="label.cost-price",f="Cost Price")}}</th>
