@@ -12,7 +12,7 @@ let plugins = {
     const now = new Date();
     now.setDate(now.getDate() - DAY_LOOKBACK);
 
-    const sql_date = now.toJSON().split("T")[0];
+    const sql_date = now.toJSON().split('T')[0];
     const sql_item_ids = '"' + item_ids.join('","') + '"';
 
     // Sqlite only
@@ -32,8 +32,7 @@ let plugins = {
 
     sql_result.forEach(({ item_id, consumption }) => {
       response[item_id] = {
-        average_monthly_consumption:
-          consumption / (DAY_LOOKBACK / DAYS_IN_MONTH),
+        average_monthly_consumption: consumption / (DAY_LOOKBACK / DAYS_IN_MONTH),
       };
     });
 
