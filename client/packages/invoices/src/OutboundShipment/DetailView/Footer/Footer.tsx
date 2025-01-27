@@ -1,18 +1,25 @@
 import React, { FC, memo } from 'react';
 import {
+  Action,
+  ActionsFooter,
+  ArrowLeftIcon,
   Box,
   ButtonWithIcon,
   StatusCrumbs,
   XCircleIcon,
+  DeleteIcon,
+  ZapIcon,
   useTranslation,
   AppFooterPortal,
   InvoiceNodeStatus,
   useBreadcrumbs,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, outboundStatuses } from '../../../utils';
 import { useOutbound, OutboundFragment } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
+import { StockOutLineFragment } from 'packages/invoices/src/StockOut';
 
 const createStatusLog = (invoice: OutboundFragment) => {
   const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
@@ -48,44 +55,110 @@ const createStatusLog = (invoice: OutboundFragment) => {
   return statusLog;
 };
 
-export const FooterComponent: FC = () => {
+interface FooterComponentProps {
+  onReturnLines: (selectedLines: StockOutLineFragment[]) => void;
+}
+
+export const FooterComponent: FC<FooterComponentProps> = ({
+  onReturnLines,
+}) => {
   const t = useTranslation();
-  const { data } = useOutbound.document.get();
   const { navigateUpOne } = useBreadcrumbs();
+
+  const { data } = useOutbound.document.get();
+  const isDisabled = useOutbound.utils.isDisabled();
+  const onDelete = useOutbound.line.deleteSelected();
+  const { onAllocate } = useOutbound.line.allocateSelected();
+
+  const selectedLines = useOutbound.utils.selectedLines();
+
+  const selectedUnallocatedEmptyLines = selectedLines
+    .filter(
+      ({ type, numberOfPacks }) =>
+        type === 'UNALLOCATED_STOCK' && numberOfPacks === 0
+    )
+    .flat()
+    .map(row => row.id);
+
+  const getConfirmation = useConfirmationModal({
+    onConfirm: onAllocate,
+    title: t('heading.are-you-sure'),
+    message: t('messages.empty-unallocated-lines', {
+      count: selectedUnallocatedEmptyLines.length,
+    }),
+  });
+
+  const confirmAllocate = () => {
+    if (selectedUnallocatedEmptyLines.length !== 0) {
+      getConfirmation();
+    } else onAllocate();
+  };
+
+  const actions: Action[] = [
+    {
+      label: t('button.delete-lines'),
+      icon: <DeleteIcon />,
+      onClick: onDelete,
+      disabled: isDisabled,
+      disabledToastMessage: t('messages.cant-delete-generic'),
+    },
+    {
+      label: t('button.allocate-lines'),
+      icon: <ZapIcon />,
+      onClick: confirmAllocate,
+      disabled: isDisabled,
+      shouldShrink: false,
+      disabledToastMessage: t('label.no-unallocated-rows-selected'),
+    },
+    {
+      label: t('button.return-lines'),
+      icon: <ArrowLeftIcon />,
+      onClick: () => onReturnLines(selectedLines),
+      shouldShrink: false,
+    },
+  ];
 
   return (
     <AppFooterPortal
       Content={
-        data && (
-          <Box
-            gap={2}
-            display="flex"
-            flexDirection="row"
-            alignItems="center"
-            height={64}
-          >
-            <OnHoldButton />
-
-            <StatusCrumbs
-              statuses={outboundStatuses}
-              statusLog={createStatusLog(data)}
-              statusFormatter={getStatusTranslator(t)}
+        <>
+          {selectedLines.length !== 0 && (
+            <ActionsFooter
+              actions={actions}
+              selectedRowCount={selectedLines.length}
             />
+          )}
+          {data && selectedLines.length === 0 && (
+            <Box
+              gap={2}
+              display="flex"
+              flexDirection="row"
+              alignItems="center"
+              height={64}
+            >
+              <OnHoldButton />
 
-            <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-              <ButtonWithIcon
-                shrinkThreshold="lg"
-                Icon={<XCircleIcon />}
-                label={t('button.close')}
-                color="secondary"
-                sx={{ fontSize: '12px' }}
-                onClick={() => navigateUpOne()}
+              <StatusCrumbs
+                statuses={outboundStatuses}
+                statusLog={createStatusLog(data)}
+                statusFormatter={getStatusTranslator(t)}
               />
 
-              <StatusChangeButton />
+              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+                <ButtonWithIcon
+                  shrinkThreshold="lg"
+                  Icon={<XCircleIcon />}
+                  label={t('button.close')}
+                  color="secondary"
+                  sx={{ fontSize: '12px' }}
+                  onClick={() => navigateUpOne()}
+                />
+
+                <StatusChangeButton />
+              </Box>
             </Box>
-          </Box>
-        )
+          )}
+        </>
       }
     />
   );

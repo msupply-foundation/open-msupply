@@ -7,7 +7,7 @@ import {
   Theme,
 } from '@mui/material';
 
-const translateColor = (theme: Theme, color?: string) => {
+export const translateColor = (theme: Theme, color?: string) => {
   switch (color) {
     case 'error':
       return theme.palette.error.main;
@@ -23,6 +23,7 @@ export const StyledBaseButton = styled(MuiButton)(({
   color,
   variant,
   style,
+  disabled,
 }) => {
   const getHoverBgColor = () =>
     variant === 'contained'
@@ -34,28 +35,44 @@ export const StyledBaseButton = styled(MuiButton)(({
       ? translateColor(theme, color)
       : theme.palette.background.white;
 
+  const getIconColor = () =>
+    variant === 'outlined'
+      ? theme.palette.primary.contrastText
+      : translateColor(theme, color);
+
   const hoverBgColor = getHoverBgColor();
   const hoverColor = getHoverColor();
+  const iconColor = getIconColor();
 
   return {
+    '&.MuiButton-contained': { fontWeight: 600 },
     '&.MuiButton-outlined': {
       backgroundColor: 'white',
+      color:
+        color === 'primary' && !disabled
+          ? theme.mixins.button?.textColor
+          : undefined,
+      '& .MuiButton-startIcon': {
+        color:
+          color === 'primary' && !disabled
+            ? translateColor(theme, color)
+            : undefined,
+      },
     },
-
-    borderRadius: 24,
-    fontWeight: 700,
-    height: style?.height ?? 40,
-    textTransform: 'none' as Property.TextTransform,
-    boxShadow: theme.shadows[2],
-
-    minWidth: '115px',
-
     border: 'none',
-
+    borderRadius: 24,
+    boxShadow: theme.shadows[2],
+    fontSize: '0.875rem',
+    height: style?.height ?? 40,
+    minWidth: '115px',
+    textTransform: 'none' as Property.TextTransform,
     '&:hover': {
       border: 'none',
       color: hoverColor,
       backgroundColor: hoverBgColor,
+      '& .MuiButton-startIcon': {
+        color: color === 'primary' ? iconColor : undefined,
+      },
     },
   };
 });

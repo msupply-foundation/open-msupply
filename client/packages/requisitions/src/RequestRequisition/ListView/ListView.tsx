@@ -14,6 +14,7 @@ import {
   useUrlQueryParams,
   ColumnDescription,
   TooltipTextCell,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -23,6 +24,7 @@ import {
   getRequisitionTranslator,
   isRequestDisabled,
 } from '../../utils';
+import { Footer } from './Footer';
 
 const useDisableRequestRows = (rows?: RequestRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -59,6 +61,7 @@ export const RequestRequisitionListView: FC = () => {
   const { requireSupplierAuthorisation } = useRequest.utils.preferences();
 
   const columnDefinitions: ColumnDescription<RequestRowFragment>[] = [
+    GenericColumnKey.Selection,
     [getNameAndColorColumn(), { setter: onUpdate }],
     {
       key: 'requisitionNumber',
@@ -116,8 +119,6 @@ export const RequestRequisitionListView: FC = () => {
     });
   }
 
-  columnDefinitions.push('selection');
-
   const columns = useColumns<RequestRowFragment>(
     columnDefinitions,
     { sortBy, onChangeSortBy: updateSortQuery },
@@ -152,6 +153,7 @@ export const RequestRequisitionListView: FC = () => {
           />
         }
       />
+      <Footer />
     </>
   );
 };

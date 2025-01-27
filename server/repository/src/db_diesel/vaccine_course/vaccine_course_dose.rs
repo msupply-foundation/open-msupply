@@ -1,8 +1,5 @@
 use super::{
-    vaccine_course_dose_row::{
-        vaccine_course_dose::{self, dsl as vaccine_course_dose_dsl},
-        VaccineCourseDoseRow,
-    },
+    vaccine_course_dose_row::{vaccine_course_dose, VaccineCourseDoseRow},
     vaccine_course_row::{vaccine_course, VaccineCourseRow},
 };
 
@@ -90,7 +87,7 @@ impl<'a> VaccineCourseDoseRepository<'a> {
         let mut query = create_filtered_query(filter);
 
         // Sort by min_age to receive the dose - this is the order doses should be delivered in
-        query = query.order(vaccine_course_dose_dsl::min_age.asc());
+        query = query.order(vaccine_course_dose::min_age.asc());
 
         let result = query.load::<VaccineCourseDoseJoin>(self.connection.lock().connection())?;
 
@@ -102,8 +99,8 @@ type BoxedVaccineCourseDoseQuery =
     IntoBoxed<'static, InnerJoin<vaccine_course_dose::table, vaccine_course::table>, DBType>;
 
 fn create_filtered_query(filter: Option<VaccineCourseDoseFilter>) -> BoxedVaccineCourseDoseQuery {
-    let mut query = vaccine_course_dose_dsl::vaccine_course_dose
-        .inner_join(vaccine_course::dsl::vaccine_course)
+    let mut query = vaccine_course_dose::table
+        .inner_join(vaccine_course::table)
         .into_boxed();
 
     if let Some(f) = filter.clone() {
@@ -113,17 +110,17 @@ fn create_filtered_query(filter: Option<VaccineCourseDoseFilter>) -> BoxedVaccin
             include_deleted: _,
         } = f;
 
-        apply_equal_filter!(query, id, vaccine_course_dose_dsl::id);
+        apply_equal_filter!(query, id, vaccine_course_dose::id);
         apply_equal_filter!(
             query,
             vaccine_course_id,
-            vaccine_course_dose_dsl::vaccine_course_id
+            vaccine_course_dose::vaccine_course_id
         );
     }
 
     // Filter out deleted rows, unless include_deleted is set to true
     if !filter.map(|f| f.include_deleted).flatten().unwrap_or(false) {
-        query = query.filter(vaccine_course_dose_dsl::deleted_datetime.is_null());
+        query = query.filter(vaccine_course_dose::deleted_datetime.is_null());
     }
 
     query

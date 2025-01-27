@@ -109,9 +109,8 @@ export const AppBarButtons = () => {
           backgroundColor: 'primary.main',
           iconColor: 'background.white',
         }}
-      >
-        {t('button.import-fridge-tag')}
-      </LoadingButton>
+        label={t('button.import-fridge-tag')}
+      />
     </AppBarButtonsPortal>
   );
 };

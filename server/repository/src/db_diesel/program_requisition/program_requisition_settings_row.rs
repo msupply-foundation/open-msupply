@@ -1,7 +1,4 @@
-use super::{
-    program_requisition_settings_row::program_requisition_settings::dsl as program_requisition_settings_dsl,
-    program_row::program,
-};
+use super::program_row::program;
 
 use crate::{
     db_diesel::name_tag_row::name_tag, period_schedule_row::period_schedule,
@@ -44,9 +41,9 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &ProgramRequisitionSettingsRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(program_requisition_settings_dsl::program_requisition_settings)
+        diesel::insert_into(program_requisition_settings::table)
             .values(row)
-            .on_conflict(program_requisition_settings_dsl::id)
+            .on_conflict(program_requisition_settings::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -57,8 +54,8 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
         &self,
         id: &str,
     ) -> Result<Option<ProgramRequisitionSettingsRow>, RepositoryError> {
-        let result = program_requisition_settings_dsl::program_requisition_settings
-            .filter(program_requisition_settings_dsl::id.eq(id))
+        let result = program_requisition_settings::table
+            .filter(program_requisition_settings::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -68,16 +65,16 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
         &self,
         program_id: &str,
     ) -> Result<Vec<ProgramRequisitionSettingsRow>, RepositoryError> {
-        let result = program_requisition_settings_dsl::program_requisition_settings
-            .filter(program_requisition_settings_dsl::program_id.eq(program_id))
+        let result = program_requisition_settings::table
+            .filter(program_requisition_settings::program_id.eq(program_id))
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn delete(&self, settings_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
-            program_requisition_settings_dsl::program_requisition_settings
-                .filter(program_requisition_settings_dsl::id.eq(settings_id)),
+            program_requisition_settings::table
+                .filter(program_requisition_settings::id.eq(settings_id)),
         )
         .execute(self.connection.lock().connection())?;
         Ok(())

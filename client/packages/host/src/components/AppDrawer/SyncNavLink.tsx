@@ -6,15 +6,17 @@ import {
   useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
 import { getBadgeProps } from '../../utils';
 import { useSync } from '@openmsupply-client/system';
+import { useSyncModal } from '../Sync';
 
 const POLLING_INTERVAL_IN_MILLISECONDS = 60 * 1000;
 
 export const SyncNavLink = () => {
   const t = useTranslation();
   const theme = useTheme();
+  const showSync = useSyncModal();
+
   const { syncStatus, numberOfRecordsInPushQueue } = useSync.utils.syncInfo(
     POLLING_INTERVAL_IN_MILLISECONDS
   );
@@ -36,7 +38,12 @@ export const SyncNavLink = () => {
   }
   return (
     <AppNavLink
-      to={AppRoute.Sync}
+      to="sync"
+      onClick={e => {
+        // prevent the anchor element from navigating
+        e.preventDefault();
+        showSync();
+      }}
       icon={<RadioIcon fontSize="small" color="primary" />}
       text={t('sync')}
       badgeProps={badgeProps}

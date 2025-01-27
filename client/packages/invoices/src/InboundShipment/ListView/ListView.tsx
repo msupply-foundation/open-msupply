@@ -13,11 +13,13 @@ import {
   useToggle,
   useUrlQueryParams,
   TooltipTextCell,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getStatusTranslator, isInboundListItemDisabled } from '../../utils';
 import { useInbound, InboundRowFragment } from '../api';
+import { Footer } from './Footer';
 
 const useDisableInboundRows = (rows?: InboundRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -60,6 +62,7 @@ export const InboundListView: FC = () => {
 
   const columns = useColumns<InboundRowFragment>(
     [
+      GenericColumnKey.Selection,
       [getNameAndColorColumn(), { setter: onUpdate }],
       [
         'status',
@@ -85,7 +88,6 @@ export const InboundListView: FC = () => {
           accessor: ({ rowData }) => rowData.pricing.totalAfterTax,
         },
       ],
-      'selection',
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
@@ -115,6 +117,7 @@ export const InboundListView: FC = () => {
         }
         enableColumnSelection
       />
+      <Footer />
     </>
   );
 };

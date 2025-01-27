@@ -1,5 +1,3 @@
-use super::period_schedule_row::period_schedule::dsl as period_schedule_dsl;
-
 use crate::{repository_error::RepositoryError, StorageConnection};
 
 use crate::Upsert;
@@ -29,9 +27,9 @@ impl<'a> PeriodScheduleRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &PeriodScheduleRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(period_schedule_dsl::period_schedule)
+        diesel::insert_into(period_schedule::table)
             .values(row)
-            .on_conflict(period_schedule_dsl::id)
+            .on_conflict(period_schedule::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -39,8 +37,8 @@ impl<'a> PeriodScheduleRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<PeriodScheduleRow>, RepositoryError> {
-        let result = period_schedule_dsl::period_schedule
-            .filter(period_schedule_dsl::id.eq(id))
+        let result = period_schedule::table
+            .filter(period_schedule::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -50,8 +48,8 @@ impl<'a> PeriodScheduleRowRepository<'a> {
         &self,
         name: &str,
     ) -> Result<Option<PeriodScheduleRow>, RepositoryError> {
-        let result = period_schedule_dsl::period_schedule
-            .filter(period_schedule_dsl::name.eq(name))
+        let result = period_schedule::table
+            .filter(period_schedule::name.eq(name))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)

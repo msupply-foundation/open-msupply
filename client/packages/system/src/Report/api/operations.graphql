@@ -1,4 +1,5 @@
 fragment ReportRow on ReportNode {
+  __typename
   context
   id
   name
@@ -12,29 +13,51 @@ fragment ReportRow on ReportNode {
   }
 }
 
-query report($storeId: String!, $id: String!) {
-  report(storeId: $storeId, id: $id) {
-    ...ReportRow
+query report($storeId: String!, $userLanguage: String!, $id: String!) {
+  report(storeId: $storeId, userLanguage: $userLanguage, id: $id) {
+    ... on ReportNode {
+      ...ReportRow
+    }
+    ... on QueryReportError {
+      __typename
+      error {
+        ... on FailedTranslation {
+          __typename
+          description
+        }
+      }
+    }
   }
 }
 
 query reports(
   $storeId: String!
+  $userLanguage: String!
   $key: ReportSortFieldInput!
   $desc: Boolean
   $filter: ReportFilterInput
 ) {
   reports(
     storeId: $storeId
+    userLanguage: $userLanguage
     sort: { key: $key, desc: $desc }
     filter: $filter
   ) {
+    __typename
     ... on ReportConnector {
       nodes {
-        __typename
         ...ReportRow
       }
       totalCount
+    }
+    ... on QueryReportsError {
+      __typename
+      error {
+        ... on FailedTranslation {
+          __typename
+          description
+        }
+      }
     }
   }
 }

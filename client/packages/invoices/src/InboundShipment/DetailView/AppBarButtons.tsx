@@ -31,7 +31,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const isDisabled = useInbound.utils.isDisabled();
   const { data } = useInbound.document.get();
   const { OpenButton } = useDetailPanel();
-  const t = useTranslation(); 
+  const t = useTranslation();
   const { print, isPrinting } = usePrintReport();
   const {
     queryParams: { sortBy },
@@ -73,9 +73,8 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
             variant="outlined"
             startIcon={<PrinterIcon />}
             isLoading={isPrinting}
-          >
-            {t('button.print')}
-          </LoadingButton>
+            label={t('button.print')}
+          />
         </ReportSelector>
 
         {OpenButton}

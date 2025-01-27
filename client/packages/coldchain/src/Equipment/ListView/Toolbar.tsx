@@ -3,9 +3,6 @@ import {
   AppBarContentPortal,
   AssetLogStatusInput,
   Box,
-  DeleteIcon,
-  DropdownMenu,
-  DropdownMenuItem,
   FilterDefinition,
   FilterMenu,
   useIsCentralServerApi,
@@ -14,7 +11,6 @@ import {
 } from '@openmsupply-client/common';
 import { mapIdNameToOptions, useAssetData } from '@openmsupply-client/system';
 import { CCE_CLASS_ID } from '../utils';
-import { useAssets } from '../api';
 
 type ReferenceData = {
   id: string;
@@ -33,7 +29,6 @@ export const Toolbar = () => {
   });
   const [types, setTypes] = useState<ReferenceData[]>([]);
 
-  const onDelete = useAssets.document.deleteAssets();
   const isCentralServer = useIsCentralServerApi();
 
   const categoryId = urlQuery['categoryId'];
@@ -158,11 +153,6 @@ export const Toolbar = () => {
       <Box display="flex" gap={1}>
         <FilterMenu filters={filters} />
       </Box>
-      <DropdownMenu label={t('label.actions')}>
-        <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
-          {t('button.delete-lines')}
-        </DropdownMenuItem>
-      </DropdownMenu>
     </AppBarContentPortal>
   );
 };

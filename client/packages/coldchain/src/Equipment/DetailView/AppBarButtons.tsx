@@ -27,11 +27,11 @@ export const AppBarButtonsComponent = () => {
     if (settings === null) {
       show(e);
     } else {
-      printQR();
+      printAssetLabel();
     }
   };
 
-  const printQR = () => {
+  const printAssetLabel = () => {
     setIsPrinting(true);
     fetch(Environment.PRINT_LABEL_QR, {
       method: 'POST',
@@ -49,10 +49,10 @@ export const AppBarButtonsComponent = () => {
           const text = await response.text();
           throw new Error(text);
         }
-        success(t('messages.success-printing-qr'))();
+        success(t('messages.success-printing-asset-label'))();
       })
       .catch(e => {
-        error(`${t('error.printing-qr')}: ${e.message}`)();
+        error(`${t('error.printing-asset-label')}: ${e.message}`)();
       })
       .finally(() => setIsPrinting(false));
   };
@@ -65,9 +65,8 @@ export const AppBarButtonsComponent = () => {
           startIcon={<PrinterIcon />}
           isLoading={isPrinting}
           onClick={onClick}
-        >
-          {t('button.print-qr')}
-        </LoadingButton>
+          label={t('button.print-asset-label')}
+        />
       </Grid>
       <DisabledNotification />
     </AppBarButtonsPortal>

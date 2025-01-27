@@ -7,6 +7,8 @@ import { useRequests } from './useRequests';
 import { useRequestsAll } from './useRequestsAll';
 import { useUpdateRequest } from './useUpdateRequest';
 import { useInsertProgramRequest } from './useInsertProgramRequest';
+import { useUpdateIndicatorValue } from './useUpdateIndicatorValue';
+import { useIndicators } from './useIndicators';
 
 export const Document = {
   useDeleteRequests,
@@ -18,4 +20,6 @@ export const Document = {
   useRequestsAll,
   useUpdateRequest,
   useInsertProgramRequest,
+  useIndicators,
+  useUpdateIndicatorValue,
 };

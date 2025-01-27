@@ -106,7 +106,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   return (
     <Modal
       title=""
-      sx={{ maxWidth: '90%' }}
+      width={950}
       okButton={
         currentTab === Tabs.SearchResults ? (
           <DialogButton

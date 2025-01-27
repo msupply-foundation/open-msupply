@@ -86,7 +86,7 @@ fragment ResponseLine on RequisitionLineNode {
 
   itemStats {
     __typename
-    availableStockOnHand
+    stockOnHand
     availableMonthsOfStockOnHand
     averageMonthlyConsumption
   }
@@ -191,6 +191,7 @@ fragment Response on RequisitionNode {
     id
   }
   orderType
+  isEmergency
 }
 query responseByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
@@ -478,6 +479,7 @@ query responseRequisitionStats($storeId: String!, $requisitionLineId: String!) {
 
 fragment CustomerProgramSettings on CustomerProgramRequisitionSettingNode {
   programName
+  tagName
   programId
   customerAndOrderTypes {
     customer {
@@ -495,46 +497,8 @@ query customerProgramSettings($storeId: String!) {
   }
 }
 
-fragment ProgramIndicator on ProgramIndicatorNode {
-  code
-  lineAndColumns {
-    ...IndicatorLineWithColumns
-  }
-  id
-}
-fragment IndicatorLineRow on IndicatorLineRowNode {
-  id
-  code
-  lineNumber
-  name
-  valueType
-}
-fragment IndicatorColumn on IndicatorColumnNode {
-  columnNumber
-  name
-  valueType
-  value(
-    periodId: $periodId
-    customerNameLinkId: $customerNameLinkId
-    storeId: $storeId
-  ) {
-    ...IndicatorValue
-  }
-}
-fragment IndicatorValue on IndicatorValueNode {
-  id
-  value
-}
-fragment IndicatorLineWithColumns on IndicatorLineNode {
-  columns {
-    ...IndicatorColumn
-  }
-  line {
-    ...IndicatorLineRow
-  }
-}
 query programIndicators(
-  $customerNameLinkId: String!
+  $customerNameId: String!
   $periodId: String!
   $storeId: String!
   $programId: String!

@@ -3,8 +3,6 @@ import { Box, Typography, Pagination, TablePagination } from '@mui/material';
 import { useTranslation } from '@common/intl';
 import { useLocalStorage } from '@openmsupply-client/common';
 import { DEFAULT_RECORDS_PER_PAGE } from '@common/hooks';
-import { useTableStore } from '../../context';
-
 interface PaginationRowProps {
   offset: number;
   first: number;
@@ -20,7 +18,6 @@ export const PaginationRow: FC<PaginationRowProps> = ({
   total,
   onChange,
 }) => {
-  const { numberSelected } = useTableStore();
   const [, setRowsPerPage] = useLocalStorage(
     '/pagination/rowsperpage',
     DEFAULT_RECORDS_PER_PAGE
@@ -51,8 +48,6 @@ export const PaginationRow: FC<PaginationRowProps> = ({
   };
 
   const t = useTranslation();
-  const getNumberSelectedLabel = () =>
-    !!numberSelected && `(${numberSelected} ${t('label.selected')})`;
 
   // Pages are zero indexed. The Pagination component wants the page as
   // one-indexed.
@@ -82,11 +77,6 @@ export const PaginationRow: FC<PaginationRowProps> = ({
             <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
               {total}
             </Typography>
-            {!!numberSelected && (
-              <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
-                {getNumberSelectedLabel()}
-              </Typography>
-            )}
           </Box>
 
           <TablePagination
