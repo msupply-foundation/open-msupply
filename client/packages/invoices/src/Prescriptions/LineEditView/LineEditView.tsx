@@ -7,7 +7,6 @@ import {
   RouteBuilder,
   useBreadcrumbs,
   useConfirmOnLeaving,
-  useDirtyCheck,
   useNavigate,
   useParams,
 } from '@openmsupply-client/common';
@@ -46,8 +45,6 @@ export const PrescriptionLineEditView = () => {
     // the list before scrolling to it
     setTimeout(() => scrollRef.current?.scrollIntoView(), 100);
 
-  const { isDirty, setIsDirty } = useDirtyCheck();
-
   const lines =
     data?.lines.nodes.sort((a, b) => a.id.localeCompare(b.id)) ?? [];
 
@@ -82,8 +79,9 @@ export const PrescriptionLineEditView = () => {
     });
   }, [currentItem]);
 
-  useConfirmOnLeaving(
-    isDirty,
+  // tODO: does the state turn up right lol
+  const { isDirty, setIsDirty } = useConfirmOnLeaving(
+    'prescription-line-edit',
     // Need a custom checking method here, as we don't want to warn user when
     // switching to a different item within this page
     (current, next) => {

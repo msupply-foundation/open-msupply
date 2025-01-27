@@ -2,7 +2,6 @@ import React, { FC, ReactNode, useState, useEffect, useCallback } from 'react';
 import TabContext from '@mui/lab/TabContext';
 import { Box } from '@mui/material';
 import {
-  useConfirmOnLeaving,
   UrlQueryObject,
   UrlQuerySort,
   useDetailPanelStore,
@@ -13,6 +12,7 @@ import { AppBarTabsPortal } from '../../portals';
 import { DetailTab } from './DetailTab';
 import { ShortTabList, Tab } from './Tabs';
 import { useUrlQuery } from '@common/hooks';
+import { useConfirmationModal } from '../../modals';
 
 export type TabDefinition = {
   Component: ReactNode;
@@ -44,8 +44,12 @@ export const DetailTabs: FC<DetailTabsProps> = ({
   const currentUrlTab = urlQuery['tab'] as string | undefined;
   const currentTab = isValidTab(currentUrlTab)
     ? currentUrlTab
-    : tabs[0]?.value ?? '';
-  const { showConfirmation } = useConfirmOnLeaving(false);
+    : (tabs[0]?.value ?? '');
+
+  const showConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-cancel-generic'),
+  });
 
   // Inelegant hack to force the "Underline" indicator for the currently active
   // tab to re-render in the correct position when one of the side "drawers" is
@@ -76,11 +80,11 @@ export const DetailTabs: FC<DetailTabsProps> = ({
 
     // restore the query params for the tab
     const query: UrlQueryObject = restoreTabQuery
-      ? tabQueryParams[tab] ?? getDefaultTabQueryParams(tab)
+      ? (tabQueryParams[tab] ?? getDefaultTabQueryParams(tab))
       : { tab };
 
     if (!!tabConfirm?.confirmOnLeaving && requiresConfirmation(currentTab)) {
-      showConfirmation(() => updateQuery(query, overwriteQuery));
+      showConfirmation({ onConfirm: () => updateQuery(query, overwriteQuery) });
     } else {
       updateQuery(query, overwriteQuery);
     }
