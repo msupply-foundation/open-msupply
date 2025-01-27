@@ -825,6 +825,7 @@
   "label.low-stock-items_other": "Items with less than 3 months of stock",
   "label.manufacturer": "Manufacturer",
   "label.margin": "Margin",
+  "label.mark-as-status": "Mark as {{status}}",
   "label.master-list": "Master List",
   "label.master-lists": "Master Lists",
   "label.max": "Max",
