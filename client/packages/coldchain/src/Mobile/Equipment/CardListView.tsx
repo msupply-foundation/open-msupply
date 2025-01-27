@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { FC, useState } from "react";
 import {
   NothingHere,
   useTranslation,
@@ -14,10 +14,12 @@ import { Box, Typography, Card, CardContent } from "@mui/material";
 import { Status } from '../../Equipment/Components';
 import { useAssets } from "../../Equipment/api";
 import { SimpleLabelDisplay } from "../Components/SimpleLabelDisplay";
+import { CollapseFilterMenu } from "./CollapseFilterMenu";
 
 export const CardListView: FC = () => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const { data, isError, isLoading } = useAssets.document.list();
   const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
     AppRoute.Equipment
@@ -54,7 +56,7 @@ export const CardListView: FC = () => {
         <ButtonWithIcon
           shouldShrink={false}
           label={t("label.filters")}
-          onClick={() => { }}
+          onClick={() => { setFiltersOpen(pv => !pv) }}
           Icon={<TuneIcon />}
         />
         <ButtonWithIcon
@@ -64,6 +66,7 @@ export const CardListView: FC = () => {
           Icon={<QrCodeScannerIcon />}
         />
       </Box>
+      <CollapseFilterMenu open={filtersOpen} />
       <Box sx={{
         display: 'flex',
         flexDirection: "column",

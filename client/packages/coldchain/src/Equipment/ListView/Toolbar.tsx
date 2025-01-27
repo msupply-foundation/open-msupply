@@ -18,7 +18,7 @@ type ReferenceData = {
   categoryId?: string;
 };
 
-export const Toolbar = () => {
+export const useToolbar = () => {
   const { data: categoryData } = useAssetData.utils.categories({
     classId: { equalTo: CCE_CLASS_ID },
   });
@@ -130,13 +130,25 @@ export const Toolbar = () => {
     },
   ];
 
-  if (isCentralServer)
+  if (isCentralServer) {
     filters.push({
       type: 'text',
       name: t('label.store'),
       urlParameter: 'store',
       isDefault: true,
     });
+  }
+
+  return {
+    filters,
+  }
+
+}
+
+export const Toolbar = () => {
+  const {
+    filters,
+  } = useToolbar();
 
   return (
     <AppBarContentPortal
