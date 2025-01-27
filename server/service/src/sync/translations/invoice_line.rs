@@ -282,6 +282,8 @@ impl SyncTranslation for InvoiceLineTranslation {
             item_variant_id,
         };
 
+        let result = adjust_negative_values(result);
+
         Ok(PullTranslateResult::upsert(result))
     }
 
@@ -403,6 +405,25 @@ fn to_legacy_invoice_line_type(_type: &InvoiceLineType) -> LegacyTransLineType {
         InvoiceLineType::UnallocatedStock => LegacyTransLineType::Placeholder,
         InvoiceLineType::Service => LegacyTransLineType::Service,
     }
+}
+
+/// If you cancel invoice in mSupply it would create negative values in outbound shipment
+/// in omSupply number of packs should always be positive and r#type would determine stock movement direction
+fn adjust_negative_values(line: InvoiceLineRow) -> InvoiceLineRow {
+    if line.number_of_packs >= 0.0 {
+        return line;
+    }
+
+    return InvoiceLineRow {
+        cost_price_per_pack: line.cost_price_per_pack.abs(),
+        sell_price_per_pack: line.sell_price_per_pack.abs(),
+        total_before_tax: line.total_before_tax.abs(),
+        total_after_tax: line.total_after_tax.abs(),
+        number_of_packs: line.number_of_packs.abs(),
+        foreign_currency_price_before_tax: line.foreign_currency_price_before_tax.map(|n| n.abs()),
+        r#type: InvoiceLineType::StockIn,
+        ..line
+    };
 }
 
 #[cfg(test)]

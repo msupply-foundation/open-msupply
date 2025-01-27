@@ -3,6 +3,7 @@ import {
   InsertPrescriptionLineInput,
   InvoiceLineNodeType,
   RecordPatch,
+  setNullableInput,
   UpdatePrescriptionLineInput,
   useMutation,
 } from '@openmsupply-client/common';
@@ -39,7 +40,7 @@ export const usePrescriptionLines = (id?: string) => {
     draftPrescriptionLines: DraftStockOutLine[];
     patch?: RecordPatch<PrescriptionRowFragment>;
   }) => {
-    await updateMutation({
+    return await updateMutation({
       draftPrescriptionLines,
       patch,
     });
@@ -115,6 +116,8 @@ const useSaveLines = (id: string, invoiceNum: number) => {
             {
               ...patch,
               status: mapStatus(patch),
+              clinicianId: setNullableInput('clinicianId', patch),
+              diagnosisId: setNullableInput('diagnosisId', patch),
             },
           ]
         : undefined,

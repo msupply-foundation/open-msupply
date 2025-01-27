@@ -1,4 +1,4 @@
-import { FnUtils, SortUtils } from '@common/utils';
+import { FnUtils, NumUtils, SortUtils } from '@common/utils';
 import { NumberInputCell, CellProps } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../types';
 import { InvoiceLineNodeType, InvoiceNodeStatus } from '@common/types';
@@ -149,15 +149,18 @@ export const sumAvailableQuantity = (
 };
 
 export const getAllocatedQuantity = (draftStockOutLines: DraftStockOutLine[]) =>
-  draftStockOutLines.reduce(
-    (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
-    0
+  NumUtils.round(
+    draftStockOutLines.reduce(
+      (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
+      0
+    ),
+    3
   );
 
 export const issueStock = (
   draftStockOutLines: DraftStockOutLine[],
   idToIssue: string,
-  value: number
+  packs: number
 ) => {
   const foundRowIdx = draftStockOutLines.findIndex(
     ({ id }) => id === idToIssue
@@ -168,7 +171,7 @@ export const issueStock = (
   const newDraftStockOutLines = [...draftStockOutLines];
   newDraftStockOutLines[foundRowIdx] = {
     ...foundRow,
-    numberOfPacks: value,
+    numberOfPacks: packs,
     isUpdated: true,
   };
 
@@ -177,7 +180,11 @@ export const issueStock = (
 
 export const allocateQuantities =
   (status: InvoiceNodeStatus, draftStockOutLines: DraftStockOutLine[]) =>
-  (newValue: number, issuePackSize: number | null) => {
+  (
+    newValue: number,
+    issuePackSize: number | null,
+    allowPartialPacks: boolean = false
+  ) => {
     // if invalid quantity entered, don't allocate
     if (newValue < 0 || Number.isNaN(newValue)) {
       return;
@@ -224,6 +231,7 @@ export const allocateQuantities =
       validBatches,
       newDraftStockOutLines,
       toAllocate,
+      allowPartialPacks,
     });
 
     // if there is still a quantity to allocate, run through all stock lines again
@@ -234,6 +242,7 @@ export const allocateQuantities =
         newDraftStockOutLines,
         toAllocate,
         roundUp: true,
+        allowPartialPacks,
       });
     }
 
@@ -286,11 +295,13 @@ const allocateToBatches = ({
   newDraftStockOutLines,
   toAllocate,
   roundUp = false,
+  allowPartialPacks,
 }: {
   validBatches: DraftStockOutLine[];
   newDraftStockOutLines: DraftStockOutLine[];
   toAllocate: number;
   roundUp?: boolean;
+  allowPartialPacks: boolean;
 }) => {
   validBatches.forEach(batch => {
     const draftStockOutLineIdx = newDraftStockOutLines.findIndex(
@@ -311,9 +322,11 @@ const allocateToBatches = ({
     const unitsToAllocate = Math.min(toAllocate, availableUnits);
     const numberOfPacksToAllocate =
       unitsToAllocate / draftStockOutLine.packSize;
-    const allocatedNumberOfPacks = roundUp
-      ? Math.ceil(numberOfPacksToAllocate)
-      : Math.floor(numberOfPacksToAllocate);
+    const allocatedNumberOfPacks = allowPartialPacks
+      ? numberOfPacksToAllocate
+      : roundUp
+        ? Math.ceil(numberOfPacksToAllocate)
+        : Math.floor(numberOfPacksToAllocate);
 
     toAllocate -= allocatedNumberOfPacks * draftStockOutLine.packSize;
 
@@ -382,6 +395,19 @@ export const PackQuantityCell = (props: CellProps<DraftStockOutLine>) => (
     id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
     decimalLimit={2}
     min={0}
+  />
+);
+
+export const UnitQuantityCell = (props: CellProps<DraftStockOutLine>) => (
+  <NumberInputCell
+    {...props}
+    max={
+      (props.rowData.stockLine?.availableNumberOfPacks ?? 0) *
+      (props.rowData.stockLine?.packSize ?? 1)
+    }
+    id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
+    min={0}
+    decimalLimit={2}
   />
 );
 

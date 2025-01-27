@@ -13,6 +13,9 @@ import {
 
 declare module '@mui/material/styles/createMixins' {
   interface Mixins {
+    button: {
+      textColor: string;
+    };
     header: {
       backgroundColor: string;
       borderBottom: string;
@@ -148,6 +151,7 @@ export const themeOptions = {
   },
   direction: 'ltr' as Direction,
   mixins: {
+    button: { textColor: '#373740' },
     dialog: {
       button: {
         iconHeight: 16,

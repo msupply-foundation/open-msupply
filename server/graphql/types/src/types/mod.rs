@@ -70,6 +70,9 @@ pub use self::clinician::*;
 pub mod barcode;
 pub use self::barcode::*;
 
+pub mod diagnosis;
+pub use self::diagnosis::*;
+
 pub mod store_preference;
 pub use self::store_preference::*;
 
@@ -114,6 +117,8 @@ pub use self::reason_option::*;
 
 pub mod cold_storage_type;
 pub use self::cold_storage_type::*;
+
+mod requisition_item_information;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);

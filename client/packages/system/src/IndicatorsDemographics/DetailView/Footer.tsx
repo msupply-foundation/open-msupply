@@ -49,9 +49,8 @@ export const FooterComponent = ({
             disabled={!isDirty}
             isLoading={false}
             color="secondary"
-          >
-            {t('button.save')}
-          </LoadingButton>
+            label={t('button.save')}
+          />
         </Box>
       }
     />

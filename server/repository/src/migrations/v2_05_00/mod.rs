@@ -1,14 +1,21 @@
 use super::{version::Version, Migration, MigrationFragment};
 
 mod abbreviation_create_table;
+mod add_contact_form_processor_pg_enum_type;
 mod add_contact_form_table;
+mod add_elmis_code_to_program;
 mod add_email_queue_table;
+mod add_email_retry_at;
 mod add_emergency_orders;
+mod add_requisition_is_emergency;
+mod diagnosis_add_to_invoice;
 mod diagnosis_create_table;
 mod item_direction_create_table;
 mod new_store_preferences;
 mod remove_contact_form_site_id;
+mod remove_contact_form_user_account_fk;
 mod remove_unique_description_on_tmp_breach;
+mod remove_vaccination_user_account_fk;
 
 use crate::StorageConnection;
 
@@ -34,6 +41,13 @@ impl Migration for V2_05_00 {
             Box::new(item_direction_create_table::Migrate),
             Box::new(diagnosis_create_table::Migrate),
             Box::new(add_email_queue_table::Migrate),
+            Box::new(add_elmis_code_to_program::Migrate),
+            Box::new(diagnosis_add_to_invoice::Migrate),
+            Box::new(add_email_retry_at::Migrate),
+            Box::new(remove_contact_form_user_account_fk::Migrate),
+            Box::new(add_contact_form_processor_pg_enum_type::Migrate),
+            Box::new(remove_vaccination_user_account_fk::Migrate),
+            Box::new(add_requisition_is_emergency::Migrate),
         ]
     }
 }

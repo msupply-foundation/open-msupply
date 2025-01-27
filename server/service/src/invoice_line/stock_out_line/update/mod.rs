@@ -4,6 +4,7 @@ use repository::{
 };
 
 use crate::{
+    invoice::update_picked_date::update_picked_date,
     invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
     service_provider::ServiceContext,
 };
@@ -63,7 +64,8 @@ pub fn update_stock_out_line(
         .transaction_sync(|connection| {
             let (line, item, batch_pair, invoice) = validate(ctx, &input, &ctx.store_id)?;
 
-            let (update_line, batch_pair) = generate(input, line, item, batch_pair, invoice)?;
+            let (update_line, batch_pair) =
+                generate(input, line, item, batch_pair, invoice.clone())?;
             InvoiceLineRowRepository::new(connection).upsert_one(&update_line)?;
 
             let stock_line_repo = StockLineRowRepository::new(connection);
@@ -71,6 +73,8 @@ pub fn update_stock_out_line(
             if let Some(previous_batch) = batch_pair.previous_batch_option {
                 stock_line_repo.upsert_one(&previous_batch.stock_line_row)?;
             }
+
+            update_picked_date(&connection, &invoice)?;
 
             get_invoice_line(ctx, &update_line.id)
                 .map_err(OutError::DatabaseError)?
@@ -696,5 +700,115 @@ mod test {
                 line_id: "prescription_stock_out_line1".to_string()
             })
         );
+    }
+
+    #[actix_rt::test]
+    async fn update_stock_out_line_picked_date() {
+        let (_, connection, connection_manager, _) =
+            setup_all("update_stock_out_line_picked_date", MockDataInserts::all()).await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let invoice_line_service = service_provider.invoice_line_service;
+
+        let invoice_row_repo = InvoiceRowRepository::new(&connection);
+
+        // 1. Check that pick datetime is updated when lines are updated or added to a prescription invoice
+
+        // Create a prescription invoice with picked status
+        // Prescription invoice (1 day ago)
+        let datetime = chrono::Utc::now().naive_utc() - chrono::Duration::days(1);
+        let prescription = InvoiceRow {
+            id: "prescription_invoice-0".to_string(),
+            invoice_number: 0,
+            name_link_id: mock_name_store_a().id,
+            r#type: InvoiceType::Prescription,
+            store_id: context.store_id.clone(),
+            created_datetime: datetime,
+            picked_datetime: Some(datetime),
+            verified_datetime: None,
+            status: InvoiceStatus::Picked,
+            ..Default::default()
+        };
+
+        prescription.upsert(&context.connection).unwrap();
+
+        // insert a stock out line to the prescription
+        let stock_out_line = InsertStockOutLine {
+            id: "prescription_invoice-0-1".to_string(),
+            r#type: StockOutType::Prescription,
+            invoice_id: prescription.id.clone(),
+            stock_line_id: mock_stock_line_b().id.clone(),
+            number_of_packs: 1.0,
+            ..Default::default()
+        };
+
+        invoice_line_service
+            .insert_stock_out_line(&context, stock_out_line)
+            .unwrap();
+
+        // get the invoice to check if the picked date is updated
+        let invoice = invoice_row_repo
+            .find_one_by_id(&prescription.id)
+            .unwrap()
+            .unwrap();
+        let inserted_picked_date = invoice.picked_datetime.unwrap();
+        assert!(inserted_picked_date > prescription.picked_datetime.unwrap());
+
+        // update the stock out line again, check that the picked date is not updated as it's been updated recently
+        let stock_out_line = UpdateStockOutLine {
+            id: "prescription_invoice-0-1".to_string(),
+            r#type: Some(StockOutType::Prescription),
+            number_of_packs: Some(2.0),
+            ..Default::default()
+        };
+
+        invoice_line_service
+            .update_stock_out_line(&context, stock_out_line)
+            .unwrap();
+
+        // get the invoice to check if the picked date is updated
+        let invoice = invoice_row_repo
+            .find_one_by_id(&prescription.id)
+            .unwrap()
+            .unwrap();
+        let updated_picked_date = invoice.picked_datetime.unwrap();
+        assert_eq!(updated_picked_date, inserted_picked_date);
+
+        // Make sure that the picked date is not updated if the invoice is not in picked status
+        let prescription1 = InvoiceRow {
+            id: "prescription_invoice-1".to_string(),
+            invoice_number: 1,
+            name_link_id: mock_name_store_a().id,
+            r#type: InvoiceType::Prescription,
+            store_id: context.store_id.clone(),
+            created_datetime: datetime,
+            picked_datetime: None,
+            status: InvoiceStatus::New,
+            ..Default::default()
+        };
+
+        prescription1.upsert(&context.connection).unwrap();
+
+        let stock_out_line = InsertStockOutLine {
+            id: "prescription_invoice-1-1".to_string(),
+            r#type: StockOutType::Prescription,
+            invoice_id: prescription1.id.clone(),
+            stock_line_id: mock_stock_line_b().id.clone(),
+            number_of_packs: 1.0,
+            ..Default::default()
+        };
+
+        invoice_line_service
+            .insert_stock_out_line(&context, stock_out_line)
+            .unwrap();
+
+        let invoice = invoice_row_repo
+            .find_one_by_id(&prescription1.id)
+            .unwrap()
+            .unwrap();
+
+        assert!(invoice.picked_datetime.is_none());
     }
 }

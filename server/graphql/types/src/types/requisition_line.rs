@@ -4,19 +4,23 @@ use repository::{
     requisition_row::{RequisitionRow, RequisitionType},
     ItemRow, RequisitionLine, RequisitionLineRow,
 };
-use service::{item_stats::ItemStats, usize_to_u32, ListResult};
+use service::{item_stats::ItemStats, usize_to_u32};
 
 use graphql_core::{
     loader::{
         InvoiceLineForRequisitionLine, ItemLoader, ItemStatsLoaderInput, ItemsStatsForItemLoader,
-        LinkedRequisitionLineLoader, ReasonOptionLoader, RequisitionAndItemId,
+        LinkedRequisitionLineLoader, ProgramByIdLoader, ReasonOptionLoader, RequisitionAndItemId,
+        RequisitionItemInfoLoader, RequisitionItemInfoLoaderInput,
         RequisitionLineSupplyStatusLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 
-use super::{InvoiceLineConnector, ItemNode, ItemStatsNode, ReasonOptionNode};
+use super::{
+    requisition_item_information::RequisitionItemInformationNode, InvoiceLineConnector, ItemNode,
+    ItemStatsNode, ReasonOptionNode,
+};
 
 #[derive(PartialEq, Debug)]
 pub struct RequisitionLineNode {
@@ -287,6 +291,44 @@ impl RequisitionLineNode {
     pub async fn requisition_number(&self) -> &i64 {
         &self.requisition_row().requisition_number
     }
+
+    pub async fn item_information(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<Vec<RequisitionItemInformationNode>>> {
+        let (program_id, period_id) = match (
+            &self.requisition_row().program_id,
+            &self.requisition_row().period_id,
+        ) {
+            (Some(program_id), Some(period_id)) => (program_id, period_id),
+            _ => return Ok(None),
+        };
+
+        let program_loader = ctx.get_loader::<DataLoader<ProgramByIdLoader>>();
+        let program = match program_loader.load_one(program_id.clone()).await? {
+            Some(program) => program,
+            None => {
+                return Err(
+                    StandardGraphqlError::InternalError("Program not found".to_string()).extend(),
+                )
+            }
+        };
+
+        let loader = ctx.get_loader::<DataLoader<RequisitionItemInfoLoader>>();
+        let result = loader
+            .load_one(RequisitionItemInfoLoaderInput::new(
+                &self.requisition_row().store_id,
+                &self.item_row().id,
+                (
+                    program_id.clone(),
+                    program.elmis_code.clone(),
+                    period_id.clone(),
+                ),
+            ))
+            .await?;
+
+        Ok(result.map(RequisitionItemInformationNode::from_vec))
+    }
 }
 
 impl RequisitionLineNode {
@@ -296,17 +338,6 @@ impl RequisitionLineNode {
 }
 
 impl RequisitionLineConnector {
-    pub fn from_domain(requisition_lines: ListResult<RequisitionLine>) -> RequisitionLineConnector {
-        RequisitionLineConnector {
-            total_count: requisition_lines.count,
-            nodes: requisition_lines
-                .rows
-                .into_iter()
-                .map(RequisitionLineNode::from_domain)
-                .collect(),
-        }
-    }
-
     pub fn from_vec(requisition_lines: Vec<RequisitionLine>) -> RequisitionLineConnector {
         RequisitionLineConnector {
             total_count: usize_to_u32(requisition_lines.len()),

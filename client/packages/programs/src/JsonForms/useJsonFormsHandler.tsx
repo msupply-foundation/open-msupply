@@ -132,7 +132,7 @@ export const useJsonFormsHandler = <R,>(
   const [validationError, setValidationError] = useState<string | false>(false);
   const { success, error: errorNotification } = useNotification();
 
-  useConfirmOnLeaving(isDirty);
+  useConfirmOnLeaving(isDirty ?? false);
 
   // returns the document name
   const saveData = async (deletion?: boolean): Promise<R | undefined> => {

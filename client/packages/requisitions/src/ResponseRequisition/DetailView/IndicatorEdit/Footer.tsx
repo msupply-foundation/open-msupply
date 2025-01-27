@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Box,
   AppFooterPortal,
@@ -8,7 +8,7 @@ import {
   useParams,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { IndicatorLineRowFragment } from '../../api';
+import { IndicatorLineRowFragment } from '../../../RequestRequisition/api';
 
 interface FooterProps {
   hasNext: boolean;
@@ -16,15 +16,17 @@ interface FooterProps {
   hasPrevious: boolean;
   previous: IndicatorLineRowFragment | null;
   requisitionNumber?: number;
+  scrollIntoView: () => void;
 }
 
-export const Footer: FC<FooterProps> = ({
+export const Footer = ({
   hasNext,
   next,
   hasPrevious,
   previous,
   requisitionNumber,
-}) => {
+  scrollIntoView,
+}: FooterProps) => {
   const navigate = useNavigate();
   const { programIndicatorCode } = useParams();
 
@@ -48,7 +50,7 @@ export const Footer: FC<FooterProps> = ({
             <DialogButton
               variant="previous"
               disabled={!hasPrevious}
-              onClick={() =>
+              onClick={() => {
                 navigate(
                   RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.CustomerRequisition)
@@ -57,13 +59,14 @@ export const Footer: FC<FooterProps> = ({
                     .addPart(String(programIndicatorCode))
                     .addPart(String(previous?.id))
                     .build()
-                )
-              }
+                );
+                scrollIntoView();
+              }}
             />
             <DialogButton
               variant="next"
               disabled={!hasNext}
-              onClick={() =>
+              onClick={() => {
                 navigate(
                   RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.CustomerRequisition)
@@ -72,8 +75,9 @@ export const Footer: FC<FooterProps> = ({
                     .addPart(String(programIndicatorCode))
                     .addPart(String(next?.id))
                     .build()
-                )
-              }
+                );
+                scrollIntoView();
+              }}
             />
           </Box>
         </Box>
