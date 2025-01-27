@@ -8,7 +8,6 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        //
         sql!(
             connection,
             r#"
