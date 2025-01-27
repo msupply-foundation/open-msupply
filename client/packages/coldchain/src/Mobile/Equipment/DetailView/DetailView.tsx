@@ -15,6 +15,7 @@ import { Footer } from './Footer';
 import { StatusLogs } from 'packages/coldchain/src/Equipment/DetailView/Tabs/StatusLogs';
 import { UpdateStatusButton } from 'packages/coldchain/src/Equipment/DetailView/UpdateStatusButton';
 import { Documents } from 'packages/coldchain/src/Equipment/DetailView/Tabs/Documents';
+import { LogCardListView } from '../LogCardListView';
 
 export const EquipmentDetailView: FC = () => {
   const {
@@ -110,6 +111,10 @@ export const EquipmentDetailView: FC = () => {
 
         <AccordionPanelSection title="Documents" defaultExpanded={false}>
           {draft === undefined ? null : <Documents draft={draft} />}
+        </AccordionPanelSection>
+
+        <AccordionPanelSection title="Logs" defaultExpanded={false}>
+          <LogCardListView recordId={data?.id} />
         </AccordionPanelSection>
 
       </Box>

@@ -21,6 +21,7 @@ export const SimpleLabelDisplay: FC<EleProps> = ({ label, value }) => {
       </Typography>
       <Typography sx={{
         fontSize: "1.2rem",
+        wordBreak: 'break-all',
       }}>
         {value}
       </Typography>
