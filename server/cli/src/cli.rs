@@ -117,15 +117,15 @@ enum Action {
 
         /// Path to the report
         #[clap(short, long)]
-        report_path: String,
+        report_path: PathBuf,
 
         /// Path to the arguments json form schema
         #[clap(long)]
-        arguments_path: Option<String>,
+        arguments_path: Option<PathBuf>,
 
         /// Path to the arguments json form UI schema
         #[clap(long)]
-        arguments_ui_path: Option<String>,
+        arguments_ui_path: Option<PathBuf>,
 
         /// Report name
         #[clap(short, long)]
@@ -148,7 +148,7 @@ enum Action {
     UpsertReportsJson {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long)]
-        json_path: Option<String>,
+        json_path: Option<PathBuf>,
     },
 }
 
@@ -388,75 +388,90 @@ async fn main() -> anyhow::Result<()> {
         Action::BuildStandardReports {} => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
-            let base_reports_dir = "./reports";
+            let base_reports_dir = Path::new("reports");
 
-            let report_names: Vec<String> = fs::read_dir(base_reports_dir)?
+            let report_names: Vec<PathBuf> = fs::read_dir(base_reports_dir)?
                 .filter_map(|r| r.ok())
                 .map(|e| e.path())
                 .filter(|p| p.is_dir())
-                .filter(|name| name != &PathBuf::from("./reports/generated"))
-                .map(|p| p.into_os_string().into_string().unwrap())
+                .filter(|name| name != &Path::new("reports").join("generated"))
+                .map(|p| p)
                 .collect();
 
             let mut reports_data = ReportsData { reports: vec![] };
 
             for name_dir in report_names {
-                let report_versions: Vec<String> = fs::read_dir(&name_dir)?
+                let report_versions: Vec<PathBuf> = fs::read_dir(&name_dir)?
                     .filter_map(|r| r.ok())
                     .map(|e| e.path())
                     .filter(|p| p.is_dir())
-                    .map(|p| p.into_os_string().into_string().unwrap())
+                    .map(|p| p)
                     .collect();
 
-                let (_, name) = name_dir.rsplit_once('/').unwrap();
+                let parent = name_dir
+                    .components()
+                    .next()
+                    .expect("failed to read report name directory");
+                let name = name_dir.strip_prefix(parent).unwrap();
 
                 for version_dir in report_versions {
                     // install esbuild depedencies
                     if let Err(e) = run_yarn_install(&version_dir) {
-                        eprintln!("Failed to run yarn install in {}: {}", version_dir, e);
+                        eprintln!(
+                            "Failed to run yarn install in {}: {}",
+                            version_dir.display(),
+                            e
+                        );
                         continue;
                     }
                     // read manifest file
 
-                    let manifest_file = fs::File::open(format!("{version_dir}/manifest.json"))
-                        .expect("file should open read only");
+                    let manifest_file =
+                        fs::File::open(version_dir.join("manifest.json")).expect(&format!(
+                            "manifest file should open read only in report {:?} {:?}",
+                            name, version_dir
+                        ));
 
-                    let manifest: Manifest = serde_json::from_reader(manifest_file)
-                        .expect("manifest json not formatted correctly");
+                    let manifest: Manifest =
+                        serde_json::from_reader(manifest_file).expect(&format!(
+                            "manifest json not formatted correctly {:?} {:?}",
+                            name, version_dir
+                        ));
                     let code = manifest.code;
 
                     let version = manifest.version;
                     let id_version = str::replace(&version, ".", "_");
 
-                    let id = format!("{code}_{id_version}");
                     let context = manifest.context;
                     let report_name = manifest.name;
                     let is_custom = manifest.is_custom;
+                    let id = format!("{code}_{id_version}_{is_custom}");
                     let sub_context = manifest.sub_context;
                     let arguments_path = manifest
                         .arguments
                         .clone()
                         .and_then(|a| a.schema)
-                        .and_then(|schema| format!("{version_dir}/{schema}").into());
+                        .and_then(|schema| Some(version_dir.join(schema)));
                     let arguments_ui_path = manifest
                         .arguments
                         .and_then(|a| a.ui)
-                        .and_then(|ui| format!("{version_dir}/{ui}").into());
+                        .and_then(|ui| Some(version_dir.join(ui)));
                     let graphql_query = manifest.queries.clone().and_then(|q| q.gql);
                     let sql_queries = manifest.queries.clone().and_then(|q| q.sql);
                     let convert_data = manifest
                         .convert_data
-                        .and_then(|cd| format!("{version_dir}/{cd}").into());
+                        .and_then(|cd| Some(version_dir.join(cd)));
                     let custom_wasm_function = manifest.custom_wasm_function;
+                    let query_default = manifest.query_default;
 
                     let args = BuildArgs {
-                        dir: format!("{version_dir}/src"),
-                        output: format!("{version_dir}/generated/{name}.json").into(),
+                        dir: version_dir.join("src"),
+                        output: Some(version_dir.join("generated").join("built_report.json")),
                         template: "template.html".to_string(),
                         header: manifest.header,
                         footer: manifest.footer,
                         query_gql: graphql_query,
-                        query_default: None,
+                        query_default: query_default,
                         query_sql: sql_queries,
                         convert_data,
                         custom_wasm_function,
@@ -475,7 +490,7 @@ async fn main() -> anyhow::Result<()> {
                     let form_schema_json = match (arguments_path, arguments_ui_path) {
                         (Some(_), None) | (None, Some(_)) => {
                             return Err(anyhow!(
-                                "When arguments path are specified both paths must be present"
+                                "When arguments_path is specified arguments_ui_path must also be specified in report and vice versa {:?} {:?}", name, version_dir
                             ))
                         }
                         (Some(arguments_path), Some(arguments_ui_path)) => {
@@ -508,33 +523,41 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
 
-            let output_path = format!("{base_reports_dir}/generated/standard_reports.json");
-            let output_path = Path::new(&output_path);
+            let output_path = base_reports_dir
+                .join("generated")
+                .join("standard_reports.json");
 
             fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
                 "Invalid output path: {:?}",
                 output_path
             )))?)?;
 
-            fs::write(output_path, serde_json::to_string_pretty(&reports_data)?).map_err(|_| {
-                anyhow::Error::msg(format!(
-                    "Failed to write to {:?}. Does output dir exist?",
-                    output_path
-                ))
-            })?;
+            fs::write(&output_path, serde_json::to_string_pretty(&reports_data)?).map_err(
+                |_| {
+                    anyhow::Error::msg(format!(
+                        "Failed to write to {:?}. Does output dir exist?",
+                        output_path
+                    ))
+                },
+            )?;
 
             info!("All standard reports built");
         }
         Action::UpsertReportsJson { json_path } => {
-            let base_reports_dir = "./reports";
-            let generated_dir = format!("{base_reports_dir}/generated");
+            let standard_reports_dir = Path::new("reports")
+                .join("generated")
+                .join("standard_reports.json");
 
-            let json_file = fs::File::open(
-                json_path.unwrap_or(format!("{generated_dir}/standard_reports.json")),
-            )
-            .expect("{generated_dir}/standard_reports.json not found");
+            let json_file = match json_path {
+                Some(json_path) => fs::File::open(json_path),
+                None => fs::File::open(standard_reports_dir.clone()),
+            }
+            .expect(&format!(
+                "{} not found for report",
+                standard_reports_dir.display()
+            ));
             let reports_data: ReportsData =
-                serde_json::from_reader(json_file).expect("json incorrectly formatted");
+                serde_json::from_reader(json_file).expect("json incorrectly formatted for report");
 
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
@@ -615,29 +638,34 @@ fn export_paths(name: &str) -> (PathBuf, PathBuf, PathBuf) {
     (export_folder, export_file_path, users_file_path)
 }
 
-fn run_yarn_install(directory: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let mut convert_dir = directory.to_owned();
-    convert_dir.push_str("/convert_data_js");
+fn run_yarn_install(directory: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+    let convert_dir = directory.join("convert_data_js");
 
-    if !Path::new(&convert_dir).exists() {
+    if !convert_dir.exists() {
         info!(
             "No conversion function for {}. Skipping esbuild install.",
-            convert_dir
+            convert_dir.display().to_string()
         );
         return Ok(());
     }
 
-    let status = Command::new("yarn")
-        .args(["install", "--cwd", &convert_dir, "--no-lockfile"])
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .status()?;
+    let node_modules_path = convert_dir.join("node_modules");
 
-    println!("status {:?}", status);
+    if !node_modules_path.exists() {
+        let status = Command::new("yarn")
+            .args(["install", "--cwd"])
+            .arg(convert_dir)
+            .args(["--no-lockfile", "--check-files"])
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .status()?;
 
-    if !status.success() {
-        eprintln!("Error: `yarn install` failed");
-        return Err("Failed to run yarn install".into());
+        if !status.success() {
+            info!("Error: `yarn install` failed");
+            return Err("Failed to run yarn install".into());
+        }
+    } else {
+        info!("Dependencies up to date");
     }
 
     Ok(())
@@ -659,6 +687,7 @@ pub struct Manifest {
     pub test_arguments: Option<TestReportArguments>,
     pub convert_data: Option<String>,
     pub custom_wasm_function: Option<String>,
+    pub query_default: Option<String>,
 }
 
 #[derive(serde::Deserialize, Clone)]

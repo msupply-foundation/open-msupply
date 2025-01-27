@@ -3,15 +3,17 @@ import {
   InsertPrescriptionLineInput,
   InvoiceLineNodeType,
   RecordPatch,
+  setNullableInput,
   UpdatePrescriptionLineInput,
   useMutation,
 } from '@openmsupply-client/common';
 import { usePrescription } from './usePrescription';
-import { DraftStockOutLine } from 'packages/invoices/src/types';
+import { DraftStockOutLine } from '@openmsupply-client/invoices/src/types';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { PrescriptionRowFragment } from '../operations.generated';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
 import { createInputObject, mapStatus } from './utils';
+import { HISTORICAL_STOCK_LINES } from '@openmsupply-client/system/src/Item/api/keys';
 
 // Hook to manage prescription lines. Only has "save" and "delete"
 // functionality, as the query is done as part of the full prescription query
@@ -39,7 +41,7 @@ export const usePrescriptionLines = (id?: string) => {
     draftPrescriptionLines: DraftStockOutLine[];
     patch?: RecordPatch<PrescriptionRowFragment>;
   }) => {
-    await updateMutation({
+    return await updateMutation({
       draftPrescriptionLines,
       patch,
     });
@@ -115,6 +117,8 @@ const useSaveLines = (id: string, invoiceNum: number) => {
             {
               ...patch,
               status: mapStatus(patch),
+              clinicianId: setNullableInput('clinicianId', patch),
+              diagnosisId: setNullableInput('diagnosisId', patch),
             },
           ]
         : undefined,
@@ -133,6 +137,7 @@ const useSaveLines = (id: string, invoiceNum: number) => {
         PRESCRIPTION_LINE,
         invoiceNum,
       ]);
+      queryClient.invalidateQueries([HISTORICAL_STOCK_LINES]);
     },
   });
 };
@@ -159,6 +164,7 @@ const useDeleteLines = (invoiceNum: number) => {
         PRESCRIPTION_LINE,
         invoiceNum,
       ]);
+      queryClient.invalidateQueries([HISTORICAL_STOCK_LINES]);
     },
   });
 };

@@ -32,9 +32,9 @@ impl PackageJsonAsset {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Version {
-    major: i16,
-    minor: i16,
-    patch: i16,
+    pub major: i16,
+    pub minor: i16,
+    pub patch: i16,
     // RC or TEST etc
     pre_release: Option<String>,
 }
@@ -57,27 +57,26 @@ impl Display for Version {
         Ok(())
     }
 }
-// TODO no unwrap ?
 
 impl Version {
     pub fn from_package_json() -> Self {
         Self::from_str(&PackageJsonAsset::version())
     }
 
-    pub(crate) fn from_str(version: &str) -> Self {
+    pub fn from_str(version: &str) -> Self {
         let mut version_split = version.split('.');
-        let major = version_split.next().unwrap();
-        let minor = version_split.next().unwrap();
-        let patch_and_extra = version_split.next().unwrap();
+        let major = version_split.next().unwrap_or("0");
+        let minor = version_split.next().unwrap_or("0");
+        let patch_and_extra = version_split.next().unwrap_or("0");
 
         let mut patch_and_extra_split = patch_and_extra.splitn(2, '-');
-        let patch = patch_and_extra_split.next().unwrap();
+        let patch = patch_and_extra_split.next().unwrap_or("");
         let extra = patch_and_extra_split.next();
 
         Version {
-            major: major.parse().unwrap(),
-            minor: minor.parse().unwrap(),
-            patch: patch.parse().unwrap(),
+            major: major.parse().unwrap_or(0),
+            minor: minor.parse().unwrap_or(0),
+            patch: patch.parse().unwrap_or(0),
             pre_release: extra.map(String::from),
         }
     }
@@ -140,19 +139,25 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
-    fn parsing_version_panic1() {
-        Version::from_str("10.11");
+    fn parsing_version_poorly_formatted_1() {
+        let version = Version::from_str("10.11");
+        assert!(version.major == 10);
+        assert!(version.minor == 11);
+        assert!(version.patch == 0);
     }
     #[test]
-    #[should_panic]
-    fn parsing_version_panic2() {
-        Version::from_str("10.11.99RC1");
+    fn parsing_version_poorly_formatted_2() {
+        let version = Version::from_str("10.11.99RC1");
+        assert!(version.major == 10);
+        assert!(version.minor == 11);
+        assert!(version.patch == 0);
     }
     #[test]
-    #[should_panic]
-    fn parsing_version_panic3() {
-        Version::from_str("10.11b.99");
+    fn parsing_version_poorly_formatted_3() {
+        let version = Version::from_str("10.11b.99");
+        assert!(version.major == 10);
+        assert!(version.minor == 0);
+        assert!(version.patch == 99);
     }
 
     #[test]

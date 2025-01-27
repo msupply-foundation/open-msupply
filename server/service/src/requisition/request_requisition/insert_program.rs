@@ -2,18 +2,26 @@ use crate::{
     activity_log::activity_log_entry,
     number::next_number,
     requisition::{
-        common::check_requisition_row_exists,
-        program_settings::get_supplier_program_requisition_settings, query::get_requisition,
+        common::{check_requisition_row_exists, default_indicator_value, indicator_value_type},
+        program_indicator::query::{program_indicators, ProgramIndicator},
+        program_settings::get_supplier_program_requisition_settings,
+        query::get_requisition,
+        response_requisition::GenerateResult,
     },
     service_provider::ServiceContext,
+    store_preference::get_store_preferences,
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
+    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ActivityLogType, EqualFilter, MasterListLineFilter, MasterListLineRepository, NumberRowType,
-    ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError, Requisition, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRowRepository,
+    ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
+    IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
+    NumberRowType, Pagination, ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow,
+    RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
+    StorageConnection, StoreFilter, StoreRepository,
 };
+use util::uuid::uuid;
 
 use super::generate_requisition_lines;
 
@@ -52,12 +60,21 @@ pub fn insert_program_request_requisition(
         .connection
         .transaction_sync(|connection| {
             let (program, order_type) = validate(ctx, &input)?;
-            let (new_requisition, requisition_lines) = generate(ctx, program, order_type, input)?;
+            let GenerateResult {
+                requisition: new_requisition,
+                requisition_lines,
+                indicator_values,
+            } = generate(ctx, program, order_type, input)?;
             RequisitionRowRepository::new(connection).upsert_one(&new_requisition)?;
 
             let requisition_line_repo = RequisitionLineRowRepository::new(connection);
             for requisition_line in requisition_lines {
                 requisition_line_repo.upsert_one(&requisition_line)?;
+            }
+
+            let indicator_value_repo = IndicatorValueRowRepository::new(connection);
+            for indicator_value in indicator_values {
+                indicator_value_repo.upsert_one(&indicator_value)?;
             }
 
             activity_log_entry(
@@ -135,7 +152,7 @@ fn generate(
         program_order_type_id: _,
         period_id,
     }: InsertProgramRequestRequisition,
-) -> Result<(RequisitionRow, Vec<RequisitionLineRow>), RepositoryError> {
+) -> Result<GenerateResult, RepositoryError> {
     let connection = &ctx.connection;
 
     let requisition = RequisitionRow {
@@ -146,7 +163,7 @@ fn generate(
             &NumberRowType::RequestRequisition,
             &ctx.store_id,
         )?,
-        name_link_id: other_party_id,
+        name_link_id: other_party_id.clone(),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
@@ -157,9 +174,10 @@ fn generate(
         their_reference,
         max_months_of_stock: order_type.max_mos,
         min_months_of_stock: order_type.threshold_mos,
-        program_id: Some(program.id),
-        period_id: Some(period_id),
+        program_id: Some(program.id.clone()),
+        period_id: Some(period_id.clone()),
         order_type: Some(order_type.name),
+        is_emergency: order_type.is_emergency,
         // Default
         sent_datetime: None,
         approval_status: None,
@@ -177,10 +195,137 @@ fn generate(
         .map(|line| line.item_id)
         .collect();
 
-    let requisition_line_rows =
+    let requisition_lines =
         generate_requisition_lines(ctx, &ctx.store_id, &requisition, program_item_ids)?;
 
-    Ok((requisition, requisition_line_rows))
+    let program_indicators = program_indicators(
+        connection,
+        Pagination::all(),
+        None,
+        Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
+    )?;
+
+    let customer_name_id = StoreRepository::new(connection)
+        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(&ctx.store_id)))?
+        .pop()
+        .ok_or(RepositoryError::NotFound)?
+        .name_row
+        .id;
+
+    let indicator_values = if !order_type.is_emergency {
+        generate_program_indicator_values(
+            connection,
+            &ctx.store_id,
+            &period_id,
+            program_indicators,
+            &customer_name_id,
+        )?
+    } else {
+        vec![]
+    };
+
+    Ok(GenerateResult {
+        requisition,
+        requisition_lines,
+        indicator_values,
+    })
+}
+
+fn generate_program_indicator_values(
+    connection: &StorageConnection,
+    store_id: &str,
+    period_id: &str,
+    program_indicators: Vec<ProgramIndicator>,
+    customer_name_id: &str,
+) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
+    let store_pref = get_store_preferences(connection, store_id)?;
+    let customer_name_ids: Vec<String> = NameRepository::new(connection)
+        .query(
+            store_id,
+            Pagination::all(),
+            Some(
+                NameFilter::new()
+                    .supplying_store_id(EqualFilter::equal_to(store_id))
+                    .is_customer(true),
+            ),
+            None,
+        )?
+        .into_iter()
+        .map(|name| name.name_row.id)
+        .collect();
+
+    let indicator_line_ids = program_indicators
+        .iter()
+        .flat_map(|program_indicator| {
+            program_indicator
+                .lines
+                .iter()
+                .map(|line| line.line.id.clone())
+        })
+        .collect::<Vec<String>>();
+    let indicator_column_ids = program_indicators
+        .iter()
+        .flat_map(|program_indicator| {
+            program_indicator
+                .lines
+                .iter()
+                .flat_map(|line| line.columns.iter().map(|column| column.id.clone()))
+        })
+        .collect::<Vec<String>>();
+
+    let customer_values = IndicatorValueRepository::new(connection).query_by_filter(
+        IndicatorValueFilter::new()
+            .period_id(EqualFilter::equal_to(period_id))
+            .indicator_line_id(EqualFilter::equal_any(indicator_line_ids))
+            .indicator_column_id(EqualFilter::equal_any(indicator_column_ids))
+            .customer_name_id(EqualFilter::equal_any(customer_name_ids.clone())),
+    )?;
+
+    let mut indicator_values = vec![];
+
+    for program_indicator in program_indicators {
+        for line in program_indicator.lines {
+            for column in line.columns.clone() {
+                let value_type = indicator_value_type(&line.line, &column);
+                let value = if store_pref
+                    .use_consumption_and_stock_from_customers_for_internal_orders
+                    && value_type == &Some(IndicatorValueType::Number)
+                    && !customer_name_ids.is_empty()
+                {
+                    customer_values
+                        .iter()
+                        .filter(|v| {
+                            v.indicator_value_row.indicator_line_id == line.line.id
+                                && v.indicator_value_row.indicator_column_id == column.id
+                        })
+                        .map(|v| {
+                            v.indicator_value_row
+                                .value
+                                .parse::<f64>()
+                                .unwrap_or_default()
+                        })
+                        .sum::<f64>()
+                        .to_string()
+                } else {
+                    default_indicator_value(&line.line, &column)
+                };
+
+                let indicator_value = IndicatorValueRow {
+                    id: uuid(),
+                    customer_name_link_id: customer_name_id.to_string(),
+                    store_id: store_id.to_string(),
+                    period_id: period_id.to_string(),
+                    indicator_line_id: line.line.id.to_string(),
+                    indicator_column_id: column.id.to_string(),
+                    value,
+                };
+
+                indicator_values.push(indicator_value);
+            }
+        }
+    }
+
+    Ok(indicator_values)
 }
 
 impl From<RepositoryError> for InsertProgramRequestRequisitionError {
@@ -274,9 +419,9 @@ mod test_insert {
     }
 
     #[actix_rt::test]
-    async fn insert_program_request_requisition_success() {
+    async fn insert_program_request_requisition_success_service() {
         let (_, connection, connection_manager, _) = setup_all(
-            "insert_program_request_requisition_success",
+            "insert_program_request_requisition_success_service",
             MockDataInserts::all(),
         )
         .await;

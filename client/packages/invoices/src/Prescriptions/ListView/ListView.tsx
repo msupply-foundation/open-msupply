@@ -13,12 +13,14 @@ import {
   useToggle,
   useUrlQueryParams,
   ColumnFormat,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
 import { usePrescriptionList, usePrescription } from '../api';
 import { PrescriptionRowFragment } from '../api/operations.generated';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
+import { Footer } from './Footer';
 
 const useDisablePrescriptionRows = (rows?: PrescriptionRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -62,6 +64,7 @@ const PrescriptionListViewComponent: FC = () => {
 
   const columns = useColumns<PrescriptionRowFragment>(
     [
+      GenericColumnKey.Selection,
       [getNameAndColorColumn(), { setter: update }],
       [
         'status',
@@ -85,7 +88,6 @@ const PrescriptionListViewComponent: FC = () => {
         sortable: true,
       },
       ['comment'],
-      'selection',
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
@@ -93,7 +95,7 @@ const PrescriptionListViewComponent: FC = () => {
 
   return (
     <>
-      <Toolbar filter={filter} listParams={listParams} />
+      <Toolbar filter={filter} />
       <AppBarButtons
         modalController={modalController}
         listParams={listParams}
@@ -117,6 +119,7 @@ const PrescriptionListViewComponent: FC = () => {
           navigate(String(row.invoiceNumber));
         }}
       />
+      <Footer listParams={listParams} />
     </>
   );
 };

@@ -100,7 +100,7 @@ impl SyncTranslation for IndicatorValue {
             indicator_line_id,
             indicator_column_id,
             value,
-        } = indicator_value;
+        } = indicator_value.indicator_value_row;
 
         let customer_store_id = StoreRepository::new(connection)
             .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&customer_name_link_id)))?

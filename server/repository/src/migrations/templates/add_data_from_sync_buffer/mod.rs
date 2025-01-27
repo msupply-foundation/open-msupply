@@ -47,9 +47,6 @@ impl Migration for V1_00_08 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        use self::store::dsl as store_dsl;
-        use self::sync_buffer::dsl as sync_buffer_dsl;
-
         sql!(
             connection,
             r#"
@@ -58,12 +55,12 @@ impl Migration for V1_00_08 {
         )?;
 
         // Find all store upsert sync buffer rows
-        let sync_buffer_rows = sync_buffer_dsl::sync_buffer
-            .select((sync_buffer_dsl::record_id, sync_buffer_dsl::data))
+        let sync_buffer_rows = sync_buffer::table
+            .select((sync_buffer::record_id, sync_buffer::data))
             .filter(
-                sync_buffer_dsl::action
+                sync_buffer::action
                     .eq(SyncAction::Upsert)
-                    .and(sync_buffer_dsl::table_name.eq("store")),
+                    .and(sync_buffer::table_name.eq("store")),
             )
             .load::<(String, String)>(connection.lock().connection())?;
 
@@ -71,9 +68,9 @@ impl Migration for V1_00_08 {
             let legacy_row = serde_json::from_str::<LegacyStoreRow>(&data)
                 .with_context(|| format!("Cannot parse sync buffer row data: {}", data))?;
 
-            diesel::update(store_dsl::store)
-                .filter(store_dsl::id.eq(id))
-                .set(store_dsl::disabled.eq(legacy_row.disabled))
+            diesel::update(store::table)
+                .filter(store::id.eq(id))
+                .set(store::disabled.eq(legacy_row.disabled))
                 .execute(connection.lock().connection())?;
         }
 
@@ -230,12 +227,10 @@ async fn migration_1_00_08() {
     let _ = connection.lock();
     assert_eq!(1, 1);
 
-    use self::store::dsl as store_dsl;
-
     // Check data
-    let stores = store_dsl::store
-        .select((store_dsl::id, store_dsl::disabled))
-        .order_by(store_dsl::id.asc())
+    let stores = store::table
+        .select((store::id, store::disabled))
+        .order_by(store::id.asc())
         .load::<(String, bool)>(connection.lock().connection())
         .unwrap();
 

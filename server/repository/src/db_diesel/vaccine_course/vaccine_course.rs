@@ -1,7 +1,4 @@
-use super::vaccine_course_row::{
-    vaccine_course::{self, dsl as vaccine_course_dsl},
-    VaccineCourseRow,
-};
+use super::vaccine_course_row::{vaccine_course, VaccineCourseRow};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -87,11 +84,11 @@ impl<'a> VaccineCourseRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 VaccineCourseSortField::Name => {
-                    apply_sort_no_case!(query, sort, vaccine_course_dsl::name);
+                    apply_sort_no_case!(query, sort, vaccine_course::name);
                 }
             }
         } else {
-            query = query.order(vaccine_course_dsl::id.asc())
+            query = query.order(vaccine_course::id.asc())
         }
 
         let final_query = query
@@ -117,7 +114,7 @@ fn to_domain(vaccine_course_row: VaccineCourseRow) -> VaccineCourseRow {
 type BoxedVaccineCourseQuery = IntoBoxed<'static, vaccine_course::table, DBType>;
 
 fn create_filtered_query(filter: Option<VaccineCourseFilter>) -> BoxedVaccineCourseQuery {
-    let mut query = vaccine_course_dsl::vaccine_course.into_boxed();
+    let mut query = vaccine_course::table.into_boxed();
 
     if let Some(f) = filter {
         let VaccineCourseFilter {
@@ -126,12 +123,12 @@ fn create_filtered_query(filter: Option<VaccineCourseFilter>) -> BoxedVaccineCou
             program_id,
         } = f;
 
-        apply_equal_filter!(query, id, vaccine_course_dsl::id);
-        apply_string_filter!(query, name, vaccine_course_dsl::name);
-        apply_equal_filter!(query, program_id, vaccine_course_dsl::program_id);
+        apply_equal_filter!(query, id, vaccine_course::id);
+        apply_string_filter!(query, name, vaccine_course::name);
+        apply_equal_filter!(query, program_id, vaccine_course::program_id);
     }
 
-    query = query.filter(vaccine_course_dsl::deleted_datetime.is_null());
+    query = query.filter(vaccine_course::deleted_datetime.is_null());
 
     query
 }

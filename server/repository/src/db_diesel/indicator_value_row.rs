@@ -1,5 +1,6 @@
 use super::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
+    name_link_row::name_link, name_row::name, ChangeLogInsertRow, ChangelogRepository,
+    ChangelogTableName, RowActionType, StorageConnection,
 };
 use crate::{repository_error::RepositoryError, Delete, Upsert};
 use diesel::prelude::*;
@@ -27,6 +28,10 @@ pub struct IndicatorValueRow {
     pub indicator_column_id: String,
     pub value: String,
 }
+
+joinable!(indicator_value -> name_link (customer_name_link_id));
+allow_tables_to_appear_in_same_query!(indicator_value, name_link);
+allow_tables_to_appear_in_same_query!(indicator_value, name);
 
 pub struct IndicatorValueRowRepository<'a> {
     connection: &'a StorageConnection,

@@ -90,6 +90,10 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sync_file_reference", "retry_at"),
         ("migration_fragment_log", "datetime"),
         ("system_log", "datetime"),
+        ("email_queue", "created_at"),
+        ("email_queue", "updated_at"),
+        ("email_queue", "sent_at"),
+        ("email_queue", "retry_at"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -130,13 +134,13 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
 #[cfg(test)]
 #[cfg(feature = "postgres")]
 fn get_exclude_date_fields() -> Vec<TableAndFieldName> {
-    vec![]
-    // .iter()
-    // .map(|(table_name, field_name)| TableAndFieldName {
-    //     table_name,
-    //     field_name,
-    // })
-    // .collect()
+    vec![("diagnosis", "valid_till")]
+        .iter()
+        .map(|(table_name, field_name)| TableAndFieldName {
+            table_name,
+            field_name,
+        })
+        .collect()
 }
 
 #[derive(QueryableByName, Debug, PartialEq)]

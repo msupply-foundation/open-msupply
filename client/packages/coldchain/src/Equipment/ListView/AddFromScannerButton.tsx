@@ -15,6 +15,8 @@ import {
   useConfirmationModal,
   FnUtils,
   AssetLogStatusInput,
+  UserPermission,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useAssets } from '../api';
@@ -24,7 +26,7 @@ export const AddFromScannerButtonComponent = () => {
   const t = useTranslation();
   const { isConnected, isEnabled, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
-  const { error } = useNotification();
+  const { error, info } = useNotification();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
   const { DisabledNotification, show } = useDisabledNotificationPopover({
@@ -35,10 +37,12 @@ export const AddFromScannerButtonComponent = () => {
     AppRoute.Equipment
   );
   const { mutateAsync: fetchAsset } = useAssets.document.fetch();
-  const { mutateAsync: fetchOrCreateFromGS1 } = useAssets.document.gs1();
+  const { mutateAsync: fetchFromGS1 } = useAssets.document.gs1();
   const { mutateAsync: saveNewAsset } = useAssets.document.insert();
   const { insertLog, invalidateQueries } = useAssets.log.insert();
   const newAssetData = useRef<DraftAsset>();
+
+  const { userHasPermission } = useAuthContext();
 
   const showCreateConfirmation = useConfirmationModal({
     onConfirm: () => {
@@ -59,8 +63,8 @@ export const AddFromScannerButtonComponent = () => {
           .catch(e => error(t('error.unable-to-save-asset', { error: e }))());
       }
     },
-    message: t('heading.create-new-asset'),
-    title: t('messages.create-new-asset-confirmation'),
+    title: t('heading.create-new-asset'),
+    message: t('messages.create-new-asset-confirmation'),
   });
 
   const handleScanResult = async (result: ScanResult) => {
@@ -81,7 +85,7 @@ export const AddFromScannerButtonComponent = () => {
       }
 
       // send the GS1 data to backend to handle
-      const asset = await fetchOrCreateFromGS1(gs1).catch(() => {});
+      const asset = await fetchFromGS1(gs1).catch(() => {});
 
       if (asset?.__typename !== 'AssetNode') {
         error(t('error.no-matching-asset', { id: result.content }))();
@@ -93,7 +97,8 @@ export const AddFromScannerButtonComponent = () => {
       }
 
       // If not existing, offer to create from the parsed GS1 data
-      if (!asset?.id) {
+      const permission = UserPermission.AssetMutate;
+      if (userHasPermission(permission)) {
         newAssetData.current = {
           ...asset,
           id: FnUtils.generateUUID(),
@@ -102,16 +107,21 @@ export const AddFromScannerButtonComponent = () => {
           parsedCatalogProperties: {},
         };
         showCreateConfirmation();
-      }
+      } else info(t('error.no-asset-create-permission'))();
     }
   };
 
   const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    const permission = UserPermission.AssetQuery;
+
+    if (!userHasPermission(permission)) {
+      info(t('error.no-asset-view-permission'))();
+      return;
+    }
     if (!isConnected) {
       show(e);
       return;
     }
-
     buttonRef.current?.blur();
     if (isScanning) {
       stopScan();
@@ -151,7 +161,9 @@ export const AddFromScannerButtonComponent = () => {
     <Box>
       <ButtonWithIcon
         ref={buttonRef}
-        onClick={handleClick}
+        onClick={e => {
+          handleClick(e);
+        }}
         Icon={
           isScanning ? (
             <CircularProgress size={20} color="primary" />

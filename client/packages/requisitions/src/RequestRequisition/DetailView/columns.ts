@@ -50,6 +50,7 @@ export const useRequestColumns = () => {
   const { getError } = useRequestRequisitionLineErrorContext();
 
   const columnDefinitions: ColumnDescription<RequestLineFragment>[] = [
+    GenericColumnKey.Selection,
     getCommentPopoverColumn(),
     [
       'itemCode',
@@ -111,7 +112,7 @@ export const useRequestColumns = () => {
     columnDefinitions.push({
       key: 'monthsOfStock',
       label: 'label.months-of-stock',
-      description: 'description.months-of-stock',
+      description: 'description.available-months-of-stock',
       align: ColumnAlign.Right,
       width: 150,
       Cell: PackQuantityCell,
@@ -250,7 +251,6 @@ export const useRequestColumns = () => {
       accessor: ({ rowData }) => rowData.linkedRequisitionLine?.approvalComment,
     });
   }
-  columnDefinitions.push(GenericColumnKey.Selection);
 
   const columns = useColumns<RequestLineFragment>(
     columnDefinitions,

@@ -25,7 +25,7 @@ import {
   usePrescription,
   usePrescriptionLines,
 } from '@openmsupply-client/invoices/src/Prescriptions';
-import { useDraftPrescriptionLines } from '@openmsupply-client/invoices/src/Prescriptions/DetailView/PrescriptionLineEdit/hooks';
+import { useDraftPrescriptionLines } from '@openmsupply-client/invoices/src/Prescriptions/LineEditView/hooks';
 import { StockLineTable } from './StockLineTable';
 import { DraftStockOutLine } from '@openmsupply-client/invoices/src/types';
 
@@ -72,8 +72,16 @@ const UIComponent = (props: ControlProps) => {
     useState<ItemStockOnHandFragment | null>(
       formActions.getState(`${path}_item`) ?? null
     );
-  const { draftStockOutLines, setDraftStockOutLines } =
-    useDraftPrescriptionLines(selectedItem);
+
+  const [draftPrescriptionLines, setDraftPrescriptionLines] = useState<
+    DraftStockOutLine[]
+  >([]);
+
+  useDraftPrescriptionLines(
+    selectedItem,
+    draftPrescriptionLines,
+    setDraftPrescriptionLines
+  );
 
   const { success } = useNotification();
 
@@ -92,7 +100,7 @@ const UIComponent = (props: ControlProps) => {
       `${path}_stockline`
     );
     if (existing && existing[0]?.item.id === selectedItem?.id)
-      setDraftStockOutLines(existing);
+      setDraftPrescriptionLines(existing);
   }, []);
 
   useEffect(() => {
@@ -120,7 +128,7 @@ const UIComponent = (props: ControlProps) => {
   };
 
   const handleStockLineUpdate = (draftLines: DraftStockOutLine[]) => {
-    setDraftStockOutLines(draftLines);
+    setDraftPrescriptionLines(draftLines);
     formActions.setState(`${path}_stockline`, draftLines);
     formActions.register(
       prescriptionIdPath,
@@ -189,7 +197,7 @@ const UIComponent = (props: ControlProps) => {
           />
           {selectedItem && (
             <StockLineTable
-              stocklines={draftStockOutLines}
+              stocklines={draftPrescriptionLines}
               handleStockLineUpdate={handleStockLineUpdate}
             />
           )}

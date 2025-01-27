@@ -57,7 +57,9 @@ fragment ItemRowWithStats on ItemNode {
     averageMonthlyConsumption
     availableStockOnHand
     availableMonthsOfStockOnHand
+    monthsOfStockOnHand
     totalConsumption
+    stockOnHand
   }
 }
 
@@ -155,7 +157,9 @@ fragment Item on ItemNode {
     averageMonthlyConsumption
     availableStockOnHand
     availableMonthsOfStockOnHand
+    monthsOfStockOnHand
     totalConsumption
+    stockOnHand
   }
   variants {
     ...ItemVariant
@@ -247,7 +251,9 @@ fragment ItemsWithStats on ItemNode {
     averageMonthlyConsumption
     availableStockOnHand
     availableMonthsOfStockOnHand
+    monthsOfStockOnHand
     totalConsumption
+    stockOnHand
   }
 }
 
@@ -423,6 +429,50 @@ mutation deleteBundledItem($storeId: String!, $input: DeleteBundledItemInput!) {
           id
         }
       }
+    }
+  }
+}
+
+fragment ItemLedger on ItemLedgerNode {
+  id
+  balance
+  batch
+  costPricePerPack
+  datetime
+  expiryDate
+  invoiceNumber
+  invoiceStatus
+  invoiceType
+  name
+  packSize
+  quantity
+  reason
+  sellPricePerPack
+  totalBeforeTax
+  numberOfPacks
+}
+
+query itemLedger(
+  $key: LedgerSortFieldInput!
+  $first: Int
+  $offset: Int
+  $desc: Boolean
+  $filter: LedgerFilterInput
+  $storeId: String!
+) {
+  itemLedger(
+    storeId: $storeId
+    filter: $filter
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+  ) {
+    ... on ItemLedgerConnector {
+      __typename
+      nodes {
+        __typename
+        ...ItemLedger
+      }
+      totalCount
     }
   }
 }

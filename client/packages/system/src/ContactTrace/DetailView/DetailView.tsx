@@ -12,7 +12,7 @@ import {
   useIntlUtils,
 } from '@openmsupply-client/common';
 import {
-  useJsonForms,
+  useJsonFormsHandler,
   useContactTraces,
   ContactTraceRowFragment,
   useDocumentDataAccessor,
@@ -90,7 +90,7 @@ export const DetailView: FC<DetailViewProps> = ({
     isSaving,
     validationError,
     revert,
-  } = useJsonForms(
+  } = useJsonFormsHandler(
     {
       documentName: contactData?.documentName,
       patientId: contactData?.patient?.id,

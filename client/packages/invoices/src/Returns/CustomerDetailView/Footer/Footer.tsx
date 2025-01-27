@@ -8,6 +8,9 @@ import {
   AppFooterPortal,
   useBreadcrumbs,
   InvoiceNodeStatus,
+  Action,
+  DeleteIcon,
+  ActionsFooter,
 } from '@openmsupply-client/common';
 import {
   getStatusTranslator,
@@ -51,45 +54,71 @@ const createStatusLog = (invoice: CustomerReturnFragment) => {
 export const FooterComponent: FC = () => {
   const t = useTranslation();
   const { data } = useReturns.document.customerReturn();
+  const { id } = data ?? { id: '' };
   const { navigateUpOne } = useBreadcrumbs();
+  const { confirmAndDelete } = useReturns.lines.deleteSelectedCustomerLines({
+    returnId: id,
+  });
+  const isDisabled = useReturns.utils.customerIsDisabled();
+  const { selectedIds } = useReturns.lines.deleteSelectedCustomerLines({
+    returnId: id,
+  });
 
   const isManuallyCreated = !data?.linkedShipment?.id;
+
+  const actions: Action[] = [
+    {
+      label: t('button.delete-lines'),
+      icon: <DeleteIcon />,
+      onClick: confirmAndDelete,
+      disabled: isDisabled,
+      disabledToastMessage: t('label.cant-delete-disabled'),
+    },
+  ];
 
   return (
     <AppFooterPortal
       Content={
-        data && (
-          <Box
-            gap={2}
-            display="flex"
-            flexDirection="row"
-            alignItems="center"
-            height={64}
-          >
-            <OnHoldButton />
-            <StatusCrumbs
-              statuses={
-                isManuallyCreated
-                  ? manualCustomerReturnStatuses
-                  : customerReturnStatuses
-              }
-              statusLog={createStatusLog(data)}
-              statusFormatter={getStatusTranslator(t)}
+        <>
+          {selectedIds.length !== 0 && (
+            <ActionsFooter
+              actions={actions}
+              selectedRowCount={selectedIds.length}
             />
-            <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-              <ButtonWithIcon
-                shrinkThreshold="lg"
-                Icon={<XCircleIcon />}
-                label={t('button.close')}
-                color="secondary"
-                sx={{ fontSize: '12px' }}
-                onClick={() => navigateUpOne()}
+          )}
+          {data && selectedIds.length === 0 && (
+            <Box
+              gap={2}
+              display="flex"
+              flexDirection="row"
+              alignItems="center"
+              height={64}
+            >
+              <OnHoldButton />
+              <StatusCrumbs
+                statuses={
+                  isManuallyCreated
+                    ? manualCustomerReturnStatuses
+                    : customerReturnStatuses
+                }
+                statusLog={createStatusLog(data)}
+                statusFormatter={getStatusTranslator(t)}
               />
+              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+                <ButtonWithIcon
+                  shrinkThreshold="lg"
+                  Icon={<XCircleIcon />}
+                  label={t('button.close')}
+                  color="secondary"
+                  sx={{ fontSize: '12px' }}
+                  onClick={() => navigateUpOne()}
+                />
 
-              <StatusChangeButton />
+                <StatusChangeButton />
+              </Box>
             </Box>
-          </Box>
-        )
+          )}
+        </>
       }
     />
   );
