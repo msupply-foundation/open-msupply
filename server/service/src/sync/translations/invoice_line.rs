@@ -66,6 +66,8 @@ pub struct LegacyTransLineRow {
     pub r#type: LegacyTransLineType,
     #[serde(rename = "quantity")]
     pub number_of_packs: f64,
+    #[serde(rename = "prescribedQuantity")]
+    pub prescribed_quantity: f64,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub note: Option<String>,
 
@@ -132,6 +134,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             sell_price_per_pack,
             r#type,
             number_of_packs,
+            prescribed_quantity,
             note,
             item_code,
             tax_percentage,
@@ -267,6 +270,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             tax_percentage,
             r#type: line_type,
             number_of_packs,
+            prescribed_quantity,
             note,
             inventory_adjustment_reason_id: match invoice.r#type {
                 InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => {
@@ -329,6 +333,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     tax_percentage,
                     r#type,
                     number_of_packs,
+                    prescribed_quantity,
                     note,
                     inventory_adjustment_reason_id,
                     return_reason_id,
@@ -362,6 +367,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             sell_price_per_pack,
             r#type: to_legacy_invoice_line_type(&r#type),
             number_of_packs,
+            prescribed_quantity,
             note,
             item_code: Some(item_code),
             tax_percentage,

@@ -38,6 +38,7 @@ pub fn generate_empty_invoice_lines(
                     tax_percentage: None,
                     r#type: InvoiceLineType::StockIn,
                     number_of_packs: 0.0,
+                    prescribed_quantity: 0.0,
                     note: None,
                     inventory_adjustment_reason_id: None,
                     return_reason_id: None,
