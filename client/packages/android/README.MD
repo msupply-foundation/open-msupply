@@ -111,9 +111,11 @@ Usually you will need to either set `ANDROID_SDK_ROOT` or add `sdk.dir` in `loca
 
 Debugging native Java code is straight forward, breakpoint in Android Studio and press debug.
 
-Debugging web app code is done by opening `chrome://inspect`, you should see the Web View when the app is running in emulator. When bundled is served from remote server (default setup), js bundle is minimised and this makes debugging very hard, however we can run the bundle from webpack server by commenting out the plugins section in `capacitor.config.ts` and entering your local ip in the debugUrl field and running `yarn apply-config`. Please make sure that you start front end server with `yarn start-local` from 'client' directory for this to work.
+Debugging web app code is done by opening `chrome://inspect`, you should see the Web View when the app is running in emulator. When bundled is served from remote server (default setup), js bundle is minimised and this makes debugging very hard (and doesn't allow for hot reload), however we can run the bundle from webpack server by commenting out the plugins section in `capacitor.config.ts` and entering your local ip in the debugUrl field and running `yarn apply-config`. Please make sure that you start front end server with `yarn start` from 'client' directory for this to work. For examples: `yarn && yarn start -- -- --env API_HOST='http://192.168.1.205:8000` <- your local server will also need to be running.
 
 Please note that when debugging with live reload, connections to a discovered server will always go through to the webpack server (regardless of which server is being selected).
+
+It's  also a good idea to connect your local chrome browser to emulator or device, by going to chrome://inspect, this is especially helpful when needing to refresh the app, read consoles or inspect network traffic
 
 When running the Android app in an emulator the service discovery will not work outside of the emulator network, to test discovery you will need to run the app on a physical device.
 
