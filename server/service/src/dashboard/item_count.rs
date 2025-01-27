@@ -1,9 +1,7 @@
-use repository::{EqualFilter, ItemFilter, ItemRepository};
+use repository::{ItemFilter, ItemRepository};
 
 use crate::{
-    item_stats::{get_item_stats, ItemStatsFilter},
-    service_provider::ServiceContext,
-    PluginOrRepositoryError,
+    item_stats::get_item_stats, service_provider::ServiceContext, PluginOrRepositoryError,
 };
 
 pub struct ItemCounts {
@@ -43,11 +41,9 @@ impl ItemCountServiceTrait for ItemServiceCount {
 
         let visible_items_count = visible_items.len() as i64;
 
-        let item_id_filter =
-            EqualFilter::equal_any(visible_items.into_iter().map(|i| i.item_row.id).collect());
-        let item_id_filter = Some(ItemStatsFilter::new().item_id(item_id_filter));
+        let item_ids = visible_items.into_iter().map(|i| i.item_row.id).collect();
 
-        let item_stats = get_item_stats(ctx, store_id, None, item_id_filter)?;
+        let item_stats = get_item_stats(ctx, store_id, None, item_ids)?;
 
         let no_stock = item_stats
             .iter()
