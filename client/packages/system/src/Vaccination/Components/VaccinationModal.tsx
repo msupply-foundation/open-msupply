@@ -41,7 +41,7 @@ interface VaccinationModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultClinician?: Clinician;
-  setTouched: (touched: boolean) => void;
+  setTouched: () => void;
 }
 
 export const VaccinationModal = ({
@@ -80,7 +80,7 @@ export const VaccinationModal = ({
 
         if (result?.__typename === 'VaccinationNode') {
           success(t('messages.vaccination-saved'))();
-          setTouched(true);
+          setTouched();
           onClose();
         }
 

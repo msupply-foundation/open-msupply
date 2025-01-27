@@ -1,6 +1,6 @@
 import React from 'react';
 import { VaccinationModal } from './VaccinationModal';
-import { useConfirmOnLeaving, useEditModal } from '@common/hooks';
+import { useEditModal } from '@common/hooks';
 import { Clinician } from '../../Clinician';
 import { VaccineCardTable } from './VaccineCardTable';
 
@@ -8,14 +8,13 @@ export const VaccinationCard = ({
   clinician,
   programEnrolmentId,
   encounterId,
+  setTouched = () => {},
 }: {
   programEnrolmentId: string;
   encounterId?: string;
   clinician?: Clinician;
+  setTouched?: () => void;
 }) => {
-  // todo, only when not visited
-  const { setIsDirty } = useConfirmOnLeaving('vaccination-card');
-
   const { isOpen, onClose, onOpen, entity } = useEditModal<{
     vaccinationId?: string | undefined;
     vaccineCourseDoseId: string;
@@ -43,7 +42,7 @@ export const VaccinationCard = ({
           vaccineCourseDoseId={vaccineCourseDoseId}
           onClose={onClose}
           defaultClinician={clinician}
-          setTouched={setIsDirty}
+          setTouched={setTouched}
         />
       )}
       <VaccineCardTable

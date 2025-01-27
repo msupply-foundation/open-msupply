@@ -16,6 +16,7 @@ import {
   ButtonWithIcon,
   SaveIcon,
   DetailTabs,
+  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -152,6 +153,8 @@ export const DetailView: FC = () => {
   );
   const [deleteRequest, setDeleteRequest] = useState(false);
 
+  const { setIsDirty } = useConfirmOnLeaving('encounter');
+
   const {
     data: encounter,
     isSuccess,
@@ -280,6 +283,10 @@ export const DetailView: FC = () => {
           encounterId={encounter.id}
           programEnrolmentId={encounter.programEnrolment.id}
           clinician={encounter.clinician ?? undefined}
+          setTouched={() => {
+            if (encounter.status === EncounterNodeStatus.Pending)
+              setIsDirty(true);
+          }}
         />
       ),
       value: t('label.vaccinations'),
