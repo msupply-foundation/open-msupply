@@ -81,6 +81,7 @@ pub fn generate_invoice_lines(
             invoice_id: invoice_id.to_owned(),
             pack_size: 1.0,
             number_of_packs: requisition_line_supply_status.remaining_quantity(),
+            prescribed_quantity: 0.0,
             item_link_id: item_row.id,
             item_code: item_row.code,
             item_name: item_row.name,

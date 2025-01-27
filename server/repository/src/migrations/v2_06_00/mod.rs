@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 
 mod add_index_to_sync_buffer;
+mod add_invoice_line_prescribed_quantity;
 mod add_program_deleted_datetime;
 use crate::StorageConnection;
 
@@ -18,6 +19,7 @@ impl Migration for V2_06_00 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(add_index_to_sync_buffer::Migrate),
+            Box::new(add_invoice_line_prescribed_quantity::Migrate),
             Box::new(add_program_deleted_datetime::Migrate),
         ]
     }
