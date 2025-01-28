@@ -466,3 +466,25 @@ export const getAllocationAlerts = (
 
   return alerts;
 };
+
+export const updatePrescribedQuantity = (
+  draftStockOutLines: DraftStockOutLine[],
+  itemId: string,
+  prescribedQuantity: number
+) => {
+  const stockOutLineIndex = draftStockOutLines.findIndex(
+    ({ item }) => item.id === itemId
+  );
+
+  const selectedStockOutLineRow = draftStockOutLines[stockOutLineIndex];
+  if (!selectedStockOutLineRow) return draftStockOutLines;
+
+  const newDraftStockOutLines = [...draftStockOutLines];
+  newDraftStockOutLines[stockOutLineIndex] = {
+    ...selectedStockOutLineRow,
+    prescribedQuantity,
+    isUpdated: true,
+  };
+
+  return newDraftStockOutLines;
+};

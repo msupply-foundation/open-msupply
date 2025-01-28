@@ -7,6 +7,7 @@ import {
   allocateQuantities,
   createDraftStockOutLine,
   createStockOutPlaceholderRow,
+  updatePrescribedQuantity,
 } from './utils';
 import { DraftStockOutLine } from '../types';
 
@@ -17,6 +18,7 @@ type TestLineParams = {
   totalNumberOfPacks?: number;
   availableNumberOfPacks?: number;
   numberOfPacks?: number;
+  prescribedQuantity?: number;
   onHold?: boolean;
   expiryDate?: string;
 };
@@ -27,6 +29,7 @@ const createTestLine = ({
   totalNumberOfPacks = 1,
   availableNumberOfPacks = 1,
   numberOfPacks = 0,
+  prescribedQuantity = 0,
   id = FnUtils.generateUUID(),
   onHold = false,
   expiryDate,
@@ -52,7 +55,7 @@ const createTestLine = ({
       invoiceId: '',
       __typename: 'InvoiceLineNode',
       numberOfPacks,
-      prescribedQuantity: 0,
+      prescribedQuantity,
       expiryDate,
       stockLine: {
         __typename: 'StockLineNode',
@@ -768,6 +771,19 @@ describe('Allocated quantities - coping with over-allocation', () => {
       line3,
       { ...line4, isUpdated: false },
       placeholder,
+    ]);
+  });
+});
+
+describe('updatePrescribeQuantity', () => {
+  it('should update the prescribed quantity for a line', () => {
+    const line = createTestLine({
+      prescribedQuantity: 10,
+    });
+
+    const result = updatePrescribedQuantity([line], line.item.id, 15);
+    expect(result).toEqual([
+      { ...line, prescribedQuantity: 15, isUpdated: true },
     ]);
   });
 });
