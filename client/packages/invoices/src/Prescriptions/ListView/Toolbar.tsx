@@ -26,13 +26,12 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               type: 'text',
               name: t('label.name'),
               urlParameter: 'otherPartyName',
-              placeholder: t('placeholder.search-by-name'),
               isDefault: true,
             },
             {
               type: 'number',
               name: t('label.invoice-number'),
-              urlParameter: 'invoiceNumber', // remove placeholder sort by invoice number
+              urlParameter: 'invoiceNumber',
               isDefault: true,
             },
             {
@@ -41,14 +40,14 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               elements: [
                 {
                   type: 'date',
-                  name: t('label.from-date'), // TODO translate this
+                  name: t('label.from-date'),
                   urlParameter: 'pickedDatetime',
                   range: 'from',
                   isDefault: true,
                 },
                 {
                   type: 'date',
-                  name: t('label.to-date'), // TODO translate this
+                  name: t('label.to-date'),
                   urlParameter: 'pickedDatetime',
                   range: 'to',
                   isDefault: true,
