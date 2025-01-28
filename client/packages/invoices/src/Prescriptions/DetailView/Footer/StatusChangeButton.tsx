@@ -134,7 +134,11 @@ const useStatusChangeButton = () => {
   };
 };
 
-export const StatusChangeButton = () => {
+export const StatusChangeButton = ({
+  isPluginDataValid,
+}: {
+  isPluginDataValid?: boolean;
+}) => {
   const {
     options,
     selectedOption,
@@ -144,6 +148,9 @@ export const StatusChangeButton = () => {
     isDisabled,
   } = useStatusChangeButton();
   const t = useTranslation();
+
+  const { error } = useNotification();
+
   const noLines =
     lines?.totalCount === 0 ||
     lines?.nodes?.every(l => l.type === InvoiceLineNodeType.UnallocatedStock);
@@ -157,6 +164,13 @@ export const StatusChangeButton = () => {
     return getConfirmation();
   };
   if (!selectedOption) return null;
+  if (!isPluginDataValid) {
+    // TODO: Translation
+    // TODO: Allow the plugin to set the error message
+    error("Plugin Data isn't valid, please correct this first")();
+    return null;
+  }
+
   if (isDisabled) return null;
 
   return (

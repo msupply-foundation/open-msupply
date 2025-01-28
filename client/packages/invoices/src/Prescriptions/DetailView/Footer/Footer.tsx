@@ -57,6 +57,7 @@ export const FooterComponent: FC = () => {
     rows: items,
   } = usePrescription();
   const { navigateUpOne } = useBreadcrumbs();
+  const [isPluginDataValid, setIsPluginDataValid] = React.useState(true); // TODO: this should allow multiple plugins in future...
 
   const selectedRows =
     useTableStore(state => {
@@ -85,8 +86,16 @@ export const FooterComponent: FC = () => {
   });
 
   const plugins = usePluginElements({
-    type: 'PrescriptionPaymentsForm',
-    data: data ?? undefined,
+    type: 'PrescriptionFooterComponent',
+    data: {
+      prescriptionData: data ?? undefined,
+      savePluginData: () => {
+        alert('savePluginData');
+      },
+      setIsPluginDataValid: isValid => {
+        alert('setIsPluginDataValid');
+      },
+    },
   });
 
   const actions: Action[] = [
@@ -133,7 +142,7 @@ export const FooterComponent: FC = () => {
                   onClick={() => navigateUpOne()}
                 />
                 {plugins}
-                <StatusChangeButton />
+                <StatusChangeButton isPluginDataValid={isPluginDataValid} />
               </Box>
             </Box>
           )}
