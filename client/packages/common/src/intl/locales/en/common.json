@@ -1054,6 +1054,8 @@
   "label.to-created-datetime": "To created date / time",
   "label.to-datetime": "To date / time",
   "label.to-expiry": "To expiry",
+  "label.from-date": "From date",
+  "label.to-date": "To date",
   "label.to-start-datetime": "To start date / time",
   "label.today": "Today",
   "label.toggle-password-visibility": "Toggle password visibility",
