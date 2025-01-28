@@ -19,6 +19,7 @@ impl Migration for V2_06_00 {
         vec![
             Box::new(add_index_to_sync_buffer::Migrate),
             Box::new(add_program_deleted_datetime::Migrate),
+            Box::new(backend_plugins::Migrate),
         ]
     }
 }
