@@ -37,6 +37,8 @@ import { getLogicalStatus } from '../utils';
 import { PatientTabValue } from '../../Patient/PatientView/PatientView';
 import { VaccinationCard } from '../../Vaccination/Components/VaccinationCard';
 import { ScheduleNextEncounterModal } from './ScheduleNextEncounterModal';
+import { usePatientVaccineCard } from '../../Vaccination/api/usePatientVaccineCard';
+import { getNextVaccinationEncounterDate } from './helpers';
 
 const getPatientBreadcrumbSuffix = (
   encounter: EncounterFragment,
@@ -165,6 +167,15 @@ export const DetailView: FC = () => {
     isSuccess,
     isError,
   } = useEncounter.document.byId(id);
+
+  // If this is a vaccination encounter, we want to use the suggested
+  // next vaccination dates for the next encounter
+  const {
+    query: { data: vaccineCard },
+  } = usePatientVaccineCard(encounter?.programEnrolment?.id ?? '');
+  const suggestedNextEncounterDate = getNextVaccinationEncounterDate(
+    vaccineCard?.items ?? []
+  );
 
   const handleSave = useEncounter.document.upsertDocument(
     encounter?.patient.id ?? '',
@@ -363,6 +374,7 @@ export const DetailView: FC = () => {
               encounterConfig={encounter.document.documentRegistry}
               onClose={nextEncounterModal.toggleOff}
               patientId={encounter.patient.id ?? ''}
+              suggestedDate={suggestedNextEncounterDate}
             />
           )}
           <Toolbar onChange={updateEncounter} encounter={encounter} />
