@@ -1,0 +1,25 @@
+query StockStatus($storeId: String, $itemCode: String, $itemName: String) {
+  items(
+    storeId: $storeId
+    filter: {
+      code: { like: $itemCode }
+      name: { like: $itemName }
+      isVisibleOrOnHand: true
+      isActive: true
+    }
+    page: { first: 5000 }
+  ) {
+    ... on ItemConnector {
+      nodes {
+        code
+        name
+        stats(storeId: $storeId) {
+          totalConsumption
+          availableMonthsOfStockOnHand
+          availableStockOnHand
+          averageMonthlyConsumption
+        }
+      }
+    }
+  }
+}
