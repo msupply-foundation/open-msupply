@@ -25,7 +25,7 @@ body {
     text-align: right;
 }
 
-.line_number, .quantity, .pack, .batch, .expiry, .sell_price, .cost_price, .total_quantity, .total_extension {
+.number_columns {
     text-align: right;
 }
 

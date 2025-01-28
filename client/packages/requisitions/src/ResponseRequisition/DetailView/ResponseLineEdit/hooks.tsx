@@ -71,7 +71,7 @@ export const usePreviousNextResponseLine = (
   lines?: ResponseLineFragment[],
   currentItem?: ItemRowFragment | null
 ) => {
-  if (!lines) {
+  if (!lines || !currentItem) {
     return { hasNext: false, next: null, hasPrevious: false, previous: null };
   }
 

@@ -46,7 +46,7 @@ export const SplitButton = <T,>({
       <ButtonGroup color={color} variant="outlined" aria-label={ariaLabel}>
         <ButtonWithIcon
           color={color}
-          disabled={isDisabled}
+          disabled={isDisabled || selectedOption.isDisabled}
           sx={{
             borderRadius: 0,
             borderStartStartRadius: '24px',
