@@ -27,7 +27,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
-          disabled={isDisabled}
           label={t('button.history')}
           Icon={<InfoOutlineIcon />}
           onClick={() => onViewHistory()}
