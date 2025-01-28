@@ -39,11 +39,6 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
     onClose();
   };
 
-  function handlePatientModalClick() {
-    handleClose();
-    openPatientModal();
-  }
-
   return (
     <BasicModal open={open} onClose={handleClose} height={modalHeight}>
       <ModalTitle title={t('label.patients')} />
@@ -76,8 +71,11 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
       <Box p={2}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
-          label={'Create new patient'}
-          onClick={handlePatientModalClick}
+          label={t('button.create-new-patient')}
+          onClick={() => {
+            handleClose();
+            openPatientModal();
+          }}
         />
       </Box>
     </BasicModal>
