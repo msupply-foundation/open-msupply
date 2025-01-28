@@ -5,34 +5,10 @@ import {
   FilterMenu,
   FilterController,
   Box,
-  FilterDefinition,
 } from '@openmsupply-client/common';
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
   const t = useTranslation();
-
-  const filters: FilterDefinition[] = [
-    {
-      type: 'text',
-      name: t('label.name'),
-      urlParameter: 'otherPartyName',
-      placeholder: t('placeholder.search-by-name'),
-      isDefault: true,
-    },
-    {
-      type: 'text',
-      name: t('label.invoice-number'),
-      urlParameter: 'invoiceNumber',
-      placeholder: t('placeholder.search-by-invoice-number'),
-      isDefault: true,
-    },
-    {
-      type: 'date',
-      name: t('label.date'),
-      urlParameter: 'prescriptionDatetime',
-      isDefault: true,
-    },
-  ];
 
   return (
     <AppBarContentPortal
@@ -44,7 +20,43 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
       }}
     >
       <Box display="flex" gap={1}>
-        <FilterMenu filters={filters} />
+        <FilterMenu
+          filters={[
+            {
+              type: 'text',
+              name: t('label.name'),
+              urlParameter: 'otherPartyName',
+              placeholder: t('placeholder.search-by-name'),
+              isDefault: true,
+            },
+            {
+              type: 'number',
+              name: t('label.invoice-number'),
+              urlParameter: 'invoiceNumber', // remove placeholder sort by invoice number
+              isDefault: true,
+            },
+            {
+              type: 'group',
+              name: t('label.date'),
+              elements: [
+                {
+                  type: 'date',
+                  name: t('label.from-date'), // TODO translate this
+                  urlParameter: 'pickedDatetime',
+                  range: 'from',
+                  isDefault: true,
+                },
+                {
+                  type: 'date',
+                  name: t('label.to-date'), // TODO translate this
+                  urlParameter: 'pickedDatetime',
+                  range: 'to',
+                  isDefault: true,
+                },
+              ],
+            },
+          ]}
+        />
       </Box>
     </AppBarContentPortal>
   );

@@ -27,6 +27,7 @@ interface Filter {
   key: string;
   condition?: string;
   value?: string;
+  isNumber?: boolean;
 }
 interface UrlQueryParams {
   initialSort?: UrlQuerySort;
@@ -51,6 +52,7 @@ export const useUrlQueryParams = ({
   const { urlQuery, updateQuery } = useUrlQuery({
     skipParse,
   });
+
   const [storedRowsPerPage] = useLocalStorage(
     '/pagination/rowsperpage',
     DEFAULT_RECORDS_PER_PAGE
@@ -85,7 +87,11 @@ export const useUrlQueryParams = ({
 
   const getFilterBy = (): FilterByWithBoolean =>
     filters.reduce<FilterByWithBoolean>((prev, filter) => {
-      const filterValue = getFilterValue(urlQuery, filter.key);
+      const filterValue = getFilterValue(
+        urlQuery,
+        filter.key,
+        filter?.isNumber
+      );
       if (filterValue === undefined) return prev;
       // create a new object to prevent mutating the existing filter
       const f = { ...filter };
@@ -154,15 +160,20 @@ export const useUrlQueryParams = ({
 
 const getFilterValue = (
   urlQuery: Record<string, UrlQueryValue>,
-  key: string
+  key: string,
+  isNumber?: boolean
 ) => {
-  switch (urlQuery[key]) {
-    case 'true':
-      return true;
-    case 'false':
-      return false;
-    default:
-      return urlQuery[key];
+  if (isNumber === true) {
+    return Number(urlQuery[key]);
+  } else {
+    switch (urlQuery[key]) {
+      case 'true':
+        return true;
+      case 'false':
+        return false;
+      default:
+        return urlQuery[key];
+    }
   }
 };
 
