@@ -65,7 +65,7 @@ pub fn update_stock_line(
                 }
             }
 
-            log_stock_changes(ctx, existing, new_stock_line.clone())?;
+            log_stock_changes(ctx, existing.stock_line_row, new_stock_line.clone())?;
 
             get_stock_line(ctx, new_stock_line.id).map_err(|error| match error {
                 SingleRecordError::DatabaseError(error) => DatabaseError(error),
@@ -80,7 +80,7 @@ fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &UpdateStockLine,
-) -> Result<StockLineRow, UpdateStockLineError> {
+) -> Result<StockLine, UpdateStockLineError> {
     use UpdateStockLineError::*;
 
     let stock_line: StockLine =
@@ -94,13 +94,13 @@ fn validate(
         return Err(LocationDoesNotExist);
     }
 
-    Ok(stock_line.stock_line_row)
+    Ok(stock_line)
 }
 
 fn generate(
     store_id: String,
     connection: &StorageConnection,
-    mut existing: StockLineRow,
+    existing_line: StockLine,
     UpdateStockLine {
         id: _,
         location,
@@ -119,6 +119,7 @@ fn generate(
     ),
     UpdateStockLineError,
 > {
+    let mut existing = existing_line.stock_line_row;
     let location_movements = match location.clone() {
         Some(location) => {
             if location.value != existing.location_id {
@@ -142,7 +143,7 @@ fn generate(
             connection,
             BarcodeInput {
                 gtin: gtin.clone(),
-                item_id: existing.item_id.clone(),
+                item_id: existing_line.item_row.id,
                 pack_size: Some(existing.pack_size),
             },
         )?),

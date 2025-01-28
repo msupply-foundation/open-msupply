@@ -3,9 +3,9 @@ use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     #[cfg(not(feature = "postgres"))]
-    const SENSOR_TYPE: &'static str = "TEXT";
+    const SENSOR_TYPE: &str = "TEXT";
     #[cfg(feature = "postgres")]
-    const SENSOR_TYPE: &'static str = "sensor_type";
+    const SENSOR_TYPE: &str = "sensor_type";
     #[cfg(feature = "postgres")]
     sql!(
         connection,

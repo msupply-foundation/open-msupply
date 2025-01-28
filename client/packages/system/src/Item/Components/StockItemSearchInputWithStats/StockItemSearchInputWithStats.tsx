@@ -26,7 +26,7 @@ export const StockItemSearchInputWithStats: FC<
   openOnFocus,
 }) => {
   const { data, isLoading } = useStockItemsWithStats();
-  const t = useTranslation('common');
+  const t = useTranslation();
   const formatNumber = useFormatNumber();
 
   const value = data?.nodes.find(({ id }) => id === currentItemId) ?? null;

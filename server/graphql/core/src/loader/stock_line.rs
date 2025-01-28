@@ -81,7 +81,7 @@ impl Loader<StockLineByItemAndStoreIdLoaderInput> for StockLineByItemAndStoreIdL
         let result = repo.query_by_filter(
             StockLineFilter::new()
                 .item_id(EqualFilter::equal_any(IdPair::get_all_secondary_ids(
-                    &item_and_store_ids,
+                    item_and_store_ids,
                 )))
                 .store_id(EqualFilter::equal_to(store_id))
                 .has_packs_in_store(true),
@@ -92,8 +92,8 @@ impl Loader<StockLineByItemAndStoreIdLoaderInput> for StockLineByItemAndStoreIdL
         for stock_line in result {
             result_map
                 .entry(StockLineByItemAndStoreIdLoaderInput::new(
-                    &store_id,
-                    &stock_line.stock_line_row.item_id,
+                    store_id,
+                    &stock_line.item_row.id,
                 ))
                 .or_insert(Vec::new())
                 .push(stock_line);

@@ -42,7 +42,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   // then the current item may not be in the available list of items due to pagination batching
   const { data: currentItem } = useItemById(currentItemId ?? undefined);
 
-  const t = useTranslation('common');
+  const t = useTranslation();
   const formatNumber = useFormatNumber();
 
   const selectControl = useToggle();

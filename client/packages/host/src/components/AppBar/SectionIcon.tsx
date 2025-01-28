@@ -10,6 +10,7 @@ import {
   SettingsIcon,
   StockIcon,
   SuppliersIcon,
+  ThermometerIcon,
   Tooltip,
   TruckIcon,
   useLocation,
@@ -24,8 +25,14 @@ type Section = {
 
 const getIcon = (section?: AppRoute) => {
   switch (section) {
+    case AppRoute.Admin:
+      return <SettingsIcon color="primary" fontSize="small" />;
     case AppRoute.Catalogue:
       return <ListIcon color="primary" fontSize="small" />;
+    case AppRoute.Coldchain:
+      return <ThermometerIcon color="primary" fontSize="small" />;
+    case AppRoute.Dispensary:
+      return <CustomersIcon color="primary" fontSize="small" />;
     case AppRoute.Distribution:
       return <TruckIcon color="primary" fontSize="small" />;
     case AppRoute.Inventory:
@@ -34,12 +41,8 @@ const getIcon = (section?: AppRoute) => {
       return <SuppliersIcon color="primary" fontSize="small" />;
     case AppRoute.Reports:
       return <ReportsIcon color="primary" fontSize="small" />;
-    case AppRoute.Admin:
-      return <SettingsIcon color="primary" fontSize="small" />;
     case AppRoute.Sync:
       return <RadioIcon color="primary" fontSize="small" />;
-    case AppRoute.Dispensary:
-      return <CustomersIcon color="primary" fontSize="small" />;
     default:
       return undefined;
   }
@@ -47,14 +50,15 @@ const getIcon = (section?: AppRoute) => {
 
 const useSection = (): Section | undefined => {
   const routes = [
+    AppRoute.Admin,
     AppRoute.Catalogue,
+    AppRoute.Coldchain,
+    AppRoute.Dispensary,
     AppRoute.Distribution,
     AppRoute.Inventory,
     AppRoute.Replenishment,
     AppRoute.Reports,
-    AppRoute.Admin,
     AppRoute.Sync,
-    AppRoute.Dispensary,
   ];
   const location = useLocation();
 

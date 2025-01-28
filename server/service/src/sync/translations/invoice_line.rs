@@ -1,27 +1,22 @@
 use crate::sync::{
-    api::RemoteSyncRecordV5,
     sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
+    translations::{
+        currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
+        location::LocationTranslation, reason::ReasonTranslation, stock_line::StockLineTranslation,
+    },
 };
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType,
+    ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
+    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineRowType,
     ItemRowRepository, StockLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
 use super::{
-    is_active_record_on_site, ActiveRecordCheck, IntegrationRecords, LegacyTableName,
-    PullDeleteRecordTable, PullDependency, PullUpsertRecord, SyncTranslation,
+    is_active_record_on_site, ActiveRecordCheck, PullTranslateResult, PushTranslateResult,
+    SyncTranslation,
 };
-
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::TRANS_LINE;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::InvoiceLine
-}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyTransLineType {
@@ -83,32 +78,41 @@ pub struct LegacyTransLineRow {
     #[serde(rename = "optionID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub inventory_adjustment_reason_id: Option<String>,
+    #[serde(rename = "foreign_currency_price")]
+    pub foreign_currency_price_before_tax: Option<f64>,
+}
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(InvoiceLineTranslation)
 }
 
-pub(crate) struct InvoiceLineTranslation {}
+pub(super) struct InvoiceLineTranslation;
 impl SyncTranslation for InvoiceLineTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::TRANS_LINE,
-            dependencies: vec![
-                LegacyTableName::TRANSACT,
-                LegacyTableName::ITEM,
-                LegacyTableName::ITEM_LINE,
-                LegacyTableName::LOCATION,
-                LegacyTableName::INVENTORY_ADJUSTMENT_REASON,
-            ],
-        }
+    fn table_name(&self) -> &str {
+        "trans_line"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![
+            InvoiceTranslation.table_name(),
+            ItemTranslation.table_name(),
+            StockLineTranslation.table_name(),
+            LocationTranslation.table_name(),
+            ReasonTranslation.table_name(),
+            CurrencyTranslation.table_name(),
+        ]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::InvoiceLine)
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyTransLineRow {
             id,
             invoice_id,
@@ -129,6 +133,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             total_before_tax,
             total_after_tax,
             inventory_adjustment_reason_id,
+            foreign_currency_price_before_tax,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
 
         let line_type = to_invoice_line_type(&r#type).ok_or(anyhow::Error::msg(format!(
@@ -147,7 +152,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                 )
             }
             None => {
-                let item = match ItemRowRepository::new(connection).find_one_by_id(&item_id)? {
+                let item = match ItemRowRepository::new(connection).find_active_by_id(&item_id)? {
                     Some(item) => item,
                     None => {
                         return Err(anyhow::Error::msg(format!(
@@ -162,13 +167,13 @@ impl SyncTranslation for InvoiceLineTranslation {
                     _ => 0.0,
                 };
 
-                let total = total_multiplier * number_of_packs as f64;
+                let total = total_multiplier * number_of_packs;
                 (item.code, None, total, total)
             }
         };
 
         let is_record_active_on_site = is_active_record_on_site(
-            &connection,
+            connection,
             ActiveRecordCheck::InvoiceLine {
                 invoice_id: invoice_id.clone(),
             },
@@ -179,7 +184,7 @@ impl SyncTranslation for InvoiceLineTranslation {
         // Currently a uuid is assigned by central for the stock_line id which causes a foreign key constraint violation
         let is_stock_line_valid = match stock_line_id {
             Some(ref stock_line_id) => StockLineRowRepository::new(connection)
-                .find_one_by_id(&stock_line_id)
+                .find_one_by_id(stock_line_id)
                 .is_ok(),
             None => true,
         };
@@ -204,7 +209,7 @@ impl SyncTranslation for InvoiceLineTranslation {
         let result = InvoiceLineRow {
             id,
             invoice_id,
-            item_id,
+            item_link_id: item_id,
             item_name,
             item_code,
             stock_line_id,
@@ -221,64 +226,68 @@ impl SyncTranslation for InvoiceLineTranslation {
             number_of_packs,
             note,
             inventory_adjustment_reason_id,
+            return_reason_id: None, // TODO
+            foreign_currency_price_before_tax,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::InvoiceLine(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_pull_delete(
+    fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         // TODO, check site ? (should never get delete records for this site, only transfer other half)
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(
-                &sync_record.record_id,
-                PullDeleteRecordTable::InvoiceLine,
-            )
-        });
-
-        Ok(result)
+        Ok(PullTranslateResult::delete(InvoiceLineRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Some(invoice_line) = InvoiceLineRepository::new(connection)
+            .query_one(InvoiceLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+        else {
+            return Err(anyhow::anyhow!("invoice_line row not found"));
+        };
 
-        let InvoiceLineRow {
-            id,
-            invoice_id,
-            item_id,
-            item_name,
-            item_code,
-            stock_line_id,
-            location_id,
-            batch,
-            expiry_date,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            total_before_tax,
-            total_after_tax,
-            tax,
-            r#type,
-            number_of_packs,
-            note,
-            inventory_adjustment_reason_id,
-        } = InvoiceLineRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
+        let InvoiceLine {
+            invoice_line_row:
+                InvoiceLineRow {
+                    id,
+                    invoice_id,
+                    item_link_id: _,
+                    item_name,
+                    item_code,
+                    stock_line_id,
+                    location_id,
+                    batch,
+                    expiry_date,
+                    pack_size,
+                    cost_price_per_pack,
+                    sell_price_per_pack,
+                    total_before_tax,
+                    total_after_tax,
+                    tax,
+                    r#type,
+                    number_of_packs,
+                    note,
+                    inventory_adjustment_reason_id,
+                    return_reason_id: _, // TODO
+                    foreign_currency_price_before_tax,
+                },
+            item_row,
+            ..
+        } = invoice_line;
 
         let legacy_row = LegacyTransLineRow {
             id: id.clone(),
             invoice_id,
-            item_id,
+            item_id: item_row.id,
             item_name,
             stock_line_id,
             location_id,
@@ -295,24 +304,21 @@ impl SyncTranslation for InvoiceLineTranslation {
             total_before_tax: Some(total_before_tax),
             total_after_tax: Some(total_after_tax),
             inventory_adjustment_reason_id,
+            foreign_currency_price_before_tax,
         };
-
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LEGACY_TABLE_NAME,
-            serde_json::to_value(&legacy_row)?,
-        )]))
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 
-    fn try_translate_push_delete(
+    fn try_translate_to_delete_sync_record(
         &self,
         _: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        let result = match_push_table(changelog)
-            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
-
-        Ok(result)
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
 
@@ -338,12 +344,17 @@ fn to_legacy_invoice_line_type(_type: &InvoiceLineRowType) -> LegacyTransLineTyp
 
 #[cfg(test)]
 mod tests {
+    use crate::sync::{
+        test::merge_helpers::merge_all_item_links, translations::ToSyncRecordTranslationType,
+    };
+
     use super::*;
     use repository::{
         mock::{mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
-        KeyValueStoreRow, KeyValueType,
+        test_db::{setup_all, setup_all_with_data},
+        ChangelogFilter, ChangelogRepository, KeyValueStoreRow, KeyValueType,
     };
+    use serde_json::json;
     use util::inline_init;
 
     #[actix_rt::test]
@@ -359,7 +370,8 @@ mod tests {
                 .names()
                 .stores()
                 .locations()
-                .stock_lines(),
+                .stock_lines()
+                .currencies(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![mock_outbound_shipment_a()];
                 r.key_value_store_rows = vec![inline_init(|r: &mut KeyValueStoreRow| {
@@ -371,19 +383,61 @@ mod tests {
         .await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
         }
 
         for record in test_data::test_pull_delete_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
+                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_requisition_line_push_merged() {
+        // The item_links_merged function will merge ALL items into item_a, so all invoice_lines should have an item_id of "item_a" regardless of their original item_id.
+        let (mock_data, connection, _, _) = setup_all(
+            "test_invoice_line_push_item_link_merged",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        merge_all_item_links(&connection, &mock_data).unwrap();
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(ChangelogFilter::new().table_name(ChangelogTableName::InvoiceLine.equal_to())),
+            )
+            .unwrap();
+
+        let translator = InvoiceLineTranslation {};
+        for changelog in changelogs {
+            assert!(translator.should_translate_to_sync_record(
+                &changelog,
+                &ToSyncRecordTranslationType::PushToLegacyCentral
+            ));
+            let translated = translator
+                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .unwrap();
+
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+
+            let PushTranslateResult::PushRecord(translated) = translated else {
+                panic!("Test fail, should translate")
+            };
+
+            assert_eq!(translated[0].record.record_data["item_ID"], json!("item_a"));
         }
     }
 }

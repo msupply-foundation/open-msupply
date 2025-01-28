@@ -58,7 +58,7 @@ pub fn insert_encounter(
                 user_id,
                 input,
                 event_datetime,
-                &program_enrolment.1,
+                &program_enrolment.program_row,
                 &encounter,
             )?;
             let encounter_start_datetime = encounter.start_datetime;
@@ -96,7 +96,7 @@ pub fn insert_encounter(
                     &document,
                     encounter,
                     clinician.map(|c| c.id),
-                    program_enrolment.1,
+                    program_enrolment.program_row,
                     encounter_start_datetime,
                     None,
                     Some(&allowed_ctx),
@@ -211,8 +211,7 @@ fn validate(
         .encounter
         .clinician
         .as_ref()
-        .map(|c| c.id.clone())
-        .flatten()
+        .and_then(|c| c.id.clone())
     {
         let clinician_row = validate_clinician_exists(&ctx.connection, &clinician_id)?;
         if clinician_row.is_none() {

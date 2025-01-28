@@ -25,10 +25,9 @@ pub(crate) fn update_program_enrolment_row(
         .naive_utc();
 
     let repo = ProgramEnrolmentRepository::new(con);
-    let program_enrolment_row =
-        repo.find_one_by_program_id_and_patient(&program_row.id, patient_id)?;
-    let id = match program_enrolment_row {
-        Some(program_enrolment_row) => program_enrolment_row.0.id,
+    let program_enrolment = repo.find_one_by_program_id_and_patient(&program_row.id, patient_id)?;
+    let id = match program_enrolment {
+        Some(program_enrolment) => program_enrolment.row.id,
         None => sha256(&document.name),
     };
 
@@ -46,7 +45,7 @@ pub(crate) fn update_program_enrolment_row(
         document_type: document.r#type.clone(),
         program_id: program_row.id,
         document_name: document.name.clone(),
-        patient_id: patient_id.to_string(),
+        patient_link_id: patient_id.to_string(),
         enrolment_datetime,
         program_enrolment_id: program.program_enrolment_id,
         status,

@@ -134,7 +134,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 pub struct RequisitionLineWithItemIdExists;
 #[Object]
 impl RequisitionLineWithItemIdExists {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Requisition line already exists for this item"
     }
 }
@@ -143,11 +143,12 @@ impl RequisitionLineWithItemIdExists {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{
-            mock_request_draft_requisition, mock_sent_request_requisition_line, MockDataInserts,
+            mock_item_a, mock_request_draft_requisition, mock_sent_request_requisition_line,
+            MockDataInserts,
         },
         RequisitionLine, StorageConnectionManager,
     };
@@ -202,7 +203,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_insert_request_requisition_line_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionLineMutations,
             "test_graphql_insert_request_requisition_line_structured_errors",
@@ -365,7 +366,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_insert_request_requisition_line_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionLineMutations,
             "test_graphql_insert_request_requisition_line_success",
@@ -389,7 +390,7 @@ mod test {
                 input,
                 ServiceInput {
                     id: "new line id input".to_string(),
-                    item_id: "item id input".to_string(),
+                    item_id: mock_item_a().id,
                     requisition_id: "requisition id input".to_string(),
                     requested_quantity: Some(1),
                     comment: Some("comment".to_string())
@@ -398,6 +399,7 @@ mod test {
             Ok(RequisitionLine {
                 requisition_row: mock_request_draft_requisition(),
                 requisition_line_row: mock_sent_request_requisition_line(),
+                item_row: mock_item_a(),
             })
         }));
 
@@ -405,7 +407,7 @@ mod test {
           "input": {
             "id": "new line id input",
             "requisitionId": "requisition id input",
-            "itemId": "item id input",
+            "itemId": "item_a",
             "requestedQuantity": 1,
             "comment": "comment"
           },

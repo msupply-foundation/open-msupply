@@ -45,7 +45,7 @@ export const SensorEditModal: FC<SensorEditModalProps> = ({
   const { draft, onSave, onUpdate } = useDraftSensor(sensor);
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('message.confirm-sensor-update'),
+    message: t('messages.confirm-sensor-update'),
   });
 
   return (

@@ -14,7 +14,7 @@ use crate::{EqualFilter, Sort};
 
 pub type PeriodSchedule = PeriodScheduleRow;
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct PeriodScheduleFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<EqualFilter<String>>,
@@ -87,10 +87,7 @@ fn create_filtered_query(filter: Option<PeriodScheduleFilter>) -> BoxedPeriodSch
 
 impl PeriodScheduleFilter {
     pub fn new() -> PeriodScheduleFilter {
-        PeriodScheduleFilter {
-            id: None,
-            name: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

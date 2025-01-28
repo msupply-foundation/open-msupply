@@ -80,7 +80,7 @@ const isStringEnum = (
 };
 
 export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const [removeIndex, setRemoveIndex] = useState<number | undefined>();
   const {
     uischema,

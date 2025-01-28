@@ -2,11 +2,10 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
-use repository::{ActivityLogRow, ActivityLogType};
-use serde_json::json;
+use repository::{ActivityLogRow, ActivityLogRowDelete, ActivityLogType};
 use util::{inline_edit, uuid::uuid};
 
 pub struct ActivityLogRecordTester;
@@ -48,16 +47,13 @@ impl SyncRecordTester for ActivityLogRecordTester {
         });
 
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::ActivityLog(log_1.clone()),
-                PullUpsertRecord::ActivityLog(log_2.clone()),
-            ])
-            .join(IntegrationRecords::from_deletes(vec![PullDeleteRecord {
-                id: log_3.id.clone(),
-                table: PullDeleteRecordTable::ActivityLog,
-            }])),
+            integration_records: vec![
+                IntegrationOperation::upsert(log_1),
+                IntegrationOperation::upsert(log_2),
+                // Should not sync out thus need to check if it's missing after re-initialisation
+                IntegrationOperation::delete(ActivityLogRowDelete(log_3.id)),
+            ],
+            ..Default::default()
         });
         result
     }

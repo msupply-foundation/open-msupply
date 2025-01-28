@@ -1,6 +1,6 @@
 mod test {
     use async_graphql::EmptyMutation;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::{
         mock_invoice1_linked_to_requisition, mock_invoice2_linked_to_requisition,
         mock_invoice3_linked_to_requisition, mock_name_a, mock_name_b,
@@ -13,7 +13,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_requisition_loaders() {
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             RequisitionQueries,
             EmptyMutation,
             "test_graphql_requisition_loaders",
@@ -134,7 +134,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_requisition_line() {
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             RequisitionQueries,
             EmptyMutation,
             "test_graphql_requisition_line",
@@ -191,7 +191,7 @@ mod test {
                         "totalCount": 1,
                          "nodes": [{
                             "id": &response_requisition.lines[0].id,
-                            "itemId":&response_requisition.lines[0].item_id,
+                            "itemId":&response_requisition.lines[0].item_link_id,
                             "requestedQuantity": &response_requisition.lines[0].requested_quantity,
                             "supplyQuantity": &response_requisition.lines[0].supply_quantity,
                             "suggestedQuantity": &response_requisition.lines[0].suggested_quantity,
@@ -208,7 +208,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_requisition_line_loaders() {
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             RequisitionQueries,
             EmptyMutation,
             "test_graphql_requisition_line_loaders",
@@ -260,14 +260,14 @@ mod test {
                     "lines": {
                          "nodes": [{
                              "item": {
-                                 "id": request_requisition.lines[0].item_id
+                                 "id": request_requisition.lines[0].item_link_id
                              },
                              "linkedRequisitionLine": {
                                 "id": response_requisition.lines[0].id,
                              }
                          },{
                             "item": {
-                                "id": request_requisition.lines[1].item_id
+                                "id": request_requisition.lines[1].item_link_id
                             },
                             "linkedRequisitionLine": null
                         }]
@@ -277,7 +277,7 @@ mod test {
                     "lines": {
                          "nodes": [{
                              "item": {
-                                 "id": response_requisition.lines[0].item_id
+                                 "id": response_requisition.lines[0].item_link_id
                              },
                              "linkedRequisitionLine": {
                                 "id": request_requisition.lines[0].id,

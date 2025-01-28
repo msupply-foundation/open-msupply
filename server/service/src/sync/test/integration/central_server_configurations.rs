@@ -1,10 +1,12 @@
 use serde::{Deserialize, Serialize};
 use std::env;
 
-use crate::sync::{
-    api::{to_json, SyncApiError, SyncApiV5},
-    settings::SyncSettings,
-    sync_api_credentials::SyncCredentials,
+use crate::{
+    app_data::{AppDataService, AppDataServiceTrait},
+    sync::{
+        api::{to_json, SyncApiError, SyncApiSettings, SyncApiV5},
+        settings::SyncSettings,
+    },
 };
 
 use super::with_retry;
@@ -61,6 +63,7 @@ impl SyncApiV5 {
         visible_name_ids: Vec<String>,
     ) -> Result<CreateSyncSiteResponse, SyncApiError> {
         let route = "/sync/v5/test/create_site";
+
         let response = self
             .do_post(route, &CreateSyncSiteInput { visible_name_ids })
             .await?;
@@ -70,9 +73,10 @@ impl SyncApiV5 {
             .map_err(|error| self.api_error(route, error.into()))?;
 
         let check_site_api = SyncApiV5 {
-            credentials: SyncCredentials {
+            settings: SyncApiSettings {
                 username: site_response.site.name.clone(),
                 password_sha256: site_response.site.password_sha256.clone(),
+                ..self.settings.clone()
             },
             ..self.clone()
         };
@@ -100,8 +104,12 @@ impl ConfigureCentralServer {
         let site_name = env::var("SYNC_SITE_NAME").expect("SYNC_SITE_NAME env variable missing");
         let url = env::var("SYNC_URL").expect("SYNC_URL env variable missing");
 
+        let hardware_id = AppDataService::new("../app_data")
+            .get_hardware_id()
+            .unwrap();
+
         ConfigureCentralServer {
-            api: SyncApiV5::new_test(&url, &site_name, &password, ""),
+            api: SyncApiV5::new_test(&url, &site_name, &password, &hardware_id),
             server_url: url,
         }
     }

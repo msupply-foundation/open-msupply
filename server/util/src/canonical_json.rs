@@ -91,25 +91,25 @@ mod test {
     fn test_canonical_json() {
         let base = json!({
             "A": "string",
-            "B": 1.23456789 as f32,
+            "B": 1.234_567_9_f32,
             "C": true,
-            "D": 5 as i32,
-            "E": [1 as i32, 2 as i32, 3 as i32],
+            "D": 5_i32,
+            "E": [1_i32, 2_i32, 3_i32],
             "F": {
                 "AA": "str",
-                "BB": 1.23 as f32,
+                "BB": 1.23_f32,
             }
         });
         let base2 = json!({
             "C": true,
             "A": "string",
-            "D": 5 as i32,
-            "E": [1 as i32, 2 as i32, 3 as i32],
+            "D": 5_i32,
+            "E": [1_i32, 2_i32, 3_i32],
             "F": {
-                "BB": 1.23 as f32,
+                "BB": 1.23_f32,
                 "AA": "str",
             },
-            "B": 1.23456789 as f32,
+            "B": 1.234_567_9_f32,
         });
         // test same object with different order result in the same string
         assert_eq!(canonical_json(&base), canonical_json(&base2));

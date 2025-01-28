@@ -1,8 +1,9 @@
 pub mod plugin_data;
 use self::plugin_data::mutations;
+pub mod types;
 
+use crate::types::RelatedRecordNodeType;
 use async_graphql::*;
-use graphql_types::types::RelatedRecordNodeType;
 use plugin_data::query::{PluginDataFilterInput, PluginDataResponse, PluginDataSortInput};
 
 #[derive(Default, Clone)]

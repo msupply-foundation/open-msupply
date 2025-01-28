@@ -35,7 +35,7 @@ export const Initialise = () => {
 
   useEffect(() => {
     setPageTitle(`${t('messages.not-initialised')} | ${t('app')} `);
-  }, []);
+  }, [setPageTitle, t]);
 
   const isInputDisabled = isInitialising || isLoading;
 

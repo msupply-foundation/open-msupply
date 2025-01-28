@@ -32,7 +32,7 @@ pub fn update_location(
         .transaction_sync(|connection| {
             let location_row = validate(connection, &ctx.store_id, &input)?;
             let updated_location_row = generate(input, location_row);
-            LocationRowRepository::new(&connection).upsert_one(&updated_location_row)?;
+            LocationRowRepository::new(connection).upsert_one(&updated_location_row)?;
 
             get_location(ctx, updated_location_row.id).map_err(UpdateLocationError::from)
         })

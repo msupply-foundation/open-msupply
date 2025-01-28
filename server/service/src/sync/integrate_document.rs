@@ -1,7 +1,7 @@
 use repository::{
     Document, DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistryRepository,
     DocumentRepository, EncounterFilter, EncounterRepository, EqualFilter, ProgramFilter,
-    ProgramRepository, RepositoryError, StorageConnection,
+    ProgramRepository, RepositoryError, StorageConnection, Upsert,
 };
 
 use crate::{
@@ -16,8 +16,23 @@ use crate::{
         program_enrolment::program_schema::SchemaProgramEnrolment,
     },
 };
+#[derive(Debug)]
+pub(crate) struct DocumentUpsert(pub(crate) Document);
 
-pub(crate) fn sync_upsert_document(
+impl Upsert for DocumentUpsert {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        sync_upsert_document(con, &self.0)
+    }
+
+    fn assert_upserted(&self, con: &StorageConnection) {
+      assert_eq!(
+          DocumentRepository::new(con).find_one_by_id(&self.0.id),
+          Ok(Some(self.0.clone()))
+      );
+    }
+}
+
+fn sync_upsert_document(
     con: &StorageConnection,
     document: &Document,
 ) -> Result<(), RepositoryError> {
@@ -110,7 +125,7 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
         clinician_id,
         program_row,
         encounter_start_time,
-        existing_encounter.map(|(existing, _)| existing.start_datetime),
+        existing_encounter.map(|encounter| encounter.row.start_datetime),
         None,
     )
     .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
@@ -172,7 +187,7 @@ mod integrate_document_test {
                 name: doc_name.to_string(),
                 parent_ids: vec![],
                 user_id: "me".to_string(),
-                datetime: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                     NaiveDateTime::from_timestamp_opt(50000, 0).unwrap(),
                     Utc,
                 ),
@@ -203,7 +218,7 @@ mod integrate_document_test {
             .unwrap()
             .pop()
             .unwrap()
-            .0;
+            .row;
         assert_eq!(&found.program_enrolment_id.unwrap(), "name1");
 
         // adding older document shouldn't update the patient entry
@@ -214,7 +229,7 @@ mod integrate_document_test {
                 name: doc_name.to_string(),
                 parent_ids: vec![],
                 user_id: "me".to_string(),
-                datetime: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                     NaiveDateTime::from_timestamp_opt(20000, 0).unwrap(),
                     Utc,
                 ),
@@ -245,7 +260,7 @@ mod integrate_document_test {
             .unwrap()
             .pop()
             .unwrap()
-            .0;
+            .row;
         assert_eq!(&found.program_enrolment_id.unwrap(), "name1");
 
         // adding newer document should update the patient entry
@@ -256,7 +271,7 @@ mod integrate_document_test {
                 name: doc_name.to_string(),
                 parent_ids: vec![],
                 user_id: "me".to_string(),
-                datetime: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                     NaiveDateTime::from_timestamp_opt(100000, 0).unwrap(),
                     Utc,
                 ),
@@ -287,7 +302,7 @@ mod integrate_document_test {
             .unwrap()
             .pop()
             .unwrap()
-            .0;
+            .row;
         assert_eq!(&found.program_enrolment_id.unwrap(), "name2");
     }
 }

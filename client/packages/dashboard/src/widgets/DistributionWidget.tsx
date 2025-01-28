@@ -13,6 +13,7 @@ import {
   RouteBuilder,
   InvoiceNodeStatus,
   RequisitionNodeStatus,
+  useNavigate,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import { useDashboard } from '../api';
@@ -20,9 +21,10 @@ import { useOutbound } from '@openmsupply-client/invoices';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const DistributionWidget: React.FC = () => {
-  const modalControl = useToggle(false);
-  const { error: errorNotification } = useNotification();
   const t = useTranslation('dashboard');
+  const modalControl = useToggle(false);
+  const navigate = useNavigate();
+  const { error: errorNotification } = useNotification();
   const formatNumber = useFormatNumber();
   const {
     data: outboundCount,
@@ -60,7 +62,15 @@ export const DistributionWidget: React.FC = () => {
                 otherPartyId,
               },
               { onError }
-            );
+            ).then(invoiceNumber => {
+              navigate(
+                RouteBuilder.create(AppRoute.Distribution)
+                  .addPart(AppRoute.OutboundShipment)
+                  .addPart(String(invoiceNumber))
+                  .build(),
+                { replace: true }
+              );
+            });
           }}
         />
       ) : null}

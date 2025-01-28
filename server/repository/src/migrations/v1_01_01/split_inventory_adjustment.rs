@@ -81,14 +81,14 @@ async fn split_inventory_adjustment() {
 
     execute_sql_with_error(
         &connection,
-        sql_query(format!(
+        sql_query((
             r#"
             INSERT INTO stocktake
             (id, stocktake_number, store_id, user_id, created_datetime, status, inventory_adjustment_id)
             VALUES
                 ('stocktake1', 1, 'store_id', '', $1, 'NEW', 'invoice1')
         "#
-        ))
+        ).to_string())
         .bind::<Timestamp, _>(util::Defaults::naive_date_time()),
     )
     .unwrap();

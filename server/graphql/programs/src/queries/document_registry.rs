@@ -68,9 +68,7 @@ pub fn document_registries(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let filter = filter
-        .map(|f| f.to_domain())
-        .unwrap_or(DocumentRegistryFilter::new());
+    let filter = filter.map(|f| f.to_domain()).unwrap_or_default();
 
     let entries = service_provider
         .document_registry_service
@@ -79,7 +77,7 @@ pub fn document_registries(
             Some(filter),
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
-            &allowed_ctx,
+            allowed_ctx,
         )
         .map_err(|err| {
             let formatted_err = format! {"{:?}", err};

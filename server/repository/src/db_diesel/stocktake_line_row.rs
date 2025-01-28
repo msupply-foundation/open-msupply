@@ -1,11 +1,11 @@
 use super::{
-    inventory_adjustment_reason_row::inventory_adjustment_reason, item_row::item,
+    inventory_adjustment_reason_row::inventory_adjustment_reason, item_link_row::item_link,
     location_row::location, stock_line_row::stock_line,
     stocktake_line_row::stocktake_line::dsl as stocktake_line_dsl, stocktake_row::stocktake,
     StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 
 use diesel::prelude::*;
 
@@ -22,7 +22,7 @@ table! {
         counted_number_of_packs -> Nullable<Double>,
 
         // stock line related fields:
-        item_id -> Text,
+        item_link_id -> Text,
         batch -> Nullable<Text>,
         expiry_date -> Nullable<Date>,
         pack_size -> Nullable<Integer>,
@@ -33,11 +33,12 @@ table! {
     }
 }
 
-joinable!(stocktake_line -> item (item_id));
+joinable!(stocktake_line -> item_link (item_link_id));
 joinable!(stocktake_line -> location (location_id));
 joinable!(stocktake_line -> stocktake (stocktake_id));
 joinable!(stocktake_line -> stock_line (stock_line_id));
 joinable!(stocktake_line -> inventory_adjustment_reason (inventory_adjustment_reason_id));
+allow_tables_to_appear_in_same_query!(stocktake_line, item_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]
@@ -54,8 +55,7 @@ pub struct StocktakeLineRow {
     pub counted_number_of_packs: Option<f64>,
 
     // stock line related fields:
-    /// When a creating a new stock line this field holds the required item id
-    pub item_id: String,
+    pub item_link_id: String,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
     pub pack_size: Option<i32>,
@@ -104,7 +104,7 @@ impl<'a> StocktakeLineRowRepository<'a> {
             .filter(stocktake_line_dsl::id.eq(id))
             .first(&self.connection.connection)
             .optional();
-        result.map_err(|err| RepositoryError::from(err))
+        result.map_err(RepositoryError::from)
     }
 
     pub fn find_many_by_id(
@@ -115,5 +115,35 @@ impl<'a> StocktakeLineRowRepository<'a> {
             .filter(stocktake_line_dsl::id.eq_any(ids))
             .load(&self.connection.connection)?;
         Ok(result)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct StocktakeLineRowDelete(pub String);
+// For tests only
+impl Delete for StocktakeLineRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        StocktakeLineRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            StocktakeLineRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for StocktakeLineRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        StocktakeLineRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            StocktakeLineRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

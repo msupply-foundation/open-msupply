@@ -226,7 +226,7 @@ const NoteComponent = (props: ControlProps) => {
   );
   const [editMode, setEditMode] = useState(!text);
 
-  const t = useTranslation('common');
+  const t = useTranslation();
 
   if (!props.visible) {
     return null;

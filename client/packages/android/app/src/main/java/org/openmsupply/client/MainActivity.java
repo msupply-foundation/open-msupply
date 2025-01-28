@@ -3,6 +3,7 @@ package org.openmsupply.client;
 import android.content.Intent;
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
+import java.io.File;
 
 public class MainActivity extends BridgeActivity {
     RemoteServer server = new RemoteServer();
@@ -39,5 +40,9 @@ public class MainActivity extends BridgeActivity {
     // Implementing here, so that we can use the FileManager instance
     public void SaveFile(String filename, String content) {
         fileManager.Save(filename, content);
+    }
+
+    public void SaveDatabase(File file) {
+        fileManager.SaveDatabase(file);
     }
 }

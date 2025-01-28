@@ -12,6 +12,7 @@ import { useOutboundLineEditRows } from './hooks';
 import { useOutboundLineEditColumns } from './columns';
 import { DraftItem } from '../../..';
 import { PackSizeController, shouldUpdatePlaceholder } from '../../../StockOut';
+import { CurrencyRowFragment } from '@openmsupply-client/system';
 
 export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
@@ -20,6 +21,8 @@ export interface OutboundLineEditTableProps {
   item: DraftItem | null;
   allocatedQuantity: number;
   batch?: string;
+  currency?: CurrencyRowFragment | null;
+  isExternalSupplier: boolean;
 }
 
 const PlaceholderCell = styled(TableCell)(({ theme }) => ({
@@ -84,6 +87,8 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   item,
   allocatedQuantity,
   batch,
+  currency,
+  isExternalSupplier,
 }) => {
   const t = useTranslation('distribution');
   const { orderedRows, placeholderRow } = useOutboundLineEditRows(
@@ -92,8 +97,9 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
     batch
   );
   const onEditStockLine = (key: string, value: number, packSize: number) => {
-    onChange(key, value, packSize);
-    if (placeholderRow && shouldUpdatePlaceholder(value, placeholderRow)) {
+    const num = Number.isNaN(value) ? 0 : value;
+    onChange(key, num, packSize);
+    if (placeholderRow && shouldUpdatePlaceholder(num, placeholderRow)) {
       // if a stock line has been allocated
       // and the placeholder row is a generated one,
       // remove the placeholder row
@@ -106,6 +112,8 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   const columns = useOutboundLineEditColumns({
     onChange: onEditStockLine,
     unit,
+    currency,
+    isExternalSupplier,
   });
 
   const additionalRows = [
@@ -123,6 +131,7 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
       <Divider margin={10} />
       <Box
         style={{
+          maxHeight: 325,
           display: 'flex',
           flexDirection: 'column',
           overflowX: 'hidden',

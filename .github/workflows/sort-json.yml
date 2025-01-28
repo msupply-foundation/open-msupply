@@ -1,0 +1,26 @@
+name: Sort JSON files
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'client/**'
+  workflow_dispatch:
+
+jobs:
+  sort:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Sort JSON files
+        run: ./sort-json.sh
+
+      - name: Commit changes
+        run: git commit --no-verify -m 'Sorted JSON files'

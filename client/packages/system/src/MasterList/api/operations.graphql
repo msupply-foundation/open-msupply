@@ -14,28 +14,13 @@ fragment MasterListLine on MasterListLineNode {
   }
 }
 
-fragment MasterList on MasterListNode {
-  __typename
-  name
-  code
-  description
-  id
-  lines {
-    nodes {
-      ...MasterListLine
-    }
-  }
-}
-
 fragment MasterListRow on MasterListNode {
   __typename
   name
   code
   description
   id
-  lines {
-    totalCount
-  }
+  linesCount
 }
 
 query masterLists(
@@ -86,7 +71,31 @@ query masterList($filter: MasterListFilterInput, $storeId: String!) {
       __typename
       totalCount
       nodes {
-        ...MasterList
+        ...MasterListRow
+      }
+    }
+  }
+}
+
+query masterListLines(
+  $storeId: String!
+  $masterListId: String!
+  $page: PaginationInput
+  $sort: [MasterListLineSortInput!]
+  $filter: MasterListLineFilterInput
+) {
+  masterListLines(
+    storeId: $storeId
+    masterListId: $masterListId
+    page: $page
+    sort: $sort
+    filter: $filter
+  ) {
+    ... on MasterListLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...MasterListLine
       }
     }
   }

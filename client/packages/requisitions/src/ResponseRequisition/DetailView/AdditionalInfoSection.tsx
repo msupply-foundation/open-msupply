@@ -10,17 +10,21 @@ import {
   useBufferState,
   BufferedTextArea,
   InfoTooltipIcon,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { useResponse } from '../api';
 
 export const AdditionalInfoSection: FC = () => {
   const isDisabled = useResponse.utils.isDisabled();
-  const { user, colour, comment, update } = useResponse.document.fields([
-    'colour',
-    'comment',
-    'user',
-  ]);
+  const { user, colour, comment, createdDatetime, update } =
+    useResponse.document.fields([
+      'colour',
+      'comment',
+      'user',
+      'createdDatetime',
+    ]);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
+  const { localisedDate } = useFormatDateTime();
   const t = useTranslation('distribution');
 
   return (
@@ -30,6 +34,10 @@ export const AdditionalInfoSection: FC = () => {
           <PanelLabel>{t('label.edited-by')}</PanelLabel>
           <PanelField>{user?.username}</PanelField>
           {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('label.entered')}</PanelLabel>
+          <PanelField>{localisedDate(createdDatetime)}</PanelField>
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('label.color')}</PanelLabel>

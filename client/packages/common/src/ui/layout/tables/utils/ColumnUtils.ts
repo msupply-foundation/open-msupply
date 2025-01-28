@@ -53,11 +53,16 @@ export const useColumnUtils = () => {
           const obj = line[key];
           return !!obj ? [obj] : [];
         });
+
+        // Extract a value from the array if:
+        // - Array is not empty
+        // - First array element has the required property:
         const isValid =
-          arr.length === 0 ||
-          arr[0] === undefined ||
-          typeof arr[0] !== 'object' ||
-          !(key in arr[0]);
+          arr.length > 0 &&
+          !!propertyKey &&
+          arr[0] !== undefined &&
+          typeof arr[0] === 'object' &&
+          propertyKey in arr[0];
 
         return isValid
           ? ArrayUtils.ifTheSameElseDefault(

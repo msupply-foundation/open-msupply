@@ -19,5 +19,6 @@ export const usePatient = {
     update: Document.useUpdatePatient,
     insertProgramPatient: Document.useInsertProgramPatient,
     updateProgramPatient: Document.useUpdateProgramPatient,
+    latestPatientEncounter: Document.useLatestPatientEncounter,
   },
 };

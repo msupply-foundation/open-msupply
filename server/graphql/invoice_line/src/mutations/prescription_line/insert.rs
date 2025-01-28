@@ -21,7 +21,6 @@ use service::invoice_line::stock_out_line::{
 pub struct InsertInput {
     pub id: String,
     pub invoice_id: String,
-    pub item_id: String,
     pub stock_line_id: String,
     pub number_of_packs: f64,
     pub note: Option<String>,
@@ -137,9 +136,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | NoInvoiceType
         | InvoiceTypeDoesNotMatch
         | LineAlreadyExists
-        | NumberOfPacksBelowOne
-        | ItemNotFound
-        | ItemDoesNotMatchStockLine => StandardGraphqlError::BadUserInput(formatted_error),
+        | NumberOfPacksBelowOne => StandardGraphqlError::BadUserInput(formatted_error),
         DatabaseError(_) | NewlyCreatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
         }
@@ -153,7 +150,6 @@ impl InsertInput {
         let InsertInput {
             id,
             invoice_id,
-            item_id,
             stock_line_id,
             number_of_packs,
             note,
@@ -163,7 +159,6 @@ impl InsertInput {
             id,
             r#type: Some(StockOutType::Prescription),
             invoice_id,
-            item_id,
             stock_line_id,
             number_of_packs,
             total_before_tax: None,
@@ -177,7 +172,7 @@ impl InsertInput {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{
@@ -226,7 +221,6 @@ mod test {
           "input": {
             "id": "n/a",
             "invoiceId": "n/a",
-            "itemId": "n/a",
             "stockLineId": "n/a",
             "numberOfPacks": 0,
             "stockLineId": "n/a",
@@ -237,7 +231,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_insert_prescription_line_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_insert_prescription_line_errors",
@@ -473,30 +467,6 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //ItemNotFound
-        let test_service = TestService(Box::new(|_| Err(ServiceError::ItemNotFound)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        //ItemDoesNotMatchStockLine
-        let test_service = TestService(Box::new(|_| Err(ServiceError::ItemDoesNotMatchStockLine)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
         //DatabaseError
         let test_service = TestService(Box::new(|_| {
             Err(ServiceError::DatabaseError(RepositoryError::NotFound))
@@ -528,7 +498,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_insert_prescription_line_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_insert_prescription_line_success",
@@ -556,7 +526,6 @@ mod test {
                     id: "new id".to_string(),
                     r#type: Some(StockOutType::Prescription),
                     invoice_id: "invoice input".to_string(),
-                    item_id: "item input".to_string(),
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
                     total_before_tax: None,
@@ -567,7 +536,7 @@ mod test {
             Ok(InvoiceLine {
                 invoice_line_row: mock_prescription_a_invoice_lines()[0].clone(),
                 invoice_row: mock_prescription_a(),
-                item_row_option: Some(mock_item_a()),
+                item_row: mock_item_a(),
                 location_row_option: Some(mock_location_1()),
                 stock_line_option: None,
             })
@@ -577,7 +546,6 @@ mod test {
             "input": {
                 "id": "new id",
                 "invoiceId": "invoice input",
-                "itemId": "item input",
                 "stockLineId": "stock line input",
                 "numberOfPacks": 1.0
             },

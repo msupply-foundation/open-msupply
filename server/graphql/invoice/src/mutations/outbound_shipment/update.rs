@@ -14,7 +14,8 @@ use service::invoice::outbound_shipment::update::{
 use service::invoice_line::ShipmentTaxUpdate;
 
 use super::error::{
-    CannotChangeStatusOfInvoiceOnHold, InvoiceIsNotEditable, NotAnOutboundShipmentError,
+    CannotChangeStatusOfInvoiceOnHold, CannotIssueInForeignCurrency, InvoiceIsNotEditable,
+    NotAnOutboundShipmentError,
 };
 
 #[derive(InputObject)]
@@ -32,6 +33,8 @@ pub struct UpdateInput {
     transport_reference: Option<String>,
     colour: Option<String>,
     tax: Option<TaxInput>,
+    currency_id: Option<String>,
+    currency_rate: Option<f64>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -94,6 +97,7 @@ pub enum UpdateErrorInterface {
     InvoiceIsNotEditable(InvoiceIsNotEditable),
     NotAnOutboundShipment(NotAnOutboundShipmentError),
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(CanOnlyChangeToAllocatedWhenNoUnallocatedLines),
+    CannotIssueInForeignCurrency(CannotIssueInForeignCurrency),
 }
 
 impl UpdateInput {
@@ -107,6 +111,8 @@ impl UpdateInput {
             colour,
             transport_reference,
             tax,
+            currency_id,
+            currency_rate,
         } = self;
 
         ServiceInput {
@@ -122,6 +128,8 @@ impl UpdateInput {
                     percentage: tax.percentage,
                 })
             }),
+            currency_id,
+            currency_rate,
         }
     }
 }
@@ -160,9 +168,15 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 ),
             )
         }
+        ServiceError::CannotIssueInForeignCurrency => {
+            return Ok(UpdateErrorInterface::CannotIssueInForeignCurrency(
+                CannotIssueInForeignCurrency,
+            ))
+        }
         // Standard Graphql Errors
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
+        ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InvoiceLineHasNoStockLine(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
@@ -196,7 +210,7 @@ impl UpdateOutboundShipmentStatusInput {
 
 #[cfg(test)]
 mod graphql {
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
     use repository::mock::{mock_new_invoice_with_unallocated_line, MockDataInserts};
     use serde_json::json;
@@ -205,7 +219,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_outbound_shipment_update() {
-        let (mock_data, _, _, settings) = setup_graphl_test(
+        let (mock_data, _, _, settings) = setup_graphql_test(
             InvoiceQueries,
             InvoiceMutations,
             "omsupply-database-gql-outbound_shipment_update",

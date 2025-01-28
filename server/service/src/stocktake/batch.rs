@@ -1,9 +1,6 @@
-use repository::{RepositoryError, Stocktake, StocktakeLine};
+use repository::StocktakeLine;
 
-use crate::{
-    service_provider::ServiceContext, stocktake_line::*, BatchMutationsProcessor, InputWithResult,
-    WithDBError,
-};
+use crate::{stocktake_line::*, BatchMutationsProcessor, InputWithResult, WithDBError};
 
 use super::*;
 

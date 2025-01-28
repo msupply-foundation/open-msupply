@@ -15,5 +15,6 @@ export const IPC_MESSAGES = {
   ON_DEVICE_MATCHED: 'on-device-matched',
   SET_SCANNER_TYPE: 'set-scanner-type',
   GET_SCANNER_TYPE: 'get-scanner-type',
+  SAVE_DATABASE: 'save-database',
   SAVE_FILE: 'save-file',
 };

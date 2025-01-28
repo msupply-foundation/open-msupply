@@ -4,7 +4,7 @@ use repository::{
 
 use super::{Operation, ShipmentTransferProcessor, ShipmentTransferProcessorRecord};
 
-const DESCRIPTION: &'static str = "Link outbound shipment to inbound shipment";
+const DESCRIPTION: &str = "Link outbound shipment to inbound shipment";
 
 pub(crate) struct LinkOutboundShipmentProcessor;
 
@@ -16,7 +16,7 @@ impl ShipmentTransferProcessor for LinkOutboundShipmentProcessor {
     /// Outbound shipment will be linked to inbound shipment when all below conditions are met:
     ///
     /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
-    /// 2. Source shipment is Inbound shipment
+    /// 2. Source shipment is either Inbound shipment or Inbound Return
     /// 3. Linked shipment exists (the outbound shipment)
     /// 4. Linked outbound shipment is not linked to source inbound shipment
     ///
@@ -37,7 +37,10 @@ impl ShipmentTransferProcessor for LinkOutboundShipmentProcessor {
             _ => return Ok(None),
         };
         // 2.
-        if inbound_shipment.invoice_row.r#type != InvoiceRowType::InboundShipment {
+        if !matches!(
+            inbound_shipment.invoice_row.r#type,
+            InvoiceRowType::InboundShipment | InvoiceRowType::InboundReturn
+        ) {
             return Ok(None);
         }
         // 3.

@@ -1,5 +1,5 @@
 use super::{unit_row::unit::dsl::*, StorageConnection};
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 use diesel::prelude::*;
 
 table! {
@@ -8,6 +8,7 @@ table! {
         name -> Text,
         description -> Nullable<Text>,
         index -> Integer,
+        is_active -> Bool,
     }
 }
 
@@ -18,6 +19,7 @@ pub struct UnitRow {
     pub name: String,
     pub description: Option<String>,
     pub index: i32,
+    pub is_active: bool,
 }
 
 pub struct UnitRowRepository<'a> {
@@ -48,7 +50,7 @@ impl<'a> UnitRowRepository<'a> {
         Ok(())
     }
 
-    pub async fn find_one_by_id(&self, unit_id: &str) -> Result<UnitRow, RepositoryError> {
+    pub async fn find_active_by_id(&self, unit_id: &str) -> Result<UnitRow, RepositoryError> {
         let result = unit
             .filter(id.eq(unit_id))
             .first(&self.connection.connection)?;
@@ -63,8 +65,50 @@ impl<'a> UnitRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_inactive_by_id(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
+        let result = unit
+            .filter(id.eq(unit_id).and(is_active.eq(false)))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn delete(&self, unit_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(unit.filter(id.eq(unit_id))).execute(&self.connection.connection)?;
+        diesel::update(unit.filter(id.eq(unit_id)))
+            .set(is_active.eq(false))
+            .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct UnitRowDelete(pub String);
+impl Delete for UnitRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        UnitRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert!(matches!(
+            UnitRowRepository::new(con).find_one_by_id_option(&self.0),
+            Ok(Some(UnitRow {
+                is_active: false,
+                ..
+            })) | Ok(None)
+        ));
+    }
+}
+
+impl Upsert for UnitRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        UnitRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            UnitRowRepository::new(con).find_one_by_id_option(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

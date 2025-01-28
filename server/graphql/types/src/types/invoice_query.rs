@@ -1,5 +1,8 @@
 use super::patient::PatientNode;
-use super::{ClinicianNode, InvoiceLineConnector, NameNode, RequisitionNode, StoreNode, UserNode};
+use super::{
+    ClinicianNode, CurrencyNode, InvoiceLineConnector, NameNode, RequisitionNode, StoreNode,
+    UserNode,
+};
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
@@ -13,9 +16,9 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, PricingRow};
+use repository::{ClinicianRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, PricingRow};
 
-use repository::{unknown_user, Invoice};
+use repository::Invoice;
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -27,6 +30,8 @@ pub enum InvoiceNodeType {
     Prescription,
     InventoryAddition,
     InventoryReduction,
+    OutboundReturn,
+    InboundReturn,
     Repack,
 }
 
@@ -117,9 +122,9 @@ impl InvoiceNode {
         let result = loader
             .load_one(user_id.clone())
             .await?
-            .unwrap_or(unknown_user());
+            .map(UserNode::from_domain);
 
-        Ok(Some(UserNode::from_domain(result)))
+        Ok(result)
     }
 
     pub async fn r#type(&self) -> InvoiceNodeType {
@@ -151,37 +156,37 @@ impl InvoiceNode {
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row().created_datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
 
     pub async fn allocated_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .allocated_datetime
-            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn picked_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .picked_datetime
-            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn shipped_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .shipped_datetime
-            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn delivered_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .delivered_datetime
-            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn verified_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .verified_datetime
-            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn colour(&self) -> &Option<String> {
@@ -240,6 +245,7 @@ impl InvoiceNode {
             service_total_before_tax: 0.0,
             service_total_after_tax: 0.0,
             tax_percentage: self.row().tax,
+            foreign_currency_total_after_tax: None,
         };
 
         let result_option = loader.load_one(self.row().id.to_string()).await?;
@@ -257,13 +263,13 @@ impl InvoiceNode {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let response_option = loader
-            .load_one(NameByIdLoaderInput::new(&store_id, &self.row().name_id))
+            .load_one(NameByIdLoaderInput::new(&store_id, &self.name_row().id))
             .await?;
 
         response_option.map(NameNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find name ({}) linked to invoice ({})",
-                &self.row().name_id,
+                &self.name_row().id,
                 &self.row().id
             ))
             .extend(),
@@ -271,8 +277,8 @@ impl InvoiceNode {
     }
 
     pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
-        let clinician_id = if let Some(clinician_id) = &self.row().clinician_id {
-            clinician_id
+        let clinician_id = if let Some(clinician) = &self.clinician_row() {
+            &clinician.id
         } else {
             return Ok(None);
         };
@@ -281,21 +287,23 @@ impl InvoiceNode {
         Ok(loader
             .load_one(ClinicianLoaderInput::new(
                 &self.row().store_id,
-                &clinician_id,
+                clinician_id,
             ))
             .await?
             .map(ClinicianNode::from_domain))
     }
 
-    pub async fn clinician_id(&self) -> &Option<String> {
-        &self.row().clinician_id
+    pub async fn clinician_id(&self) -> Option<String> {
+        self.clinician_row()
+            .as_ref()
+            .map(|clinician| clinician.id.clone())
     }
 
     pub async fn patient(&self, ctx: &Context<'_>) -> Result<Option<PatientNode>> {
         let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
         let result = loader
-            .load_one(self.row().name_id.clone())
+            .load_one(self.name_row().id.clone())
             .await?
             .map(|patient| PatientNode {
                 store_id: self.row().store_id.clone(),
@@ -304,10 +312,51 @@ impl InvoiceNode {
             })
             .ok_or(Error::new(format!(
                 "Failed to load patient: {}",
-                self.row().name_id
+                self.name_row().id
             )))?;
 
         Ok(Some(result))
+    }
+
+    pub async fn currency(&self, ctx: &Context<'_>) -> Result<Option<CurrencyNode>> {
+        let service_provider = ctx.service_provider();
+        let currency_provider = &service_provider.currency_service;
+        let service_context = &service_provider.basic_context()?;
+
+        let currency_id = if let Some(currency_id) = &self.row().currency_id {
+            currency_id
+        } else {
+            return Ok(None);
+        };
+
+        let currency = currency_provider
+            .get_currency(service_context, currency_id)
+            .map_err(|e| StandardGraphqlError::from_repository_error(e).extend())?
+            .ok_or(StandardGraphqlError::InternalError(format!(
+                "Cannot find currency ({}) linked to invoice ({})",
+                currency_id,
+                &self.row().id
+            )))?;
+
+        Ok(Some(CurrencyNode::from_domain(currency)))
+    }
+
+    pub async fn currency_rate(&self) -> &f64 {
+        &self.row().currency_rate
+    }
+
+    /// Inbound Shipment that is the origin of this Outbound Return
+    /// OR Outbound Shipment that is the origin of this Inbound Return
+    pub async fn original_shipment(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
+        let Some(original_shipment_id) = &self.row().original_shipment_id else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
+        Ok(loader
+            .load_one(original_shipment_id.to_string())
+            .await?
+            .map(InvoiceNode::from_domain))
     }
 }
 
@@ -317,6 +366,12 @@ impl InvoiceNode {
     }
     pub fn row(&self) -> &InvoiceRow {
         &self.invoice.invoice_row
+    }
+    pub fn name_row(&self) -> &NameRow {
+        &self.invoice.name_row
+    }
+    pub fn clinician_row(&self) -> &Option<ClinicianRow> {
+        &self.invoice.clinician_row
     }
 }
 
@@ -335,6 +390,10 @@ impl PricingNode {
 
     pub async fn total_after_tax(&self) -> f64 {
         self.invoice_pricing.total_after_tax
+    }
+
+    pub async fn foreign_currency_total_after_tax(&self) -> &Option<f64> {
+        &self.invoice_pricing.foreign_currency_total_after_tax
     }
 
     // stock
@@ -394,6 +453,8 @@ impl InvoiceNodeType {
             InventoryAddition => InvoiceRowType::InventoryAddition,
             InventoryReduction => InvoiceRowType::InventoryReduction,
             Repack => InvoiceRowType::Repack,
+            OutboundReturn => InvoiceRowType::OutboundReturn,
+            InboundReturn => InvoiceRowType::InboundReturn,
         }
     }
 
@@ -406,6 +467,8 @@ impl InvoiceNodeType {
             InventoryAddition => InvoiceNodeType::InventoryAddition,
             InventoryReduction => InvoiceNodeType::InventoryReduction,
             Repack => InvoiceNodeType::Repack,
+            InboundReturn => InvoiceNodeType::InboundReturn,
+            OutboundReturn => InvoiceNodeType::OutboundReturn,
         }
     }
 }
@@ -441,10 +504,10 @@ mod test {
 
     use async_graphql::{EmptyMutation, Object};
 
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test_with_data};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::{
         mock::{
-            mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
+            currency_a, mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
             MockDataInserts,
         },
         Invoice, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
@@ -462,15 +525,16 @@ mod test {
         fn invoice() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "test_invoice_pricing".to_string();
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
+                r.currency_id = Some(currency_a().id);
             })
         }
         fn line1() -> InvoiceLineRow {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.invoice_id = invoice().id;
                 r.id = "line1_id".to_string();
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.total_after_tax = 110.0;
                 r.total_before_tax = 100.0;
                 r.tax = Some(10.0);
@@ -481,7 +545,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.invoice_id = invoice().id;
                 r.id = "line2_id".to_string();
-                r.item_id = mock_item_b().id;
+                r.item_link_id = mock_item_b().id;
                 r.total_after_tax = 50.0;
                 r.total_before_tax = 50.0;
                 r.tax = None;
@@ -492,7 +556,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.invoice_id = invoice().id;
                 r.id = "line3_id".to_string();
-                r.item_id = mock_item_c().id;
+                r.item_link_id = mock_item_c().id;
                 r.total_after_tax = 105.0;
                 r.total_before_tax = 100.0;
                 r.tax = Some(5.0);
@@ -500,7 +564,7 @@ mod test {
             })
         }
 
-        let (_, _, _, settings) = setup_graphl_test_with_data(
+        let (_, _, _, settings) = setup_graphql_test_with_data(
             TestQuery,
             EmptyMutation,
             "graphq_test_invoice_pricing",

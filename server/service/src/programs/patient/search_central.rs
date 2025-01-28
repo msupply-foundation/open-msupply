@@ -47,14 +47,14 @@ pub async fn patient_search_central(
         last_name,
         date_of_birth,
         gender: _,
-        name_or_code: _,
+        identifier: _,
     } = params;
     let patients = api
         .patient(PatientParamsV4 {
             limit: None,
             offset: None,
-            first_name,
-            last_name,
+            first_name: first_name.map(|it| format!("@{it}@")),
+            last_name: last_name.map(|it| format!("@{it}@")),
             dob: date_of_birth,
             policy_number: None,
             barcode: None,

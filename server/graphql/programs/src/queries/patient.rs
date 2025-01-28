@@ -91,7 +91,7 @@ pub fn patients(
         filter.map(PatientFilter::from),
         sort.and_then(|mut sort_list| sort_list.pop())
             .map(|sort| sort.to_domain()),
-        Some(&allowed_ctx),
+        Some(allowed_ctx),
     )?;
     let nodes: Vec<PatientNode> = patients
         .rows
@@ -132,7 +132,7 @@ pub fn patient(
             None,
             Some(PatientFilter::new().id(EqualFilter::equal_to(&patient_id))),
             None,
-            Some(&allowed_ctx),
+            Some(allowed_ctx),
         )?
         .rows
         .pop()

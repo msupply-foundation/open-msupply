@@ -3,15 +3,15 @@ use serde::{Deserialize, Serialize};
 use super::*;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub(crate) struct SiteStatusV5 {
-    pub(crate) code: SiteStatusCodeV5,
-    pub(crate) message: String,
-    pub(crate) data: Option<String>,
+pub struct SiteStatusV5 {
+    pub code: SiteStatusCodeV5,
+    pub message: String,
+    pub data: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub(crate) enum SiteStatusCodeV5 {
+pub enum SiteStatusCodeV5 {
     SyncIsRunning,
     IntegrationInProgress,
     InitialisationInProgress,
@@ -20,9 +20,9 @@ pub(crate) enum SiteStatusCodeV5 {
 
 impl SyncApiV5 {
     // Get site status
-    pub(crate) async fn get_site_status(&self) -> Result<SiteStatusV5, SyncApiError> {
+    pub async fn get_site_status(&self) -> Result<SiteStatusV5, SyncApiError> {
         let route = "/sync/v5/site_status";
-        let response = self.do_get_no_query(route).await?;
+        let response = self.do_get(route, &()).await?;
 
         to_json(response)
             .await

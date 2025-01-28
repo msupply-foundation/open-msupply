@@ -123,7 +123,7 @@ export const useJsonForms = <R,>(
   const [data, setData] = useState<JsonData | undefined>();
   const [isSaving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState<boolean>();
-  const t = useTranslation('common');
+  const t = useTranslation();
   const [validationError, setValidationError] = useState<string | false>(false);
   const { success, error: errorNotification } = useNotification();
 

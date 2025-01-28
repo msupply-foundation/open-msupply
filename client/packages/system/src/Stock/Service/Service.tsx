@@ -5,7 +5,6 @@ import { StockListView } from '../ListView';
 
 const Service: FC = () => {
   const stockRoute = RouteBuilder.create(AppRoute.Stock).build();
-
   return (
     <Routes>
       <Route path={stockRoute} element={<StockListView />} />

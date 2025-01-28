@@ -1,4 +1,6 @@
-use crate::mutations::outbound_shipment::error::CannotChangeStatusOfInvoiceOnHold;
+use crate::mutations::outbound_shipment::error::{
+    CannotChangeStatusOfInvoiceOnHold, CannotIssueInForeignCurrency,
+};
 use async_graphql::*;
 
 use graphql_core::generic_inputs::TaxInput;
@@ -28,6 +30,8 @@ pub struct UpdateInput {
     pub their_reference: Option<String>,
     pub colour: Option<String>,
     pub tax: Option<TaxInput>,
+    pub currency_id: Option<String>,
+    pub currency_rate: Option<f64>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -78,6 +82,7 @@ pub enum UpdateErrorInterface {
     CannotEditInvoice(CannotEditInvoice),
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
+    CannotIssueForeignCurrencyForInternalSuppliers(CannotIssueInForeignCurrency),
 }
 
 impl UpdateInput {
@@ -91,6 +96,8 @@ impl UpdateInput {
             their_reference,
             colour,
             tax,
+            currency_id,
+            currency_rate,
         } = self;
 
         ServiceInput {
@@ -106,6 +113,8 @@ impl UpdateInput {
                     percentage: tax.percentage,
                 })
             }),
+            currency_id,
+            currency_rate,
         }
     }
 }
@@ -154,6 +163,13 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 OtherPartyNotVisible,
             ))
         }
+        ServiceError::CannotIssueForeignCurrencyForInternalSuppliers => {
+            return Ok(
+                UpdateErrorInterface::CannotIssueForeignCurrencyForInternalSuppliers(
+                    CannotIssueInForeignCurrency,
+                ),
+            )
+        }
         // Standard Graphql Errors
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
@@ -179,7 +195,7 @@ impl UpdateInboundShipmentStatusInput {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{
@@ -240,7 +256,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_update_inbound_line_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceMutations,
             "test_graphql_update_inbound_errors",
@@ -444,7 +460,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_update_inbound_shipment_success() {
-        let (mock_data, connection, connection_manager, settings) = setup_graphl_test(
+        let (mock_data, connection, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceMutations,
             "test_graphql_update_inbound_shipment_success",
@@ -485,6 +501,8 @@ mod test {
                     their_reference: Some("their reference input".to_string()),
                     colour: Some("colour input".to_string()),
                     tax: None,
+                    currency_id: None,
+                    currency_rate: None
                 }
             );
             Ok(Invoice {

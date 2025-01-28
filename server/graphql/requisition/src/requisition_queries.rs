@@ -138,7 +138,7 @@ pub fn get_requisitions(
         .requisition_service
         .get_requisitions(
             &service_context,
-            Some(&store_id),
+            Some(store_id),
             page.map(PaginationOption::from),
             filter.map(|filter| filter.to_domain()),
             // Currently only one sort option is supported, use the first from the list.

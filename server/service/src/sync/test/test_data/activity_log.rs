@@ -1,12 +1,14 @@
 use crate::sync::{
-    test::{TestSyncPullRecord, TestSyncPushRecord},
-    translations::{activity_log::LegacyActivityLogRow, LegacyTableName, PullUpsertRecord},
+    test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
+    translations::activity_log::LegacyActivityLogRow,
 };
 use chrono::NaiveDate;
 use repository::{ActivityLogRow, ActivityLogType};
 use serde_json::json;
 
-const ACTIVITY_LOG_1: (&'static str, &'static str) = (
+const TABLE_NAME: &str = "om_activity_log";
+
+const ACTIVITY_LOG_1: (&str, &str) = (
     "log_d",
     r#"{
     "ID": "log_d",
@@ -20,7 +22,7 @@ const ACTIVITY_LOG_1: (&'static str, &'static str) = (
     }"#,
 );
 
-const ACTIVITY_LOG_2: (&'static str, &'static str) = (
+const ACTIVITY_LOG_2: (&str, &str) = (
     "log_e",
     r#"{
     "ID": "log_e",
@@ -34,12 +36,12 @@ const ACTIVITY_LOG_2: (&'static str, &'static str) = (
     }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestSyncPullRecord::new_pull_upsert(
-            LegacyTableName::OM_ACTIVITY_LOG,
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
             ACTIVITY_LOG_1,
-            PullUpsertRecord::ActivityLog(ActivityLogRow {
+            ActivityLogRow {
                 id: ACTIVITY_LOG_1.0.to_string(),
                 r#type: ActivityLogType::InvoiceCreated,
                 user_id: Some("user_account_a".to_string()),
@@ -51,12 +53,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                     .unwrap(),
                 changed_to: None,
                 changed_from: None,
-            }),
+            },
         ),
-        TestSyncPullRecord::new_pull_upsert(
-            LegacyTableName::OM_ACTIVITY_LOG,
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
             ACTIVITY_LOG_2,
-            PullUpsertRecord::ActivityLog(ActivityLogRow {
+            ActivityLogRow {
                 id: ACTIVITY_LOG_2.0.to_string(),
                 r#type: ActivityLogType::InvoiceStatusAllocated,
                 user_id: Some("user_account_a".to_string()),
@@ -68,16 +70,16 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                     .unwrap(),
                 changed_to: None,
                 changed_from: None,
-            }),
+            },
         ),
     ]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![
-        TestSyncPushRecord {
+        TestSyncOutgoingRecord {
             record_id: ACTIVITY_LOG_1.0.to_string(),
-            table_name: LegacyTableName::OM_ACTIVITY_LOG.to_string(),
+            table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyActivityLogRow {
                 id: ACTIVITY_LOG_1.0.to_string(),
                 r#type: ActivityLogType::InvoiceCreated,
@@ -92,9 +94,9 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                 changed_from: None,
             }),
         },
-        TestSyncPushRecord {
+        TestSyncOutgoingRecord {
             record_id: ACTIVITY_LOG_2.0.to_string(),
-            table_name: LegacyTableName::OM_ACTIVITY_LOG.to_string(),
+            table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyActivityLogRow {
                 id: ACTIVITY_LOG_2.0.to_string(),
                 r#type: ActivityLogType::InvoiceStatusAllocated,

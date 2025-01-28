@@ -27,11 +27,17 @@ pub fn insert_inbound_shipment_service_line(
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item_row, _) = validate(&input, &ctx.store_id, &connection)?;
-            let new_line = generate(input, item_row)?;
-            InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
+            let (item_row, invoice_row) = validate(&input, &ctx.store_id, connection)?;
+            let new_line = generate(
+                connection,
+                input,
+                item_row,
+                invoice_row.currency_id,
+                &invoice_row.currency_rate,
+            )?;
+            InvoiceLineRowRepository::new(connection).upsert_one(&new_line)?;
             get_invoice_line(ctx, &new_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -224,14 +230,16 @@ mod test {
         let default_service_item = ItemRepository::new(&connection)
             .query_one(
                 None,
-                ItemFilter::new().code(StringFilter::equal_to(DEFAULT_SERVICE_ITEM_CODE)),
+                ItemFilter::new()
+                    .code(StringFilter::equal_to(DEFAULT_SERVICE_ITEM_CODE))
+                    .is_active(true),
             )
             .unwrap()
             .unwrap();
         assert_eq!(
             line,
             inline_edit(&line, |mut u| {
-                u.item_id = default_service_item.item_row.id;
+                u.item_link_id = default_service_item.item_row.id;
                 u.item_name = default_service_item.item_row.name;
                 u
             })
@@ -263,7 +271,7 @@ mod test {
             inline_edit(&line, |mut u| {
                 u.id = "new_line2_id".to_string();
                 u.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
-                u.item_id = mock_item_service_item().id;
+                u.item_link_id = mock_item_service_item().id;
                 u.item_name = "modified name".to_string();
                 u.total_before_tax = 0.3;
                 u.tax = Some(10.0);

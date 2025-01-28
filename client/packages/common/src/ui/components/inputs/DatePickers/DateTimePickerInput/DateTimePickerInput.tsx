@@ -31,7 +31,6 @@ export const DateTimePickerInput: FC<
   width,
   label,
   textFieldProps,
-  format = 'P p',
   minDate,
   maxDate,
   showTime,
@@ -43,6 +42,7 @@ export const DateTimePickerInput: FC<
   const t = useTranslation();
   const { getLocale } = useIntlUtils();
   const dateParseOptions = { locale: getLocale() };
+  const format = props.format ?? showTime ? 'P p' : 'P';
 
   // Max/Min should be restricted by the UI, but it's not restricting TIME input
   // (only Date component). So this function will enforce the max/min after
@@ -61,7 +61,7 @@ export const DateTimePickerInput: FC<
 
   return (
     <DateTimePicker
-      format={showTime ? 'P p' : 'P'}
+      format={format}
       slots={{
         textField: TextField,
       }}

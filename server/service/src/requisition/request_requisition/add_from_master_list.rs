@@ -1,14 +1,14 @@
 use crate::{
-    requisition::common::{check_requisition_exists, get_lines_for_requisition},
+    requisition::common::{check_requisition_row_exists, get_lines_for_requisition},
     service_provider::ServiceContext,
 };
-use repository::EqualFilter;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     MasterList, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
     MasterListRepository, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
 };
+use repository::{EqualFilter, ItemRowType};
 
 use super::generate_requisition_lines;
 
@@ -63,7 +63,7 @@ fn validate(
     store_id: &str,
     input: &AddFromMasterList,
 ) -> Result<RequisitionRow, OutError> {
-    let requisition_row = check_requisition_exists(connection, &input.request_requisition_id)?
+    let requisition_row = check_requisition_row_exists(connection, &input.request_requisition_id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {
@@ -95,14 +95,15 @@ fn generate(
 
     let item_ids_in_requisition: Vec<String> = requisition_lines
         .into_iter()
-        .map(|requisition_line| requisition_line.requisition_line_row.item_id)
+        .map(|requisition_line| requisition_line.item_row.id)
         .collect();
 
     let master_list_lines_not_in_requisition = MasterListLineRepository::new(&ctx.connection)
         .query_by_filter(
             MasterListLineFilter::new()
                 .master_list_id(EqualFilter::equal_to(&input.master_list_id))
-                .item_id(EqualFilter::not_equal_all(item_ids_in_requisition)),
+                .item_id(EqualFilter::not_equal_all(item_ids_in_requisition))
+                .item_type(ItemRowType::Stock.equal_to()),
         )?;
 
     let items_ids_not_in_requisition: Vec<String> = master_list_lines_not_in_requisition
@@ -144,10 +145,10 @@ mod test {
         mock::{
             common::FullMockMasterList,
             mock_draft_request_requisition_for_update_test,
-            mock_draft_response_requisition_for_update_test, mock_item_a, mock_item_b, mock_item_c,
-            mock_item_d, mock_name_store_a, mock_request_draft_requisition_calculation_test,
-            mock_sent_request_requisition, mock_store_a, mock_store_b,
-            mock_test_not_store_a_master_list,
+            mock_full_draft_response_requisition_for_update_test, mock_item_a, mock_item_b,
+            mock_item_c, mock_item_d, mock_name_store_a,
+            mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
+            mock_store_a, mock_store_b, mock_test_not_store_a_master_list,
             test_item_stats::{self},
             MockData, MockDataInserts,
         },
@@ -204,7 +205,9 @@ mod test {
             service.add_from_master_list(
                 &context,
                 AddFromMasterList {
-                    request_requisition_id: mock_draft_response_requisition_for_update_test().id,
+                    request_requisition_id: mock_full_draft_response_requisition_for_update_test()
+                        .requisition
+                        .id,
                     master_list_id: "n/a".to_owned()
                 },
             ),
@@ -257,22 +260,22 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_id: mock_name_store_a().id,
+                    name_link_id: mock_name_store_a().id,
                 }],
                 lines: vec![
                     MasterListLineRow {
                         id: line1.clone(),
-                        item_id: mock_item_a().id,
+                        item_link_id: mock_item_a().id,
                         master_list_id: id.clone(),
                     },
                     MasterListLineRow {
                         id: line2.clone(),
-                        item_id: test_item_stats::item().id,
+                        item_link_id: test_item_stats::item().id,
                         master_list_id: id.clone(),
                     },
                     MasterListLineRow {
                         id: line3.clone(),
-                        item_id: test_item_stats::item2().id,
+                        item_link_id: test_item_stats::item2().id,
                         master_list_id: id.clone(),
                     },
                 ],
@@ -319,7 +322,7 @@ mod test {
         let mut item_ids: Vec<String> = lines
             .clone()
             .into_iter()
-            .map(|requisition_line| requisition_line.requisition_line_row.item_id)
+            .map(|requisition_line| requisition_line.item_row.id)
             .collect();
         item_ids.sort_by(|a, b| a.cmp(&b));
 
@@ -336,7 +339,7 @@ mod test {
         assert_eq!(item_ids, test_item_ids);
         let line = lines
             .iter()
-            .find(|line| line.requisition_line_row.item_id == test_item_stats::item().id)
+            .find(|line| line.requisition_line_row.item_link_id == test_item_stats::item().id)
             .unwrap();
 
         assert_eq!(
@@ -356,7 +359,7 @@ mod test {
 
         let line = lines
             .iter()
-            .find(|line| line.requisition_line_row.item_id == test_item_stats::item2().id)
+            .find(|line| line.requisition_line_row.item_link_id == test_item_stats::item2().id)
             .unwrap();
 
         assert_eq!(

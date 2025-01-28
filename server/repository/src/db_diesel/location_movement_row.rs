@@ -3,7 +3,7 @@ use super::{
     stock_line_row::stock_line, store_row::store, StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Upsert};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -76,5 +76,19 @@ impl<'a> LocationMovementRowRepository<'a> {
         )
         .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+impl Upsert for LocationMovementRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        LocationMovementRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            LocationMovementRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

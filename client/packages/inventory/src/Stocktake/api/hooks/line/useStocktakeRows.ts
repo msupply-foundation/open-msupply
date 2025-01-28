@@ -1,64 +1,36 @@
-import { useMemo } from 'react';
-import {
-  ItemNode,
-  SortUtils,
-  useItemUtils,
-  useUrlQueryParams,
-} from '@openmsupply-client/common';
-import { useStocktakeColumns } from '../../../DetailView';
+import { ArrayUtils, useIsGrouped } from '@openmsupply-client/common';
+import { StocktakeLineFragment } from '../../operations.generated';
+import { StocktakeSummaryItem } from '../../../../types';
+import { useStocktake } from '..';
+import { isStocktakeDisabled } from '../../../../utils';
 import { useStocktakeLines } from './useStocktakeLines';
-import { useStocktakeItems } from './useStocktakeItems';
+import { useMemo } from 'react';
 
-export const useStocktakeRows = (isGrouped = true) => {
-  const {
-    updateSortQuery,
-    queryParams: { sortBy },
-  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
-  const { data: lines } = useStocktakeLines();
-  const { data: items } = useStocktakeItems();
-  const { itemFilter, setItemFilter, matchItem } = useItemUtils();
-  const columns = useStocktakeColumns({
-    onChangeSortBy: updateSortQuery,
-    sortBy,
+const getStocktakeItems = (lines: StocktakeLineFragment[]) =>
+  Object.entries(ArrayUtils.groupBy(lines, 'itemId')).map(([itemId, lines]) => {
+    return {
+      id: itemId,
+      item: lines[0]?.item,
+      lines,
+    } as StocktakeSummaryItem;
   });
 
-  const sortedItems = useMemo(() => {
-    const currentColumn = columns.find(({ key }) => key === sortBy.key);
-    if (!currentColumn?.getSortValue) return items;
-    const sorter = SortUtils.getColumnSorter(
-      currentColumn?.getSortValue,
-      !!sortBy.isDesc
-    );
-    return items
-      ?.filter(item => {
-        return matchItem(itemFilter, item.item as ItemNode);
-      })
-      ?.sort(sorter);
-  }, [items, sortBy.key, sortBy.isDesc, itemFilter]);
-
-  const sortedLines = useMemo(() => {
-    const currentColumn = columns.find(({ key }) => key === sortBy.key);
-    if (!currentColumn?.getSortValue) return lines;
-    const sorter = SortUtils.getColumnSorter(
-      currentColumn?.getSortValue,
-      !!sortBy.isDesc
-    );
-    return lines
-      ?.filter(line => {
-        return matchItem(itemFilter, line.item);
-      })
-      ?.sort(sorter);
-  }, [lines, sortBy.key, sortBy.isDesc, itemFilter]);
-
-  const rows = isGrouped ? sortedItems : sortedLines;
+export const useStocktakeRows = () => {
+  const { data: stocktake } = useStocktake.document.get();
+  const { data: lineData, isLoading } = useStocktakeLines(stocktake?.id ?? '');
+  const lines = lineData?.nodes;
+  const items = useMemo(() => getStocktakeItems(lines ?? []), [lines]);
+  const totalLineCount = lineData?.totalCount ?? 0;
+  const { isGrouped } = useIsGrouped('stocktake');
+  const rows = isGrouped ? items : lines;
+  const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
 
   return {
+    isDisabled,
+    isLoading,
+    items,
+    lines,
     rows,
-    lines: sortedLines,
-    items: sortedItems,
-    onChangeSortBy: updateSortQuery,
-    sortBy,
-    itemFilter,
-    setItemFilter,
+    totalLineCount,
   };
 };

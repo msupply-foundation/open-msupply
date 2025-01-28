@@ -20,9 +20,19 @@ export const useDeleteSelectedLines = (): (() => void) => {
       return isGrouped
         ? items
             ?.filter(({ id }) => state.rowState[id]?.isSelected)
-            .map(({ lines }) => lines.flat())
+            .map(({ lines }) =>
+              lines.map(line => ({
+                ...line,
+                isDeleted: true,
+              }))
+            )
             .flat()
-        : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
+        : lines
+            ?.filter(({ id }) => state.rowState[id]?.isSelected)
+            .map(line => ({
+              ...line,
+              isDeleted: true,
+            }));
     }) || [];
 
   const onDelete = async () => {

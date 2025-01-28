@@ -11,7 +11,7 @@ interface InputModalProps {
   Input: React.ReactNode;
   onClose: () => void;
   title: string;
-  onChange: (() => Promise<void>) | (() => void);
+  onChange: () => Promise<void> | void;
 }
 
 export const InputModal = ({

@@ -128,7 +128,7 @@ impl<'a> UserAccountService<'a> {
                 let repo = UserAccountRowRepository::new(con);
                 if let Some(_) = repo
                     .find_one_by_user_name(&user.username)
-                    .map_err(|e| CreateUserAccountError::DatabaseError(e))?
+                    .map_err(CreateUserAccountError::DatabaseError)?
                 {
                     return Err(CreateUserAccountError::UserNameExist);
                 }
@@ -179,7 +179,7 @@ impl<'a> UserAccountService<'a> {
         let repo = UserAccountRowRepository::new(self.connection);
         let user = match repo
             .find_one_by_user_name(username)
-            .map_err(|e| VerifyPasswordError::DatabaseError(e))?
+            .map_err(VerifyPasswordError::DatabaseError)?
         {
             Some(user) => user,
             None => return Err(VerifyPasswordError::UsernameDoesNotExist),
@@ -202,8 +202,7 @@ mod user_account_test {
     use repository::{
         mock::{mock_user_account_a, mock_user_account_b, MockDataInserts},
         test_db::{self, setup_all},
-        EqualFilter, Permission, UserFilter, UserPermissionFilter, UserPermissionRepository,
-        UserRepository,
+        Permission,
     };
     use util::{assert_matches, inline_edit};
 
@@ -326,13 +325,13 @@ mod user_account_test {
             .unwrap()
             .pop()
             .unwrap();
-        assert!(user.stores.len() > 0);
+        assert!(!user.stores.is_empty());
         let permissions = user_permission_repo
             .query_by_filter(
                 UserPermissionFilter::new()
                     .user_id(EqualFilter::equal_to(&mock_user_account_b().id)),
             )
             .unwrap();
-        assert!(permissions.len() > 0);
+        assert!(!permissions.is_empty());
     }
 }

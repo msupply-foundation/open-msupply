@@ -22,7 +22,7 @@ export const getRowExpandColumn = <
   align: ColumnAlign.Right,
   width: 60,
   Header: () => {
-    const t = useTranslation('common');
+    const t = useTranslation();
     const { isGrouped, numberExpanded, toggleAllExpanded } = useTableStore();
 
     return isGrouped ? (
@@ -50,7 +50,7 @@ export const getRowExpandColumn = <
     ) : null;
   },
   Cell: ({ rowData }) => {
-    const t = useTranslation('common');
+    const t = useTranslation();
     const { toggleExpanded, isExpanded } = useExpanded(rowData.id);
 
     if (!rowData.canExpand && !((rowData?.lines?.length ?? 0) > 1)) return null;

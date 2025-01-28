@@ -36,7 +36,7 @@ impl Manifest {
             return Ok(None);
         };
 
-        let content = fs::read_to_string(&file_path)?;
+        let content = fs::read_to_string(file_path)?;
         let mut hasher = Sha256::new();
         hasher.update(content.as_bytes());
         let file_hash = hex::encode(hasher.finalize());
@@ -70,7 +70,7 @@ pub(crate) fn create_manifest(
             Some(entry) => entry,
         }?;
         let file_name = entry.file_name().to_string_lossy().to_string();
-        if file_name.starts_with(".") {
+        if file_name.starts_with('.') {
             continue;
         }
         let metadata = entry.metadata()?;

@@ -6,8 +6,7 @@ import {
   ModalRow,
   Select,
   useTranslation,
-  InputLabel,
-  NonNegativeIntegerInput,
+  NumericTextInput,
   Divider,
   Box,
   Typography,
@@ -17,11 +16,12 @@ import {
 import {
   StockItemSearchInput,
   ItemRowFragment,
+  usePackVariant,
 } from '@openmsupply-client/system';
 import { usePrescription } from '../../api';
 import { DraftItem } from '../../..';
+import { PackSizeController } from '../../../StockOut';
 import {
-  PackSizeController,
   StockOutAlert,
   StockOutAlerts,
   getAllocationAlerts,
@@ -74,6 +74,11 @@ export const PrescriptionLineEditForm: React.FC<
   const { format } = useFormatNumber();
   const { items } = usePrescription.line.rows();
 
+  const { activePackVariant } = usePackVariant(
+    item?.id ?? '',
+    item?.unitName ?? null
+  );
+
   const onChangePackSize = (newPackSize: number) => {
     const packSize = newPackSize === -1 ? 1 : newPackSize;
     const newAllocatedQuantity =
@@ -82,8 +87,6 @@ export const PrescriptionLineEditForm: React.FC<
     packSizeController.setPackSize(newPackSize);
     allocate(newAllocatedQuantity, newPackSize);
   };
-
-  const unit = item?.unitName ?? t('label.unit');
 
   const updateIssueQuantity = (quantity: number) => {
     setIssueQuantity(
@@ -139,7 +142,8 @@ export const PrescriptionLineEditForm: React.FC<
     updateIssueQuantity(allocatedQuantity);
   };
 
-  const handleIssueQuantityChange = (quantity: number) => {
+  const handleIssueQuantityChange = (quantity?: number) => {
+    if (quantity === undefined) return;
     setIssueQuantity(quantity);
     allocate(quantity, Number(packSizeController.selected?.value));
   };
@@ -197,7 +201,7 @@ export const PrescriptionLineEditForm: React.FC<
               <BasicTextInput
                 disabled
                 sx={{ width: 150 }}
-                value={item?.unitName ?? ''}
+                value={activePackVariant}
               />
             </Grid>
           </ModalRow>
@@ -229,11 +233,11 @@ export const PrescriptionLineEditForm: React.FC<
           />
           <Grid container>
             <ModalLabel label={t('label.issue')} />
-            <NonNegativeIntegerInput
+            <NumericTextInput
               autoFocus
               value={issueQuantity}
               onChange={handleIssueQuantityChange}
-              defaultValue={0}
+              min={1}
             />
 
             <Box marginLeft={1} />
@@ -247,43 +251,16 @@ export const PrescriptionLineEditForm: React.FC<
                   justifyContent="flex-start"
                   style={{ minWidth: 125 }}
                 >
-                  <InputLabel sx={{ fontSize: '12px' }}>
-                    {packSizeController.selected?.value === -1
-                      ? `${t('label.unit-plural', {
-                          unit,
-                          count: issueQuantity,
-                        })} ${t('label.in-packs-of')}`
-                      : t('label.in-packs-of')}
-                  </InputLabel>
+                  <Select
+                    sx={{ width: 110 }}
+                    options={packSizeController.options}
+                    value={packSizeController.selected?.value ?? ''}
+                    onChange={e => {
+                      const { value } = e.target;
+                      onChangePackSize(Number(value));
+                    }}
+                  />
                 </Grid>
-
-                <Box marginLeft={1} />
-
-                <Select
-                  sx={{ width: 110 }}
-                  options={packSizeController.options}
-                  value={packSizeController.selected?.value ?? ''}
-                  clearable={false}
-                  onChange={e => {
-                    const { value } = e.target;
-                    onChangePackSize(Number(value));
-                  }}
-                />
-                {packSizeController.selected?.value !== -1 && (
-                  <Grid
-                    item
-                    alignItems="center"
-                    display="flex"
-                    justifyContent="flex-start"
-                  >
-                    <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
-                      {t('label.unit-plural', {
-                        count: packSizeController.selected?.value,
-                        unit,
-                      })}
-                    </InputLabel>
-                  </Grid>
-                )}
                 <Box marginLeft="auto" />
               </>
             ) : null}

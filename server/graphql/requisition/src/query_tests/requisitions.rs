@@ -2,7 +2,7 @@ mod graphql {
     use async_graphql::EmptyMutation;
     use chrono::NaiveDate;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition_all_fields, MockDataInserts},
@@ -55,7 +55,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_get_requisitions() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             RequisitionQueries,
             EmptyMutation,
             "test_graphql_get_requisitions",
@@ -201,7 +201,7 @@ mod graphql {
             assert_eq!(
                 created_datetime,
                 Some(DatetimeFilter::equal_to(
-                    NaiveDate::from_ymd_opt(2021, 01, 01)
+                    NaiveDate::from_ymd_opt(2021, 1, 1)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap()
@@ -210,7 +210,7 @@ mod graphql {
             assert_eq!(
                 sent_datetime,
                 Some(DatetimeFilter::after_or_equal_to(
-                    NaiveDate::from_ymd_opt(2021, 01, 02)
+                    NaiveDate::from_ymd_opt(2021, 1, 2)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap()
@@ -219,7 +219,7 @@ mod graphql {
             assert_eq!(
                 finalised_datetime,
                 Some(DatetimeFilter::before_or_equal_to(
-                    NaiveDate::from_ymd_opt(2021, 01, 03)
+                    NaiveDate::from_ymd_opt(2021, 1, 3)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap()
@@ -228,7 +228,7 @@ mod graphql {
             assert_eq!(
                 expected_delivery_date,
                 Some(DateFilter::after_or_equal_to(
-                    NaiveDate::from_ymd_opt(2021, 01, 04).unwrap()
+                    NaiveDate::from_ymd_opt(2021, 1, 4).unwrap()
                 ))
             );
             assert_eq!(name, Some(StringFilter::like("like_other_party_name")));

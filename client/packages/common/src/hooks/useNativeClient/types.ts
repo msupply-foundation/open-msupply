@@ -53,6 +53,7 @@ export interface NativeAPI {
   saveFile: (
     fileInfo: FileInfo
   ) => Promise<{ success: boolean; error?: string }>;
+  saveDatabase: () => Promise<{ success: boolean; error?: string }>;
 }
 
 export enum NativeMode {

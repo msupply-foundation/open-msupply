@@ -15,7 +15,7 @@ use service::{
 pub struct MasterListNotFoundForThisName;
 #[Object]
 impl MasterListNotFoundForThisName {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Master list not found (might not be visible to this name)"
     }
 }
@@ -106,7 +106,7 @@ mod test {
     use crate::InvoiceMutations;
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{
@@ -161,7 +161,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_add_from_master_list_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceMutations,
             "test_graphql_add_os_from_master_list_structured_errors",
@@ -270,7 +270,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_add_from_master_list_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceMutations,
             "test_graphql_add_os_from_master_list_success",
@@ -302,7 +302,7 @@ mod test {
             Ok(vec![InvoiceLine {
                 invoice_line_row: mock_outbound_shipment_line_a(),
                 invoice_row: mock_new_outbound_shipment_no_lines(),
-                item_row_option: Some(mock_item_a()),
+                item_row: mock_item_a(),
                 location_row_option: None,
                 stock_line_option: None,
             }])

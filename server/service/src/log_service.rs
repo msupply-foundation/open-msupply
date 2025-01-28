@@ -49,7 +49,7 @@ pub trait LogServiceTrait: Send + Sync {
         };
 
         let log_file_content = log_file_content
-            .split("\n")
+            .split('\n')
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
 

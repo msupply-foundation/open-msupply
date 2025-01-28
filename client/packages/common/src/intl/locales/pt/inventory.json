@@ -28,7 +28,6 @@
   "label.cant-delete-disabled": "Só é possível excluir linhas se o status é Novo",
   "label.pricing": "Preços",
   "label.supplier": "Fornecedor",
-  "label.location": "Local",
   "label.master-list": "Lista Mestra",
   "label.items-with-stock": "Itens em Estoque",
   "message.no-supplier": "Ajuste de Inventário",

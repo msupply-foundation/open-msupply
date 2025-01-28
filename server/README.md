@@ -13,6 +13,7 @@ Remote server can use `sqlite` or `postgres`, quick start guide is for `sqlite` 
 ## Dependencies
 
 ### Windows
+
 - [Follow this guide](https://docs.microsoft.com/en-us/windows/dev-environment/rust/setup)
 - Install [perl](https://learn.perl.org/installing/windows.html)
 - For building the windows binary, you'll need to install the [Bonjour Windows SDK](https://developer.apple.com/bonjour/) and configure the environment variable `BONJOUR_SDK_HOME` to point to the installation location. This is required for the dns-sd implementation on windows, used for server discovery.
@@ -48,9 +49,29 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 sudo apt install make gcc pkg-config libavahi-compat-libdnssd-dev libpq-dev
 ```
 
-# Run without mSupply central
+# Set up sync with mSupply central
 
-Remote server data is configured through mSupply central server, when app first start it's expected to initialise from mSupply. There is a cli option to initialise from previously exported initialisation:
+Remote server data is configured through mSupply central server, when the app first starts it's expected to initialise from mSupply.
+
+### Set up Open mSupply remote site in mSupply
+
+- Ensure you have mSupply set up locally
+- In Admin > Preferences > General, ensure `Synchronisation is active` is selected
+- In Special > Synchronisation
+  - Open (or create) the site for our Open mSupply instance
+  - Does it have a hardware ID already? If so, refresh the hardware ID so it doesn't have one.
+- Initialise your Open mSupply instance - you can do this two ways:
+  - Via the UI (this may be the easier option when you are switching between different APIs):
+    - After starting the server & client, you should see an initialisation screen
+    - Enter the site details from mSupply
+  - Via YAML configuration:
+    - In your Open mSupply repo, under `server/configuration` copy the `example.yaml` to `local.yaml`, and uncomment the contents of the file. Under the `sync` config, ensure the `username` is set to the site name from mSupply (i.e. `remote`)
+    - Your Open mSupply instance should sync with mSupply automatically when you start the server
+- After the initial sync, you generally shouldn't need mSupply running to run Open mSupply
+
+### OR: Run without mSupply central
+
+Instead of initialising from mSupply, there is also a cli option to initialise from previously exported initialisation:
 
 ```bash
 cargo run --bin remote_server_cli -- initialise-from-export -n [export name]
@@ -65,15 +86,37 @@ cargo run --bin remote_server_cli -- initialise-from-export -n reference1
 
 Above will create sqlite database in root folder with the name specified in `configuration/*.yaml` and will populate it with data. Towards the end of console output of the cli command user:password list is presented (those users can be used to log in vi client/api)
 
-Now we can start server with 
+## Start the server
+
+Now we can start server with
 
 ```
 cargo run
 ```
 
-`NOTE` make sure that sync configurations in configuration/*.yaml file is commented out, otherwise may get an error that database and yaml sync configurations differ (in which case remote server will try to contact central server)
+> NOTE: make sure that sync configurations in `configuration/*.yaml` files are commented out if running without mSupply Central, otherwise you may get an error stating that the database and yaml sync configurations differ (in which case, the remote server will try to contact central server)
 
 Explore API available on `http://localhost:8000/graphql` with build in playground or try [online graphiql explorer](https://graphiql-online.com/)
+
+### Start server in watch mode
+
+Sometimes it's nice to have your dev server automatically rebuild and restart on changes.
+
+You'll need to install `cargo-make` and `cargo-watch` globally:
+
+```
+cargo install cargo-make cargo-watch
+```
+
+Then, to start the server in watch mode:
+
+```
+cargo make watch
+```
+
+> Note: watch mode may not always be a part of your desired workflow - particularly when you are making lots of backend changes, it's another competitor for the build directory file lock on every save (alongside tests, rust-analyzer...) and Rust compilation isn't known for its speediness 😁
+>
+> It's great for cases such as doing frontend work, where you want the backend to refresh as you switch/pull branches, or when making minor backend changes. Or you can play around with debounced re-compile times, with the `cargo-watch` `--delay` flag.
 
 # Run with postgres
 
@@ -118,11 +161,11 @@ sudo apt install postgresql
 
 ## Postgres rust feature
 
-Remote server by default will run with sqlite database (`sqlite` rust feature), postgres can be turned on with `postgres` feature. 
+Remote server by default will run with sqlite database (`sqlite` rust feature), postgres can be turned on with `postgres` feature.
 
 i.e. to run without mSupply central, as per above
 
-* Make sure that postgres credentials are correct in `configuration/*.yaml` (database will be automatically created)
+- Make sure that postgres credentials are correct in `configuration/*.yaml` (database will be automatically created)
 
 ```bash
 cargo run --bin remote_server_cli --features postgres -- initialise-from-export -n reference1
@@ -133,7 +176,7 @@ cargo run --features postgres
 
 You can manually create and migrate database with the following
 
-* Settings in `configurations/*.yaml` will be used for credentials and database name
+- Settings in `configurations/*.yaml` will be used for credentials and database name
 
 ```bash
 # postgres
@@ -166,7 +209,7 @@ APP_SYNC__URL='http://localhost:8001' cargo run
 
 If you have mSupply central running and want to export initialisation
 
-* Note sync credentials from `configurations/*.yaml` or env vars will be used
+- Note sync credentials from `configurations/*.yaml` or env vars will be used
 
 ```bash
 cargo run --bin remote_server_cli -- export-initialisation -n [name of export] -u [users]
@@ -218,13 +261,14 @@ By default remote-server limits Cross-Origin Resource Sharing to the origins con
 This is a security mechanism to reduce the risk of a malicious site accessing an authenticated connection with mSupply.
 Rust enforces the allowed origins in requests, even if the browser doesn't, by returning a 400 error when the Origin isn't specified in a request, or if doesn't match one of origins configured in cors_origins.
 
-Set the cors_origins section of the yaml to include any URLs you want to access omSupply's GraphQL API from this includes the url for the omsupply-client you are using.
+Set the cors_origins section of the yaml to include any URLs you want to access Open mSupply's GraphQL API from this includes the url for the omsupply-client you are using.
 e.g. local.yaml
+
 ```
 server:
   port: 8000
   cors_origins: [http://localhost:3003, https://youwebserver:yourport]
-````
+```
 
 In development mode (if not built with --release) cors is set to permissive (server will return allow origin = requesting origin)
 
@@ -236,13 +280,11 @@ server:
 
 # Serving front end
 
-Server will serve front end files from (client/packages/host/dist), if the client was not build and the folder is empty, server will return an error message: Cannot find index.html. See https://github.com/openmsupply/open-msupply#serving-front-end. 
+Server will serve front end files from (client/packages/host/dist), if the client was not build and the folder is empty, server will return an error message: Cannot find index.html. See https://github.com/openmsupply/open-msupply#serving-front-end.
 
 You can build front end by running `yarn build` from `client` directory in the root of the project. After that if you run the server you can navigate to `http://localhost:port` to see this feature in action.
 
 When app is built in production mode (with build --release) static files will be embedded in the binary. To build, run `yarn build` command from the root of repository. This will build the client application and then build the release version of the server, bundling in the client so that it can be hosted.
-
-
 
 # Cli
 
@@ -274,8 +316,8 @@ cargo run --bin remote_server_cli -- refresh-dates
 # Discovery
 
 DNS-SD is available for all targets except for Android (for Android DNS-SD is toggled at runtime and is done in native java code).
-We also start another graphql server with `initialisationStatus` query endpoint, in http mode with permissive cors. 
-This allows site information (initialised/site) to be presented during discovery. 
+We also start another graphql server with `initialisationStatus` query endpoint, in http mode with permissive cors.
+This allows site information (initialised/site) to be presented during discovery.
 
 # Logging
 

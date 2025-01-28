@@ -1,5 +1,8 @@
 import { RecordPatch, RecordWithId } from '@common/types';
-import { groupBy, uniqBy } from 'lodash';
+import groupBy from 'lodash/groupBy';
+import uniqBy from 'lodash/uniqBy';
+import keyBy from 'lodash/keyBy';
+import uniq from 'lodash/uniq';
 
 export const ArrayUtils = {
   ifTheSameElseDefault: <T, K extends keyof T, J>(
@@ -34,6 +37,8 @@ export const ArrayUtils = {
   ): number => {
     return arr.reduce((sum, someEntity) => sum + someEntity[key], 0);
   },
+  // De-duplicate (remove duplicates)
+  dedupe: uniq,
   immutablePatch: <T extends RecordWithId>(arr: T[], patch: RecordPatch<T>) =>
     arr.map(entity => {
       if (entity.id === patch.id) {
@@ -46,4 +51,5 @@ export const ArrayUtils = {
     }),
   groupBy,
   uniqBy,
+  keyBy,
 };

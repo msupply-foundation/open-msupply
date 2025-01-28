@@ -211,7 +211,7 @@ export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({
   additionalRenderers,
   config,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
 
   if (isError)
     return (

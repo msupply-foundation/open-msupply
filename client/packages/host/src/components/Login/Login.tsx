@@ -23,7 +23,6 @@ export const Login = () => {
     theme: LocalStorage.getItem('/theme/customhash') ?? '',
   };
   const { data: displaySettings } = useHost.settings.displaySettings(hashInput);
-
   const passwordRef = React.useRef(null);
   const {
     isValid,
@@ -67,6 +66,10 @@ export const Login = () => {
       );
       return `${t('error.account-blocked')} ${formattedTime}`;
     }
+    if (error?.stdError === 'Internal error') {
+      return t('error.internal-error');
+    }
+
     return t('error.login');
   }, [error, timeoutRemaining, customDate, t]);
 

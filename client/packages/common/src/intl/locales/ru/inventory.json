@@ -5,7 +5,6 @@
   "error.stocktake-not-found": "Учёт не найден",
   "heading.description": "Описание",
   "label.add-new-line": "Добавить новую строку",
-  "label.location": "Локация",
   "label.new": "Новый",
   "error.no-stocktakes": "Нет Учётов для отображения.",
   "error.no-stocktake-items": "К этой инвентаризации не добавлено ни одного товара.",

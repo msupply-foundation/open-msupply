@@ -7,7 +7,7 @@ use crate::activity_log::system_activity_log_entry;
 
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 
-const DESCRIPTION: &'static str = "Update request requisition status to finalised";
+const DESCRIPTION: &str = "Update request requisition status to finalised";
 
 pub struct UpdateRequestRequisitionStatusProcessor;
 
@@ -59,10 +59,7 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionStatusProcessor {
         let updated_request_requisition = RequisitionRow {
             // 6.
             status: RequisitionRowStatus::Finalised,
-            finalised_datetime: response_requisition
-                .requisition_row
-                .finalised_datetime
-                .clone(),
+            finalised_datetime: response_requisition.requisition_row.finalised_datetime,
             ..request_requisition.requisition_row.clone()
         };
 

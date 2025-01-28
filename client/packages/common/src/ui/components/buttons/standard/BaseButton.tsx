@@ -9,6 +9,8 @@ import {
 
 const translateColor = (theme: Theme, color?: string) => {
   switch (color) {
+    case 'error':
+      return theme.palette.error.main;
     case 'secondary':
       return theme.palette.secondary.main;
     default:

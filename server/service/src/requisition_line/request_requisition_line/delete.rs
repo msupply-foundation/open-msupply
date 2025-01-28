@@ -1,5 +1,5 @@
 use crate::{
-    requisition::common::check_requisition_exists,
+    requisition::common::check_requisition_row_exists,
     requisition_line::common::check_requisition_line_exists, service_provider::ServiceContext,
 };
 use repository::{
@@ -51,7 +51,7 @@ fn validate(
         .requisition_line_row;
 
     let requisition_row =
-        check_requisition_exists(connection, &requisition_line_row.requisition_id)?
+        check_requisition_row_exists(connection, &requisition_line_row.requisition_id)?
             .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {
@@ -79,7 +79,7 @@ impl From<RepositoryError> for DeleteRequestRequisitionLineError {
 mod test {
     use repository::{
         mock::{
-            mock_draft_response_requisition_for_update_test_line,
+            mock_full_draft_response_requisition_for_update_test,
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition_line,
             mock_store_a, mock_store_b, MockDataInserts,
         },
@@ -135,7 +135,9 @@ mod test {
             service.delete_request_requisition_line(
                 &context,
                 DeleteRequestRequisitionLine {
-                    id: mock_draft_response_requisition_for_update_test_line().id,
+                    id: mock_full_draft_response_requisition_for_update_test().lines[0]
+                        .id
+                        .clone(),
                 },
             ),
             Err(ServiceError::NotARequestRequisition)

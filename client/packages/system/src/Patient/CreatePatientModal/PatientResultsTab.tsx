@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BasicSpinner,
   Box,
@@ -98,14 +98,19 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
   const isCentralConnectionFailure =
     !isLoadingCentral && isConnectionError(centralSearchData);
 
-  const searchParams = {
-    code: patient?.code,
-    code2: patient?.code2,
-    firstName: patient?.firstName,
-    lastName: patient?.lastName,
-    dateOfBirth: patient?.dateOfBirth,
-    gender: patient?.gender ? genderToGenderInput(patient?.gender) : undefined,
-  };
+  const searchParams = useMemo(
+    () => ({
+      code: patient?.code,
+      code2: patient?.code2,
+      firstName: patient?.firstName,
+      lastName: patient?.lastName,
+      dateOfBirth: patient?.dateOfBirth,
+      gender: patient?.gender
+        ? genderToGenderInput(patient?.gender)
+        : undefined,
+    }),
+    [patient]
+  );
 
   const { setCreateNewPatient } = usePatientStore();
   const t = useTranslation('dispensary');
@@ -154,8 +159,9 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
   const count = data?.length ?? 0;
 
   useEffect(() => {
+    if (Object.values(searchParams).every(it => it === undefined)) return;
     search(searchParams);
-  }, [patient]);
+  }, [search, searchParams]);
 
   useEffect(() => {
     const patients: PatientColumnData[] = [];
@@ -175,6 +181,12 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     setData(patients);
   }, [localSearchData, centralSearchData]);
 
+  const onClose = useCallback(() => {
+    // refresh local list so that patient shows up to be in the current store
+    search(searchParams);
+    setFetchingPatient(undefined);
+  }, [search, searchParams]);
+
   if (!active) {
     return null;
   }
@@ -186,14 +198,7 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
   return (
     <PatientPanel value={value} patient={patient}>
       {fetchingPatient ? (
-        <FetchPatientModal
-          patient={fetchingPatient}
-          onClose={() => {
-            // refresh local list so that patient shows up to be in the current store
-            search(searchParams);
-            setFetchingPatient(undefined);
-          }}
-        />
+        <FetchPatientModal patient={fetchingPatient} onClose={onClose} />
       ) : null}
       <>
         <Box

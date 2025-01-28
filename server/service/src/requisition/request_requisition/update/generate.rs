@@ -58,7 +58,7 @@ pub fn generate(
         u.their_reference = update_their_reference.or(u.their_reference);
         u.min_months_of_stock = update_threshold_months_of_stock;
         u.max_months_of_stock = update_max_months_of_stock;
-        u.name_id = update_other_party_id.unwrap_or(u.name_id);
+        u.name_link_id = update_other_party_id.unwrap_or(u.name_link_id);
         u.expected_delivery_date = update_expected_delivery_date.or(u.expected_delivery_date);
 
         u

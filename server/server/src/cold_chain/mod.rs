@@ -42,12 +42,11 @@ fn validate_request(
     let service_context = service_provider
         .basic_context()
         .map_err(|err| AuthError::Denied(AuthDeniedKind::NotAuthenticated(err.to_string())))?;
-    let token = match request.cookie(COOKIE_NAME) {
-        Some(cookie) => Some(cookie.value().to_string()),
-        None => None,
-    };
+    let token = request
+        .cookie(COOKIE_NAME)
+        .map(|cookie| cookie.value().to_string());
 
-    validate_access(&service_provider, &service_context, &auth_data, token)
+    validate_access(service_provider, &service_context, auth_data, token)
 }
 
 /// Validates current user is authenticated and authorized

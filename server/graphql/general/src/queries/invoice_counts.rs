@@ -156,14 +156,14 @@ pub struct InvoiceCounts {
 impl InvoiceCounts {
     async fn outbound(&self) -> OutboundInvoiceCounts {
         OutboundInvoiceCounts {
-            timezone_offset: self.timezone_offset.clone(),
+            timezone_offset: self.timezone_offset,
             store_id: self.store_id.clone(),
         }
     }
 
     async fn inbound(&self) -> InboundInvoiceCounts {
         InboundInvoiceCounts {
-            timezone_offset: self.timezone_offset.clone(),
+            timezone_offset: self.timezone_offset,
             store_id: self.store_id.clone(),
         }
     }

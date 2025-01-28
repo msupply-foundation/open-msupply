@@ -3,7 +3,7 @@ use crate::invoice::common::{
 };
 use crate::invoice::{check_invoice_exists, common::check_master_list_for_store};
 use crate::service_provider::ServiceContext;
-use repository::EqualFilter;
+use repository::{EqualFilter, ItemRowType};
 use repository::{
     InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType, MasterListLineFilter,
@@ -40,7 +40,7 @@ pub fn add_from_master_list(
             let invoice_row = validate(connection, &ctx.store_id, &input)?;
             let new_invoice_line_rows = generate(ctx, invoice_row, &input)?;
 
-            let invoice_line_row_repository = InvoiceLineRowRepository::new(&connection);
+            let invoice_line_row_repository = InvoiceLineRowRepository::new(connection);
 
             for invoice_line_row in new_invoice_line_rows {
                 invoice_line_row_repository.upsert_one(&invoice_line_row)?;
@@ -91,14 +91,15 @@ fn generate(
 
     let item_ids_in_invoice: Vec<String> = invoice_lines
         .into_iter()
-        .map(|invoice_line| invoice_line.invoice_line_row.item_id)
+        .map(|invoice_line| invoice_line.item_row.id)
         .collect();
 
     let master_list_lines_not_in_invoice = MasterListLineRepository::new(&ctx.connection)
         .query_by_filter(
             MasterListLineFilter::new()
                 .master_list_id(EqualFilter::equal_to(&input.master_list_id))
-                .item_id(EqualFilter::not_equal_all(item_ids_in_invoice)),
+                .item_id(EqualFilter::not_equal_all(item_ids_in_invoice))
+                .item_type(ItemRowType::Stock.equal_to()),
         )?;
 
     let items_ids_not_in_invoice: Vec<String> = master_list_lines_not_in_invoice
@@ -106,11 +107,7 @@ fn generate(
         .map(|master_list_line| master_list_line.item_id)
         .collect();
 
-    Ok(generate_empty_invoice_lines(
-        ctx,
-        &invoice_row,
-        items_ids_not_in_invoice,
-    )?)
+    generate_empty_invoice_lines(ctx, &invoice_row, items_ids_not_in_invoice)
 }
 
 #[cfg(test)]
@@ -224,27 +221,27 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_id: mock_name_store_a().id,
+                    name_link_id: mock_name_store_a().id,
                 }],
                 lines: vec![
                     MasterListLineRow {
                         id: line1.clone(),
-                        item_id: mock_item_a().id,
+                        item_link_id: mock_item_a().id,
                         master_list_id: id.clone(),
                     },
                     MasterListLineRow {
                         id: line2.clone(),
-                        item_id: mock_item_b().id,
+                        item_link_id: mock_item_b().id,
                         master_list_id: id.clone(),
                     },
                     MasterListLineRow {
                         id: line3.clone(),
-                        item_id: mock_item_c().id,
+                        item_link_id: mock_item_c().id,
                         master_list_id: id.clone(),
                     },
                     MasterListLineRow {
                         id: line4.clone(),
-                        item_id: mock_item_d().id,
+                        item_link_id: mock_item_d().id,
                         master_list_id: id.clone(),
                     },
                 ],
@@ -282,9 +279,9 @@ mod test {
         let mut item_ids: Vec<String> = result
             .clone()
             .into_iter()
-            .map(|invoice_line| invoice_line.item_id)
+            .map(|invoice_line| invoice_line.item_link_id)
             .collect();
-        item_ids.sort_by(|a, b| a.cmp(&b));
+        item_ids.sort();
 
         let mut test_item_ids = vec![
             mock_item_a().id,
@@ -292,12 +289,12 @@ mod test {
             mock_item_c().id,
             mock_item_d().id,
         ];
-        test_item_ids.sort_by(|a, b| a.cmp(&b));
+        test_item_ids.sort();
 
         assert_eq!(item_ids, test_item_ids);
         let line = result
             .iter()
-            .find(|line| line.item_id == mock_item_a().id)
+            .find(|line| line.item_link_id == mock_item_a().id)
             .unwrap();
 
         assert_eq!(line.number_of_packs, 0.0);
@@ -306,7 +303,7 @@ mod test {
 
         let line = result
             .iter()
-            .find(|line| line.item_id == mock_item_b().id)
+            .find(|line| line.item_link_id == mock_item_b().id)
             .unwrap();
 
         assert_eq!(line.number_of_packs, 0.0);

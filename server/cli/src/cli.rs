@@ -32,7 +32,7 @@ use std::{
 };
 use util::inline_init;
 
-const DATA_EXPORT_FOLDER: &'static str = "data";
+const DATA_EXPORT_FOLDER: &str = "data";
 
 /// omSupply remote server cli
 #[derive(clap::Parser)]
@@ -147,7 +147,7 @@ async fn initialise_from_central(
     sync_driver.sync(service_provider.clone()).await;
 
     info!("Syncing users");
-    for user in users.split(",") {
+    for user in users.split(',') {
         let user = user.split(':').collect::<Vec<&str>>();
         let input = LoginInput {
             username: user[0].to_string(),
@@ -183,11 +183,11 @@ async fn main() -> anyhow::Result<()> {
             let schema =
                 OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
                     .finish();
-            fs::write("schema.graphql", &schema.sdl())?;
+            fs::write("schema.graphql", schema.sdl())?;
             info!("Schema exported in schema.graphql");
         }
         Action::InitialiseDatabase => {
-            info!("Reseting database");
+            info!("Resetting database");
             test_db::setup(&settings.database).await;
             info!("Finished database reset");
         }
@@ -208,7 +208,7 @@ async fn main() -> anyhow::Result<()> {
 
             info!("Syncing users");
             let mut synced_user_info_rows = Vec::new();
-            for user in users.split(",") {
+            for user in users.split(',') {
                 let user = user.split(':').collect::<Vec<&str>>();
                 let input = LoginInput {
                     username: user[0].to_string(),
@@ -219,7 +219,7 @@ async fn main() -> anyhow::Result<()> {
                     input.clone(),
                     LoginService::fetch_user_from_central(&input)
                         .await
-                        .expect(&format!("Cannot find user {:?}", input)),
+                        .unwrap_or_else(|_| panic!("Cannot find user {:?}", input)),
                 ));
             }
 
@@ -241,11 +241,11 @@ async fn main() -> anyhow::Result<()> {
 
             info!("Saving export");
             let (folder, export_file, users_file) = export_paths(&name);
-            if let Err(_) = fs::create_dir(&folder) {
+            if fs::create_dir(&folder).is_err() {
                 info!("Export directory already exists, replacing {:#?}", folder)
             };
-            fs::write(&export_file, data_string)?;
-            fs::write(&users_file, users)?;
+            fs::write(export_file, data_string)?;
+            fs::write(users_file, users)?;
             info!("Export saved in {}", folder.to_str().unwrap());
         }
         Action::InitialiseFromExport { name, refresh } => {

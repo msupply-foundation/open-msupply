@@ -1,12 +1,12 @@
 use crate::certs::Protocol;
 use {astro_dnssd::DNSServiceBuilder, std::collections::HashMap};
 
-const SERVICE_NAME: &'static str = "_omsupply._tcp";
-const NAME: &'static str = "omSupplyServer";
-const PROTOCOL_KEY: &'static str = "protocol";
-const CLIENT_VERSION_KEY: &'static str = "client_version";
-const HARDWARE_ID_KEY: &'static str = "hardware_id";
-const CLIENT_VERSION: &'static str = "unspecified";
+const SERVICE_NAME: &str = "_omsupply._tcp";
+const NAME: &str = "omSupplyServer";
+const PROTOCOL_KEY: &str = "protocol";
+const CLIENT_VERSION_KEY: &str = "client_version";
+const HARDWARE_ID_KEY: &str = "hardware_id";
+const CLIENT_VERSION: &str = "unspecified";
 
 pub(crate) fn start_discovery(protocol: Protocol, port: u16, hardware_id: String) {
     tokio::task::spawn(async move {

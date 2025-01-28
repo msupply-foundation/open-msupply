@@ -10,18 +10,22 @@ import {
   ColorSelectButton,
   useBufferState,
   InfoTooltipIcon,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../api';
 
 export const AdditionalInfoSectionComponent = () => {
-  const { user, comment, colour, update } = useInbound.document.fields([
-    'comment',
-    'colour',
-    'user',
-  ]);
+  const { user, comment, colour, createdDatetime, update } =
+    useInbound.document.fields([
+      'comment',
+      'colour',
+      'user',
+      'createdDatetime',
+    ]);
   const isDisabled = useInbound.utils.isDisabled();
   const t = useTranslation(['common', 'replenishment']);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
+  const { localisedDate } = useFormatDateTime();
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
@@ -31,7 +35,10 @@ export const AdditionalInfoSectionComponent = () => {
           <PanelField>{user?.username}</PanelField>
           {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
         </PanelRow>
-
+        <PanelRow>
+          <PanelLabel>{t('label.entered')}</PanelLabel>
+          <PanelField>{localisedDate(createdDatetime)}</PanelField>
+        </PanelRow>
         <PanelRow>
           <PanelLabel>{t('label.color')}</PanelLabel>
           <PanelField>

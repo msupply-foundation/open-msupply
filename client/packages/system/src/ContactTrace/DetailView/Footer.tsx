@@ -35,7 +35,7 @@ export const Footer: FC<FooterProps> = ({
   onCancel,
   onSave,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const navigate = useNavigate();
   const { Modal, showDialog, hideDialog } = useDialog();
   return (

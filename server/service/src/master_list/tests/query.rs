@@ -20,14 +20,14 @@ mod query {
                 None,
                 Some(
                     MasterListFilter::new()
-                        .exists_for_name_id(EqualFilter::equal_to("id_master_list_filter_test")),
+                        .exists_for_name_id(EqualFilter::equal_to("name_store_a")),
                 ),
                 None,
             )
             .unwrap();
 
         assert_eq!(result.count, 1);
-        assert_eq!(result.rows[0].id, "master_list_filter_test");
+        assert_eq!(result.rows[0].id, "item_query_test1");
 
         let result = service
             .get_master_lists(
@@ -35,16 +35,14 @@ mod query {
                 None,
                 Some(
                     MasterListFilter::new()
-                        .exists_for_name(StringFilter::like("e_master_list_filter_te")),
+                        .exists_for_name(StringFilter::like("name_master_list_filter_test")),
                 ),
                 None,
             )
             .unwrap();
 
-        let master_list_row = result.rows[0].clone();
         assert_eq!(result.count, 1);
-        assert_eq!(master_list_row.id, "master_list_filter_test");
-        assert_eq!(master_list_row.name, "name_master_list_filter_test");
+        assert_eq!(result.rows[0].id, "master_list_filter_test");
 
         //Test filter on exists_for_store_id "store_a" finds something
         let result = service
@@ -57,7 +55,6 @@ mod query {
             .unwrap();
         assert!(result.count >= 1);
 
-        //Test filter for non existent store finds nothing
         let result = service
             .get_master_lists(
                 &context,

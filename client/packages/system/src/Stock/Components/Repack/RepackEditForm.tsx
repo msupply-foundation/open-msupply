@@ -3,7 +3,7 @@ import {
   Box,
   Divider,
   InputWithLabelRow,
-  NonNegativeIntegerInput,
+  NumericTextInput,
   TextWithLabelRow,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -60,7 +60,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
             label={t('label.packs-to-repack')}
             labelWidth="100%"
             Input={
-              <NonNegativeIntegerInput
+              <NumericTextInput
                 autoFocus
                 onChange={numberOfPacks =>
                   onChange({
@@ -130,7 +130,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
             label={t('label.new-pack-size')}
             labelWidth="100%"
             Input={
-              <NonNegativeIntegerInput
+              <NumericTextInput
                 onChange={newPackSize =>
                   onChange({
                     newPackSize,

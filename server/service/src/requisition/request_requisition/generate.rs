@@ -59,14 +59,14 @@ pub fn generate_requisition_lines(
             let suggested_quantity = generate_suggested_quantity(GenerateSuggestedQuantity {
                 average_monthly_consumption,
                 available_stock_on_hand,
-                min_months_of_stock: requisition_row.min_months_of_stock.clone(),
-                max_months_of_stock: requisition_row.max_months_of_stock.clone(),
+                min_months_of_stock: requisition_row.min_months_of_stock,
+                max_months_of_stock: requisition_row.max_months_of_stock,
             });
 
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition_row.id.clone(),
-                item_id: item_stats.item_id,
+                item_link_id: item_stats.item_id,
                 suggested_quantity,
                 available_stock_on_hand,
                 average_monthly_consumption,

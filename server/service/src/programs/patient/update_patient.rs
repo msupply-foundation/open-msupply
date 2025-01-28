@@ -24,7 +24,7 @@ fn validate_patient_exists(
 }
 
 fn validate(con: &StorageConnection, input: &UpdatePatient) -> Result<NameRow, UpdatePatientError> {
-    let Some(existing) = validate_patient_exists(con, &input)? else {
+    let Some(existing) = validate_patient_exists(con, input)? else {
         return Err(UpdatePatientError::PatientDoesNotExists);
     };
 
@@ -104,7 +104,7 @@ pub(crate) fn update_patient(
                     None,
                     None,
                 )
-                .map_err(|err| UpdatePatientError::DatabaseError(err))?
+                .map_err(UpdatePatientError::DatabaseError)?
                 .rows
                 .pop()
                 .ok_or(UpdatePatientError::InternalError(

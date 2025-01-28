@@ -12,12 +12,12 @@ pub fn generate_empty_invoice_lines(
     let mut result: Vec<InvoiceLineRow> = Vec::new();
 
     item_ids.into_iter().for_each(|item_id| {
-        match ItemRowRepository::new(&ctx.connection).find_one_by_id(&item_id) {
+        match ItemRowRepository::new(&ctx.connection).find_active_by_id(&item_id) {
             Ok(Some(item)) => {
                 result.push(InvoiceLineRow {
                     id: uuid(),
                     invoice_id: invoice_row.id.clone(),
-                    item_id: item.id.clone(),
+                    item_link_id: item.id.clone(),
                     item_name: item.name.clone(),
                     item_code: item.code.clone(),
                     stock_line_id: None,
@@ -34,6 +34,8 @@ pub fn generate_empty_invoice_lines(
                     number_of_packs: 0.0,
                     note: None,
                     inventory_adjustment_reason_id: None,
+                    return_reason_id: None,
+                    foreign_currency_price_before_tax: None,
                 });
             }
             Ok(None) => {}

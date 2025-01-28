@@ -9,7 +9,7 @@ interface AppVersionProps {
 }
 
 export const AppVersion: FC<AppVersionProps> = ({ SiteInfo, style }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   return (
     <Grid
       style={{

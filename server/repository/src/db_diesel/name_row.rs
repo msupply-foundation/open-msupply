@@ -1,6 +1,9 @@
 use super::{name_row::name::dsl::*, StorageConnection};
-
-use crate::{repository_error::RepositoryError, EqualFilter};
+use crate::{
+    item_link, name_link, repository_error::RepositoryError, EqualFilter, NameLinkRow,
+    NameLinkRowRepository,
+};
+use crate::{Delete, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -50,6 +53,9 @@ table! {
     }
 }
 
+allow_tables_to_appear_in_same_query!(name, item_link);
+allow_tables_to_appear_in_same_query!(name, name_link);
+
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -80,7 +86,7 @@ impl Gender {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum NameType {
@@ -89,16 +95,11 @@ pub enum NameType {
     Build,
     Invad,
     Repack,
+    #[default]
     Store,
 
     #[serde(other)]
     Others,
-}
-
-impl Default for NameType {
-    fn default() -> Self {
-        NameType::Store
-    }
 }
 
 impl NameType {
@@ -156,6 +157,18 @@ pub struct NameRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
+fn insert_or_ignore_name_link(
+    connection: &StorageConnection,
+    name_row: &NameRow,
+) -> Result<(), RepositoryError> {
+    let name_link_row = NameLinkRow {
+        id: name_row.id.clone(),
+        name_id: name_row.id.clone(),
+    };
+    NameLinkRowRepository::new(connection).insert_one_or_ignore(&name_link_row)?;
+    Ok(())
+}
+
 impl<'a> NameRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         NameRowRepository { connection }
@@ -194,6 +207,7 @@ impl<'a> NameRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
+        insert_or_ignore_name_link(self.connection, row)?;
         self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
@@ -207,6 +221,7 @@ impl<'a> NameRowRepository<'a> {
         diesel::insert_into(name)
             .values(name_row)
             .execute(&self.connection.connection)?;
+        insert_or_ignore_name_link(self.connection, name_row)?;
         Ok(())
     }
 
@@ -235,6 +250,7 @@ impl<'a> NameRowRepository<'a> {
 
     pub fn sync_upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
+        insert_or_ignore_name_link(self.connection, row)?;
         self.toggle_is_sync_update(&row.id, true)?;
 
         Ok(())
@@ -248,6 +264,36 @@ impl<'a> NameRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct NameRowDelete(pub String);
+// TODO soft delete
+impl Delete for NameRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        NameRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            NameRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for NameRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        NameRowRepository::new(con).sync_upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            NameRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 

@@ -1,14 +1,14 @@
-use crate::sync::translations::{
-    temperature_log::LegacyTemperatureLogRow, LegacyTableName, PullUpsertRecord,
-};
+use crate::sync::translations::temperature_log::LegacyTemperatureLogRow;
 
 use chrono::{Duration, NaiveDate, NaiveTime};
 use repository::TemperatureLogRow;
 use serde_json::json;
 
-use super::{TestSyncPullRecord, TestSyncPushRecord};
+use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
-const TEMPERATURE_LOG_1: (&'static str, &'static str) = (
+const TABLE_NAME: &str = "temperature_log";
+
+const TEMPERATURE_LOG_1: (&str, &str) = (
     "995812e0c33911eb9757779d39ae2dbd",
     r#"{
         "ID": "995812e0c33911eb9757779d39ae2dbd",
@@ -23,11 +23,11 @@ const TEMPERATURE_LOG_1: (&'static str, &'static str) = (
     }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TEMPERATURE_LOG,
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
         TEMPERATURE_LOG_1,
-        PullUpsertRecord::TemperatureLog(TemperatureLogRow {
+        TemperatureLogRow {
             id: TEMPERATURE_LOG_1.0.to_string(),
             store_id: "store_a".to_string(),
             location_id: None,
@@ -39,13 +39,13 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 .unwrap()
                 + Duration::seconds(47046),
             temperature_breach_id: None,
-        }),
+        },
     )]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
-    vec![TestSyncPushRecord {
-        table_name: LegacyTableName::TEMPERATURE_LOG.to_string(),
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
+    vec![TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
         record_id: TEMPERATURE_LOG_1.0.to_string(),
         push_data: json!(LegacyTemperatureLogRow {
             id: TEMPERATURE_LOG_1.0.to_string(),

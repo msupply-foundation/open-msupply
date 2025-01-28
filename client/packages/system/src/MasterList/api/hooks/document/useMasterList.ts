@@ -3,15 +3,15 @@ import {
   UseQueryResult,
   useParams,
 } from '@openmsupply-client/common';
-import { MasterListFragment } from '../../operations.generated';
+import { MasterListRowFragment } from '../../operations.generated';
 import { useMasterListApi } from '../utils/useMasterListApi';
 
-const useMasterListId = () => {
+export const useMasterListId = () => {
   const { id = '' } = useParams();
   return id;
 };
 
-export const useMasterList = (): UseQueryResult<MasterListFragment> => {
+export const useMasterList = (): UseQueryResult<MasterListRowFragment> => {
   const masterListId = useMasterListId();
   const api = useMasterListApi();
   return useQuery(

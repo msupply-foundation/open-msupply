@@ -9,7 +9,7 @@ import {
 } from '@openmsupply-client/common';
 
 export const NotFound: React.FC = () => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   return (
     <Grid
       container

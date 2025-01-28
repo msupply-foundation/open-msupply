@@ -40,13 +40,13 @@ pub fn create_requisition_shipment(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let (requisition_row, fullfilments) = validate(connection, &ctx.store_id, &input)?;
+            let (requisition_row, fulfillments) = validate(connection, &ctx.store_id, &input)?;
             let (invoice_row, invoice_line_rows) = generate(
                 connection,
                 &ctx.store_id,
                 &ctx.user_id,
                 requisition_row,
-                fullfilments,
+                fulfillments,
             )?;
 
             InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;

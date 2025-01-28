@@ -25,7 +25,7 @@ impl Loader<String> for DocumentLoader {
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let ctx = self.service_provider.basic_context()?;
         let mut out = HashMap::new();
-        let doc_names = document_names.iter().map(|n| n.clone()).collect::<Vec<_>>();
+        let doc_names = document_names.to_vec();
 
         let result = DocumentRepository::new(&ctx.connection).query(
             Pagination::all(),
@@ -57,7 +57,7 @@ impl Loader<String> for DocumentByIdLoader {
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let ctx = self.service_provider.basic_context()?;
         let mut out = HashMap::new();
-        let doc_ids = document_ids.iter().map(|n| n.clone()).collect::<Vec<_>>();
+        let doc_ids = document_ids.to_vec();
 
         let result = DocumentRepository::new(&ctx.connection).query(
             Pagination::all(),

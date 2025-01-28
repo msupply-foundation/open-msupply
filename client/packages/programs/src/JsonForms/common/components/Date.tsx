@@ -5,7 +5,6 @@ import {
   DetailInputWithLabelRow,
   useFormatDateTime,
   BaseDatePickerInput,
-  DateUtils,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
@@ -25,7 +24,7 @@ export const dateTester = rankWith(5, isDateControl);
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, uischema } = props;
-  const dateFormatter = useFormatDateTime().customDate;
+  const formatDateTime = useFormatDateTime();
   const { errors: zErrors, options } = useZodOptionsValidation(
     Options,
     uischema.options
@@ -36,6 +35,7 @@ const UIComponent = (props: ControlProps) => {
   if (!props.visible) {
     return null;
   }
+
   return (
     <DetailInputWithLabelRow
       sx={{
@@ -50,9 +50,12 @@ const UIComponent = (props: ControlProps) => {
       Input={
         <BaseDatePickerInput
           // undefined is displayed as "now" and null as unset
-          value={DateUtils.getDateOrNull(data)}
+          value={formatDateTime.getLocalDate(data)}
           onChange={e => {
-            handleChange(path, !e ? undefined : dateFormatter(e, 'yyyy-MM-dd'));
+            handleChange(
+              path,
+              !e ? undefined : formatDateTime.customDate(e, 'yyyy-MM-dd')
+            );
             if (customError) setCustomError(undefined);
           }}
           format="P"

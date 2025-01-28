@@ -24,7 +24,7 @@ impl SyncApiV5 {
     // Get site status
     pub(crate) async fn get_site_info(&self) -> Result<SiteInfoV5, SyncApiError> {
         let route = "/sync/v5/site";
-        let response = self.do_get_no_query(route).await?;
+        let response = self.do_get(route, &()).await?;
 
         to_json(response)
             .await

@@ -38,7 +38,7 @@ export const StatusCrumbs = <StatusType extends string>(
   props: StatusCrumbsProps<StatusType>
 ): JSX.Element | null => {
   const { statuses, statusLog, statusFormatter } = props;
-  const t = useTranslation('common');
+  const t = useTranslation();
   const isSmallScreen = useIsSmallScreen();
 
   const steps = useSteps(props);

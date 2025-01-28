@@ -8,7 +8,7 @@ pub mod requisition_line_row;
 pub use self::requisition_line::*;
 pub use self::requisition_line_row::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct RequisitionLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
@@ -21,15 +21,7 @@ pub struct RequisitionLineFilter {
 
 impl RequisitionLineFilter {
     pub fn new() -> RequisitionLineFilter {
-        RequisitionLineFilter {
-            id: None,
-            store_id: None,
-            requisition_id: None,
-            r#type: None,
-            requested_quantity: None,
-            item_id: None,
-            status: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

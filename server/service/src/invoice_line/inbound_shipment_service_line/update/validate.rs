@@ -1,5 +1,5 @@
 use repository::{
-    InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow, ItemRowType, StorageConnection,
+    InvoiceLine, InvoiceRow, InvoiceRowType, ItemRow, ItemRowType, StorageConnection,
 };
 
 use crate::{
@@ -15,16 +15,17 @@ pub fn validate(
     input: &UpdateInboundShipmentServiceLine,
     store_id: &str,
     connection: &StorageConnection,
-) -> Result<(InvoiceLineRow, InvoiceRow, ItemRow), UpdateInboundShipmentServiceLineError> {
+) -> Result<(InvoiceLine, InvoiceRow, ItemRow), UpdateInboundShipmentServiceLineError> {
     use UpdateInboundShipmentServiceLineError::*;
 
     let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
-    let invoice = check_invoice_exists(&line.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    let invoice = check_invoice_exists(&line.invoice_line_row.invoice_id, connection)?
+        .ok_or(InvoiceDoesNotExist)?;
 
     let item = if let Some(item_id) = &input.item_id {
         check_item_exists(connection, item_id)?.ok_or(ItemNotFound)?
     } else {
-        check_item_exists(connection, &line.item_id)?.ok_or(ItemNotFound)?
+        line.item_row.clone()
     };
     if item.r#type != ItemRowType::Service {
         return Err(UpdateInboundShipmentServiceLineError::NotAServiceItem);
@@ -39,8 +40,8 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditInvoice);
     }
-    if !check_line_belongs_to_invoice(&line, &invoice) {
-        return Err(NotThisInvoiceLine(line.invoice_id));
+    if !check_line_belongs_to_invoice(&line.invoice_line_row, &invoice) {
+        return Err(NotThisInvoiceLine(line.invoice_line_row.invoice_id));
     }
 
     Ok((line, invoice, item))

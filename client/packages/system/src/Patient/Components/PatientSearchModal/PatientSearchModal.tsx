@@ -46,9 +46,9 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
               ? t('messages.results-found', { totalCount })
               : t('placeholder.search-by-name-or-code')}
           </Typography>
-          {totalCount > 100 && (
+          {totalCount > patients.length && (
             <Typography variant="body1" color="error">
-              {t('messages.results-over-limit')}
+              {t('messages.results-over-limit', { limit: patients.length })}
             </Typography>
           )}
         </Box>

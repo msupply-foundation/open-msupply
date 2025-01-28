@@ -151,7 +151,7 @@ impl<'a> TokenService<'a> {
         // add tokens to bucket
         let mut token_bucket = self.token_bucket.write().map_err(|e| {
             error!("{}", e);
-            return JWTIssuingError::ConcurrencyLockError(anyhow!("jwt_token: {}", e));
+            JWTIssuingError::ConcurrencyLockError(anyhow!("jwt_token: {}", e))
         })?;
         token_bucket.put(user_id, password, &pair.token, pair.expiry_date);
         token_bucket.put(user_id, password, &pair.refresh, pair.refresh_expiry_date);
@@ -173,7 +173,7 @@ impl<'a> TokenService<'a> {
     ) -> Result<TokenPair, JWTRefreshError> {
         let mut validation = jsonwebtoken::Validation::default();
         validation.leeway = leeway_sec.unwrap_or(validation.leeway);
-        validation.set_audience(&vec![format!("{:?}", Audience::TokenRefresh)]);
+        validation.set_audience(&[format!("{:?}", Audience::TokenRefresh)]);
         validation.set_issuer(&[ISSUER]);
         let decoded = jsonwebtoken::decode::<OmSupplyClaim>(
             refresh_token,
@@ -232,7 +232,7 @@ impl<'a> TokenService<'a> {
     ) -> Result<OmSupplyClaim, JWTValidationError> {
         let mut validation = jsonwebtoken::Validation::default();
         validation.leeway = leeway_sec.unwrap_or(validation.leeway);
-        validation.set_audience(&vec![format!("{:?}", Audience::Api)]);
+        validation.set_audience(&[format!("{:?}", Audience::Api)]);
         validation.set_issuer(&[ISSUER]);
         let decoded = jsonwebtoken::decode::<OmSupplyClaim>(
             token,
@@ -323,8 +323,6 @@ fn create_jwt_pair(
 mod user_account_test {
     use util::assert_matches;
 
-    use crate::token_bucket::TokenBucket;
-
     use super::*;
 
     #[actix_rt::test]
@@ -370,7 +368,7 @@ mod user_account_test {
         assert_eq!(user_id, claims.sub);
 
         // should fail to verify and refresh when logged out
-        bucket_validating_service.logout(&user_id).unwrap();
+        bucket_validating_service.logout(user_id).unwrap();
         let err = bucket_validating_service
             .verify_token(&token_pair.token, Some(0))
             .unwrap_err();

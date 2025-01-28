@@ -1,7 +1,7 @@
 use crate::{
     activity_log::activity_log_entry,
     number::next_number,
-    requisition::{common::check_requisition_exists, query::get_requisition},
+    requisition::{common::check_requisition_row_exists, query::get_requisition},
     service_provider::ServiceContext,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
@@ -51,7 +51,7 @@ pub fn insert_request_requisition(
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &input)?;
             let new_requisition = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
-            RequisitionRowRepository::new(&connection).upsert_one(&new_requisition)?;
+            RequisitionRowRepository::new(connection).upsert_one(&new_requisition)?;
 
             activity_log_entry(
                 &ctx,
@@ -62,7 +62,7 @@ pub fn insert_request_requisition(
             )?;
 
             get_requisition(ctx, None, &new_requisition.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedRequisitionDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -75,7 +75,7 @@ fn validate(
     store_id: &str,
     input: &InsertRequestRequisition,
 ) -> Result<(), OutError> {
-    if let Some(_) = check_requisition_exists(connection, &input.id)? {
+    if let Some(_) = check_requisition_row_exists(connection, &input.id)? {
         return Err(OutError::RequisitionAlreadyExists);
     }
 
@@ -119,8 +119,8 @@ fn generate(
     let result = RequisitionRow {
         id,
         user_id: Some(user_id.to_string()),
-        requisition_number: next_number(connection, &NumberRowType::RequestRequisition, &store_id)?,
-        name_id: other_party_id,
+        requisition_number: next_number(connection, &NumberRowType::RequestRequisition, store_id)?,
+        name_link_id: other_party_id,
         store_id: store_id.to_owned(),
         r#type: RequisitionRowType::Request,
         status: RequisitionRowStatus::Draft,
@@ -277,7 +277,7 @@ mod test_insert {
                     comment: Some("new comment".to_owned()),
                     max_months_of_stock: 1.0,
                     min_months_of_stock: 0.5,
-                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap()),
+                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
                 },
             )
             .unwrap();
@@ -294,13 +294,13 @@ mod test_insert {
             inline_edit(&new_row, |mut u| {
                 u.id = "new_request_requisition".to_owned();
                 u.user_id = Some(mock_user_account_a().id);
-                u.name_id = mock_name_store_c().id;
+                u.name_link_id = mock_name_store_c().id;
                 u.colour = Some("new colour".to_owned());
                 u.their_reference = Some("new their_reference".to_owned());
                 u.comment = Some("new comment".to_owned());
                 u.max_months_of_stock = 1.0;
                 u.min_months_of_stock = 0.5;
-                u.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap());
+                u.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap());
                 u
             })
         );

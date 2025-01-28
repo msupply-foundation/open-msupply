@@ -9,7 +9,7 @@ mod tests {
         app_data::{AppData, AppDataServiceTrait},
         service_provider::ServiceProvider,
         sync::{
-            api::{ParsedError, SyncApiError, SyncApiErrorVariant, SyncErrorCodeV5},
+            api::{ParsedError, SyncApiError, SyncApiErrorVariantV5, SyncErrorCodeV5},
             remote_data_synchroniser::{PostInitialisationError, RemotePushError},
             settings::SyncSettings,
             sync_status::SyncLogError,
@@ -94,7 +94,7 @@ mod tests {
         assert_matches!(
             error,
             SyncError::RemotePushError(RemotePushError::SyncApiError(SyncApiError {
-                source: SyncApiErrorVariant::ParsedError {
+                source: SyncApiErrorVariantV5::ParsedError {
                     status: StatusCode::UNAUTHORIZED,
                     ..
                 },
@@ -153,7 +153,7 @@ mod tests {
             error,
             SyncError::PostInitialisationError(PostInitialisationError::SyncApiError(
                 SyncApiError {
-                    source: SyncApiErrorVariant::ParsedError {
+                    source: SyncApiErrorVariantV5::ParsedError {
                         status: StatusCode::CONFLICT,
                         source: ParsedError {
                             code: SyncErrorCodeV5::ApiVersionIncompatible,

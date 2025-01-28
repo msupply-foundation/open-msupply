@@ -1,4 +1,4 @@
-use repository::ItemRow;
+use repository::{CurrencyRow, ItemRow};
 use serde_json::json;
 use util::{inline_init, uuid::uuid};
 
@@ -21,6 +21,13 @@ async fn integration_sync_shipment_transfers_normal() {
         r.id = uuid();
     });
 
+    let currency = inline_init(|r: &mut CurrencyRow| {
+        r.id = String::from("currency_a");
+        r.code = String::from("USD");
+        r.rate = 1.0;
+        r.is_home_currency = true;
+    });
+
     let SyncIntegrationTransferContext {
         site_1: outbound_and_response_site,
         site_2: inbound_and_request_site,
@@ -31,6 +38,9 @@ async fn integration_sync_shipment_transfers_normal() {
             "item": [
                 {"ID": item1.id, "type_of": "general"},
                 {"ID": item2.id, "type_of": "general"},
+            ],
+            "currency": [
+                {"ID": currency.id, "currency": currency.code, "rate": currency.rate, "is_home_currency": currency.is_home_currency}
             ]
         }),
         "sync_shipment_transfers_normal",
@@ -41,6 +51,7 @@ async fn integration_sync_shipment_transfers_normal() {
         let mut tester = ShipmentTransferTester::new(
             &outbound_and_response_site.store,
             &inbound_and_request_site.store,
+            None,
             &item1,
             &item2,
         );
@@ -172,6 +183,13 @@ async fn integration_sync_shipment_transfers_delete() {
         r.id = uuid();
     });
 
+    let currency = inline_init(|r: &mut CurrencyRow| {
+        r.id = String::from("currency_a");
+        r.code = String::from("USD");
+        r.rate = 1.0;
+        r.is_home_currency = true;
+    });
+
     let SyncIntegrationTransferContext {
         site_1: outbound_and_response_site,
         site_2: inbound_and_request_site,
@@ -182,6 +200,9 @@ async fn integration_sync_shipment_transfers_delete() {
             "item": [
                 {"ID": item1.id, "type_of": "general"},
                 {"ID": item2.id, "type_of": "general"},
+            ],
+            "currency": [
+                {"ID": currency.id, "currency": currency.code, "rate": currency.rate, "is_home_currency": currency.is_home_currency}
             ]
         }),
         "shipment_transfers_delete",
@@ -192,6 +213,7 @@ async fn integration_sync_shipment_transfers_delete() {
         let mut tester = ShipmentTransferTester::new(
             &outbound_and_response_site.store,
             &inbound_and_request_site.store,
+            None,
             &item1,
             &item2,
         );
@@ -269,6 +291,13 @@ async fn integration_sync_shipment_transfers_initialise() {
         r.id = uuid();
     });
 
+    let currency = inline_init(|r: &mut CurrencyRow| {
+        r.id = String::from("currency_a");
+        r.code = String::from("USD");
+        r.rate = 1.0;
+        r.is_home_currency = true;
+    });
+
     let SyncIntegrationTransferContext {
         site_1: outbound_and_response_site,
         site_2: inbound_and_request_site,
@@ -279,6 +308,9 @@ async fn integration_sync_shipment_transfers_initialise() {
             "item": [
                 {"ID": item1.id, "type_of": "general"},
                 {"ID": item2.id, "type_of": "general"},
+            ],
+            "currency": [
+                {"ID": currency.id, "currency": currency.code, "rate": currency.rate, "is_home_currency": currency.is_home_currency}
             ]
         }),
         identifier,
@@ -289,6 +321,7 @@ async fn integration_sync_shipment_transfers_initialise() {
         let mut tester = ShipmentTransferTester::new(
             &outbound_and_response_site.store,
             &inbound_and_request_site.store,
+            None,
             &item1,
             &item2,
         );

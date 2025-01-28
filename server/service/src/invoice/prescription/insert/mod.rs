@@ -43,7 +43,7 @@ pub fn insert_prescription(
             InvoiceRowRepository::new(connection).upsert_one(&new_invoice)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::PrescriptionCreated,
                 Some(new_invoice.id.to_owned()),
                 None,
@@ -51,7 +51,7 @@ pub fn insert_prescription(
             )?;
 
             get_invoice(ctx, None, &new_invoice.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -112,7 +112,7 @@ mod test {
         fn not_a_patient_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "not_a_patient_join".to_string();
-                r.name_id = not_a_patient().id;
+                r.name_link_id = not_a_patient().id;
                 r.store_id = mock_store_a().id;
                 r.name_is_supplier = false;
             })
@@ -192,7 +192,7 @@ mod test {
         fn patient_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "patient_join".to_string();
-                r.name_id = patient().id;
+                r.name_link_id = patient().id;
                 r.store_id = mock_store_a().id;
                 r.name_is_customer = true;
             })
@@ -232,7 +232,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.name_id = patient().id;
+                u.name_link_id = patient().id;
                 u.user_id = Some(mock_user_account_a().id);
                 u
             })

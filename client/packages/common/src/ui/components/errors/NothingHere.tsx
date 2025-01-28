@@ -17,7 +17,7 @@ export const NothingHere: React.FC<NothingHereProps> = ({
   title,
   onCreate,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const heading = title || t('error.no-results');
   const createButtonText = buttonText || t('button.create-a-new-one');
 

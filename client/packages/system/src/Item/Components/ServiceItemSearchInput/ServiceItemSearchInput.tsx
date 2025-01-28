@@ -49,7 +49,7 @@ const ServiceItemSearchComponent: FC<ItemSearchInputProps> = ({
   refetchOnMount = true,
 }) => {
   const { data, isLoading } = useServiceItems({ refetchOnMount });
-  const t = useTranslation('common');
+  const t = useTranslation();
   const selectControl = useToggle();
 
   const value =

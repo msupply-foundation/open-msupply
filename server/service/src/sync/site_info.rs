@@ -54,7 +54,12 @@ impl SiteInfoTrait for SiteInfoService {
     ) -> Result<SiteInfoV5, RequestAndSetSiteInfoError> {
         use RequestAndSetSiteInfoError as Error;
 
-        let sync_api_v5 = SyncApiV5::new(&settings, &service_provider, SYNC_VERSION)?;
+        // This can be simplified
+        let sync_api_v5 = SyncApiV5::new(SyncApiV5::new_settings(
+            &settings,
+            &service_provider,
+            SYNC_VERSION,
+        )?)?;
         let ctx = service_provider.basic_context()?;
 
         info!("Requesting site info");

@@ -13,6 +13,7 @@ import {
   UpdatePatientInput,
   BasicSpinner,
   DocumentRegistryCategoryNode,
+  useNavigate,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -106,6 +107,7 @@ const PatientDetailView = ({
       },
     });
   const isLoading = isCurrentPatientLoading || isPatientRegistryLoading;
+  const navigate = useNavigate();
 
   const patientRegistry = patientRegistries?.nodes[0];
   const isCreatingPatient = !!createNewPatient;
@@ -228,6 +230,14 @@ const PatientDetailView = ({
     title: t('heading.are-you-sure'),
   });
 
+  const showCancelConfirmation = useConfirmationModal({
+    onConfirm: () => {
+      navigate(-1);
+    },
+    message: t('messages.confirm-cancel-generic'),
+    title: t('heading.are-you-sure'),
+  });
+
   if (isLoading) return <BasicSpinner />;
 
   return (
@@ -240,6 +250,7 @@ const PatientDetailView = ({
         validationError={validationError}
         inputData={inputData}
         showSaveConfirmation={showSaveConfirmation}
+        showCancelConfirmation={showCancelConfirmation}
       />
     </Box>
   );

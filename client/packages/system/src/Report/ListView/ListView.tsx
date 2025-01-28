@@ -79,7 +79,7 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
     queryParams,
   });
   const pagination = { page, first, offset };
-  const t = useTranslation('common');
+  const t = useTranslation();
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined
   >();

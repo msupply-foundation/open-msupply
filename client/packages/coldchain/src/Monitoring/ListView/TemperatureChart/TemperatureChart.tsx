@@ -10,7 +10,6 @@ import {
   Legend,
   Line,
   NothingHere,
-  NumUtils,
   ResponsiveContainer,
   TooltipProps,
   Typography,
@@ -20,11 +19,12 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { useTemperatureChartData } from './useTemperatureChartData';
-import { TemperatureTooltipLayout } from './TemperatureTooltipLayout';
+import { Entry, TemperatureTooltipLayout } from './TemperatureTooltipLayout';
 import { BreachPopover } from './BreachPopover';
 import { BreachConfig, BreachDot, DotProps, Sensor } from './types';
 import { BreachIndicator } from './BreachIndicator';
 import { Toolbar } from '../TemperatureLog/Toolbar';
+import { useFormatTemperature } from '../../../common';
 
 const NUMBER_OF_HORIZONTAL_LINES = 4;
 const LOWER_THRESHOLD = 2;
@@ -51,30 +51,31 @@ const Chart = ({
     null
   );
   const { urlQuery, updateQuery } = useUrlQuery();
+  const formatTemp = useFormatTemperature();
 
   const formatTemperature = (value: number | null) =>
-    value === null
-      ? '-'
-      : `${NumUtils.round(value, 2)} ${t('label.temperature-unit')}`;
+    !!value ? `${formatTemp(value)}` : '-';
 
   const TemperatureTooltip = ({
     active,
     payload,
     label,
   }: TooltipProps<number, string>) => {
-    if (!active || !payload?.length) return null;
+    const entries: Entry[] = [];
 
-    const date = payload[0]?.payload?.date;
-    const entries = sensors.map(sensor => {
-      const entry = sensor.logs.find(log => log.date === date.getTime());
-      if (!entry) return null;
-      return {
-        name: sensor.name,
-        value: formatTemperature(entry.temperature),
-        id: sensor.id,
-        color: sensor.colour,
-      };
-    });
+    if (active && !!payload?.length) {
+      const date = payload[0]?.payload?.date;
+      sensors.forEach(sensor => {
+        const entry = sensor.logs.find(log => log.date === date.getTime());
+        if (!entry) return;
+        entries.push({
+          name: sensor.name,
+          value: formatTemperature(entry.temperature),
+          id: sensor.id,
+          color: sensor.colour,
+        });
+      });
+    }
 
     return <TemperatureTooltipLayout entries={entries} label={label} />;
   };

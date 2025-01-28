@@ -247,8 +247,8 @@ impl DateFilter {
     pub fn date_range(from: &NaiveDate, to: &NaiveDate) -> DateFilter {
         DateFilter {
             equal_to: None,
-            after_or_equal_to: Some(from.clone()),
-            before_or_equal_to: Some(to.clone()),
+            after_or_equal_to: Some(*from),
+            before_or_equal_to: Some(*to),
         }
     }
 

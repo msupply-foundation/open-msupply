@@ -7,8 +7,7 @@ use crate::{activity_log::system_activity_log_entry, invoice::common::get_lines_
 
 use super::{Operation, ShipmentTransferProcessor, ShipmentTransferProcessorRecord};
 
-const DESCRIPTION: &'static str =
-    "Delete inbound shipment when source outbound shipment is deleted";
+const DESCRIPTION: &str = "Delete inbound shipment when source outbound shipment is deleted";
 
 pub(crate) struct DeleteInboundShipmentProcessor;
 
@@ -27,11 +26,11 @@ impl ShipmentTransferProcessor for DeleteInboundShipmentProcessor {
     /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
     /// 2. Operation is delete
     /// 3. Linked shipment exists
-    /// 4. Linked shipment is InboundShipment
+    /// 4. Linked shipment is either InboundShipment or Inbound Return
     /// 5. Linked inbound shipment is Picked (Inbound shipment can only be deleted before it turns to Shipped status)
     ///
     /// Only runs once:
-    /// 6. Because linked inbound shipment is deleted `3.` will never be true again
+    /// 6. Because linked inbound shipment is deleted. `3.` will never be true again
     fn try_process_record(
         &self,
         connection: &StorageConnection,
@@ -49,7 +48,10 @@ impl ShipmentTransferProcessor for DeleteInboundShipmentProcessor {
             None => return Ok(None),
         };
         // 4.
-        if inbound_shipment.invoice_row.r#type != InvoiceRowType::InboundShipment {
+        if !matches!(
+            inbound_shipment.invoice_row.r#type,
+            InvoiceRowType::InboundShipment | InvoiceRowType::InboundReturn
+        ) {
             return Ok(None);
         }
         // 5.

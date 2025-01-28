@@ -1,12 +1,15 @@
 use serde::{Deserialize, Serialize};
 
-use repository::{Permission, StorageConnection, SyncBufferRow, UserPermissionRow};
-
-use crate::sync::{sync_serde::empty_str_as_option_string, translations::LegacyTableName};
-
-use super::{
-    IntegrationRecords, PullDeleteRecordTable, PullDependency, PullUpsertRecord, SyncTranslation,
+use repository::{
+    Permission, StorageConnection, SyncBufferRow, UserPermissionRow, UserPermissionRowDelete,
 };
+
+use crate::sync::{
+    sync_serde::empty_str_as_option_string,
+    translations::{master_list::MasterListTranslation, store::StoreTranslation},
+};
+
+use super::{PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyPermission {
@@ -28,29 +31,31 @@ pub struct LegacyUserPermissionTable {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub context: Option<String>,
 }
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::USER_PERMISSION
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(UserPermissionTranslation)
 }
 
-pub(crate) struct UserPermissionTranslation {}
+pub(super) struct UserPermissionTranslation;
 impl SyncTranslation for UserPermissionTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::USER_PERMISSION,
-            // include LIST_MASTER to populate context entries, e.g. program contexts
-            dependencies: vec![LegacyTableName::STORE, LegacyTableName::LIST_MASTER],
-        }
+    fn table_name(&self) -> &str {
+        "om_user_permission"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![
+            StoreTranslation.table_name(),
+            // include Master List to populate context entries, e.g. program contexts
+            MasterListTranslation.table_name(),
+        ]
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyUserPermissionTable {
             id,
             user_id,
@@ -71,24 +76,17 @@ impl SyncTranslation for UserPermissionTranslation {
             permission: user_permission,
             context_id: context,
         };
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::UserPermission(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_pull_delete(
+    fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(
-                &sync_record.record_id,
-                PullDeleteRecordTable::UserPermission,
-            )
-        });
-
-        Ok(result)
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(UserPermissionRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 }
 
@@ -106,16 +104,18 @@ mod tests {
             setup_all("test_user_permission_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
         }
 
         for record in test_data::test_pull_delete_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
+                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

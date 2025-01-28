@@ -1,4 +1,5 @@
 {
+  "auth.permission-denied": "Permission refusée",
   "description.requested-packs": "Nombre de packs demandé (environ)",
   "label.dps": "Cond.",
   "label.requisition-general": "Général",
@@ -18,7 +19,6 @@
   "log.requisition-status-finalised": "Commande finalisée",
   "description.program": "Les bons de commande programme sont utilisées pour gérer des groupes d'article et les calendriers de commande.",
   "filename.outbounds": "Sorties de stock",
-  "description.remaining-to-supply": "C'est la quantité restante à livrer, c'est à dire la quantité total à livrer moins la quantité déjà livrée avec les sorties de stock",
   "button.new-outbound-shipment": "Nouvelle sortie de stock",
   "description.default-pack-size": "Conditionnement",
   "label.default-pack-size": "Conditionnement"

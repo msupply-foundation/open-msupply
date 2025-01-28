@@ -64,7 +64,7 @@ mod query {
             .unwrap();
 
         assert_eq!(result.location_row.id, "location_on_hold");
-        assert_eq!(result.location_row.on_hold, true);
+        assert!(result.location_row.on_hold);
     }
 
     #[actix_rt::test]

@@ -33,7 +33,7 @@ pub fn validate(
     let other_party = check_other_party(
         connection,
         store_id,
-        &other_party_id,
+        other_party_id,
         CheckOtherPartyType::Customer,
     )
     .map_err(|e| match e {

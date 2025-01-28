@@ -1,7 +1,7 @@
-use super::MasterListLineConnector;
-use async_graphql::{dataloader::DataLoader, Context, Object, Result};
-use graphql_core::{loader::MasterListLineByMasterListId, ContextExt};
+use async_graphql::{Context, Error, Object};
+use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 use repository::MasterList;
+use service::master_list::query_lines::get_master_list_lines_count;
 
 #[derive(PartialEq, Debug)]
 pub struct MasterListNode {
@@ -26,17 +26,14 @@ impl MasterListNode {
         &self.master_list.description
     }
 
-    pub async fn lines(&self, ctx: &Context<'_>) -> Result<MasterListLineConnector> {
-        let loader = ctx.get_loader::<DataLoader<MasterListLineByMasterListId>>();
+    pub async fn lines_count(&self, ctx: &Context<'_>) -> Result<Option<i64>, Error> {
+        let count = get_master_list_lines_count(
+            &ctx.get_connection_manager().connection()?,
+            &self.master_list.id,
+        )
+        .map_err(StandardGraphqlError::from_repository_error)?;
 
-        let lines_option = loader.load_one(self.master_list.id.clone()).await?;
-
-        let result = match lines_option {
-            None => MasterListLineConnector::empty(),
-            Some(lines) => MasterListLineConnector::from_domain_vec(lines),
-        };
-
-        Ok(result)
+        Ok(Some(count as i64))
     }
 }
 

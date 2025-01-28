@@ -106,7 +106,7 @@ mod test {
 
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         location::Location, mock::MockDataInserts, LocationRow, StorageConnectionManager,
@@ -149,7 +149,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_insert_location_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             LocationMutations,
             "test_graphql_insert_location_errors",
@@ -253,7 +253,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_insert_location_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             LocationMutations,
             "test_graphql_insert_location_success",

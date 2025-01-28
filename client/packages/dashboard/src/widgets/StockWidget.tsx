@@ -11,6 +11,7 @@ import {
   StatsPanel,
   useFormatDateTime,
   useFormatNumber,
+  useNavigate,
   useNotification,
   useToggle,
   useTranslation,
@@ -24,9 +25,10 @@ import { AppRoute } from '@openmsupply-client/config';
 const LOW_MOS_THRESHOLD = 3;
 
 export const StockWidget: React.FC = () => {
+  const t = useTranslation('dashboard');
+  const navigate = useNavigate();
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
-  const t = useTranslation('dashboard');
   const formatNumber = useFormatNumber();
   const {
     data: expiryData,
@@ -77,7 +79,15 @@ export const StockWidget: React.FC = () => {
                 otherPartyId,
               },
               { onError }
-            );
+            ).then(requisitionNumber => {
+              navigate(
+                RouteBuilder.create(AppRoute.Replenishment)
+                  .addPart(AppRoute.InternalOrder)
+                  .addPart(String(requisitionNumber))
+                  .build(),
+                { replace: true }
+              );
+            });
           }}
         />
       ) : null}

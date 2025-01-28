@@ -2,31 +2,40 @@ import React from 'react';
 import { StoreRowFragment, useStore } from '../../api';
 import {
   Autocomplete,
-  AutocompleteProps,
   createQueryParamsStore,
   defaultOptionMapper,
   QueryParamsProvider,
 } from '@openmsupply-client/common';
 
 type StoreSearchInputProps = {
-  renderInput: AutocompleteProps<StoreRowFragment>['renderInput'];
+  clearable?: boolean;
+  fullWidth?: boolean;
   isDisabled?: boolean;
-  onChange: (newStore: StoreRowFragment) => void;
   value?: StoreRowFragment;
+  onChange: (newStore: StoreRowFragment) => void;
+  onInputChange?: (
+    event: React.SyntheticEvent,
+    value: string,
+    reason: string
+  ) => void;
 };
 
 const StoreSearchComponent = ({
-  renderInput,
+  clearable = false,
+  fullWidth = false,
   isDisabled = false,
-  onChange,
   value,
+  onInputChange,
+  onChange,
 }: StoreSearchInputProps) => {
   const { data, isLoading } = useStore.document.list();
 
   return (
     <Autocomplete
-      clearable={false}
-      renderInput={renderInput}
+      width={fullWidth ? '100%' : undefined}
+      sx={fullWidth ? { width: '100%' } : undefined}
+      onInputChange={onInputChange}
+      clearable={clearable}
       loading={isLoading}
       options={defaultOptionMapper(data?.nodes ?? [], 'code')}
       disabled={isDisabled}

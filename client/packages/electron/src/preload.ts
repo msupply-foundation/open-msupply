@@ -29,6 +29,7 @@ const electronNativeAPI: NativeAPI = {
   getScannerType: () => ipcRenderer.invoke(IPC_MESSAGES.GET_SCANNER_TYPE),
   saveFile: (fileInfo: FileInfo) =>
     ipcRenderer.invoke(IPC_MESSAGES.SAVE_FILE, fileInfo),
+  saveDatabase: () => ipcRenderer.invoke(IPC_MESSAGES.SAVE_DATABASE),
 };
 
 contextBridge.exposeInMainWorld('electronNativeAPI', electronNativeAPI);

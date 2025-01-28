@@ -18,7 +18,7 @@ pub(crate) fn encounters(
     allowed_ctx: Vec<String>,
 ) -> Result<ListResult<Encounter>, ListError> {
     // restrict query results to allowed entries
-    let mut filter = filter.unwrap_or(EncounterFilter::new());
+    let mut filter = filter.unwrap_or_default();
     filter.program_context_id = Some(
         filter
             .program_context_id

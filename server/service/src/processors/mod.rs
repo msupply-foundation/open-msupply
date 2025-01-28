@@ -211,7 +211,7 @@ mod test {
             err = processor_handle => unreachable!("Processor handle shouldn't exit {:?}", err),
             triggered_compare = trigger_handle => triggered_compare.unwrap()
         };
-        // Unbaised assert not equal
+        // Unbiased assert not equal
         assert_ne!(triggered_compare, triggered.lock().await.clone());
 
         // BIASED (ordered select)

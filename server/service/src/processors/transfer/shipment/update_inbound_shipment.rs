@@ -14,7 +14,7 @@ use super::{
     Operation, ShipmentTransferProcessor, ShipmentTransferProcessorRecord,
 };
 
-const DESCRIPTION: &'static str = "Update inbound shipment from outbound shipment";
+const DESCRIPTION: &str = "Update inbound shipment from outbound shipment";
 
 pub(crate) struct UpdateInboundShipmentProcessor;
 
@@ -26,7 +26,7 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
     /// Inbound shipment will be updated when all below conditions are met:
     ///
     /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
-    /// 2. Source shipment is Outbound shipment
+    /// 2. Source shipment is Outbound shipment or Outbound Return
     /// 3. Linked shipment exists (the inbound shipment)
     /// 4. Linked inbound shipment is Picked (Inbound shipment can only be deleted before it turns to Shipped status)
     /// 5. Source outbound shipment is Shipped
@@ -48,7 +48,10 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
             _ => return Ok(None),
         };
         // 2.
-        if outbound_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment {
+        if !matches!(
+            outbound_shipment.invoice_row.r#type,
+            InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn
+        ) {
             return Ok(None);
         }
         // 3.
@@ -70,11 +73,11 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
         let new_inbound_lines = generate_inbound_shipment_lines(
             connection,
             &inbound_shipment.invoice_row.id,
-            &outbound_shipment,
+            outbound_shipment,
         )?;
 
         let store_preferences =
-            get_store_preferences(connection, &&inbound_shipment.invoice_row.store_id)?;
+            get_store_preferences(connection, &inbound_shipment.invoice_row.store_id)?;
         let new_inbound_lines = match store_preferences.pack_to_one {
             true => convert_invoice_line_to_single_pack(new_inbound_lines),
             false => new_inbound_lines,
@@ -93,7 +96,7 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
         let updated_inbound_shipment = InvoiceRow {
             // 6.
             status: InvoiceRowStatus::Shipped,
-            shipped_datetime: outbound_shipment.invoice_row.shipped_datetime.clone(),
+            shipped_datetime: outbound_shipment.invoice_row.shipped_datetime,
             ..inbound_shipment.invoice_row.clone()
         };
 

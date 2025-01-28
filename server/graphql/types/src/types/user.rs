@@ -2,10 +2,11 @@ use super::{StorePreferenceNode, UserStorePermissionConnector};
 use async_graphql::{
     dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result, SimpleObject,
 };
+use chrono::NaiveDate;
 use graphql_core::{
     loader::NameRowLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
-use repository::{Language, StoreMode, User, UserStore};
+use repository::{CurrencyFilter, Language, StoreMode, User, UserStore};
 use service::permission::permissions;
 
 pub struct UserStoreNode {
@@ -51,6 +52,30 @@ impl UserStoreNode {
 
     pub async fn store_mode(&self) -> StoreModeNodeType {
         StoreModeNodeType::from_domain(&self.user_store.store_row.store_mode)
+    }
+
+    pub async fn created_date(&self) -> &Option<NaiveDate> {
+        &self.user_store.store_row.created_date
+    }
+    pub async fn home_currency_code(&self, ctx: &Context<'_>) -> Result<Option<String>> {
+        let service_provider = ctx.service_provider();
+        let currency_provider = &service_provider.currency_service;
+        let service_context = service_provider.basic_context()?;
+
+        let home_currency = currency_provider
+            .get_currencies(
+                &service_context,
+                Some(CurrencyFilter::new().is_home_currency(true)),
+                None,
+            )
+            .map_err(StandardGraphqlError::from_list_error)?
+            .rows
+            .pop();
+
+        match home_currency {
+            Some(home_currency) => Ok(Some(home_currency.currency_row.code)),
+            None => Ok(None),
+        }
     }
 }
 

@@ -105,7 +105,7 @@ impl ResponseNode {
         } = from;
         ResponseNode {
             updates: InvoiceLineConnector::from_vec(updates),
-            deletes: deletes.into_iter().map(|id| DeleteResponse(id)).collect(),
+            deletes: deletes.into_iter().map(DeleteResponse).collect(),
             inserts: InvoiceLineConnector::from_vec(inserts),
             skipped_expired_stock_lines: StockLineConnector::from_vec(skipped_expired_stock_lines),
             skipped_on_hold_stock_lines: StockLineConnector::from_vec(skipped_on_hold_stock_lines),
@@ -120,7 +120,7 @@ impl ResponseNode {
 mod graphql {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::MockDataInserts, InvoiceLine, InvoiceLineRow, StockLine, StorageConnectionManager,
@@ -172,7 +172,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_allocate_unallocated_structured_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_allocate_unallocated_line_structured_errors",
@@ -215,7 +215,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_allocate_unallocated_standard_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_allocate_unallocated_line_standard_errors",
@@ -248,7 +248,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_allocate_unallocated_line_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_allocate_unallocated_line_success",

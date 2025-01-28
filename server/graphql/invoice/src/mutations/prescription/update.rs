@@ -177,7 +177,7 @@ impl UpdatePrescriptionStatusInput {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{mock_patient, mock_prescription_a, mock_store_a, MockDataInserts},
@@ -234,7 +234,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_update_prescription_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceMutations,
             "test_graphql_prescription_errors",
@@ -367,7 +367,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_update_prescription_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceMutations,
             "test_graphql_update_prescription_success",

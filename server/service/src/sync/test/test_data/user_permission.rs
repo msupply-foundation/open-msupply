@@ -1,11 +1,10 @@
-use repository::{mock::context_program_a, Permission, UserPermissionRow};
+use repository::{mock::context_program_a, Permission, UserPermissionRow, UserPermissionRowDelete};
 
-use crate::sync::{
-    test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullDeleteRecordTable, PullUpsertRecord},
-};
+use crate::sync::test::TestSyncIncomingRecord;
 
-const USER_PERMISSION_1: (&'static str, &'static str) = (
+const TABLE_NAME: &str = "om_user_permission";
+
+const USER_PERMISSION_1: (&str, &str) = (
     "user_permission_1",
     r#"{
     "ID": "user_permission_1",
@@ -16,7 +15,7 @@ const USER_PERMISSION_1: (&'static str, &'static str) = (
 }"#,
 );
 
-const USER_PERMISSION_2: (&'static str, &'static str) = (
+const USER_PERMISSION_2: (&str, &str) = (
     "user_permission_2",
     r#"{
     "ID": "user_permission_2",
@@ -27,37 +26,37 @@ const USER_PERMISSION_2: (&'static str, &'static str) = (
 }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestSyncPullRecord::new_pull_upsert(
-            LegacyTableName::USER_PERMISSION,
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
             USER_PERMISSION_1,
-            PullUpsertRecord::UserPermission(UserPermissionRow {
+            UserPermissionRow {
                 id: USER_PERMISSION_1.0.to_owned(),
                 user_id: "user_account_a".to_string(),
                 store_id: Some("store_a".to_string()),
                 permission: Permission::DocumentQuery,
                 context_id: Some(context_program_a().id.to_string()),
-            }),
+            },
         ),
-        TestSyncPullRecord::new_pull_upsert(
-            LegacyTableName::USER_PERMISSION,
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
             USER_PERMISSION_2,
-            PullUpsertRecord::UserPermission(UserPermissionRow {
+            UserPermissionRow {
                 id: USER_PERMISSION_2.0.to_owned(),
                 user_id: "user_account_a".to_string(),
                 store_id: Some("store_a".to_string()),
                 permission: Permission::DocumentMutate,
                 context_id: Some(context_program_a().id.to_string()),
-            }),
+            },
         ),
     ]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::USER_PERMISSION,
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
+        TABLE_NAME,
         USER_PERMISSION_2.0,
-        PullDeleteRecordTable::UserPermission,
+        UserPermissionRowDelete(USER_PERMISSION_2.0.to_string()),
     )]
 }

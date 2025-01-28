@@ -42,7 +42,7 @@ pub async fn update_sync_settings(
     if sync_settings.core_site_details_changed(&database_sync_settings) {
         if let Err(error) = service_provider
             .site_info_service
-            .request_and_set_site_info(&service_provider, &sync_settings)
+            .request_and_set_site_info(service_provider, &sync_settings)
             .await
         {
             return Ok(UpdateSyncSettingsResponse::Error(SyncErrorNode::map_error(

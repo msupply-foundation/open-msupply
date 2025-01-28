@@ -13,22 +13,23 @@ repository = { path = "../repository" }
 service = { path = "../service" }
 util = { path = "../util" }
 graphql_core = { path = "core" }
-graphql_programs = { path = "programs" }
-graphql_types = { path = "types" }
-graphql_general = { path = "general" }
-graphql_location = { path = "location" }
-graphql_reports = { path = "reports" }
-graphql_sensor = { path = "sensor" }
-graphql_temperature_breach = { path = "temperature_breach" }
-graphql_temperature_log = { path = "temperature_log" }
-graphql_temperature_notification = { path = "temperature_notification" }
 
+graphql_asset = { path = "asset" }
+graphql_general = { path = "general" }
+graphql_cold_chain = { path = "cold_chain" }
+graphql_asset_catalogue = { path = "asset_catalogue" }
+graphql_inventory_adjustment = { path = "inventory_adjustment" }
 graphql_invoice = { path = "invoice" }
 graphql_invoice_line = { path = "invoice_line" }
+graphql_location = { path = "location" }
+graphql_pack_variant = { path = "pack_variant" }
+graphql_programs = { path = "programs" }
+graphql_reports = { path = "reports" }
 graphql_requisition = { path = "requisition" }
 graphql_requisition_line = { path = "requisition_line" }
 graphql_stocktake = { path = "stocktake" }
 graphql_stocktake_line = { path = "stocktake_line" }
+graphql_types = { path = "types" }
 graphql_batch_mutations = { path = "batch_mutations" }
 graphql_stock_line = { path = "stock_line" }
 graphql_repack = { path = "repack" }
@@ -37,15 +38,12 @@ graphql_clinician = { path = "clinician" }
 graphql_plugin = { path = "plugin" }
 
 actix-web = { workspace = true }
-anymap = { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
 async-trait = { workspace = true }
 chrono = { workspace = true }
-reqwest = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-thiserror = { workspace = true }
 
 tokio = { version = "1.17.0", features = ["macros"] }
 

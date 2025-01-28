@@ -1,6 +1,7 @@
 use crate::{
+    cursor_controller::CursorController,
     processors::transfer::{
-        get_requisition_and_linked_requisition,
+        get_linked_original_shipment, get_requisition_and_linked_requisition,
         shipment::{
             assign_invoice_number::AssignInvoiceNumberProcessor,
             create_inbound_shipment::CreateInboundShipmentProcessor,
@@ -15,12 +16,12 @@ use crate::{
 };
 use repository::{
     ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
-    EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, KeyValueStoreRepository, KeyValueType,
-    RepositoryError, Requisition, StorageConnection,
+    EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, KeyValueType, RepositoryError,
+    Requisition, StorageConnection,
 };
 use thiserror::Error;
 
-use super::GetRequisitionAndLinkedRequisitionError;
+use super::{GetLinkedOriginalShipmentError, GetRequisitionAndLinkedRequisitionError};
 
 pub(crate) mod assign_invoice_number;
 pub(crate) mod common;
@@ -55,6 +56,16 @@ enum Operation {
         /// OR
         /// `shipment.requisition_id -> requisition.id -> linked_requisition.linked_requisition_id`
         linked_shipment_requisition: Option<Requisition>,
+        /// Original shipment for linked return, required for linking inbound return to outbound shipment
+        /// Could be Some() even if linked_shipment (which is actually linked_return in this case...) is None
+        /// because in/outbound return may not be linked to another return, but can be linked/connected to its
+        /// original in/outbound shipment
+        ///
+        /// Deduced through:
+        /// `return.original_shipment_id -> original_shipment.linked_invoice_id = linked_invoice.id`
+        /// OR
+        /// `return.original_shipment_id -> original_shipment.id -> linked_invoice.linked_invoice_id`
+        linked_original_shipment: Option<Invoice>,
     },
 }
 
@@ -103,18 +114,18 @@ pub(crate) fn process_shipment_transfers(
         ActiveStoresOnSite::get(&ctx.connection).map_err(Error::GetActiveStoresOnSiteError)?;
 
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
-    let key_value_store_repo = KeyValueStoreRepository::new(&ctx.connection);
+    let cursor_controller = CursorController::new(KeyValueType::ShipmentTransferProcessorCursor);
     // For transfers, changelog MUST be filtered by records where name_id is active store on this site
     // this is the contract obligation for try_process_record in ProcessorTrait
     let filter = ChangelogFilter::new()
         .table_name(ChangelogTableName::Invoice.equal_to())
-        .name_id(EqualFilter::equal_any(active_stores.name_ids()));
+        .name_id(EqualFilter::equal_any(active_stores.name_ids().clone()));
 
     loop {
-        let cursor = key_value_store_repo
-            .get_i64(KeyValueType::ShipmentTransferProcessorCursor)
-            .map_err(Error::DatabaseError)?
-            .unwrap_or(0) as u64;
+        let cursor = cursor_controller
+            .get(&ctx.connection)
+            .map_err(Error::DatabaseError)?;
+
         let logs = changelog_repo
             .changelogs(cursor, CHANGELOG_BATCH_SIZE, Some(filter.clone()))
             .map_err(Error::DatabaseError)?;
@@ -144,6 +155,8 @@ pub(crate) fn process_shipment_transfers(
                     .ok_or_else(|| Error::NameIsNotAnActiveStore(log.clone()))?,
             };
 
+            // TODO: MERGE: Ignore if invoice name_link_id points to store's name. Supplying to itself! (Can happen with names are merge into stores)
+
             // Try record against all of the processors
             for processor in processors.iter() {
                 processor
@@ -151,11 +164,8 @@ pub(crate) fn process_shipment_transfers(
                     .map_err(Error::ProcessorError)?;
             }
 
-            key_value_store_repo
-                .set_i64(
-                    KeyValueType::ShipmentTransferProcessorCursor,
-                    Some(log.cursor + 1),
-                )
+            cursor_controller
+                .update(&ctx.connection, (log.cursor + 1) as u64)
                 .map_err(Error::DatabaseError)?;
         }
     }
@@ -171,6 +181,8 @@ pub(crate) enum GetUpsertOperationError {
     DatabaseError(String, RepositoryError),
     #[error("Error while fetching shipment operation {0:?} {1}")]
     GetRequisitionAndLinkedRequisitionError(ChangelogRow, GetRequisitionAndLinkedRequisitionError),
+    #[error("Error while fetching shipment operation {0:?} {1}")]
+    GetLinkedOriginalShipmentError(ChangelogRow, GetLinkedOriginalShipmentError),
 }
 
 fn get_upsert_operation(
@@ -207,10 +219,21 @@ fn get_upsert_operation(
         None => None,
     };
 
+    let linked_original_shipment = match &shipment.invoice_row.original_shipment_id {
+        Some(original_shipment_id) => {
+            let linked_original_shipment =
+                get_linked_original_shipment(connection, original_shipment_id)
+                    .map_err(|e| GetLinkedOriginalShipmentError(changelog_row.clone(), e))?;
+            linked_original_shipment
+        }
+        None => None,
+    };
+
     Ok(Operation::Upsert {
         shipment,
         linked_shipment,
         linked_shipment_requisition,
+        linked_original_shipment,
     })
 }
 
@@ -238,7 +261,7 @@ trait ShipmentTransferProcessor {
         record: &ShipmentTransferProcessorRecord,
     ) -> Result<Option<String>, ProcessorError> {
         let result = connection
-            .transaction_sync(|connection| self.try_process_record(connection, &record))
+            .transaction_sync(|connection| self.try_process_record(connection, record))
             .map_err(|e| ProcessorError(self.get_description(), e.to_inner_error()))?;
 
         if let Some(result) = &result {

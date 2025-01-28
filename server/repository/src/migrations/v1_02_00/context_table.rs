@@ -157,7 +157,7 @@ async fn migration_context_program_upgrade() {
     // test that the migration adds a context for every program
     // Migrate to version - 1
     let SetupResult { connection, .. } = setup_test(SetupOption {
-        db_name: &format!("migration_context_program_upgrade"),
+        db_name: "migration_context_program_upgrade",
         version: Some(prev_version.clone()),
         ..Default::default()
     })

@@ -4,8 +4,8 @@ use crate::{
     invoice_line::{
         inbound_shipment_line::{
             delete_inbound_shipment_line, insert_inbound_shipment_line,
-            update_inbound_shipment_line, DeleteInboundShipmentLine,
-            DeleteInboundShipmentLineError, InsertInboundShipmentLine,
+            update_inbound_shipment_line,
+            DeleteInboundShipmentLine, DeleteInboundShipmentLineError, InsertInboundShipmentLine,
             InsertInboundShipmentLineError, UpdateInboundShipmentLine,
             UpdateInboundShipmentLineError,
         },

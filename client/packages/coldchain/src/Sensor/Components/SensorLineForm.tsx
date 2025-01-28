@@ -2,9 +2,15 @@ import React, { FC } from 'react';
 import { LocationSearchInput } from '@openmsupply-client/system/src';
 import { useTranslation } from '@common/intl';
 import { BasicTextInput, InputWithLabelRow } from '@common/components';
-import { Box, Formatter, TextWithLabelRow } from '@openmsupply-client/common';
+import {
+  Box,
+  Formatter,
+  TextWithLabelRow,
+  SensorNodeType,
+} from '@openmsupply-client/common';
 import { UseDraftSensorControl } from './SensorEditModal';
 import { isSensorNameEditDisabled } from '../utils';
+import { useFormatTemperature } from '../../common';
 
 export const SensorLineForm: FC<UseDraftSensorControl> = ({
   draft,
@@ -14,6 +20,7 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
   const textSx = { paddingLeft: 2 };
   const labelWrap = { sx: { whiteSpace: 'pre-wrap' } };
   const inputTextAlign = { sx: { textAlign: 'end' } };
+  const formatTemperature = useFormatTemperature();
 
   return (
     <Box display="flex" flexDirection="column" gap={2}>
@@ -53,14 +60,18 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
       <TextWithLabelRow
         sx={textSx}
         label={t('label.battery-level')}
-        text={`${draft.batteryLevel?.toString()}%` ?? ''}
+        text={draft.batteryLevel ? `${draft.batteryLevel}%` : '-'}
       />
       <TextWithLabelRow
         sx={textSx}
         labelProps={labelWrap}
         label={t('label.last-reading')}
         text={
-          draft.latestTemperatureLog?.nodes[0]?.temperature.toString() ?? ''
+          !!draft.latestTemperatureLog?.nodes[0]?.temperature
+            ? `${formatTemperature(
+                draft.latestTemperatureLog?.nodes[0]?.temperature
+              )}`
+            : '-'
         }
       />
       <TextWithLabelRow
@@ -70,6 +81,16 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
         text={Formatter.csvDateTimeString(
           draft.latestTemperatureLog?.nodes[0]?.datetime
         )}
+      />
+      <TextWithLabelRow
+        sx={textSx}
+        labelProps={labelWrap}
+        label={t('label.sensor-type')}
+        text={
+          draft.type === SensorNodeType.BlueMaestro
+            ? t('label.rtmd')
+            : Formatter.enumCase(draft?.type)
+        }
       />
     </Box>
   );

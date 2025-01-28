@@ -39,10 +39,12 @@ const getLabelLocaleKey = ({
 
 export interface ConsumptionHistoryProps {
   id: string;
+  numberOfPacksFromQuantity: (totalQuantity: number) => number;
 }
 
 export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
   id,
+  numberOfPacksFromQuantity,
 }) => {
   const t = useTranslation('replenishment');
   const theme = useTheme();
@@ -66,6 +68,14 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
     }
   };
   if (!data || !data.consumptionHistory) return null;
+
+  const consumptionHistory = data.consumptionHistory.nodes.map(entry => ({
+    ...entry,
+    averageMonthlyConsumption: numberOfPacksFromQuantity(
+      entry.averageMonthlyConsumption
+    ),
+    consumption: numberOfPacksFromQuantity(entry.consumption),
+  }));
 
   const tooltipLabelFormatter = (date: string) => dateFormatter(date);
 
@@ -97,11 +107,7 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
         {data.consumptionHistory.nodes?.length === 0 ? (
           <Typography width={450}>{t('error.no-data')}</Typography>
         ) : (
-          <ComposedChart
-            width={450}
-            height={255}
-            data={data.consumptionHistory.nodes}
-          >
+          <ComposedChart width={450} height={255} data={consumptionHistory}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="date"

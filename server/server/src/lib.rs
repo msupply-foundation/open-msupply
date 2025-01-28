@@ -3,7 +3,9 @@ extern crate machine_uid;
 
 use crate::{
     certs::Certificates, cold_chain::config_cold_chain, configuration::get_or_create_token_secret,
-    cors::cors_policy, serve_frontend::config_serve_frontend, static_files::config_static_files,
+    cors::cors_policy, middleware::central_server_only, print::config_print,
+    serve_frontend::config_serve_frontend, static_files::config_static_files,
+    support::config_support, sync_on_central::config_sync_on_central,
     upload_fridge_tag::config_upload_fridge_tag,
 };
 
@@ -30,6 +32,7 @@ use service::{
 
 use actix_web::{web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
+use util::is_central_server;
 
 pub mod certs;
 pub mod cold_chain;
@@ -40,8 +43,11 @@ mod logging;
 pub mod middleware;
 mod serve_frontend;
 pub mod static_files;
+pub mod support;
 mod upload_fridge_tag;
 pub use self::logging::*;
+pub mod print;
+mod sync_on_central;
 
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
 #[cfg(not(target_os = "android"))]
@@ -59,11 +65,16 @@ pub async fn start_server(
     mut off_switch: tokio::sync::mpsc::Receiver<()>,
 ) -> std::io::Result<()> {
     info!(
-        "Server starting in {} mode",
+        "{} server starting in {} mode on port {}",
+        match is_central_server() {
+            true => "Central",
+            false => "Remote",
+        },
         match is_develop() {
             true => "Development",
             false => "Production",
-        }
+        },
+        settings.server.port
     );
 
     // INITIALISE DATABASE AND CONNECTION
@@ -76,6 +87,10 @@ pub async fn start_server(
         .context("Failed to run DB migrations")
         .unwrap();
     info!("Run DB migrations...done");
+
+    if is_central_server() {
+        info!("Running as central");
+    }
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");
@@ -290,6 +305,9 @@ pub async fn start_server(
             .configure(config_static_files)
             .configure(config_cold_chain)
             .configure(config_upload_fridge_tag)
+            .configure(config_sync_on_central)
+            .configure(config_support)
+            .configure(config_print)
             // Needs to be last to capture all unmatches routes
             .configure(config_serve_frontend)
     })

@@ -63,7 +63,6 @@ impl RawDocument {
 #[cfg(test)]
 mod document_id_test {
     use chrono::TimeZone;
-    use repository::DocumentStatus;
     use serde_json::*;
 
     use super::*;

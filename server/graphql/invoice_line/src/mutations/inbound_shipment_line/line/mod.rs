@@ -7,7 +7,7 @@ pub mod update;
 pub struct BatchIsReserved;
 #[Object]
 impl BatchIsReserved {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Batch is already reserved/issued"
     }
 }

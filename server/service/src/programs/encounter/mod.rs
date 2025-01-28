@@ -16,6 +16,7 @@ use self::encounter_fields::EncounterFieldsResult;
 pub use self::insert::*;
 use self::query::encounter;
 use self::query::encounters;
+use self::suggested_next_encounter::{suggested_next_encounter, SuggestedNextEncounter};
 pub use self::update::*;
 
 pub mod encounter_fields;
@@ -24,6 +25,7 @@ pub mod encounter_updated;
 pub(crate) mod extract_fields;
 mod insert;
 mod query;
+pub mod suggested_next_encounter;
 mod update;
 pub(crate) mod validate_misc;
 
@@ -80,6 +82,23 @@ pub trait EncounterServiceTrait: Sync + Send {
         allowed_ctx: Vec<String>,
     ) -> Result<ListResult<EncounterFieldsResult>, ListError> {
         encounter_fields(ctx, input, pagination, filter, sort, allowed_ctx)
+    }
+
+    fn suggested_next_encounter(
+        &self,
+        ctx: &ServiceContext,
+        service_provider: &ServiceProvider,
+        patient_id: &str,
+        encounter_type: &str,
+        allowed_ctx: &[String],
+    ) -> Result<Option<SuggestedNextEncounter>, RepositoryError> {
+        suggested_next_encounter(
+            ctx,
+            service_provider,
+            patient_id,
+            encounter_type,
+            allowed_ctx,
+        )
     }
 }
 
