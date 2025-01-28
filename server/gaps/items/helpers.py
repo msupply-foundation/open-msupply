@@ -10,12 +10,16 @@ def cold_storage_type_id_lookup(storage_temp):
         return '(SELECT id FROM cold_storage_type WHERE name = \'-20\' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)'
     elif storage_temp == '-70°C':
         return '(SELECT id FROM cold_storage_type WHERE name = \'-70\' or (min_temperature >= -80 AND max_temperature <= -60) LIMIT 1)'
+    elif storage_temp == '+25°C' or storage_temp == '25°C':
+        return '(SELECT id FROM cold_storage_type WHERE name = \'+25\' or (min_temperature >= 10 AND max_temperature <= 30) LIMIT 1)'
     else:
+        if storage_temp != '':
+            print('Unknown storage temperature: ' + storage_temp)
         return 'null'
 
 
 def create_master_list():
-    master_list_statement  = "INSERT INTO master_list (id, name, code, description, is_active) VALUES ('43491ce9-bc89-4ee5-988d-9dbb2856e398', 'gaps_items', 'gaps_items', 'All Items automatically create for Cold Chain Gap Analysis', true) ON CONFLICT DO NOTHING;\n";
+    master_list_statement  = "INSERT INTO master_list (id, name, code, description, is_active) VALUES ('43491ce9-bc89-4ee5-988d-9dbb2856e398', '☆ GAPS reference catalogue', 'gaps_items', 'AItems used for Cold Chain Equipment Gap Analysis', true) ON CONFLICT DO NOTHING;\n";
     master_list_join_statement = "INSERT INTO master_list_name_join (id, master_list_id, name_link_id) SELECT uuid_in(md5(random()::text || random()::text)::cstring), '43491ce9-bc89-4ee5-988d-9dbb2856e398', id FROM name_link WHERE id NOT IN (select name_link_id from master_list_name_join WHERE master_list_id = '43491ce9-bc89-4ee5-988d-9dbb2856e398');\n"
     return master_list_statement + master_list_join_statement
 

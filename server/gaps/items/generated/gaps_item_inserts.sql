@@ -1,11 +1,11 @@
 BEGIN;
-INSERT INTO master_list (id, name, code, description, is_active) VALUES ('43491ce9-bc89-4ee5-988d-9dbb2856e398', 'gaps_items', 'gaps_items', 'All Items automatically create for Cold Chain Gap Analysis', true) ON CONFLICT DO NOTHING;
+INSERT INTO master_list (id, name, code, description, is_active) VALUES ('43491ce9-bc89-4ee5-988d-9dbb2856e398', '☆ GAPS reference catalogue', 'gaps_items', 'AItems used for Cold Chain Equipment Gap Analysis', true) ON CONFLICT DO NOTHING;
 INSERT INTO master_list_name_join (id, master_list_id, name_link_id) SELECT uuid_in(md5(random()::text || random()::text)::cstring), '43491ce9-bc89-4ee5-988d-9dbb2856e398', id FROM name_link WHERE id NOT IN (select name_link_id from master_list_name_join WHERE master_list_id = '43491ce9-bc89-4ee5-988d-9dbb2856e398');
 INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('26cb458e-bb1c-4154-bc6e-9b17e4e111fe', 'BCG - two vial set (active + excipient) - 10 doses - [S1]', '☆ BCG-2VSAE-10-S1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 10, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('26cb458e-bb1c-4154-bc6e-9b17e4e111fe', '26cb458e-bb1c-4154-bc6e-9b17e4e111fe') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('26cb458e-bb1c-4154-bc6e-9b17e4e111fe', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_26cb458e-bb1c-4154-bc6e-9b17e4e111fe', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '26cb458e-bb1c-4154-bc6e-9b17e4e111fe') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('12386306-bc3b-419e-8e5b-6fc459752f77', 'BCG Vaccine SSI (AJ Vaccines A/S)', '26cb458e-bb1c-4154-bc6e-9b17e4e111fe', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('12386306-bc3b-419e-8e5b-6fc459752f77', 'BCG Vaccine SSI (AJ Vaccines A/S)', '26cb458e-bb1c-4154-bc6e-9b17e4e111fe', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('12386306-bc3b-419e-8e5b-6fc459752f77', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('85a50c83-83ac-426e-98c6-44228f311c18', '12386306-bc3b-419e-8e5b-6fc459752f77', 'Primary', 1, 0.013300) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('85a50c83-83ac-426e-98c6-44228f311c18', 'packaging_variant', 'UPSERT');
@@ -17,7 +17,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('ce77f34c-4bfe-4ff1-b2d4-76c83fff1398', 'ce77f34c-4bfe-4ff1-b2d4-76c83fff1398') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ce77f34c-4bfe-4ff1-b2d4-76c83fff1398', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_ce77f34c-4bfe-4ff1-b2d4-76c83fff1398', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'ce77f34c-4bfe-4ff1-b2d4-76c83fff1398') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a7e4b139-91fb-41a6-aab1-b06400f8a7ec', 'BCG vaccine (Freeze Dried) - Intradermal (GreenSignal Bio Pharma Limited)', 'ce77f34c-4bfe-4ff1-b2d4-76c83fff1398', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a7e4b139-91fb-41a6-aab1-b06400f8a7ec', 'BCG vaccine (Freeze Dried) - Intradermal (GreenSignal Bio Pharma Limited)', 'ce77f34c-4bfe-4ff1-b2d4-76c83fff1398', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a7e4b139-91fb-41a6-aab1-b06400f8a7ec', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d12c1e64-c824-4e30-a2c6-bdcc5ecd1193', 'a7e4b139-91fb-41a6-aab1-b06400f8a7ec', 'Primary', 1, 0.010800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d12c1e64-c824-4e30-a2c6-bdcc5ecd1193', 'packaging_variant', 'UPSERT');
@@ -29,7 +29,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('9844fee7-f43b-4040-ac09-63b856834809', '9844fee7-f43b-4040-ac09-63b856834809') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9844fee7-f43b-4040-ac09-63b856834809', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_9844fee7-f43b-4040-ac09-63b856834809', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '9844fee7-f43b-4040-ac09-63b856834809') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5d48b80f-f21e-40be-88fa-21460dbef76b', 'BCG vaccine (Freeze Dried) - Intradermal (GreenSignal Bio Pharma Limited)', '9844fee7-f43b-4040-ac09-63b856834809', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5d48b80f-f21e-40be-88fa-21460dbef76b', 'BCG vaccine (Freeze Dried) - Intradermal (GreenSignal Bio Pharma Limited)', '9844fee7-f43b-4040-ac09-63b856834809', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5d48b80f-f21e-40be-88fa-21460dbef76b', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2bfd2276-d651-4837-81ef-4141c838b8c4', '5d48b80f-f21e-40be-88fa-21460dbef76b', 'Primary', 1, 0.0) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2bfd2276-d651-4837-81ef-4141c838b8c4', 'packaging_variant', 'UPSERT');
@@ -43,7 +43,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('aa294108-ba2c-4fb5-b3f4-66a2247a744d', 'aa294108-ba2c-4fb5-b3f4-66a2247a744d') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('aa294108-ba2c-4fb5-b3f4-66a2247a744d', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_aa294108-ba2c-4fb5-b3f4-66a2247a744d', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'aa294108-ba2c-4fb5-b3f4-66a2247a744d') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0eb3deb0-cd40-4675-b48e-641777009734', 'BCG Freeze Dried Glutamate vaccine (Japan BCG Laboratory)', 'aa294108-ba2c-4fb5-b3f4-66a2247a744d', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0eb3deb0-cd40-4675-b48e-641777009734', 'BCG Freeze Dried Glutamate vaccine (Japan BCG Laboratory)', 'aa294108-ba2c-4fb5-b3f4-66a2247a744d', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0eb3deb0-cd40-4675-b48e-641777009734', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0aa03d6b-62bb-46fa-afb0-0bf727a389f4', '0eb3deb0-cd40-4675-b48e-641777009734', 'Primary', 1, 0.014400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0aa03d6b-62bb-46fa-afb0-0bf727a389f4', 'packaging_variant', 'UPSERT');
@@ -55,7 +55,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('7afcf05b-b4a1-445a-948f-45d0f7d4d0cd', '7afcf05b-b4a1-445a-948f-45d0f7d4d0cd') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7afcf05b-b4a1-445a-948f-45d0f7d4d0cd', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_7afcf05b-b4a1-445a-948f-45d0f7d4d0cd', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '7afcf05b-b4a1-445a-948f-45d0f7d4d0cd') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4eb29af5-5fdc-48d2-a9c6-973a28dee7c8', 'BCG Freeze Dried Glutamate vaccine (Japan BCG Laboratory)', '7afcf05b-b4a1-445a-948f-45d0f7d4d0cd', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4eb29af5-5fdc-48d2-a9c6-973a28dee7c8', 'BCG Freeze Dried Glutamate vaccine (Japan BCG Laboratory)', '7afcf05b-b4a1-445a-948f-45d0f7d4d0cd', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4eb29af5-5fdc-48d2-a9c6-973a28dee7c8', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('9aa32ee6-5778-4038-b853-519c5aefee84', '4eb29af5-5fdc-48d2-a9c6-973a28dee7c8', 'Primary', 1, 0.012) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9aa32ee6-5778-4038-b853-519c5aefee84', 'packaging_variant', 'UPSERT');
@@ -69,7 +69,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('d3d569ae-4841-4747-ae3f-90ad35faef30', 'd3d569ae-4841-4747-ae3f-90ad35faef30') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d3d569ae-4841-4747-ae3f-90ad35faef30', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_d3d569ae-4841-4747-ae3f-90ad35faef30', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'd3d569ae-4841-4747-ae3f-90ad35faef30') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('19b475fa-b51a-4a32-b107-8eda4b2d41e5', 'BCG Freezed Dried Glutamate vaccine (Japan BCG Laboratory)', 'd3d569ae-4841-4747-ae3f-90ad35faef30', (SELECT id FROM cold_storage_type WHERE name = '-70' or (min_temperature >= -80 AND max_temperature <= -60) LIMIT 1)) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('19b475fa-b51a-4a32-b107-8eda4b2d41e5', 'BCG Freezed Dried Glutamate vaccine (Japan BCG Laboratory)', 'd3d569ae-4841-4747-ae3f-90ad35faef30', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('19b475fa-b51a-4a32-b107-8eda4b2d41e5', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('008bcbb9-637f-4b60-847d-6810295214dc', '19b475fa-b51a-4a32-b107-8eda4b2d41e5', 'Primary', 1, 0.014400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('008bcbb9-637f-4b60-847d-6810295214dc', 'packaging_variant', 'UPSERT');
@@ -81,7 +81,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('bd92d4eb-1b4d-43f3-8a1d-fd9cb8a75244', 'bd92d4eb-1b4d-43f3-8a1d-fd9cb8a75244') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bd92d4eb-1b4d-43f3-8a1d-fd9cb8a75244', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_bd92d4eb-1b4d-43f3-8a1d-fd9cb8a75244', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'bd92d4eb-1b4d-43f3-8a1d-fd9cb8a75244') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a53e7949-4500-4288-8b55-8f874aca9f93', 'BCG Freezed Dried Glutamate vaccine (Japan BCG Laboratory)', 'bd92d4eb-1b4d-43f3-8a1d-fd9cb8a75244', (SELECT id FROM cold_storage_type WHERE name = '-70' or (min_temperature >= -80 AND max_temperature <= -60) LIMIT 1)) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a53e7949-4500-4288-8b55-8f874aca9f93', 'BCG Freezed Dried Glutamate vaccine (Japan BCG Laboratory)', 'bd92d4eb-1b4d-43f3-8a1d-fd9cb8a75244', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a53e7949-4500-4288-8b55-8f874aca9f93', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('170f765a-df8f-4ad7-bd84-63394155a4b8', 'a53e7949-4500-4288-8b55-8f874aca9f93', 'Primary', 1, 0.012) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('170f765a-df8f-4ad7-bd84-63394155a4b8', 'packaging_variant', 'UPSERT');
@@ -109,7 +109,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ef0a47b2-cbc3-4d13-add6-bef18babe19e', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('884bd831-5150-4b8d-b1b9-ee0e9f3a8a6d', 'ca92aae8-62c9-4ca4-8602-0e57de99d7db', '85dd7656-be13-4759-92e0-c7d0f77ae512', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('884bd831-5150-4b8d-b1b9-ee0e9f3a8a6d', 'bundled_item', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c4f335ca-d662-4540-afe2-6f11602d81d5', 'BCG Vaccine (National Center of Infectious and Parasitic Diseases)', 'aa294108-ba2c-4fb5-b3f4-66a2247a744d', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c4f335ca-d662-4540-afe2-6f11602d81d5', 'BCG Vaccine (National Center of Infectious and Parasitic Diseases)', 'aa294108-ba2c-4fb5-b3f4-66a2247a744d', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c4f335ca-d662-4540-afe2-6f11602d81d5', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('db6ebee3-db99-4bcf-adf8-32935eb23b77', 'c4f335ca-d662-4540-afe2-6f11602d81d5', 'Primary', 1, 0.022600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('db6ebee3-db99-4bcf-adf8-32935eb23b77', 'packaging_variant', 'UPSERT');
@@ -117,7 +117,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ac6bb94c-64a6-43e0-8ef6-c4c3cb4041ce', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('38c81d37-0068-4879-809f-dadaa87181f7', 'c4f335ca-d662-4540-afe2-6f11602d81d5', 'Tertiary', 3, 0.045000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('38c81d37-0068-4879-809f-dadaa87181f7', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b8a944f5-d511-4b84-a0e0-2fdb9049a49c', 'BCG Vaccine (National Center of Infectious and Parasitic Diseases)', '7afcf05b-b4a1-445a-948f-45d0f7d4d0cd', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b8a944f5-d511-4b84-a0e0-2fdb9049a49c', 'BCG Vaccine (National Center of Infectious and Parasitic Diseases)', '7afcf05b-b4a1-445a-948f-45d0f7d4d0cd', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b8a944f5-d511-4b84-a0e0-2fdb9049a49c', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('5d392482-5b32-4b02-b8fc-05399b30b64d', 'b8a944f5-d511-4b84-a0e0-2fdb9049a49c', 'Primary', 1, 0.022) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5d392482-5b32-4b02-b8fc-05399b30b64d', 'packaging_variant', 'UPSERT');
@@ -131,7 +131,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('b61ba2b8-7c00-4863-8643-d408c6beae2a', 'b61ba2b8-7c00-4863-8643-d408c6beae2a') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b61ba2b8-7c00-4863-8643-d408c6beae2a', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_b61ba2b8-7c00-4863-8643-d408c6beae2a', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'b61ba2b8-7c00-4863-8643-d408c6beae2a') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3eab6207-f883-4948-87c5-a55b5ab73b07', 'BCG Vaccine (Serum Institute of India Pvt. Ltd.)', 'b61ba2b8-7c00-4863-8643-d408c6beae2a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3eab6207-f883-4948-87c5-a55b5ab73b07', 'BCG Vaccine (Serum Institute of India Pvt. Ltd.)', 'b61ba2b8-7c00-4863-8643-d408c6beae2a', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3eab6207-f883-4948-87c5-a55b5ab73b07', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('47ad4a30-db0d-4e2b-8609-2c0b7d6ecda8', '3eab6207-f883-4948-87c5-a55b5ab73b07', 'Primary', 1, 0.017600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('47ad4a30-db0d-4e2b-8609-2c0b7d6ecda8', 'packaging_variant', 'UPSERT');
@@ -143,7 +143,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('6262cbda-1d00-4e3b-9780-29834906d456', '6262cbda-1d00-4e3b-9780-29834906d456') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6262cbda-1d00-4e3b-9780-29834906d456', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_6262cbda-1d00-4e3b-9780-29834906d456', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '6262cbda-1d00-4e3b-9780-29834906d456') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('10e81d57-cebd-444c-b433-3cb0d9baf14b', 'BCG Vaccine (Serum Institute of India Pvt. Ltd.)', '6262cbda-1d00-4e3b-9780-29834906d456', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('10e81d57-cebd-444c-b433-3cb0d9baf14b', 'BCG Vaccine (Serum Institute of India Pvt. Ltd.)', '6262cbda-1d00-4e3b-9780-29834906d456', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('10e81d57-cebd-444c-b433-3cb0d9baf14b', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d530946d-928f-4af4-aa88-1da88fd92430', '10e81d57-cebd-444c-b433-3cb0d9baf14b', 'Primary', 1, 0.012) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d530946d-928f-4af4-aa88-1da88fd92430', 'packaging_variant', 'UPSERT');
@@ -157,7 +157,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('415d9614-637b-44c3-a027-84c4a579d9e6', '415d9614-637b-44c3-a027-84c4a579d9e6') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('415d9614-637b-44c3-a027-84c4a579d9e6', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_415d9614-637b-44c3-a027-84c4a579d9e6', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '415d9614-637b-44c3-a027-84c4a579d9e6') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2f289421-e76d-48fb-8587-84914cd87904', 'BIOPOLIO B1/3 (Bharat Biotech International Limited)', '415d9614-637b-44c3-a027-84c4a579d9e6', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2f289421-e76d-48fb-8587-84914cd87904', 'BIOPOLIO B1/3 (Bharat Biotech International Limited)', '415d9614-637b-44c3-a027-84c4a579d9e6', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2f289421-e76d-48fb-8587-84914cd87904', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('00d28f41-74f2-4739-b1bb-84d120aed22c', '2f289421-e76d-48fb-8587-84914cd87904', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('00d28f41-74f2-4739-b1bb-84d120aed22c', 'packaging_variant', 'UPSERT');
@@ -169,7 +169,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('f521b2e9-60b7-4495-b048-59f611b3012e', 'f521b2e9-60b7-4495-b048-59f611b3012e') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f521b2e9-60b7-4495-b048-59f611b3012e', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_f521b2e9-60b7-4495-b048-59f611b3012e', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'f521b2e9-60b7-4495-b048-59f611b3012e') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('00e5eca2-29c3-417d-8582-2bf651deb053', 'BIOPOLIO B1/3 (Bharat Biotech International Limited)', 'f521b2e9-60b7-4495-b048-59f611b3012e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('00e5eca2-29c3-417d-8582-2bf651deb053', 'BIOPOLIO B1/3 (Bharat Biotech International Limited)', 'f521b2e9-60b7-4495-b048-59f611b3012e', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('00e5eca2-29c3-417d-8582-2bf651deb053', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('feaaff86-4541-4de6-b215-3eba8d206359', '00e5eca2-29c3-417d-8582-2bf651deb053', 'Primary', 1, 0.017000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('feaaff86-4541-4de6-b215-3eba8d206359', 'packaging_variant', 'UPSERT');
@@ -177,7 +177,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('50e3ce9d-a799-4a93-b37f-9123cef3d0ed', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d1f0e4f3-12d6-4683-8398-46b288b187a8', '00e5eca2-29c3-417d-8582-2bf651deb053', 'Tertiary', 3, 0.108400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d1f0e4f3-12d6-4683-8398-46b288b187a8', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3b39ebc0-1c2b-40d4-88e5-337f459ccb7e', 'Polio Sabin One and Three (GlaxoSmithKline Biologicals SA)', '415d9614-637b-44c3-a027-84c4a579d9e6', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3b39ebc0-1c2b-40d4-88e5-337f459ccb7e', 'Polio Sabin One and Three (GlaxoSmithKline Biologicals SA)', '415d9614-637b-44c3-a027-84c4a579d9e6', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3b39ebc0-1c2b-40d4-88e5-337f459ccb7e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('991308b6-03f5-41b5-8567-a1ddf97630f4', '3b39ebc0-1c2b-40d4-88e5-337f459ccb7e', 'Primary', 1, 0.009700) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('991308b6-03f5-41b5-8567-a1ddf97630f4', 'packaging_variant', 'UPSERT');
@@ -185,7 +185,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1acde1ac-4bd6-49c1-9b99-5a0d70f494b8', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a186c391-03a8-4c0c-96fb-d8fca5802628', '3b39ebc0-1c2b-40d4-88e5-337f459ccb7e', 'Tertiary', 3, 0.039800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a186c391-03a8-4c0c-96fb-d8fca5802628', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('df9de7d4-d356-4635-857b-16475a30969e', 'Polio Sabin One and Three (GlaxoSmithKline Biologicals SA)', 'f521b2e9-60b7-4495-b048-59f611b3012e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('df9de7d4-d356-4635-857b-16475a30969e', 'Polio Sabin One and Three (GlaxoSmithKline Biologicals SA)', 'f521b2e9-60b7-4495-b048-59f611b3012e', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('df9de7d4-d356-4635-857b-16475a30969e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b997dba0-c0aa-4f7e-8ec0-4cebe26c2160', 'df9de7d4-d356-4635-857b-16475a30969e', 'Primary', 1, 0.009600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b997dba0-c0aa-4f7e-8ec0-4cebe26c2160', 'packaging_variant', 'UPSERT');
@@ -193,7 +193,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('db5199ac-c71c-4015-86e9-cfe23c67f1e9', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c3ea2e35-15de-42bb-85dc-9fc59b18023e', 'df9de7d4-d356-4635-857b-16475a30969e', 'Tertiary', 3, 0.039800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c3ea2e35-15de-42bb-85dc-9fc59b18023e', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c6201772-4bbc-4a6e-8a36-785ef14c9e90', 'Bivalent type 1&3 Oral Poliomyelitis vaccine, IP (bOPV1&3) (Haffkine Bio Pharmaceutical Corporation Ltd)', 'f521b2e9-60b7-4495-b048-59f611b3012e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c6201772-4bbc-4a6e-8a36-785ef14c9e90', 'Bivalent type 1&3 Oral Poliomyelitis vaccine, IP (bOPV1&3) (Haffkine Bio Pharmaceutical Corporation Ltd)', 'f521b2e9-60b7-4495-b048-59f611b3012e', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c6201772-4bbc-4a6e-8a36-785ef14c9e90', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c6d58667-3b3f-4a11-aea2-09021829d26b', 'c6201772-4bbc-4a6e-8a36-785ef14c9e90', 'Primary', 1, 0.020000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c6d58667-3b3f-4a11-aea2-09021829d26b', 'packaging_variant', 'UPSERT');
@@ -201,7 +201,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('91fb8d5e-1363-4f5c-9d0c-62b3cd6c087a', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('4a8cc24d-0f11-4406-926f-42bc0249409c', 'c6201772-4bbc-4a6e-8a36-785ef14c9e90', 'Tertiary', 3, 0.020000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4a8cc24d-0f11-4406-926f-42bc0249409c', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3a664c80-c371-4d65-9b86-925c1edbc2d6', 'Bivalent Oral Poliomyelitis Vaccine Type 1&3 (bOPV 1&3) (PT Bio Farma (Persero))', '415d9614-637b-44c3-a027-84c4a579d9e6', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3a664c80-c371-4d65-9b86-925c1edbc2d6', 'Bivalent Oral Poliomyelitis Vaccine Type 1&3 (bOPV 1&3) (PT Bio Farma (Persero))', '415d9614-637b-44c3-a027-84c4a579d9e6', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3a664c80-c371-4d65-9b86-925c1edbc2d6', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('eedf060b-040b-45cd-9c51-497a790ae34c', '3a664c80-c371-4d65-9b86-925c1edbc2d6', 'Primary', 1, 0.014000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('eedf060b-040b-45cd-9c51-497a790ae34c', 'packaging_variant', 'UPSERT');
@@ -209,7 +209,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1a78e92f-c686-40e9-8059-5538aa6f271d', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ce2cdc20-615e-4298-af9b-a966c046d572', '3a664c80-c371-4d65-9b86-925c1edbc2d6', 'Tertiary', 3, 0.062200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ce2cdc20-615e-4298-af9b-a966c046d572', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3e61acbc-9184-4dc8-b240-1dac4513ae1f', 'Bivalent Oral Poliomyelitis Vaccine Type 1&3 (bOPV 1&3) (PT Bio Farma (Persero))', 'f521b2e9-60b7-4495-b048-59f611b3012e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3e61acbc-9184-4dc8-b240-1dac4513ae1f', 'Bivalent Oral Poliomyelitis Vaccine Type 1&3 (bOPV 1&3) (PT Bio Farma (Persero))', 'f521b2e9-60b7-4495-b048-59f611b3012e', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3e61acbc-9184-4dc8-b240-1dac4513ae1f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('9e86dd84-1fb9-460c-a97a-be86682c0b01', '3e61acbc-9184-4dc8-b240-1dac4513ae1f', 'Primary', 1, 0.011000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9e86dd84-1fb9-460c-a97a-be86682c0b01', 'packaging_variant', 'UPSERT');
@@ -217,7 +217,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7c7a8d7e-d423-4c8d-beb4-fb8f79ef4e6e', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('af5c4567-4c2c-483b-8535-f67faa87d27a', '3e61acbc-9184-4dc8-b240-1dac4513ae1f', 'Tertiary', 3, 0.082800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('af5c4567-4c2c-483b-8535-f67faa87d27a', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7c3e972e-7700-4beb-817e-3bebf345ea6f', 'none (Sanofi Pasteur SA)', 'f521b2e9-60b7-4495-b048-59f611b3012e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7c3e972e-7700-4beb-817e-3bebf345ea6f', 'none (Sanofi Pasteur SA)', 'f521b2e9-60b7-4495-b048-59f611b3012e', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7c3e972e-7700-4beb-817e-3bebf345ea6f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3623674c-c199-4131-ae3b-caaf85d6291c', '7c3e972e-7700-4beb-817e-3bebf345ea6f', 'Primary', 1, 0.009800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3623674c-c199-4131-ae3b-caaf85d6291c', 'packaging_variant', 'UPSERT');
@@ -225,7 +225,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cd03d96b-4ce7-4e5a-824b-5c8965a4a33d', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2c4608e0-6846-49a1-b0a5-c777a07d1b03', '7c3e972e-7700-4beb-817e-3bebf345ea6f', 'Tertiary', 3, 0.048400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2c4608e0-6846-49a1-b0a5-c777a07d1b03', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('1cfde05b-96b1-4d68-bc95-d0c432a418b7', 'Poliomyelitis Vaccine (Oral), Bivalent types 1 and 3 (Serum Institute of India Pvt. Ltd.)', '415d9614-637b-44c3-a027-84c4a579d9e6', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('1cfde05b-96b1-4d68-bc95-d0c432a418b7', 'Poliomyelitis Vaccine (Oral), Bivalent types 1 and 3 (Serum Institute of India Pvt. Ltd.)', '415d9614-637b-44c3-a027-84c4a579d9e6', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1cfde05b-96b1-4d68-bc95-d0c432a418b7', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('791a9edf-27e9-47b5-ab05-eb6421f6b0ea', '1cfde05b-96b1-4d68-bc95-d0c432a418b7', 'Primary', 1, 0.017600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('791a9edf-27e9-47b5-ab05-eb6421f6b0ea', 'packaging_variant', 'UPSERT');
@@ -233,7 +233,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('15281a8d-30c4-4a23-bb19-4859d15c6882', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d4977d51-fe8d-4efe-868d-39a5810cac45', '1cfde05b-96b1-4d68-bc95-d0c432a418b7', 'Tertiary', 3, 0.115200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d4977d51-fe8d-4efe-868d-39a5810cac45', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fe299db5-5ca3-4893-aa73-4d823f48ac03', 'Poliomyelitis Vaccine (Oral), Bivalent types 1 and 3 (Serum Institute of India Pvt. Ltd.)', 'f521b2e9-60b7-4495-b048-59f611b3012e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fe299db5-5ca3-4893-aa73-4d823f48ac03', 'Poliomyelitis Vaccine (Oral), Bivalent types 1 and 3 (Serum Institute of India Pvt. Ltd.)', 'f521b2e9-60b7-4495-b048-59f611b3012e', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fe299db5-5ca3-4893-aa73-4d823f48ac03', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('23651548-a31d-408c-8a87-33b545dcd0bc', 'fe299db5-5ca3-4893-aa73-4d823f48ac03', 'Primary', 1, 0.017600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('23651548-a31d-408c-8a87-33b545dcd0bc', 'packaging_variant', 'UPSERT');
@@ -245,7 +245,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('6db7da52-421f-4b31-b212-e0bb10d64fcb', '6db7da52-421f-4b31-b212-e0bb10d64fcb') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6db7da52-421f-4b31-b212-e0bb10d64fcb', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_6db7da52-421f-4b31-b212-e0bb10d64fcb', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '6db7da52-421f-4b31-b212-e0bb10d64fcb') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('de8a4d36-ac8e-48a3-a655-502771b0c27f', 'COVOVAX (Serum Institute of India Pvt. Ltd (s/c AZ))', '6db7da52-421f-4b31-b212-e0bb10d64fcb', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('de8a4d36-ac8e-48a3-a655-502771b0c27f', 'COVOVAX (Serum Institute of India Pvt. Ltd (s/c AZ))', '6db7da52-421f-4b31-b212-e0bb10d64fcb', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('de8a4d36-ac8e-48a3-a655-502771b0c27f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3fbfdafd-7b00-4f17-a754-e7dabc74b25c', 'de8a4d36-ac8e-48a3-a655-502771b0c27f', 'Primary', 1, 0.015800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3fbfdafd-7b00-4f17-a754-e7dabc74b25c', 'packaging_variant', 'UPSERT');
@@ -257,7 +257,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('d6721bbf-6d5f-455f-b663-ae0eb528ac9e', 'd6721bbf-6d5f-455f-b663-ae0eb528ac9e') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d6721bbf-6d5f-455f-b663-ae0eb528ac9e', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_d6721bbf-6d5f-455f-b663-ae0eb528ac9e', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'd6721bbf-6d5f-455f-b663-ae0eb528ac9e') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fb83a86d-7125-4931-86a1-b40ea92bdb88', 'COVOVAX (Serum Institute of India Pvt. Ltd (s/c AZ))', 'd6721bbf-6d5f-455f-b663-ae0eb528ac9e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fb83a86d-7125-4931-86a1-b40ea92bdb88', 'COVOVAX (Serum Institute of India Pvt. Ltd (s/c AZ))', 'd6721bbf-6d5f-455f-b663-ae0eb528ac9e', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fb83a86d-7125-4931-86a1-b40ea92bdb88', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d56c7612-46c5-4fd0-9366-bc82e601f873', 'fb83a86d-7125-4931-86a1-b40ea92bdb88', 'Primary', 1, 0.021000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d56c7612-46c5-4fd0-9366-bc82e601f873', 'packaging_variant', 'UPSERT');
@@ -269,7 +269,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('c7c70248-e8ed-424a-938e-6af63c7e15d5', 'c7c70248-e8ed-424a-938e-6af63c7e15d5') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c7c70248-e8ed-424a-938e-6af63c7e15d5', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_c7c70248-e8ed-424a-938e-6af63c7e15d5', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'c7c70248-e8ed-424a-938e-6af63c7e15d5') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a01356a2-a75a-4909-ab54-2a23ce876161', 'NUVAXOVID (Novavax CZ a.s.)', 'c7c70248-e8ed-424a-938e-6af63c7e15d5', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a01356a2-a75a-4909-ab54-2a23ce876161', 'NUVAXOVID (Novavax CZ a.s.)', 'c7c70248-e8ed-424a-938e-6af63c7e15d5', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a01356a2-a75a-4909-ab54-2a23ce876161', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1ee8e62f-2033-4e9f-bf53-0fddbb61a54a', 'a01356a2-a75a-4909-ab54-2a23ce876161', 'Primary', 1, 0.020500) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1ee8e62f-2033-4e9f-bf53-0fddbb61a54a', 'packaging_variant', 'UPSERT');
@@ -281,7 +281,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('70058534-1a6d-4783-9408-33c70f6ea5d3', '70058534-1a6d-4783-9408-33c70f6ea5d3') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('70058534-1a6d-4783-9408-33c70f6ea5d3', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_70058534-1a6d-4783-9408-33c70f6ea5d3', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '70058534-1a6d-4783-9408-33c70f6ea5d3') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ec376af3-ad5a-4384-b8da-d05358cbf6ab', 'BBV152, COVAXIN® (Bharat Biotech International Limited)', '70058534-1a6d-4783-9408-33c70f6ea5d3', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ec376af3-ad5a-4384-b8da-d05358cbf6ab', 'BBV152, COVAXIN® (Bharat Biotech International Limited)', '70058534-1a6d-4783-9408-33c70f6ea5d3', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ec376af3-ad5a-4384-b8da-d05358cbf6ab', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('aebd647c-6aed-4b59-ad2e-f8dd66ceea2b', 'ec376af3-ad5a-4384-b8da-d05358cbf6ab', 'Primary', 1, 0.014450) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('aebd647c-6aed-4b59-ad2e-f8dd66ceea2b', 'packaging_variant', 'UPSERT');
@@ -293,7 +293,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('60e3b1d0-4034-4861-8aec-de669e036c9f', '60e3b1d0-4034-4861-8aec-de669e036c9f') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('60e3b1d0-4034-4861-8aec-de669e036c9f', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_60e3b1d0-4034-4861-8aec-de669e036c9f', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '60e3b1d0-4034-4861-8aec-de669e036c9f') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('609ef422-94fe-4918-af23-12eb87948498', 'BBV152, COVAXIN® (Bharat Biotech International Limited)', '60e3b1d0-4034-4861-8aec-de669e036c9f', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('609ef422-94fe-4918-af23-12eb87948498', 'BBV152, COVAXIN® (Bharat Biotech International Limited)', '60e3b1d0-4034-4861-8aec-de669e036c9f', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('609ef422-94fe-4918-af23-12eb87948498', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a8e4d421-8c69-4839-8e71-bf30742df91d', '609ef422-94fe-4918-af23-12eb87948498', 'Primary', 1, 0.014450) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a8e4d421-8c69-4839-8e71-bf30742df91d', 'packaging_variant', 'UPSERT');
@@ -305,7 +305,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('a466674c-ff5d-44f6-a546-972d8d778bcf', 'a466674c-ff5d-44f6-a546-972d8d778bcf') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a466674c-ff5d-44f6-a546-972d8d778bcf', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_a466674c-ff5d-44f6-a546-972d8d778bcf', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'a466674c-ff5d-44f6-a546-972d8d778bcf') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('cdf7dcbf-a44b-4a5c-92d9-094fc14def4e', 'BBV152, COVAXIN® (Bharat Biotech International Limited)', 'a466674c-ff5d-44f6-a546-972d8d778bcf', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('cdf7dcbf-a44b-4a5c-92d9-094fc14def4e', 'BBV152, COVAXIN® (Bharat Biotech International Limited)', 'a466674c-ff5d-44f6-a546-972d8d778bcf', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cdf7dcbf-a44b-4a5c-92d9-094fc14def4e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a4f04591-3fb6-4e1e-8e5b-cf32bef209dc', 'cdf7dcbf-a44b-4a5c-92d9-094fc14def4e', 'Primary', 1, 0.026900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a4f04591-3fb6-4e1e-8e5b-cf32bef209dc', 'packaging_variant', 'UPSERT');
@@ -317,7 +317,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('79900094-18ca-400d-98f0-6dd1bbd28313', '79900094-18ca-400d-98f0-6dd1bbd28313') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('79900094-18ca-400d-98f0-6dd1bbd28313', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_79900094-18ca-400d-98f0-6dd1bbd28313', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '79900094-18ca-400d-98f0-6dd1bbd28313') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4c15a06f-e83a-4a56-ba3d-20fc37c1615f', 'BBV152, COVAXIN® (Bharat Biotech International Limited)', '79900094-18ca-400d-98f0-6dd1bbd28313', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4c15a06f-e83a-4a56-ba3d-20fc37c1615f', 'BBV152, COVAXIN® (Bharat Biotech International Limited)', '79900094-18ca-400d-98f0-6dd1bbd28313', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4c15a06f-e83a-4a56-ba3d-20fc37c1615f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7df2fbf7-fd08-450b-ad47-334251f819cf', '4c15a06f-e83a-4a56-ba3d-20fc37c1615f', 'Primary', 1, 0.034400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7df2fbf7-fd08-450b-ad47-334251f819cf', 'packaging_variant', 'UPSERT');
@@ -329,7 +329,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('bb2aea53-b3a6-44e2-828f-6cea44a8a937', 'bb2aea53-b3a6-44e2-828f-6cea44a8a937') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bb2aea53-b3a6-44e2-828f-6cea44a8a937', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_bb2aea53-b3a6-44e2-828f-6cea44a8a937', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'bb2aea53-b3a6-44e2-828f-6cea44a8a937') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8e6883bb-e060-4448-a124-87dc27fc3d7b', 'COVISHIELD (Serum Institute of India Pvt. Ltd (s/c AZ))', 'bb2aea53-b3a6-44e2-828f-6cea44a8a937', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8e6883bb-e060-4448-a124-87dc27fc3d7b', 'COVISHIELD (Serum Institute of India Pvt. Ltd (s/c AZ))', 'bb2aea53-b3a6-44e2-828f-6cea44a8a937', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8e6883bb-e060-4448-a124-87dc27fc3d7b', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('cd0b6fb8-26f0-4e16-810a-88db31778bb9', '8e6883bb-e060-4448-a124-87dc27fc3d7b', 'Primary', 1, 0.014060) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cd0b6fb8-26f0-4e16-810a-88db31778bb9', 'packaging_variant', 'UPSERT');
@@ -341,7 +341,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('c6cc3707-3591-4f51-a442-47f8174e74cf', 'c6cc3707-3591-4f51-a442-47f8174e74cf') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c6cc3707-3591-4f51-a442-47f8174e74cf', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_c6cc3707-3591-4f51-a442-47f8174e74cf', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'c6cc3707-3591-4f51-a442-47f8174e74cf') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f01767e0-5e75-47f5-b107-6398d52bba26', 'COVISHIELD (Serum Institute of India Pvt. Ltd (s/c AZ))', 'c6cc3707-3591-4f51-a442-47f8174e74cf', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f01767e0-5e75-47f5-b107-6398d52bba26', 'COVISHIELD (Serum Institute of India Pvt. Ltd (s/c AZ))', 'c6cc3707-3591-4f51-a442-47f8174e74cf', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f01767e0-5e75-47f5-b107-6398d52bba26', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('4efc3592-9e9b-4834-a06a-db9a2a67b445', 'f01767e0-5e75-47f5-b107-6398d52bba26', 'Primary', 1, 0.021000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4efc3592-9e9b-4834-a06a-db9a2a67b445', 'packaging_variant', 'UPSERT');
@@ -353,7 +353,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('3551ad3d-cb1a-405a-bf6f-c10aee41d048', '3551ad3d-cb1a-405a-bf6f-c10aee41d048') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3551ad3d-cb1a-405a-bf6f-c10aee41d048', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_3551ad3d-cb1a-405a-bf6f-c10aee41d048', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '3551ad3d-cb1a-405a-bf6f-c10aee41d048') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('427d522b-f14f-404f-8f90-c0fb7cf52fe9', 'Ad26.COV2.S (Janssen - Cilag)', '3551ad3d-cb1a-405a-bf6f-c10aee41d048', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('427d522b-f14f-404f-8f90-c0fb7cf52fe9', 'Ad26.COV2.S (Janssen - Cilag)', '3551ad3d-cb1a-405a-bf6f-c10aee41d048', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('427d522b-f14f-404f-8f90-c0fb7cf52fe9', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a37db045-d84e-4e63-8437-9d215d036faa', '427d522b-f14f-404f-8f90-c0fb7cf52fe9', 'Primary', 1, 0.019100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a37db045-d84e-4e63-8437-9d215d036faa', 'packaging_variant', 'UPSERT');
@@ -365,7 +365,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('0fc68d5c-2265-44a6-bffb-ffd564d76350', '0fc68d5c-2265-44a6-bffb-ffd564d76350') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0fc68d5c-2265-44a6-bffb-ffd564d76350', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_0fc68d5c-2265-44a6-bffb-ffd564d76350', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '0fc68d5c-2265-44a6-bffb-ffd564d76350') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4f2b13bf-f34e-4de5-bace-4f397d01e1ca', 'mRNA-1273 (Moderna)', '0fc68d5c-2265-44a6-bffb-ffd564d76350', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4f2b13bf-f34e-4de5-bace-4f397d01e1ca', 'mRNA-1273 (Moderna)', '0fc68d5c-2265-44a6-bffb-ffd564d76350', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4f2b13bf-f34e-4de5-bace-4f397d01e1ca', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('09c84718-c800-4e90-9e70-8c9d4baf8edb', '4f2b13bf-f34e-4de5-bace-4f397d01e1ca', 'Primary', 1, 0.043000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('09c84718-c800-4e90-9e70-8c9d4baf8edb', 'packaging_variant', 'UPSERT');
@@ -377,7 +377,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('c9102cf3-9549-454a-a645-1a636f276fcf', 'c9102cf3-9549-454a-a645-1a636f276fcf') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c9102cf3-9549-454a-a645-1a636f276fcf', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_c9102cf3-9549-454a-a645-1a636f276fcf', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'c9102cf3-9549-454a-a645-1a636f276fcf') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9aa1558e-77a5-486e-a52a-682a08b3e90c', 'mRNA-1273 (Moderna)', 'c9102cf3-9549-454a-a645-1a636f276fcf', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9aa1558e-77a5-486e-a52a-682a08b3e90c', 'mRNA-1273 (Moderna)', 'c9102cf3-9549-454a-a645-1a636f276fcf', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9aa1558e-77a5-486e-a52a-682a08b3e90c', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7780371d-d8c5-44a3-8679-d7613fccdfc3', '9aa1558e-77a5-486e-a52a-682a08b3e90c', 'Primary', 1, 0.029400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7780371d-d8c5-44a3-8679-d7613fccdfc3', 'packaging_variant', 'UPSERT');
@@ -389,7 +389,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('d10c4e3a-5e7f-4d79-83d0-c4cb6c524980', 'd10c4e3a-5e7f-4d79-83d0-c4cb6c524980') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d10c4e3a-5e7f-4d79-83d0-c4cb6c524980', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_d10c4e3a-5e7f-4d79-83d0-c4cb6c524980', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'd10c4e3a-5e7f-4d79-83d0-c4cb6c524980') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e0777936-099a-4dc1-b4f8-94f97072794b', 'Comirnaty (Pfizer/BioNTech)', 'd10c4e3a-5e7f-4d79-83d0-c4cb6c524980', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e0777936-099a-4dc1-b4f8-94f97072794b', 'Comirnaty (Pfizer/BioNTech)', 'd10c4e3a-5e7f-4d79-83d0-c4cb6c524980', (SELECT id FROM cold_storage_type WHERE name = '-70' or (min_temperature >= -80 AND max_temperature <= -60) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e0777936-099a-4dc1-b4f8-94f97072794b', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2bfd85c2-2ae5-483e-896d-60c8ad85b8f4', 'e0777936-099a-4dc1-b4f8-94f97072794b', 'Primary', 1, 0.010800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2bfd85c2-2ae5-483e-896d-60c8ad85b8f4', 'packaging_variant', 'UPSERT');
@@ -401,7 +401,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('94eaacd6-026c-4e24-8d18-77a15412c403', '94eaacd6-026c-4e24-8d18-77a15412c403') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('94eaacd6-026c-4e24-8d18-77a15412c403', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_94eaacd6-026c-4e24-8d18-77a15412c403', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '94eaacd6-026c-4e24-8d18-77a15412c403') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('03313c1f-5252-42f8-bd8b-94e3fe245a25', 'Comirnaty (Pfizer/BioNTech)', '94eaacd6-026c-4e24-8d18-77a15412c403', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('03313c1f-5252-42f8-bd8b-94e3fe245a25', 'Comirnaty (Pfizer/BioNTech)', '94eaacd6-026c-4e24-8d18-77a15412c403', (SELECT id FROM cold_storage_type WHERE name = '-70' or (min_temperature >= -80 AND max_temperature <= -60) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('03313c1f-5252-42f8-bd8b-94e3fe245a25', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('34e45246-d61e-4e61-93de-410fe7f7c2d6', '03313c1f-5252-42f8-bd8b-94e3fe245a25', 'Primary', 1, 0.02778) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('34e45246-d61e-4e61-93de-410fe7f7c2d6', 'packaging_variant', 'UPSERT');
@@ -415,7 +415,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('6c4086ee-322d-4b31-a82e-79891b0259d3', '6c4086ee-322d-4b31-a82e-79891b0259d3') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6c4086ee-322d-4b31-a82e-79891b0259d3', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_6c4086ee-322d-4b31-a82e-79891b0259d3', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '6c4086ee-322d-4b31-a82e-79891b0259d3') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5cffd465-743c-4efc-bdfc-af98e2c64bd8', 'Comirnaty (Pfizer/BioNTech)', '6c4086ee-322d-4b31-a82e-79891b0259d3', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5cffd465-743c-4efc-bdfc-af98e2c64bd8', 'Comirnaty (Pfizer/BioNTech)', '6c4086ee-322d-4b31-a82e-79891b0259d3', (SELECT id FROM cold_storage_type WHERE name = '-70' or (min_temperature >= -80 AND max_temperature <= -60) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5cffd465-743c-4efc-bdfc-af98e2c64bd8', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ffea5afd-15fd-4b61-8c24-7c3f501ac540', '5cffd465-743c-4efc-bdfc-af98e2c64bd8', 'Primary', 1, 0.011400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ffea5afd-15fd-4b61-8c24-7c3f501ac540', 'packaging_variant', 'UPSERT');
@@ -427,7 +427,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('ca97d9f8-7472-4a21-843f-2c4a1eaafd59', 'ca97d9f8-7472-4a21-843f-2c4a1eaafd59') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ca97d9f8-7472-4a21-843f-2c4a1eaafd59', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_ca97d9f8-7472-4a21-843f-2c4a1eaafd59', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'ca97d9f8-7472-4a21-843f-2c4a1eaafd59') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9b8e7e92-cfff-4657-b9a9-8cd0a975f47e', 'Comirnaty (Pfizer/BioNTech)', 'ca97d9f8-7472-4a21-843f-2c4a1eaafd59', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9b8e7e92-cfff-4657-b9a9-8cd0a975f47e', 'Comirnaty (Pfizer/BioNTech)', 'ca97d9f8-7472-4a21-843f-2c4a1eaafd59', (SELECT id FROM cold_storage_type WHERE name = '-70' or (min_temperature >= -80 AND max_temperature <= -60) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9b8e7e92-cfff-4657-b9a9-8cd0a975f47e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('9011ca75-4d8c-4a03-962d-223728a05494', '9b8e7e92-cfff-4657-b9a9-8cd0a975f47e', 'Primary', 1, 0.015600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9011ca75-4d8c-4a03-962d-223728a05494', 'packaging_variant', 'UPSERT');
@@ -439,7 +439,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('b7d9aff8-5f2c-44d5-a98e-31ec0fea3c7e', 'b7d9aff8-5f2c-44d5-a98e-31ec0fea3c7e') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b7d9aff8-5f2c-44d5-a98e-31ec0fea3c7e', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_b7d9aff8-5f2c-44d5-a98e-31ec0fea3c7e', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'b7d9aff8-5f2c-44d5-a98e-31ec0fea3c7e') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5cdfc5a3-18a6-4846-b73f-e909ad1b216b', 'Comirnaty (Pfizer/BioNTech)', 'b7d9aff8-5f2c-44d5-a98e-31ec0fea3c7e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5cdfc5a3-18a6-4846-b73f-e909ad1b216b', 'Comirnaty (Pfizer/BioNTech)', 'b7d9aff8-5f2c-44d5-a98e-31ec0fea3c7e', (SELECT id FROM cold_storage_type WHERE name = '-70' or (min_temperature >= -80 AND max_temperature <= -60) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5cdfc5a3-18a6-4846-b73f-e909ad1b216b', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2171c7f9-f5b1-4417-bef5-4c2560027517', '5cdfc5a3-18a6-4846-b73f-e909ad1b216b', 'Primary', 1, 0.02778) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2171c7f9-f5b1-4417-bef5-4c2560027517', 'packaging_variant', 'UPSERT');
@@ -453,7 +453,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('ca9c1cf5-c81b-4212-ba88-c108438ee5fb', 'ca9c1cf5-c81b-4212-ba88-c108438ee5fb') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ca9c1cf5-c81b-4212-ba88-c108438ee5fb', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_ca9c1cf5-c81b-4212-ba88-c108438ee5fb', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'ca9c1cf5-c81b-4212-ba88-c108438ee5fb') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5d53dc19-5b18-43d6-bb1d-6c16049a0bf9', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', 'ca9c1cf5-c81b-4212-ba88-c108438ee5fb', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5d53dc19-5b18-43d6-bb1d-6c16049a0bf9', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', 'ca9c1cf5-c81b-4212-ba88-c108438ee5fb', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5d53dc19-5b18-43d6-bb1d-6c16049a0bf9', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('56b411f1-1f53-4b47-a453-91d9fc574d07', '5d53dc19-5b18-43d6-bb1d-6c16049a0bf9', 'Primary', 1, 0.094900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('56b411f1-1f53-4b47-a453-91d9fc574d07', 'packaging_variant', 'UPSERT');
@@ -461,7 +461,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5fa8e88d-dfcf-4737-8598-82824a8358fc', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('358b1962-4cf0-4a47-926c-da9dca4c6f11', '5d53dc19-5b18-43d6-bb1d-6c16049a0bf9', 'Tertiary', 3, 0.115900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('358b1962-4cf0-4a47-926c-da9dca4c6f11', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0580ac4b-b376-4919-8a52-09eb715e724f', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', 'ca9c1cf5-c81b-4212-ba88-c108438ee5fb', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0580ac4b-b376-4919-8a52-09eb715e724f', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', 'ca9c1cf5-c81b-4212-ba88-c108438ee5fb', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0580ac4b-b376-4919-8a52-09eb715e724f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a467ba6e-093e-4904-84f5-4178469c29dd', '0580ac4b-b376-4919-8a52-09eb715e724f', 'Primary', 1, 0.124900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a467ba6e-093e-4904-84f5-4178469c29dd', 'packaging_variant', 'UPSERT');
@@ -473,7 +473,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('0f3d230b-48c6-4ac6-b01f-90bfe45e7ac7', '0f3d230b-48c6-4ac6-b01f-90bfe45e7ac7') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0f3d230b-48c6-4ac6-b01f-90bfe45e7ac7', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_0f3d230b-48c6-4ac6-b01f-90bfe45e7ac7', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '0f3d230b-48c6-4ac6-b01f-90bfe45e7ac7') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('89b29d33-69c5-426f-9b25-c1934c70e08c', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', '0f3d230b-48c6-4ac6-b01f-90bfe45e7ac7', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('89b29d33-69c5-426f-9b25-c1934c70e08c', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', '0f3d230b-48c6-4ac6-b01f-90bfe45e7ac7', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('89b29d33-69c5-426f-9b25-c1934c70e08c', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d88f3047-ca87-4ff2-84e3-7da13fd28f23', '89b29d33-69c5-426f-9b25-c1934c70e08c', 'Primary', 1, 0.022800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d88f3047-ca87-4ff2-84e3-7da13fd28f23', 'packaging_variant', 'UPSERT');
@@ -485,7 +485,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('16475022-d8dd-4b08-a4b0-4d7cc3d52814', '16475022-d8dd-4b08-a4b0-4d7cc3d52814') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('16475022-d8dd-4b08-a4b0-4d7cc3d52814', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_16475022-d8dd-4b08-a4b0-4d7cc3d52814', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '16475022-d8dd-4b08-a4b0-4d7cc3d52814') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f44b960f-8ed1-4825-95a3-d724bd92a4bb', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', '16475022-d8dd-4b08-a4b0-4d7cc3d52814', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f44b960f-8ed1-4825-95a3-d724bd92a4bb', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', '16475022-d8dd-4b08-a4b0-4d7cc3d52814', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f44b960f-8ed1-4825-95a3-d724bd92a4bb', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('37847250-211a-4244-911d-8234539ab76a', 'f44b960f-8ed1-4825-95a3-d724bd92a4bb', 'Primary', 1, 0.021000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('37847250-211a-4244-911d-8234539ab76a', 'packaging_variant', 'UPSERT');
@@ -493,7 +493,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d0244cbc-0341-4af0-80c9-f471d325508e', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('9d0d11f6-2abe-4ca0-9899-bc5ccc0ff256', 'f44b960f-8ed1-4825-95a3-d724bd92a4bb', 'Tertiary', 3, 0.028900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9d0d11f6-2abe-4ca0-9899-bc5ccc0ff256', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c03e528e-52a4-4c50-809d-ded4058f9635', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', '16475022-d8dd-4b08-a4b0-4d7cc3d52814', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c03e528e-52a4-4c50-809d-ded4058f9635', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', '16475022-d8dd-4b08-a4b0-4d7cc3d52814', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c03e528e-52a4-4c50-809d-ded4058f9635', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e8564edb-526a-422c-81a5-85a666a5d495', 'c03e528e-52a4-4c50-809d-ded4058f9635', 'Primary', 1, 0.022500) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e8564edb-526a-422c-81a5-85a666a5d495', 'packaging_variant', 'UPSERT');
@@ -501,7 +501,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('de2a1e3b-dcf9-4ec3-800d-917e3c647486', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('01b4d264-9f19-4402-a35f-07f63e0e256b', 'c03e528e-52a4-4c50-809d-ded4058f9635', 'Tertiary', 3, 0.034100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('01b4d264-9f19-4402-a35f-07f63e0e256b', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3e618ce9-533e-4fda-99cb-b20c91275e36', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', '16475022-d8dd-4b08-a4b0-4d7cc3d52814', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3e618ce9-533e-4fda-99cb-b20c91275e36', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', '16475022-d8dd-4b08-a4b0-4d7cc3d52814', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3e618ce9-533e-4fda-99cb-b20c91275e36', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('16fc6659-071a-42f9-a049-13e9a45c3209', '3e618ce9-533e-4fda-99cb-b20c91275e36', 'Primary', 1, 0.061500) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('16fc6659-071a-42f9-a049-13e9a45c3209', 'packaging_variant', 'UPSERT');
@@ -513,7 +513,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('f62ee222-7d95-469c-98dd-dfac428abb5b', 'f62ee222-7d95-469c-98dd-dfac428abb5b') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f62ee222-7d95-469c-98dd-dfac428abb5b', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_f62ee222-7d95-469c-98dd-dfac428abb5b', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'f62ee222-7d95-469c-98dd-dfac428abb5b') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b29b81ed-542a-486b-aeb4-1feb43412f43', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', 'f62ee222-7d95-469c-98dd-dfac428abb5b', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b29b81ed-542a-486b-aeb4-1feb43412f43', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', 'f62ee222-7d95-469c-98dd-dfac428abb5b', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b29b81ed-542a-486b-aeb4-1feb43412f43', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('9befde66-98b2-48c1-ba44-5f49e84082c3', 'b29b81ed-542a-486b-aeb4-1feb43412f43', 'Primary', 1, 0.021200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9befde66-98b2-48c1-ba44-5f49e84082c3', 'packaging_variant', 'UPSERT');
@@ -521,7 +521,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('225a7260-df80-4f3a-8a5e-9ca4fbbc5f94', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0544333d-9155-4f9e-ba6b-67bb9b06d603', 'b29b81ed-542a-486b-aeb4-1feb43412f43', 'Tertiary', 3, 0.028900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0544333d-9155-4f9e-ba6b-67bb9b06d603', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bdd3b0aa-8a9a-42d3-9526-9b04aca5c820', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', 'f62ee222-7d95-469c-98dd-dfac428abb5b', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bdd3b0aa-8a9a-42d3-9526-9b04aca5c820', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', 'f62ee222-7d95-469c-98dd-dfac428abb5b', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bdd3b0aa-8a9a-42d3-9526-9b04aca5c820', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('01b5becf-6bdb-4a2f-a4b4-c65fa5f2bf8d', 'bdd3b0aa-8a9a-42d3-9526-9b04aca5c820', 'Primary', 1, 0.061800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('01b5becf-6bdb-4a2f-a4b4-c65fa5f2bf8d', 'packaging_variant', 'UPSERT');
@@ -533,7 +533,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('5f997842-8032-499d-b2f6-32209e812374', '5f997842-8032-499d-b2f6-32209e812374') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5f997842-8032-499d-b2f6-32209e812374', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_5f997842-8032-499d-b2f6-32209e812374', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '5f997842-8032-499d-b2f6-32209e812374') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('20df8934-0813-48d2-8b4b-26c623cba18f', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', '5f997842-8032-499d-b2f6-32209e812374', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('20df8934-0813-48d2-8b4b-26c623cba18f', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', '5f997842-8032-499d-b2f6-32209e812374', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('20df8934-0813-48d2-8b4b-26c623cba18f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('6ec6d303-ebc5-45c3-aa6b-bd485b8bdb0a', '20df8934-0813-48d2-8b4b-26c623cba18f', 'Primary', 1, 0.021000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6ec6d303-ebc5-45c3-aa6b-bd485b8bdb0a', 'packaging_variant', 'UPSERT');
@@ -541,7 +541,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4359f100-4cb0-41f4-a84b-0d4b28dc021d', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('82efedde-e223-4fb2-bbc7-c18a0302ce85', '20df8934-0813-48d2-8b4b-26c623cba18f', 'Tertiary', 3, 0.028900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('82efedde-e223-4fb2-bbc7-c18a0302ce85', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3cc43ee2-395a-402c-b7aa-8189efaae32d', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', '5f997842-8032-499d-b2f6-32209e812374', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3cc43ee2-395a-402c-b7aa-8189efaae32d', 'Sinopharm (Beijing Institute of Biological Products Co., Ltd)', '5f997842-8032-499d-b2f6-32209e812374', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3cc43ee2-395a-402c-b7aa-8189efaae32d', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('945b66c2-9d46-473a-bbed-8cf1a6135af3', '3cc43ee2-395a-402c-b7aa-8189efaae32d', 'Primary', 1, 0.061600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('945b66c2-9d46-473a-bbed-8cf1a6135af3', 'packaging_variant', 'UPSERT');
@@ -553,7 +553,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('b83cda9c-7f73-4309-8bbd-d8e2bec943c7', 'b83cda9c-7f73-4309-8bbd-d8e2bec943c7') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b83cda9c-7f73-4309-8bbd-d8e2bec943c7', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_b83cda9c-7f73-4309-8bbd-d8e2bec943c7', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'b83cda9c-7f73-4309-8bbd-d8e2bec943c7') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f733d44d-a9d4-408b-a0ec-a05fb81b2949', 'CoronaVac (Sinovac Life Sciences Co., Ltd.)', 'b83cda9c-7f73-4309-8bbd-d8e2bec943c7', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f733d44d-a9d4-408b-a0ec-a05fb81b2949', 'CoronaVac (Sinovac Life Sciences Co., Ltd.)', 'b83cda9c-7f73-4309-8bbd-d8e2bec943c7', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f733d44d-a9d4-408b-a0ec-a05fb81b2949', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8f9a76da-5037-41bc-8d98-41163818bde2', 'f733d44d-a9d4-408b-a0ec-a05fb81b2949', 'Primary', 1, 0.041650) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8f9a76da-5037-41bc-8d98-41163818bde2', 'packaging_variant', 'UPSERT');
@@ -565,7 +565,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('abebf14a-6bf8-42db-a774-9309c07686b3', 'abebf14a-6bf8-42db-a774-9309c07686b3') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('abebf14a-6bf8-42db-a774-9309c07686b3', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_abebf14a-6bf8-42db-a774-9309c07686b3', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'abebf14a-6bf8-42db-a774-9309c07686b3') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d10e86c8-45de-459d-a2e6-6cbd311a7739', 'CoronaVac (Sinovac Life Sciences Co., Ltd.)', 'abebf14a-6bf8-42db-a774-9309c07686b3', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d10e86c8-45de-459d-a2e6-6cbd311a7739', 'CoronaVac (Sinovac Life Sciences Co., Ltd.)', 'abebf14a-6bf8-42db-a774-9309c07686b3', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d10e86c8-45de-459d-a2e6-6cbd311a7739', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('fbf3718d-68a5-4de5-afd1-6995a63cde64', 'd10e86c8-45de-459d-a2e6-6cbd311a7739', 'Primary', 1, 0.016300) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fbf3718d-68a5-4de5-afd1-6995a63cde64', 'packaging_variant', 'UPSERT');
@@ -577,7 +577,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('8c602585-9ef2-44ea-907b-e7b2c6097145', '8c602585-9ef2-44ea-907b-e7b2c6097145') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8c602585-9ef2-44ea-907b-e7b2c6097145', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_8c602585-9ef2-44ea-907b-e7b2c6097145', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '8c602585-9ef2-44ea-907b-e7b2c6097145') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('05d188fd-13ee-482d-82e9-81c061573f74', 'CoronaVac (Sinovac Life Sciences Co., Ltd.)', '8c602585-9ef2-44ea-907b-e7b2c6097145', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('05d188fd-13ee-482d-82e9-81c061573f74', 'CoronaVac (Sinovac Life Sciences Co., Ltd.)', '8c602585-9ef2-44ea-907b-e7b2c6097145', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('05d188fd-13ee-482d-82e9-81c061573f74', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a4c847b4-18b5-4e36-a640-7638aff00004', '05d188fd-13ee-482d-82e9-81c061573f74', 'Primary', 1, 0.016300) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a4c847b4-18b5-4e36-a640-7638aff00004', 'packaging_variant', 'UPSERT');
@@ -589,7 +589,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('7462f713-f48f-4a85-9f77-c2b895c48503', '7462f713-f48f-4a85-9f77-c2b895c48503') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7462f713-f48f-4a85-9f77-c2b895c48503', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_7462f713-f48f-4a85-9f77-c2b895c48503', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '7462f713-f48f-4a85-9f77-c2b895c48503') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('12660a51-e13a-44fd-96ad-233291e96519', 'Sputnik V (Gamalia Institute)', '7462f713-f48f-4a85-9f77-c2b895c48503', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('12660a51-e13a-44fd-96ad-233291e96519', 'Sputnik V (Gamalia Institute)', '7462f713-f48f-4a85-9f77-c2b895c48503', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('12660a51-e13a-44fd-96ad-233291e96519', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ce9adab6-2562-4ad7-b5ac-b48f93d23b12', '12660a51-e13a-44fd-96ad-233291e96519', 'Primary', 1, 0.027500) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ce9adab6-2562-4ad7-b5ac-b48f93d23b12', 'packaging_variant', 'UPSERT');
@@ -601,7 +601,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('9d968e72-80ae-4c0d-afbc-948d21601ac8', '9d968e72-80ae-4c0d-afbc-948d21601ac8') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9d968e72-80ae-4c0d-afbc-948d21601ac8', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_9d968e72-80ae-4c0d-afbc-948d21601ac8', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '9d968e72-80ae-4c0d-afbc-948d21601ac8') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('341c5f6a-8de0-4cfc-86e9-f9980f1e8599', 'Vaxzevria (AstraZeneca AB)', '9d968e72-80ae-4c0d-afbc-948d21601ac8', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('341c5f6a-8de0-4cfc-86e9-f9980f1e8599', 'Vaxzevria (AstraZeneca AB)', '9d968e72-80ae-4c0d-afbc-948d21601ac8', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('341c5f6a-8de0-4cfc-86e9-f9980f1e8599', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('412d5699-b229-4bb5-8d9a-465c764f8b1b', '341c5f6a-8de0-4cfc-86e9-f9980f1e8599', 'Primary', 1, 0.027600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('412d5699-b229-4bb5-8d9a-465c764f8b1b', 'packaging_variant', 'UPSERT');
@@ -613,7 +613,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('65e0779c-b685-4099-849b-f86df1ac8b8f', '65e0779c-b685-4099-849b-f86df1ac8b8f') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('65e0779c-b685-4099-849b-f86df1ac8b8f', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_65e0779c-b685-4099-849b-f86df1ac8b8f', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '65e0779c-b685-4099-849b-f86df1ac8b8f') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('73da003f-9972-496a-b6c1-deef64f55fbb', 'Vaxzevria (AstraZeneca AB)', '65e0779c-b685-4099-849b-f86df1ac8b8f', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('73da003f-9972-496a-b6c1-deef64f55fbb', 'Vaxzevria (AstraZeneca AB)', '65e0779c-b685-4099-849b-f86df1ac8b8f', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('73da003f-9972-496a-b6c1-deef64f55fbb', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3b15334c-bb87-493a-9597-8f7d98c7ec4b', '73da003f-9972-496a-b6c1-deef64f55fbb', 'Primary', 1, 0.027600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3b15334c-bb87-493a-9597-8f7d98c7ec4b', 'packaging_variant', 'UPSERT');
@@ -621,7 +621,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d926d4d8-3c36-4414-ad2e-e7c545917283', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3740e347-a2af-4704-9763-a5d437136294', '73da003f-9972-496a-b6c1-deef64f55fbb', 'Tertiary', 3, 0.052900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3740e347-a2af-4704-9763-a5d437136294', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('43c454de-9b55-4ba8-941b-2bec37c16b85', 'Vaxzevria (AstraZeneca AB /SK Bioscience Co. Ltd)', '9d968e72-80ae-4c0d-afbc-948d21601ac8', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('43c454de-9b55-4ba8-941b-2bec37c16b85', 'Vaxzevria (AstraZeneca AB /SK Bioscience Co. Ltd)', '9d968e72-80ae-4c0d-afbc-948d21601ac8', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('43c454de-9b55-4ba8-941b-2bec37c16b85', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7add484f-ffef-4007-a83a-53500c72614a', '43c454de-9b55-4ba8-941b-2bec37c16b85', 'Primary', 1, 0.035200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7add484f-ffef-4007-a83a-53500c72614a', 'packaging_variant', 'UPSERT');
@@ -629,7 +629,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3c923e77-2d59-4630-ace1-a03e1768fe1d', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1e9c2cec-0aab-4ea9-bc6d-22cc5bda30eb', '43c454de-9b55-4ba8-941b-2bec37c16b85', 'Tertiary', 3, 0.046800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1e9c2cec-0aab-4ea9-bc6d-22cc5bda30eb', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4a9222ee-c13b-4669-8d3e-6b419297d641', 'Vaxzevria (AstraZeneca AB /SK Bioscience Co. Ltd)', '65e0779c-b685-4099-849b-f86df1ac8b8f', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4a9222ee-c13b-4669-8d3e-6b419297d641', 'Vaxzevria (AstraZeneca AB /SK Bioscience Co. Ltd)', '65e0779c-b685-4099-849b-f86df1ac8b8f', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4a9222ee-c13b-4669-8d3e-6b419297d641', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2492751b-8abb-4304-a852-d2ae5d8a7c9d', '4a9222ee-c13b-4669-8d3e-6b419297d641', 'Primary', 1, 0.037600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2492751b-8abb-4304-a852-d2ae5d8a7c9d', 'packaging_variant', 'UPSERT');
@@ -641,7 +641,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('3e6263f0-f573-4f73-8fa0-f860c6fa266e', '3e6263f0-f573-4f73-8fa0-f860c6fa266e') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3e6263f0-f573-4f73-8fa0-f860c6fa266e', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_3e6263f0-f573-4f73-8fa0-f860c6fa266e', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '3e6263f0-f573-4f73-8fa0-f860c6fa266e') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('90881372-78da-47f8-9e4d-1a7e3ec599f3', 'COVID-A (Generic)', '3e6263f0-f573-4f73-8fa0-f860c6fa266e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('90881372-78da-47f8-9e4d-1a7e3ec599f3', 'COVID-A (Generic)', '3e6263f0-f573-4f73-8fa0-f860c6fa266e', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('90881372-78da-47f8-9e4d-1a7e3ec599f3', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d95bd76a-a8bb-4871-ba2d-cde056941be4', '90881372-78da-47f8-9e4d-1a7e3ec599f3', 'Primary', 1, 0.046300) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d95bd76a-a8bb-4871-ba2d-cde056941be4', 'packaging_variant', 'UPSERT');
@@ -653,7 +653,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('ea2a0300-5381-4f07-aefe-6967d882e1ba', 'ea2a0300-5381-4f07-aefe-6967d882e1ba') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ea2a0300-5381-4f07-aefe-6967d882e1ba', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_ea2a0300-5381-4f07-aefe-6967d882e1ba', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'ea2a0300-5381-4f07-aefe-6967d882e1ba') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2647b5ce-8e35-4976-820d-a9c1fe01b66a', 'COVID-B (Generic)', 'ea2a0300-5381-4f07-aefe-6967d882e1ba', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2647b5ce-8e35-4976-820d-a9c1fe01b66a', 'COVID-B (Generic)', 'ea2a0300-5381-4f07-aefe-6967d882e1ba', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2647b5ce-8e35-4976-820d-a9c1fe01b66a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('9409c579-3fd3-481c-8cdc-bd68284149e0', '2647b5ce-8e35-4976-820d-a9c1fe01b66a', 'Primary', 1, 0.046300) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9409c579-3fd3-481c-8cdc-bd68284149e0', 'packaging_variant', 'UPSERT');
@@ -665,7 +665,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('ad414324-7d3f-453a-9d94-cc06cba36526', 'ad414324-7d3f-453a-9d94-cc06cba36526') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ad414324-7d3f-453a-9d94-cc06cba36526', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_ad414324-7d3f-453a-9d94-cc06cba36526', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'ad414324-7d3f-453a-9d94-cc06cba36526') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c4f53ab0-4215-47f7-8308-184885702926', 'COVID-B (Generic)', 'ad414324-7d3f-453a-9d94-cc06cba36526', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c4f53ab0-4215-47f7-8308-184885702926', 'COVID-B (Generic)', 'ad414324-7d3f-453a-9d94-cc06cba36526', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c4f53ab0-4215-47f7-8308-184885702926', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e30b76ce-a012-428e-a733-0e2891807ee0', 'c4f53ab0-4215-47f7-8308-184885702926', 'Primary', 1, 0.0463) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e30b76ce-a012-428e-a733-0e2891807ee0', 'packaging_variant', 'UPSERT');
@@ -679,7 +679,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('bc305d1a-ee01-49f4-9372-88c3393f7d14', 'bc305d1a-ee01-49f4-9372-88c3393f7d14') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bc305d1a-ee01-49f4-9372-88c3393f7d14', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_bc305d1a-ee01-49f4-9372-88c3393f7d14', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'bc305d1a-ee01-49f4-9372-88c3393f7d14') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9b12813a-ec83-437d-a897-c3b4030e9b76', 'COVID-C (Generic)', 'bc305d1a-ee01-49f4-9372-88c3393f7d14', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9b12813a-ec83-437d-a897-c3b4030e9b76', 'COVID-C (Generic)', 'bc305d1a-ee01-49f4-9372-88c3393f7d14', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9b12813a-ec83-437d-a897-c3b4030e9b76', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ff1ed839-5eaf-49f0-8f85-d01e5486b8a7', '9b12813a-ec83-437d-a897-c3b4030e9b76', 'Primary', 1, 0.017000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ff1ed839-5eaf-49f0-8f85-d01e5486b8a7', 'packaging_variant', 'UPSERT');
@@ -691,7 +691,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('f9b947de-7896-45c6-830d-3aa75d732aba', 'f9b947de-7896-45c6-830d-3aa75d732aba') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f9b947de-7896-45c6-830d-3aa75d732aba', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_f9b947de-7896-45c6-830d-3aa75d732aba', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'f9b947de-7896-45c6-830d-3aa75d732aba') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('707d22d4-5c15-4139-8198-3c06d9009763', 'Dengvaxia (Sanofi Pasteur SA)', 'f9b947de-7896-45c6-830d-3aa75d732aba', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('707d22d4-5c15-4139-8198-3c06d9009763', 'Dengvaxia (Sanofi Pasteur SA)', 'f9b947de-7896-45c6-830d-3aa75d732aba', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('707d22d4-5c15-4139-8198-3c06d9009763', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('36ecb35d-85e1-4943-9d9e-72085ee20583', '707d22d4-5c15-4139-8198-3c06d9009763', 'Primary', 1, 0.026100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('36ecb35d-85e1-4943-9d9e-72085ee20583', 'packaging_variant', 'UPSERT');
@@ -703,7 +703,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('1d00a7f0-2095-4603-8673-d00bacf0cb94', '1d00a7f0-2095-4603-8673-d00bacf0cb94') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1d00a7f0-2095-4603-8673-d00bacf0cb94', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_1d00a7f0-2095-4603-8673-d00bacf0cb94', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '1d00a7f0-2095-4603-8673-d00bacf0cb94') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f331c678-248a-4ad0-80b4-00a2a65a3b6a', 'Diftet (National Center of Infectious and Parasitic Diseases)', '1d00a7f0-2095-4603-8673-d00bacf0cb94', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f331c678-248a-4ad0-80b4-00a2a65a3b6a', 'Diftet (National Center of Infectious and Parasitic Diseases)', '1d00a7f0-2095-4603-8673-d00bacf0cb94', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f331c678-248a-4ad0-80b4-00a2a65a3b6a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('fa90884b-e38e-4c84-b33e-d7b91c55c908', 'f331c678-248a-4ad0-80b4-00a2a65a3b6a', 'Primary', 1, 0.037800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fa90884b-e38e-4c84-b33e-d7b91c55c908', 'packaging_variant', 'UPSERT');
@@ -715,7 +715,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('ce0b59e1-4137-4024-9f00-45f50b7ffecc', 'ce0b59e1-4137-4024-9f00-45f50b7ffecc') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ce0b59e1-4137-4024-9f00-45f50b7ffecc', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_ce0b59e1-4137-4024-9f00-45f50b7ffecc', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'ce0b59e1-4137-4024-9f00-45f50b7ffecc') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fe518cf1-b3ce-484f-b6de-7aeaa7b58386', 'Diftet (National Center of Infectious and Parasitic Diseases)', 'ce0b59e1-4137-4024-9f00-45f50b7ffecc', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fe518cf1-b3ce-484f-b6de-7aeaa7b58386', 'Diftet (National Center of Infectious and Parasitic Diseases)', 'ce0b59e1-4137-4024-9f00-45f50b7ffecc', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fe518cf1-b3ce-484f-b6de-7aeaa7b58386', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1f5f681a-cdf7-4293-a834-92eac7aeca92', 'fe518cf1-b3ce-484f-b6de-7aeaa7b58386', 'Primary', 1, 0.037800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1f5f681a-cdf7-4293-a834-92eac7aeca92', 'packaging_variant', 'UPSERT');
@@ -723,7 +723,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e4b07a75-2ed5-449b-b758-47391b97f2f6', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d4fadb81-c9b0-43a7-ab5b-f4cac4017098', 'fe518cf1-b3ce-484f-b6de-7aeaa7b58386', 'Tertiary', 3, 0.037800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d4fadb81-c9b0-43a7-ab5b-f4cac4017098', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('93b42e0f-ea33-4c10-b47c-0ffde33c858f', 'Adsorbed DT Vaccine (PT Bio Farma (Persero))', '1d00a7f0-2095-4603-8673-d00bacf0cb94', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('93b42e0f-ea33-4c10-b47c-0ffde33c858f', 'Adsorbed DT Vaccine (PT Bio Farma (Persero))', '1d00a7f0-2095-4603-8673-d00bacf0cb94', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('93b42e0f-ea33-4c10-b47c-0ffde33c858f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('abb55621-e110-45ef-9cec-7a2f114cadcd', '93b42e0f-ea33-4c10-b47c-0ffde33c858f', 'Primary', 1, 0.023800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('abb55621-e110-45ef-9cec-7a2f114cadcd', 'packaging_variant', 'UPSERT');
@@ -735,7 +735,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('c361a08e-8834-458b-bc52-40c06afcf5c4', 'c361a08e-8834-458b-bc52-40c06afcf5c4') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c361a08e-8834-458b-bc52-40c06afcf5c4', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_c361a08e-8834-458b-bc52-40c06afcf5c4', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'c361a08e-8834-458b-bc52-40c06afcf5c4') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6f460b28-02e6-47d1-8246-df0491ed3357', 'Diphtheria and Tetanus Vaccine Adsorbed (Paediatric) (Serum Institute of India Pvt. Ltd.)', 'c361a08e-8834-458b-bc52-40c06afcf5c4', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6f460b28-02e6-47d1-8246-df0491ed3357', 'Diphtheria and Tetanus Vaccine Adsorbed (Paediatric) (Serum Institute of India Pvt. Ltd.)', 'c361a08e-8834-458b-bc52-40c06afcf5c4', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6f460b28-02e6-47d1-8246-df0491ed3357', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0274b972-f30b-4020-a7e7-2346f10ca0e8', '6f460b28-02e6-47d1-8246-df0491ed3357', 'Primary', 1, 0.012180) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0274b972-f30b-4020-a7e7-2346f10ca0e8', 'packaging_variant', 'UPSERT');
@@ -743,7 +743,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('40b7a2b7-e298-45e4-9496-d90662b7a0ea', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('dfd237f6-8d5c-4234-9d9c-22f3ea4d5968', '6f460b28-02e6-47d1-8246-df0491ed3357', 'Tertiary', 3, 0.009840) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dfd237f6-8d5c-4234-9d9c-22f3ea4d5968', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('be40315d-5641-4988-b88c-b9249e8c6907', 'Diphtheria and Tetanus Vaccine Adsorbed (Pediatric) (Serum Institute of India Pvt. Ltd.)', '1d00a7f0-2095-4603-8673-d00bacf0cb94', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('be40315d-5641-4988-b88c-b9249e8c6907', 'Diphtheria and Tetanus Vaccine Adsorbed (Pediatric) (Serum Institute of India Pvt. Ltd.)', '1d00a7f0-2095-4603-8673-d00bacf0cb94', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('be40315d-5641-4988-b88c-b9249e8c6907', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c9014c0e-968c-44f0-b55c-41eede8bcd82', 'be40315d-5641-4988-b88c-b9249e8c6907', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c9014c0e-968c-44f0-b55c-41eede8bcd82', 'packaging_variant', 'UPSERT');
@@ -751,7 +751,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('011c49e7-53dd-4b07-9843-d4e4ea83766d', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a79f7f36-4b97-4f42-94b4-2d27bb5d36fa', 'be40315d-5641-4988-b88c-b9249e8c6907', 'Tertiary', 3, 0.098400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a79f7f36-4b97-4f42-94b4-2d27bb5d36fa', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b18b5ba4-cc9d-457c-a0e1-af627a00698e', 'Diphtheria and Tetanus Vaccine Adsorbed (Pediatric) (Serum Institute of India Pvt. Ltd.)', 'ce0b59e1-4137-4024-9f00-45f50b7ffecc', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b18b5ba4-cc9d-457c-a0e1-af627a00698e', 'Diphtheria and Tetanus Vaccine Adsorbed (Pediatric) (Serum Institute of India Pvt. Ltd.)', 'ce0b59e1-4137-4024-9f00-45f50b7ffecc', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b18b5ba4-cc9d-457c-a0e1-af627a00698e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3ad6ccec-77c0-46cb-a464-b238eb3c9a1d', 'b18b5ba4-cc9d-457c-a0e1-af627a00698e', 'Primary', 1, 0.042400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3ad6ccec-77c0-46cb-a464-b238eb3c9a1d', 'packaging_variant', 'UPSERT');
@@ -763,7 +763,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('6efd1af9-3f06-43cb-b9b8-f4181dd2845b', '6efd1af9-3f06-43cb-b9b8-f4181dd2845b') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6efd1af9-3f06-43cb-b9b8-f4181dd2845b', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_6efd1af9-3f06-43cb-b9b8-f4181dd2845b', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '6efd1af9-3f06-43cb-b9b8-f4181dd2845b') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('01f967c8-b52e-442e-a2c5-a7cb0a669493', 'Boostrix (GlaxoSmithKline Biologicals SA)', '6efd1af9-3f06-43cb-b9b8-f4181dd2845b', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('01f967c8-b52e-442e-a2c5-a7cb0a669493', 'Boostrix (GlaxoSmithKline Biologicals SA)', '6efd1af9-3f06-43cb-b9b8-f4181dd2845b', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('01f967c8-b52e-442e-a2c5-a7cb0a669493', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8f81edab-1739-451a-900d-3a7855119047', '01f967c8-b52e-442e-a2c5-a7cb0a669493', 'Primary', 1, 0.009700) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8f81edab-1739-451a-900d-3a7855119047', 'packaging_variant', 'UPSERT');
@@ -771,7 +771,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8851f179-f555-43f2-8150-ad60f31832b4', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('bc6a03f6-723a-4f3b-ab05-55941b00a835', '01f967c8-b52e-442e-a2c5-a7cb0a669493', 'Tertiary', 3, 0.015230) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bc6a03f6-723a-4f3b-ab05-55941b00a835', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fbd0f37c-19bb-4957-9fb3-fcff9a6c1b70', 'Adacel (Sanofi Pasteur Limited)', '6efd1af9-3f06-43cb-b9b8-f4181dd2845b', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fbd0f37c-19bb-4957-9fb3-fcff9a6c1b70', 'Adacel (Sanofi Pasteur Limited)', '6efd1af9-3f06-43cb-b9b8-f4181dd2845b', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fbd0f37c-19bb-4957-9fb3-fcff9a6c1b70', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e867650d-1ebb-4493-89c3-ea6f35dca413', 'fbd0f37c-19bb-4957-9fb3-fcff9a6c1b70', 'Primary', 1, 0.019500) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e867650d-1ebb-4493-89c3-ea6f35dca413', 'packaging_variant', 'UPSERT');
@@ -783,7 +783,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('42f250a3-a8f6-4681-97f6-a08136bea3f2', '42f250a3-a8f6-4681-97f6-a08136bea3f2') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('42f250a3-a8f6-4681-97f6-a08136bea3f2', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_42f250a3-a8f6-4681-97f6-a08136bea3f2', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '42f250a3-a8f6-4681-97f6-a08136bea3f2') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fa165263-f2af-4443-a407-07ec875452ec', 'Hexaxim (Sanofi Pasteur SA)', '42f250a3-a8f6-4681-97f6-a08136bea3f2', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fa165263-f2af-4443-a407-07ec875452ec', 'Hexaxim (Sanofi Pasteur SA)', '42f250a3-a8f6-4681-97f6-a08136bea3f2', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fa165263-f2af-4443-a407-07ec875452ec', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('9902cdc1-ce3f-40bf-bb46-59eed702e66e', 'fa165263-f2af-4443-a407-07ec875452ec', 'Primary', 1, 0.011320) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9902cdc1-ce3f-40bf-bb46-59eed702e66e', 'packaging_variant', 'UPSERT');
@@ -795,7 +795,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('db16ac6d-c572-4af2-bcc1-33266fc50727', 'db16ac6d-c572-4af2-bcc1-33266fc50727') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('db16ac6d-c572-4af2-bcc1-33266fc50727', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_db16ac6d-c572-4af2-bcc1-33266fc50727', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'db16ac6d-c572-4af2-bcc1-33266fc50727') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('87429066-40ff-41e9-a46f-c456f9373381', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name TRIPVAC (Biological E. Limited)', 'db16ac6d-c572-4af2-bcc1-33266fc50727', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('87429066-40ff-41e9-a46f-c456f9373381', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name TRIPVAC (Biological E. Limited)', 'db16ac6d-c572-4af2-bcc1-33266fc50727', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('87429066-40ff-41e9-a46f-c456f9373381', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('9f0a9be6-3682-4463-b662-b670a9f7b17b', '87429066-40ff-41e9-a46f-c456f9373381', 'Primary', 1, 0.014680) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9f0a9be6-3682-4463-b662-b670a9f7b17b', 'packaging_variant', 'UPSERT');
@@ -807,7 +807,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('512adde9-1ba5-48ed-98d3-e65c74e1c7ef', '512adde9-1ba5-48ed-98d3-e65c74e1c7ef') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('512adde9-1ba5-48ed-98d3-e65c74e1c7ef', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_512adde9-1ba5-48ed-98d3-e65c74e1c7ef', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '512adde9-1ba5-48ed-98d3-e65c74e1c7ef') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6bc374cd-69a5-4ab5-98f8-810da1b316d2', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name TRIPVAC (Biological E. Limited)', '512adde9-1ba5-48ed-98d3-e65c74e1c7ef', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6bc374cd-69a5-4ab5-98f8-810da1b316d2', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name TRIPVAC (Biological E. Limited)', '512adde9-1ba5-48ed-98d3-e65c74e1c7ef', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6bc374cd-69a5-4ab5-98f8-810da1b316d2', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('060a400f-abbb-41b9-acd2-7a36d976e468', '6bc374cd-69a5-4ab5-98f8-810da1b316d2', 'Primary', 1, 0.017800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('060a400f-abbb-41b9-acd2-7a36d976e468', 'packaging_variant', 'UPSERT');
@@ -815,7 +815,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ad399a3a-3349-4990-adbd-63c1d03e9cc4', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f3bce4d5-9cf7-4a6c-8f3c-4b9fe518715b', '6bc374cd-69a5-4ab5-98f8-810da1b316d2', 'Tertiary', 3, 0.089400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f3bce4d5-9cf7-4a6c-8f3c-4b9fe518715b', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('86a1d020-10c3-45c7-ba1f-dd3fa7632caf', 'DTP Vaccine (PT Bio Farma (Persero))', '512adde9-1ba5-48ed-98d3-e65c74e1c7ef', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('86a1d020-10c3-45c7-ba1f-dd3fa7632caf', 'DTP Vaccine (PT Bio Farma (Persero))', '512adde9-1ba5-48ed-98d3-e65c74e1c7ef', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('86a1d020-10c3-45c7-ba1f-dd3fa7632caf', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('fb9eae6a-c943-4222-89d0-88f3215de4ab', '86a1d020-10c3-45c7-ba1f-dd3fa7632caf', 'Primary', 1, 0.023800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fb9eae6a-c943-4222-89d0-88f3215de4ab', 'packaging_variant', 'UPSERT');
@@ -827,7 +827,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('44271277-625a-4401-a1b0-d92e859830f2', '44271277-625a-4401-a1b0-d92e859830f2') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('44271277-625a-4401-a1b0-d92e859830f2', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_44271277-625a-4401-a1b0-d92e859830f2', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '44271277-625a-4401-a1b0-d92e859830f2') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3c3345c3-c0a9-47ca-a45a-482411f4f080', 'DT COQ (Sanofi Pasteur SA)', '44271277-625a-4401-a1b0-d92e859830f2', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3c3345c3-c0a9-47ca-a45a-482411f4f080', 'DT COQ (Sanofi Pasteur SA)', '44271277-625a-4401-a1b0-d92e859830f2', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3c3345c3-c0a9-47ca-a45a-482411f4f080', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('344a7846-7dbb-4c40-ab80-5e8b7da81fad', '3c3345c3-c0a9-47ca-a45a-482411f4f080', 'Primary', 1, 0.026100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('344a7846-7dbb-4c40-ab80-5e8b7da81fad', 'packaging_variant', 'UPSERT');
@@ -835,7 +835,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('de60fe2d-aaba-4be8-811f-7c19d55d24c0', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b4f08aa7-e25e-4ff9-a195-2c1ee8a2ea1a', '3c3345c3-c0a9-47ca-a45a-482411f4f080', 'Tertiary', 3, 0.026100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b4f08aa7-e25e-4ff9-a195-2c1ee8a2ea1a', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4c72701c-4e4c-434b-81bb-38211a51e291', 'DT COQ (Sanofi Pasteur SA)', '512adde9-1ba5-48ed-98d3-e65c74e1c7ef', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4c72701c-4e4c-434b-81bb-38211a51e291', 'DT COQ (Sanofi Pasteur SA)', '512adde9-1ba5-48ed-98d3-e65c74e1c7ef', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4c72701c-4e4c-434b-81bb-38211a51e291', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('479858ab-04f1-4a11-b36f-62931e2b997c', '4c72701c-4e4c-434b-81bb-38211a51e291', 'Primary', 1, 0.024600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('479858ab-04f1-4a11-b36f-62931e2b997c', 'packaging_variant', 'UPSERT');
@@ -843,7 +843,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('727d90cc-3ae0-4a96-939d-95e366d06022', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('232a05d3-10f5-4e25-b448-c39867f638ac', '4c72701c-4e4c-434b-81bb-38211a51e291', 'Tertiary', 3, 0.024600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('232a05d3-10f5-4e25-b448-c39867f638ac', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('863492eb-5944-46a7-97a1-20b87216b4ea', 'Diphtheria-Tetanus-Pertussis Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '44271277-625a-4401-a1b0-d92e859830f2', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('863492eb-5944-46a7-97a1-20b87216b4ea', 'Diphtheria-Tetanus-Pertussis Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '44271277-625a-4401-a1b0-d92e859830f2', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('863492eb-5944-46a7-97a1-20b87216b4ea', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('19598d3b-7dad-4b63-9206-950d47be2465', '863492eb-5944-46a7-97a1-20b87216b4ea', 'Primary', 1, 0.012180) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('19598d3b-7dad-4b63-9206-950d47be2465', 'packaging_variant', 'UPSERT');
@@ -851,7 +851,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bcc45c50-a557-4f55-bad2-42dc3b9af699', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('af0f9b3f-b622-405a-af72-661ceb12886e', '863492eb-5944-46a7-97a1-20b87216b4ea', 'Tertiary', 3, 0.065600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('af0f9b3f-b622-405a-af72-661ceb12886e', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('799751b2-736d-43bf-bc76-a5cb9bb4942d', 'Diphtheria-Tetanus-Pertussis Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '512adde9-1ba5-48ed-98d3-e65c74e1c7ef', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('799751b2-736d-43bf-bc76-a5cb9bb4942d', 'Diphtheria-Tetanus-Pertussis Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '512adde9-1ba5-48ed-98d3-e65c74e1c7ef', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('799751b2-736d-43bf-bc76-a5cb9bb4942d', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('dddfed69-ffd8-4572-958d-0b18c46ef631', '799751b2-736d-43bf-bc76-a5cb9bb4942d', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dddfed69-ffd8-4572-958d-0b18c46ef631', 'packaging_variant', 'UPSERT');
@@ -863,7 +863,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('a012a3da-5369-4457-9e63-165e97d14d21', 'a012a3da-5369-4457-9e63-165e97d14d21') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a012a3da-5369-4457-9e63-165e97d14d21', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_a012a3da-5369-4457-9e63-165e97d14d21', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'a012a3da-5369-4457-9e63-165e97d14d21') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('db5e5aac-0b97-4fa7-a75a-56d50a097c8c', 'Diphtheria-Tetanus-Pertussis Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', 'a012a3da-5369-4457-9e63-165e97d14d21', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('db5e5aac-0b97-4fa7-a75a-56d50a097c8c', 'Diphtheria-Tetanus-Pertussis Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', 'a012a3da-5369-4457-9e63-165e97d14d21', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('db5e5aac-0b97-4fa7-a75a-56d50a097c8c', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('44d22377-a3dc-4a2a-8d73-586db7343d65', 'db5e5aac-0b97-4fa7-a75a-56d50a097c8c', 'Primary', 1, 0.042400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('44d22377-a3dc-4a2a-8d73-586db7343d65', 'packaging_variant', 'UPSERT');
@@ -875,7 +875,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('61fabb01-ed69-45da-92e3-d0eee74f816c', '61fabb01-ed69-45da-92e3-d0eee74f816c') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('61fabb01-ed69-45da-92e3-d0eee74f816c', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_61fabb01-ed69-45da-92e3-d0eee74f816c', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '61fabb01-ed69-45da-92e3-d0eee74f816c') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('631adf62-fee2-425d-8cd3-fd84be45c6db', 'DTP - Hep B 10 (PT Bio Farma (Persero))', '61fabb01-ed69-45da-92e3-d0eee74f816c', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('631adf62-fee2-425d-8cd3-fd84be45c6db', 'DTP - Hep B 10 (PT Bio Farma (Persero))', '61fabb01-ed69-45da-92e3-d0eee74f816c', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('631adf62-fee2-425d-8cd3-fd84be45c6db', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('aa6584e7-6786-436a-9db4-56d8a5c1fa40', '631adf62-fee2-425d-8cd3-fd84be45c6db', 'Primary', 1, 0.021000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('aa6584e7-6786-436a-9db4-56d8a5c1fa40', 'packaging_variant', 'UPSERT');
@@ -887,7 +887,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('6c69d710-1a7e-4629-93dc-ac1688a0c175', '6c69d710-1a7e-4629-93dc-ac1688a0c175') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6c69d710-1a7e-4629-93dc-ac1688a0c175', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_6c69d710-1a7e-4629-93dc-ac1688a0c175', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '6c69d710-1a7e-4629-93dc-ac1688a0c175') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d099773e-e7c6-4c40-8f55-604283b95d4c', 'DTP - Hep B 5 (PT Bio Farma (Persero))', '6c69d710-1a7e-4629-93dc-ac1688a0c175', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d099773e-e7c6-4c40-8f55-604283b95d4c', 'DTP - Hep B 5 (PT Bio Farma (Persero))', '6c69d710-1a7e-4629-93dc-ac1688a0c175', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d099773e-e7c6-4c40-8f55-604283b95d4c', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('55a9e27a-6bb5-4e41-a7fd-4c34c6996ade', 'd099773e-e7c6-4c40-8f55-604283b95d4c', 'Primary', 1, 0.021000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('55a9e27a-6bb5-4e41-a7fd-4c34c6996ade', 'packaging_variant', 'UPSERT');
@@ -899,7 +899,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('4076ce1b-3f8c-4324-be64-dbafaf97e782', '4076ce1b-3f8c-4324-be64-dbafaf97e782') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4076ce1b-3f8c-4324-be64-dbafaf97e782', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_4076ce1b-3f8c-4324-be64-dbafaf97e782', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '4076ce1b-3f8c-4324-be64-dbafaf97e782') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d1e7a408-acd9-4d65-80b7-7f5b9b46f54f', 'Diphtheria ,Tetanus, Pertussis and Hepatitis B Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '4076ce1b-3f8c-4324-be64-dbafaf97e782', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d1e7a408-acd9-4d65-80b7-7f5b9b46f54f', 'Diphtheria ,Tetanus, Pertussis and Hepatitis B Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '4076ce1b-3f8c-4324-be64-dbafaf97e782', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d1e7a408-acd9-4d65-80b7-7f5b9b46f54f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('15d71d0d-c4aa-49a2-81ba-59fa08eadaca', 'd1e7a408-acd9-4d65-80b7-7f5b9b46f54f', 'Primary', 1, 0.012180) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('15d71d0d-c4aa-49a2-81ba-59fa08eadaca', 'packaging_variant', 'UPSERT');
@@ -907,7 +907,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f2c36e8e-cb43-4234-8a8b-b3918b044aab', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('987b6961-4cda-4137-bc20-2548baee1c1e', 'd1e7a408-acd9-4d65-80b7-7f5b9b46f54f', 'Tertiary', 3, 0.065600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('987b6961-4cda-4137-bc20-2548baee1c1e', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('52c60fc5-5bf0-4c48-ab31-ccc2804c8400', 'Diphtheria ,Tetanus, Pertussis and Hepatitis B Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '61fabb01-ed69-45da-92e3-d0eee74f816c', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('52c60fc5-5bf0-4c48-ab31-ccc2804c8400', 'Diphtheria ,Tetanus, Pertussis and Hepatitis B Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '61fabb01-ed69-45da-92e3-d0eee74f816c', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('52c60fc5-5bf0-4c48-ab31-ccc2804c8400', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3230f888-4c4d-4a2d-9e30-841ee451582e', '52c60fc5-5bf0-4c48-ab31-ccc2804c8400', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3230f888-4c4d-4a2d-9e30-841ee451582e', 'packaging_variant', 'UPSERT');
@@ -919,7 +919,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('5d40ffb4-f4a0-449b-9d7f-05dfd6178363', '5d40ffb4-f4a0-449b-9d7f-05dfd6178363') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5d40ffb4-f4a0-449b-9d7f-05dfd6178363', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_5d40ffb4-f4a0-449b-9d7f-05dfd6178363', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '5d40ffb4-f4a0-449b-9d7f-05dfd6178363') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b09bad8f-b795-4efa-84fc-c4980416f03b', 'Diphtheria ,Tetanus, Pertussis and Hepatitis B Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '5d40ffb4-f4a0-449b-9d7f-05dfd6178363', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b09bad8f-b795-4efa-84fc-c4980416f03b', 'Diphtheria ,Tetanus, Pertussis and Hepatitis B Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '5d40ffb4-f4a0-449b-9d7f-05dfd6178363', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b09bad8f-b795-4efa-84fc-c4980416f03b', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('6684c2c4-47c2-455c-b5b3-de4fdc03f72b', 'b09bad8f-b795-4efa-84fc-c4980416f03b', 'Primary', 1, 0.042400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6684c2c4-47c2-455c-b5b3-de4fdc03f72b', 'packaging_variant', 'UPSERT');
@@ -931,7 +931,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('6f05a6bf-defc-4c4d-94a3-b21d44f744c7', '6f05a6bf-defc-4c4d-94a3-b21d44f744c7') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6f05a6bf-defc-4c4d-94a3-b21d44f744c7', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_6f05a6bf-defc-4c4d-94a3-b21d44f744c7', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '6f05a6bf-defc-4c4d-94a3-b21d44f744c7') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2b679476-3266-4092-b763-e69057c46cee', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name ComBE Five (Liquid). (Biological E. Limited)', '6f05a6bf-defc-4c4d-94a3-b21d44f744c7', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2b679476-3266-4092-b763-e69057c46cee', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name ComBE Five (Liquid). (Biological E. Limited)', '6f05a6bf-defc-4c4d-94a3-b21d44f744c7', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2b679476-3266-4092-b763-e69057c46cee', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e48e8561-882a-4bc9-9cc3-b349ce501192', '2b679476-3266-4092-b763-e69057c46cee', 'Primary', 1, 0.014700) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e48e8561-882a-4bc9-9cc3-b349ce501192', 'packaging_variant', 'UPSERT');
@@ -943,7 +943,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('7eb7095f-d7dc-4451-a2e3-dfc09d4df27b', '7eb7095f-d7dc-4451-a2e3-dfc09d4df27b') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7eb7095f-d7dc-4451-a2e3-dfc09d4df27b', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_7eb7095f-d7dc-4451-a2e3-dfc09d4df27b', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '7eb7095f-d7dc-4451-a2e3-dfc09d4df27b') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fa953233-75c1-481d-88a2-59414cdc3031', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name ComBE Five (Liquid). (Biological E. Limited)', '7eb7095f-d7dc-4451-a2e3-dfc09d4df27b', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fa953233-75c1-481d-88a2-59414cdc3031', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name ComBE Five (Liquid). (Biological E. Limited)', '7eb7095f-d7dc-4451-a2e3-dfc09d4df27b', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fa953233-75c1-481d-88a2-59414cdc3031', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2bcf8465-b4c9-48d6-869e-e3dd36d226b5', 'fa953233-75c1-481d-88a2-59414cdc3031', 'Primary', 1, 0.014600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2bcf8465-b4c9-48d6-869e-e3dd36d226b5', 'packaging_variant', 'UPSERT');
@@ -955,7 +955,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('bdec59df-c46a-496a-96d9-3f9fbd542cee', 'bdec59df-c46a-496a-96d9-3f9fbd542cee') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bdec59df-c46a-496a-96d9-3f9fbd542cee', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_bdec59df-c46a-496a-96d9-3f9fbd542cee', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'bdec59df-c46a-496a-96d9-3f9fbd542cee') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('46adf05c-9b83-4181-9d8a-642566da7c7d', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name ComBE Five (Liquid). (Biological E. Limited)', 'bdec59df-c46a-496a-96d9-3f9fbd542cee', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('46adf05c-9b83-4181-9d8a-642566da7c7d', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name ComBE Five (Liquid). (Biological E. Limited)', 'bdec59df-c46a-496a-96d9-3f9fbd542cee', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('46adf05c-9b83-4181-9d8a-642566da7c7d', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c967fd7c-694b-4fe7-82d1-6b18886cafdd', '46adf05c-9b83-4181-9d8a-642566da7c7d', 'Primary', 1, 0.014500) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c967fd7c-694b-4fe7-82d1-6b18886cafdd', 'packaging_variant', 'UPSERT');
@@ -967,7 +967,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('1e55a742-1815-47e5-89cd-57a470f5c572', '1e55a742-1815-47e5-89cd-57a470f5c572') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1e55a742-1815-47e5-89cd-57a470f5c572', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_1e55a742-1815-47e5-89cd-57a470f5c572', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '1e55a742-1815-47e5-89cd-57a470f5c572') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9ddb3192-01db-42ab-83c4-a72847905481', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name ComBE Five (Liquid). (Biological E. Limited)', '1e55a742-1815-47e5-89cd-57a470f5c572', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9ddb3192-01db-42ab-83c4-a72847905481', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name ComBE Five (Liquid). (Biological E. Limited)', '1e55a742-1815-47e5-89cd-57a470f5c572', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9ddb3192-01db-42ab-83c4-a72847905481', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('20590f57-c74d-4b69-a607-70328025825d', '9ddb3192-01db-42ab-83c4-a72847905481', 'Primary', 1, 0.029000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('20590f57-c74d-4b69-a607-70328025825d', 'packaging_variant', 'UPSERT');
@@ -975,7 +975,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('32e1ba47-0a2c-459c-9b1f-ec20781725d9', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('6e396beb-5e1f-4c5a-a052-2125d377f451', '9ddb3192-01db-42ab-83c4-a72847905481', 'Tertiary', 3, 0.211300) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6e396beb-5e1f-4c5a-a052-2125d377f451', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bffa2c05-396c-4dac-8d86-2a5632aec33c', 'Quinvaxem (Janssen Vaccines Corp.)', '6f05a6bf-defc-4c4d-94a3-b21d44f744c7', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bffa2c05-396c-4dac-8d86-2a5632aec33c', 'Quinvaxem (Janssen Vaccines Corp.)', '6f05a6bf-defc-4c4d-94a3-b21d44f744c7', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bffa2c05-396c-4dac-8d86-2a5632aec33c', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8fa32774-013b-426f-8ae0-b1e7198d30f9', 'bffa2c05-396c-4dac-8d86-2a5632aec33c', 'Primary', 1, 0.010300) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8fa32774-013b-426f-8ae0-b1e7198d30f9', 'packaging_variant', 'UPSERT');
@@ -983,7 +983,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('df570a6e-567a-4db9-b1fa-4e4a10e711f4', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('eb6cfc21-eda4-4e12-9220-ae8d706cc69f', 'bffa2c05-396c-4dac-8d86-2a5632aec33c', 'Tertiary', 3, 0.054320) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('eb6cfc21-eda4-4e12-9220-ae8d706cc69f', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5858ce3d-dea4-4b55-aee8-ccb9cac8e858', 'Eupenta (LG Chem Ltd)', '6f05a6bf-defc-4c4d-94a3-b21d44f744c7', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5858ce3d-dea4-4b55-aee8-ccb9cac8e858', 'Eupenta (LG Chem Ltd)', '6f05a6bf-defc-4c4d-94a3-b21d44f744c7', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5858ce3d-dea4-4b55-aee8-ccb9cac8e858', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ec5f210a-6b5f-4eaf-995a-e686b50abf13', '5858ce3d-dea4-4b55-aee8-ccb9cac8e858', 'Primary', 1, 0.014530) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ec5f210a-6b5f-4eaf-995a-e686b50abf13', 'packaging_variant', 'UPSERT');
@@ -991,7 +991,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('70799556-e568-4f11-9a5a-8df1c887dfa4', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e3627e22-53c3-4a74-bce2-99891906cd80', '5858ce3d-dea4-4b55-aee8-ccb9cac8e858', 'Tertiary', 3, 0.075130) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e3627e22-53c3-4a74-bce2-99891906cd80', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e0d10ec7-ddd5-4ff4-86d7-1f0baad03c9c', 'Eupenta (LG Chem Ltd)', '1e55a742-1815-47e5-89cd-57a470f5c572', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e0d10ec7-ddd5-4ff4-86d7-1f0baad03c9c', 'Eupenta (LG Chem Ltd)', '1e55a742-1815-47e5-89cd-57a470f5c572', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e0d10ec7-ddd5-4ff4-86d7-1f0baad03c9c', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('62981834-1964-4837-9355-c26d6cb588dd', 'e0d10ec7-ddd5-4ff4-86d7-1f0baad03c9c', 'Primary', 1, 0.029000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('62981834-1964-4837-9355-c26d6cb588dd', 'packaging_variant', 'UPSERT');
@@ -999,7 +999,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4988b1cc-995d-45ef-87ae-8c727fc81b0a', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7542377b-9712-47be-a935-a0f6bf7daf67', 'e0d10ec7-ddd5-4ff4-86d7-1f0baad03c9c', 'Tertiary', 3, 0.167000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7542377b-9712-47be-a935-a0f6bf7daf67', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ed40ac8b-1c1e-40c9-a00b-73d53747d4f5', 'Easyfive-TT (Panacea Biotec Ltd.)', '6f05a6bf-defc-4c4d-94a3-b21d44f744c7', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ed40ac8b-1c1e-40c9-a00b-73d53747d4f5', 'Easyfive-TT (Panacea Biotec Ltd.)', '6f05a6bf-defc-4c4d-94a3-b21d44f744c7', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ed40ac8b-1c1e-40c9-a00b-73d53747d4f5', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3cfec373-68df-46cc-817f-ed738035da55', 'ed40ac8b-1c1e-40c9-a00b-73d53747d4f5', 'Primary', 1, 0.015300) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3cfec373-68df-46cc-817f-ed738035da55', 'packaging_variant', 'UPSERT');
@@ -1007,7 +1007,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a440d4e0-4c22-4372-83db-2dd033b1e3db', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('12448968-9703-4adf-8448-453f6da7c7db', 'ed40ac8b-1c1e-40c9-a00b-73d53747d4f5', 'Tertiary', 3, 0.083120) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('12448968-9703-4adf-8448-453f6da7c7db', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('72248b9a-7b7e-494d-9e9d-e54d5b39ba46', 'Easyfive-TT (Panacea Biotec Ltd.)', '1e55a742-1815-47e5-89cd-57a470f5c572', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('72248b9a-7b7e-494d-9e9d-e54d5b39ba46', 'Easyfive-TT (Panacea Biotec Ltd.)', '1e55a742-1815-47e5-89cd-57a470f5c572', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('72248b9a-7b7e-494d-9e9d-e54d5b39ba46', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('6af629f8-badc-4c54-919f-610b40389f60', '72248b9a-7b7e-494d-9e9d-e54d5b39ba46', 'Primary', 1, 0.032000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6af629f8-badc-4c54-919f-610b40389f60', 'packaging_variant', 'UPSERT');
@@ -1015,7 +1015,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('976e4825-27a1-4798-b89d-835f14ead2a8', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('12ce22d8-9b2f-4b38-8c84-77cd2c731f73', '72248b9a-7b7e-494d-9e9d-e54d5b39ba46', 'Tertiary', 3, 0.166500) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('12ce22d8-9b2f-4b38-8c84-77cd2c731f73', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fde3a518-6f0d-4cdf-8d8c-4d20c816b6c4', 'Pentabio (PT Bio Farma (Persero))', 'bdec59df-c46a-496a-96d9-3f9fbd542cee', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fde3a518-6f0d-4cdf-8d8c-4d20c816b6c4', 'Pentabio (PT Bio Farma (Persero))', 'bdec59df-c46a-496a-96d9-3f9fbd542cee', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fde3a518-6f0d-4cdf-8d8c-4d20c816b6c4', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('cc5eb10c-6f48-46b3-9287-b51208ed3fc0', 'fde3a518-6f0d-4cdf-8d8c-4d20c816b6c4', 'Primary', 1, 0.040000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cc5eb10c-6f48-46b3-9287-b51208ed3fc0', 'packaging_variant', 'UPSERT');
@@ -1023,7 +1023,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('add4cfd1-871e-4b5a-b101-958cdd8a0c4d', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('6cb027d5-dd74-45fc-a747-d41e709054b3', 'fde3a518-6f0d-4cdf-8d8c-4d20c816b6c4', 'Tertiary', 3, 0.165750) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6cb027d5-dd74-45fc-a747-d41e709054b3', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('17d88e41-15f3-4f4a-b597-e1ea3db5b821', 'Pentabio (PT Bio Farma (Persero))', '1e55a742-1815-47e5-89cd-57a470f5c572', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('17d88e41-15f3-4f4a-b597-e1ea3db5b821', 'Pentabio (PT Bio Farma (Persero))', '1e55a742-1815-47e5-89cd-57a470f5c572', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('17d88e41-15f3-4f4a-b597-e1ea3db5b821', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e6f513a0-21f6-4e4d-821a-33a55413ede6', '17d88e41-15f3-4f4a-b597-e1ea3db5b821', 'Primary', 1, 0.040000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e6f513a0-21f6-4e4d-821a-33a55413ede6', 'packaging_variant', 'UPSERT');
@@ -1031,7 +1031,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5e45899c-97a1-4f77-bc24-0db18b45562e', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e083afae-bf4c-4e7b-bfae-072d75522224', '17d88e41-15f3-4f4a-b597-e1ea3db5b821', 'Tertiary', 3, 0.165800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e083afae-bf4c-4e7b-bfae-072d75522224', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4b4e2ca8-0507-46fa-969d-1c9f619e968a', 'Diphtheria, Tetanus, Pertussis, Hepatitis B and Haemophilus influenzae type b Conjugate Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '6f05a6bf-defc-4c4d-94a3-b21d44f744c7', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4b4e2ca8-0507-46fa-969d-1c9f619e968a', 'Diphtheria, Tetanus, Pertussis, Hepatitis B and Haemophilus influenzae type b Conjugate Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '6f05a6bf-defc-4c4d-94a3-b21d44f744c7', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4b4e2ca8-0507-46fa-969d-1c9f619e968a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e03f0cff-7d41-4969-919b-71043ae3f18e', '4b4e2ca8-0507-46fa-969d-1c9f619e968a', 'Primary', 1, 0.014060) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e03f0cff-7d41-4969-919b-71043ae3f18e', 'packaging_variant', 'UPSERT');
@@ -1039,7 +1039,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('62da35fc-dcc7-4eab-b799-35af2505767b', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8f3e7de7-3bd5-484e-9a1d-cfb749739627', '4b4e2ca8-0507-46fa-969d-1c9f619e968a', 'Tertiary', 3, 0.077600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8f3e7de7-3bd5-484e-9a1d-cfb749739627', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d5d65376-0218-4c06-9703-f207254fe04c', 'Diphtheria, Tetanus, Pertussis, Hepatitis B and Haemophilus influenzae type b Conjugate Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '7eb7095f-d7dc-4451-a2e3-dfc09d4df27b', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d5d65376-0218-4c06-9703-f207254fe04c', 'Diphtheria, Tetanus, Pertussis, Hepatitis B and Haemophilus influenzae type b Conjugate Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '7eb7095f-d7dc-4451-a2e3-dfc09d4df27b', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d5d65376-0218-4c06-9703-f207254fe04c', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('cf5ab883-85ad-42ed-9538-69a30ea9a5e3', 'd5d65376-0218-4c06-9703-f207254fe04c', 'Primary', 1, 0.017580) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cf5ab883-85ad-42ed-9538-69a30ea9a5e3', 'packaging_variant', 'UPSERT');
@@ -1047,7 +1047,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('57fd58d8-7b6b-49af-b69b-d3d19d66a050', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f7a0bce9-5ecd-4e6f-8e68-67be950e5d48', 'd5d65376-0218-4c06-9703-f207254fe04c', 'Tertiary', 3, 0.086400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f7a0bce9-5ecd-4e6f-8e68-67be950e5d48', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6115229a-3443-427c-911d-3348bf02c10e', 'Diphtheria, Tetanus, Pertussis, Hepatitis B and Haemophilus influenzae type b Conjugate Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '1e55a742-1815-47e5-89cd-57a470f5c572', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6115229a-3443-427c-911d-3348bf02c10e', 'Diphtheria, Tetanus, Pertussis, Hepatitis B and Haemophilus influenzae type b Conjugate Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '1e55a742-1815-47e5-89cd-57a470f5c572', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6115229a-3443-427c-911d-3348bf02c10e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3a907371-8709-4ba8-b24b-748ca7b4f97c', '6115229a-3443-427c-911d-3348bf02c10e', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3a907371-8709-4ba8-b24b-748ca7b4f97c', 'packaging_variant', 'UPSERT');
@@ -1055,7 +1055,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('40d7783f-2fa3-4e54-a8a5-dff18b865632', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1134a8c8-216a-43ef-a629-51dc3a6a873e', '6115229a-3443-427c-911d-3348bf02c10e', 'Tertiary', 3, 0.098400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1134a8c8-216a-43ef-a629-51dc3a6a873e', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('dc42ae58-2d3e-4d7a-9b51-2dec7c5d9724', 'Shan-5 (Shantha Biotechnics Private Limited (A Sanofi Company))', '6f05a6bf-defc-4c4d-94a3-b21d44f744c7', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('dc42ae58-2d3e-4d7a-9b51-2dec7c5d9724', 'Shan-5 (Shantha Biotechnics Private Limited (A Sanofi Company))', '6f05a6bf-defc-4c4d-94a3-b21d44f744c7', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dc42ae58-2d3e-4d7a-9b51-2dec7c5d9724', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f9a761b7-8333-43dd-b52b-a24dee37327b', 'dc42ae58-2d3e-4d7a-9b51-2dec7c5d9724', 'Primary', 1, 0.016800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f9a761b7-8333-43dd-b52b-a24dee37327b', 'packaging_variant', 'UPSERT');
@@ -1063,7 +1063,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2a167573-4e8b-42f8-9628-6f9776571ea1', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('768dc260-c173-43aa-b987-7202e1388894', 'dc42ae58-2d3e-4d7a-9b51-2dec7c5d9724', 'Tertiary', 3, 0.063950) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('768dc260-c173-43aa-b987-7202e1388894', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0069e08d-431c-445c-8448-6a5d84c257c9', 'Shan-5 (Shantha Biotechnics Private Limited (A Sanofi Company))', '1e55a742-1815-47e5-89cd-57a470f5c572', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0069e08d-431c-445c-8448-6a5d84c257c9', 'Shan-5 (Shantha Biotechnics Private Limited (A Sanofi Company))', '1e55a742-1815-47e5-89cd-57a470f5c572', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0069e08d-431c-445c-8448-6a5d84c257c9', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('9bfdaca5-9022-4b5e-a66e-c33523efc71d', '0069e08d-431c-445c-8448-6a5d84c257c9', 'Primary', 1, 0.044000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9bfdaca5-9022-4b5e-a66e-c33523efc71d', 'packaging_variant', 'UPSERT');
@@ -1075,7 +1075,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('c88a1ce0-107a-4027-b851-c8b1b95bb081', 'c88a1ce0-107a-4027-b851-c8b1b95bb081') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c88a1ce0-107a-4027-b851-c8b1b95bb081', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_c88a1ce0-107a-4027-b851-c8b1b95bb081', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'c88a1ce0-107a-4027-b851-c8b1b95bb081') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bf44a11b-0913-4f24-ac06-50b538accd4b', 'Shan6 (Sanofi Healthcare India Private Limited)', 'c88a1ce0-107a-4027-b851-c8b1b95bb081', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bf44a11b-0913-4f24-ac06-50b538accd4b', 'Shan6 (Sanofi Healthcare India Private Limited)', 'c88a1ce0-107a-4027-b851-c8b1b95bb081', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bf44a11b-0913-4f24-ac06-50b538accd4b', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('af22940e-702d-42ba-94bd-c78086dcd703', 'bf44a11b-0913-4f24-ac06-50b538accd4b', 'Primary', 1, 0.011090) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('af22940e-702d-42ba-94bd-c78086dcd703', 'packaging_variant', 'UPSERT');
@@ -1087,7 +1087,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('c0918c2d-c64c-4155-b357-ba130ec4dc43', 'c0918c2d-c64c-4155-b357-ba130ec4dc43') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c0918c2d-c64c-4155-b357-ba130ec4dc43', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_c0918c2d-c64c-4155-b357-ba130ec4dc43', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'c0918c2d-c64c-4155-b357-ba130ec4dc43') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('1c56b903-6a66-467d-a1ce-613d5dc4cb51', 'Shan6 (Sanofi Healthcare India Private Limited)', 'c0918c2d-c64c-4155-b357-ba130ec4dc43', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('1c56b903-6a66-467d-a1ce-613d5dc4cb51', 'Shan6 (Sanofi Healthcare India Private Limited)', 'c0918c2d-c64c-4155-b357-ba130ec4dc43', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1c56b903-6a66-467d-a1ce-613d5dc4cb51', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d02d746e-52a8-4fc4-bc44-87de173e2b69', '1c56b903-6a66-467d-a1ce-613d5dc4cb51', 'Primary', 1, 0.015200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d02d746e-52a8-4fc4-bc44-87de173e2b69', 'packaging_variant', 'UPSERT');
@@ -1099,7 +1099,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('d0689950-f092-4248-9b7b-3b6419671db3', 'd0689950-f092-4248-9b7b-3b6419671db3') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d0689950-f092-4248-9b7b-3b6419671db3', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_d0689950-f092-4248-9b7b-3b6419671db3', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'd0689950-f092-4248-9b7b-3b6419671db3') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('19fc13f5-706c-4599-9380-36a679b96c2f', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name ComBE Five (Reconstituted). (Biological E. Limited)', 'd0689950-f092-4248-9b7b-3b6419671db3', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('19fc13f5-706c-4599-9380-36a679b96c2f', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name ComBE Five (Reconstituted). (Biological E. Limited)', 'd0689950-f092-4248-9b7b-3b6419671db3', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('19fc13f5-706c-4599-9380-36a679b96c2f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b6ec862a-9c12-46be-ac43-27e556e0660f', '19fc13f5-706c-4599-9380-36a679b96c2f', 'Primary', 1, 0.058700) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b6ec862a-9c12-46be-ac43-27e556e0660f', 'packaging_variant', 'UPSERT');
@@ -1111,7 +1111,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('ab025f60-bc4e-4081-91a8-79727e4316fc', 'ab025f60-bc4e-4081-91a8-79727e4316fc') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ab025f60-bc4e-4081-91a8-79727e4316fc', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_ab025f60-bc4e-4081-91a8-79727e4316fc', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'ab025f60-bc4e-4081-91a8-79727e4316fc') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9ad11292-c873-4a04-b660-3c4615019c44', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name ComBE Five (Reconstituted). (Biological E. Limited)', 'ab025f60-bc4e-4081-91a8-79727e4316fc', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9ad11292-c873-4a04-b660-3c4615019c44', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name ComBE Five (Reconstituted). (Biological E. Limited)', 'ab025f60-bc4e-4081-91a8-79727e4316fc', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9ad11292-c873-4a04-b660-3c4615019c44', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('15f866b1-f771-43d2-a93c-e73068d104f1', '9ad11292-c873-4a04-b660-3c4615019c44', 'Primary', 1, 0.075000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('15f866b1-f771-43d2-a93c-e73068d104f1', 'packaging_variant', 'UPSERT');
@@ -1119,7 +1119,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ba408566-45cc-45f8-8f4a-1fae39bdc4f3', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('88379aad-ca1a-40f3-a53b-238951ca535d', '9ad11292-c873-4a04-b660-3c4615019c44', 'Tertiary', 3, 0.075000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('88379aad-ca1a-40f3-a53b-238951ca535d', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2e689853-7d72-4164-ac62-b168d33b543e', 'Tritanrix HB+Hib (GlaxoSmithKline Biologicals SA)', 'd0689950-f092-4248-9b7b-3b6419671db3', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2e689853-7d72-4164-ac62-b168d33b543e', 'Tritanrix HB+Hib (GlaxoSmithKline Biologicals SA)', 'd0689950-f092-4248-9b7b-3b6419671db3', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2e689853-7d72-4164-ac62-b168d33b543e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('48f8bbf1-9901-4350-8c30-94da0d0f3991', '2e689853-7d72-4164-ac62-b168d33b543e', 'Primary', 1, 0.014540) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('48f8bbf1-9901-4350-8c30-94da0d0f3991', 'packaging_variant', 'UPSERT');
@@ -1131,7 +1131,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('cc0123ca-3048-43d9-a588-3ff080fe6276', 'cc0123ca-3048-43d9-a588-3ff080fe6276') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cc0123ca-3048-43d9-a588-3ff080fe6276', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_cc0123ca-3048-43d9-a588-3ff080fe6276', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'cc0123ca-3048-43d9-a588-3ff080fe6276') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0561d546-00ac-49a8-9c15-dab5d26b7228', 'Tritanrix HB+Hib (GlaxoSmithKline Biologicals SA)', 'cc0123ca-3048-43d9-a588-3ff080fe6276', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0561d546-00ac-49a8-9c15-dab5d26b7228', 'Tritanrix HB+Hib (GlaxoSmithKline Biologicals SA)', 'cc0123ca-3048-43d9-a588-3ff080fe6276', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0561d546-00ac-49a8-9c15-dab5d26b7228', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('27d6167f-7c7e-43a4-b894-2bdb5bc89b7b', '0561d546-00ac-49a8-9c15-dab5d26b7228', 'Primary', 1, 0.014540) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('27d6167f-7c7e-43a4-b894-2bdb5bc89b7b', 'packaging_variant', 'UPSERT');
@@ -1139,7 +1139,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1f21f74d-3046-44ab-9578-5aba2933e770', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2ebd68e7-134e-4099-ab5c-dc5e70de98a9', '0561d546-00ac-49a8-9c15-dab5d26b7228', 'Tertiary', 3, 0.014540) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2ebd68e7-134e-4099-ab5c-dc5e70de98a9', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('79d885a5-c91f-4f02-9af5-a05ffbff4ba0', 'Euforvac-Hib Inj (LG Chem Ltd)', 'd0689950-f092-4248-9b7b-3b6419671db3', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('79d885a5-c91f-4f02-9af5-a05ffbff4ba0', 'Euforvac-Hib Inj (LG Chem Ltd)', 'd0689950-f092-4248-9b7b-3b6419671db3', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('79d885a5-c91f-4f02-9af5-a05ffbff4ba0', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a673d45a-d76e-4909-8070-423e36445a9f', '79d885a5-c91f-4f02-9af5-a05ffbff4ba0', 'Primary', 1, 0.029070) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a673d45a-d76e-4909-8070-423e36445a9f', 'packaging_variant', 'UPSERT');
@@ -1147,7 +1147,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6015ec57-b19d-4889-8f58-877a5856a895', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('91ae938b-b1be-4b6a-ad08-b5dba9ba4e3c', '79d885a5-c91f-4f02-9af5-a05ffbff4ba0', 'Tertiary', 3, 0.149770) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('91ae938b-b1be-4b6a-ad08-b5dba9ba4e3c', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('dc9e7c87-33f7-4b05-9cfe-b64d7354d18c', 'Euforvac-Hib Inj. (LG Chem Ltd)', 'cc0123ca-3048-43d9-a588-3ff080fe6276', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('dc9e7c87-33f7-4b05-9cfe-b64d7354d18c', 'Euforvac-Hib Inj. (LG Chem Ltd)', 'cc0123ca-3048-43d9-a588-3ff080fe6276', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dc9e7c87-33f7-4b05-9cfe-b64d7354d18c', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('18e0f555-67d2-44ac-9a27-e1252c9b3e82', 'dc9e7c87-33f7-4b05-9cfe-b64d7354d18c', 'Primary', 1, 0.029080) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('18e0f555-67d2-44ac-9a27-e1252c9b3e82', 'packaging_variant', 'UPSERT');
@@ -1159,7 +1159,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('45bd9ba9-b449-484f-860c-4ebfa4120892', '45bd9ba9-b449-484f-860c-4ebfa4120892') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('45bd9ba9-b449-484f-860c-4ebfa4120892', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_45bd9ba9-b449-484f-860c-4ebfa4120892', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '45bd9ba9-b449-484f-860c-4ebfa4120892') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('318b5d79-5a8c-48d8-9b99-5c66d6f5a004', 'Diphtheria, Tetanus, Pertussis, Hepatitis B and Haemophilus influenzae type b Conjugate Vaccine (Serum Institute of India Pvt. Ltd.)', '45bd9ba9-b449-484f-860c-4ebfa4120892', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('318b5d79-5a8c-48d8-9b99-5c66d6f5a004', 'Diphtheria, Tetanus, Pertussis, Hepatitis B and Haemophilus influenzae type b Conjugate Vaccine (Serum Institute of India Pvt. Ltd.)', '45bd9ba9-b449-484f-860c-4ebfa4120892', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('318b5d79-5a8c-48d8-9b99-5c66d6f5a004', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2cdbef14-3529-4a74-9119-96a392faa713', '318b5d79-5a8c-48d8-9b99-5c66d6f5a004', 'Primary', 1, 0.033270) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2cdbef14-3529-4a74-9119-96a392faa713', 'packaging_variant', 'UPSERT');
@@ -1171,7 +1171,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('624dc8a1-2185-4a0a-bebe-187e491c6ebf', '624dc8a1-2185-4a0a-bebe-187e491c6ebf') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('624dc8a1-2185-4a0a-bebe-187e491c6ebf', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_624dc8a1-2185-4a0a-bebe-187e491c6ebf', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '624dc8a1-2185-4a0a-bebe-187e491c6ebf') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3b1c1613-cc5b-442f-8751-20e192035a40', 'Diphtheria, Tetanus, Pertussis, Hepatitis B and Haemophilus influenzae type b Conjugate Vaccine (Serum Institute of India Pvt. Ltd.)', '624dc8a1-2185-4a0a-bebe-187e491c6ebf', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3b1c1613-cc5b-442f-8751-20e192035a40', 'Diphtheria, Tetanus, Pertussis, Hepatitis B and Haemophilus influenzae type b Conjugate Vaccine (Serum Institute of India Pvt. Ltd.)', '624dc8a1-2185-4a0a-bebe-187e491c6ebf', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3b1c1613-cc5b-442f-8751-20e192035a40', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2c83c390-eb8d-44c2-8d9c-4b0d31d4aebc', '3b1c1613-cc5b-442f-8751-20e192035a40', 'Primary', 1, 0.022300) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2c83c390-eb8d-44c2-8d9c-4b0d31d4aebc', 'packaging_variant', 'UPSERT');
@@ -1183,7 +1183,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('5460ec22-2ea7-475f-99e7-d6ced7b185cd', '5460ec22-2ea7-475f-99e7-d6ced7b185cd') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5460ec22-2ea7-475f-99e7-d6ced7b185cd', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_5460ec22-2ea7-475f-99e7-d6ced7b185cd', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '5460ec22-2ea7-475f-99e7-d6ced7b185cd') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('67dcbc30-e96a-4752-92ee-4ffcae1434e3', 'Diphtheria, Tetanus, Pertussis, Hepatitis B and Haemophilus influenzae type b Conjugate Vaccine (Serum Institute of India Pvt. Ltd.)', '5460ec22-2ea7-475f-99e7-d6ced7b185cd', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('67dcbc30-e96a-4752-92ee-4ffcae1434e3', 'Diphtheria, Tetanus, Pertussis, Hepatitis B and Haemophilus influenzae type b Conjugate Vaccine (Serum Institute of India Pvt. Ltd.)', '5460ec22-2ea7-475f-99e7-d6ced7b185cd', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('67dcbc30-e96a-4752-92ee-4ffcae1434e3', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('db4bddc0-dbf4-45ce-aaae-21ff374646cb', '67dcbc30-e96a-4752-92ee-4ffcae1434e3', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('db4bddc0-dbf4-45ce-aaae-21ff374646cb', 'packaging_variant', 'UPSERT');
@@ -1195,7 +1195,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('86bfcd50-cd92-48f1-bf4b-fc2476fb6839', '86bfcd50-cd92-48f1-bf4b-fc2476fb6839') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('86bfcd50-cd92-48f1-bf4b-fc2476fb6839', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_86bfcd50-cd92-48f1-bf4b-fc2476fb6839', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '86bfcd50-cd92-48f1-bf4b-fc2476fb6839') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('cb8ccadd-95cb-4e50-8717-bc47465e08b0', 'TETRAct-HIB (Sanofi Pasteur SA)', '86bfcd50-cd92-48f1-bf4b-fc2476fb6839', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('cb8ccadd-95cb-4e50-8717-bc47465e08b0', 'TETRAct-HIB (Sanofi Pasteur SA)', '86bfcd50-cd92-48f1-bf4b-fc2476fb6839', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cb8ccadd-95cb-4e50-8717-bc47465e08b0', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c306801e-3433-4e2d-bb68-d73a4853025c', 'cb8ccadd-95cb-4e50-8717-bc47465e08b0', 'Primary', 1, 0.123900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c306801e-3433-4e2d-bb68-d73a4853025c', 'packaging_variant', 'UPSERT');
@@ -1207,7 +1207,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('9c30bcd8-8862-4348-ae1e-932eba5775fd', '9c30bcd8-8862-4348-ae1e-932eba5775fd') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9c30bcd8-8862-4348-ae1e-932eba5775fd', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_9c30bcd8-8862-4348-ae1e-932eba5775fd', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '9c30bcd8-8862-4348-ae1e-932eba5775fd') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c9113f45-fd70-466f-9691-eeb268ba5e8d', 'TETRAct-HIB (Sanofi Pasteur SA)', '9c30bcd8-8862-4348-ae1e-932eba5775fd', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c9113f45-fd70-466f-9691-eeb268ba5e8d', 'TETRAct-HIB (Sanofi Pasteur SA)', '9c30bcd8-8862-4348-ae1e-932eba5775fd', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c9113f45-fd70-466f-9691-eeb268ba5e8d', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0251375e-6ae9-472c-8524-a09e3ff29f02', 'c9113f45-fd70-466f-9691-eeb268ba5e8d', 'Primary', 1, 0.044720) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0251375e-6ae9-472c-8524-a09e3ff29f02', 'packaging_variant', 'UPSERT');
@@ -1215,7 +1215,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('449cdc10-01dd-4fe1-8674-f8a3e6f64c71', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('5bca85c4-d7f2-44b5-a25f-0d7b7918d677', 'c9113f45-fd70-466f-9691-eeb268ba5e8d', 'Tertiary', 3, 0.044720) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5bca85c4-d7f2-44b5-a25f-0d7b7918d677', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('86e118d5-21d8-4b95-baaa-d03bea044167', 'Diphtheria, Tetanus, Pertussis and Haemophilus influenzae type b Conjugate Vaccine (Serum Institute of India Pvt. Ltd.)', '9c30bcd8-8862-4348-ae1e-932eba5775fd', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('86e118d5-21d8-4b95-baaa-d03bea044167', 'Diphtheria, Tetanus, Pertussis and Haemophilus influenzae type b Conjugate Vaccine (Serum Institute of India Pvt. Ltd.)', '9c30bcd8-8862-4348-ae1e-932eba5775fd', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('86e118d5-21d8-4b95-baaa-d03bea044167', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8b267219-e8f0-4e30-acdb-dc1191b9980c', '86e118d5-21d8-4b95-baaa-d03bea044167', 'Primary', 1, 0.021090) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8b267219-e8f0-4e30-acdb-dc1191b9980c', 'packaging_variant', 'UPSERT');
@@ -1227,7 +1227,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('6ea602d6-41d3-499f-ad0e-6791442b0bd5', '6ea602d6-41d3-499f-ad0e-6791442b0bd5') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6ea602d6-41d3-499f-ad0e-6791442b0bd5', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_6ea602d6-41d3-499f-ad0e-6791442b0bd5', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '6ea602d6-41d3-499f-ad0e-6791442b0bd5') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('24ab519e-277e-4085-a809-76a9f39e67bb', 'Zabdeno (Janssen Vaccines, Branch of Cilag GmbH International)', '6ea602d6-41d3-499f-ad0e-6791442b0bd5', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('24ab519e-277e-4085-a809-76a9f39e67bb', 'Zabdeno (Janssen Vaccines, Branch of Cilag GmbH International)', '6ea602d6-41d3-499f-ad0e-6791442b0bd5', (SELECT id FROM cold_storage_type WHERE name = '-70' or (min_temperature >= -80 AND max_temperature <= -60) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('24ab519e-277e-4085-a809-76a9f39e67bb', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2002c077-7424-4935-8907-4b2b2646394c', '24ab519e-277e-4085-a809-76a9f39e67bb', 'Primary', 1, 0.024510) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2002c077-7424-4935-8907-4b2b2646394c', 'packaging_variant', 'UPSERT');
@@ -1239,7 +1239,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('9cae7a08-cbe3-40b1-b70a-4b04ea4c6540', '9cae7a08-cbe3-40b1-b70a-4b04ea4c6540') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9cae7a08-cbe3-40b1-b70a-4b04ea4c6540', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_9cae7a08-cbe3-40b1-b70a-4b04ea4c6540', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '9cae7a08-cbe3-40b1-b70a-4b04ea4c6540') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6336baba-9bb5-4bba-8366-46999b765d8f', 'Mvabea (Janssen Vaccines, Branch of Cilag GmbH International)', '9cae7a08-cbe3-40b1-b70a-4b04ea4c6540', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6336baba-9bb5-4bba-8366-46999b765d8f', 'Mvabea (Janssen Vaccines, Branch of Cilag GmbH International)', '9cae7a08-cbe3-40b1-b70a-4b04ea4c6540', (SELECT id FROM cold_storage_type WHERE name = '-70' or (min_temperature >= -80 AND max_temperature <= -60) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6336baba-9bb5-4bba-8366-46999b765d8f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b6f90be5-04bc-4d5a-9d19-ffaf076f1088', '6336baba-9bb5-4bba-8366-46999b765d8f', 'Primary', 1, 0.024510) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b6f90be5-04bc-4d5a-9d19-ffaf076f1088', 'packaging_variant', 'UPSERT');
@@ -1251,7 +1251,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('e053adcb-9b3c-4650-8c1c-8c7431d4f12e', 'e053adcb-9b3c-4650-8c1c-8c7431d4f12e') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e053adcb-9b3c-4650-8c1c-8c7431d4f12e', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_e053adcb-9b3c-4650-8c1c-8c7431d4f12e', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'e053adcb-9b3c-4650-8c1c-8c7431d4f12e') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('022d6c99-f044-4a71-94e4-b5c308bd7c30', 'ERVEBO (Merck Vaccines)', 'e053adcb-9b3c-4650-8c1c-8c7431d4f12e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('022d6c99-f044-4a71-94e4-b5c308bd7c30', 'ERVEBO (Merck Vaccines)', 'e053adcb-9b3c-4650-8c1c-8c7431d4f12e', (SELECT id FROM cold_storage_type WHERE name = '-70' or (min_temperature >= -80 AND max_temperature <= -60) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('022d6c99-f044-4a71-94e4-b5c308bd7c30', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('30265ff6-a279-4513-9ebc-ed9126de16ec', '022d6c99-f044-4a71-94e4-b5c308bd7c30', 'Primary', 1, 0.016420) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('30265ff6-a279-4513-9ebc-ed9126de16ec', 'packaging_variant', 'UPSERT');
@@ -1263,7 +1263,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('890149b0-856b-4a68-8320-669dd5d81f68', '890149b0-856b-4a68-8320-669dd5d81f68') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('890149b0-856b-4a68-8320-669dd5d81f68', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_890149b0-856b-4a68-8320-669dd5d81f68', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '890149b0-856b-4a68-8320-669dd5d81f68') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('357d7578-ed39-494d-85ad-d12d6a64e439', 'Green Flu-S (Green Cross Corporation)', '890149b0-856b-4a68-8320-669dd5d81f68', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('357d7578-ed39-494d-85ad-d12d6a64e439', 'Green Flu-S (Green Cross Corporation)', '890149b0-856b-4a68-8320-669dd5d81f68', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('357d7578-ed39-494d-85ad-d12d6a64e439', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c14e286d-fcce-4eea-8cd1-e1e7bcea6c7e', '357d7578-ed39-494d-85ad-d12d6a64e439', 'Primary', 1, 0.034370) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c14e286d-fcce-4eea-8cd1-e1e7bcea6c7e', 'packaging_variant', 'UPSERT');
@@ -1275,7 +1275,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('8afc0be8-fce3-4bdc-93e3-fa4be6f0ec35', '8afc0be8-fce3-4bdc-93e3-fa4be6f0ec35') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8afc0be8-fce3-4bdc-93e3-fa4be6f0ec35', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_8afc0be8-fce3-4bdc-93e3-fa4be6f0ec35', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '8afc0be8-fce3-4bdc-93e3-fa4be6f0ec35') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6a37a2e2-b674-46ec-8796-e5306e4ff191', 'Influenza A (H1N1) 2009 monovalent vaccine (MedImmune)', '8afc0be8-fce3-4bdc-93e3-fa4be6f0ec35', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6a37a2e2-b674-46ec-8796-e5306e4ff191', 'Influenza A (H1N1) 2009 monovalent vaccine (MedImmune)', '8afc0be8-fce3-4bdc-93e3-fa4be6f0ec35', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6a37a2e2-b674-46ec-8796-e5306e4ff191', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('322927e0-d7f5-4843-8784-e7485061bee5', '6a37a2e2-b674-46ec-8796-e5306e4ff191', 'Primary', 1, 0.065280) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('322927e0-d7f5-4843-8784-e7485061bee5', 'packaging_variant', 'UPSERT');
@@ -1287,7 +1287,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('95d7fb12-fe20-4c10-90fd-7bcd5fc34402', '95d7fb12-fe20-4c10-90fd-7bcd5fc34402') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('95d7fb12-fe20-4c10-90fd-7bcd5fc34402', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_95d7fb12-fe20-4c10-90fd-7bcd5fc34402', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '95d7fb12-fe20-4c10-90fd-7bcd5fc34402') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('546e05f7-b4c3-4725-86e2-a18a1c3ee889', 'Panenza (Sanofi Pasteur SA)', '95d7fb12-fe20-4c10-90fd-7bcd5fc34402', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('546e05f7-b4c3-4725-86e2-a18a1c3ee889', 'Panenza (Sanofi Pasteur SA)', '95d7fb12-fe20-4c10-90fd-7bcd5fc34402', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('546e05f7-b4c3-4725-86e2-a18a1c3ee889', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('035f8eb9-fea2-4abc-a7a0-a340a25a098a', '546e05f7-b4c3-4725-86e2-a18a1c3ee889', 'Primary', 1, 0.023100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('035f8eb9-fea2-4abc-a7a0-a340a25a098a', 'packaging_variant', 'UPSERT');
@@ -1295,7 +1295,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('99e13f1f-cce5-4d86-b5a0-a7b92de7b450', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('300e33d5-afea-4123-a7a9-a48b479bf2f0', '546e05f7-b4c3-4725-86e2-a18a1c3ee889', 'Tertiary', 3, 0.030600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('300e33d5-afea-4123-a7a9-a48b479bf2f0', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4b9cd3c8-c921-494f-82aa-cbeee5acbe29', 'Influenza A (H1N1) 2009 monovalent vaccine (Sanofi Pasteur-USA)', '890149b0-856b-4a68-8320-669dd5d81f68', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4b9cd3c8-c921-494f-82aa-cbeee5acbe29', 'Influenza A (H1N1) 2009 monovalent vaccine (Sanofi Pasteur-USA)', '890149b0-856b-4a68-8320-669dd5d81f68', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4b9cd3c8-c921-494f-82aa-cbeee5acbe29', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('4dab3433-5e0c-47bf-90a1-6e651f258af1', '4b9cd3c8-c921-494f-82aa-cbeee5acbe29', 'Primary', 1, 0.018360) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4dab3433-5e0c-47bf-90a1-6e651f258af1', 'packaging_variant', 'UPSERT');
@@ -1303,7 +1303,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c97cf8f4-7bd4-4d63-8076-0ab491290458', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('58ba5f7c-829a-4325-9ffd-a1b6af7d94f7', '4b9cd3c8-c921-494f-82aa-cbeee5acbe29', 'Tertiary', 3, 0.022390) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('58ba5f7c-829a-4325-9ffd-a1b6af7d94f7', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5b3f8030-fd8f-45d2-8df0-9ff68cb09fef', 'Influenza A (H1N1) 2009 monovalent vaccine (Sanofi Pasteur-USA)', '95d7fb12-fe20-4c10-90fd-7bcd5fc34402', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5b3f8030-fd8f-45d2-8df0-9ff68cb09fef', 'Influenza A (H1N1) 2009 monovalent vaccine (Sanofi Pasteur-USA)', '95d7fb12-fe20-4c10-90fd-7bcd5fc34402', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5b3f8030-fd8f-45d2-8df0-9ff68cb09fef', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('dfb8d650-1144-4b08-ab88-e52778e86363', '5b3f8030-fd8f-45d2-8df0-9ff68cb09fef', 'Primary', 1, 0.060000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dfb8d650-1144-4b08-ab88-e52778e86363', 'packaging_variant', 'UPSERT');
@@ -1315,7 +1315,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('ae55aef1-a85a-4b16-8224-a815e67aa9fa', 'ae55aef1-a85a-4b16-8224-a815e67aa9fa') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ae55aef1-a85a-4b16-8224-a815e67aa9fa', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_ae55aef1-a85a-4b16-8224-a815e67aa9fa', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'ae55aef1-a85a-4b16-8224-a815e67aa9fa') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('81a5bca5-b28c-4288-98c8-d6729ffc11c7', 'Celtura (Seqirus GmbH)', 'ae55aef1-a85a-4b16-8224-a815e67aa9fa', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('81a5bca5-b28c-4288-98c8-d6729ffc11c7', 'Celtura (Seqirus GmbH)', 'ae55aef1-a85a-4b16-8224-a815e67aa9fa', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('81a5bca5-b28c-4288-98c8-d6729ffc11c7', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('706adf91-8ea6-4575-9ae1-8b7afa86860f', '81a5bca5-b28c-4288-98c8-d6729ffc11c7', 'Primary', 1, 0.022780) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('706adf91-8ea6-4575-9ae1-8b7afa86860f', 'packaging_variant', 'UPSERT');
@@ -1323,7 +1323,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a482b586-a1ae-432a-975b-ee88c216a025', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1fbb3c4e-e6cc-486b-9e5c-2e6b492a5c41', '81a5bca5-b28c-4288-98c8-d6729ffc11c7', 'Tertiary', 3, 0.156230) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1fbb3c4e-e6cc-486b-9e5c-2e6b492a5c41', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f02464e3-ad87-4739-b9db-f25557a1be5b', 'Panvax (Seqirus Limited)', '95d7fb12-fe20-4c10-90fd-7bcd5fc34402', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f02464e3-ad87-4739-b9db-f25557a1be5b', 'Panvax (Seqirus Limited)', '95d7fb12-fe20-4c10-90fd-7bcd5fc34402', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f02464e3-ad87-4739-b9db-f25557a1be5b', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('31dfe474-160f-409d-85eb-ccc30b8dc137', 'f02464e3-ad87-4739-b9db-f25557a1be5b', 'Primary', 1, 0.030800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('31dfe474-160f-409d-85eb-ccc30b8dc137', 'packaging_variant', 'UPSERT');
@@ -1331,7 +1331,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7701b309-d7fc-4968-9d04-e1bab2e958aa', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('30706674-1676-414c-a87f-499bdfdb10ce', 'f02464e3-ad87-4739-b9db-f25557a1be5b', 'Tertiary', 3, 0.040000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('30706674-1676-414c-a87f-499bdfdb10ce', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('308a9217-406a-407d-990e-949564266859', 'Fluvirin-H1N1 (Seqirus Vaccines Limited)', '95d7fb12-fe20-4c10-90fd-7bcd5fc34402', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('308a9217-406a-407d-990e-949564266859', 'Fluvirin-H1N1 (Seqirus Vaccines Limited)', '95d7fb12-fe20-4c10-90fd-7bcd5fc34402', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('308a9217-406a-407d-990e-949564266859', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('6983bd17-beb2-41a6-9122-2269ed79c715', '308a9217-406a-407d-990e-949564266859', 'Primary', 1, 0.533000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6983bd17-beb2-41a6-9122-2269ed79c715', 'packaging_variant', 'UPSERT');
@@ -1339,7 +1339,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6615260d-3672-4e1f-9db7-08db9fa6674a', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b25082dd-3330-46f1-882c-bf7c7cacf72c', '308a9217-406a-407d-990e-949564266859', 'Tertiary', 3, 0.059900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b25082dd-3330-46f1-882c-bf7c7cacf72c', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a8305852-8dd7-4b63-85ee-d91da37205d4', 'Focetria (Seqirus Vaccines Limited)', '95d7fb12-fe20-4c10-90fd-7bcd5fc34402', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a8305852-8dd7-4b63-85ee-d91da37205d4', 'Focetria (Seqirus Vaccines Limited)', '95d7fb12-fe20-4c10-90fd-7bcd5fc34402', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a8305852-8dd7-4b63-85ee-d91da37205d4', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('eb8bea7a-0fcb-4719-ad65-60c0cfd0300c', 'a8305852-8dd7-4b63-85ee-d91da37205d4', 'Primary', 1, 0.023600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('eb8bea7a-0fcb-4719-ad65-60c0cfd0300c', 'packaging_variant', 'UPSERT');
@@ -1351,7 +1351,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('7160d61e-5fd1-4a66-be62-49daf8fece66', '7160d61e-5fd1-4a66-be62-49daf8fece66') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7160d61e-5fd1-4a66-be62-49daf8fece66', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_7160d61e-5fd1-4a66-be62-49daf8fece66', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '7160d61e-5fd1-4a66-be62-49daf8fece66') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b78f9ca5-6df6-4ef6-b9b4-b4953b2b7bf6', 'NASOVAC Influenza Vaccine, Live Attenuated (Human) Freeze-Dried (Serum Institute of India Pvt. Ltd.)', '7160d61e-5fd1-4a66-be62-49daf8fece66', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b78f9ca5-6df6-4ef6-b9b4-b4953b2b7bf6', 'NASOVAC Influenza Vaccine, Live Attenuated (Human) Freeze-Dried (Serum Institute of India Pvt. Ltd.)', '7160d61e-5fd1-4a66-be62-49daf8fece66', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b78f9ca5-6df6-4ef6-b9b4-b4953b2b7bf6', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ec8635dc-bb09-42cb-b857-b95f59099719', 'b78f9ca5-6df6-4ef6-b9b4-b4953b2b7bf6', 'Primary', 1, 0.017580) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ec8635dc-bb09-42cb-b857-b95f59099719', 'packaging_variant', 'UPSERT');
@@ -1363,7 +1363,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('5ca46da3-3a3e-4a06-9c8f-b866457b4eec', '5ca46da3-3a3e-4a06-9c8f-b866457b4eec') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5ca46da3-3a3e-4a06-9c8f-b866457b4eec', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_5ca46da3-3a3e-4a06-9c8f-b866457b4eec', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '5ca46da3-3a3e-4a06-9c8f-b866457b4eec') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('76cf1a76-e2bf-4934-93c9-09ef5b38804c', 'NASOVAC Influenza Vaccine, Live Attenuated (Human) Freeze-Dried (Serum Institute of India Pvt. Ltd.)', '5ca46da3-3a3e-4a06-9c8f-b866457b4eec', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('76cf1a76-e2bf-4934-93c9-09ef5b38804c', 'NASOVAC Influenza Vaccine, Live Attenuated (Human) Freeze-Dried (Serum Institute of India Pvt. Ltd.)', '5ca46da3-3a3e-4a06-9c8f-b866457b4eec', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('76cf1a76-e2bf-4934-93c9-09ef5b38804c', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0204ba58-85af-4010-ace6-7cd511093a88', '76cf1a76-e2bf-4934-93c9-09ef5b38804c', 'Primary', 1, 0.0167) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0204ba58-85af-4010-ace6-7cd511093a88', 'packaging_variant', 'UPSERT');
@@ -1377,7 +1377,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('6ed3b764-9bea-45f8-9b89-e6da39364405', '6ed3b764-9bea-45f8-9b89-e6da39364405') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6ed3b764-9bea-45f8-9b89-e6da39364405', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_6ed3b764-9bea-45f8-9b89-e6da39364405', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '6ed3b764-9bea-45f8-9b89-e6da39364405') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('39af4d0d-af63-41a5-bd20-852bc5e33e91', 'NASOVAC Influenza Vaccine, Live Attenuated (Human) Freeze-Dried (Serum Institute of India Pvt. Ltd.)', '6ed3b764-9bea-45f8-9b89-e6da39364405', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('39af4d0d-af63-41a5-bd20-852bc5e33e91', 'NASOVAC Influenza Vaccine, Live Attenuated (Human) Freeze-Dried (Serum Institute of India Pvt. Ltd.)', '6ed3b764-9bea-45f8-9b89-e6da39364405', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('39af4d0d-af63-41a5-bd20-852bc5e33e91', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e5dbbc4f-ecc9-4ab0-aa57-ba225cfe135d', '39af4d0d-af63-41a5-bd20-852bc5e33e91', 'Primary', 1, 0.017600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e5dbbc4f-ecc9-4ab0-aa57-ba225cfe135d', 'packaging_variant', 'UPSERT');
@@ -1389,7 +1389,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('7540ebd6-d8eb-4c7e-9549-0094aff0f83e', '7540ebd6-d8eb-4c7e-9549-0094aff0f83e') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7540ebd6-d8eb-4c7e-9549-0094aff0f83e', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_7540ebd6-d8eb-4c7e-9549-0094aff0f83e', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '7540ebd6-d8eb-4c7e-9549-0094aff0f83e') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9064a5af-2d9c-45b4-924f-8fb49bed1fa0', 'NASOVAC Influenza Vaccine, Live Attenuated (Human) Freeze-Dried (Serum Institute of India Pvt. Ltd.)', '7540ebd6-d8eb-4c7e-9549-0094aff0f83e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9064a5af-2d9c-45b4-924f-8fb49bed1fa0', 'NASOVAC Influenza Vaccine, Live Attenuated (Human) Freeze-Dried (Serum Institute of India Pvt. Ltd.)', '7540ebd6-d8eb-4c7e-9549-0094aff0f83e', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9064a5af-2d9c-45b4-924f-8fb49bed1fa0', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ca594d51-369a-47d9-94c4-3feec7578a6d', '9064a5af-2d9c-45b4-924f-8fb49bed1fa0', 'Primary', 1, 0.0175) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ca594d51-369a-47d9-94c4-3feec7578a6d', 'packaging_variant', 'UPSERT');
@@ -1403,7 +1403,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('c56a2cc3-4512-4467-b344-7ee3b4e050e4', 'c56a2cc3-4512-4467-b344-7ee3b4e050e4') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c56a2cc3-4512-4467-b344-7ee3b4e050e4', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_c56a2cc3-4512-4467-b344-7ee3b4e050e4', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'c56a2cc3-4512-4467-b344-7ee3b4e050e4') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2c7bcb35-5700-4bc8-839c-5347c68fbfc6', 'Havrix 1440 Adult (GlaxoSmithKline Biologicals SA)', 'c56a2cc3-4512-4467-b344-7ee3b4e050e4', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2c7bcb35-5700-4bc8-839c-5347c68fbfc6', 'Havrix 1440 Adult (GlaxoSmithKline Biologicals SA)', 'c56a2cc3-4512-4467-b344-7ee3b4e050e4', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2c7bcb35-5700-4bc8-839c-5347c68fbfc6', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('57ba60af-1bea-4c46-ac00-ae6b4c59ad9e', '2c7bcb35-5700-4bc8-839c-5347c68fbfc6', 'Primary', 1, 0.011500) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('57ba60af-1bea-4c46-ac00-ae6b4c59ad9e', 'packaging_variant', 'UPSERT');
@@ -1411,7 +1411,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f065e27d-18f5-4b00-879c-27619b31b01d', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f5625aab-1151-42f1-ad3a-395fa751683e', '2c7bcb35-5700-4bc8-839c-5347c68fbfc6', 'Tertiary', 3, 0.015230) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f5625aab-1151-42f1-ad3a-395fa751683e', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5a5c40dd-c3d3-45fe-a096-820fb188a814', 'Havrix 720 Junior (GlaxoSmithKline Biologicals SA)', 'c56a2cc3-4512-4467-b344-7ee3b4e050e4', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5a5c40dd-c3d3-45fe-a096-820fb188a814', 'Havrix 720 Junior (GlaxoSmithKline Biologicals SA)', 'c56a2cc3-4512-4467-b344-7ee3b4e050e4', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5a5c40dd-c3d3-45fe-a096-820fb188a814', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3d6c007d-fc76-4ee9-b670-cf5531caad33', '5a5c40dd-c3d3-45fe-a096-820fb188a814', 'Primary', 1, 0.011500) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3d6c007d-fc76-4ee9-b670-cf5531caad33', 'packaging_variant', 'UPSERT');
@@ -1423,7 +1423,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('03abec49-9ff4-4264-b437-3c41ad825e41', '03abec49-9ff4-4264-b437-3c41ad825e41') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('03abec49-9ff4-4264-b437-3c41ad825e41', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_03abec49-9ff4-4264-b437-3c41ad825e41', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '03abec49-9ff4-4264-b437-3c41ad825e41') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('52daa97f-a33c-4a47-a120-35aaedf36cac', 'Heberbiovac HB (Centro de Ingenieria Genetica y Biotecnologia)', '03abec49-9ff4-4264-b437-3c41ad825e41', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('52daa97f-a33c-4a47-a120-35aaedf36cac', 'Heberbiovac HB (Centro de Ingenieria Genetica y Biotecnologia)', '03abec49-9ff4-4264-b437-3c41ad825e41', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('52daa97f-a33c-4a47-a120-35aaedf36cac', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f58a46c3-cbc3-4b59-b9da-e1b1b52bebed', '52daa97f-a33c-4a47-a120-35aaedf36cac', 'Primary', 1, 0.002760) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f58a46c3-cbc3-4b59-b9da-e1b1b52bebed', 'packaging_variant', 'UPSERT');
@@ -1435,7 +1435,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('254fe9df-3632-4ff8-85b5-041ded843cbe', '254fe9df-3632-4ff8-85b5-041ded843cbe') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('254fe9df-3632-4ff8-85b5-041ded843cbe', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_254fe9df-3632-4ff8-85b5-041ded843cbe', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '254fe9df-3632-4ff8-85b5-041ded843cbe') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9ad2ed08-d4c2-4da5-8091-d7d460015e37', 'Heberbiovac HB (Centro de Ingenieria Genetica y Biotecnologia)', '254fe9df-3632-4ff8-85b5-041ded843cbe', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9ad2ed08-d4c2-4da5-8091-d7d460015e37', 'Heberbiovac HB (Centro de Ingenieria Genetica y Biotecnologia)', '254fe9df-3632-4ff8-85b5-041ded843cbe', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9ad2ed08-d4c2-4da5-8091-d7d460015e37', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8af9bcd4-d99e-42db-ad69-9f196f56af8d', '9ad2ed08-d4c2-4da5-8091-d7d460015e37', 'Primary', 1, 0.027600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8af9bcd4-d99e-42db-ad69-9f196f56af8d', 'packaging_variant', 'UPSERT');
@@ -1443,7 +1443,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('438a994b-43dd-4b0e-8b6a-a387b948054b', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('fcdc945e-f95a-4cec-ad4a-3ea1877cb4b9', '9ad2ed08-d4c2-4da5-8091-d7d460015e37', 'Tertiary', 3, 0.027600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fcdc945e-f95a-4cec-ad4a-3ea1877cb4b9', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d8e5c149-e533-407c-9f89-6392b68d2235', 'Engerix (GlaxoSmithKline Biologicals SA)', '03abec49-9ff4-4264-b437-3c41ad825e41', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d8e5c149-e533-407c-9f89-6392b68d2235', 'Engerix (GlaxoSmithKline Biologicals SA)', '03abec49-9ff4-4264-b437-3c41ad825e41', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d8e5c149-e533-407c-9f89-6392b68d2235', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2ead86fc-2c8d-42f0-b71a-e0d1be647135', 'd8e5c149-e533-407c-9f89-6392b68d2235', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2ead86fc-2c8d-42f0-b71a-e0d1be647135', 'packaging_variant', 'UPSERT');
@@ -1451,7 +1451,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d7ef93eb-de56-4765-a2f7-78444e836975', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('703807a9-d3d4-41c7-a37f-a1d6578a0674', 'd8e5c149-e533-407c-9f89-6392b68d2235', 'Tertiary', 3, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('703807a9-d3d4-41c7-a37f-a1d6578a0674', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d3cb2939-44c7-4048-8014-4f3074b22de6', 'Engerix (GlaxoSmithKline Biologicals SA)', '254fe9df-3632-4ff8-85b5-041ded843cbe', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d3cb2939-44c7-4048-8014-4f3074b22de6', 'Engerix (GlaxoSmithKline Biologicals SA)', '254fe9df-3632-4ff8-85b5-041ded843cbe', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d3cb2939-44c7-4048-8014-4f3074b22de6', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1f4f1026-85d9-46f7-9ccf-809935267313', 'd3cb2939-44c7-4048-8014-4f3074b22de6', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1f4f1026-85d9-46f7-9ccf-809935267313', 'packaging_variant', 'UPSERT');
@@ -1463,7 +1463,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('3af1ca94-71f3-497f-b779-474cfa1184ac', '3af1ca94-71f3-497f-b779-474cfa1184ac') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3af1ca94-71f3-497f-b779-474cfa1184ac', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_3af1ca94-71f3-497f-b779-474cfa1184ac', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '3af1ca94-71f3-497f-b779-474cfa1184ac') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f3ca6c45-581a-4118-b27c-2b7f46eaaf0b', 'Engerix (GlaxoSmithKline Biologicals SA)', '3af1ca94-71f3-497f-b779-474cfa1184ac', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f3ca6c45-581a-4118-b27c-2b7f46eaaf0b', 'Engerix (GlaxoSmithKline Biologicals SA)', '3af1ca94-71f3-497f-b779-474cfa1184ac', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f3ca6c45-581a-4118-b27c-2b7f46eaaf0b', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d99209ed-f6b9-4a5d-acba-f54e8210cf09', 'f3ca6c45-581a-4118-b27c-2b7f46eaaf0b', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d99209ed-f6b9-4a5d-acba-f54e8210cf09', 'packaging_variant', 'UPSERT');
@@ -1471,7 +1471,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8dec83c8-1f9e-47c7-bb60-ecf2ef600a44', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('32aa791b-b934-49a7-8ea5-fbd90513ff82', 'f3ca6c45-581a-4118-b27c-2b7f46eaaf0b', 'Tertiary', 3, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('32aa791b-b934-49a7-8ea5-fbd90513ff82', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('016af286-1923-4421-b6f9-e150b1715ea2', 'Hepavax-Gene (Janssen Vaccines Corp.)', '254fe9df-3632-4ff8-85b5-041ded843cbe', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('016af286-1923-4421-b6f9-e150b1715ea2', 'Hepavax-Gene (Janssen Vaccines Corp.)', '254fe9df-3632-4ff8-85b5-041ded843cbe', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('016af286-1923-4421-b6f9-e150b1715ea2', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('614b5298-8438-494b-9b58-aab49ad1e7dc', '016af286-1923-4421-b6f9-e150b1715ea2', 'Primary', 1, 0.037000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('614b5298-8438-494b-9b58-aab49ad1e7dc', 'packaging_variant', 'UPSERT');
@@ -1479,7 +1479,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f256b7a3-c81c-4b78-87df-d4eac760acb8', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d63e73c1-30be-404c-8ed8-6096ee967c74', '016af286-1923-4421-b6f9-e150b1715ea2', 'Tertiary', 3, 0.128900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d63e73c1-30be-404c-8ed8-6096ee967c74', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('03c6dabc-b7ae-4827-b568-077de53123ae', 'Euvax B (LG Chem Ltd)', '03abec49-9ff4-4264-b437-3c41ad825e41', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('03c6dabc-b7ae-4827-b568-077de53123ae', 'Euvax B (LG Chem Ltd)', '03abec49-9ff4-4264-b437-3c41ad825e41', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('03c6dabc-b7ae-4827-b568-077de53123ae', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1fb08a72-b98b-4278-a945-fb3c6e35797e', '03c6dabc-b7ae-4827-b568-077de53123ae', 'Primary', 1, 0.014530) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1fb08a72-b98b-4278-a945-fb3c6e35797e', 'packaging_variant', 'UPSERT');
@@ -1491,7 +1491,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('86bdecae-f55f-4f58-b2e1-24a9182a6ee1', '86bdecae-f55f-4f58-b2e1-24a9182a6ee1') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('86bdecae-f55f-4f58-b2e1-24a9182a6ee1', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_86bdecae-f55f-4f58-b2e1-24a9182a6ee1', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '86bdecae-f55f-4f58-b2e1-24a9182a6ee1') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8b7f1d59-799d-4458-a97f-fbd65126e910', 'Euvax B (LG Chem Ltd)', '86bdecae-f55f-4f58-b2e1-24a9182a6ee1', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8b7f1d59-799d-4458-a97f-fbd65126e910', 'Euvax B (LG Chem Ltd)', '86bdecae-f55f-4f58-b2e1-24a9182a6ee1', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8b7f1d59-799d-4458-a97f-fbd65126e910', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a3936bd5-87e5-4df6-8809-52dd986ba8e5', '8b7f1d59-799d-4458-a97f-fbd65126e910', 'Primary', 1, 0.014400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a3936bd5-87e5-4df6-8809-52dd986ba8e5', 'packaging_variant', 'UPSERT');
@@ -1503,7 +1503,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('64cd7c18-4fcd-470a-8b2c-bcc45788d970', '64cd7c18-4fcd-470a-8b2c-bcc45788d970') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('64cd7c18-4fcd-470a-8b2c-bcc45788d970', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_64cd7c18-4fcd-470a-8b2c-bcc45788d970', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '64cd7c18-4fcd-470a-8b2c-bcc45788d970') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('048fa7c9-726f-4d2a-8fd9-fa35b4c1cbe1', 'Euvax B (LG Chem Ltd)', '64cd7c18-4fcd-470a-8b2c-bcc45788d970', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('048fa7c9-726f-4d2a-8fd9-fa35b4c1cbe1', 'Euvax B (LG Chem Ltd)', '64cd7c18-4fcd-470a-8b2c-bcc45788d970', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('048fa7c9-726f-4d2a-8fd9-fa35b4c1cbe1', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0c4291ba-fbe2-4ce5-8b2e-64bf92e1f99a', '048fa7c9-726f-4d2a-8fd9-fa35b4c1cbe1', 'Primary', 1, 0.027960) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0c4291ba-fbe2-4ce5-8b2e-64bf92e1f99a', 'packaging_variant', 'UPSERT');
@@ -1511,7 +1511,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('70f591f3-10be-4be7-a86e-d23710bc286f', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c8b5bf4c-b966-4372-b416-b92164673d97', '048fa7c9-726f-4d2a-8fd9-fa35b4c1cbe1', 'Tertiary', 3, 0.027960) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c8b5bf4c-b966-4372-b416-b92164673d97', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('42fa52c0-d011-40d1-9ca9-b1e05e3cd560', 'Euvax B (LG Chem Ltd)', '254fe9df-3632-4ff8-85b5-041ded843cbe', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('42fa52c0-d011-40d1-9ca9-b1e05e3cd560', 'Euvax B (LG Chem Ltd)', '254fe9df-3632-4ff8-85b5-041ded843cbe', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('42fa52c0-d011-40d1-9ca9-b1e05e3cd560', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('83df5672-8a12-4691-b32b-e9f4284455ec', '42fa52c0-d011-40d1-9ca9-b1e05e3cd560', 'Primary', 1, 0.048800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('83df5672-8a12-4691-b32b-e9f4284455ec', 'packaging_variant', 'UPSERT');
@@ -1523,7 +1523,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('ac3f651e-7d9a-495c-890c-09e0ed783b43', 'ac3f651e-7d9a-495c-890c-09e0ed783b43') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ac3f651e-7d9a-495c-890c-09e0ed783b43', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_ac3f651e-7d9a-495c-890c-09e0ed783b43', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'ac3f651e-7d9a-495c-890c-09e0ed783b43') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a4dea965-91ba-4ae3-a0d8-3407dddb9643', 'Hepatitis B Vaccine Recombinant (PT Bio Farma (Persero))', 'ac3f651e-7d9a-495c-890c-09e0ed783b43', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a4dea965-91ba-4ae3-a0d8-3407dddb9643', 'Hepatitis B Vaccine Recombinant (PT Bio Farma (Persero))', 'ac3f651e-7d9a-495c-890c-09e0ed783b43', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a4dea965-91ba-4ae3-a0d8-3407dddb9643', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('814dd1a9-79e3-443c-baab-587a5cf63236', 'a4dea965-91ba-4ae3-a0d8-3407dddb9643', 'Primary', 1, 0.012000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('814dd1a9-79e3-443c-baab-587a5cf63236', 'packaging_variant', 'UPSERT');
@@ -1535,7 +1535,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('c1622101-14b5-47a4-bb5c-3026d584e43f', 'c1622101-14b5-47a4-bb5c-3026d584e43f') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c1622101-14b5-47a4-bb5c-3026d584e43f', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_c1622101-14b5-47a4-bb5c-3026d584e43f', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'c1622101-14b5-47a4-bb5c-3026d584e43f') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9680c68f-4f11-4ddb-a02f-e57f8afe8d84', 'Hepatitis B Vaccine (rDNA) (Adult) (Serum Institute of India Pvt. Ltd.)', 'c1622101-14b5-47a4-bb5c-3026d584e43f', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9680c68f-4f11-4ddb-a02f-e57f8afe8d84', 'Hepatitis B Vaccine (rDNA) (Adult) (Serum Institute of India Pvt. Ltd.)', 'c1622101-14b5-47a4-bb5c-3026d584e43f', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9680c68f-4f11-4ddb-a02f-e57f8afe8d84', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f2652e23-85e6-456c-adcc-88bc591cf2a1', '9680c68f-4f11-4ddb-a02f-e57f8afe8d84', 'Primary', 1, 0.014100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f2652e23-85e6-456c-adcc-88bc591cf2a1', 'packaging_variant', 'UPSERT');
@@ -1543,7 +1543,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8f036e49-3f5d-4c35-8c6d-98041299bef8', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('65ec6d25-315b-414c-b678-822004dbfe62', '9680c68f-4f11-4ddb-a02f-e57f8afe8d84', 'Tertiary', 3, 0.065600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('65ec6d25-315b-414c-b678-822004dbfe62', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3c7c3abb-4021-42f7-a1ba-e159485d46b5', 'Hepatitis B Vaccine (rDNA) (Adult) (Serum Institute of India Pvt. Ltd.)', '254fe9df-3632-4ff8-85b5-041ded843cbe', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3c7c3abb-4021-42f7-a1ba-e159485d46b5', 'Hepatitis B Vaccine (rDNA) (Adult) (Serum Institute of India Pvt. Ltd.)', '254fe9df-3632-4ff8-85b5-041ded843cbe', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3c7c3abb-4021-42f7-a1ba-e159485d46b5', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('951c4131-e7be-4589-b1b4-097bb90f829e', '3c7c3abb-4021-42f7-a1ba-e159485d46b5', 'Primary', 1, 0.021200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('951c4131-e7be-4589-b1b4-097bb90f829e', 'packaging_variant', 'UPSERT');
@@ -1551,7 +1551,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3d2ac44d-32c1-4099-851e-18908ed586d6', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c2a21a36-8577-453c-bf58-cd77a6d766f6', '3c7c3abb-4021-42f7-a1ba-e159485d46b5', 'Tertiary', 3, 0.098400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c2a21a36-8577-453c-bf58-cd77a6d766f6', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d1a3989f-edc8-48a4-9c9c-6106a7bdbc2f', 'Hepatitis B Vaccine (rDNA) (Paediatric) (Serum Institute of India Pvt. Ltd.)', '254fe9df-3632-4ff8-85b5-041ded843cbe', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d1a3989f-edc8-48a4-9c9c-6106a7bdbc2f', 'Hepatitis B Vaccine (rDNA) (Paediatric) (Serum Institute of India Pvt. Ltd.)', '254fe9df-3632-4ff8-85b5-041ded843cbe', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d1a3989f-edc8-48a4-9c9c-6106a7bdbc2f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1f790ecb-8fb4-4b8d-860b-5d4c756ae3c4', 'd1a3989f-edc8-48a4-9c9c-6106a7bdbc2f', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1f790ecb-8fb4-4b8d-860b-5d4c756ae3c4', 'packaging_variant', 'UPSERT');
@@ -1559,7 +1559,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('373835a7-688b-4b3e-97f5-1f031f57ce3b', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ffb7a59a-41ff-43a7-9808-01e69b6639b3', 'd1a3989f-edc8-48a4-9c9c-6106a7bdbc2f', 'Tertiary', 3, 0.098400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ffb7a59a-41ff-43a7-9808-01e69b6639b3', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ccf0d263-b37a-4808-b5e7-fdd2a8efa8f5', 'Hepatitis B Vaccine (rDNA) (Paedriatic) (Serum Institute of India Pvt. Ltd.)', 'c1622101-14b5-47a4-bb5c-3026d584e43f', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ccf0d263-b37a-4808-b5e7-fdd2a8efa8f5', 'Hepatitis B Vaccine (rDNA) (Paedriatic) (Serum Institute of India Pvt. Ltd.)', 'c1622101-14b5-47a4-bb5c-3026d584e43f', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ccf0d263-b37a-4808-b5e7-fdd2a8efa8f5', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('240b1fd8-6741-4c7c-b123-7c64136fdc24', 'ccf0d263-b37a-4808-b5e7-fdd2a8efa8f5', 'Primary', 1, 0.014100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('240b1fd8-6741-4c7c-b123-7c64136fdc24', 'packaging_variant', 'UPSERT');
@@ -1567,7 +1567,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c636470d-556b-4962-aac1-720ff7933310', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d65b279d-dcef-4d36-9668-aa9dc0c0b860', 'ccf0d263-b37a-4808-b5e7-fdd2a8efa8f5', 'Tertiary', 3, 0.065600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d65b279d-dcef-4d36-9668-aa9dc0c0b860', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('709ada18-999e-4484-a66e-1b83079b8e3d', 'Shanvac-B (Shantha Biotechnics Private Limited (A Sanofi Company))', '03abec49-9ff4-4264-b437-3c41ad825e41', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('709ada18-999e-4484-a66e-1b83079b8e3d', 'Shanvac-B (Shantha Biotechnics Private Limited (A Sanofi Company))', '03abec49-9ff4-4264-b437-3c41ad825e41', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('709ada18-999e-4484-a66e-1b83079b8e3d', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('85cdee97-51fe-41ff-a95b-0fc31c3fee9d', '709ada18-999e-4484-a66e-1b83079b8e3d', 'Primary', 1, 0.016800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('85cdee97-51fe-41ff-a95b-0fc31c3fee9d', 'packaging_variant', 'UPSERT');
@@ -1575,7 +1575,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6e0b3892-2ba3-4dbd-b271-076d2bc280e9', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7122062a-2554-4264-a29b-15f6bfcad037', '709ada18-999e-4484-a66e-1b83079b8e3d', 'Tertiary', 3, 0.068220) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7122062a-2554-4264-a29b-15f6bfcad037', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b1399959-7cee-4709-850a-3b3a5f32e117', 'Shanvac-B (Shantha Biotechnics Private Limited (A Sanofi Company))', '86bdecae-f55f-4f58-b2e1-24a9182a6ee1', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b1399959-7cee-4709-850a-3b3a5f32e117', 'Shanvac-B (Shantha Biotechnics Private Limited (A Sanofi Company))', '86bdecae-f55f-4f58-b2e1-24a9182a6ee1', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b1399959-7cee-4709-850a-3b3a5f32e117', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('55620a3a-908e-473d-a95b-ebde01d5edba', 'b1399959-7cee-4709-850a-3b3a5f32e117', 'Primary', 1, 0.016100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('55620a3a-908e-473d-a95b-ebde01d5edba', 'packaging_variant', 'UPSERT');
@@ -1583,7 +1583,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4c9a78e4-aaa2-4398-b5b4-e814db9cb381', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e4bf25c5-73ef-418e-913b-6a5f25c371c2', 'b1399959-7cee-4709-850a-3b3a5f32e117', 'Tertiary', 3, 0.068220) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e4bf25c5-73ef-418e-913b-6a5f25c371c2', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('48ab172b-c195-43ae-9dfb-fafb605b77ec', 'Shanvac-B (Shantha Biotechnics Private Limited (A Sanofi Company))', '64cd7c18-4fcd-470a-8b2c-bcc45788d970', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('48ab172b-c195-43ae-9dfb-fafb605b77ec', 'Shanvac-B (Shantha Biotechnics Private Limited (A Sanofi Company))', '64cd7c18-4fcd-470a-8b2c-bcc45788d970', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('48ab172b-c195-43ae-9dfb-fafb605b77ec', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c2ff2772-e7d1-4e2f-b4cf-1992186fd482', '48ab172b-c195-43ae-9dfb-fafb605b77ec', 'Primary', 1, 0.022380) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c2ff2772-e7d1-4e2f-b4cf-1992186fd482', 'packaging_variant', 'UPSERT');
@@ -1591,7 +1591,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1cc8b3bf-e6b2-426d-afbb-4bea7b9906a6', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('563e3178-3927-4ecd-9ee2-28e6d4ae7185', '48ab172b-c195-43ae-9dfb-fafb605b77ec', 'Tertiary', 3, 0.109620) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('563e3178-3927-4ecd-9ee2-28e6d4ae7185', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7e7feaf5-abe1-48c5-ac09-379aa69c7dcb', 'Shanvac-B (Shantha Biotechnics Private Limited (A Sanofi Company))', '254fe9df-3632-4ff8-85b5-041ded843cbe', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7e7feaf5-abe1-48c5-ac09-379aa69c7dcb', 'Shanvac-B (Shantha Biotechnics Private Limited (A Sanofi Company))', '254fe9df-3632-4ff8-85b5-041ded843cbe', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7e7feaf5-abe1-48c5-ac09-379aa69c7dcb', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('bdb8cc48-c217-4b85-b505-f2866e5c31e8', '7e7feaf5-abe1-48c5-ac09-379aa69c7dcb', 'Primary', 1, 0.043600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bdb8cc48-c217-4b85-b505-f2866e5c31e8', 'packaging_variant', 'UPSERT');
@@ -1599,7 +1599,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2cb9ab27-4b6b-4b44-85c7-72eb463aac71', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('938de467-481b-4b2d-a666-d04ce186cb4b', '7e7feaf5-abe1-48c5-ac09-379aa69c7dcb', 'Tertiary', 3, 0.149200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('938de467-481b-4b2d-a666-d04ce186cb4b', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('aeb71600-fcda-45a8-9078-808d42aa99f7', 'Shanvac-B (Shantha Biotechnics Private Limited (A Sanofi Company))', '3af1ca94-71f3-497f-b779-474cfa1184ac', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('aeb71600-fcda-45a8-9078-808d42aa99f7', 'Shanvac-B (Shantha Biotechnics Private Limited (A Sanofi Company))', '3af1ca94-71f3-497f-b779-474cfa1184ac', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('aeb71600-fcda-45a8-9078-808d42aa99f7', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0bb132b2-3088-470d-8e64-bf2caea32c33', 'aeb71600-fcda-45a8-9078-808d42aa99f7', 'Primary', 1, 0.051400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0bb132b2-3088-470d-8e64-bf2caea32c33', 'packaging_variant', 'UPSERT');
@@ -1611,7 +1611,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('8efd927c-a81b-4156-843b-4d5fde165c24', '8efd927c-a81b-4156-843b-4d5fde165c24') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8efd927c-a81b-4156-843b-4d5fde165c24', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_8efd927c-a81b-4156-843b-4d5fde165c24', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '8efd927c-a81b-4156-843b-4d5fde165c24') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('910889e3-452b-429d-90f2-1da4236e3f77', 'Quimi-Hib (Centro de Ingenieria Genetica y Biotecnologia)', '8efd927c-a81b-4156-843b-4d5fde165c24', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('910889e3-452b-429d-90f2-1da4236e3f77', 'Quimi-Hib (Centro de Ingenieria Genetica y Biotecnologia)', '8efd927c-a81b-4156-843b-4d5fde165c24', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('910889e3-452b-429d-90f2-1da4236e3f77', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0eea505f-5428-48f9-91ce-2ef00dfcae4f', '910889e3-452b-429d-90f2-1da4236e3f77', 'Primary', 1, 0.012400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0eea505f-5428-48f9-91ce-2ef00dfcae4f', 'packaging_variant', 'UPSERT');
@@ -1619,7 +1619,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('57f5cf6f-d548-4908-946e-3d95036dd177', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b764db96-bbdf-4cec-a1b4-26dab15283c9', '910889e3-452b-429d-90f2-1da4236e3f77', 'Tertiary', 3, 0.122400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b764db96-bbdf-4cec-a1b4-26dab15283c9', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('857812cd-d715-4986-afcc-9ba9e6e1fe44', 'Pedvax HIB (Merck Vaccines)', '8efd927c-a81b-4156-843b-4d5fde165c24', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('857812cd-d715-4986-afcc-9ba9e6e1fe44', 'Pedvax HIB (Merck Vaccines)', '8efd927c-a81b-4156-843b-4d5fde165c24', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('857812cd-d715-4986-afcc-9ba9e6e1fe44', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b6a1b25b-33de-4604-8a10-cebd2dfed63a', '857812cd-d715-4986-afcc-9ba9e6e1fe44', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b6a1b25b-33de-4604-8a10-cebd2dfed63a', 'packaging_variant', 'UPSERT');
@@ -1627,7 +1627,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a4459a85-962c-4bf9-9cbb-4e76d77901fd', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7a1ac464-30c6-43f7-8b94-a65055a7177e', '857812cd-d715-4986-afcc-9ba9e6e1fe44', 'Tertiary', 3, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7a1ac464-30c6-43f7-8b94-a65055a7177e', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('509f637f-f449-4add-8823-3c2496114c0a', 'Vaxem HIB (Novartis Vaccines and Diagnostics S.r.l.)', '8efd927c-a81b-4156-843b-4d5fde165c24', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('509f637f-f449-4add-8823-3c2496114c0a', 'Vaxem HIB (Novartis Vaccines and Diagnostics S.r.l.)', '8efd927c-a81b-4156-843b-4d5fde165c24', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('509f637f-f449-4add-8823-3c2496114c0a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8933c5f3-064a-455a-bb13-cbab4d65809d', '509f637f-f449-4add-8823-3c2496114c0a', 'Primary', 1, 0.013390) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8933c5f3-064a-455a-bb13-cbab4d65809d', 'packaging_variant', 'UPSERT');
@@ -1639,7 +1639,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('e46a79ac-b627-4841-8296-d3ffc1c35913', 'e46a79ac-b627-4841-8296-d3ffc1c35913') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e46a79ac-b627-4841-8296-d3ffc1c35913', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_e46a79ac-b627-4841-8296-d3ffc1c35913', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'e46a79ac-b627-4841-8296-d3ffc1c35913') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7863c252-a2ed-4e4d-bcc3-5e9d099b9693', 'Act-HIB (Sanofi Pasteur SA)', 'e46a79ac-b627-4841-8296-d3ffc1c35913', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7863c252-a2ed-4e4d-bcc3-5e9d099b9693', 'Act-HIB (Sanofi Pasteur SA)', 'e46a79ac-b627-4841-8296-d3ffc1c35913', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7863c252-a2ed-4e4d-bcc3-5e9d099b9693', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1fd31fbc-5ff1-45dc-b487-669514e1d10e', '7863c252-a2ed-4e4d-bcc3-5e9d099b9693', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1fd31fbc-5ff1-45dc-b487-669514e1d10e', 'packaging_variant', 'UPSERT');
@@ -1651,7 +1651,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('e5b796e7-cd61-405d-961f-e1135e70a0e7', 'e5b796e7-cd61-405d-961f-e1135e70a0e7') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e5b796e7-cd61-405d-961f-e1135e70a0e7', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_e5b796e7-cd61-405d-961f-e1135e70a0e7', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'e5b796e7-cd61-405d-961f-e1135e70a0e7') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('56837ba4-3e8c-4409-82f6-c35b3573ed9f', 'Act-HIB (Sanofi Pasteur SA)', 'e5b796e7-cd61-405d-961f-e1135e70a0e7', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('56837ba4-3e8c-4409-82f6-c35b3573ed9f', 'Act-HIB (Sanofi Pasteur SA)', 'e5b796e7-cd61-405d-961f-e1135e70a0e7', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('56837ba4-3e8c-4409-82f6-c35b3573ed9f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('24636e43-680c-4937-a395-9c3374780bba', '56837ba4-3e8c-4409-82f6-c35b3573ed9f', 'Primary', 1, 0.012660) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('24636e43-680c-4937-a395-9c3374780bba', 'packaging_variant', 'UPSERT');
@@ -1659,7 +1659,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4e75998f-ef76-49b0-b225-05fa96670455', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('05b2a42d-6f15-4dd4-8958-7e38f35ddc02', '56837ba4-3e8c-4409-82f6-c35b3573ed9f', 'Tertiary', 3, 0.012660) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('05b2a42d-6f15-4dd4-8958-7e38f35ddc02', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fec5f9ac-3263-456c-96ad-3c05456e79ee', 'Hemophilus influenzae type b Conjugated Vaccine (Serum Institute of India Pvt. Ltd.)', 'e5b796e7-cd61-405d-961f-e1135e70a0e7', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fec5f9ac-3263-456c-96ad-3c05456e79ee', 'Hemophilus influenzae type b Conjugated Vaccine (Serum Institute of India Pvt. Ltd.)', 'e5b796e7-cd61-405d-961f-e1135e70a0e7', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fec5f9ac-3263-456c-96ad-3c05456e79ee', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('6ec6f41a-d725-45fc-b373-45f60269e079', 'fec5f9ac-3263-456c-96ad-3c05456e79ee', 'Primary', 1, 0.021090) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6ec6f41a-d725-45fc-b373-45f60269e079', 'packaging_variant', 'UPSERT');
@@ -1671,7 +1671,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('8857e143-1c17-40c3-aa94-72a63beeccab', '8857e143-1c17-40c3-aa94-72a63beeccab') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8857e143-1c17-40c3-aa94-72a63beeccab', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_8857e143-1c17-40c3-aa94-72a63beeccab', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '8857e143-1c17-40c3-aa94-72a63beeccab') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('942a1e1a-1211-4cdb-92df-652527caf3c7', 'Hemophilus influenzae type b Conjugated Vaccine (Serum Institute of India Pvt. Ltd.)', '8857e143-1c17-40c3-aa94-72a63beeccab', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('942a1e1a-1211-4cdb-92df-652527caf3c7', 'Hemophilus influenzae type b Conjugated Vaccine (Serum Institute of India Pvt. Ltd.)', '8857e143-1c17-40c3-aa94-72a63beeccab', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('942a1e1a-1211-4cdb-92df-652527caf3c7', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('357ab558-6619-46ea-ba75-3f58933e128d', '942a1e1a-1211-4cdb-92df-652527caf3c7', 'Primary', 1, 0.0125) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('357ab558-6619-46ea-ba75-3f58933e128d', 'packaging_variant', 'UPSERT');
@@ -1685,7 +1685,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('3da63c7d-ee3e-462c-804a-4cdbe367a053', '3da63c7d-ee3e-462c-804a-4cdbe367a053') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3da63c7d-ee3e-462c-804a-4cdbe367a053', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_3da63c7d-ee3e-462c-804a-4cdbe367a053', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '3da63c7d-ee3e-462c-804a-4cdbe367a053') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2b9c3775-c7d8-4418-a714-47efeadd9be0', 'Cervarix (GlaxoSmithKline Biologicals SA)', '3da63c7d-ee3e-462c-804a-4cdbe367a053', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2b9c3775-c7d8-4418-a714-47efeadd9be0', 'Cervarix (GlaxoSmithKline Biologicals SA)', '3da63c7d-ee3e-462c-804a-4cdbe367a053', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2b9c3775-c7d8-4418-a714-47efeadd9be0', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('070161ec-a1f2-4106-a2f9-1fcbd615050b', '2b9c3775-c7d8-4418-a714-47efeadd9be0', 'Primary', 1, 0.009680) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('070161ec-a1f2-4106-a2f9-1fcbd615050b', 'packaging_variant', 'UPSERT');
@@ -1697,7 +1697,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('9112030b-14d0-4730-b29a-77746b0af546', '9112030b-14d0-4730-b29a-77746b0af546') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9112030b-14d0-4730-b29a-77746b0af546', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_9112030b-14d0-4730-b29a-77746b0af546', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '9112030b-14d0-4730-b29a-77746b0af546') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f43a290f-5115-4828-941f-f013969f9561', 'Cervarix (GlaxoSmithKline Biologicals SA)', '9112030b-14d0-4730-b29a-77746b0af546', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f43a290f-5115-4828-941f-f013969f9561', 'Cervarix (GlaxoSmithKline Biologicals SA)', '9112030b-14d0-4730-b29a-77746b0af546', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f43a290f-5115-4828-941f-f013969f9561', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('6501b273-7ad1-4d96-bff0-9d7af565b5c9', 'f43a290f-5115-4828-941f-f013969f9561', 'Primary', 1, 0.011400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6501b273-7ad1-4d96-bff0-9d7af565b5c9', 'packaging_variant', 'UPSERT');
@@ -1705,7 +1705,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('00f14259-3dd5-4075-b925-ab40ac4c4315', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7fec6b40-1ae6-4991-a36a-f4ae17a38284', 'f43a290f-5115-4828-941f-f013969f9561', 'Tertiary', 3, 0.015220) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7fec6b40-1ae6-4991-a36a-f4ae17a38284', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bf5f4b6e-089f-4b78-aacd-b6ecc15d1bc5', 'Cervarix (GlaxoSmithKline Biologicals SA)', '9112030b-14d0-4730-b29a-77746b0af546', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bf5f4b6e-089f-4b78-aacd-b6ecc15d1bc5', 'Cervarix (GlaxoSmithKline Biologicals SA)', '9112030b-14d0-4730-b29a-77746b0af546', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bf5f4b6e-089f-4b78-aacd-b6ecc15d1bc5', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('449012c3-97b7-4779-9d82-ecf2fea48649', 'bf5f4b6e-089f-4b78-aacd-b6ecc15d1bc5', 'Primary', 1, 0.009680) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('449012c3-97b7-4779-9d82-ecf2fea48649', 'packaging_variant', 'UPSERT');
@@ -1713,7 +1713,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('17104053-40c9-4775-ae32-487ad62cb67d', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('32400747-008a-4b12-9a77-ee1ddf4a0f12', 'bf5f4b6e-089f-4b78-aacd-b6ecc15d1bc5', 'Tertiary', 3, 0.015220) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('32400747-008a-4b12-9a77-ee1ddf4a0f12', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7116e143-aafd-49a0-8742-24786d24f7ee', 'Gardasil (Merck Sharp & Dohme LLC)', '3da63c7d-ee3e-462c-804a-4cdbe367a053', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7116e143-aafd-49a0-8742-24786d24f7ee', 'Gardasil (Merck Sharp & Dohme LLC)', '3da63c7d-ee3e-462c-804a-4cdbe367a053', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7116e143-aafd-49a0-8742-24786d24f7ee', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('59e0115e-b073-4442-bdf5-5e9c705aa9bd', '7116e143-aafd-49a0-8742-24786d24f7ee', 'Primary', 1, 0.015000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('59e0115e-b073-4442-bdf5-5e9c705aa9bd', 'packaging_variant', 'UPSERT');
@@ -1721,7 +1721,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('72bf9998-7e66-4f27-b8fd-3d02cde9e203', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('25e75b12-90c7-48f1-bcee-f0b4363d6d91', '7116e143-aafd-49a0-8742-24786d24f7ee', 'Tertiary', 3, 0.021160) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('25e75b12-90c7-48f1-bcee-f0b4363d6d91', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2f8eb56f-c58b-4d96-8536-b3bd16219fe0', 'Gardasil 9 (Merck Sharp & Dohme LLC)', '3da63c7d-ee3e-462c-804a-4cdbe367a053', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2f8eb56f-c58b-4d96-8536-b3bd16219fe0', 'Gardasil 9 (Merck Sharp & Dohme LLC)', '3da63c7d-ee3e-462c-804a-4cdbe367a053', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2f8eb56f-c58b-4d96-8536-b3bd16219fe0', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c22f9170-ea17-4e21-b283-723337c62451', '2f8eb56f-c58b-4d96-8536-b3bd16219fe0', 'Primary', 1, 0.015110) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c22f9170-ea17-4e21-b283-723337c62451', 'packaging_variant', 'UPSERT');
@@ -1729,7 +1729,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7fd4a9f9-ef84-47ca-b385-d1d8adda7e6a', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('06b8a58a-e30f-4a31-8a10-49425026ad7d', '2f8eb56f-c58b-4d96-8536-b3bd16219fe0', 'Tertiary', 3, 0.021160) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('06b8a58a-e30f-4a31-8a10-49425026ad7d', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7cf966e4-aad5-4dac-a19d-ce5a1c811c86', 'Gardasil 9 (Merck Sharp & Dohme LLC)', '3da63c7d-ee3e-462c-804a-4cdbe367a053', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7cf966e4-aad5-4dac-a19d-ce5a1c811c86', 'Gardasil 9 (Merck Sharp & Dohme LLC)', '3da63c7d-ee3e-462c-804a-4cdbe367a053', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7cf966e4-aad5-4dac-a19d-ce5a1c811c86', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0ba5f5b5-1809-47a5-af3a-4c4f5e9106df', '7cf966e4-aad5-4dac-a19d-ce5a1c811c86', 'Primary', 1, 0.018400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0ba5f5b5-1809-47a5-af3a-4c4f5e9106df', 'packaging_variant', 'UPSERT');
@@ -1737,7 +1737,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('098aef9e-fd72-40cb-b9bf-0607c2ad3747', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7c501a64-25b0-4d6d-8711-bff306c8bbd7', '7cf966e4-aad5-4dac-a19d-ce5a1c811c86', 'Tertiary', 3, 0.021160) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7c501a64-25b0-4d6d-8711-bff306c8bbd7', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ca731ddc-87bf-487f-8634-1de8a132a87d', 'Cecolin® (Xiamen Innovax Biotech Co. Ltd.)', '3da63c7d-ee3e-462c-804a-4cdbe367a053', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ca731ddc-87bf-487f-8634-1de8a132a87d', 'Cecolin® (Xiamen Innovax Biotech Co. Ltd.)', '3da63c7d-ee3e-462c-804a-4cdbe367a053', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ca731ddc-87bf-487f-8634-1de8a132a87d', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('781c51a0-0c1c-4255-92ca-865feb233f35', 'ca731ddc-87bf-487f-8634-1de8a132a87d', 'Primary', 1, 0.014290) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('781c51a0-0c1c-4255-92ca-865feb233f35', 'packaging_variant', 'UPSERT');
@@ -1749,7 +1749,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('2c99dad2-b7e9-4670-9bcb-597fda22b513', '2c99dad2-b7e9-4670-9bcb-597fda22b513') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2c99dad2-b7e9-4670-9bcb-597fda22b513', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_2c99dad2-b7e9-4670-9bcb-597fda22b513', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '2c99dad2-b7e9-4670-9bcb-597fda22b513') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('05e20882-5585-4ed1-85a4-9f7955313d14', 'FluLaval (GlaxoSmithKline Biologicals SA)', '2c99dad2-b7e9-4670-9bcb-597fda22b513', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('05e20882-5585-4ed1-85a4-9f7955313d14', 'FluLaval (GlaxoSmithKline Biologicals SA)', '2c99dad2-b7e9-4670-9bcb-597fda22b513', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('05e20882-5585-4ed1-85a4-9f7955313d14', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e5d069c4-80c5-45f3-ac9a-4ba188cdbcc3', '05e20882-5585-4ed1-85a4-9f7955313d14', 'Primary', 1, 0.073200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e5d069c4-80c5-45f3-ac9a-4ba188cdbcc3', 'packaging_variant', 'UPSERT');
@@ -1761,7 +1761,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('db3a3b5b-9339-42f0-adac-afc451a32049', 'db3a3b5b-9339-42f0-adac-afc451a32049') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('db3a3b5b-9339-42f0-adac-afc451a32049', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_db3a3b5b-9339-42f0-adac-afc451a32049', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'db3a3b5b-9339-42f0-adac-afc451a32049') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3029f53a-b148-46ef-8437-de162cd3ff08', 'GC FLU inj (Green Cross Corporation)', 'db3a3b5b-9339-42f0-adac-afc451a32049', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3029f53a-b148-46ef-8437-de162cd3ff08', 'GC FLU inj (Green Cross Corporation)', 'db3a3b5b-9339-42f0-adac-afc451a32049', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3029f53a-b148-46ef-8437-de162cd3ff08', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2f914607-e498-4a9a-afb2-ca7cb4765015', '3029f53a-b148-46ef-8437-de162cd3ff08', 'Primary', 1, 0.013930) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2f914607-e498-4a9a-afb2-ca7cb4765015', 'packaging_variant', 'UPSERT');
@@ -1769,7 +1769,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9f0373bb-b13d-44cb-855c-50a9790403cb', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8c19ebb5-ee17-4ac1-b844-125b9f2a7dd1', '3029f53a-b148-46ef-8437-de162cd3ff08', 'Tertiary', 3, 0.290180) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8c19ebb5-ee17-4ac1-b844-125b9f2a7dd1', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e7f2fced-288f-4a85-b45a-7ea0e00e2051', 'GC FLU Multi inj. (Green Cross Corporation)', '2c99dad2-b7e9-4670-9bcb-597fda22b513', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e7f2fced-288f-4a85-b45a-7ea0e00e2051', 'GC FLU Multi inj. (Green Cross Corporation)', '2c99dad2-b7e9-4670-9bcb-597fda22b513', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e7f2fced-288f-4a85-b45a-7ea0e00e2051', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ae7e0087-5aaf-4802-b1ce-aae28d92e05e', 'e7f2fced-288f-4a85-b45a-7ea0e00e2051', 'Primary', 1, 0.037600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ae7e0087-5aaf-4802-b1ce-aae28d92e05e', 'packaging_variant', 'UPSERT');
@@ -1777,7 +1777,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dd51577c-be56-42e0-9f9b-69b89bb9e813', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0725b597-a546-42be-a9b5-7e6d0afd3eb7', 'e7f2fced-288f-4a85-b45a-7ea0e00e2051', 'Tertiary', 3, 0.193500) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0725b597-a546-42be-a9b5-7e6d0afd3eb7', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8cbe3491-3e37-4c3c-a8f3-d8387b5d5309', 'Influenza Vaccine (Split virion, inactivated) (Hualan Biological Bacterin Co., Ltd)', 'db3a3b5b-9339-42f0-adac-afc451a32049', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8cbe3491-3e37-4c3c-a8f3-d8387b5d5309', 'Influenza Vaccine (Split virion, inactivated) (Hualan Biological Bacterin Co., Ltd)', 'db3a3b5b-9339-42f0-adac-afc451a32049', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8cbe3491-3e37-4c3c-a8f3-d8387b5d5309', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0ef0c859-4506-4778-9330-d1bc05fc4e16', '8cbe3491-3e37-4c3c-a8f3-d8387b5d5309', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0ef0c859-4506-4778-9330-d1bc05fc4e16', 'packaging_variant', 'UPSERT');
@@ -1785,7 +1785,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2f2a2c69-b914-4105-a716-46aa763eec77', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('08e60359-a30b-4067-9f0b-12918b10ec01', '8cbe3491-3e37-4c3c-a8f3-d8387b5d5309', 'Tertiary', 3, 0.040040) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('08e60359-a30b-4067-9f0b-12918b10ec01', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ba15294a-ec9e-4e9c-9b2d-fcdcb6ac61b5', 'Vaxigrip (Sanofi Pasteur SA)', '2c99dad2-b7e9-4670-9bcb-597fda22b513', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ba15294a-ec9e-4e9c-9b2d-fcdcb6ac61b5', 'Vaxigrip (Sanofi Pasteur SA)', '2c99dad2-b7e9-4670-9bcb-597fda22b513', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ba15294a-ec9e-4e9c-9b2d-fcdcb6ac61b5', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('17f9814f-037f-4c11-8c70-707d531540ef', 'ba15294a-ec9e-4e9c-9b2d-fcdcb6ac61b5', 'Primary', 1, 0.024000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('17f9814f-037f-4c11-8c70-707d531540ef', 'packaging_variant', 'UPSERT');
@@ -1797,7 +1797,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('374ee11f-8a86-4a37-8597-cda501d5712e', '374ee11f-8a86-4a37-8597-cda501d5712e') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('374ee11f-8a86-4a37-8597-cda501d5712e', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_374ee11f-8a86-4a37-8597-cda501d5712e', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '374ee11f-8a86-4a37-8597-cda501d5712e') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7017ec3c-e717-42a6-a278-2ef1446dacf0', 'Fluzone (Sanofi Pasteur-USA)', '374ee11f-8a86-4a37-8597-cda501d5712e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7017ec3c-e717-42a6-a278-2ef1446dacf0', 'Fluzone (Sanofi Pasteur-USA)', '374ee11f-8a86-4a37-8597-cda501d5712e', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7017ec3c-e717-42a6-a278-2ef1446dacf0', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a45e0af9-5882-4335-bbe9-f3a3aa5a0739', '7017ec3c-e717-42a6-a278-2ef1446dacf0', 'Primary', 1, 0.018360) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a45e0af9-5882-4335-bbe9-f3a3aa5a0739', 'packaging_variant', 'UPSERT');
@@ -1805,7 +1805,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('adc52b5e-609c-4862-80aa-00c97c6bc69a', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('104df74b-0edf-46c9-839b-79096a440dc8', '7017ec3c-e717-42a6-a278-2ef1446dacf0', 'Tertiary', 3, 0.022390) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('104df74b-0edf-46c9-839b-79096a440dc8', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b642716c-a33e-4b74-8edc-2e0f6ed62bbb', 'Fluzone (Sanofi Pasteur-USA)', '2c99dad2-b7e9-4670-9bcb-597fda22b513', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b642716c-a33e-4b74-8edc-2e0f6ed62bbb', 'Fluzone (Sanofi Pasteur-USA)', '2c99dad2-b7e9-4670-9bcb-597fda22b513', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b642716c-a33e-4b74-8edc-2e0f6ed62bbb', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d5a5a0cf-8621-4bbb-8eff-7dcd66a42912', 'b642716c-a33e-4b74-8edc-2e0f6ed62bbb', 'Primary', 1, 0.058000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d5a5a0cf-8621-4bbb-8eff-7dcd66a42912', 'packaging_variant', 'UPSERT');
@@ -1813,7 +1813,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3ff1f751-1eae-4820-828d-3cf71e8cb200', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('72e39234-8694-461a-b793-9df0244174b5', 'b642716c-a33e-4b74-8edc-2e0f6ed62bbb', 'Tertiary', 3, 0.086200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('72e39234-8694-461a-b793-9df0244174b5', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('232cfb03-8d0a-452b-a6d0-20cae65db9dc', 'AGRIFLU (Seqirus Vaccines Limited)', '2c99dad2-b7e9-4670-9bcb-597fda22b513', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('232cfb03-8d0a-452b-a6d0-20cae65db9dc', 'AGRIFLU (Seqirus Vaccines Limited)', '2c99dad2-b7e9-4670-9bcb-597fda22b513', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('232cfb03-8d0a-452b-a6d0-20cae65db9dc', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('42a94691-60fa-4c7c-952c-0a2bca50fa16', '232cfb03-8d0a-452b-a6d0-20cae65db9dc', 'Primary', 1, 0.529200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('42a94691-60fa-4c7c-952c-0a2bca50fa16', 'packaging_variant', 'UPSERT');
@@ -1821,7 +1821,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8e76a8f9-4327-4207-8424-d4e5bbca351e', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('76354959-203d-47e1-8d1e-e361403cf3d3', '232cfb03-8d0a-452b-a6d0-20cae65db9dc', 'Tertiary', 3, 0.058400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('76354959-203d-47e1-8d1e-e361403cf3d3', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7a96140c-2f54-428d-a14f-846b7d4d5a41', 'Fluvirin (Seqirus Vaccines Limited)', '2c99dad2-b7e9-4670-9bcb-597fda22b513', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7a96140c-2f54-428d-a14f-846b7d4d5a41', 'Fluvirin (Seqirus Vaccines Limited)', '2c99dad2-b7e9-4670-9bcb-597fda22b513', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7a96140c-2f54-428d-a14f-846b7d4d5a41', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('153efb96-fb9d-4ecd-b8fc-0cdebadb9899', '7a96140c-2f54-428d-a14f-846b7d4d5a41', 'Primary', 1, 0.533000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('153efb96-fb9d-4ecd-b8fc-0cdebadb9899', 'packaging_variant', 'UPSERT');
@@ -1833,7 +1833,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('45a4303d-521c-4ab8-9cde-b5c755f6f66e', '45a4303d-521c-4ab8-9cde-b5c755f6f66e') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('45a4303d-521c-4ab8-9cde-b5c755f6f66e', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_45a4303d-521c-4ab8-9cde-b5c755f6f66e', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '45a4303d-521c-4ab8-9cde-b5c755f6f66e') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3b025a82-6a25-4c25-9b60-7ad0887f7b9d', 'Nasovac-S Influenza Vaccine, Live, Attenuated (Human) (Serum Institute of India Pvt. Ltd.)', '45a4303d-521c-4ab8-9cde-b5c755f6f66e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3b025a82-6a25-4c25-9b60-7ad0887f7b9d', 'Nasovac-S Influenza Vaccine, Live, Attenuated (Human) (Serum Institute of India Pvt. Ltd.)', '45a4303d-521c-4ab8-9cde-b5c755f6f66e', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3b025a82-6a25-4c25-9b60-7ad0887f7b9d', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('fb270b62-2512-47a0-91b4-77fdd3596a65', '3b025a82-6a25-4c25-9b60-7ad0887f7b9d', 'Primary', 1, 0.017580) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fb270b62-2512-47a0-91b4-77fdd3596a65', 'packaging_variant', 'UPSERT');
@@ -1845,7 +1845,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('d665d5ab-ef1d-4619-b1e9-16be5f886dc7', 'd665d5ab-ef1d-4619-b1e9-16be5f886dc7') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d665d5ab-ef1d-4619-b1e9-16be5f886dc7', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_d665d5ab-ef1d-4619-b1e9-16be5f886dc7', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'd665d5ab-ef1d-4619-b1e9-16be5f886dc7') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('864d7f59-62db-47d7-aadb-5023e8c526e7', 'Nasovac-S Influenza Vaccine, Live, Attenuated (Human) (Serum Institute of India Pvt. Ltd.)', 'd665d5ab-ef1d-4619-b1e9-16be5f886dc7', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('864d7f59-62db-47d7-aadb-5023e8c526e7', 'Nasovac-S Influenza Vaccine, Live, Attenuated (Human) (Serum Institute of India Pvt. Ltd.)', 'd665d5ab-ef1d-4619-b1e9-16be5f886dc7', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('864d7f59-62db-47d7-aadb-5023e8c526e7', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('44e02bad-0b47-4972-baa9-c8094555f6bc', '864d7f59-62db-47d7-aadb-5023e8c526e7', 'Primary', 1, 0.0) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('44e02bad-0b47-4972-baa9-c8094555f6bc', 'packaging_variant', 'UPSERT');
@@ -1859,7 +1859,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('a2ade4a4-c5ba-4e12-bcb0-4252b464bae4', 'a2ade4a4-c5ba-4e12-bcb0-4252b464bae4') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a2ade4a4-c5ba-4e12-bcb0-4252b464bae4', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_a2ade4a4-c5ba-4e12-bcb0-4252b464bae4', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'a2ade4a4-c5ba-4e12-bcb0-4252b464bae4') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8b887c6e-b641-409f-bb36-7a0eb951335a', 'GCFLU Quadrivalent inj. (Green Cross Corporation)', 'a2ade4a4-c5ba-4e12-bcb0-4252b464bae4', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8b887c6e-b641-409f-bb36-7a0eb951335a', 'GCFLU Quadrivalent inj. (Green Cross Corporation)', 'a2ade4a4-c5ba-4e12-bcb0-4252b464bae4', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8b887c6e-b641-409f-bb36-7a0eb951335a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('5f3d4f29-d72e-4019-8118-f777d65cf361', '8b887c6e-b641-409f-bb36-7a0eb951335a', 'Primary', 1, 0.013900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5f3d4f29-d72e-4019-8118-f777d65cf361', 'packaging_variant', 'UPSERT');
@@ -1871,7 +1871,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('194e3630-0d42-46d6-9116-da6b980c26b2', '194e3630-0d42-46d6-9116-da6b980c26b2') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('194e3630-0d42-46d6-9116-da6b980c26b2', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_194e3630-0d42-46d6-9116-da6b980c26b2', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '194e3630-0d42-46d6-9116-da6b980c26b2') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('1834dd8c-0697-4a2d-b6d4-c710df25c602', 'GCFLU Quadrivalent Multi inj. (Green Cross Corporation)', '194e3630-0d42-46d6-9116-da6b980c26b2', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('1834dd8c-0697-4a2d-b6d4-c710df25c602', 'GCFLU Quadrivalent Multi inj. (Green Cross Corporation)', '194e3630-0d42-46d6-9116-da6b980c26b2', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1834dd8c-0697-4a2d-b6d4-c710df25c602', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c6163ca3-fe03-45a7-8d02-b9d224341d65', '1834dd8c-0697-4a2d-b6d4-c710df25c602', 'Primary', 1, 0.037600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c6163ca3-fe03-45a7-8d02-b9d224341d65', 'packaging_variant', 'UPSERT');
@@ -1879,7 +1879,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0dca28f6-e1d0-4fbc-a5d8-30f69bee8eb7', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('494a19c9-cd15-4d85-afb4-cacba9348959', '1834dd8c-0697-4a2d-b6d4-c710df25c602', 'Tertiary', 3, 0.767800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('494a19c9-cd15-4d85-afb4-cacba9348959', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('28dfdfa0-99a6-46fb-9bb2-d236d02b4eb4', 'Fluzone Quadrivalent (Sanofi Pasteur-USA)', 'a2ade4a4-c5ba-4e12-bcb0-4252b464bae4', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('28dfdfa0-99a6-46fb-9bb2-d236d02b4eb4', 'Fluzone Quadrivalent (Sanofi Pasteur-USA)', 'a2ade4a4-c5ba-4e12-bcb0-4252b464bae4', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('28dfdfa0-99a6-46fb-9bb2-d236d02b4eb4', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b90f8169-9ff8-40b4-9a08-bb118adaf90c', '28dfdfa0-99a6-46fb-9bb2-d236d02b4eb4', 'Primary', 1, 0.018400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b90f8169-9ff8-40b4-9a08-bb118adaf90c', 'packaging_variant', 'UPSERT');
@@ -1887,7 +1887,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('521c1342-e179-4e91-a92d-58bb29047940', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c2cb873b-a4ed-4c92-b05c-6f23d010037a', '28dfdfa0-99a6-46fb-9bb2-d236d02b4eb4', 'Tertiary', 3, 0.019460) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c2cb873b-a4ed-4c92-b05c-6f23d010037a', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('86fa99d4-6795-45da-a5d9-8b6c82a377ff', 'Fluzone Quadrivalent (Sanofi Pasteur-USA)', '194e3630-0d42-46d6-9116-da6b980c26b2', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('86fa99d4-6795-45da-a5d9-8b6c82a377ff', 'Fluzone Quadrivalent (Sanofi Pasteur-USA)', '194e3630-0d42-46d6-9116-da6b980c26b2', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('86fa99d4-6795-45da-a5d9-8b6c82a377ff', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a63fd3c3-3bbc-4dff-972c-f1d15e70f627', '86fa99d4-6795-45da-a5d9-8b6c82a377ff', 'Primary', 1, 0.054000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a63fd3c3-3bbc-4dff-972c-f1d15e70f627', 'packaging_variant', 'UPSERT');
@@ -1899,7 +1899,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('d5bbe4fc-1f98-4621-8343-c9687a6343c9', 'd5bbe4fc-1f98-4621-8343-c9687a6343c9') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d5bbe4fc-1f98-4621-8343-c9687a6343c9', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_d5bbe4fc-1f98-4621-8343-c9687a6343c9', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'd5bbe4fc-1f98-4621-8343-c9687a6343c9') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('42cbb995-819d-4071-b8a0-6ed40a56acde', 'IPV Vaccine SSI (AJ Vaccines A/S)', 'd5bbe4fc-1f98-4621-8343-c9687a6343c9', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('42cbb995-819d-4071-b8a0-6ed40a56acde', 'IPV Vaccine SSI (AJ Vaccines A/S)', 'd5bbe4fc-1f98-4621-8343-c9687a6343c9', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('42cbb995-819d-4071-b8a0-6ed40a56acde', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('5725d71e-6336-4fc6-be71-02b6d4425388', '42cbb995-819d-4071-b8a0-6ed40a56acde', 'Primary', 1, 0.012940) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5725d71e-6336-4fc6-be71-02b6d4425388', 'packaging_variant', 'UPSERT');
@@ -1911,7 +1911,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('136dc6b0-7ab2-45f3-bef8-9f9d077ba508', '136dc6b0-7ab2-45f3-bef8-9f9d077ba508') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('136dc6b0-7ab2-45f3-bef8-9f9d077ba508', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_136dc6b0-7ab2-45f3-bef8-9f9d077ba508', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '136dc6b0-7ab2-45f3-bef8-9f9d077ba508') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e52e99c8-55c1-4de0-96d9-c212f1e7ace8', 'Picovax (AJ Vaccines A/S)', '136dc6b0-7ab2-45f3-bef8-9f9d077ba508', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e52e99c8-55c1-4de0-96d9-c212f1e7ace8', 'Picovax (AJ Vaccines A/S)', '136dc6b0-7ab2-45f3-bef8-9f9d077ba508', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e52e99c8-55c1-4de0-96d9-c212f1e7ace8', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('38d3c77c-c68e-4205-89a6-f753561196d6', 'e52e99c8-55c1-4de0-96d9-c212f1e7ace8', 'Primary', 1, 0.034100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('38d3c77c-c68e-4205-89a6-f753561196d6', 'packaging_variant', 'UPSERT');
@@ -1919,7 +1919,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a1be694f-eec5-4f0d-8a8d-b81f53f8ee27', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f2abb398-b9d5-4125-9902-f10caeca77aa', 'e52e99c8-55c1-4de0-96d9-c212f1e7ace8', 'Tertiary', 3, 0.134800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f2abb398-b9d5-4125-9902-f10caeca77aa', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b7272a0a-3c9c-49ad-8bec-ddc7dd05eb96', 'Poliomyelitis vaccine (Bilthoven Biologicals)', 'd5bbe4fc-1f98-4621-8343-c9687a6343c9', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b7272a0a-3c9c-49ad-8bec-ddc7dd05eb96', 'Poliomyelitis vaccine (Bilthoven Biologicals)', 'd5bbe4fc-1f98-4621-8343-c9687a6343c9', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b7272a0a-3c9c-49ad-8bec-ddc7dd05eb96', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('5484fa2a-8265-46d9-80bb-c4419b978a61', 'b7272a0a-3c9c-49ad-8bec-ddc7dd05eb96', 'Primary', 1, 0.015700) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5484fa2a-8265-46d9-80bb-c4419b978a61', 'packaging_variant', 'UPSERT');
@@ -1927,7 +1927,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('99fac8ea-52ff-43ab-956f-fa9a42353ead', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('be6fedc2-273c-4f0b-bde0-fafb85db7138', 'b7272a0a-3c9c-49ad-8bec-ddc7dd05eb96', 'Tertiary', 3, 0.130560) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('be6fedc2-273c-4f0b-bde0-fafb85db7138', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ce135406-63db-48c5-bfce-b1e13dd39560', 'Poliomyelitis vaccine multidose, suspension for injection 2.5 mL (Bilthoven Biologicals)', '136dc6b0-7ab2-45f3-bef8-9f9d077ba508', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ce135406-63db-48c5-bfce-b1e13dd39560', 'Poliomyelitis vaccine multidose, suspension for injection 2.5 mL (Bilthoven Biologicals)', '136dc6b0-7ab2-45f3-bef8-9f9d077ba508', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ce135406-63db-48c5-bfce-b1e13dd39560', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('dd3829a4-89bf-4105-bde1-027f88e171fb', 'ce135406-63db-48c5-bfce-b1e13dd39560', 'Primary', 1, 0.020000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dd3829a4-89bf-4105-bde1-027f88e171fb', 'packaging_variant', 'UPSERT');
@@ -1935,7 +1935,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('43098ff7-61eb-4549-a040-154e1a2f779f', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1b4079cd-245d-4e97-9749-cdccb62dd919', 'ce135406-63db-48c5-bfce-b1e13dd39560', 'Tertiary', 3, 0.044850) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1b4079cd-245d-4e97-9749-cdccb62dd919', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ba0c09fc-53ea-4edd-bdad-f9157c673671', 'Poliorix (GlaxoSmithKline Biologicals SA)', 'd5bbe4fc-1f98-4621-8343-c9687a6343c9', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ba0c09fc-53ea-4edd-bdad-f9157c673671', 'Poliorix (GlaxoSmithKline Biologicals SA)', 'd5bbe4fc-1f98-4621-8343-c9687a6343c9', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ba0c09fc-53ea-4edd-bdad-f9157c673671', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('60092aed-0c06-4e7d-8c47-0c68a4ddcf09', 'ba0c09fc-53ea-4edd-bdad-f9157c673671', 'Primary', 1, 0.009680) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('60092aed-0c06-4e7d-8c47-0c68a4ddcf09', 'packaging_variant', 'UPSERT');
@@ -1947,7 +1947,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('398dfacc-27e8-4b2d-aa7f-d387a93a9464', '398dfacc-27e8-4b2d-aa7f-d387a93a9464') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('398dfacc-27e8-4b2d-aa7f-d387a93a9464', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_398dfacc-27e8-4b2d-aa7f-d387a93a9464', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '398dfacc-27e8-4b2d-aa7f-d387a93a9464') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a1b06244-f4b3-49c6-b17b-2ac33cf867ef', 'Poliorix (GlaxoSmithKline Biologicals SA)', '398dfacc-27e8-4b2d-aa7f-d387a93a9464', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a1b06244-f4b3-49c6-b17b-2ac33cf867ef', 'Poliorix (GlaxoSmithKline Biologicals SA)', '398dfacc-27e8-4b2d-aa7f-d387a93a9464', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a1b06244-f4b3-49c6-b17b-2ac33cf867ef', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7847fa2e-d13f-4487-8b6c-f6433e3378e9', 'a1b06244-f4b3-49c6-b17b-2ac33cf867ef', 'Primary', 1, 0.009680) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7847fa2e-d13f-4487-8b6c-f6433e3378e9', 'packaging_variant', 'UPSERT');
@@ -1955,7 +1955,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4b2030cf-885b-4596-985b-0df4f56ca1bd', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8c37cc57-4528-4ac9-9ef7-f33eaf13f14f', 'a1b06244-f4b3-49c6-b17b-2ac33cf867ef', 'Tertiary', 3, 0.015420) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8c37cc57-4528-4ac9-9ef7-f33eaf13f14f', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('26de5eb1-7209-44dc-8acc-785dcb24f9d4', 'Eupolio Inj. (LG Chem Ltd)', 'd5bbe4fc-1f98-4621-8343-c9687a6343c9', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('26de5eb1-7209-44dc-8acc-785dcb24f9d4', 'Eupolio Inj. (LG Chem Ltd)', 'd5bbe4fc-1f98-4621-8343-c9687a6343c9', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('26de5eb1-7209-44dc-8acc-785dcb24f9d4', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('616adc11-778a-4e32-9b53-ed0ce6d3a9b1', '26de5eb1-7209-44dc-8acc-785dcb24f9d4', 'Primary', 1, 0.013570) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('616adc11-778a-4e32-9b53-ed0ce6d3a9b1', 'packaging_variant', 'UPSERT');
@@ -1963,7 +1963,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d8a57c77-9d13-4714-aec8-fc120c65d777', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d352f9cc-b6f0-4a07-9744-191e84c64ac7', '26de5eb1-7209-44dc-8acc-785dcb24f9d4', 'Tertiary', 3, 0.078880) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d352f9cc-b6f0-4a07-9744-191e84c64ac7', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('05ba80c5-ba5e-4100-a77b-59db8e7ca5d5', 'Eupolio Inj. (LG Chem Ltd)', '136dc6b0-7ab2-45f3-bef8-9f9d077ba508', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('05ba80c5-ba5e-4100-a77b-59db8e7ca5d5', 'Eupolio Inj. (LG Chem Ltd)', '136dc6b0-7ab2-45f3-bef8-9f9d077ba508', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('05ba80c5-ba5e-4100-a77b-59db8e7ca5d5', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c3b0c7ab-78af-42f1-9db6-a86bcf574cdf', '05ba80c5-ba5e-4100-a77b-59db8e7ca5d5', 'Primary', 1, 0.014850) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c3b0c7ab-78af-42f1-9db6-a86bcf574cdf', 'packaging_variant', 'UPSERT');
@@ -1971,7 +1971,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('02b45aa1-9165-4fcf-ad1c-4bac132f6b49', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3f92480b-33a2-448c-b4e8-01103aa2f90f', '05ba80c5-ba5e-4100-a77b-59db8e7ca5d5', 'Tertiary', 3, 0.083900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3f92480b-33a2-448c-b4e8-01103aa2f90f', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d0fccb23-f87f-4f16-b25e-315da2b2fbd6', 'ShanIPV™ (Sanofi Healthcare India Private Limited)', '136dc6b0-7ab2-45f3-bef8-9f9d077ba508', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d0fccb23-f87f-4f16-b25e-315da2b2fbd6', 'ShanIPV™ (Sanofi Healthcare India Private Limited)', '136dc6b0-7ab2-45f3-bef8-9f9d077ba508', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d0fccb23-f87f-4f16-b25e-315da2b2fbd6', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a3506e7e-7bc5-4264-bdd0-7f869c12f2d6', 'd0fccb23-f87f-4f16-b25e-315da2b2fbd6', 'Primary', 1, 0.030400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a3506e7e-7bc5-4264-bdd0-7f869c12f2d6', 'packaging_variant', 'UPSERT');
@@ -1983,7 +1983,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('0e7ecff8-0978-4b27-a1eb-6334d3c82976', '0e7ecff8-0978-4b27-a1eb-6334d3c82976') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0e7ecff8-0978-4b27-a1eb-6334d3c82976', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_0e7ecff8-0978-4b27-a1eb-6334d3c82976', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '0e7ecff8-0978-4b27-a1eb-6334d3c82976') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('dfb54c12-4e1a-4be1-b8cc-5fe0d33123a6', 'ShanIPV™ (Sanofi Healthcare India Private Limited)', '0e7ecff8-0978-4b27-a1eb-6334d3c82976', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('dfb54c12-4e1a-4be1-b8cc-5fe0d33123a6', 'ShanIPV™ (Sanofi Healthcare India Private Limited)', '0e7ecff8-0978-4b27-a1eb-6334d3c82976', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dfb54c12-4e1a-4be1-b8cc-5fe0d33123a6', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7afbb79d-401a-4ac4-b5f5-6c5140739f99', 'dfb54c12-4e1a-4be1-b8cc-5fe0d33123a6', 'Primary', 1, 0.030400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7afbb79d-401a-4ac4-b5f5-6c5140739f99', 'packaging_variant', 'UPSERT');
@@ -1991,7 +1991,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bbe8430d-3481-4cfd-b04a-a604d75f2c25', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d72867fe-611f-4e51-8ddf-ed00e5ceaf1f', 'dfb54c12-4e1a-4be1-b8cc-5fe0d33123a6', 'Tertiary', 3, 0.208900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d72867fe-611f-4e51-8ddf-ed00e5ceaf1f', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d84c92ca-e5d7-4a0b-85d3-4df22e61b056', 'IMOVAX POLIO (Sanofi Pasteur SA)', '0e7ecff8-0978-4b27-a1eb-6334d3c82976', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d84c92ca-e5d7-4a0b-85d3-4df22e61b056', 'IMOVAX POLIO (Sanofi Pasteur SA)', '0e7ecff8-0978-4b27-a1eb-6334d3c82976', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d84c92ca-e5d7-4a0b-85d3-4df22e61b056', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1f75af53-c018-4ae4-b019-daf3019f08ce', 'd84c92ca-e5d7-4a0b-85d3-4df22e61b056', 'Primary', 1, 0.024600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1f75af53-c018-4ae4-b019-daf3019f08ce', 'packaging_variant', 'UPSERT');
@@ -1999,7 +1999,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e14af416-8f6b-4d2b-8602-64edd4490da8', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f6698219-f014-49d7-acdd-c7ec8f2830db', 'd84c92ca-e5d7-4a0b-85d3-4df22e61b056', 'Tertiary', 3, 0.024600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f6698219-f014-49d7-acdd-c7ec8f2830db', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ea8bddc5-33a2-40e4-99f4-ca39d742d563', 'Poliomyelitis Vaccine (Inactivated) (Serum Institute of India Pvt. Ltd.)', 'd5bbe4fc-1f98-4621-8343-c9687a6343c9', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ea8bddc5-33a2-40e4-99f4-ca39d742d563', 'Poliomyelitis Vaccine (Inactivated) (Serum Institute of India Pvt. Ltd.)', 'd5bbe4fc-1f98-4621-8343-c9687a6343c9', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ea8bddc5-33a2-40e4-99f4-ca39d742d563', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8cfadd73-dad9-414e-9c54-9a40cef8f29e', 'ea8bddc5-33a2-40e4-99f4-ca39d742d563', 'Primary', 1, 0.017580) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8cfadd73-dad9-414e-9c54-9a40cef8f29e', 'packaging_variant', 'UPSERT');
@@ -2007,7 +2007,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5f1c3bbb-197e-4ba5-91d5-4ffbb7485162', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('fc99b4e4-42c7-425e-bf5d-29426ab175a3', 'ea8bddc5-33a2-40e4-99f4-ca39d742d563', 'Tertiary', 3, 0.086400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fc99b4e4-42c7-425e-bf5d-29426ab175a3', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ed8db5d2-9147-4ed4-bf87-0a1e30641dc2', 'Poliomyelitis Vaccine (Inactivated) (Serum Institute of India Pvt. Ltd.)', '398dfacc-27e8-4b2d-aa7f-d387a93a9464', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ed8db5d2-9147-4ed4-bf87-0a1e30641dc2', 'Poliomyelitis Vaccine (Inactivated) (Serum Institute of India Pvt. Ltd.)', '398dfacc-27e8-4b2d-aa7f-d387a93a9464', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ed8db5d2-9147-4ed4-bf87-0a1e30641dc2', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('dfa7722c-1f0a-4427-b357-9f73d9cc3a34', 'ed8db5d2-9147-4ed4-bf87-0a1e30641dc2', 'Primary', 1, 0.017580) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dfa7722c-1f0a-4427-b357-9f73d9cc3a34', 'packaging_variant', 'UPSERT');
@@ -2015,7 +2015,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6546b17e-397b-4769-b692-4a9180daabb6', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('517b7516-f9d4-46a2-a4d0-ff6f6eac225f', 'ed8db5d2-9147-4ed4-bf87-0a1e30641dc2', 'Tertiary', 3, 0.086400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('517b7516-f9d4-46a2-a4d0-ff6f6eac225f', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('231f841e-9764-4194-abd5-9fb2c5ab870b', 'Poliomyelitis Vaccine (Inactivated) (Serum Institute of India Pvt. Ltd.)', '136dc6b0-7ab2-45f3-bef8-9f9d077ba508', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('231f841e-9764-4194-abd5-9fb2c5ab870b', 'Poliomyelitis Vaccine (Inactivated) (Serum Institute of India Pvt. Ltd.)', '136dc6b0-7ab2-45f3-bef8-9f9d077ba508', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('231f841e-9764-4194-abd5-9fb2c5ab870b', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('28088313-7dfd-4744-a493-6ace9bf9d598', '231f841e-9764-4194-abd5-9fb2c5ab870b', 'Primary', 1, 0.017600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('28088313-7dfd-4744-a493-6ace9bf9d598', 'packaging_variant', 'UPSERT');
@@ -2027,7 +2027,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('95e552d3-fe9f-4a8a-b070-1f817575a377', '95e552d3-fe9f-4a8a-b070-1f817575a377') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('95e552d3-fe9f-4a8a-b070-1f817575a377', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_95e552d3-fe9f-4a8a-b070-1f817575a377', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '95e552d3-fe9f-4a8a-b070-1f817575a377') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7613b246-0644-459d-912d-e9f504eb08fb', 'JEEV Pediatric (Biological E. Limited)', '95e552d3-fe9f-4a8a-b070-1f817575a377', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7613b246-0644-459d-912d-e9f504eb08fb', 'JEEV Pediatric (Biological E. Limited)', '95e552d3-fe9f-4a8a-b070-1f817575a377', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7613b246-0644-459d-912d-e9f504eb08fb', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('40de4113-37c7-4349-b78a-fd07cfdbde98', '7613b246-0644-459d-912d-e9f504eb08fb', 'Primary', 1, 0.014700) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('40de4113-37c7-4349-b78a-fd07cfdbde98', 'packaging_variant', 'UPSERT');
@@ -2039,7 +2039,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('0765b718-5fdc-4fae-828a-bad35f1c1f14', '0765b718-5fdc-4fae-828a-bad35f1c1f14') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0765b718-5fdc-4fae-828a-bad35f1c1f14', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_0765b718-5fdc-4fae-828a-bad35f1c1f14', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '0765b718-5fdc-4fae-828a-bad35f1c1f14') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('790fe490-7fce-4c10-95df-e9e573a8c128', 'JEEV Pediatric (Biological E. Limited)', '0765b718-5fdc-4fae-828a-bad35f1c1f14', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('790fe490-7fce-4c10-95df-e9e573a8c128', 'JEEV Pediatric (Biological E. Limited)', '0765b718-5fdc-4fae-828a-bad35f1c1f14', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('790fe490-7fce-4c10-95df-e9e573a8c128', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ebd7caf3-cb37-4536-aa1d-ed7cb892b9fe', '790fe490-7fce-4c10-95df-e9e573a8c128', 'Primary', 1, 0.014500) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ebd7caf3-cb37-4536-aa1d-ed7cb892b9fe', 'packaging_variant', 'UPSERT');
@@ -2051,7 +2051,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('9f8c7dcf-8d62-4b3c-bf19-309ed066d2a3', '9f8c7dcf-8d62-4b3c-bf19-309ed066d2a3') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9f8c7dcf-8d62-4b3c-bf19-309ed066d2a3', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_9f8c7dcf-8d62-4b3c-bf19-309ed066d2a3', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '9f8c7dcf-8d62-4b3c-bf19-309ed066d2a3') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0377bb30-2296-403c-9c3a-a0b5f84e5f9a', 'Japanese Encephalitis Vaccine Live (SA14-14-2) (Chengdu Institute of Biological Products Co.,Ltd)', '9f8c7dcf-8d62-4b3c-bf19-309ed066d2a3', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0377bb30-2296-403c-9c3a-a0b5f84e5f9a', 'Japanese Encephalitis Vaccine Live (SA14-14-2) (Chengdu Institute of Biological Products Co.,Ltd)', '9f8c7dcf-8d62-4b3c-bf19-309ed066d2a3', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0377bb30-2296-403c-9c3a-a0b5f84e5f9a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ccd9203b-51f6-4729-ab33-c68b73c458c9', '0377bb30-2296-403c-9c3a-a0b5f84e5f9a', 'Primary', 1, 0.021200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ccd9203b-51f6-4729-ab33-c68b73c458c9', 'packaging_variant', 'UPSERT');
@@ -2063,7 +2063,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('a8bf304d-3fd4-4638-9643-94fe9c381c48', 'a8bf304d-3fd4-4638-9643-94fe9c381c48') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a8bf304d-3fd4-4638-9643-94fe9c381c48', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_a8bf304d-3fd4-4638-9643-94fe9c381c48', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'a8bf304d-3fd4-4638-9643-94fe9c381c48') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b1104527-c735-493b-aff3-aac2dc5cffd8', 'Japanese Encephalitis Vaccine Live (SA14-14-2) (Chengdu Institute of Biological Products Co.,Ltd)', 'a8bf304d-3fd4-4638-9643-94fe9c381c48', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b1104527-c735-493b-aff3-aac2dc5cffd8', 'Japanese Encephalitis Vaccine Live (SA14-14-2) (Chengdu Institute of Biological Products Co.,Ltd)', 'a8bf304d-3fd4-4638-9643-94fe9c381c48', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b1104527-c735-493b-aff3-aac2dc5cffd8', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2fc0329b-28ad-4278-8ad4-a1e750f46642', 'b1104527-c735-493b-aff3-aac2dc5cffd8', 'Primary', 1, 0.0) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2fc0329b-28ad-4278-8ad4-a1e750f46642', 'packaging_variant', 'UPSERT');
@@ -2077,7 +2077,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('d5807e2b-6ddd-4c43-becb-2d8590d6453c', 'd5807e2b-6ddd-4c43-becb-2d8590d6453c') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d5807e2b-6ddd-4c43-becb-2d8590d6453c', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_d5807e2b-6ddd-4c43-becb-2d8590d6453c', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'd5807e2b-6ddd-4c43-becb-2d8590d6453c') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5959168f-ddff-44a5-9192-15bd60836ca1', 'Japanese Encephalitis Vaccine Live (SA14-14-2) (Chengdu Institute of Biological Products Co.,Ltd)', 'd5807e2b-6ddd-4c43-becb-2d8590d6453c', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5959168f-ddff-44a5-9192-15bd60836ca1', 'Japanese Encephalitis Vaccine Live (SA14-14-2) (Chengdu Institute of Biological Products Co.,Ltd)', 'd5807e2b-6ddd-4c43-becb-2d8590d6453c', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5959168f-ddff-44a5-9192-15bd60836ca1', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('69553932-8c86-4a55-a9f0-9fea341efd60', '5959168f-ddff-44a5-9192-15bd60836ca1', 'Primary', 1, 0.021000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('69553932-8c86-4a55-a9f0-9fea341efd60', 'packaging_variant', 'UPSERT');
@@ -2089,7 +2089,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('095f631b-7a6c-434e-be9a-dc814aeb47e6', '095f631b-7a6c-434e-be9a-dc814aeb47e6') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('095f631b-7a6c-434e-be9a-dc814aeb47e6', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_095f631b-7a6c-434e-be9a-dc814aeb47e6', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '095f631b-7a6c-434e-be9a-dc814aeb47e6') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('feb78ca3-6c94-43e8-8c99-f66fd58111cf', 'Japanese Encephalitis Vaccine Live (SA14-14-2) (Chengdu Institute of Biological Products Co.,Ltd)', '095f631b-7a6c-434e-be9a-dc814aeb47e6', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('feb78ca3-6c94-43e8-8c99-f66fd58111cf', 'Japanese Encephalitis Vaccine Live (SA14-14-2) (Chengdu Institute of Biological Products Co.,Ltd)', '095f631b-7a6c-434e-be9a-dc814aeb47e6', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('feb78ca3-6c94-43e8-8c99-f66fd58111cf', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2203e911-ba0f-4e6d-bc30-6f7f5d4341ed', 'feb78ca3-6c94-43e8-8c99-f66fd58111cf', 'Primary', 1, 0.0) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2203e911-ba0f-4e6d-bc30-6f7f5d4341ed', 'packaging_variant', 'UPSERT');
@@ -2103,7 +2103,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('75a725cc-9df0-46db-b616-252cf6db3b02', '75a725cc-9df0-46db-b616-252cf6db3b02') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('75a725cc-9df0-46db-b616-252cf6db3b02', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_75a725cc-9df0-46db-b616-252cf6db3b02', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '75a725cc-9df0-46db-b616-252cf6db3b02') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5a61fb6b-c118-49e7-a07f-2396f34c6e87', 'IMOJEV MD (GPO-MBP Co., Ltd.)', '75a725cc-9df0-46db-b616-252cf6db3b02', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5a61fb6b-c118-49e7-a07f-2396f34c6e87', 'IMOJEV MD (GPO-MBP Co., Ltd.)', '75a725cc-9df0-46db-b616-252cf6db3b02', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5a61fb6b-c118-49e7-a07f-2396f34c6e87', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('23bcc879-3a22-4728-9d8a-3a9297de844b', '5a61fb6b-c118-49e7-a07f-2396f34c6e87', 'Primary', 1, 0.010000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('23bcc879-3a22-4728-9d8a-3a9297de844b', 'packaging_variant', 'UPSERT');
@@ -2115,7 +2115,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('dd1468a3-aa44-4c5c-badf-e6b49e021965', 'dd1468a3-aa44-4c5c-badf-e6b49e021965') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dd1468a3-aa44-4c5c-badf-e6b49e021965', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_dd1468a3-aa44-4c5c-badf-e6b49e021965', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'dd1468a3-aa44-4c5c-badf-e6b49e021965') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3bb28d3f-9749-433c-8419-479ebf6be147', 'IMOJEV MD (GPO-MBP Co., Ltd.)', 'dd1468a3-aa44-4c5c-badf-e6b49e021965', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3bb28d3f-9749-433c-8419-479ebf6be147', 'IMOJEV MD (GPO-MBP Co., Ltd.)', 'dd1468a3-aa44-4c5c-badf-e6b49e021965', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3bb28d3f-9749-433c-8419-479ebf6be147', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('08ce3a44-f990-45d8-9c16-2e331d21b992', '3bb28d3f-9749-433c-8419-479ebf6be147', 'Primary', 1, 0.0) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('08ce3a44-f990-45d8-9c16-2e331d21b992', 'packaging_variant', 'UPSERT');
@@ -2129,7 +2129,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('db15fcad-90a4-48c1-aae4-e5c97320f8b6', 'db15fcad-90a4-48c1-aae4-e5c97320f8b6') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('db15fcad-90a4-48c1-aae4-e5c97320f8b6', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_db15fcad-90a4-48c1-aae4-e5c97320f8b6', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'db15fcad-90a4-48c1-aae4-e5c97320f8b6') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5c2dad1c-cfe7-4416-9c82-267e6feba658', 'Measles vaccine (PT Bio Farma (Persero))', 'db15fcad-90a4-48c1-aae4-e5c97320f8b6', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5c2dad1c-cfe7-4416-9c82-267e6feba658', 'Measles vaccine (PT Bio Farma (Persero))', 'db15fcad-90a4-48c1-aae4-e5c97320f8b6', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5c2dad1c-cfe7-4416-9c82-267e6feba658', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3a884e9c-9e3c-4280-a820-82ee33a49ab4', '5c2dad1c-cfe7-4416-9c82-267e6feba658', 'Primary', 1, 0.013000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3a884e9c-9e3c-4280-a820-82ee33a49ab4', 'packaging_variant', 'UPSERT');
@@ -2141,7 +2141,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('005dc699-791b-41c0-9b0e-aa963fcf1f85', '005dc699-791b-41c0-9b0e-aa963fcf1f85') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('005dc699-791b-41c0-9b0e-aa963fcf1f85', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_005dc699-791b-41c0-9b0e-aa963fcf1f85', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '005dc699-791b-41c0-9b0e-aa963fcf1f85') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0f0b3209-6355-46ea-9be0-aa50244b2189', 'Measles vaccine (PT Bio Farma (Persero))', '005dc699-791b-41c0-9b0e-aa963fcf1f85', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0f0b3209-6355-46ea-9be0-aa50244b2189', 'Measles vaccine (PT Bio Farma (Persero))', '005dc699-791b-41c0-9b0e-aa963fcf1f85', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0f0b3209-6355-46ea-9be0-aa50244b2189', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3a673c71-7739-495a-9fd8-50ba7980ff5b', '0f0b3209-6355-46ea-9be0-aa50244b2189', 'Primary', 1, 0.0) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3a673c71-7739-495a-9fd8-50ba7980ff5b', 'packaging_variant', 'UPSERT');
@@ -2155,7 +2155,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('c5e4b990-c73c-4f07-b324-e84606671630', 'c5e4b990-c73c-4f07-b324-e84606671630') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c5e4b990-c73c-4f07-b324-e84606671630', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_c5e4b990-c73c-4f07-b324-e84606671630', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'c5e4b990-c73c-4f07-b324-e84606671630') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('849914e8-5eb8-4396-b4d3-f5287854389d', 'Measles vaccine (PT Bio Farma (Persero))', 'c5e4b990-c73c-4f07-b324-e84606671630', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('849914e8-5eb8-4396-b4d3-f5287854389d', 'Measles vaccine (PT Bio Farma (Persero))', 'c5e4b990-c73c-4f07-b324-e84606671630', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('849914e8-5eb8-4396-b4d3-f5287854389d', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0d10664a-a2f0-4284-908e-1fc208ad4151', '849914e8-5eb8-4396-b4d3-f5287854389d', 'Primary', 1, 0.033000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0d10664a-a2f0-4284-908e-1fc208ad4151', 'packaging_variant', 'UPSERT');
@@ -2167,7 +2167,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('05adfd49-758e-4df0-ba6f-ad042efe96ae', '05adfd49-758e-4df0-ba6f-ad042efe96ae') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('05adfd49-758e-4df0-ba6f-ad042efe96ae', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_05adfd49-758e-4df0-ba6f-ad042efe96ae', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '05adfd49-758e-4df0-ba6f-ad042efe96ae') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d5a561bc-ec11-4105-911e-31a5c6cb5e41', 'Measles vaccine (PT Bio Farma (Persero))', '05adfd49-758e-4df0-ba6f-ad042efe96ae', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d5a561bc-ec11-4105-911e-31a5c6cb5e41', 'Measles vaccine (PT Bio Farma (Persero))', '05adfd49-758e-4df0-ba6f-ad042efe96ae', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d5a561bc-ec11-4105-911e-31a5c6cb5e41', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b9f50c39-8783-45c3-b65c-0a625e268573', 'd5a561bc-ec11-4105-911e-31a5c6cb5e41', 'Primary', 1, 0.0) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b9f50c39-8783-45c3-b65c-0a625e268573', 'packaging_variant', 'UPSERT');
@@ -2177,7 +2177,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dcf571d8-0ef7-43f2-a85e-c5e0ac042d33', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('37b17be2-a2e9-40e4-9f9f-e11457ad8fee', '849914e8-5eb8-4396-b4d3-f5287854389d', 'd5a561bc-ec11-4105-911e-31a5c6cb5e41', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('37b17be2-a2e9-40e4-9f9f-e11457ad8fee', 'bundled_item', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('81ae424d-6bc5-4613-a4a3-ab830c4f7795', 'ROUVAX (Sanofi Pasteur SA)', 'db15fcad-90a4-48c1-aae4-e5c97320f8b6', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('81ae424d-6bc5-4613-a4a3-ab830c4f7795', 'ROUVAX (Sanofi Pasteur SA)', 'db15fcad-90a4-48c1-aae4-e5c97320f8b6', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('81ae424d-6bc5-4613-a4a3-ab830c4f7795', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7a10d747-e06a-45dd-9506-a3f476e7c91d', '81ae424d-6bc5-4613-a4a3-ab830c4f7795', 'Primary', 1, 0.023100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7a10d747-e06a-45dd-9506-a3f476e7c91d', 'packaging_variant', 'UPSERT');
@@ -2185,7 +2185,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('06babb25-ec80-4840-9435-466f91997c4e', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('03c4ea85-7d72-4bdd-a476-27f29bf593e3', '81ae424d-6bc5-4613-a4a3-ab830c4f7795', 'Tertiary', 3, 0.023100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('03c4ea85-7d72-4bdd-a476-27f29bf593e3', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c4828186-bc7c-4450-9b4b-bdaff48adcca', 'ROUVAX (Sanofi Pasteur SA)', '005dc699-791b-41c0-9b0e-aa963fcf1f85', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c4828186-bc7c-4450-9b4b-bdaff48adcca', 'ROUVAX (Sanofi Pasteur SA)', '005dc699-791b-41c0-9b0e-aa963fcf1f85', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c4828186-bc7c-4450-9b4b-bdaff48adcca', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('21d05fdc-fb28-4de3-badd-83efbd5ef2b4', 'c4828186-bc7c-4450-9b4b-bdaff48adcca', 'Primary', 1, 0.0) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('21d05fdc-fb28-4de3-badd-83efbd5ef2b4', 'packaging_variant', 'UPSERT');
@@ -2199,7 +2199,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('4429a7b0-95ff-4ac3-9794-e2a050231558', '4429a7b0-95ff-4ac3-9794-e2a050231558') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4429a7b0-95ff-4ac3-9794-e2a050231558', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_4429a7b0-95ff-4ac3-9794-e2a050231558', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '4429a7b0-95ff-4ac3-9794-e2a050231558') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3e652c58-e1ca-49c7-8ceb-a7e3ee122b96', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '4429a7b0-95ff-4ac3-9794-e2a050231558', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3e652c58-e1ca-49c7-8ceb-a7e3ee122b96', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '4429a7b0-95ff-4ac3-9794-e2a050231558', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3e652c58-e1ca-49c7-8ceb-a7e3ee122b96', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2bbcc14c-e626-47bc-9f3a-21cd17275657', '3e652c58-e1ca-49c7-8ceb-a7e3ee122b96', 'Primary', 1, 0.021090) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2bbcc14c-e626-47bc-9f3a-21cd17275657', 'packaging_variant', 'UPSERT');
@@ -2211,7 +2211,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('df396fce-8c95-4d94-9e9d-48609fda47fb', 'df396fce-8c95-4d94-9e9d-48609fda47fb') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('df396fce-8c95-4d94-9e9d-48609fda47fb', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_df396fce-8c95-4d94-9e9d-48609fda47fb', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'df396fce-8c95-4d94-9e9d-48609fda47fb') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('19abe1b1-2a63-4f2c-98a4-dc15acec5bd6', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'df396fce-8c95-4d94-9e9d-48609fda47fb', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('19abe1b1-2a63-4f2c-98a4-dc15acec5bd6', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'df396fce-8c95-4d94-9e9d-48609fda47fb', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('19abe1b1-2a63-4f2c-98a4-dc15acec5bd6', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d4b12fa9-4a9e-4c63-83c3-8fe184c04984', '19abe1b1-2a63-4f2c-98a4-dc15acec5bd6', 'Primary', 1, 0.0125) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d4b12fa9-4a9e-4c63-83c3-8fe184c04984', 'packaging_variant', 'UPSERT');
@@ -2225,7 +2225,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('45fa057a-85dc-40a7-a9ab-4d86d9eb0df2', '45fa057a-85dc-40a7-a9ab-4d86d9eb0df2') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('45fa057a-85dc-40a7-a9ab-4d86d9eb0df2', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_45fa057a-85dc-40a7-a9ab-4d86d9eb0df2', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '45fa057a-85dc-40a7-a9ab-4d86d9eb0df2') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('36422b70-add0-4a60-a642-d45c871669ce', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '45fa057a-85dc-40a7-a9ab-4d86d9eb0df2', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('36422b70-add0-4a60-a642-d45c871669ce', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '45fa057a-85dc-40a7-a9ab-4d86d9eb0df2', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('36422b70-add0-4a60-a642-d45c871669ce', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('52c2bd03-cfcd-4985-a238-321b0a4deb7e', '36422b70-add0-4a60-a642-d45c871669ce', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('52c2bd03-cfcd-4985-a238-321b0a4deb7e', 'packaging_variant', 'UPSERT');
@@ -2237,7 +2237,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('264990ca-f6b1-4c52-8bcc-045a9252205b', '264990ca-f6b1-4c52-8bcc-045a9252205b') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('264990ca-f6b1-4c52-8bcc-045a9252205b', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_264990ca-f6b1-4c52-8bcc-045a9252205b', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '264990ca-f6b1-4c52-8bcc-045a9252205b') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bd53e91e-91ef-4040-9d06-c591ee7e2b06', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '264990ca-f6b1-4c52-8bcc-045a9252205b', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bd53e91e-91ef-4040-9d06-c591ee7e2b06', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '264990ca-f6b1-4c52-8bcc-045a9252205b', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bd53e91e-91ef-4040-9d06-c591ee7e2b06', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0facc647-a6e9-4511-bd5d-59b66b7cf1f4', 'bd53e91e-91ef-4040-9d06-c591ee7e2b06', 'Primary', 1, 0.0126) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0facc647-a6e9-4511-bd5d-59b66b7cf1f4', 'packaging_variant', 'UPSERT');
@@ -2251,7 +2251,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('71afe54f-9085-4449-a863-2f4fdf5af63e', '71afe54f-9085-4449-a863-2f4fdf5af63e') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('71afe54f-9085-4449-a863-2f4fdf5af63e', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_71afe54f-9085-4449-a863-2f4fdf5af63e', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '71afe54f-9085-4449-a863-2f4fdf5af63e') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5a8f6d2e-0c42-4f3f-8e63-03f18cd015c0', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '71afe54f-9085-4449-a863-2f4fdf5af63e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5a8f6d2e-0c42-4f3f-8e63-03f18cd015c0', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '71afe54f-9085-4449-a863-2f4fdf5af63e', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5a8f6d2e-0c42-4f3f-8e63-03f18cd015c0', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('47ead8d9-9db7-4e52-880e-bc43f0b673a1', '5a8f6d2e-0c42-4f3f-8e63-03f18cd015c0', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('47ead8d9-9db7-4e52-880e-bc43f0b673a1', 'packaging_variant', 'UPSERT');
@@ -2263,7 +2263,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('6ec1459f-d95b-4525-b3a4-08ef0e5ded23', '6ec1459f-d95b-4525-b3a4-08ef0e5ded23') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6ec1459f-d95b-4525-b3a4-08ef0e5ded23', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_6ec1459f-d95b-4525-b3a4-08ef0e5ded23', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '6ec1459f-d95b-4525-b3a4-08ef0e5ded23') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('13ad9c5b-40be-4bed-86d7-2b073472105e', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '6ec1459f-d95b-4525-b3a4-08ef0e5ded23', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('13ad9c5b-40be-4bed-86d7-2b073472105e', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '6ec1459f-d95b-4525-b3a4-08ef0e5ded23', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('13ad9c5b-40be-4bed-86d7-2b073472105e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2939fb16-44a8-4d0d-934e-5b4dcec8c716', '13ad9c5b-40be-4bed-86d7-2b073472105e', 'Primary', 1, 0.0275) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2939fb16-44a8-4d0d-934e-5b4dcec8c716', 'packaging_variant', 'UPSERT');
@@ -2273,7 +2273,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('165f041a-0598-42e8-8c9f-02a117476e4a', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('b8854276-56d0-48d4-9029-26cc0ceb9fa1', '5a8f6d2e-0c42-4f3f-8e63-03f18cd015c0', '13ad9c5b-40be-4bed-86d7-2b073472105e', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b8854276-56d0-48d4-9029-26cc0ceb9fa1', 'bundled_item', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('61426324-0b8c-406d-a5d0-2a58f2cb7dd7', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'db15fcad-90a4-48c1-aae4-e5c97320f8b6', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('61426324-0b8c-406d-a5d0-2a58f2cb7dd7', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'db15fcad-90a4-48c1-aae4-e5c97320f8b6', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('61426324-0b8c-406d-a5d0-2a58f2cb7dd7', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ef9325ba-7f51-4361-91c1-9bccc61476fc', '61426324-0b8c-406d-a5d0-2a58f2cb7dd7', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ef9325ba-7f51-4361-91c1-9bccc61476fc', 'packaging_variant', 'UPSERT');
@@ -2281,7 +2281,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b1ca2f85-5322-4bbf-955d-e7e5dca4e81f', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ae291ee4-d4f4-44ae-9427-b229b12464c9', '61426324-0b8c-406d-a5d0-2a58f2cb7dd7', 'Tertiary', 3, 0.098400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ae291ee4-d4f4-44ae-9427-b229b12464c9', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('dfff7ab0-5111-4777-96e5-28422185f54a', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '005dc699-791b-41c0-9b0e-aa963fcf1f85', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('dfff7ab0-5111-4777-96e5-28422185f54a', 'Measles Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '005dc699-791b-41c0-9b0e-aa963fcf1f85', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dfff7ab0-5111-4777-96e5-28422185f54a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('16bcf7a4-8a97-4b12-8bd9-b4cc864b8a2f', 'dfff7ab0-5111-4777-96e5-28422185f54a', 'Primary', 1, 0.031) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('16bcf7a4-8a97-4b12-8bd9-b4cc864b8a2f', 'packaging_variant', 'UPSERT');
@@ -2295,7 +2295,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('3b4515ce-647c-488b-b328-3730f6a495d2', '3b4515ce-647c-488b-b328-3730f6a495d2') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3b4515ce-647c-488b-b328-3730f6a495d2', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_3b4515ce-647c-488b-b328-3730f6a495d2', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '3b4515ce-647c-488b-b328-3730f6a495d2') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('1d33cb6d-19f3-44d2-a069-81b2590eeb91', 'MenAfriVac A Conjugate Vaccine (Serum Institute of India Pvt. Ltd.)', '3b4515ce-647c-488b-b328-3730f6a495d2', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('1d33cb6d-19f3-44d2-a069-81b2590eeb91', 'MenAfriVac A Conjugate Vaccine (Serum Institute of India Pvt. Ltd.)', '3b4515ce-647c-488b-b328-3730f6a495d2', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1d33cb6d-19f3-44d2-a069-81b2590eeb91', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3170cb7c-d011-42d9-8bb1-f2e5480e32ea', '1d33cb6d-19f3-44d2-a069-81b2590eeb91', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3170cb7c-d011-42d9-8bb1-f2e5480e32ea', 'packaging_variant', 'UPSERT');
@@ -2307,7 +2307,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('d97959b1-33fb-4834-b773-42fb1df1232e', 'd97959b1-33fb-4834-b773-42fb1df1232e') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d97959b1-33fb-4834-b773-42fb1df1232e', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_d97959b1-33fb-4834-b773-42fb1df1232e', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'd97959b1-33fb-4834-b773-42fb1df1232e') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3566a677-a740-43fc-8117-5e4715697c9f', 'MenAfriVac A Conjugate Vaccine (Serum Institute of India Pvt. Ltd.)', 'd97959b1-33fb-4834-b773-42fb1df1232e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3566a677-a740-43fc-8117-5e4715697c9f', 'MenAfriVac A Conjugate Vaccine (Serum Institute of India Pvt. Ltd.)', 'd97959b1-33fb-4834-b773-42fb1df1232e', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3566a677-a740-43fc-8117-5e4715697c9f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ae31fd6e-2e8f-4e8c-bfb3-ccad6217d332', '3566a677-a740-43fc-8117-5e4715697c9f', 'Primary', 1, 0.031) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ae31fd6e-2e8f-4e8c-bfb3-ccad6217d332', 'packaging_variant', 'UPSERT');
@@ -2321,7 +2321,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('a2af9466-5cad-40df-8cdf-66a8df0bf5bf', 'a2af9466-5cad-40df-8cdf-66a8df0bf5bf') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a2af9466-5cad-40df-8cdf-66a8df0bf5bf', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_a2af9466-5cad-40df-8cdf-66a8df0bf5bf', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'a2af9466-5cad-40df-8cdf-66a8df0bf5bf') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('919c65c1-4467-43c1-8ae3-0da562b20fdd', 'MenAfriVac 5 micrograms (Serum Institute of India Pvt. Ltd.)', 'a2af9466-5cad-40df-8cdf-66a8df0bf5bf', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('919c65c1-4467-43c1-8ae3-0da562b20fdd', 'MenAfriVac 5 micrograms (Serum Institute of India Pvt. Ltd.)', 'a2af9466-5cad-40df-8cdf-66a8df0bf5bf', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('919c65c1-4467-43c1-8ae3-0da562b20fdd', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a191c3e9-b982-49fe-a691-210ea94bbaed', '919c65c1-4467-43c1-8ae3-0da562b20fdd', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a191c3e9-b982-49fe-a691-210ea94bbaed', 'packaging_variant', 'UPSERT');
@@ -2333,7 +2333,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('69571c1c-90e0-407c-9b34-67a8284fc945', '69571c1c-90e0-407c-9b34-67a8284fc945') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('69571c1c-90e0-407c-9b34-67a8284fc945', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_69571c1c-90e0-407c-9b34-67a8284fc945', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '69571c1c-90e0-407c-9b34-67a8284fc945') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fcfffd5e-d247-4b3e-be87-f17adf7aea4d', 'MenAfriVac 5 micrograms (Serum Institute of India Pvt. Ltd.)', '69571c1c-90e0-407c-9b34-67a8284fc945', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fcfffd5e-d247-4b3e-be87-f17adf7aea4d', 'MenAfriVac 5 micrograms (Serum Institute of India Pvt. Ltd.)', '69571c1c-90e0-407c-9b34-67a8284fc945', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fcfffd5e-d247-4b3e-be87-f17adf7aea4d', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0cff1eaa-a820-4cf6-9639-408b0374bdef', 'fcfffd5e-d247-4b3e-be87-f17adf7aea4d', 'Primary', 1, 0.031) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0cff1eaa-a820-4cf6-9639-408b0374bdef', 'packaging_variant', 'UPSERT');
@@ -2347,7 +2347,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('369ee5e5-251b-4ad1-b2ce-ca6f41813c73', '369ee5e5-251b-4ad1-b2ce-ca6f41813c73') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('369ee5e5-251b-4ad1-b2ce-ca6f41813c73', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_369ee5e5-251b-4ad1-b2ce-ca6f41813c73', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '369ee5e5-251b-4ad1-b2ce-ca6f41813c73') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e2051f74-fa7e-4270-b3cf-797d747a59f7', 'POLYSACCHARIDE MENINGOCOCCAL A+C VACCINE (Sanofi Pasteur SA)', '369ee5e5-251b-4ad1-b2ce-ca6f41813c73', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e2051f74-fa7e-4270-b3cf-797d747a59f7', 'POLYSACCHARIDE MENINGOCOCCAL A+C VACCINE (Sanofi Pasteur SA)', '369ee5e5-251b-4ad1-b2ce-ca6f41813c73', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e2051f74-fa7e-4270-b3cf-797d747a59f7', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('9d5bce58-a191-4150-b8d8-be5e1a53a616', 'e2051f74-fa7e-4270-b3cf-797d747a59f7', 'Primary', 1, 0.023100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9d5bce58-a191-4150-b8d8-be5e1a53a616', 'packaging_variant', 'UPSERT');
@@ -2359,7 +2359,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('55876dbc-aa13-4dba-9fa4-c1fbdcb2058c', '55876dbc-aa13-4dba-9fa4-c1fbdcb2058c') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('55876dbc-aa13-4dba-9fa4-c1fbdcb2058c', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_55876dbc-aa13-4dba-9fa4-c1fbdcb2058c', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '55876dbc-aa13-4dba-9fa4-c1fbdcb2058c') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8975bae2-17f0-4ca2-8f57-f59ef83bc455', 'POLYSACCHARIDE MENINGOCOCCAL A+C VACCINE (Sanofi Pasteur SA)', '55876dbc-aa13-4dba-9fa4-c1fbdcb2058c', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8975bae2-17f0-4ca2-8f57-f59ef83bc455', 'POLYSACCHARIDE MENINGOCOCCAL A+C VACCINE (Sanofi Pasteur SA)', '55876dbc-aa13-4dba-9fa4-c1fbdcb2058c', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8975bae2-17f0-4ca2-8f57-f59ef83bc455', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('12df5a66-5b93-4aa7-be07-7658c046dd2b', '8975bae2-17f0-4ca2-8f57-f59ef83bc455', 'Primary', 1, 0.023) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('12df5a66-5b93-4aa7-be07-7658c046dd2b', 'packaging_variant', 'UPSERT');
@@ -2373,7 +2373,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('0c23948c-4c68-4309-aa01-62db1c1b0c5c', '0c23948c-4c68-4309-aa01-62db1c1b0c5c') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0c23948c-4c68-4309-aa01-62db1c1b0c5c', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_0c23948c-4c68-4309-aa01-62db1c1b0c5c', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '0c23948c-4c68-4309-aa01-62db1c1b0c5c') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('63489381-4d54-4bb4-8128-21f3438ffea2', 'MenFive™ (Serum Institute of India Pvt. Ltd.)', '0c23948c-4c68-4309-aa01-62db1c1b0c5c', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('63489381-4d54-4bb4-8128-21f3438ffea2', 'MenFive™ (Serum Institute of India Pvt. Ltd.)', '0c23948c-4c68-4309-aa01-62db1c1b0c5c', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('63489381-4d54-4bb4-8128-21f3438ffea2', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('66a0a815-a20c-40cd-a02d-fd239a93dfa1', '63489381-4d54-4bb4-8128-21f3438ffea2', 'Primary', 1, 0.015810) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('66a0a815-a20c-40cd-a02d-fd239a93dfa1', 'packaging_variant', 'UPSERT');
@@ -2385,7 +2385,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('a4bc9258-cf15-4750-9051-1a767f0473de', 'a4bc9258-cf15-4750-9051-1a767f0473de') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a4bc9258-cf15-4750-9051-1a767f0473de', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_a4bc9258-cf15-4750-9051-1a767f0473de', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'a4bc9258-cf15-4750-9051-1a767f0473de') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('74c55f25-82a9-4a3a-b447-a1bb25185428', 'MenFive™ (Serum Institute of India Pvt. Ltd.)', 'a4bc9258-cf15-4750-9051-1a767f0473de', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('74c55f25-82a9-4a3a-b447-a1bb25185428', 'MenFive™ (Serum Institute of India Pvt. Ltd.)', 'a4bc9258-cf15-4750-9051-1a767f0473de', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('74c55f25-82a9-4a3a-b447-a1bb25185428', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7c3ac46f-afe3-4647-b84a-b2e019c3b5d0', '74c55f25-82a9-4a3a-b447-a1bb25185428', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7c3ac46f-afe3-4647-b84a-b2e019c3b5d0', 'packaging_variant', 'UPSERT');
@@ -2397,7 +2397,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('4b34b59d-acb9-4581-8311-2e8b11ed3c69', '4b34b59d-acb9-4581-8311-2e8b11ed3c69') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4b34b59d-acb9-4581-8311-2e8b11ed3c69', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_4b34b59d-acb9-4581-8311-2e8b11ed3c69', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '4b34b59d-acb9-4581-8311-2e8b11ed3c69') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('232a8ccd-9a94-4dea-8133-1bb292e10c09', 'Menveo (Novartis Vaccines and Diagnostics S.r.l.)', '4b34b59d-acb9-4581-8311-2e8b11ed3c69', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('232a8ccd-9a94-4dea-8133-1bb292e10c09', 'Menveo (Novartis Vaccines and Diagnostics S.r.l.)', '4b34b59d-acb9-4581-8311-2e8b11ed3c69', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('232a8ccd-9a94-4dea-8133-1bb292e10c09', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('76b5797d-e115-4122-895c-da2687c05268', '232a8ccd-9a94-4dea-8133-1bb292e10c09', 'Primary', 1, 0.032600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('76b5797d-e115-4122-895c-da2687c05268', 'packaging_variant', 'UPSERT');
@@ -2409,7 +2409,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('23386877-3275-42a2-a03e-fa79dda3255f', '23386877-3275-42a2-a03e-fa79dda3255f') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('23386877-3275-42a2-a03e-fa79dda3255f', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_23386877-3275-42a2-a03e-fa79dda3255f', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '23386877-3275-42a2-a03e-fa79dda3255f') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('cdf6cf04-3126-473d-a0f9-a554679d3d5d', 'Nimenrix (Pfizer)', '23386877-3275-42a2-a03e-fa79dda3255f', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('cdf6cf04-3126-473d-a0f9-a554679d3d5d', 'Nimenrix (Pfizer)', '23386877-3275-42a2-a03e-fa79dda3255f', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cdf6cf04-3126-473d-a0f9-a554679d3d5d', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c4e10e8c-abdb-40f7-a79a-0c2ac9a62fc6', 'cdf6cf04-3126-473d-a0f9-a554679d3d5d', 'Primary', 1, 0.009680) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c4e10e8c-abdb-40f7-a79a-0c2ac9a62fc6', 'packaging_variant', 'UPSERT');
@@ -2421,7 +2421,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('067fb1f8-3ace-45a6-bef9-8c5b75657749', '067fb1f8-3ace-45a6-bef9-8c5b75657749') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('067fb1f8-3ace-45a6-bef9-8c5b75657749', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_067fb1f8-3ace-45a6-bef9-8c5b75657749', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '067fb1f8-3ace-45a6-bef9-8c5b75657749') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('45c04445-003b-459d-b39c-efb062996bd8', 'Nimenrix (Pfizer)', '067fb1f8-3ace-45a6-bef9-8c5b75657749', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('45c04445-003b-459d-b39c-efb062996bd8', 'Nimenrix (Pfizer)', '067fb1f8-3ace-45a6-bef9-8c5b75657749', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('45c04445-003b-459d-b39c-efb062996bd8', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('020f87aa-1cc9-465e-8da1-528b9f206d70', '45c04445-003b-459d-b39c-efb062996bd8', 'Primary', 1, 0.0103) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('020f87aa-1cc9-465e-8da1-528b9f206d70', 'packaging_variant', 'UPSERT');
@@ -2435,7 +2435,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('8c2312ac-ba16-43f9-b982-95d1e2157218', '8c2312ac-ba16-43f9-b982-95d1e2157218') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8c2312ac-ba16-43f9-b982-95d1e2157218', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_8c2312ac-ba16-43f9-b982-95d1e2157218', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '8c2312ac-ba16-43f9-b982-95d1e2157218') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('dc535d03-e374-40c1-a84f-1524ec8afd36', 'MenQuadfi (Sanofi Pasteur Inc.)', '8c2312ac-ba16-43f9-b982-95d1e2157218', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('dc535d03-e374-40c1-a84f-1524ec8afd36', 'MenQuadfi (Sanofi Pasteur Inc.)', '8c2312ac-ba16-43f9-b982-95d1e2157218', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dc535d03-e374-40c1-a84f-1524ec8afd36', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ee337087-e858-449d-85b6-246a1714eeff', 'dc535d03-e374-40c1-a84f-1524ec8afd36', 'Primary', 1, 0.014380) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ee337087-e858-449d-85b6-246a1714eeff', 'packaging_variant', 'UPSERT');
@@ -2443,7 +2443,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f29bf36c-1fcb-498f-83c3-a3842bef5014', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('30f28047-10b3-437b-b6d2-473fd043fd17', 'dc535d03-e374-40c1-a84f-1524ec8afd36', 'Tertiary', 3, 0.020510) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('30f28047-10b3-437b-b6d2-473fd043fd17', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('41acdc45-6f37-4c24-a86a-527c5f7f59f9', 'Menactra (Sanofi Pasteur-USA)', '8c2312ac-ba16-43f9-b982-95d1e2157218', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('41acdc45-6f37-4c24-a86a-527c5f7f59f9', 'Menactra (Sanofi Pasteur-USA)', '8c2312ac-ba16-43f9-b982-95d1e2157218', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('41acdc45-6f37-4c24-a86a-527c5f7f59f9', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1ec7ce4d-4b39-48f4-941d-3fa8b438b7d7', '41acdc45-6f37-4c24-a86a-527c5f7f59f9', 'Primary', 1, 0.020480) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1ec7ce4d-4b39-48f4-941d-3fa8b438b7d7', 'packaging_variant', 'UPSERT');
@@ -2455,7 +2455,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('5fdebf01-e941-4bc9-9015-48a4cb55931b', '5fdebf01-e941-4bc9-9015-48a4cb55931b') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5fdebf01-e941-4bc9-9015-48a4cb55931b', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_5fdebf01-e941-4bc9-9015-48a4cb55931b', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '5fdebf01-e941-4bc9-9015-48a4cb55931b') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f712e8a4-7141-45e9-be4d-faf6350987c3', 'Menomune (Sanofi Pasteur-USA)', '5fdebf01-e941-4bc9-9015-48a4cb55931b', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f712e8a4-7141-45e9-be4d-faf6350987c3', 'Menomune (Sanofi Pasteur-USA)', '5fdebf01-e941-4bc9-9015-48a4cb55931b', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f712e8a4-7141-45e9-be4d-faf6350987c3', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('89038b7f-78b3-4db8-9b1f-6b4aca9e5cc0', 'f712e8a4-7141-45e9-be4d-faf6350987c3', 'Primary', 1, 0.111300) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('89038b7f-78b3-4db8-9b1f-6b4aca9e5cc0', 'packaging_variant', 'UPSERT');
@@ -2467,7 +2467,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('f4b8b40b-b343-4682-8be2-c8cb92f74218', 'f4b8b40b-b343-4682-8be2-c8cb92f74218') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f4b8b40b-b343-4682-8be2-c8cb92f74218', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_f4b8b40b-b343-4682-8be2-c8cb92f74218', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'f4b8b40b-b343-4682-8be2-c8cb92f74218') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5b378c35-7741-4fcc-9789-b22dbec84b68', 'Priorix (GlaxoSmithKline Biologicals SA)', 'f4b8b40b-b343-4682-8be2-c8cb92f74218', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5b378c35-7741-4fcc-9789-b22dbec84b68', 'Priorix (GlaxoSmithKline Biologicals SA)', 'f4b8b40b-b343-4682-8be2-c8cb92f74218', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5b378c35-7741-4fcc-9789-b22dbec84b68', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f118c152-c4ad-4e76-ac3a-bca07815ce76', '5b378c35-7741-4fcc-9789-b22dbec84b68', 'Primary', 1, 0.009600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f118c152-c4ad-4e76-ac3a-bca07815ce76', 'packaging_variant', 'UPSERT');
@@ -2479,7 +2479,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('383bbbdb-755e-4609-9e60-c76465d389be', '383bbbdb-755e-4609-9e60-c76465d389be') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('383bbbdb-755e-4609-9e60-c76465d389be', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_383bbbdb-755e-4609-9e60-c76465d389be', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '383bbbdb-755e-4609-9e60-c76465d389be') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f72555bf-cb92-43e9-a824-5338bfa01894', 'Priorix (GlaxoSmithKline Biologicals SA)', '383bbbdb-755e-4609-9e60-c76465d389be', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f72555bf-cb92-43e9-a824-5338bfa01894', 'Priorix (GlaxoSmithKline Biologicals SA)', '383bbbdb-755e-4609-9e60-c76465d389be', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f72555bf-cb92-43e9-a824-5338bfa01894', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f2c40115-7f44-4458-9195-40573d4d75a0', 'f72555bf-cb92-43e9-a824-5338bfa01894', 'Primary', 1, 0.0257) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f2c40115-7f44-4458-9195-40573d4d75a0', 'packaging_variant', 'UPSERT');
@@ -2493,7 +2493,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('6ae6ae4f-48a6-4c00-bb67-ec5d7aa942ed', '6ae6ae4f-48a6-4c00-bb67-ec5d7aa942ed') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6ae6ae4f-48a6-4c00-bb67-ec5d7aa942ed', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_6ae6ae4f-48a6-4c00-bb67-ec5d7aa942ed', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '6ae6ae4f-48a6-4c00-bb67-ec5d7aa942ed') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('501ae7dc-7bcb-44bd-bbb9-b6a33c7e0dd3', 'Priorix (GlaxoSmithKline Biologicals SA)', '6ae6ae4f-48a6-4c00-bb67-ec5d7aa942ed', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('501ae7dc-7bcb-44bd-bbb9-b6a33c7e0dd3', 'Priorix (GlaxoSmithKline Biologicals SA)', '6ae6ae4f-48a6-4c00-bb67-ec5d7aa942ed', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('501ae7dc-7bcb-44bd-bbb9-b6a33c7e0dd3', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0a68c0b5-57eb-4be4-a3c7-6c216addb494', '501ae7dc-7bcb-44bd-bbb9-b6a33c7e0dd3', 'Primary', 1, 0.009600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0a68c0b5-57eb-4be4-a3c7-6c216addb494', 'packaging_variant', 'UPSERT');
@@ -2505,7 +2505,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('72032ce7-2a1a-4b67-afd5-7321ed306717', '72032ce7-2a1a-4b67-afd5-7321ed306717') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('72032ce7-2a1a-4b67-afd5-7321ed306717', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_72032ce7-2a1a-4b67-afd5-7321ed306717', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '72032ce7-2a1a-4b67-afd5-7321ed306717') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('02346e47-8562-4913-8390-315d2ca10214', 'Priorix (GlaxoSmithKline Biologicals SA)', '72032ce7-2a1a-4b67-afd5-7321ed306717', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('02346e47-8562-4913-8390-315d2ca10214', 'Priorix (GlaxoSmithKline Biologicals SA)', '72032ce7-2a1a-4b67-afd5-7321ed306717', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('02346e47-8562-4913-8390-315d2ca10214', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b8833138-bf2c-4f55-a3f1-734e47af4664', '02346e47-8562-4913-8390-315d2ca10214', 'Primary', 1, 0.0256) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b8833138-bf2c-4f55-a3f1-734e47af4664', 'packaging_variant', 'UPSERT');
@@ -2515,7 +2515,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('94257225-e663-4fa2-b9c5-35d0e30a617a', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('02b2e83f-1198-42d0-b4ab-ec637300bda5', '501ae7dc-7bcb-44bd-bbb9-b6a33c7e0dd3', '02346e47-8562-4913-8390-315d2ca10214', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('02b2e83f-1198-42d0-b4ab-ec637300bda5', 'bundled_item', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('848cf63b-5577-43e7-b385-da5e2acd485e', 'rHA M-M-R II (Merck Vaccines)', 'f4b8b40b-b343-4682-8be2-c8cb92f74218', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('848cf63b-5577-43e7-b385-da5e2acd485e', 'rHA M-M-R II (Merck Vaccines)', 'f4b8b40b-b343-4682-8be2-c8cb92f74218', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('848cf63b-5577-43e7-b385-da5e2acd485e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('709da388-f043-4a0b-a7a4-e178f47f8ed4', '848cf63b-5577-43e7-b385-da5e2acd485e', 'Primary', 1, 0.015000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('709da388-f043-4a0b-a7a4-e178f47f8ed4', 'packaging_variant', 'UPSERT');
@@ -2523,7 +2523,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5e22a199-6b37-4722-9949-43a69cb0c9cb', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('de01ae6f-d3bb-47e2-993b-62b12f931100', '848cf63b-5577-43e7-b385-da5e2acd485e', 'Tertiary', 3, 0.019920) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('de01ae6f-d3bb-47e2-993b-62b12f931100', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('03e30f65-4223-46af-b90a-4ea3bf4e1e7b', 'rHA M-M-R II (Merck Vaccines)', '383bbbdb-755e-4609-9e60-c76465d389be', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('03e30f65-4223-46af-b90a-4ea3bf4e1e7b', 'rHA M-M-R II (Merck Vaccines)', '383bbbdb-755e-4609-9e60-c76465d389be', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('03e30f65-4223-46af-b90a-4ea3bf4e1e7b', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('40f1f7e4-d3ec-4866-a714-ae60886119fe', '03e30f65-4223-46af-b90a-4ea3bf4e1e7b', 'Primary', 1, 0.0) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('40f1f7e4-d3ec-4866-a714-ae60886119fe', 'packaging_variant', 'UPSERT');
@@ -2533,7 +2533,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('51d7886d-3e24-4808-9661-f5cf78087519', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('1134e347-355c-4b1f-adbb-177e90f7938a', '848cf63b-5577-43e7-b385-da5e2acd485e', '03e30f65-4223-46af-b90a-4ea3bf4e1e7b', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1134e347-355c-4b1f-adbb-177e90f7938a', 'bundled_item', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6d3ea5d2-40f6-43eb-b86d-6a445ca3c2a8', 'TRIMOVAX MÉRIEUX (Sanofi Pasteur SA)', 'f4b8b40b-b343-4682-8be2-c8cb92f74218', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6d3ea5d2-40f6-43eb-b86d-6a445ca3c2a8', 'TRIMOVAX MÉRIEUX (Sanofi Pasteur SA)', 'f4b8b40b-b343-4682-8be2-c8cb92f74218', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6d3ea5d2-40f6-43eb-b86d-6a445ca3c2a8', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c35d4a48-1036-41a4-8ca8-38a49e1a8453', '6d3ea5d2-40f6-43eb-b86d-6a445ca3c2a8', 'Primary', 1, 0.011720) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c35d4a48-1036-41a4-8ca8-38a49e1a8453', 'packaging_variant', 'UPSERT');
@@ -2541,7 +2541,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('96bdf82e-f817-4f3e-b82d-5a7abb0502b5', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('4e1dfcce-6250-46b1-9566-74ce2082a168', '6d3ea5d2-40f6-43eb-b86d-6a445ca3c2a8', 'Tertiary', 3, 0.011720) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4e1dfcce-6250-46b1-9566-74ce2082a168', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('711eb19c-1504-4ad5-84df-0b515921a9f4', 'TRIMOVAX MÉRIEUX (Sanofi Pasteur SA)', '383bbbdb-755e-4609-9e60-c76465d389be', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('711eb19c-1504-4ad5-84df-0b515921a9f4', 'TRIMOVAX MÉRIEUX (Sanofi Pasteur SA)', '383bbbdb-755e-4609-9e60-c76465d389be', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('711eb19c-1504-4ad5-84df-0b515921a9f4', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('780ebb80-cf6e-4d53-b4c6-9237b5e03c10', '711eb19c-1504-4ad5-84df-0b515921a9f4', 'Primary', 1, 0.0) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('780ebb80-cf6e-4d53-b4c6-9237b5e03c10', 'packaging_variant', 'UPSERT');
@@ -2555,7 +2555,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('2a2795fc-ab47-47a8-ae2c-df49c632469f', '2a2795fc-ab47-47a8-ae2c-df49c632469f') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2a2795fc-ab47-47a8-ae2c-df49c632469f', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_2a2795fc-ab47-47a8-ae2c-df49c632469f', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '2a2795fc-ab47-47a8-ae2c-df49c632469f') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5ee4da99-ff6f-462f-8f7f-1d1ba5cb4698', 'TRIMOVAX MÉRIEUX (Sanofi Pasteur SA)', '2a2795fc-ab47-47a8-ae2c-df49c632469f', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5ee4da99-ff6f-462f-8f7f-1d1ba5cb4698', 'TRIMOVAX MÉRIEUX (Sanofi Pasteur SA)', '2a2795fc-ab47-47a8-ae2c-df49c632469f', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5ee4da99-ff6f-462f-8f7f-1d1ba5cb4698', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('240e48cf-81f7-44d8-8b7d-82717ac7a577', '5ee4da99-ff6f-462f-8f7f-1d1ba5cb4698', 'Primary', 1, 0.023100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('240e48cf-81f7-44d8-8b7d-82717ac7a577', 'packaging_variant', 'UPSERT');
@@ -2567,7 +2567,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('8058d5ad-819a-4594-98e9-f595d6deebf1', '8058d5ad-819a-4594-98e9-f595d6deebf1') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8058d5ad-819a-4594-98e9-f595d6deebf1', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_8058d5ad-819a-4594-98e9-f595d6deebf1', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '8058d5ad-819a-4594-98e9-f595d6deebf1') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2774328c-9b65-476a-ac85-fd1f62e45deb', 'TRIMOVAX MÉRIEUX (Sanofi Pasteur SA)', '8058d5ad-819a-4594-98e9-f595d6deebf1', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2774328c-9b65-476a-ac85-fd1f62e45deb', 'TRIMOVAX MÉRIEUX (Sanofi Pasteur SA)', '8058d5ad-819a-4594-98e9-f595d6deebf1', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2774328c-9b65-476a-ac85-fd1f62e45deb', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('130d57ac-665d-4687-8e5e-61aa284469d4', '2774328c-9b65-476a-ac85-fd1f62e45deb', 'Primary', 1, 0.0) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('130d57ac-665d-4687-8e5e-61aa284469d4', 'packaging_variant', 'UPSERT');
@@ -2577,7 +2577,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('73ffc2d2-282b-467c-b74e-c648d158dd9e', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('501108fd-f9ff-48cc-87b5-bb7aa8fadcf1', '5ee4da99-ff6f-462f-8f7f-1d1ba5cb4698', '2774328c-9b65-476a-ac85-fd1f62e45deb', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('501108fd-f9ff-48cc-87b5-bb7aa8fadcf1', 'bundled_item', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4201645e-6aa2-4912-91de-be4190bbe316', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'f4b8b40b-b343-4682-8be2-c8cb92f74218', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4201645e-6aa2-4912-91de-be4190bbe316', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'f4b8b40b-b343-4682-8be2-c8cb92f74218', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4201645e-6aa2-4912-91de-be4190bbe316', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('5effa696-1e1a-472f-84f4-54cf35090368', '4201645e-6aa2-4912-91de-be4190bbe316', 'Primary', 1, 0.021090) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5effa696-1e1a-472f-84f4-54cf35090368', 'packaging_variant', 'UPSERT');
@@ -2585,7 +2585,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('401ebdef-dbed-4635-8642-5c4fd2df3f3e', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('bf26a8ba-7242-4da2-8829-10c2cc29ce97', '4201645e-6aa2-4912-91de-be4190bbe316', 'Tertiary', 3, 0.098400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bf26a8ba-7242-4da2-8829-10c2cc29ce97', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('cddabcff-b314-4922-953d-cb46e332bdb1', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '383bbbdb-755e-4609-9e60-c76465d389be', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('cddabcff-b314-4922-953d-cb46e332bdb1', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '383bbbdb-755e-4609-9e60-c76465d389be', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cddabcff-b314-4922-953d-cb46e332bdb1', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a1317b37-8f98-47e1-a14a-fba1b1ad564d', 'cddabcff-b314-4922-953d-cb46e332bdb1', 'Primary', 1, 0.0125) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a1317b37-8f98-47e1-a14a-fba1b1ad564d', 'packaging_variant', 'UPSERT');
@@ -2595,7 +2595,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('81984016-384b-4d60-9aa1-065e66d7d7e6', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('cb3c6ce7-c04a-4362-9821-f69b2cce74ca', '4201645e-6aa2-4912-91de-be4190bbe316', 'cddabcff-b314-4922-953d-cb46e332bdb1', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cb3c6ce7-c04a-4362-9821-f69b2cce74ca', 'bundled_item', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ed5c05d9-7a6b-4a81-b6d4-bc102ca7edd3', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '6ae6ae4f-48a6-4c00-bb67-ec5d7aa942ed', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ed5c05d9-7a6b-4a81-b6d4-bc102ca7edd3', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '6ae6ae4f-48a6-4c00-bb67-ec5d7aa942ed', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ed5c05d9-7a6b-4a81-b6d4-bc102ca7edd3', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('356adde9-898f-4e7b-925f-0f1d94a4bd1b', 'ed5c05d9-7a6b-4a81-b6d4-bc102ca7edd3', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('356adde9-898f-4e7b-925f-0f1d94a4bd1b', 'packaging_variant', 'UPSERT');
@@ -2603,7 +2603,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e0399b1e-c116-443a-a2d4-aed4ac0823a8', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f0e06272-e22b-4a11-81f6-8550d24c2c97', 'ed5c05d9-7a6b-4a81-b6d4-bc102ca7edd3', 'Tertiary', 3, 0.098400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f0e06272-e22b-4a11-81f6-8550d24c2c97', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4b80dc04-426c-442a-8f6e-23d838c1701a', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '72032ce7-2a1a-4b67-afd5-7321ed306717', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4b80dc04-426c-442a-8f6e-23d838c1701a', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '72032ce7-2a1a-4b67-afd5-7321ed306717', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4b80dc04-426c-442a-8f6e-23d838c1701a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a3c7c793-d8cb-4914-b087-053f3f533b3a', '4b80dc04-426c-442a-8f6e-23d838c1701a', 'Primary', 1, 0.0126) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a3c7c793-d8cb-4914-b087-053f3f533b3a', 'packaging_variant', 'UPSERT');
@@ -2617,7 +2617,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('a51d981e-768c-4adc-bf65-bace7b7651e4', 'a51d981e-768c-4adc-bf65-bace7b7651e4') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a51d981e-768c-4adc-bf65-bace7b7651e4', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_a51d981e-768c-4adc-bf65-bace7b7651e4', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'a51d981e-768c-4adc-bf65-bace7b7651e4') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c29489c6-b586-480e-b444-207db33658cc', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'a51d981e-768c-4adc-bf65-bace7b7651e4', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c29489c6-b586-480e-b444-207db33658cc', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'a51d981e-768c-4adc-bf65-bace7b7651e4', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c29489c6-b586-480e-b444-207db33658cc', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('da4970a4-e7e7-4ed5-8d2a-01c1279e01f0', 'c29489c6-b586-480e-b444-207db33658cc', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('da4970a4-e7e7-4ed5-8d2a-01c1279e01f0', 'packaging_variant', 'UPSERT');
@@ -2629,7 +2629,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('696d0dc4-7f2d-4626-9f03-10862e629d29', '696d0dc4-7f2d-4626-9f03-10862e629d29') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('696d0dc4-7f2d-4626-9f03-10862e629d29', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_696d0dc4-7f2d-4626-9f03-10862e629d29', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '696d0dc4-7f2d-4626-9f03-10862e629d29') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a92921d1-4097-4fd3-9d02-8244ba22abe3', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '696d0dc4-7f2d-4626-9f03-10862e629d29', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a92921d1-4097-4fd3-9d02-8244ba22abe3', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '696d0dc4-7f2d-4626-9f03-10862e629d29', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a92921d1-4097-4fd3-9d02-8244ba22abe3', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8cadc4e5-80fb-42f6-b620-fcbf6d7237a0', 'a92921d1-4097-4fd3-9d02-8244ba22abe3', 'Primary', 1, 0.0275) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8cadc4e5-80fb-42f6-b620-fcbf6d7237a0', 'packaging_variant', 'UPSERT');
@@ -2639,7 +2639,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a13fce49-ad2a-4340-ab0f-a5828c868f57', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('86d7f9a7-98f7-4242-a17a-e0c2ad05fe84', 'c29489c6-b586-480e-b444-207db33658cc', 'a92921d1-4097-4fd3-9d02-8244ba22abe3', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('86d7f9a7-98f7-4242-a17a-e0c2ad05fe84', 'bundled_item', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a8810684-bb0a-4faf-9e81-370e31aae0bf', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '2a2795fc-ab47-47a8-ae2c-df49c632469f', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a8810684-bb0a-4faf-9e81-370e31aae0bf', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '2a2795fc-ab47-47a8-ae2c-df49c632469f', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a8810684-bb0a-4faf-9e81-370e31aae0bf', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ef0cb2ae-f7c7-44c8-b96b-5751cd275115', 'a8810684-bb0a-4faf-9e81-370e31aae0bf', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ef0cb2ae-f7c7-44c8-b96b-5751cd275115', 'packaging_variant', 'UPSERT');
@@ -2647,7 +2647,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7b979eea-d347-4d37-9509-518c3b809ca9', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c447bd6e-340e-4a35-8ef6-a86ee8183ce6', 'a8810684-bb0a-4faf-9e81-370e31aae0bf', 'Tertiary', 3, 0.098400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c447bd6e-340e-4a35-8ef6-a86ee8183ce6', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d67988d5-cf5a-4019-b8bc-f21ee17d0be2', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '8058d5ad-819a-4594-98e9-f595d6deebf1', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d67988d5-cf5a-4019-b8bc-f21ee17d0be2', 'Measles, Mumps and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '8058d5ad-819a-4594-98e9-f595d6deebf1', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d67988d5-cf5a-4019-b8bc-f21ee17d0be2', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('83c39736-f466-43ed-854e-1de81aed1b51', 'd67988d5-cf5a-4019-b8bc-f21ee17d0be2', 'Primary', 1, 0.031) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('83c39736-f466-43ed-854e-1de81aed1b51', 'packaging_variant', 'UPSERT');
@@ -2661,7 +2661,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('8c654039-0ca3-4d65-a937-91df16d5b175', '8c654039-0ca3-4d65-a937-91df16d5b175') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8c654039-0ca3-4d65-a937-91df16d5b175', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_8c654039-0ca3-4d65-a937-91df16d5b175', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '8c654039-0ca3-4d65-a937-91df16d5b175') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b0aec30d-2d14-42f6-9289-e9402e01c1e4', 'Polio Sabin Mono T1 (GlaxoSmithKline Biologicals SA)', '8c654039-0ca3-4d65-a937-91df16d5b175', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b0aec30d-2d14-42f6-9289-e9402e01c1e4', 'Polio Sabin Mono T1 (GlaxoSmithKline Biologicals SA)', '8c654039-0ca3-4d65-a937-91df16d5b175', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b0aec30d-2d14-42f6-9289-e9402e01c1e4', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('980532e5-6e1c-4a9e-a05d-4734e26bb15d', 'b0aec30d-2d14-42f6-9289-e9402e01c1e4', 'Primary', 1, 0.009700) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('980532e5-6e1c-4a9e-a05d-4734e26bb15d', 'packaging_variant', 'UPSERT');
@@ -2673,7 +2673,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('bf03331e-7ebc-4dc4-a375-1ae99f07941e', 'bf03331e-7ebc-4dc4-a375-1ae99f07941e') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bf03331e-7ebc-4dc4-a375-1ae99f07941e', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_bf03331e-7ebc-4dc4-a375-1ae99f07941e', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'bf03331e-7ebc-4dc4-a375-1ae99f07941e') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('901e39ab-63e6-47d5-992f-e1383bec6554', 'Polio Sabin Mono T1 (GlaxoSmithKline Biologicals SA)', 'bf03331e-7ebc-4dc4-a375-1ae99f07941e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('901e39ab-63e6-47d5-992f-e1383bec6554', 'Polio Sabin Mono T1 (GlaxoSmithKline Biologicals SA)', 'bf03331e-7ebc-4dc4-a375-1ae99f07941e', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('901e39ab-63e6-47d5-992f-e1383bec6554', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e103c20b-283b-4ebb-8d29-7738e7873a23', '901e39ab-63e6-47d5-992f-e1383bec6554', 'Primary', 1, 0.009600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e103c20b-283b-4ebb-8d29-7738e7873a23', 'packaging_variant', 'UPSERT');
@@ -2681,7 +2681,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('360982b7-9b5c-4997-afef-55fc387f5052', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c4905599-450d-427b-bb8a-fb6671f4c994', '901e39ab-63e6-47d5-992f-e1383bec6554', 'Tertiary', 3, 0.039800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c4905599-450d-427b-bb8a-fb6671f4c994', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c6517161-4a3e-400f-80b3-54d143aabba0', 'Monovalent type 1 Oral Poliomyelitis vaccine, IP (mOPV1) (Haffkine Bio Pharmaceutical Corporation Ltd)', 'bf03331e-7ebc-4dc4-a375-1ae99f07941e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c6517161-4a3e-400f-80b3-54d143aabba0', 'Monovalent type 1 Oral Poliomyelitis vaccine, IP (mOPV1) (Haffkine Bio Pharmaceutical Corporation Ltd)', 'bf03331e-7ebc-4dc4-a375-1ae99f07941e', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c6517161-4a3e-400f-80b3-54d143aabba0', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a5f296de-2604-4fbe-8d73-6c46b48a30c8', 'c6517161-4a3e-400f-80b3-54d143aabba0', 'Primary', 1, 0.018800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a5f296de-2604-4fbe-8d73-6c46b48a30c8', 'packaging_variant', 'UPSERT');
@@ -2689,7 +2689,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f958e0a9-c9c1-4ecd-a223-2855d07f67ea', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e1915376-5cf6-4b50-a81e-a3fdcf9f287b', 'c6517161-4a3e-400f-80b3-54d143aabba0', 'Tertiary', 3, 0.084200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e1915376-5cf6-4b50-a81e-a3fdcf9f287b', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6683fac0-bb28-410f-b322-661f4e19844c', 'Monovalent Oral Poliomyelitis Vaccine Type 1 (mOPV1) (PT Bio Farma (Persero))', 'bf03331e-7ebc-4dc4-a375-1ae99f07941e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6683fac0-bb28-410f-b322-661f4e19844c', 'Monovalent Oral Poliomyelitis Vaccine Type 1 (mOPV1) (PT Bio Farma (Persero))', 'bf03331e-7ebc-4dc4-a375-1ae99f07941e', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6683fac0-bb28-410f-b322-661f4e19844c', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('84be5ac4-cbc4-4f20-9420-ee22bde3db37', '6683fac0-bb28-410f-b322-661f4e19844c', 'Primary', 1, 0.011000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('84be5ac4-cbc4-4f20-9420-ee22bde3db37', 'packaging_variant', 'UPSERT');
@@ -2697,7 +2697,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f0e5c7bb-f902-4866-8152-39ade2900f4c', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f3b74b4c-54ef-4260-b961-315097327b95', '6683fac0-bb28-410f-b322-661f4e19844c', 'Tertiary', 3, 0.082800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f3b74b4c-54ef-4260-b961-315097327b95', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('241a1007-727d-406b-bc13-f93ed1e096a2', 'ORAL MONOVALENT TYPE 1 POLIOMYELITIS VACCINE (Sanofi Pasteur SA)', 'bf03331e-7ebc-4dc4-a375-1ae99f07941e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('241a1007-727d-406b-bc13-f93ed1e096a2', 'ORAL MONOVALENT TYPE 1 POLIOMYELITIS VACCINE (Sanofi Pasteur SA)', 'bf03331e-7ebc-4dc4-a375-1ae99f07941e', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('241a1007-727d-406b-bc13-f93ed1e096a2', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0a56d257-9993-4457-8764-7629b5b33921', '241a1007-727d-406b-bc13-f93ed1e096a2', 'Primary', 1, 0.009600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0a56d257-9993-4457-8764-7629b5b33921', 'packaging_variant', 'UPSERT');
@@ -2709,7 +2709,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('4f25c242-1bb8-4e10-ab96-e5c08d42cde5', '4f25c242-1bb8-4e10-ab96-e5c08d42cde5') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4f25c242-1bb8-4e10-ab96-e5c08d42cde5', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_4f25c242-1bb8-4e10-ab96-e5c08d42cde5', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '4f25c242-1bb8-4e10-ab96-e5c08d42cde5') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c7e8a292-353d-4887-8582-1e9a171753f3', 'Polio Sabin Mono Two (oral) (GlaxoSmithKline Biologicals SA)', '4f25c242-1bb8-4e10-ab96-e5c08d42cde5', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c7e8a292-353d-4887-8582-1e9a171753f3', 'Polio Sabin Mono Two (oral) (GlaxoSmithKline Biologicals SA)', '4f25c242-1bb8-4e10-ab96-e5c08d42cde5', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c7e8a292-353d-4887-8582-1e9a171753f3', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('70e5f2f4-8fb0-4dad-abaa-1ca7f65a62ac', 'c7e8a292-353d-4887-8582-1e9a171753f3', 'Primary', 1, 0.009700) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('70e5f2f4-8fb0-4dad-abaa-1ca7f65a62ac', 'packaging_variant', 'UPSERT');
@@ -2721,7 +2721,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('2fe263cc-d7a1-4ef7-a1ee-57bb8214571e', '2fe263cc-d7a1-4ef7-a1ee-57bb8214571e') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2fe263cc-d7a1-4ef7-a1ee-57bb8214571e', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_2fe263cc-d7a1-4ef7-a1ee-57bb8214571e', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '2fe263cc-d7a1-4ef7-a1ee-57bb8214571e') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('15f46575-5833-40db-b3af-c95e1d121744', 'Polio Sabin Mono Two (oral) (GlaxoSmithKline Biologicals SA)', '2fe263cc-d7a1-4ef7-a1ee-57bb8214571e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('15f46575-5833-40db-b3af-c95e1d121744', 'Polio Sabin Mono Two (oral) (GlaxoSmithKline Biologicals SA)', '2fe263cc-d7a1-4ef7-a1ee-57bb8214571e', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('15f46575-5833-40db-b3af-c95e1d121744', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0d6ef1d2-1bd4-4c41-98e5-6d525aff6a28', '15f46575-5833-40db-b3af-c95e1d121744', 'Primary', 1, 0.009600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0d6ef1d2-1bd4-4c41-98e5-6d525aff6a28', 'packaging_variant', 'UPSERT');
@@ -2729,7 +2729,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('70224d4d-ae24-4300-a0fb-746e540ddd35', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('efdab64f-26c5-473c-8fdc-10f652a29753', '15f46575-5833-40db-b3af-c95e1d121744', 'Tertiary', 3, 0.077000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('efdab64f-26c5-473c-8fdc-10f652a29753', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('edb84a4c-1af8-49fb-b6e2-b243ab2c31f4', 'ORAL MONOVALENT TYPE 2 POLIOMYELITIS VACCINE (mOPV2) (Sanofi Pasteur SA)', '2fe263cc-d7a1-4ef7-a1ee-57bb8214571e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('edb84a4c-1af8-49fb-b6e2-b243ab2c31f4', 'ORAL MONOVALENT TYPE 2 POLIOMYELITIS VACCINE (mOPV2) (Sanofi Pasteur SA)', '2fe263cc-d7a1-4ef7-a1ee-57bb8214571e', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('edb84a4c-1af8-49fb-b6e2-b243ab2c31f4', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('195b646b-913c-4b04-9281-5d1d999c5f9b', 'edb84a4c-1af8-49fb-b6e2-b243ab2c31f4', 'Primary', 1, 0.009800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('195b646b-913c-4b04-9281-5d1d999c5f9b', 'packaging_variant', 'UPSERT');
@@ -2741,7 +2741,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('5ae71186-25f1-4cc2-83c0-2fa3209c9033', '5ae71186-25f1-4cc2-83c0-2fa3209c9033') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5ae71186-25f1-4cc2-83c0-2fa3209c9033', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_5ae71186-25f1-4cc2-83c0-2fa3209c9033', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '5ae71186-25f1-4cc2-83c0-2fa3209c9033') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e7ffe4e8-4f23-4fd1-bed2-809850d7ddb7', 'Polio Sabin Mono Three (oral) (GlaxoSmithKline Biologicals SA)', '5ae71186-25f1-4cc2-83c0-2fa3209c9033', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e7ffe4e8-4f23-4fd1-bed2-809850d7ddb7', 'Polio Sabin Mono Three (oral) (GlaxoSmithKline Biologicals SA)', '5ae71186-25f1-4cc2-83c0-2fa3209c9033', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e7ffe4e8-4f23-4fd1-bed2-809850d7ddb7', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('43a72a17-75fe-4a1b-a83e-3f9f3f366c17', 'e7ffe4e8-4f23-4fd1-bed2-809850d7ddb7', 'Primary', 1, 0.009700) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('43a72a17-75fe-4a1b-a83e-3f9f3f366c17', 'packaging_variant', 'UPSERT');
@@ -2753,7 +2753,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('43419758-41f2-4db6-9f8c-22d7ffc45e1f', '43419758-41f2-4db6-9f8c-22d7ffc45e1f') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('43419758-41f2-4db6-9f8c-22d7ffc45e1f', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_43419758-41f2-4db6-9f8c-22d7ffc45e1f', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '43419758-41f2-4db6-9f8c-22d7ffc45e1f') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d9382630-0aa4-4973-8de3-b8f6d2a8f09d', 'Polio Sabin Mono Three (oral) (GlaxoSmithKline Biologicals SA)', '43419758-41f2-4db6-9f8c-22d7ffc45e1f', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d9382630-0aa4-4973-8de3-b8f6d2a8f09d', 'Polio Sabin Mono Three (oral) (GlaxoSmithKline Biologicals SA)', '43419758-41f2-4db6-9f8c-22d7ffc45e1f', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d9382630-0aa4-4973-8de3-b8f6d2a8f09d', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2bea052d-0ab4-45f3-abd4-b052223f2695', 'd9382630-0aa4-4973-8de3-b8f6d2a8f09d', 'Primary', 1, 0.009600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2bea052d-0ab4-45f3-abd4-b052223f2695', 'packaging_variant', 'UPSERT');
@@ -2761,7 +2761,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('89e9d13f-978b-48aa-86ab-1f6a471f9f18', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0626180c-94fb-4c56-ba1e-f6ffac37bce5', 'd9382630-0aa4-4973-8de3-b8f6d2a8f09d', 'Tertiary', 3, 0.039800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0626180c-94fb-4c56-ba1e-f6ffac37bce5', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6c013c75-b34c-49d3-803c-429c7fdc1296', 'ORAL MONOVALENT TYPE 3 POLIOMYELITIS VACCINE (Sanofi Pasteur SA)', '43419758-41f2-4db6-9f8c-22d7ffc45e1f', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6c013c75-b34c-49d3-803c-429c7fdc1296', 'ORAL MONOVALENT TYPE 3 POLIOMYELITIS VACCINE (Sanofi Pasteur SA)', '43419758-41f2-4db6-9f8c-22d7ffc45e1f', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6c013c75-b34c-49d3-803c-429c7fdc1296', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('dce4a7ea-e286-4182-8ac5-b96f755ab71c', '6c013c75-b34c-49d3-803c-429c7fdc1296', 'Primary', 1, 0.009800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dce4a7ea-e286-4182-8ac5-b96f755ab71c', 'packaging_variant', 'UPSERT');
@@ -2773,7 +2773,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('ab822a48-7d74-4dcc-b784-5d2915ab23af', 'ab822a48-7d74-4dcc-b784-5d2915ab23af') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ab822a48-7d74-4dcc-b784-5d2915ab23af', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_ab822a48-7d74-4dcc-b784-5d2915ab23af', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'ab822a48-7d74-4dcc-b784-5d2915ab23af') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('cec7a9bb-9735-4ebc-ae66-74d89dc4b7a6', 'Measles and Rubella Vaccine (Live) (Biological E. Limited)', 'ab822a48-7d74-4dcc-b784-5d2915ab23af', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('cec7a9bb-9735-4ebc-ae66-74d89dc4b7a6', 'Measles and Rubella Vaccine (Live) (Biological E. Limited)', 'ab822a48-7d74-4dcc-b784-5d2915ab23af', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cec7a9bb-9735-4ebc-ae66-74d89dc4b7a6', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d39af249-638b-4e04-855b-e54f16512ddb', 'cec7a9bb-9735-4ebc-ae66-74d89dc4b7a6', 'Primary', 1, 0.014090) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d39af249-638b-4e04-855b-e54f16512ddb', 'packaging_variant', 'UPSERT');
@@ -2785,7 +2785,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('8ab8f58e-f861-40a5-af25-76f2f458478d', '8ab8f58e-f861-40a5-af25-76f2f458478d') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8ab8f58e-f861-40a5-af25-76f2f458478d', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_8ab8f58e-f861-40a5-af25-76f2f458478d', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '8ab8f58e-f861-40a5-af25-76f2f458478d') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('122ad77c-8be3-4856-9bca-8cf2ebd287c4', 'Measles and Rubella Vaccine (Live) (Biological E. Limited)', '8ab8f58e-f861-40a5-af25-76f2f458478d', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('122ad77c-8be3-4856-9bca-8cf2ebd287c4', 'Measles and Rubella Vaccine (Live) (Biological E. Limited)', '8ab8f58e-f861-40a5-af25-76f2f458478d', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('122ad77c-8be3-4856-9bca-8cf2ebd287c4', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('38b23b86-3f37-44b1-9146-7cc2f8329783', '122ad77c-8be3-4856-9bca-8cf2ebd287c4', 'Primary', 1, 0.0078) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('38b23b86-3f37-44b1-9146-7cc2f8329783', 'packaging_variant', 'UPSERT');
@@ -2799,7 +2799,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('f7276278-aad5-47b5-8c91-7190414e3101', 'f7276278-aad5-47b5-8c91-7190414e3101') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f7276278-aad5-47b5-8c91-7190414e3101', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_f7276278-aad5-47b5-8c91-7190414e3101', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'f7276278-aad5-47b5-8c91-7190414e3101') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('81908572-3cc5-48ed-81e4-19c918426f6a', 'Measles and Rubella Vaccine (Live) (Biological E. Limited)', 'f7276278-aad5-47b5-8c91-7190414e3101', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('81908572-3cc5-48ed-81e4-19c918426f6a', 'Measles and Rubella Vaccine (Live) (Biological E. Limited)', 'f7276278-aad5-47b5-8c91-7190414e3101', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('81908572-3cc5-48ed-81e4-19c918426f6a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('91d0414e-c749-4d9e-8d96-0b281e8a5732', '81908572-3cc5-48ed-81e4-19c918426f6a', 'Primary', 1, 0.013350) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('91d0414e-c749-4d9e-8d96-0b281e8a5732', 'packaging_variant', 'UPSERT');
@@ -2811,7 +2811,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('79c3b72e-dfd2-40ee-af36-ac20c2612957', '79c3b72e-dfd2-40ee-af36-ac20c2612957') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('79c3b72e-dfd2-40ee-af36-ac20c2612957', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_79c3b72e-dfd2-40ee-af36-ac20c2612957', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '79c3b72e-dfd2-40ee-af36-ac20c2612957') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('116c65e6-7210-4a32-8d86-92738e096914', 'Measles and Rubella Vaccine (Live) (Biological E. Limited)', '79c3b72e-dfd2-40ee-af36-ac20c2612957', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('116c65e6-7210-4a32-8d86-92738e096914', 'Measles and Rubella Vaccine (Live) (Biological E. Limited)', '79c3b72e-dfd2-40ee-af36-ac20c2612957', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('116c65e6-7210-4a32-8d86-92738e096914', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('284961dd-ae57-4550-924d-247a70e4b2ba', '116c65e6-7210-4a32-8d86-92738e096914', 'Primary', 1, 0.0165) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('284961dd-ae57-4550-924d-247a70e4b2ba', 'packaging_variant', 'UPSERT');
@@ -2825,7 +2825,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('3cd32470-bd54-48c4-9dda-249cca24897b', '3cd32470-bd54-48c4-9dda-249cca24897b') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3cd32470-bd54-48c4-9dda-249cca24897b', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_3cd32470-bd54-48c4-9dda-249cca24897b', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '3cd32470-bd54-48c4-9dda-249cca24897b') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('05ae9f0c-5453-45c6-8d48-85425bd76b0e', 'Measles and Rubella Vaccine (Live) (Biological E. Limited)', '3cd32470-bd54-48c4-9dda-249cca24897b', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('05ae9f0c-5453-45c6-8d48-85425bd76b0e', 'Measles and Rubella Vaccine (Live) (Biological E. Limited)', '3cd32470-bd54-48c4-9dda-249cca24897b', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('05ae9f0c-5453-45c6-8d48-85425bd76b0e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8a5bf552-1995-4d66-8505-8619bad5f0a4', '05ae9f0c-5453-45c6-8d48-85425bd76b0e', 'Primary', 1, 0.017800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8a5bf552-1995-4d66-8505-8619bad5f0a4', 'packaging_variant', 'UPSERT');
@@ -2837,7 +2837,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('e4bb03f4-8dff-4152-b7d3-4060be932c87', 'e4bb03f4-8dff-4152-b7d3-4060be932c87') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e4bb03f4-8dff-4152-b7d3-4060be932c87', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_e4bb03f4-8dff-4152-b7d3-4060be932c87', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'e4bb03f4-8dff-4152-b7d3-4060be932c87') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4983677b-474e-422d-8a95-ee5bc5b86890', 'Measles and Rubella Vaccine (Live) (Biological E. Limited)', 'e4bb03f4-8dff-4152-b7d3-4060be932c87', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4983677b-474e-422d-8a95-ee5bc5b86890', 'Measles and Rubella Vaccine (Live) (Biological E. Limited)', 'e4bb03f4-8dff-4152-b7d3-4060be932c87', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4983677b-474e-422d-8a95-ee5bc5b86890', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b0a35e7a-8a76-47d5-b9be-081766c90b58', '4983677b-474e-422d-8a95-ee5bc5b86890', 'Primary', 1, 0.021) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b0a35e7a-8a76-47d5-b9be-081766c90b58', 'packaging_variant', 'UPSERT');
@@ -2851,7 +2851,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('ba8ed23b-4537-4d7f-be92-5dd84c7a1c5f', 'ba8ed23b-4537-4d7f-be92-5dd84c7a1c5f') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ba8ed23b-4537-4d7f-be92-5dd84c7a1c5f', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_ba8ed23b-4537-4d7f-be92-5dd84c7a1c5f', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'ba8ed23b-4537-4d7f-be92-5dd84c7a1c5f') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a42c751a-aab1-4a1a-a55e-a20add878af9', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'ba8ed23b-4537-4d7f-be92-5dd84c7a1c5f', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a42c751a-aab1-4a1a-a55e-a20add878af9', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'ba8ed23b-4537-4d7f-be92-5dd84c7a1c5f', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a42c751a-aab1-4a1a-a55e-a20add878af9', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3ffd0ee9-c273-4d3a-9b01-44f50a7ad44f', 'a42c751a-aab1-4a1a-a55e-a20add878af9', 'Primary', 1, 0.021090) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3ffd0ee9-c273-4d3a-9b01-44f50a7ad44f', 'packaging_variant', 'UPSERT');
@@ -2863,7 +2863,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('3e0346f1-2173-422e-a8bf-c0e312b1c9a2', '3e0346f1-2173-422e-a8bf-c0e312b1c9a2') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3e0346f1-2173-422e-a8bf-c0e312b1c9a2', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_3e0346f1-2173-422e-a8bf-c0e312b1c9a2', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '3e0346f1-2173-422e-a8bf-c0e312b1c9a2') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('22004d69-a401-4149-8d8f-0ffb2125285c', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '3e0346f1-2173-422e-a8bf-c0e312b1c9a2', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('22004d69-a401-4149-8d8f-0ffb2125285c', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '3e0346f1-2173-422e-a8bf-c0e312b1c9a2', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('22004d69-a401-4149-8d8f-0ffb2125285c', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('02f60021-5815-43f0-9fe9-8f6a56ac17bd', '22004d69-a401-4149-8d8f-0ffb2125285c', 'Primary', 1, 0.0125) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('02f60021-5815-43f0-9fe9-8f6a56ac17bd', 'packaging_variant', 'UPSERT');
@@ -2877,7 +2877,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('c98f592e-a80e-4bfe-8a6d-53bcdb755355', 'c98f592e-a80e-4bfe-8a6d-53bcdb755355') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c98f592e-a80e-4bfe-8a6d-53bcdb755355', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_c98f592e-a80e-4bfe-8a6d-53bcdb755355', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'c98f592e-a80e-4bfe-8a6d-53bcdb755355') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ba180eb6-41d8-4616-929e-03ae6042d406', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'c98f592e-a80e-4bfe-8a6d-53bcdb755355', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ba180eb6-41d8-4616-929e-03ae6042d406', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'c98f592e-a80e-4bfe-8a6d-53bcdb755355', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ba180eb6-41d8-4616-929e-03ae6042d406', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2582a46c-51ce-438c-b8ac-9979a3af74ae', 'ba180eb6-41d8-4616-929e-03ae6042d406', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2582a46c-51ce-438c-b8ac-9979a3af74ae', 'packaging_variant', 'UPSERT');
@@ -2889,7 +2889,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('b0eb5185-8a62-49bb-9107-b0f3fb6e8e72', 'b0eb5185-8a62-49bb-9107-b0f3fb6e8e72') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b0eb5185-8a62-49bb-9107-b0f3fb6e8e72', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_b0eb5185-8a62-49bb-9107-b0f3fb6e8e72', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'b0eb5185-8a62-49bb-9107-b0f3fb6e8e72') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2ae873b7-7985-4830-9bcc-fa468cf3cdd8', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'b0eb5185-8a62-49bb-9107-b0f3fb6e8e72', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2ae873b7-7985-4830-9bcc-fa468cf3cdd8', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'b0eb5185-8a62-49bb-9107-b0f3fb6e8e72', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2ae873b7-7985-4830-9bcc-fa468cf3cdd8', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('cad2af68-e4da-498d-b1de-19ba645184a8', '2ae873b7-7985-4830-9bcc-fa468cf3cdd8', 'Primary', 1, 0.0126) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cad2af68-e4da-498d-b1de-19ba645184a8', 'packaging_variant', 'UPSERT');
@@ -2903,7 +2903,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('323ec11b-cbfb-4862-99c4-4293b57e514f', '323ec11b-cbfb-4862-99c4-4293b57e514f') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('323ec11b-cbfb-4862-99c4-4293b57e514f', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_323ec11b-cbfb-4862-99c4-4293b57e514f', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '323ec11b-cbfb-4862-99c4-4293b57e514f') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9753ef33-9369-47b2-b9d2-944de76f51bf', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '323ec11b-cbfb-4862-99c4-4293b57e514f', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9753ef33-9369-47b2-b9d2-944de76f51bf', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '323ec11b-cbfb-4862-99c4-4293b57e514f', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9753ef33-9369-47b2-b9d2-944de76f51bf', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ee3cf541-652a-4b6b-945b-f7b816777adc', '9753ef33-9369-47b2-b9d2-944de76f51bf', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ee3cf541-652a-4b6b-945b-f7b816777adc', 'packaging_variant', 'UPSERT');
@@ -2915,7 +2915,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('71a75251-70ef-4589-bf6e-c8b2884391f7', '71a75251-70ef-4589-bf6e-c8b2884391f7') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('71a75251-70ef-4589-bf6e-c8b2884391f7', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_71a75251-70ef-4589-bf6e-c8b2884391f7', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '71a75251-70ef-4589-bf6e-c8b2884391f7') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('dcdce810-b302-4fbc-b0cb-90ab860096d2', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '71a75251-70ef-4589-bf6e-c8b2884391f7', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('dcdce810-b302-4fbc-b0cb-90ab860096d2', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '71a75251-70ef-4589-bf6e-c8b2884391f7', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dcdce810-b302-4fbc-b0cb-90ab860096d2', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1bf20fe6-fbac-4962-a231-23a00c532142', 'dcdce810-b302-4fbc-b0cb-90ab860096d2', 'Primary', 1, 0.0275) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1bf20fe6-fbac-4962-a231-23a00c532142', 'packaging_variant', 'UPSERT');
@@ -2929,7 +2929,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('f83f8e91-e92a-4f58-b5eb-3661789fde7d', 'f83f8e91-e92a-4f58-b5eb-3661789fde7d') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f83f8e91-e92a-4f58-b5eb-3661789fde7d', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_f83f8e91-e92a-4f58-b5eb-3661789fde7d', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'f83f8e91-e92a-4f58-b5eb-3661789fde7d') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c1a7ba24-3332-4031-9431-7d3a34b69647', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'f83f8e91-e92a-4f58-b5eb-3661789fde7d', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c1a7ba24-3332-4031-9431-7d3a34b69647', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'f83f8e91-e92a-4f58-b5eb-3661789fde7d', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c1a7ba24-3332-4031-9431-7d3a34b69647', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0fd2defa-be18-4283-a46a-0ecb4ef48dad', 'c1a7ba24-3332-4031-9431-7d3a34b69647', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0fd2defa-be18-4283-a46a-0ecb4ef48dad', 'packaging_variant', 'UPSERT');
@@ -2941,7 +2941,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('ff527fed-599b-4707-972a-8ca42a10eefa', 'ff527fed-599b-4707-972a-8ca42a10eefa') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ff527fed-599b-4707-972a-8ca42a10eefa', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_ff527fed-599b-4707-972a-8ca42a10eefa', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'ff527fed-599b-4707-972a-8ca42a10eefa') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b8a73aa2-a828-47a8-8572-29fa360c83e7', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'ff527fed-599b-4707-972a-8ca42a10eefa', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b8a73aa2-a828-47a8-8572-29fa360c83e7', 'Measles and Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'ff527fed-599b-4707-972a-8ca42a10eefa', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b8a73aa2-a828-47a8-8572-29fa360c83e7', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('6bef6ab2-d616-4d9f-b867-f9e29c84d74e', 'b8a73aa2-a828-47a8-8572-29fa360c83e7', 'Primary', 1, 0.031) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6bef6ab2-d616-4d9f-b867-f9e29c84d74e', 'packaging_variant', 'UPSERT');
@@ -2955,7 +2955,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('a6455342-32e3-42e7-8c90-3d34654f4cc2', 'a6455342-32e3-42e7-8c90-3d34654f4cc2') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a6455342-32e3-42e7-8c90-3d34654f4cc2', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_a6455342-32e3-42e7-8c90-3d34654f4cc2', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'a6455342-32e3-42e7-8c90-3d34654f4cc2') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('00ebb6f0-a7f3-4fb8-a029-d7eb8284531b', 'Novel Oral (nOPV) Monovalent type 2 (PT Bio Farma (Persero))', 'a6455342-32e3-42e7-8c90-3d34654f4cc2', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('00ebb6f0-a7f3-4fb8-a029-d7eb8284531b', 'Novel Oral (nOPV) Monovalent type 2 (PT Bio Farma (Persero))', 'a6455342-32e3-42e7-8c90-3d34654f4cc2', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('00ebb6f0-a7f3-4fb8-a029-d7eb8284531b', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('85694d03-d7d3-43a0-8d62-9b261387858e', '00ebb6f0-a7f3-4fb8-a029-d7eb8284531b', 'Primary', 1, 0.027500) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('85694d03-d7d3-43a0-8d62-9b261387858e', 'packaging_variant', 'UPSERT');
@@ -2967,7 +2967,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('e9814237-d54c-40e2-8b39-e674549b1fd0', 'e9814237-d54c-40e2-8b39-e674549b1fd0') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e9814237-d54c-40e2-8b39-e674549b1fd0', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_e9814237-d54c-40e2-8b39-e674549b1fd0', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'e9814237-d54c-40e2-8b39-e674549b1fd0') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('651f1698-9b9f-4c16-9be2-6c359bc86905', 'Euvichol (EuBiologics Co., Ltd.)', 'e9814237-d54c-40e2-8b39-e674549b1fd0', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('651f1698-9b9f-4c16-9be2-6c359bc86905', 'Euvichol (EuBiologics Co., Ltd.)', 'e9814237-d54c-40e2-8b39-e674549b1fd0', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('651f1698-9b9f-4c16-9be2-6c359bc86905', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('58ffc701-933c-412b-be9c-6bfb978abeec', '651f1698-9b9f-4c16-9be2-6c359bc86905', 'Primary', 1, 0.011000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('58ffc701-933c-412b-be9c-6bfb978abeec', 'packaging_variant', 'UPSERT');
@@ -2979,7 +2979,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('f6cd45c1-3704-4dda-8aef-3e0ec86d3125', 'f6cd45c1-3704-4dda-8aef-3e0ec86d3125') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f6cd45c1-3704-4dda-8aef-3e0ec86d3125', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_f6cd45c1-3704-4dda-8aef-3e0ec86d3125', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'f6cd45c1-3704-4dda-8aef-3e0ec86d3125') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3ae851c5-f8a2-4325-a0fa-f5c53412bab8', 'Euvichol-Plus (EuBiologics Co., Ltd.)', 'f6cd45c1-3704-4dda-8aef-3e0ec86d3125', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3ae851c5-f8a2-4325-a0fa-f5c53412bab8', 'Euvichol-Plus (EuBiologics Co., Ltd.)', 'f6cd45c1-3704-4dda-8aef-3e0ec86d3125', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3ae851c5-f8a2-4325-a0fa-f5c53412bab8', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('66eb952b-2a4a-4c14-84d5-bcd80b123e0f', '3ae851c5-f8a2-4325-a0fa-f5c53412bab8', 'Primary', 1, 0.007850) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('66eb952b-2a4a-4c14-84d5-bcd80b123e0f', 'packaging_variant', 'UPSERT');
@@ -2987,7 +2987,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9ffba3c6-6e75-48ed-980f-7fefb1ec40b6', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d20c4816-f860-472a-af4e-b66c4c91f27f', '3ae851c5-f8a2-4325-a0fa-f5c53412bab8', 'Tertiary', 3, 0.038660) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d20c4816-f860-472a-af4e-b66c4c91f27f', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b3f6f666-01e0-4e19-93ce-1c40c22e5c26', 'Shanchol (Shantha Biotechnics Private Limited (A Sanofi Company))', 'e9814237-d54c-40e2-8b39-e674549b1fd0', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b3f6f666-01e0-4e19-93ce-1c40c22e5c26', 'Shanchol (Shantha Biotechnics Private Limited (A Sanofi Company))', 'e9814237-d54c-40e2-8b39-e674549b1fd0', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b3f6f666-01e0-4e19-93ce-1c40c22e5c26', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('61096826-6374-4f1b-ac40-c63c8be7e885', 'b3f6f666-01e0-4e19-93ce-1c40c22e5c26', 'Primary', 1, 0.016800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('61096826-6374-4f1b-ac40-c63c8be7e885', 'packaging_variant', 'UPSERT');
@@ -2999,7 +2999,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('16c5cda3-b43f-46af-9907-d35057277ae8', '16c5cda3-b43f-46af-9907-d35057277ae8') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('16c5cda3-b43f-46af-9907-d35057277ae8', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_16c5cda3-b43f-46af-9907-d35057277ae8', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '16c5cda3-b43f-46af-9907-d35057277ae8') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('99c6e869-8a95-4e9f-9b69-33c8442e4b96', 'Dukoral (Valneva Sweden AB)', '16c5cda3-b43f-46af-9907-d35057277ae8', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('99c6e869-8a95-4e9f-9b69-33c8442e4b96', 'Dukoral (Valneva Sweden AB)', '16c5cda3-b43f-46af-9907-d35057277ae8', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('99c6e869-8a95-4e9f-9b69-33c8442e4b96', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('aa413c40-938b-4819-9fee-abaccfc85866', '99c6e869-8a95-4e9f-9b69-33c8442e4b96', 'Primary', 1, 0.136000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('aa413c40-938b-4819-9fee-abaccfc85866', 'packaging_variant', 'UPSERT');
@@ -3011,7 +3011,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('717c4c30-0cc7-4f7e-b9ce-76742078cb93', '717c4c30-0cc7-4f7e-b9ce-76742078cb93') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('717c4c30-0cc7-4f7e-b9ce-76742078cb93', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_717c4c30-0cc7-4f7e-b9ce-76742078cb93', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '717c4c30-0cc7-4f7e-b9ce-76742078cb93') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('cfc3e2d7-3a5b-42f3-85a0-ded95f991a05', 'Synflorix (GlaxoSmithKline Biologicals SA)', '717c4c30-0cc7-4f7e-b9ce-76742078cb93', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('cfc3e2d7-3a5b-42f3-85a0-ded95f991a05', 'Synflorix (GlaxoSmithKline Biologicals SA)', '717c4c30-0cc7-4f7e-b9ce-76742078cb93', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cfc3e2d7-3a5b-42f3-85a0-ded95f991a05', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c06e87f0-2b7b-42d9-b179-57a17d9fc47b', 'cfc3e2d7-3a5b-42f3-85a0-ded95f991a05', 'Primary', 1, 0.009680) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c06e87f0-2b7b-42d9-b179-57a17d9fc47b', 'packaging_variant', 'UPSERT');
@@ -3023,7 +3023,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('62fe3af4-2ed0-4f83-b8a6-bc917e52fb9c', '62fe3af4-2ed0-4f83-b8a6-bc917e52fb9c') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('62fe3af4-2ed0-4f83-b8a6-bc917e52fb9c', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_62fe3af4-2ed0-4f83-b8a6-bc917e52fb9c', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '62fe3af4-2ed0-4f83-b8a6-bc917e52fb9c') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('16ceb8c2-78f6-4cb5-a800-5fc5930bfa17', 'Synflorix (GlaxoSmithKline Biologicals SA)', '62fe3af4-2ed0-4f83-b8a6-bc917e52fb9c', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('16ceb8c2-78f6-4cb5-a800-5fc5930bfa17', 'Synflorix (GlaxoSmithKline Biologicals SA)', '62fe3af4-2ed0-4f83-b8a6-bc917e52fb9c', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('16ceb8c2-78f6-4cb5-a800-5fc5930bfa17', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c917af5d-5e8a-4053-94e1-b22c61a2c16e', '16ceb8c2-78f6-4cb5-a800-5fc5930bfa17', 'Primary', 1, 0.009600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c917af5d-5e8a-4053-94e1-b22c61a2c16e', 'packaging_variant', 'UPSERT');
@@ -3035,7 +3035,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('eee0537e-00fc-44c5-95b1-45a11c13448d', 'eee0537e-00fc-44c5-95b1-45a11c13448d') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('eee0537e-00fc-44c5-95b1-45a11c13448d', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_eee0537e-00fc-44c5-95b1-45a11c13448d', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'eee0537e-00fc-44c5-95b1-45a11c13448d') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7e4bcfd3-238c-4e57-ad94-7840201bb676', 'Synflorix (GlaxoSmithKline Biologicals SA)', 'eee0537e-00fc-44c5-95b1-45a11c13448d', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7e4bcfd3-238c-4e57-ad94-7840201bb676', 'Synflorix (GlaxoSmithKline Biologicals SA)', 'eee0537e-00fc-44c5-95b1-45a11c13448d', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7e4bcfd3-238c-4e57-ad94-7840201bb676', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('cc69abf6-f19c-40b2-8a73-55ea5a549c66', '7e4bcfd3-238c-4e57-ad94-7840201bb676', 'Primary', 1, 0.009600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cc69abf6-f19c-40b2-8a73-55ea5a549c66', 'packaging_variant', 'UPSERT');
@@ -3043,7 +3043,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('30c153c7-c36f-4f45-8e28-77d8697b439c', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2c0e3153-56ff-422d-b8ab-3dab92b3b512', '7e4bcfd3-238c-4e57-ad94-7840201bb676', 'Tertiary', 3, 0.014160) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2c0e3153-56ff-422d-b8ab-3dab92b3b512', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('1123c018-eebb-47ec-8863-15f23e253b88', 'PNEUMOSIL (Serum Institute of India Pvt. Ltd.)', '717c4c30-0cc7-4f7e-b9ce-76742078cb93', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('1123c018-eebb-47ec-8863-15f23e253b88', 'PNEUMOSIL (Serum Institute of India Pvt. Ltd.)', '717c4c30-0cc7-4f7e-b9ce-76742078cb93', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1123c018-eebb-47ec-8863-15f23e253b88', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e4e09dd2-3ae5-49f4-b6ea-adf2c4462121', '1123c018-eebb-47ec-8863-15f23e253b88', 'Primary', 1, 0.017580) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e4e09dd2-3ae5-49f4-b6ea-adf2c4462121', 'packaging_variant', 'UPSERT');
@@ -3055,7 +3055,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('55a9a28a-63cc-4a6b-89d4-f28a0108e1e9', '55a9a28a-63cc-4a6b-89d4-f28a0108e1e9') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('55a9a28a-63cc-4a6b-89d4-f28a0108e1e9', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_55a9a28a-63cc-4a6b-89d4-f28a0108e1e9', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '55a9a28a-63cc-4a6b-89d4-f28a0108e1e9') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f447e34d-f3b1-4964-83c4-a9d373de5e8a', 'PNEUMOSIL (Serum Institute of India Pvt. Ltd.)', '55a9a28a-63cc-4a6b-89d4-f28a0108e1e9', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f447e34d-f3b1-4964-83c4-a9d373de5e8a', 'PNEUMOSIL (Serum Institute of India Pvt. Ltd.)', '55a9a28a-63cc-4a6b-89d4-f28a0108e1e9', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f447e34d-f3b1-4964-83c4-a9d373de5e8a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e81abef8-77da-4975-85a2-08603465f087', 'f447e34d-f3b1-4964-83c4-a9d373de5e8a', 'Primary', 1, 0.017600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e81abef8-77da-4975-85a2-08603465f087', 'packaging_variant', 'UPSERT');
@@ -3067,7 +3067,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('6be1b904-0bc9-4ee4-a1d0-07dfe9d94a9e', '6be1b904-0bc9-4ee4-a1d0-07dfe9d94a9e') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6be1b904-0bc9-4ee4-a1d0-07dfe9d94a9e', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_6be1b904-0bc9-4ee4-a1d0-07dfe9d94a9e', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '6be1b904-0bc9-4ee4-a1d0-07dfe9d94a9e') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2ffbbfe6-7281-44b3-812b-bc75f7e0b26b', 'Prevenar 13 (Pfizer)', '6be1b904-0bc9-4ee4-a1d0-07dfe9d94a9e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2ffbbfe6-7281-44b3-812b-bc75f7e0b26b', 'Prevenar 13 (Pfizer)', '6be1b904-0bc9-4ee4-a1d0-07dfe9d94a9e', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2ffbbfe6-7281-44b3-812b-bc75f7e0b26b', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('07839c60-ced3-42de-9a04-4ddb6a61f7cd', '2ffbbfe6-7281-44b3-812b-bc75f7e0b26b', 'Primary', 1, 0.012000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('07839c60-ced3-42de-9a04-4ddb6a61f7cd', 'packaging_variant', 'UPSERT');
@@ -3079,7 +3079,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('c34a52a6-e288-48d9-bfc5-bc690b033304', 'c34a52a6-e288-48d9-bfc5-bc690b033304') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c34a52a6-e288-48d9-bfc5-bc690b033304', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_c34a52a6-e288-48d9-bfc5-bc690b033304', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'c34a52a6-e288-48d9-bfc5-bc690b033304') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9a5362b7-d251-4c47-a5f4-aefd5eee64b7', 'Prevenar 13 Multidose Vial (Pfizer)', 'c34a52a6-e288-48d9-bfc5-bc690b033304', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9a5362b7-d251-4c47-a5f4-aefd5eee64b7', 'Prevenar 13 Multidose Vial (Pfizer)', 'c34a52a6-e288-48d9-bfc5-bc690b033304', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9a5362b7-d251-4c47-a5f4-aefd5eee64b7', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('702319db-1ca3-4d36-9855-58ceb287a68a', '9a5362b7-d251-4c47-a5f4-aefd5eee64b7', 'Primary', 1, 0.014400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('702319db-1ca3-4d36-9855-58ceb287a68a', 'packaging_variant', 'UPSERT');
@@ -3091,7 +3091,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('740c27b4-fab3-4948-ab44-b71f4cbda66c', '740c27b4-fab3-4948-ab44-b71f4cbda66c') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('740c27b4-fab3-4948-ab44-b71f4cbda66c', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_740c27b4-fab3-4948-ab44-b71f4cbda66c', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '740c27b4-fab3-4948-ab44-b71f4cbda66c') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3be90ea0-b7e7-4a33-9c13-4e7653a575a5', 'R21 Malaria (Serum Institut of India Pvt. Ltd.)', '740c27b4-fab3-4948-ab44-b71f4cbda66c', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3be90ea0-b7e7-4a33-9c13-4e7653a575a5', 'R21 Malaria (Serum Institut of India Pvt. Ltd.)', '740c27b4-fab3-4948-ab44-b71f4cbda66c', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3be90ea0-b7e7-4a33-9c13-4e7653a575a5', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8a3db8ac-8a13-4d72-81e8-f1448c1be251', '3be90ea0-b7e7-4a33-9c13-4e7653a575a5', 'Primary', 1, 0.014060) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8a3db8ac-8a13-4d72-81e8-f1448c1be251', 'packaging_variant', 'UPSERT');
@@ -3103,7 +3103,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('9f35bf22-2708-46d5-bbaf-839aac913f86', '9f35bf22-2708-46d5-bbaf-839aac913f86') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9f35bf22-2708-46d5-bbaf-839aac913f86', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_9f35bf22-2708-46d5-bbaf-839aac913f86', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '9f35bf22-2708-46d5-bbaf-839aac913f86') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bb3faa98-a000-4620-a9b2-4a74a5d5b654', 'R21 Malaria (Serum Institut of India Pvt. Ltd.)', '9f35bf22-2708-46d5-bbaf-839aac913f86', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bb3faa98-a000-4620-a9b2-4a74a5d5b654', 'R21 Malaria (Serum Institut of India Pvt. Ltd.)', '9f35bf22-2708-46d5-bbaf-839aac913f86', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bb3faa98-a000-4620-a9b2-4a74a5d5b654', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('957fb3b7-7b03-4868-8233-83f2a4aea14a', 'bb3faa98-a000-4620-a9b2-4a74a5d5b654', 'Primary', 1, 0.014060) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('957fb3b7-7b03-4868-8233-83f2a4aea14a', 'packaging_variant', 'UPSERT');
@@ -3115,7 +3115,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('d5217343-a605-43dc-aa71-457a62a75bd2', 'd5217343-a605-43dc-aa71-457a62a75bd2') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d5217343-a605-43dc-aa71-457a62a75bd2', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_d5217343-a605-43dc-aa71-457a62a75bd2', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'd5217343-a605-43dc-aa71-457a62a75bd2') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('36b935a4-12d7-4999-bf7c-a55c6ef42db1', 'Rabipur (Chiron Behring Vaccines Private Ltd.)', 'd5217343-a605-43dc-aa71-457a62a75bd2', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('36b935a4-12d7-4999-bf7c-a55c6ef42db1', 'Rabipur (Chiron Behring Vaccines Private Ltd.)', 'd5217343-a605-43dc-aa71-457a62a75bd2', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('36b935a4-12d7-4999-bf7c-a55c6ef42db1', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f6f95f78-0578-4c0c-b4f6-18a57a713bee', '36b935a4-12d7-4999-bf7c-a55c6ef42db1', 'Primary', 1, 0.048000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f6f95f78-0578-4c0c-b4f6-18a57a713bee', 'packaging_variant', 'UPSERT');
@@ -3123,7 +3123,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('aa5c511c-f17b-47bb-be8d-e9f5ce06e164', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('22e2c43f-9dcf-47d9-beba-46b95869bef4', '36b935a4-12d7-4999-bf7c-a55c6ef42db1', 'Tertiary', 3, 0.378280) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('22e2c43f-9dcf-47d9-beba-46b95869bef4', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d1f1f691-82b6-4bf8-bbc0-01dbfd792aec', 'Rabipur (Novartis Vaccines and Diagnostics GmbH)', 'd5217343-a605-43dc-aa71-457a62a75bd2', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d1f1f691-82b6-4bf8-bbc0-01dbfd792aec', 'Rabipur (Novartis Vaccines and Diagnostics GmbH)', 'd5217343-a605-43dc-aa71-457a62a75bd2', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d1f1f691-82b6-4bf8-bbc0-01dbfd792aec', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b995f3c9-5a73-44a1-959d-a6f5151d2b30', 'd1f1f691-82b6-4bf8-bbc0-01dbfd792aec', 'Primary', 1, 0.174000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b995f3c9-5a73-44a1-959d-a6f5151d2b30', 'packaging_variant', 'UPSERT');
@@ -3131,7 +3131,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6bc48841-cef7-48b6-a542-e1c1c02a9b7f', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('96edfd10-e053-408c-8e1a-1bcd3cfb74e9', 'd1f1f691-82b6-4bf8-bbc0-01dbfd792aec', 'Tertiary', 3, 0.174000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('96edfd10-e053-408c-8e1a-1bcd3cfb74e9', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2218a875-043f-4f47-978b-b921733c206d', 'VERORAB (Sanofi Pasteur SA)', 'd5217343-a605-43dc-aa71-457a62a75bd2', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2218a875-043f-4f47-978b-b921733c206d', 'VERORAB (Sanofi Pasteur SA)', 'd5217343-a605-43dc-aa71-457a62a75bd2', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2218a875-043f-4f47-978b-b921733c206d', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c96aec0f-99a6-4900-ab6e-0b02aa4bd242', '2218a875-043f-4f47-978b-b921733c206d', 'Primary', 1, 0.050500) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c96aec0f-99a6-4900-ab6e-0b02aa4bd242', 'packaging_variant', 'UPSERT');
@@ -3143,7 +3143,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('ab235f62-77c0-4551-bd14-6a4df2adec6c', 'ab235f62-77c0-4551-bd14-6a4df2adec6c') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ab235f62-77c0-4551-bd14-6a4df2adec6c', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_ab235f62-77c0-4551-bd14-6a4df2adec6c', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'ab235f62-77c0-4551-bd14-6a4df2adec6c') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c973d1ef-2af5-4703-9480-adfb05223d16', 'Rotavac 50D (Bharat Biotech International Limited)', 'ab235f62-77c0-4551-bd14-6a4df2adec6c', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c973d1ef-2af5-4703-9480-adfb05223d16', 'Rotavac 50D (Bharat Biotech International Limited)', 'ab235f62-77c0-4551-bd14-6a4df2adec6c', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c973d1ef-2af5-4703-9480-adfb05223d16', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('41036c04-3888-4fe0-a3e7-c7577ab77b8b', 'c973d1ef-2af5-4703-9480-adfb05223d16', 'Primary', 1, 0.014450) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('41036c04-3888-4fe0-a3e7-c7577ab77b8b', 'packaging_variant', 'UPSERT');
@@ -3155,7 +3155,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('40323957-c8ae-4bd6-94f6-16284884dd13', '40323957-c8ae-4bd6-94f6-16284884dd13') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('40323957-c8ae-4bd6-94f6-16284884dd13', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_40323957-c8ae-4bd6-94f6-16284884dd13', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '40323957-c8ae-4bd6-94f6-16284884dd13') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('24bc6ed8-5b1d-45b7-af7e-a9c29e60ebab', 'Rotavac 50D (Bharat Biotech International Limited)', '40323957-c8ae-4bd6-94f6-16284884dd13', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('24bc6ed8-5b1d-45b7-af7e-a9c29e60ebab', 'Rotavac 50D (Bharat Biotech International Limited)', '40323957-c8ae-4bd6-94f6-16284884dd13', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('24bc6ed8-5b1d-45b7-af7e-a9c29e60ebab', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('67746fe0-05c8-49de-abd6-1056aac97987', '24bc6ed8-5b1d-45b7-af7e-a9c29e60ebab', 'Primary', 1, 0.016000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('67746fe0-05c8-49de-abd6-1056aac97987', 'packaging_variant', 'UPSERT');
@@ -3167,7 +3167,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('119c0a0a-074c-49e8-89f2-056de76baddf', '119c0a0a-074c-49e8-89f2-056de76baddf') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('119c0a0a-074c-49e8-89f2-056de76baddf', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_119c0a0a-074c-49e8-89f2-056de76baddf', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '119c0a0a-074c-49e8-89f2-056de76baddf') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('33c384e0-4c8b-44a3-b3ea-86fadc3d1178', 'Rotarix (GlaxoSmithKline Biologicals SA)', '119c0a0a-074c-49e8-89f2-056de76baddf', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('33c384e0-4c8b-44a3-b3ea-86fadc3d1178', 'Rotarix (GlaxoSmithKline Biologicals SA)', '119c0a0a-074c-49e8-89f2-056de76baddf', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('33c384e0-4c8b-44a3-b3ea-86fadc3d1178', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('356dbe38-b97d-4588-9dc5-7ce44625a47f', '33c384e0-4c8b-44a3-b3ea-86fadc3d1178', 'Primary', 1, 0.011800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('356dbe38-b97d-4588-9dc5-7ce44625a47f', 'packaging_variant', 'UPSERT');
@@ -3179,7 +3179,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('2862797f-3af0-4a2c-bc0c-8089ce49b00f', '2862797f-3af0-4a2c-bc0c-8089ce49b00f') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2862797f-3af0-4a2c-bc0c-8089ce49b00f', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_2862797f-3af0-4a2c-bc0c-8089ce49b00f', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '2862797f-3af0-4a2c-bc0c-8089ce49b00f') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('db6300b3-7a7a-4ddb-8bcc-4a1d5ca2fc4d', 'Rotarix (GlaxoSmithKline Biologicals SA)', '2862797f-3af0-4a2c-bc0c-8089ce49b00f', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('db6300b3-7a7a-4ddb-8bcc-4a1d5ca2fc4d', 'Rotarix (GlaxoSmithKline Biologicals SA)', '2862797f-3af0-4a2c-bc0c-8089ce49b00f', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('db6300b3-7a7a-4ddb-8bcc-4a1d5ca2fc4d', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0ee8262f-f7c2-4a36-b343-8a1d1aff0881', 'db6300b3-7a7a-4ddb-8bcc-4a1d5ca2fc4d', 'Primary', 1, 0.085300) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0ee8262f-f7c2-4a36-b343-8a1d1aff0881', 'packaging_variant', 'UPSERT');
@@ -3187,7 +3187,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fc900a69-fb22-4040-beeb-74067eade837', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('adead130-70b4-4348-807e-0461443032fe', 'db6300b3-7a7a-4ddb-8bcc-4a1d5ca2fc4d', 'Tertiary', 3, 0.123330) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('adead130-70b4-4348-807e-0461443032fe', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6f7dd426-9a74-4376-9fa2-ed03c1f05b24', 'Rotarix (GlaxoSmithKline Biologicals SA)', '119c0a0a-074c-49e8-89f2-056de76baddf', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6f7dd426-9a74-4376-9fa2-ed03c1f05b24', 'Rotarix (GlaxoSmithKline Biologicals SA)', '119c0a0a-074c-49e8-89f2-056de76baddf', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6f7dd426-9a74-4376-9fa2-ed03c1f05b24', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f3f171e8-6542-4837-aa41-47b846ab98c5', '6f7dd426-9a74-4376-9fa2-ed03c1f05b24', 'Primary', 1, 0.017130) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f3f171e8-6542-4837-aa41-47b846ab98c5', 'packaging_variant', 'UPSERT');
@@ -3199,7 +3199,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('5ff7ca93-9ba3-43d6-bf41-e84429e9d641', '5ff7ca93-9ba3-43d6-bf41-e84429e9d641') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5ff7ca93-9ba3-43d6-bf41-e84429e9d641', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_5ff7ca93-9ba3-43d6-bf41-e84429e9d641', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '5ff7ca93-9ba3-43d6-bf41-e84429e9d641') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('1350a4e2-de89-414f-8be8-463684f7a621', 'Rotateq (Merck Vaccines)', '5ff7ca93-9ba3-43d6-bf41-e84429e9d641', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('1350a4e2-de89-414f-8be8-463684f7a621', 'Rotateq (Merck Vaccines)', '5ff7ca93-9ba3-43d6-bf41-e84429e9d641', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1350a4e2-de89-414f-8be8-463684f7a621', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2b2adb0a-df90-4de9-a469-63edfb4da1bc', '1350a4e2-de89-414f-8be8-463684f7a621', 'Primary', 1, 0.046300) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2b2adb0a-df90-4de9-a469-63edfb4da1bc', 'packaging_variant', 'UPSERT');
@@ -3207,7 +3207,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d2e2d25e-630d-4e5c-bb6d-072d0d5a726b', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3d687e3f-d5e9-49d3-b6fe-0a40d39bf6a9', '1350a4e2-de89-414f-8be8-463684f7a621', 'Tertiary', 3, 0.049450) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3d687e3f-d5e9-49d3-b6fe-0a40d39bf6a9', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('60cf8c96-15db-4ff9-9cc8-7d2583035f2a', 'Rotasiil-Liquid (Serum Institute of India Pvt. Ltd.)', '5ff7ca93-9ba3-43d6-bf41-e84429e9d641', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('60cf8c96-15db-4ff9-9cc8-7d2583035f2a', 'Rotasiil-Liquid (Serum Institute of India Pvt. Ltd.)', '5ff7ca93-9ba3-43d6-bf41-e84429e9d641', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('60cf8c96-15db-4ff9-9cc8-7d2583035f2a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f3165312-34fe-446b-ae9f-911e7d217852', '60cf8c96-15db-4ff9-9cc8-7d2583035f2a', 'Primary', 1, 0.020060) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f3165312-34fe-446b-ae9f-911e7d217852', 'packaging_variant', 'UPSERT');
@@ -3219,7 +3219,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('1bdd2f5b-35df-4881-b4bf-dfbde0cdee14', '1bdd2f5b-35df-4881-b4bf-dfbde0cdee14') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1bdd2f5b-35df-4881-b4bf-dfbde0cdee14', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_1bdd2f5b-35df-4881-b4bf-dfbde0cdee14', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '1bdd2f5b-35df-4881-b4bf-dfbde0cdee14') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a2d2b20a-6b38-4fc0-a815-57724e0d7eb9', 'Rotasiil-Liquid (Serum Institute of India Pvt. Ltd.)', '1bdd2f5b-35df-4881-b4bf-dfbde0cdee14', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a2d2b20a-6b38-4fc0-a815-57724e0d7eb9', 'Rotasiil-Liquid (Serum Institute of India Pvt. Ltd.)', '1bdd2f5b-35df-4881-b4bf-dfbde0cdee14', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a2d2b20a-6b38-4fc0-a815-57724e0d7eb9', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('5fa9e8c5-6340-4bf5-a63d-92b515190e68', 'a2d2b20a-6b38-4fc0-a815-57724e0d7eb9', 'Primary', 1, 0.028600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5fa9e8c5-6340-4bf5-a63d-92b515190e68', 'packaging_variant', 'UPSERT');
@@ -3231,7 +3231,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('0efaf104-9b8c-4246-b6fe-955df6a2a5d3', '0efaf104-9b8c-4246-b6fe-955df6a2a5d3') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0efaf104-9b8c-4246-b6fe-955df6a2a5d3', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_0efaf104-9b8c-4246-b6fe-955df6a2a5d3', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '0efaf104-9b8c-4246-b6fe-955df6a2a5d3') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('27392111-81be-49ff-ac38-104e23f7c51e', 'Rotavac (Bharat Biotech International Limited)', '0efaf104-9b8c-4246-b6fe-955df6a2a5d3', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('27392111-81be-49ff-ac38-104e23f7c51e', 'Rotavac (Bharat Biotech International Limited)', '0efaf104-9b8c-4246-b6fe-955df6a2a5d3', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('27392111-81be-49ff-ac38-104e23f7c51e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3655cb5a-3732-42e3-8d4a-41c7331adf16', '27392111-81be-49ff-ac38-104e23f7c51e', 'Primary', 1, 0.021000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3655cb5a-3732-42e3-8d4a-41c7331adf16', 'packaging_variant', 'UPSERT');
@@ -3243,7 +3243,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('b3a97cff-0f46-49f7-bd30-a2f9fda17538', 'b3a97cff-0f46-49f7-bd30-a2f9fda17538') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b3a97cff-0f46-49f7-bd30-a2f9fda17538', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_b3a97cff-0f46-49f7-bd30-a2f9fda17538', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'b3a97cff-0f46-49f7-bd30-a2f9fda17538') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4f8761e7-c0a1-4670-b097-330162a0e748', 'Rotavac (Bharat Biotech International Limited)', 'b3a97cff-0f46-49f7-bd30-a2f9fda17538', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4f8761e7-c0a1-4670-b097-330162a0e748', 'Rotavac (Bharat Biotech International Limited)', 'b3a97cff-0f46-49f7-bd30-a2f9fda17538', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4f8761e7-c0a1-4670-b097-330162a0e748', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('cd3f00a2-0e99-4937-9de9-0828b329e45a', '4f8761e7-c0a1-4670-b097-330162a0e748', 'Primary', 1, 0.032000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cd3f00a2-0e99-4937-9de9-0828b329e45a', 'packaging_variant', 'UPSERT');
@@ -3255,7 +3255,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('0900bfc2-4106-401d-b91e-3b7df83c39a8', '0900bfc2-4106-401d-b91e-3b7df83c39a8') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0900bfc2-4106-401d-b91e-3b7df83c39a8', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_0900bfc2-4106-401d-b91e-3b7df83c39a8', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '0900bfc2-4106-401d-b91e-3b7df83c39a8') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bcd70b89-cd8a-4339-baa4-4c9043823b37', 'Rotasiil (Serum Institute of India Pvt. Ltd.)', '0900bfc2-4106-401d-b91e-3b7df83c39a8', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bcd70b89-cd8a-4339-baa4-4c9043823b37', 'Rotasiil (Serum Institute of India Pvt. Ltd.)', '0900bfc2-4106-401d-b91e-3b7df83c39a8', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bcd70b89-cd8a-4339-baa4-4c9043823b37', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f0639c80-e045-4886-abbe-815f51211948', 'bcd70b89-cd8a-4339-baa4-4c9043823b37', 'Primary', 1, 0.017580) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f0639c80-e045-4886-abbe-815f51211948', 'packaging_variant', 'UPSERT');
@@ -3267,7 +3267,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('75f8a522-6636-406c-bc2e-8eb494906e50', '75f8a522-6636-406c-bc2e-8eb494906e50') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('75f8a522-6636-406c-bc2e-8eb494906e50', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_75f8a522-6636-406c-bc2e-8eb494906e50', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '75f8a522-6636-406c-bc2e-8eb494906e50') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('936ab21c-3757-45e0-a156-fdcb602e8683', 'Rotasiil (Serum Institute of India Pvt. Ltd.)', '75f8a522-6636-406c-bc2e-8eb494906e50', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('936ab21c-3757-45e0-a156-fdcb602e8683', 'Rotasiil (Serum Institute of India Pvt. Ltd.)', '75f8a522-6636-406c-bc2e-8eb494906e50', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('936ab21c-3757-45e0-a156-fdcb602e8683', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1bcf7e14-9059-40b1-94e2-cd09b55bb817', '936ab21c-3757-45e0-a156-fdcb602e8683', 'Primary', 1, 0.0176) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1bcf7e14-9059-40b1-94e2-cd09b55bb817', 'packaging_variant', 'UPSERT');
@@ -3281,7 +3281,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('316d6480-e083-4a35-92e0-740da7db1541', '316d6480-e083-4a35-92e0-740da7db1541') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('316d6480-e083-4a35-92e0-740da7db1541', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_316d6480-e083-4a35-92e0-740da7db1541', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '316d6480-e083-4a35-92e0-740da7db1541') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9fd6dc31-0aba-44bc-a331-0d1952fdcfb6', 'Rotasiil (Serum Institute of India Pvt. Ltd.)', '316d6480-e083-4a35-92e0-740da7db1541', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9fd6dc31-0aba-44bc-a331-0d1952fdcfb6', 'Rotasiil (Serum Institute of India Pvt. Ltd.)', '316d6480-e083-4a35-92e0-740da7db1541', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9fd6dc31-0aba-44bc-a331-0d1952fdcfb6', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('29a12efe-61e4-48f4-b43f-a04379eb50b9', '9fd6dc31-0aba-44bc-a331-0d1952fdcfb6', 'Primary', 1, 0.021080) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('29a12efe-61e4-48f4-b43f-a04379eb50b9', 'packaging_variant', 'UPSERT');
@@ -3293,7 +3293,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('c01f0bc3-f645-4b18-87e9-3843d3aecb46', 'c01f0bc3-f645-4b18-87e9-3843d3aecb46') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c01f0bc3-f645-4b18-87e9-3843d3aecb46', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_c01f0bc3-f645-4b18-87e9-3843d3aecb46', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'c01f0bc3-f645-4b18-87e9-3843d3aecb46') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('437bfebb-a0a5-4d18-9287-049541b54a2d', 'Rotasiil (Serum Institute of India Pvt. Ltd.)', 'c01f0bc3-f645-4b18-87e9-3843d3aecb46', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('437bfebb-a0a5-4d18-9287-049541b54a2d', 'Rotasiil (Serum Institute of India Pvt. Ltd.)', 'c01f0bc3-f645-4b18-87e9-3843d3aecb46', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('437bfebb-a0a5-4d18-9287-049541b54a2d', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8c95e5d7-14e9-4d0a-8690-7bbedaf61226', '437bfebb-a0a5-4d18-9287-049541b54a2d', 'Primary', 1, 0.021) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8c95e5d7-14e9-4d0a-8690-7bbedaf61226', 'packaging_variant', 'UPSERT');
@@ -3303,7 +3303,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('76e69edc-285a-42cb-b5f8-ce8a2a28540c', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('ed48d8c8-3319-47e8-97e6-00fef5d847e6', '9fd6dc31-0aba-44bc-a331-0d1952fdcfb6', '437bfebb-a0a5-4d18-9287-049541b54a2d', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ed48d8c8-3319-47e8-97e6-00fef5d847e6', 'bundled_item', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a8b8c0f1-2e72-41b3-ac72-f2f08d7b58e1', 'ROTASIIL®Thermo (Serum Institute of India Pvt. Ltd.)', '0900bfc2-4106-401d-b91e-3b7df83c39a8', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('a8b8c0f1-2e72-41b3-ac72-f2f08d7b58e1', 'ROTASIIL®Thermo (Serum Institute of India Pvt. Ltd.)', '0900bfc2-4106-401d-b91e-3b7df83c39a8', (SELECT id FROM cold_storage_type WHERE name = '+25' or (min_temperature >= 10 AND max_temperature <= 30) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a8b8c0f1-2e72-41b3-ac72-f2f08d7b58e1', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('932ab82f-b51d-478f-8070-64e6a83d5d93', 'a8b8c0f1-2e72-41b3-ac72-f2f08d7b58e1', 'Primary', 1, 0.017570) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('932ab82f-b51d-478f-8070-64e6a83d5d93', 'packaging_variant', 'UPSERT');
@@ -3311,7 +3311,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('38d41bcd-6d81-42e0-a34e-dff1e3bcf55e', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b1425673-6972-43b7-b900-ee36d9fa6566', 'a8b8c0f1-2e72-41b3-ac72-f2f08d7b58e1', 'Tertiary', 3, 0.086400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b1425673-6972-43b7-b900-ee36d9fa6566', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b9b7b6d6-d9af-4fe5-bd23-8be7386b76af', 'ROTASIIL®Thermo (Serum Institute of India Pvt. Ltd.)', '75f8a522-6636-406c-bc2e-8eb494906e50', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b9b7b6d6-d9af-4fe5-bd23-8be7386b76af', 'ROTASIIL®Thermo (Serum Institute of India Pvt. Ltd.)', '75f8a522-6636-406c-bc2e-8eb494906e50', (SELECT id FROM cold_storage_type WHERE name = '+25' or (min_temperature >= 10 AND max_temperature <= 30) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b9b7b6d6-d9af-4fe5-bd23-8be7386b76af', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a6963a19-7ae7-4f6d-8ed9-46a381786f69', 'b9b7b6d6-d9af-4fe5-bd23-8be7386b76af', 'Primary', 1, 0.8823) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a6963a19-7ae7-4f6d-8ed9-46a381786f69', 'packaging_variant', 'UPSERT');
@@ -3321,7 +3321,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0b187fe0-1046-4ee2-a8a9-3fda546e4fd5', 'packaging_variant', 'UPSERT');
 INSERT INTO bundled_item (id, principal_item_variant_id, bundled_item_variant_id, ratio) VALUES ('d8b6bddb-bdae-48e7-9cc2-d21a0589f910', 'a8b8c0f1-2e72-41b3-ac72-f2f08d7b58e1', 'b9b7b6d6-d9af-4fe5-bd23-8be7386b76af', 1) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d8b6bddb-bdae-48e7-9cc2-d21a0589f910', 'bundled_item', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('761b74e4-758f-4164-ac83-8f11dd4b091a', 'ROTASIIL®Thermo (Serum Institute of India Pvt. Ltd.)', '316d6480-e083-4a35-92e0-740da7db1541', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('761b74e4-758f-4164-ac83-8f11dd4b091a', 'ROTASIIL®Thermo (Serum Institute of India Pvt. Ltd.)', '316d6480-e083-4a35-92e0-740da7db1541', (SELECT id FROM cold_storage_type WHERE name = '+25' or (min_temperature >= 10 AND max_temperature <= 30) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('761b74e4-758f-4164-ac83-8f11dd4b091a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0f0732a8-c19f-4d8f-af69-3267e53636ec', '761b74e4-758f-4164-ac83-8f11dd4b091a', 'Primary', 1, 0.021080) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0f0732a8-c19f-4d8f-af69-3267e53636ec', 'packaging_variant', 'UPSERT');
@@ -3329,7 +3329,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e1df93d7-0cae-475b-b9d0-da3950eb0703', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0e896148-6d3e-4bca-9ac2-d11cd250c9ee', '761b74e4-758f-4164-ac83-8f11dd4b091a', 'Tertiary', 3, 0.098400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0e896148-6d3e-4bca-9ac2-d11cd250c9ee', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('78a42ef5-a9ec-42d7-bc71-dc25360b59fc', 'ROTASIIL®Thermo (Serum Institute of India Pvt. Ltd.)', 'c01f0bc3-f645-4b18-87e9-3843d3aecb46', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('78a42ef5-a9ec-42d7-bc71-dc25360b59fc', 'ROTASIIL®Thermo (Serum Institute of India Pvt. Ltd.)', 'c01f0bc3-f645-4b18-87e9-3843d3aecb46', (SELECT id FROM cold_storage_type WHERE name = '+25' or (min_temperature >= 10 AND max_temperature <= 30) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('78a42ef5-a9ec-42d7-bc71-dc25360b59fc', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c5132199-8acc-494d-99be-08650090e216', '78a42ef5-a9ec-42d7-bc71-dc25360b59fc', 'Primary', 1, 0.021) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c5132199-8acc-494d-99be-08650090e216', 'packaging_variant', 'UPSERT');
@@ -3343,7 +3343,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('df22f1f9-23b2-4dee-943b-189a464767fb', 'df22f1f9-23b2-4dee-943b-189a464767fb') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('df22f1f9-23b2-4dee-943b-189a464767fb', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_df22f1f9-23b2-4dee-943b-189a464767fb', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'df22f1f9-23b2-4dee-943b-189a464767fb') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9a76aa39-247b-4b15-bab2-35ff661c755c', 'Mosquirix (GlaxoSmithKline Biologicals SA)', 'df22f1f9-23b2-4dee-943b-189a464767fb', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9a76aa39-247b-4b15-bab2-35ff661c755c', 'Mosquirix (GlaxoSmithKline Biologicals SA)', 'df22f1f9-23b2-4dee-943b-189a464767fb', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9a76aa39-247b-4b15-bab2-35ff661c755c', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('af65a41a-0b5f-42ed-a9e0-b5c128079481', '9a76aa39-247b-4b15-bab2-35ff661c755c', 'Primary', 1, 0.019800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('af65a41a-0b5f-42ed-a9e0-b5c128079481', 'packaging_variant', 'UPSERT');
@@ -3355,7 +3355,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('7c059e02-17fd-47c4-97f8-06951026ab77', '7c059e02-17fd-47c4-97f8-06951026ab77') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7c059e02-17fd-47c4-97f8-06951026ab77', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_7c059e02-17fd-47c4-97f8-06951026ab77', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '7c059e02-17fd-47c4-97f8-06951026ab77') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8b106591-a639-48e2-9d0e-7d494d3053f1', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '7c059e02-17fd-47c4-97f8-06951026ab77', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8b106591-a639-48e2-9d0e-7d494d3053f1', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '7c059e02-17fd-47c4-97f8-06951026ab77', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8b106591-a639-48e2-9d0e-7d494d3053f1', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('2c715474-47af-4e2e-ae0c-a93d0d17a440', '8b106591-a639-48e2-9d0e-7d494d3053f1', 'Primary', 1, 0.021090) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2c715474-47af-4e2e-ae0c-a93d0d17a440', 'packaging_variant', 'UPSERT');
@@ -3367,7 +3367,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('b3c4539d-cff1-4bd6-83b1-352f4c3432b3', 'b3c4539d-cff1-4bd6-83b1-352f4c3432b3') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b3c4539d-cff1-4bd6-83b1-352f4c3432b3', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_b3c4539d-cff1-4bd6-83b1-352f4c3432b3', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'b3c4539d-cff1-4bd6-83b1-352f4c3432b3') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0c81569e-35aa-4753-93ed-bcdd707e1ee0', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'b3c4539d-cff1-4bd6-83b1-352f4c3432b3', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0c81569e-35aa-4753-93ed-bcdd707e1ee0', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'b3c4539d-cff1-4bd6-83b1-352f4c3432b3', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0c81569e-35aa-4753-93ed-bcdd707e1ee0', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('239b5f2a-9102-46c7-8fb6-f86a53912959', '0c81569e-35aa-4753-93ed-bcdd707e1ee0', 'Primary', 1, 0.0125) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('239b5f2a-9102-46c7-8fb6-f86a53912959', 'packaging_variant', 'UPSERT');
@@ -3381,7 +3381,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('c6c2e1b6-e1a2-4882-b29b-1f937f3dae51', 'c6c2e1b6-e1a2-4882-b29b-1f937f3dae51') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c6c2e1b6-e1a2-4882-b29b-1f937f3dae51', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_c6c2e1b6-e1a2-4882-b29b-1f937f3dae51', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'c6c2e1b6-e1a2-4882-b29b-1f937f3dae51') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('90689c05-1ebd-45e3-aeb4-82b27f1e57a0', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'c6c2e1b6-e1a2-4882-b29b-1f937f3dae51', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('90689c05-1ebd-45e3-aeb4-82b27f1e57a0', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'c6c2e1b6-e1a2-4882-b29b-1f937f3dae51', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('90689c05-1ebd-45e3-aeb4-82b27f1e57a0', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('5db36710-6f1a-4488-a386-a7f3333276e9', '90689c05-1ebd-45e3-aeb4-82b27f1e57a0', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5db36710-6f1a-4488-a386-a7f3333276e9', 'packaging_variant', 'UPSERT');
@@ -3393,7 +3393,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('e5142e6d-4025-472b-a26d-3ac24e65f305', 'e5142e6d-4025-472b-a26d-3ac24e65f305') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e5142e6d-4025-472b-a26d-3ac24e65f305', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_e5142e6d-4025-472b-a26d-3ac24e65f305', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'e5142e6d-4025-472b-a26d-3ac24e65f305') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f553b9ae-cd73-44c2-9363-86f441bfc482', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'e5142e6d-4025-472b-a26d-3ac24e65f305', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f553b9ae-cd73-44c2-9363-86f441bfc482', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'e5142e6d-4025-472b-a26d-3ac24e65f305', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f553b9ae-cd73-44c2-9363-86f441bfc482', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('940653b0-cddb-4261-a5c8-9bbbfcd2dce2', 'f553b9ae-cd73-44c2-9363-86f441bfc482', 'Primary', 1, 0.0126) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('940653b0-cddb-4261-a5c8-9bbbfcd2dce2', 'packaging_variant', 'UPSERT');
@@ -3407,7 +3407,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('f0cc3e3e-71ed-4d28-95e9-c99aa3433d8e', 'f0cc3e3e-71ed-4d28-95e9-c99aa3433d8e') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f0cc3e3e-71ed-4d28-95e9-c99aa3433d8e', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_f0cc3e3e-71ed-4d28-95e9-c99aa3433d8e', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'f0cc3e3e-71ed-4d28-95e9-c99aa3433d8e') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('db6f342c-f59c-4e4d-838c-6ed798d5dd03', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'f0cc3e3e-71ed-4d28-95e9-c99aa3433d8e', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('db6f342c-f59c-4e4d-838c-6ed798d5dd03', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'f0cc3e3e-71ed-4d28-95e9-c99aa3433d8e', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('db6f342c-f59c-4e4d-838c-6ed798d5dd03', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c5e4a4aa-6258-40af-887c-24e4df53b838', 'db6f342c-f59c-4e4d-838c-6ed798d5dd03', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c5e4a4aa-6258-40af-887c-24e4df53b838', 'packaging_variant', 'UPSERT');
@@ -3419,7 +3419,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('72104c0f-a26e-46d2-817a-f7e24d1ef879', '72104c0f-a26e-46d2-817a-f7e24d1ef879') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('72104c0f-a26e-46d2-817a-f7e24d1ef879', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_72104c0f-a26e-46d2-817a-f7e24d1ef879', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '72104c0f-a26e-46d2-817a-f7e24d1ef879') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('503ee128-f61e-44b9-bd44-4914a6cd6a00', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '72104c0f-a26e-46d2-817a-f7e24d1ef879', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('503ee128-f61e-44b9-bd44-4914a6cd6a00', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '72104c0f-a26e-46d2-817a-f7e24d1ef879', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('503ee128-f61e-44b9-bd44-4914a6cd6a00', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('6a13c9b5-929d-4cc0-830b-37b259483e42', '503ee128-f61e-44b9-bd44-4914a6cd6a00', 'Primary', 1, 0.0275) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6a13c9b5-929d-4cc0-830b-37b259483e42', 'packaging_variant', 'UPSERT');
@@ -3433,7 +3433,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('5977ad85-c2f3-487d-9302-41f1c080e134', '5977ad85-c2f3-487d-9302-41f1c080e134') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5977ad85-c2f3-487d-9302-41f1c080e134', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_5977ad85-c2f3-487d-9302-41f1c080e134', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '5977ad85-c2f3-487d-9302-41f1c080e134') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('94976a96-fdf5-4a57-8385-785400909ccb', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '5977ad85-c2f3-487d-9302-41f1c080e134', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('94976a96-fdf5-4a57-8385-785400909ccb', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', '5977ad85-c2f3-487d-9302-41f1c080e134', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('94976a96-fdf5-4a57-8385-785400909ccb', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7c95cf2c-cdff-447b-8b8d-2d3cfa6120d1', '94976a96-fdf5-4a57-8385-785400909ccb', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7c95cf2c-cdff-447b-8b8d-2d3cfa6120d1', 'packaging_variant', 'UPSERT');
@@ -3445,7 +3445,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('d50d3b42-fbf4-45f4-b60e-7a8aa1a36c5c', 'd50d3b42-fbf4-45f4-b60e-7a8aa1a36c5c') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d50d3b42-fbf4-45f4-b60e-7a8aa1a36c5c', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_d50d3b42-fbf4-45f4-b60e-7a8aa1a36c5c', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'd50d3b42-fbf4-45f4-b60e-7a8aa1a36c5c') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('395fc45b-db59-4bc9-bfd1-bb47f5e2ffab', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'd50d3b42-fbf4-45f4-b60e-7a8aa1a36c5c', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('395fc45b-db59-4bc9-bfd1-bb47f5e2ffab', 'Rubella Vaccine, Live, Attenuated (Serum Institute of India Pvt. Ltd.)', 'd50d3b42-fbf4-45f4-b60e-7a8aa1a36c5c', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('395fc45b-db59-4bc9-bfd1-bb47f5e2ffab', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('eb5d846e-70ad-4a79-92ed-3f79e725a362', '395fc45b-db59-4bc9-bfd1-bb47f5e2ffab', 'Primary', 1, 0.031) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('eb5d846e-70ad-4a79-92ed-3f79e725a362', 'packaging_variant', 'UPSERT');
@@ -3459,7 +3459,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('483a139a-fced-45cb-8fa2-b6908bd47675', '483a139a-fced-45cb-8fa2-b6908bd47675') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('483a139a-fced-45cb-8fa2-b6908bd47675', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_483a139a-fced-45cb-8fa2-b6908bd47675', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '483a139a-fced-45cb-8fa2-b6908bd47675') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ef2ed7d9-d169-4b6b-a9fd-bb54a9a5848e', 'Poliomyelitis Vaccine (Vero Cell), Inactivated, Sabin Strains (Beijing Institute of Biological Products Co., Ltd.)', '483a139a-fced-45cb-8fa2-b6908bd47675', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ef2ed7d9-d169-4b6b-a9fd-bb54a9a5848e', 'Poliomyelitis Vaccine (Vero Cell), Inactivated, Sabin Strains (Beijing Institute of Biological Products Co., Ltd.)', '483a139a-fced-45cb-8fa2-b6908bd47675', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ef2ed7d9-d169-4b6b-a9fd-bb54a9a5848e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('86209a86-7d30-4f74-b441-fe3a38820f73', 'ef2ed7d9-d169-4b6b-a9fd-bb54a9a5848e', 'Primary', 1, 0.021180) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('86209a86-7d30-4f74-b441-fe3a38820f73', 'packaging_variant', 'UPSERT');
@@ -3467,7 +3467,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('508b68e1-56f1-431f-9e1d-8907ae010a27', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('9fcea101-a9c3-4ce8-9200-8f57f5d041db', 'ef2ed7d9-d169-4b6b-a9fd-bb54a9a5848e', 'Tertiary', 3, 0.028900) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9fcea101-a9c3-4ce8-9200-8f57f5d041db', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c082d8de-ad79-4cc4-b9d3-54395b65a620', 'Poliomyelitis Vaccine (Vero Cell), Inactivated, Sabin Strains (Sinovac Biotech Co. Ltd)', '483a139a-fced-45cb-8fa2-b6908bd47675', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c082d8de-ad79-4cc4-b9d3-54395b65a620', 'Poliomyelitis Vaccine (Vero Cell), Inactivated, Sabin Strains (Sinovac Biotech Co. Ltd)', '483a139a-fced-45cb-8fa2-b6908bd47675', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c082d8de-ad79-4cc4-b9d3-54395b65a620', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('41a541d3-dd65-405f-9c4d-d0179af1dc8e', 'c082d8de-ad79-4cc4-b9d3-54395b65a620', 'Primary', 1, 0.012200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('41a541d3-dd65-405f-9c4d-d0179af1dc8e', 'packaging_variant', 'UPSERT');
@@ -3479,7 +3479,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('fcbec82d-d04c-4ac0-adf1-ad154b188696', 'fcbec82d-d04c-4ac0-adf1-ad154b188696') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fcbec82d-d04c-4ac0-adf1-ad154b188696', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_fcbec82d-d04c-4ac0-adf1-ad154b188696', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'fcbec82d-d04c-4ac0-adf1-ad154b188696') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('84e79043-0088-40d0-aae7-74d4c0486f88', 'Typbar-TCV (Bharat Biotech International Limited)', 'fcbec82d-d04c-4ac0-adf1-ad154b188696', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('84e79043-0088-40d0-aae7-74d4c0486f88', 'Typbar-TCV (Bharat Biotech International Limited)', 'fcbec82d-d04c-4ac0-adf1-ad154b188696', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('84e79043-0088-40d0-aae7-74d4c0486f88', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f180cce7-4bc1-4e4f-b473-14ca8cde089e', '84e79043-0088-40d0-aae7-74d4c0486f88', 'Primary', 1, 0.014180) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f180cce7-4bc1-4e4f-b473-14ca8cde089e', 'packaging_variant', 'UPSERT');
@@ -3491,7 +3491,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('48067ebb-3342-4ad1-81ec-566905673ff4', '48067ebb-3342-4ad1-81ec-566905673ff4') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('48067ebb-3342-4ad1-81ec-566905673ff4', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_48067ebb-3342-4ad1-81ec-566905673ff4', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '48067ebb-3342-4ad1-81ec-566905673ff4') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3d4a230f-fbab-4397-a401-f4dbf3b824f0', 'Typbar-TCV (Bharat Biotech International Limited)', '48067ebb-3342-4ad1-81ec-566905673ff4', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('3d4a230f-fbab-4397-a401-f4dbf3b824f0', 'Typbar-TCV (Bharat Biotech International Limited)', '48067ebb-3342-4ad1-81ec-566905673ff4', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3d4a230f-fbab-4397-a401-f4dbf3b824f0', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a4aa6eb3-dac6-4cda-9f72-0eedab26105a', '3d4a230f-fbab-4397-a401-f4dbf3b824f0', 'Primary', 1, 0.014450) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a4aa6eb3-dac6-4cda-9f72-0eedab26105a', 'packaging_variant', 'UPSERT');
@@ -3503,7 +3503,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('f4a23217-3aa4-41c8-addc-b864eb9e527b', 'f4a23217-3aa4-41c8-addc-b864eb9e527b') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f4a23217-3aa4-41c8-addc-b864eb9e527b', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_f4a23217-3aa4-41c8-addc-b864eb9e527b', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'f4a23217-3aa4-41c8-addc-b864eb9e527b') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b5119cde-a9e7-4bea-a741-c2b65a2db812', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name BE Td (Biological E. Limited)', 'f4a23217-3aa4-41c8-addc-b864eb9e527b', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('b5119cde-a9e7-4bea-a741-c2b65a2db812', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name BE Td (Biological E. Limited)', 'f4a23217-3aa4-41c8-addc-b864eb9e527b', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b5119cde-a9e7-4bea-a741-c2b65a2db812', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3d8e7bc5-a042-4c55-bb22-fb85205356aa', 'b5119cde-a9e7-4bea-a741-c2b65a2db812', 'Primary', 1, 0.014680) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3d8e7bc5-a042-4c55-bb22-fb85205356aa', 'packaging_variant', 'UPSERT');
@@ -3515,7 +3515,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('97868996-1e2c-4cd6-b967-bc51a649f842', '97868996-1e2c-4cd6-b967-bc51a649f842') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('97868996-1e2c-4cd6-b967-bc51a649f842', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_97868996-1e2c-4cd6-b967-bc51a649f842', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '97868996-1e2c-4cd6-b967-bc51a649f842') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2e602049-03be-4005-93fc-704f8e424945', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name BE Td (Biological E. Limited)', '97868996-1e2c-4cd6-b967-bc51a649f842', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('2e602049-03be-4005-93fc-704f8e424945', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name BE Td (Biological E. Limited)', '97868996-1e2c-4cd6-b967-bc51a649f842', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2e602049-03be-4005-93fc-704f8e424945', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('444c3db5-e56e-4865-bc79-974101467ea0', '2e602049-03be-4005-93fc-704f8e424945', 'Primary', 1, 0.029300) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('444c3db5-e56e-4865-bc79-974101467ea0', 'packaging_variant', 'UPSERT');
@@ -3523,7 +3523,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('55459896-ecf7-4063-bbd8-0e2718bb6cfc', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('838d9d3f-e949-4ce1-960e-de233905046e', '2e602049-03be-4005-93fc-704f8e424945', 'Tertiary', 3, 0.186200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('838d9d3f-e949-4ce1-960e-de233905046e', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('37c62fb9-bef8-4e77-8fe6-14e5418b0d04', 'Tetadif (National Center of Infectious and Parasitic Diseases)', '97868996-1e2c-4cd6-b967-bc51a649f842', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('37c62fb9-bef8-4e77-8fe6-14e5418b0d04', 'Tetadif (National Center of Infectious and Parasitic Diseases)', '97868996-1e2c-4cd6-b967-bc51a649f842', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('37c62fb9-bef8-4e77-8fe6-14e5418b0d04', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a6c874ae-1b03-4e43-854f-83718b32b00b', '37c62fb9-bef8-4e77-8fe6-14e5418b0d04', 'Primary', 1, 0.037800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a6c874ae-1b03-4e43-854f-83718b32b00b', 'packaging_variant', 'UPSERT');
@@ -3535,7 +3535,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('7bceb807-3b8e-4be9-80d2-2f45b9029c1a', '7bceb807-3b8e-4be9-80d2-2f45b9029c1a') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7bceb807-3b8e-4be9-80d2-2f45b9029c1a', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_7bceb807-3b8e-4be9-80d2-2f45b9029c1a', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '7bceb807-3b8e-4be9-80d2-2f45b9029c1a') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0f9ee30c-6145-42b5-8a6a-137468daa2b2', 'Tetadif (National Center of Infectious and Parasitic Diseases)', '7bceb807-3b8e-4be9-80d2-2f45b9029c1a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0f9ee30c-6145-42b5-8a6a-137468daa2b2', 'Tetadif (National Center of Infectious and Parasitic Diseases)', '7bceb807-3b8e-4be9-80d2-2f45b9029c1a', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0f9ee30c-6145-42b5-8a6a-137468daa2b2', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1f30e4a9-a5ab-4db5-bf06-44da589b3297', '0f9ee30c-6145-42b5-8a6a-137468daa2b2', 'Primary', 1, 0.037800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1f30e4a9-a5ab-4db5-bf06-44da589b3297', 'packaging_variant', 'UPSERT');
@@ -3543,7 +3543,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2c15af83-f771-47a6-853a-c5b337b38efd', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('5093a36a-c692-4445-b247-9fbc67e74775', '0f9ee30c-6145-42b5-8a6a-137468daa2b2', 'Tertiary', 3, 0.037800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5093a36a-c692-4445-b247-9fbc67e74775', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0c42e196-553e-4173-ae42-25f064ae3603', 'none (PT Bio Farma (Persero))', '97868996-1e2c-4cd6-b967-bc51a649f842', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0c42e196-553e-4173-ae42-25f064ae3603', 'none (PT Bio Farma (Persero))', '97868996-1e2c-4cd6-b967-bc51a649f842', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0c42e196-553e-4173-ae42-25f064ae3603', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('fa1b821e-a822-4b93-adae-58976e3e02db', '0c42e196-553e-4173-ae42-25f064ae3603', 'Primary', 1, 0.022300) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fa1b821e-a822-4b93-adae-58976e3e02db', 'packaging_variant', 'UPSERT');
@@ -3551,7 +3551,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('86389189-1c38-44aa-b53c-399e0e22cfc8', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('573b3fd6-4507-48c5-89d6-9622e6c96cd3', '0c42e196-553e-4173-ae42-25f064ae3603', 'Tertiary', 3, 0.022300) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('573b3fd6-4507-48c5-89d6-9622e6c96cd3', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('40e77097-abb7-46bc-9757-f6128bf3608e', 'IMOVAX dT adult (Sanofi Pasteur SA)', '97868996-1e2c-4cd6-b967-bc51a649f842', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('40e77097-abb7-46bc-9757-f6128bf3608e', 'IMOVAX dT adult (Sanofi Pasteur SA)', '97868996-1e2c-4cd6-b967-bc51a649f842', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('40e77097-abb7-46bc-9757-f6128bf3608e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e37fa99e-45c4-4999-9954-9dfc8361f9ef', '40e77097-abb7-46bc-9757-f6128bf3608e', 'Primary', 1, 0.024600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e37fa99e-45c4-4999-9954-9dfc8361f9ef', 'packaging_variant', 'UPSERT');
@@ -3563,7 +3563,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('8b4bbf35-4a29-45b2-a5b3-d10cfc6da714', '8b4bbf35-4a29-45b2-a5b3-d10cfc6da714') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8b4bbf35-4a29-45b2-a5b3-d10cfc6da714', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_8b4bbf35-4a29-45b2-a5b3-d10cfc6da714', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '8b4bbf35-4a29-45b2-a5b3-d10cfc6da714') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f6860580-56ea-4d0d-8f1c-e5fb2f2fa7a7', 'Diphtheria and Tetanus Vaccine Adsorbed for Adults and Adolescents (Serum Institute of India Pvt. Ltd.)', '8b4bbf35-4a29-45b2-a5b3-d10cfc6da714', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('f6860580-56ea-4d0d-8f1c-e5fb2f2fa7a7', 'Diphtheria and Tetanus Vaccine Adsorbed for Adults and Adolescents (Serum Institute of India Pvt. Ltd.)', '8b4bbf35-4a29-45b2-a5b3-d10cfc6da714', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f6860580-56ea-4d0d-8f1c-e5fb2f2fa7a7', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b5cb9bee-f489-41c0-9cec-7ef92130d367', 'f6860580-56ea-4d0d-8f1c-e5fb2f2fa7a7', 'Primary', 1, 0.012180) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b5cb9bee-f489-41c0-9cec-7ef92130d367', 'packaging_variant', 'UPSERT');
@@ -3571,7 +3571,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8e94bfe1-7b25-40e3-bed4-7317aaf33ab5', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('d1be881f-26cc-477f-bb11-31940352fd1a', 'f6860580-56ea-4d0d-8f1c-e5fb2f2fa7a7', 'Tertiary', 3, 0.000340) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d1be881f-26cc-477f-bb11-31940352fd1a', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('535ac504-d5ae-4b80-94ed-d7cf43390a5b', 'Diphtheria and Tetanus Vaccine Adsorbed for Adults and Adolescents (Serum Institute of India Pvt. Ltd.)', '97868996-1e2c-4cd6-b967-bc51a649f842', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('535ac504-d5ae-4b80-94ed-d7cf43390a5b', 'Diphtheria and Tetanus Vaccine Adsorbed for Adults and Adolescents (Serum Institute of India Pvt. Ltd.)', '97868996-1e2c-4cd6-b967-bc51a649f842', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('535ac504-d5ae-4b80-94ed-d7cf43390a5b', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b6b19fb7-64c8-436c-a247-78e5886930ad', '535ac504-d5ae-4b80-94ed-d7cf43390a5b', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b6b19fb7-64c8-436c-a247-78e5886930ad', 'packaging_variant', 'UPSERT');
@@ -3579,7 +3579,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5f2d31ad-c037-468f-b2a6-33ea198d0413', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a62599c9-b0f3-403e-a33b-ddd9c6ed1a9d', '535ac504-d5ae-4b80-94ed-d7cf43390a5b', 'Tertiary', 3, 0.098400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a62599c9-b0f3-403e-a33b-ddd9c6ed1a9d', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('22acac98-81d7-4a7a-9720-80a82063c443', 'Diphtheria and Tetanus Vaccine Adsorbed for Adults and Adolescents (Serum Institute of India Pvt. Ltd.)', '7bceb807-3b8e-4be9-80d2-2f45b9029c1a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('22acac98-81d7-4a7a-9720-80a82063c443', 'Diphtheria and Tetanus Vaccine Adsorbed for Adults and Adolescents (Serum Institute of India Pvt. Ltd.)', '7bceb807-3b8e-4be9-80d2-2f45b9029c1a', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('22acac98-81d7-4a7a-9720-80a82063c443', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('4a87b6c7-88ef-4b44-b0ec-e52d9d62d89d', '22acac98-81d7-4a7a-9720-80a82063c443', 'Primary', 1, 0.042400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4a87b6c7-88ef-4b44-b0ec-e52d9d62d89d', 'packaging_variant', 'UPSERT');
@@ -3591,7 +3591,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('3840cc8d-3379-4d3e-a603-7397e879940a', '3840cc8d-3379-4d3e-a603-7397e879940a') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3840cc8d-3379-4d3e-a603-7397e879940a', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_3840cc8d-3379-4d3e-a603-7397e879940a', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '3840cc8d-3379-4d3e-a603-7397e879940a') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d145ce77-9dfa-4284-b27d-e3539f0feefb', 'BIOPOLIO (Bharat Biotech International Limited)', '3840cc8d-3379-4d3e-a603-7397e879940a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d145ce77-9dfa-4284-b27d-e3539f0feefb', 'BIOPOLIO (Bharat Biotech International Limited)', '3840cc8d-3379-4d3e-a603-7397e879940a', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d145ce77-9dfa-4284-b27d-e3539f0feefb', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('fe950ab2-8992-4902-91ff-52ba2e56ef7f', 'd145ce77-9dfa-4284-b27d-e3539f0feefb', 'Primary', 1, 0.017000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fe950ab2-8992-4902-91ff-52ba2e56ef7f', 'packaging_variant', 'UPSERT');
@@ -3603,7 +3603,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('a00f17d9-b638-4795-993f-2b0c85b2704a', 'a00f17d9-b638-4795-993f-2b0c85b2704a') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a00f17d9-b638-4795-993f-2b0c85b2704a', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_a00f17d9-b638-4795-993f-2b0c85b2704a', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'a00f17d9-b638-4795-993f-2b0c85b2704a') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('26ab70ff-fb7d-4e24-9259-e1e8d1c3aa81', 'BIOPOLIO (Bharat Biotech International Limited)', 'a00f17d9-b638-4795-993f-2b0c85b2704a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('26ab70ff-fb7d-4e24-9259-e1e8d1c3aa81', 'BIOPOLIO (Bharat Biotech International Limited)', 'a00f17d9-b638-4795-993f-2b0c85b2704a', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('26ab70ff-fb7d-4e24-9259-e1e8d1c3aa81', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('42a42d25-b3c0-4ae3-afe8-1200c196713a', '26ab70ff-fb7d-4e24-9259-e1e8d1c3aa81', 'Primary', 1, 0.017000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('42a42d25-b3c0-4ae3-afe8-1200c196713a', 'packaging_variant', 'UPSERT');
@@ -3611,7 +3611,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('025ef0ef-e064-4fd0-9cb5-6ad3ee6370fb', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ebe1ab81-3cf7-4a29-9b47-d3554fc3a95e', '26ab70ff-fb7d-4e24-9259-e1e8d1c3aa81', 'Tertiary', 3, 0.098400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ebe1ab81-3cf7-4a29-9b47-d3554fc3a95e', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('725cdf26-d169-4dae-9f55-b83d1001e21a', 'Polio sabin (GlaxoSmithKline Biologicals SA)', '3840cc8d-3379-4d3e-a603-7397e879940a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('725cdf26-d169-4dae-9f55-b83d1001e21a', 'Polio sabin (GlaxoSmithKline Biologicals SA)', '3840cc8d-3379-4d3e-a603-7397e879940a', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('725cdf26-d169-4dae-9f55-b83d1001e21a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('792329c5-8593-41f3-a12e-4881233b506b', '725cdf26-d169-4dae-9f55-b83d1001e21a', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('792329c5-8593-41f3-a12e-4881233b506b', 'packaging_variant', 'UPSERT');
@@ -3619,7 +3619,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b671ba33-25f1-43fb-a528-88a6a6bb49e9', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1354484e-4347-4884-917f-9839bf9aacde', '725cdf26-d169-4dae-9f55-b83d1001e21a', 'Tertiary', 3, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1354484e-4347-4884-917f-9839bf9aacde', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9ec4f631-8c7b-4a1b-bc71-0f6d9bce6f1e', 'Polio sabin (GlaxoSmithKline Biologicals SA)', 'a00f17d9-b638-4795-993f-2b0c85b2704a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9ec4f631-8c7b-4a1b-bc71-0f6d9bce6f1e', 'Polio sabin (GlaxoSmithKline Biologicals SA)', 'a00f17d9-b638-4795-993f-2b0c85b2704a', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9ec4f631-8c7b-4a1b-bc71-0f6d9bce6f1e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('77abeffe-928d-49a2-8870-9b0a11158a25', '9ec4f631-8c7b-4a1b-bc71-0f6d9bce6f1e', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('77abeffe-928d-49a2-8870-9b0a11158a25', 'packaging_variant', 'UPSERT');
@@ -3627,7 +3627,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('44a1016a-4ec3-4658-9838-962f02b1e68a', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('39c9138e-7278-4ef8-850f-e03acc5c97af', '9ec4f631-8c7b-4a1b-bc71-0f6d9bce6f1e', 'Tertiary', 3, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('39c9138e-7278-4ef8-850f-e03acc5c97af', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e317755d-33a2-4338-888b-ebb1bc0a4736', 'Polioviral vaccine (Haffkine Bio Pharmaceutical Corporation Ltd)', 'a00f17d9-b638-4795-993f-2b0c85b2704a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e317755d-33a2-4338-888b-ebb1bc0a4736', 'Polioviral vaccine (Haffkine Bio Pharmaceutical Corporation Ltd)', 'a00f17d9-b638-4795-993f-2b0c85b2704a', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e317755d-33a2-4338-888b-ebb1bc0a4736', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('760af090-0112-411e-a57c-f4dde45dc8a4', 'e317755d-33a2-4338-888b-ebb1bc0a4736', 'Primary', 1, 0.020000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('760af090-0112-411e-a57c-f4dde45dc8a4', 'packaging_variant', 'UPSERT');
@@ -3635,7 +3635,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5716c664-9601-43d9-b71b-a8f88290c892', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('443e1fd8-50c6-48cf-93a0-754685f41ad3', 'e317755d-33a2-4338-888b-ebb1bc0a4736', 'Tertiary', 3, 0.020000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('443e1fd8-50c6-48cf-93a0-754685f41ad3', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c8c75afc-2521-43aa-b030-04836b75c671', 'Oral polio (PT Bio Farma (Persero))', '3840cc8d-3379-4d3e-a603-7397e879940a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c8c75afc-2521-43aa-b030-04836b75c671', 'Oral polio (PT Bio Farma (Persero))', '3840cc8d-3379-4d3e-a603-7397e879940a', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c8c75afc-2521-43aa-b030-04836b75c671', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b96737ae-b465-43f3-8e8b-24c6308a2197', 'c8c75afc-2521-43aa-b030-04836b75c671', 'Primary', 1, 0.032000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b96737ae-b465-43f3-8e8b-24c6308a2197', 'packaging_variant', 'UPSERT');
@@ -3643,7 +3643,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5a828270-3aba-4245-a676-7da3fc7de411', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b116ce16-fc6a-4c38-91c8-28d1bbeba21b', 'c8c75afc-2521-43aa-b030-04836b75c671', 'Tertiary', 3, 0.032000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b116ce16-fc6a-4c38-91c8-28d1bbeba21b', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c48b19d4-f627-4553-903c-458bdefccb6d', 'Oral polio (PT Bio Farma (Persero))', 'a00f17d9-b638-4795-993f-2b0c85b2704a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c48b19d4-f627-4553-903c-458bdefccb6d', 'Oral polio (PT Bio Farma (Persero))', 'a00f17d9-b638-4795-993f-2b0c85b2704a', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c48b19d4-f627-4553-903c-458bdefccb6d', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('5d23917a-b552-4447-8112-016ed73ac3a4', 'c48b19d4-f627-4553-903c-458bdefccb6d', 'Primary', 1, 0.004800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5d23917a-b552-4447-8112-016ed73ac3a4', 'packaging_variant', 'UPSERT');
@@ -3651,7 +3651,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0ddef8c5-3aa9-4316-86ba-41b712d9c4e3', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f8cf031a-05bc-4b04-9032-1b5937b82c5d', 'c48b19d4-f627-4553-903c-458bdefccb6d', 'Tertiary', 3, 0.004800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f8cf031a-05bc-4b04-9032-1b5937b82c5d', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d3a0a526-3f2a-4beb-8ed0-2a985deb0fbb', 'OPVERO (Sanofi Pasteur SA)', '3840cc8d-3379-4d3e-a603-7397e879940a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d3a0a526-3f2a-4beb-8ed0-2a985deb0fbb', 'OPVERO (Sanofi Pasteur SA)', '3840cc8d-3379-4d3e-a603-7397e879940a', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d3a0a526-3f2a-4beb-8ed0-2a985deb0fbb', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('4763c78d-f684-4790-98cc-2a87f9edc7b3', 'd3a0a526-3f2a-4beb-8ed0-2a985deb0fbb', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4763c78d-f684-4790-98cc-2a87f9edc7b3', 'packaging_variant', 'UPSERT');
@@ -3659,7 +3659,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('da901d1a-8ef5-4635-8234-587d37cd0f82', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('4d4a793e-ac69-499e-9d9d-874caed3bd78', 'd3a0a526-3f2a-4beb-8ed0-2a985deb0fbb', 'Tertiary', 3, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4d4a793e-ac69-499e-9d9d-874caed3bd78', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('72e84634-bddb-4199-8214-cbf22b5b6c2e', 'OPVERO (Sanofi Pasteur SA)', '3840cc8d-3379-4d3e-a603-7397e879940a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('72e84634-bddb-4199-8214-cbf22b5b6c2e', 'OPVERO (Sanofi Pasteur SA)', '3840cc8d-3379-4d3e-a603-7397e879940a', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('72e84634-bddb-4199-8214-cbf22b5b6c2e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('63b36275-2f2b-47f6-975e-0ec4e425ffab', '72e84634-bddb-4199-8214-cbf22b5b6c2e', 'Primary', 1, 0.009700) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('63b36275-2f2b-47f6-975e-0ec4e425ffab', 'packaging_variant', 'UPSERT');
@@ -3667,7 +3667,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('167d06ae-3ed8-4ae5-9e34-13f840a35155', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e6bf6b38-b6af-4791-8970-9d2a1d95e010', '72e84634-bddb-4199-8214-cbf22b5b6c2e', 'Tertiary', 3, 0.009700) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e6bf6b38-b6af-4791-8970-9d2a1d95e010', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5787fefe-29f6-4935-8a0c-796ae760a597', 'OPVERO (Sanofi Pasteur SA)', 'a00f17d9-b638-4795-993f-2b0c85b2704a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5787fefe-29f6-4935-8a0c-796ae760a597', 'OPVERO (Sanofi Pasteur SA)', 'a00f17d9-b638-4795-993f-2b0c85b2704a', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5787fefe-29f6-4935-8a0c-796ae760a597', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3ab59993-db08-4000-b445-575a1a320c20', '5787fefe-29f6-4935-8a0c-796ae760a597', 'Primary', 1, 0.009600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3ab59993-db08-4000-b445-575a1a320c20', 'packaging_variant', 'UPSERT');
@@ -3675,7 +3675,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('59adae2a-5a9b-494f-8e2c-8d061a50f3d2', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('a0b29c3f-15b6-4360-8cca-e8e223dc5315', '5787fefe-29f6-4935-8a0c-796ae760a597', 'Tertiary', 3, 0.009600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a0b29c3f-15b6-4360-8cca-e8e223dc5315', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5f721a2a-13b8-4cb2-b8e9-38a00d6f3ecf', 'Poliomyelitis Vaccine (Oral), Trivalent types 1, 2 and 3 (Serum Institute of India Pvt. Ltd.)', '3840cc8d-3379-4d3e-a603-7397e879940a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5f721a2a-13b8-4cb2-b8e9-38a00d6f3ecf', 'Poliomyelitis Vaccine (Oral), Trivalent types 1, 2 and 3 (Serum Institute of India Pvt. Ltd.)', '3840cc8d-3379-4d3e-a603-7397e879940a', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5f721a2a-13b8-4cb2-b8e9-38a00d6f3ecf', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('4cd73d23-5a96-44c8-aa9f-bcdc52790d8f', '5f721a2a-13b8-4cb2-b8e9-38a00d6f3ecf', 'Primary', 1, 0.017600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4cd73d23-5a96-44c8-aa9f-bcdc52790d8f', 'packaging_variant', 'UPSERT');
@@ -3683,7 +3683,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7b9e6d0a-fddd-430f-9145-714536e33c31', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('defe1cb8-ea8e-4d72-b22a-ee0597c179f6', '5f721a2a-13b8-4cb2-b8e9-38a00d6f3ecf', 'Tertiary', 3, 0.115200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('defe1cb8-ea8e-4d72-b22a-ee0597c179f6', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fd0e1ca6-205b-4385-bf6f-fe9589c5b5f5', 'Poliomyelitis Vaccine (Oral), Trivalent types 1, 2 and 3 (Serum Institute of India Pvt. Ltd.)', 'a00f17d9-b638-4795-993f-2b0c85b2704a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fd0e1ca6-205b-4385-bf6f-fe9589c5b5f5', 'Poliomyelitis Vaccine (Oral), Trivalent types 1, 2 and 3 (Serum Institute of India Pvt. Ltd.)', 'a00f17d9-b638-4795-993f-2b0c85b2704a', (SELECT id FROM cold_storage_type WHERE name = '-20' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fd0e1ca6-205b-4385-bf6f-fe9589c5b5f5', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('dacc4b45-8e0b-4e84-aba3-47e71d43d3fa', 'fd0e1ca6-205b-4385-bf6f-fe9589c5b5f5', 'Primary', 1, 0.017600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('dacc4b45-8e0b-4e84-aba3-47e71d43d3fa', 'packaging_variant', 'UPSERT');
@@ -3695,7 +3695,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('2490f067-b4a9-44d5-a4ca-f28f201ca943', '2490f067-b4a9-44d5-a4ca-f28f201ca943') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2490f067-b4a9-44d5-a4ca-f28f201ca943', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_2490f067-b4a9-44d5-a4ca-f28f201ca943', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '2490f067-b4a9-44d5-a4ca-f28f201ca943') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d20cd300-3960-41ee-bf55-1f7a330ef719', 'Typhym-Vi (Sanofi Pasteur SA)', '2490f067-b4a9-44d5-a4ca-f28f201ca943', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d20cd300-3960-41ee-bf55-1f7a330ef719', 'Typhym-Vi (Sanofi Pasteur SA)', '2490f067-b4a9-44d5-a4ca-f28f201ca943', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d20cd300-3960-41ee-bf55-1f7a330ef719', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1aefafe0-74f7-4323-977b-826e2b89e8dc', 'd20cd300-3960-41ee-bf55-1f7a330ef719', 'Primary', 1, 0.031400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1aefafe0-74f7-4323-977b-826e2b89e8dc', 'packaging_variant', 'UPSERT');
@@ -3707,7 +3707,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('00f610d7-5286-4c7d-a4cb-3c4b228baa38', '00f610d7-5286-4c7d-a4cb-3c4b228baa38') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('00f610d7-5286-4c7d-a4cb-3c4b228baa38', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_00f610d7-5286-4c7d-a4cb-3c4b228baa38', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '00f610d7-5286-4c7d-a4cb-3c4b228baa38') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('03ca05f9-1c0e-434a-8dc1-0ac9bbba9ae5', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name BEtt. (Biological E. Limited)', '00f610d7-5286-4c7d-a4cb-3c4b228baa38', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('03ca05f9-1c0e-434a-8dc1-0ac9bbba9ae5', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name BEtt. (Biological E. Limited)', '00f610d7-5286-4c7d-a4cb-3c4b228baa38', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('03ca05f9-1c0e-434a-8dc1-0ac9bbba9ae5', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('7480c8f8-ce71-4021-b0b2-2fbf97937089', '03ca05f9-1c0e-434a-8dc1-0ac9bbba9ae5', 'Primary', 1, 0.014700) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7480c8f8-ce71-4021-b0b2-2fbf97937089', 'packaging_variant', 'UPSERT');
@@ -3719,7 +3719,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('bfc13579-d776-4b27-8c7a-aead358ec70a', 'bfc13579-d776-4b27-8c7a-aead358ec70a') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bfc13579-d776-4b27-8c7a-aead358ec70a', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_bfc13579-d776-4b27-8c7a-aead358ec70a', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'bfc13579-d776-4b27-8c7a-aead358ec70a') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c45ab64c-6077-4413-8f56-3cfd7300b0e0', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name BEtt. (Biological E. Limited)', 'bfc13579-d776-4b27-8c7a-aead358ec70a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c45ab64c-6077-4413-8f56-3cfd7300b0e0', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name BEtt. (Biological E. Limited)', 'bfc13579-d776-4b27-8c7a-aead358ec70a', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c45ab64c-6077-4413-8f56-3cfd7300b0e0', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f739ecbd-f257-4316-a75c-8755a3175a06', 'c45ab64c-6077-4413-8f56-3cfd7300b0e0', 'Primary', 1, 0.029000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f739ecbd-f257-4316-a75c-8755a3175a06', 'packaging_variant', 'UPSERT');
@@ -3731,7 +3731,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('49cc4102-3223-45ed-8876-17952a1a28e9', '49cc4102-3223-45ed-8876-17952a1a28e9') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('49cc4102-3223-45ed-8876-17952a1a28e9', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_49cc4102-3223-45ed-8876-17952a1a28e9', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '49cc4102-3223-45ed-8876-17952a1a28e9') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8a95436d-3ec7-4637-a0f5-19f52e191e15', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name BEtt. (Biological E. Limited)', '49cc4102-3223-45ed-8876-17952a1a28e9', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8a95436d-3ec7-4637-a0f5-19f52e191e15', 'None used on labelling for supply through UN agencies. Also marketed with labelled commercial name BEtt. (Biological E. Limited)', '49cc4102-3223-45ed-8876-17952a1a28e9', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8a95436d-3ec7-4637-a0f5-19f52e191e15', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c1a4eb89-f90e-4752-abc6-043d48249139', '8a95436d-3ec7-4637-a0f5-19f52e191e15', 'Primary', 1, 0.058000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c1a4eb89-f90e-4752-abc6-043d48249139', 'packaging_variant', 'UPSERT');
@@ -3739,7 +3739,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bd0afd6a-2334-4f12-ae51-9d0bc4abed53', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('4d11d70d-ce6a-4b83-8e9d-2659991ea6bf', '8a95436d-3ec7-4637-a0f5-19f52e191e15', 'Tertiary', 3, 0.305600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4d11d70d-ce6a-4b83-8e9d-2659991ea6bf', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5e8423c4-b8a3-4978-8abc-7b1d81bbc503', 'Tetatox (National Center of Infectious and Parasitic Diseases)', 'bfc13579-d776-4b27-8c7a-aead358ec70a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5e8423c4-b8a3-4978-8abc-7b1d81bbc503', 'Tetatox (National Center of Infectious and Parasitic Diseases)', 'bfc13579-d776-4b27-8c7a-aead358ec70a', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5e8423c4-b8a3-4978-8abc-7b1d81bbc503', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8ab3b971-2c07-4133-926a-f4f767315a0d', '5e8423c4-b8a3-4978-8abc-7b1d81bbc503', 'Primary', 1, 0.037800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8ab3b971-2c07-4133-926a-f4f767315a0d', 'packaging_variant', 'UPSERT');
@@ -3747,7 +3747,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('882d65f0-0a7b-4542-a54e-42daafbf10ab', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('99f5fed1-deb5-4a70-b052-e2801c4b045d', '5e8423c4-b8a3-4978-8abc-7b1d81bbc503', 'Tertiary', 3, 0.037800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('99f5fed1-deb5-4a70-b052-e2801c4b045d', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bf1d5676-48dc-4437-af57-828516e8e7e8', 'Tetatox (National Center of Infectious and Parasitic Diseases)', '49cc4102-3223-45ed-8876-17952a1a28e9', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('bf1d5676-48dc-4437-af57-828516e8e7e8', 'Tetatox (National Center of Infectious and Parasitic Diseases)', '49cc4102-3223-45ed-8876-17952a1a28e9', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bf1d5676-48dc-4437-af57-828516e8e7e8', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e1251eb3-ed4c-456e-a782-d97a93a62779', 'bf1d5676-48dc-4437-af57-828516e8e7e8', 'Primary', 1, 0.037800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e1251eb3-ed4c-456e-a782-d97a93a62779', 'packaging_variant', 'UPSERT');
@@ -3759,7 +3759,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('cfceb933-0174-44e4-a8d9-d1a939864fad', 'cfceb933-0174-44e4-a8d9-d1a939864fad') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cfceb933-0174-44e4-a8d9-d1a939864fad', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_cfceb933-0174-44e4-a8d9-d1a939864fad', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'cfceb933-0174-44e4-a8d9-d1a939864fad') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5ba3eb07-dfa7-49f2-ba9c-092ea51350af', 'TT vaccine (PT Bio Farma (Persero))', 'cfceb933-0174-44e4-a8d9-d1a939864fad', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('5ba3eb07-dfa7-49f2-ba9c-092ea51350af', 'TT vaccine (PT Bio Farma (Persero))', 'cfceb933-0174-44e4-a8d9-d1a939864fad', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5ba3eb07-dfa7-49f2-ba9c-092ea51350af', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8c1730df-add9-4771-b606-ac5a50271ea5', '5ba3eb07-dfa7-49f2-ba9c-092ea51350af', 'Primary', 1, 0.012000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8c1730df-add9-4771-b606-ac5a50271ea5', 'packaging_variant', 'UPSERT');
@@ -3767,7 +3767,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('845f37c7-ace6-4e95-85bb-515939ddc469', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('fc8a11e1-7d59-43d6-97b0-e1e44539f310', '5ba3eb07-dfa7-49f2-ba9c-092ea51350af', 'Tertiary', 3, 0.012000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fc8a11e1-7d59-43d6-97b0-e1e44539f310', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('00bce0d4-5f56-452e-af88-cd174c5076a9', 'TT vaccine (PT Bio Farma (Persero))', 'bfc13579-d776-4b27-8c7a-aead358ec70a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('00bce0d4-5f56-452e-af88-cd174c5076a9', 'TT vaccine (PT Bio Farma (Persero))', 'bfc13579-d776-4b27-8c7a-aead358ec70a', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('00bce0d4-5f56-452e-af88-cd174c5076a9', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('87f10e4f-f12a-4989-ba3e-ab6b6f372c99', '00bce0d4-5f56-452e-af88-cd174c5076a9', 'Primary', 1, 0.022200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('87f10e4f-f12a-4989-ba3e-ab6b6f372c99', 'packaging_variant', 'UPSERT');
@@ -3775,7 +3775,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4bd13aed-1784-4eb5-8451-f147b0e7edc5', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('02bb2f31-1bcf-48a2-b5ff-a27d6c4f068d', '00bce0d4-5f56-452e-af88-cd174c5076a9', 'Tertiary', 3, 0.022200) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('02bb2f31-1bcf-48a2-b5ff-a27d6c4f068d', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('75a109b1-f7df-4908-8f7d-a2acc612b14a', 'TT vaccine (PT Bio Farma (Persero))', '49cc4102-3223-45ed-8876-17952a1a28e9', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('75a109b1-f7df-4908-8f7d-a2acc612b14a', 'TT vaccine (PT Bio Farma (Persero))', '49cc4102-3223-45ed-8876-17952a1a28e9', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('75a109b1-f7df-4908-8f7d-a2acc612b14a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('5280bc31-5b30-49d2-a050-2b6546405f23', '75a109b1-f7df-4908-8f7d-a2acc612b14a', 'Primary', 1, 0.015000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5280bc31-5b30-49d2-a050-2b6546405f23', 'packaging_variant', 'UPSERT');
@@ -3783,7 +3783,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3ceeddb0-225c-4057-920b-6a57fa04f948', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8ab301d4-110b-40e9-a245-22fb2f91cab4', '75a109b1-f7df-4908-8f7d-a2acc612b14a', 'Tertiary', 3, 0.015000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8ab301d4-110b-40e9-a245-22fb2f91cab4', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0e19ff7d-5233-4e11-94b4-5a414816cbf0', 'TETAVAX (Sanofi Pasteur SA)', 'bfc13579-d776-4b27-8c7a-aead358ec70a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('0e19ff7d-5233-4e11-94b4-5a414816cbf0', 'TETAVAX (Sanofi Pasteur SA)', 'bfc13579-d776-4b27-8c7a-aead358ec70a', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0e19ff7d-5233-4e11-94b4-5a414816cbf0', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('bd473c9a-467e-41ad-a8a3-8c03b7a9083d', '0e19ff7d-5233-4e11-94b4-5a414816cbf0', 'Primary', 1, 0.024600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bd473c9a-467e-41ad-a8a3-8c03b7a9083d', 'packaging_variant', 'UPSERT');
@@ -3791,7 +3791,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b0b88081-72f5-400f-82c0-449f15e734d9', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('694c7394-d426-4a25-8507-77f93e29168b', '0e19ff7d-5233-4e11-94b4-5a414816cbf0', 'Tertiary', 3, 0.024600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('694c7394-d426-4a25-8507-77f93e29168b', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e90c8115-fd3c-4c3f-a9d5-347d5b73268a', 'TETAVAX (Sanofi Pasteur SA)', '49cc4102-3223-45ed-8876-17952a1a28e9', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('e90c8115-fd3c-4c3f-a9d5-347d5b73268a', 'TETAVAX (Sanofi Pasteur SA)', '49cc4102-3223-45ed-8876-17952a1a28e9', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e90c8115-fd3c-4c3f-a9d5-347d5b73268a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('08dd17e2-39ac-43bf-8793-568f81ab5ff7', 'e90c8115-fd3c-4c3f-a9d5-347d5b73268a', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('08dd17e2-39ac-43bf-8793-568f81ab5ff7', 'packaging_variant', 'UPSERT');
@@ -3803,7 +3803,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('cd92d653-8732-4318-91ab-ef64b1281b86', 'cd92d653-8732-4318-91ab-ef64b1281b86') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cd92d653-8732-4318-91ab-ef64b1281b86', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_cd92d653-8732-4318-91ab-ef64b1281b86', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'cd92d653-8732-4318-91ab-ef64b1281b86') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('85528329-a857-4e31-acc8-e6d393d63a31', 'Tetanus Toxoid Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', 'cd92d653-8732-4318-91ab-ef64b1281b86', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('85528329-a857-4e31-acc8-e6d393d63a31', 'Tetanus Toxoid Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', 'cd92d653-8732-4318-91ab-ef64b1281b86', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('85528329-a857-4e31-acc8-e6d393d63a31', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('53b6f918-6fae-4f2d-b6b0-c067082d3d70', '85528329-a857-4e31-acc8-e6d393d63a31', 'Primary', 1, 0.012180) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('53b6f918-6fae-4f2d-b6b0-c067082d3d70', 'packaging_variant', 'UPSERT');
@@ -3811,7 +3811,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('517435b4-ab5c-498a-94c8-513db30a4c6a', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('76c6a369-5bca-48c0-b360-77d5bbfeaa8b', '85528329-a857-4e31-acc8-e6d393d63a31', 'Tertiary', 3, 0.065600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('76c6a369-5bca-48c0-b360-77d5bbfeaa8b', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c55659f4-7e5a-4d4a-9c8a-eb7b049cf801', 'Tetanus Toxoid Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', 'bfc13579-d776-4b27-8c7a-aead358ec70a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('c55659f4-7e5a-4d4a-9c8a-eb7b049cf801', 'Tetanus Toxoid Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', 'bfc13579-d776-4b27-8c7a-aead358ec70a', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c55659f4-7e5a-4d4a-9c8a-eb7b049cf801', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('39b267d3-513d-493e-ade6-3497c5588d84', 'c55659f4-7e5a-4d4a-9c8a-eb7b049cf801', 'Primary', 1, 0.021100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('39b267d3-513d-493e-ade6-3497c5588d84', 'packaging_variant', 'UPSERT');
@@ -3819,7 +3819,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('bae2bd3f-1b61-4e2a-a117-2b860ac08d39', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0332640e-870f-48b2-8c75-327ac8697067', 'c55659f4-7e5a-4d4a-9c8a-eb7b049cf801', 'Tertiary', 3, 0.098400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0332640e-870f-48b2-8c75-327ac8697067', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4a67fd03-c66f-4753-8fd7-8f99fbcd60f3', 'Tetanus Toxoid Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '49cc4102-3223-45ed-8876-17952a1a28e9', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('4a67fd03-c66f-4753-8fd7-8f99fbcd60f3', 'Tetanus Toxoid Vaccine Adsorbed (Serum Institute of India Pvt. Ltd.)', '49cc4102-3223-45ed-8876-17952a1a28e9', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4a67fd03-c66f-4753-8fd7-8f99fbcd60f3', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('98769360-6286-4f11-8ae4-d71217f22dbc', '4a67fd03-c66f-4753-8fd7-8f99fbcd60f3', 'Primary', 1, 0.042400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('98769360-6286-4f11-8ae4-d71217f22dbc', 'packaging_variant', 'UPSERT');
@@ -3827,7 +3827,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4f852509-e281-43d6-90e6-c2391ee4eddd', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('6f06560b-5ad0-44b7-862c-d4a73a079060', '4a67fd03-c66f-4753-8fd7-8f99fbcd60f3', 'Tertiary', 3, 0.196800) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6f06560b-5ad0-44b7-862c-d4a73a079060', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d67bb1d0-cad4-4dea-9bb2-de91c82d8245', 'ShanTT (Shantha Biotechnics Private Limited (A Sanofi Company))', 'bfc13579-d776-4b27-8c7a-aead358ec70a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d67bb1d0-cad4-4dea-9bb2-de91c82d8245', 'ShanTT (Shantha Biotechnics Private Limited (A Sanofi Company))', 'bfc13579-d776-4b27-8c7a-aead358ec70a', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d67bb1d0-cad4-4dea-9bb2-de91c82d8245', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('5e7434bc-f1a9-45b8-b39f-85c0844511b3', 'd67bb1d0-cad4-4dea-9bb2-de91c82d8245', 'Primary', 1, 0.043600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5e7434bc-f1a9-45b8-b39f-85c0844511b3', 'packaging_variant', 'UPSERT');
@@ -3835,7 +3835,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d9c1a04c-4f8b-4a32-ab3c-c39d6ad2e087', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('60b7a453-07c8-471a-8c73-49119468abb9', 'd67bb1d0-cad4-4dea-9bb2-de91c82d8245', 'Tertiary', 3, 0.043600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('60b7a453-07c8-471a-8c73-49119468abb9', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8c160da5-60c8-4745-b63d-0174b4150284', 'ShanTT (Shantha Biotechnics Private Limited (A Sanofi Company))', '49cc4102-3223-45ed-8876-17952a1a28e9', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('8c160da5-60c8-4745-b63d-0174b4150284', 'ShanTT (Shantha Biotechnics Private Limited (A Sanofi Company))', '49cc4102-3223-45ed-8876-17952a1a28e9', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8c160da5-60c8-4745-b63d-0174b4150284', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('1eb4fb6c-df89-45fa-8388-b3704a0141f5', '8c160da5-60c8-4745-b63d-0174b4150284', 'Primary', 1, 0.052000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1eb4fb6c-df89-45fa-8388-b3704a0141f5', 'packaging_variant', 'UPSERT');
@@ -3847,7 +3847,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('684f2fc2-67a8-486d-bc4e-0003009200bd', '684f2fc2-67a8-486d-bc4e-0003009200bd') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('684f2fc2-67a8-486d-bc4e-0003009200bd', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_684f2fc2-67a8-486d-bc4e-0003009200bd', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '684f2fc2-67a8-486d-bc4e-0003009200bd') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ce65978c-2304-46c2-bb82-e211793fd958', 'Generic (Generic)', '684f2fc2-67a8-486d-bc4e-0003009200bd', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('ce65978c-2304-46c2-bb82-e211793fd958', 'Generic (Generic)', '684f2fc2-67a8-486d-bc4e-0003009200bd', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ce65978c-2304-46c2-bb82-e211793fd958', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('879ee3e8-4cba-4f74-ad34-b17482a503a8', 'ce65978c-2304-46c2-bb82-e211793fd958', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('879ee3e8-4cba-4f74-ad34-b17482a503a8', 'packaging_variant', 'UPSERT');
@@ -3859,7 +3859,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('ad350504-d6db-4711-9c99-802bdcef6ad9', 'ad350504-d6db-4711-9c99-802bdcef6ad9') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ad350504-d6db-4711-9c99-802bdcef6ad9', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_ad350504-d6db-4711-9c99-802bdcef6ad9', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'ad350504-d6db-4711-9c99-802bdcef6ad9') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('02c6a790-f83c-47d8-b982-93c9c2205cad', 'Generic (Generic)', 'ad350504-d6db-4711-9c99-802bdcef6ad9', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('02c6a790-f83c-47d8-b982-93c9c2205cad', 'Generic (Generic)', 'ad350504-d6db-4711-9c99-802bdcef6ad9', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('02c6a790-f83c-47d8-b982-93c9c2205cad', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e2daaa20-f636-4627-94f3-27e55fd554dc', '02c6a790-f83c-47d8-b982-93c9c2205cad', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e2daaa20-f636-4627-94f3-27e55fd554dc', 'packaging_variant', 'UPSERT');
@@ -3871,7 +3871,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('03aea8d6-d422-4d94-b35a-fc1db09e1280', '03aea8d6-d422-4d94-b35a-fc1db09e1280') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('03aea8d6-d422-4d94-b35a-fc1db09e1280', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_03aea8d6-d422-4d94-b35a-fc1db09e1280', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '03aea8d6-d422-4d94-b35a-fc1db09e1280') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7c956da8-a9b2-4611-b153-f1e6b130f06f', 'Generic (Generic)', '03aea8d6-d422-4d94-b35a-fc1db09e1280', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7c956da8-a9b2-4611-b153-f1e6b130f06f', 'Generic (Generic)', '03aea8d6-d422-4d94-b35a-fc1db09e1280', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7c956da8-a9b2-4611-b153-f1e6b130f06f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('8e3e0ced-2a77-4cd2-ab40-9057dd5f7e1e', '7c956da8-a9b2-4611-b153-f1e6b130f06f', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('8e3e0ced-2a77-4cd2-ab40-9057dd5f7e1e', 'packaging_variant', 'UPSERT');
@@ -3883,7 +3883,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('fd3ec437-9b8a-48bf-bf99-836a84818f6a', 'fd3ec437-9b8a-48bf-bf99-836a84818f6a') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fd3ec437-9b8a-48bf-bf99-836a84818f6a', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_fd3ec437-9b8a-48bf-bf99-836a84818f6a', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'fd3ec437-9b8a-48bf-bf99-836a84818f6a') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('de219a0c-8732-4bf0-92f4-0b736423cc4e', 'Generic (Generic)', 'fd3ec437-9b8a-48bf-bf99-836a84818f6a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('de219a0c-8732-4bf0-92f4-0b736423cc4e', 'Generic (Generic)', 'fd3ec437-9b8a-48bf-bf99-836a84818f6a', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('de219a0c-8732-4bf0-92f4-0b736423cc4e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('11fdf7d0-989a-434f-b0a7-f5ba6003e3a7', 'de219a0c-8732-4bf0-92f4-0b736423cc4e', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('11fdf7d0-989a-434f-b0a7-f5ba6003e3a7', 'packaging_variant', 'UPSERT');
@@ -3895,7 +3895,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('7912db33-dee8-4e1a-8de2-f5c86005a173', '7912db33-dee8-4e1a-8de2-f5c86005a173') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7912db33-dee8-4e1a-8de2-f5c86005a173', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_7912db33-dee8-4e1a-8de2-f5c86005a173', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '7912db33-dee8-4e1a-8de2-f5c86005a173') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('eee81a89-70ea-4d10-aa03-1f0851784aec', 'Generic (Generic)', '7912db33-dee8-4e1a-8de2-f5c86005a173', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('eee81a89-70ea-4d10-aa03-1f0851784aec', 'Generic (Generic)', '7912db33-dee8-4e1a-8de2-f5c86005a173', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('eee81a89-70ea-4d10-aa03-1f0851784aec', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('0828ede9-3cc3-4f3a-8c71-edf1c8dce9da', 'eee81a89-70ea-4d10-aa03-1f0851784aec', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('0828ede9-3cc3-4f3a-8c71-edf1c8dce9da', 'packaging_variant', 'UPSERT');
@@ -3907,7 +3907,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('92318346-a290-49b4-a189-4f6ee1f4b70f', '92318346-a290-49b4-a189-4f6ee1f4b70f') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('92318346-a290-49b4-a189-4f6ee1f4b70f', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_92318346-a290-49b4-a189-4f6ee1f4b70f', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '92318346-a290-49b4-a189-4f6ee1f4b70f') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6a656b5b-6499-4c65-aa3f-900d786f9b8e', 'Generic (Generic)', '92318346-a290-49b4-a189-4f6ee1f4b70f', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('6a656b5b-6499-4c65-aa3f-900d786f9b8e', 'Generic (Generic)', '92318346-a290-49b4-a189-4f6ee1f4b70f', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6a656b5b-6499-4c65-aa3f-900d786f9b8e', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('6142d6e3-b40b-49b1-8b0f-71809ff62360', '6a656b5b-6499-4c65-aa3f-900d786f9b8e', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6142d6e3-b40b-49b1-8b0f-71809ff62360', 'packaging_variant', 'UPSERT');
@@ -3919,7 +3919,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('db2be7a0-0bfc-4eb8-b052-61f402ae8fe5', 'db2be7a0-0bfc-4eb8-b052-61f402ae8fe5') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('db2be7a0-0bfc-4eb8-b052-61f402ae8fe5', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_db2be7a0-0bfc-4eb8-b052-61f402ae8fe5', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'db2be7a0-0bfc-4eb8-b052-61f402ae8fe5') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('efac184b-efb8-4431-bca0-91a37d31622f', 'Generic (Generic)', 'db2be7a0-0bfc-4eb8-b052-61f402ae8fe5', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('efac184b-efb8-4431-bca0-91a37d31622f', 'Generic (Generic)', 'db2be7a0-0bfc-4eb8-b052-61f402ae8fe5', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('efac184b-efb8-4431-bca0-91a37d31622f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('c6a2d0ab-2994-4692-896d-7a556594e35c', 'efac184b-efb8-4431-bca0-91a37d31622f', 'Primary', 1, 0.000000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('c6a2d0ab-2994-4692-896d-7a556594e35c', 'packaging_variant', 'UPSERT');
@@ -3931,7 +3931,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('7d493465-73da-499b-aa2e-dcbbaf579955', '7d493465-73da-499b-aa2e-dcbbaf579955') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7d493465-73da-499b-aa2e-dcbbaf579955', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_7d493465-73da-499b-aa2e-dcbbaf579955', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '7d493465-73da-499b-aa2e-dcbbaf579955') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('16042706-40fe-43f1-845d-bc690d4ce3ca', 'Yellow Fever (Bio-Manguinhos/Fiocruz)', '7d493465-73da-499b-aa2e-dcbbaf579955', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('16042706-40fe-43f1-845d-bc690d4ce3ca', 'Yellow Fever (Bio-Manguinhos/Fiocruz)', '7d493465-73da-499b-aa2e-dcbbaf579955', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('16042706-40fe-43f1-845d-bc690d4ce3ca', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('b6356a77-fe03-4f68-ac8d-66bda8fa438b', '16042706-40fe-43f1-845d-bc690d4ce3ca', 'Primary', 1, 0.031500) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b6356a77-fe03-4f68-ac8d-66bda8fa438b', 'packaging_variant', 'UPSERT');
@@ -3943,7 +3943,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('b3e18699-173c-4960-94e4-f20fbf93c8a4', 'b3e18699-173c-4960-94e4-f20fbf93c8a4') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('b3e18699-173c-4960-94e4-f20fbf93c8a4', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_b3e18699-173c-4960-94e4-f20fbf93c8a4', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'b3e18699-173c-4960-94e4-f20fbf93c8a4') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d27e1f5a-d47f-4f50-9373-c21ebf41ece5', 'Yellow Fever (Bio-Manguinhos/Fiocruz)', 'b3e18699-173c-4960-94e4-f20fbf93c8a4', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d27e1f5a-d47f-4f50-9373-c21ebf41ece5', 'Yellow Fever (Bio-Manguinhos/Fiocruz)', 'b3e18699-173c-4960-94e4-f20fbf93c8a4', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d27e1f5a-d47f-4f50-9373-c21ebf41ece5', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f7903eb4-a426-4afa-916e-afe18dce031c', 'd27e1f5a-d47f-4f50-9373-c21ebf41ece5', 'Primary', 1, 0.031550) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f7903eb4-a426-4afa-916e-afe18dce031c', 'packaging_variant', 'UPSERT');
@@ -3955,7 +3955,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('442ca60b-8676-43b2-9c39-efb955c9c28f', '442ca60b-8676-43b2-9c39-efb955c9c28f') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('442ca60b-8676-43b2-9c39-efb955c9c28f', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_442ca60b-8676-43b2-9c39-efb955c9c28f', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '442ca60b-8676-43b2-9c39-efb955c9c28f') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9c747389-3ce7-40c9-a7db-3b0993fb443f', 'Yellow Fever (Bio-Manguinhos/Fiocruz)', '442ca60b-8676-43b2-9c39-efb955c9c28f', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('9c747389-3ce7-40c9-a7db-3b0993fb443f', 'Yellow Fever (Bio-Manguinhos/Fiocruz)', '442ca60b-8676-43b2-9c39-efb955c9c28f', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9c747389-3ce7-40c9-a7db-3b0993fb443f', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('87c9983e-7d74-4be0-87a3-9cb93b0b1b89', '9c747389-3ce7-40c9-a7db-3b0993fb443f', 'Primary', 1, 0.029600) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('87c9983e-7d74-4be0-87a3-9cb93b0b1b89', 'packaging_variant', 'UPSERT');
@@ -3967,7 +3967,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('4a8fd560-29c7-4d6f-99ac-8631bb292647', '4a8fd560-29c7-4d6f-99ac-8631bb292647') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('4a8fd560-29c7-4d6f-99ac-8631bb292647', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_4a8fd560-29c7-4d6f-99ac-8631bb292647', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '4a8fd560-29c7-4d6f-99ac-8631bb292647') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('55024879-40cd-42a2-b238-dc776d83636c', 'none (Chumakov Federal Scientific Center for Reserch & Development of Immune-And Biological Products)', '4a8fd560-29c7-4d6f-99ac-8631bb292647', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('55024879-40cd-42a2-b238-dc776d83636c', 'none (Chumakov Federal Scientific Center for Reserch & Development of Immune-And Biological Products)', '4a8fd560-29c7-4d6f-99ac-8631bb292647', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('55024879-40cd-42a2-b238-dc776d83636c', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('afc8bf71-b03f-4016-b372-fdf61796c9ef', '55024879-40cd-42a2-b238-dc776d83636c', 'Primary', 1, 0.014400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('afc8bf71-b03f-4016-b372-fdf61796c9ef', 'packaging_variant', 'UPSERT');
@@ -3979,7 +3979,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('e8979e0e-8132-40d6-b50e-8a53d886ed28', 'e8979e0e-8132-40d6-b50e-8a53d886ed28') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e8979e0e-8132-40d6-b50e-8a53d886ed28', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_e8979e0e-8132-40d6-b50e-8a53d886ed28', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'e8979e0e-8132-40d6-b50e-8a53d886ed28') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('082aec82-8a85-4058-ab9c-995b1e51ad00', 'none (Chumakov Federal Scientific Center for Reserch & Development of Immune-And Biological Products)', 'e8979e0e-8132-40d6-b50e-8a53d886ed28', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('082aec82-8a85-4058-ab9c-995b1e51ad00', 'none (Chumakov Federal Scientific Center for Reserch & Development of Immune-And Biological Products)', 'e8979e0e-8132-40d6-b50e-8a53d886ed28', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('082aec82-8a85-4058-ab9c-995b1e51ad00', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('33ffd9a7-2311-47f4-85c9-44269cdb5575', '082aec82-8a85-4058-ab9c-995b1e51ad00', 'Primary', 1, 0.0) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('33ffd9a7-2311-47f4-85c9-44269cdb5575', 'packaging_variant', 'UPSERT');
@@ -3993,7 +3993,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('6c160375-fb0c-4cf8-8370-6876da5b2698', '6c160375-fb0c-4cf8-8370-6876da5b2698') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('6c160375-fb0c-4cf8-8370-6876da5b2698', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_6c160375-fb0c-4cf8-8370-6876da5b2698', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '6c160375-fb0c-4cf8-8370-6876da5b2698') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('34e5afe2-dfce-43dd-ab1e-f6677412f7e9', 'none (Chumakov Federal Scientific Center for Reserch & Development of Immune-And Biological Products)', '6c160375-fb0c-4cf8-8370-6876da5b2698', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('34e5afe2-dfce-43dd-ab1e-f6677412f7e9', 'none (Chumakov Federal Scientific Center for Reserch & Development of Immune-And Biological Products)', '6c160375-fb0c-4cf8-8370-6876da5b2698', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('34e5afe2-dfce-43dd-ab1e-f6677412f7e9', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('e01dbfd2-5f98-45b1-830c-02ac132c025a', '34e5afe2-dfce-43dd-ab1e-f6677412f7e9', 'Primary', 1, 0.029950) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e01dbfd2-5f98-45b1-830c-02ac132c025a', 'packaging_variant', 'UPSERT');
@@ -4005,7 +4005,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('2df8a14f-1214-40ad-97d2-ebfd7b6f0fd3', '2df8a14f-1214-40ad-97d2-ebfd7b6f0fd3') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('2df8a14f-1214-40ad-97d2-ebfd7b6f0fd3', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_2df8a14f-1214-40ad-97d2-ebfd7b6f0fd3', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '2df8a14f-1214-40ad-97d2-ebfd7b6f0fd3') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('cf351ff8-9f34-457f-bcc0-2c9e334854fd', 'none (Chumakov Federal Scientific Center for Reserch & Development of Immune-And Biological Products)', '2df8a14f-1214-40ad-97d2-ebfd7b6f0fd3', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('cf351ff8-9f34-457f-bcc0-2c9e334854fd', 'none (Chumakov Federal Scientific Center for Reserch & Development of Immune-And Biological Products)', '2df8a14f-1214-40ad-97d2-ebfd7b6f0fd3', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('cf351ff8-9f34-457f-bcc0-2c9e334854fd', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('babb2cb6-7d7c-48af-a32d-889bb659b210', 'cf351ff8-9f34-457f-bcc0-2c9e334854fd', 'Primary', 1, 0.0) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('babb2cb6-7d7c-48af-a32d-889bb659b210', 'packaging_variant', 'UPSERT');
@@ -4019,7 +4019,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('3553b836-7351-4d1c-b8ae-50d2cc054687', '3553b836-7351-4d1c-b8ae-50d2cc054687') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3553b836-7351-4d1c-b8ae-50d2cc054687', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_3553b836-7351-4d1c-b8ae-50d2cc054687', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '3553b836-7351-4d1c-b8ae-50d2cc054687') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fc41660e-bf86-47b4-af28-b49e8c072aba', 'none (Chumakov Federal Scientific Center for Reserch & Development of Immune-And Biological Products)', '3553b836-7351-4d1c-b8ae-50d2cc054687', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('fc41660e-bf86-47b4-af28-b49e8c072aba', 'none (Chumakov Federal Scientific Center for Reserch & Development of Immune-And Biological Products)', '3553b836-7351-4d1c-b8ae-50d2cc054687', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fc41660e-bf86-47b4-af28-b49e8c072aba', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('f8776181-a05b-4fe3-80cd-74474957e0a1', 'fc41660e-bf86-47b4-af28-b49e8c072aba', 'Primary', 1, 0.036100) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('f8776181-a05b-4fe3-80cd-74474957e0a1', 'packaging_variant', 'UPSERT');
@@ -4031,7 +4031,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('38a97e7e-4ef4-4f7c-b9e7-f4a83f833cc9', '38a97e7e-4ef4-4f7c-b9e7-f4a83f833cc9') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('38a97e7e-4ef4-4f7c-b9e7-f4a83f833cc9', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_38a97e7e-4ef4-4f7c-b9e7-f4a83f833cc9', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '38a97e7e-4ef4-4f7c-b9e7-f4a83f833cc9') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d8783f2f-7829-40c0-bba0-0841c6c723c1', 'none (Chumakov Federal Scientific Center for Reserch & Development of Immune-And Biological Products)', '38a97e7e-4ef4-4f7c-b9e7-f4a83f833cc9', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d8783f2f-7829-40c0-bba0-0841c6c723c1', 'none (Chumakov Federal Scientific Center for Reserch & Development of Immune-And Biological Products)', '38a97e7e-4ef4-4f7c-b9e7-f4a83f833cc9', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d8783f2f-7829-40c0-bba0-0841c6c723c1', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('ad2386f1-5a86-42f8-8190-eed800670988', 'd8783f2f-7829-40c0-bba0-0841c6c723c1', 'Primary', 1, 0.0) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('ad2386f1-5a86-42f8-8190-eed800670988', 'packaging_variant', 'UPSERT');
@@ -4045,7 +4045,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('e2bdad6b-174a-40b8-b75e-bdaf9460945a', 'e2bdad6b-174a-40b8-b75e-bdaf9460945a') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('e2bdad6b-174a-40b8-b75e-bdaf9460945a', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_e2bdad6b-174a-40b8-b75e-bdaf9460945a', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'e2bdad6b-174a-40b8-b75e-bdaf9460945a') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('056d609d-d2a9-49a6-b444-d9be34a0dd43', 'Stabilized Yellow Fever Vaccine (Institut Pasteur de Dakar)', 'e2bdad6b-174a-40b8-b75e-bdaf9460945a', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('056d609d-d2a9-49a6-b444-d9be34a0dd43', 'Stabilized Yellow Fever Vaccine (Institut Pasteur de Dakar)', 'e2bdad6b-174a-40b8-b75e-bdaf9460945a', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('056d609d-d2a9-49a6-b444-d9be34a0dd43', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('401aa700-e07a-4436-9e09-9b91142e27c6', '056d609d-d2a9-49a6-b444-d9be34a0dd43', 'Primary', 1, 0.014000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('401aa700-e07a-4436-9e09-9b91142e27c6', 'packaging_variant', 'UPSERT');
@@ -4057,7 +4057,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('fc5464cd-eec6-454f-b218-a86b71d9e091', 'fc5464cd-eec6-454f-b218-a86b71d9e091') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('fc5464cd-eec6-454f-b218-a86b71d9e091', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_fc5464cd-eec6-454f-b218-a86b71d9e091', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'fc5464cd-eec6-454f-b218-a86b71d9e091') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7872fe9a-8f34-491c-bedd-b9a1b4ace4a9', 'Stabilized Yellow Fever Vaccine (Institut Pasteur de Dakar)', 'fc5464cd-eec6-454f-b218-a86b71d9e091', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('7872fe9a-8f34-491c-bedd-b9a1b4ace4a9', 'Stabilized Yellow Fever Vaccine (Institut Pasteur de Dakar)', 'fc5464cd-eec6-454f-b218-a86b71d9e091', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('7872fe9a-8f34-491c-bedd-b9a1b4ace4a9', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('436a4c92-16cc-4f39-90f4-25b59012fe64', '7872fe9a-8f34-491c-bedd-b9a1b4ace4a9', 'Primary', 1, 0.014000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('436a4c92-16cc-4f39-90f4-25b59012fe64', 'packaging_variant', 'UPSERT');
@@ -4069,7 +4069,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('46b1f194-2461-4cea-8dad-fb0835da79fd', '46b1f194-2461-4cea-8dad-fb0835da79fd') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('46b1f194-2461-4cea-8dad-fb0835da79fd', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_46b1f194-2461-4cea-8dad-fb0835da79fd', '43491ce9-bc89-4ee5-988d-9dbb2856e398', '46b1f194-2461-4cea-8dad-fb0835da79fd') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('757c3858-b14b-43fa-afad-88de8ed0dee5', 'Stabilized Yellow Fever Vaccine (Institut Pasteur de Dakar)', '46b1f194-2461-4cea-8dad-fb0835da79fd', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('757c3858-b14b-43fa-afad-88de8ed0dee5', 'Stabilized Yellow Fever Vaccine (Institut Pasteur de Dakar)', '46b1f194-2461-4cea-8dad-fb0835da79fd', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('757c3858-b14b-43fa-afad-88de8ed0dee5', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('3565db3d-08b9-4a6c-9841-1c4c5a2540bb', '757c3858-b14b-43fa-afad-88de8ed0dee5', 'Primary', 1, 0.014000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('3565db3d-08b9-4a6c-9841-1c4c5a2540bb', 'packaging_variant', 'UPSERT');
@@ -4077,7 +4077,7 @@ INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volum
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('1d8b55a9-cac9-47a2-a705-89f2280e2966', 'packaging_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('701e4dff-8117-42be-9ec4-ee22151c953e', '757c3858-b14b-43fa-afad-88de8ed0dee5', 'Tertiary', 3, 0.014000) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('701e4dff-8117-42be-9ec4-ee22151c953e', 'packaging_variant', 'UPSERT');
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('19de05b2-ab4e-4b7b-8edd-c0f44875e09a', 'STAMARIL (Sanofi Pasteur SA)', 'fc5464cd-eec6-454f-b218-a86b71d9e091', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('19de05b2-ab4e-4b7b-8edd-c0f44875e09a', 'STAMARIL (Sanofi Pasteur SA)', 'fc5464cd-eec6-454f-b218-a86b71d9e091', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('19de05b2-ab4e-4b7b-8edd-c0f44875e09a', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('9fb2df42-3979-40b0-ae96-9646dae74889', '19de05b2-ab4e-4b7b-8edd-c0f44875e09a', 'Primary', 1, 0.024400) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('9fb2df42-3979-40b0-ae96-9646dae74889', 'packaging_variant', 'UPSERT');
@@ -4089,7 +4089,7 @@ INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, 
 INSERT INTO item_link (id, item_id) VALUES ('a99581f6-ea71-4116-8fee-633c9d6313f2', 'a99581f6-ea71-4116-8fee-633c9d6313f2') ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a99581f6-ea71-4116-8fee-633c9d6313f2', 'item', 'UPSERT');
 INSERT INTO master_list_line (id, master_list_id, item_link_id) VALUES ('mll_a99581f6-ea71-4116-8fee-633c9d6313f2', '43491ce9-bc89-4ee5-988d-9dbb2856e398', 'a99581f6-ea71-4116-8fee-633c9d6313f2') ON CONFLICT DO NOTHING;
-INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d71db001-fd92-422e-8765-2bfb48dfa886', 'STAMARIL (Sanofi Pasteur SA)', 'a99581f6-ea71-4116-8fee-633c9d6313f2', null) ON CONFLICT DO NOTHING;
+INSERT INTO item_variant (id, name, item_link_id, cold_storage_type_id) VALUES ('d71db001-fd92-422e-8765-2bfb48dfa886', 'STAMARIL (Sanofi Pasteur SA)', 'a99581f6-ea71-4116-8fee-633c9d6313f2', (SELECT id FROM cold_storage_type WHERE name = '+5' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('d71db001-fd92-422e-8765-2bfb48dfa886', 'item_variant', 'UPSERT');
 INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('5770070e-4a23-4212-b4d2-ed08515465a6', 'd71db001-fd92-422e-8765-2bfb48dfa886', 'Primary', 1, 0.048) ON CONFLICT DO NOTHING;
 INSERT INTO changelog (record_id, table_name, row_action) VALUES ('5770070e-4a23-4212-b4d2-ed08515465a6', 'packaging_variant', 'UPSERT');
