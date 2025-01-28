@@ -79,8 +79,6 @@ export const HistoryModal: React.FC<HistoryModalModalProps> = ({
     return compiled;
   }, [data]);
 
-  console.log('historyData', historyData);
-
   return (
     <TableProvider
       createStore={createTableStore}
