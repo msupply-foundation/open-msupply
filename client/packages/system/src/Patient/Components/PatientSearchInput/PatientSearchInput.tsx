@@ -32,7 +32,7 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
       isOptionEqualToValue={(option, value) => option.name === value.name}
       width={`${width}px`}
       popperMinWidth={width}
-      value={value && { ...value, label: value.name }}
+      defaultValue={value && { ...value, label: value.name }}
       filterOptions={filterByNameAndCode}
       sx={{ minWidth: width }}
       noOptionsText=""
