@@ -218,22 +218,14 @@ export const useOutboundColumns = ({
       },
     ],
     {
-      label: 'label.unit-price',
+      label: 'label.unit-sell-price',
       key: 'sellPricePerUnit',
       align: ColumnAlign.Right,
       Cell: CurrencyCell,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
-          // Multiple lines, so we need to calculate the average price per unit
-          let totalSellPrice = 0;
-          let totalUnits = 0;
-
-          for (const line of rowData.lines) {
-            totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
-            totalUnits += line.numberOfPacks * line.packSize;
-          }
-
-          return totalSellPrice / totalUnits;
+          const { lines } = rowData;
+          return ArrayUtils.getAveragePrice(lines, 'sellPricePerPack');
         } else {
           if (isDefaultPlaceholderRow(rowData)) return undefined;
           return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
@@ -252,8 +244,8 @@ export const useOutboundColumns = ({
       },
     },
     {
-      label: 'label.line-total',
-      key: 'lineTotal',
+      label: 'label.total',
+      key: 'total',
       align: ColumnAlign.Right,
       Cell: CurrencyCell,
       accessor: ({ rowData }) => {

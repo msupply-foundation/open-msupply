@@ -54,9 +54,8 @@ export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
           variant="outlined"
           isLoading={isLoading}
           onClick={csvExport}
-        >
-          {t('button.export')}
-        </LoadingButton>
+          label={t('button.export')}
+        />
       </Grid>
     </AppBarButtonsPortal>
   );

@@ -203,9 +203,8 @@ export const RepackModal: FC<RepackModalControlProps> = ({
             startIcon={<PrinterIcon />}
             isLoading={isPrinting}
             disabled={!invoiceId}
-          >
-            {t('button.print')}
-          </LoadingButton>
+            label={t('button.print')}
+          />
         </ReportSelector>
       }
     >

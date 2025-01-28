@@ -1,9 +1,9 @@
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     EqualFilter, InvoiceType, Pagination, RepositoryError, Sort,
 };
 
-use super::{ledger::ledger::dsl as ledger_dsl, DBType, InvoiceStatus, StorageConnection};
+use super::{DBType, DatetimeFilter, InvoiceStatus, StorageConnection};
 
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -61,6 +61,7 @@ pub struct LedgerFilter {
     pub stock_line_id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
+    pub datetime: Option<DatetimeFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -95,6 +96,11 @@ impl LedgerFilter {
         self.store_id = Some(filter);
         self
     }
+
+    pub fn datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.datetime = Some(filter);
+        self
+    }
 }
 
 pub struct LedgerRepository<'a> {
@@ -124,25 +130,25 @@ impl<'a> LedgerRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 LedgerSortField::Id => {
-                    apply_sort!(query, sort, ledger_dsl::id);
+                    apply_sort!(query, sort, ledger::id);
                 }
                 LedgerSortField::Datetime => {
-                    apply_sort!(query, sort, ledger_dsl::datetime);
+                    apply_sort!(query, sort, ledger::datetime);
                 }
                 LedgerSortField::Name => {
-                    apply_sort_no_case!(query, sort, ledger_dsl::name);
+                    apply_sort_no_case!(query, sort, ledger::name);
                 }
                 LedgerSortField::InvoiceType => {
-                    apply_sort!(query, sort, ledger_dsl::invoice_type);
+                    apply_sort!(query, sort, ledger::invoice_type);
                 }
                 LedgerSortField::StockLineId => {
-                    apply_sort!(query, sort, ledger_dsl::stock_line_id);
+                    apply_sort!(query, sort, ledger::stock_line_id);
                 }
                 LedgerSortField::Quantity => {
-                    apply_sort!(query, sort, ledger_dsl::quantity);
+                    apply_sort!(query, sort, ledger::quantity);
                 }
                 LedgerSortField::ItemId => {
-                    apply_sort!(query, sort, ledger_dsl::item_id);
+                    apply_sort!(query, sort, ledger::item_id);
                 }
             }
         }
@@ -167,19 +173,21 @@ impl<'a> LedgerRepository<'a> {
 type BoxedLedgerQuery = ledger::BoxedQuery<'static, DBType>;
 
 fn create_filtered_query(filter: Option<LedgerFilter>) -> BoxedLedgerQuery {
-    let mut query = ledger_dsl::ledger.into_boxed();
-    query = query.filter(ledger_dsl::datetime.is_not_null());
+    let mut query = ledger::table.into_boxed();
+    query = query.filter(ledger::datetime.is_not_null());
 
     if let Some(f) = filter {
         let LedgerFilter {
             stock_line_id,
             item_id,
             store_id,
+            datetime,
         } = f;
 
-        apply_equal_filter!(query, stock_line_id, ledger_dsl::stock_line_id);
-        apply_equal_filter!(query, item_id, ledger_dsl::item_id);
-        apply_equal_filter!(query, store_id, ledger_dsl::store_id);
+        apply_equal_filter!(query, stock_line_id, ledger::stock_line_id);
+        apply_equal_filter!(query, item_id, ledger::item_id);
+        apply_equal_filter!(query, store_id, ledger::store_id);
+        apply_date_time_filter!(query, datetime, ledger::datetime);
     }
 
     query

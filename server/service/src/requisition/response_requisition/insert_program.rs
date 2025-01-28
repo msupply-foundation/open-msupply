@@ -2,7 +2,7 @@ use crate::{
     activity_log::activity_log_entry,
     number::next_number,
     requisition::{
-        common::check_requisition_row_exists,
+        common::{check_requisition_row_exists, default_indicator_value},
         program_indicator::query::{program_indicators, ProgramIndicator},
         program_settings::get_customer_program_requisition_settings,
         query::get_requisition,
@@ -184,6 +184,7 @@ fn generate(
         program_id: Some(program.id.clone()),
         period_id: Some(period_id.clone()),
         order_type: Some(order_type.name),
+        is_emergency: order_type.is_emergency,
         // Default
         colour: None,
         comment: None,
@@ -207,12 +208,16 @@ fn generate(
 
     let requisition_lines = generate_lines(ctx, &ctx.store_id, &requisition, program_item_ids)?;
 
-    let program_indicators = program_indicators(
-        connection,
-        Pagination::all(),
-        None,
-        Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
-    )?;
+    let program_indicators = if !order_type.is_emergency {
+        program_indicators(
+            connection,
+            Pagination::all(),
+            None,
+            Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
+        )?
+    } else {
+        vec![]
+    };
 
     let customer_store = StoreRepository::new(connection)
         .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&other_party_id)))?;
@@ -281,7 +286,7 @@ fn generate_lines(
 fn generate_program_indicator_values(
     store_id: &str,
     period_id: &str,
-    other_party_id: &str,
+    customer_name_id: &str,
     program_indicators: Vec<ProgramIndicator>,
 ) -> Vec<IndicatorValueRow> {
     let mut indicator_values = vec![];
@@ -289,19 +294,14 @@ fn generate_program_indicator_values(
     for program_indicator in program_indicators {
         for line in program_indicator.lines {
             for column in line.columns {
-                let value = match column.value_type {
-                    Some(_) => column.default_value.clone(),
-                    None => line.line.default_value.clone(),
-                };
-
                 let indicator_value = IndicatorValueRow {
                     id: uuid(),
-                    customer_name_link_id: other_party_id.to_string(),
+                    customer_name_link_id: customer_name_id.to_string(),
                     store_id: store_id.to_string(),
                     period_id: period_id.to_string(),
+                    value: default_indicator_value(&line.line, &column),
                     indicator_line_id: line.line.id.to_string(),
                     indicator_column_id: column.id.to_string(),
-                    value,
                 };
 
                 indicator_values.push(indicator_value);

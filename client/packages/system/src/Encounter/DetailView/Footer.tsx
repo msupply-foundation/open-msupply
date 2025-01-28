@@ -21,12 +21,14 @@ import {
   EncounterFragment,
 } from '@openmsupply-client/programs';
 import { encounterStatusTranslation } from '../utils';
+import { StatusChangeButton } from './StatusChangeButton';
 
 interface FooterProps {
   documentName?: string;
   isDisabled: boolean;
   isSaving: boolean;
   onCancel: () => void;
+  onChangeStatus: (status: EncounterNodeStatus) => void;
   onSave: () => void;
   encounter?: EncounterFragment;
 }
@@ -66,6 +68,7 @@ export const Footer: FC<FooterProps> = ({
   isDisabled,
   isSaving,
   onCancel,
+  onChangeStatus,
   onSave,
   encounter,
 }) => {
@@ -115,9 +118,14 @@ export const Footer: FC<FooterProps> = ({
               isLoading={isSaving}
               onClick={onSave}
               startIcon={<SaveIcon />}
-            >
-              {t('button.save')}
-            </LoadingButton>
+              label={t('button.save')}
+            />
+            {encounter?.status && (
+              <StatusChangeButton
+                currentStatus={encounter.status}
+                onSave={onChangeStatus}
+              />
+            )}
           </Box>
 
           <Modal
@@ -134,7 +142,7 @@ export const Footer: FC<FooterProps> = ({
                 gap={2}
               >
                 <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
-                  Document Edit History
+                  {t('label.document-edit-history')}
                 </Typography>
                 {documentName ? (
                   <DocumentHistory documentName={documentName} />

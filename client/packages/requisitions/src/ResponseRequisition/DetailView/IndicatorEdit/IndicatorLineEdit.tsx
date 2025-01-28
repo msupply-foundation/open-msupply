@@ -10,11 +10,12 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
+import { useDraftIndicatorValue } from './hooks';
 import {
   IndicatorLineRowFragment,
   IndicatorLineWithColumnsFragment,
-} from '../../api';
-import { useDraftIndicatorValue } from './hooks';
+} from '../../../RequestRequisition/api';
+import { indicatorColumnNameToLocal } from '../../../utils';
 
 interface IndicatorLineEditProps {
   requisitionNumber: number;
@@ -24,15 +25,18 @@ interface IndicatorLineEditProps {
   previous: IndicatorLineRowFragment | null;
   currentLine?: IndicatorLineWithColumnsFragment | null;
   disabled: boolean;
+  scrollIntoView: () => void;
 }
 
 const INPUT_WIDTH = 185;
 const LABEL_WIDTH = '150px';
 
 const InputWithLabel = ({
+  autoFocus,
   data,
   disabled,
 }: {
+  autoFocus: boolean;
   data: IndicatorColumnNode;
   disabled: boolean;
 }) => {
@@ -56,6 +60,12 @@ const InputWithLabel = ({
     },
     [t]
   );
+
+  const sharedProps = {
+    disabled,
+    autoFocus,
+  };
+
   const inputComponent =
     data.valueType === IndicatorValueTypeNode.Number ? (
       <NumericTextInput
@@ -65,8 +75,7 @@ const InputWithLabel = ({
           const newValue = isNaN(Number(v)) ? 0 : v;
           update({ value: String(newValue) }).then(errorHandler);
         }}
-        disabled={disabled}
-        autoFocus
+        {...sharedProps}
       />
     ) : (
       <BasicTextInput
@@ -75,8 +84,7 @@ const InputWithLabel = ({
         onChange={e => {
           update({ value: e.target.value }).then(errorHandler);
         }}
-        disabled={disabled}
-        autoFocus
+        {...sharedProps}
       />
     );
 
@@ -84,7 +92,7 @@ const InputWithLabel = ({
     <InputWithLabelRow
       Input={inputComponent}
       labelWidth={LABEL_WIDTH}
-      label={data.name}
+      label={indicatorColumnNameToLocal(data.name)}
       sx={{ marginBottom: 1 }}
     />
   );
@@ -98,6 +106,7 @@ export const IndicatorLineEdit = ({
   previous,
   currentLine,
   disabled,
+  scrollIntoView,
 }: IndicatorLineEditProps) => {
   const columns = currentLine?.columns
     .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
@@ -106,9 +115,14 @@ export const IndicatorLineEdit = ({
   return (
     <>
       <Box display="flex" flexDirection="column">
-        {columns?.map(c => {
+        {columns?.map((c, i) => {
           return (
-            <InputWithLabel key={c.value?.id} data={c} disabled={disabled} />
+            <InputWithLabel
+              key={c.value?.id}
+              data={c}
+              disabled={disabled}
+              autoFocus={i === 0}
+            />
           );
         })}
       </Box>
@@ -119,6 +133,7 @@ export const IndicatorLineEdit = ({
           hasPrevious={hasPrevious}
           previous={previous}
           requisitionNumber={requisitionNumber}
+          scrollIntoView={scrollIntoView}
         />
       </Box>
     </>

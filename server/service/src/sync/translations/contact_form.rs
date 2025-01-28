@@ -120,6 +120,7 @@ mod tests {
                     body: mock_contact_form_a().body,
                     created_datetime: mock_contact_form_a().created_datetime,
                     user_id: mock_contact_form_a().user_id,
+                    username: mock_contact_form_a().username,
                     store_id: mock_contact_form_a().store_id,
                     contact_type: mock_contact_form_a().contact_type,
                 }],

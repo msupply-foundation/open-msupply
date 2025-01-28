@@ -14,6 +14,7 @@ import { useLocation, LocationRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { LocationEditModal } from './LocationEditModal';
 import { Toolbar } from './Toolbar';
+import { Footer } from './Footer';
 
 const LocationListComponent: FC = () => {
   const {
@@ -47,7 +48,11 @@ const LocationListComponent: FC = () => {
         label: 'label.cold-storage-type',
         accessor: ({ rowData: { coldStorageType } }) =>
           coldStorageType
-            ? `${coldStorageType.name} (${coldStorageType.minTemperature}°C to ${coldStorageType.maxTemperature}°C)`
+            ? t('label.cold-storage-temperature-range', {
+                coldStorageName: coldStorageType.name,
+                minTemperature: coldStorageType.minTemperature,
+                maxTemperature: coldStorageType.maxTemperature,
+              })
             : null,
         width: 200,
         sortable: false,
@@ -73,7 +78,7 @@ const LocationListComponent: FC = () => {
           location={entity}
         />
       )}
-      <Toolbar data={locations} filter={filter} />
+      <Toolbar filter={filter} />
       <AppBarButtons onCreate={() => onOpen()} />
       <DataTable
         id="location-list"
@@ -91,6 +96,7 @@ const LocationListComponent: FC = () => {
           />
         }
       />
+      <Footer data={locations} />
     </>
   );
 };

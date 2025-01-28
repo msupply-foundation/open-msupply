@@ -8,8 +8,10 @@ import {
   Card,
   Grid,
   Typography,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
+import { translateReportName } from '../utils';
 
 interface ReportWidgetProps {
   height?: number | string;
@@ -30,6 +32,8 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
   onReportClick,
   hasReports = false,
 }) => {
+  const t = useTranslation();
+
   return (
     <>
       {hasReports ? (
@@ -108,7 +112,7 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
                             paddingBottom: 2,
                           }}
                         >
-                          {report?.name}
+                          {translateReportName(t, report.name)}
                         </Typography>
                         <ChevronDownIcon
                           color="secondary"

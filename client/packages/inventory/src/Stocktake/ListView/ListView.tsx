@@ -19,6 +19,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { getStocktakeTranslator, isStocktakeDisabled } from '../../utils';
 import { StocktakeRowFragment } from '../api/operations.generated';
 import { useStocktake } from '../api';
+import { Footer } from './Footer';
 
 const useDisableStocktakeRows = (rows?: StocktakeRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -87,6 +88,7 @@ export const StocktakeListView: FC = () => {
           />
         }
       />
+      <Footer />
     </>
   );
 };

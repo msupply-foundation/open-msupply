@@ -8,10 +8,19 @@ import {
   AppFooterPortal,
   InvoiceNodeStatus,
   useBreadcrumbs,
+  useTableStore,
+  useDeleteConfirmation,
+  DeleteIcon,
+  Action,
+  ActionsFooter,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, prescriptionStatuses } from '../../../utils';
 import { StatusChangeButton } from './StatusChangeButton';
-import { PrescriptionRowFragment, usePrescription } from '../../api';
+import {
+  PrescriptionRowFragment,
+  usePrescription,
+  usePrescriptionLines,
+} from '../../api';
 
 const createStatusLog = (invoice: PrescriptionRowFragment) => {
   const statusIdx = prescriptionStatuses.findIndex(s => invoice.status === s);
@@ -43,40 +52,86 @@ export const FooterComponent: FC = () => {
   const t = useTranslation();
   const {
     query: { data },
+    isDisabled,
+    rows: items,
   } = usePrescription();
   const { navigateUpOne } = useBreadcrumbs();
+
+  const selectedRows =
+    useTableStore(state => {
+      return items
+        ?.filter(({ id }) => state.rowState[id]?.isSelected)
+        .map(({ lines }) => lines.flat())
+        .flat();
+    }) || [];
+
+  const {
+    delete: { deleteLines },
+  } = usePrescriptionLines();
+
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction: () => deleteLines(selectedRows),
+    canDelete: !isDisabled,
+    messages: {
+      confirmMessage: t('messages.confirm-delete-lines', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-lines', {
+        count: selectedRows.length,
+      }),
+    },
+  });
+
+  const actions: Action[] = [
+    {
+      label: t('button.delete-lines'),
+      icon: <DeleteIcon />,
+      onClick: confirmAndDelete,
+      disabled: isDisabled,
+      disabledToastMessage: t('messages.cant-delete-generic'),
+    },
+  ];
 
   return (
     <AppFooterPortal
       Content={
-        data?.id && (
-          <Box
-            gap={2}
-            display="flex"
-            flexDirection="row"
-            alignItems="center"
-            height={64}
-          >
-            <StatusCrumbs
-              statuses={prescriptionStatuses}
-              statusLog={createStatusLog(data)}
-              statusFormatter={getStatusTranslator(t)}
+        <>
+          {selectedRows.length !== 0 && (
+            <ActionsFooter
+              actions={actions}
+              selectedRowCount={selectedRows.length}
             />
-
-            <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-              <ButtonWithIcon
-                shrinkThreshold="lg"
-                Icon={<XCircleIcon />}
-                label={t('button.close')}
-                color="secondary"
-                sx={{ fontSize: '12px' }}
-                onClick={() => navigateUpOne()}
+          )}
+          {data?.id && selectedRows.length === 0 && (
+            <Box
+              gap={2}
+              display="flex"
+              flexDirection="row"
+              alignItems="center"
+              height={64}
+            >
+              <StatusCrumbs
+                statuses={prescriptionStatuses}
+                statusLog={createStatusLog(data)}
+                statusFormatter={getStatusTranslator(t)}
               />
 
-              <StatusChangeButton />
+              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+                <ButtonWithIcon
+                  shrinkThreshold="lg"
+                  Icon={<XCircleIcon />}
+                  label={t('button.close')}
+                  color="secondary"
+                  sx={{ fontSize: '12px' }}
+                  onClick={() => navigateUpOne()}
+                />
+
+                <StatusChangeButton />
+              </Box>
             </Box>
-          </Box>
-        )
+          )}
+        </>
       }
     />
   );

@@ -24,6 +24,7 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { Action } from 'kbar/lib/types';
 import { useEasterEggModal } from './components/EasterEggModal';
+import { useSyncModal } from './components/Sync';
 
 const CustomKBarSearch = styled(KBarSearch)(({ theme }) => ({
   width: 500,
@@ -90,6 +91,7 @@ const Actions = () => {
   const t = useTranslation();
   const { store, logout, user, userHasPermission } = useAuthContext();
   const showEasterEgg = useEasterEggModal();
+  const showSync = useSyncModal();
   const confirmLogout = useConfirmationModal({
     onConfirm: () => {
       logout();
@@ -103,22 +105,22 @@ const Actions = () => {
   const actions = [
     {
       id: 'navigation-drawer:toggle',
-      name: `${t('cmdk.drawer-toggle')} (n)`,
-      shortcut: ['n'],
+      name: `${t('cmdk.drawer-toggle')} (Ctrl+M)`,
+      shortcut: ['$mod+KeyM'],
       keywords: 'drawer, close',
       perform: () => drawer.toggle(),
     },
     {
       id: 'navigation-drawer:report',
-      name: `${t('cmdk.goto-reports')} (g+r)`,
-      shortcut: ['g', 'r'],
+      name: `${t('cmdk.goto-reports')} (Alt+R)`,
+      shortcut: ['Alt+KeyR'],
       keywords: 'report',
       perform: () => navigate(RouteBuilder.create(AppRoute.Reports).build()),
     },
     {
       id: 'navigation:outbound-shipment',
-      name: `${t('cmdk.goto-outbound')} (o)`,
-      shortcut: ['o'],
+      name: `${t('cmdk.goto-outbound')} (Alt+O)`,
+      shortcut: ['Alt+KeyO'],
       keywords: 'shipment',
       perform: () =>
         navigate(
@@ -129,8 +131,8 @@ const Actions = () => {
     },
     {
       id: 'navigation:inbound-shipment',
-      name: `${t('cmdk.goto-inbound')} (i)`,
-      shortcut: ['i'],
+      name: `${t('cmdk.goto-inbound')} (Alt+I)`,
+      shortcut: ['Alt+KeyI'],
       keywords: 'shipment',
       perform: () =>
         navigate(
@@ -141,9 +143,9 @@ const Actions = () => {
     },
     {
       id: 'navigation:customers',
-      name: `${t('cmdk.goto-customers')} (g+c)`,
+      name: `${t('cmdk.goto-customers')} (Ctrl+Alt+C)`,
       keywords: 'customers',
-      shortcut: ['g', 'c'],
+      shortcut: ['$mod+Alt+KeyC'],
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Distribution)
@@ -153,15 +155,15 @@ const Actions = () => {
     },
     {
       id: 'navigation:dashboard',
-      name: `${t('cmdk.goto-dashboard')} (d)`,
-      shortcut: ['d'],
+      name: `${t('cmdk.goto-dashboard')} (Alt+D)`,
+      shortcut: ['Alt+KeyD'],
       keywords: 'dashboard',
       perform: () => navigate(RouteBuilder.create(AppRoute.Dashboard).build()),
     },
     {
       id: 'navigation:items',
-      name: `${t('cmdk.goto-items')} (g+i)`,
-      shortcut: ['g', 'i'],
+      name: `${t('cmdk.goto-items')} (Alt+Shift+I)`,
+      shortcut: ['Alt+Shift+KeyI'],
       keywords: 'items',
       perform: () =>
         navigate(
@@ -172,8 +174,8 @@ const Actions = () => {
     },
     {
       id: 'navigation:customer-requisition',
-      name: `${t('cmdk.goto-customer-requisition')} (c+r)`,
-      shortcut: ['c', 'r'],
+      name: `${t('cmdk.goto-customer-requisition')} (Alt+R)`,
+      shortcut: ['Alt+Shift+KeyR'],
       keywords: 'distribution',
       perform: () =>
         navigate(
@@ -184,8 +186,8 @@ const Actions = () => {
     },
     {
       id: 'navigation:internal-order',
-      name: `${t('cmdk.goto-internal-order')} (g+o)`,
-      shortcut: ['g', 'o'],
+      name: `${t('cmdk.goto-internal-order')} (Alt+Shift+O)`,
+      shortcut: ['Alt+Shift+KeyO'],
       keywords: 'replenishment',
       perform: () =>
         navigate(
@@ -196,9 +198,9 @@ const Actions = () => {
     },
     {
       id: 'navigation:suppliers',
-      name: `${t('cmdk.goto-suppliers')} (g+s)`,
+      name: `${t('cmdk.goto-suppliers')} (Ctrl+S)`,
       keywords: 'suppliers',
-      shortcut: ['g', 's'],
+      shortcut: ['$mod+KeyS'],
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Replenishment)
@@ -208,8 +210,8 @@ const Actions = () => {
     },
     {
       id: 'navigation:stock',
-      name: `${t('cmdk.goto-stock')} (s)`,
-      shortcut: ['s'],
+      name: `${t('cmdk.goto-stock')} (Alt+S)`,
+      shortcut: ['Alt+KeyS'],
       keywords: 'stock',
       perform: () =>
         navigate(
@@ -220,8 +222,8 @@ const Actions = () => {
     },
     {
       id: 'navigation:stocktakes',
-      name: `${t('cmdk.goto-stocktakes')} (g+t)`,
-      shortcut: ['g', 't'],
+      name: `${t('cmdk.goto-stocktakes')} (Shift+S)`,
+      shortcut: ['Shift+KeyS'],
       keywords: 'stocktakes',
       perform: () =>
         navigate(
@@ -232,8 +234,8 @@ const Actions = () => {
     },
     {
       id: 'navigation:locations',
-      name: `${t('cmdk.goto-locations')} (g+l)`,
-      shortcut: ['g', 'l'],
+      name: `${t('cmdk.goto-locations')} (Alt+L)`,
+      shortcut: ['Alt+KeyL'],
       keywords: 'locations',
       perform: () =>
         navigate(
@@ -244,8 +246,8 @@ const Actions = () => {
     },
     {
       id: 'navigation:master-lists',
-      name: `${t('cmdk.goto-master-lists')} (g+m)`,
-      shortcut: ['g', 'm'],
+      name: `${t('cmdk.goto-master-lists')} (Alt+M)`,
+      shortcut: ['Alt+KeyM'],
       keywords: 'master lists',
       perform: () =>
         navigate(
@@ -256,32 +258,39 @@ const Actions = () => {
     },
     {
       id: 'action:logout',
-      name: `${t('logout')}`,
-      shortcut: ['l', 'o'],
+      name: `${t('logout')} (Ctrl+L)`,
+      shortcut: ['$mod+KeyL'],
       keywords: 'logout',
       perform: () => confirmLogout({}),
     },
     {
       id: 'action:easter-egg',
       name: `${t('easter-egg')}`,
-      shortcut: ['e', 'e'],
+      shortcut: ['$mod+Shift+KeyE'],
       keywords: 'easter egg game',
       perform: showEasterEgg,
     },
     {
       id: 'navigation:help',
-      name: `${t('help')} (h)`,
+      name: `${t('help')} (Alt+H)`,
       keywords: 'help, docs, guide',
-      shortcut: ['h'],
+      shortcut: ['Alt+KeyH'],
       perform: () => navigate(RouteBuilder.create(AppRoute.Help).build()),
+    },
+    {
+      id: 'action:sync',
+      name: `${t('sync')} (Alt+Control+S)`,
+      keywords: 'sync',
+      shortcut: ['Alt+$mod+KeyS'],
+      perform: showSync,
     },
   ];
 
   if (userHasPermission(UserPermission.ServerAdmin)) {
     actions.push({
       id: 'navigation:settings',
-      name: `${t('settings')} (a)`,
-      shortcut: ['a'],
+      name: `${t('settings')} (Alt+Shift+S)`,
+      shortcut: ['Alt+Shift+KeyS'],
       keywords: 'settings',
       perform: () => navigate(RouteBuilder.create(AppRoute.Settings).build()),
     });
@@ -290,9 +299,9 @@ const Actions = () => {
   if (store?.storeMode === StoreModeNodeType.Dispensary) {
     actions.push({
       id: 'navigation:prescription',
-      name: `${t('cmdk.goto-prescriptions')} (p)`,
+      name: `${t('cmdk.goto-prescriptions')} (Alt+P)`,
       keywords: 'prescription',
-      shortcut: ['p'],
+      shortcut: ['Alt+KeyP'],
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Dispensary)
@@ -302,9 +311,9 @@ const Actions = () => {
     });
     actions.push({
       id: 'navigation:patients',
-      name: `${t('cmdk.goto-patients')} (g+p)`,
+      name: `${t('cmdk.goto-patients')} (Alt+Control+P)`,
       keywords: 'patient',
-      shortcut: ['g', 'p'],
+      shortcut: ['Alt+$mod+KeyP'],
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Dispensary)
@@ -316,16 +325,16 @@ const Actions = () => {
     actions.push(
       {
         id: 'action:more-open',
-        name: `${t('cmdk.more-info-close')} (m+o)`,
+        name: `${t('cmdk.more-info-open')} (Ctrl+M)`,
         keywords: 'more open',
-        shortcut: ['m', 'o'],
+        shortcut: ['$mod+KeyM'],
         perform: open,
       },
       {
         id: 'action:more-close',
-        name: `${t('cmdk.more-info-close')} (m+c)`,
+        name: `${t('cmdk.more-info-close')} (Ctrl+Shift+M)`,
         keywords: 'more close',
-        shortcut: ['m', 'c'],
+        shortcut: ['$mod+Shift+KeyM'],
         perform: close,
       }
     );
@@ -333,8 +342,8 @@ const Actions = () => {
     if (store?.preferences.vaccineModule ?? false) {
       actions.push({
         id: 'navigation:coldchain-monitoring',
-        name: `${t('cmdk.goto-cold-chain-monitoring')} (c+c)`,
-        shortcut: ['c', 'c'],
+        name: `${t('cmdk.goto-cold-chain-monitoring')} (Alt+C)`,
+        shortcut: ['Alt+KeyC'],
         keywords: 'cold chain coldchain monitoring',
         perform: () =>
           navigate(
@@ -345,8 +354,8 @@ const Actions = () => {
       });
       actions.push({
         id: 'navigation:coldchain-equipment',
-        name: `${t('cmdk.goto-cold-chain-equipment')} (c + e)`,
-        shortcut: ['c', 'e'],
+        name: `${t('cmdk.goto-cold-chain-equipment')} (Alt+E)`,
+        shortcut: ['Alt+KeyE'],
         keywords: 'cold chain coldchain equipment',
         perform: () =>
           navigate(

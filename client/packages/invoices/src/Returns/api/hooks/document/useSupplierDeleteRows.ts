@@ -47,5 +47,5 @@ export const useSupplierDeleteRows = () => {
     },
   });
 
-  return confirmAndDelete;
+  return { confirmAndDelete, selectedRows };
 };

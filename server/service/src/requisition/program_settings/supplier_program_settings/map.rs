@@ -50,7 +50,11 @@ pub(super) fn map_supplier_program_settings(
             // Filter by program_id
             let suppliers = program_suppliers
                 .iter()
-                .filter(|s| s.program.id == program_setting.program_row.id)
+                .filter(|s| {
+                    s.program.id == program_setting.program_row.id
+                        || (s.program.elmis_code == program_setting.program_row.elmis_code
+                            && s.program.elmis_code.is_some())
+                })
                 .cloned()
                 .collect();
 

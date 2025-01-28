@@ -28,6 +28,9 @@ pub struct RequisitionFilter {
     pub linked_requisition_id: Option<EqualFilter<String>>,
     pub order_type: Option<EqualFilter<String>>,
     pub a_shipment_has_been_created: Option<bool>,
+    pub period_id: Option<EqualFilter<String>>,
+    pub elmis_code: Option<EqualFilter<String>>,
+    pub program_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -149,6 +152,21 @@ impl RequisitionFilter {
 
     pub fn a_shipment_has_been_created(mut self, filter: bool) -> Self {
         self.a_shipment_has_been_created = Some(filter);
+        self
+    }
+
+    pub fn period_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.period_id = Some(filter);
+        self
+    }
+
+    pub fn elmis_code(mut self, filter: EqualFilter<String>) -> Self {
+        self.elmis_code = Some(filter);
+        self
+    }
+
+    pub fn program_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.program_id = Some(filter);
         self
     }
 }

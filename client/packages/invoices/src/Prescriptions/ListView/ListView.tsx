@@ -20,6 +20,7 @@ import { usePrescriptionList, usePrescription } from '../api';
 import { PrescriptionRowFragment } from '../api/operations.generated';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
+import { Footer } from './Footer';
 
 const useDisablePrescriptionRows = (rows?: PrescriptionRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -94,7 +95,7 @@ const PrescriptionListViewComponent: FC = () => {
 
   return (
     <>
-      <Toolbar filter={filter} listParams={listParams} />
+      <Toolbar filter={filter} />
       <AppBarButtons
         modalController={modalController}
         listParams={listParams}
@@ -118,6 +119,7 @@ const PrescriptionListViewComponent: FC = () => {
           navigate(String(row.invoiceNumber));
         }}
       />
+      <Footer listParams={listParams} />
     </>
   );
 };

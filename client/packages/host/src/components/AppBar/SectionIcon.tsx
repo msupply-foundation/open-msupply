@@ -4,7 +4,6 @@ import {
   HelpIcon,
   InvoiceIcon,
   ListIcon,
-  RadioIcon,
   ReportsIcon,
   SettingsIcon,
   SlidersIcon,
@@ -48,8 +47,6 @@ const getIcon = (section?: AppRoute) => {
       return <SuppliersIcon color="primary" fontSize="small" />;
     case AppRoute.Reports:
       return <ReportsIcon color="primary" fontSize="small" />;
-    case AppRoute.Sync:
-      return <RadioIcon color="primary" fontSize="small" />;
     case AppRoute.Manage:
       return <SlidersIcon color="primary" fontSize="small" />;
     case AppRoute.Programs:
@@ -70,7 +67,6 @@ const useSection = (): Section | undefined => {
     AppRoute.Inventory,
     AppRoute.Replenishment,
     AppRoute.Reports,
-    AppRoute.Sync,
     AppRoute.Manage,
     AppRoute.Programs,
   ];

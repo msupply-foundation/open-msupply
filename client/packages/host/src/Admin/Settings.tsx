@@ -15,15 +15,14 @@ import {
   PrinterIcon,
   ListIcon,
 } from '@common/icons';
-import { AppVersion } from '../components';
 import { SyncSettings } from './SyncSettings';
-import { SiteInfo } from '../components/SiteInfo';
 import { ServerSettings } from './ServerSettings';
 import { ElectronSettings } from './ElectronSettings';
 import { DisplaySettings } from './DisplaySettings';
 import { SettingsSection } from './SettingsSection';
 import { LabelPrinterSettings } from './LabelPrinterSettings';
 import { ConfigurationSettings } from './ConfigurationSettings';
+import { ServerInfo } from './ServerInfo';
 
 export const Settings: React.FC = () => {
   const { data: initStatus } = useInitialisationStatus();
@@ -86,7 +85,14 @@ export const Settings: React.FC = () => {
         </SettingsSection>
       )}
       <AppBarButtonsPortal>
-        <AppVersion SiteInfo={<SiteInfo siteName={initStatus?.siteName} />} />
+        <Box
+          flex={1}
+          display="flex"
+          justifyContent="flex-end"
+          flexDirection="column"
+        >
+          <ServerInfo siteName={initStatus?.siteName} />
+        </Box>
       </AppBarButtonsPortal>
     </Box>
   );
