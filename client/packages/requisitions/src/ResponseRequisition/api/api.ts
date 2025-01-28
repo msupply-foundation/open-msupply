@@ -194,9 +194,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to create requisition');
   },
-  insertProgram: async (
-    input: InsertProgramResponseRequisitionInput
-  )=> {
+  insertProgram: async (input: InsertProgramResponseRequisitionInput) => {
     const result = await sdk.insertProgramResponse({
       storeId,
       input,
