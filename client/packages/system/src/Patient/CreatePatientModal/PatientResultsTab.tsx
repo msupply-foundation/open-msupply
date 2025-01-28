@@ -225,9 +225,8 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
                 onClick={() => centralRefetch()}
                 isLoading={isLoadingCentral}
                 variant="outlined"
-              >
-                {t('button.retry')}
-              </LoadingButton>
+                label={t('button.retry')}
+              />
             ) : null}
           </Box>
         </Box>

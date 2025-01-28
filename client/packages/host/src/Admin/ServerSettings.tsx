@@ -98,8 +98,8 @@ export const ServerSettings = () => {
               databaseSettings?.databaseType !== DatabaseType.SqLite
                 ? t('message.database-not-sqlite')
                 : nativeMode !== NativeMode.Server
-                ? t('message.database-not-local')
-                : t('label.download-database')
+                  ? t('message.database-not-local')
+                  : t('label.download-database')
             }
           >
             <span>
@@ -123,9 +123,8 @@ export const ServerSettings = () => {
                   }
                   setIsDownloading(false);
                 }}
-              >
-                {t('button.download')}
-              </LoadingButton>
+                label={t('button.download')}
+              />
             </span>
           </Tooltip>
         }

@@ -3,11 +3,7 @@ use crate::standard_graphql_error::StandardGraphqlError;
 use super::IdPair;
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
-use repository::EqualFilter;
-use service::{
-    item_stats::{ItemStats, ItemStatsFilter},
-    service_provider::ServiceProvider,
-};
+use service::{item_stats::ItemStats, service_provider::ServiceProvider};
 use std::collections::HashMap;
 
 pub struct ItemsStatsForItemLoader {
@@ -42,19 +38,12 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
             return Ok(HashMap::new());
         };
 
-        let filter = ItemStatsFilter::new().item_id(EqualFilter::equal_any(
-            IdPair::get_all_secondary_ids(loader_inputs),
-        ));
+        let item_ids = IdPair::get_all_secondary_ids(loader_inputs);
 
         let item_stats = self
             .service_provider
             .item_stats_service
-            .get_item_stats(
-                &service_context,
-                &store_id,
-                amc_lookback_months,
-                Some(filter),
-            )
+            .get_item_stats(&service_context, &store_id, amc_lookback_months, item_ids)
             .map_err(|e| StandardGraphqlError::from_error(&e))?;
 
         Ok(item_stats

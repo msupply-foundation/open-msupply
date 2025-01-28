@@ -7,11 +7,18 @@ import { useCustomerReturnRows } from './useCustomerReturnRows';
 import { useCustomerReturnIsDisabled } from '../utils/useCustomerReturnIsDisabled';
 import { useReturns } from '../..';
 
+interface DeleteSelectedCustomerReturnLinesOutput {
+  confirmAndDelete: () => void;
+  selectedIds: string[];
+}
+
+interface DeleteSelectedCustomerReturnLines {
+  returnId: string;
+}
+
 export const useDeleteSelectedCustomerReturnLines = ({
   returnId,
-}: {
-  returnId: string;
-}): (() => void) => {
+}: DeleteSelectedCustomerReturnLines): DeleteSelectedCustomerReturnLinesOutput => {
   const { items, lines } = useCustomerReturnRows();
   const isDisabled = useCustomerReturnIsDisabled();
   const t = useTranslation();
@@ -61,5 +68,8 @@ export const useDeleteSelectedCustomerReturnLines = ({
     },
   });
 
-  return confirmAndDelete;
+  return {
+    confirmAndDelete,
+    selectedIds: selectedRows.map(row => row.id),
+  };
 };

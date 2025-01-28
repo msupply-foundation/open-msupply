@@ -48,7 +48,8 @@ export type ColumnKey =
   | 'returnReason'
   | 'availableNumberOfPacks'
   | 'numberOfPacksToReturn'
-  | 'numberOfPacksReturned';
+  | 'numberOfPacksReturned'
+  | 'availableStockOnHand';
 
 export const getColumnLookupWithOverrides = <T extends RecordWithId>(
   columnKey: ColumnKey,
@@ -62,6 +63,13 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   ColumnKey,
   ColumnDefinition<T>
 > => ({
+  availableStockOnHand: {
+    label: 'label.stock-on-hand-remaining',
+    key: 'availableStockOnHand',
+    width: 100,
+    align: ColumnAlign.Right,
+    Cell: NumberCell,
+  },
   monthlyConsumption: {
     key: 'monthlyConsumption',
     label: 'label.amc',
@@ -69,7 +77,6 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     align: ColumnAlign.Left,
     width: 100,
   },
-
   numberOfPacks: {
     key: 'numberOfPacks',
     format: ColumnFormat.Integer,
@@ -267,11 +274,12 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     align: ColumnAlign.Right,
   },
   stockOnHand: {
-    label: 'label.stock-on-hand-remaining',
-    key: 'availableStockOnHand',
-    width: 100,
-    align: ColumnAlign.Right,
     Cell: NumberCell,
+    align: ColumnAlign.Right,
+    description: 'description.soh',
+    key: 'stockOnHand',
+    label: 'label.soh',
+    width: 100,
   },
   theirReference: {
     label: 'label.reference',

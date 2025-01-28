@@ -17,11 +17,13 @@ table! {
         sent_at -> Nullable<Timestamp>,
         retries -> Integer,
         error -> Nullable<Text>,
+        retry_at -> Nullable<Timestamp>,
     }
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+#[PgType = "email_queue_status_enum"]
 pub enum EmailQueueStatus {
     Queued,
     Sent,
@@ -51,6 +53,7 @@ pub struct EmailQueueRow {
     pub sent_at: Option<NaiveDateTime>,
     pub retries: i32,
     pub error: Option<String>,
+    pub retry_at: Option<NaiveDateTime>,
 }
 
 pub struct EmailQueueRowRepository<'a> {
@@ -88,7 +91,9 @@ impl<'a> EmailQueueRowRepository<'a> {
             .filter(
                 email_queue::status
                     .eq(EmailQueueStatus::Queued)
-                    .or(email_queue::status.eq(EmailQueueStatus::Errored)),
+                    .or(email_queue::status
+                        .eq(EmailQueueStatus::Errored)
+                        .and(email_queue::retry_at.le(diesel::dsl::now))),
             )
             .load::<EmailQueueRow>(self.connection.lock().connection())?;
         Ok(result)

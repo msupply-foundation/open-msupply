@@ -18,6 +18,9 @@ import {
   useEditModal,
   UNDEFINED_STRING_VALUE,
   GenericColumnKey,
+  ActionsFooter,
+  Action,
+  DeleteIcon,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -27,6 +30,7 @@ import {
   useImmunisationProgram,
 } from '../api';
 import { VaccineCourseEditModal } from '../VaccineCourseEditModal';
+import { useDeleteSelectedVaccineCourses } from '../api';
 
 export const ProgramComponent: FC = () => {
   const {
@@ -41,6 +45,7 @@ export const ProgramComponent: FC = () => {
   const {
     query: { data, isLoading },
   } = useImmunisationProgram(id);
+  const { selectedRows, confirmAndDelete } = useDeleteSelectedVaccineCourses();
 
   const queryParams = {
     filterBy: { ...filterBy, programId: { equalTo: id } },
@@ -94,6 +99,14 @@ export const ProgramComponent: FC = () => {
     mode,
   } = useEditModal<VaccineCourseFragment>();
 
+  const actions: Action[] = [
+    {
+      label: t('button.delete-lines'),
+      icon: <DeleteIcon />,
+      onClick: confirmAndDelete,
+    },
+  ];
+
   return isLoading ? (
     <InlineSpinner />
   ) : (
@@ -122,14 +135,21 @@ export const ProgramComponent: FC = () => {
       />
       <AppFooterPortal
         Content={
-          <Box
-            gap={2}
-            display="flex"
-            flexDirection="row"
-            alignItems="center"
-            height={64}
-          >
-            <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+          selectedRows.length ? (
+            <ActionsFooter
+              actions={actions}
+              selectedRowCount={selectedRows.length}
+            />
+          ) : (
+            <Box
+              flex={1}
+              display="flex"
+              flexDirection="row"
+              justifyContent="flex-end"
+              alignItems="center"
+              gap={2}
+              height={64}
+            >
               <ButtonWithIcon
                 shrinkThreshold="lg"
                 Icon={<CloseIcon />}
@@ -139,7 +159,7 @@ export const ProgramComponent: FC = () => {
                 onClick={navigateUpOne}
               />
             </Box>
-          </Box>
+          )
         }
       />
     </>

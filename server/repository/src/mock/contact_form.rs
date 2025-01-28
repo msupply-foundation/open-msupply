@@ -10,6 +10,7 @@ pub fn mock_contact_form_a() -> ContactFormRow {
         body: "Help description".to_string(),
         created_datetime: Defaults::naive_date_time(),
         user_id: mock_user_account_a().id,
+        username: mock_user_account_a().username,
         store_id: mock_store_a().id,
         contact_type: ContactType::Feedback,
     }

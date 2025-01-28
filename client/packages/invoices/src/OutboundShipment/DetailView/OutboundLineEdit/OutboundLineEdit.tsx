@@ -13,7 +13,6 @@ import {
   TableProvider,
   createTableStore,
   createQueryParamsStore,
-  useKeyboardHeightAdjustment,
   InvoiceLineNodeType,
   useNotification,
   InvoiceNodeStatus,
@@ -90,7 +89,6 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const packSizeController = usePackSizeController(draftStockOutLines);
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
-  const height = useKeyboardHeightAdjustment(700);
   const { warning } = useNotification();
   const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
     useState(false);
@@ -233,8 +231,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           onClick={() => handleSave(onClose)}
         />
       }
-      height={height}
-      width={1000}
+      height={700}
+      width={1200}
     >
       <Grid container gap={0.5}>
         <OutboundLineEditForm
