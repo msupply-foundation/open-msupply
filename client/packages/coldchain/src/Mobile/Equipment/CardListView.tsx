@@ -1,4 +1,4 @@
-import React, { FC, useState } from "react";
+import React, { FC } from "react";
 import {
   NothingHere,
   useTranslation,
@@ -6,23 +6,31 @@ import {
   useNavigate,
   BasicSpinner,
   ButtonWithIcon,
-  TuneIcon,
-  QrCodeScannerIcon,
+  PlusCircleIcon,
+  useToggle,
+  UserPermission,
+  useCallbackWithPermission,
 } from "@openmsupply-client/common";
 import { AppRoute } from '@openmsupply-client/config';
 import { Box, Typography, Card, CardContent } from "@mui/material";
 import { Status } from '../../Equipment/Components';
 import { useAssets } from "../../Equipment/api";
 import { SimpleLabelDisplay } from "../Components/SimpleLabelDisplay";
-import { CollapseFilterMenu } from "./CollapseFilterMenu";
+import { AddFromScannerButton } from "../../Equipment/ListView/AddFromScannerButton";
+import { CreateAssetModal } from "../../Equipment/ListView/CreateAssetModal";
 
 export const CardListView: FC = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const { data, isError, isLoading } = useAssets.document.list();
+  const modalController = useToggle();
   const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
     AppRoute.Equipment
+  );
+  const onAdd = useCallbackWithPermission(
+    UserPermission.AssetMutate,
+    modalController.toggleOn,
+    t('error.no-asset-create-permission')
   );
 
   if (isLoading) return <BasicSpinner />;
@@ -42,36 +50,34 @@ export const CardListView: FC = () => {
   }
 
   return (
-    <Box sx={{
+    <Box id="myboxxxx" sx={{
       width: '100%',
       flex: 1,
     }}>
+      <CreateAssetModal
+        isOpen={modalController.isOn}
+        onClose={modalController.toggleOff}
+      />
       <Box sx={{
         width: '100%',
         minHeight: '50px',
         display: 'flex',
-        justifyContent: 'space-evenly',
         padding: '.75rem',
+        gap: '1em'
       }}>
         <ButtonWithIcon
           shouldShrink={false}
-          label={t("label.filters")}
-          onClick={() => { setFiltersOpen(pv => !pv) }}
-          Icon={<TuneIcon />}
+          label="Add Asset"
+          onClick={onAdd}
+          Icon={<PlusCircleIcon />}
         />
-        <ButtonWithIcon
-          shouldShrink={false}
-          label="Scan Asset"
-          onClick={() => { }}
-          Icon={<QrCodeScannerIcon />}
-        />
+        <AddFromScannerButton />
       </Box>
-      <CollapseFilterMenu open={filtersOpen} />
       <Box sx={{
         display: 'flex',
         flexDirection: "column",
         alignItems: 'center',
-        padding: '10px 5px',
+        padding: '0px 0px',
         gap: 1,
         overflow: 'auto',
         overflowY: 'scroll',
@@ -79,8 +85,9 @@ export const CardListView: FC = () => {
 
         {data.nodes.map(n => (
           <Card key={n.id} sx={{
-            minWidth: 330,
-            padding: '10px 5px',
+            width: '90%',
+            maxWidth: '400px',
+            padding: '0px 5px 5px 5px',
             border: '1px solid',
             borderColor: '#eee',
             borderRadius: '16px',
@@ -89,12 +96,16 @@ export const CardListView: FC = () => {
           >
             <CardContent>
               <SimpleLabelDisplay
-                label="Manufacturer"
+                label={t('label.manufacturer')}
                 value={n.catalogueItem?.manufacturer || "n/a"}
               />
               <SimpleLabelDisplay
-                label="Type"
+                label={t('label.type')}
                 value={n.assetType?.name || "n/a"}
+              />
+              <SimpleLabelDisplay
+                label={t('label.asset-number')}
+                value={n.assetNumber || "n/a"}
               />
             </CardContent>
             <Box padding=".2em">
