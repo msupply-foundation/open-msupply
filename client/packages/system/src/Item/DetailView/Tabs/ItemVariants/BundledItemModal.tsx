@@ -7,7 +7,6 @@ import {
   Box,
   useTranslation,
   useDialog,
-  useKeyboardHeightAdjustment,
   QueryParamsProvider,
   createQueryParamsStore,
   useNotification,
@@ -35,7 +34,6 @@ export const BundledItemModal = ({
 }) => {
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen: true, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(350);
   const { success } = useNotification();
 
   const { draft, isComplete, updateDraft, save } = useUpsertBundledItem({
@@ -58,7 +56,7 @@ export const BundledItemModal = ({
           }}
         />
       }
-      height={height}
+      height={350}
       width={700}
       slideAnimation={false}
     >
