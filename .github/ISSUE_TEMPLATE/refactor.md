@@ -4,7 +4,7 @@ about: Suggest a refactor
 title: ""
 labels: needs triage
 assignees: ""
-type: Refactor
+type: refactor
 ---
 
 ## The suggestion
