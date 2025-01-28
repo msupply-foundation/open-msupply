@@ -109,6 +109,11 @@ fn generate_line(
     let cost_price_per_pack = invoice_line_cost_price_per_pack;
     let sell_price_per_pack = invoice_line_sell_price_per_pack;
 
+    println!(
+        "generate line prescribed quantity {:?}",
+        prescribed_quantity
+    );
+
     let mut update_line = InvoiceLineRow {
         id,
         invoice_id,
