@@ -48,8 +48,8 @@ export const LogCardListView: FC<{ recordId: string }> = ({ recordId }) => {
 
         {data.nodes.map(l => (
           <Card key={l.id} sx={{
-            minWidth: 330,
-            maxWidth: 450,
+            minWidth: '90%',
+            maxWidth: '450px',
             padding: '10px 5px',
             border: '1px solid',
             borderColor: '#eee',
@@ -57,10 +57,12 @@ export const LogCardListView: FC<{ recordId: string }> = ({ recordId }) => {
           }}
           >
             <CardContent>
-              <SimpleLabelDisplay
-                label=""
-                value={localisedDate(l.datetime) || "n/a"}
-              />
+              <Typography sx={{
+                fontSize: '1.2rem!important',
+                fontWeight: 'bold',
+              }}>
+                {localisedDate(l.datetime) || "n/a"}
+              </Typography>
               <SimpleLabelDisplay
                 label="Time"
                 value={localisedTime(l.datetime) || "n/a"}
