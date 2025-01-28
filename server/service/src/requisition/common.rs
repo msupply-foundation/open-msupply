@@ -99,7 +99,6 @@ pub fn check_emergency_order_within_max_items_limit(
 }
 
 pub struct CheckExceededOrdersForPeriod<'a> {
-    pub connection: &'a StorageConnection,
     pub program_id: &'a str,
     pub period_id: &'a str,
     pub program_order_type_id: &'a str,
@@ -108,9 +107,10 @@ pub struct CheckExceededOrdersForPeriod<'a> {
 }
 
 pub fn check_exceeded_max_orders_for_period(
+    connection: &StorageConnection,
     input: CheckExceededOrdersForPeriod,
 ) -> Result<bool, RepositoryError> {
-    let order_type = ProgramRequisitionOrderTypeRowRepository::new(input.connection)
+    let order_type = ProgramRequisitionOrderTypeRowRepository::new(connection)
         .find_one_by_id(input.program_order_type_id)?;
 
     // TODO add check which matches lower case as per in period_is_available function
@@ -122,15 +122,11 @@ pub fn check_exceeded_max_orders_for_period(
                 .period_id(EqualFilter::equal_to(input.period_id))
                 .r#type(input.requisition_type.equal_to());
 
-            let current_orders =
-                RequisitionRepository::new(input.connection).count(Some(filter))?;
+            let current_orders = RequisitionRepository::new(connection).count(Some(filter))?;
 
-            if current_orders < i64::from(input.max_orders_per_period) {
-                return Ok(false);
-            }
-            Ok(true)
+            Ok(current_orders > input.max_orders_per_period)
         }
-        None => return Err(RepositoryError::NotFound),
+        None => Err(RepositoryError::NotFound),
     }
 }
 
