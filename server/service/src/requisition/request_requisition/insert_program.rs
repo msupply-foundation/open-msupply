@@ -20,8 +20,8 @@ use repository::{
     ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
     IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
     NumberRowType, Pagination, ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow,
-    RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
-    StorageConnection, StoreFilter, StoreRepository,
+    RepositoryError, Requisition, RequisitionLineRow, RequisitionLineRowRepository,
+    RequisitionRowRepository, StorageConnection, StoreFilter, StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -155,7 +155,7 @@ fn generate(
         program_order_type_id: _,
         period_id,
     }: InsertProgramRequestRequisition,
-) -> Result<(RequisitionRow, Vec<RequisitionLineRow>), PluginOrRepositoryError> {
+) -> Result<GenerateResult, PluginOrRepositoryError> {
     let connection = &ctx.connection;
 
     let requisition = RequisitionRow {
