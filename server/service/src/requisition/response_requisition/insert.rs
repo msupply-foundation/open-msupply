@@ -235,6 +235,8 @@ mod test_insert {
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
+
+        // TODO add test for if max number of orders per period is reached
     }
 
     #[actix_rt::test]
