@@ -14,22 +14,17 @@ use repository::{
     RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
     StorePreferenceRowRepository,
 };
-use serde::{Deserialize, Serialize};
 use util::{
     constants::{DEFAULT_AMC_LOOKBACK_MONTHS, NUMBER_OF_DAYS_IN_A_MONTH},
     date_now_with_offset,
 };
-
-#[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
-pub struct ItemStatsFilter {
-    pub item_id: Option<EqualFilter<String>>,
-}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ItemStats {
     pub total_consumption: f64,
     pub average_monthly_consumption: f64,
     pub available_stock_on_hand: f64,
+    pub total_stock_on_hand: f64,
     pub item_id: String,
     pub item_name: String,
 }
@@ -40,9 +35,9 @@ pub trait ItemStatsServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id: &str,
         amc_lookback_months: Option<f64>,
-        filter: Option<ItemStatsFilter>,
+        item_ids: Vec<String>,
     ) -> Result<Vec<ItemStats>, PluginOrRepositoryError> {
-        get_item_stats(ctx, store_id, amc_lookback_months, filter)
+        get_item_stats(ctx, store_id, amc_lookback_months, item_ids)
     }
 }
 
@@ -53,12 +48,8 @@ pub fn get_item_stats(
     ctx: &ServiceContext,
     store_id: &str,
     amc_lookback_months: Option<f64>,
-    filter: Option<ItemStatsFilter>,
+    item_ids: Vec<String>,
 ) -> Result<Vec<ItemStats>, PluginOrRepositoryError> {
-    let ItemStatsFilter {
-        item_id: item_id_filter,
-    } = filter.clone().unwrap_or_default();
-
     let default_amc_lookback_months = StorePreferenceRowRepository::new(&ctx.connection)
         .find_one_by_id(store_id)?
         .map_or(DEFAULT_AMC_LOOKBACK_MONTHS.into(), |row| {
@@ -77,7 +68,7 @@ pub fn get_item_stats(
     let consumption_map = get_consumption_map(
         &ctx.connection,
         store_id,
-        item_id_filter.clone(),
+        item_ids.clone(),
         amc_lookback_months,
     )?;
 
@@ -86,7 +77,7 @@ pub fn get_item_stats(
         amc_lookback_months,
         // Really don't like cloning this
         consumption_map: consumption_map.clone(),
-        filter,
+        item_ids: item_ids.clone(),
     };
 
     let amc_by_item = match PluginInstance::get_one(PluginType::Amc) {
@@ -97,7 +88,7 @@ pub fn get_item_stats(
     Ok(ItemStats::new_vec(
         amc_by_item,
         consumption_map,
-        get_stock_on_hand_rows(&ctx.connection, store_id, item_id_filter)?,
+        get_stock_on_hand_rows(&ctx.connection, store_id, Some(item_ids))?,
     ))
 }
 
@@ -128,7 +119,7 @@ impl amc::Trait for DefaultAmc {
 fn get_consumption_map(
     connection: &StorageConnection,
     store_id: &str,
-    item_id_filter: Option<EqualFilter<String>>,
+    item_ids: Vec<String>,
     amc_lookback_months: f64,
 ) -> Result<HashMap<String /* item_id */, f64 /* total consumption */>, RepositoryError> {
     let start_date = date_now_with_offset(Duration::days(
@@ -136,7 +127,7 @@ fn get_consumption_map(
     ));
 
     let filter = ConsumptionFilter {
-        item_id: item_id_filter,
+        item_id: Some(EqualFilter::equal_any(item_ids)),
         store_id: Some(EqualFilter::equal_to(store_id)),
         date: Some(DateFilter::after_or_equal_to(start_date)),
     };
@@ -156,10 +147,10 @@ fn get_consumption_map(
 pub fn get_stock_on_hand_rows(
     connection: &StorageConnection,
     store_id: &str,
-    item_id_filter: Option<EqualFilter<String>>,
+    item_ids: Option<Vec<String>>,
 ) -> Result<Vec<StockOnHandRow>, RepositoryError> {
     let filter = StockOnHandFilter {
-        item_id: item_id_filter,
+        item_id: item_ids.map(|ids| EqualFilter::equal_any(ids)),
         store_id: Some(EqualFilter::equal_to(store_id)),
     };
 
@@ -187,6 +178,7 @@ impl ItemStats {
                     .get(&stock_on_hand.item_id)
                     .copied()
                     .unwrap_or_default(),
+                total_stock_on_hand: stock_on_hand.total_stock_on_hand,
             })
             .collect()
     }
@@ -200,28 +192,19 @@ impl ItemStats {
             item_name: requisition_line.item_row.name.clone(),
             // TODO: Implement total consumption & total_stock_on_hand
             total_consumption: 0.0,
+            total_stock_on_hand: 0.0,
         }
     }
 }
 
-impl ItemStatsFilter {
-    pub fn new() -> ItemStatsFilter {
-        ItemStatsFilter { item_id: None }
-    }
-
-    pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.item_id = Some(filter);
-        self
-    }
-}
 #[cfg(test)]
 mod test {
     use repository::{
         mock::{mock_store_a, mock_store_b, test_item_stats, MockDataInserts},
-        test_db, EqualFilter, StorePreferenceRow, StorePreferenceRowRepository,
+        test_db, StorePreferenceRow, StorePreferenceRowRepository,
     };
 
-    use crate::{item_stats::ItemStatsFilter, service_provider::ServiceProvider};
+    use crate::service_provider::ServiceProvider;
 
     #[actix_rt::test]
     async fn test_item_stats_service() {
@@ -237,10 +220,9 @@ mod test {
         let service = service_provider.item_stats_service;
 
         let item_ids = vec![test_item_stats::item().id, test_item_stats::item2().id];
-        let filter = Some(ItemStatsFilter::new().item_id(EqualFilter::equal_any(item_ids)));
 
         let mut item_stats = service
-            .get_item_stats(&context, &mock_store_a().id, None, filter.clone())
+            .get_item_stats(&context, &mock_store_a().id, None, item_ids.clone())
             .unwrap();
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
@@ -265,7 +247,7 @@ mod test {
 
         // Reduce to looking back 1 month
         let mut item_stats = service
-            .get_item_stats(&context, &mock_store_a().id, Some(1.0), filter.clone())
+            .get_item_stats(&context, &mock_store_a().id, Some(1.0), item_ids.clone())
             .unwrap();
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
@@ -293,7 +275,7 @@ mod test {
             })
             .unwrap();
         let mut item_stats = service
-            .get_item_stats(&context, &mock_store_a().id, None, filter.clone())
+            .get_item_stats(&context, &mock_store_a().id, None, item_ids.clone())
             .unwrap();
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
@@ -315,7 +297,7 @@ mod test {
         assert_eq!(item_stats[1].average_monthly_consumption, 0.0);
 
         let mut item_stats = service
-            .get_item_stats(&context, &mock_store_b().id, None, filter.clone())
+            .get_item_stats(&context, &mock_store_b().id, None, item_ids.clone())
             .unwrap();
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 

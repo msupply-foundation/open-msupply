@@ -3,11 +3,10 @@ import {
   Box,
   AppFooterPortal,
   DialogButton,
-  RouteBuilder,
   useNavigate,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
-import { AppRoute } from '@openmsupply-client/config';
+import { buildItemEditRoute } from '../utils';
 
 interface FooterProps {
   hasNext: boolean;
@@ -15,6 +14,7 @@ interface FooterProps {
   hasPrevious: boolean;
   previous: ItemRowFragment | null;
   requisitionNumber?: number;
+  scrollIntoView: () => void;
 }
 
 export const Footer = ({
@@ -23,6 +23,7 @@ export const Footer = ({
   hasPrevious,
   previous,
   requisitionNumber,
+  scrollIntoView,
 }: FooterProps) => {
   const navigate = useNavigate();
 
@@ -46,28 +47,18 @@ export const Footer = ({
             <DialogButton
               variant="previous"
               disabled={!hasPrevious}
-              onClick={() =>
-                navigate(
-                  RouteBuilder.create(AppRoute.Replenishment)
-                    .addPart(AppRoute.InternalOrder)
-                    .addPart(String(requisitionNumber))
-                    .addPart(String(previous?.id))
-                    .build()
-                )
-              }
+              onClick={() => {
+                navigate(buildItemEditRoute(requisitionNumber, previous?.id));
+                scrollIntoView();
+              }}
             />
             <DialogButton
               variant="next"
               disabled={!hasNext}
-              onClick={() =>
-                navigate(
-                  RouteBuilder.create(AppRoute.Replenishment)
-                    .addPart(AppRoute.InternalOrder)
-                    .addPart(String(requisitionNumber))
-                    .addPart(String(next?.id))
-                    .build()
-                )
-              }
+              onClick={() => {
+                navigate(buildItemEditRoute(requisitionNumber, next?.id));
+                scrollIntoView();
+              }}
             />
           </Box>
         </Box>

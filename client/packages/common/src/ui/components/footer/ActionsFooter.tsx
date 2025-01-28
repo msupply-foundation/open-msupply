@@ -4,6 +4,7 @@ import {
   useTranslation,
   Typography,
   FlatButton,
+  useNotification,
 } from '@openmsupply-client/common';
 
 export interface Action {
@@ -11,6 +12,8 @@ export interface Action {
   icon: ReactNode;
   onClick: () => void;
   disabled?: boolean;
+  shouldShrink?: boolean;
+  disabledToastMessage?: string;
 }
 
 interface ActionsFooterProps {
@@ -23,11 +26,27 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
   selectedRowCount,
 }): ReactElement => {
   const t = useTranslation();
+  const { info } = useNotification();
+
+  const showDisabledActionToastMessage = (disabledToastMessage: string) =>
+    info(disabledToastMessage);
+
+  const handleDisabledClick = (
+    disabled?: boolean,
+    disabledToastMessage?: string
+  ) => {
+    if (!disabled) return undefined;
+    return showDisabledActionToastMessage(
+      disabledToastMessage ?? `${t('messages.cannot-perform-action')}`
+    );
+  };
+
   return (
     <Stack
       direction="row"
       alignItems="center"
       height={64}
+      gap={4}
       sx={{
         p: 4,
         mx: '-20px',
@@ -42,15 +61,28 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
       >
         {selectedRowCount} {t('label.selected')}
       </Typography>
-      {actions.map(({ label, icon, onClick, disabled }) => (
-        <FlatButton
-          key={label}
-          startIcon={icon}
-          label={label}
-          disabled={disabled}
-          onClick={onClick}
-        />
-      ))}
+      {actions.map(
+        ({
+          label,
+          icon,
+          onClick,
+          disabled,
+          shouldShrink,
+          disabledToastMessage,
+        }) => (
+          <div onClick={handleDisabledClick(disabled, disabledToastMessage)}>
+            <FlatButton
+              key={label}
+              startIcon={icon}
+              label={label}
+              disabled={disabled}
+              onClick={onClick}
+              // Flatbutton doesn't shrink by default but we want it to in actions footer
+              shouldShrink={shouldShrink ?? true}
+            />
+          </div>
+        )
+      )}
     </Stack>
   );
 };

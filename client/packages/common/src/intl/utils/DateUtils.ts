@@ -10,6 +10,7 @@ import {
   differenceInMonths,
   differenceInMinutes,
   differenceInYears,
+  getDaysInMonth,
   isPast,
   isFuture,
   isThisWeek,
@@ -104,6 +105,7 @@ export const DateUtils = {
         : new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
+  getDaysInMonth,
   /**
    * While getDateOrNull is naive to the timezone, the timezone will still
    * change. When converting from the assumed naive zone of GMT to the local

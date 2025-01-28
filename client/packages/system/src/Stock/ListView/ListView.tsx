@@ -15,7 +15,6 @@ import {
   RouteBuilder,
   CurrencyCell,
   ExpiryDateCell,
-  NumberCell,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -40,11 +39,14 @@ const StockListComponent: FC = () => {
         key: 'expiryDate',
         condition: 'between',
       },
+      {
+        key: 'masterList.name',
+      },
     ],
   });
   const navigate = useNavigate();
   const queryParams = {
-    filterBy,
+    filterBy: filterBy ?? undefined,
     offset,
     sortBy,
     first,
@@ -72,7 +74,14 @@ const StockListComponent: FC = () => {
       Cell: TooltipTextCell,
       width: 350,
     },
-    // TODO:: Add a column for the master list name
+    // TODO: Add back when design has been decided
+    // {
+    //   key: 'masterList',
+    //   label: 'label.master-list',
+    //   Cell: ChipTableCell,
+    //   width: 150,
+    //   accessor: ({ rowData }) => rowData.masterList.map(m => m.name),
+    // },
     { key: 'batch', label: 'label.batch', Cell: TooltipTextCell, width: 100 },
     {
       key: 'expiryDate',
@@ -102,21 +111,22 @@ const StockListComponent: FC = () => {
       Cell: TooltipTextCell,
       width: 125,
     },
-    {
-      key: 'numberOfPacks',
-      Cell: NumberCell,
-      accessor: ({ rowData }) => rowData.totalNumberOfPacks,
-      width: 125,
-    },
-    {
-      key: 'stockOnHand',
-      label: 'label.soh',
-      Cell: NumberCell,
-      accessor: ({ rowData }) => rowData.totalNumberOfPacks * rowData.packSize,
-      description: 'description.soh',
-      sortable: false,
-      width: 125,
-    },
+    [
+      'numberOfPacks',
+      {
+        accessor: ({ rowData }) => rowData.totalNumberOfPacks,
+        width: 125,
+      },
+    ],
+    [
+      'stockOnHand',
+      {
+        accessor: ({ rowData }) =>
+          rowData.totalNumberOfPacks * rowData.packSize,
+        sortable: false,
+        width: 125,
+      },
+    ],
     {
       key: 'costPricePerPack',
       label: 'label.pack-cost-price',

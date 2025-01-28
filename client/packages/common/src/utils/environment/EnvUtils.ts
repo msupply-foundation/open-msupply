@@ -18,6 +18,8 @@ const mapRoute = (route: string): RouteMapping => {
   switch (true) {
     case inRoute(AppRoute.Dashboard):
       return { title: 'dashboard', docs: '/getting_started/dashboard/' };
+    case inRoute(AppRoute.Reports):
+      return { title: 'reports', docs: '/getting_started/report/' };
     case inRoute(AppRoute.OutboundShipment):
       return {
         title: 'outbound-shipments',
@@ -64,8 +66,6 @@ const mapRoute = (route: string): RouteMapping => {
       return { title: 'stock', docs: '/inventory/stock-view/' };
     case inRoute(AppRoute.Stocktakes):
       return { title: 'stocktakes', docs: '/inventory/stock-takes/' };
-    case inRoute(AppRoute.Sync):
-      return { title: 'sync', docs: '/sync/synchronisation/' };
     case inRoute(AppRoute.Settings):
       return { title: 'settings', docs: '/settings/' };
     case inRoute(AppRoute.Patients):
@@ -98,7 +98,7 @@ const mapRoute = (route: string): RouteMapping => {
     case inRoute(AppRoute.RnRForms):
       return { title: 'r-and-r-forms', docs: '/replenishment/r-and-r-forms/' };
     default:
-      return { title: undefined, docs: '/introduction/' };
+      return { title: undefined, docs: '/introduction/introduction' };
   }
 };
 

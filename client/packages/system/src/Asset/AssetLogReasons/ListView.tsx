@@ -17,6 +17,7 @@ import { Toolbar } from './Toolbar';
 import { parseStatus } from '../utils';
 import { AppBarButtons } from './AppBarButtons';
 import { LogReasonCreateModal } from './LogReasonCreateModal';
+import { Footer } from './Footer';
 
 const AssetListComponent: FC = () => {
   const {
@@ -68,7 +69,7 @@ const AssetListComponent: FC = () => {
         />
       )}
       <AppBarButtons onCreate={() => onOpen()} />
-      <Toolbar data={data?.nodes ?? []} filter={filter} />
+      <Toolbar filter={filter} />
       <DataTable
         id="item-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
@@ -79,6 +80,7 @@ const AssetListComponent: FC = () => {
         isLoading={isLoading}
         noDataElement={<NothingHere body={t('error.no-items')} />}
       />
+      <Footer data={data?.nodes ?? []} />
     </>
   );
 };

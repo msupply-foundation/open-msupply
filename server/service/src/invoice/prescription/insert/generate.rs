@@ -13,7 +13,11 @@ pub fn generate(
     connection: &StorageConnection,
     store_id: &str,
     user_id: &str,
-    InsertPrescription { id, patient_id }: InsertPrescription,
+    InsertPrescription {
+        id,
+        patient_id,
+        diagnosis_id,
+    }: InsertPrescription,
 ) -> Result<InvoiceRow, RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
     let currency = CurrencyRepository::new(connection)
@@ -50,6 +54,7 @@ pub fn generate(
         clinician_link_id: None,
         original_shipment_id: None,
         backdated_datetime: None,
+        diagnosis_id,
     };
 
     Ok(result)

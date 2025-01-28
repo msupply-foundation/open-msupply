@@ -1,7 +1,4 @@
-use crate::{
-    backend_plugin::{plugin_provider::PluginInstance, *},
-    item_stats::ItemStatsFilter,
-};
+use crate::backend_plugin::{plugin_provider::PluginInstance, *};
 use plugin_provider::{call_plugin, PluginResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -16,7 +13,7 @@ pub struct Input {
     pub store_id: String,
     pub amc_lookback_months: f64,
     pub consumption_map: HashMap<String /* item_id */, f64 /* consumption */>,
-    pub filter: Option<ItemStatsFilter>,
+    pub item_ids: Vec<String>,
 }
 
 pub type Output = HashMap<String /* item_id */, AverageMonthlyConsumptionItem>;

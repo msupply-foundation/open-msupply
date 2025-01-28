@@ -10,7 +10,7 @@ use repository::{
 use crate::{
     processors::Processors,
     service_provider::{ServiceContext, ServiceProvider},
-    settings::{ServerSettings, Settings},
+    settings::{MailSettings, ServerSettings, Settings},
     sync::{
         file_sync_driver::FileSyncDriver,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
@@ -52,8 +52,16 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         sync: None,
         logging: None,
         backup: None,
+        mail: Some(MailSettings {
+            port: 1025,
+            host: "localhost".to_string(),
+            starttls: false,
+            username: "".to_string(),
+            password: "".to_string(),
+            from: "no-reply@msupply.foundation".to_string(),
+            interval: 1,
+        }),
     };
-
     let (file_sync_trigger, _) = FileSyncDriver::init(&settings);
     let (sync_trigger, _) = SynchroniserDriver::init(file_sync_trigger);
     let (site_is_initialise_trigger, _) = SiteIsInitialisedCallback::init();
@@ -63,6 +71,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         processors_trigger,
         sync_trigger,
         site_is_initialise_trigger,
+        settings.mail.clone(),
     ));
 
     let processors_task = processors.spawn(service_provider.clone());
@@ -87,4 +96,22 @@ pub(crate) async fn setup_all_and_service_provider(
     inserts: MockDataInserts,
 ) -> ServiceTestContext {
     setup_all_with_data_and_service_provider(db_name, inserts, MockData::default()).await
+}
+
+pub mod email_test {
+    use crate::service_provider::ServiceProvider;
+
+    #[cfg(feature = "email-tests")]
+    pub fn send_test_emails(service_provider: &ServiceProvider) {
+        service_provider
+            .email_service
+            .send_queued_emails(&service_provider.basic_context().unwrap())
+            .unwrap();
+    }
+
+    #[allow(dead_code)]
+    #[cfg(not(feature = "email-tests"))]
+    pub fn send_test_emails(_service_provider: &ServiceProvider) {
+        println!("Skipping email sending");
+    }
 }

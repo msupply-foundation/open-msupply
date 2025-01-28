@@ -14,9 +14,7 @@ const DAY_LOOKBACK = 800;
 const DAYS_IN_MONTH = 30;
 
 let plugins = {
-  average_monthly_consumption: ({ store_id, filter }) => {
-    const item_ids = filter.item_id.equal_any;
-
+  average_monthly_consumption: ({ store_id, item_ids }) => {
     const now = new Date();
     now.setDate(now.getDate() - DAY_LOOKBACK);
 

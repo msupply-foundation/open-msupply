@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 
-use super::{key_value_store::key_value_store::dsl as kv_store_dsl, StorageConnection};
+use super::StorageConnection;
 use crate::repository_error::RepositoryError;
 
 use diesel_derive_enum::DbEnum;
@@ -27,6 +27,7 @@ pub enum KeyType {
     RemoteSyncPushCursor,
     ShipmentTransferProcessorCursor,
     RequisitionTransferProcessorCursor,
+    ContactFormProcessorCursor,
 
     SettingsSyncUrl,
     SettingsSyncUsername,
@@ -73,9 +74,9 @@ impl<'a> KeyValueStoreRepository<'a> {
     }
 
     pub fn upsert_one(&self, value: &KeyValueStoreRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(kv_store_dsl::key_value_store)
+        diesel::insert_into(key_value_store::table)
             .values(value)
-            .on_conflict(kv_store_dsl::id)
+            .on_conflict(key_value_store::id)
             .do_update()
             .set(value)
             .execute(self.connection.lock().connection())?;
@@ -83,8 +84,8 @@ impl<'a> KeyValueStoreRepository<'a> {
     }
 
     fn get_row(&self, key: KeyType) -> Result<Option<KeyValueStoreRow>, RepositoryError> {
-        let result = kv_store_dsl::key_value_store
-            .filter(kv_store_dsl::id.eq(key))
+        let result = key_value_store::table
+            .filter(key_value_store::id.eq(key))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)

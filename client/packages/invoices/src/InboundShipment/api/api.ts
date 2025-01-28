@@ -304,12 +304,6 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
             !isCreated && isUpdated && type === InvoiceLineNodeType.StockIn
         )
         .map(inboundParsers.toUpdateLine),
-      deleteInboundShipmentLines: draftInboundLine
-        .filter(
-          ({ type, isCreated, isDeleted }) =>
-            !isCreated && isDeleted && type === InvoiceLineNodeType.StockIn
-        )
-        .map(inboundParsers.toDeleteLine),
       insertInboundShipmentServiceLines: draftInboundLine
         .filter(
           ({ type, isCreated, isDeleted }) =>

@@ -17,9 +17,6 @@ export const ExpiryDateCell = <T extends RecordWithId>({
 
   return (
     <Box
-      flexDirection="row"
-      display="flex"
-      flex={1}
       sx={{ color: isExpired ? 'error.main' : 'inherit' }}
       color={isExpired ? 'red' : 'inherit'}
     >
@@ -29,6 +26,7 @@ export const ExpiryDateCell = <T extends RecordWithId>({
           textOverflow: 'ellipsis',
           color: 'inherit',
           fontSize: 'inherit',
+          textAlign: 'right',
         }}
       >
         {expiryDate ? localisedDate(new Date(expiryDate)) || '' : ''}
