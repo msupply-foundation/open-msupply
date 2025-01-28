@@ -114,6 +114,7 @@ pub enum ChangelogTableName {
     Item,
     ContactForm,
     SystemLog,
+    InsuranceProvider,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -182,6 +183,7 @@ impl ChangelogTableName {
             ChangelogTableName::BundledItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::ContactForm => ChangeLogSyncStyle::RemoteToCentral,
             ChangelogTableName::SystemLog => ChangeLogSyncStyle::RemoteToCentral, // System Log records won't be synced to remote site on initialisation
+            ChangelogTableName::InsuranceProvider => ChangeLogSyncStyle::Legacy,
         }
     }
 }
