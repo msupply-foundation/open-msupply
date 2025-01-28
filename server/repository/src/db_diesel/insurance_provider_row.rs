@@ -94,21 +94,3 @@ impl Upsert for InsuranceProviderRow {
         )
     }
 }
-
-#[derive(Debug, Clone)]
-// Most central data will be soft deleted (via upsert), and this trait will not be implemented
-// add_insurance_provider don't have referencial relations to any other tables so it's ok to delete as an example
-pub struct InsuranceProviderRowDelete(pub String);
-impl Delete for InsuranceProviderRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        InsuranceProviderRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            InsuranceProviderRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}
