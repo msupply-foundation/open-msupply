@@ -237,7 +237,8 @@ export const DetailView: FC = () => {
   });
 
   // Block navigation if the encounter is dirty and the status is pending
-  // "cancel" would proceed with the navigation, confirm to mark as visited
+  // "cancel" maps to "leave as pending" => would proceed with the navigation
+  // confirm to mark as visited
   const { isDirty: shouldMarkVisited, setIsDirty: setShouldMarkVisited } =
     useConfirmOnLeaving('encounter', {
       customConfirmation: proceed =>
