@@ -1582,6 +1582,7 @@
   "placeholder.search-by-name": "Search by name",
   "placeholder.search-by-name-or-code": "Search by name or code",
   "placeholder.search-by-notes": "Search by notes",
+  "placeholder.search-by-invoice-number": "Search by invoice number",
   "preferences": "Preferences",
   "prescription": "Prescription",
   "prescriptions": "Prescriptions",
