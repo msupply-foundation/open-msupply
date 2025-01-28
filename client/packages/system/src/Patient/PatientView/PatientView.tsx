@@ -14,9 +14,9 @@ import {
   BasicSpinner,
   DocumentRegistryCategoryNode,
   useNavigate,
-  useSearchParams,
   RouteBuilder,
   FnUtils,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { usePatient } from '../api';
@@ -105,9 +105,8 @@ const PatientDetailView = ({
   } = usePatientStore();
 
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const fromPrescription =
-    searchParams.get('previousPath') === AppRoute.Prescription;
+  const { urlQuery } = useUrlQuery();
+  const fromPrescription = urlQuery['previousPath'] === AppRoute.Prescription;
 
   const patientId = usePatient.utils.id();
   const { data: currentPatient, isLoading: isCurrentPatientLoading } =
@@ -232,6 +231,20 @@ const PatientDetailView = ({
     if (savedDocument) {
       setDocumentName(savedDocument.name);
     }
+    // Creates a new prescription and redirects to the prescriptions page
+    // if the patient was created from there.
+    if (fromPrescription === true) {
+      const invoiceNumber = await createPrescription({
+        id: FnUtils.generateUUID(),
+        patientId,
+      });
+      navigate(
+        RouteBuilder.create(AppRoute.Dispensary)
+          .addPart(AppRoute.Prescription)
+          .addPart(String(invoiceNumber))
+          .build()
+      );
+    }
   }, [saveData, setCreateNewPatient, setDocumentName]);
 
   useEffect(() => {
@@ -243,23 +256,6 @@ const PatientDetailView = ({
   useEffect(() => {
     onEdit(isDirty);
   }, [isDirty, onEdit]);
-
-  useEffect(() => {
-    (async () => {
-      if (fromPrescription === true && currentPatient != null) {
-        const invoiceNumber = await createPrescription({
-          id: FnUtils.generateUUID(),
-          patientId: currentPatient.id,
-        });
-        navigate(
-          RouteBuilder.create(AppRoute.Dispensary)
-            .addPart(AppRoute.Prescription)
-            .addPart(String(invoiceNumber))
-            .build()
-        );
-      }
-    })();
-  }, [currentPatient]);
 
   const showSaveConfirmation = useConfirmationModal({
     onConfirm: save,
