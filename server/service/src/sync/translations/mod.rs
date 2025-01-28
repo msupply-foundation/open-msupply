@@ -19,6 +19,7 @@ pub(crate) mod demographic;
 pub(crate) mod diagnosis;
 pub(crate) mod document;
 pub(crate) mod document_registry;
+pub(crate) mod insurance_provider;
 pub(crate) mod form_schema;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
@@ -165,6 +166,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         packaging_variant::boxed(),
         // System log
         system_log::boxed(),
+        insurance_provider::boxed(),
     ]
 }
 

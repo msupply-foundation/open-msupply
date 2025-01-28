@@ -20,6 +20,7 @@ pub(crate) mod demographic;
 pub(crate) mod diagnosis;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
+pub(crate) mod insurance_provider;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
@@ -116,6 +117,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut packaging_variant::test_pull_upsert_records());
     test_records.append(&mut system_log::test_pull_upsert_records());
     test_records.append(&mut contact_form::test_pull_upsert_records());
+    test_records.append(&mut insurance_provider::test_pull_upsert_records());
 
     test_records
 }
