@@ -17,6 +17,7 @@ import {
   SaveIcon,
   DetailTabs,
   useConfirmOnLeaving,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -153,8 +154,6 @@ export const DetailView: FC = () => {
   );
   const [deleteRequest, setDeleteRequest] = useState(false);
 
-  const { setIsDirty } = useConfirmOnLeaving('encounter');
-
   const {
     data: encounter,
     isSuccess,
@@ -229,6 +228,23 @@ export const DetailView: FC = () => {
     data as unknown as EncounterSchema,
     updateEncounter
   );
+
+  const showConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.mark-as-visited'),
+    cancelButtonLabel: t('label.leave-as-pending'),
+    buttonLabel: t('label.mark-as-visited'),
+    onConfirm: () => saveWithStatusChange(EncounterNodeStatus.Visited),
+  });
+
+  const { isDirty: shouldMarkVisited, setIsDirty: setShouldMarkVisited } =
+    useConfirmOnLeaving('encounter', {
+      customConfirmation: proceed =>
+        showConfirmation({
+          onCancel: proceed,
+        }),
+    });
+
   const dataStatus = data
     ? (data as Record<string, JsonData>)['status']
     : undefined;
@@ -237,6 +253,12 @@ export const DetailView: FC = () => {
       encounter.status === EncounterNodeStatus.Pending &&
       dataStatus === EncounterNodeStatus.Pending
     : false;
+
+  useEffect(() => {
+    if (shouldMarkVisited && dataStatus === EncounterNodeStatus.Visited) {
+      setShouldMarkVisited(false);
+    }
+  }, [dataStatus]);
 
   useEffect(() => {
     if (encounter) {
@@ -285,7 +307,7 @@ export const DetailView: FC = () => {
           clinician={encounter.clinician ?? undefined}
           setTouched={() => {
             if (encounter.status === EncounterNodeStatus.Pending)
-              setIsDirty(true);
+              setShouldMarkVisited(true);
           }}
         />
       ),

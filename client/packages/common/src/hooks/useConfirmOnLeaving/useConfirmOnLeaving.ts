@@ -79,10 +79,13 @@ export const useBlockNavigation = () => {
 
   useEffect(() => {
     if (blocker.state === 'blocked') {
-      showConfirmation({
-        onConfirm: blocker.proceed,
-        message: activeBlocker?.options?.blockingMessage,
-      });
+      const customConfirmation = activeBlocker?.options?.customConfirmation;
+
+      customConfirmation
+        ? customConfirmation(blocker.proceed)
+        : showConfirmation({
+            onConfirm: blocker.proceed,
+          });
     }
   }, [blocker]);
 };
@@ -93,7 +96,7 @@ interface BlockerOptions {
    * even if multiple blockers are registered
    */
   customCheck?: (currentLocation: Location, nextLocation: Location) => boolean;
-  blockingMessage?: string;
+  customConfirmation?: (proceed: () => void) => void;
 }
 
 interface BlockingState {
