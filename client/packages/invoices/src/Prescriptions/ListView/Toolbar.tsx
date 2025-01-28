@@ -2,20 +2,37 @@ import React, { FC } from 'react';
 import {
   useTranslation,
   AppBarContentPortal,
-  SearchBar,
+  FilterMenu,
   FilterController,
-  FilterRule,
+  Box,
+  FilterDefinition,
 } from '@openmsupply-client/common';
-import { PrescriptionRowFragment } from '../api';
 
-export const Toolbar: FC<{
-  filter: FilterController;
-}> = ({ filter }) => {
+export const Toolbar: FC<{ filter: FilterController }> = () => {
   const t = useTranslation();
 
-  const key = 'otherPartyName' as keyof PrescriptionRowFragment;
-  const filterString =
-    ((filter.filterBy?.[key] as FilterRule)?.like as string) || '';
+  const filters: FilterDefinition[] = [
+    {
+      type: 'text',
+      name: t('label.name'),
+      urlParameter: 'otherPartyName',
+      placeholder: t('placeholder.search-by-name'),
+      isDefault: true,
+    },
+    {
+      type: 'text',
+      name: t('label.invoice-number'),
+      urlParameter: 'invoiceNumber',
+      placeholder: t('placeholder.search-by-invoice-number'),
+      isDefault: true,
+    },
+    {
+      type: 'date',
+      name: t('label.date'),
+      urlParameter: 'prescriptionDatetime',
+      isDefault: true,
+    },
+  ];
 
   return (
     <AppBarContentPortal
@@ -26,13 +43,9 @@ export const Toolbar: FC<{
         display: 'flex',
       }}
     >
-      <SearchBar
-        placeholder={t('placeholder.search-by-name')}
-        value={filterString}
-        onChange={newValue => {
-          filter.onChangeStringFilterRule('otherPartyName', 'like', newValue);
-        }}
-      />
+      <Box display="flex" gap={1}>
+        <FilterMenu filters={filters} />
+      </Box>
     </AppBarContentPortal>
   );
 };
