@@ -15,7 +15,7 @@ pub(super) enum Error {
     #[error("Failed to open manifest file {0}")]
     CannotOpenManifestFile(PathBuf, #[source] std::io::Error),
     #[error("Failed to parse manifest file {0}")]
-    CannotManifestFile(PathBuf, #[source] serde_json::Error),
+    CannotReadManifestFile(PathBuf, #[source] serde_json::Error),
     #[error("Path does not have parent {0}")]
     PathDoesNotHaveParent(PathBuf),
     #[error("Failed to read bundle file {0}")]
@@ -30,10 +30,10 @@ pub(super) enum Error {
 pub(super) struct GeneratePluginBundle {
     /// Directory in which to search for plugins
     #[clap(short, long)]
-    in_dir: String,
+    in_dir: PathBuf,
     /// Output bundle json file
     #[clap(short, long)]
-    out_file: String,
+    out_file: PathBuf,
 }
 
 #[derive(Deserialize)]
@@ -41,7 +41,7 @@ struct ManifestJson {
     code: String,
     types: PluginTypes,
     variant_type: PluginVariantType,
-    bundle_path: String,
+    bundle_path: PathBuf,
 }
 
 pub(crate) fn generate_plugin_bundle(
@@ -50,8 +50,7 @@ pub(crate) fn generate_plugin_bundle(
     let ignore_paths = vec![OsStr::new("node_modules"), OsStr::new("target")];
     let manifest_name = OsStr::new("plugin_manifest.json");
 
-    let start_path = PathBuf::from(in_dir);
-    let output_path = PathBuf::from(out_file);
+    let start_path = in_dir;
 
     let mut bundle = PluginBundle {
         backend_plugins: Vec::new(),
@@ -59,10 +58,10 @@ pub(crate) fn generate_plugin_bundle(
 
     generate_bundle_recursive(&mut bundle, &ignore_paths, manifest_name, &start_path)?;
     fs::write(
-        &output_path,
+        &out_file,
         serde_json::to_string_pretty(&bundle).map_err(Error::FailedToSerializeBundle)?,
     )
-    .map_err(|e| Error::FailedToWriteBundleFile(output_path.clone(), e))?;
+    .map_err(|e| Error::FailedToWriteBundleFile(out_file.clone(), e))?;
 
     Ok(())
 }
@@ -107,7 +106,7 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
     } = serde_json::from_reader(
         fs::File::open(path).map_err(|e| Error::CannotOpenManifestFile(path.clone(), e))?,
     )
-    .map_err(|e| Error::CannotManifestFile(path.clone(), e))?;
+    .map_err(|e| Error::CannotReadManifestFile(path.clone(), e))?;
 
     let bundle_path = path
         .parent()
