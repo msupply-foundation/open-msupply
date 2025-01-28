@@ -13,10 +13,12 @@ import {
   useFormatDateTime,
   useNativeClient,
   useTranslation,
+  useIsScreen,
 } from '@openmsupply-client/common';
 import { useSync } from '@openmsupply-client/system';
 import { SyncProgress } from '../SyncProgress';
 import { BasicModal, IconButton } from '@common/components';
+import { ServerInfo } from '../../Admin/ServerInfo';
 
 const STATUS_POLLING_INTERVAL = 1000;
 
@@ -95,6 +97,7 @@ export const SyncModal = ({
     onManualSync,
   } = useHostSync(open);
   const { updateUserIsLoading, updateUser } = useAuthContext();
+  const isMobile = useIsScreen('sm');
 
   const sync = async () => {
     await updateUser();
@@ -111,8 +114,8 @@ export const SyncModal = ({
 
   return (
     <BasicModal
-      width={width}
-      height={height}
+      width={!isMobile ? width : 340}
+      height={!isMobile ? height : 600}
       open={open}
       onKeyDown={e => {
         if (e.key === 'Escape') onCancel();
@@ -131,18 +134,38 @@ export const SyncModal = ({
           container
           flexDirection="column"
           justifyContent="flex-start"
-          sx={{ padding: 2, paddingBottom: 6, minWidth: 650 }}
+          sx={theme => ({
+            [theme.breakpoints.down('sm')]: {
+              minWidth: 300,
+              padding: 0,
+              marginTop: '50px',
+            },
+            padding: 2,
+            paddingBottom: 6,
+            minWidth: 650
+          })}
           flexWrap="nowrap"
         >
           <Typography variant="h5" color="primary" sx={{ paddingBottom: 1.25 }}>
             {t('heading.synchronise-status')}
           </Typography>
-          <Typography sx={{ paddingBottom: 2, fontSize: 12, maxWidth: 650 }}>
-            {t('sync-info.summary')
-              .split('\n')
-              .map(line => (
-                <div>{line}</div>
-              ))}
+          <Typography sx={theme => ({
+            [theme.breakpoints.down('sm')]: {
+              textWrap: 'wrap',
+            },
+            paddingBottom: 2,
+            fontSize: 12,
+            maxWidth: 650
+          })}
+          >
+            {!isMobile ?
+              t('sync-info.summary')
+                .split('\n')
+                .map(line => (
+                  <div>{line}</div>
+                )) :
+              t('sync-info.summary')
+            }
           </Typography>
           <Row title={t('sync-info.number-to-push')}>
             <Typography>{numberOfRecordsInPushQueue}</Typography>
@@ -165,11 +188,21 @@ export const SyncModal = ({
           </Row>
           <Row>
             <LoadingButton
+              shouldShrink={false}
               autoFocus
               isLoading={isLoading || updateUserIsLoading}
-              startIcon={<RadioIcon />}
+              startIcon={<RadioIcon sx={{ color: "#fff!important" }} />}
               variant="contained"
-              sx={{ fontSize: '12px' }}
+              sx={theme => ({
+                [theme.breakpoints.down('sm')]: {
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  margin: '1em'
+                },
+                color: theme.palette.common.white,
+                fontSize: '12px',
+              })}
               disabled={false}
               onClick={sync}
               label={t('button.sync-now')}
@@ -179,8 +212,9 @@ export const SyncModal = ({
               isUpdatingUser={updateUserIsLoading}
             />
           </Row>
+          <ServerInfo />
         </Grid>
-        <SyncProgress syncStatus={syncStatus} isOperational={true} />
+        {!isMobile && <SyncProgress syncStatus={syncStatus} isOperational={true} />}
       </Grid>
     </BasicModal>
   );
@@ -191,7 +225,16 @@ interface RowProps {
 }
 
 const Row: React.FC<PropsWithChildren<RowProps>> = ({ title, children }) => (
-  <Grid container padding={1}>
+  <Grid
+    container
+    sx={theme => ({
+      [theme.breakpoints.down('sm')]: {
+        flexDirection: 'column',
+        padding: '0em .5em 1em 0em',
+      },
+      padding: 1,
+    })}
+  >
     <Grid flex={1} flexBasis="40%">
       <Typography fontWeight={700}>{title}</Typography>
     </Grid>
@@ -234,7 +277,17 @@ const ShowStatus = ({
   const message = isSyncing ? 'sync-info.syncing' : 'sync-info.updating-user';
   return (
     <Typography
-      sx={{ fontSize: 12, textAlign: 'center', width: '115px' }}
+      sx={theme => ({
+        [theme.breakpoints.down('sm')]: {
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          margin: '1em'
+        },
+        fontSize: 12,
+        textAlign: 'center',
+        width: '115px'
+      })}
       padding={1}
     >
       {t(message)}
