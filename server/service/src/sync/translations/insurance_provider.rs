@@ -36,9 +36,14 @@ impl SyncTranslation for InsuranceProviderTranslator {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
+        println!(
+            "Translating insurance provider record: {}",
+            sync_record.data
+        );
+
         let LegacyInsuranceProvider {
             id,
             comment,
