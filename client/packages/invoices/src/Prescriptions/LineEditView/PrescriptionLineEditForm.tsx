@@ -85,6 +85,13 @@ export const PrescriptionLineEditForm: React.FC<
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
 
+  const key = item?.id ?? 'new';
+  const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);
+  const note = prescriptionLineWithNote?.note ?? '';
+  const prescribedQuantity = items.find(
+    prescriptionItem => prescriptionItem.id === item?.id
+  )?.lines[0]?.prescribedQuantity;
+
   const debouncedSetAllocationAlerts = useDebounceCallback(
     warning => setAllocationAlerts(warning),
     []
@@ -171,9 +178,6 @@ export const PrescriptionLineEditForm: React.FC<
     debouncedAllocate(numPacks, Number(packSize));
   };
 
-  const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);
-  const note = prescriptionLineWithNote?.note ?? '';
-
   useEffect(() => {
     const newIssueQuantity = Math.round(
       allocatedUnits / Math.abs(Number(packSizeController.selected?.value || 1))
@@ -186,8 +190,6 @@ export const PrescriptionLineEditForm: React.FC<
   useEffect(() => {
     if (!isAutoAllocated) setIssueUnitQuantity(allocatedUnits);
   }, [packSizeController.selected?.value, allocatedUnits]);
-
-  const key = item?.id ?? 'new';
 
   return (
     <Grid
@@ -274,7 +276,7 @@ export const PrescriptionLineEditForm: React.FC<
                 <NumericTextInput
                   autoFocus
                   disabled={disabled}
-                  value={10}
+                  value={prescribedQuantity}
                   min={0}
                   decimalLimit={2}
                 />

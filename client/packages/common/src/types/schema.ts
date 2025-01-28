@@ -3395,6 +3395,7 @@ export type InvoiceLineNode = {
   note?: Maybe<Scalars['String']['output']>;
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
+  prescribedQuantity: Scalars['Float']['output'];
   pricing: PricingNode;
   returnReason?: Maybe<ReturnReasonNode>;
   returnReasonId?: Maybe<Scalars['String']['output']>;
