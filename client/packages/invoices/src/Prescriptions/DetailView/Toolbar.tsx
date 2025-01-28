@@ -20,13 +20,14 @@ import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 
 export const Toolbar: FC = () => {
   const {
-    query: { data },
+    query: { data, isFetchedAfterMount },
     update: { update },
     isDisabled,
     rows: items,
   } = usePrescription();
   const { id, patient, clinician, prescriptionDate, createdDatetime } =
     data ?? {};
+  const currentPatient = isFetchedAfterMount ? patient : null;
   const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
     clinician ?? null
   );
@@ -110,13 +111,13 @@ export const Toolbar: FC = () => {
             gap={1}
             maxWidth={'fit-content'}
           >
-            {patient && (
+            {currentPatient && (
               <InputWithLabelRow
                 label={t('label.patient')}
                 Input={
                   <PatientSearchInput
                     disabled={isDisabled}
-                    value={patient}
+                    value={currentPatient}
                     onChange={async ({ id: patientId }) => {
                       await update({ id, patientId });
                     }}
