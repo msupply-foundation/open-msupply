@@ -81,6 +81,7 @@ export const useDraftPrescriptionLines = (
           });
         }
       })
+      .filter(stockLine => !stockLine.location?.onHold)
       .sort(SortUtils.byExpiryAsc);
 
     if (status === InvoiceNodeStatus.New) {
