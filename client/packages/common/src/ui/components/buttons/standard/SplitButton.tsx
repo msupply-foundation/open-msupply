@@ -5,6 +5,7 @@ import MenuItem from '@mui/material/MenuItem';
 import { ChevronDownIcon } from '../../../icons';
 import { ButtonWithIcon, ButtonWithIconProps } from './ButtonWithIcon';
 import { ShrinkableBaseButton, Tooltip } from '@common/components';
+import { PopoverOrigin } from '@mui/material';
 
 export interface SplitButtonOption<T> {
   label: string;
@@ -23,6 +24,7 @@ export interface SplitButtonProps<T> {
   selectedOption: SplitButtonOption<T>;
   onSelectOption: (option: SplitButtonOption<T>) => void;
   label?: string;
+  openFrom?: PopoverOrigin['vertical'];
 }
 
 export const SplitButton = <T,>({
@@ -36,10 +38,19 @@ export const SplitButton = <T,>({
   selectedOption,
   onSelectOption,
   label,
+  openFrom = 'top',
 }: SplitButtonProps<T>) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const buttonLabel = selectedOption.label;
   const open = !!anchorEl;
+
+  const popoverOrigin: {
+    anchorOrigin: PopoverOrigin['vertical'];
+    transformOrigin: PopoverOrigin['vertical'];
+  } =
+    openFrom === 'top'
+      ? { anchorOrigin: 'top', transformOrigin: 'bottom' }
+      : { anchorOrigin: 'bottom', transformOrigin: 'top' };
 
   return (
     <>
@@ -63,6 +74,7 @@ export const SplitButton = <T,>({
           <ShrinkableBaseButton
             shouldShrink={true}
             shrinkThreshold="md"
+            variant="outlined"
             disabled={isDisabled}
             color={color}
             size="small"
@@ -89,11 +101,11 @@ export const SplitButton = <T,>({
         onClose={() => setAnchorEl(null)}
         elevation={5}
         anchorOrigin={{
-          vertical: 'top',
+          vertical: popoverOrigin.anchorOrigin,
           horizontal: 'right',
         }}
         transformOrigin={{
-          vertical: 'bottom',
+          vertical: popoverOrigin.transformOrigin,
           horizontal: 'right',
         }}
       >
