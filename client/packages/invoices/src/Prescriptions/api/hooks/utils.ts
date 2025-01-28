@@ -31,7 +31,8 @@ export const createInputObject = (
   line: DraftStockOutLine,
   type: 'insert' | 'update' | 'delete'
 ) => {
-  const { id, numberOfPacks, stockLine, invoiceId, note } = line;
+  const { id, numberOfPacks, prescribedQuantity, stockLine, invoiceId, note } =
+    line;
 
   const stockLineId = stockLine?.id ?? '';
   const output = { id, numberOfPacks, stockLineId, note };
@@ -40,7 +41,7 @@ export const createInputObject = (
     case 'delete':
       return { id };
     case 'update':
-      return output;
+      return { ...output, prescribedQuantity };
     case 'insert':
       return { ...output, invoiceId };
   }
