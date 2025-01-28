@@ -18,6 +18,7 @@ import {
   DetailTabs,
   useConfirmOnLeaving,
   useConfirmationModal,
+  useToggle,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -35,6 +36,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { getLogicalStatus } from '../utils';
 import { PatientTabValue } from '../../Patient/PatientView/PatientView';
 import { VaccinationCard } from '../../Vaccination/Components/VaccinationCard';
+import { ScheduleNextEncounterModal } from './ScheduleNextEncounterModal';
 
 const getPatientBreadcrumbSuffix = (
   encounter: EncounterFragment,
@@ -60,7 +62,8 @@ const getPatientBreadcrumbSuffix = (
 const useSaveWithStatus = (
   saveData: () => void,
   encounterData: EncounterSchema | undefined,
-  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>
+  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>,
+  scheduleNextEncounter: () => void
 ): ((status: EncounterNodeStatus | undefined) => void) => {
   const [saveStatus, setSaveStatus] = useState<
     EncounterNodeStatus | undefined
@@ -69,6 +72,7 @@ const useSaveWithStatus = (
   useEffect(() => {
     if (!!saveStatus && saveStatus === encounterData?.status) {
       saveData();
+      if (saveStatus === EncounterNodeStatus.Visited) scheduleNextEncounter();
     }
   }, [saveStatus, encounterData?.status]);
 
@@ -86,7 +90,8 @@ const useSaveWithStatus = (
 const useSaveWithStatusChange = (
   onSave: () => void,
   encounterData: EncounterSchema | undefined,
-  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>
+  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>,
+  scheduleNextEncounter: () => void
 ): {
   showDialog: () => void;
   SaveAsVisitedModal: React.FC;
@@ -100,7 +105,8 @@ const useSaveWithStatusChange = (
   const saveWithStatusChange = useSaveWithStatus(
     onSave,
     encounterData,
-    updateEncounter
+    updateEncounter,
+    scheduleNextEncounter
   );
 
   const SaveAsVisitedModal = () => (
@@ -152,6 +158,7 @@ export const DetailView: FC = () => {
     undefined
   );
   const [deleteRequest, setDeleteRequest] = useState(false);
+  const nextEncounterModal = useToggle(false);
 
   const {
     data: encounter,
@@ -225,7 +232,8 @@ export const DetailView: FC = () => {
   } = useSaveWithStatusChange(
     saveData,
     data as unknown as EncounterSchema,
-    updateEncounter
+    updateEncounter,
+    nextEncounterModal.toggleOn
   );
 
   const promptToMarkVisitedOnLeaving = useConfirmationModal({
@@ -350,6 +358,13 @@ export const DetailView: FC = () => {
         />
       ) : (
         <>
+          {nextEncounterModal.isOn && encounter.document.documentRegistry && (
+            <ScheduleNextEncounterModal
+              encounterConfig={encounter.document.documentRegistry}
+              onClose={nextEncounterModal.toggleOff}
+              patientId={encounter.patient.id ?? ''}
+            />
+          )}
           <Toolbar onChange={updateEncounter} encounter={encounter} />
           {tabs.length > 0 ? <DetailTabs tabs={tabs} /> : JsonForm}
           <SidePanel
