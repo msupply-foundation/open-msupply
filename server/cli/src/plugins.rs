@@ -50,13 +50,11 @@ pub(crate) fn generate_plugin_bundle(
     let ignore_paths = vec![OsStr::new("node_modules"), OsStr::new("target")];
     let manifest_name = OsStr::new("plugin_manifest.json");
 
-    let start_path = in_dir;
-
     let mut bundle = PluginBundle {
         backend_plugins: Vec::new(),
     };
 
-    generate_bundle_recursive(&mut bundle, &ignore_paths, manifest_name, &start_path)?;
+    generate_bundle_recursive(&mut bundle, &ignore_paths, manifest_name, &in_dir)?;
     fs::write(
         &out_file,
         serde_json::to_string_pretty(&bundle).map_err(Error::FailedToSerializeBundle)?,
