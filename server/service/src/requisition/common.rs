@@ -124,7 +124,7 @@ pub fn check_exceeded_max_orders_for_period(
 
             let current_orders = RequisitionRepository::new(connection).count(Some(filter))?;
 
-            Ok(current_orders > input.max_orders_per_period)
+            Ok(current_orders >= input.max_orders_per_period)
         }
         None => Err(RepositoryError::NotFound),
     }
