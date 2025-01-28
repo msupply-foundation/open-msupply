@@ -38,8 +38,19 @@
                     <div class="col col-unit">{{ line.item.unitName }}</div>
                     <div class="col col-packsize">{{ line.packSize }}</div>                    
                     <div class="col col-snapshot-packs">{{ line.snapshotNumberOfPacks }}</div>
-                    <div class="col col-counted-packs">{{ line.countedNumberOfPacks | default(value=0) }}</div>
-                    <div class="col col-difference">{{ line.countedNumberOfPacks | default(value=0) - line.snapshotNumberOfPacks }}</div>
+                    <div class="col col-counted-packs">
+                        {% if line.countedNumberOfPacks %}
+                        {{ line.countedNumberOfPacks }} 
+                        {% else %}
+                        -
+                        {% endif %}
+                    </div>
+                    <div class="col col-difference">
+                        {% if line.countedNumberOfPacks %} 
+                        {{ line.countedNumberOfPacks - line.snapshotNumberOfPacks }} 
+                        {% else %}
+                        -
+                        {% endif %}</div>
                     <div class="col col-reason">{{ line.inventoryAdjustmentReason.reason | default(value='') }}</div>
                 </div>
                 {%- endfor %}
