@@ -26,12 +26,13 @@ export const StyledShrinkableBaseButton = styled(StyledBaseButton, {
           marginLeft: 8,
         }
       : {},
-
-    '&.MuiButton-root:not(:hover) .MuiSvgIcon-root': {
-      color:
-        color === 'primary' && !disabled
-          ? translateColor(theme, color)
-          : undefined,
+    '&.MuiButton-outlined': {
+      '&.MuiButton-root:not(:hover) .MuiSvgIcon-root': {
+        color:
+          color === 'primary' && !disabled
+            ? translateColor(theme, color)
+            : undefined,
+      },
     },
   })
 );
