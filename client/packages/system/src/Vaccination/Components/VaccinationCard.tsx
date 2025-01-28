@@ -8,12 +8,12 @@ export const VaccinationCard = ({
   clinician,
   programEnrolmentId,
   encounterId,
-  setTouched = () => {},
+  onOk = () => {},
 }: {
   programEnrolmentId: string;
   encounterId?: string;
   clinician?: Clinician;
-  setTouched?: () => void;
+  onOk?: () => void;
 }) => {
   const { isOpen, onClose, onOpen, entity } = useEditModal<{
     vaccinationId?: string | undefined;
@@ -42,7 +42,7 @@ export const VaccinationCard = ({
           vaccineCourseDoseId={vaccineCourseDoseId}
           onClose={onClose}
           defaultClinician={clinician}
-          setTouched={setTouched}
+          onOk={onOk}
         />
       )}
       <VaccineCardTable

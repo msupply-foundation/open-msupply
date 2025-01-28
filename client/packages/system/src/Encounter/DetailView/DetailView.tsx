@@ -103,7 +103,6 @@ const useSaveWithStatusChange = (
     updateEncounter
   );
 
-  // todo: should be confirmation modal? or at least show some kind of message bc ick
   const SaveAsVisitedModal = () => (
     <Modal
       title={t('messages.save-encounter-as-visited')}
@@ -229,7 +228,7 @@ export const DetailView: FC = () => {
     updateEncounter
   );
 
-  const showConfirmation = useConfirmationModal({
+  const promptToMarkVisitedOnLeaving = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.mark-as-visited'),
     cancelButtonLabel: t('label.leave-as-pending'),
@@ -237,10 +236,12 @@ export const DetailView: FC = () => {
     onConfirm: () => saveWithStatusChange(EncounterNodeStatus.Visited),
   });
 
+  // Block navigation if the encounter is dirty and the status is pending
+  // "cancel" would proceed with the navigation, confirm to mark as visited
   const { isDirty: shouldMarkVisited, setIsDirty: setShouldMarkVisited } =
     useConfirmOnLeaving('encounter', {
       customConfirmation: proceed =>
-        showConfirmation({
+        promptToMarkVisitedOnLeaving({
           onCancel: proceed,
         }),
     });
@@ -248,17 +249,22 @@ export const DetailView: FC = () => {
   const dataStatus = data
     ? (data as Record<string, JsonData>)['status']
     : undefined;
-  const suggestSaveWithStatusVisited = encounter
-    ? new Date(encounter.startDatetime).getTime() < Date.now() &&
-      encounter.status === EncounterNodeStatus.Pending &&
-      dataStatus === EncounterNodeStatus.Pending
-    : false;
 
   useEffect(() => {
+    // If JSON form is touched, we should prompt to mark as visited on leaving
+    if (
+      isDirty &&
+      dataStatus === EncounterNodeStatus.Pending &&
+      !shouldMarkVisited
+    ) {
+      setShouldMarkVisited(true);
+    }
+
+    // Allow to navigate away without prompt if the encounter is already visited
     if (shouldMarkVisited && dataStatus === EncounterNodeStatus.Visited) {
       setShouldMarkVisited(false);
     }
-  }, [dataStatus]);
+  }, [dataStatus, isDirty]);
 
   useEffect(() => {
     if (encounter) {
@@ -295,6 +301,12 @@ export const DetailView: FC = () => {
 
   if (!isSuccess && !isError) return <DetailViewSkeleton />;
 
+  const suggestSaveWithStatusVisited = encounter
+    ? new Date(encounter.startDatetime).getTime() < Date.now() &&
+      encounter.status === EncounterNodeStatus.Pending &&
+      dataStatus === EncounterNodeStatus.Pending
+    : false;
+
   // For Immunization Programs, we display as two different tabs - Vaccinations
   // card, and the normal "Encounter" page (if defined)
   const tabs = [];
@@ -305,7 +317,9 @@ export const DetailView: FC = () => {
           encounterId={encounter.id}
           programEnrolmentId={encounter.programEnrolment.id}
           clinician={encounter.clinician ?? undefined}
-          setTouched={() => {
+          onOk={() => {
+            // After changes to vax card, if the encounter is still pending
+            // we should prompt to mark as visited on leaving
             if (encounter.status === EncounterNodeStatus.Pending)
               setShouldMarkVisited(true);
           }}
