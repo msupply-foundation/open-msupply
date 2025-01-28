@@ -57,6 +57,7 @@ interface PrescriptionLineEditFormProps {
   hasExpired: boolean;
   isLoading: boolean;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
+  updatePrescribedQuantity: (itemId: string, updateQuantity: number) => void;
 }
 
 export const PrescriptionLineEditForm: React.FC<
@@ -78,6 +79,7 @@ export const PrescriptionLineEditForm: React.FC<
   hasExpired,
   isLoading,
   updateQuantity,
+  updatePrescribedQuantity,
 }) => {
   const t = useTranslation();
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
@@ -88,9 +90,14 @@ export const PrescriptionLineEditForm: React.FC<
   const key = item?.id ?? 'new';
   const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);
   const note = prescriptionLineWithNote?.note ?? '';
-  const prescribedQuantity = items.find(
+
+  const defaultPrescribedQuantity = items.find(
     prescriptionItem => prescriptionItem.id === item?.id
   )?.lines[0]?.prescribedQuantity;
+
+  const [prescribedQuantity, setPrescribedQuantity] = useState(
+    defaultPrescribedQuantity
+  );
 
   const debouncedSetAllocationAlerts = useDebounceCallback(
     warning => setAllocationAlerts(warning),
@@ -176,6 +183,23 @@ export const PrescriptionLineEditForm: React.FC<
 
     const numPacks = quantity / packSize;
     debouncedAllocate(numPacks, Number(packSize));
+  };
+
+  const debouncedPrescribedQuantity = useDebouncedValueCallback(
+    (itemId, prescribedQuantity) => {
+      updatePrescribedQuantity(itemId, prescribedQuantity);
+    },
+    [],
+    500,
+    [draftPrescriptionLines]
+  );
+
+  const handlePrescribedQuantityChange = (inputPrescribedQuantity?: number) => {
+    if (!inputPrescribedQuantity) return;
+    if (!item) return;
+
+    setPrescribedQuantity(inputPrescribedQuantity);
+    debouncedPrescribedQuantity(item.id, inputPrescribedQuantity);
   };
 
   useEffect(() => {
@@ -277,6 +301,7 @@ export const PrescriptionLineEditForm: React.FC<
                   autoFocus
                   disabled={disabled}
                   value={prescribedQuantity}
+                  onChange={handlePrescribedQuantityChange}
                   min={0}
                   decimalLimit={2}
                 />

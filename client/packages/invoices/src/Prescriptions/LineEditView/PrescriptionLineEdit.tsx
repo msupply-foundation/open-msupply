@@ -39,12 +39,13 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
     isDisabled,
   } = usePrescription();
   const { status = InvoiceNodeStatus.New, prescriptionDate } = data ?? {};
-  const { updateQuantity, isLoading, updateNotes } = useDraftPrescriptionLines(
-    currentItem,
-    draftPrescriptionLines,
-    updateLines,
-    DateUtils.getDateOrNull(prescriptionDate)
-  );
+  const { isLoading, updateQuantity, updatePrescribedQuantity, updateNotes } =
+    useDraftPrescriptionLines(
+      currentItem,
+      draftPrescriptionLines,
+      updateLines,
+      DateUtils.getDateOrNull(prescriptionDate)
+    );
 
   const packSizeController = usePackSizeController(draftPrescriptionLines);
 
@@ -57,6 +58,14 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
   const onUpdateNotes = (note: string) => {
     updateNotes(note);
     setIsAutoAllocated(false);
+    setIsDirty(true);
+  };
+
+  const onUpdatePrescribedQuantity = (
+    itemId: string,
+    prescribedQuantity: number
+  ) => {
+    updatePrescribedQuantity(itemId, prescribedQuantity);
     setIsDirty(true);
   };
 
@@ -117,6 +126,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
       hasExpired={hasExpired}
       isLoading={isLoading}
       updateQuantity={onUpdateQuantity}
+      updatePrescribedQuantity={onUpdatePrescribedQuantity}
     />
   );
 };
