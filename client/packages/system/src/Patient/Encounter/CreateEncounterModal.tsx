@@ -41,7 +41,6 @@ export const CreateEncounterModal: FC = () => {
   const [encounterRegistry, setEncounterRegistry] = useState<
     EncounterRegistryByProgram | undefined
   >();
-  const [createdDatetime] = useState(new Date().toISOString());
   const [dataError, setDataError] = useState(false);
   const [draft, setDraft] = useState<EncounterSchema | undefined>(undefined);
   const navigate = useNavigate();
@@ -86,7 +85,7 @@ export const CreateEncounterModal: FC = () => {
   const currentOrNewDraft = useCallback((): EncounterSchema => {
     return (
       draft ?? {
-        createdDatetime,
+        createdDatetime: new Date().toISOString(),
         createdBy: { id: user?.id ?? '', username: user?.name ?? '' },
         status: EncounterNodeStatus.Pending,
         location: {
@@ -94,7 +93,7 @@ export const CreateEncounterModal: FC = () => {
         },
       }
     );
-  }, [createdDatetime, draft, storeId, user?.id, user?.name]);
+  }, [draft, storeId, user?.id, user?.name]);
   // set the startDatetime from the suggestedNextEncounter
   useEffect(() => {
     // don't suggest date if there is already an encounter for this day
