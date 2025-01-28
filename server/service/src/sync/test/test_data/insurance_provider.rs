@@ -1,7 +1,7 @@
 use super::TestSyncIncomingRecord;
 use repository::InsuranceProviderRow;
 
-const TABLE_NAME: &str = "insurance_provider";
+const TABLE_NAME: &str = "insuranceProvider";
 
 const INSURANCE_PROVIDER_1: (&str, &str) = (
     "3CB14F143AFF4232889615B52EC56A1D",
