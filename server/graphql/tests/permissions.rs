@@ -526,7 +526,7 @@ mod permission_tests {
                 }
               }"#,
                 expected: ResourceAccessRequest {
-                    resource: Resource::MutateOutboundShipment,
+                    resource: Resource::CreateOutboundShipmentFromRequisition,
                     store_id: Some("some".to_string()),
                 },
             },
