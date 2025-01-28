@@ -24,6 +24,7 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
     message,
     info,
     buttonLabel,
+    cancelButtonLabel,
     title,
     iconType,
     onConfirm,
@@ -41,6 +42,8 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
         setState(state => ({ ...state, iconType })),
       setButtonLabel: (buttonLabel: string | undefined) =>
         setState(state => ({ ...state, buttonLabel })),
+      setCancelButtonLabel: (cancelButtonLabel: string | undefined) =>
+        setState(state => ({ ...state, cancelButtonLabel })),
       setOnConfirm: (
         onConfirm: (() => Promise<void>) | (() => void) | undefined
       ) => setState(state => ({ ...state, onConfirm })),
@@ -72,6 +75,7 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
         }}
         iconType={iconType}
         buttonLabel={buttonLabel}
+        cancelButtonLabel={cancelButtonLabel}
       />
     </ConfirmationModalContext.Provider>
   );
