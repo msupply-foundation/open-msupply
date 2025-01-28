@@ -58,7 +58,7 @@ export const CreateShipmentButtonComponent = () => {
   };
 
   const handleClick = useCallbackWithPermission(
-    UserPermission.OutboundShipmentMutate,
+    UserPermission.RequisitionCreateOutboundShipment,
     onCreateShipment,
     t('error.no-create-outbound-shipment-permission')
   );
