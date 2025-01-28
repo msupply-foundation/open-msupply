@@ -173,7 +173,7 @@ mod test {
             setup_all("backend_plugin_row_enum", MockDataInserts::none()).await;
 
         let repo = BackendPluginRowRepository::new(&connection);
-        // Try upsert all variants of Language, confirm that diesel enums match postgres
+        // Try upsert all plugin_variant types, confirm that diesel enums match postgres
         for variant in PluginVariantType::iter() {
             let id = format!("{:?}", variant);
             let result = repo.upsert_one(BackendPluginRow {
