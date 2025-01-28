@@ -134,6 +134,7 @@ fn name_1() -> TestSyncIncomingRecord {
             is_manufacturer: true,
             is_donor: false,
             on_hold: true,
+            next_of_kin_id: None,
             address1: Some("address1".to_string()),
             address2: Some("address2".to_string()),
             created_datetime: Some(
@@ -195,7 +196,7 @@ const NAME_2: (&str, &str) = (
     "default_order_days": 0,
     "connection_type": 0,
     "PATIENT_PHOTO": "[object Picture]",
-    "NEXT_OF_KIN_ID": "",
+    "NEXT_OF_KIN_ID": "1FB32324AF8049248D929CFB35F255BA",
     "POBOX": "",
     "ZIP": 0,
     "middle": "",
@@ -274,6 +275,7 @@ fn name_2() -> TestSyncIncomingRecord {
             is_manufacturer: false,
             is_donor: false,
             on_hold: false,
+            next_of_kin_id: Some(NAME_1.0.to_string()),
             created_datetime: None,
             is_deceased: false,
             national_health_number: None,
@@ -409,6 +411,7 @@ fn name_3() -> TestSyncIncomingRecord {
             is_manufacturer: false,
             is_donor: false,
             on_hold: false,
+            next_of_kin_id: None,
             created_datetime: None,
             is_deceased: false,
             national_health_number: Some("NHN002".to_string()),
@@ -545,6 +548,7 @@ fn name_4() -> TestSyncIncomingRecord {
             is_manufacturer: false,
             is_donor: false,
             on_hold: false,
+            next_of_kin_id: None,
             created_datetime: Some(
                 NaiveDate::from_ymd_opt(2022, 5, 22)
                     .unwrap()
@@ -586,6 +590,7 @@ fn name_push_record_1() -> TestSyncOutgoingRecord {
             is_manufacturer: true,
             is_donor: false,
             on_hold: true,
+            next_of_kin_id: None,
             address1: Some("address1".to_string()),
             address2: Some("address2".to_string()),
             created_date: Some(NaiveDate::from_ymd_opt(2022, 5, 22).unwrap()),
@@ -629,6 +634,7 @@ fn name_push_record_2() -> TestSyncOutgoingRecord {
             is_manufacturer: false,
             is_donor: false,
             on_hold: false,
+            next_of_kin_id: None,
             is_deceased: true,
             national_health_number: Some("NHN003".to_string()),
             female: true,
