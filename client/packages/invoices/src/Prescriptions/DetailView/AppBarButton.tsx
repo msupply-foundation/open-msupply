@@ -6,6 +6,7 @@ import {
   Grid,
   useDetailPanel,
   useTranslation,
+  InfoOutlineIcon,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { Draft } from '../..';
@@ -28,7 +29,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <ButtonWithIcon
           disabled={isDisabled}
           label={t('button.history')}
-          Icon={<PlusCircleIcon />}
+          Icon={<InfoOutlineIcon />}
           onClick={() => onViewHistory()}
         />
         <ButtonWithIcon

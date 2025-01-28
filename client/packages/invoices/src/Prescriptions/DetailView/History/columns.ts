@@ -1,40 +1,29 @@
-import {
-  ColumnDescription,
-  useColumns,
-} from '@openmsupply-client/common';
-import { DraftStockOutLine } from '../../../types';
+import { ColumnDescription, useColumns } from '@openmsupply-client/common';
+import { HistoryItem } from './HistoryModal';
 
 export const useHistoryColumns = () => {
-  const columns: ColumnDescription<DraftStockOutLine>[] = [
+  const columns: ColumnDescription<HistoryItem>[] = [
     {
       label: 'label.qty-item-name',
       key: 'qtyItemName',
       accessor: ({ rowData }) => {
-        const {numberOfPacks, packSize,  itemName} = rowData;
-        const unitQuantity = numberOfPacks*packSize
-        return `${unitQuantity}, ${itemName}`
+        const { unitQuantity, itemName } = rowData;
+        return `${unitQuantity}, ${itemName}`;
       },
-      width: 80,
     },
     {
       label: 'label.directions',
       key: 'directions',
-      width: 80,
-      accessor: () => "todo",
     },
     {
       label: 'label.date',
       key: 'date',
-      width: 50,
-      accessor: () => "todo",
+      accessor: ({ rowData }) => rowData.date?.toLocaleDateString(),
     },
     {
       label: 'label.prescriber',
       key: 'prescriber',
-      width: 50,
-      accessor: () => "todo",
     },
-
   ];
 
   return useColumns(columns, {}, []);
