@@ -52,6 +52,7 @@ const createTestLine = ({
       invoiceId: '',
       __typename: 'InvoiceLineNode',
       numberOfPacks,
+      prescribedQuantity: 0,
       expiryDate,
       stockLine: {
         __typename: 'StockLineNode',
