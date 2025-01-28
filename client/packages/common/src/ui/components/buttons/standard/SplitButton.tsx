@@ -42,73 +42,75 @@ export const SplitButton = <T,>({
   const open = !!anchorEl;
 
   return (
-    <Tooltip title={label}>
-      <ButtonGroup color={color} variant="outlined" aria-label={ariaLabel}>
-        <ButtonWithIcon
-          color={color}
-          disabled={isDisabled}
-          sx={{
-            borderRadius: 0,
-            borderStartStartRadius: '24px',
-            borderEndStartRadius: '24px',
-          }}
-          onClick={() => {
-            onClick(selectedOption);
-          }}
-          label={buttonLabel}
-          Icon={Icon}
-        />
+    <>
+      <Tooltip title={label}>
+        <ButtonGroup color={color} variant="outlined" aria-label={ariaLabel}>
+          <ButtonWithIcon
+            color={color}
+            disabled={isDisabled}
+            sx={{
+              borderRadius: 0,
+              borderStartStartRadius: '24px',
+              borderEndStartRadius: '24px',
+            }}
+            onClick={() => {
+              onClick(selectedOption);
+            }}
+            label={buttonLabel}
+            Icon={Icon}
+          />
 
-        <ShrinkableBaseButton
-          shouldShrink={true}
-          shrinkThreshold="md"
-          disabled={isDisabled}
-          color={color}
-          size="small"
-          aria-controls={open ? ariaControlLabel : undefined}
-          aria-expanded={open ? 'true' : undefined}
-          aria-label={ariaLabel}
-          aria-haspopup="menu"
-          onClick={e => {
-            setAnchorEl(e.currentTarget);
-          }}
-          sx={{
-            borderRadius: 0,
-            borderStartEndRadius: '24px',
-            borderEndEndRadius: '24px',
-          }}
-          label=""
-          startIcon={<ChevronDownIcon />}
-        />
-        <Menu
-          anchorEl={anchorEl}
-          open={open}
-          onClose={() => setAnchorEl(null)}
-          elevation={5}
-          anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
-          transformOrigin={{
-            vertical: 'bottom',
-            horizontal: 'right',
-          }}
-        >
-          {options.map(option => (
-            <MenuItem
-              key={option.label}
-              disabled={option?.isDisabled}
-              selected={option.value === selectedOption.value}
-              onClick={() => {
-                onSelectOption(option);
-                setAnchorEl(null);
-              }}
-            >
-              {option.label}
-            </MenuItem>
-          ))}
-        </Menu>
-      </ButtonGroup>
-    </Tooltip>
+          <ShrinkableBaseButton
+            shouldShrink={true}
+            shrinkThreshold="md"
+            disabled={isDisabled}
+            color={color}
+            size="small"
+            aria-controls={open ? ariaControlLabel : undefined}
+            aria-expanded={open ? 'true' : undefined}
+            aria-label={ariaLabel}
+            aria-haspopup="menu"
+            onClick={e => {
+              setAnchorEl(e.currentTarget);
+            }}
+            sx={{
+              borderRadius: 0,
+              borderStartEndRadius: '24px',
+              borderEndEndRadius: '24px',
+            }}
+            label=""
+            startIcon={<ChevronDownIcon />}
+          />
+        </ButtonGroup>
+      </Tooltip>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={() => setAnchorEl(null)}
+        elevation={5}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+      >
+        {options.map(option => (
+          <MenuItem
+            key={option.label}
+            disabled={option?.isDisabled}
+            selected={option.value === selectedOption.value}
+            onClick={() => {
+              onSelectOption(option);
+              setAnchorEl(null);
+            }}
+          >
+            {option.label}
+          </MenuItem>
+        ))}
+      </Menu>
+    </>
   );
 };
