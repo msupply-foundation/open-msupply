@@ -130,7 +130,7 @@ const Row = ({
     <Box paddingTop={1.5}>
       <Typography
         sx={{
-          fontSize: '1em',
+          fontSize: '1rem!important',
           fontWeight: 'bold',
         }}
       >

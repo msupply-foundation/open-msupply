@@ -14,13 +14,13 @@ export const SimpleLabelDisplay: FC<EleProps> = ({ label, value }) => {
   return (
     <Box>
       <Typography sx={{
-        fontSize: "0.875rem",
+        fontSize: '1rem!important',
         fontWeight: 'bold',
       }}>
         {label}
       </Typography>
       <Typography sx={{
-        fontSize: "1.2rem",
+        fontSize: '1.2rem!important',
         wordBreak: 'break-all',
       }}>
         {value}
