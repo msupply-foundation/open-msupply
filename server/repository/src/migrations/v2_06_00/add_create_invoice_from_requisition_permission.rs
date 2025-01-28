@@ -12,7 +12,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TABLE user_permission ADD VALUE IF NOT EXISTS 'REQUISITION_CREATE_OUTBOUND_SHIPMENT';
+                    ALTER TYPE permission_type ADD VALUE IF NOT EXISTS 'REQUISITION_CREATE_OUTBOUND_SHIPMENT';
                 "#
             )?;
         }
