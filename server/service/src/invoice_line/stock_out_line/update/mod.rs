@@ -22,6 +22,7 @@ pub struct UpdateStockOutLine {
     pub r#type: Option<StockOutType>,
     pub stock_line_id: Option<String>,
     pub number_of_packs: Option<f64>,
+    pub prescribed_quantity: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax: Option<ShipmentTaxUpdate>,
     pub note: Option<String>,
@@ -67,6 +68,8 @@ pub fn update_stock_out_line(
             let (update_line, batch_pair) =
                 generate(input, line, item, batch_pair, invoice.clone())?;
             InvoiceLineRowRepository::new(connection).upsert_one(&update_line)?;
+
+            println!("updated_line {:?}", update_line);
 
             let stock_line_repo = StockLineRowRepository::new(connection);
             stock_line_repo.upsert_one(&batch_pair.main_batch.stock_line_row)?;

@@ -182,6 +182,7 @@ fn try_allocate_existing_line(
                 id: line_row.id,
                 r#type: Some(StockOutType::OutboundShipment),
                 number_of_packs: Some(line_row.number_of_packs + number_of_packs_to_add),
+                prescribed_quantity: Some(0.0),
                 stock_line_id: None,
                 total_before_tax: None,
                 tax: None,

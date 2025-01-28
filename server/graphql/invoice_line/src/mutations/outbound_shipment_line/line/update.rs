@@ -26,6 +26,7 @@ pub struct UpdateInput {
     pub id: String,
     stock_line_id: Option<String>,
     number_of_packs: Option<f64>,
+    prescribed_quantity: Option<f64>,
     tax: Option<TaxInput>,
 }
 
@@ -92,6 +93,7 @@ impl UpdateInput {
             id,
             stock_line_id,
             number_of_packs,
+            prescribed_quantity,
             tax,
         } = self;
         ServiceInput {
@@ -99,6 +101,7 @@ impl UpdateInput {
             r#type: Some(StockOutType::OutboundShipment),
             stock_line_id,
             number_of_packs,
+            prescribed_quantity,
             total_before_tax: None,
             tax: tax.map(|tax| ShipmentTaxUpdate {
                 percentage: tax.percentage,
@@ -544,6 +547,7 @@ mod test {
                     r#type: Some(StockOutType::OutboundShipment),
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
+                    prescribed_quantity: Some(1.0),
                     total_before_tax: None,
                     tax: Some(ShipmentTaxUpdate {
                         percentage: Some(1.0),
