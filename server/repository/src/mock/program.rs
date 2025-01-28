@@ -12,6 +12,8 @@ pub fn mock_program_a() -> ProgramRow {
         name: "program_a".to_string(),
         context_id: context_program_a().id,
         is_immunisation: false,
+        elmis_code: None,
+        deleted_datetime: None,
     }
 }
 pub fn mock_program_b() -> ProgramRow {
@@ -21,6 +23,8 @@ pub fn mock_program_b() -> ProgramRow {
         name: "program_b".to_string(),
         context_id: context_program_b().id,
         is_immunisation: false,
+        elmis_code: None,
+        deleted_datetime: None,
     }
 }
 
@@ -31,6 +35,8 @@ pub fn mock_immunisation_program_a() -> ProgramRow {
         name: "immunisation_program".to_string(),
         context_id: context_immunisation_program().id,
         is_immunisation: true,
+        elmis_code: None,
+        deleted_datetime: None,
     }
 }
 
@@ -41,6 +47,8 @@ pub fn mock_immunisation_program_b() -> ProgramRow {
         name: "immunisation_program_b".to_string(),
         context_id: context_immunisation_program().id,
         is_immunisation: true,
+        elmis_code: None,
+        deleted_datetime: None,
     }
 }
 

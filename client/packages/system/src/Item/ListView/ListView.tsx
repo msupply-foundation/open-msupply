@@ -51,20 +51,17 @@ const ItemListComponent: FC = () => {
       [
         'stockOnHand',
         {
+          accessor: ({ rowData }) => rowData.stats.stockOnHand,
           Cell: PackQuantityCell,
-          accessor: ({rowData}) => rowData.stats.availableStockOnHand,
-          label: 'label.soh',
-          description: 'description.soh',
           sortable: false,
-          width: 100,
         },
       ],
       [
         'monthlyConsumption',
         {
           Cell: PackQuantityCell,
-          accessor: ({rowData}) => rowData.stats.averageMonthlyConsumption,
-  
+          accessor: ({ rowData }) => rowData.stats.averageMonthlyConsumption,
+
           align: ColumnAlign.Right,
           sortable: false,
           width: 100,
@@ -72,10 +69,10 @@ const ItemListComponent: FC = () => {
       ],
       {
         Cell: PackQuantityCell,
-        accessor: ({rowData}) => rowData.stats.availableMonthsOfStockOnHand ?? 0,
+        accessor: ({ rowData }) => rowData.stats.monthsOfStockOnHand ?? 0,
         align: ColumnAlign.Right,
         description: 'description.months-of-stock',
-        key: 'availableMonthsOfStockOnHand',
+        key: 'monthsOfStockOnHand',
         label: 'label.months-of-stock',
         sortable: false,
         width: 100,

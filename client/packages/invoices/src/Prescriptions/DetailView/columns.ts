@@ -12,6 +12,7 @@ import {
   NumberCell,
   CurrencyCell,
   ColumnDescription,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -24,6 +25,36 @@ interface UsePrescriptionColumnOptions {
 const expansionColumn = getRowExpandColumn<
   StockOutLineFragment | StockOutItem
 >();
+
+export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
+  useColumns([
+    'batch',
+    'expiryDate',
+    [
+      'location',
+      {
+        accessor: ({ rowData }) => rowData.location?.code,
+      },
+    ],
+    [
+      'itemUnit',
+      {
+        accessor: ({ rowData }) => rowData.item?.unitName,
+      },
+    ],
+    'numberOfPacks',
+    'packSize',
+    [
+      'unitQuantity',
+      {
+        accessor: ({ rowData }) =>
+          NumUtils.round(
+            (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
+            3
+          ),
+      },
+    ],
+  ]);
 
 export const usePrescriptionColumn = ({
   sortBy,
@@ -42,18 +73,22 @@ export const usePrescriptionColumn = ({
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
-            const noteSections = lines
-              .map(({ batch, note }) => ({
-                header: batch ?? '',
-                body: note ?? '',
-              }))
-              .filter(({ body }) => !!body);
+            if (!lines) return null;
+
+            // All the lines should have the same note, so we just take the first one
+            const lineWithNote = lines.find(({ note }) => !!note);
+            if (!lineWithNote) return null;
+
+            const noteSections = [
+              {
+                header: null,
+                body: lineWithNote.note ?? '',
+              },
+            ];
+
             return noteSections.length ? noteSections : null;
-          } else {
-            return rowData.batch && rowData.note
-              ? { header: rowData.batch, body: rowData.note }
-              : null;
           }
+          return null;
         },
       },
     ],

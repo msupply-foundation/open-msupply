@@ -1,7 +1,10 @@
 import { getAuthCookie, useQuery } from '@openmsupply-client/common';
 import { useSyncApi } from './useSyncApi';
 
-export const useSyncInfo = (refetchInterval: number | false = false) => {
+export const useSyncInfo = (
+  refetchInterval: number | false = false,
+  enabled: boolean = true
+) => {
   const api = useSyncApi();
   const { token } = getAuthCookie();
 
@@ -15,7 +18,7 @@ export const useSyncInfo = (refetchInterval: number | false = false) => {
     () => api.get.syncInfo(token),
     {
       refetchInterval,
-      enabled: !!token,
+      enabled: !!token && enabled,
     }
   );
 

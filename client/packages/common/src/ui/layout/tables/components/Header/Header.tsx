@@ -4,7 +4,11 @@ import { Column } from '../../columns/types';
 import { InfoOutlineIcon, SortDescIcon } from '@common/icons';
 import { RecordWithId } from '@common/types';
 import { useDebounceCallback } from '@common/hooks';
-import { useTranslation } from '@common/intl';
+import {
+  LocaleKey,
+  translationExistsInLocale,
+  useTranslation,
+} from '@common/intl';
 import { tooltipPlacement } from '../tooltipPlacement';
 
 export const HeaderRow: FC<PropsWithChildren<{ dense?: boolean }>> = ({
@@ -63,8 +67,10 @@ export const HeaderCell = <T extends RecordWithId>({
     150
   );
 
-  const columnLabel =
-    column.label === '' ? '' : t(column.label, column.labelProps);
+  const labelExistsInLocale = translationExistsInLocale(column.label);
+  const columnLabel = labelExistsInLocale
+    ? t(column.label as LocaleKey, column.labelProps)
+    : column.label;
   const tooltip =
     !description && !sortable && !columnLabel ? null : (
       <>
@@ -72,7 +78,7 @@ export const HeaderCell = <T extends RecordWithId>({
         {sortable ? (
           <div>
             {t('label.click-to-sort')}
-            {` ${columnLabel.toLocaleLowerCase()}`}
+            {` ${columnLabel}`}
           </div>
         ) : (
           !description && columnLabel

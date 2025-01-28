@@ -1,7 +1,4 @@
-use super::asset_row::{
-    asset::{self, dsl as asset_dsl},
-    AssetRow,
-};
+use super::asset_row::{asset, AssetRow};
 
 use diesel::{
     dsl::{IntoBoxed, LeftJoin},
@@ -9,11 +6,8 @@ use diesel::{
 };
 
 use crate::{
-    asset_log_row::{
-        latest_asset_log::{self, dsl as latest_asset_log_dsl},
-        AssetLogRow, AssetLogStatus,
-    },
-    db_diesel::store_row::store::{self, dsl as store_dsl},
+    asset_log_row::{latest_asset_log, AssetLogRow, AssetLogStatus},
+    db_diesel::store_row::store,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
     },
@@ -156,29 +150,29 @@ impl<'a> AssetRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 AssetSortField::SerialNumber => {
-                    apply_sort_no_case!(query, sort, asset_dsl::serial_number);
+                    apply_sort_no_case!(query, sort, asset::serial_number);
                 }
                 AssetSortField::InstallationDate => {
-                    apply_sort!(query, sort, asset_dsl::installation_date)
+                    apply_sort!(query, sort, asset::installation_date)
                 }
                 AssetSortField::ReplacementDate => {
-                    apply_sort!(query, sort, asset_dsl::replacement_date)
+                    apply_sort!(query, sort, asset::replacement_date)
                 }
                 AssetSortField::ModifiedDatetime => {
-                    apply_sort!(query, sort, asset_dsl::modified_datetime)
+                    apply_sort!(query, sort, asset::modified_datetime)
                 }
                 AssetSortField::Notes => {
-                    apply_sort!(query, sort, asset_dsl::notes)
+                    apply_sort!(query, sort, asset::notes)
                 }
                 AssetSortField::AssetNumber => {
-                    apply_sort_no_case!(query, sort, asset_dsl::asset_number)
+                    apply_sort_no_case!(query, sort, asset::asset_number)
                 }
                 AssetSortField::Store => {
-                    apply_sort_no_case!(query, sort, store_dsl::code)
+                    apply_sort_no_case!(query, sort, store::code)
                 }
             }
         } else {
-            query = query.order(asset_dsl::id.asc())
+            query = query.order(asset::id.asc())
         }
 
         let final_query = query
@@ -208,12 +202,12 @@ type BoxedAssetQuery = IntoBoxed<
 >;
 
 fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
-    let mut query = asset_dsl::asset
-        .left_join(store_dsl::store)
-        .left_join(latest_asset_log_dsl::latest_asset_log)
+    let mut query = asset::table
+        .left_join(store::table)
+        .left_join(latest_asset_log::table)
         .into_boxed();
 
-    query = query.filter(asset_dsl::deleted_datetime.is_null()); // Don't include any deleted items
+    query = query.filter(asset::deleted_datetime.is_null()); // Don't include any deleted items
 
     if let Some(f) = filter {
         let AssetFilter {
@@ -232,39 +226,39 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
             functional_status,
         } = f;
 
-        apply_equal_filter!(query, id, asset_dsl::id);
-        apply_string_filter!(query, notes, asset_dsl::notes);
-        apply_string_filter!(query, asset_number, asset_dsl::asset_number);
-        apply_string_filter!(query, serial_number, asset_dsl::serial_number);
+        apply_equal_filter!(query, id, asset::id);
+        apply_string_filter!(query, notes, asset::notes);
+        apply_string_filter!(query, asset_number, asset::asset_number);
+        apply_string_filter!(query, serial_number, asset::serial_number);
 
-        apply_equal_filter!(query, catalogue_item_id, asset_dsl::asset_catalogue_item_id);
-        apply_date_filter!(query, installation_date, asset_dsl::installation_date);
-        apply_date_filter!(query, replacement_date, asset_dsl::replacement_date);
+        apply_equal_filter!(query, catalogue_item_id, asset::asset_catalogue_item_id);
+        apply_date_filter!(query, installation_date, asset::installation_date);
+        apply_date_filter!(query, replacement_date, asset::replacement_date);
 
-        apply_equal_filter!(query, category_id, asset_dsl::asset_category_id);
-        apply_equal_filter!(query, class_id, asset_dsl::asset_class_id);
-        apply_equal_filter!(query, type_id, asset_dsl::asset_catalogue_type_id);
+        apply_equal_filter!(query, category_id, asset::asset_category_id);
+        apply_equal_filter!(query, class_id, asset::asset_class_id);
+        apply_equal_filter!(query, type_id, asset::asset_catalogue_type_id);
 
         if let Some(value) = is_non_catalogue {
             apply_equal_filter!(
                 query,
                 Some(EqualFilter::is_null(value)),
-                asset_dsl::asset_catalogue_item_id
+                asset::asset_catalogue_item_id
             );
         }
 
         if store.is_some() {
-            let mut sub_query = store_dsl::store.select(store_dsl::id).into_boxed();
-            apply_string_filter!(sub_query, store, store_dsl::code);
-            query = query.filter(asset_dsl::store_id.eq_any(sub_query.nullable()));
+            let mut sub_query = store::table.select(store::id).into_boxed();
+            apply_string_filter!(sub_query, store, store::code);
+            query = query.filter(asset::store_id.eq_any(sub_query.nullable()));
         }
 
         if functional_status.is_some() {
-            let mut sub_query = latest_asset_log_dsl::latest_asset_log
-                .select(latest_asset_log_dsl::asset_id)
+            let mut sub_query = latest_asset_log::table
+                .select(latest_asset_log::asset_id)
                 .into_boxed();
-            apply_equal_filter!(sub_query, functional_status, latest_asset_log_dsl::status);
-            query = query.filter(asset_dsl::id.eq_any(sub_query));
+            apply_equal_filter!(sub_query, functional_status, latest_asset_log::status);
+            query = query.filter(asset::id.eq_any(sub_query));
         }
     }
 

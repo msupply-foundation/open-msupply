@@ -1,23 +1,21 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   AppBarContentPortal,
   Box,
   InputWithLabelRow,
   Grid,
   useTranslation,
-  DropdownMenu,
-  DropdownMenuItem,
-  DeleteIcon,
   DateTimePickerInput,
   Formatter,
   DateUtils,
   useConfirmationModal,
-  useTableStore,
-  useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { PatientSearchInput } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
-import { ClinicianSearchInput } from '../../../../system/src/Clinician';
+import {
+  Clinician,
+  ClinicianSearchInput,
+} from '../../../../system/src/Clinician';
 import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 
 export const Toolbar: FC = () => {
@@ -29,14 +27,14 @@ export const Toolbar: FC = () => {
   } = usePrescription();
   const { id, patient, clinician, prescriptionDate, createdDatetime } =
     data ?? {};
-
-  const selectedRows =
-    useTableStore(state => {
-      return items
-        ?.filter(({ id }) => state.rowState[id]?.isSelected)
-        .map(({ lines }) => lines.flat())
-        .flat();
-    }) || [];
+  const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
+    clinician ?? null
+  );
+  const [dateValue, setDateValue] = useState(
+    DateUtils.getDateOrNull(prescriptionDate) ??
+      DateUtils.getDateOrNull(createdDatetime) ??
+      null
+  );
 
   const {
     delete: { deleteLines },
@@ -50,31 +48,24 @@ export const Toolbar: FC = () => {
 
   const t = useTranslation();
 
-  const confirmAndDelete = useDeleteConfirmation({
-    selectedRows,
-    deleteAction: () => deleteLines(selectedRows),
-    canDelete: !isDisabled,
-    messages: {
-      confirmMessage: t('messages.confirm-delete-lines', {
-        count: selectedRows.length,
-      }),
-      deleteSuccess: t('messages.deleted-lines', {
-        count: selectedRows.length,
-      }),
-    },
-  });
-
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-delete-prescription-lines'),
   });
 
   const handleDateChange = async (newPrescriptionDate: Date | null) => {
+    const currentDateValue = dateValue; // Revert to this value if user cancels
+
     if (!newPrescriptionDate) return;
+    setDateValue(newPrescriptionDate);
 
-    const oldPrescriptionDate = DateUtils.getDateOrNull(prescriptionDate);
+    const oldPrescriptionDate = DateUtils.getDateOrNull(dateValue);
 
-    if (newPrescriptionDate === oldPrescriptionDate) return;
+    if (
+      newPrescriptionDate.toLocaleDateString() ===
+      oldPrescriptionDate?.toLocaleDateString()
+    )
+      return;
 
     if (!items || items.length === 0) {
       // If there are no lines, we can just update the prescription date
@@ -98,13 +89,9 @@ export const Toolbar: FC = () => {
           ),
         });
       },
+      onCancel: () => setDateValue(currentDateValue),
     });
   };
-
-  const defaultPrescriptionDate =
-    DateUtils.getDateOrNull(prescriptionDate) ??
-    DateUtils.getDateOrNull(createdDatetime) ??
-    new Date();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -130,8 +117,8 @@ export const Toolbar: FC = () => {
                   <PatientSearchInput
                     disabled={isDisabled}
                     value={patient}
-                    onChange={async ({ id: otherPartyId }) => {
-                      await update({ id, otherPartyId });
+                    onChange={async ({ id: patientId }) => {
+                      await update({ id, patientId });
                     }}
                   />
                 }
@@ -141,13 +128,15 @@ export const Toolbar: FC = () => {
               label={t('label.clinician')}
               Input={
                 <ClinicianSearchInput
+                  disabled={isDisabled}
                   onChange={async clinician => {
-                    await update({
+                    setClinicianValue(clinician ? clinician.value : null);
+                    update({
                       id,
-                      clinicianId: clinician?.value?.id ?? undefined,
+                      clinicianId: clinician?.value?.id ?? null,
                     });
                   }}
-                  clinicianValue={clinician}
+                  clinicianValue={clinicianValue}
                 />
               }
             />
@@ -158,14 +147,9 @@ export const Toolbar: FC = () => {
               Input={
                 <DateTimePickerInput
                   disabled={isDisabled}
-                  defaultValue={defaultPrescriptionDate}
-                  value={DateUtils.getDateOrNull(prescriptionDate)}
+                  value={DateUtils.getDateOrNull(dateValue) ?? new Date()}
                   format="P"
-                  // Using onAccept rather than onChange -- on mobile, onChange
-                  // is triggered when first opening the picker, which causes UI
-                  // conflict with the confirmation modal
-                  onAccept={handleDateChange}
-                  onChange={() => {}}
+                  onChange={handleDateChange}
                   maxDate={new Date()}
                 />
               }
@@ -178,17 +162,7 @@ export const Toolbar: FC = () => {
           gap={1}
           justifyContent="flex-end"
           alignItems="center"
-        >
-          <DropdownMenu label={t('label.actions')}>
-            <DropdownMenuItem
-              IconComponent={DeleteIcon}
-              onClick={confirmAndDelete}
-              disabled={isDisabled}
-            >
-              {t('button.delete-lines')}
-            </DropdownMenuItem>
-          </DropdownMenu>
-        </Grid>
+        ></Grid>
       </Grid>
     </AppBarContentPortal>
   );

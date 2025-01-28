@@ -65,9 +65,8 @@ export const AppBarButtons = ({
           onClick={csvExport}
           variant="outlined"
           disabled={EnvUtils.platform === Platform.Android}
-        >
-          {t('button.export')}
-        </LoadingButton>
+          label={t('button.export')}
+        />
       </Grid>
       <CreateRequisitionModal
         isOpen={modalController.isOn}

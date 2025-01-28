@@ -118,9 +118,8 @@ const SyncSettingsForm = ({
           sx={{ fontSize: '12px' }}
           disabled={!isValid}
           onClick={onSave}
-        >
-          {t('button.save')}
-        </LoadingButton>
+          label={t('button.save')}
+        />
       </Grid>
     </form>
   );

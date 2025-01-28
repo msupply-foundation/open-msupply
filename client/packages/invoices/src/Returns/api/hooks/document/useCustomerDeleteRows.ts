@@ -49,5 +49,5 @@ export const useCustomerDeleteRows = () => {
     },
   });
 
-  return confirmAndDelete;
+  return { confirmAndDelete, selectedRows };
 };

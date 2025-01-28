@@ -118,11 +118,11 @@ export const DetailView: FC = () => {
         >
           <AppBarButtons onAddItem={() => onOpen()} />
 
-          <Toolbar onReturnLines={onReturn} />
+          <Toolbar />
 
           <DetailTabs tabs={tabs} />
 
-          <Footer />
+          <Footer onReturnLines={onReturn} />
           <SidePanel />
 
           {isOpen && (
