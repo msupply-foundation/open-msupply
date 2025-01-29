@@ -98,6 +98,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
+      {...inputProps}
       autoFocus={autoFocus}
       slotProps={{
         input: {
