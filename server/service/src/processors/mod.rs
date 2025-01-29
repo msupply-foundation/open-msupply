@@ -16,9 +16,10 @@ use self::transfer::requisition::ProcessRequisitionTransfersError;
 use self::transfer::{
     invoice::process_invoice_transfers, requisition::process_requisition_transfers,
 };
-use contact_form::{process_central_records, ProcessCentralRecordsError};
+use central_records::{process_central_records, ProcessCentralRecordsError};
 
-mod contact_form;
+mod central_records;
+pub use central_records::CentralRecordProcessorType;
 #[cfg(test)]
 mod test_helpers;
 pub(crate) mod transfer;
@@ -29,14 +30,14 @@ const CHANNEL_BUFFER_SIZE: usize = 30;
 pub struct ProcessorsTrigger {
     requisition_transfer: Sender<()>,
     invoice_transfer: Sender<()>,
-    contact_form_to_email: Sender<()>,
+    central_record: Sender<CentralRecordProcessorType>,
     await_process_queue: Sender<oneshot::Sender<()>>,
 }
 
 pub struct Processors {
     requisition_transfer: Receiver<()>,
     invoice_transfer: Receiver<()>,
-    contact_form_to_email: Receiver<()>,
+    central_record: Receiver<CentralRecordProcessorType>,
     await_process_queue: Receiver<oneshot::Sender<()>>,
 }
 
@@ -60,8 +61,7 @@ impl Processors {
         let (invoice_transfer_sender, invoice_transfer_receiver) =
             mpsc::channel(CHANNEL_BUFFER_SIZE);
 
-        let (contact_form_to_email_sender, contact_form_to_email_receiver) =
-            mpsc::channel(CHANNEL_BUFFER_SIZE);
+        let (central_record_sender, central_record_receiver) = mpsc::channel(CHANNEL_BUFFER_SIZE);
 
         let (request_check_sender, request_check_receiver) = mpsc::channel(CHANNEL_BUFFER_SIZE);
 
@@ -69,13 +69,13 @@ impl Processors {
             ProcessorsTrigger {
                 requisition_transfer: requisition_transfer_sender,
                 invoice_transfer: invoice_transfer_sender,
-                contact_form_to_email: contact_form_to_email_sender,
+                central_record: central_record_sender,
                 await_process_queue: request_check_sender,
             },
             Processors {
                 requisition_transfer: requisition_transfer_receiver,
                 invoice_transfer: invoice_transfer_receiver,
-                contact_form_to_email: contact_form_to_email_receiver,
+                central_record: central_record_receiver,
                 await_process_queue: request_check_receiver,
             },
         )
@@ -85,7 +85,7 @@ impl Processors {
         let Processors {
             mut requisition_transfer,
             mut invoice_transfer,
-            mut contact_form_to_email,
+            mut central_record,
             mut await_process_queue,
         } = self;
 
@@ -103,8 +103,8 @@ impl Processors {
                     Some(_) = invoice_transfer.recv() => {
                         process_invoice_transfers(&service_provider).map_err(ProcessorsError::InvoiceTransfer)
                     },
-                    Some(_) = contact_form_to_email.recv() => {
-                        process_central_records(&service_provider).map_err(ProcessorsError::ProcessCentralRecord)
+                    Some(r#type) = central_record.recv() => {
+                        process_central_records(&service_provider, r#type).map_err(ProcessorsError::ProcessCentralRecord)
                     },
                     Some(sender) = await_process_queue.recv() => {
                         sender.send(()).map_err(ProcessorsError::AwaitProcessQueue)
@@ -137,10 +137,11 @@ impl ProcessorsTrigger {
         }
     }
 
-    pub(crate) fn trigger_central_only_processors(&self) {
+    pub(crate) fn trigger_central_record_processor(&self, r#type: CentralRecordProcessorType) {
         if CentralServerConfig::is_central_server() {
-            if let Err(error) = self.contact_form_to_email.try_send(()) {
-                log::error!("Problem triggering contact form processor {:#?}", error)
+            if let Err(error) = self.central_record.try_send(r#type.clone()) {
+                let description = r#type.get_processor().get_description();
+                log::error!("Problem triggering {description} processor {:#?}", error)
             }
         }
     }
@@ -171,7 +172,7 @@ impl ProcessorsTrigger {
         ProcessorsTrigger {
             requisition_transfer: mpsc::channel(1).0,
             invoice_transfer: mpsc::channel(1).0,
-            contact_form_to_email: mpsc::channel(1).0,
+            central_record: mpsc::channel(1).0,
             await_process_queue: mpsc::channel(1).0,
         }
     }

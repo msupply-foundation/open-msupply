@@ -1,24 +1,26 @@
 use repository::{
     contact_form::{ContactForm, ContactFormFilter, ContactFormRepository},
     contact_form_row::ContactType,
-    ChangelogRow, EqualFilter, StorageConnection,
+    ChangelogRow, EqualFilter, KeyType, StorageConnection,
 };
 use tera::{Context, Tera};
 use util::constants::{FEEDBACK_EMAIL, SUPPORT_EMAIL};
 
-use crate::email::{
-    enqueue::{enqueue_email, EnqueueEmailData},
-    EmailServiceError,
+use crate::{
+    email::{
+        enqueue::{enqueue_email, EnqueueEmailData},
+        EmailServiceError,
+    },
+    processors::{central_records::CentralServerProcessor, ProcessCentralRecordsError},
+    sync::CentralServerConfig,
 };
 use nanohtml2text::html2text;
-
-use super::{ContactFormProcessor, ProcessCentralRecordsError};
 
 const DESCRIPTION: &str = "Adds an email to the queue from a contact form";
 
 pub(crate) struct QueueContactEmailProcessor;
 
-impl ContactFormProcessor for QueueContactEmailProcessor {
+impl CentralServerProcessor for QueueContactEmailProcessor {
     fn get_description(&self) -> String {
         DESCRIPTION.to_string()
     }
@@ -76,6 +78,15 @@ impl ContactFormProcessor for QueueContactEmailProcessor {
 
         Ok(Some("success".to_string()))
     }
+
+    fn cursor_type(&self) -> repository::KeyType {
+        KeyType::ContactFormProcessorCursor
+    }
+
+    // Only run on central server
+    fn should_run(&self) -> bool {
+        CentralServerConfig::is_central_server()
+    }
 }
 
 fn create_email(contact_form: &ContactForm) -> Result<EnqueueEmailData, EmailServiceError> {
@@ -86,7 +97,7 @@ fn create_email(contact_form: &ContactForm) -> Result<EnqueueEmailData, EmailSer
     } = &contact_form;
 
     let template_name = "contact.html";
-    let base_html_template = include_str!("../../email/base.html");
+    let base_html_template = include_str!("../../../email/base.html");
     let html_template = include_str!("templates/contact.html");
 
     let mut tera = Tera::default();
