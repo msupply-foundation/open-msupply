@@ -6,6 +6,7 @@ import { DefaultFormRowSx, FORM_GAP, FORM_LABEL_WIDTH } from '../common';
 import {
   PatientSearchInput,
   SearchInputPatient,
+  usePatient,
 } from '@openmsupply-client/system';
 
 export const patientSearchTester = rankWith(10, uiTypeIs('PatientSearch'));
@@ -19,12 +20,12 @@ const UIComponent = (props: ControlProps) => {
     handleChange(path, patient.id);
   };
 
+  const { data: patientData } = usePatient.document.get(data);
+
   useEffect(() => {
-    if (!data) return;
-    // todo - set if exists!
-    // const naiveDoB = DateUtils.getNaiveDate(data.dateOfBirth);
-    // setDoB(naiveDoB);
-  }, [data]);
+    if (!patientData) return;
+    setPatient(patientData);
+  }, [patientData]);
 
   if (!props.visible) {
     return null;
@@ -38,7 +39,10 @@ const UIComponent = (props: ControlProps) => {
       inputAlignment={'start'}
       Input={
         <Box display="flex" alignItems="center" gap={FORM_GAP} width="100%">
-          <PatientSearchInput value={patient} onChange={onChangePatient} />
+          {/* todo this */}
+          {(!data || (!!patientData && patient)) && (
+            <PatientSearchInput value={patient} onChange={onChangePatient} />
+          )}
         </Box>
       }
     />
