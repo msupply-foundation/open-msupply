@@ -39,10 +39,7 @@ const UIComponent = (props: ControlProps) => {
       inputAlignment={'start'}
       Input={
         <Box display="flex" alignItems="center" gap={FORM_GAP} width="100%">
-          {/* todo this */}
-          {(!data || (!!patientData && patient)) && (
-            <PatientSearchInput value={patient} onChange={onChangePatient} />
-          )}
+          <PatientSearchInput value={patient} onChange={onChangePatient} />
         </Box>
       }
     />
