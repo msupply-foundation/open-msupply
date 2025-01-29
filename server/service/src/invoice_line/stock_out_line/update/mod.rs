@@ -135,8 +135,9 @@ mod test {
             mock_store_a, mock_store_b, mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
-        InvoiceType, StockLineRow, StockLineRowRepository, Upsert,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
+        Upsert,
     };
     use util::{inline_edit, inline_init};
 
