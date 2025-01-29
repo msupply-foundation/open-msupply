@@ -139,7 +139,10 @@ export function Autocomplete<T>({
         popper: popper,
       }}
       sx={{
-        background: theme => theme.palette.background.drawer,
+        background: theme =>
+          disabled
+            ? theme.palette.background.toolbar
+            : theme.palette.background.drawer,
         borderRadius: 2,
         paddingTop: 0.5,
         paddingBottom: 0.5,
