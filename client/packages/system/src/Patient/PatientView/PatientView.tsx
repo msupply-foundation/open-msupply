@@ -151,6 +151,7 @@ const PatientDetailView = ({
           isDeceased: currentPatient.isDeceased ?? undefined,
           phone: currentPatient.phone ?? undefined,
           address1: currentPatient.address1 ?? undefined,
+          nextOfKinId: currentPatient.nextOfKinId ?? undefined,
         },
         isCreating: false,
       };
