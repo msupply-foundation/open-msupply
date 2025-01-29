@@ -75,7 +75,7 @@
           "label": "Phone"
         },
         {
-          "type": "Control",
+          "type": "PatientSearch",
           "scope": "#/properties/nextOfKinId",
           "label": "Next of Kin"
         }
