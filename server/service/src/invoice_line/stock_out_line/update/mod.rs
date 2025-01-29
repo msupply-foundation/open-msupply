@@ -69,8 +69,6 @@ pub fn update_stock_out_line(
                 generate(input, line, item, batch_pair, invoice.clone())?;
             InvoiceLineRowRepository::new(connection).upsert_one(&update_line)?;
 
-            println!("updated_line {:?}", update_line);
-
             let stock_line_repo = StockLineRowRepository::new(connection);
             stock_line_repo.upsert_one(&batch_pair.main_batch.stock_line_row)?;
             if let Some(previous_batch) = batch_pair.previous_batch_option {
@@ -832,4 +830,6 @@ mod test {
 
         assert!(invoice.picked_datetime.is_none());
     }
+
+    // write test for prescribed_quantity
 }
