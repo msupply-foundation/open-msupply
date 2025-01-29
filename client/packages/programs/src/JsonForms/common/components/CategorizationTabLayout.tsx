@@ -228,7 +228,6 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
 
   return (
     <Grid
-      item
       display="flex"
       justifyContent="center"
       alignContent="center"
@@ -244,7 +243,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
         const CategoryIcon =
           ProgramsIcons[iconName] ?? ProgramsIcons['stethoscope'];
         return (
-          <Grid item key={category.label}>
+          <Grid key={category.label}>
             <Button
               variant="outlined"
               startIcon={<CategoryIcon sx={{ fontSize: '5em !important' }} />}
