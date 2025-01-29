@@ -63,7 +63,7 @@ pub fn generate(
             id: line.id,
             stock_line_id: Some(line.stock_line_id),
             number_of_packs: Some(line.number_of_packs),
-            prescribed_quantity: Some(0.0),
+            prescribed_quantity: None,
             note: line.note,
             r#type: Some(StockOutType::SupplierReturn),
             tax: None,

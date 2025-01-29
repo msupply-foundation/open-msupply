@@ -541,7 +541,7 @@ mod test {
                     r#type: Some(StockOutType::Prescription),
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
-                    prescribed_quantity: Some(1.0),
+                    prescribed_quantity: None,
                     note: Some("some note".to_string()),
                     total_before_tax: None,
                     tax: None,

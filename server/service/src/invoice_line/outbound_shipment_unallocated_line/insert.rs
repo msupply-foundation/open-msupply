@@ -105,7 +105,6 @@ fn generate(
         invoice_id,
         pack_size: 1.0,
         number_of_packs: quantity as f64,
-        prescribed_quantity: Some(0.0),
         item_link_id: item_id,
         item_code: item.code,
         item_name: item.name,
@@ -126,6 +125,7 @@ fn generate(
         return_reason_id: None,
         foreign_currency_price_before_tax: None,
         item_variant_id: None,
+        prescribed_quantity: None,
     };
 
     Ok(new_line)
