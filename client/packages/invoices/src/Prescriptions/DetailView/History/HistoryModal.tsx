@@ -87,7 +87,7 @@ export const HistoryModal: React.FC<HistoryModalModalProps> = ({
         initialSortBy: { key: 'expiryDate' },
       })}
     >
-      <Modal title={t('heading.history')} width={1125} height={600}>
+      <Modal title={t('heading.history')} width={900} height={600}>
         <DataTable
           id="prescription-line-edit"
           columns={columns}
