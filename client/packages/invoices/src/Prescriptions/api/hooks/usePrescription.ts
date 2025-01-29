@@ -127,11 +127,7 @@ export const usePrescription = (id?: string) => {
   };
 
   return {
-    query: {
-      data,
-      loading,
-      error,
-    },
+    query: { data, loading, error },
     isDisabled,
     update: { update, isUpdating, updateError },
     create: { create, isCreating, createError },
