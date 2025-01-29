@@ -21,7 +21,10 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
   const [input, setInput] = useState('');
 
   useEffect(() => {
-    if (value) setInput(value.name);
+    if (value) {
+      setInput(value.name);
+      search(value.name);
+    }
   }, [value]);
 
   return (
