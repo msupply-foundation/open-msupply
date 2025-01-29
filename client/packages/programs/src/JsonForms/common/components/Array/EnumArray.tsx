@@ -49,8 +49,8 @@ const filterOptions = (
       const rank = lowerCaseOption.startsWith(searchTerm)
         ? searchRanking.STARTS_WITH
         : lowerCaseOption.includes(searchTerm)
-        ? searchRanking.CONTAINS
-        : searchRanking.NO_MATCH;
+          ? searchRanking.CONTAINS
+          : searchRanking.NO_MATCH;
       return { option, rank };
     })
     .filter(({ rank }) => rank !== searchRanking.NO_MATCH)
@@ -83,10 +83,12 @@ const renderInput = (props: AutocompleteRenderInputParams) => (
   <BasicTextInput
     {...props}
     color="secondary"
-    InputProps={{
-      disableUnderline: false,
-      style: props.disabled ? { paddingLeft: 0 } : {},
-      ...props.InputProps,
+    slotProps={{
+      input: {
+        disableUnderline: false,
+        style: props.disabled ? { paddingLeft: 0 } : {},
+        ...props.InputProps,
+      },
     }}
   />
 );

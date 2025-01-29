@@ -110,6 +110,7 @@ export const AppBarButtons = () => {
           iconColor: 'background.white',
         }}
         label={t('button.import-fridge-tag')}
+        variant="outlined"
       />
     </AppBarButtonsPortal>
   );
