@@ -23,8 +23,8 @@ use repository::{
     ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
     IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
     NumberRowType, Pagination, ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow,
-    RepositoryError, Requisition, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRowRepository, StorageConnection, StoreFilter, StoreRepository,
+    RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
+    StorageConnection, StoreFilter, StoreRepository,
 };
 use util::uuid::uuid;
 
