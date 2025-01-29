@@ -60,14 +60,15 @@ export const HistoryModal: React.FC<HistoryModalModalProps> = ({
     const compiled: HistoryItem[] = [];
 
     rawData.forEach(prescription => {
-      const { clinician, pickedDatetime, lines } = prescription;
+      const { clinician, pickedDatetime, createdDatetime, lines } =
+        prescription;
       compiled.push(
         ...combineCommonLines(lines.nodes as InvoiceLineNode[]).map(line => ({
           id: line.id,
           itemName: line.itemName,
           unitQuantity: line.unitQuantity,
           directions: line.note ?? '',
-          date: pickedDatetime ? new Date(pickedDatetime) : null,
+          date: new Date(pickedDatetime ?? createdDatetime),
           prescriber: getLocalisedFullName(
             clinician?.firstName,
             clinician?.lastName
