@@ -50,10 +50,9 @@ export const EquipmentDetailView = () => {
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const [draft, setDraft] = useState<DraftAsset>();
-  const [isDirty, setIsDirty] = useState(false);
   const { error, success } = useNotification();
 
-  useConfirmOnLeaving(isDirty);
+  const { isDirty, setIsDirty } = useConfirmOnLeaving('equipment-detail-view');
 
   const save = async () => {
     if (!draft) return;
