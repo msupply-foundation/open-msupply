@@ -25,7 +25,7 @@ const defaultRenderOption = (option: Option) => (
 
 export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
   (
-    { options, renderOption, sx, InputProps, clearable = false, ...props },
+    { options, renderOption, sx, slotProps, clearable = false, ...props },
     ref
   ) => {
     const t = useTranslation();
@@ -44,17 +44,18 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
         select
         variant="standard"
         size="small"
-        InputProps={{
-          ...InputProps,
-          color: 'secondary',
-          sx: {
-            backgroundColor: theme =>
-              props.disabled
-                ? theme.palette.background.toolbar
-                : theme.palette.background.menu,
-            borderRadius: '8px',
-            padding: '4px 8px',
-            ...InputProps?.sx,
+        slotProps={{
+          input: {
+            ...slotProps?.input,
+            color: 'secondary',
+            sx: {
+              backgroundColor: theme =>
+                props.disabled
+                  ? theme.palette.background.toolbar
+                  : theme.palette.background.menu,
+              borderRadius: '8px',
+              padding: '4px 8px',
+            },
           },
         }}
         {...props}

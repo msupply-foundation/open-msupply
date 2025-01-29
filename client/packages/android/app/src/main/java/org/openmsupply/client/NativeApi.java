@@ -284,7 +284,11 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         WebView webView = bridge.getWebView();
         this.serverUrl = url;
         // .post to run on UI thread
-        webView.post(() -> webView.loadUrl(server.getConnectionUrl()));
+        webView.post(() -> webView.loadUrl(orDebugUrl(server.getConnectionUrl())));
+    }
+
+    private String orDebugUrl(String url) {
+        return isDebug ? localUrl : url;
     }
 
     @PluginMethod()
@@ -293,7 +297,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         JSObject response = new JSObject();
 
         try {
-            URL url = new URL(server.getConnectionUrl());
+            URL url = new URL(orDebugUrl(server.getConnectionUrl()));
             HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
             urlc.setRequestMethod("GET");
             urlc.connect();
