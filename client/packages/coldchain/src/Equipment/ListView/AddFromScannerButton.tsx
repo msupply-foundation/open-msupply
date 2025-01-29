@@ -74,7 +74,7 @@ export const AddFromScannerButtonComponent = () => {
       if (!gs1) {
         // try to fetch the asset by id, as it could be an id from our own barcode
         const { content: id } = result;
-        const asset = await fetchAsset(id).catch(() => {});
+        const asset = await fetchAsset(id).catch(() => { });
         if (asset) {
           navigate(equipmentRoute.addPart(id).build());
 
@@ -85,7 +85,7 @@ export const AddFromScannerButtonComponent = () => {
       }
 
       // send the GS1 data to backend to handle
-      const asset = await fetchFromGS1(gs1).catch(() => {});
+      const asset = await fetchFromGS1(gs1).catch(() => { });
 
       if (asset?.__typename !== 'AssetNode') {
         error(t('error.no-matching-asset', { id: result.content }))();
@@ -160,6 +160,7 @@ export const AddFromScannerButtonComponent = () => {
   return (
     <Box>
       <ButtonWithIcon
+        shouldShrink={false}
         ref={buttonRef}
         onClick={e => {
           handleClick(e);
