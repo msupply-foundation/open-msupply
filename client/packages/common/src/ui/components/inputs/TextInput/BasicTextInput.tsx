@@ -77,6 +77,7 @@ export const BasicTextInput = React.forwardRef<
             input: {
               disableInjectingGlobalStyles: true,
               disableUnderline: error ? true : false,
+              ...slotProps?.input,
               sx: {
                 border: theme =>
                   error ? `2px solid ${theme.palette.error.main}` : 'none',
@@ -86,16 +87,19 @@ export const BasicTextInput = React.forwardRef<
                     : theme.palette.background.menu,
                 borderRadius: 1,
                 padding: 0.5,
+                // Ignoring below, see https://github.com/mui/material-ui/issues/45041, use mergeSlotProps when it's available in MUI-6
+                // @ts-ignore
+                ...slotProps?.input?.sx,
               },
-              ...slotProps?.input,
             },
             htmlInput: {
               style: props?.disabled ? { textOverflow: 'ellipsis' } : {},
               inputMode: props?.disabled ? undefined : props.inputMode,
-              sx: { padding: 0.5 },
               ...slotProps?.htmlInput,
+              // Ignoring below, see https://github.com/mui/material-ui/issues/45041, use mergeSlotProps when it's available in MUI-6
+              // @ts-ignore
+              sx: { padding: 0.5, ...slotProps?.htmlInput?.sx },
             },
-            ...slotProps,
           }}
           {...props}
         />
