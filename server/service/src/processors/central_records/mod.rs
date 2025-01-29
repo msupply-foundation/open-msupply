@@ -45,12 +45,15 @@ pub(crate) fn process_central_records(
 ) -> Result<(), ProcessCentralRecordsError> {
     use ProcessCentralRecordsError as Error;
 
+    let processor = r#type.get_processor();
+    if !processor.should_run() {
+        return Ok(());
+    }
+
     let ctx = service_provider
         .basic_context()
         .map_err(Error::DatabaseError)?;
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
-
-    let processor = r#type.get_processor();
 
     let cursor_controller = CursorController::new(processor.cursor_type());
 
