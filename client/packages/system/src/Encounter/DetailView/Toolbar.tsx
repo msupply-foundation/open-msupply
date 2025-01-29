@@ -101,7 +101,6 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
         alignItems="center"
       >
         <Grid
-          item
           sx={{
             alignItems: 'center',
             backgroundColor: 'background.menu',
@@ -117,7 +116,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
             <UserIcon fontSize="large" style={{ flex: 1 }} />
           </Box>
         </Grid>
-        <Grid item display="flex" flex={1}>
+        <Grid display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={0.5}>
             <Box display="flex" gap={1.5}>
               <Row
