@@ -8909,6 +8909,7 @@ export enum UserPermission {
   PrescriptionMutate = 'PRESCRIPTION_MUTATE',
   PrescriptionQuery = 'PRESCRIPTION_QUERY',
   Report = 'REPORT',
+  RequisitionCreateOutboundShipment = 'REQUISITION_CREATE_OUTBOUND_SHIPMENT',
   RequisitionMutate = 'REQUISITION_MUTATE',
   RequisitionQuery = 'REQUISITION_QUERY',
   RequisitionSend = 'REQUISITION_SEND',
