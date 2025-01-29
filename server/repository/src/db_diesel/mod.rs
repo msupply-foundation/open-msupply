@@ -356,7 +356,7 @@ pub struct JsonRawRow {
     #[diesel(sql_type = Text)]
     pub json_row: String,
 }
-
+// TODO should accept parameters
 pub fn raw_query(connection: &StorageConnection, query: String) -> Vec<JsonRawRow> {
     sql_query(&query)
         .get_results::<JsonRawRow>(connection.lock().connection())
