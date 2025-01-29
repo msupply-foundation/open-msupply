@@ -16,7 +16,7 @@ query StockStatus($storeId: String, $itemCode: String, $itemName: String) {
         stats(storeId: $storeId) {
           totalConsumption
           availableMonthsOfStockOnHand
-          availableStockOnHand
+          stockOnHand
           averageMonthlyConsumption
         }
       }

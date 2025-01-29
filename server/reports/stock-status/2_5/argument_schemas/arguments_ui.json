@@ -22,9 +22,7 @@
       "scope": "#/properties/monthlyConsumptionLookBackPeriod",
       "label": "T#report.amc-lookback",
       "options": {
-        "readonly": true,
-        "inputAlignment": "end",
-        "paddingRight": 25
+        "readonly": true
       }
     },
     {
@@ -32,9 +30,7 @@
       "scope": "#/properties/monthsOverstock",
       "label": "T#label.max-months-of-stock",
       "options": {
-        "readonly": true,
-        "inputAlignment": "end",
-        "paddingRight": 25
+        "readonly": true
       }
     },
     {
@@ -42,9 +38,7 @@
       "scope": "#/properties/monthsUnderstock",
       "label": "T#label.min-months-of-stock",
       "options": {
-        "readonly": true,
-        "inputAlignment": "end",
-        "paddingRight": 25
+        "readonly": true
       }
     },
     {
