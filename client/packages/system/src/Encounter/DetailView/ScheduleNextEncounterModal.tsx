@@ -23,15 +23,18 @@ export const ScheduleNextEncounterModal = ({
   patientId,
   encounterConfig,
   onClose,
+  suggestedDate,
 }: {
   patientId: string;
   encounterConfig: DocumentRegistryFragment;
   onClose: () => void;
+  suggestedDate: Date | null;
 }) => {
   const { user, storeId } = useAuthContext();
   const t = useTranslation();
   const [draft, setDraft] = useState<EncounterSchema>({
     createdDatetime: new Date().toISOString(),
+    startDatetime: suggestedDate?.toISOString(),
     createdBy: { id: user?.id ?? '', username: user?.name ?? '' },
     status: EncounterNodeStatus.Pending,
     location: {
