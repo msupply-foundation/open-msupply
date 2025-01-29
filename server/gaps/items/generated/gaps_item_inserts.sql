@@ -1,5 +1,5 @@
 BEGIN;
-INSERT INTO master_list (id, name, code, description, is_active) VALUES ('43491ce9-bc89-4ee5-988d-9dbb2856e398', '☆ GAPS reference catalogue', 'gaps_items', 'AItems used for Cold Chain Equipment Gap Analysis', true) ON CONFLICT DO NOTHING;
+INSERT INTO master_list (id, name, code, description, is_active) VALUES ('43491ce9-bc89-4ee5-988d-9dbb2856e398', '☆ GAPS reference catalogue', 'gaps_items', 'Items used for Cold Chain Equipment Gap Analysis', true) ON CONFLICT DO NOTHING;
 INSERT INTO master_list_name_join (id, master_list_id, name_link_id) SELECT uuid_in(md5(random()::text || random()::text)::cstring), '43491ce9-bc89-4ee5-988d-9dbb2856e398', id FROM name_link WHERE id NOT IN (select name_link_id from master_list_name_join WHERE master_list_id = '43491ce9-bc89-4ee5-988d-9dbb2856e398');
 INSERT INTO item (id, name, code, ven_category, type, legacy_record, is_active, is_vaccine, vaccine_doses, default_pack_size) VALUES ('26cb458e-bb1c-4154-bc6e-9b17e4e111fe', 'BCG - two vial set (active + excipient) - 10 doses - [S1]', '☆ BCG-2VSAE-10-S1', 'NOT_ASSIGNED', 'STOCK', '', 'True', 'True', 10, 1) ON CONFLICT DO NOTHING;
 INSERT INTO item_link (id, item_id) VALUES ('26cb458e-bb1c-4154-bc6e-9b17e4e111fe', '26cb458e-bb1c-4154-bc6e-9b17e4e111fe') ON CONFLICT DO NOTHING;
