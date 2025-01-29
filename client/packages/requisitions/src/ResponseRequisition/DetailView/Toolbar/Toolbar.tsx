@@ -38,7 +38,7 @@ export const Toolbar: FC = () => {
         alignItems="flex-end"
         gap={1}
       >
-        <Grid item display="flex" flex={1}>
+        <Grid display="flex" flex={1}>
           <Box display="flex" flexDirection="row" gap={4}>
             <Box display="flex" flex={1} flexDirection="column" gap={1}>
               {otherParty && (

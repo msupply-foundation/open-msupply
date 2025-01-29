@@ -86,24 +86,15 @@ export const StockLineForm: FC<StockLineFormProps> = ({
   return (
     <DetailContainer>
       <Grid
-        display="flex"
         flex={1}
         container
         paddingTop={2}
-        paddingBottom={1}
         width="100%"
         flexWrap="nowrap"
         maxWidth={900}
         gap={isInModal ? undefined : 10}
       >
-        <Grid
-          container
-          display="flex"
-          flex={1}
-          flexBasis="50%"
-          flexDirection="column"
-          gap={1}
-        >
+        <Grid container flex={1} flexBasis="50%" flexDirection="column" gap={1}>
           <StyledInputRow
             label={t('label.pack-quantity')}
             Input={
@@ -176,14 +167,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
           )}
           {plugins}
         </Grid>
-        <Grid
-          container
-          display="flex"
-          flex={1}
-          flexBasis="50%"
-          flexDirection="column"
-          gap={1}
-        >
+        <Grid container flex={1} flexBasis="50%" flexDirection="column" gap={1}>
           {packEditable ? (
             <StyledInputRow
               label={t('label.pack-size')}
@@ -230,7 +214,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
           <StyledInputRow
             label={t('label.barcode')}
             Input={
-              <Box display="flex" style={{ width: 162 }}>
+              <Box style={{ width: 162 }}>
                 <BufferedTextInput
                   value={draft.barcode ?? ''}
                   onChange={e => onUpdate({ barcode: e.target.value })}
