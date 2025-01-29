@@ -66,7 +66,7 @@ export const LinkInternalOrderModal = ({
   return (
     <Modal
       title={t('header.link-internal-order')}
-      width={width * 0.5}
+      width={width * 0.7}
       height={height * 0.8}
       nextButton={<DialogButton variant="next" onClick={createInvoice} />}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}

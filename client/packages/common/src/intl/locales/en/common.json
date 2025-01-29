@@ -416,7 +416,7 @@
   "filename.stocktakes": "stocktakes",
   "filename.supplier-returns": "supplier-returns",
   "format.comment": "Acknowledged by {{name}} on {{date}}: {{comment}}.",
-  "header.link-internal-order": "Link Internal Orders",
+  "header.link-internal-order": "Link Internal Order",
   "heading.404": "Feeling lost?",
   "heading.acknowledgeBreach": "Acknowledge Breach",
   "heading.actions": "Actions",
