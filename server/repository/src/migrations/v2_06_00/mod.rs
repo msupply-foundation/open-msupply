@@ -1,8 +1,10 @@
 use super::{version::Version, Migration, MigrationFragment};
 
+mod add_create_invoice_from_requisition_permission;
 mod add_index_to_sync_buffer;
-mod add_program_deleted_datetime;
 mod add_name_next_of_kin_id;
+mod add_program_deleted_datetime;
+mod backend_plugins;
 use crate::StorageConnection;
 
 pub(crate) struct V2_06_00;
@@ -20,6 +22,8 @@ impl Migration for V2_06_00 {
         vec![
             Box::new(add_index_to_sync_buffer::Migrate),
             Box::new(add_program_deleted_datetime::Migrate),
+            Box::new(backend_plugins::Migrate),
+            Box::new(add_create_invoice_from_requisition_permission::Migrate),
             Box::new(add_name_next_of_kin_id::Migrate),
         ]
     }

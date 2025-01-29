@@ -25,9 +25,11 @@ export const TransportSectionComponent: FC = () => {
         <BasicTextInput
           disabled={true}
           value={data?.transportReference ?? ''}
-          InputProps={{
-            style: {
-              backgroundColor: 'white',
+          slotProps={{
+            input: {
+              style: {
+                backgroundColor: 'white',
+              },
             },
           }}
         />
