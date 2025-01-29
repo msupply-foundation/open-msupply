@@ -124,9 +124,11 @@ export const CreateEncounterForm: FC<{
         label={t('label.visit-notes')}
         Input={
           <TextArea
-            InputProps={{
-              sx: {
-                backgroundColor: 'background.drawer',
+            slotProps={{
+              input: {
+                sx: {
+                  backgroundColor: 'background.drawer',
+                },
               },
             }}
             fullWidth
