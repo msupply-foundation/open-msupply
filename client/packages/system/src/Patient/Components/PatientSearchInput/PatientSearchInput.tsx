@@ -55,9 +55,6 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
         },
         // reset input value to previous selected patient if user clicks away without selecting a patient
         onBlur: () => setInput(value?.name ?? ''),
-        // Trigger search when input is focused, and there is already an input value
-        // so selected patient is shown in the dropdown
-        onFocus: () => !!input && search(input),
       }}
       filterOptions={filterByNameAndCode}
       sx={{ minWidth: width }}
