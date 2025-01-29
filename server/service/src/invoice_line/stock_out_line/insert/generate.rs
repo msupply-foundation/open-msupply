@@ -160,7 +160,7 @@ fn generate_line(
         cost_price_per_pack,
         r#type: InvoiceLineType::StockOut,
         number_of_packs,
-        prescribed_quantity: None,
+        prescribed_quantity: Some(0.0),
         item_name,
         item_code,
         stock_line_id: Some(stock_line_id),

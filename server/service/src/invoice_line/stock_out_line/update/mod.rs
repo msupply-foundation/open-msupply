@@ -831,5 +831,70 @@ mod test {
         assert!(invoice.picked_datetime.is_none());
     }
 
-    // write test for prescribed_quantity
+    #[actix_rt::test]
+    async fn update_stock_out_line_prescribed_quantity() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_stock_out_line_prescribed_quantity",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let invoice_line_service = service_provider.invoice_line_service;
+        let invoice_line_row_repo = InvoiceLineRowRepository::new(&connection);
+
+        // Create a prescription
+        let prescription = InvoiceRow {
+            id: "prescription_invoice-0".to_string(),
+            invoice_number: 0,
+            name_link_id: mock_name_store_a().id,
+            r#type: InvoiceType::Prescription,
+            store_id: context.store_id.clone(),
+            verified_datetime: None,
+            status: InvoiceStatus::Picked,
+            ..Default::default()
+        };
+
+        prescription.upsert(&context.connection).unwrap();
+
+        // insert a stock out line to the prescription
+        let stock_out_line = InsertStockOutLine {
+            id: "prescription_invoice-0-1".to_string(),
+            r#type: StockOutType::Prescription,
+            invoice_id: prescription.id.clone(),
+            stock_line_id: mock_stock_line_b().id.clone(),
+            number_of_packs: 1.0,
+            ..Default::default()
+        };
+
+        invoice_line_service
+            .insert_stock_out_line(&context, stock_out_line.clone())
+            .unwrap();
+
+        // update the stock out line's prescribed quantity
+        let updated_prescribed_quantity = Some(5.0);
+        invoice_line_service
+            .update_stock_out_line(
+                &context,
+                inline_init(|r: &mut UpdateStockOutLine| {
+                    r.id = "prescription_invoice-0-1".to_string();
+                    r.r#type = Some(StockOutType::Prescription);
+                    r.prescribed_quantity = updated_prescribed_quantity
+                }),
+            )
+            .unwrap();
+
+        let updated_invoice_line = invoice_line_row_repo
+            .find_one_by_id(&stock_out_line.id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            updated_invoice_line.prescribed_quantity,
+            updated_prescribed_quantity
+        );
+    }
 }
