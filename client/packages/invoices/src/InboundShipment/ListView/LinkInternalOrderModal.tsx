@@ -4,11 +4,11 @@ import {
   useColumns,
   getNotePopoverColumn,
   ColumnAlign,
-  BasicModal,
   DataTable,
-  ModalTitle,
   useWindowDimensions,
   useTranslation,
+  useDialog,
+  DialogButton,
 } from '@openmsupply-client/common';
 
 interface LinkInternalOrderModalProps {
@@ -17,6 +17,7 @@ interface LinkInternalOrderModalProps {
   requestRequisitions?: LinkedRequestRowFragment[];
   onRowClick: (row: LinkedRequestRowFragment) => void;
   isLoading: boolean;
+  onNextClick: () => void;
 }
 
 export const LinkInternalOrderModal = ({
@@ -25,9 +26,11 @@ export const LinkInternalOrderModal = ({
   requestRequisitions: data,
   onRowClick,
   isLoading,
+  onNextClick: createInvoice,
 }: LinkInternalOrderModalProps) => {
   const t = useTranslation();
   const { width, height } = useWindowDimensions();
+  const { Modal } = useDialog({ isOpen, onClose });
 
   const columns = useColumns<LinkedRequestRowFragment>([
     {
@@ -61,13 +64,13 @@ export const LinkInternalOrderModal = ({
   ]);
 
   return (
-    <BasicModal
-      open={isOpen}
-      onClose={onClose}
+    <Modal
+      title={t('header.link-internal-order')}
       width={width * 0.5}
       height={height * 0.8}
+      nextButton={<DialogButton variant="next" onClick={createInvoice} />}
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
-      <ModalTitle title={t('header.link-internal-order')} />
       <DataTable
         id="link-internal-order-to-inbound"
         columns={columns}
@@ -76,6 +79,6 @@ export const LinkInternalOrderModal = ({
         onRowClick={onRowClick}
         isLoading={isLoading}
       />
-    </BasicModal>
+    </Modal>
   );
 };
