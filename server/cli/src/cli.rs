@@ -153,7 +153,7 @@ enum Action {
     UpsertReports {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long)]
-        json_path: Option<PathBuf>,
+        path: Option<PathBuf>,
     },
 }
 
@@ -558,13 +558,13 @@ async fn main() -> anyhow::Result<()> {
                 info!("All standard reports built")
             };
         }
-        Action::UpsertReports { json_path } => {
+        Action::UpsertReports { path } => {
             let standard_reports_dir = Path::new("reports")
                 .join("generated")
                 .join("standard_reports.json");
 
-            let json_file = match json_path {
-                Some(json_path) => fs::File::open(json_path),
+            let json_file = match path {
+                Some(path) => fs::File::open(path),
                 None => fs::File::open(standard_reports_dir.clone()),
             }
             .expect(&format!(
