@@ -10,7 +10,7 @@ on:
 
 jobs:
   sort:
-    name: Test
+    name: Sort JSON locale files
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -19,7 +19,7 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
-      - name: Sort JSON files
+      - name: Sort files
         run: |
           chmod +x .sort-json.sh 
           .sort-json.sh
