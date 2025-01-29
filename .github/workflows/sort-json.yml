@@ -23,7 +23,10 @@ jobs:
         run: |
           chmod +x .github/workflows/sort-json.sh 
           .github/workflows/sort-json.sh
-
+      - name: Configure git user
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
       - name: Commit changes
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
