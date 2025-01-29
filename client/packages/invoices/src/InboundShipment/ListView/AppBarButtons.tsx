@@ -113,22 +113,20 @@ export const AppBarButtons = ({
         />
       </Grid>
 
-      {data?.totalCount !== 0 &&
-        manuallyLinkInternalOrder &&
-        linkRequestModalController.isOn && (
-          <LinkInternalOrderModal
-            requestRequisitions={data?.nodes}
-            isOpen={linkRequestModalController.isOn}
-            onClose={linkRequestModalController.toggleOff}
-            onRowClick={onRowClick}
-            isLoading={internalOrderIsLoading}
-            onNextClick={() => {
-              if (name) {
-                createInvoice(name.id);
-              }
-            }}
-          />
-        )}
+      {data?.totalCount !== 0 && manuallyLinkInternalOrder && (
+        <LinkInternalOrderModal
+          requestRequisitions={data?.nodes}
+          isOpen={linkRequestModalController.isOn}
+          onClose={linkRequestModalController.toggleOff}
+          onRowClick={onRowClick}
+          isLoading={internalOrderIsLoading}
+          onNextClick={() => {
+            if (name) {
+              createInvoice(name.id);
+            }
+          }}
+        />
+      )}
       <SupplierSearchModal
         open={invoiceModalController.isOn}
         onClose={invoiceModalController.toggleOff}
