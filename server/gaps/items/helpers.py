@@ -19,7 +19,7 @@ def cold_storage_type_id_lookup(storage_temp):
 
 
 def create_master_list():
-    master_list_statement  = "INSERT INTO master_list (id, name, code, description, is_active) VALUES ('43491ce9-bc89-4ee5-988d-9dbb2856e398', '☆ GAPS reference catalogue', 'gaps_items', 'AItems used for Cold Chain Equipment Gap Analysis', true) ON CONFLICT DO NOTHING;\n";
+    master_list_statement  = "INSERT INTO master_list (id, name, code, description, is_active) VALUES ('43491ce9-bc89-4ee5-988d-9dbb2856e398', '☆ GAPS reference catalogue', 'gaps_items', 'Items used for Cold Chain Equipment Gap Analysis', true) ON CONFLICT DO NOTHING;\n";
     master_list_join_statement = "INSERT INTO master_list_name_join (id, master_list_id, name_link_id) SELECT uuid_in(md5(random()::text || random()::text)::cstring), '43491ce9-bc89-4ee5-988d-9dbb2856e398', id FROM name_link WHERE id NOT IN (select name_link_id from master_list_name_join WHERE master_list_id = '43491ce9-bc89-4ee5-988d-9dbb2856e398');\n"
     return master_list_statement + master_list_join_statement
 
