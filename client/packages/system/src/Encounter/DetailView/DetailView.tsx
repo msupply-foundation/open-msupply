@@ -16,6 +16,8 @@ import {
   ButtonWithIcon,
   SaveIcon,
   DetailTabs,
+  useConfirmOnLeaving,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -225,14 +227,45 @@ export const DetailView: FC = () => {
     data as unknown as EncounterSchema,
     updateEncounter
   );
+
+  const promptToMarkVisitedOnLeaving = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.mark-as-visited'),
+    cancelButtonLabel: t('label.leave-as-pending'),
+    buttonLabel: t('label.mark-as-visited'),
+    onConfirm: () => saveWithStatusChange(EncounterNodeStatus.Visited),
+  });
+
+  // Block navigation if the encounter is dirty and the status is pending
+  // "cancel" maps to "leave as pending" => would proceed with the navigation
+  // confirm to mark as visited
+  const { isDirty: shouldMarkVisited, setIsDirty: setShouldMarkVisited } =
+    useConfirmOnLeaving('encounter', {
+      customConfirmation: proceed =>
+        promptToMarkVisitedOnLeaving({
+          onCancel: proceed,
+        }),
+    });
+
   const dataStatus = data
     ? (data as Record<string, JsonData>)['status']
     : undefined;
-  const suggestSaveWithStatusVisited = encounter
-    ? new Date(encounter.startDatetime).getTime() < Date.now() &&
-      encounter.status === EncounterNodeStatus.Pending &&
-      dataStatus === EncounterNodeStatus.Pending
-    : false;
+
+  useEffect(() => {
+    // If JSON form is touched, we should prompt to mark as visited on leaving
+    if (
+      isDirty &&
+      dataStatus === EncounterNodeStatus.Pending &&
+      !shouldMarkVisited
+    ) {
+      setShouldMarkVisited(true);
+    }
+
+    // Allow to navigate away without prompt if the encounter is already visited
+    if (shouldMarkVisited && dataStatus === EncounterNodeStatus.Visited) {
+      setShouldMarkVisited(false);
+    }
+  }, [dataStatus, isDirty]);
 
   useEffect(() => {
     if (encounter) {
@@ -269,6 +302,12 @@ export const DetailView: FC = () => {
 
   if (!isSuccess && !isError) return <DetailViewSkeleton />;
 
+  const suggestSaveWithStatusVisited = encounter
+    ? new Date(encounter.startDatetime).getTime() < Date.now() &&
+      encounter.status === EncounterNodeStatus.Pending &&
+      dataStatus === EncounterNodeStatus.Pending
+    : false;
+
   // For Immunization Programs, we display as two different tabs - Vaccinations
   // card, and the normal "Encounter" page (if defined)
   const tabs = [];
@@ -279,6 +318,12 @@ export const DetailView: FC = () => {
           encounterId={encounter.id}
           programEnrolmentId={encounter.programEnrolment.id}
           clinician={encounter.clinician ?? undefined}
+          onOk={() => {
+            // After changes to vax card, if the encounter is still pending
+            // we should prompt to mark as visited on leaving
+            if (encounter.status === EncounterNodeStatus.Pending)
+              setShouldMarkVisited(true);
+          }}
         />
       ),
       value: t('label.vaccinations'),
