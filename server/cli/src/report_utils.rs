@@ -26,6 +26,12 @@ pub enum Error {
     CannotReadManifestFile(PathBuf, #[source] serde_json::Error),
     #[error("Path does not have parent {0}")]
     PathDoesNotHaveParent(PathBuf),
+    #[error("Failed to find package json {0}")]
+    FailedToFindPackageJson(PathBuf),
+    #[error("Failed to find esbuild module {0}")]
+    FailedToFindEsbuildModule(PathBuf),
+    #[error("Failed to install yarn {0}")]
+    FailedToInstallYarn(PathBuf, #[source] std::io::Error),
     #[error("Failed to build report {0}")]
     FailedToBuildReport(PathBuf, #[source] anyhow::Error),
     #[error("Repository error on existing report validation")]
@@ -178,7 +184,7 @@ fn process_report(
     Ok(())
 }
 
-fn run_yarn_install(directory: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+fn run_yarn_install(directory: &PathBuf) -> Result<(), Error> {
     let convert_dir = directory.join("convert_data_js");
 
     if !convert_dir.exists() {
@@ -191,19 +197,25 @@ fn run_yarn_install(directory: &PathBuf) -> Result<(), Box<dyn std::error::Error
 
     let node_modules_path = convert_dir.join("node_modules");
 
+    let package_json = convert_dir.join("package.json");
+    if !package_json.exists() {
+        return Err(Error::FailedToFindPackageJson(convert_dir));
+    }
+
+    let esbuild = convert_dir.join("esbuild.js");
+    if !esbuild.exists() {
+        return Err(Error::FailedToFindEsbuildModule(convert_dir));
+    }
+
     if !node_modules_path.exists() {
-        let status = Command::new("yarn")
+        Command::new("yarn")
             .args(["install", "--cwd"])
-            .arg(convert_dir)
+            .arg(convert_dir.clone())
             .args(["--no-lockfile", "--check-files"])
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit())
-            .status()?;
-
-        if !status.success() {
-            info!("Error: `yarn install` failed");
-            return Err("Failed to run yarn install".into());
-        }
+            .status()
+            .map_err(|e| Error::FailedToInstallYarn(convert_dir.clone(), e))?;
     } else {
         info!("Dependencies up to date");
     }
