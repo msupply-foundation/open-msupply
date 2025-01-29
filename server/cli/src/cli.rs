@@ -400,7 +400,7 @@ async fn main() -> anyhow::Result<()> {
 
             let mut reports_data = ReportsData { reports: vec![] };
             let ignore_paths = vec![OsStr::new("node_modules")];
-            let manifest_name = OsStr::new("report-manifest.json");
+            let manifest_name = OsStr::new("manifest.json");
 
             generate_reports_recursive(
                 &mut reports_data,
