@@ -23,11 +23,7 @@ jobs:
         run: |
           chmod +x .github/workflows/sort-json.sh 
           .github/workflows/sort-json.sh
-      - name: Configure git user
-        run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "<>"
-      - name: Commit changes
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        run: git commit --no-verify -m 'Sorted JSON files'
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'Sorted JSON translation files'
+          commit_options: '--no-verify'
