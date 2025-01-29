@@ -63,7 +63,7 @@ export const CardListView: FC = () => {
         minHeight: '50px',
         display: 'flex',
         padding: '.75rem',
-        gap: '1em'
+        gap: '.5em'
       }}>
         <ButtonWithIcon
           shouldShrink={false}

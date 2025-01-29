@@ -1,8 +1,6 @@
 import React, { FC } from 'react';
 import {
   Box,
-  ButtonWithIcon,
-  PrinterIcon,
   DetailFormSkeleton,
 } from '@openmsupply-client/common';
 import { SimpleLabelDisplay } from '../../Components/SimpleLabelDisplay';
@@ -50,14 +48,10 @@ export const EquipmentDetailView: FC = () => {
           minHeight: '50px',
           display: 'flex',
           padding: '.75rem',
+          gap: '.5em'
         }}
       >
-        <ButtonWithIcon
-          shouldShrink={false}
-          label={'Print QR code'}
-          onClick={() => { }}
-          Icon={<PrinterIcon />}
-        />
+        <UpdateStatusButton assetId={data?.id} />
       </Box>
 
       <Box
@@ -86,6 +80,10 @@ export const EquipmentDetailView: FC = () => {
           gap: 1
         }}
       >
+        <AccordionPanelSection title="Status History" defaultExpanded={false}>
+          {draft === undefined ? null : <StatusLogs assetId={draft.id} />}
+        </AccordionPanelSection>
+
         <AccordionPanelSection title="Summary" defaultExpanded={false}>
           <Summary onChange={onChange} draft={draft} locations={locations} />
           <Footer
@@ -102,11 +100,6 @@ export const EquipmentDetailView: FC = () => {
             isSaving={isSaving}
             showSaveConfirmation={showSaveConfirmation}
           />
-        </AccordionPanelSection>
-
-        <AccordionPanelSection title="Status History" defaultExpanded={false}>
-          <UpdateStatusButton assetId={data?.id} />
-          {draft === undefined ? null : <StatusLogs assetId={draft.id} />}
         </AccordionPanelSection>
 
         <AccordionPanelSection title="Documents" defaultExpanded={false}>
