@@ -122,7 +122,9 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::CannotAddItemToProgramRequisition => BadUserInput(formatted_error),
         ServiceError::CannotFindItemStatusForRequisitionLine => InternalError(formatted_error),
         ServiceError::NewlyCreatedRequisitionLineDoesNotExist => InternalError(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::DatabaseError(_) | ServiceError::PluginError(_) => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
