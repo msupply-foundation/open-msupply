@@ -76,7 +76,7 @@ export const AppBarButtons = ({
       );
     };
 
-    if (name && data?.totalCount === 0) {
+    if (name && (data?.totalCount === 0 || !manuallyLinkInternalOrder)) {
       createInvoice();
     }
   }, [name, data]);
