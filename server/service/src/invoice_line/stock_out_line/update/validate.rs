@@ -22,10 +22,8 @@ pub fn validate(
 ) -> Result<(InvoiceLineRow, ItemRow, BatchPair, InvoiceRow), UpdateStockOutLineError> {
     use UpdateStockOutLineError::*;
     let ServiceContext { connection, .. } = ctx;
-    println!("validate input {:?}", input);
 
     let line = check_line_exists(connection, &input.id)?.ok_or(LineDoesNotExist)?;
-    println!("validate line {:?}", line);
     let line_row = &line.invoice_line_row;
     let invoice =
         check_invoice_exists(&line_row.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
