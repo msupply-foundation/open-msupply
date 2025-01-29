@@ -284,23 +284,13 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
   },
   insertProgram: async (
     input: InsertProgramRequestRequisitionInput
-  ): Promise<{
-    __typename: 'RequisitionNode';
-    id: string;
-    requisitionNumber: number;
-  }> => {
+  ) => {
     const result = await sdk.insertProgramRequest({
       storeId,
       input,
     });
 
-    const { insertProgramRequestRequisition } = result || {};
-
-    if (insertProgramRequestRequisition?.__typename === 'RequisitionNode') {
-      return insertProgramRequestRequisition;
-    }
-
-    throw new Error('Unable to create requisition');
+    return result.insertProgramRequestRequisition;
   },
   deleteRequests: async (requisitions: RequestRowFragment[]) => {
     const deleteRequestRequisitions = requisitions.map(requestParser.toDelete);
