@@ -1,7 +1,7 @@
 use repository::{
     contact_form::{ContactForm, ContactFormFilter, ContactFormRepository},
     contact_form_row::ContactType,
-    ChangelogRow, EqualFilter, KeyType, StorageConnection,
+    ChangelogRow, ChangelogTableName, EqualFilter, KeyType, StorageConnection,
 };
 use tera::{Context, Tera};
 use util::constants::{FEEDBACK_EMAIL, SUPPORT_EMAIL};
@@ -79,7 +79,11 @@ impl CentralServerProcessor for QueueContactEmailProcessor {
         Ok(Some("success".to_string()))
     }
 
-    fn cursor_type(&self) -> repository::KeyType {
+    fn change_log_table_names(&self) -> Vec<ChangelogTableName> {
+        vec![ChangelogTableName::ContactForm]
+    }
+
+    fn cursor_type(&self) -> KeyType {
         KeyType::ContactFormProcessorCursor
     }
 
