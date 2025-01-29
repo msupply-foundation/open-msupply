@@ -61,23 +61,22 @@ export const AppBarButtons = ({
     success(t('success'))();
   };
 
+  const createInvoice = async (nameId: string) => {
+    const invoiceNumber = await onCreate({
+      id: FnUtils.generateUUID(),
+      otherPartyId: nameId,
+    });
+
+    navigate(
+      RouteBuilder.create(AppRoute.Replenishment)
+        .addPart(AppRoute.InboundShipment)
+        .addPart(String(invoiceNumber))
+        .build()
+    );
+  };
   useEffect(() => {
-    const createInvoice = async () => {
-      const invoiceNumber = await onCreate({
-        id: FnUtils.generateUUID(),
-        otherPartyId: name?.id ?? '',
-      });
-
-      navigate(
-        RouteBuilder.create(AppRoute.Replenishment)
-          .addPart(AppRoute.InboundShipment)
-          .addPart(String(invoiceNumber))
-          .build()
-      );
-    };
-
     if (name && (data?.totalCount === 0 || !manuallyLinkInternalOrder)) {
-      createInvoice();
+      createInvoice(name.id);
     }
   }, [name, data]);
 
@@ -114,15 +113,22 @@ export const AppBarButtons = ({
         />
       </Grid>
 
-      {data?.totalCount !== 0 && manuallyLinkInternalOrder && (
-        <LinkInternalOrderModal
-          requestRequisitions={data?.nodes}
-          isOpen={linkRequestModalController.isOn}
-          onClose={linkRequestModalController.toggleOff}
-          onRowClick={onRowClick}
-          isLoading={internalOrderIsLoading}
-        />
-      )}
+      {data?.totalCount !== 0 &&
+        manuallyLinkInternalOrder &&
+        linkRequestModalController.isOn && (
+          <LinkInternalOrderModal
+            requestRequisitions={data?.nodes}
+            isOpen={linkRequestModalController.isOn}
+            onClose={linkRequestModalController.toggleOff}
+            onRowClick={onRowClick}
+            isLoading={internalOrderIsLoading}
+            onNextClick={() => {
+              if (name) {
+                createInvoice(name.id);
+              }
+            }}
+          />
+        )}
       <SupplierSearchModal
         open={invoiceModalController.isOn}
         onClose={invoiceModalController.toggleOff}
