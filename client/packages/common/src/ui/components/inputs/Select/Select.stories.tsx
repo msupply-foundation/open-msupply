@@ -2,7 +2,8 @@ import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 
 import { Select } from './Select';
-import { Grid, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
+import { Grid } from '@openmsupply-client/common';
 
 export default {
   title: 'Inputs/Select',
@@ -11,11 +12,11 @@ export default {
 
 const Template: StoryFn<typeof Select> = args => (
   <Grid container spacing={5} flexDirection="column">
-    <Grid item>
+    <Grid>
       <Typography>Basic Select</Typography>
       <Select {...args} />
     </Grid>
-    <Grid item>
+    <Grid>
       <Typography>Disabled</Typography>
       <Select {...args} disabled defaultValue={args.options[0]?.value ?? ''} />
     </Grid>

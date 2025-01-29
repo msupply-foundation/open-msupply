@@ -30,6 +30,7 @@ pub enum UserPermission {
     RequisitionQuery,
     RequisitionMutate,
     RequisitionSend,
+    RequisitionCreateOutboundShipment,
     RnRFormQuery,
     RnRFormMutate,
     OutboundShipmentQuery,
@@ -113,6 +114,9 @@ impl UserPermission {
             PermissionType::InventoryAdjustmentMutate => UserPermission::InventoryAdjustmentMutate,
             PermissionType::RequisitionQuery => UserPermission::RequisitionQuery,
             PermissionType::RequisitionMutate => UserPermission::RequisitionMutate,
+            PermissionType::RequisitionCreateOutboundShipment => {
+                UserPermission::RequisitionCreateOutboundShipment
+            }
             PermissionType::RnrFormQuery => UserPermission::RnRFormQuery,
             PermissionType::RnrFormMutate => UserPermission::RnRFormMutate,
             PermissionType::RequisitionSend => UserPermission::RequisitionSend,
@@ -164,6 +168,9 @@ impl UserPermission {
             UserPermission::RequisitionQuery => PermissionType::RequisitionQuery,
             UserPermission::RequisitionMutate => PermissionType::RequisitionMutate,
             UserPermission::RequisitionSend => PermissionType::RequisitionSend,
+            UserPermission::RequisitionCreateOutboundShipment => {
+                PermissionType::RequisitionCreateOutboundShipment
+            }
             UserPermission::RnRFormQuery => PermissionType::RnrFormQuery,
             UserPermission::RnRFormMutate => PermissionType::RnrFormMutate,
             UserPermission::OutboundShipmentQuery => PermissionType::OutboundShipmentQuery,

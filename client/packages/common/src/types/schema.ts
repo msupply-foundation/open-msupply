@@ -5228,6 +5228,7 @@ export type PatientNode = {
   isDeceased: Scalars['Boolean']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  nextOfKinId?: Maybe<Scalars['String']['output']>;
   phone?: Maybe<Scalars['String']['output']>;
   programEnrolments: ProgramEnrolmentResponse;
   website?: Maybe<Scalars['String']['output']>;
@@ -8907,6 +8908,7 @@ export enum UserPermission {
   PrescriptionMutate = 'PRESCRIPTION_MUTATE',
   PrescriptionQuery = 'PRESCRIPTION_QUERY',
   Report = 'REPORT',
+  RequisitionCreateOutboundShipment = 'REQUISITION_CREATE_OUTBOUND_SHIPMENT',
   RequisitionMutate = 'REQUISITION_MUTATE',
   RequisitionQuery = 'REQUISITION_QUERY',
   RequisitionSend = 'REQUISITION_SEND',

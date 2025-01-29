@@ -86,6 +86,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
     <>
       <SplitButton
         color="primary"
+        openFrom={'bottom'}
         isDisabled={disabled}
         options={options}
         selectedOption={selectedOption}

@@ -98,7 +98,7 @@ export type InsertProgramRequestMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertProgramRequestMutation = { __typename: 'Mutations', insertProgramRequestRequisition: { __typename: 'InsertProgramRequestRequisitionError' } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
+export type InsertProgramRequestMutation = { __typename: 'Mutations', insertProgramRequestRequisition: { __typename: 'InsertProgramRequestRequisitionError', error: { __typename: 'MaxOrdersReachedForPeriod', description: string } } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
 
 export type RequisitionReasonNotProvidedErrorFragment = { __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } };
 
@@ -729,6 +729,16 @@ export const InsertProgramRequestDocument = gql`
       __typename
       id
       requisitionNumber
+    }
+    ... on InsertProgramRequestRequisitionError {
+      __typename
+      error {
+        description
+        ... on MaxOrdersReachedForPeriod {
+          __typename
+          description
+        }
+      }
     }
   }
 }
