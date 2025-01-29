@@ -1,5 +1,7 @@
 <style>
-  {% include "style.css" %}
+  {
+    % include "style.css" %
+  }
 </style>
 
 <div class="container">
@@ -8,10 +10,11 @@
       <tr class="heading">
         <td>{{t(k="label.code", f="Code")}}</td>
         <td>{{t(k="label.name", f="Name")}}</td>
-        <td>{{t(k="report.available-stock-on-hand", f="Available stock on hand")}}</td>
+        <td>{{t(k="report.stock-on-hand", f="Stock on hand")}}</td>
         <td>{{t(k="report.stock-on-order", f="Stock on order")}}</td>
         <td>{{t(k="report.amc-12-months", f="AMC (12 months)")}}</td>
         <td>{{t(k="report.amc-24-months", f="AMC (24 months)")}}</td>
+        <td>{{t(k="report.amc", f="AMC (lookback period)")}}</td>
         <td>{{t(k="report.months-cover", f="Months cover")}}</td>
         <td>
           {{t(k="report.usage-this-month", f="Monthly usage (this month)")}}
@@ -36,6 +39,7 @@
         <td>{{item.stockOnOrder}}</td>
         <td>{{item.AMC12}}</td>
         <td>{{item.AMC24}}</td>
+        <td>{{item.AMC}}</td>
         <td>{{item.MOS}}</td>
         <td>{{item.monthConsumption}}</td>
         <td>{{item.lastMonthConsumption}}</td>
