@@ -1,10 +1,11 @@
 {
   "error.item-not-found": "Item la hetan",
+  "error.master-list-not-found": "Master List la hetan",
   "error.no-items": "Laiha items atu hatudu.",
   "error.no-master-lists": "Laiha Master List atu hatudu.",
-  "error.master-list-not-found": "Master List la hetan",
   "label.atc-category": "Kategoria ATC",
   "label.code": "Kodigu",
+  "label.ddd": "Defini doze diáriu",
   "label.default-pack-size": "Size pakote default",
   "label.doses": "Doze",
   "label.is-vaccine": "Vasina",
@@ -26,6 +27,5 @@
   "title.months-of-stock": "Stok fulan hira",
   "title.packaging": "Embalagem",
   "title.pricing": "Folin",
-  "title.stock-on-hand": "Stock ne'ebe disponivel",
-  "label.ddd": "Defini doze diáriu"
+  "title.stock-on-hand": "Stock ne'ebe disponivel"
 }

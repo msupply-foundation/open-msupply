@@ -1,6 +1,8 @@
 {
   "error.item-not-found": "Article introuvable",
   "error.master-list-not-found": "Liste maîtresse introuvable",
+  "error.no-items": "Aucun article à afficher.",
+  "error.no-master-lists": "Aucune liste maîtresse à afficher.",
   "label.atc-category": "Catégorie ATC",
   "label.code": "Code",
   "label.ddd": "Dose Quotidienne Définie",
@@ -25,7 +27,5 @@
   "title.months-of-stock": "Mois de stock",
   "title.packaging": "Packaging",
   "title.pricing": "Tarification",
-  "title.stock-on-hand": "Stock disponible",
-  "error.no-items": "Aucun article à afficher.",
-  "error.no-master-lists": "Aucune liste maîtresse à afficher."
+  "title.stock-on-hand": "Stock disponible"
 }
