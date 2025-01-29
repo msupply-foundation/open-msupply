@@ -32,7 +32,13 @@ export const TextInputCell = <T extends RecordWithId>({
       fullWidth={fullWidth}
       disabled={isDisabled}
       autoFocus={autoFocus}
-      InputProps={maxLength ? { inputProps: { maxLength } } : undefined}
+      slotProps={{
+        input: {
+          inputProps: {
+            maxLength: maxLength ? maxLength : undefined,
+          },
+        },
+      }}
       value={buffer}
       onChange={e => {
         const newValue = e.target.value;

@@ -74,6 +74,10 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   );
 
   useEffect(() => {
+    if (currentItem && search === '') setSearch(getOptionLabel(currentItem));
+  }, [currentItem]);
+
+  useEffect(() => {
     // Using the Autocomplete openOnFocus prop, the popper is incorrectly
     // positioned when used within a Dialog. This is a workaround to fix the
     // popper position.

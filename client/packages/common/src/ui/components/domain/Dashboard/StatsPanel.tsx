@@ -1,9 +1,10 @@
 import React, { FC } from 'react';
-import { Grid, Paper, Tooltip, Typography } from '@mui/material';
+import { Paper, Tooltip, Typography } from '@mui/material';
 import { InlineSpinner, StockIcon } from '../../../';
 import { useTranslation } from '@common/intl';
 import { ApiException, isPermissionDeniedException } from '@common/types';
 import { SimpleLink } from '../../navigation/AppNavLink/SimpleLink';
+import { Grid } from '@openmsupply-client/common';
 
 export type Stat = {
   label: string;
@@ -25,7 +26,6 @@ const Statistic: FC<Stat> = ({ label, value, link }) => {
   return (
     <Grid container alignItems="center" sx={{ marginTop: 1 }}>
       <Grid
-        item
         sx={{ minWidth: '43px', display: 'flex', justifyContent: 'flex-end' }}
       >
         {value ? (
@@ -51,7 +51,6 @@ const Statistic: FC<Stat> = ({ label, value, link }) => {
         )}
       </Grid>
       <Grid
-        item
         sx={{
           color: 'gray.main',
           flex: 1,
@@ -91,7 +90,7 @@ const Content = ({
       return <InlineSpinner color="secondary" />;
     default:
       return (
-        <Grid item>
+        <Grid>
           {stats.map(stat => (
             <Statistic key={stat.label} {...stat} />
           ))}
@@ -119,9 +118,9 @@ export const StatsPanel: FC<StatsPanelProps> = ({
       width: width ? `${width}px` : undefined,
     }}
   >
-    <Grid container>
+    <Grid container flexDirection="column">
       <Grid alignItems="center" display="flex">
-        <Grid item style={{ marginInlineEnd: 8 }}>
+        <Grid style={{ marginInlineEnd: 8 }}>
           <StockIcon
             sx={theme => ({
               fill: theme.palette.secondary.main,
@@ -130,7 +129,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
             })}
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <Typography
             color="secondary"
             style={{ fontSize: 12, fontWeight: 500 }}
