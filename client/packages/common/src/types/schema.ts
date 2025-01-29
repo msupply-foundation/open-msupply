@@ -8328,6 +8328,7 @@ export type UpdatePatientInput = {
   id: Scalars['String']['input'];
   isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  nextOfKinId?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
 };
 
