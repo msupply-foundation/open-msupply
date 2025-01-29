@@ -30,41 +30,49 @@ export const Footer: FC<FooterProps> = ({
 
 	return (
 		<Box
-			gap={2}
-			display="flex"
-			flexDirection="row"
-			alignItems="center"
-			height={64}
+			sx={{
+				display: 'flex',
+				alignItems: 'center',
+				alignContent: 'space-evenly',
+				justifyContent: 'center',
+				gap: '1.5em',
+				height: '70px',
+				position: 'absolute',
+				left: '0',
+				bottom: '0',
+				width: '100%',
+				backgroundColor: theme => theme.palette.background.white,
+			}}
 		>
-			<Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-				<ButtonWithIcon
-					shrinkThreshold="lg"
-					Icon={<XCircleIcon />}
-					label={t('button.close')}
-					color="secondary"
-					sx={{ fontSize: '12px' }}
-					onClick={() => navigateUpOne()}
-				/>
-				<ButtonWithIcon
-					shrinkThreshold="lg"
-					Icon={<DeleteIcon />}
-					label={t('button.delete')}
-					color="error"
-					sx={{ fontSize: '12px' }}
-					onClick={onDelete}
-				/>
-				<LoadingButton
-					color="secondary"
-					shouldShrink={false}
-					disabled={
-						!isDirty // ||
-						// !userHasPermission(UserPermission.AssetMutate)
-					}
-					isLoading={isSaving}
-					onClick={showSaveConfirmation}
-					label={t('button.save')}
-				/>
-			</Box>
+
+			<ButtonWithIcon
+				shrinkThreshold="lg"
+				Icon={<XCircleIcon />}
+				label={t('button.close')}
+				color="secondary"
+				sx={{ fontSize: '12px' }}
+				onClick={() => navigateUpOne()}
+			/>
+			<ButtonWithIcon
+				shrinkThreshold="lg"
+				Icon={<DeleteIcon />}
+				label={t('button.delete')}
+				color="error"
+				sx={{ fontSize: '12px' }}
+				onClick={onDelete}
+			/>
+			<LoadingButton
+				color="secondary"
+				shouldShrink={false}
+				disabled={
+					!isDirty // ||
+					// !userHasPermission(UserPermission.AssetMutate)
+				}
+				isLoading={isSaving}
+				onClick={showSaveConfirmation}
+				label={t('button.save')}
+			/>
+
 		</Box>
 	)
 }

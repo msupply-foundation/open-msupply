@@ -86,20 +86,10 @@ export const EquipmentDetailView: FC = () => {
 
         <AccordionPanelSection title="Summary" defaultExpanded={false}>
           <Summary onChange={onChange} draft={draft} locations={locations} />
-          <Footer
-            isDirty={isDirty}
-            isSaving={isSaving}
-            showSaveConfirmation={showSaveConfirmation}
-          />
         </AccordionPanelSection>
 
         <AccordionPanelSection title="Details" defaultExpanded={false}>
           <Details onChange={onChange} draft={draft} />
-          <Footer
-            isDirty={isDirty}
-            isSaving={isSaving}
-            showSaveConfirmation={showSaveConfirmation}
-          />
         </AccordionPanelSection>
 
         <AccordionPanelSection title="Documents" defaultExpanded={false}>
@@ -109,7 +99,11 @@ export const EquipmentDetailView: FC = () => {
         <AccordionPanelSection title="Logs" defaultExpanded={false}>
           <LogCardListView recordId={data?.id} />
         </AccordionPanelSection>
-
+        {isDirty && <Footer
+          isDirty={isDirty}
+          isSaving={isSaving}
+          showSaveConfirmation={showSaveConfirmation}
+        />}
       </Box>
     </Box>
   );
