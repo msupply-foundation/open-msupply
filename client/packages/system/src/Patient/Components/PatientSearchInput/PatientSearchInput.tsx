@@ -1,5 +1,5 @@
-import React, { FC } from 'react';
-import { Autocomplete } from '@openmsupply-client/common';
+import React, { FC, useEffect, useState } from 'react';
+import { Autocomplete, useTranslation } from '@openmsupply-client/common';
 import {
   NameSearchInputProps,
   SearchInputPatient,
@@ -16,6 +16,13 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
 }) => {
   const PatientOptionRenderer = getPatientOptionRenderer();
   const { isLoading, patients, search } = useSearchPatient();
+  const t = useTranslation();
+
+  const [input, setInput] = useState('');
+
+  useEffect(() => {
+    if (value) setInput(value.name);
+  }, [value]);
 
   return (
     <Autocomplete
@@ -23,19 +30,35 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
       disabled={disabled}
       clearable={false}
       loading={isLoading}
-      onInputChange={(_, value) => search(value)}
       onChange={(_, name) => {
-        if (name && !(name instanceof Array)) onChange(name);
+        if (name && !(name instanceof Array)) {
+          onChange(name);
+          setInput(name.name);
+        }
       }}
       renderOption={PatientOptionRenderer}
       getOptionLabel={(option: SearchInputPatient) => option.name}
       isOptionEqualToValue={(option, value) => option.name === value.name}
       width={`${width}px`}
       popperMinWidth={width}
-      defaultValue={value && { ...value, label: value.name }}
+      value={value}
+      inputValue={input}
+      inputProps={{
+        onChange: e => {
+          const { value } = e.target;
+          // update the input value and the search filter
+          setInput(value);
+          search(value);
+        },
+        // reset input value to previous selected patient if user clicks away without selecting a patient
+        onBlur: () => setInput(value?.name ?? ''),
+        // Trigger search when input is focused, and there is already an input value
+        // so selected patient is shown in the dropdown
+        onFocus: () => !!input && search(input),
+      }}
       filterOptions={filterByNameAndCode}
       sx={{ minWidth: width }}
-      noOptionsText=""
+      noOptionsText={t('messages.no-matching-patients')}
     />
   );
 };
