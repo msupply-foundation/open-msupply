@@ -61,7 +61,7 @@ export type InsertProgramResponseMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertProgramResponseMutation = { __typename: 'Mutations', insertProgramResponseRequisition: { __typename: 'InsertProgramResponseRequisitionError' } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
+export type InsertProgramResponseMutation = { __typename: 'Mutations', insertProgramResponseRequisition: { __typename: 'InsertProgramResponseRequisitionError', error: { __typename: 'MaxOrdersReachedForPeriod', description: string } } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
 
 export type InsertResponseLineMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -427,6 +427,16 @@ export const InsertProgramResponseDocument = gql`
       __typename
       id
       requisitionNumber
+    }
+    ... on InsertProgramResponseRequisitionError {
+      __typename
+      error {
+        description
+        ... on MaxOrdersReachedForPeriod {
+          __typename
+          description
+        }
+      }
     }
   }
 }

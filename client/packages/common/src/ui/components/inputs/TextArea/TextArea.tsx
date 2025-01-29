@@ -7,17 +7,18 @@ export const TextArea: FC<StandardTextFieldProps> = ({
   onChange,
   maxRows = 4,
   minRows = 4,
-  InputProps,
+  slotProps,
   rows,
   ...props
 }) => (
   <BasicTextInput
     sx={{ width: '100%' }}
-    InputProps={{
-      ...InputProps,
-      sx: {
-        backgroundColor: 'white',
-        ...InputProps?.sx,
+    slotProps={{
+      input: {
+        ...slotProps?.input,
+        sx: {
+          backgroundColor: 'white',
+        },
       },
     }}
     multiline

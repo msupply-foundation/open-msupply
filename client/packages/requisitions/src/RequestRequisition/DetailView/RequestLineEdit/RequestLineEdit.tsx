@@ -262,13 +262,14 @@ export const RequestLineEdit = ({
                       value={Math.ceil(draft?.requestedQuantity)}
                       disabled={isPacks}
                       onChange={value => {
-                        if (draft?.suggestedQuantity === value) {
+                        const newValue = isNaN(Number(value)) ? 0 : value;
+                        if (draft?.suggestedQuantity === newValue) {
                           update({
-                            requestedQuantity: value,
+                            requestedQuantity: newValue,
                             reason: null,
                           });
                         } else {
-                          update({ requestedQuantity: value });
+                          update({ requestedQuantity: newValue });
                         }
                       }}
                       onBlur={save}
@@ -320,7 +321,8 @@ export const RequestLineEdit = ({
                         decimalLimit={2}
                         width={100}
                         onChange={value => {
-                          const newValue = (value ?? 0) * (draft?.defaultPackSize ?? 0);
+                          const newValue =
+                            (value ?? 0) * (draft?.defaultPackSize ?? 0);
                           if (draft?.suggestedQuantity === newValue) {
                             update({
                               requestedQuantity: newValue,
@@ -391,9 +393,12 @@ export const RequestLineEdit = ({
                   <TextArea
                     value={draft?.comment ?? ''}
                     onChange={e => update({ comment: e.target.value })}
-                    InputProps={{
-                      sx: {
-                        backgroundColor: theme => theme.palette.background.menu,
+                    slotProps={{
+                      input: {
+                        sx: {
+                          backgroundColor: theme =>
+                            theme.palette.background.menu,
+                        },
                       },
                     }}
                     onBlur={save}
