@@ -20,7 +20,9 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Sort JSON files
-        run: ./sort-json.sh
+        run: |
+          chmod +x .sort-json.sh 
+          .sort-json.sh
 
       - name: Commit changes
         run: git commit --no-verify -m 'Sorted JSON files'
