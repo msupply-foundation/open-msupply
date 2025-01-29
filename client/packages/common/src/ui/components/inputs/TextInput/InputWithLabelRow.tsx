@@ -20,7 +20,15 @@ export const InputWithLabelRow: FC<InputWithLabelRowProps> = ({
   const { sx: labelSx, ...labelPropsRest } = labelProps || {};
 
   return (
-    <Box display="flex" alignItems="center" gap={1} sx={sx}>
+    <Box display="flex" alignItems="center" gap={1}
+      sx={theme => ({
+        [theme.breakpoints.down('sm')]: {
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+        },
+        ...sx
+      })}
+    >
       <FormLabel
         sx={{ width: labelWidth, fontWeight: 'bold', ...labelSx }}
         {...labelPropsRest}
