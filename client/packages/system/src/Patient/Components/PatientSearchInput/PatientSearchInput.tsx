@@ -58,7 +58,11 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
       }}
       filterOptions={filterByNameAndCode}
       sx={{ minWidth: width }}
-      noOptionsText={t('messages.no-matching-patients')}
+      noOptionsText={
+        input.length > 0
+          ? t('messages.no-matching-patients')
+          : t('messages.type-to-search')
+      }
     />
   );
 };
