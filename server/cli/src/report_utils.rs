@@ -91,7 +91,7 @@ fn process_report(
         eprintln!("Failed to run yarn install in {}: {}", path.display(), e);
     }
     // read manifest file
-    let manifest_file = fs::File::open(path.join("manifest.json"))
+    let manifest_file = fs::File::open(path.join("report-manifest.json"))
         .map_err(|e| Error::CannotOpenManifestFile(path.clone(), e))?;
 
     let manifest: Manifest = serde_json::from_reader(manifest_file)
