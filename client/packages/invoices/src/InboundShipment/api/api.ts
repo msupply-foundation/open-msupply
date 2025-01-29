@@ -16,6 +16,8 @@ import {
   InsertInboundShipmentServiceLineInput,
   UpdateInboundShipmentServiceLineInput,
   DeleteInboundShipmentServiceLineInput,
+  RequisitionSortFieldInput,
+  RequisitionNodeType,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA } from '../../utils';
@@ -207,6 +209,21 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       }
 
       throw new Error('Could not find invoice!');
+    },
+    listInternalOrders: async (otherPartyId: string) => {
+      const filter = {
+        type: { equalTo: RequisitionNodeType.Request },
+        otherPartyId: { equalTo: otherPartyId },
+      };
+      const result = await sdk.requests({
+        storeId,
+        sort: {
+          key: RequisitionSortFieldInput.CreatedDatetime,
+          desc: true,
+        },
+        filter,
+      });
+      return result?.requisitions;
     },
   },
   delete: async (invoices: InboundRowFragment[]): Promise<string[]> => {

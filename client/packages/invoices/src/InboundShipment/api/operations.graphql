@@ -686,3 +686,32 @@ mutation addToInboundShipmentFromMasterList(
     }
   }
 }
+
+fragment LinkedRequestRow on RequisitionNode {
+  id
+  createdDatetime
+  requisitionNumber
+  theirReference
+  user {
+    username
+  }
+  program {
+    name
+  }
+  comment
+}
+
+query requests(
+  $storeId: String!
+  $filter: RequisitionFilterInput
+  $sort: [RequisitionSortInput!]
+) {
+  requisitions(storeId: $storeId, filter: $filter, sort: $sort) {
+    ... on RequisitionConnector {
+      totalCount
+      nodes {
+        ...LinkedRequestRow
+      }
+    }
+  }
+}
