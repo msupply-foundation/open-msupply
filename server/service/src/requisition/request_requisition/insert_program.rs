@@ -1,8 +1,12 @@
 use crate::{
     activity_log::activity_log_entry,
+    backend_plugin::plugin_provider::PluginError,
     number::next_number,
     requisition::{
-        common::{check_requisition_row_exists, default_indicator_value, indicator_value_type},
+        common::{
+            check_exceeded_max_orders_for_period, check_requisition_row_exists,
+            default_indicator_value, indicator_value_type, CheckExceededOrdersForPeriod,
+        },
         program_indicator::query::{program_indicators, ProgramIndicator},
         program_settings::get_supplier_program_requisition_settings,
         query::get_requisition,
@@ -10,6 +14,7 @@ use crate::{
     },
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
+    PluginOrRepositoryError,
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
@@ -35,6 +40,7 @@ pub enum InsertProgramRequestRequisitionError {
     MaxOrdersReachedForPeriod,
     // Internal
     NewlyCreatedRequisitionDoesNotExist,
+    PluginError(PluginError),
     DatabaseError(RepositoryError),
 }
 
@@ -129,6 +135,19 @@ fn validate(
         return Err(OutError::SupplierNotValid);
     }
 
+    if check_exceeded_max_orders_for_period(
+        connection,
+        CheckExceededOrdersForPeriod {
+            program_id: &program_setting.program_requisition_settings.program_row.id,
+            period_id: &input.period_id,
+            program_order_type_id: &input.program_order_type_id,
+            max_orders_per_period: i64::from(order_type.order_type.max_order_per_period),
+            requisition_type: RequisitionType::Request,
+        },
+    )? {
+        return Err(OutError::MaxOrdersReachedForPeriod);
+    }
+
     Ok((
         program_setting
             .program_requisition_settings
@@ -152,7 +171,7 @@ fn generate(
         program_order_type_id: _,
         period_id,
     }: InsertProgramRequestRequisition,
-) -> Result<GenerateResult, RepositoryError> {
+) -> Result<GenerateResult, PluginOrRepositoryError> {
     let connection = &ctx.connection;
 
     let requisition = RequisitionRow {
@@ -331,6 +350,17 @@ fn generate_program_indicator_values(
 impl From<RepositoryError> for InsertProgramRequestRequisitionError {
     fn from(error: RepositoryError) -> Self {
         InsertProgramRequestRequisitionError::DatabaseError(error)
+    }
+}
+
+impl From<PluginOrRepositoryError> for InsertProgramRequestRequisitionError {
+    fn from(error: PluginOrRepositoryError) -> Self {
+        use InsertProgramRequestRequisitionError as to;
+        use PluginOrRepositoryError as from;
+        match error {
+            from::RepositoryError(repository_error) => repository_error.into(),
+            from::PluginError(plugin_error) => to::PluginError(plugin_error),
+        }
     }
 }
 

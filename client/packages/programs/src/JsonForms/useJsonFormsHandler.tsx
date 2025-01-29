@@ -126,13 +126,12 @@ export const useJsonFormsHandler = <R,>(
   // current modified data
   const [data, setData] = useState<JsonData | undefined>();
   const [isSaving, setSaving] = useState(false);
-  const [isDirty, setIsDirty] = useState<boolean>();
-  const formActions = useFormActions(setIsDirty);
   const t = useTranslation();
   const [validationError, setValidationError] = useState<string | false>(false);
   const { success, error: errorNotification } = useNotification();
 
-  useConfirmOnLeaving(isDirty ?? false);
+  const { isDirty, setIsDirty } = useConfirmOnLeaving('json-forms');
+  const formActions = useFormActions(setIsDirty);
 
   // returns the document name
   const saveData = async (deletion?: boolean): Promise<R | undefined> => {
