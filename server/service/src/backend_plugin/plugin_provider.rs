@@ -4,24 +4,20 @@ use actix_web::web::Data;
 
 use base64::{prelude::BASE64_STANDARD, Engine};
 
-use serde::{Deserialize, Serialize};
+use repository::{PluginType, PluginVariantType};
+use serde::Serialize;
 use thiserror::Error;
 
 use crate::{backend_plugin::boajs, service_provider::ServiceProvider};
 
 use super::boajs::BoaJsPluginError;
 
-#[derive(Deserialize)]
-#[serde(rename_all = "UPPERCASE")]
-pub enum PluginVariantType {
-    BoaJs,
-}
-
-#[derive(Deserialize, PartialEq)]
-#[serde(rename_all = "UPPERCASE")]
-pub enum PluginType {
-    Amc,
-    SuggestedQuantity,
+#[derive(Debug, Error, PartialEq)]
+#[error("Error in plugin {name}")]
+pub struct PluginError {
+    name: String,
+    #[source]
+    variant: PluginErrorVariant,
 }
 
 pub struct Plugin {
@@ -31,14 +27,6 @@ pub struct Plugin {
 }
 pub enum PluginInstance {
     BoaJs(Vec<u8>),
-}
-
-#[derive(Debug, Error, PartialEq)]
-#[error("Error in plugin {name}")]
-pub struct PluginError {
-    name: String,
-    #[source]
-    variant: PluginErrorVariant,
 }
 
 pub type PluginResult<T> = Result<T, PluginError>;

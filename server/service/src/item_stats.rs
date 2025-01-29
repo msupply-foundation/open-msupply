@@ -2,7 +2,7 @@ use std::{collections::HashMap, ops::Neg};
 
 use crate::{
     backend_plugin::{
-        plugin_provider::{PluginInstance, PluginResult, PluginType},
+        plugin_provider::{PluginInstance, PluginResult},
         types::amc,
     },
     service_provider::ServiceContext,
@@ -10,7 +10,7 @@ use crate::{
 };
 use chrono::Duration;
 use repository::{
-    ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, RepositoryError,
+    ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, PluginType, RepositoryError,
     RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
     StorePreferenceRowRepository,
 };
