@@ -50,22 +50,17 @@ export const usePrescription = (id?: string) => {
     data: dataByNum,
     isLoading,
     error: errorByNum,
-    isFetchedAfterMount: isFetchedAfterMountByNum,
   } = useGetByNumber(invoiceNum);
   const {
     data: dataById,
     isLoading: loadingById,
     error: errorById,
-    isFetchedAfterMount: isFetchedAfterMountById,
   } = useGetById(id);
 
   const data = id ? dataById : dataByNum;
   const loading = id ? loadingById : isLoading;
   const error = id ? errorById : errorByNum;
   const isDisabled = data ? isPrescriptionDisabled(data) : false;
-  const isFetchedAfterMount = id
-    ? isFetchedAfterMountById
-    : isFetchedAfterMountByNum;
 
   const rows = useMemo(() => {
     const stockLines = data?.lines?.nodes;
@@ -136,7 +131,6 @@ export const usePrescription = (id?: string) => {
       data,
       loading,
       error,
-      isFetchedAfterMount,
     },
     isDisabled,
     update: { update, isUpdating, updateError },
