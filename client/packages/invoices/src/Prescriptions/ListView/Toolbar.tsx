@@ -32,7 +32,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               type: 'number',
               name: t('label.invoice-number'),
               urlParameter: 'invoiceNumber',
-              isDefault: true,
+              isDefault: false,
             },
             {
               type: 'group',
