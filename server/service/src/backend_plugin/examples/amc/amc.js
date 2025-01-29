@@ -1,7 +1,13 @@
 // To upload to server (from this dir):
-// curl --form files='@amc.js' --form "config={};type=application/json" 'http://localhost:8000/plugin?type=AMC&variant-type=BOA_JS&code=amc_check'
-
-// TODO type sharing and type sharing
+// cargo run --bin remote_server_cli -- generate-plugin-bundle -i './service/src/backend_plugin/examples/amc' -o 'check.json'
+// curl -H 'Content-Type: application/json' --data '{"query":"query MyQuery {authToken(password: \"pass\", username: \"Admin\") {... on AuthToken {token}... on AuthTokenError {error {description}}}}","variables":{}}' 'http://localhost:8000/graphql'
+// TOKEN=token from above
+// curl --form files='@check.json' -v -H 'Cookie: auth={"token":"'$TOKEN'"}' 'http://localhost:8000/upload'
+// FILE_ID=file id from above
+// curl -H 'Authorization: Bearer '${TOKEN} -H 'Content-Type: application/json' --data '{"query":"query MyQuery { centralServer { plugin { uploadedPluginInfo(fileId: \"'$FILE_ID'\") {... on PluginInfoNode {backendPluginCodes}... on UploadedPluginError {error}}} }}","variables":{}}' 'http://localhost:8000/graphql'
+// Above would list codes in the bundle, next to add plugins
+// curl -H 'Authorization: Bearer '${TOKEN} -H 'Content-Type: application/json' --data '{"query":"mutation MyMutation { centralServer { plugins { installUploadedPlugin(fileId: \"'$FILE_ID'\") { backendPluginCodes } } } }" }' 'http://localhost:8000/graphql'
+// Above would add uploaded plugin to backend_plugin table and bind it
 
 // TODO Should come from settings
 const DAY_LOOKBACK = 800;
@@ -17,14 +23,14 @@ let plugins = {
 
     // Sqlite only
     const sql_statement = `
-    SELECT json_object('item_id', item_id, 'consumption', consumption) as json_row 
-    FROM (
+        SELECT json_object('item_id', item_id, 'consumption', consumption) as json_row 
+        FROM (
         SELECT item_id, sum(quantity) as consumption FROM consumption WHERE 
-          store_id = "${store_id}" 
-          AND item_id in (${sql_item_ids}) 
-          AND date > "${sql_date}"
+        store_id = "${store_id}" 
+        AND item_id in (${sql_item_ids}) 
+        AND date > "${sql_date}"
         GROUP BY item_id
-    )
+        )
     `;
 
     const sql_result = sql(sql_statement);

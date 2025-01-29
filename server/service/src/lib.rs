@@ -5,8 +5,14 @@ use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowR
 use repository::location::{LocationFilter, LocationRepository};
 use repository::{EqualFilter, Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
 use repository::{RepositoryError, StorageConnection};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use service_provider::ServiceContext;
+use settings::Settings;
+use static_files::{StaticFile, StaticFileCategory, StaticFileService};
 use std::convert::TryInto;
+use std::fs::File;
+use std::io::BufReader;
 use thiserror::Error;
 
 pub mod activity_log;
@@ -334,4 +340,59 @@ fn check_item_variant_exists(
     let variant = ItemVariantRowRepository::new(connection).find_one_by_id(item_variant_id)?;
 
     return Ok(variant);
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct UploadedFile {
+    pub file_id: String,
+}
+
+#[derive(Error, Debug)]
+pub enum UploadedFileConversionError {
+    #[error("Problem while getting file")]
+    StaticFileError(#[source] anyhow::Error),
+    #[error("File not found")]
+    FileNotFound,
+}
+
+#[derive(Error, Debug)]
+pub enum UploadedFileJsonError {
+    #[error(transparent)]
+    UploadedFileConversionError(#[from] UploadedFileConversionError),
+    #[error("Error while reading file")]
+    ErrorWhileReadingFile(#[from] std::io::Error),
+    #[error("Cannot parse plugin manifest file")]
+    CannotParseFile(#[from] serde_json::Error),
+}
+
+impl UploadedFile {
+    pub fn as_static_file(
+        self,
+        settings: &Settings,
+    ) -> Result<StaticFile, UploadedFileConversionError> {
+        use UploadedFileConversionError as Error;
+
+        let base_dir = &settings.server.base_dir;
+
+        let file_service = StaticFileService::new(base_dir).map_err(Error::StaticFileError)?;
+
+        file_service
+            .find_file(&self.file_id, StaticFileCategory::Temporary)
+            .map_err(Error::StaticFileError)?
+            .ok_or(Error::FileNotFound)
+    }
+
+    pub fn as_json_file<T: DeserializeOwned>(
+        self,
+        settings: &Settings,
+    ) -> Result<T, UploadedFileJsonError> {
+        let static_file = self.as_static_file(settings)?;
+        let file = File::open(static_file.to_path_buf())?;
+        let reader = BufReader::new(file);
+
+        let json = serde_json::from_reader(reader)?;
+
+        Ok(json)
+    }
 }

@@ -2093,6 +2093,7 @@ dependencies = [
  "anyhow",
  "async-graphql",
  "async-trait",
+ "base64 0.22.1",
  "chrono",
  "clap",
  "copy_dir",
@@ -4406,6 +4407,7 @@ dependencies = [
  "serde",
  "serde_json",
  "service",
+ "util",
 ]
 
 [[package]]
