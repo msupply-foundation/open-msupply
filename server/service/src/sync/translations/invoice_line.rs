@@ -67,7 +67,7 @@ pub struct LegacyTransLineRow {
     #[serde(rename = "quantity")]
     pub number_of_packs: f64,
     #[serde(rename = "prescribedQuantity")]
-    pub prescribed_quantity: f64,
+    pub prescribed_quantity: Option<f64>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub note: Option<String>,
 

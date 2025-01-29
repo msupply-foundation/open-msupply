@@ -96,7 +96,7 @@ impl InvoiceLineNode {
     pub async fn number_of_packs(&self) -> f64 {
         self.row().number_of_packs
     }
-    pub async fn prescribed_quantity(&self) -> f64 {
+    pub async fn prescribed_quantity(&self) -> Option<f64> {
         self.row().prescribed_quantity
     }
     // Batch
