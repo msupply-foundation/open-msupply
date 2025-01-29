@@ -50,7 +50,7 @@ export const Toolbar = ({ reportName, isCustom }: ToolbarProps) => {
               }}
               onClick={() => setExpand(!expand)}
             >
-              {t('messages.how-to-read-report', { reportName })}
+              {t('messages.how-to-read-report')}
               {expand ? (
                 <ChevronDownIcon sx={{ ...chevronCommonStyles }} />
               ) : (

@@ -51,10 +51,12 @@ export const ReturnReasonSearchInput: FC<ReturnReasonSearchInputProps> = ({
           <BasicTextInput
             {...props}
             autoFocus={autoFocus}
-            InputProps={{
-              disableUnderline: false,
-              style: props.disabled ? { paddingLeft: 0 } : {},
-              ...props.InputProps,
+            slotProps={{
+              input: {
+                disableUnderline: false,
+                style: props.disabled ? { paddingLeft: 0 } : {},
+                ...props.InputProps,
+              },
             }}
             error={isError}
           />
