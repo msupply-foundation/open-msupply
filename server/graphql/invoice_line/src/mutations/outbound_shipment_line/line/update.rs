@@ -547,7 +547,7 @@ mod test {
                     r#type: Some(StockOutType::OutboundShipment),
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
-                    prescribed_quantity: Some(1.0),
+                    prescribed_quantity: None,
                     total_before_tax: None,
                     tax: Some(ShipmentTaxUpdate {
                         percentage: Some(1.0),
