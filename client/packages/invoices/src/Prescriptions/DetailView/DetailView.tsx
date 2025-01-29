@@ -94,15 +94,13 @@ export const PrescriptionDetailView: FC = () => {
           })}
         >
           <AppBarButtons onAddItem={onAddItem} onViewHistory={onViewHistory} />
-          {isHistoryOpen && (
-            <HistoryModal
-              draft={historyEntity}
-              mode={historyMode}
-              isOpen={isHistoryOpen}
-              onClose={onCloseHistory}
-              patientId={data.patientId}
-            />
-          )}
+          <HistoryModal
+            draft={historyEntity}
+            mode={historyMode}
+            isOpen={isHistoryOpen}
+            onClose={onCloseHistory}
+            patientId={data.patientId}
+          />
           <Toolbar />
           <DetailTabs tabs={tabs} />
           <Footer />
