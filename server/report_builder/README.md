@@ -42,13 +42,13 @@ Note: don't upload sensitive data to online encoders.
   Json files can contain some other information that can be accessed in the Tera template (through the `res` object, see example dir).
   For example, instead of hard coding the timezone, as done in the example, the timeszone string could also stored in a json data file.
 
-- **`manifest.json`**
+- **`report-manifest.json`**
   Manifest file to specify various report metadata.
   The manifest file is added to the `res` object as a normal resource and thus can be accessed from within the Tera template.
   The manifest file must have the following structure:
 
 ```ts
-// manifest.json
+// report-manifest.json
 {
   // Report context type
   "context": "PATIENT" | "DISPENSARY" | ...
@@ -243,7 +243,7 @@ These are built and added from the standard_reports.json file in reports/generat
 
 Standard reports are built from html, css, and query files a similar way as from the reports repo with the following differences:
 
-Standard reports include a 'manifest.json' file which includes details of how the report is constructed.
+Standard reports include a 'report-manifest.json' file which includes details of how the report is constructed.
 Optional fields in the manifest json are marked as '// optional'
 
 ```json
@@ -292,7 +292,7 @@ Optional fields in the manifest json are marked as '// optional'
 }
 ```
 
-This manifest.json file takes the place of cli param inserts seen in bash scripts such as upsert.sh in the open-mSupply-reports repo.
+This report-manifest.json file takes the place of cli param inserts seen in bash scripts such as upsert.sh in the open-mSupply-reports repo.
 
 The command to build reports uses the build cli, so you will first need to run
 
@@ -369,7 +369,7 @@ The simplest way is to:
 - Change the version dir name to match the version number.
 - Change the is_custom boolean to true if the report will be a custom report.
 
-> The dir names are for developer convenience only. The name and version of each report read by omSupply is from the manifest.json file.
+> The dir names are for developer convenience only. The name and version of each report read by omSupply is from the report-manifest.json file.
 
 New report versions must be compatible with the matching major and minor versions of the OMS app.
 
