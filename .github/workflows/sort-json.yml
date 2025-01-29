@@ -21,8 +21,8 @@ jobs:
 
       - name: Sort files
         run: |
-          chmod +x .sort-json.sh 
-          .sort-json.sh
+          chmod +x .github/workflows/sort-json.sh 
+          .github/workflows/sort-json.sh
 
       - name: Commit changes
         run: git commit --no-verify -m 'Sorted JSON files'
