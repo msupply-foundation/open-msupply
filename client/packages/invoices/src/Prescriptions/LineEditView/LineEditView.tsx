@@ -24,6 +24,7 @@ import { NavBar } from './NavBar';
 export const PrescriptionLineEditView = () => {
   const { invoiceNumber, itemId } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const isDirty = useRef(false);
   const navigate = useNavigate();
 
   const {
@@ -79,14 +80,13 @@ export const PrescriptionLineEditView = () => {
     });
   }, [currentItem]);
 
-  // tODO: does the state turn up right lol
-  const { isDirty, setIsDirty } = useConfirmOnLeaving(
+  useConfirmOnLeaving(
     'prescription-line-edit',
     // Need a custom checking method here, as we don't want to warn user when
     // switching to a different item within this page
     {
       customCheck: (current, next) => {
-        if (!isDirty) return false;
+        if (!isDirty.current) return false;
 
         const currentPathParts = current.pathname.split('/');
         const nextPathParts = next.pathname.split('/');
@@ -108,7 +108,7 @@ export const PrescriptionLineEditView = () => {
   };
 
   const onSave = async () => {
-    if (!isDirty) return;
+    if (!isDirty.current) return;
 
     const flattenedLines = Object.values(allDraftLines).flat();
 
@@ -145,7 +145,7 @@ export const PrescriptionLineEditView = () => {
           .build()
       );
     }
-    setIsDirty(false);
+    isDirty.current = false;
     setAllDraftLines({});
   };
 
@@ -168,7 +168,7 @@ export const PrescriptionLineEditView = () => {
               .addPart(String(invoiceNumber))}
             enteredLineIds={enteredLineIds}
             showNew={status !== InvoiceNodeStatus.Verified}
-            isDirty={isDirty}
+            isDirty={isDirty.current}
             handleSaveNew={onSave}
             scrollRef={scrollRef}
           />
@@ -179,7 +179,9 @@ export const PrescriptionLineEditView = () => {
               item={currentItem ?? null}
               draftLines={allDraftLines[itemId] ?? []}
               updateLines={updateAllLines}
-              setIsDirty={setIsDirty}
+              setIsDirty={dirty => {
+                isDirty.current = dirty;
+              }}
             />
             <NavBar
               items={itemIdList}
@@ -200,7 +202,7 @@ export const PrescriptionLineEditView = () => {
       />
       <Footer
         isSaving={isSavingLines}
-        isDirty={isDirty}
+        isDirty={isDirty.current}
         handleSave={onSave}
         handleCancel={() =>
           navigate(

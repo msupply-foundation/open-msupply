@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Grid, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { BasicModal } from '../BasicModal';
 import { AlertIcon, CheckIcon, HelpIcon, InfoIcon } from '@common/icons';
 import { DialogButton, LoadingButton } from '../../buttons';
 import { Alert } from '@common/components';
-import { useTranslation } from '@openmsupply-client/common';
+import { useTranslation, Grid } from '@openmsupply-client/common';
 
 interface ConfirmationModalProps {
   open: boolean;
@@ -47,21 +47,21 @@ export const ConfirmationModal = ({
     <BasicModal width={width} height={height} open={open}>
       <Grid container gap={1} flex={1} padding={4} flexDirection="column">
         <Grid container gap={1} flexDirection="row">
-          <Grid item>
+          <Grid>
             <Icon color={iconType === 'alert' ? 'primary' : 'secondary'} />
           </Grid>
-          <Grid item>
+          <Grid>
             <Typography variant="h6">{title}</Typography>
           </Grid>
         </Grid>
         {info && (
-          <Grid item paddingY={1}>
+          <Grid paddingY={1}>
             <Alert style={{ whiteSpace: 'pre-line' }} severity="info">
               {info}
             </Alert>
           </Grid>
         )}
-        <Grid item>
+        <Grid>
           <Typography style={{ whiteSpace: 'pre-line' }}>{message}</Typography>
         </Grid>
         <Grid
@@ -73,7 +73,7 @@ export const ConfirmationModal = ({
           flex={1}
           display="flex"
         >
-          <Grid item>
+          <Grid>
             <DialogButton
               variant="cancel"
               customLabel={cancelButtonLabel}
@@ -81,7 +81,7 @@ export const ConfirmationModal = ({
               onClick={onCancel}
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <LoadingButton
               autoFocus
               color="secondary"

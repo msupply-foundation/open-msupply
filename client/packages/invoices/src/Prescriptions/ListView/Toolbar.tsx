@@ -2,20 +2,13 @@ import React, { FC } from 'react';
 import {
   useTranslation,
   AppBarContentPortal,
-  SearchBar,
+  FilterMenu,
   FilterController,
-  FilterRule,
+  Box,
 } from '@openmsupply-client/common';
-import { PrescriptionRowFragment } from '../api';
 
-export const Toolbar: FC<{
-  filter: FilterController;
-}> = ({ filter }) => {
+export const Toolbar: FC<{ filter: FilterController }> = () => {
   const t = useTranslation();
-
-  const key = 'otherPartyName' as keyof PrescriptionRowFragment;
-  const filterString =
-    ((filter.filterBy?.[key] as FilterRule)?.like as string) || '';
 
   return (
     <AppBarContentPortal
@@ -26,13 +19,44 @@ export const Toolbar: FC<{
         display: 'flex',
       }}
     >
-      <SearchBar
-        placeholder={t('placeholder.search-by-name')}
-        value={filterString}
-        onChange={newValue => {
-          filter.onChangeStringFilterRule('otherPartyName', 'like', newValue);
-        }}
-      />
+      <Box display="flex" gap={1}>
+        <FilterMenu
+          filters={[
+            {
+              type: 'text',
+              name: t('label.name'),
+              urlParameter: 'otherPartyName',
+              isDefault: true,
+            },
+            {
+              type: 'number',
+              name: t('label.invoice-number'),
+              urlParameter: 'invoiceNumber',
+              isDefault: false,
+            },
+            {
+              type: 'group',
+              name: t('label.date'),
+              elements: [
+                {
+                  type: 'date',
+                  name: t('label.from-date'),
+                  urlParameter: 'pickedDatetime',
+                  range: 'from',
+                  isDefault: true,
+                },
+                {
+                  type: 'date',
+                  name: t('label.to-date'),
+                  urlParameter: 'pickedDatetime',
+                  range: 'to',
+                  isDefault: true,
+                },
+              ],
+            },
+          ]}
+        />
+      </Box>
     </AppBarContentPortal>
   );
 };
