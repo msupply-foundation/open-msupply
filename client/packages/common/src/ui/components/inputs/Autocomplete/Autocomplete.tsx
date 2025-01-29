@@ -7,14 +7,13 @@ import {
   AutocompleteInputChangeReason,
   AutocompleteProps as MuiAutocompleteProps,
   PopperProps,
-  StandardTextFieldProps,
 } from '@mui/material';
 import {
   AutocompleteOption,
   AutocompleteOnChange,
   AutocompleteOptionRenderer,
 } from './types';
-import { BasicTextInput } from '../TextInput';
+import { BasicTextInput, BasicTextInputProps } from '../TextInput';
 import { StyledPopper } from './components';
 import { useOpenStateWithKeyboard } from './utils';
 
@@ -47,7 +46,7 @@ export interface AutocompleteProps<T>
   ) => void;
   inputValue?: string;
   popperMinWidth?: number;
-  inputProps?: StandardTextFieldProps;
+  inputProps?: BasicTextInputProps;
 }
 
 export function Autocomplete<T>({
@@ -73,6 +72,7 @@ export function Autocomplete<T>({
   autoFocus = false,
   getOptionLabel,
   popperMinWidth,
+  inputProps,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
@@ -80,6 +80,7 @@ export function Autocomplete<T>({
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
+      {...inputProps}
       autoFocus={autoFocus}
       slotProps={{
         input: {
