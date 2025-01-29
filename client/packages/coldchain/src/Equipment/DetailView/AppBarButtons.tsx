@@ -66,6 +66,7 @@ export const AppBarButtonsComponent = () => {
           isLoading={isPrinting}
           onClick={onClick}
           label={t('button.print-asset-label')}
+          variant="outlined"
         />
       </Grid>
       <DisabledNotification />
