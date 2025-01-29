@@ -108,15 +108,15 @@ const combineCommonLines = (lines: InvoiceLineNode[]) => {
     InvoiceLineNode & { unitQuantity: number }
   > = {};
   lines.forEach(line => {
+    const unitQuantity = line.numberOfPacks * line.packSize;
     const item = uniqueItems?.[line.item.id];
     if (item) {
-      item.unitQuantity += line.numberOfPacks * line.packSize;
-    } else {
+      item.unitQuantity += unitQuantity;
+    } else
       uniqueItems[line.item.id] = {
         ...line,
-        unitQuantity: line.numberOfPacks * line.packSize,
+        unitQuantity,
       };
-    }
   });
   return Object.values(uniqueItems);
 };
