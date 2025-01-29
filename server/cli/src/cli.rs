@@ -35,11 +35,13 @@ use std::{
     process::{Command, Stdio},
     sync::{Arc, RwLock},
 };
-
 use util::inline_init;
 
 mod backup;
 use backup::*;
+
+mod plugins;
+use plugins::*;
 
 const DATA_EXPORT_FOLDER: &str = "data";
 
@@ -150,6 +152,8 @@ enum Action {
         #[clap(short, long)]
         path: Option<PathBuf>,
     },
+    /// Will generate a plugin bundle
+    GeneratePluginBundle(GeneratePluginBundle),
     UpsertReports {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long)]
@@ -639,6 +643,9 @@ async fn main() -> anyhow::Result<()> {
         }
         Action::Restore(arguments) => {
             restore(&settings, arguments)?;
+        }
+        Action::GeneratePluginBundle(arguments) => {
+            generate_plugin_bundle(arguments)?;
         }
     }
 
