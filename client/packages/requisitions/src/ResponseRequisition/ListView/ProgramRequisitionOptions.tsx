@@ -135,11 +135,11 @@ const LabelAndOptions = <T,>({
     !!labelNoOptions && <Typography>{labelNoOptions}</Typography>;
 
   return (
-    <Grid item container spacing={2} direction="row">
-      <Grid xs={3} item>
+    <Grid container flexDirection="row">
+      <Grid size={3} marginTop={-1}>
         <Typography>{label}</Typography>
       </Grid>
-      <Grid item>
+      <Grid>
         {noOptionsDisplay || (
           <Autocomplete
             width="450"
@@ -151,6 +151,10 @@ const LabelAndOptions = <T,>({
             value={value}
             disabled={disabled}
             onChange={(_, newValue) => set(newValue)}
+            sx={{
+              background: theme => theme.palette.background.toolbar,
+              borderRadius: 2,
+            }}
           />
         )}
       </Grid>
@@ -171,14 +175,7 @@ export const ProgramRequisitionOptions = ({
   const ProgramOptionRenderer = getProgramOptionRenderer();
 
   return (
-    <Grid
-      container
-      paddingTop={2}
-      spacing="15"
-      direction="column"
-      justifyContent="center"
-      alignItems="center"
-    >
+    <Grid container paddingTop={2} direction="column">
       <LabelAndOptions
         {...programs}
         renderOption={ProgramOptionRenderer}
@@ -188,7 +185,7 @@ export const ProgramRequisitionOptions = ({
       <LabelAndOptions {...customers} optionKey="name" />
       <LabelAndOptions {...orderTypes} optionKey="name" />
       <LabelAndOptions {...periods} optionKey="name" />
-      <Grid item>
+      <Grid display="flex" justifyContent="center">
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           disabled={!createOptions}
