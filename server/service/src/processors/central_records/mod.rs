@@ -1,5 +1,6 @@
+use contact_form::QueueContactEmailProcessor;
 use repository::{
-    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, KeyType,
+    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, KeyType,
     RepositoryError, StorageConnection, TransactionError,
 };
 use thiserror::Error;
@@ -11,9 +12,7 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
 };
 
-mod queue_email;
-
-use queue_email::QueueContactEmailProcessor;
+mod contact_form;
 
 #[derive(Error, Debug)]
 pub(crate) enum ProcessCentralRecordsError {
@@ -27,21 +26,36 @@ pub(crate) enum ProcessCentralRecordsError {
 
 const CHANGELOG_BATCH_SIZE: u32 = 20;
 
+#[derive(Clone)]
+pub enum CentralRecordProcessorType {
+    ContactFormEmail,
+}
+
+impl CentralRecordProcessorType {
+    pub(super) fn get_processor(&self) -> Box<dyn CentralServerProcessor> {
+        match self {
+            CentralRecordProcessorType::ContactFormEmail => Box::new(QueueContactEmailProcessor),
+        }
+    }
+}
+
 pub(crate) fn process_central_records(
     service_provider: &ServiceProvider,
+    r#type: CentralRecordProcessorType,
 ) -> Result<(), ProcessCentralRecordsError> {
     use ProcessCentralRecordsError as Error;
-    let processors: Vec<Box<dyn ContactFormProcessor>> = vec![Box::new(QueueContactEmailProcessor)];
 
     let ctx = service_provider
         .basic_context()
         .map_err(Error::DatabaseError)?;
-
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
-    let cursor_controller = CursorController::new(KeyType::ContactFormProcessorCursor);
+
+    let processor = r#type.get_processor();
+
+    let cursor_controller = CursorController::new(processor.cursor_type());
 
     // Only process the changelogs we care about
-    let filter = ChangelogFilter::new().table_name(ChangelogTableName::ContactForm.equal_to());
+    let filter = processor.changelogs_filter();
 
     loop {
         let cursor = cursor_controller
@@ -58,13 +72,10 @@ pub(crate) fn process_central_records(
 
         for log in logs {
             // Try record against all of the processors
-            for processor in processors.iter() {
-                let result = processor.try_process_record_common(&ctx, &log);
-                if let Err(e) = result {
-                    log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
-                }
+            let result = processor.try_process_record_common(&ctx, &log);
+            if let Err(e) = result {
+                log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
             }
-
             cursor_controller
                 .update(&ctx.connection, (log.cursor + 1) as u64)
                 .map_err(Error::DatabaseError)?;
@@ -74,8 +85,27 @@ pub(crate) fn process_central_records(
     Ok(())
 }
 
-trait ContactFormProcessor {
+pub(super) trait CentralServerProcessor {
     fn get_description(&self) -> String;
+    /// Default to using change_log_table_names
+    fn changelogs_filter(&self) -> ChangelogFilter {
+        ChangelogFilter::new().table_name(EqualFilter {
+            equal_any: Some(self.change_log_table_names()),
+            ..Default::default()
+        })
+    }
+
+    /// Default to empty array in case chanelogs_filter is manually implemented
+    fn change_log_table_names(&self) -> Vec<ChangelogTableName> {
+        Vec::new()
+    }
+
+    /// Extra check to see if processor should trigger, like if it's central for contact form email
+    fn should_run(&self) -> bool {
+        true
+    }
+
+    fn cursor_type(&self) -> KeyType;
 
     fn try_process_record_common(
         &self,
