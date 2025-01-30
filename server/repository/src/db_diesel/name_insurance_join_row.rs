@@ -19,7 +19,7 @@ pub enum InsurancePolicyType {
 table! {
   name_insurance_join (id) {
     id -> Text,
-    name_id -> Text,
+    name_link_id -> Text,
     insurance_provider_id -> Text,
     policy_number_person -> Nullable<Text>,
     policy_number_family -> Nullable<Text>,
@@ -38,7 +38,7 @@ table! {
 #[diesel(table_name = name_insurance_join)]
 pub struct NameInsuranceJoinRow {
     pub id: String,
-    pub name_id: String,
+    pub name_link_id: String,
     pub insurance_provider_id: String,
     pub policy_number_person: Option<String>,
     pub policy_number_family: Option<String>,
