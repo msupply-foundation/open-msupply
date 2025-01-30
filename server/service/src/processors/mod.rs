@@ -1,5 +1,4 @@
 use crate::activity_log::system_log_entry;
-use crate::sync::CentralServerConfig;
 use repository::system_log_row::SystemLogType;
 use repository::{RepositoryError, StorageConnection};
 use std::sync::Arc;
@@ -16,10 +15,11 @@ use self::transfer::requisition::ProcessRequisitionTransfersError;
 use self::transfer::{
     invoice::process_invoice_transfers, requisition::process_requisition_transfers,
 };
-use central_records::{process_central_records, ProcessCentralRecordsError};
+use general_processor::{process_records, ProcessorError};
 
-mod central_records;
-pub use central_records::CentralRecordProcessorType;
+mod contact_form;
+mod general_processor;
+pub use general_processor::ProcessorType;
 #[cfg(test)]
 mod test_helpers;
 pub(crate) mod transfer;
@@ -30,14 +30,14 @@ const CHANNEL_BUFFER_SIZE: usize = 30;
 pub struct ProcessorsTrigger {
     requisition_transfer: Sender<()>,
     invoice_transfer: Sender<()>,
-    central_record: Sender<CentralRecordProcessorType>,
+    general_processor: Sender<ProcessorType>,
     await_process_queue: Sender<oneshot::Sender<()>>,
 }
 
 pub struct Processors {
     requisition_transfer: Receiver<()>,
     invoice_transfer: Receiver<()>,
-    central_record: Receiver<CentralRecordProcessorType>,
+    general_processor: Receiver<ProcessorType>,
     await_process_queue: Receiver<oneshot::Sender<()>>,
 }
 
@@ -48,7 +48,7 @@ enum ProcessorsError {
     #[error("Error in requisition transfer processor ({0})")]
     RequisitionTransfer(ProcessRequisitionTransfersError),
     #[error("Error in central record processor ({0})")]
-    ProcessCentralRecord(ProcessCentralRecordsError),
+    ProcessCentralRecord(ProcessorError),
     #[error("Error when waiting for the process queue to be processed")]
     AwaitProcessQueue(()),
 }
@@ -61,7 +61,8 @@ impl Processors {
         let (invoice_transfer_sender, invoice_transfer_receiver) =
             mpsc::channel(CHANNEL_BUFFER_SIZE);
 
-        let (central_record_sender, central_record_receiver) = mpsc::channel(CHANNEL_BUFFER_SIZE);
+        let (general_processor_sender, general_processor_receiver) =
+            mpsc::channel(CHANNEL_BUFFER_SIZE);
 
         let (request_check_sender, request_check_receiver) = mpsc::channel(CHANNEL_BUFFER_SIZE);
 
@@ -69,13 +70,13 @@ impl Processors {
             ProcessorsTrigger {
                 requisition_transfer: requisition_transfer_sender,
                 invoice_transfer: invoice_transfer_sender,
-                central_record: central_record_sender,
+                general_processor: general_processor_sender,
                 await_process_queue: request_check_sender,
             },
             Processors {
                 requisition_transfer: requisition_transfer_receiver,
                 invoice_transfer: invoice_transfer_receiver,
-                central_record: central_record_receiver,
+                general_processor: general_processor_receiver,
                 await_process_queue: request_check_receiver,
             },
         )
@@ -85,7 +86,7 @@ impl Processors {
         let Processors {
             mut requisition_transfer,
             mut invoice_transfer,
-            mut central_record,
+            mut general_processor,
             mut await_process_queue,
         } = self;
 
@@ -103,8 +104,8 @@ impl Processors {
                     Some(_) = invoice_transfer.recv() => {
                         process_invoice_transfers(&service_provider).map_err(ProcessorsError::InvoiceTransfer)
                     },
-                    Some(r#type) = central_record.recv() => {
-                        process_central_records(&service_provider, r#type).map_err(ProcessorsError::ProcessCentralRecord)
+                    Some(r#type) = general_processor.recv() => {
+                        process_records(&service_provider, r#type).map_err(ProcessorsError::ProcessCentralRecord)
                     },
                     Some(sender) = await_process_queue.recv() => {
                         sender.send(()).map_err(ProcessorsError::AwaitProcessQueue)
@@ -137,12 +138,10 @@ impl ProcessorsTrigger {
         }
     }
 
-    pub(crate) fn trigger_central_record_processor(&self, r#type: CentralRecordProcessorType) {
-        if CentralServerConfig::is_central_server() {
-            if let Err(error) = self.central_record.try_send(r#type.clone()) {
-                let description = r#type.get_processor().get_description();
-                log::error!("Problem triggering {description} processor {:#?}", error)
-            }
+    pub(crate) fn trigger_processor(&self, r#type: ProcessorType) {
+        if let Err(error) = self.general_processor.try_send(r#type.clone()) {
+            let description = r#type.get_processor().get_description();
+            log::error!("Problem triggering {description} processor {:#?}", error)
         }
     }
 
@@ -172,7 +171,7 @@ impl ProcessorsTrigger {
         ProcessorsTrigger {
             requisition_transfer: mpsc::channel(1).0,
             invoice_transfer: mpsc::channel(1).0,
-            central_record: mpsc::channel(1).0,
+            general_processor: mpsc::channel(1).0,
             await_process_queue: mpsc::channel(1).0,
         }
     }
