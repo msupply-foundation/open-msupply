@@ -18,6 +18,7 @@ table! {
 
 // Database:  https://github.com/openmsupply/open-msupply/blob/d6645711184c63593949c3e8b6dc96b5a5ded39f/server/repository/migrations/postgres/2022-02-11T15-00_create_key_value_store/up.sql#L2-L16
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+#[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum KeyType {
     #[default]
@@ -170,5 +171,31 @@ impl<'a> KeyValueStoreRepository<'a> {
     pub fn get_bool(&self, key: KeyType) -> Result<Option<bool>, RepositoryError> {
         let row = self.get_row(key)?;
         Ok(row.and_then(|row| row.value_bool))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use strum::IntoEnumIterator;
+    use util::assert_matches;
+
+    use crate::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn key_type_enum() {
+        let (_, connection, _, _) = setup_all("key_type_enum", MockDataInserts::none()).await;
+
+        let repo = KeyValueStoreRepository::new(&connection);
+        // Try upsert all variants, confirm that diesel enums match postgres
+        for variant in KeyType::iter() {
+            let result = repo.upsert_one(&KeyValueStoreRow {
+                id: variant.clone(),
+                ..Default::default()
+            });
+            assert_eq!(result, Ok(()));
+
+            assert_matches!(repo.get_row(variant.clone()), Ok(Some(_)));
+        }
     }
 }
