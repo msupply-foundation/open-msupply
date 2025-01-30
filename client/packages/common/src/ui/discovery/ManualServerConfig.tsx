@@ -35,13 +35,11 @@ export function ManualServerConfig({
 }: ManualServerConfigProps): ReactElement {
   const t = useTranslation();
   const { error } = useNotification();
-  const [serverURL, setServerURL] = useState<string>();
+  const [serverURL, setServerURL] = useState(DEFAULT_SERVER);
 
   useEffect(() => {
     if (previousServer != null) {
       setServerURL(frontEndHostDisplay(previousServer));
-    } else {
-      setServerURL(DEFAULT_SERVER);
     }
   }, [previousServer]);
 
@@ -70,10 +68,13 @@ export function ManualServerConfig({
   async function handleServerClick(): Promise<void> {
     if (!serverURL) return;
     const parsedServerDetails = parseServerURL(serverURL);
-    if (!parsedServerDetails) return;
+    if (!parsedServerDetails) {
+      error(t('error.invalid-url'));
+      return;
+    }
 
-    // Generate a new hardware ID because the existing one
-    // cannot be reused once the server goes offline
+    // Generate a new hardware ID because it's uncertain
+    // if the existing one can be reused after the server goes offline
     const hardwareId = FnUtils.generateUUID().toUpperCase();
 
     const serverConfig: FrontEndHost = {
