@@ -5219,6 +5219,7 @@ export type PatientFilterInput = {
   identifier?: InputMaybe<StringFilterInput>;
   lastName?: InputMaybe<StringFilterInput>;
   name?: InputMaybe<StringFilterInput>;
+  nextOfKinName?: InputMaybe<StringFilterInput>;
   phone?: InputMaybe<StringFilterInput>;
   programEnrolmentName?: InputMaybe<StringFilterInput>;
 };
