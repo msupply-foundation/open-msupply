@@ -408,6 +408,7 @@ mod test {
                 u.number_of_packs = 2.0;
                 u.total_before_tax = 18.00;
                 u.total_after_tax = 18.00;
+                u.note = Some("new note".to_string());
                 u
             })
         );
