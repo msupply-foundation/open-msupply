@@ -42,7 +42,7 @@ pub mod android {
             server: ServerSettings {
                 port,
                 danger_allow_http: false,
-                disable_discovery: false,
+                disable_discovery: true,
                 debug_no_access_control: false,
                 cors_origins: vec!["http://localhost".to_string()],
                 base_dir: Some(files_dir.to_str().unwrap().to_string()),
