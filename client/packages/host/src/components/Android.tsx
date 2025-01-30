@@ -80,7 +80,7 @@ const ModeOption = ({
   message: string;
   setMode: (mode: NativeMode) => void;
 }) => (
-  <Box display="flex" gap={2} alignItems="center">
+  <Box display="flex" gap={3} alignItems="center" padding=".5em 1em">
     <Box flex={0}>
       <ButtonWithIcon
         onClick={() => setMode(mode)}
@@ -151,13 +151,19 @@ export const Android = () => {
     return (
       <Viewport>
         <Stack
+          id="stack"
           display="flex"
           flex={1}
           style={{ minHeight: '100%' }}
           alignItems="center"
           justifyContent="center"
         >
-          <Box display="flex" flex="0 0 40%" alignSelf="center">
+          <Box display="flex" flex="0 0 40%" alignSelf="center" sx={theme => ({
+            [theme.breakpoints.down('sm')]: {
+              flexDirection: 'column',
+              flex: '0 0 35%',
+            },
+          })}>
             <Box
               display="flex"
               alignItems="center"
@@ -166,12 +172,17 @@ export const Android = () => {
             >
               <LoginIcon />
             </Box>
-            <Box display="flex" flexDirection="column" justifyContent="center">
+            <Box display="flex" flexDirection="column" justifyContent="center" sx={theme => ({
+              [theme.breakpoints.down('sm')]: {
+                alignItems: 'center',
+                paddingX: '1.5em',
+              },
+            })}>
               <Heading text={t('initialise.heading')} />
               <SubHeading text={t('messages.native-mode')} />
             </Box>
           </Box>
-          <Stack spacing={5} maxWidth={400}>
+          <Stack spacing={3} maxWidth={400} >
             <ModeOption
               label={t('label.client')}
               mode={NativeMode.Client}
