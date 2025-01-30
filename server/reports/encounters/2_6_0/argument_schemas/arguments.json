@@ -6,8 +6,19 @@
         "programId": {
           "description": "Program ID",
           "type": "string"
+        },
+        "after": {
+          "description": "From date",
+          "format": "date-time",
+          "type": "string"
+        },
+        "before": {
+          "description": "To date",
+          "format": "date-time",
+          "type": "string"
         }
-      }
+      },
+      "required": ["programId"]
     }
   },
   "type": "object",
