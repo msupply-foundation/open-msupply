@@ -38,6 +38,7 @@ import { DraftStockOutLine } from '../../types';
 import { isA } from '../../utils';
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
+import { handleAbbreviations } from './getPrescriptionDirections';
 
 interface PrescriptionLineEditFormProps {
   allocatedUnits: number;
@@ -196,13 +197,13 @@ export const PrescriptionLineEditForm: React.FC<
   const key = item?.id ?? 'new';
 
   //MOCK DATA FOR TESTING
+
   interface Option {
     id: string;
     name: string;
     direction: string;
   }
-
-  const options = [
+  const options: Option[] = [
     { id: '1', name: 'One', direction: '1 per day in the AM' },
     { id: '2', name: 'Two', direction: '2 per Day' },
     { id: '3', name: '3_5', direction: '3 1/2 per day' },
@@ -211,18 +212,11 @@ export const PrescriptionLineEditForm: React.FC<
 
   //END OF MOCK DATA
 
-  function handleAbbreviations(input: string, options: Option[]) {
-    const output = input.split(' ');
-    const matchedString = output.map(output => {
-      const match = options.find(
-        option => option.name.toLowerCase() === output.toLowerCase()
-      );
-      return match ? match.direction : output;
-    });
-
-    updateNotes(matchedString.join(' '));
-    setAbbreviation('');
-  }
+  const onSave = () => {
+    if (!abbreviation) return;
+    const note = handleAbbreviations(abbreviation, options);
+    updateNotes(note);
+  };
 
   return (
     <Grid
@@ -322,9 +316,7 @@ export const PrescriptionLineEditForm: React.FC<
                 <BasicTextInput
                   value={abbreviation}
                   onChange={e => setAbbreviation(e.target.value)}
-                  onBlur={e => {
-                    handleAbbreviations(e.target.value, options);
-                  }}
+                  onBlur={onSave}
                 />
               }
             />
