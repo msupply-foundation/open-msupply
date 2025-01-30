@@ -38,7 +38,7 @@ import { DraftStockOutLine } from '../../types';
 import { isA } from '../../utils';
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
-import { handleAbbreviations } from './getPrescriptionDirections';
+import { getPrescriptionDirections } from './getPrescriptionDirections';
 
 interface PrescriptionLineEditFormProps {
   allocatedUnits: number;
@@ -196,8 +196,7 @@ export const PrescriptionLineEditForm: React.FC<
 
   const key = item?.id ?? 'new';
 
-  //MOCK DATA FOR TESTING
-
+  //MOCK DATA FOR TESTING ABBREVIATIONS
   interface Option {
     id: string;
     name: string;
@@ -214,7 +213,8 @@ export const PrescriptionLineEditForm: React.FC<
 
   const onSave = () => {
     if (!abbreviation) return;
-    const note = handleAbbreviations(abbreviation, options);
+    3_5;
+    const note = getPrescriptionDirections(abbreviation, options);
     updateNotes(note);
   };
 
@@ -342,10 +342,7 @@ export const PrescriptionLineEditForm: React.FC<
                 </DropdownMenuItem>
               ))}
             </DropdownMenu>
-
-            {/* <Select options={direction} /> */}
           </Grid>
-
           <Grid>
             <InputWithLabelRow
               label={t('label.directions')}
