@@ -207,7 +207,11 @@ export const PrescriptionLineEditForm: React.FC<
     { id: '2', name: 'Two', direction: '2 per Day' },
     { id: '3', name: '3_5', direction: '3 1/2 per day' },
   ];
-  const defaultDirections = ['1 per day', '2 per day', '3 per day'];
+  const defaultDirections = [
+    { id: '1', item_link_id: 'a', direction: '1 per day', priority: 2 },
+    { id: '2', item_link_id: 'b', direction: '2 per day', priority: 3 },
+    { id: '3', item_link_id: 'c', direction: '3 per day', priority: 1 },
+  ];
 
   //END OF MOCK DATA
 
@@ -328,19 +332,24 @@ export const PrescriptionLineEditForm: React.FC<
                   : t('placeholder.item-directions')
               }
             >
-              {defaultDirections.map(direction => (
-                <DropdownMenuItem
-                  key={direction}
-                  value={direction}
-                  onClick={() => {
-                    updateNotes(direction);
-                    setDefaultDirection(direction);
-                  }}
-                  sx={{ fontSize: 14 }}
-                >
-                  {direction}
-                </DropdownMenuItem>
-              ))}
+              {defaultDirections
+                .sort((a, b) => a.priority - b.priority)
+                .map(
+                  direction =>
+                    direction && (
+                      <DropdownMenuItem
+                        key={direction.id}
+                        value={direction.direction}
+                        onClick={() => {
+                          updateNotes(direction.direction);
+                          setDefaultDirection(direction.direction);
+                        }}
+                        sx={{ fontSize: 14 }}
+                      >
+                        {direction.direction}
+                      </DropdownMenuItem>
+                    )
+                )}
             </DropdownMenu>
           </Grid>
           <Grid>
