@@ -1194,7 +1194,7 @@
   "message.confirm-delete-encounter": "Are you sure?",
   "message.confirm-save-new": "Click OK to save the new item, or Cancel to continue editing",
   "message.contact-support": "Please contact support@msupply.foundation about configuring reports",
-  "message.continue-to-make-inbound-shipment": "Click Next to continue to make an Inbound Dhipment without linking an Internal Order.",
+  "message.continue-to-make-inbound-shipment": "Click Next to continue to make an Inbound Shipment without linking an Internal Order.",
   "message.copy-success": "Copied to clipboard successfully",
   "message.database-not-local": "Database is running on a server, so can't be downloaded here",
   "message.database-not-sqlite": "Database download is only available for SQLite databases",
