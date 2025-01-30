@@ -43,7 +43,8 @@ interface PrescriptionLineEditFormProps {
   onChangeQuantity: (
     quantity: number,
     packSize: number | null,
-    isAutoAllocated: boolean
+    isAutoAllocated: boolean,
+    prescribedQuantity: number | null
   ) => DraftStockOutLine[] | undefined;
   packSizeController: PackSizeController;
   disabled: boolean;
@@ -57,7 +58,6 @@ interface PrescriptionLineEditFormProps {
   hasExpired: boolean;
   isLoading: boolean;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
-  updatePrescribedQuantity: (itemId: string, updateQuantity: number) => void;
 }
 
 export const PrescriptionLineEditForm: React.FC<
@@ -79,7 +79,6 @@ export const PrescriptionLineEditForm: React.FC<
   hasExpired,
   isLoading,
   updateQuantity,
-  updatePrescribedQuantity,
 }) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
@@ -98,11 +97,16 @@ export const PrescriptionLineEditForm: React.FC<
     []
   );
 
-  const allocate = (numPacks: number, packSize: number) => {
+  const allocate = (
+    numPacks: number,
+    packSize: number,
+    prescribedQuantity: number
+  ) => {
     const newAllocateQuantities = onChangeQuantity(
       numPacks,
       packSize === -1 || packSize === 1 ? null : packSize,
-      true
+      true,
+      prescribedQuantity
     );
     const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
     const allocatedQuantity =
@@ -153,15 +157,18 @@ export const PrescriptionLineEditForm: React.FC<
   // See https://github.com/msupply-foundation/open-msupply/issues/2727
   // and https://github.com/msupply-foundation/open-msupply/issues/3532
   const debouncedAllocate = useDebouncedValueCallback(
-    (numPacks, packSize) => {
-      allocate(numPacks, packSize);
+    (numPacks, packSize, prescribedQuantity) => {
+      allocate(numPacks, packSize, prescribedQuantity);
     },
     [],
     500,
     [draftPrescriptionLines] // this is needed to prevent a captured enclosure of onChangeQuantity
   );
 
-  const handleIssueQuantityChange = (inputUnitQuantity?: number) => {
+  const handleIssueQuantityChange = (
+    inputUnitQuantity?: number,
+    quantityType: 'issue' | 'prescribed' | undefined = 'issue'
+  ) => {
     // this method is also called onBlur... check that there actually has been a
     // change in quantity (to prevent triggering auto allocation if only focus
     // has moved)
@@ -176,24 +183,17 @@ export const PrescriptionLineEditForm: React.FC<
         : 1;
 
     const numPacks = quantity / packSize;
-    debouncedAllocate(numPacks, Number(packSize));
+    debouncedAllocate(
+      numPacks,
+      Number(packSize),
+      quantityType === 'prescribed' ? inputUnitQuantity : prescribedQuantity
+    );
   };
-
-  const debouncedPrescribedQuantity = useDebouncedValueCallback(
-    (itemId, prescribedQuantity) => {
-      updatePrescribedQuantity(itemId, prescribedQuantity);
-    },
-    [],
-    500,
-    [draftPrescriptionLines]
-  );
 
   const handlePrescribedQuantityChange = (inputPrescribedQuantity?: number) => {
     if (!inputPrescribedQuantity) return;
-    if (!item) return;
-
     setPrescribedQuantity(inputPrescribedQuantity);
-    debouncedPrescribedQuantity(item.id, inputPrescribedQuantity);
+    handleIssueQuantityChange(inputPrescribedQuantity, 'prescribed');
   };
 
   useEffect(() => {

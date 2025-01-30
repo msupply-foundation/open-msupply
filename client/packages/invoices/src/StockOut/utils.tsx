@@ -192,7 +192,8 @@ export const allocateQuantities =
   (
     newValue: number,
     issuePackSize: number | null,
-    allowPartialPacks: boolean = false
+    allowPartialPacks: boolean = false,
+    prescribedQuantity: number | null
   ) => {
     // if invalid quantity entered, don't allocate
     if (newValue < 0 || Number.isNaN(newValue)) {
@@ -223,6 +224,8 @@ export const allocateQuantities =
       ...batch,
       numberOfPacks: 0,
       isUpdated: batch.numberOfPacks > 0,
+      prescribedQuantity:
+        batch.numberOfPacks > 0 && prescribedQuantity ? prescribedQuantity : 0,
     }));
 
     const validBatches = newDraftStockOutLines
@@ -467,21 +470,4 @@ export const getAllocationAlerts = (
   }
 
   return alerts;
-};
-
-export const updatePrescribedQuantity = (
-  draftStockOutLines: DraftStockOutLine[],
-  itemId: string,
-  prescribedQuantity: number
-) => {
-  return draftStockOutLines.map(line => {
-    if (line.numberOfPacks > 0 && line.item.id == itemId) {
-      return {
-        ...line,
-        prescribedQuantity,
-        isUpdated: true,
-      };
-    }
-    return line;
-  });
 };

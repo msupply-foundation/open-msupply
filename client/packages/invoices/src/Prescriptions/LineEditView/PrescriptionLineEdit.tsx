@@ -39,13 +39,12 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
     isDisabled,
   } = usePrescription();
   const { status = InvoiceNodeStatus.New, prescriptionDate } = data ?? {};
-  const { isLoading, updateQuantity, updatePrescribedQuantity, updateNotes } =
-    useDraftPrescriptionLines(
-      currentItem,
-      draftPrescriptionLines,
-      updateLines,
-      DateUtils.getDateOrNull(prescriptionDate)
-    );
+  const { isLoading, updateQuantity, updateNotes } = useDraftPrescriptionLines(
+    currentItem,
+    draftPrescriptionLines,
+    updateLines,
+    DateUtils.getDateOrNull(prescriptionDate)
+  );
 
   const packSizeController = usePackSizeController(draftPrescriptionLines);
 
@@ -61,23 +60,16 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
     setIsDirty(true);
   };
 
-  const onUpdatePrescribedQuantity = (
-    itemId: string,
-    prescribedQuantity: number
-  ) => {
-    updatePrescribedQuantity(itemId, prescribedQuantity);
-    setIsDirty(true);
-  };
-
   const onAllocate = (
     numPacks: number,
     packSize: number | null,
-    autoAllocated = false
+    autoAllocated = false,
+    prescribedQuantity: number | null
   ) => {
     const newAllocateQuantities = allocateQuantities(
       status,
       draftPrescriptionLines
-    )(numPacks, packSize, true);
+    )(numPacks, packSize, true, prescribedQuantity);
 
     // Don't make saveable (isDirty) if item is new and has no auto-allocatable
     // stock
@@ -126,7 +118,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
       hasExpired={hasExpired}
       isLoading={isLoading}
       updateQuantity={onUpdateQuantity}
-      updatePrescribedQuantity={onUpdatePrescribedQuantity}
     />
   );
 };

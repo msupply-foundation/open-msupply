@@ -83,7 +83,7 @@ const useSaveLines = (id: string, invoiceNum: number) => {
             isCreated &&
             type === InvoiceLineNodeType.StockOut &&
             numberOfPacks > 0 &&
-            (prescribedQuantity ?? 0) > 0
+            !prescribedQuantity
         )
         .map(
           line =>
