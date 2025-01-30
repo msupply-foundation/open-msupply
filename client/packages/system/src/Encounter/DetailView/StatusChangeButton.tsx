@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SplitButton, SplitButtonOption } from '@common/components';
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 import { EncounterNodeStatus } from '@common/types';
@@ -21,8 +21,17 @@ export const StatusChangeButton = ({
   const onStatusClick = () => {
     if (!selectedOption.value || selectedOption.value === currentStatus) return;
     onSave(selectedOption.value);
-    setSelectedOption(selected => ({ ...selected, isDisabled: true }));
   };
+
+  useEffect(() => {
+    setSelectedOption(selected =>
+      encounterStatusOption(
+        selected.value ?? EncounterNodeStatus.Visited,
+        t,
+        currentStatus
+      )
+    );
+  }, [currentStatus]);
 
   const statusOptions = [
     encounterStatusOption(EncounterNodeStatus.Pending, t, currentStatus),

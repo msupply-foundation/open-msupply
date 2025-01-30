@@ -146,13 +146,18 @@ enum Action {
     /// User can specify max number of backup to keep, see example configuration file
     Backup,
     Restore(RestoreArguments),
-    BuildStandardReports,
+    BuildReports {
+        /// Optional reports path. If supplied, this dir should be the same structure as per standard reports.
+        /// Will generate a json of all reports within this directory
+        #[clap(short, long)]
+        path: Option<PathBuf>,
+    },
     /// Will generate a plugin bundle
     GeneratePluginBundle(GeneratePluginBundle),
-    UpsertReportsJson {
+    UpsertReports {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long)]
-        json_path: Option<PathBuf>,
+        path: Option<PathBuf>,
     },
 }
 
@@ -389,12 +394,14 @@ async fn main() -> anyhow::Result<()> {
             info!("Refresh data result: {:#?}", result);
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
-        Action::BuildStandardReports {} => {
+        Action::BuildReports { path } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
-            let base_reports_dir = Path::new("reports");
-
-            let report_names: Vec<PathBuf> = fs::read_dir(base_reports_dir)?
+            let base_reports_dir = match path.clone() {
+                Some(path) => path,
+                None => PathBuf::new().join("reports"),
+            };
+            let report_names: Vec<PathBuf> = fs::read_dir(base_reports_dir.clone())?
                 .filter_map(|r| r.ok())
                 .map(|e| e.path())
                 .filter(|p| p.is_dir())
@@ -527,9 +534,13 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
 
-            let output_path = base_reports_dir
-                .join("generated")
-                .join("standard_reports.json");
+            let output_name = if path.is_some() {
+                "reports.json"
+            } else {
+                "standard_reports.json"
+            };
+
+            let output_path = base_reports_dir.join("generated").join(output_name);
 
             fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
                 "Invalid output path: {:?}",
@@ -545,15 +556,19 @@ async fn main() -> anyhow::Result<()> {
                 },
             )?;
 
-            info!("All standard reports built");
+            if let Some(path) = path {
+                info!("All reports built in custom path {:?}", path);
+            } else {
+                info!("All standard reports built")
+            };
         }
-        Action::UpsertReportsJson { json_path } => {
+        Action::UpsertReports { path } => {
             let standard_reports_dir = Path::new("reports")
                 .join("generated")
                 .join("standard_reports.json");
 
-            let json_file = match json_path {
-                Some(json_path) => fs::File::open(json_path),
+            let json_file = match path {
+                Some(path) => fs::File::open(path),
                 None => fs::File::open(standard_reports_dir.clone()),
             }
             .expect(&format!(
