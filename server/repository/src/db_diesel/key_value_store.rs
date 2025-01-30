@@ -28,6 +28,7 @@ pub enum KeyType {
     ShipmentTransferProcessorCursor,
     RequisitionTransferProcessorCursor,
     ContactFormProcessorCursor,
+    LoadPluginProcessorCursor,
 
     SettingsSyncUrl,
     SettingsSyncUsername,
