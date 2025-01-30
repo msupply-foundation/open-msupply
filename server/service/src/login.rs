@@ -448,6 +448,9 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
             Permissions::ConfirmInternalOrderSent => {
                 output.insert(PermissionType::RequisitionSend);
             }
+            Permissions::CreateCustomerInvoicesFromRequisitions => {
+                output.insert(PermissionType::RequisitionCreateOutboundShipment);
+            }
             // reports
             Permissions::ViewReports => {
                 output.insert(PermissionType::Report);
