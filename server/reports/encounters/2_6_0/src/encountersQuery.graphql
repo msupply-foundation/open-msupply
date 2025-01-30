@@ -1,9 +1,15 @@
-query encountersQuery($storeId: String!, $programId: String!) {
+query encountersQuery(
+  $storeId: String!
+  $programId: String!
+  $after: DateTime
+  $before: DateTime
+) {
   encounters(
     storeId: $storeId
     filter: {
       programId: { equalTo: $programId }
       status: { equalTo: "PENDING" }
+      startDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }
     }
     sort: { key: "startDatetime", desc: false }
   ) {
