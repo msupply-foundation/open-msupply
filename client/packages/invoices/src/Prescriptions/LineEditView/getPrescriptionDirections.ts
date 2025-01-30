@@ -4,7 +4,7 @@ export interface Option {
   direction: string;
 }
 
-export const handleAbbreviations = (input: string, options: Option[]) => {
+export const getPrescriptionDirections = (input: string, options: Option[]) => {
   const output = input.split(' ');
   const matchedString = output.map(output => {
     const match = options.find(
