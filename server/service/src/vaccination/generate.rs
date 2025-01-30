@@ -25,6 +25,7 @@ pub fn generate_create_prescription(
         id: prescription_id.clone(),
         patient_id,
         diagnosis_id: None,
+        master_list_id: None,
     };
 
     let number_of_packs =

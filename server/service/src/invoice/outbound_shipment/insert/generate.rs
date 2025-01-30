@@ -52,6 +52,7 @@ pub fn generate(
         original_shipment_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
+        master_list_id: None,
     };
 
     Ok(result)
