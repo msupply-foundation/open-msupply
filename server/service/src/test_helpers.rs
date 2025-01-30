@@ -42,6 +42,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
     let settings = Settings {
         server: ServerSettings {
             port: 0,
+            disable_discovery: true,
             danger_allow_http: false,
             debug_no_access_control: false,
             cors_origins: vec![],
