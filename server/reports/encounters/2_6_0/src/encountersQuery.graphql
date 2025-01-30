@@ -4,7 +4,8 @@ query encountersQuery($storeId: String!, $programId: String!) {
     filter: {
       programId: { equalTo: $programId }
       status: { equalTo: "PENDING" }
-    } # key: "startDatetime"
+    }
+    sort: { key: "startDatetime", desc: false }
   ) {
     ... on EncounterConnector {
       nodes {
@@ -12,18 +13,20 @@ query encountersQuery($storeId: String!, $programId: String!) {
           id
           startDatetime
           type
-          status
           patient {
             firstName
             lastName
             dateOfBirth
+            nextOfKin {
+              firstName
+              lastName
+              phone
+            }
           }
           programEnrolment {
             programEnrolmentId
             status
           }
-          # TODO: next of kin loader
-          # TODO: prev encounter? heck
         }
       }
     }
