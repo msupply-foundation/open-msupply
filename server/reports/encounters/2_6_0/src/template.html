@@ -1,0 +1,33 @@
+{% macro formatDate(datetime) %} {% if datetime %}{{ datetime |
+date(format="%d/%m/%Y") }}{% endif %} {% endmacro input %}
+
+<style>
+  {% include "encounters.css" %}
+</style>
+
+<div class="container">
+  <table>
+    <thead>
+      <tr class="heading">
+        <td>{{t(k="label.program-id", f="Program ID")}}</td>
+        <td>{{t(k="label.first-name", f="First Name")}}</td>
+        <td>{{t(k="label.last-name", f="Last Name")}}</td>
+        <td>{{t(k="label.dob", f="DOB")}}</td>
+        <td>{{t(k="label.appointment-date", f="Appointment date")}}</td>
+        <td>{{t(k="label.status", f="Status")}}</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for encounter in data.encounters.nodes %}
+      <tr>
+        <td>{{encounter.programEnrolment.programEnrolmentId}}</td>
+        <td>{{encounter.patient.firstName}}</td>
+        <td>{{encounter.patient.lastName}}</td>
+        <td>{{self::formatDate(datetime=encounter.patient.dateOfBirth)}}</td>
+        <td>{{self::formatDate(datetime=encounter.startDatetime)}}</td>
+        <td>{{encounter.programEnrolment.status}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
