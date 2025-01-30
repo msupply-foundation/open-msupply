@@ -10,13 +10,17 @@ import {
   DateUtils,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import { PatientSearchInput } from '@openmsupply-client/system';
+import {
+  PatientSearchInput,
+  ProgramSearchInput,
+} from '@openmsupply-client/system';
 import { usePrescription } from '../api';
 import {
   Clinician,
   ClinicianSearchInput,
 } from '../../../../system/src/Clinician';
 import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
+import { useProgramList } from 'packages/programs/src';
 
 export const Toolbar: FC = () => {
   const {
@@ -35,6 +39,9 @@ export const Toolbar: FC = () => {
       DateUtils.getDateOrNull(createdDatetime) ??
       null
   );
+
+  const { data: programData } = useProgramList(true);
+  const programs = programData?.nodes ?? [];
 
   const {
     delete: { deleteLines },
@@ -141,7 +148,13 @@ export const Toolbar: FC = () => {
               }
             />
           </Box>
-          <Box display="flex" flexDirection="column" flex={1} marginLeft={3}>
+          <Box
+            display="flex"
+            flexDirection="column"
+            flex={1}
+            marginLeft={3}
+            gap={1}
+          >
             <InputWithLabelRow
               label={t('label.date')}
               Input={
@@ -154,6 +167,23 @@ export const Toolbar: FC = () => {
                 />
               }
             />
+            {programs.length > 0 && (
+              <InputWithLabelRow
+                label={t('label.program')}
+                Input={
+                  <ProgramSearchInput
+                    disabled={isDisabled}
+                    programs={programs}
+                    selectedProgram={programs[0]}
+                    onChange={() => {}}
+                    // value={DateUtils.getDateOrNull(dateValue) ?? new Date()}
+                    // format="P"
+                    // onChange={handleDateChange}
+                    // maxDate={new Date()}
+                  />
+                }
+              />
+            )}
           </Box>
         </Grid>
         <Grid
