@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Grid, Paper, Typography } from '@mui/material';
+import { Paper, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { StoryFn } from '@storybook/react';
 import { BasicTextInput } from './BasicTextInput';
 import { InputWithLabelRow } from './InputWithLabelRow';
 import { NumericTextInput } from './';
+import { Grid } from '@openmsupply-client/common';
 
 export default {
   title: 'Inputs/TextInputs',
@@ -20,9 +21,9 @@ const StyledPaper = styled(Paper)({
 
 const Template: StoryFn = () => (
   <Grid>
-    <Grid item>
+    <Grid>
       <Grid container spacing={1}>
-        <Grid item xs>
+        <Grid>
           <StyledPaper>
             <Typography>BasicTextInput</Typography>
             <BasicTextInput />
@@ -60,9 +61,9 @@ const NumericTemplate: StoryFn = () => {
 
   return (
     <Grid>
-      <Grid item>
+      <Grid>
         <Grid container spacing={1}>
-          <Grid item xs>
+          <Grid>
             <StyledPaper>
               <Typography>Numeric text input, default options</Typography>
               <NumericTextInput value={positive} onChange={setPositive} />

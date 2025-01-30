@@ -145,8 +145,10 @@ export const sumAvailableQuantity = (
   draftStockOutLines: DraftStockOutLine[]
 ) => {
   const sum = draftStockOutLines.reduce(
-    (acc, { stockLine, packSize }) =>
-      acc + (stockLine?.availableNumberOfPacks ?? 0) * packSize,
+    (acc, { stockLine, packSize, location }) =>
+      !location?.onHold && !stockLine?.onHold
+        ? acc + (stockLine?.availableNumberOfPacks ?? 0) * packSize
+        : acc,
     0
   );
 

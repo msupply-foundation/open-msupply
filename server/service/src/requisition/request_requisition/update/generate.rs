@@ -1,13 +1,16 @@
 use super::{UpdateRequestRequisition, UpdateRequestRequisitionStatus};
-use crate::requisition::{
-    common::get_lines_for_requisition,
-    request_requisition::{generate_suggested_quantity, GenerateSuggestedQuantity},
+use crate::{
+    requisition::{
+        common::get_lines_for_requisition,
+        request_requisition::{generate_suggested_quantity, GenerateSuggestedQuantity},
+    },
+    store_preference::get_store_preferences,
 };
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus},
     EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionLineRow, StorageConnection, StorePreferenceRowRepository,
+    RequisitionLineRepository, RequisitionLineRow, StorageConnection,
 };
 use util::inline_edit;
 
@@ -33,11 +36,8 @@ pub fn generate(
     }: UpdateRequestRequisition,
 ) -> Result<GenerateResult, RepositoryError> {
     let keep_requisition_lines_with_zero_requested_quantity_on_finalised =
-        StorePreferenceRowRepository::new(connection)
-            .find_one_by_id(&existing.store_id)?
-            .map_or(false, |p| {
-                p.keep_requisition_lines_with_zero_requested_quantity_on_finalised
-            });
+        get_store_preferences(connection, &existing.store_id)?
+            .keep_requisition_lines_with_zero_requested_quantity_on_finalised;
 
     // Recalculate lines only if max_months_of_stock or min_months_of_stock changed
     let update_threshold_months_of_stock =
