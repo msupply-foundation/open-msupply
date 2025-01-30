@@ -17,6 +17,7 @@ interface ConfirmationModalProps {
   info?: string | undefined;
   iconType?: 'alert' | 'info' | 'help';
   buttonLabel?: string | undefined;
+  cancelButtonLabel?: string | undefined;
 }
 
 const iconLookup = {
@@ -36,6 +37,7 @@ export const ConfirmationModal = ({
   onCancel,
   iconType = 'alert',
   buttonLabel,
+  cancelButtonLabel,
 }: ConfirmationModalProps) => {
   const [loading, setLoading] = useState(false);
   const Icon = iconLookup[iconType];
@@ -74,6 +76,7 @@ export const ConfirmationModal = ({
           <Grid>
             <DialogButton
               variant="cancel"
+              customLabel={cancelButtonLabel}
               disabled={loading}
               onClick={onCancel}
             />

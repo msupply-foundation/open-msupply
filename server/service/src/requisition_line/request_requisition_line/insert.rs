@@ -1,4 +1,5 @@
 use crate::{
+    backend_plugin::plugin_provider::PluginError,
     item::item::check_item_exists,
     requisition::{
         common::check_requisition_row_exists, request_requisition::generate_requisition_lines,
@@ -8,6 +9,7 @@ use crate::{
         query::get_requisition_line,
     },
     service_provider::ServiceContext,
+    PluginOrRepositoryError,
 };
 
 use repository::{
@@ -35,6 +37,7 @@ pub enum InsertRequestRequisitionLineError {
     NotThisStoreRequisition,
     CannotEditRequisition,
     NotARequestRequisition,
+    PluginError(PluginError),
     DatabaseError(RepositoryError),
     // Should never happen
     CannotFindItemStatusForRequisitionLine,
@@ -127,6 +130,17 @@ fn generate(
 impl From<RepositoryError> for InsertRequestRequisitionLineError {
     fn from(error: RepositoryError) -> Self {
         InsertRequestRequisitionLineError::DatabaseError(error)
+    }
+}
+
+impl From<PluginOrRepositoryError> for InsertRequestRequisitionLineError {
+    fn from(error: PluginOrRepositoryError) -> Self {
+        use InsertRequestRequisitionLineError as to;
+        use PluginOrRepositoryError as from;
+        match error {
+            from::RepositoryError(repository_error) => repository_error.into(),
+            from::PluginError(plugin_error) => to::PluginError(plugin_error),
+        }
     }
 }
 

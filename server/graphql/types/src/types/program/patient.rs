@@ -205,6 +205,10 @@ impl PatientNode {
         self.patient.date_of_death
     }
 
+    pub async fn next_of_kin_id(&self) -> &Option<String> {
+        &self.patient.next_of_kin_id
+    }
+
     pub async fn created_datetime(&self) -> Option<DateTime<Utc>> {
         self.patient.created_datetime.map(|created_datetime| {
             DateTime::<Utc>::from_naive_utc_and_offset(created_datetime, Utc)
