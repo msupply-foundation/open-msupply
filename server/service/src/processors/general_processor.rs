@@ -1,4 +1,3 @@
-use contact_form::QueueContactEmailProcessor;
 use repository::{
     ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, KeyType,
     RepositoryError, StorageConnection, TransactionError,
@@ -12,10 +11,10 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
 };
 
-mod contact_form;
+use super::contact_form::QueueContactEmailProcessor;
 
 #[derive(Error, Debug)]
-pub(crate) enum ProcessCentralRecordsError {
+pub(crate) enum ProcessorError {
     #[error("{0:?} not found: {1:?}")]
     RecordNotFound(String, String),
     #[error("{0:?}")]
@@ -27,23 +26,23 @@ pub(crate) enum ProcessCentralRecordsError {
 const CHANGELOG_BATCH_SIZE: u32 = 20;
 
 #[derive(Clone)]
-pub enum CentralRecordProcessorType {
+pub enum ProcessorType {
     ContactFormEmail,
 }
 
-impl CentralRecordProcessorType {
-    pub(super) fn get_processor(&self) -> Box<dyn CentralServerProcessor> {
+impl ProcessorType {
+    pub(super) fn get_processor(&self) -> Box<dyn Processor> {
         match self {
-            CentralRecordProcessorType::ContactFormEmail => Box::new(QueueContactEmailProcessor),
+            ProcessorType::ContactFormEmail => Box::new(QueueContactEmailProcessor),
         }
     }
 }
 
-pub(crate) fn process_central_records(
+pub(crate) fn process_records(
     service_provider: &ServiceProvider,
-    r#type: CentralRecordProcessorType,
-) -> Result<(), ProcessCentralRecordsError> {
-    use ProcessCentralRecordsError as Error;
+    r#type: ProcessorType,
+) -> Result<(), ProcessorError> {
+    use ProcessorError as Error;
 
     let processor = r#type.get_processor();
     if !processor.should_run() {
@@ -88,7 +87,7 @@ pub(crate) fn process_central_records(
     Ok(())
 }
 
-pub(super) trait CentralServerProcessor {
+pub(super) trait Processor {
     fn get_description(&self) -> String;
     /// Default to using change_log_table_names
     fn changelogs_filter(&self) -> ChangelogFilter {
@@ -114,11 +113,11 @@ pub(super) trait CentralServerProcessor {
         &self,
         ctx: &ServiceContext,
         changelog: &ChangelogRow,
-    ) -> Result<Option<String>, ProcessCentralRecordsError> {
+    ) -> Result<Option<String>, ProcessorError> {
         let result = ctx
             .connection
             .transaction_sync(|connection| self.try_process_record(connection, changelog))
-            .map_err(ProcessCentralRecordsError::from)?;
+            .map_err(ProcessorError::from)?;
 
         if let Some(result) = &result {
             log::info!("{} - {}", self.get_description(), result);
@@ -131,17 +130,14 @@ pub(super) trait CentralServerProcessor {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<String>, ProcessCentralRecordsError>;
+    ) -> Result<Option<String>, ProcessorError>;
 }
 
-impl From<TransactionError<ProcessCentralRecordsError>> for ProcessCentralRecordsError {
-    fn from(error: TransactionError<ProcessCentralRecordsError>) -> Self {
+impl From<TransactionError<ProcessorError>> for ProcessorError {
+    fn from(error: TransactionError<ProcessorError>) -> Self {
         match error {
             TransactionError::Transaction { msg, level } => {
-                ProcessCentralRecordsError::DatabaseError(RepositoryError::TransactionError {
-                    msg,
-                    level,
-                })
+                ProcessorError::DatabaseError(RepositoryError::TransactionError { msg, level })
             }
             TransactionError::Inner(e) => e,
         }

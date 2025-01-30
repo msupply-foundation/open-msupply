@@ -11,7 +11,7 @@ use crate::{
         enqueue::{enqueue_email, EnqueueEmailData},
         EmailServiceError,
     },
-    processors::{central_records::CentralServerProcessor, ProcessCentralRecordsError},
+    processors::general_processor::{Processor, ProcessorError},
     sync::CentralServerConfig,
 };
 use nanohtml2text::html2text;
@@ -20,7 +20,7 @@ const DESCRIPTION: &str = "Adds an email to the queue from a contact form";
 
 pub(crate) struct QueueContactEmailProcessor;
 
-impl CentralServerProcessor for QueueContactEmailProcessor {
+impl Processor for QueueContactEmailProcessor {
     fn get_description(&self) -> String {
         DESCRIPTION.to_string()
     }
@@ -31,13 +31,13 @@ impl CentralServerProcessor for QueueContactEmailProcessor {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<String>, ProcessCentralRecordsError> {
+    ) -> Result<Option<String>, ProcessorError> {
         let filter = ContactFormFilter::new().id(EqualFilter::equal_to(&changelog.record_id));
 
         let contact_form = ContactFormRepository::new(connection)
             .query_one(filter)
-            .map_err(ProcessCentralRecordsError::DatabaseError)?
-            .ok_or(ProcessCentralRecordsError::RecordNotFound(
+            .map_err(ProcessorError::DatabaseError)?
+            .ok_or(ProcessorError::RecordNotFound(
                 "Contact Form".to_string(),
                 changelog.record_id.clone(),
             ))?;
@@ -52,7 +52,7 @@ impl CentralServerProcessor for QueueContactEmailProcessor {
                     contact_form.contact_form_row.id,
                     e
                 );
-                return Err(ProcessCentralRecordsError::EmailServiceError(e));
+                return Err(ProcessorError::EmailServiceError(e));
             }
         };
 
@@ -101,7 +101,7 @@ fn create_email(contact_form: &ContactForm) -> Result<EnqueueEmailData, EmailSer
     } = &contact_form;
 
     let template_name = "contact.html";
-    let base_html_template = include_str!("../../../email/base.html");
+    let base_html_template = include_str!("../../email/base.html");
     let html_template = include_str!("templates/contact.html");
 
     let mut tera = Tera::default();
