@@ -1610,6 +1610,7 @@
   "report.amc-12-months": "AMC (12 months)",
   "report.amc-24-months": "AMC (24 months)",
   "report.amc-lookback": "AMC Lookback Period",
+  "report.amc-for-lookback": "AMC (lookback period)",
   "report.authorized-by": "Authorized by",
   "report.available-stock-on-hand": "Available stock on hand",
   "report.collected-by": "Collected by",
