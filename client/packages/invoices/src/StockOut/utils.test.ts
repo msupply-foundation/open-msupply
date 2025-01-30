@@ -775,15 +775,49 @@ describe('Allocated quantities - coping with over-allocation', () => {
   });
 });
 
-describe('updatePrescribeQuantity', () => {
-  it('should update the prescribed quantity for a line', () => {
-    const line = createTestLine({
-      prescribedQuantity: 10,
-    });
+describe('updatePrescribedQuantity', () => {
+  const line1 = createTestLine({
+    id: 'line1.id',
+    prescribedQuantity: 10,
+    itemId: 'item1.id',
+    numberOfPacks: 5,
+  });
 
-    const result = updatePrescribedQuantity([line], line.item.id, 15);
+  const line2 = createTestLine({
+    id: 'line2.id',
+    prescribedQuantity: 10,
+    itemId: 'item2.id',
+    numberOfPacks: 0,
+  });
+
+  const line3 = createTestLine({
+    id: 'line3.id',
+    prescribedQuantity: 10,
+    itemId: 'item3.id',
+    numberOfPacks: 3,
+  });
+
+  it('should update the prescribed quantity for lines with numberOfPacks that are greater than zero', () => {
+    const result = updatePrescribedQuantity(
+      [line1, line2, line3],
+      'item1.id',
+      15
+    );
+
     expect(result).toEqual([
-      { ...line, prescribedQuantity: 15, isUpdated: true },
+      { ...line1, prescribedQuantity: 15, isUpdated: true },
+      line2,
+      line3,
     ]);
+  });
+
+  it('should not update lines with numberOfPacks that are less than zero', () => {
+    const result = updatePrescribedQuantity(
+      [line1, line2, line3],
+      'item2.id',
+      20
+    );
+
+    expect(result).toEqual([line1, line2, line3]);
   });
 });

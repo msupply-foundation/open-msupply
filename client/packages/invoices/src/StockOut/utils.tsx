@@ -474,19 +474,14 @@ export const updatePrescribedQuantity = (
   itemId: string,
   prescribedQuantity: number
 ) => {
-  const stockOutLineIndex = draftStockOutLines.findIndex(
-    ({ item }) => item.id === itemId
-  );
-
-  const selectedStockOutLineRow = draftStockOutLines[stockOutLineIndex];
-  if (!selectedStockOutLineRow) return draftStockOutLines;
-
-  const newDraftStockOutLines = [...draftStockOutLines];
-  newDraftStockOutLines[stockOutLineIndex] = {
-    ...selectedStockOutLineRow,
-    prescribedQuantity,
-    isUpdated: true,
-  };
-
-  return newDraftStockOutLines;
+  return draftStockOutLines.map(line => {
+    if (line.numberOfPacks > 0 && line.item.id == itemId) {
+      return {
+        ...line,
+        prescribedQuantity,
+        isUpdated: true,
+      };
+    }
+    return line;
+  });
 };
