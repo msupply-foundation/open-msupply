@@ -10,6 +10,7 @@ import {
   InvoiceNodeStatus,
   useIntlUtils,
   InvoiceLineNode,
+  DialogButton,
 } from '@openmsupply-client/common';
 import { Draft } from '../../..';
 
@@ -87,7 +88,12 @@ export const HistoryModal: React.FC<HistoryModalModalProps> = ({
         initialSortBy: { key: 'expiryDate' },
       })}
     >
-      <Modal title={t('heading.history')} width={900} height={600}>
+      <Modal
+        title={t('heading.recently-prescribed')}
+        width={900}
+        height={600}
+        okButton={<DialogButton variant="ok" onClick={onClose} />}
+      >
         <DataTable
           id="prescription-line-edit"
           columns={columns}
