@@ -12,6 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   ItemStockOnHandFragment,
+  StockOnHandFilter,
   useItemById,
   useItemStockOnHandInfinite,
 } from '../../api';
@@ -31,6 +32,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   openOnFocus,
   includeNonVisibleWithStockOnHand = false,
   itemCategoryName,
+  masterListId,
 }) => {
   const { filter, onFilter } = useStringFilter('codeOrName');
   const [search, setSearch] = useState('');
@@ -43,9 +45,9 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
     DEBOUNCE_TIMEOUT
   );
 
-  const fullFilter = itemCategoryName
-    ? { ...filter, categoryName: itemCategoryName }
-    : filter;
+  const fullFilter: StockOnHandFilter = { ...filter };
+  if (itemCategoryName) fullFilter['categoryName'] = itemCategoryName;
+  if (masterListId) fullFilter['masterListId'] = { equalTo: masterListId };
 
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
     useItemStockOnHandInfinite({
