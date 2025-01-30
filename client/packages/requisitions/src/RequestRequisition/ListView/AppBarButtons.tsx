@@ -28,7 +28,7 @@ export const AppBarButtons: FC<{
   const t = useTranslation();
   const navigate = useNavigate();
   const { mutateAsync: onCreate } = useRequest.document.insert();
-  const { mutateAsync: onProgramCreate } = useRequest.document.insertProgram();
+  const { insert: onProgramCreate } = useRequest.document.insertProgram();
   const { success, error } = useNotification();
   const { isLoading, fetchAsync } = useRequest.document.listAll({
     key: 'createdDatetime',
@@ -69,13 +69,13 @@ export const AppBarButtons: FC<{
         isOpen={modalController.isOn}
         onClose={modalController.toggleOff}
         onCreate={async newRequisition => {
-          modalController.toggleOff();
           switch (newRequisition.type) {
             case NewRequisitionType.General:
               return onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId: newRequisition.name.id,
               }).then(({ requisitionNumber }) => {
+                modalController.toggleOff();
                 navigate(
                   RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InternalOrder)
@@ -89,13 +89,16 @@ export const AppBarButtons: FC<{
               return onProgramCreate({
                 id: FnUtils.generateUUID(),
                 ...rest,
-              }).then(({ requisitionNumber }) => {
-                navigate(
-                  RouteBuilder.create(AppRoute.Replenishment)
-                    .addPart(AppRoute.InternalOrder)
-                    .addPart(String(requisitionNumber))
-                    .build()
-                );
+              }).then((response) => {
+                if (response.__typename == "RequisitionNode") {
+                  modalController.toggleOff()
+                  navigate(
+                    RouteBuilder.create(AppRoute.Replenishment)
+                      .addPart(AppRoute.InternalOrder)
+                      .addPart(String(response.requisitionNumber))
+                      .build()
+                  );
+                }
               });
           }
         }}
