@@ -262,64 +262,61 @@ export const usePrescriptionColumn = ({
     ],
 
     {
-      label: 'label.unit-price',
-      key: 'sellPricePerUnit',
+      label: 'label.cost-price',
+      key: 'costPrice',
       align: ColumnAlign.Right,
       Cell: CurrencyCell,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           // Multiple lines, so we need to calculate the average price per unit
-
-          let totalSellPrice = 0;
-          let totalUnits = 0;
-
+          let totalCostPrice = 0;
           for (const line of rowData.lines) {
-            totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
-            totalUnits += line.numberOfPacks * line.packSize;
+            totalCostPrice += line.costPricePerPack * line.numberOfPacks;
           }
-
-          return totalSellPrice / totalUnits;
+          return totalCostPrice;
         } else {
-          return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
+          return (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks;
         }
       },
       getSortValue: rowData => {
         if ('lines' in rowData) {
           return Object.values(rowData.lines).reduce(
             (sum, batch) =>
-              sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
+              sum + (batch.costPricePerPack ?? 0) * batch.numberOfPacks,
             0
           );
         } else {
-          return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
+          return (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks;
         }
       },
     },
+
     {
-      label: 'label.line-total',
-      key: 'lineTotal',
+      label: 'label.sell-price',
+      key: 'sellPrice',
       align: ColumnAlign.Right,
       Cell: CurrencyCell,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
-          return Object.values(rowData.lines).reduce(
-            (sum, batch) => sum + batch.sellPricePerPack * batch.numberOfPacks,
-            0
-          );
+          // Multiple lines, so we need to calculate the average price per unit
+          let totalSellPrice = 0;
+          for (const line of rowData.lines) {
+            totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
+          }
+          return totalSellPrice;
         } else {
-          const x = rowData.sellPricePerPack * rowData.numberOfPacks;
-          return x;
+          return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
         }
       },
-      getSortValue: row => {
-        if ('lines' in row) {
-          return Object.values(row.lines).reduce(
-            (sum, batch) => sum + batch.sellPricePerPack * batch.numberOfPacks,
+      getSortValue: rowData => {
+        if ('lines' in rowData) {
+          return Object.values(rowData.lines).reduce(
+            (sum, batch) =>
+              sum + (batch.sellPricePerPack ?? 0) * batch.numberOfPacks,
             0
           );
         } else {
-          const x = row.sellPricePerPack * row.numberOfPacks;
-          return x;
+          return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
         }
       },
     },
