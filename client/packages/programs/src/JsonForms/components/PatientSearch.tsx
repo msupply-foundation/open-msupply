@@ -13,6 +13,7 @@ export const patientSearchTester = rankWith(10, uiTypeIs('PatientSearch'));
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path } = props;
+
   const [patient, setPatient] = React.useState<SearchInputPatient | null>(null);
 
   const onChangePatient = async (patient: SearchInputPatient) => {
@@ -26,10 +27,6 @@ const UIComponent = (props: ControlProps) => {
     if (!patientData) return;
     setPatient(patientData);
   }, [patientData]);
-
-  if (!props.visible) {
-    return null;
-  }
 
   return (
     <DetailInputWithLabelRow
@@ -46,4 +43,11 @@ const UIComponent = (props: ControlProps) => {
   );
 };
 
-export const PatientSearch = withJsonFormsControlProps(UIComponent);
+const UIComponentWrapper = (props: ControlProps) => {
+  if (!props.visible) {
+    return null;
+  }
+  return <UIComponent {...props} />;
+};
+
+export const PatientSearch = withJsonFormsControlProps(UIComponentWrapper);
