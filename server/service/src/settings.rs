@@ -24,7 +24,7 @@ pub struct ServerSettings {
     #[serde(default)]
     pub debug_no_access_control: bool,
     #[serde(default)]
-    pub disable_discovery: bool,
+    pub discovery: DiscoveryMode,
     /// Sets the allowed origin for cors requests
     pub cors_origins: Vec<String>,
     /// Directory where the server stores its data, e.g. sqlite DB file or certs
@@ -65,6 +65,14 @@ pub enum LogMode {
     All,
     Console,
     File,
+}
+
+#[derive(serde::Deserialize, Clone, Default)]
+pub enum DiscoveryMode {
+    #[default]
+    Auto,
+    Enabled,
+    Disabled,
 }
 
 #[derive(serde::Deserialize, Clone, Debug)]

@@ -1,6 +1,7 @@
 server:
   port: 8000
-  # disable_discovery: true # enable this if you don't want to use the discovery service, mainly for development
+  #   one of: Auto | Enabled | Disabled - Auto will enable discovery if the server is running in development mode
+  # discovery: Auto
   # debug_no_access_control: true # enable this if you want to ignore API authorisation (dummy user will be used for all operations)
   # danger_allow_http: true # allow http in production mode
   cors_origins: [
