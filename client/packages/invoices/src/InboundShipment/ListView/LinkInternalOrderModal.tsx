@@ -9,6 +9,7 @@ import {
   useTranslation,
   useDialog,
   DialogButton,
+  Typography,
 } from '@openmsupply-client/common';
 
 interface LinkInternalOrderModalProps {
@@ -71,14 +72,23 @@ export const LinkInternalOrderModal = ({
       nextButton={<DialogButton variant="next" onClick={createInvoice} />}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
-      <DataTable
-        id="link-internal-order-to-inbound"
-        columns={columns}
-        data={data ?? []}
-        dense
-        onRowClick={onRowClick}
-        isLoading={isLoading}
-      />
+      <>
+        <Typography
+          sx={{
+            fontStyle: 'italic',
+          }}
+        >
+          {t('message.continue-to-make-inbound-shipment')}
+        </Typography>
+        <DataTable
+          id="link-internal-order-to-inbound"
+          columns={columns}
+          data={data ?? []}
+          dense
+          onRowClick={onRowClick}
+          isLoading={isLoading}
+        />
+      </>
     </Modal>
   );
 };
