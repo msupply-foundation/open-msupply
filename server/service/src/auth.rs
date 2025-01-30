@@ -67,6 +67,7 @@ pub enum Resource {
     RequisitionChart,
     RequisitionStats,
     RequisitionSend,
+    CreateOutboundShipmentFromRequisition,
     // stock take line
     InsertStocktakeLine,
     UpdateStocktakeLine,
@@ -333,6 +334,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::RequisitionSend),
+        ]),
+    );
+
+    map.insert(
+        Resource::CreateOutboundShipmentFromRequisition,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::RequisitionCreateOutboundShipment),
         ]),
     );
     // r&r form
@@ -607,6 +616,7 @@ pub enum AuthError {
     InternalError(String),
 }
 
+#[derive(Debug)]
 pub struct ValidatedUserAuth {
     pub user_id: String,
     pub claims: OmSupplyClaim,

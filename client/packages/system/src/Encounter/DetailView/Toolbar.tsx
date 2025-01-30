@@ -11,13 +11,8 @@ import {
   UserIcon,
   useFormatDateTime,
   ClinicianNode,
-  EncounterNodeStatus,
-  LocaleKey,
-  TypedTFunction,
-  Option,
   useIntlUtils,
   DocumentRegistryCategoryNode,
-  DeleteIcon,
   SxProps,
   Theme,
 } from '@openmsupply-client/common';
@@ -30,23 +25,7 @@ import {
   ClinicianSearchInput,
 } from '../../Clinician';
 import { Clinician } from '../../Clinician/utils';
-import {
-  DateTimePickerInput,
-  IconButton,
-  Select,
-  useConfirmationModal,
-} from '@common/components';
-import { encounterStatusTranslation } from '../utils';
-
-const encounterStatusOption = (
-  status: EncounterNodeStatus,
-  t: TypedTFunction<LocaleKey>
-): Option => {
-  return {
-    label: encounterStatusTranslation(status, t),
-    value: status,
-  };
-};
+import { DateTimePickerInput } from '@common/components';
 
 const Row = ({
   label,
@@ -80,17 +59,9 @@ const updateEndDatetimeFromStartDate = (
 
 interface ToolbarProps {
   onChange: (patch: Partial<EncounterFragment>) => void;
-  onDelete: () => void;
   encounter: EncounterFragment;
 }
-export const Toolbar: FC<ToolbarProps> = ({
-  encounter,
-  onChange,
-  onDelete,
-}) => {
-  const [status, setStatus] = useState<EncounterNodeStatus | undefined>(
-    encounter.status ?? undefined
-  );
+export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   const [startDatetime, setStartDatetime] = useState<string | undefined>();
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation();
@@ -107,7 +78,6 @@ export const Toolbar: FC<ToolbarProps> = ({
     });
 
   useEffect(() => {
-    setStatus(encounter.status ?? undefined);
     setStartDatetime(encounter.startDatetime);
     setEndDatetime(encounter.endDatetime);
     setClinician({
@@ -119,30 +89,8 @@ export const Toolbar: FC<ToolbarProps> = ({
     });
   }, [encounter, getLocalisedFullName]);
 
-  const getDeleteConfirmation = useConfirmationModal({
-    message: t('message.confirm-delete-encounter'),
-    title: t('title.confirm-delete-encounter'),
-  });
-
-  const onDeleteClick = () => {
-    getDeleteConfirmation({
-      onConfirm: () => {
-        setStatus(EncounterNodeStatus.Deleted);
-        onDelete();
-      },
-    });
-  };
-
   const { patient } = encounter;
 
-  const statusOptions = [
-    encounterStatusOption(EncounterNodeStatus.Pending, t),
-    encounterStatusOption(EncounterNodeStatus.Visited, t),
-    encounterStatusOption(EncounterNodeStatus.Cancelled, t),
-  ];
-  if (status === EncounterNodeStatus.Deleted) {
-    statusOptions.push(encounterStatusOption(EncounterNodeStatus.Deleted, t));
-  }
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
@@ -153,7 +101,6 @@ export const Toolbar: FC<ToolbarProps> = ({
         alignItems="center"
       >
         <Grid
-          item
           sx={{
             alignItems: 'center',
             backgroundColor: 'background.menu',
@@ -169,7 +116,7 @@ export const Toolbar: FC<ToolbarProps> = ({
             <UserIcon fontSize="large" style={{ flex: 1 }} />
           </Box>
         </Grid>
-        <Grid item display="flex" flex={1}>
+        <Grid display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={0.5}>
             <Box display="flex" gap={1.5}>
               <Row
@@ -186,32 +133,6 @@ export const Toolbar: FC<ToolbarProps> = ({
                     value={localisedDate(patient.dateOfBirth ?? '')}
                   />
                 }
-              />
-
-              <Row
-                label={t('label.encounter-status')}
-                sx={{ marginLeft: 'auto' }}
-                Input={
-                  <Select
-                    fullWidth
-                    onChange={event => {
-                      const newStatus = event.target
-                        .value as EncounterNodeStatus;
-                      setStatus(newStatus);
-                      onChange({
-                        status: newStatus,
-                      });
-                    }}
-                    options={statusOptions}
-                    value={status}
-                  />
-                }
-              />
-
-              <IconButton
-                icon={<DeleteIcon />}
-                onClick={onDeleteClick}
-                label={t('label.delete')}
               />
             </Box>
             <Box display="flex" gap={1.5}>

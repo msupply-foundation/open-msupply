@@ -33,11 +33,13 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
 };
-
 use util::inline_init;
 
 mod backup;
 use backup::*;
+
+mod plugins;
+use plugins::*;
 
 use cli::{generate_reports_recursive, RefreshDatesRepository};
 
@@ -150,10 +152,12 @@ enum Action {
         #[clap(short, long)]
         path: Option<PathBuf>,
     },
+    /// Will generate a plugin bundle
+    GeneratePluginBundle(GeneratePluginBundle),
     UpsertReports {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long)]
-        json_path: Option<PathBuf>,
+        path: Option<PathBuf>,
     },
 }
 
@@ -435,13 +439,13 @@ async fn main() -> anyhow::Result<()> {
                 info!("All standard reports built")
             };
         }
-        Action::UpsertReports { json_path } => {
+        Action::UpsertReports { path } => {
             let standard_reports_dir = Path::new("reports")
                 .join("generated")
                 .join("standard_reports.json");
 
-            let json_file = match json_path {
-                Some(json_path) => fs::File::open(json_path),
+            let json_file = match path {
+                Some(path) => fs::File::open(path),
                 None => fs::File::open(standard_reports_dir.clone()),
             }
             .expect(&format!(
@@ -516,6 +520,9 @@ async fn main() -> anyhow::Result<()> {
         }
         Action::Restore(arguments) => {
             restore(&settings, arguments)?;
+        }
+        Action::GeneratePluginBundle(arguments) => {
+            generate_plugin_bundle(arguments)?;
         }
     }
 
