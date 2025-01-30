@@ -30,6 +30,7 @@ fragment StockOutLine on InvoiceLineNode {
   numberOfPacks
   packSize
   invoiceId
+  costPricePerPack
   sellPricePerPack
   note
   totalBeforeTax
