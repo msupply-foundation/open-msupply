@@ -97,16 +97,18 @@ export const ContactForm = () => {
             onChange={e => {
               updateDraft({ body: e.target.value });
             }}
-            InputProps={{
-              sx: {
-                backgroundColor: 'background.menu',
+            slotProps={{
+              input: {
+                sx: {
+                  backgroundColor: 'background.menu',
+                },
               },
             }}
             fullWidth
           />
         }
       />
-      <Grid item justifyContent="flex-end" width="100%" display="flex">
+      <Grid justifyContent="flex-end" width="100%" display="flex">
         <LoadingButton
           isLoading={false}
           startIcon={<MailIcon />}

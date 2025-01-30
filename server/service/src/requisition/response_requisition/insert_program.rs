@@ -2,7 +2,10 @@ use crate::{
     activity_log::activity_log_entry,
     number::next_number,
     requisition::{
-        common::{check_requisition_row_exists, default_indicator_value},
+        common::{
+            check_exceeded_max_orders_for_period, check_requisition_row_exists,
+            default_indicator_value, CheckExceededOrdersForPeriod,
+        },
         program_indicator::query::{program_indicators, ProgramIndicator},
         program_settings::get_customer_program_requisition_settings,
         query::get_requisition,
@@ -135,6 +138,19 @@ fn validate(
         .ok_or(OutError::ProgramOrderTypeDoesNotExist)?;
 
     if order_type.available_periods.is_empty() {
+        return Err(OutError::MaxOrdersReachedForPeriod);
+    }
+
+    if check_exceeded_max_orders_for_period(
+        connection,
+        CheckExceededOrdersForPeriod {
+            program_id: &program_setting.program_requisition_settings.program_row.id,
+            period_id: &input.period_id,
+            program_order_type_id: &input.program_order_type_id,
+            max_orders_per_period: i64::from(order_type.order_type.max_order_per_period),
+            requisition_type: RequisitionType::Response,
+        },
+    )? {
         return Err(OutError::MaxOrdersReachedForPeriod);
     }
 

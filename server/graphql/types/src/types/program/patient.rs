@@ -45,6 +45,7 @@ pub struct PatientFilterInput {
     pub identifier: Option<StringFilterInput>,
     pub date_of_death: Option<DateFilterInput>,
     pub program_enrolment_name: Option<StringFilterInput>,
+    pub next_of_kin_name: Option<StringFilterInput>,
 }
 
 impl From<PatientFilterInput> for PatientFilter {
@@ -66,6 +67,7 @@ impl From<PatientFilterInput> for PatientFilter {
             identifier: f.identifier.map(StringFilter::from),
             date_of_death: f.date_of_death.map(DateFilter::from),
             program_enrolment_name: f.program_enrolment_name.map(StringFilter::from),
+            next_of_kin_name: f.next_of_kin_name.map(StringFilter::from),
         }
     }
 }
@@ -203,6 +205,10 @@ impl PatientNode {
 
     pub async fn date_of_death(&self) -> Option<NaiveDate> {
         self.patient.date_of_death
+    }
+
+    pub async fn next_of_kin_id(&self) -> &Option<String> {
+        &self.patient.next_of_kin_id
     }
 
     pub async fn created_datetime(&self) -> Option<DateTime<Utc>> {
