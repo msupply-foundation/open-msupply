@@ -1,5 +1,6 @@
 use crate::sync::test::TestSyncIncomingRecord;
 use repository::{StorePreferenceRow, StorePreferenceType};
+use util::constants::DEFAULT_AMC_LOOKBACK_MONTHS;
 
 const TABLE_NAME: &str = "pref";
 
@@ -154,7 +155,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 om_program_module: true,
                 vaccine_module: false,
                 issue_in_foreign_currency: true,
-                monthly_consumption_look_back_period: 0.0,
+                monthly_consumption_look_back_period: DEFAULT_AMC_LOOKBACK_MONTHS,
                 months_lead_time: 0.0,
                 months_overstock: 6.12,
                 months_understock: 4.42,
@@ -179,7 +180,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 om_program_module: false,
                 vaccine_module: true,
                 issue_in_foreign_currency: false,
-                monthly_consumption_look_back_period: 0.0,
+                monthly_consumption_look_back_period: DEFAULT_AMC_LOOKBACK_MONTHS,
                 months_lead_time: 0.0,
                 months_overstock: 6.0,
                 months_understock: 3.0,

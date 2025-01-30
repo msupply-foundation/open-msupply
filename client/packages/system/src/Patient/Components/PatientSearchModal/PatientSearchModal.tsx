@@ -3,8 +3,10 @@ import {
   AutocompleteList,
   BasicModal,
   Box,
+  ButtonWithIcon,
   createQueryParamsStore,
   ModalTitle,
+  PlusCircleIcon,
   QueryParamsProvider,
   Typography,
   useTranslation,
@@ -23,6 +25,7 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
   open,
   onClose,
   onChange,
+  openPatientModal,
 }) => {
   const t = useTranslation();
   const PatientOptionRenderer = getPatientOptionRenderer();
@@ -63,6 +66,16 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
             if (name && !(name instanceof Array)) onChange(name);
           }}
           noOptionsText=""
+        />
+      </Box>
+      <Box p={2}>
+        <ButtonWithIcon
+          Icon={<PlusCircleIcon />}
+          label={t('button.create-new-patient')}
+          onClick={() => {
+            handleClose();
+            openPatientModal();
+          }}
         />
       </Box>
     </BasicModal>
