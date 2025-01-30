@@ -14,16 +14,11 @@ import {
   createDraftStockOutLineFromStockLine,
   issueStock,
   updateNotes,
-  updatePrescribedQuantity,
 } from '../../../StockOut/utils';
 
 export interface UseDraftPrescriptionLinesControl {
   updateNotes: (note: string) => void;
   updateQuantity: (batchId: string, packs: number) => void;
-  updatePrescribedQuantity: (
-    itemId: string,
-    prescribedQuantity: number
-  ) => void;
   isLoading: boolean;
 }
 
@@ -132,19 +127,9 @@ export const useDraftPrescriptionLines = (
     [draftLines]
   );
 
-  const onPrescribedQuantityUpdate = useCallback(
-    (itemId: string, prescribedQuantity: number) => {
-      updateDraftLines(
-        updatePrescribedQuantity(draftLines, itemId, prescribedQuantity)
-      );
-    },
-    [draftLines]
-  );
-
   return {
     isLoading,
     updateQuantity: onChangeRowQuantity,
     updateNotes: onUpdateNote,
-    updatePrescribedQuantity: onPrescribedQuantityUpdate,
   };
 };
