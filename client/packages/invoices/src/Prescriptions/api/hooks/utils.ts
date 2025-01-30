@@ -35,13 +35,13 @@ export const createInputObject = (
     line;
 
   const stockLineId = stockLine?.id ?? '';
-  const output = { id, numberOfPacks, stockLineId, note };
+  const output = { id, numberOfPacks, stockLineId, note, prescribedQuantity };
 
   switch (type) {
     case 'delete':
       return { id };
     case 'update':
-      return { ...output, prescribedQuantity };
+      return { ...output };
     case 'insert':
       return { ...output, invoiceId };
   }

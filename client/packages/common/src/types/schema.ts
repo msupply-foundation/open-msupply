@@ -928,6 +928,26 @@ export type CentralPatientSearchInput = {
 
 export type CentralPatientSearchResponse = CentralPatientSearchConnector | CentralPatientSearchError;
 
+export type CentralPluginMutations = {
+  __typename: 'CentralPluginMutations';
+  installUploadedPlugin: PluginInfoNode;
+};
+
+
+export type CentralPluginMutationsInstallUploadedPluginArgs = {
+  fileId: Scalars['String']['input'];
+};
+
+export type CentralPluginQueries = {
+  __typename: 'CentralPluginQueries';
+  uploadedPluginInfo: UploadedPluginInfoResponse;
+};
+
+
+export type CentralPluginQueriesUploadedPluginInfoArgs = {
+  fileId: Scalars['String']['input'];
+};
+
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   assetCatalogue: AssetCatalogueMutations;
@@ -936,7 +956,13 @@ export type CentralServerMutationNode = {
   general: CentralGeneralMutations;
   itemVariant: ItemVariantMutations;
   logReason: AssetLogReasonMutations;
+  plugins: CentralPluginMutations;
   vaccineCourse: VaccineCourseMutations;
+};
+
+export type CentralServerQueryNode = {
+  __typename: 'CentralServerQueryNode';
+  plugin: CentralPluginQueries;
 };
 
 export type CentralSyncRequired = AuthTokenErrorInterface & {
@@ -2920,6 +2946,7 @@ export type InsertPrescriptionLineInput = {
   invoiceId: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacks: Scalars['Float']['input'];
+  prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
   stockLineId: Scalars['String']['input'];
 };
 
@@ -3395,7 +3422,7 @@ export type InvoiceLineNode = {
   note?: Maybe<Scalars['String']['output']>;
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
-  prescribedQuantity: Scalars['Float']['output'];
+  prescribedQuantity?: Maybe<Scalars['Float']['output']>;
   pricing: PricingNode;
   returnReason?: Maybe<ReturnReasonNode>;
   returnReasonId?: Maybe<Scalars['String']['output']>;
@@ -5361,6 +5388,11 @@ export type PluginDataSortInput = {
   key: PluginDataSortFieldInput;
 };
 
+export type PluginInfoNode = {
+  __typename: 'PluginInfoNode';
+  backendPluginCodes: Array<Scalars['String']['output']>;
+};
+
 export type PluginNode = {
   __typename: 'PluginNode';
   config: Scalars['String']['output'];
@@ -5678,6 +5710,7 @@ export type Queries = {
   authToken: AuthTokenResponse;
   barcodeByGtin: BarcodeResponse;
   centralPatientSearch: CentralPatientSearchResponse;
+  centralServer: CentralServerQueryNode;
   clinicians: CliniciansResponse;
   /** Query omSupply "cold_storage_type" entries */
   coldStorageTypes: ColdStorageTypesResponse;
@@ -8786,6 +8819,17 @@ export type UpdateVaccineCourseInput = {
 };
 
 export type UpdateVaccineCourseResponse = UpdateVaccineCourseError | VaccineCourseNode;
+
+export type UploadedPluginError = {
+  __typename: 'UploadedPluginError';
+  error: UploadedPluginErrorVariant;
+};
+
+export enum UploadedPluginErrorVariant {
+  CannotParseFile = 'CANNOT_PARSE_FILE'
+}
+
+export type UploadedPluginInfoResponse = PluginInfoNode | UploadedPluginError;
 
 export type UpsertBundledItemError = {
   __typename: 'UpsertBundledItemError';
