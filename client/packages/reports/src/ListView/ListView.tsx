@@ -45,8 +45,10 @@ export const ListView = () => {
   );
   const programReports = data?.nodes?.filter(
     report =>
-      report?.subContext === 'HIVCareProgram' &&
-      report?.context === ReportContext.Dispensary
+      report?.context === ReportContext.Dispensary &&
+      (report?.subContext === 'HIVCareProgram' ||
+        // TODO: Also check vaccine module enabled?
+        report.subContext === 'Encounters')
   );
   const onReportClick = (report: ReportRowFragment) => {
     if (report.argumentSchema) {
