@@ -274,7 +274,8 @@ const TRANSACT_2: (&str, &str) = (
         "user_ID": "0763E2E3053D4C478E1E6B6B03FEC207",
         "wardID": "",
         "waybill_number": "",
-        "om_transport_reference": "transport reference"
+        "om_transport_reference": "transport reference",
+        "programID": "programID"
     }"#,
 );
 fn transact_2_pull_record() -> TestSyncIncomingRecord {
@@ -314,6 +315,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: None,
+            master_list_id: None,
         },
     )
 }
@@ -364,6 +366,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             currency_rate: 1.0,
             backdated_datetime: None,
             diagnosis_id: None,
+            master_list_id: None,
         }),
     }
 }
@@ -517,6 +520,7 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: None,
+            master_list_id: None,
         },
     )
 }
@@ -592,6 +596,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             currency_rate: 1.0,
             backdated_datetime: None,
             diagnosis_id: None,
+            master_list_id: None,
         }),
     }
 }
