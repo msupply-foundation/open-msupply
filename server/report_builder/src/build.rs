@@ -220,7 +220,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
             let name = name.strip_suffix(".json").unwrap();
             if name == "manifest" {
                 let manifest: Manifest = serde_json::from_str(&data).map_err(|err| {
-                    anyhow::Error::msg(format!("Failed to parse manifest.json: {}", err))
+                    anyhow::Error::msg(format!("Failed to parse report-manifest.json: {}", err))
                 })?;
                 (name.to_string(), ReportDefinitionEntry::Manifest(manifest))
             } else {

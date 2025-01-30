@@ -52,6 +52,10 @@
         "phone": {
           "description": "Phone number",
           "type": "string"
+        },
+        "nextOfKinId": {
+          "description": "ID of the mSupply name record for the patient's next of kin",
+          "type": "string"
         }
       },
       "required": ["id", "code", "firstName", "lastName"],

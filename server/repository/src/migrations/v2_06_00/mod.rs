@@ -6,6 +6,7 @@ mod add_invoice_line_prescribed_quantity;
 mod add_name_next_of_kin_id;
 mod add_program_deleted_datetime;
 mod backend_plugins;
+
 use crate::StorageConnection;
 
 pub(crate) struct V2_06_00;
