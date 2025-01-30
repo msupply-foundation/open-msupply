@@ -1,0 +1,52 @@
+query encountersQuery($storeId: String!, $programId: String!) {
+  encounters(
+    storeId: $storeId
+    filter: {
+      programId: { equalTo: $programId }
+      status: { equalTo: "PENDING" }
+    } # key: "startDatetime"
+  ) {
+    ... on EncounterConnector {
+      nodes {
+        ... on EncounterNode {
+          id
+          startDatetime
+          type
+          status
+          patient {
+            firstName
+            lastName
+            dateOfBirth
+          }
+          programEnrolment {
+            programEnrolmentId
+            status
+          }
+          # TODO: next of kin loader
+          # TODO: prev encounter? heck
+        }
+      }
+    }
+  }
+  store(id: $storeId) {
+    ... on StoreNode {
+      code
+      storeName
+      logo
+      name(storeId: $storeId) {
+        ... on NameNode {
+          address1
+          address2
+          chargeCode
+          code
+          comment
+          country
+          email
+          name
+          phone
+          website
+        }
+      }
+    }
+  }
+}

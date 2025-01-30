@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Filters": {
+      "properties": {
+        "programId": {
+          "description": "Program ID",
+          "type": "string"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/Filters"
+    }
+  ]
+}
