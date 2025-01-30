@@ -262,6 +262,41 @@ export const usePrescriptionColumn = ({
     ],
 
     {
+      label: 'label.unit-price',
+      key: 'sellPricePerUnit',
+      align: ColumnAlign.Right,
+      Cell: CurrencyCell,
+      accessor: ({ rowData }) => {
+        if ('lines' in rowData) {
+          // Multiple lines, so we need to calculate the average price per unit
+
+          let totalSellPrice = 0;
+          let totalUnits = 0;
+
+          for (const line of rowData.lines) {
+            totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
+            totalUnits += line.numberOfPacks * line.packSize;
+          }
+
+          return totalSellPrice / totalUnits;
+        } else {
+          return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
+        }
+      },
+      getSortValue: rowData => {
+        if ('lines' in rowData) {
+          return Object.values(rowData.lines).reduce(
+            (sum, batch) =>
+              sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
+            0
+          );
+        } else {
+          return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
+        }
+      },
+    },
+    
+    {
       label: 'label.line-total',
       key: 'lineTotal',
       align: ColumnAlign.Right,
