@@ -270,8 +270,13 @@ pub async fn start_server(
     // Don't do discovery in android
     #[cfg(not(target_os = "android"))]
     {
-        info!("Starting server DNS-SD discovery",);
-        discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
+        if !settings.server.disable_discovery {
+            info!("Starting server DNS-SD discovery",);
+            discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
+        }
+        else{
+            info!("Server DNS-SD discovery disabled",);
+        }
     }
 
     info!("Starting discovery graphql server",);

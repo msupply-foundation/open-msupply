@@ -23,6 +23,8 @@ pub struct ServerSettings {
     /// Only used in development mode
     #[serde(default)]
     pub debug_no_access_control: bool,
+    #[serde(default)]
+    pub disable_discovery: bool,
     /// Sets the allowed origin for cors requests
     pub cors_origins: Vec<String>,
     /// Directory where the server stores its data, e.g. sqlite DB file or certs
