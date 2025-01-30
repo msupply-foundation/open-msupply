@@ -146,32 +146,7 @@ use crate::{
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
     },
-    ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ClinicianRow,
-    ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
-    ContextRowRepository, CurrencyRow, DemographicRow, Document, DocumentRegistryRow,
-    DocumentRegistryRowRepository, DocumentRepository, EncounterRow, EncounterRowRepository,
-    FormSchema, FormSchemaRowRepository, IndicatorColumnRow, IndicatorColumnRowRepository,
-    IndicatorLineRow, IndicatorLineRowRepository, IndicatorValueRow, IndicatorValueRowRepository,
-    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceRow, ItemLinkRowRepository, ItemRow, KeyValueStoreRepository,
-    KeyValueStoreRow, LocationRow, LocationRowRepository, MasterListNameJoinRepository,
-    MasterListNameJoinRow, MasterListRow, MasterListRowRepository, NameLinkRow,
-    NameLinkRowRepository, NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository,
-    NumberRow, NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
-    PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository, ProgramEnrolmentRow,
-    ProgramEnrolmentRowRepository, ProgramIndicatorRow, ProgramIndicatorRowRepository,
-    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
-    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
-    ProgramRowRepository, PropertyRow, PropertyRowRepository, ReportRowRepository,
-    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository,
-    ReturnReasonRow, ReturnReasonRowRepository, RnRFormLineRow, RnRFormLineRowRepository,
-    RnRFormRow, RnRFormRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
-    SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow,
-    TemperatureBreachConfigRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
-    TemperatureLogRow, TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository,
-    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
-    VaccinationRow, VaccinationRowRepository,
+    *,
 };
 
 use self::{activity_log::mock_activity_logs, unit::mock_units};
@@ -254,6 +229,7 @@ pub struct MockData {
     pub options: Vec<ReasonOptionRow>,
     pub contact_form: Vec<ContactFormRow>,
     pub reports: Vec<crate::ReportRow>,
+    pub backend_plugin: Vec<BackendPluginRow>,
 }
 
 impl MockData {
@@ -338,6 +314,7 @@ pub struct MockDataInserts {
     pub options: bool,
     pub contact_form: bool,
     pub reports: bool,
+    pub backend_plugin: bool,
 }
 
 impl MockDataInserts {
@@ -411,6 +388,7 @@ impl MockDataInserts {
             options: true,
             contact_form: true,
             reports: true,
+            backend_plugin: true,
         }
     }
 
@@ -746,6 +724,11 @@ impl MockDataInserts {
 
     pub fn reports(mut self) -> Self {
         self.reports = true;
+        self
+    }
+
+    pub fn backend_plugin(mut self) -> Self {
+        self.backend_plugin = true;
         self
     }
 }
@@ -1379,6 +1362,13 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
+        if inserts.backend_plugin {
+            let repo = BackendPluginRowRepository::new(connection);
+            for row in &mock_data.backend_plugin {
+                repo.upsert_one(row.clone()).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1456,6 +1446,7 @@ impl MockData {
             mut options,
             mut contact_form,
             mut reports,
+            backend_plugin: _,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);

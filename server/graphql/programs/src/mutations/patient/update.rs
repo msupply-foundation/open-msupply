@@ -9,7 +9,6 @@ use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::patient::{UpdatePatient, UpdatePatientError},
 };
-use util::inline_init;
 
 /// All fields in the input object will be used to update the patient record.
 /// This means that the caller also has to provide the fields that are not going to change.
@@ -27,6 +26,7 @@ pub struct UpdatePatientInput {
     pub phone: Option<String>,
     pub is_deceased: Option<bool>,
     pub date_of_death: Option<NaiveDate>,
+    pub next_of_kin_id: Option<String>,
 }
 
 #[derive(Union)]
@@ -49,6 +49,7 @@ pub fn update_patient(
         phone,
         is_deceased,
         date_of_death,
+        next_of_kin_id,
     }: UpdatePatientInput,
 ) -> Result<UpdatePatientResponse> {
     let user = validate_auth(
@@ -63,19 +64,20 @@ pub fn update_patient(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    let update_patient = inline_init(|n: &mut UpdatePatient| {
-        n.id = id;
-        n.code = code;
-        n.code_2 = code_2;
-        n.first_name = first_name;
-        n.last_name = last_name;
-        n.gender = gender.map(|g| g.to_domain());
-        n.date_of_birth = date_of_birth;
-        n.address1 = address1;
-        n.phone = phone;
-        n.is_deceased = is_deceased;
-        n.date_of_death = date_of_death;
-    });
+    let update_patient = UpdatePatient {
+        id,
+        code,
+        code_2,
+        first_name,
+        last_name,
+        gender: gender.map(|g| g.to_domain()),
+        date_of_birth,
+        address1,
+        phone,
+        is_deceased,
+        date_of_death,
+        next_of_kin_id,
+    };
 
     match service_provider.patient_service.update_patient(
         &service_context,

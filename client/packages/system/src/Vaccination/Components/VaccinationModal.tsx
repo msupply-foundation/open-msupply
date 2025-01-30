@@ -41,6 +41,7 @@ interface VaccinationModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultClinician?: Clinician;
+  onOk: () => void;
 }
 
 export const VaccinationModal = ({
@@ -50,6 +51,7 @@ export const VaccinationModal = ({
   encounterId,
   vaccinationId,
   defaultClinician,
+  onOk,
 }: VaccinationModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
@@ -78,6 +80,7 @@ export const VaccinationModal = ({
 
         if (result?.__typename === 'VaccinationNode') {
           success(t('messages.vaccination-saved'))();
+          onOk();
           onClose();
         }
 

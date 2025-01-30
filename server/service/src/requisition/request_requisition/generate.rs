@@ -1,9 +1,10 @@
 use chrono::Utc;
-use repository::{EqualFilter, RepositoryError, RequisitionLineRow, RequisitionRow};
+use repository::{RequisitionLineRow, RequisitionRow};
 use util::uuid::uuid;
 
-use crate::item_stats::{get_item_stats, ItemStatsFilter};
+use crate::item_stats::get_item_stats;
 use crate::service_provider::ServiceContext;
+use crate::PluginOrRepositoryError;
 
 pub struct GenerateSuggestedQuantity {
     pub average_monthly_consumption: f64,
@@ -43,13 +44,8 @@ pub fn generate_requisition_lines(
     store_id: &str,
     requisition_row: &RequisitionRow,
     item_ids: Vec<String>,
-) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
-    let item_stats_rows = get_item_stats(
-        ctx,
-        store_id,
-        None,
-        Some(ItemStatsFilter::new().item_id(EqualFilter::equal_any(item_ids))),
-    )?;
+) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
+    let item_stats_rows = get_item_stats(ctx, store_id, None, item_ids)?;
 
     let result = item_stats_rows
         .into_iter()
