@@ -10,7 +10,7 @@ use repository::{
 use crate::{
     processors::Processors,
     service_provider::{ServiceContext, ServiceProvider},
-    settings::{MailSettings, ServerSettings, Settings},
+    settings::{DiscoveryMode, MailSettings, ServerSettings, Settings},
     sync::{
         file_sync_driver::FileSyncDriver,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
@@ -42,7 +42,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
     let settings = Settings {
         server: ServerSettings {
             port: 0,
-            disable_discovery: true,
+            discovery: DiscoveryMode::Disabled,
             danger_allow_http: false,
             debug_no_access_control: false,
             cors_origins: vec![],
