@@ -50,6 +50,12 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
         { label: 'Female', value: GenderType.Female },
       ],
     },
+    {
+      type: 'text',
+      name: t('label.next-of-kin'),
+      urlParameter: 'nextOfKinName',
+      placeholder: t('placeholder.search-by-name'),
+    },
   ];
 
   if (store?.preferences.omProgramModule) {

@@ -41,6 +41,7 @@ interface VaccinationModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultClinician?: Clinician;
+  onOk: () => void;
 }
 
 export const VaccinationModal = ({
@@ -50,6 +51,7 @@ export const VaccinationModal = ({
   encounterId,
   vaccinationId,
   defaultClinician,
+  onOk,
 }: VaccinationModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
@@ -78,6 +80,7 @@ export const VaccinationModal = ({
 
         if (result?.__typename === 'VaccinationNode') {
           success(t('messages.vaccination-saved'))();
+          onOk();
           onClose();
         }
 
@@ -186,7 +189,7 @@ const VaccinationForm = ({
         label={t('label.facility')}
         labelProps={{ sx: { alignSelf: 'start', marginTop: '3px' } }}
         Input={
-          <Grid item flex={1}>
+          <Grid flex={1}>
             <FacilitySearchInput
               onChange={facilityId =>
                 updateDraft({
@@ -215,7 +218,7 @@ const VaccinationForm = ({
         <InputWithLabelRow
           label={t('label.clinician')}
           Input={
-            <Grid item flex={1}>
+            <Grid flex={1}>
               <ClinicianSearchInput
                 onChange={clinician => {
                   updateDraft({

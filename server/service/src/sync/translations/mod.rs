@@ -8,6 +8,7 @@ pub(crate) mod asset_log;
 pub(crate) mod asset_log_reason;
 pub(crate) mod asset_property;
 pub(crate) mod asset_type;
+pub(crate) mod backend_plugin;
 pub(crate) mod barcode;
 pub(crate) mod category;
 pub(crate) mod clinician;
@@ -167,6 +168,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         packaging_variant::boxed(),
         // System log
         system_log::boxed(),
+        backend_plugin::boxed(),
         insurance_provider::boxed(),
         name_insurance_join::boxed(),
     ]

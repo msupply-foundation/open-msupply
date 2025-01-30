@@ -7,7 +7,6 @@ import {
   RouteBuilder,
   useBreadcrumbs,
   useConfirmOnLeaving,
-  useDirtyCheck,
   useNavigate,
   useParams,
 } from '@openmsupply-client/common';
@@ -25,6 +24,7 @@ import { NavBar } from './NavBar';
 export const PrescriptionLineEditView = () => {
   const { invoiceNumber, itemId } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const isDirty = useRef(false);
   const navigate = useNavigate();
 
   const {
@@ -45,8 +45,6 @@ export const PrescriptionLineEditView = () => {
     // Small time delay to allow the ref to change to the previous/next item in
     // the list before scrolling to it
     setTimeout(() => scrollRef.current?.scrollIntoView(), 100);
-
-  const { isDirty, setIsDirty } = useDirtyCheck();
 
   const lines =
     data?.lines.nodes.sort((a, b) => a.id.localeCompare(b.id)) ?? [];
@@ -83,18 +81,20 @@ export const PrescriptionLineEditView = () => {
   }, [currentItem]);
 
   useConfirmOnLeaving(
-    isDirty,
+    'prescription-line-edit',
     // Need a custom checking method here, as we don't want to warn user when
     // switching to a different item within this page
-    (current, next) => {
-      if (!isDirty) return false;
+    {
+      customCheck: (current, next) => {
+        if (!isDirty.current) return false;
 
-      const currentPathParts = current.pathname.split('/');
-      const nextPathParts = next.pathname.split('/');
-      // Compare URLS, but don't include the last part, which is the ItemID
-      currentPathParts.pop();
-      nextPathParts.pop();
-      return !isEqual(currentPathParts, nextPathParts);
+        const currentPathParts = current.pathname.split('/');
+        const nextPathParts = next.pathname.split('/');
+        // Compare URLS, but don't include the last part, which is the ItemID
+        currentPathParts.pop();
+        nextPathParts.pop();
+        return !isEqual(currentPathParts, nextPathParts);
+      },
     }
   );
 
@@ -108,7 +108,7 @@ export const PrescriptionLineEditView = () => {
   };
 
   const onSave = async () => {
-    if (!isDirty) return;
+    if (!isDirty.current) return;
 
     const flattenedLines = Object.values(allDraftLines).flat();
 
@@ -145,7 +145,7 @@ export const PrescriptionLineEditView = () => {
           .build()
       );
     }
-    setIsDirty(false);
+    isDirty.current = false;
     setAllDraftLines({});
   };
 
@@ -168,7 +168,7 @@ export const PrescriptionLineEditView = () => {
               .addPart(String(invoiceNumber))}
             enteredLineIds={enteredLineIds}
             showNew={status !== InvoiceNodeStatus.Verified}
-            isDirty={isDirty}
+            isDirty={isDirty.current}
             handleSaveNew={onSave}
             scrollRef={scrollRef}
           />
@@ -179,7 +179,9 @@ export const PrescriptionLineEditView = () => {
               item={currentItem ?? null}
               draftLines={allDraftLines[itemId] ?? []}
               updateLines={updateAllLines}
-              setIsDirty={setIsDirty}
+              setIsDirty={dirty => {
+                isDirty.current = dirty;
+              }}
             />
             <NavBar
               items={itemIdList}
@@ -200,7 +202,7 @@ export const PrescriptionLineEditView = () => {
       />
       <Footer
         isSaving={isSavingLines}
-        isDirty={isDirty}
+        isDirty={isDirty.current}
         handleSave={onSave}
         handleCancel={() =>
           navigate(

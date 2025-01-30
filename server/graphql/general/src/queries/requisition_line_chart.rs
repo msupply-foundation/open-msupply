@@ -10,13 +10,14 @@ use service::{
     requisition_line::chart::{
         ConsumptionHistoryOptions, RequisitionLineChartError, StockEvolutionOptions,
     },
+    store_preference::get_store_preferences,
 };
 
 type ServiceError = RequisitionLineChartError;
 
 #[derive(InputObject)]
 pub struct ConsumptionOptionsInput {
-    /// Defaults to 3 months
+    /// Defaults to store preference amc_lookback_months
     amc_lookback_months: Option<u32>,
     /// Defaults to 12
     number_of_data_points: Option<u32>,
@@ -67,15 +68,15 @@ pub fn chart(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let amc_lookback_months = get_store_preferences(&service_context.connection, store_id)?
+        .monthly_consumption_look_back_period;
 
     let result = match service_provider
         .requisition_line_service
         .get_requisition_line_chart(
             &service_context,
             request_requisition_line_id,
-            consumption_options_input
-                .map(|i| i.to_domain())
-                .unwrap_or_default(),
+            ConsumptionOptionsInput::to_domain(amc_lookback_months, consumption_options_input),
             stock_evolution_options_input
                 .map(|i| i.to_domain())
                 .unwrap_or_default(),
@@ -110,16 +111,27 @@ fn map_error(error: ServiceError) -> Result<ChartErrorInterface> {
 }
 
 impl ConsumptionOptionsInput {
-    fn to_domain(self) -> ConsumptionHistoryOptions {
-        let ConsumptionOptionsInput {
-            amc_lookback_months,
-            number_of_data_points,
-        } = self;
-        let default = ConsumptionHistoryOptions::default();
-        ConsumptionHistoryOptions {
-            amc_lookback_months: amc_lookback_months.unwrap_or(default.amc_lookback_months),
-            number_of_data_points: number_of_data_points.unwrap_or(default.number_of_data_points),
-        }
+    fn to_domain(
+        default_amc_lookback_months: f64,
+        from: Option<Self>,
+    ) -> ConsumptionHistoryOptions {
+        let default_amc_lookback_months = default_amc_lookback_months as u32;
+        let default_number_of_datapoints = 3;
+
+        from.map(
+            |ConsumptionOptionsInput {
+                 amc_lookback_months,
+                 number_of_data_points,
+             }| ConsumptionHistoryOptions {
+                amc_lookback_months: amc_lookback_months.unwrap_or(default_amc_lookback_months),
+                number_of_data_points: number_of_data_points
+                    .unwrap_or(default_number_of_datapoints),
+            },
+        )
+        .unwrap_or(ConsumptionHistoryOptions {
+            amc_lookback_months: default_amc_lookback_months,
+            number_of_data_points: default_number_of_datapoints,
+        })
     }
 }
 
@@ -155,7 +167,7 @@ mod graphql {
         requisition_line::RequisitionLineServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
     };
-    use util::inline_init;
+    use util::{inline_edit, inline_init};
 
     use crate::GeneralQueries;
 
@@ -304,9 +316,10 @@ mod graphql {
             assert_eq!(stock_evolution, StockEvolutionOptions::default());
             assert_eq!(
                 consumption_history,
-                inline_init(|r: &mut ConsumptionHistoryOptions| {
-                    r.amc_lookback_months = 20;
-                })
+                ConsumptionHistoryOptions {
+                    amc_lookback_months: 20,
+                    number_of_data_points: 3,
+                }
             );
             Ok(ItemChart::default())
         }));

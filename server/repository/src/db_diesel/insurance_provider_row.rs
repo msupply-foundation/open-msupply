@@ -1,6 +1,5 @@
 use super::{
-    insurance_provider_row::insurance_provider::dsl as insurance_provider_dsl, ChangeLogInsertRow,
-    ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
 };
 
 use crate::{repository_error::RepositoryError, Upsert};
@@ -42,17 +41,17 @@ impl<'a> InsuranceProviderRowRepository<'a> {
         &self,
         id: &str,
     ) -> Result<Option<InsuranceProviderRow>, RepositoryError> {
-        let result = insurance_provider_dsl::insurance_provider
-            .filter(insurance_provider_dsl::id.eq(id))
+        let result = insurance_provider::table
+            .filter(insurance_provider::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn upsert_one(&self, row: &InsuranceProviderRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(insurance_provider_dsl::insurance_provider)
+        diesel::insert_into(insurance_provider::table)
             .values(row)
-            .on_conflict(insurance_provider_dsl::id)
+            .on_conflict(insurance_provider::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -69,14 +68,6 @@ impl<'a> InsuranceProviderRowRepository<'a> {
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
-    }
-
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(
-            insurance_provider_dsl::insurance_provider.filter(insurance_provider_dsl::id.eq(id)),
-        )
-        .execute(self.connection.lock().connection())?;
-        Ok(())
     }
 }
 
