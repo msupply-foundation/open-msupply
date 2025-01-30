@@ -2,9 +2,9 @@
   "type": "VerticalLayout",
   "elements": [
     {
-      "type": "Control",
+      "type": "ProgramSearch",
       "scope": "#/properties/programId",
-      "label": "T#report.program"
+      "label": "T#label.program"
     }
   ]
 }
