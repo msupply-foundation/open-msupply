@@ -18,6 +18,7 @@ import {
   SnackbarProvider,
   BarcodeScannerProvider,
   DetailLoadingSkeleton,
+  useBlockNavigation,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -68,6 +69,8 @@ export const Site: FC = () => {
   useEffect(() => {
     setPageTitle(pageTitle);
   }, [location, pageTitle, setPageTitle]);
+
+  useBlockNavigation();
 
   return (
     <RequireAuthentication>
