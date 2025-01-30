@@ -36,7 +36,7 @@ export const DropdownMenuItem: FC<DropdownMenuItemProps> = ({
       ) : null}
       <ListItemText
         inset={props.inset}
-        primaryTypographyProps={{ color, sx: { fontSize: 'inherit' } }}
+        slotProps={{ primary: { color, sx: { fontSize: 'inherit' } } }}
         sx={{
           '&.MuiListItemText-inset': { paddingLeft: '22px' },
         }}

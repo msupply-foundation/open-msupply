@@ -184,6 +184,13 @@ mod test {
 
     type ServiceError = RequisitionLineChartError;
 
+    fn consumption_history_options() -> ConsumptionHistoryOptions {
+        ConsumptionHistoryOptions {
+            amc_lookback_months: 3,
+            number_of_data_points: 3,
+        }
+    }
+
     #[actix_rt::test]
     async fn get_requisition_line_chart_errors() {
         let (_, _, connection_manager, _) =
@@ -200,7 +207,7 @@ mod test {
             service.get_requisition_line_chart(
                 &context,
                 "n/a",
-                ConsumptionHistoryOptions::default(),
+                consumption_history_options(),
                 StockEvolutionOptions::default(),
             ),
             Err(ServiceError::RequisitionLineDoesNotExist)
@@ -213,7 +220,7 @@ mod test {
             service.get_requisition_line_chart(
                 &context,
                 &test_line.id,
-                ConsumptionHistoryOptions::default(),
+                consumption_history_options(),
                 StockEvolutionOptions::default(),
             ),
             Err(ServiceError::NotARequestRequisition)
@@ -225,7 +232,7 @@ mod test {
             service.get_requisition_line_chart(
                 &context,
                 &test_line.id,
-                ConsumptionHistoryOptions::default(),
+                consumption_history_options(),
                 StockEvolutionOptions::default(),
             ),
             Err(ServiceError::RequisitionLineDoesNotBelongToCurrentStore)
@@ -656,7 +663,7 @@ mod test {
             .get_requisition_line_chart(
                 &context,
                 &requisition_line().id,
-                ConsumptionHistoryOptions::default(),
+                consumption_history_options(),
                 StockEvolutionOptions {
                     number_of_historic_data_points: 3,
                     number_of_projected_data_points: 4,
