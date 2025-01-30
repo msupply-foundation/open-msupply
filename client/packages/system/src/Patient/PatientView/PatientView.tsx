@@ -233,7 +233,7 @@ const PatientDetailView = ({
     }
     // Creates a new prescription and redirects to the prescriptions page
     // if the patient was created from there.
-    if (fromPrescription === true) {
+    if (fromPrescription) {
       const invoiceNumber = await createPrescription({
         id: FnUtils.generateUUID(),
         patientId,
