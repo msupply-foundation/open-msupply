@@ -151,7 +151,6 @@ export const Android = () => {
     return (
       <Viewport>
         <Stack
-          id="stack"
           display="flex"
           flex={1}
           style={{ minHeight: '100%' }}
