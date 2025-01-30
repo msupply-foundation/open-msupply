@@ -262,38 +262,8 @@ export const usePrescriptionColumn = ({
     ],
 
     {
-      label: 'label.cost-price',
-      key: 'costPrice',
-      align: ColumnAlign.Right,
-      Cell: CurrencyCell,
-      accessor: ({ rowData }) => {
-        if ('lines' in rowData) {
-          // Multiple lines, so we need to calculate the average price per unit
-          let totalCostPrice = 0;
-          for (const line of rowData.lines) {
-            totalCostPrice += line.costPricePerPack * line.numberOfPacks;
-          }
-          return totalCostPrice;
-        } else {
-          return (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks;
-        }
-      },
-      getSortValue: rowData => {
-        if ('lines' in rowData) {
-          return Object.values(rowData.lines).reduce(
-            (sum, batch) =>
-              sum + (batch.costPricePerPack ?? 0) * batch.numberOfPacks,
-            0
-          );
-        } else {
-          return (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks;
-        }
-      },
-    },
-
-    {
-      label: 'label.sell-price',
-      key: 'sellPrice',
+      label: 'label.line-total',
+      key: 'lineTotal',
       align: ColumnAlign.Right,
       Cell: CurrencyCell,
       accessor: ({ rowData }) => {
@@ -317,6 +287,36 @@ export const usePrescriptionColumn = ({
           );
         } else {
           return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
+        }
+      },
+    },
+
+    {
+      label: 'label.total-cost-price',
+      key: 'totalCostPrice',
+      align: ColumnAlign.Right,
+      Cell: CurrencyCell,
+      accessor: ({ rowData }) => {
+        if ('lines' in rowData) {
+          // Multiple lines, so we need to calculate the average price per unit
+          let totalCostPrice = 0;
+          for (const line of rowData.lines) {
+            totalCostPrice += line.costPricePerPack * line.numberOfPacks;
+          }
+          return totalCostPrice;
+        } else {
+          return (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks;
+        }
+      },
+      getSortValue: rowData => {
+        if ('lines' in rowData) {
+          return Object.values(rowData.lines).reduce(
+            (sum, batch) =>
+              sum + (batch.costPricePerPack ?? 0) * batch.numberOfPacks,
+            0
+          );
+        } else {
+          return (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks;
         }
       },
     },
