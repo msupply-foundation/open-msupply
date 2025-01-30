@@ -391,8 +391,6 @@ async fn main() -> anyhow::Result<()> {
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
         Action::BuildReports { path } => {
-            let connection_manager = get_storage_connection_manager(&settings.database);
-            let con = connection_manager.connection()?;
             let base_reports_dir = match path.clone() {
                 Some(path) => path,
                 None => PathBuf::new().join("reports"),
@@ -407,7 +405,6 @@ async fn main() -> anyhow::Result<()> {
                 &ignore_paths,
                 manifest_name,
                 &base_reports_dir,
-                &con,
             )?;
 
             let output_name = if path.is_some() {
