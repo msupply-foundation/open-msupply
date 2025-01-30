@@ -57,7 +57,12 @@ export const useLoginForm = (
     // navigate back, if redirected by the <RequireAuthentication /> component
     // or to the dashboard as a default
     const state = location.state as State | undefined;
-    const from = state?.from?.pathname || ( !isGapsStore ? `/${AppRoute.Dashboard}` : `/${AppRoute.Coldchain}/${AppRoute.Equipment}`);
+    let from = state?.from?.pathname || `/${AppRoute.Dashboard}`;
+    
+    // if GAPS store only, redirect to Cold Chain
+    if (isGapsStore) {
+      from = state?.from?.pathname || `/${AppRoute.Coldchain}/${AppRoute.Equipment}`;
+    }
     navigate(from, { replace: true });
   };
 
