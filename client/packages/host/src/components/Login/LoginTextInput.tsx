@@ -8,7 +8,7 @@ import {
 export const LoginTextInput = React.forwardRef<
   HTMLDivElement,
   StandardTextFieldProps
->(({ sx, InputProps, error, ...props }, ref) => {
+>(({ sx, slotProps, error, ...props }, ref) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const onFocus = () => {
     if (!ref) {
@@ -34,22 +34,23 @@ export const LoginTextInput = React.forwardRef<
     variant: 'standard',
     focused: true,
     size: 'small',
-    InputProps: {
-      disableUnderline: true,
-      onFocus,
-      ...InputProps,
-      sx: {
-        border: theme =>
-          error
-            ? `2px solid ${theme.palette.error.main}`
-            : `1px solid ${theme.palette.border}`,
-        backgroundColor: theme =>
-          props.disabled
-            ? theme.palette.background.toolbar
-            : theme.palette.background.white,
-        borderRadius: '8px',
-        padding: '4px 8px',
-        ...InputProps?.sx,
+    slotProps: {
+      input: {
+        disableUnderline: true,
+        onFocus,
+        ...slotProps?.input,
+        sx: {
+          border: theme =>
+            error
+              ? `2px solid ${theme.palette.error.main}`
+              : `1px solid ${theme.palette.border}`,
+          backgroundColor: theme =>
+            props.disabled
+              ? theme.palette.background.toolbar
+              : theme.palette.background.white,
+          borderRadius: '8px',
+          padding: '4px 8px',
+        },
       },
     },
     ...props,

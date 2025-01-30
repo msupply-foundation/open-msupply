@@ -32,6 +32,7 @@ pub struct PatientFilter {
     pub address2: Option<StringFilter>,
     pub country: Option<StringFilter>,
     pub email: Option<StringFilter>,
+    pub next_of_kin_name: Option<StringFilter>,
 
     /// Filter for any identifier associated with a name entry.
     /// Currently:
@@ -187,6 +188,7 @@ impl<'a> PatientRepository<'a> {
                 email,
                 identifier,
                 program_enrolment_name,
+                next_of_kin_name,
             } = f;
 
             // or filters need to be applied first
@@ -206,6 +208,19 @@ impl<'a> PatientRepository<'a> {
                 .select(name::id);
 
                 query = query.or_filter(name::id.eq_any(sub_query))
+            }
+
+            if next_of_kin_name.is_some() {
+                let sub_query = Self::create_filtered_query(
+                    Some(PatientFilter {
+                        name: next_of_kin_name,
+                        ..Default::default()
+                    }),
+                    None,
+                )
+                .select(name::id);
+
+                query = query.filter(name::next_of_kin_id.eq_any(sub_query.nullable()))
             }
 
             if program_enrolment_name.is_some() {
@@ -299,6 +314,11 @@ impl PatientFilter {
         self
     }
 
+    pub fn next_of_kin_name(mut self, filter: StringFilter) -> Self {
+        self.next_of_kin_name = Some(filter);
+        self
+    }
+
     pub fn gender(mut self, filter: EqualFilter<GenderType>) -> Self {
         self.gender = Some(filter);
         self
@@ -384,6 +404,42 @@ mod tests {
         let result = PatientRepository::new(&connection)
             .query_by_filter(
                 PatientFilter::new().id(EqualFilter::equal_to("patient_1")),
+                None,
+            )
+            .unwrap();
+        result.first().unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn test_patient_next_of_kin_name_query() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "patient_next_of_kin_name_query",
+            MockDataInserts::none().names().stores().name_store_joins(),
+        )
+        .await;
+
+        let next_of_kin_patient_row = NameRow {
+            id: "patient_1".to_string(),
+            name: "Bestie guy".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+
+        let patient_row = NameRow {
+            id: "patient_2".to_string(),
+            r#type: NameRowType::Patient,
+            next_of_kin_id: Some(next_of_kin_patient_row.id.clone()),
+            ..Default::default()
+        };
+
+        let name_repo = NameRowRepository::new(&connection);
+
+        name_repo.upsert_one(&next_of_kin_patient_row).unwrap();
+        name_repo.upsert_one(&patient_row).unwrap();
+
+        let result = PatientRepository::new(&connection)
+            .query_by_filter(
+                PatientFilter::new().next_of_kin_name(StringFilter::like("Bestie")),
                 None,
             )
             .unwrap();
