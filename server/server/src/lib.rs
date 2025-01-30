@@ -274,7 +274,6 @@ pub async fn start_server(
             DiscoveryMode::Disabled => false,
             DiscoveryMode::Enabled => true,
             DiscoveryMode::Auto => {
-                // Only disable discovery if we are not in develop mode and have AUTO mode
                 if is_develop() {
                     log::warn!("DNS-SD discovery is automatically disabled in dev mode, add `discovery: Enabled` to local.yaml to turn it on");
                     false
