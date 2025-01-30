@@ -50,8 +50,6 @@ export const Toolbar: FC = () => {
   const programs = programData?.nodes ?? [];
   const selectedProgram = programs.find(prog => prog.id === masterListId);
 
-  console.log('selectedProgram', selectedProgram);
-
   const {
     delete: { deleteLines },
   } = usePrescriptionLines();
@@ -109,19 +107,23 @@ export const Toolbar: FC = () => {
     });
   };
 
-  console.log('Data', data);
-
   const handleProgramChange = async (
     newProgram: ProgramFragment | undefined
   ) => {
-    console.log('newProgram', newProgram);
+    if (!newProgram) {
+      // It's okay to *clear* program without losing current items
+      await update({ id, masterListId: null });
+      return;
+    }
 
     getConfirmation({
-      message: t('messages.confirm-change-prescription-program'),
       onConfirm: async () => {
+        // For simplicity, we currently delete all items that have already been
+        // added when switching programs. We may wish to improve this in the
+        // future to only remove items that don't belong to the new program
+        await deleteAll();
         await update({ id, masterListId: newProgram?.id });
       },
-      onCancel: () => console.log('Cancelled'),
     });
   };
 
