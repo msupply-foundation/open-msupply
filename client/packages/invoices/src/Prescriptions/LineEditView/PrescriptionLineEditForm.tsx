@@ -82,22 +82,16 @@ export const PrescriptionLineEditForm: React.FC<
   updatePrescribedQuantity,
 }) => {
   const t = useTranslation();
-  const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
-  const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
+
+  const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
+  const [prescribedQuantity, setPrescribedQuantity] = useState(0);
+  const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
 
   const key = item?.id ?? 'new';
   const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);
   const note = prescriptionLineWithNote?.note ?? '';
-
-  const defaultPrescribedQuantity = items.find(
-    prescriptionItem => prescriptionItem.id === item?.id
-  )?.lines[0]?.prescribedQuantity;
-
-  const [prescribedQuantity, setPrescribedQuantity] = useState(
-    defaultPrescribedQuantity
-  );
 
   const debouncedSetAllocationAlerts = useDebounceCallback(
     warning => setAllocationAlerts(warning),
@@ -203,6 +197,16 @@ export const PrescriptionLineEditForm: React.FC<
   };
 
   useEffect(() => {
+    const newPrescribedQuantity = items.find(
+      prescriptionItem => prescriptionItem.id === item?.id
+    )?.lines[0]?.prescribedQuantity;
+
+    if (newPrescribedQuantity != null) {
+      setPrescribedQuantity(newPrescribedQuantity);
+    } else {
+      setPrescribedQuantity(0);
+    }
+
     const newIssueQuantity = Math.round(
       allocatedUnits / Math.abs(Number(packSizeController.selected?.value || 1))
     );
@@ -265,46 +269,44 @@ export const PrescriptionLineEditForm: React.FC<
               alignItems="center"
               display="flex"
               flexDirection="row"
-              justifyContent="flex-start"
+              justifyContent="space-between"
               gap={1}
             >
               <Grid>
-                <InputLabel style={{ fontSize: 12 }}>
-                  {t('label.issue')}
-                </InputLabel>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <InputLabel sx={{ fontSize: 12 }}>
+                    {t('label.prescribed-quantity')}
+                  </InputLabel>
+                  <NumericTextInput
+                    autoFocus
+                    disabled={disabled}
+                    value={prescribedQuantity}
+                    onChange={handlePrescribedQuantityChange}
+                    min={0}
+                    decimalLimit={2}
+                  />
+                </Box>
               </Grid>
               <Grid>
-                <NumericTextInput
-                  autoFocus
-                  disabled={disabled}
-                  value={issueUnitQuantity}
-                  onChange={handleIssueQuantityChange}
-                  min={0}
-                  decimalLimit={2}
-                />
-              </Grid>
-              <Grid>
-                <InputLabel style={{ fontSize: 12 }}>
-                  {t('label.unit-plural', {
-                    count: issueUnitQuantity,
-                    unit: item?.unitName,
-                  })}
-                </InputLabel>
-              </Grid>
-              <Grid>
-                <InputLabel sx={{ fontSize: 12 }}>
-                  {t('label.prescribed-quantity')}
-                </InputLabel>
-              </Grid>
-              <Grid>
-                <NumericTextInput
-                  autoFocus
-                  disabled={disabled}
-                  value={prescribedQuantity}
-                  onChange={handlePrescribedQuantityChange}
-                  min={0}
-                  decimalLimit={2}
-                />
+                <Box display="flex" alignItems="center" gap={1}>
+                  <InputLabel style={{ fontSize: 12 }}>
+                    {t('label.issue')}
+                  </InputLabel>
+                  <NumericTextInput
+                    autoFocus
+                    disabled={disabled}
+                    value={issueUnitQuantity}
+                    onChange={handleIssueQuantityChange}
+                    min={0}
+                    decimalLimit={2}
+                  />
+                  <InputLabel style={{ fontSize: 12 }}>
+                    {t('label.unit-plural', {
+                      count: issueUnitQuantity,
+                      unit: item?.unitName,
+                    })}
+                  </InputLabel>
+                </Box>
               </Grid>
             </Grid>
             <TableWrapper
