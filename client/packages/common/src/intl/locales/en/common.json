@@ -1207,6 +1207,7 @@
   "message.nothing-to-save": "Nothing to save",
   "message.placeholder-line": "A placeholder line has been created for additional requested quantity",
   "message.placeholder-lines-cannot-be-returned": "Placeholder lines cannot be returned",
+  "message.program-period": "Only the first five historic and future periods are available for selection.",
   "messages": "Messages",
   "messages.acknowledge-breach-helptext": "Enter a comment and click OK to acknowledge the breach.",
   "messages.ago": "{{time}} ago",
