@@ -3,7 +3,7 @@ use super::{
     ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{repository_error::RepositoryError, Upsert};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 

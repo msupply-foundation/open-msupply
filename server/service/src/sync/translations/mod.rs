@@ -19,10 +19,10 @@ pub(crate) mod demographic;
 pub(crate) mod diagnosis;
 pub(crate) mod document;
 pub(crate) mod document_registry;
-pub(crate) mod insurance_provider;
 pub(crate) mod form_schema;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
+pub(crate) mod insurance_provider;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
@@ -34,6 +34,7 @@ pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
 pub(crate) mod name;
+pub(crate) mod name_insurance_join;
 pub(crate) mod name_oms_fields;
 pub(crate) mod name_property;
 pub(crate) mod name_store_join;
@@ -167,6 +168,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // System log
         system_log::boxed(),
         insurance_provider::boxed(),
+        name_insurance_join::boxed(),
     ]
 }
 
