@@ -184,7 +184,6 @@ export const ProgramRequisitionOptions = ({
       />
       <LabelAndOptions {...customers} optionKey="name" />
       <LabelAndOptions {...orderTypes} optionKey="name" />
-      <LabelAndOptions {...periods} optionKey="name" />
       <Grid>
         <Typography
           sx={{
