@@ -1,4 +1,4 @@
-use repository::{StorageConnection, SyncBufferRow};
+use repository::{name_insurance_join_row::NameInsuranceJoinRow, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
 
@@ -50,21 +50,29 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
 
         let result = NameInsuranceJoinRow {
             id: ID,
-            name_link_id: name_ID,
-            name_insurance_id: name_insurance_ID,
+            name_id: name_ID,
+            insurance_provider_id: String::new(),
+            policy_number_person: None,
+            policy_number_family: None,
+            policy_number: String::new(),
+            policy_type: InsurancePolicyType::default(),
+            discount_percentage: 0,
+            expiry_date: NaiveDate::default(),
+            is_active: false,
+            entered_by_id: String::new(),
         };
 
         Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_from_delete_sync_record(
-        &self,
-        _: &StorageConnection,
-        sync_record: &SyncBufferRow,
-    ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(NameInsuranceJoinRowDelete(
-            sync_record.record_id.clone(),
-        )))
+    fn try_translate_to_upsert_sync_record(
+            &self,
+            _: &StorageConnection,
+            _: &repository::ChangelogRow,
+        ) -> Result<super::PushTranslateResult, anyhow::Error> {
+    
+            todo!("NameInsuranceJoinTranslation is not implemented for upsert YET!")
+        }
     }
 }
 
@@ -88,15 +96,6 @@ mod tests {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
-                .unwrap();
-
-            assert_eq!(translation_result, record.translated_record);
-        }
-
-        for record in test_data::test_pull_delete_records() {
-            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
-            let translation_result = translator
-                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
