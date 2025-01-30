@@ -1,9 +1,6 @@
 use log::info;
 use report_builder::{build::build_report_definition, BuildArgs};
-use repository::{
-    schema_from_row, ContextType, EqualFilter, FormSchemaRow, ReportFilter, ReportRepository,
-    RepositoryError, StorageConnection,
-};
+use repository::{schema_from_row, ContextType, FormSchemaRow, RepositoryError};
 use service::standard_reports::{ReportData, ReportsData};
 use std::{
     ffi::OsStr,
@@ -51,7 +48,6 @@ pub fn generate_reports_recursive(
     ignore_paths: &Vec<&OsStr>,
     manifest_name: &OsStr,
     path: &PathBuf,
-    con: &StorageConnection,
 ) -> Result<(), Error> {
     if let Some(_) = ignore_paths.iter().find(|p| Some(**p) == path.file_name()) {
         return Ok(());
@@ -61,7 +57,7 @@ pub fn generate_reports_recursive(
             .parent()
             .ok_or(Error::PathDoesNotHaveParent(path.clone()))?
             .to_owned();
-        return process_report(reports_data, &parent_path, &con);
+        return process_report(reports_data, &parent_path);
     }
 
     if !path.is_dir() {
@@ -75,16 +71,12 @@ pub fn generate_reports_recursive(
         let next_path = file_or_folder
             .map_err(|e| Error::FailedToGetFileOrDir(path.clone(), e))?
             .path();
-        generate_reports_recursive(reports_data, &ignore_paths, manifest_name, &next_path, &con)?;
+        generate_reports_recursive(reports_data, &ignore_paths, manifest_name, &next_path)?;
     }
     Ok(())
 }
 
-fn process_report(
-    reports_data: &mut ReportsData,
-    path: &PathBuf,
-    con: &StorageConnection,
-) -> Result<(), Error> {
+fn process_report(reports_data: &mut ReportsData, path: &PathBuf) -> Result<(), Error> {
     // install esbuild depedencies
 
     if let Err(e) = run_yarn_install(&path) {
@@ -137,22 +129,13 @@ fn process_report(
     let report_definition =
         build_report_definition(&args).map_err(|e| Error::FailedToBuildReport(path.clone(), e))?;
 
-    let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
-    let existing_report = ReportRepository::new(&con)
-        .query_by_filter(filter)
-        .map_err(|e| Error::RepositoryError(path.clone(), e))?
-        .pop();
-
-    let argument_schema_id =
-        existing_report.and_then(|r| r.argument_schema.as_ref().map(|r| r.id.clone()));
-
     let form_schema_json = match (arguments_path, arguments_ui_path) {
         (Some(_), None) | (None, Some(_)) => {
             return Err(Error::FailedToGenerateArgumentSchema(path.to_path_buf()))
         }
         (Some(arguments_path), Some(arguments_ui_path)) => Some(
             schema_from_row(FormSchemaRow {
-                id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
+                id: (format!("for_report_{}", id)),
                 r#type: "reportArgument".to_string(),
                 json_schema: fs::read_to_string(arguments_path)
                     .map_err(|e| Error::CannotReadSchemaFile(path.clone(), e))?,
