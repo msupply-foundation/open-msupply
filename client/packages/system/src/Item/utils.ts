@@ -37,6 +37,7 @@ export interface StockItemSearchInputProps
   extraFilter?: (item: ItemStockOnHandFragment) => boolean;
   includeNonVisibleWithStockOnHand?: boolean;
   itemCategoryName?: string;
+  masterListId?: string;
 }
 
 export const ItemOption = styled('li')(({ theme }) => ({

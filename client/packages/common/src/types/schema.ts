@@ -928,6 +928,26 @@ export type CentralPatientSearchInput = {
 
 export type CentralPatientSearchResponse = CentralPatientSearchConnector | CentralPatientSearchError;
 
+export type CentralPluginMutations = {
+  __typename: 'CentralPluginMutations';
+  installUploadedPlugin: PluginInfoNode;
+};
+
+
+export type CentralPluginMutationsInstallUploadedPluginArgs = {
+  fileId: Scalars['String']['input'];
+};
+
+export type CentralPluginQueries = {
+  __typename: 'CentralPluginQueries';
+  uploadedPluginInfo: UploadedPluginInfoResponse;
+};
+
+
+export type CentralPluginQueriesUploadedPluginInfoArgs = {
+  fileId: Scalars['String']['input'];
+};
+
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   assetCatalogue: AssetCatalogueMutations;
@@ -936,7 +956,13 @@ export type CentralServerMutationNode = {
   general: CentralGeneralMutations;
   itemVariant: ItemVariantMutations;
   logReason: AssetLogReasonMutations;
+  plugins: CentralPluginMutations;
   vaccineCourse: VaccineCourseMutations;
+};
+
+export type CentralServerQueryNode = {
+  __typename: 'CentralServerQueryNode';
+  plugin: CentralPluginQueries;
 };
 
 export type CentralSyncRequired = AuthTokenErrorInterface & {
@@ -2903,6 +2929,7 @@ export type InsertPluginDataResponse = PluginDataNode;
 export type InsertPrescriptionInput = {
   diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  masterListId?: InputMaybe<Scalars['String']['input']>;
   patientId: Scalars['String']['input'];
 };
 
@@ -3457,6 +3484,7 @@ export type InvoiceNode = {
   lines: InvoiceLineConnector;
   /** Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment */
   linkedShipment?: Maybe<InvoiceNode>;
+  masterListId?: Maybe<Scalars['String']['output']>;
   onHold: Scalars['Boolean']['output'];
   /**
    * Inbound Shipment that is the origin of this Supplier Return
@@ -3621,6 +3649,7 @@ export type ItemFilterInput = {
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   /** Items that are part of a masterlist which is visible in this store OR there is available stock of that item in this store */
   isVisibleOrOnHand?: InputMaybe<Scalars['Boolean']['input']>;
+  masterListId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
 };
@@ -5360,6 +5389,11 @@ export type PluginDataSortInput = {
   key: PluginDataSortFieldInput;
 };
 
+export type PluginInfoNode = {
+  __typename: 'PluginInfoNode';
+  backendPluginCodes: Array<Scalars['String']['output']>;
+};
+
 export type PluginNode = {
   __typename: 'PluginNode';
   config: Scalars['String']['output'];
@@ -5677,6 +5711,7 @@ export type Queries = {
   authToken: AuthTokenResponse;
   barcodeByGtin: BarcodeResponse;
   centralPatientSearch: CentralPatientSearchResponse;
+  centralServer: CentralServerQueryNode;
   clinicians: CliniciansResponse;
   /** Query omSupply "cold_storage_type" entries */
   coldStorageTypes: ColdStorageTypesResponse;
@@ -8358,6 +8393,7 @@ export type UpdatePrescriptionInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   diagnosisId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
+  masterListId?: InputMaybe<NullableStringUpdate>;
   patientId?: InputMaybe<Scalars['String']['input']>;
   prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
   status?: InputMaybe<UpdatePrescriptionStatusInput>;
@@ -8783,6 +8819,17 @@ export type UpdateVaccineCourseInput = {
 };
 
 export type UpdateVaccineCourseResponse = UpdateVaccineCourseError | VaccineCourseNode;
+
+export type UploadedPluginError = {
+  __typename: 'UploadedPluginError';
+  error: UploadedPluginErrorVariant;
+};
+
+export enum UploadedPluginErrorVariant {
+  CannotParseFile = 'CANNOT_PARSE_FILE'
+}
+
+export type UploadedPluginInfoResponse = PluginInfoNode | UploadedPluginError;
 
 export type UpsertBundledItemError = {
   __typename: 'UpsertBundledItemError';

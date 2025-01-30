@@ -20,7 +20,7 @@ import {
   ClinicianSearchInput,
 } from '../../../../system/src/Clinician';
 import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
-import { useProgramList } from 'packages/programs/src';
+import { ProgramFragment, useProgramList } from 'packages/programs/src';
 
 export const Toolbar: FC = () => {
   const {
@@ -29,8 +29,14 @@ export const Toolbar: FC = () => {
     isDisabled,
     rows: items,
   } = usePrescription();
-  const { id, patient, clinician, prescriptionDate, createdDatetime } =
-    data ?? {};
+  const {
+    id,
+    patient,
+    clinician,
+    prescriptionDate,
+    createdDatetime,
+    masterListId,
+  } = data ?? {};
   const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
     clinician ?? null
   );
@@ -42,6 +48,9 @@ export const Toolbar: FC = () => {
 
   const { data: programData } = useProgramList(true);
   const programs = programData?.nodes ?? [];
+  const selectedProgram = programs.find(prog => prog.id === masterListId);
+
+  console.log('selectedProgram', selectedProgram);
 
   const {
     delete: { deleteLines },
@@ -97,6 +106,22 @@ export const Toolbar: FC = () => {
         });
       },
       onCancel: () => setDateValue(currentDateValue),
+    });
+  };
+
+  console.log('Data', data);
+
+  const handleProgramChange = async (
+    newProgram: ProgramFragment | undefined
+  ) => {
+    console.log('newProgram', newProgram);
+
+    getConfirmation({
+      message: t('messages.confirm-change-prescription-program'),
+      onConfirm: async () => {
+        await update({ id, masterListId: newProgram?.id });
+      },
+      onCancel: () => console.log('Cancelled'),
     });
   };
 
@@ -174,8 +199,8 @@ export const Toolbar: FC = () => {
                   <ProgramSearchInput
                     disabled={isDisabled}
                     programs={programs}
-                    selectedProgram={programs[0]}
-                    onChange={() => {}}
+                    selectedProgram={selectedProgram}
+                    onChange={handleProgramChange}
                     // value={DateUtils.getDateOrNull(dateValue) ?? new Date()}
                     // format="P"
                     // onChange={handleDateChange}

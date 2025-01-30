@@ -34,6 +34,7 @@ pub struct UpdatePrescription {
     pub colour: Option<String>,
     pub backdated_datetime: Option<NaiveDateTime>,
     pub diagnosis_id: Option<NullableUpdate<String>>,
+    pub master_list_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]

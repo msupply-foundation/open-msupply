@@ -57,6 +57,7 @@ interface PrescriptionLineEditFormProps {
   hasExpired: boolean;
   isLoading: boolean;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
+  masterListId?: string;
 }
 
 export const PrescriptionLineEditForm: React.FC<
@@ -78,6 +79,7 @@ export const PrescriptionLineEditForm: React.FC<
   hasExpired,
   isLoading,
   updateQuantity,
+  masterListId,
 }) => {
   const t = useTranslation();
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
@@ -216,6 +218,7 @@ export const PrescriptionLineEditForm: React.FC<
                 ? undefined
                 : item => !items?.some(({ id }) => id === item.id)
             }
+            masterListId={masterListId}
           />
         </Grid>
       </AccordionPanelSection>
