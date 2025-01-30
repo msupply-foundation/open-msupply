@@ -6,18 +6,15 @@ use crate::{
         types::amc,
     },
     service_provider::ServiceContext,
+    store_preference::get_store_preferences,
     PluginOrRepositoryError,
 };
 use chrono::Duration;
 use repository::{
     ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, PluginType, RepositoryError,
     RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
-    StorePreferenceRowRepository,
 };
-use util::{
-    constants::{DEFAULT_AMC_LOOKBACK_MONTHS, NUMBER_OF_DAYS_IN_A_MONTH},
-    date_now_with_offset,
-};
+use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now_with_offset};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ItemStats {
@@ -50,15 +47,8 @@ pub fn get_item_stats(
     amc_lookback_months: Option<f64>,
     item_ids: Vec<String>,
 ) -> Result<Vec<ItemStats>, PluginOrRepositoryError> {
-    let default_amc_lookback_months = StorePreferenceRowRepository::new(&ctx.connection)
-        .find_one_by_id(store_id)?
-        .map_or(DEFAULT_AMC_LOOKBACK_MONTHS.into(), |row| {
-            if row.monthly_consumption_look_back_period == 0.0 {
-                DEFAULT_AMC_LOOKBACK_MONTHS.into()
-            } else {
-                row.monthly_consumption_look_back_period
-            }
-        });
+    let default_amc_lookback_months =
+        get_store_preferences(&ctx.connection, store_id)?.monthly_consumption_look_back_period;
 
     let amc_lookback_months = match amc_lookback_months {
         Some(months) => months,
