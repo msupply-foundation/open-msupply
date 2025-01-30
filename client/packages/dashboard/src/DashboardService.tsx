@@ -17,6 +17,7 @@ const Dashboard: React.FC = () => {
       sx={{
         backgroundColor: 'background.toolbar',
         paddingBottom: '32px',
+        width: '100%',
       }}
       justifyContent="space-evenly"
     >

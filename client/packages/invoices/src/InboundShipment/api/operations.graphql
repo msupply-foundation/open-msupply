@@ -317,11 +317,16 @@ mutation deleteInboundShipments(
 mutation insertInboundShipment(
   $id: String!
   $otherPartyId: String!
+  $requisitionId: String
   $storeId: String!
 ) {
   insertInboundShipment(
     storeId: $storeId
-    input: { id: $id, otherPartyId: $otherPartyId }
+    input: {
+      id: $id
+      otherPartyId: $otherPartyId
+      requisitionId: $requisitionId
+    }
   ) {
     ... on InsertInboundShipmentError {
       __typename

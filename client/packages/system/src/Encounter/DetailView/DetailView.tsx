@@ -16,6 +16,9 @@ import {
   ButtonWithIcon,
   SaveIcon,
   DetailTabs,
+  useConfirmOnLeaving,
+  useConfirmationModal,
+  useToggle,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -33,6 +36,9 @@ import { AppBarButtons } from './AppBarButtons';
 import { getLogicalStatus } from '../utils';
 import { PatientTabValue } from '../../Patient/PatientView/PatientView';
 import { VaccinationCard } from '../../Vaccination/Components/VaccinationCard';
+import { ScheduleNextEncounterModal } from './ScheduleNextEncounterModal';
+import { usePatientVaccineCard } from '../../Vaccination/api/usePatientVaccineCard';
+import { getNextVaccinationEncounterDate } from './helpers';
 
 const getPatientBreadcrumbSuffix = (
   encounter: EncounterFragment,
@@ -58,7 +64,8 @@ const getPatientBreadcrumbSuffix = (
 const useSaveWithStatus = (
   saveData: () => void,
   encounterData: EncounterSchema | undefined,
-  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>
+  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>,
+  scheduleNextEncounter: () => void
 ): ((status: EncounterNodeStatus | undefined) => void) => {
   const [saveStatus, setSaveStatus] = useState<
     EncounterNodeStatus | undefined
@@ -67,6 +74,7 @@ const useSaveWithStatus = (
   useEffect(() => {
     if (!!saveStatus && saveStatus === encounterData?.status) {
       saveData();
+      if (saveStatus === EncounterNodeStatus.Visited) scheduleNextEncounter();
     }
   }, [saveStatus, encounterData?.status]);
 
@@ -84,7 +92,8 @@ const useSaveWithStatus = (
 const useSaveWithStatusChange = (
   onSave: () => void,
   encounterData: EncounterSchema | undefined,
-  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>
+  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>,
+  scheduleNextEncounter: () => void
 ): {
   showDialog: () => void;
   SaveAsVisitedModal: React.FC;
@@ -98,7 +107,8 @@ const useSaveWithStatusChange = (
   const saveWithStatusChange = useSaveWithStatus(
     onSave,
     encounterData,
-    updateEncounter
+    updateEncounter,
+    scheduleNextEncounter
   );
 
   const SaveAsVisitedModal = () => (
@@ -150,12 +160,22 @@ export const DetailView: FC = () => {
     undefined
   );
   const [deleteRequest, setDeleteRequest] = useState(false);
+  const nextEncounterModal = useToggle(false);
 
   const {
     data: encounter,
     isSuccess,
     isError,
   } = useEncounter.document.byId(id);
+
+  // If this is a vaccination encounter, we want to use the suggested
+  // next vaccination dates for the next encounter
+  const {
+    query: { data: vaccineCard },
+  } = usePatientVaccineCard(encounter?.programEnrolment?.id ?? '');
+  const suggestedNextEncounterDate = getNextVaccinationEncounterDate(
+    vaccineCard?.items ?? []
+  );
 
   const handleSave = useEncounter.document.upsertDocument(
     encounter?.patient.id ?? '',
@@ -223,16 +243,48 @@ export const DetailView: FC = () => {
   } = useSaveWithStatusChange(
     saveData,
     data as unknown as EncounterSchema,
-    updateEncounter
+    updateEncounter,
+    nextEncounterModal.toggleOn
   );
+
+  const promptToMarkVisitedOnLeaving = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.mark-as-visited'),
+    cancelButtonLabel: t('label.leave-as-pending'),
+    buttonLabel: t('label.mark-as-visited'),
+    onConfirm: () => saveWithStatusChange(EncounterNodeStatus.Visited),
+  });
+
+  // Block navigation if the encounter is dirty and the status is pending
+  // "cancel" maps to "leave as pending" => would proceed with the navigation
+  // confirm to mark as visited
+  const { isDirty: shouldMarkVisited, setIsDirty: setShouldMarkVisited } =
+    useConfirmOnLeaving('encounter', {
+      customConfirmation: proceed =>
+        promptToMarkVisitedOnLeaving({
+          onCancel: proceed,
+        }),
+    });
+
   const dataStatus = data
     ? (data as Record<string, JsonData>)['status']
     : undefined;
-  const suggestSaveWithStatusVisited = encounter
-    ? new Date(encounter.startDatetime).getTime() < Date.now() &&
-      encounter.status === EncounterNodeStatus.Pending &&
-      dataStatus === EncounterNodeStatus.Pending
-    : false;
+
+  useEffect(() => {
+    // If JSON form is touched, we should prompt to mark as visited on leaving
+    if (
+      isDirty &&
+      dataStatus === EncounterNodeStatus.Pending &&
+      !shouldMarkVisited
+    ) {
+      setShouldMarkVisited(true);
+    }
+
+    // Allow to navigate away without prompt if the encounter is already visited
+    if (shouldMarkVisited && dataStatus === EncounterNodeStatus.Visited) {
+      setShouldMarkVisited(false);
+    }
+  }, [dataStatus, isDirty]);
 
   useEffect(() => {
     if (encounter) {
@@ -269,6 +321,12 @@ export const DetailView: FC = () => {
 
   if (!isSuccess && !isError) return <DetailViewSkeleton />;
 
+  const suggestSaveWithStatusVisited = encounter
+    ? new Date(encounter.startDatetime).getTime() < Date.now() &&
+      encounter.status === EncounterNodeStatus.Pending &&
+      dataStatus === EncounterNodeStatus.Pending
+    : false;
+
   // For Immunization Programs, we display as two different tabs - Vaccinations
   // card, and the normal "Encounter" page (if defined)
   const tabs = [];
@@ -279,6 +337,12 @@ export const DetailView: FC = () => {
           encounterId={encounter.id}
           programEnrolmentId={encounter.programEnrolment.id}
           clinician={encounter.clinician ?? undefined}
+          onOk={() => {
+            // After changes to vax card, if the encounter is still pending
+            // we should prompt to mark as visited on leaving
+            if (encounter.status === EncounterNodeStatus.Pending)
+              setShouldMarkVisited(true);
+          }}
         />
       ),
       value: t('label.vaccinations'),
@@ -305,6 +369,14 @@ export const DetailView: FC = () => {
         />
       ) : (
         <>
+          {nextEncounterModal.isOn && encounter.document.documentRegistry && (
+            <ScheduleNextEncounterModal
+              encounterConfig={encounter.document.documentRegistry}
+              onClose={nextEncounterModal.toggleOff}
+              patientId={encounter.patient.id ?? ''}
+              suggestedDate={suggestedNextEncounterDate}
+            />
+          )}
           <Toolbar onChange={updateEncounter} encounter={encounter} />
           {tabs.length > 0 ? <DetailTabs tabs={tabs} /> : JsonForm}
           <SidePanel

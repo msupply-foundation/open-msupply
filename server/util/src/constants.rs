@@ -19,7 +19,7 @@ pub fn expected_delivery_date_offset() -> Duration {
     Duration::weeks(2)
 }
 /// Default AMC calculation lookback
-pub const DEFAULT_AMC_LOOKBACK_MONTHS: u32 = 3;
+pub const DEFAULT_AMC_LOOKBACK_MONTHS: f64 = 3.0;
 // System user
 pub const SYSTEM_USER_ID: &str = "omsupply_system";
 // Missing program
