@@ -269,8 +269,7 @@ export const PrescriptionLineEditForm: React.FC<
               alignItems="center"
               display="flex"
               flexDirection="row"
-              justifyContent="space-between"
-              gap={1}
+              gap={5}
             >
               <Grid>
                 <Box display="flex" alignItems="center" gap={1}>
