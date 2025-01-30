@@ -205,7 +205,20 @@ export const ProgramRequisitionOptions = ({
       />
       <LabelAndOptions {...suppliers} optionKey="name" />
       <LabelAndOptions {...orderTypes} optionKey="name" />
-      <LabelAndOptions {...periods} optionKey="name" />
+      <Grid item width={'100%'}>
+        <Typography
+          sx={{
+            fontStyle: 'italic',
+            color: 'gray.main',
+            fontSize: '12px',
+            paddingLeft: 20,
+            marginBottom: 0,
+          }}
+        >
+          {t('message.program-period')}
+        </Typography>
+        <LabelAndOptions {...periods} optionKey="name" />
+      </Grid>
       <Grid item>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
