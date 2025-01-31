@@ -1,6 +1,10 @@
 use repository::name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow};
 
-use crate::sync::test::TestSyncIncomingRecord;
+use crate::sync::{
+    test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
+    translations::name_insurance_join::{LegacyInsurancePolicyType, LegacyNameInsuranceJoinRow},
+};
+use serde_json::json;
 
 const TABLE_NAME: &str = "nameInsuranceJoin";
 
@@ -80,4 +84,24 @@ fn name_insurance_join_2() -> TestSyncIncomingRecord {
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![name_insurance_join_1(), name_insurance_join_2()]
+}
+
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
+    vec![TestSyncOutgoingRecord {
+        record_id: NAME_INSURANCE_JOIN_1.0.to_string(),
+        table_name: TABLE_NAME.to_string(),
+        push_data: json!(LegacyNameInsuranceJoinRow {
+            ID: NAME_INSURANCE_JOIN_1.0.to_string(),
+            nameID: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+            insuranceProviderID: "INSURANCE_PROVIDER_1_ID".to_string(),
+            discountRate: 30,
+            enteredByID: None,
+            expiryDate: "2026-01-23".parse().unwrap(),
+            isActive: true,
+            policyNumberFamily: None,
+            policyNumberFull: "888".to_string(),
+            policyNumberPerson: None,
+            policyType: LegacyInsurancePolicyType::Personal,
+        }),
+    }]
 }
