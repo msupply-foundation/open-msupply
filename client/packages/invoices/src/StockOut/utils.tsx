@@ -420,10 +420,6 @@ export const assignPrescribedQuantity = (
     }
   });
 
-  console.log('newDraftStockOutlines', newDraftStockOutLines);
-  console.log('prescribedQuantityAssigned', prescribedQuantityAssigned);
-  console.log('placeholder', placeholder);
-
   // If no stock is allocated, assign it to the placeholder stock
   if (!prescribedQuantityAssigned && placeholder) {
     const placeholderIdx = newDraftStockOutLines.findIndex(
