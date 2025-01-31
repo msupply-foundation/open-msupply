@@ -53,6 +53,7 @@ fragment ProgramPatientRow on PatientNode {
   documentDraft
   isDeceased
   dateOfDeath
+  nextOfKinId
   programEnrolments {
     ... on ProgramEnrolmentConnector {
       __typename

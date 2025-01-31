@@ -56,6 +56,7 @@ export type DeleteInboundShipmentsMutation = { __typename: 'Mutations', batchInb
 export type InsertInboundShipmentMutationVariables = Types.Exact<{
   id: Types.Scalars['String']['input'];
   otherPartyId: Types.Scalars['String']['input'];
+  requisitionId?: Types.InputMaybe<Types.Scalars['String']['input']>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
@@ -86,6 +87,17 @@ export type AddToInboundShipmentFromMasterListMutationVariables = Types.Exact<{
 
 
 export type AddToInboundShipmentFromMasterListMutation = { __typename: 'Mutations', addToInboundShipmentFromMasterList: { __typename: 'AddToInboundShipmentFromMasterListError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'MasterListNotFoundForThisStore', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number } };
+
+export type LinkedRequestRowFragment = { __typename: 'RequisitionNode', id: string, createdDatetime: string, requisitionNumber: number, theirReference?: string | null, comment?: string | null, user?: { __typename: 'UserNode', username: string } | null, program?: { __typename: 'ProgramNode', name: string } | null };
+
+export type RequestsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  filter?: Types.InputMaybe<Types.RequisitionFilterInput>;
+  sort?: Types.InputMaybe<Array<Types.RequisitionSortInput> | Types.RequisitionSortInput>;
+}>;
+
+
+export type RequestsQuery = { __typename: 'Queries', requisitions: { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionNode', id: string, createdDatetime: string, requisitionNumber: number, theirReference?: string | null, comment?: string | null, user?: { __typename: 'UserNode', username: string } | null, program?: { __typename: 'ProgramNode', name: string } | null }> } };
 
 export const InboundLineFragmentDoc = gql`
     fragment InboundLine on InvoiceLineNode {
@@ -251,6 +263,21 @@ export const InboundRowFragmentDoc = gql`
   currencyRate
 }
     `;
+export const LinkedRequestRowFragmentDoc = gql`
+    fragment LinkedRequestRow on RequisitionNode {
+  id
+  createdDatetime
+  requisitionNumber
+  theirReference
+  user {
+    username
+  }
+  program {
+    name
+  }
+  comment
+}
+    `;
 export const InvoicesDocument = gql`
     query invoices($first: Int, $offset: Int, $key: InvoiceSortFieldInput!, $desc: Boolean, $filter: InvoiceFilterInput, $storeId: String!) {
   invoices(
@@ -384,10 +411,10 @@ export const DeleteInboundShipmentsDocument = gql`
 }
     `;
 export const InsertInboundShipmentDocument = gql`
-    mutation insertInboundShipment($id: String!, $otherPartyId: String!, $storeId: String!) {
+    mutation insertInboundShipment($id: String!, $otherPartyId: String!, $requisitionId: String, $storeId: String!) {
   insertInboundShipment(
     storeId: $storeId
-    input: {id: $id, otherPartyId: $otherPartyId}
+    input: {id: $id, otherPartyId: $otherPartyId, requisitionId: $requisitionId}
   ) {
     ... on InsertInboundShipmentError {
       __typename
@@ -742,6 +769,18 @@ export const AddToInboundShipmentFromMasterListDocument = gql`
   }
 }
     `;
+export const RequestsDocument = gql`
+    query requests($storeId: String!, $filter: RequisitionFilterInput, $sort: [RequisitionSortInput!]) {
+  requisitions(storeId: $storeId, filter: $filter, sort: $sort) {
+    ... on RequisitionConnector {
+      totalCount
+      nodes {
+        ...LinkedRequestRow
+      }
+    }
+  }
+}
+    ${LinkedRequestRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -776,6 +815,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     addToInboundShipmentFromMasterList(variables: AddToInboundShipmentFromMasterListMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AddToInboundShipmentFromMasterListMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<AddToInboundShipmentFromMasterListMutation>(AddToInboundShipmentFromMasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'addToInboundShipmentFromMasterList', 'mutation', variables);
+    },
+    requests(variables: RequestsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequestsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestsQuery>(RequestsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requests', 'query', variables);
     }
   };
 }
