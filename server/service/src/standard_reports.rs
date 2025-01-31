@@ -24,13 +24,13 @@ pub struct StandardReports;
 
 impl StandardReports {
     // Load embedded reports
-    pub fn load_reports(con: &StorageConnection) -> Result<(), anyhow::Error> {
+    pub fn load_reports(con: &StorageConnection, overwrite: bool) -> Result<(), anyhow::Error> {
         info!("upserting standard reports...");
         for file in EmbeddedStandardReports::iter() {
             if let Some(content) = EmbeddedStandardReports::get(&file) {
                 let json_data = content.data;
                 let reports_data: ReportsData = serde_json::from_slice(&json_data)?;
-                StandardReports::upsert_reports(reports_data, con, false)?;
+                StandardReports::upsert_reports(reports_data, con, overwrite)?;
             }
         }
         Ok(())

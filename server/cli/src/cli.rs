@@ -163,6 +163,7 @@ enum Action {
         #[clap(short, long, action = ArgAction::SetTrue)]
         overwrite: bool,
     },
+    ReloadEmbeddedReports,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -518,6 +519,12 @@ async fn main() -> anyhow::Result<()> {
             })?;
 
             info!("Report upserted");
+        }
+        Action::ReloadEmbeddedReports => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+
+            let _ = StandardReports::load_reports(&con, true);
         }
         Action::Backup => {
             backup(&settings)?;
