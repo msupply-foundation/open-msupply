@@ -36,23 +36,7 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
         inactive
       />
       <Collapse in={isGapsStore ? isGapsStore : isActive}>
-        <List>
-          <AppNavLink
-            visible={visible}
-            end
-            to={RouteBuilder.create(AppRoute.Coldchain)
-              .addPart(AppRoute.Monitoring)
-              .build()}
-            text={t('monitoring')}
-          />
-          <AppNavLink
-            visible={visible}
-            end
-            to={RouteBuilder.create(AppRoute.Coldchain)
-              .addPart(AppRoute.Sensors)
-              .build()}
-            text={t('sensors')}
-          />
+        <List>          
           <AppNavLink
             visible={visible}
             end

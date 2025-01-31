@@ -8,7 +8,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import Toolbar from '@mui/material/Toolbar';
 import { AppDrawerIcon } from '../AppDrawer/AppDrawerIcon';
 import { Property } from 'csstype';
-import { 
+import {
   useTheme,
   AppNavLink,
   PowerIcon,
@@ -28,11 +28,11 @@ import {
   Breadcrumbs
 } from '@openmsupply-client/common'
 import { AppRoute, ExternalURL, useExternalUrl } from 'packages/config/src/routes';
-import { SyncNavLink } from '../AppDrawer/SyncNavLink';import { ColdChainNav } from '../Navigation/ColdChainNav';
+import { SyncNavLink } from '../AppDrawer/SyncNavLink'; import { ColdChainNav } from '../Navigation/ColdChainNav';
 ;
 
 const commonListContainerStyles = {
-  alignItems: 'center',
+  alignItems: 'flex-start',
   display: 'flex',
   flexDirection: 'column' as Property.FlexDirection,
 };
@@ -57,11 +57,11 @@ const StyledDrawer = styled(Box, {
 })<{ isOpen: boolean }>(({ isOpen, theme }) => ({
   background: theme.palette.background.drawer,
   position: 'fixed',
-  display: isOpen ? 'flex' : 'none', 
-  flexDirection: "column",       
+  display: isOpen ? 'flex' : 'none',
+  flexDirection: "column",
   height: '80%',
-  borderRadius: '0 8px 8px 0',
-  minWidth: "60%",       
+  borderRadius: '0 0 8px 8px',
+  width: "100%",
   overflow: "hidden",
   boxShadow: theme.shadows[7],
   zIndex: theme.zIndex.drawer,
@@ -81,7 +81,7 @@ const StyledDrawer = styled(Box, {
   },
 }));
 
-export const MobileNavBar = () => {  
+export const MobileNavBar = () => {
   const drawer = useDrawer();
   const theme = useTheme();
   const t = useTranslation();
@@ -89,13 +89,12 @@ export const MobileNavBar = () => {
   const navigate = useNavigate();
 
   const handleDrawerToggle = () => {
-    drawer.toggle();    
+    drawer.toggle();
   };
 
   const publicDocsUrl = useExternalUrl(ExternalURL.PublicDocs);
-  const docsUrl = `${publicDocsUrl}${
-    EnvUtils.mapRoute(location.pathname).docs
-  }`;
+  const docsUrl = `${publicDocsUrl}${EnvUtils.mapRoute(location.pathname).docs
+    }`;
 
   const handleLogout = () => {
     navigate(RouteBuilder.create(AppRoute.Login).build());
@@ -103,20 +102,20 @@ export const MobileNavBar = () => {
   };
 
   const showConfirmation = useConfirmationModal({
-      onConfirm: handleLogout,
-      message: t('messages.logout-confirm'),
-      title: t('heading.logout-confirm'),
-    });
+    onConfirm: handleLogout,
+    message: t('messages.logout-confirm'),
+    title: t('heading.logout-confirm'),
+  });
 
   return (
-    <Box id="appbar" sx={{ }}>
+    <Box>
       <AppBar component="nav" position='static' sx={{
         flexDirection: 'row-reverse',
         justifyContent: 'space-between',
         alignItems: 'center',
         background: theme.palette.background.drawer,
-      }}>        
-        <Toolbar>          
+      }}>
+        <Toolbar>
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -124,13 +123,13 @@ export const MobileNavBar = () => {
             onClick={handleDrawerToggle}
             sx={{ mr: 1, color: "black" }}
           >
-            {drawer.isOpen ? <CloseIcon /> : <MenuIcon /> }
-          </IconButton>                          
+            {drawer.isOpen ? <CloseIcon /> : <MenuIcon />}
+          </IconButton>
         </Toolbar>
         <Breadcrumbs />
         <Box sx={{ p: '10', pl: '25' }}>
           <AppDrawerIcon />
-        </Box>        
+        </Box>
       </AppBar>
       <Divider />
       <StyledDrawer isOpen={drawer.isOpen}>
@@ -141,7 +140,7 @@ export const MobileNavBar = () => {
         </UpperListContainer>
         <Divider />
         <LowerListContainer>
-          <List>            
+          <List>
             <ExternalNavLink
               to={docsUrl}
               icon={<BookIcon fontSize="small" color="primary" />}
@@ -159,12 +158,12 @@ export const MobileNavBar = () => {
               to={'#'}
               icon={<PowerIcon fontSize="small" color="primary" />}
               text={t('logout')}
-              onClick={() => {                
+              onClick={() => {
                 showConfirmation({});
               }}
             />
           </List>
-        </LowerListContainer>      
+        </LowerListContainer>
       </StyledDrawer>
     </Box>
   );
