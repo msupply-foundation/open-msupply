@@ -163,6 +163,7 @@ enum Action {
         #[clap(short, long, action = ArgAction::SetTrue)]
         overwrite: bool,
     },
+    /// Reload and overwrite the embedded reports
     ReloadEmbeddedReports,
 }
 
