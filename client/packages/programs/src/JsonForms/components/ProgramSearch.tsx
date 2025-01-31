@@ -3,7 +3,7 @@ import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Box, DetailInputWithLabelRow } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_GAP, FORM_LABEL_WIDTH } from '../common';
-import { ProgramSearchInput } from '../../Components';
+import { PatientProgramSearchInput } from '../../Components';
 import { DocumentRegistryFragment } from '../../api';
 
 export const programSearchTester = rankWith(10, uiTypeIs('ProgramSearch'));
@@ -28,7 +28,10 @@ const UIComponent = (props: ControlProps) => {
       inputAlignment={'start'}
       Input={
         <Box display="flex" alignItems="center" gap={FORM_GAP} width="100%">
-          <ProgramSearchInput onChange={onChangeProgram} value={program} />
+          <PatientProgramSearchInput
+            onChange={onChangeProgram}
+            value={program}
+          />
         </Box>
       }
     />

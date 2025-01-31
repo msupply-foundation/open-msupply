@@ -1,20 +1,18 @@
 import React, { useEffect } from 'react';
 import { Autocomplete } from '@openmsupply-client/common';
-import { ProgramFragment } from '../api/operations.generated';
-import { useProgramList } from '../api';
+import { DocumentRegistryFragment } from '../api/operations.generated';
+import { useDocumentRegistry } from '../api';
 
-type ProgramSearchInputProps = {
-  value: ProgramFragment | null;
-  onChange: (newProgram: ProgramFragment) => void;
-  width?: string;
+type PatientProgramSearchInputProps = {
+  value: DocumentRegistryFragment | null;
+  onChange: (newProgram: DocumentRegistryFragment) => void;
 };
 
-export const ProgramSearchInput = ({
+export const PatientProgramSearchInput = ({
   value,
   onChange,
-  width,
-}: ProgramSearchInputProps) => {
-  const { data, isLoading } = useProgramList();
+}: PatientProgramSearchInputProps) => {
+  const { data, isLoading } = useDocumentRegistry.get.programRegistries();
 
   // If there is only one value, set it automatically
   useEffect(() => {
@@ -25,14 +23,14 @@ export const ProgramSearchInput = ({
 
   return (
     <Autocomplete
-      width={width}
+      fullWidth
       loading={isLoading}
       options={data?.nodes ?? []}
       optionKey="name"
       onChange={(_, newVal) =>
         newVal && newVal.id !== value?.id && onChange(newVal)
       }
-      value={value ? { label: value.name, ...value } : null}
+      value={value ? { label: value.name ?? '', ...value } : null}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       clearable={false}
     />
