@@ -795,3 +795,103 @@ describe('Allocated quantities - coping with over-allocation', () => {
     ]);
   });
 });
+
+describe('Allocated quantities - assign prescribed quantity', () => {
+  const Line1 = createTestLine({
+    id: '1',
+    itemId: 'item1.id',
+    numberOfPacks: 5,
+  });
+
+  const Line2 = createTestLine({
+    id: '2',
+    itemId: 'item2.id',
+    numberOfPacks: 0,
+  });
+
+  const Line3 = createTestLine({
+    id: '3',
+    itemId: 'item3.id',
+    numberOfPacks: 3,
+  });
+
+  const prescribedQuantity = 15;
+
+  const draftStockOutLines = [Line1, Line2, Line3];
+
+  it('should only save prescribedQuantity to the first allocated line', () => {
+    const allocate = allocateQuantities(
+      InvoiceNodeStatus.New,
+      draftStockOutLines
+    );
+
+    expect(allocate(5, null, false, prescribedQuantity)).toEqual([
+      { ...Line1, prescribedQuantity: 15, isUpdated: true },
+      Line2,
+      { ...Line3, numberOfPacks: 0, isUpdated: true },
+    ]);
+  });
+
+  it('should only allow one line to have prescribedQuantity', () => {
+    const allocate = allocateQuantities(
+      InvoiceNodeStatus.New,
+      draftStockOutLines
+    );
+
+    const newDraftStockOutLines = allocate(5, null, false, prescribedQuantity);
+
+    const lineWithPrescribedQuantity = newDraftStockOutLines?.filter(
+      line => line.prescribedQuantity === 15
+    );
+
+    expect(lineWithPrescribedQuantity?.length).toBe(1);
+    expect(lineWithPrescribedQuantity?.[0]?.prescribedQuantity).toEqual(15);
+  });
+
+  it('should assign prescribedQuantity to the next line if current line gets deleted', () => {
+    // Simulates the deletion of a line by setting its numberOfPacks to 0
+    // and checks if the prescribedQuantity is reassigned to the next line
+    const newLine1 = createTestLine({
+      id: '1',
+      availableNumberOfPacks: 0,
+      numberOfPacks: 0,
+      prescribedQuantity: 15,
+    });
+
+    const allocate = allocateQuantities(InvoiceNodeStatus.New, [
+      newLine1,
+      Line2,
+      Line3,
+    ]);
+
+    const newDraftStockOutLines = allocate(5, 1, false, prescribedQuantity);
+
+    const lineWithPrescribedQuantity = newDraftStockOutLines?.filter(
+      line => line.prescribedQuantity === prescribedQuantity
+    );
+
+    expect(lineWithPrescribedQuantity?.length).toBe(1);
+    expect(lineWithPrescribedQuantity?.[0]?.id).toBe('2');
+  });
+
+  it('should save to a placeholder if no stock is allocated', () => {
+    const placeholder = getPlaceholder();
+
+    const allocate = allocateQuantities(InvoiceNodeStatus.New, [
+      { ...Line1, numberOfPacks: 0 },
+      { ...Line2, numberOfPacks: 0 },
+      { ...Line3, numberOfPacks: 0 },
+      placeholder,
+    ]);
+
+    const newDraftStockOutLines = allocate(0, 0, false, prescribedQuantity);
+
+    const lineWithPrescribedQuantity = newDraftStockOutLines?.filter(
+      line => line.prescribedQuantity === 15
+    );
+
+    expect(lineWithPrescribedQuantity).toEqual([
+      { ...placeholder, prescribedQuantity },
+    ]);
+  });
+});
