@@ -185,7 +185,7 @@ impl<'a> ItemRepository<'a> {
         // Debug diesel query
         //
         // println!(
-        //     "{}",
+        //    "{}",
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
