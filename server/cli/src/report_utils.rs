@@ -77,6 +77,12 @@ pub fn generate_reports_recursive(
 }
 
 fn process_report(reports_data: &mut ReportsData, path: &PathBuf) -> Result<(), Error> {
+    let report_data = generate_report_data(path)?;
+    reports_data.reports.push(report_data);
+    Ok(())
+}
+
+pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
     // install esbuild depedencies
 
     if let Err(e) = run_yarn_install(&path) {
@@ -147,7 +153,7 @@ fn process_report(reports_data: &mut ReportsData, path: &PathBuf) -> Result<(), 
         (None, None) => None,
     };
 
-    let report_data = ReportData {
+    Ok(ReportData {
         id,
         name: report_name,
         r#type: repository::ReportType::OmSupply,
@@ -160,11 +166,7 @@ fn process_report(reports_data: &mut ReportsData, path: &PathBuf) -> Result<(), 
         version: version.to_string(),
         code,
         form_schema: form_schema_json,
-    };
-
-    reports_data.reports.push(report_data);
-
-    Ok(())
+    })
 }
 
 fn run_yarn_install(directory: &PathBuf) -> Result<(), Error> {
