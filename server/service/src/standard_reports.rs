@@ -68,7 +68,7 @@ impl StandardReports {
                 num_std_reports += 1;
             }
         }
-        info!("Upserted {} standard reports", num_std_reports);
+        info!("Upserted {} reports", num_std_reports);
         Ok(())
     }
 }
