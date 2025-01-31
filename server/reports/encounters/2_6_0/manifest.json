@@ -4,7 +4,7 @@
   "code": "encounters",
   "context": "DISPENSARY",
   "sub_context": "Encounters",
-  "name": "Encounters",
+  "name": "Pending Encounters",
   "queries": {
     "gql": "encountersQuery.graphql"
   },
