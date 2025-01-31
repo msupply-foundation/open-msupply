@@ -1,4 +1,4 @@
-use repository::name_insurance_join_row::NameInsuranceJoinRow;
+use repository::name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -27,6 +27,16 @@ fn name_insurance_join_1() -> TestSyncIncomingRecord {
         NAME_INSURANCE_JOIN_1,
         NameInsuranceJoinRow {
             id: NAME_INSURANCE_JOIN_1.0.to_owned(),
+            name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_owned(),
+            insurance_provider_id: "INSURANCE_PROVIDER_1_ID".to_owned(),
+            policy_number_person: None,
+            policy_number_family: Some("888".to_owned()),
+            policy_number: "888".to_owned(),
+            policy_type: InsurancePolicyType::Personal,
+            discount_percentage: 30,
+            expiry_date: "2026-01-23".parse().unwrap(),
+            is_active: true,
+            entered_by_id: None,
         },
     )
 }
@@ -54,8 +64,16 @@ fn name_insurance_join_2() -> TestSyncIncomingRecord {
         NAME_INSURANCE_JOIN_2,
         NameInsuranceJoinRow {
             id: NAME_INSURANCE_JOIN_2.0.to_owned(),
-            name_link_id: "name_store_a".to_owned(),
-            name_tag_id: "1A3B380E37F741729DAC4761AF3549F9".to_owned(),
+            name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_owned(),
+            insurance_provider_id: "INSURANCE_PROVIDER_1_ID".to_owned(),
+            policy_number_person: Some("777".to_owned()),
+            policy_number_family: None,
+            policy_number: "777".to_owned(),
+            policy_type: InsurancePolicyType::Business,
+            discount_percentage: 20,
+            expiry_date: "2027-01-01".parse().unwrap(),
+            is_active: true,
+            entered_by_id: None,
         },
     )
 }

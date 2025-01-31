@@ -28,7 +28,7 @@ table! {
     discount_percentage -> Integer,
     expiry_date -> Date,
     is_active -> Bool,
-    entered_by_id -> Text,
+    entered_by_id -> Nullable<Text>,
   }
 }
 
@@ -47,7 +47,7 @@ pub struct NameInsuranceJoinRow {
     pub discount_percentage: i32,
     pub expiry_date: chrono::NaiveDate,
     pub is_active: bool,
-    pub entered_by_id: String,
+    pub entered_by_id: Option<String>,
 }
 
 pub struct NameInsuranceJoinRowRepository<'a> {

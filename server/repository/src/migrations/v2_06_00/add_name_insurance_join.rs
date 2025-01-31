@@ -28,7 +28,7 @@ impl MigrationFragment for Migrate {
                     discount_percentage INTEGER NOT NULL,
                     expiry_date DATE NOT NULL,
                     is_active BOOLEAN NOT NULL,
-                    entered_by_id TEXT NOT NULL
+                    entered_by_id TEXT
                 );
             "#
         )?;
