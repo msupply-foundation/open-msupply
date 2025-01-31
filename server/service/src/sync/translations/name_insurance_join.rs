@@ -1,19 +1,70 @@
-use repository::{name_insurance_join_row::NameInsuranceJoinRow, StorageConnection, SyncBufferRow};
-
-use serde::Deserialize;
+use crate::sync::sync_serde::empty_str_as_option_string;
+use chrono::NaiveDate;
+use repository::{
+    name_insurance_join_row::{
+        InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinRowRepository,
+    },
+    StorageConnection, SyncBufferRow,
+};
+use serde::{Deserialize, Serialize};
 
 use crate::sync::translations::{
     insurance_provider::InsuranceProviderTranslator, name::NameTranslation,
 };
 
-use super::{PullTranslateResult, SyncTranslation};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+
+/*
+{
+    "ID": "194EDEC801F3457B814EA2549F713DEC",
+    "discountRate": 30,
+    "enteredByID": "",
+    "expiryDate": "2026-01-23",
+    "insuranceProviderID": "3CB14F143AFF4232889615B52EC56A1D",
+    "isActive": true,
+    "nameID": "87E06FEF0D424D9F8F639565E2E54A4A",
+    "policyNumberFamily": "888",
+    "policyNumberFull": "888",
+    "policyNumberPerson": "",
+    "type": "personal"
+}
+*/
+
+#[derive(Deserialize, Serialize, Debug)]
+pub enum LegacyPolicyType {
+    #[serde(rename = "personal")]
+    Personal,
+    #[serde(rename = "business")]
+    Business,
+}
+
+impl LegacyPolicyType {
+    fn to_domain(&self) -> InsurancePolicyType {
+        match self {
+            LegacyPolicyType::Personal => InsurancePolicyType::Personal,
+            LegacyPolicyType::Business => InsurancePolicyType::Business,
+        }
+    }
+}
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LegacyNameInsuranceJoinRow {
     ID: String,
-    name_ID: String,
-    name_insurance_ID: String,
+    nameID: String,
+    insuranceProviderID: String,
+    discountRate: i32,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    enteredByID: Option<String>,
+    expiryDate: NaiveDate,
+    isActive: bool,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    policyNumberFamily: Option<String>,
+    policyNumberFull: String,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    policyNumberPerson: Option<String>,
+    #[serde(rename = "type")]
+    policyType: LegacyPolicyType,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -41,38 +92,83 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyNameInsuranceJoinRow {
             ID,
-            name_ID,
-            name_insurance_ID,
+            nameID,
+            insuranceProviderID,
+            discountRate,
+            enteredByID,
+            expiryDate,
+            isActive,
+            policyNumberFamily,
+            policyNumberFull,
+            policyNumberPerson,
+            policyType,
         } = serde_json::from_str::<LegacyNameInsuranceJoinRow>(&sync_record.data)?;
-        if name_ID.is_empty() {
-            return Ok(PullTranslateResult::Ignored("Name id is empty".to_string()));
-        }
 
         let result = NameInsuranceJoinRow {
             id: ID,
-            name_id: name_ID,
-            insurance_provider_id: String::new(),
-            policy_number_person: None,
-            policy_number_family: None,
-            policy_number: String::new(),
-            policy_type: InsurancePolicyType::default(),
-            discount_percentage: 0,
-            expiry_date: NaiveDate::default(),
-            is_active: false,
-            entered_by_id: String::new(),
+            name_link_id: nameID,
+            insurance_provider_id: insuranceProviderID,
+            policy_number_person: policyNumberPerson,
+            policy_number_family: policyNumberFamily,
+            policy_number: policyNumberFull,
+            policy_type: policyType.to_domain(),
+            discount_percentage: discountRate,
+            expiry_date: expiryDate,
+            is_active: isActive,
+            entered_by_id: enteredByID,
         };
 
         Ok(PullTranslateResult::upsert(result))
     }
 
     fn try_translate_to_upsert_sync_record(
-            &self,
-            _: &StorageConnection,
-            _: &repository::ChangelogRow,
-        ) -> Result<super::PushTranslateResult, anyhow::Error> {
-    
-            todo!("NameInsuranceJoinTranslation is not implemented for upsert YET!")
-        }
+        &self,
+        connection: &StorageConnection,
+        changelog: &repository::ChangelogRow,
+    ) -> Result<super::PushTranslateResult, anyhow::Error> {
+        let NameInsuranceJoinRow {
+            id,
+            name_link_id,
+            insurance_provider_id,
+            policy_number_person,
+            policy_number_family,
+            policy_number,
+            policy_type,
+            discount_percentage,
+            expiry_date,
+            is_active,
+            entered_by_id,
+        } = NameInsuranceJoinRowRepository::new(connection)
+            .find_one_by_id(&changelog.record_id)?
+            .ok_or_else(|| {
+                anyhow::Error::msg(format!(
+                    "NameInsuranceJoin row ({}) not found",
+                    changelog.record_id
+                ))
+            })?;
+
+        let legacy_row = LegacyNameInsuranceJoinRow {
+            ID: id,
+            nameID: name_link_id,
+            insuranceProviderID: insurance_provider_id,
+            discountRate: discount_percentage,
+            enteredByID: entered_by_id,
+            expiryDate: expiry_date,
+            isActive: is_active,
+            policyNumberFamily: policy_number_family,
+            policyNumberFull: policy_number,
+            policyNumberPerson: policy_number_person,
+            policyType: match policy_type {
+                InsurancePolicyType::Personal => LegacyPolicyType::Personal,
+                InsurancePolicyType::Business => LegacyPolicyType::Business,
+            },
+        };
+
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 }
 
