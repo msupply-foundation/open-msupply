@@ -203,10 +203,6 @@ export const Toolbar: FC = () => {
                     programs={programs}
                     selectedProgram={selectedProgram}
                     onChange={handleProgramChange}
-                    // value={DateUtils.getDateOrNull(dateValue) ?? new Date()}
-                    // format="P"
-                    // onChange={handleDateChange}
-                    // maxDate={new Date()}
                   />
                 }
               />
