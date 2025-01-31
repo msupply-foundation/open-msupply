@@ -31,18 +31,18 @@ use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 */
 
 #[derive(Deserialize, Serialize, Debug)]
-pub enum LegacyPolicyType {
+pub enum LegacyInsurancePolicyType {
     #[serde(rename = "personal")]
     Personal,
     #[serde(rename = "business")]
     Business,
 }
 
-impl LegacyPolicyType {
+impl LegacyInsurancePolicyType {
     fn to_domain(&self) -> InsurancePolicyType {
         match self {
-            LegacyPolicyType::Personal => InsurancePolicyType::Personal,
-            LegacyPolicyType::Business => InsurancePolicyType::Business,
+            LegacyInsurancePolicyType::Personal => InsurancePolicyType::Personal,
+            LegacyInsurancePolicyType::Business => InsurancePolicyType::Business,
         }
     }
 }
@@ -50,21 +50,21 @@ impl LegacyPolicyType {
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
 pub struct LegacyNameInsuranceJoinRow {
-    ID: String,
-    nameID: String,
-    insuranceProviderID: String,
-    discountRate: i32,
+    pub ID: String,
+    pub nameID: String,
+    pub insuranceProviderID: String,
+    pub discountRate: i32,
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    enteredByID: Option<String>,
-    expiryDate: NaiveDate,
-    isActive: bool,
+    pub enteredByID: Option<String>,
+    pub expiryDate: NaiveDate,
+    pub isActive: bool,
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    policyNumberFamily: Option<String>,
-    policyNumberFull: String,
+    pub policyNumberFamily: Option<String>,
+    pub policyNumberFull: String,
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    policyNumberPerson: Option<String>,
+    pub policyNumberPerson: Option<String>,
     #[serde(rename = "type")]
-    policyType: LegacyPolicyType,
+    pub policyType: LegacyInsurancePolicyType,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -159,8 +159,8 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
             policyNumberFull: policy_number,
             policyNumberPerson: policy_number_person,
             policyType: match policy_type {
-                InsurancePolicyType::Personal => LegacyPolicyType::Personal,
-                InsurancePolicyType::Business => LegacyPolicyType::Business,
+                InsurancePolicyType::Personal => LegacyInsurancePolicyType::Personal,
+                InsurancePolicyType::Business => LegacyInsurancePolicyType::Business,
             },
         };
 
