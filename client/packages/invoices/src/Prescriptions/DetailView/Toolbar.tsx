@@ -110,9 +110,9 @@ export const Toolbar: FC = () => {
   const handleProgramChange = async (
     newProgram: ProgramFragment | undefined
   ) => {
-    if (!newProgram) {
+    if (!newProgram || !items || items.length === 0) {
       // It's okay to *clear* program without losing current items
-      await update({ id, masterListId: null });
+      await update({ id, masterListId: newProgram?.id ?? null });
       return;
     }
 
