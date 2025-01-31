@@ -4,6 +4,7 @@ import {
   Stack,
   Typography,
   useTranslation,
+  useIsScreen,
 } from '@openmsupply-client/common';
 import { LoginIcon } from '../Login/LoginIcon';
 import { Theme } from '@common/styles';
@@ -31,6 +32,7 @@ export const InitialiseLayout = ({
   onInitialise,
 }: LoginLayoutProps) => {
   const t = useTranslation();
+  const isMobile = useIsScreen('sm');
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {
@@ -42,10 +44,13 @@ export const InitialiseLayout = ({
     <Box display="flex" style={{ width: '100%' }}>
       <Box
         flex="1 0 50%"
-        sx={{
+        sx={theme => ({
+          [theme.breakpoints.down('sm')]: {
+            display: 'none !important',
+          },
           backgroundImage: (theme: Theme) => theme.mixins.gradient.secondary,
           padding: '0 80px 7% 80px',
-        }}
+        })}
         display="flex"
         alignItems="flex-start"
         justifyContent="flex-end"
@@ -99,17 +104,41 @@ export const InitialiseLayout = ({
         flexDirection="column"
       >
         <Box
-          sx={{
+          sx={theme => ({
+            [theme.breakpoints.down('sm')]: {
+              justifyContent: 'flex-start',
+              paddingTop: '1.5em'
+            },
             alignItems: 'center',
             justifyContent: 'center',
-          }}
+          })}
           display="flex"
           flexDirection="column"
           flex={1}
         >
           <Box style={{ width: 285 }}>
             <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
-              <Stack spacing={5}>
+              <Stack spacing={isMobile ? 3 : 5}>
+                {isMobile && <Box paddingTop="1em">
+                  <Typography
+                    sx={{
+                      fontSize: '16px',
+                      color: (theme: Theme) => theme.typography.caption,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {t('initialise.heading')}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: '14px',
+                      color: (theme: Theme) => theme.typography.caption,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {t('initialise.body')}
+                  </Typography>
+                </Box>}
                 <Box display="flex" justifyContent="center">
                   <LoginIcon small />
                 </Box>
