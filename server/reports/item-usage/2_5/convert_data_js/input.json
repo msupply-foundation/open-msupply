@@ -121,7 +121,7 @@
         "stats": {
           "totalConsumption": 1200,
           "availableMonthsOfStockOnHand": 4.5,
-          "availableStockOnHand": 300.902,
+          "stockOnHand": 300.902,
           "averageMonthlyConsumption": 266.7
         },
         "someOtherKey": ""
@@ -134,7 +134,7 @@
         "stats": {
           "totalConsumption": 100,
           "availableMonthsOfStockOnHand": 4.5,
-          "availableStockOnHand": 200,
+          "stockOnHand": 200,
           "someNestedEmptyStringKey": ""
         },
         "someOtherOtherKey": ""
