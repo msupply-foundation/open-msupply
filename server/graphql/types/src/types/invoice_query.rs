@@ -385,8 +385,8 @@ impl InvoiceNode {
             .map(DiagnosisNode::from_domain))
     }
 
-    pub async fn master_list_id(&self) -> &Option<String> {
-        &self.row().master_list_id
+    pub async fn program_id(&self) -> &Option<String> {
+        &self.row().program_id
     }
 }
 

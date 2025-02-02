@@ -315,7 +315,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: None,
-            master_list_id: None,
+            program_id: None,
         },
     )
 }
@@ -366,7 +366,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             currency_rate: 1.0,
             backdated_datetime: None,
             diagnosis_id: None,
-            master_list_id: None,
+            program_id: None,
         }),
     }
 }
@@ -520,7 +520,7 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: None,
-            master_list_id: None,
+            program_id: None,
         },
     )
 }
@@ -596,7 +596,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             currency_rate: 1.0,
             backdated_datetime: None,
             diagnosis_id: None,
-            master_list_id: None,
+            program_id: None,
         }),
     }
 }

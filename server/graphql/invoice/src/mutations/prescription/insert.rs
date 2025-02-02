@@ -15,7 +15,7 @@ pub struct InsertInput {
     pub id: String,
     pub patient_id: String,
     pub diagnosis_id: Option<String>,
-    pub master_list_id: Option<String>,
+    pub program_id: Option<String>,
 }
 
 #[derive(Union)]
@@ -49,14 +49,14 @@ impl InsertInput {
             id,
             patient_id,
             diagnosis_id,
-            master_list_id,
+            program_id,
         } = self;
 
         ServiceInput {
             id,
             patient_id,
             diagnosis_id,
-            master_list_id,
+            program_id,
         }
     }
 }

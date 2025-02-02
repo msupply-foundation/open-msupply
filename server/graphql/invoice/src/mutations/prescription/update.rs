@@ -29,7 +29,7 @@ pub struct UpdateInput {
     pub comment: Option<String>,
     pub colour: Option<String>,
     pub diagnosis_id: Option<NullableUpdateInput<String>>,
-    pub master_list_id: Option<NullableUpdateInput<String>>,
+    pub program_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -103,7 +103,7 @@ impl UpdateInput {
             colour,
             prescription_date,
             diagnosis_id,
-            master_list_id,
+            program_id,
         } = self;
 
         ServiceInput {
@@ -119,8 +119,8 @@ impl UpdateInput {
             diagnosis_id: diagnosis_id.map(|diagnosis_id| NullableUpdate {
                 value: diagnosis_id.value,
             }),
-            master_list_id: master_list_id.map(|master_list_id| NullableUpdate {
-                value: master_list_id.value,
+            program_id: program_id.map(|program_id| NullableUpdate {
+                value: program_id.value,
             }),
         }
     }

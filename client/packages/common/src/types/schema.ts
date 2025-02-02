@@ -1097,7 +1097,7 @@ export type ConsumptionHistoryNode = {
 };
 
 export type ConsumptionOptionsInput = {
-  /** Defaults to 3 months */
+  /** Defaults to store preference amc_lookback_months */
   amcLookbackMonths?: InputMaybe<Scalars['Int']['input']>;
   /** Defaults to 12 */
   numberOfDataPoints?: InputMaybe<Scalars['Int']['input']>;
@@ -2931,8 +2931,8 @@ export type InsertPluginDataResponse = PluginDataNode;
 export type InsertPrescriptionInput = {
   diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  masterListId?: InputMaybe<Scalars['String']['input']>;
   patientId: Scalars['String']['input'];
+  programId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPrescriptionLineError = {
@@ -3486,7 +3486,6 @@ export type InvoiceNode = {
   lines: InvoiceLineConnector;
   /** Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment */
   linkedShipment?: Maybe<InvoiceNode>;
-  masterListId?: Maybe<Scalars['String']['output']>;
   onHold: Scalars['Boolean']['output'];
   /**
    * Inbound Shipment that is the origin of this Supplier Return
@@ -3499,6 +3498,7 @@ export type InvoiceNode = {
   patient?: Maybe<PatientNode>;
   pickedDatetime?: Maybe<Scalars['DateTime']['output']>;
   pricing: PricingNode;
+  programId?: Maybe<Scalars['String']['output']>;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
    * Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
@@ -8397,9 +8397,9 @@ export type UpdatePrescriptionInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   diagnosisId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
-  masterListId?: InputMaybe<NullableStringUpdate>;
   patientId?: InputMaybe<Scalars['String']['input']>;
   prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
+  programId?: InputMaybe<NullableStringUpdate>;
   status?: InputMaybe<UpdatePrescriptionStatusInput>;
 };
 

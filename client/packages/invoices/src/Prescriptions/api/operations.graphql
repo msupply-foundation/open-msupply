@@ -69,7 +69,7 @@ fragment PrescriptionRow on InvoiceNode {
     description
   }
 
-  masterListId
+  programId
 }
 
 query prescriptions(

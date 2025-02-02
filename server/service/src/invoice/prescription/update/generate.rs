@@ -29,7 +29,7 @@ pub(crate) fn generate(
         colour: input_colour,
         backdated_datetime: backdated_datetime_input,
         diagnosis_id,
-        master_list_id,
+        program_id,
     }: UpdatePrescription,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdatePrescriptionError> {
@@ -60,8 +60,8 @@ pub(crate) fn generate(
         update_invoice.diagnosis_id = diagnosis_id.value;
     }
 
-    if let Some(master_list_id) = master_list_id {
-        update_invoice.master_list_id = master_list_id.value;
+    if let Some(program_id) = program_id {
+        update_invoice.program_id = program_id.value;
     }
 
     if let Some(status) = input_status.clone() {
