@@ -10,6 +10,7 @@ import {
   useUrlQueryParams,
   usePluginElements,
   InvoiceNodeStatus,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { useInbound } from '../api';
 import {
@@ -26,6 +27,7 @@ interface AppBarButtonProps {
 
 export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
   const t = useTranslation();
+  const { store } = useAuthContext();
   const isDisabled = useInbound.utils.isDisabled();
   const { data } = useInbound.document.get();
   const { OpenButton } = useDetailPanel();
@@ -37,6 +39,11 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
     type: 'InboundShipmentAppBar',
     data,
   });
+  const disableInternalOrderButton =
+    !store?.preferences.manuallyLinkInternalOrderToInboundShipment ||
+    !!data?.linkedShipment ||
+    !data?.requisition ||
+    data?.status !== InvoiceNodeStatus.New;
 
   const printReport = (
     report: ReportRowFragment,
@@ -60,6 +67,8 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
           disableAddFromMasterListButton={
             data?.status !== InvoiceNodeStatus.New
           }
+          disableAddFromInternalOrderButton={disableInternalOrderButton}
+          requisitionId={data?.requisition?.id ?? ''}
         />
         {pluginButtons}
         <ReportSelector
