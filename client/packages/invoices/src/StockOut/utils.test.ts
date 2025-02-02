@@ -876,22 +876,37 @@ describe('Allocated quantities - assign prescribed quantity', () => {
 
   it('should save to a placeholder if no stock is allocated', () => {
     const placeholder = getPlaceholder();
+    const newLine1 = createTestLine({
+      id: '1',
+      availableNumberOfPacks: 0,
+      numberOfPacks: 0,
+    });
+    const newLine2 = createTestLine({
+      id: '2',
+      availableNumberOfPacks: 0,
+      numberOfPacks: 0,
+    });
+    const newLine3 = createTestLine({
+      id: '3',
+      availableNumberOfPacks: 0,
+      numberOfPacks: 0,
+    });
 
     const allocate = allocateQuantities(InvoiceNodeStatus.New, [
-      { ...Line1, numberOfPacks: 0 },
-      { ...Line2, numberOfPacks: 0 },
-      { ...Line3, numberOfPacks: 0 },
+      newLine1,
+      newLine2,
+      newLine3,
       placeholder,
     ]);
 
-    const newDraftStockOutLines = allocate(0, 0, false, prescribedQuantity);
+    const newDraftStockOutLines = allocate(5, 0, false, prescribedQuantity);
 
     const lineWithPrescribedQuantity = newDraftStockOutLines?.filter(
       line => line.prescribedQuantity === 15
     );
 
     expect(lineWithPrescribedQuantity).toEqual([
-      { ...placeholder, prescribedQuantity },
+      { ...placeholder, numberOfPacks: 5, prescribedQuantity },
     ]);
   });
 });
