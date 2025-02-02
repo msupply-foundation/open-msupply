@@ -197,15 +197,16 @@ export const PrescriptionLineEditForm: React.FC<
   };
 
   useEffect(() => {
-    const newPrescribedQuantity = items.find(
+    const selectedItem = items.find(
       prescriptionItem => prescriptionItem.id === item?.id
-    )?.lines[0]?.prescribedQuantity;
+    );
+    const newPrescribedQuantity: number =
+      selectedItem?.lines?.find(
+        ({ prescribedQuantity }) =>
+          prescribedQuantity != null && prescribedQuantity > 0
+      )?.prescribedQuantity ?? 0;
 
-    if (newPrescribedQuantity != null) {
-      setPrescribedQuantity(newPrescribedQuantity);
-    } else {
-      setPrescribedQuantity(0);
-    }
+    setPrescribedQuantity(newPrescribedQuantity);
 
     const newIssueQuantity = Math.round(
       allocatedUnits / Math.abs(Number(packSizeController.selected?.value || 1))
@@ -292,7 +293,6 @@ export const PrescriptionLineEditForm: React.FC<
                     {t('label.issue')}
                   </InputLabel>
                   <NumericTextInput
-                    autoFocus
                     disabled={disabled}
                     value={issueUnitQuantity}
                     onChange={handleIssueQuantityChange}
