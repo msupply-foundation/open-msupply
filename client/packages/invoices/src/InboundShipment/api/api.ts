@@ -225,6 +225,15 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result?.requisitions;
     },
+    listInternalOrderLines: async (requisitionId: string) => {
+      const result = await sdk.request({
+        storeId,
+        id: requisitionId,
+      });
+      if (result?.requisition?.__typename === 'RequisitionNode') {
+        return result.requisition;
+      }
+    },
   },
   delete: async (invoices: InboundRowFragment[]): Promise<string[]> => {
     const result =
