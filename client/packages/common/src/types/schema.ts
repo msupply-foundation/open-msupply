@@ -2706,6 +2706,7 @@ export type InsertInboundShipmentInput = {
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId: Scalars['String']['input'];
+  requisitionId?: InputMaybe<Scalars['String']['input']>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -2911,6 +2912,7 @@ export type InsertPatientInput = {
   id: Scalars['String']['input'];
   isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  nextOfKinId?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -5221,6 +5223,7 @@ export type PatientFilterInput = {
   identifier?: InputMaybe<StringFilterInput>;
   lastName?: InputMaybe<StringFilterInput>;
   name?: InputMaybe<StringFilterInput>;
+  nextOfKinName?: InputMaybe<StringFilterInput>;
   phone?: InputMaybe<StringFilterInput>;
   programEnrolmentName?: InputMaybe<StringFilterInput>;
 };
@@ -8363,6 +8366,7 @@ export type UpdatePatientInput = {
   id: Scalars['String']['input'];
   isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  nextOfKinId?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
 };
 
