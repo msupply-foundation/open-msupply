@@ -1,4 +1,9 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-cd ./client && yarn pre-commit-lint
+SRC_PATTERN="client/"
+
+if git diff --cached --name-only | grep --quiet "$SRC_PATTERN"
+then
+  cd ./client && yarn pre-commit-lint
+fi
