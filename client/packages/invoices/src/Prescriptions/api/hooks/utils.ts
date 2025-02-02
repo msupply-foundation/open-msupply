@@ -14,6 +14,7 @@ export const sortFieldMap: Record<string, InvoiceSortFieldInput> = {
   comment: InvoiceSortFieldInput.Comment,
   invoiceNumber: InvoiceSortFieldInput.InvoiceNumber,
   status: InvoiceSortFieldInput.Status,
+  pickedDatetime: InvoiceSortFieldInput.PickedDatetime,
 };
 
 export const mapStatus = (patch: RecordPatch<PrescriptionRowFragment>) => {
