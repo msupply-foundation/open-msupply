@@ -79,7 +79,7 @@ pub fn generate(
         clinician_link_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
-        master_list_id: None,
+        program_id: None,
     };
 
     let invoice_line_id = uuid();

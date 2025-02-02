@@ -35,7 +35,7 @@ export const Toolbar: FC = () => {
     clinician,
     prescriptionDate,
     createdDatetime,
-    masterListId,
+    programId,
   } = data ?? {};
   const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
     clinician ?? null
@@ -48,7 +48,7 @@ export const Toolbar: FC = () => {
 
   const { data: programData } = useProgramList(true);
   const programs = programData?.nodes ?? [];
-  const selectedProgram = programs.find(prog => prog.id === masterListId);
+  const selectedProgram = programs.find(prog => prog.id === programId);
 
   const {
     delete: { deleteLines },
@@ -112,7 +112,7 @@ export const Toolbar: FC = () => {
   ) => {
     if (!newProgram || !items || items.length === 0) {
       // It's okay to *clear* program without losing current items
-      await update({ id, masterListId: newProgram?.id ?? null });
+      await update({ id, programId: newProgram?.id ?? null });
       return;
     }
 
@@ -122,7 +122,7 @@ export const Toolbar: FC = () => {
         // added when switching programs. We may wish to improve this in the
         // future to only remove items that don't belong to the new program
         await deleteAll();
-        await update({ id, masterListId: newProgram?.id });
+        await update({ id, programId: newProgram?.id });
       },
     });
   };

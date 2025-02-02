@@ -46,7 +46,7 @@ table! {
         original_shipment_id -> Nullable<Text>,
         backdated_datetime -> Nullable<Timestamp>,
         diagnosis_id -> Nullable<Text>,
-        master_list_id -> Nullable<Text>,
+        program_id -> Nullable<Text>,
     }
 }
 
@@ -122,7 +122,7 @@ pub struct InvoiceRow {
     pub original_shipment_id: Option<String>,
     pub backdated_datetime: Option<NaiveDateTime>,
     pub diagnosis_id: Option<String>,
-    pub master_list_id: Option<String>,
+    pub program_id: Option<String>,
 }
 
 impl Default for InvoiceRow {
@@ -157,7 +157,7 @@ impl Default for InvoiceRow {
             original_shipment_id: Default::default(),
             backdated_datetime: Default::default(),
             diagnosis_id: Default::default(),
-            master_list_id: Default::default(),
+            program_id: Default::default(),
         }
     }
 }

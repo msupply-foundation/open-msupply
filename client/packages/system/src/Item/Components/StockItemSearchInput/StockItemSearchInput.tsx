@@ -32,7 +32,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   openOnFocus,
   includeNonVisibleWithStockOnHand = false,
   itemCategoryName,
-  masterListId,
+  programId,
 }) => {
   const { filter, onFilter } = useStringFilter('codeOrName');
   const [search, setSearch] = useState('');
@@ -47,7 +47,10 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
 
   const fullFilter: StockOnHandFilter = { ...filter };
   if (itemCategoryName) fullFilter['categoryName'] = itemCategoryName;
-  if (masterListId) fullFilter['masterListId'] = { equalTo: masterListId };
+  // For now, we are filtering items by "master_list", as they have the same ID
+  // as their equivalent program. In the future, this may change, so we can add
+  // another filter specifically for programs if required.
+  if (programId) fullFilter['masterListId'] = { equalTo: programId };
 
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
     useItemStockOnHandInfinite({
