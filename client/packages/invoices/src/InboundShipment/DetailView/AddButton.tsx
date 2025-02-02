@@ -3,24 +3,33 @@ import { SplitButton, SplitButtonOption } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { AddFromMasterListButton } from './AddFromMasterListButton';
 import { useToggle } from '@common/hooks';
+import { AddFromInternalOrder } from './AddFromInternalOrder';
 
 interface AddButtonProps {
+  requisitionId: string;
+  onAddItem: (newState: boolean) => void;
   /** Disable the whole control */
   disable: boolean;
   disableAddFromMasterListButton: boolean;
-  onAddItem: (newState: boolean) => void;
+  disableAddFromInternalOrderButton: boolean;
 }
 
 export const AddButton = ({
+  requisitionId,
+  onAddItem,
   disable,
   disableAddFromMasterListButton,
-
-  onAddItem,
+  disableAddFromInternalOrderButton,
 }: AddButtonProps) => {
   const t = useTranslation();
   const masterListModalController = useToggle();
+  const internalOrderModalController = useToggle();
 
-  const options: [SplitButtonOption<string>, SplitButtonOption<string>] = [
+  const options: [
+    SplitButtonOption<string>,
+    SplitButtonOption<string>,
+    SplitButtonOption<string>,
+  ] = [
     {
       value: 'add-item',
       label: t('button.add-item'),
@@ -30,6 +39,11 @@ export const AddButton = ({
       value: 'add-from-master-list',
       label: t('button.add-from-master-list'),
       isDisabled: disableAddFromMasterListButton || disable,
+    },
+    {
+      value: 'add-from-internal-order',
+      label: t('button.add-from-internal-order'),
+      isDisabled: disableAddFromInternalOrderButton,
     },
   ];
   const [addItemOption] = options;
@@ -51,6 +65,9 @@ export const AddButton = ({
             case 'add-from-master-list':
               masterListModalController.toggleOn();
               break;
+            case 'add-from-internal-order':
+              internalOrderModalController.toggleOn();
+              break;
           }
         }}
       />
@@ -59,6 +76,13 @@ export const AddButton = ({
         <AddFromMasterListButton
           isOn={masterListModalController.isOn}
           toggleOff={masterListModalController.toggleOff}
+        />
+      )}
+      {internalOrderModalController.isOn && (
+        <AddFromInternalOrder
+          isOpen={internalOrderModalController.isOn}
+          onClose={internalOrderModalController.toggleOff}
+          requisitionId={requisitionId}
         />
       )}
     </>
