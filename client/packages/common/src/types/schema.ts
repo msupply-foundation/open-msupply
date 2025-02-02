@@ -666,6 +666,7 @@ export type BatchInboundShipmentInput = {
   deleteInboundShipmentLines?: InputMaybe<Array<DeleteInboundShipmentLineInput>>;
   deleteInboundShipmentServiceLines?: InputMaybe<Array<DeleteInboundShipmentServiceLineInput>>;
   deleteInboundShipments?: InputMaybe<Array<DeleteInboundShipmentInput>>;
+  insertFromInternalOrderLines?: InputMaybe<Array<InsertInboundShipmentLineFromInternalOrderLineInput>>;
   insertInboundShipmentLines?: InputMaybe<Array<InsertInboundShipmentLineInput>>;
   insertInboundShipmentServiceLines?: InputMaybe<Array<InsertInboundShipmentServiceLineInput>>;
   insertInboundShipments?: InputMaybe<Array<InsertInboundShipmentInput>>;
@@ -679,6 +680,7 @@ export type BatchInboundShipmentResponse = {
   deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineResponseWithId>>;
   deleteInboundShipmentServiceLines?: Maybe<Array<DeleteInboundShipmentServiceLineResponseWithId>>;
   deleteInboundShipments?: Maybe<Array<DeleteInboundShipmentResponseWithId>>;
+  insertFromInternalOrderLines?: Maybe<Array<InsertInboundShipmentLineFromInternalOrderLineResponseWithId>>;
   insertInboundShipmentLines?: Maybe<Array<InsertInboundShipmentLineResponseWithId>>;
   insertInboundShipmentServiceLines?: Maybe<Array<InsertInboundShipmentServiceLineResponseWithId>>;
   insertInboundShipments?: Maybe<Array<InsertInboundShipmentResponseWithId>>;
@@ -1097,7 +1099,7 @@ export type ConsumptionHistoryNode = {
 };
 
 export type ConsumptionOptionsInput = {
-  /** Defaults to 3 months */
+  /** Defaults to store preference amc_lookback_months */
   amcLookbackMonths?: InputMaybe<Scalars['Int']['input']>;
   /** Defaults to 12 */
   numberOfDataPoints?: InputMaybe<Scalars['Int']['input']>;
@@ -2691,6 +2693,8 @@ export type InsertFormSchemaInput = {
 
 export type InsertFormSchemaResponse = FormSchemaNode;
 
+export type InsertFromInternalOrderResponse = InvoiceLineNode;
+
 export type InsertInboundShipmentError = {
   __typename: 'InsertInboundShipmentError';
   error: InsertInboundShipmentErrorInterface;
@@ -2717,6 +2721,17 @@ export type InsertInboundShipmentLineError = {
 
 export type InsertInboundShipmentLineErrorInterface = {
   description: Scalars['String']['output'];
+};
+
+export type InsertInboundShipmentLineFromInternalOrderLineInput = {
+  invoiceId: Scalars['String']['input'];
+  requisitionLineId: Scalars['String']['input'];
+};
+
+export type InsertInboundShipmentLineFromInternalOrderLineResponseWithId = {
+  __typename: 'InsertInboundShipmentLineFromInternalOrderLineResponseWithId';
+  id: Scalars['String']['output'];
+  response: InsertFromInternalOrderResponse;
 };
 
 export type InsertInboundShipmentLineInput = {

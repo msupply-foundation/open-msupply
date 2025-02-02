@@ -688,6 +688,7 @@ mutation addToInboundShipmentFromMasterList(
 }
 
 fragment LinkedRequestRow on RequisitionNode {
+  __typename
   id
   createdDatetime
   requisitionNumber
@@ -701,6 +702,26 @@ fragment LinkedRequestRow on RequisitionNode {
   comment
 }
 
+fragment LinkedRequestLine on RequisitionLineNode {
+  __typename
+  id
+  requestedQuantity
+  item {
+    id
+    code
+    name
+  }
+}
+
+fragment LinkedRequestWithLines on RequisitionNode {
+  ...LinkedRequestRow
+  lines {
+    nodes {
+      ...LinkedRequestLine
+    }
+  }
+}
+
 query requests(
   $storeId: String!
   $filter: RequisitionFilterInput
@@ -712,6 +733,15 @@ query requests(
       nodes {
         ...LinkedRequestRow
       }
+    }
+  }
+}
+
+query request($id: String!, $storeId: String!) {
+  requisition(id: $id, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      ...LinkedRequestWithLines
     }
   }
 }
