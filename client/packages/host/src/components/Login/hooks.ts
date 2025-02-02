@@ -59,9 +59,9 @@ export const useLoginForm = (
     const state = location.state as State | undefined;
     let from = state?.from?.pathname || `/${AppRoute.Dashboard}`;
     
-    // if GAPS store only, redirect to Cold Chain
+    // if GAPS store only, always redirect to Cold Chain
     if (isGapsStore) {
-      from = state?.from?.pathname || `/${AppRoute.Coldchain}/${AppRoute.Equipment}`;
+      from = `/${AppRoute.Coldchain}/${AppRoute.Equipment}`;
     }
     navigate(from, { replace: true });
   };
