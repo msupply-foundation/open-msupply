@@ -321,11 +321,13 @@ export const PrescriptionLineEditForm: React.FC<
                   value={abbreviation}
                   onChange={e => setAbbreviation(e.target.value)}
                   onBlur={onSave}
+                  style={{ flex: 1 }}
                 />
               }
             />
-
             <DropdownMenu
+              sx={{ flex: 1 }}
+              selectSx={{ width: '100%' }}
               label={
                 defaultDirection
                   ? defaultDirection
@@ -361,7 +363,7 @@ export const PrescriptionLineEditForm: React.FC<
                   onChange={e => {
                     updateNotes(e.target.value);
                   }}
-                  fullWidth
+                  style={{ flex: 1 }}
                 />
               }
             />
