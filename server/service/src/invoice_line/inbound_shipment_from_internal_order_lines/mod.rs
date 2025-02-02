@@ -27,6 +27,7 @@ pub enum InsertFromInternalOrderLineError {
     RequisitionLineDoesNotExist,
     ItemDoesNotExist,
     RequisitionNotLinkedToInvoice,
+    CannotAddLineFromInternalOrder,
     NewlyCreatedLineDoesNotExist,
     DatabaseError(RepositoryError),
 }
