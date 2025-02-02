@@ -15,6 +15,7 @@ use std::fs::File;
 use std::io::BufReader;
 use thiserror::Error;
 
+pub mod abbreviation;
 pub mod activity_log;
 pub mod apis;
 pub mod app_data;
