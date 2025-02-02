@@ -464,7 +464,7 @@ async fn main() -> anyhow::Result<()> {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
 
-            let _ = StandardReports::upsert_reports(reports_data, &con, overwrite);
+            StandardReports::upsert_reports(reports_data, &con, overwrite)?;
         }
         Action::UpsertReport {
             id,
@@ -525,7 +525,7 @@ async fn main() -> anyhow::Result<()> {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
 
-            let _ = StandardReports::load_reports(&con, true);
+            StandardReports::load_reports(&con, true)?;
         }
         Action::Backup => {
             backup(&settings)?;
