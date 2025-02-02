@@ -293,7 +293,6 @@ export const PrescriptionLineEditForm: React.FC<
                     {t('label.issue')}
                   </InputLabel>
                   <NumericTextInput
-                    autoFocus
                     disabled={disabled}
                     value={issueUnitQuantity}
                     onChange={handleIssueQuantityChange}
