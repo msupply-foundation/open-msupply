@@ -9,7 +9,6 @@ fragment ServiceItemRow on ItemNode {
 fragment StockLine on StockLineNode {
   availableNumberOfPacks
   batch
-  costPricePerPack
   expiryDate
   id
   itemId
@@ -29,6 +28,7 @@ fragment StockLine on StockLineNode {
   onHold
   packSize
   sellPricePerPack
+  costPricePerPack
   storeId
   totalNumberOfPacks
   itemVariantId
