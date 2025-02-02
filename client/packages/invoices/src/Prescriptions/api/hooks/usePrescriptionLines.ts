@@ -79,11 +79,10 @@ const useSaveLines = (id: string, invoiceNum: number) => {
     const input = {
       insertPrescriptionLines: draftPrescriptionLines
         .filter(
-          ({ type, isCreated, numberOfPacks, prescribedQuantity }) =>
+          ({ type, isCreated, numberOfPacks }) =>
             isCreated &&
             type === InvoiceLineNodeType.StockOut &&
-            numberOfPacks > 0 &&
-            !prescribedQuantity
+            numberOfPacks > 0
         )
         .map(
           line =>
@@ -96,7 +95,7 @@ const useSaveLines = (id: string, invoiceNum: number) => {
             isUpdated &&
             type === InvoiceLineNodeType.StockOut &&
             numberOfPacks > 0 &&
-            (prescribedQuantity ?? 0) > 0
+            (prescribedQuantity ?? 0) >= 0
         )
         .map(
           line =>
