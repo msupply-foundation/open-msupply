@@ -7,7 +7,7 @@ import { ProgramFragment } from '../operations.generated';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { LIST, PROGRAM } from './keys';
 
-export const useProgramList = () => {
+export const useProgramList = (includeImmunisation?: boolean) => {
   const { api, storeId } = useProgramsGraphQL();
 
   const queryKey = [PROGRAM, LIST];
@@ -16,7 +16,7 @@ export const useProgramList = () => {
     totalCount: number;
   }> => {
     const filter: ProgramFilterInput = {
-      isImmunisation: false,
+      isImmunisation: includeImmunisation ? undefined : false,
       existsForStoreId: {
         equalTo: storeId,
       },
