@@ -4,6 +4,7 @@ use crate::StorageConnection;
 mod add_create_invoice_from_requisition_permission;
 mod add_index_to_sync_buffer;
 mod add_insurance_provider;
+mod add_name_insurance_join;
 mod add_name_next_of_kin_id;
 mod add_program_deleted_datetime;
 mod add_program_id_to_invoice;
@@ -29,6 +30,7 @@ impl Migration for V2_06_00 {
             Box::new(add_name_next_of_kin_id::Migrate),
             Box::new(add_program_id_to_invoice::Migrate),
             Box::new(add_insurance_provider::Migrate),
+            Box::new(add_name_insurance_join::Migrate),
         ]
     }
 }

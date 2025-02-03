@@ -79,6 +79,7 @@ pub mod master_list_name_join;
 mod master_list_row;
 mod migration_fragment_log;
 pub mod name;
+pub mod name_insurance_join_row;
 mod name_link_row;
 pub mod name_property;
 pub mod name_property_row;
