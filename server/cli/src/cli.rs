@@ -5,13 +5,17 @@ use clap::{ArgAction, Parser};
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
 
+use report_builder::{
+    print::{generate_report_inner, Config, ReportGenerateData},
+    Format,
+};
 use repository::{
     get_storage_connection_manager, schema_from_row, test_db, ContextType, EqualFilter,
     FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository, ReportFilter,
     ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
 };
 use serde::{Deserialize, Serialize};
-use server::configuration;
+use server::{cold_chain::config_cold_chain, configuration};
 use service::{
     apis::login_v4::LoginUserInfoV4,
     auth_data::AuthData,
@@ -19,7 +23,7 @@ use service::{
     plugin::validation::sign_plugin,
     service_provider::{ServiceContext, ServiceProvider},
     settings::Settings,
-    standard_reports::{ReportsData, StandardReports},
+    standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
         file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_status::logger::SyncLogger,
         synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
@@ -28,11 +32,14 @@ use service::{
 };
 use simple_log::LogConfigBuilder;
 use std::{
+    env::current_dir,
     ffi::OsStr,
     fs,
     path::{Path, PathBuf},
+    process::Command,
     sync::{Arc, RwLock},
 };
+use tokio::task::spawn_blocking;
 use util::inline_init;
 
 mod backup;
@@ -41,7 +48,7 @@ use backup::*;
 mod plugins;
 use plugins::*;
 
-use cli::{generate_reports_recursive, RefreshDatesRepository};
+use cli::{generate_report_data, generate_reports_recursive, RefreshDatesRepository, ReportError};
 
 const DATA_EXPORT_FOLDER: &str = "data";
 
@@ -158,6 +165,14 @@ enum Action {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long)]
         path: Option<PathBuf>,
+    },
+    ShowReport {
+        /// Path to report source files which will be built and displayed
+        #[clap(short, long)]
+        path: PathBuf,
+        /// Optional test config path location for non standard test config file
+        #[clap(short, long)]
+        config: Option<PathBuf>,
     },
 }
 
@@ -524,9 +539,65 @@ async fn main() -> anyhow::Result<()> {
         Action::GeneratePluginBundle(arguments) => {
             generate_plugin_bundle(arguments)?;
         }
+        Action::ShowReport { path, config } => {
+            let report_data: ReportData = generate_report_data(&path)?;
+
+            let report_json =
+                serde_json::to_value(report_data.template).expect("fail to convert report to json");
+
+            let test_config_path = Path::new("reports");
+
+            let test_config_file = fs::File::open(test_config_path.join("test-config.json"))
+                .map_err(|e| {
+                    ReportError::CannotOpenTestConfigFile(test_config_path.to_path_buf(), e)
+                })?;
+            let test_config: TestConfig =
+                serde_json::from_reader(test_config_file).map_err(|e| {
+                    ReportError::CannotReadTestConfigFile(test_config_path.clone().to_path_buf(), e)
+                })?;
+
+            let config = Config {
+                url: test_config.url,
+                username: test_config.username,
+                password: test_config.password,
+            };
+
+            let report_generate_data = ReportGenerateData {
+                report: report_json,
+                config: config,
+                store_id: Some(test_config.store_id),
+                store_name: None,
+                output_filename: Some(test_config.output_filename.clone()),
+                format: Format::Html,
+                data_id: Some(test_config.data_id),
+                arguments: Some(test_config.arguments),
+            };
+
+            spawn_blocking(|| generate_report_inner(report_generate_data)).await?;
+
+            let generated_file_path = current_dir()?.join(&(test_config.output_filename));
+
+            Command::new("open")
+                .arg(generated_file_path)
+                .status()
+                .expect("failed to open file");
+        }
     }
 
     Ok(())
+}
+
+#[derive(serde::Deserialize, Clone)]
+
+pub struct TestConfig {
+    data_id: String,
+    store_id: String,
+    url: String,
+    username: String,
+    password: String,
+    arguments: serde_json::Value,
+    locale: Option<String>,
+    output_filename: String,
 }
 
 fn export_paths(name: &str) -> (PathBuf, PathBuf, PathBuf) {

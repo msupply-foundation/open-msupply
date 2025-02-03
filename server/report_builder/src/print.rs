@@ -58,10 +58,10 @@ const STORES_QUERY: &str = r#"
 "#;
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Config {
-    url: String,
-    username: String,
-    password: String,
+pub struct Config {
+    pub url: String,
+    pub username: String,
+    pub password: String,
 }
 
 #[allow(dead_code)]
@@ -147,6 +147,11 @@ fn generate_request(
         "format": format
       }
     });
+
+    println!("token: {:?}", token);
+    println!("body: {}", serde_json::to_string_pretty(&body).unwrap());
+
+    // println!("reoirt body {:?}", body);
     let response = reqwest::blocking::Client::new()
         .post(url)
         .bearer_auth(token)
@@ -154,6 +159,7 @@ fn generate_request(
         .send()?;
     let status = response.status();
     let gql_result: GraphQlResponse = response.json()?;
+
     let result = &gql_result.data["generateReportDefinition"];
     if result["__typename"] != "PrintReportNode" {
         return Err(anyhow::Error::msg(format!(
@@ -210,6 +216,17 @@ fn fetch_file(
     Ok(output_filename)
 }
 
+pub struct ReportGenerateData {
+    pub report: serde_json::Value,
+    pub config: Config,
+    pub store_id: Option<String>,
+    pub store_name: Option<String>,
+    pub output_filename: Option<String>,
+    pub format: Format,
+    pub data_id: Option<String>,
+    pub arguments: Option<serde_json::Value>,
+}
+
 pub fn generate_report(
     config_path: String,
     store_id: Option<String>,
@@ -243,24 +260,41 @@ pub fn generate_report(
     let config: Config = serde_yaml::from_str(&config_data)
         .map_err(|err| anyhow::Error::msg(format!("Failed to parse config file: {}", err)))?;
 
-    let base_url = Url::parse(&config.url)
+    let inner_data = ReportGenerateData {
+        report,
+        config,
+        store_id,
+        store_name,
+        output_filename,
+        format,
+        data_id,
+        arguments,
+    };
+
+    generate_report_inner(inner_data)?;
+
+    Ok(())
+}
+
+pub fn generate_report_inner(input: ReportGenerateData) -> anyhow::Result<()> {
+    let base_url = Url::parse(&input.config.url)
         .map_err(|err| anyhow::Error::msg(format!("Invalid base url: {}", err)))?;
     let gql_url = base_url.join("graphql")?;
     let files_url = base_url.join("files")?;
 
     println!("> User graphql endpoint: {}", gql_url);
     println!("> Authenticate with remote server");
-    let token = token_request(gql_url.clone(), &config).map_err(|err| {
+    let token = token_request(gql_url.clone(), &input.config).map_err(|err| {
         anyhow::Error::msg(format!(
             "Failed to authenticate with remote server: {}",
             err
         ))
     })?;
 
-    let store_id = if let Some(store_id) = store_id {
+    let store_id = if let Some(store_id) = input.store_id {
         store_id
     } else {
-        let Some(store_name) = store_name else {
+        let Some(store_name) = input.store_name else {
             return Err(anyhow::Error::msg(
                 "Either store_id or store_name must be specified".to_string(),
             ));
@@ -270,7 +304,7 @@ pub fn generate_report(
     };
 
     println!("> Send report generate request ");
-    let file_name = output_filename.as_ref().and_then(|p| {
+    let file_name = input.output_filename.as_ref().and_then(|p| {
         Path::new(&p)
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
@@ -280,15 +314,15 @@ pub fn generate_report(
         &token,
         &store_id,
         &file_name,
-        report,
-        data_id,
-        arguments,
-        format,
+        input.report,
+        input.data_id,
+        input.arguments,
+        input.format,
     )
     .map_err(|err| anyhow::Error::msg(format!("Failed to fetch report data: {}", err)))?;
 
     println!("> Download report from {}", files_url);
-    fetch_file(files_url, &token, &file_id, &output_filename)?;
+    fetch_file(files_url, &token, &file_id, &input.output_filename)?;
 
     Ok(())
 }
