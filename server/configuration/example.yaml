@@ -4,6 +4,7 @@
 #   host: 127.0.0.1
 #   develop: true
 #   port: 8000
+#   # discovery: Enabled # Enabled, Disabled, or Auto
 #   # debug_no_access_control: true # enable this if you want to ignore API authorisation (dummy user will be used for all operations)
 #   # danger_allow_http: true # allow http in production mode
 #   cors_origins: [

@@ -22,25 +22,28 @@ export const AppVersion: FC<AppVersionProps> = ({ SiteInfo, style }) => {
       style={{
         flexGrow: 0,
         alignSelf: 'flex-end',
-        alignContent: 'flex-end',
-        display: 'flex',
-        flexDirection: 'column',
         ...style,
       }}
       padding={1}
     >
-      <Grid padding={1} paddingBottom={0}>
-        <Grid item display="flex" flex={1} gap={1} justifyContent="flex-end">
-          <Grid item justifyContent="flex-end" flex={0} display="flex">
+      <Grid padding={1} paddingBottom={0} display="flex" flexDirection="column">
+        <Grid
+          display="flex"
+          flexDirection="row"
+          flex={1}
+          gap={1}
+          justifyContent="flex-end"
+        >
+          <Grid>
             <Typography fontWeight={700}>{t('label.app-version')}</Typography>
           </Grid>
-          <Grid item flex={0}>
+          <Grid>
             <Typography whiteSpace="nowrap">{appVersion}</Typography>
           </Grid>
         </Grid>
         {isCentralServer && (
-          <Grid item display="flex" flex={1} gap={1} justifyContent="flex-end">
-            <Grid item justifyContent="flex-end" flex={0} display="flex">
+          <Grid display="flex" justifyContent="flex-end" gap={1}>
+            <Grid>
               <Typography fontWeight={700} sx={{ whiteSpace: 'nowrap' }}>
                 {t('label.central-server')}
               </Typography>
