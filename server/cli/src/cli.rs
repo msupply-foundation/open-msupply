@@ -154,6 +154,10 @@ enum Action {
     },
     /// Will generate a plugin bundle
     GeneratePluginBundle(GeneratePluginBundle),
+    /// Will insert generated plugin bundle
+    InstallPluginBundle(InstallPluginBundle),
+    /// Will generate and then install  plugin bundle
+    GenerateAndInstallPluginBundle(GenerateAndInstallPluginBundle),
     UpsertReports {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long)]
@@ -535,6 +539,12 @@ async fn main() -> anyhow::Result<()> {
         }
         Action::GeneratePluginBundle(arguments) => {
             generate_plugin_bundle(arguments)?;
+        }
+        Action::InstallPluginBundle(arguments) => {
+            install_plugin_bundle(arguments).await?;
+        }
+        Action::GenerateAndInstallPluginBundle(arguments) => {
+            generate_and_install_plugin_bundle(arguments).await?;
         }
     }
 
