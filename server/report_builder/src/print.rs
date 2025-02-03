@@ -147,7 +147,6 @@ fn generate_request(
         "format": format
       }
     });
-
     let response = reqwest::blocking::Client::new()
         .post(url)
         .bearer_auth(token)
@@ -272,24 +271,35 @@ pub fn generate_report(
 }
 
 pub fn generate_report_inner(input: ReportGenerateData) -> anyhow::Result<()> {
-    let base_url = Url::parse(&input.config.url)
+    let ReportGenerateData {
+        report,
+        config,
+        store_id,
+        store_name,
+        output_filename,
+        format,
+        data_id,
+        arguments,
+    } = input;
+
+    let base_url = Url::parse(&config.url)
         .map_err(|err| anyhow::Error::msg(format!("Invalid base url: {}", err)))?;
     let gql_url = base_url.join("graphql")?;
     let files_url = base_url.join("files")?;
 
     println!("> User graphql endpoint: {}", gql_url);
     println!("> Authenticate with remote server");
-    let token = token_request(gql_url.clone(), &input.config).map_err(|err| {
+    let token = token_request(gql_url.clone(), &config).map_err(|err| {
         anyhow::Error::msg(format!(
             "Failed to authenticate with remote server: {}",
             err
         ))
     })?;
 
-    let store_id = if let Some(store_id) = input.store_id {
+    let store_id = if let Some(store_id) = store_id {
         store_id
     } else {
-        let Some(store_name) = input.store_name else {
+        let Some(store_name) = store_name else {
             return Err(anyhow::Error::msg(
                 "Either store_id or store_name must be specified".to_string(),
             ));
@@ -299,7 +309,7 @@ pub fn generate_report_inner(input: ReportGenerateData) -> anyhow::Result<()> {
     };
 
     println!("> Send report generate request ");
-    let file_name = input.output_filename.as_ref().and_then(|p| {
+    let file_name = output_filename.as_ref().and_then(|p| {
         Path::new(&p)
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
@@ -309,15 +319,15 @@ pub fn generate_report_inner(input: ReportGenerateData) -> anyhow::Result<()> {
         &token,
         &store_id,
         &file_name,
-        input.report,
-        input.data_id,
-        input.arguments,
-        input.format,
+        report,
+        data_id,
+        arguments,
+        format,
     )
     .map_err(|err| anyhow::Error::msg(format!("Failed to fetch report data: {}", err)))?;
 
     println!("> Download report from {}", files_url);
-    fetch_file(files_url, &token, &file_id, &input.output_filename)?;
+    fetch_file(files_url, &token, &file_id, &output_filename)?;
 
     Ok(())
 }
