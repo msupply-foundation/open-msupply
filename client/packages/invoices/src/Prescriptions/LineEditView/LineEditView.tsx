@@ -182,6 +182,7 @@ export const PrescriptionLineEditView = () => {
               setIsDirty={dirty => {
                 isDirty.current = dirty;
               }}
+              programId={data?.programId ?? undefined}
             />
             <NavBar
               items={itemIdList}
