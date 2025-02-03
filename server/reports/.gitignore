@@ -7,3 +7,4 @@ target/
 /**/dist/
 /**/package-lock.json
 /**/yarn.lock
+**/report_to_show.html
