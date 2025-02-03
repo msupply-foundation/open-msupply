@@ -132,9 +132,6 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
         row: &ChangelogRow,
         r#type: &ToSyncRecordTranslationType,
     ) -> bool {
-        if row.table_name == ChangelogTableName::NameInsuranceJoin {
-            println!("should_translate_to_sync_record: {:?}", row.table_name);
-        }
         match r#type {
             ToSyncRecordTranslationType::PushToLegacyCentral => {
                 self.change_log_type().as_ref() == Some(&row.table_name)
