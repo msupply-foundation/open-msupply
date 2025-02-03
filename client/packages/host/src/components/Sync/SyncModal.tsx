@@ -12,6 +12,7 @@ import {
   useAuthContext,
   useFormatDateTime,
   useNativeClient,
+  useQueryClient,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useSync } from '@openmsupply-client/system';
@@ -38,6 +39,7 @@ const useHostSync = (enabled: boolean) => {
 
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!syncStatus) {
@@ -52,6 +54,7 @@ const useHostSync = (enabled: boolean) => {
       keepAwake();
     } else {
       allowSleep();
+      queryClient.invalidateQueries(); //refresh the page user is on after sync finishes
     }
   }, [syncStatus?.isSyncing]);
 
@@ -140,8 +143,8 @@ export const SyncModal = ({
           <Typography sx={{ paddingBottom: 2, fontSize: 12, maxWidth: 650 }}>
             {t('sync-info.summary')
               .split('\n')
-              .map(line => (
-                <div>{line}</div>
+              .map((line, index) => (
+                <div key={index}>{line}</div>
               ))}
           </Typography>
           <Row title={t('sync-info.number-to-push')}>
@@ -155,7 +158,7 @@ export const SyncModal = ({
           </Row>
           <Row title={t('sync-info.last-sync-duration')}>
             <Grid display="flex" container gap={1}>
-              <Grid item flex={0} style={{ whiteSpace: 'nowrap' }}>
+              <Grid flex={0} style={{ whiteSpace: 'nowrap' }}>
                 {DateUtils.formatDuration(durationAsDate)}
               </Grid>
             </Grid>
@@ -192,10 +195,10 @@ interface RowProps {
 
 const Row: React.FC<PropsWithChildren<RowProps>> = ({ title, children }) => (
   <Grid container padding={1}>
-    <Grid item flex={1} flexBasis="40%">
+    <Grid flex={1} flexBasis="40%">
       <Typography fontWeight={700}>{title}</Typography>
     </Grid>
-    <Grid item flex={1} flexBasis="60%">
+    <Grid flex={1} flexBasis="60%">
       {children}
     </Grid>
   </Grid>
@@ -212,13 +215,11 @@ const FormattedSyncDate = ({ date }: { date: Date | null }) => {
   })} )`;
 
   return (
-    <Grid display="flex" container gap={1}>
-      <Grid item flex={0} style={{ whiteSpace: 'nowrap' }}>
+    <Grid display="flex" flexDirection="row" container gap={1}>
+      <Grid style={{ whiteSpace: 'nowrap' }}>
         {Formatter.sentenceCase(relativeDateTime(date))}
       </Grid>
-      <Grid item flex={1} style={{ whiteSpace: 'nowrap' }}>
-        {relativeTime}
-      </Grid>
+      <Grid style={{ whiteSpace: 'nowrap' }}>{relativeTime}</Grid>
     </Grid>
   );
 };

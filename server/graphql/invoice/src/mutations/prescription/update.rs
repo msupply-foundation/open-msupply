@@ -29,6 +29,7 @@ pub struct UpdateInput {
     pub comment: Option<String>,
     pub colour: Option<String>,
     pub diagnosis_id: Option<NullableUpdateInput<String>>,
+    pub program_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -102,6 +103,7 @@ impl UpdateInput {
             colour,
             prescription_date,
             diagnosis_id,
+            program_id,
         } = self;
 
         ServiceInput {
@@ -116,6 +118,9 @@ impl UpdateInput {
             backdated_datetime: prescription_date.map(|date| date.naive_utc()),
             diagnosis_id: diagnosis_id.map(|diagnosis_id| NullableUpdate {
                 value: diagnosis_id.value,
+            }),
+            program_id: program_id.map(|program_id| NullableUpdate {
+                value: program_id.value,
             }),
         }
     }
@@ -200,6 +205,7 @@ mod test {
             InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
+        NullableUpdate,
     };
 
     use crate::InvoiceMutations;
@@ -232,7 +238,7 @@ mod test {
           "input": {
             "id": "n/a",
             "patientId": "n/a",
-            "clinicianId": "n/a",
+            "clinicianId": {"value": "n/a"},
             "comment": "n/a",
             "colour": "n/a"
           }
@@ -367,12 +373,15 @@ mod test {
                 ServiceInput {
                     id: "id input".to_string(),
                     patient_id: Some("patient_a".to_string()),
-                    clinician_id: Some("some_clinician".to_string()),
+                    clinician_id: Some(NullableUpdate {
+                        value: Some("some_clinician".to_string())
+                    }),
                     status: Some(UpdatePrescriptionStatus::Picked),
                     comment: Some("comment input".to_string()),
                     colour: Some("colour input".to_string()),
                     backdated_datetime: None,
                     diagnosis_id: None,
+                    program_id: None
                 }
             );
             Ok(Invoice {
@@ -387,7 +396,7 @@ mod test {
           "input": {
             "id": "id input",
             "patientId": "patient_a",
-            "clinicianId": "some_clinician",
+            "clinicianId": {"value": "some_clinician"},
             "status": "PICKED",
             "comment": "comment input",
             "colour": "colour input"

@@ -21,6 +21,7 @@ import type { AutocompleteProps } from './Autocomplete';
 import { StyledPopper } from './components';
 import { ArrayUtils } from '@common/utils';
 import { RecordWithId } from '@common/types';
+import { useOpenStateWithKeyboard } from '@common/components';
 
 const LOADER_HIDE_TIMEOUT = 500;
 
@@ -70,6 +71,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const [isLoading, setIsLoading] = useState(true);
   const lastOptions = useRef<T[]>([]);
+  const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
 
   const options = useMemo(() => {
     if (!pages) {
@@ -98,19 +100,26 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       {...props}
       {...inputProps}
       autoFocus={autoFocus}
-      InputProps={{
-        ...props.InputProps,
-        disableUnderline: false,
-        endAdornment: (
-          <>
-            {isLoading || loading ? (
-              <CircularProgress color="primary" size={18} />
-            ) : null}
-            {props.InputProps.endAdornment}
-          </>
-        ),
+      slotProps={{
+        input: {
+          ...props.InputProps,
+          disableUnderline: false,
+          sx: {
+            paddingLeft: 1,
+          },
+          endAdornment: (
+            <>
+              {isLoading || loading ? (
+                <CircularProgress color="primary" size={18} />
+              ) : null}
+              {props.InputProps.endAdornment}
+            </>
+          ),
+        },
+        htmlInput: {
+          ...props?.inputProps,
+        },
       }}
-      sx={{ width }}
     />
   );
 
@@ -155,13 +164,15 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         },
       };
 
-  const CustomPopper: React.FC<PopperProps> = props => (
+  const CustomPopper = (props: PopperProps) => (
     <StyledPopper
       {...props}
       placement="bottom-start"
       style={{ minWidth: popperMinWidth, width: 'auto' }}
     />
   );
+
+  const popper = popperMinWidth ? CustomPopper : StyledPopper;
 
   useEffect(() => {
     setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
@@ -170,6 +181,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   return (
     <MuiAutocomplete
       {...restOfAutocompleteProps}
+      {...openOverrides}
       inputValue={inputValue}
       onInputChange={onInputChange}
       disabled={disabled}
@@ -188,8 +200,22 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       renderOption={renderOption || DefaultRenderOption}
       onChange={onChange}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
-      PopperComponent={popperMinWidth ? CustomPopper : StyledPopper}
-      ListboxProps={listboxProps}
+      sx={{
+        background: theme =>
+          disabled
+            ? theme.palette.background.toolbar
+            : theme.palette.background.drawer,
+        borderRadius: 2,
+        paddingTop: 0.5,
+        paddingBottom: 0.5,
+        width,
+      }}
+      slots={{
+        popper: popper,
+      }}
+      slotProps={{
+        listbox: listboxProps,
+      }}
     />
   );
 }

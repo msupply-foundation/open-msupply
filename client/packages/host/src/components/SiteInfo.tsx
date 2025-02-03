@@ -1,8 +1,11 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   frontEndHostUrl,
+  getNativeAPI,
+  getPreference,
   Grid,
   IconButton,
+  NativeMode,
   Typography,
   useNativeClient,
 } from '@openmsupply-client/common';
@@ -16,19 +19,28 @@ const RowWithLabel = ({
   label: string;
   contents: React.ReactNode;
 }) => (
-  <Grid item display="flex" flex={1} gap={1} justifyContent="flex-end">
-    <Grid item justifyContent="flex-end" flex={0} display="flex">
+  <Grid display="flex" flex={1} gap={1} justifyContent="flex-end">
+    <Grid justifyContent="flex-end" flex={0} display="flex">
       <Typography fontWeight={700}>{label}</Typography>
     </Grid>
-    <Grid item flex={0} display="flex">
+    <Grid flex={0} display="flex">
       {contents}
     </Grid>
   </Grid>
 );
 
 export const SiteInfo: FC<{ siteName?: string | null }> = ({ siteName }) => {
-  const { connectedServer, goBackToDiscovery } = useNativeClient();
   const t = useTranslation();
+  const nativeApi = getNativeAPI();
+  const [localMode, setLocalMode] = useState(NativeMode.None);
+  const { connectedServer, goBackToDiscovery } = useNativeClient();
+
+  useEffect(() => {
+    getPreference('mode', NativeMode.None).then(setLocalMode);
+  }, []);
+
+  const renderServerRow = !nativeApi || localMode !== NativeMode.Server;
+
   if (!connectedServer) return null;
 
   return (
@@ -39,21 +51,23 @@ export const SiteInfo: FC<{ siteName?: string | null }> = ({ siteName }) => {
           contents={<Typography whiteSpace="nowrap">{siteName}</Typography>}
         />
       )}
-      <RowWithLabel
-        label={`${t('label.server')}:`}
-        contents={
-          <>
-            <Typography whiteSpace="nowrap">
-              {frontEndHostUrl(connectedServer)}
-            </Typography>
-            <IconButton
-              label={t('messages.change-server')}
-              icon={<EditIcon style={{ height: 16, width: 16 }} />}
-              onClick={() => goBackToDiscovery()}
-            />
-          </>
-        }
-      />
+      {renderServerRow && (
+        <RowWithLabel
+          label={`${t('label.server')}:`}
+          contents={
+            <>
+              <Typography whiteSpace="nowrap">
+                {frontEndHostUrl(connectedServer)}
+              </Typography>
+              <IconButton
+                label={t('messages.change-server')}
+                icon={<EditIcon style={{ height: 16, width: 16 }} />}
+                onClick={() => goBackToDiscovery()}
+              />
+            </>
+          }
+        />
+      )}
     </>
   );
 };

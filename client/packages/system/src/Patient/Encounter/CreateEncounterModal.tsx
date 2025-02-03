@@ -13,9 +13,6 @@ import {
   useNavigate,
   useNotification,
   useAuthContext,
-  TextArea,
-  DateTimePickerInput,
-  Tooltip,
 } from '@openmsupply-client/common';
 import { DateUtils, useTranslation } from '@common/intl';
 import {
@@ -29,49 +26,12 @@ import {
 import { usePatient } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { EncounterSearchInput } from './EncounterSearchInput';
-import {
-  ClinicianAutocompleteOption,
-  ClinicianSearchInput,
-} from '../../Clinician';
 import { PatientTabValue } from '../PatientView/PatientView';
-import { PickersDay, PickersDayProps } from '@mui/x-date-pickers';
-import Badge from '@mui/material/Badge';
+import { CreateEncounterForm } from './CreateEncounterForm';
 
 const LABEL_FLEX = '0 0 100px';
 
 type HighlightedDay = { datetime: Date; label?: string | null };
-type BadgePickersDayProps = {
-  highlightedDays: HighlightedDay[];
-};
-const BadgePickersDay = (
-  props: PickersDayProps<Date> & BadgePickersDayProps
-) => {
-  const { highlightedDays = [], day, outsideCurrentMonth, ...other } = props;
-
-  const matchingDay = highlightedDays.find(it =>
-    DateUtils.isSameDay(it.datetime, day)
-  );
-  const isSelected = !props.outsideCurrentMonth && !!matchingDay;
-  return (
-    <Badge
-      key={props.day.toString()}
-      overlap="circular"
-      badgeContent={
-        isSelected ? (
-          <Tooltip title={matchingDay?.label ?? ''}>
-            <span>⚠️</span>
-          </Tooltip>
-        ) : undefined
-      }
-    >
-      <PickersDay
-        {...other}
-        outsideCurrentMonth={outsideCurrentMonth}
-        day={day}
-      />
-    </Badge>
-  );
-};
 
 export const CreateEncounterModal: FC = () => {
   const patientId = usePatient.utils.id();
@@ -81,12 +41,11 @@ export const CreateEncounterModal: FC = () => {
   const [encounterRegistry, setEncounterRegistry] = useState<
     EncounterRegistryByProgram | undefined
   >();
-  const [createdDatetime] = useState(new Date().toISOString());
   const [dataError, setDataError] = useState(false);
   const [draft, setDraft] = useState<EncounterSchema | undefined>(undefined);
   const navigate = useNavigate();
   const { error } = useNotification();
-  const [startDateTimeError, setStartDateTimeError] = useState<string>();
+  const [hasFormError, setHasFormError] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
   const handleSave = useEncounter.document.upsert(
@@ -126,7 +85,7 @@ export const CreateEncounterModal: FC = () => {
   const currentOrNewDraft = useCallback((): EncounterSchema => {
     return (
       draft ?? {
-        createdDatetime,
+        createdDatetime: new Date().toISOString(),
         createdBy: { id: user?.id ?? '', username: user?.name ?? '' },
         status: EncounterNodeStatus.Pending,
         location: {
@@ -134,7 +93,7 @@ export const CreateEncounterModal: FC = () => {
         },
       }
     );
-  }, [createdDatetime, draft, storeId, user?.id, user?.name]);
+  }, [draft, storeId, user?.id, user?.name]);
   // set the startDatetime from the suggestedNextEncounter
   useEffect(() => {
     // don't suggest date if there is already an encounter for this day
@@ -172,32 +131,12 @@ export const CreateEncounterModal: FC = () => {
     suggestedNextInFuture,
   ]);
 
-  const setStartDatetime = (date: Date | null): void => {
-    const startDatetime = DateUtils.formatRFC3339(
-      DateUtils.addCurrentTime(date)
-    );
-    setDraft({
-      ...currentOrNewDraft(),
-      startDatetime,
-    });
-    setStartDateTimeError(undefined);
-  };
-
-  const setClinician = (option: ClinicianAutocompleteOption | null): void => {
-    if (option === null) {
-      setDraft({ ...currentOrNewDraft(), clinician: undefined });
-      return;
-    }
-    const clinician = option.value;
-    setDraft({ ...currentOrNewDraft(), clinician });
-  };
-
   const setNote = (notes: NoteSchema[] | undefined): void => {
     setDraft({ ...currentOrNewDraft(), notes });
   };
 
   const canSubmit = () =>
-    draft !== undefined && draft.startDatetime && !startDateTimeError;
+    draft !== undefined && draft.startDatetime && !hasFormError;
 
   const getHighlightedDays = (): HighlightedDay[] => {
     if (!suggestedNextInFuture || !suggestedNextEncounter) return [];
@@ -231,19 +170,23 @@ export const CreateEncounterModal: FC = () => {
                 return;
               }
               const startDatetime = new Date(draft?.startDatetime ?? 0);
-              if (DateUtils.addHours(startDatetime, 1).getTime() > Date.now()) {
+              const dateNow = Date.now();
+              if (
+                startDatetime.getTime() <=
+                DateUtils.addMinutes(dateNow, 5).getTime()
+              ) {
                 navigate(
                   RouteBuilder.create(AppRoute.Dispensary)
-                    .addPart(AppRoute.Patients)
-                    .addPart(patientId)
-                    .addQuery({ tab: PatientTabValue.Encounters })
+                    .addPart(AppRoute.Encounter)
+                    .addPart(id)
                     .build()
                 );
               } else {
                 navigate(
                   RouteBuilder.create(AppRoute.Dispensary)
-                    .addPart(AppRoute.Encounter)
-                    .addPart(id)
+                    .addPart(AppRoute.Patients)
+                    .addPart(patientId)
+                    .addQuery({ tab: PatientTabValue.Encounters })
                     .build()
                 );
               }
@@ -272,66 +215,12 @@ export const CreateEncounterModal: FC = () => {
             isLoading={false}
             isProgram={!!encounterRegistry}
             form={
-              <>
-                <InputWithLabelRow
-                  labelProps={{ sx: { flex: LABEL_FLEX } }}
-                  label={t('label.visit-date')}
-                  Input={
-                    <DateTimePickerInput
-                      value={DateUtils.getDateOrNull(draft?.startDatetime)}
-                      onChange={setStartDatetime}
-                      onError={validationError =>
-                        setStartDateTimeError(validationError as string)
-                      }
-                      error={startDateTimeError}
-                      slots={{
-                        day: BadgePickersDay as React.FC<PickersDayProps<Date>>,
-                      }}
-                      slotProps={{
-                        day: {
-                          highlightedDays: getHighlightedDays(),
-                        } as any,
-                      }}
-                    />
-                  }
-                />
-                <InputWithLabelRow
-                  labelProps={{ sx: { flex: LABEL_FLEX } }}
-                  label={t('label.clinician')}
-                  Input={
-                    <ClinicianSearchInput
-                      fullWidth
-                      onChange={setClinician}
-                      clinicianValue={draft?.clinician}
-                    />
-                  }
-                />
-                <InputWithLabelRow
-                  labelProps={{ sx: { flex: LABEL_FLEX } }}
-                  label={t('label.visit-notes')}
-                  Input={
-                    <TextArea
-                      InputProps={{
-                        sx: {
-                          backgroundColor: 'background.drawer',
-                        },
-                      }}
-                      fullWidth
-                      value={draft?.notes?.[0]?.text ?? ''}
-                      onChange={e => {
-                        setNote([
-                          {
-                            authorId: user?.id,
-                            authorName: user?.name,
-                            created: new Date().toISOString(),
-                            text: e.target.value,
-                          },
-                        ]);
-                      }}
-                    />
-                  }
-                />
-              </>
+              <CreateEncounterForm
+                draft={currentOrNewDraft()}
+                setDraft={setDraft}
+                setHasFormError={setHasFormError}
+                highlightedDays={getHighlightedDays()}
+              />
             }
           />
         </Stack>

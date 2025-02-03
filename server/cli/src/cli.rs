@@ -2,10 +2,8 @@ use anyhow::anyhow;
 use async_graphql::EmptySubscription;
 use chrono::Utc;
 use clap::{ArgAction, Parser};
-use cli::RefreshDatesRepository;
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
-use report_builder::{build::build_report_definition, BuildArgs};
 
 use repository::{
     get_storage_connection_manager, schema_from_row, test_db, ContextType, EqualFilter,
@@ -21,7 +19,7 @@ use service::{
     plugin::validation::sign_plugin,
     service_provider::{ServiceContext, ServiceProvider},
     settings::Settings,
-    standard_reports::{ReportData, ReportsData, StandardReports},
+    standard_reports::{ReportsData, StandardReports},
     sync::{
         file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_status::logger::SyncLogger,
         synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
@@ -30,16 +28,20 @@ use service::{
 };
 use simple_log::LogConfigBuilder;
 use std::{
+    ffi::OsStr,
     fs,
     path::{Path, PathBuf},
-    process::{Command, Stdio},
     sync::{Arc, RwLock},
 };
-
 use util::inline_init;
 
 mod backup;
 use backup::*;
+
+mod plugins;
+use plugins::*;
+
+use cli::{generate_reports_recursive, RefreshDatesRepository};
 
 const DATA_EXPORT_FOLDER: &str = "data";
 
@@ -117,15 +119,15 @@ enum Action {
 
         /// Path to the report
         #[clap(short, long)]
-        report_path: String,
+        report_path: PathBuf,
 
         /// Path to the arguments json form schema
         #[clap(long)]
-        arguments_path: Option<String>,
+        arguments_path: Option<PathBuf>,
 
         /// Path to the arguments json form UI schema
         #[clap(long)]
-        arguments_ui_path: Option<String>,
+        arguments_ui_path: Option<PathBuf>,
 
         /// Report name
         #[clap(short, long)]
@@ -144,12 +146,25 @@ enum Action {
     /// User can specify max number of backup to keep, see example configuration file
     Backup,
     Restore(RestoreArguments),
-    BuildStandardReports,
-    UpsertReportsJson {
+    BuildReports {
+        /// Optional reports path. If supplied, this dir should be the same structure as per standard reports.
+        /// Will generate a json of all reports within this directory
+        #[clap(short, long)]
+        path: Option<PathBuf>,
+    },
+    /// Will generate a plugin bundle
+    GeneratePluginBundle(GeneratePluginBundle),
+    UpsertReports {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long)]
-        json_path: Option<String>,
+        path: Option<PathBuf>,
+        
+        /// Overwrite any pre-existing reports
+        #[clap(short, long, action = ArgAction::SetTrue)]
+        overwrite: bool,
     },
+    /// Reload and overwrite the embedded reports
+    ReloadEmbeddedReports,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -385,162 +400,63 @@ async fn main() -> anyhow::Result<()> {
             info!("Refresh data result: {:#?}", result);
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
-        Action::BuildStandardReports {} => {
-            let connection_manager = get_storage_connection_manager(&settings.database);
-            let con = connection_manager.connection()?;
-            let base_reports_dir = "./reports";
-
-            let report_names: Vec<String> = fs::read_dir(base_reports_dir)?
-                .filter_map(|r| r.ok())
-                .map(|e| e.path())
-                .filter(|p| p.is_dir())
-                .filter(|name| name != &PathBuf::from("./reports/generated"))
-                .map(|p| p.into_os_string().into_string().unwrap())
-                .collect();
+        Action::BuildReports { path } => {
+            let base_reports_dir = match path.clone() {
+                Some(path) => path,
+                None => PathBuf::new().join("reports"),
+            };
 
             let mut reports_data = ReportsData { reports: vec![] };
+            let ignore_paths = vec![OsStr::new("node_modules")];
+            let manifest_name = OsStr::new("report-manifest.json");
 
-            for name_dir in report_names {
-                let report_versions: Vec<String> = fs::read_dir(&name_dir)?
-                    .filter_map(|r| r.ok())
-                    .map(|e| e.path())
-                    .filter(|p| p.is_dir())
-                    .map(|p| p.into_os_string().into_string().unwrap())
-                    .collect();
+            generate_reports_recursive(
+                &mut reports_data,
+                &ignore_paths,
+                manifest_name,
+                &base_reports_dir,
+            )?;
 
-                let (_, name) = name_dir.rsplit_once('/').unwrap();
+            let output_name = if path.is_some() {
+                "reports.json"
+            } else {
+                "standard_reports.json"
+            };
 
-                for version_dir in report_versions {
-                    // install esbuild depedencies
-                    if let Err(e) = run_yarn_install(&version_dir) {
-                        eprintln!("Failed to run yarn install in {}: {}", version_dir, e);
-                        continue;
-                    }
-                    // read manifest file
-
-                    let manifest_file = fs::File::open(format!("{version_dir}/manifest.json"))
-                        .expect(&format!(
-                            "manifest file should open read only in report {:?} {:?}",
-                            name, version_dir
-                        ));
-
-                    let manifest: Manifest =
-                        serde_json::from_reader(manifest_file).expect(&format!(
-                            "manifest json not formatted correctly {:?} {:?}",
-                            name, version_dir
-                        ));
-                    let code = manifest.code;
-
-                    let version = manifest.version;
-                    let id_version = str::replace(&version, ".", "_");
-
-                    let context = manifest.context;
-                    let report_name = manifest.name;
-                    let is_custom = manifest.is_custom;
-                    let id = format!("{code}_{id_version}_{is_custom}");
-                    let sub_context = manifest.sub_context;
-                    let arguments_path = manifest
-                        .arguments
-                        .clone()
-                        .and_then(|a| a.schema)
-                        .and_then(|schema| format!("{version_dir}/{schema}").into());
-                    let arguments_ui_path = manifest
-                        .arguments
-                        .and_then(|a| a.ui)
-                        .and_then(|ui| format!("{version_dir}/{ui}").into());
-                    let graphql_query = manifest.queries.clone().and_then(|q| q.gql);
-                    let sql_queries = manifest.queries.clone().and_then(|q| q.sql);
-                    let convert_data = manifest
-                        .convert_data
-                        .and_then(|cd| format!("{version_dir}/{cd}").into());
-                    let custom_wasm_function = manifest.custom_wasm_function;
-                    let query_default = manifest.query_default;
-
-                    let args = BuildArgs {
-                        dir: format!("{version_dir}/src"),
-                        output: format!("{version_dir}/generated/{name}.json").into(),
-                        template: "template.html".to_string(),
-                        header: manifest.header,
-                        footer: manifest.footer,
-                        query_gql: graphql_query,
-                        query_default: query_default,
-                        query_sql: sql_queries,
-                        convert_data,
-                        custom_wasm_function,
-                    };
-
-                    let report_definition = build_report_definition(&args)
-                        .map_err(|_| anyhow!("Failed to build report {:?}", id))?;
-
-                    let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
-                    let existing_report =
-                        ReportRepository::new(&con).query_by_filter(filter)?.pop();
-
-                    let argument_schema_id = existing_report
-                        .and_then(|r| r.argument_schema.as_ref().map(|r| r.id.clone()));
-
-                    let form_schema_json = match (arguments_path, arguments_ui_path) {
-                        (Some(_), None) | (None, Some(_)) => {
-                            return Err(anyhow!(format!(
-                                "When arguments_path is specified arguments_ui_path must be specified too in report {:?} {:?}", name, version_dir
-                            )))
-                        }
-                        (Some(arguments_path), Some(arguments_ui_path)) => {
-                            Some(schema_from_row(FormSchemaRow {
-                                id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
-                                r#type: "reportArgument".to_string(),
-                                json_schema: fs::read_to_string(arguments_path)?,
-                                ui_schema: fs::read_to_string(arguments_ui_path)?,
-                            })?)
-                        }
-                        (None, None) => None,
-                    };
-
-                    let report_data = ReportData {
-                        id,
-                        name: report_name,
-                        r#type: repository::ReportType::OmSupply,
-                        template: report_definition,
-                        context,
-                        sub_context,
-                        argument_schema_id: form_schema_json.clone().map(|r| r.id.clone()),
-                        comment: None,
-                        is_custom,
-                        version: version.to_string(),
-                        code,
-                        form_schema: form_schema_json,
-                    };
-
-                    reports_data.reports.push(report_data);
-                }
-            }
-
-            let output_path = format!("{base_reports_dir}/generated/standard_reports.json");
-            let output_path = Path::new(&output_path);
+            let output_path = base_reports_dir.join("generated").join(output_name);
 
             fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
                 "Invalid output path: {:?}",
                 output_path
             )))?)?;
 
-            fs::write(output_path, serde_json::to_string_pretty(&reports_data)?).map_err(|_| {
-                anyhow::Error::msg(format!(
-                    "Failed to write to {:?}. Does output dir exist?",
-                    output_path
-                ))
-            })?;
+            fs::write(&output_path, serde_json::to_string_pretty(&reports_data)?).map_err(
+                |_| {
+                    anyhow::Error::msg(format!(
+                        "Failed to write to {:?}. Does output dir exist?",
+                        output_path
+                    ))
+                },
+            )?;
 
-            info!("All standard reports built");
+            if let Some(path) = path {
+                info!("All reports built in custom path {:?}", path);
+            } else {
+                info!("All standard reports built")
+            };
         }
-        Action::UpsertReportsJson { json_path } => {
-            let base_reports_dir = "./reports";
-            let generated_dir = format!("{base_reports_dir}/generated");
+        Action::UpsertReports { path, overwrite } => {
+            let standard_reports_dir = Path::new("reports")
+                .join("generated")
+                .join("standard_reports.json");
 
-            let json_file = fs::File::open(
-                json_path.unwrap_or(format!("{generated_dir}/standard_reports.json")),
-            )
+            let json_file = match path {
+                Some(path) => fs::File::open(path),
+                None => fs::File::open(standard_reports_dir.clone()),
+            }
             .expect(&format!(
-                "{generated_dir}/standard_reports.json not found for report",
+                "{} not found for report",
+                standard_reports_dir.display()
             ));
             let reports_data: ReportsData =
                 serde_json::from_reader(json_file).expect("json incorrectly formatted for report");
@@ -548,7 +464,7 @@ async fn main() -> anyhow::Result<()> {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
 
-            let _ = StandardReports::upsert_reports(reports_data, &con);
+            StandardReports::upsert_reports(reports_data, &con, overwrite)?;
         }
         Action::UpsertReport {
             id,
@@ -605,11 +521,20 @@ async fn main() -> anyhow::Result<()> {
 
             info!("Report upserted");
         }
+        Action::ReloadEmbeddedReports => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+
+            StandardReports::load_reports(&con, true)?;
+        }
         Action::Backup => {
             backup(&settings)?;
         }
         Action::Restore(arguments) => {
             restore(&settings, arguments)?;
+        }
+        Action::GeneratePluginBundle(arguments) => {
+            generate_plugin_bundle(arguments)?;
         }
     }
 
@@ -622,80 +547,4 @@ fn export_paths(name: &str) -> (PathBuf, PathBuf, PathBuf) {
     let users_file_path = export_folder.join("users.txt");
 
     (export_folder, export_file_path, users_file_path)
-}
-
-fn run_yarn_install(directory: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let mut convert_dir = directory.to_owned();
-    convert_dir.push_str("/convert_data_js");
-
-    if !Path::new(&convert_dir).exists() {
-        info!(
-            "No conversion function for {}. Skipping esbuild install.",
-            convert_dir
-        );
-        return Ok(());
-    }
-
-    let node_modules_path = Path::new(&convert_dir).join("node_modules");
-
-    if !node_modules_path.exists() {
-        let status = Command::new("yarn")
-            .args([
-                "install",
-                "--cwd",
-                &convert_dir,
-                "--no-lockfile",
-                "--check-files",
-            ])
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .status()?;
-
-        if !status.success() {
-            println!("Error: `yarn install` failed");
-            return Err("Failed to run yarn install".into());
-        }
-    } else {
-        println!("Dependencies up to date");
-    }
-
-    Ok(())
-}
-
-#[derive(serde::Deserialize, Clone)]
-pub struct Manifest {
-    pub is_custom: bool,
-    pub version: String,
-    pub code: String,
-    pub context: ContextType,
-    pub sub_context: Option<String>,
-    pub name: String,
-    pub header: Option<String>,
-    pub footer: Option<String>,
-    pub queries: Option<ManifestQueries>,
-    pub default_query: Option<String>,
-    pub arguments: Option<Arguments>,
-    pub test_arguments: Option<TestReportArguments>,
-    pub convert_data: Option<String>,
-    pub custom_wasm_function: Option<String>,
-    pub query_default: Option<String>,
-}
-
-#[derive(serde::Deserialize, Clone)]
-pub struct ManifestQueries {
-    pub gql: Option<String>,
-    pub sql: Option<Vec<String>>,
-}
-
-#[derive(serde::Deserialize, Clone)]
-pub struct Arguments {
-    pub schema: Option<String>,
-    pub ui: Option<String>,
-}
-
-#[derive(serde::Deserialize, Clone)]
-pub struct TestReportArguments {
-    pub arguments: Option<String>,
-    pub reference_data: Option<String>,
-    pub data_id: Option<String>,
 }
