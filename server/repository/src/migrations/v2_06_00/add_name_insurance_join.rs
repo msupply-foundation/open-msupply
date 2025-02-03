@@ -14,6 +14,24 @@ impl MigrationFragment for Migrate {
             "TEXT"
         };
 
+        if cfg!(feature = "postgres") {
+            // Postgres changelog variant
+            sql!(
+                connection,
+                r#"
+                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'name_insurance_join';
+                "#
+            )?;
+
+            // Postgres enum variant for policy_type
+            sql!(
+                connection,
+                r#"
+                    CREATE TYPE insurance_policy_type AS ENUM ('Personal', 'Business');
+                "#
+            )?;
+        }
+
         sql!(
             connection,
             r#"
@@ -32,24 +50,6 @@ impl MigrationFragment for Migrate {
                 );
             "#
         )?;
-
-        if cfg!(feature = "postgres") {
-            // Postgres changelog variant
-            sql!(
-                connection,
-                r#"
-                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'name_insurance_join';
-                "#
-            )?;
-
-            // Postgres enum variant for policy_type
-            sql!(
-                connection,
-                r#"
-                    CREATE TYPE insurance_policy_type AS ENUM ('Personal', 'Business');
-                "#
-            )?;
-        }
 
         Ok(())
     }
