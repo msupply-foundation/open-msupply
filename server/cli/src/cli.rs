@@ -579,14 +579,18 @@ async fn main() -> anyhow::Result<()> {
                 arguments: Some(test_config.arguments),
             };
 
-            let _ = spawn_blocking(|| generate_report_inner(report_generate_data)).await?;
+            let res = spawn_blocking(|| generate_report_inner(report_generate_data)).await?;
 
             let generated_file_path = current_dir()?.join(&output_name);
 
-            Command::new("open")
-                .arg(generated_file_path.clone())
-                .status()
-                .expect(&format!("failed to open file {:?}", generated_file_path));
+            if res.is_err() {
+                return Err(ReportError::FailedToGenerateReport(path).into());
+            } else {
+                Command::new("open")
+                    .arg(generated_file_path.clone())
+                    .status()
+                    .expect(&format!("failed to open file {:?}", generated_file_path));
+            }
         }
     }
 
