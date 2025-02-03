@@ -413,15 +413,15 @@ This function could also be used on any other serialised json value such as pati
 
 ## Report tools show command
 
-Reports can quickly be rendered during development using the show command
+Reports can be rendered during development using the show command
 
 ```bash
 ./target/debug/remote_server_cli show-report --path <path-to-your-report-dir> --config <config-file-path>
 ```
 
-This will render an html in the open mSupply directory. 
-`path` argument is mandatory. This is the path to the dir of the source file of your report. This is the dir that contains 'report-manifest.json'
+This command will render an html in the open mSupply directory. 
+The `path` argument is mandatory. It is the path to the dir of the source file of your report. This is the dir that contains 'report-manifest.json'
 
-This will render the report using the 'test-config.json' file located in the reports dir.
-A custom test-config file can be used if a report needs special parameters such as arguments added.
-`config` is an optional argument to the show-reports command. This is a path to a custom test-config file. If no config argument is supplied, the default test-config file is used.
+The report is rendered using the 'test-config.json' file located in the reports dir.
+A custom test-config file can be used if a report needs special parameters such as arguments (from json schema) added.
+`config` is an optional argument to the `show-reports` command. This is a path to a custom test-config file. If no config argument is supplied, the default test-config file is used.
