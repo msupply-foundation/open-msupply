@@ -218,22 +218,22 @@ impl PatientNode {
     }
 
     pub async fn next_of_kin(&self, ctx: &Context<'_>) -> Result<Option<PatientNode>> {
+        let Some(next_of_kin_id) = &self.patient.next_of_kin_id else {
+            return Ok(None);
+        };
+
         let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
-        if let Some(next_of_kin_id) = &self.patient.next_of_kin_id {
-            let result = loader
-                .load_one(next_of_kin_id.to_owned())
-                .await?
-                .map(|patient| PatientNode {
-                    patient,
-                    allowed_ctx: self.allowed_ctx.clone(),
-                    store_id: self.store_id.clone(),
-                });
+        let result = loader
+            .load_one(next_of_kin_id.to_owned())
+            .await?
+            .map(|patient| PatientNode {
+                patient,
+                allowed_ctx: self.allowed_ctx.clone(),
+                store_id: self.store_id.clone(),
+            });
 
-            return Ok(result);
-        } else {
-            return Ok(None);
-        }
+        Ok(result)
     }
 
     pub async fn document(&self, ctx: &Context<'_>) -> Result<Option<DocumentNode>> {
