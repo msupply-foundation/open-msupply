@@ -2469,7 +2469,7 @@ export type InitialisationStatusNode = {
 };
 
 export enum InitialisationStatusType {
-  /** Fuly initialised */
+  /** Fully initialised */
   Initialised = 'INITIALISED',
   /** Sync settings were set and sync was attempted at least once */
   Initialising = 'INITIALISING',
@@ -3524,9 +3524,9 @@ export type InvoiceNodeOtherPartyArgs = {
 
 export enum InvoiceNodeStatus {
   /**
-   * General description: Outbound Shipment is ready for picking (all unallocated lines need to be fullfilled)
+   * General description: Outbound Shipment is ready for picking (all unallocated lines need to be fulfilled)
    * Outbound Shipment: Invoice can only be turned to allocated status when
-   * all unallocated lines are fullfilled
+   * all unallocated lines are fulfilled
    * Inbound Shipment: not applicable
    */
   Allocated = 'ALLOCATED',
@@ -3557,7 +3557,7 @@ export enum InvoiceNodeStatus {
    * Outbound Shipment: Becomes not editable
    * Inbound Shipment: For inter store stock transfers an inbound Shipment
    * becomes editable when this status is set as a result of corresponding
-   * outbound Shipment being chagned to shipped (this is similar to New status)
+   * outbound Shipment being changed to shipped (this is similar to New status)
    */
   Shipped = 'SHIPPED',
   /**
