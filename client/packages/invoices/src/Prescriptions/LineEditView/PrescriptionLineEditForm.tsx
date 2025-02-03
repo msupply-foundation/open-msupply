@@ -57,6 +57,7 @@ interface PrescriptionLineEditFormProps {
   hasExpired: boolean;
   isLoading: boolean;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
+  programId?: string;
 }
 
 export const PrescriptionLineEditForm: React.FC<
@@ -78,6 +79,7 @@ export const PrescriptionLineEditForm: React.FC<
   hasExpired,
   isLoading,
   updateQuantity,
+  programId,
 }) => {
   const t = useTranslation();
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
@@ -203,7 +205,7 @@ export const PrescriptionLineEditForm: React.FC<
         closedSummary={item?.name}
         defaultExpanded={isNew && !disabled}
       >
-        <Grid item flex={1}>
+        <Grid flex={1}>
           <StockItemSearchInput
             autoFocus={!item}
             openOnFocus={!item}
@@ -216,6 +218,7 @@ export const PrescriptionLineEditForm: React.FC<
                 ? undefined
                 : item => !items?.some(({ id }) => id === item.id)
             }
+            programId={programId}
           />
         </Grid>
       </AccordionPanelSection>
@@ -242,12 +245,12 @@ export const PrescriptionLineEditForm: React.FC<
               justifyContent="flex-start"
               gap={1}
             >
-              <Grid item>
+              <Grid>
                 <InputLabel style={{ fontSize: 12 }}>
                   {t('label.issue')}
                 </InputLabel>
               </Grid>
-              <Grid item>
+              <Grid>
                 <NumericTextInput
                   autoFocus
                   disabled={disabled}
@@ -257,7 +260,7 @@ export const PrescriptionLineEditForm: React.FC<
                   decimalLimit={2}
                 />
               </Grid>
-              <Grid item>
+              <Grid>
                 <InputLabel style={{ fontSize: 12 }}>
                   {t('label.unit-plural', {
                     count: issueUnitQuantity,

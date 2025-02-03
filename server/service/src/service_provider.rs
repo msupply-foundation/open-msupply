@@ -32,6 +32,7 @@ use crate::{
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     name::{NameService, NameServiceTrait},
+    plugin::{PluginService, PluginServiceTrait},
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     pricing::{PricingService, PricingServiceTrait},
     processors::ProcessorsTrigger,
@@ -140,6 +141,7 @@ pub struct ServiceProvider {
     pub log_service: Box<dyn LogServiceTrait>,
     // Plugin
     pub plugin_data_service: Box<dyn PluginDataServiceTrait>,
+    pub plugin_service: Box<dyn PluginServiceTrait>,
     // Currency
     pub currency_service: Box<dyn CurrencyServiceTrait>,
     // Asset catalogue
@@ -260,6 +262,7 @@ impl ServiceProvider {
             standard_reports: Box::new(StandardReports {}),
             email_service: Box::new(EmailService::new(mail_settings.clone())),
             contact_form_service: Box::new(ContactFormService {}),
+            plugin_service: Box::new(PluginService {}),
         }
     }
 
