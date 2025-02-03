@@ -583,8 +583,8 @@ async fn main() -> anyhow::Result<()> {
 
             let generated_file_path = current_dir()?.join(&output_name);
 
-            if res.is_err() {
-                return Err(ReportError::FailedToGenerateReport(path).into());
+            if let Err(res) = res {
+                return Err(ReportError::FailedToGenerateReport(path, res).into());
             } else {
                 Command::new("open")
                     .arg(generated_file_path.clone())
