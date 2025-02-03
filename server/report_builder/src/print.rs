@@ -148,10 +148,6 @@ fn generate_request(
       }
     });
 
-    println!("token: {:?}", token);
-    println!("body: {}", serde_json::to_string_pretty(&body).unwrap());
-
-    // println!("reoirt body {:?}", body);
     let response = reqwest::blocking::Client::new()
         .post(url)
         .bearer_auth(token)
@@ -159,7 +155,6 @@ fn generate_request(
         .send()?;
     let status = response.status();
     let gql_result: GraphQlResponse = response.json()?;
-
     let result = &gql_result.data["generateReportDefinition"];
     if result["__typename"] != "PrintReportNode" {
         return Err(anyhow::Error::msg(format!(
