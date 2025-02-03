@@ -26,7 +26,6 @@ import {
   TextInputCell,
   useColumns,
   useDialog,
-  useKeyboardHeightAdjustment,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -103,7 +102,6 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   const { data: demographicData } = useDemographicData.demographics.list();
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(900);
 
   const options = useMemo(
     () => getDemographicOptions(demographicData?.nodes ?? []),
@@ -223,11 +221,8 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
           onClick={save}
         />
       }
-      height={height}
-      sx={{
-        width: 1100,
-        maxWidth: 'unset',
-      }}
+      height={900}
+      width={1100}
       slideAnimation={false}
     >
       {modalContent}

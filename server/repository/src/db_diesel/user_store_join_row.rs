@@ -1,7 +1,4 @@
-use super::{
-    store_row::store, user_row::user_account,
-    user_store_join_row::user_store_join::dsl as user_store_join_dsl, StorageConnection,
-};
+use super::{store_row::store, user_row::user_account, StorageConnection};
 
 use crate::repository_error::RepositoryError;
 
@@ -41,9 +38,9 @@ impl<'a> UserStoreJoinRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(user_store_join_dsl::user_store_join)
+        diesel::insert_into(user_store_join::table)
             .values(row)
-            .on_conflict(user_store_join_dsl::id)
+            .on_conflict(user_store_join::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -51,18 +48,16 @@ impl<'a> UserStoreJoinRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<UserStoreJoinRow>, RepositoryError> {
-        let result = user_store_join_dsl::user_store_join
-            .filter(user_store_join_dsl::id.eq(id))
+        let result = user_store_join::table
+            .filter(user_store_join::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete_by_user_id(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(
-            user_store_join_dsl::user_store_join.filter(user_store_join_dsl::user_id.eq(id)),
-        )
-        .execute(self.connection.lock().connection())?;
+        diesel::delete(user_store_join::table.filter(user_store_join::user_id.eq(id)))
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

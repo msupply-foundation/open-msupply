@@ -13,7 +13,10 @@ import {
   useTranslation,
   useDebounceCallback,
   DocumentRegistryCategoryNode,
+  useLocation,
+  RouteBuilder,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
 import {
@@ -36,9 +39,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
     useDocumentRegistry.get.documentRegistries({
       filter: { category: { equalTo: DocumentRegistryCategoryNode.Patient } },
     });
-
   const [hasError, setHasError] = useState(false);
-
   const [, setDocumentRegistry] = useState<
     DocumentRegistryFragment | undefined
   >();
@@ -47,6 +48,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
     onClose,
   });
   const navigate = useNavigate();
+  const location = useLocation();
   const { createNewPatient, setCreateNewPatient } = usePatientStore();
   const t = useTranslation();
 
@@ -56,7 +58,19 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
 
   const onOk = () => {
     if (createNewPatient) {
-      navigate(createNewPatient.id);
+      const urlSegments = location.pathname.split('/');
+
+      if (urlSegments.includes(AppRoute.Patients))
+        navigate(createNewPatient.id);
+
+      if (urlSegments.includes(AppRoute.Prescription))
+        navigate(
+          RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Patients)
+            .addPart(createNewPatient.id)
+            .addQuery({ previousPath: AppRoute.Prescription })
+            .build()
+        );
     }
   };
 
@@ -106,7 +120,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   return (
     <Modal
       title=""
-      sx={{ maxWidth: '90%' }}
+      width={950}
       okButton={
         currentTab === Tabs.SearchResults ? (
           <DialogButton

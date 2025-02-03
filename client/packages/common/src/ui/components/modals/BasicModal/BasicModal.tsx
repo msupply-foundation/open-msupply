@@ -14,14 +14,16 @@ export const BasicModal: FC<DialogProps> = ({
   width = 500,
   height = 400,
   sx,
+  fullScreen,
   ...dialogProps
 }) => {
   const { isRtl } = useIntlUtils();
   return (
     <Dialog
+      fullScreen={fullScreen}
       PaperProps={{
         sx: {
-          borderRadius: '20px',
+          borderRadius: fullScreen ? undefined : '20px',
           minHeight: `${height}px`,
           minWidth: `${width}px`,
           direction: isRtl ? 'rtl' : 'ltr',

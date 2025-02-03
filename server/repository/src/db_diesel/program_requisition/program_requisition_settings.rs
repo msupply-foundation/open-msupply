@@ -53,6 +53,7 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
             )
             .inner_join(name_tag::table)
             .into_boxed();
+        query = query.filter(program::deleted_datetime.is_null());
 
         if let Some(ProgramRequisitionSettingsFilter {
             name_tag,

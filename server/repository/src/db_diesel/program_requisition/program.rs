@@ -89,6 +89,7 @@ impl<'a> ProgramRepository<'a> {
 
     pub fn create_filtered_query(filter: Option<ProgramFilter>) -> BoxedUserProgramQuery {
         let mut query = program::table.into_boxed();
+        query = query.filter(program::deleted_datetime.is_null());
 
         if let Some(f) = filter {
             let ProgramFilter {

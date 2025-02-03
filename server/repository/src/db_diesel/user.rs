@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
 use super::{
-    store_preference_row::store_preference::dsl as store_preference_dsl, store_row::store,
-    user_row::user_account, user_store_join_row::user_store_join, DBType, StorageConnection,
-    StoreRow, UserAccountRow, UserStoreJoinRow,
+    store_preference_row::store_preference, store_row::store, user_row::user_account,
+    user_store_join_row::user_store_join, DBType, StorageConnection, StoreRow, UserAccountRow,
+    UserStoreJoinRow,
 };
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    store_preference, EqualFilter, Pagination, Sort, StorePreferenceRow, StringFilter,
+    EqualFilter, Pagination, Sort, StorePreferenceRow, StringFilter,
 };
 
 use diesel::{
@@ -142,8 +142,8 @@ fn to_domain(results: Vec<UserAndUserStoreJoin>) -> Vec<User> {
 type UserIdEqualToId = Eq<user_store_join::user_id, user_account::id>;
 // store::id.eq(store_id))
 type StoreIdEqualToId = Eq<store::id, user_store_join::store_id>;
-// store_preference_dsl::id.eq(id))
-type IdEqualToId = Eq<store_preference_dsl::id, user_store_join::store_id>;
+// store_preference::id.eq(id))
+type IdEqualToId = Eq<store_preference::id, user_store_join::store_id>;
 // user_store_join.on(user_id.eq(user_account::id))
 type OnUserStoreJoinToUserJoin = On<user_store_join::table, UserIdEqualToId>;
 // store.on(id.eq(store_id))
@@ -167,10 +167,7 @@ fn create_filtered_query(filter: Option<UserFilter>) -> BoxedUserQuery {
     let mut query = user_account::table
         .left_join(user_store_join::table.on(user_store_join::user_id.eq(user_account::id)))
         .left_join(store::table.on(store::id.eq(user_store_join::store_id)))
-        .left_join(
-            store_preference_dsl::store_preference
-                .on(store_preference_dsl::id.eq(user_store_join::store_id)),
-        )
+        .left_join(store_preference::table.on(store_preference::id.eq(user_store_join::store_id)))
         .into_boxed();
 
     if let Some(f) = filter {

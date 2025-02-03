@@ -317,11 +317,16 @@ mutation deleteInboundShipments(
 mutation insertInboundShipment(
   $id: String!
   $otherPartyId: String!
+  $requisitionId: String
   $storeId: String!
 ) {
   insertInboundShipment(
     storeId: $storeId
-    input: { id: $id, otherPartyId: $otherPartyId }
+    input: {
+      id: $id
+      otherPartyId: $otherPartyId
+      requisitionId: $requisitionId
+    }
   ) {
     ... on InsertInboundShipmentError {
       __typename
@@ -678,6 +683,35 @@ mutation addToInboundShipmentFromMasterList(
     ... on InvoiceLineConnector {
       __typename
       totalCount
+    }
+  }
+}
+
+fragment LinkedRequestRow on RequisitionNode {
+  id
+  createdDatetime
+  requisitionNumber
+  theirReference
+  user {
+    username
+  }
+  program {
+    name
+  }
+  comment
+}
+
+query requests(
+  $storeId: String!
+  $filter: RequisitionFilterInput
+  $sort: [RequisitionSortInput!]
+) {
+  requisitions(storeId: $storeId, filter: $filter, sort: $sort) {
+    ... on RequisitionConnector {
+      totalCount
+      nodes {
+        ...LinkedRequestRow
+      }
     }
   }
 }

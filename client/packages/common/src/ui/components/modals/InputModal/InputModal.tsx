@@ -21,7 +21,11 @@ export const InputModal = ({
   onClose,
   title,
 }: InputModalProps) => {
-  const { Modal } = useDialog({ isOpen, onClose });
+  const { Modal } = useDialog({
+    isOpen,
+    onClose,
+    disableMobileFullScreen: true,
+  });
   const [loading, setLoading] = useState(false);
 
   return (

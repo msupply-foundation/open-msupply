@@ -34,6 +34,7 @@ pub struct UpdatePrescription {
     pub colour: Option<String>,
     pub backdated_datetime: Option<NaiveDateTime>,
     pub diagnosis_id: Option<NullableUpdate<String>>,
+    pub program_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -147,6 +148,7 @@ mod test {
     use crate::{
         invoice::prescription::{UpdatePrescription, UpdatePrescriptionStatus},
         service_provider::ServiceProvider,
+        NullableUpdate,
     };
 
     use super::UpdatePrescriptionError;
@@ -251,7 +253,9 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdatePrescription| {
                     r.id = prescription_no_stock().id;
-                    r.clinician_id = Some("invalid".to_string());
+                    r.clinician_id = Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    })
                 })
             ),
             Err(ServiceError::ClinicianDoesNotExist)
@@ -321,11 +325,14 @@ mod test {
                 id: prescription().id,
                 status: None,
                 patient_id: Some(mock_patient_b().id),
-                clinician_id: Some(clinician().id),
+                clinician_id: Some(NullableUpdate {
+                    value: Some(clinician().id),
+                }),
                 comment: Some("test_comment".to_string()),
                 colour: Some("test_colour".to_string()),
                 backdated_datetime: None,
                 diagnosis_id: None,
+                program_id: None,
             }
         }
 
@@ -350,9 +357,10 @@ mod test {
                     colour,
                     backdated_datetime: _,
                     diagnosis_id: _,
+                    program_id: _,
                 } = get_update();
                 u.name_link_id = patient_id.unwrap();
-                u.clinician_link_id = clinician_id;
+                u.clinician_link_id = clinician_id.unwrap().value;
                 u.comment = comment;
                 u.colour = colour;
                 u

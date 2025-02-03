@@ -81,11 +81,13 @@ export const DetailView: FC = () => {
     },
   ];
 
-  if (
+  const showIndicatorTab =
     data?.programName &&
     !!data?.otherParty.store &&
-    programIndicators?.totalCount !== 0
-  ) {
+    programIndicators?.totalCount !== 0 &&
+    !data?.isEmergency;
+
+  if (showIndicatorTab) {
     tabs.push({
       Component: (
         <IndicatorsTab

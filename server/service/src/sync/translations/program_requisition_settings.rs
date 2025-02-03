@@ -2,7 +2,8 @@ use repository::{
     ContextRow, NameTagRowRepository, PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowDelete, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowDelete,
-    ProgramRequisitionSettingsRowRepository, ProgramRow, StorageConnection, SyncBufferRow,
+    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, StorageConnection,
+    SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -89,11 +90,22 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
-        if !data.is_program {
-            return Ok(PullTranslateResult::NotMatched);
-        }
+        let program_repo = ProgramRowRepository::new(connection);
 
+        // If the master list we are translating is not a program
+        if !data.is_program {
+            // Check if we already have a program with the same id (is_program could have just been unchecked)
+            match program_repo.find_one_by_id(&data.id)? {
+                // Should translate to soft delete
+                Some(_) => {}
+                // This is a non-program master list, don't translate
+                None => {
+                    return Ok(PullTranslateResult::NotMatched);
+                }
+            }
+        }
         let upserts = generate_requisition_program(connection, data.clone())?;
+
         let deletes = delete_requisition_program(connection, data)?;
 
         let mut integration_operations = Vec::new();
@@ -128,7 +140,6 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
             .program_requisition_order_type_rows
             .into_iter()
             .for_each(|u| integration_operations.push(IntegrationOperation::upsert(u)));
-
         Ok(PullTranslateResult::IntegrationOperations(
             integration_operations,
         ))
@@ -194,6 +205,11 @@ fn generate_requisition_program(
         context_id: context_row.id.clone(),
         is_immunisation: master_list.is_immunisation.unwrap_or(false),
         elmis_code: program_settings.elmis_code.clone(),
+        deleted_datetime: if master_list.is_program {
+            None
+        } else {
+            Some(chrono::Utc::now().naive_utc())
+        },
     };
 
     let mut program_requisition_settings_rows = Vec::new();

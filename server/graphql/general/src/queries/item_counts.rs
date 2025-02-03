@@ -1,5 +1,8 @@
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -34,7 +37,7 @@ impl ItemCounts {
                 low_stock: item_counts.low_stock,
                 more_than_six_months_stock: item_counts.more_than_six_months_stock,
             }),
-            Err(err) => Err(err.into()),
+            Err(err) => Err(StandardGraphqlError::from_error(&err)),
         }
     }
 }

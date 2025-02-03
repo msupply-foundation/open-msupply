@@ -65,6 +65,10 @@ const ResponseLineEditPageInner = ({
     // Small time delay to allow the ref to change to the previous/next item in
     // the list before scrolling to it
     setTimeout(() => scrollRef.current?.scrollIntoView(), 100);
+  const showNew =
+    requisition.status !== RequisitionNodeStatus.Finalised &&
+    !isProgram &&
+    !requisition.linkedRequisition;
 
   return (
     <>
@@ -79,10 +83,7 @@ const ResponseLineEditPageInner = ({
                 .addPart(AppRoute.CustomerRequisition)
                 .addPart(String(requisition.requisitionNumber))}
               enteredLineIds={enteredLineIds}
-              showNew={
-                requisition.status !== RequisitionNodeStatus.Finalised &&
-                !isProgram
-              }
+              showNew={showNew}
               scrollRef={scrollRef}
             />
           }

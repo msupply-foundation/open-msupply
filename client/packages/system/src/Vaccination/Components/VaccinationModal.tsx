@@ -16,7 +16,6 @@ import {
   Switch,
   useDialog,
   useFormatDateTime,
-  useKeyboardHeightAdjustment,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -42,6 +41,7 @@ interface VaccinationModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultClinician?: Clinician;
+  onOk: () => void;
 }
 
 export const VaccinationModal = ({
@@ -51,6 +51,7 @@ export const VaccinationModal = ({
   encounterId,
   vaccinationId,
   defaultClinician,
+  onOk,
 }: VaccinationModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
@@ -69,7 +70,6 @@ export const VaccinationModal = ({
   });
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(700);
 
   const save = useConfirmNoStockLineSelected(
     draft,
@@ -80,6 +80,7 @@ export const VaccinationModal = ({
 
         if (result?.__typename === 'VaccinationNode') {
           success(t('messages.vaccination-saved'))();
+          onOk();
           onClose();
         }
 
@@ -122,7 +123,7 @@ export const VaccinationModal = ({
           onClick={save}
         />
       }
-      height={height}
+      height={700}
       width={550}
       slideAnimation={false}
       contentProps={{ sx: { paddingTop: !!InfoBox ? 0 : undefined } }}
@@ -188,7 +189,7 @@ const VaccinationForm = ({
         label={t('label.facility')}
         labelProps={{ sx: { alignSelf: 'start', marginTop: '3px' } }}
         Input={
-          <Grid item flex={1}>
+          <Grid flex={1}>
             <FacilitySearchInput
               onChange={facilityId =>
                 updateDraft({
@@ -217,7 +218,7 @@ const VaccinationForm = ({
         <InputWithLabelRow
           label={t('label.clinician')}
           Input={
-            <Grid item flex={1}>
+            <Grid flex={1}>
               <ClinicianSearchInput
                 onChange={clinician => {
                   updateDraft({

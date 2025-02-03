@@ -114,7 +114,7 @@ export const mapProjection = (
   headerData: HeaderData,
   generalPopulationRow?: Row
 ) => ({
-  baseYear: generalPopulationRow?.baseYear ?? 2024,
+  baseYear: generalPopulationRow?.baseYear ?? 2024, // TODO: Allow the user to select the base year for their projections
   id: headerData.id,
   year1: headerData[1].value,
   year2: headerData[2].value,
@@ -142,7 +142,7 @@ export const toDemographicIndicatorRow = (row: {
   name: row.name,
   baseYear: row.baseYear ?? 0,
   basePopulation: row.basePopulation ?? 0,
-  0: (row.basePopulation ?? 0) * (row.populationPercentage ?? 0)/100,
+  0: ((row.basePopulation ?? 0) * (row.populationPercentage ?? 0)) / 100,
   1: row.year1Projection ?? 0,
   2: row.year2Projection ?? 0,
   3: row.year3Projection ?? 0,

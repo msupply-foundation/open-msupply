@@ -1,8 +1,6 @@
 use super::{
-    store_row::store,
-    temperature_breach_config_row::temperature_breach_config::dsl as temperature_breach_config_dsl,
-    temperature_breach_row::TemperatureBreachType, temperature_log_row::temperature_log,
-    StorageConnection,
+    store_row::store, temperature_breach_row::TemperatureBreachType,
+    temperature_log_row::temperature_log, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -52,9 +50,9 @@ impl<'a> TemperatureBreachConfigRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &TemperatureBreachConfigRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(temperature_breach_config_dsl::temperature_breach_config)
+        diesel::insert_into(temperature_breach_config::table)
             .values(row)
-            .on_conflict(temperature_breach_config_dsl::id)
+            .on_conflict(temperature_breach_config::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -81,8 +79,8 @@ impl<'a> TemperatureBreachConfigRowRepository<'a> {
         &self,
         id: &str,
     ) -> Result<Option<TemperatureBreachConfigRow>, RepositoryError> {
-        let result = temperature_breach_config_dsl::temperature_breach_config
-            .filter(temperature_breach_config_dsl::id.eq(id))
+        let result = temperature_breach_config::table
+            .filter(temperature_breach_config::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -92,8 +90,8 @@ impl<'a> TemperatureBreachConfigRowRepository<'a> {
         &self,
         ids: &[String],
     ) -> Result<Vec<TemperatureBreachConfigRow>, RepositoryError> {
-        Ok(temperature_breach_config_dsl::temperature_breach_config
-            .filter(temperature_breach_config_dsl::id.eq_any(ids))
+        Ok(temperature_breach_config::table
+            .filter(temperature_breach_config::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
 }

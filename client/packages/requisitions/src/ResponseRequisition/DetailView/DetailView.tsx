@@ -69,6 +69,12 @@ export const DetailView: FC = () => {
 
   if (isLoading) return <DetailViewSkeleton />;
 
+  const showIndicatorTab =
+    data?.programName &&
+    !!data?.otherParty.store &&
+    programIndicators?.totalCount !== 0 &&
+    !data?.isEmergency;
+
   const tabs = [
     {
       Component: (
@@ -88,11 +94,7 @@ export const DetailView: FC = () => {
     },
   ];
 
-  if (
-    data?.programName &&
-    !!data?.otherParty.store &&
-    programIndicators?.totalCount !== 0
-  ) {
+  if (showIndicatorTab) {
     tabs.push({
       Component: (
         <IndicatorsTab

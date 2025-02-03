@@ -1,5 +1,5 @@
 use super::super::user_row::user_account;
-use super::asset_log_row::{asset_log, latest_asset_log::dsl as latest_asset_log_dsl, AssetLogRow};
+use super::asset_log_row::{asset_log, AssetLogRow};
 use diesel::{dsl::IntoBoxed, prelude::*};
 use util::inline_init;
 
@@ -124,7 +124,7 @@ impl<'a> AssetLogRepository<'a> {
         filter: Option<AssetLogFilter>,
     ) -> Result<Vec<AssetLog>, RepositoryError> {
         let mut query = create_latest_filtered_query(filter);
-        query = query.order(latest_asset_log_dsl::log_datetime.desc());
+        query = query.order(latest_asset_log::log_datetime.desc());
 
         // Debug diesel query
         // println!(
@@ -176,11 +176,11 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
 type BoxedLatestAssetLogQuery = IntoBoxed<'static, latest_asset_log::table, DBType>;
 
 fn create_latest_filtered_query(filter: Option<AssetLogFilter>) -> BoxedLatestAssetLogQuery {
-    let mut query = latest_asset_log_dsl::latest_asset_log.into_boxed();
+    let mut query = latest_asset_log::table.into_boxed();
 
     if let Some(f) = filter {
         let AssetLogFilter { id, .. } = f;
-        apply_equal_filter!(query, id, latest_asset_log_dsl::id);
+        apply_equal_filter!(query, id, latest_asset_log::id);
     }
     query
 }

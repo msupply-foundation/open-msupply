@@ -362,6 +362,568 @@
   "error.stocktake-has-stock-reduced-below-zero": "لا يمكن إنهاء جرد المخزون لأنه تم حجز المخزون في عمليات التسليم الخارجة الجديدة أو الوصفات الطبية. لا يمكن تخفيض الكمية إلى ما دون الصفر.",
   "error.stocktake-not-found": "لم يتم العثور على جرد المخزون",
   "error.stocktake-snapshot-total-mismatch": "لا يمكن إنهاء جرد المخزون. تختلف كمية المخزون الآن عما كانت عليه عند بدء جرد المخزون لأن بعض المخزون قد تم إصداره في عمليات التسليم الخارجة أو الوصفات الطبية. يرجى حذف السطر والمحاولة مرة أخرى.",
+  "cmdk.goto-cold-chain-equipment": "الذهاب إلى: معدات سلسلة التبريد",
+  "cmdk.goto-outbound": "الذهاب إلى: التسليم الخارج",
+  "cmdk.goto-master-lists": "الذهاب إلى: القوائم الرئيسية",
+  "cold-chain": "سلسلة التبريد",
+  "button.send": "إرسال",
+  "button.upload-assets": "استيراد",
+  "button.view": "عرض",
+  "button.view-all-breaches": "عرض جميع المخالفات",
+  "button.view-details": "عرض التفاصيل",
+  "button.view-patient": "عرض المريض",
+  "button.zero-line-quantity": "تعيين الكميات إلى 0",
+  "catalogue": "كتالوج",
+  "cmdk.drawer-toggle": "قائمة التبديل",
+  "description.fc-cost-price": "سعر التكلفة بالعملة الأجنبية لكل عبوة",
+  "heading.order": "طلبية",
+  "label.date-of-birth": "تاريخ الميلاد",
+  "label.deceased": "متوفى",
+  "label.delete": "حذف",
+  "label.delivered": "تم التسليم",
+  "label.from-start-datetime": "من تاريخ/وقت البداية",
+  "label.full-screen": "ملء الشاشة",
+  "label.contact-tracing": "تتبُّع جهات الاتصال",
+  "label.unit-plural_other": "{{unit}}",
+  "label.unit-plural_one": "{{unit}}",
+  "label.universal-name": "الاسم العالمي",
+  "label.warning-message": "تحذير",
+  "messages.bundled-item-saved": "تم حفظ العنصر المجمّع بنجاح",
+  "messages.by-user": "بواسطة {{username}}",
+  "label.select-all": "اختر الكل",
+  "messages.error-deleting-locations_one": "تعذر حذف {{count}} موقع",
+  "messages.invalid-file": "ملف غير صالح",
+  "error.unable-to-connect-to-printer": "غير قادر على الاتصال بالطابعة.",
+  "inventory-adjustment": "تعديل في المخزون",
+  "label.add-variant": "إضافة متغير",
+  "label.additional-info": "معلومات إضافية",
+  "label.additions": "الإضافات",
+  "error.upserting-vaccine-courses": "خطأ غير معروف. لا يمكن تغيير دورات اللقاح",
+  "label.create": "إنشاء",
+  "label.new-functional-status": "الحالة الوظيفية الجديدة",
+  "label.reason": "السبب",
+  "filename.stocktakes": "جرد المخزون",
+  "label.last-updated": "آخر تحديث",
+  "heading.add-cold-chain-equipment": "إضافة جهاز جديد لسلسلة التبريد",
+  "heading.edit-tax-rate": "تحرير النسبة المئوية لمعدل الضريبة",
+  "heading.foreign-currency": "العملات الأجنبية",
+  "label.site": "الموقع:",
+  "messages.confirm-cancel-generic": "ستفقد أي تغييرات قمت بها على هذه الاستمارة",
+  "label.battery-level": "مستوى البطارية",
+  "messages.confirm-delete-returns_other": "سيؤدي هذا إلى إزالة {{count}} عوائد بشكل دائم",
+  "label.customer-soh": "المخزون المتوفر لديهم",
+  "messages.confirm-save-generic": "هل أنت مستعد لحفظ التغييرات؟",
+  "messages.confirm-save-stock-line": "هل تريد حفظ التغييرات على خط المخزون هذا؟ سيتم تسجيل جميع التغييرات ويمكن مراجعتها لاحقاً من هذه الشاشة.",
+  "label.encounter-type": "النوع",
+  "messages.deleted-lines_other": "تم حذف {{count}} سطور",
+  "messages.deleted-orders_other": "تم حذف {{count}} طلبات",
+  "messages.deleted-assets_other": "تم حذف {{count}} معدات",
+  "messages.deleted-immunisation-programs_other": "تم حذف {{count}} برنامج التلقيح",
+  "messages.deleted-requisitions_one": "تم حذف {{count}} طلبات شراء",
+  "messages.deleted-shipments_one": "تم حذف {{count}} شحنات",
+  "messages.error-generic_other": "{{count}} خطأ",
+  "label.enrolment-datetime": "تاريخ التسجيل",
+  "messages.failed-to-reach-central": "فشل الوصول إلى الخادم المركزي",
+  "messages.fetching-patient-data": "جلب بيانات المريض...",
+  "label.expired_other": "دفعات منتهية الصلاحية",
+  "messages.item-variant-saved": "تم حفظ متغير العنصر بنجاح",
+  "messages.last-temperature": "آخر قراءة لدرجة الحرارة: {{temperature}} درجة مئوية °C",
+  "label.previous-encounters": "اللقاءات السابقة",
+  "label.program-name": "اسم البرنامج",
+  "error.sync-api-incompatible-hint": "يحتاج خادم mSupply Central Server إلى التحديث إلى نسخة حديثة قبل أن تتمكن من الاتصال - يرجى الاتصال بـ support@msupply.foundation",
+  "error.unable-to-connect": "غير قادر على الاتصال بالخادم {{server}}",
+  "error.v6-server-not-configured-hint": "تحقق من عنوان URL الخاص بالخادم المركزي",
+  "error.vaccine-course-update-failed": "فشلت دورة اللقاح في الحفظ",
+  "filename.asset-import-example": "مثال على تصدير عنصر المعدات",
+  "label.rnr-received": "تم الاستلام",
+  "filename.cold-chain-equipment": "معدات سلسلة التبريد",
+  "filename.responses": "طلبات الشراء",
+  "filename.stock": "المخزون",
+  "filename.supplier-returns": "عوائد الموردين",
+  "format.comment": "تم إقراره بواسطة {{name}} في {{date}}: {{comment}}.",
+  "heading.acknowledgeBreach": "الاعتراف بالخرق",
+  "heading.actions": "الإجراءات",
+  "heading.add-item": "إضافة عنصر",
+  "heading.dispensary-details": "تفاصيل المستوصف",
+  "heading.download-catalogue-documents": "تنزيل ملفات الكتالوج",
+  "heading.download-example": "قم بتنزيل النموذج.",
+  "heading.edit-vaccine-course": "تحرير تفاصيل دورة اللقاح",
+  "heading.expiring": "انتهاء الصلاحية",
+  "heading.expiring-stock": "المخزون الموشك على انتهاء الصلاحية",
+  "label.supplier-name": "اسم المورّد",
+  "heading.invoice-lines-report-item": "بنود الفاتورة التي تحتوي على",
+  "heading.item-sell-price": "سعر بيع العناصر",
+  "heading.order-info": "معلومات الطلبية",
+  "heading.program-info": "معلومات البرنامج",
+  "heading.rate": "النسبة",
+  "heading.requested-to-suggested": "طلب مقترح",
+  "heading.return-items": "إرجاع العناصر",
+  "heading.stock-details": "تفاصيل المخزون",
+  "heading.supply-to-requested": "تعيين التوريد إلى مطلوب",
+  "heading.support": "الدعم",
+  "heading.synchronise-status": "حالة المزامنة",
+  "heading.target-quantity": "الكمية المستهدفة",
+  "heading.tax": "الضريبة",
+  "heading.user-guide": "دليل المستخدم",
+  "help": "المساعدة",
+  "immunisations": "اللقاحات",
+  "inbound-shipment": "التسليمات الداخلة",
+  "info.no-shipment": "إنهاء هذا الطلب سيمنعك من إنشاء شحنة له.",
+  "label.add-another": "إضافة أخرى",
+  "label.add-batch": "إضافة دفعة",
+  "label.add-bundled-item": "إضافة عنصر مجمّع",
+  "label.add-charge": "إضافة رسم",
+  "label.universal-code": "الرمز العالمي - Universal code",
+  "label.add-charges": "إضافة رسوم",
+  "label.adjusted": "مُعدل",
+  "label.balance": "الرصيد",
+  "label.barcode": "الرمز الشريطي (الباركود)",
+  "label.barcode-scanner-id": "معرّف البائع: {{vid}}، معرّف المنتج: {{pid}}",
+  "label.breaches": "الخروقات",
+  "label.category": "الفئة",
+  "label.central-server": "الخادم المركزي",
+  "label.change-currency": "تغيير العملة",
+  "label.chargeCode": "تغيير الرمز",
+  "label.chart": "الرسم البياني",
+  "label.class": "الفئة",
+  "label.clear-filter": "مسح الفلتر",
+  "label.clear-selection": "مسح الاختيار",
+  "label.upload": "تحميل",
+  "label.click-to-sort": "انقر للفرز حسب ",
+  "label.click-to-view": "انقر لعرض التفاصيل",
+  "label.client": "الزبون",
+  "label.vaccine-given": "اللقاح المعطى",
+  "label.incoming": "واردة",
+  "label.item_other": "العناصر",
+  "label.locked": "مغلق",
+  "label.website": "الموقع الإلكتروني",
+  "label.margin": "الهامش",
+  "label.master-list": "القائمة الرئيسية",
+  "label.new-requisition": "طلب جديد",
+  "label.number-months_one": "{{count}} شهر",
+  "message.no-supplier": "تعديل المخزون",
+  "label.revert-existing-transaction": "إرجاع عملية المخزون الحالية",
+  "label.review": "مراجعة",
+  "label.select-quantity": "اختر الكمية",
+  "label.select-rows-to-allocate-them": "اختر الصفوف لتخصيصها",
+  "label.sent": "تم الإرسال",
+  "label.save-log": "حفظ السجل في ملف",
+  "label.search-results": "نتائج البحث",
+  "messages.breach-ongoing": "هذا الخرق مستمر ولا يمكن الاعتراف به حتى ينتهي.",
+  "label.select": "اختر",
+  "label.secondary": "الثانوي",
+  "label.select-batch": "اختر الدفعة",
+  "messages.confirm-delete-stocktakes_one": "سيؤدي ذلك إلى إزالة جرد مخزون 1 بشكل دائم",
+  "label.type-end": "نهاية الخرق",
+  "messages.create-new-asset-confirmation": "الأصل الذي قمت بمسحه ضوئيًا ليس موجودًا حاليًا في النظام، ولكنه قدم بيانات GS1 المناسبة. هل ترغب في إنشاء أصل جديد بهذه البيانات؟",
+  "label.visit-end": "نهاية",
+  "messages.create-stocktake-1": "يمكنك إنشاء جرد المخزون بناءً على العناصر المخصصة حالياً لموقع ما، أو العناصر الموجودة لديك حالياً في المخزون، أو العناصر المخصصة لقائمة رئيسية، أو العناصر التي تنتهي صلاحيتها قبل تاريخ معين.",
+  "messages.confirm-delete-locations_many": "سيؤدي ذلك إلى إزالة {{count}} مواقع بشكل دائم",
+  "label.created-datetime-UTC": "تاريخ/وقت الإنشاء (UTC)",
+  "label.generate": "إنشاء",
+  "label.group-by-item": "التجميع حسب العنصر",
+  "label.growth-on-previous-year": "النمو عن العام السابق",
+  "label.initial-stock-on-hand": "المخزون المتوفر المتاح الابتدائي",
+  "label.initialise-store-properties": "تهيئة خصائص مخزن GAPS",
+  "messages.confirm-delete-lines_other": "سيؤدي هذا إلى إزالة {{count}} أسطر من هذه الوصفة الطبية بشكل دائم",
+  "label.direction": "اتجاه التعديل",
+  "label.items-no-stock_few": "العناصر التي لا يوجد بها مخزون",
+  "label.items-selected_few": "{{count}} عناصر مختارة",
+  "label.items-no-stock_one": "عنصر بدون مخزون",
+  "label.items-no-stock_other": "العناصر التي لا يوجد بها مخزون",
+  "label.ledger": "دفتر الأستاذ",
+  "label.level": "المستوى",
+  "messages.confirm-delete-requisition-lines_other": "سيؤدي هذا إلى إزالة {{count}} أسطر من هذا الطلب بشكل دائم",
+  "label.low-stock-items_one": "العنصر الذي يقل مخزونه عن 3 أشهر",
+  "label.low-stock-items_other": "العناصر التي يقل المخزون منها عن 3 أشهر",
+  "label.low-stock-items_few": "العناصر التي يقل المخزون منها عن 3 أشهر",
+  "label.low-stock-items_many": "العناصر التي يقل المخزون منها عن 3 أشهر",
+  "label.min-interval": "الحد الأدنى للفترة الزمنية (بالأيام)",
+  "label.min-months-of-stock": "إعادة تحديد الحد الأدنى لأشهر المخزون",
+  "label.mode": "النمط",
+  "label.model": "الطراز",
+  "label.modified-datetime": "التاريخ/الوقت المعدل",
+  "messages.connected-to-printer": "تم الاتصال بالطابعة بنجاح!",
+  "label.new-internal-order": "طلبية جديدة",
+  "label.new-pack-size": "حجم العبوة الجديد",
+  "label.new-pack-variant": "متغير العبوة الجديدة",
+  "label.new-location": "موقع جديد",
+  "label.new-num-packs": "عدد العبوات الجديدة",
+  "label.new-pack-qty": "كمية العبوة الجديدة",
+  "label.ratio": "النسبة",
+  "messages.confirm-delete-document": "سيؤدي ذلك إلى إزالة هذا الملف.",
+  "messages.confirm-delete-generic": "سيؤدي ذلك إلى إزالة البيانات بشكل دائم",
+  "messages.confirm-delete-immunisation-programs_one": "سيؤدي ذلك إلى إزالة برنامج التلقيح بشكل دائم.",
+  "messages.confirm-delete-stocktake_lines_other": "سيؤدي ذلك إلى إزالة {{count}} خطوط جرد المخزون بشكل دائم",
+  "messages.confirm-delete-stocktakes_few": "سيؤدي ذلك إلى إزالة {{count}} جرد المخزون بشكل دائم",
+  "heading.edit-item": "تحرير العنصر",
+  "messages.deleted-assets_one": "تم حذف {{count}} معدات",
+  "messages.deleted-generic_other": "تم حذف {{count}} سجلات",
+  "label.customer-name": "اسم الزبون",
+  "messages.deleted-pack-variant_one": "تم حذف {{count}} متغير العبوة",
+  "messages.inbound-shipment-created-on": "تم إنشاء شحنة داخلة بتاريخ {{date}}",
+  "messages.internal-order-created-on": "طلب داخلي تم إنشاؤه في {{date}}",
+  "label.reason-for-contacting": "سبب الاتصال بنا",
+  "label.country": "البلد",
+  "label.create-log-reason": "إنشاء سبب السجل",
+  "label.customer-ref": "مرجع الزبون",
+  "label.demographic-group": "المجموعة الديموغرافية",
+  "label.difference": "الفرق",
+  "label.directions": "الاتجاهات",
+  "label.doses-per-unit": "الجرعات لكل وحدة",
+  "label.download-database": "تنزيل قاعدة البيانات",
+  "label.draft": "مسودة",
+  "label.duration": "المدة",
+  "label.edit-variant": "تحرير المتغير",
+  "label.encounter-status-scheduled": "مجدول",
+  "label.entered-on": "تم الدخول في",
+  "label.expired_one": "دفعة منتهية الصلاحية",
+  "label.expiring-soon_one": "الدفعات التي ستنتهي صلاحيتها خلال شهر",
+  "label.feedback": "التقييمات",
+  "label.forecast-quantity": "الكمية المقترحة",
+  "label.from-age": "من العمر",
+  "label.from-created-datetime": "من تاريخ/وقت الإنشاء",
+  "label.from-datetime": "من التاريخ/الوقت",
+  "label.functional-status": "الحالة الوظيفية",
+  "label.gender": "الجنس",
+  "label.items-selected_one": "{{count}} عنصر مختار",
+  "label.general-population": "عامة السكان",
+  "label.items-selected_many": "{{count}} عناصر مختارة",
+  "label.last-name": "اللقب",
+  "label.new-patient": "مريض جديد",
+  "label.new-rnr-form": "نموذج تقرير وطلب جديد",
+  "label.new-row": "صف جديد",
+  "label.num-packs": "عدد العبوات",
+  "label.number": "عدد",
+  "label.number-months_few": "{{count}} الشهور",
+  "label.number-months_many": "{{count}} الشهور",
+  "label.number-months_other": "{{count}} شهور",
+  "label.outgoing": "الخارج",
+  "label.pack-cost-price": "سعر تكلفة العبوة",
+  "label.pack-quantity": "كمية العبوة",
+  "label.pack-quantity-issued": "كمية العبوة الصادرة",
+  "label.pack-sell-price": "سعر بيع العبوة",
+  "label.programs-immunisations": "اللقاحات",
+  "label.projected": "المتوقع",
+  "label.record-stock-transaction": "تسجيل صفقة المخزون من التطعيمات السابقة",
+  "label.recorded-contact-differs": "الاتّصال المسجّل: {{recordedName}}",
+  "label.reference": "المرجع",
+  "label.refused": "مرفوض",
+  "label.relationship": "العلاقة",
+  "label.replacement-date": "الاستبدال المستحق",
+  "label.requested": "مطلوب",
+  "label.requested-packs": "العبوات المطلوبة",
+  "label.requested-quantity": "الكمية المطلوبة",
+  "label.requisition-program": "البرنامج",
+  "label.selected": "تم الاختيار",
+  "label.serial": "الرقم التسلسلي",
+  "label.server": "الخادم",
+  "label.requisition": "طلب الشراء",
+  "label.shipped": "تم التسليم",
+  "label.store": "المتجر",
+  "label.strength": "القوة",
+  "label.sub-catalogue": "الكتالوج الفرعي",
+  "label.suggested": "مقترح",
+  "label.support": "الدعم",
+  "label.tax": "الضريبة",
+  "label.time": "الوقت",
+  "label.to-created-datetime": "إلى تاريخ/وقت الإنشاء",
+  "label.to-datetime": "حتى الآن / الوقت",
+  "label.to-expiry": "حتى انتهاء الصلاحية",
+  "label.total-before-tax": "المجموع قبل الضريبة",
+  "label.total-items_one": "إجمالي العنصر",
+  "label.total-items_other": "إجمالي العناصر",
+  "label.total-quantity": "الكمية الإجمالية",
+  "label.trace-status-done": "تم",
+  "label.type-start": "بدء الخرق",
+  "label.unit-plural_few": "{{unit}}",
+  "label.unit-plural_many": "{{unit}}",
+  "label.update-transactions": "تحديث معاملات المخزونات",
+  "label.unit-price": "سعر الوحدة",
+  "label.unit-quantity-issued": "{{unit}} كمية صادرة",
+  "label.units-plural_few": "الوحدات",
+  "label.vaccination-card": "بطاقة التلقيح",
+  "label.vaccine-not-given": "لم يتم إعطاء اللقاح",
+  "label.variant": "Variant",
+  "label.variants": "المتغيرات",
+  "label.volume-per-pack": "الحجم لكل عبوة",
+  "label.warranty-end-date": "نهاية الضمان",
+  "label.wastage-rate": "معدل التبذير",
+  "link.copy-to-clipboard": "نسخ إلى الحافظة",
+  "log.invoice-status-delivered": "تم تغيير الحالة إلى تم التسليم",
+  "log.prescription-status-picked": "انتقاء الوصفة الطبية",
+  "log.requisition-status-sent": "تم إرسال الطلب",
+  "log.stock-location-change": "تم تغيير الموقع",
+  "log.stock-on-hold": "مخزون معلق",
+  "log.stocktake-deleted": "تم حذف جرد المخزون",
+  "log.stocktake-status-finalised": "تم الانتهاء من جرد المخزون",
+  "log.user-logged-in": "تسجيل دخول المستخدم",
+  "log.zero-quantities-for-invoice-created-before-store": "تم تعيين كمية جميع الأسطر إلى 0 لأنه تم إنشاؤها قبل إنشاء المخزن.",
+  "message.database-not-sqlite": "تنزيل قواعد البيانات متاح فقط لقواعد بيانات SQLite",
+  "message.failed-to-create-requisition": "فشل في إنشاء طلب الشراء!",
+  "message.nothing-to-copy": "لا شيء للنسخ",
+  "message.placeholder-lines-cannot-be-returned": "لا يمكن إرجاع خطوط العناصر النائبة",
+  "messages.allocated-lines-partial_many": "تم تخصيص {{count}} أسطر جزئيًا",
+  "messages.allocated-lines-partial_one": "تم تخصيص {{count}} أسطر جزئيًا",
+  "messages.cant-send-order": "لا يمكن إرسال الطلب الداخلي لأنه لا يوجد خطوط",
+  "messages.cce-created": "تم إنشاء تجهيز سلسلة التبريد بنجاح",
+  "messages.confirm-delete-bundled-item": "سيؤدي ذلك إلى إزالة هذا العنصر من الحزمة",
+  "messages.confirm-delete-lines_one": "سيؤدي ذلك إلى إزالة سطر 1 من هذه الوصفة الطبية بشكل دائم",
+  "messages.confirm-delete-locations_one": "سيؤدي ذلك إلى إزالة موقع 1 بشكل دائم",
+  "messages.confirm-delete-locations_other": "سيؤدي ذلك إلى إزالة {{count}} مواقع بشكل دائم",
+  "messages.confirm-delete-prescriptions_one": "سيؤدي ذلك إلى إزالة 1 وصفة طبية بشكل دائم",
+  "messages.confirm-delete-prescriptions_other": "سيؤدي ذلك إلى إزالة {{count}} وصفات طبية بشكل دائم",
+  "messages.confirm-delete-return": "سيؤدي هذا إلى إزالة الإرجاع رقم {{number}} بشكل دائم",
+  "messages.confirm-delete-shipment-lines_many": "سيؤدي ذلك إلى إزالة {{count}} خطوط الإرساليات بشكل دائم",
+  "messages.confirm-delete-shipments_one": "سيؤدي ذلك إلى إزالة شحنة 1 بشكل دائم",
+  "messages.confirm-delete-shipments_other": "سيؤدي ذلك إلى إزالة {{count}} شحنات بشكل دائم",
+  "messages.confirm-delete-stocktake": "سيؤدي هذا إلى إزالة جرد المخزون رقم {{number}} بشكل دائم",
+  "messages.confirm-delete-stocktake_lines_few": "سيؤدي ذلك إلى إزالة {{count}} خطوط جرد المخزون بشكل دائم",
+  "messages.confirm-delete-stocktake_lines_one": "سيؤدي ذلك إلى إزالة 1 خط جرد مخزون بشكل دائم",
+  "messages.confirm-zero-quantity-status": "لديك صفوف بكمية 0 من الكمية الصادرة. إذا قمت بالمتابعة، ستتم إزالتها. يرجى ”إلغاء“ إذا كنت ترغب في تحديث العناصر.",
+  "messages.confirm-finalise-rnr": "سيؤدي ذلك إلى تعليم نموذج التقرير والطلب على أنه تم إنهاؤه وإنشاء طلب داخلي.",
+  "messages.confirm-inbound-status-as": "تأكيد الحالة كـ $t({{status}})؟",
+  "messages.confirm-zero-shipment-lines_few": "سيؤدي هذا إلى تعيين كمية {{count}} سطور إلى 0",
+  "messages.could-not-save": "تعذر الحفظ",
+  "messages.create-outbound-from-requisition": "هل أنت متأكد من أنك تريد إنشاء شحنة خارجة من طلب الزبون هذا؟",
+  "messages.create-stocktake-2": "لإنشاء جرد فارغ، ما عليك سوى النقر فوق ”موافق“ للمتابعة.",
+  "messages.deleted-generic_few": "تم حذف {{count}} سجلات",
+  "messages.deleted-orders_many": "تم حذف {{count}} طلبات",
+  "messages.deleted-orders_one": "تم حذف {{count}} طلبات",
+  "messages.deleted-pack-variant_other": "تم حذف {{count}} متغير العبوة",
+  "messages.deleted-prescriptions_few": "تم حذف {{count}} وصفات طبية",
+  "messages.deleted-returns_one": "تم حذف إرجاع 1",
+  "messages.deleted-returns_other": "تم حذف {{count}} إرجاعات",
+  "messages.deleted-vaccine-courses_one": "تم حذف دورة لقاح 1",
+  "messages.deleted-vaccine-courses_other": "تم حذف {{count}} دورات لقاح",
+  "messages.locked-description": "سيمنع ذلك من إجراء المزيد من التغييرات على جرد المخزون حتى يتم فتح القفل.",
+  "error.duplicate-asset-number": "كرر رقم المعدات في ملف CSV",
+  "error.too-many-datapoints": "تحذير: هناك الكثير من نقاط البيانات لعرضها. يرجى تخفيض نطاق التاريخ أو عدد المستشعرات لعرض جميع البيانات.",
+  "error.unable-to-save-log": "تعذر حفظ السجل",
+  "error.unable-to-update-immunisation-program": "غير قادر على تحديث برنامج التلقيح",
+  "error.unable-to-update-vaccine-course": "تعذر تحديث دورة اللقاح",
+  "error.v6-server-not-configured": "الخادم المركزي V6 غير مهيأ",
+  "facilities": "المنشآت",
+  "label.asset-notes": "الملاحظات",
+  "label.available-batches": "الدفعات المتاحة",
+  "label.available-packs": "متوفر (عبوات)",
+  "label.approved-quantity": "الكمية الموافق عليها",
+  "label.available-quantity": "الكمية المتوفرة: {{number}} وحدات",
+  "label.cant-delete-disabled-requisition": "يمكن حذف الأسطر فقط عندما يكون طلب الشراء في المسودة",
+  "label.catalogue-item": "عنصر الكتالوج",
+  "label.create-location": "إنشاء موقع",
+  "label.create-pack-variant": "إنشاء متغير العبوة",
+  "label.create-new-program": "إنشاء برنامج للتحصين",
+  "label.created": "تم الإنشاء",
+  "label.encounter-status-visited": "تمت الزيارة",
+  "label.error-message": "رسالة الخطأ",
+  "label.last-reading": "آخر قراءة",
+  "label.last-record": "تاريخ/وقت آخر تسجيل",
+  "label.line-number": "رقم السطر",
+  "label.losses": "الخسائر",
+  "label.outbound-shipment": "تسليم خارج",
+  "label.outer-pack-size": "حجم العبوة الخارجية",
+  "label.location": "الموقع",
+  "label.log": "السجل",
+  "label.low-stock": "مخزون منخفض",
+  "label.manufacturer": "المصنع",
+  "label.master-lists": "القوائم الرئيسية",
+  "label.max-months-of-stock": "أشهر المخزون المستهدفة",
+  "label.min": "الحد الأدنى",
+  "label.modified-datetime-UTC": "التاريخ/التوقيت المعدل (UTC)",
+  "label.monthly-consumption-look-back-period": "فترة التمعن في الاستهلاك الشهري",
+  "label.message": "الرسالة",
+  "label.pack": "العبوة",
+  "label.expand": "توسيع",
+  "label.expand-all": "توسيع الكل",
+  "label.new-stocktake": "جرد المخزون الجديد",
+  "label.no-reason": "لا يوجد سبب",
+  "label.no-unallocated-rows-selected": "جميع الصفوف المحددة تم تخصيصها مسبقاً",
+  "label.observations": "الملاحظات",
+  "label.program-enrolment": "التسجيل في البرنامج",
+  "label.quantity-returned": "الكمية المعادة",
+  "label.quantity-to-return": "الكمية المراد إرجاعها",
+  "label.quantity": "الكمية",
+  "heading.password": "كلمة السر",
+  "label.general": "عام",
+  "label.packs-of_other": "عبوات من",
+  "label.requested-number-packs": "عدد العبوات المطلوبة (تقريبًا)",
+  "label.report-filters": "فلاتر التقارير",
+  "label.target-stock": "المخزون المستهدف",
+  "label.temperature": "درجة الحرارة",
+  "label.settings-site-id": "معرّف الموقع",
+  "label.settings-url": "عنوان URL للخادم المركزي",
+  "label.showing": "العرض",
+  "label.suggested-date": "التاريخ المقترح",
+  "label.systolic": "الانقباض",
+  "label.target-demographic": "التركيبة السكانية المستهدفة",
+  "label.warranty-start-date": "بدء الضمان",
+  "log.stock-batch-change": "تم تغيير الدفعة",
+  "log.stock-cost-price-change": "تغير سعر التكلفة",
+  "label.weight": "الوزن",
+  "log.invoice-status-allocated": "تم تغيير الحالة إلى مخصص",
+  "log.requisition-created": "إنشاء طلب الشراء",
+  "label.years-abbreviation": "سنة",
+  "log.stock-expiry-date-change": "تم تغيير تاريخ انتهاء الصلاحية",
+  "log.stock-sell-price-change": "تغير سعر البيع",
+  "log.stocktake-created": "إنشاء جرد المخزون",
+  "messages.allocated-lines-partial_other": "تم تخصيص {{count}} أسطر جزئيًا",
+  "messages.cannot-bundle": "لا يمكنك تجميع متغيرات العناصر الأخرى مع هذا المتغير، حيث أن هذا المتغير مدمج مسبقاً مع عناصر أخرى",
+  "messages.cannot-delete-requisition-with-shipment": "لا يمكن حذف طلب شراء مرتبط بتسليم ما",
+  "messages.cant-delete-requisitions": "يمكن فقط حذف طلبات الشراء ذات الحالة ”مسودة\"",
+  "messages.allocated-lines_many": "تم تخصيص {{count}} أسطر",
+  "messages.asset-saved": "تم حفظ التجهيز 🥳",
+  "messages.catalogue-property": "هذه الخاصية محددة في الكتالوج",
+  "messages.changed-location_other": "تم تغيير الموقع لـ {{ count }} أسطر",
+  "messages.changing-max-mos": "هذا سيؤدي إلى تغيير الأشهر المستهدفة من المخزون.",
+  "messages.click-to-fetch": "انقر لجلب سجل المريض من الخادم المركزي",
+  "messages.click-to-return-to-assets": "تعذر العثور على مجموعة معدات سلسلة التبريد بهذا المعرف. انقر على موافق للعودة إلى قائمة المعدات",
+  "messages.confirm-changing-from-new": "ملاحظة: سيؤدي التغيير من ”جديد“ إلى إزالة أي أسطر بكمية صفرية.",
+  "messages.confirm-delete-invoice-lines_one": "سيؤدي ذلك إلى إزالة سطر واحد 1 من هذه الفاتورة بشكل دائم",
+  "messages.confirm-delete-item-variant": "سيؤدي ذلك إلى حذف هذا العنصر المتغير بشكل دائم",
+  "messages.confirm-delete-assets_one": "سيؤدي ذلك إلى إزالة هذا المكوّن بشكل دائم.",
+  "messages.confirm-delete-immunisation-programs_other": "سيؤدي ذلك إلى إزالة {{count}} برامج التحصين المحددة بشكل دائم.",
+  "messages.confirm-delete-locations_few": "سيؤدي ذلك إلى إزالة {{count}} مواقع بشكل دائم",
+  "messages.confirm-delete-prescription": "سيؤدي هذا إلى إزالة الوصفة الطبية رقم {{number}} بشكل دائم",
+  "messages.confirm-delete-prescription-lines": "سيؤدي ذلك إلى إزالة جميع الخطوط من هذه الوصفة الطبية بشكل دائم",
+  "messages.confirm-delete-prescriptions_few": "سيؤدي ذلك إلى إزالة {{count}} وصفات طبية بشكل دائم",
+  "messages.confirm-delete-prescriptions_many": "سيؤدي ذلك إلى إزالة {{count}} وصفات طبية بشكل دائم",
+  "messages.confirm-delete-requisition-lines_one": "سيؤدي ذلك إلى إزالة سطر 1 من هذا الطلب بشكل دائم",
+  "messages.confirm-delete-reasons_few": "سيؤدي ذلك إلى إزالة {{count}} أسبابًا بشكل دائم",
+  "messages.confirm-not-fully-supplied_many": "هناك {{count}} سطور في طلب الشراء هذا لم يتم توريدها بالكامل إلى العميل. \n\nهل ما زلت ترغب في المتابعة؟",
+  "messages.confirm-zero-shipment-lines_many": "سيؤدي هذا إلى تعيين كمية {{count}} سطور إلى 0",
+  "messages.created-new-vaccine-course": "تم إنشاء دورة اللقاح بنجاح",
+  "messages.deleted-bundled-item": "تم حذف العنصر المجمّع بنجاح",
+  "messages.customer-requisition-created-on": "تم إنشاء طلب الزبون في {{date}}",
+  "messages.deleted-locations_other": "تم حذف {{count}} مواقع",
+  "messages.deleted-generic_many": "تم حذف {{count}} سجلات",
+  "messages.deleted-orders_few": "تم حذف {{count}} طلبات",
+  "messages.deleted-generic_one": "تم حذف {{count}} سجلات",
+  "messages.deleted-locations_many": "تم حذف {{count}} مواقع",
+  "messages.deleted-locations_one": "تم حذف {{count}} مواقع",
+  "messages.deleted-shipments_many": "تم حذف {{count}} شحنات",
+  "messages.deleted-stocktakes_other": "تم حذف {{count}} جرد مخزون",
+  "messages.deleted-shipments_few": "تم حذف {{count}} شحنات",
+  "messages.error-deleting-locations_many": "تعذّر حذف {{count}} مواقع",
+  "messages.error-deleting-locations_other": "تعذر حذف {{count}} موقع",
+  "messages.error-deleting-reasons_few": "تعذر حذف {{count}} أسباب",
+  "messages.detect-scanner": "للتعرف على الماسح الضوئي الخاص بك، حاول مسح الرمز الشريطي أعلاه",
+  "messages.error-not-valid-email": "الرجاء إدخال عنوان بريد إلكتروني صحيح",
+  "messages.error-deleting-reasons_many": "تعذر حذف {{count}} أسباب",
+  "messages.loading-report": "تحميل التقرير...",
+  "messages.location": "الموقع:",
+  "heading.barcode-scanners": "ماسحات الباركود الضوئية",
+  "heading.breach": "الخرق",
+  "heading.comment": "تعليق",
+  "heading.create-vaccine-course": "إنشاء دورة تلقيح",
+  "heading.custom": "تخصيص",
+  "error.failed-to-create-prescription": "فشل في إنشاء وصفة طبية!",
+  "error.sync-v6-api-incompatible-hint": "يجب ترقية خادم Open mSupply Central Server إلى نسخة حديثة قبل أن تتمكن من الاتصال - يرجى الاتصال ب support@msupply.foundation",
+  "error.unable-to-calculate": "غير قادر على الحساب",
+  "error.sync-v6-api-incompatible": "إصدار Sync V6 API غير متوافق",
+  "filename.locations": "المواقع",
+  "filename.inbounds": "التسليمات-الداخلة",
+  "error.value-type-not-correct": "نوع القيمة غير صحيح",
+  "heading.grand-total": "المجموع الكلي",
+  "heading.history": "سجل",
+  "heading.notification-preferences": "تفضيلات الإشعارات",
+  "heading.schedule": "الجدول الزمني",
+  "heading.server-error": "خطأ في الخادم",
+  "heading.server-log": "سجل الخادم",
+  "heading.service-charges": "رسوم الخدمة",
+  "info.manual-shipment": "تم إنشاء هذا الإرجاع يدوياً. لن يتم تحديث حالة التسليم تلقائياً.",
+  "label.custom-age-label": "ملصق العمر المخصص",
+  "label.customer": "الزبون",
+  "label.date-format": "اليوم/الشهر/السنة",
+  "label.status-late": "متأخر",
+  "label.status-not-given": "غير معطى",
+  "label.stocktake-date": "تاريخ جرد المخزون",
+  "label.stocktake-comment": "تعليق",
+  "label.cold-storage-type": "نوع التخزين البارد",
+  "label.stock-on-order": "المخزون عند الطلب",
+  "label.unit": "وحدة",
+  "label.unit-quantity": "كمية الوحدة",
+  "label.use-catalogue": "استخدام كتالوج المعدات",
+  "label.user-guide": "عرض النسخة الإلكترونية (يتطلب الاتصال بالإنترنت)",
+  "label.vaccination": "التلقيح",
+  "label.vaccination-cards": "بطاقات التطعيم",
+  "label.vaccinations": "التطعيمات",
+  "label.vaccine-courses": "دورات اللقاح",
+  "label.volume-per-outer-pack": "الحجم لكل عبوة خارجية",
+  "log.quantity-for-line-has-been-set-to-zero": "تم تعيين كمية هذه الدفعة إلى 0",
+  "log.requisition-deleted": "تم حذف طلب الشراء",
+  "log.invoice-number-allocated": "العدد المخصص",
+  "log.requisition-number-allocated": "رقم الطلب المخصص",
+  "log.prescription-status-verified": "تم التحقق من الوصفة الطبية",
+  "heading.logout-confirm": "هل أنت متأكد؟",
+  "messages.allocated-lines_few": "تم تخصيص {{count}} أسطر",
+  "messages.click-to-return": "تعذر العثور على جرد مخزون بهذا المعرف. انقر فوق ”موافق“ للعودة إلى قائمة جرد المخزونات",
+  "messages.confirm-delete-stocktakes_other": "سيؤدي ذلك إلى إزالة {{count}} جرد المخزون بشكل دائم",
+  "messages.confirm-patient-retrieval": "هل أنت متأكد من أنك تريد استرداد بيانات المريض لـ {{name}}؟",
+  "messages.confirm-reduce-lines-to-zero": "سيؤدي ذلك إلى تقليل كمية جميع خطوط المخزون المحددة إلى 0",
+  "label.patient-details": "تفاصيل المريض",
+  "label.patient-id": "هوية المريض",
+  "label.programs": "البرامج",
+  "label.remaining-to-supply": "المتبقي",
+  "label.remove-all-filters": "إزالة جميع الفلاتر",
+  "label.repack": "إعادة التعبئة",
+  "label.remove": "إزالة",
+  "label.rnr-adjustments": "التعديلات +/-",
+  "label.rnr-consumed": "مستهلك/موزع",
+  "label.rnr-consumed-adjusted": "الاستهلاك/التوزيع المعدل",
+  "label.rnr-final-balance": "الرصيد النهائي",
+  "label.rnr-initial-balance": "الرصيد المبدئي",
+  "messages.deleted-immunisation-programs_one": "تم حذف {{count}} برنامج التلقيح",
+  "messages.deleted-item-variant": "تم حذف متغير العنصر بنجاح",
+  "messages.deleted-lines_few": "تم حذف {{count}} سطور",
+  "messages.deleted-lines_many": "تم حذف {{count}} سطور",
+  "messages.deleted-lines_one": "تم حذف {{count}} سطور",
+  "messages.deleted-locations_few": "تم حذف {{count}} مواقع",
+  "label.schedule": "جدولة المواعيد",
+  "label.settings-username": "اسم الموقع",
+  "messages.how-to-read-stock-detail": "يحتوي هذا التقرير على نفس معلومات صفحة المخزون دون أي تفاعل.",
+  "messages.error-saving-return": "خطأ في حفظ الإرجاع 🥺",
+  "messages.error-saving-shipment": "خطأ في حفظ الشحنة 🥺",
+  "messages.how-to-read-report": "كيف يمكن قراءة تقرير؟",
+  "messages.import-error-on-upload": "خطأ في الاستيراد عند التحميل. يرجى إصلاح الأخطاء وإعادة التحميل",
+  "messages.import-generic": "تم الاستيراد بنجاح",
+  "messages.import-warning-on-upload": "تحذير فشل تحليل بعض القيم. يرجى الإصلاح وإلا سيتم تجاهلها عند التحميل",
+  "loading": "جاري التحميل…",
+  "messages.delete-this-line": "احذف هذا السطر",
+  "messages.confirm-delete-stocktakes_many": "سيؤدي ذلك إلى إزالة {{count}} جرد المخزون بشكل دائم",
+  "messages.confirm-zero-shipment-lines_other": "سيؤدي هذا إلى تعيين الكمية من {{count}} السطور إلى 0",
+  "filename.asset-categories": "فئات المعدات",
+  "heading.select-items": "اختر العناصر",
+  "label.email": "البريد الإلكتروني",
+  "label.incoming-stock": "المخزون القادم",
+  "label.job-title": "مسمى الوظيفة",
+  "label.patients": "المرضى",
+  "label.percentage": "النسبة المئوية",
+  "label.settings-central-site-id": "معرّف موقع الخادم المركزي",
+  "label.settings-password": "كلمة سر الموقع",
+  "label.shipment": "التسليم",
+  "label.status-pending": "معلق",
+  "label.sensor-name": "اسم المستشعر",
+  "label.sensor-type": "نوع المستشعر",
+  "label.statushistory": "تاريخ الحالة",
+  "label.stocktake-frequency": "تواتر جرد المخزون",
+  "label.sell-price": "سعر البيع",
+  "label.shipment-created": "تم إنشاء التسليم",
+  "label.tertiary": "الدرجة الثالثة",
+  "label.threshold-for-understock": "الحد الأدنى للمخزون الناقص",
+  "messages.all-changes-must-be-confirmed": "لديك بعض الأسطر التي تحتوي على تغييرات غير محفوظة. قم بتحديد هذه الأسطر على أنها مؤكدة ليتم إكمالها.",
+  "messages.acknowledge-breach-helptext": "أدخل تعليقاً وانقر فوق موافق للإقرار بالخرق.",
+  "messages.ago": "منذ {{time}}",
+  "messages.alert-zero-return-quantity": "يرجى إضافة بعض الكميات للإرجاع قبل الانتقال إلى الخطوة التالية",
+  "messages.confirm-delete-vaccine-courses_one": "سيؤدي ذلك إلى إزالة دورة اللقاح هذه بشكل دائم",
+  "messages.confirm-delete-vaccine-courses_other": "سيؤدي ذلك إلى إزالة دورات اللقاح {{count}} المحددة بشكل دائم",
+  "messages.confirm-delete-requisitions_few": "سيؤدي ذلك إلى إزالة {{count}} طلبات داخلية بشكل دائم",
+  "messages.confirm-delete-shipment-lines_few": "سيؤدي ذلك إلى إزالة {{count}} خطوط الإرساليات بشكل دائم",
+  "messages.confirm-zero-shipment-lines_one": "سيؤدي ذلك إلى ضبط كمية سطر 1 إلى 0",
+  "messages.error-deleting-reasons_one": "تعذر حذف {{count}} أسباب",
+  "messages.inventory-adjustment-saved": "تم حفظ تعديل المخزون 🥳",
+  "messages.confirm-not-fully-supplied_few": "هناك {{count}} سطور في طلب الشراء هذا لم يتم توريدها بالكامل إلى العميل. \n\nهل ما زلت ترغب في المتابعة؟",
+  "messages.confirm-remove-item": "هل أنت متأكد؟",
   "error.sync-api-incompatible": "إصدار مزامنة API غير متوافق",
   "error.sync-api-incompatible-hint": "يحتاج خادم mSupply Central Server إلى التحديث إلى نسخة حديثة قبل أن تتمكن من الاتصال - يرجى الاتصال بـ support@msupply.foundation",
   "error.sync-v6-api-incompatible": "إصدار Sync V6 API غير متوافق",
@@ -1432,6 +1994,109 @@
   "messages.no-repack-detail": "حدد سطرًا لعرض تفاصيل إعادة التعبئة أو انقر فوق جديد لإنشاء إعادة تعبئة جديدة",
   "messages.no-repacks": "لم تتم إعادة تعبئة هذا الخط من المخزون. انقر فوق جديد لإنشاء إعادة تعبئة جديدة.",
   "messages.no-scanners-found": "لم يتم العثور على أي ماسحات ضوئية",
+  "messages.shipment-saved": "تم حفظ الشحنة 🥳",
+  "messages.stock-expired": "بعض خطوط المخزون منتهية الصلاحية ولن يتم تخصيصها تلقائياً.",
+  "messages.success-printing-asset-label": "تمت طباعة ملصق المعدات بنجاح.",
+  "messages.select-rows-to-delete": "حدد الصفوف المراد حذفها",
+  "messages.stock-line-saved": "تم حفظ خط المخزون 🥳",
+  "messages.stock-on-hold": "بعض خطوط المخزون معلقة ولا يمكن تخصيصها.",
+  "outbound-shipments": "تسليمات خارجة",
+  "patients": "مرضى",
+  "placeholder.enter-an-item-code-or-name": "أدخل رمز أو اسم العنصر",
+  "placeholder.enter-facility-code-or-name": "أدخل رمز أو اسم المنشأة",
+  "placeholder.enter-facility-name": "أدخل اسم المنشأة",
+  "messages.supply-to-requested": "هل أنت متأكد من أنك تريد ضبط كمية توريد جميع الخطوط على الكمية المطلوبة؟",
+  "messages.updated-new-vaccine-course": "تم تحديث دورة اللقاح بنجاح",
+  "messages.upload-error": "خطأ في الملف الذي تم تحميله {{ error }}",
+  "messages.upload-or": "أو",
+  "messages.zero-line-quantities_few": "تم ضبط كمية {{count}} خطوط إلى 0",
+  "placeholder.filter-by-status": "تصفية حسب الحالة",
+  "replenishment": "إعادة التعبئة",
+  "report.amc-lookback": "فترة المراجعة لمتوسط الاستهلاك الشهري",
+  "report.actual": "الفعلي",
+  "report.entered-date": "تاريخ المدخل",
+  "placeholder.filter-items": "تصفية العناصر",
+  "report.actual-stock": "المخزون الفعلي",
+  "report.amc-12-months": "متوسط الاستهلاك الشهري (12 أشهر)",
+  "report.available-stock-on-hand": "المخزون المتوفر في متناول اليد",
+  "reason.decommissioned": "خرجت من الخدمة",
+  "reason.multi-temperature-breaches": "الخروقات متعددة درجات الحرارة",
+  "report.expiring-in-days": "تنتهي الصلاحية في (أيام)",
+  "report.expiry-date": "تاريخ انتهاء الصلاحية",
+  "report.extension": "التمديد",
+  "report.expiring-12-months": "انتهاء الصلاحية بعد 12 شهراً",
+  "report.expiring-6-months": "تنتهي صلاحيتها بعد 6 أشهر",
+  "report.mos": "شهور من المخزون",
+  "report.in-stock": "متوفر في المخزون",
+  "report.global-total": "المجموع الكلي",
+  "report.invoice": "فاتورة",
+  "report.invoice-type": "نوع الفاتورة",
+  "report.issued": "تم الإصدار",
+  "report.item-code": "رمز العنصر",
+  "report.item-name": "اسم العنصر",
+  "report.line": "السطر",
+  "report.months-cover": "التغطية الشهرية",
+  "report.our-ref": "مرجعنا",
+  "report.received-from": "تم الاستلام من",
+  "report.requested-from": "تم الطلب من",
+  "report.requested-qty": "تم الطلب من",
+  "report.shipped-date": "تاريخ الشحن",
+  "report.snapshot-packs": "لمحة عن العبوات",
+  "report.sort-by": "فرز حسب",
+  "report.sort-direction": "اتجاه الفرز",
+  "report.stock-take-number": "رقم المخزون المستلم",
+  "report.stock-take-sheet": "ورقة جرد المخزون",
+  "report.stocktake-number": "رقم جرد المخزون",
+  "report.supplied-to": "تم التزويد إلى",
+  "report.understocked": "مخزون ناقص",
+  "report.usage-this-month": "الاستخدام الشهري (هذا الشهر)",
+  "report.variance-packs": "التباين ( عبوات)",
+  "report.variance-value": "التباين (القيمة)",
+  "report.well-stocked": "مخزن جيداً",
+  "returns": "المرتجعات",
+  "saving": "قيد الحفظ…",
+  "searching": "البحث جارٍ…",
+  "status.functioning-but-needs-attention": "قيد التشغيل ولكن في حاجة إلى عناية",
+  "status.unserviceable": "غير قابل للإصلاح",
+  "stocktake.comment-list-template": "تم الإنشاء باستخدام القائمة الرئيسية ”{{list}}}",
+  "stocktake.comment-location-template": "تم إنشاؤها باستخدام عناصر في الموقع '{{location}}'",
+  "stocktakes": "جرد المخزون",
+  "store-details": "رمز المتجر: {{code}}",
+  "settings": "الإعدادات",
+  "settings.scanner-type": "نوع الماسح الضوئي",
+  "status.decommissioned": "تم إيقاف التشغيل",
+  "supplier-returns": "عوائد الموردين",
+  "sync-info.last-successful-sync": "اكتملت آخر مزامنة ناجحة",
+  "sync-info.last-sync-duration": "مدة المزامنة الأخيرة",
+  "sync-info.updating-user": "تحديث المستخدم...",
+  "sync-info.user-last-updated": "آخر تحديث لتهيئة المستخدم",
+  "sync-status.integrate": "دمج",
+  "success": "نجاح!",
+  "success.data-deleted": "تم الحذف بنجاح",
+  "success.data-saved": "تم الحفظ بنجاح",
+  "success.sync-settings": "تم تحديث إعدادات المزامنة بنجاح!",
+  "supplier-return": "إرجاع الموردين",
+  "sync-status.prepare": "إعداد",
+  "sync-status.pull-central": "السحب المركزي",
+  "table.select-unselect-all-rows": "تحديد/إلغاء تحديد جميع الصفوف",
+  "title.bundle-with": "تجميع مع",
+  "title.patient-retrieval-modal": "استرجاع بيانات المريض",
+  "title.pricing": "التسعير",
+  "warning.cannot-create-placeholder-units": "هناك إجمالي {{allocatedQuantity}} وحدات متوفرة. غير قادر على تخصيص جميع {{requestedQuantity}} الوحدات.",
+  "title.repack-complete": "اكتملت إعادة التعبئة",
+  "warning.cannot-create-placeholder-packs": "هناك إجمالي عبوات {{allocatedQuantity}} متوفرة. غير قادر على تخصيص جميع {{requestedQuantity}} العبوات.",
+  "warning.caps-lock": "تحذير: قفل القبعات قيد التشغيل",
+  "warning.field-not-parsed": "لم يتم تحليل {{field}}",
+  "warning.nothing-to-supply": "لم يتبق شيء لتزويده!",
+  "placeholder.search-by-master-list-name": "البحث حسب اسم القائمة",
+  "messages.import-error": "فشل استيراد بعض أو كل المعدات. انقر فوق تصدير لتنزيل ملف csv مع الصفوف التي تسببت في حدوث خطأ. سيتم استيراد الصفوف الخالية من الأخطاء",
+  "messages.no-batch-selected": "لم تقم بتحديد دفعة لهذا التطعيم. لن يتم إنشاء أي معاملة مخزون. هل أنت متأكد من رغبتك في المتابعة؟",
+  "messages.no-item-variants": "لم يتم تكوين أي متغيرات للعنصر",
+  "messages.no-bundled-items": "لم يتم تكوين أي عناصر مجمعة",
+  "messages.no-contact-traces": "هذا المريض ليس لديه آثار مخالطة",
+  "messages.no-documents-uploaded": "لم يتم تحميل أي مستندات",
+  "messages.no": "لا",
+  "messages.no-available-periods": "لم يتم العثور على فترات متاحة للجدول الزمني",
   "messages.no-shipments-yet": "لم يتم إنشاء أي شحنات حتى الآن.",
   "messages.no-status-logs": "لم يتم إنشاء سجلات حالة لهذا الجهاز. انقر على زر ”تحديث الحالة“ لإنشاء سجل حالة جديد.",
   "messages.no-stock-available": "لا يوجد مخزون متاح",
@@ -1553,7 +2218,6 @@
   "report.actual-stock": "المخزون الفعلي",
   "report.amc-12-months": "متوسط الاستهلاك الشهري (12 أشهر)",
   "report.amc-24-months": "متوسط الاستهلاك الشهري (24 أشهر)",
-  "report.AMC-lookback": "فترة المراجعة لمتوسط الاستهلاك الشهري",
   "report.authorized-by": "مصرح به من قبل",
   "report.available-stock-on-hand": "المخزون المتوفر في متناول اليد",
   "report.collected-by": "تم جمعها من قبل",

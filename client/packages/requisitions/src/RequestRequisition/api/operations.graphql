@@ -172,6 +172,7 @@ fragment Request on RequisitionNode {
     endDate
   }
   orderType
+  isEmergency
 }
 
 fragment ConsumptionHistory on ConsumptionHistoryNode {
@@ -460,6 +461,16 @@ mutation insertProgramRequest(
       __typename
       id
       requisitionNumber
+    }
+    ... on InsertProgramRequestRequisitionError {
+      __typename
+      error {
+        description
+        ... on MaxOrdersReachedForPeriod {
+          __typename
+          description
+        }
+      }
     }
   }
 }

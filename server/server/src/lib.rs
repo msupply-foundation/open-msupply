@@ -24,10 +24,11 @@ use repository::{get_storage_connection_manager, migrations::migrate};
 use scheduled_tasks::spawn_scheduled_task_runner;
 use service::{
     auth_data::AuthData,
+    backend_plugin::plugin_provider::PluginContext,
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
-    settings::{is_develop, ServerSettings, Settings},
+    settings::{is_develop, DiscoveryMode, ServerSettings, Settings},
     standard_reports::StandardReports,
     sync::{
         file_sync_driver::FileSyncDriver,
@@ -38,6 +39,7 @@ use service::{
 
 use actix_web::{web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
+use upload::config_upload;
 
 mod authentication;
 pub mod certs;
@@ -53,6 +55,7 @@ pub mod static_files;
 pub mod support;
 mod upload_fridge_tag;
 pub use self::logging::*;
+mod upload;
 
 pub mod print;
 mod sync_on_central;
@@ -93,7 +96,7 @@ pub async fn start_server(
     info!("Run DB migrations...done");
 
     // Upsert standard reports
-    StandardReports::load_reports(&connection_manager.connection().unwrap()).unwrap();
+    StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");
@@ -142,6 +145,13 @@ pub async fn start_server(
             .update_log_level(&service_context, settings.logging.clone().unwrap().level)
             .unwrap();
     }
+
+    // PLUGIN CONTEXT
+
+    PluginContext {
+        service_provider: service_provider.clone(),
+    }
+    .bind();
 
     // SET LOG CALLBACK FOR WASM FUNCTIONS
     info!("Setting wasm function log callback..");
@@ -260,8 +270,24 @@ pub async fn start_server(
     // Don't do discovery in android
     #[cfg(not(target_os = "android"))]
     {
-        info!("Starting server DNS-SD discovery",);
-        discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
+        let discovery_enabled = match settings.server.discovery {
+            DiscoveryMode::Disabled => false,
+            DiscoveryMode::Enabled => true,
+            DiscoveryMode::Auto => {
+                if is_develop() {
+                    log::warn!("DNS-SD discovery is automatically disabled in dev mode, add `discovery: Enabled` to local.yaml to turn it on");
+                    false
+                } else {
+                    true
+                }
+            },
+        };
+                if discovery_enabled {
+                    info!("Starting server DNS-SD discovery",);
+                    discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
+                }else {
+                    info!("Server DNS-SD discovery disabled",);
+                }
     }
 
     info!("Starting discovery graphql server",);
@@ -316,6 +342,7 @@ pub async fn start_server(
             .configure(config_print)
             // Needs to be last to capture all unmatches routes
             .configure(config_serve_frontend)
+            .configure(config_upload)
     })
     .disable_signals();
 
