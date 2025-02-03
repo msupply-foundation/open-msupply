@@ -1452,5 +1452,9 @@
   "messages.cant-return-shipment-replenishment": "Não é possível retornar as linhas até que o estado seja 'Entregado'",
   "messages.click-to-fetch": "Clique para obter o registro do paciente no servidor central",
   "messages.changing-min-mos": "Isto irá trocar os meses do ponto de reordenamento.",
-  "messages.click-to-expand": "Clique para expandir"
+  "messages.click-to-expand": "Clique para expandir",
+  "messages.created-new-vaccine-course": "Esquema de vacinação criado com sucesso",
+  "messages.deleted-assets_one": "{{count}} Ativo excluído",
+  "messages.deleted-assets_other": "{{count}} Ativos excluídos",
+  "messages.create-new-asset-confirmation": "O activo que escaneaste não está atualmente no sistema, mas a proporcionou dados GS1 adequados. Gostaria de criar um novo ativo com esses dados?"
 }
