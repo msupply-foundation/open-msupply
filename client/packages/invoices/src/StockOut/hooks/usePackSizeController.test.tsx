@@ -58,6 +58,7 @@ const testLine = ({
       invoiceId: '',
       __typename: 'InvoiceLineNode',
       numberOfPacks,
+      prescribedQuantity: 0,
       stockLine: {
         __typename: 'StockLineNode',
         id: 'a',

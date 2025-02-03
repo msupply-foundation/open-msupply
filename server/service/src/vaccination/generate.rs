@@ -40,6 +40,7 @@ pub fn generate_create_prescription(
         number_of_packs,
 
         // default
+        prescribed_quantity: None,
         total_before_tax: None,
         tax_percentage: None,
         note: None,
