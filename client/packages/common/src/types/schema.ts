@@ -5260,6 +5260,7 @@ export type PatientNode = {
   isDeceased: Scalars['Boolean']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  nextOfKin?: Maybe<PatientNode>;
   nextOfKinId?: Maybe<Scalars['String']['output']>;
   phone?: Maybe<Scalars['String']['output']>;
   programEnrolments: ProgramEnrolmentResponse;
