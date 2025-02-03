@@ -15,11 +15,11 @@ use super::{contact_form::QueueContactEmailProcessor, load_plugin::LoadPlugin};
 
 #[derive(Error, Debug)]
 pub(crate) enum ProcessorError {
-    #[error("{0:?} not found: {1:?}")]
+    #[error("{0} not found: {1}")]
     RecordNotFound(String, String),
-    #[error("{0:?}")]
-    DatabaseError(RepositoryError),
-    #[error("{0:?}")]
+    #[error("Database error")]
+    DatabaseError(#[from] RepositoryError),
+    #[error("Error in email service {0:?}")]
     EmailServiceError(EmailServiceError),
 }
 

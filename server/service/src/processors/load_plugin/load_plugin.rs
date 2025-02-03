@@ -1,6 +1,11 @@
-use repository::{ChangelogRow, ChangelogTableName, KeyType, StorageConnection};
+use repository::{
+    BackendPluginRowRepository, ChangelogRow, ChangelogTableName, KeyType, StorageConnection,
+};
 
-use crate::processors::general_processor::{Processor, ProcessorError};
+use crate::{
+    backend_plugin::plugin_provider::PluginInstance,
+    processors::general_processor::{Processor, ProcessorError},
+};
 
 const DESCRIPTION: &str = "Load plugins";
 
@@ -11,13 +16,20 @@ impl Processor for LoadPlugin {
         DESCRIPTION.to_string()
     }
 
-    /// Only runs once because contact form is create only
-    /// Changelog will only be processed once
     fn try_process_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
+        let plugin = BackendPluginRowRepository::new(connection)
+            .find_one_by_id(&changelog.record_id)?
+            .ok_or(ProcessorError::RecordNotFound(
+                "Backend plugin".to_string(),
+                changelog.record_id.clone(),
+            ))?;
+
+        PluginInstance::bind(plugin);
+
         Ok(Some("success".to_string()))
     }
 
@@ -26,6 +38,6 @@ impl Processor for LoadPlugin {
     }
 
     fn cursor_type(&self) -> KeyType {
-        KeyType::ContactFormProcessorCursor
+        KeyType::LoadPluginProcessorCursor
     }
 }
