@@ -8,7 +8,6 @@ use std::{
     path::PathBuf,
     process::{Command, Stdio},
 };
-
 use thiserror::Error as ThisError;
 
 #[derive(ThisError, Debug)]
@@ -45,6 +44,8 @@ pub enum ReportError {
     CannotOpenTestConfigFile(PathBuf, #[source] std::io::Error),
     #[error("Failed to read test-config file {0}")]
     CannotReadTestConfigFile(PathBuf, #[source] serde_json::Error),
+    #[error("Failed to generate report {0}")]
+    FailedToGenerateReport(PathBuf),
 }
 
 pub fn generate_reports_recursive(
