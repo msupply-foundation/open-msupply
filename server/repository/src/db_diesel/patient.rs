@@ -122,9 +122,9 @@ impl<'a> PatientRepository<'a> {
                     apply_sort_no_case!(query, sort, name::first_name)
                 }
                 PatientSortField::LastName => apply_sort_no_case!(query, sort, name::last_name),
-                PatientSortField::Gender => apply_sort_no_case!(query, sort, name::gender),
+                PatientSortField::Gender => apply_sort!(query, sort, name::gender),
                 PatientSortField::DateOfBirth => {
-                    apply_sort_no_case!(query, sort, name::date_of_birth)
+                    apply_sort!(query, sort, name::date_of_birth)
                 }
                 PatientSortField::Phone => apply_sort_no_case!(query, sort, name::phone),
                 PatientSortField::Address1 => apply_sort_no_case!(query, sort, name::address1),
