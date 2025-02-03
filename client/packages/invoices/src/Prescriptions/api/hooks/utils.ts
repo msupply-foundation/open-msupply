@@ -42,7 +42,7 @@ export const createInputObject = (
     case 'delete':
       return { id };
     case 'update':
-      return { ...output };
+      return output;
     case 'insert':
       return { ...output, invoiceId };
   }
