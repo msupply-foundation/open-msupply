@@ -12,7 +12,7 @@ use std::{
 use thiserror::Error as ThisError;
 
 #[derive(ThisError, Debug)]
-pub enum Error {
+pub enum ReportError {
     #[error("Failed to read dir {0}")]
     FailedToReadDir(PathBuf, #[source] std::io::Error),
     #[error("Failed to get file or dir {0}")]
@@ -41,6 +41,10 @@ pub enum Error {
     FailedToGenerateArgumentSchema(PathBuf),
     #[error("Failed to write reports json {0}")]
     FailedToWriteReportsFile(PathBuf, #[source] std::io::Error),
+    #[error("Failed to open test-config file {0}")]
+    CannotOpenTestConfigFile(PathBuf, #[source] std::io::Error),
+    #[error("Failed to read test-config file {0}")]
+    CannotReadTestConfigFile(PathBuf, #[source] serde_json::Error),
 }
 
 pub fn generate_reports_recursive(
@@ -48,14 +52,14 @@ pub fn generate_reports_recursive(
     ignore_paths: &Vec<&OsStr>,
     manifest_name: &OsStr,
     path: &PathBuf,
-) -> Result<(), Error> {
+) -> Result<(), ReportError> {
     if let Some(_) = ignore_paths.iter().find(|p| Some(**p) == path.file_name()) {
         return Ok(());
     }
     if path.is_file() && Some(manifest_name) == path.file_name() {
         let parent_path = path
             .parent()
-            .ok_or(Error::PathDoesNotHaveParent(path.clone()))?
+            .ok_or(ReportError::PathDoesNotHaveParent(path.clone()))?
             .to_owned();
         return process_report(reports_data, &parent_path);
     }
@@ -65,24 +69,24 @@ pub fn generate_reports_recursive(
     }
 
     let files_and_folders =
-        fs::read_dir(path).map_err(|e| Error::FailedToReadDir(path.clone(), e))?;
+        fs::read_dir(path).map_err(|e| ReportError::FailedToReadDir(path.clone(), e))?;
 
     for file_or_folder in files_and_folders {
         let next_path = file_or_folder
-            .map_err(|e| Error::FailedToGetFileOrDir(path.clone(), e))?
+            .map_err(|e| ReportError::FailedToGetFileOrDir(path.clone(), e))?
             .path();
         generate_reports_recursive(reports_data, &ignore_paths, manifest_name, &next_path)?;
     }
     Ok(())
 }
 
-fn process_report(reports_data: &mut ReportsData, path: &PathBuf) -> Result<(), Error> {
+fn process_report(reports_data: &mut ReportsData, path: &PathBuf) -> Result<(), ReportError> {
     let report_data = generate_report_data(path)?;
     reports_data.reports.push(report_data);
     Ok(())
 }
 
-pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
+pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, ReportError> {
     // install esbuild depedencies
 
     if let Err(e) = run_yarn_install(&path) {
@@ -90,10 +94,10 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
     }
     // read manifest file
     let manifest_file = fs::File::open(path.join("report-manifest.json"))
-        .map_err(|e| Error::CannotOpenManifestFile(path.clone(), e))?;
+        .map_err(|e| ReportError::CannotOpenManifestFile(path.clone(), e))?;
 
     let manifest: Manifest = serde_json::from_reader(manifest_file)
-        .map_err(|e| Error::CannotReadManifestFile(path.clone(), e))?;
+        .map_err(|e| ReportError::CannotReadManifestFile(path.clone(), e))?;
     let code = manifest.code;
 
     let version = manifest.version;
@@ -119,6 +123,8 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
     let custom_wasm_function = manifest.custom_wasm_function;
     let query_default = manifest.query_default;
 
+    println!("convert data {:?} ", convert_data);
+
     let args = BuildArgs {
         dir: path.join("src"),
         output: Some(path.join("generated").join("built_report.json")),
@@ -132,23 +138,25 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
         custom_wasm_function,
     };
 
-    let report_definition =
-        build_report_definition(&args).map_err(|e| Error::FailedToBuildReport(path.clone(), e))?;
+    let report_definition = build_report_definition(&args)
+        .map_err(|e| ReportError::FailedToBuildReport(path.clone(), e))?;
 
     let form_schema_json = match (arguments_path, arguments_ui_path) {
         (Some(_), None) | (None, Some(_)) => {
-            return Err(Error::FailedToGenerateArgumentSchema(path.to_path_buf()))
+            return Err(ReportError::FailedToGenerateArgumentSchema(
+                path.to_path_buf(),
+            ))
         }
         (Some(arguments_path), Some(arguments_ui_path)) => Some(
             schema_from_row(FormSchemaRow {
                 id: (format!("for_report_{}", id)),
                 r#type: "reportArgument".to_string(),
                 json_schema: fs::read_to_string(arguments_path)
-                    .map_err(|e| Error::CannotReadSchemaFile(path.clone(), e))?,
+                    .map_err(|e| ReportError::CannotReadSchemaFile(path.clone(), e))?,
                 ui_schema: fs::read_to_string(arguments_ui_path)
-                    .map_err(|e| Error::CannotReadSchemaFile(path.clone(), e))?,
+                    .map_err(|e| ReportError::CannotReadSchemaFile(path.clone(), e))?,
             })
-            .map_err(|e| Error::CannotGenerateSchemaFile(path.clone(), e))?,
+            .map_err(|e| ReportError::CannotGenerateSchemaFile(path.clone(), e))?,
         ),
         (None, None) => None,
     };
@@ -169,7 +177,7 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
     })
 }
 
-fn run_yarn_install(directory: &PathBuf) -> Result<(), Error> {
+fn run_yarn_install(directory: &PathBuf) -> Result<(), ReportError> {
     let convert_dir = directory.join("convert_data_js");
 
     if !convert_dir.exists() {
@@ -184,12 +192,12 @@ fn run_yarn_install(directory: &PathBuf) -> Result<(), Error> {
 
     let package_json = convert_dir.join("package.json");
     if !package_json.exists() {
-        return Err(Error::FailedToFindPackageJson(convert_dir));
+        return Err(ReportError::FailedToFindPackageJson(convert_dir));
     }
 
     let esbuild = convert_dir.join("esbuild.js");
     if !esbuild.exists() {
-        return Err(Error::FailedToFindEsbuildModule(convert_dir));
+        return Err(ReportError::FailedToFindEsbuildModule(convert_dir));
     }
 
     if !node_modules_path.exists() {
@@ -200,7 +208,7 @@ fn run_yarn_install(directory: &PathBuf) -> Result<(), Error> {
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit())
             .status()
-            .map_err(|e| Error::FailedToInstallYarn(convert_dir.clone(), e))?;
+            .map_err(|e| ReportError::FailedToInstallYarn(convert_dir.clone(), e))?;
     } else {
         info!("Dependencies up to date");
     }
