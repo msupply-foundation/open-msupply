@@ -10,6 +10,7 @@ import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
+import { PickersActionBarAction } from '@mui/x-date-pickers';
 
 const Options = z
   .object({
@@ -64,6 +65,7 @@ const UIComponent = (props: ControlProps) => {
     readOnly: !!props.uischema.options?.['readonly'],
     disabled: !props.enabled,
     error: zErrors ?? error ?? customError ?? props.errors,
+    actions: ['clear', 'today'] as PickersActionBarAction[],
   };
 
   return (
