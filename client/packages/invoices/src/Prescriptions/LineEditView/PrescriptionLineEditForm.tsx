@@ -90,7 +90,7 @@ export const PrescriptionLineEditForm: React.FC<
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
   const [defaultDirection, setDefaultDirection] = useState<string>();
-  const [abbreviation, setAbbreviation] = useState<string>();
+  const [abbreviation, setAbbreviation] = useState<string>('');
 
   const debouncedSetAllocationAlerts = useDebounceCallback(
     warning => setAllocationAlerts(warning),
@@ -215,9 +215,9 @@ export const PrescriptionLineEditForm: React.FC<
 
   //END OF MOCK DATA
 
-  const onSave = () => {
+  const saveAbbreviation = () => {
     if (!abbreviation) return;
-    3_5;
+
     const note = getPrescriptionDirections(abbreviation, options);
     updateNotes(note);
   };
@@ -275,23 +275,27 @@ export const PrescriptionLineEditForm: React.FC<
               justifyContent="flex-start"
               gap={1}
             >
-              <InputLabel style={{ fontSize: 12 }}>
-                {t('label.issue')}
-              </InputLabel>
-              <NumericTextInput
-                autoFocus
-                disabled={disabled}
-                value={issueUnitQuantity}
-                onChange={handleIssueQuantityChange}
-                min={0}
-                decimalLimit={2}
-              />
-              <InputLabel style={{ fontSize: 12 }}>
-                {t('label.unit-plural', {
-                  count: issueUnitQuantity,
-                  unit: item?.unitName,
-                })}
-              </InputLabel>
+              <Grid>
+                <InputLabel style={{ fontSize: 12 }}>
+                  {t('label.issue')}
+                </InputLabel>
+                <NumericTextInput
+                  autoFocus
+                  disabled={disabled}
+                  value={issueUnitQuantity}
+                  onChange={handleIssueQuantityChange}
+                  min={0}
+                  decimalLimit={2}
+                />
+              </Grid>
+              <Grid>
+                <InputLabel style={{ fontSize: 12 }}>
+                  {t('label.unit-plural', {
+                    count: issueUnitQuantity,
+                    unit: item?.unitName,
+                  })}
+                </InputLabel>
+              </Grid>
             </Grid>
             <TableWrapper
               canAutoAllocate={canAutoAllocate}
@@ -319,8 +323,17 @@ export const PrescriptionLineEditForm: React.FC<
               Input={
                 <BasicTextInput
                   value={abbreviation}
-                  onChange={e => setAbbreviation(e.target.value)}
-                  onBlur={onSave}
+                  disabled={disabled}
+                  onChange={e => {
+                    setAbbreviation(e.target.value);
+                    setDefaultDirection('');
+                  }}
+                  onBlur={saveAbbreviation}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      saveAbbreviation();
+                    }
+                  }}
                   style={{ flex: 1 }}
                 />
               }
@@ -333,6 +346,7 @@ export const PrescriptionLineEditForm: React.FC<
                   ? defaultDirection
                   : t('placeholder.item-directions')
               }
+              disabled={disabled}
             >
               {defaultDirections
                 .sort((a, b) => a.priority - b.priority)
@@ -345,6 +359,7 @@ export const PrescriptionLineEditForm: React.FC<
                         onClick={() => {
                           updateNotes(direction.direction);
                           setDefaultDirection(direction.direction);
+                          setAbbreviation('');
                         }}
                         sx={{ fontSize: 14 }}
                       >
@@ -360,6 +375,7 @@ export const PrescriptionLineEditForm: React.FC<
               Input={
                 <TextArea
                   value={note}
+                  disabled={disabled}
                   onChange={e => {
                     updateNotes(e.target.value);
                   }}
