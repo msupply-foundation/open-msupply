@@ -62,13 +62,14 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <AddButton
-          disable={isDisabled}
           onAddItem={onAddItem}
+          requisitionId={data?.requisition?.id ?? ''}
+          invoiceId={data?.id ?? ''}
+          disable={isDisabled}
           disableAddFromMasterListButton={
             data?.status !== InvoiceNodeStatus.New
           }
           disableAddFromInternalOrderButton={disableInternalOrderButton}
-          requisitionId={data?.requisition?.id ?? ''}
         />
         {pluginButtons}
         <ReportSelector
