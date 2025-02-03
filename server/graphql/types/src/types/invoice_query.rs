@@ -384,6 +384,10 @@ impl InvoiceNode {
             .await?
             .map(DiagnosisNode::from_domain))
     }
+
+    pub async fn program_id(&self) -> &Option<String> {
+        &self.row().program_id
+    }
 }
 
 impl InvoiceNode {

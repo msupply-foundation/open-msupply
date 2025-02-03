@@ -140,6 +140,7 @@ fn transact_1_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: None,
         },
     )
 }
@@ -195,6 +196,7 @@ fn transact_1_push_record() -> TestSyncOutgoingRecord {
             currency_rate: 1.32,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: None
         }),
     }
 }
@@ -274,7 +276,8 @@ const TRANSACT_2: (&str, &str) = (
         "user_ID": "0763E2E3053D4C478E1E6B6B03FEC207",
         "wardID": "",
         "waybill_number": "",
-        "om_transport_reference": "transport reference"
+        "om_transport_reference": "transport reference",
+        "programID": "missing_program"
     }"#,
 );
 fn transact_2_pull_record() -> TestSyncIncomingRecord {
@@ -314,6 +317,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: Some("missing_program".to_string()),
         },
     )
 }
@@ -364,6 +368,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             currency_rate: 1.0,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: Some("missing_program".to_string()),
         }),
     }
 }
@@ -517,6 +522,7 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: None,
         },
     )
 }
@@ -592,6 +598,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             currency_rate: 1.0,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: None,
         }),
     }
 }
@@ -727,6 +734,7 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: None,
         },
     )
 }
@@ -783,6 +791,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             currency_rate: 1.0,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: None
         }),
     }
 }
@@ -918,6 +927,7 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: None,
         },
     )
 }
@@ -974,6 +984,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             currency_rate: 1.0,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: None
         }),
     }
 }
@@ -1105,6 +1116,7 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: Some("503E901E00534F1797DF4F29E12F907D".to_string()),
+            program_id: None,
         },
     )
 }
@@ -1160,6 +1172,7 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             currency_rate: 1.0,
             backdated_datetime: None,
             diagnosis_id: Some("503E901E00534F1797DF4F29E12F907D".to_string()),
+            program_id: None
         }),
     }
 }
