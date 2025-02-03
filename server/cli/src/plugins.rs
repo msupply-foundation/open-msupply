@@ -1,11 +1,14 @@
 use std::{ffi::OsStr, fs, path::PathBuf};
 
 use base64::{prelude::BASE64_STANDARD, Engine};
+use cli::{queries_mutations::INSTALL_PLUGINS, Api, ApiError};
 use repository::{BackendPluginRow, PluginTypes, PluginVariantType};
+use reqwest::Url;
 use serde::Deserialize;
+use serde_json::json;
 use service::backend_plugin::plugin_provider::PluginBundle;
-use thiserror::Error as ThisError;
 
+use thiserror::Error as ThisError;
 #[derive(ThisError, Debug)]
 pub(super) enum Error {
     #[error("Failed to read dir {0}")]
@@ -24,6 +27,10 @@ pub(super) enum Error {
     FailedToSerializeBundle(#[source] serde_json::Error),
     #[error("Failed to write bundle file {0}")]
     FailedToWriteBundleFile(PathBuf, #[source] std::io::Error),
+    #[error(transparent)]
+    GqlError(#[from] ApiError),
+    #[error("Failed to remove temp file {1}")]
+    FiledToRemoveTempFile(std::io::Error, PathBuf),
 }
 
 #[derive(clap::Parser, Debug)]
@@ -36,6 +43,37 @@ pub(super) struct GeneratePluginBundle {
     out_file: PathBuf,
 }
 
+#[derive(clap::Parser, Debug)]
+pub(super) struct InstallPluginBundle {
+    /// Path to bundle
+    #[clap(short, long)]
+    path: PathBuf,
+    /// Server url
+    #[clap(short, long)]
+    url: Url,
+    /// Username
+    #[clap(long)]
+    username: String,
+    /// Password
+    #[clap(long)]
+    password: String,
+}
+
+#[derive(clap::Parser, Debug)]
+pub(super) struct GenerateAndInstallPluginBundle {
+    /// Directory in which to search for plugins
+    #[clap(short, long)]
+    in_dir: PathBuf,
+    /// Server url
+    #[clap(short, long)]
+    url: Url,
+    /// Username
+    #[clap(long)]
+    username: String,
+    /// Password
+    #[clap(long)]
+    password: String,
+}
 #[derive(Deserialize)]
 struct ManifestJson {
     code: String,
@@ -122,6 +160,73 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
         types,
         code,
     });
+
+    Ok(())
+}
+
+/// username, password, url should come from config, like in reports (in the new show command)
+pub(super) async fn install_plugin_bundle(
+    InstallPluginBundle {
+        path,
+        url,
+        username,
+        password,
+    }: InstallPluginBundle,
+) -> Result<(), Error> {
+    let api = Api::new_with_token(url.clone(), username, password).await?;
+
+    let uploaded_file = api.upload_file(path).await?;
+
+    let upload_result = api
+        .gql(
+            INSTALL_PLUGINS,
+            json!( { "fileId": uploaded_file.file_id} ),
+            Some("CentralServerMutationNode"),
+        )
+        .await?;
+
+    println!(
+        "Result:{}",
+        serde_json::to_string_pretty(&upload_result).unwrap()
+    );
+
+    Ok(())
+}
+
+/// username and password should come from config, like in reports (and url too)
+pub(super) async fn generate_and_install_plugin_bundle(
+    GenerateAndInstallPluginBundle {
+        in_dir,
+        url,
+        username,
+        password,
+    }: GenerateAndInstallPluginBundle,
+) -> Result<(), Error> {
+    let out_file = PathBuf::from("report_temp.json");
+
+    generate_plugin_bundle(GeneratePluginBundle {
+        in_dir,
+        out_file: out_file.clone(),
+    })?;
+
+    let api = Api::new_with_token(url.clone(), username, password).await?;
+
+    let uploaded_file = api.upload_file(out_file.clone()).await?;
+
+    fs::remove_file(out_file.clone()).map_err(|e| Error::FiledToRemoveTempFile(e, out_file))?;
+
+    let upload_result = api
+        .gql(
+            INSTALL_PLUGINS,
+            json!( { "fileId": uploaded_file.file_id} ),
+            Some("CentralServerMutationNode"),
+        )
+        .await?;
+
+    println!(
+        "Result:{}",
+        serde_json::to_string_pretty(&upload_result).unwrap()
+    );
 
     Ok(())
 }
