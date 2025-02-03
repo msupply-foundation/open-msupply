@@ -41,12 +41,19 @@ export const InitialiseLayout = ({
   };
 
   return (
-    <Box display="flex" style={{ width: '100%' }}>
+    <Box display="flex" sx={theme => ({
+      [theme.breakpoints.down('sm')]: {
+        flexDirection: 'column',
+      },
+      width: '100%'
+    })}
+    >
       <Box
         flex="1 0 50%"
         sx={theme => ({
-          [theme.breakpoints.down('sm')]: {
-            display: 'none !important',
+          [theme.breakpoints.down('sm')]: {            
+            flex: '0 0 0',
+            padding: '2em',
           },
           backgroundImage: (theme: Theme) => theme.mixins.gradient.secondary,
           padding: '0 80px 7% 80px',
@@ -61,8 +68,8 @@ export const InitialiseLayout = ({
             sx={{
               color: (theme: Theme) => theme.typography.login.color,
               fontSize: {
-                xs: '38px',
-                sm: '38px',
+                xs: '20px',
+                sm: '20px',
                 md: '48px',
                 lg: '64px',
                 xl: '64px',
@@ -79,7 +86,7 @@ export const InitialiseLayout = ({
           <Typography
             sx={{
               fontSize: {
-                xs: '12px',
+                xs: '14px',
                 sm: '14px',
                 md: '16px',
                 lg: '20px',
@@ -96,10 +103,13 @@ export const InitialiseLayout = ({
       </Box>
       <Box
         flex="1 0 50%"
-        sx={{
+        sx={theme => ({
+          [theme.breakpoints.down('sm')]: {
+            overflowY: 'unset',
+          },
           backgroundColor: 'background.login',
           overflowY: 'scroll',
-        }}
+        })}
         display="flex"
         flexDirection="column"
       >
@@ -118,27 +128,7 @@ export const InitialiseLayout = ({
         >
           <Box style={{ width: 285 }}>
             <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
-              <Stack spacing={isMobile ? 3 : 5}>
-                {isMobile && <Box paddingTop="1em">
-                  <Typography
-                    sx={{
-                      fontSize: '16px',
-                      color: (theme: Theme) => theme.typography.caption,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {t('initialise.heading')}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: '14px',
-                      color: (theme: Theme) => theme.typography.caption,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {t('initialise.body')}
-                  </Typography>
-                </Box>}
+              <Stack spacing={isMobile ? 3 : 5}>                
                 <Box display="flex" justifyContent="center">
                   <LoginIcon small />
                 </Box>
