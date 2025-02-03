@@ -6,7 +6,7 @@ import {
   DateUtils,
   DateTimePickerInput,
 } from '@openmsupply-client/common';
-import { FORM_LABEL_WIDTH } from '../styleConstants';
+import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
@@ -71,9 +71,8 @@ const UIComponent = (props: ControlProps) => {
   return (
     <DetailInputWithLabelRow
       sx={{
+        ...DefaultFormRowSx,
         gap: 2,
-        minWidth: '300px',
-        justifyContent: 'space-around',
       }}
       label={label}
       labelWidthPercentage={FORM_LABEL_WIDTH}
