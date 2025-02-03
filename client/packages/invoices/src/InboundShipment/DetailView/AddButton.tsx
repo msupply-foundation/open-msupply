@@ -45,12 +45,31 @@ export const AddButton = ({
     {
       value: 'add-from-internal-order',
       label: t('button.add-from-internal-order'),
-      isDisabled: disableAddFromInternalOrderButton,
+      isDisabled: disableAddFromInternalOrderButton || disable,
     },
   ];
   const [addItemOption] = options;
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<string>>(addItemOption);
+
+  const handleOptionSelection = (option: SplitButtonOption<string>) => {
+    switch (option.value) {
+      case 'add-item':
+        onAddItem(true);
+        break;
+      case 'add-from-master-list':
+        masterListModalController.toggleOn();
+        break;
+      case 'add-from-internal-order':
+        internalOrderModalController.toggleOn();
+        break;
+    }
+  };
+
+  const onSelectOption = (option: SplitButtonOption<string>) => {
+    setSelectedOption(option);
+    handleOptionSelection(option);
+  };
 
   return (
     <>
@@ -58,20 +77,8 @@ export const AddButton = ({
         color="primary"
         options={options}
         selectedOption={selectedOption}
-        onSelectOption={setSelectedOption}
-        onClick={() => {
-          switch (selectedOption.value) {
-            case 'add-item':
-              onAddItem(true);
-              break;
-            case 'add-from-master-list':
-              masterListModalController.toggleOn();
-              break;
-            case 'add-from-internal-order':
-              internalOrderModalController.toggleOn();
-              break;
-          }
-        }}
+        onSelectOption={onSelectOption}
+        onClick={handleOptionSelection}
       />
 
       {masterListModalController.isOn && (
