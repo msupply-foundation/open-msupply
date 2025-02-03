@@ -7,6 +7,7 @@ import { AddFromInternalOrder } from './AddFromInternalOrder';
 
 interface AddButtonProps {
   requisitionId: string;
+  invoiceId: string;
   onAddItem: (newState: boolean) => void;
   /** Disable the whole control */
   disable: boolean;
@@ -16,6 +17,7 @@ interface AddButtonProps {
 
 export const AddButton = ({
   requisitionId,
+  invoiceId,
   onAddItem,
   disable,
   disableAddFromMasterListButton,
@@ -83,6 +85,7 @@ export const AddButton = ({
           isOpen={internalOrderModalController.isOn}
           onClose={internalOrderModalController.toggleOff}
           requisitionId={requisitionId}
+          invoiceId={invoiceId}
         />
       )}
     </>
