@@ -16,7 +16,7 @@ table! {
     }
 }
 
-// Database:  https://github.com/openmsupply/open-msupply/blob/d6645711184c63593949c3e8b6dc96b5a5ded39f/server/repository/migrations/postgres/2022-02-11T15-00_create_key_value_store/up.sql#L2-L16
+// Snippet for adding new, including migration : https://github.com/msupply-foundation/open-msupply/wiki/Snippets "New Key Type for KeyValueStore"
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
