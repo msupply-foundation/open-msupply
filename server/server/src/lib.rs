@@ -28,7 +28,7 @@ use service::{
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
-    settings::{is_develop, ServerSettings, Settings},
+    settings::{is_develop, DiscoveryMode, ServerSettings, Settings},
     standard_reports::StandardReports,
     sync::{
         file_sync_driver::FileSyncDriver,
@@ -96,7 +96,7 @@ pub async fn start_server(
     info!("Run DB migrations...done");
 
     // Upsert standard reports
-    StandardReports::load_reports(&connection_manager.connection().unwrap()).unwrap();
+    StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");
@@ -273,8 +273,24 @@ pub async fn start_server(
     // Don't do discovery in android
     #[cfg(not(target_os = "android"))]
     {
-        info!("Starting server DNS-SD discovery",);
-        discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
+        let discovery_enabled = match settings.server.discovery {
+            DiscoveryMode::Disabled => false,
+            DiscoveryMode::Enabled => true,
+            DiscoveryMode::Auto => {
+                if is_develop() {
+                    log::warn!("DNS-SD discovery is automatically disabled in dev mode, add `discovery: Enabled` to local.yaml to turn it on");
+                    false
+                } else {
+                    true
+                }
+            },
+        };
+                if discovery_enabled {
+                    info!("Starting server DNS-SD discovery",);
+                    discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
+                }else {
+                    info!("Server DNS-SD discovery disabled",);
+                }
     }
 
     info!("Starting discovery graphql server",);

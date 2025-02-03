@@ -16,6 +16,8 @@ export const useInbound = {
 
     fields: Document.useInboundFields,
     next: Document.useNextItem,
+
+    listInternalOrders: Document.useListInternalOrders,
   },
   lines: {
     list: Lines.useInboundLines,
