@@ -53,7 +53,7 @@ export const useInternalOrderLineColumns = (requisitionId: string) => {
     ['requestedQuantity'],
   ]);
 
-  return { columns, sortedLines, isLoading, requisitionId };
+  return { columns, sortedLines, isLoading };
 };
 
 const AddFromInternalOrderComponent = ({
