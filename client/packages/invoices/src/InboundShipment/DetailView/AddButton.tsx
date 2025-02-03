@@ -79,6 +79,7 @@ export const AddButton = ({
         selectedOption={selectedOption}
         onSelectOption={onSelectOption}
         onClick={handleOptionSelection}
+        openFrom="bottom"
       />
 
       {masterListModalController.isOn && (
