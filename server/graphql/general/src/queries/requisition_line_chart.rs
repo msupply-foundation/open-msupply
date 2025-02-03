@@ -167,7 +167,6 @@ mod graphql {
         requisition_line::RequisitionLineServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
     };
-    use util::{inline_edit, inline_init};
 
     use crate::GeneralQueries;
 

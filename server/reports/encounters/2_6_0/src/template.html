@@ -1,0 +1,49 @@
+{% macro formatDate(datetime) %} {% if datetime %}{{ datetime |
+date(format="%d/%m/%Y") }}{% endif %} {% endmacro input %}
+
+<style>
+  {% include "encounters.css" %}
+</style>
+
+<div class="container">
+  <table>
+    <thead>
+      <tr class="heading">
+        <td>{{t(k="label.program-id", f="Program ID")}}</td>
+        <td>{{t(k="label.first-name", f="First Name")}}</td>
+        <td>{{t(k="label.last-name", f="Last Name")}}</td>
+        <td>{{t(k="label.dob", f="DOB")}}</td>
+        <td>
+          {{t(k="label.next-of-kin-first-name", f="Next of kin's first name")}}
+        </td>
+        <td>
+          {{t(k="label.next-of-kin-last-name", f="Next of kin's last name")}}
+        </td>
+        <td>{{t(k="label.next-of-kin-phone", f="Next of kin's phone")}}</td>
+        <td>{{t(k="label.appointment-date", f="Appointment date")}}</td>
+        <td>{{t(k="label.status", f="Status")}}</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for encounter in data.encounters.nodes %}
+      <tr>
+        <td>{{encounter.programEnrolment.programEnrolmentId}}</td>
+        <td>{{encounter.patient.firstName}}</td>
+        <td>{{encounter.patient.lastName}}</td>
+        <td>{{self::formatDate(datetime=encounter.patient.dateOfBirth)}}</td>
+        {% if encounter.patient.nextOfKin %}
+        <td>{{encounter.patient.nextOfKin.firstName}}</td>
+        <td>{{encounter.patient.nextOfKin.lastName}}</td>
+        <td>{{encounter.patient.nextOfKin.phone}}</td>
+        {% else %}
+        <td></td>
+        <td></td>
+        <td></td>
+        {% endif %}
+        <td>{{self::formatDate(datetime=encounter.startDatetime)}}</td>
+        <td>{{encounter.programEnrolment.status}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

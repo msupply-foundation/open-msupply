@@ -23,6 +23,7 @@ pub(crate) mod document_registry;
 pub(crate) mod form_schema;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
+pub(crate) mod insurance_provider;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
@@ -167,6 +168,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // System log
         system_log::boxed(),
         backend_plugin::boxed(),
+        insurance_provider::boxed(),
     ]
 }
 

@@ -34,6 +34,7 @@ pub struct UpdatePrescription {
     pub colour: Option<String>,
     pub backdated_datetime: Option<NaiveDateTime>,
     pub diagnosis_id: Option<NullableUpdate<String>>,
+    pub program_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -331,6 +332,7 @@ mod test {
                 colour: Some("test_colour".to_string()),
                 backdated_datetime: None,
                 diagnosis_id: None,
+                program_id: None,
             }
         }
 
@@ -355,6 +357,7 @@ mod test {
                     colour,
                     backdated_datetime: _,
                     diagnosis_id: _,
+                    program_id: _,
                 } = get_update();
                 u.name_link_id = patient_id.unwrap();
                 u.clinician_link_id = clinician_id.unwrap().value;

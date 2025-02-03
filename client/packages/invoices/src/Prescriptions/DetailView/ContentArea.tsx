@@ -3,7 +3,6 @@ import {
   useTranslation,
   NothingHere,
   useUrlQueryParams,
-  Box,
   DataTable,
   MiniTable,
 } from '@openmsupply-client/common';
@@ -48,24 +47,22 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   if (!rows) return null;
 
   return (
-    <Box flexDirection="column" display="flex" flex={1}>
-      <DataTable
-        id="prescription-detail"
-        onRowClick={onRowClick}
-        columns={columns}
-        data={rows}
-        enableColumnSelection
-        ExpandContent={Expand}
-        noDataElement={
-          <NothingHere
-            body={t('error.no-prescriptions')}
-            onCreate={isDisabled ? undefined : () => onAddItem()}
-            buttonText={t('button.add-item')}
-          />
-        }
-        isRowAnimated={true}
-      />
-    </Box>
+    <DataTable
+      id="prescription-detail"
+      onRowClick={onRowClick}
+      columns={columns}
+      data={rows}
+      enableColumnSelection
+      ExpandContent={Expand}
+      noDataElement={
+        <NothingHere
+          body={t('error.no-prescriptions')}
+          onCreate={isDisabled ? undefined : () => onAddItem()}
+          buttonText={t('button.add-item')}
+        />
+      }
+      isRowAnimated={true}
+    />
   );
 };
 
