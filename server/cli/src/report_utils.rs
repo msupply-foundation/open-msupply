@@ -44,8 +44,8 @@ pub enum ReportError {
     CannotOpenTestConfigFile(PathBuf, #[source] std::io::Error),
     #[error("Failed to read test-config file {0}")]
     CannotReadTestConfigFile(PathBuf, #[source] serde_json::Error),
-    #[error("Failed to generate report {0}")]
-    FailedToGenerateReport(PathBuf),
+    #[error("Failed to generate report {0} {1}")]
+    FailedToGenerateReport(PathBuf, anyhow::Error),
 }
 
 pub fn generate_reports_recursive(
@@ -123,8 +123,6 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, ReportError> {
     let convert_data = manifest.convert_data.and_then(|cd| Some(path.join(cd)));
     let custom_wasm_function = manifest.custom_wasm_function;
     let query_default = manifest.query_default;
-
-    println!("convert data {:?} ", convert_data);
 
     let args = BuildArgs {
         dir: path.join("src"),
