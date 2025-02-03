@@ -20,6 +20,7 @@ pub fn generate(
         comment,
         their_reference,
         colour,
+        requisition_id,
     }: InsertInboundShipment,
     other_party: Name,
 ) -> Result<InvoiceRow, RepositoryError> {
@@ -43,6 +44,7 @@ pub fn generate(
         status: InvoiceStatus::New,
         on_hold: on_hold.unwrap_or(false),
         colour,
+        requisition_id,
         // Default
         currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
@@ -54,11 +56,11 @@ pub fn generate(
         delivered_datetime: None,
         verified_datetime: None,
         linked_invoice_id: None,
-        requisition_id: None,
         clinician_link_id: None,
         original_shipment_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
+        program_id: None,
     };
 
     Ok(result)
