@@ -12,6 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   ItemStockOnHandFragment,
+  StockOnHandFilter,
   useItemById,
   useItemStockOnHandInfinite,
 } from '../../api';
@@ -31,6 +32,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   openOnFocus,
   includeNonVisibleWithStockOnHand = false,
   itemCategoryName,
+  programId,
 }) => {
   const { filter, onFilter } = useStringFilter('codeOrName');
   const [search, setSearch] = useState('');
@@ -43,9 +45,12 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
     DEBOUNCE_TIMEOUT
   );
 
-  const fullFilter = itemCategoryName
-    ? { ...filter, categoryName: itemCategoryName }
-    : filter;
+  const fullFilter: StockOnHandFilter = { ...filter };
+  if (itemCategoryName) fullFilter['categoryName'] = itemCategoryName;
+  // For now, we are filtering items by "master_list", as they have the same ID
+  // as their equivalent program. In the future, this may change, so we can add
+  // another filter specifically for programs if required.
+  if (programId) fullFilter['masterListId'] = { equalTo: programId };
 
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
     useItemStockOnHandInfinite({
