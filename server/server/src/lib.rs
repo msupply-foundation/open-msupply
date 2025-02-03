@@ -96,7 +96,7 @@ pub async fn start_server(
     info!("Run DB migrations...done");
 
     // Upsert standard reports
-    StandardReports::load_reports(&connection_manager.connection().unwrap()).unwrap();
+    StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");

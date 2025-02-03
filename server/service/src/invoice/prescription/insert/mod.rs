@@ -15,6 +15,7 @@ pub struct InsertPrescription {
     pub id: String,
     pub patient_id: String,
     pub diagnosis_id: Option<String>,
+    pub program_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]

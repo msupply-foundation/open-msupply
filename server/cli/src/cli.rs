@@ -158,7 +158,13 @@ enum Action {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long)]
         path: Option<PathBuf>,
+        
+        /// Overwrite any pre-existing reports
+        #[clap(short, long, action = ArgAction::SetTrue)]
+        overwrite: bool,
     },
+    /// Reload and overwrite the embedded reports
+    ReloadEmbeddedReports,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -439,7 +445,7 @@ async fn main() -> anyhow::Result<()> {
                 info!("All standard reports built")
             };
         }
-        Action::UpsertReports { path } => {
+        Action::UpsertReports { path, overwrite } => {
             let standard_reports_dir = Path::new("reports")
                 .join("generated")
                 .join("standard_reports.json");
@@ -458,7 +464,7 @@ async fn main() -> anyhow::Result<()> {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
 
-            let _ = StandardReports::upsert_reports(reports_data, &con);
+            StandardReports::upsert_reports(reports_data, &con, overwrite)?;
         }
         Action::UpsertReport {
             id,
@@ -514,6 +520,12 @@ async fn main() -> anyhow::Result<()> {
             })?;
 
             info!("Report upserted");
+        }
+        Action::ReloadEmbeddedReports => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+
+            StandardReports::load_reports(&con, true)?;
         }
         Action::Backup => {
             backup(&settings)?;

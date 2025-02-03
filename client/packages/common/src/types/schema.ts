@@ -1097,7 +1097,7 @@ export type ConsumptionHistoryNode = {
 };
 
 export type ConsumptionOptionsInput = {
-  /** Defaults to 3 months */
+  /** Defaults to store preference amc_lookback_months */
   amcLookbackMonths?: InputMaybe<Scalars['Int']['input']>;
   /** Defaults to 12 */
   numberOfDataPoints?: InputMaybe<Scalars['Int']['input']>;
@@ -2932,6 +2932,7 @@ export type InsertPrescriptionInput = {
   diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
+  programId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPrescriptionLineError = {
@@ -3499,6 +3500,7 @@ export type InvoiceNode = {
   patient?: Maybe<PatientNode>;
   pickedDatetime?: Maybe<Scalars['DateTime']['output']>;
   pricing: PricingNode;
+  programId?: Maybe<Scalars['String']['output']>;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
    * Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
@@ -3651,6 +3653,7 @@ export type ItemFilterInput = {
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   /** Items that are part of a masterlist which is visible in this store OR there is available stock of that item in this store */
   isVisibleOrOnHand?: InputMaybe<Scalars['Boolean']['input']>;
+  masterListId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
 };
@@ -8399,6 +8402,7 @@ export type UpdatePrescriptionInput = {
   id: Scalars['String']['input'];
   patientId?: InputMaybe<Scalars['String']['input']>;
   prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
+  programId?: InputMaybe<NullableStringUpdate>;
   status?: InputMaybe<UpdatePrescriptionStatusInput>;
 };
 

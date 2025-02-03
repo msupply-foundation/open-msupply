@@ -58,6 +58,7 @@ interface PrescriptionLineEditFormProps {
   hasExpired: boolean;
   isLoading: boolean;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
+  programId?: string;
 }
 
 export const PrescriptionLineEditForm: React.FC<
@@ -79,6 +80,7 @@ export const PrescriptionLineEditForm: React.FC<
   hasExpired,
   isLoading,
   updateQuantity,
+  programId,
 }) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
@@ -248,6 +250,7 @@ export const PrescriptionLineEditForm: React.FC<
                 ? undefined
                 : item => !items?.some(({ id }) => id === item.id)
             }
+            programId={programId}
           />
         </Grid>
       </AccordionPanelSection>
