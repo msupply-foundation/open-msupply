@@ -52,7 +52,7 @@ date(format="%d/%m/%Y") }}{% endif %} {% endmacro input %}
         {% endif %}
         <td>{{self::formatDate(datetime=encounter.startDatetime)}}</td>
         <td>{{encounter.daysLate}}</td>
-        <td>{{encounter.programEnrolment.status}}</td>
+        <td>{{encounter.status}}</td>
       </tr>
       {% endfor %}
     </tbody>
