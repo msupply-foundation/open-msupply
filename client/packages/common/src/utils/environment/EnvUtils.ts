@@ -71,7 +71,7 @@ const mapRoute = (route: string): RouteMapping => {
     case inRoute(AppRoute.Patients):
       return { title: 'patients', docs: '/dispensary/patients/' };
     case inRoute(AppRoute.Prescription):
-      return { title: 'prescription', docs: '/dispensary/prescriptions/' };
+      return { title: 'prescriptions', docs: '/dispensary/prescriptions/' };
     case inRoute(AppRoute.Encounter):
       return {
         title: 'encounter',
