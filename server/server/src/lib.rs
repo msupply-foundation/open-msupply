@@ -147,11 +147,14 @@ pub async fn start_server(
     }
 
     // PLUGIN CONTEXT
-
     PluginContext {
         service_provider: service_provider.clone(),
     }
     .bind();
+    service_provider
+        .plugin_service
+        .reload_all_plugins(&service_context)
+        .unwrap();
 
     // SET LOG CALLBACK FOR WASM FUNCTIONS
     info!("Setting wasm function log callback..");
