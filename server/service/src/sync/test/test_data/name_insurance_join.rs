@@ -11,7 +11,7 @@ const TABLE_NAME: &str = "nameInsuranceJoin";
 const NAME_INSURANCE_JOIN_1: (&str, &str) = (
     "NAME_INSURANCE_JOIN_1_ID",
     r#"{
-        "ID": "NAME_INSURANCE_JOIN_1",
+        "ID": "NAME_INSURANCE_JOIN_1_ID",
         "discountRate": 30,
         "enteredByID": "",
         "expiryDate": "2026-01-23",
@@ -48,7 +48,7 @@ fn name_insurance_join_1() -> TestSyncIncomingRecord {
 const NAME_INSURANCE_JOIN_2: (&str, &str) = (
     "NAME_INSURANCE_JOIN_2_ID",
     r#"{
-        "ID": "NAME_INSURANCE_JOIN_2",
+        "ID": "NAME_INSURANCE_JOIN_2_ID",
         "discountRate": 20,
         "enteredByID": "",
         "expiryDate": "2027-01-01",
@@ -87,21 +87,40 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
 }
 
 pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
-    vec![TestSyncOutgoingRecord {
-        record_id: NAME_INSURANCE_JOIN_1.0.to_string(),
-        table_name: TABLE_NAME.to_string(),
-        push_data: json!(LegacyNameInsuranceJoinRow {
-            ID: NAME_INSURANCE_JOIN_1.0.to_string(),
-            nameID: "1FB32324AF8049248D929CFB35F255BA".to_string(),
-            insuranceProviderID: "INSURANCE_PROVIDER_1_ID".to_string(),
-            discountRate: 30,
-            enteredByID: None,
-            expiryDate: "2026-01-23".parse().unwrap(),
-            isActive: true,
-            policyNumberFamily: None,
-            policyNumberFull: "888".to_string(),
-            policyNumberPerson: None,
-            policyType: LegacyInsurancePolicyType::Personal,
-        }),
-    }]
+    vec![
+        TestSyncOutgoingRecord {
+            record_id: NAME_INSURANCE_JOIN_1.0.to_string(),
+            table_name: TABLE_NAME.to_string(),
+            push_data: json!(LegacyNameInsuranceJoinRow {
+                ID: NAME_INSURANCE_JOIN_1.0.to_string(),
+                nameID: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+                insuranceProviderID: "INSURANCE_PROVIDER_1_ID".to_string(),
+                discountRate: 30,
+                enteredByID: None,
+                expiryDate: "2026-01-23".parse().unwrap(),
+                isActive: true,
+                policyNumberFamily: Some("888".to_string()),
+                policyNumberFull: "888".to_string(),
+                policyNumberPerson: None,
+                policyType: LegacyInsurancePolicyType::Personal,
+            }),
+        },
+        TestSyncOutgoingRecord {
+            record_id: NAME_INSURANCE_JOIN_2.0.to_string(),
+            table_name: TABLE_NAME.to_string(),
+            push_data: json!(LegacyNameInsuranceJoinRow {
+                ID: NAME_INSURANCE_JOIN_2.0.to_string(),
+                nameID: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+                insuranceProviderID: "INSURANCE_PROVIDER_1_ID".to_string(),
+                discountRate: 20,
+                enteredByID: None,
+                expiryDate: "2027-01-01".parse().unwrap(),
+                isActive: true,
+                policyNumberFamily: None,
+                policyNumberFull: "777".to_string(),
+                policyNumberPerson: Some("777".to_string()),
+                policyType: LegacyInsurancePolicyType::Business,
+            }),
+        },
+    ]
 }

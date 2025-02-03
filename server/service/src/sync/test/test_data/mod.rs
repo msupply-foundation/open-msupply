@@ -205,6 +205,7 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut barcode::test_push_records());
     test_records.append(&mut name_store_join::test_push_upsert());
     test_records.append(&mut name_to_name_store_join::test_push_records());
+    test_records.append(&mut name_insurance_join::test_push_records());
 
     test_records
 }
