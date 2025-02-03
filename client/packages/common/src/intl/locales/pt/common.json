@@ -328,7 +328,7 @@
   "error.requisition-not-found": "Requisição não foi encontrada",
   "error.return-not-found": "Devolução não encontrada",
   "error.rnr-not-found": "Formulário R&R não encontrado",
-  "error.scanner-not-connected": "Escaneador não está conectado. Veja a sessão Admin > Dispositivos  para conectar o scanner.",
+  "error.scanner-not-connected": "Escaneador não está conectado. Veja a sessão Admin > Dispositivos para conectar o scanner.",
   "error.server-failed-to-start": "Erro! O servidor falhou ao iniciar",
   "error.server-not-found": "Encontramos um problema ao buscar um servidor Open mSupply",
   "error.shipment-not-found": "Envio não encontrado",
@@ -1410,7 +1410,7 @@
   "label.visit-notes": "Notas",
   "label.your-email-address": "Teu endereço eletrônico (email)",
   "messages.cannot-delete-transfer-requisition": "Não é possível excluir a requisição de transferência",
-  "messages.changing-max-mos": "Isto irá trocar os meses de stock alvo",
+  "messages.changing-max-mos": "Isto irá trocar os meses de stock alvo.",
   "messages.allocated-lines-failed_many": "{{count}} linhas não alocadas",
   "messages.cant-delete-transferred": "Não é possível excluir itens que tenham sido transferido de outro local",
   "messages.cant-download-android": "O ficheiro não pôde ser descarregado neste dispositivo",
@@ -1449,5 +1449,8 @@
   "manage": "Gerir",
   "messages.cannot-delete-multiple-lines": "Não foi possível excluir uma ou mais linhas",
   "messages.cannot-view-vaccine-card": "Não é possível visualizar o cartão de vacinação deste paciente deste local porque foi inscrito no {{ programName }} por outro local",
-  "messages.cant-return-shipment-replenishment": "Não é possível retornar as linhas até que o estado seja 'Entregado'"
+  "messages.cant-return-shipment-replenishment": "Não é possível retornar as linhas até que o estado seja 'Entregado'",
+  "messages.click-to-fetch": "Clique para obter o registro do paciente no servidor central",
+  "messages.changing-min-mos": "Isto irá trocar os meses do ponto de reordenamento.",
+  "messages.click-to-expand": "Clique para expandir"
 }
