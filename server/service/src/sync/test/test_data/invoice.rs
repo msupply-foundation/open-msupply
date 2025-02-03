@@ -277,7 +277,7 @@ const TRANSACT_2: (&str, &str) = (
         "wardID": "",
         "waybill_number": "",
         "om_transport_reference": "transport reference",
-        "programID": "programID"
+        "programID": "missing_program"
     }"#,
 );
 fn transact_2_pull_record() -> TestSyncIncomingRecord {
@@ -317,7 +317,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: None,
-            program_id: Some("programID".to_string()),
+            program_id: Some("missing_program".to_string()),
         },
     )
 }
@@ -368,7 +368,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             currency_rate: 1.0,
             backdated_datetime: None,
             diagnosis_id: None,
-            program_id: None,
+            program_id: Some("missing_program".to_string()),
         }),
     }
 }
