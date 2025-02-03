@@ -26,6 +26,7 @@ export const useInbound = {
     rows: Lines.useInboundRows,
     serviceLines: Lines.useInboundServiceLines,
 
+    insertFromInternalOrder: Lines.useLinesFromInternalOrder,
     delete: Lines.useDeleteInboundLines,
     deleteSelected: Lines.useDeleteSelectedLines,
     save: Lines.useSaveInboundLines,
