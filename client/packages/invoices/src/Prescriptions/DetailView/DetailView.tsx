@@ -9,6 +9,8 @@ import {
   useTranslation,
   createQueryParamsStore,
   DetailTabs,
+  ModalMode,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
@@ -20,8 +22,18 @@ import { SidePanel } from './SidePanel';
 import { Footer } from './Footer';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
+import { HistoryModal } from './History/HistoryModal';
+import { Draft } from '../..';
 
 export const PrescriptionDetailView: FC = () => {
+  const {
+    entity: historyEntity,
+    mode: historyMode,
+    onOpen: onOpenHistory,
+    onClose: onCloseHistory,
+    isOpen: isHistoryOpen,
+    setMode: setHistoryMode,
+  } = useEditModal<Draft>();
   const {
     query: { data, loading },
   } = usePrescription();
@@ -47,6 +59,10 @@ export const PrescriptionDetailView: FC = () => {
         .addPart(String('new'))
         .build()
     );
+  };
+  const onViewHistory = (draft?: Draft) => {
+    onOpenHistory(draft);
+    setHistoryMode(ModalMode.Create);
   };
 
   if (loading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
@@ -77,7 +93,14 @@ export const PrescriptionDetailView: FC = () => {
             },
           })}
         >
-          <AppBarButtons onAddItem={onAddItem} />
+          <AppBarButtons onAddItem={onAddItem} onViewHistory={onViewHistory} />
+          <HistoryModal
+            draft={historyEntity}
+            mode={historyMode}
+            isOpen={isHistoryOpen}
+            onClose={onCloseHistory}
+            patientId={data.patientId}
+          />
           <Toolbar />
           <DetailTabs tabs={tabs} />
           <Footer />

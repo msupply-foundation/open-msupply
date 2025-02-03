@@ -567,6 +567,7 @@ pub fn generate(
         original_shipment_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
+        program_id: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {
