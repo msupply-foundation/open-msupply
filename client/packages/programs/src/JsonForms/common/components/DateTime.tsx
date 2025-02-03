@@ -1,14 +1,10 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { rankWith, ControlProps, isDateTimeControl } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
-  TextFieldProps,
-  StandardTextFieldProps,
-  BasicTextInput,
   DetailInputWithLabelRow,
-  DateTimePicker,
-  DateTimePickerProps,
   DateUtils,
+  DateTimePickerInput,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
@@ -26,44 +22,6 @@ const Options = z
   .optional();
 
 type Options = z.infer<typeof Options>;
-
-const TextField = (params: TextFieldProps) => {
-  const textInputProps: StandardTextFieldProps = {
-    ...params,
-    variant: 'standard',
-  };
-  return <BasicTextInput {...textInputProps} />;
-};
-
-const DateTimePickerInput: FC<
-  Omit<DateTimePickerProps<Date>, 'renderInput'> & {
-    error: string;
-    showTime?: boolean;
-    onError?: (validationError: string) => void;
-  }
-> = ({ showTime, onError, ...props }) => (
-  <DateTimePicker
-    format={showTime ? 'P p' : 'P'}
-    disabled={props.disabled}
-    slots={{ textField: TextField }}
-    slotProps={{
-      textField: {
-        error: !!props.error,
-        helperText: props.error,
-        FormHelperTextProps: !!props.error
-          ? { sx: { color: 'error.main' } }
-          : undefined,
-      },
-    }}
-    onError={onError}
-    views={
-      showTime
-        ? ['year', 'month', 'day', 'hours', 'minutes', 'seconds']
-        : ['year', 'month', 'day']
-    }
-    {...props}
-  />
-);
 
 export const datetimeTester = rankWith(5, isDateTimeControl);
 
@@ -120,10 +78,7 @@ const UIComponent = (props: ControlProps) => {
       inputAlignment="start"
       Input={
         !dateOnly ? (
-          <DateTimePickerInput
-            // undefined is displayed as "now" and null as unset
-            {...sharedComponentProps}
-          />
+          <DateTimePickerInput showTime {...sharedComponentProps} />
         ) : (
           <DateTimePickerInput
             {...sharedComponentProps}
