@@ -1,18 +1,22 @@
 import React, { FC, useState } from 'react';
-import { DateTimePicker, DateTimePickerProps } from '@mui/x-date-pickers';
-import { BasicTextInput } from '../../TextInput/BasicTextInput';
+import {
+  DateTimePicker,
+  DateTimePickerProps,
+  PickersActionBarAction,
+} from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
 import { DateUtils, useIntlUtils, useTranslation } from '@common/intl';
 import { getFormattedDateError } from '../BaseDatePickerInput';
 import { useBufferState } from '@common/hooks';
+import { DeprecatedBasicTextInput } from '../../TextInput';
 
 const TextField = (params: TextFieldProps) => {
   const textInputProps: StandardTextFieldProps = {
     ...params,
     variant: 'standard',
   };
-  return <BasicTextInput {...textInputProps} />;
+  return <DeprecatedBasicTextInput {...textInputProps} />;
 };
 
 export const DateTimePickerInput: FC<
@@ -24,6 +28,7 @@ export const DateTimePickerInput: FC<
     onError?: (validationError: string, date?: Date | null) => void;
     textFieldProps?: TextFieldProps;
     showTime?: boolean;
+    actions?: PickersActionBarAction[];
   }
 > = ({
   error,
@@ -35,6 +40,7 @@ export const DateTimePickerInput: FC<
   minDate,
   maxDate,
   showTime,
+  actions,
   ...props
 }) => {
   const theme = useAppTheme();
@@ -136,6 +142,7 @@ export const DateTimePickerInput: FC<
             width,
           },
         },
+        ...(actions ? { actionBar: { actions } } : {}),
       }}
       views={
         showTime

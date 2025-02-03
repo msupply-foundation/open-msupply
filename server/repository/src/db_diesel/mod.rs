@@ -6,6 +6,7 @@ pub mod activity_log;
 mod activity_log_row;
 pub mod adjustment;
 pub mod assets;
+pub mod backend_plugin_row;
 pub mod barcode;
 mod barcode_row;
 pub mod category_row;
@@ -50,6 +51,7 @@ pub mod indicator_line;
 mod indicator_line_row;
 pub mod indicator_value;
 mod indicator_value_row;
+pub mod insurance_provider_row;
 pub mod inventory_adjustment_reason;
 mod inventory_adjustment_reason_row;
 pub mod invoice;
@@ -155,6 +157,7 @@ pub use abbreviation_row::*;
 pub use activity_log_row::*;
 pub use adjustment::*;
 pub use assets::*;
+pub use backend_plugin_row::*;
 pub use barcode_row::*;
 pub use changelog::*;
 pub use clinician::*;
@@ -184,6 +187,7 @@ pub use form_schema_row::*;
 pub use indicator_column_row::*;
 pub use indicator_line_row::*;
 pub use indicator_value_row::*;
+pub use insurance_provider_row::*;
 pub use inventory_adjustment_reason_row::*;
 pub use invoice::*;
 pub use invoice_line::*;
@@ -356,7 +360,7 @@ pub struct JsonRawRow {
     #[diesel(sql_type = Text)]
     pub json_row: String,
 }
-
+// TODO should accept parameters
 pub fn raw_query(connection: &StorageConnection, query: String) -> Vec<JsonRawRow> {
     sql_query(&query)
         .get_results::<JsonRawRow>(connection.lock().connection())
