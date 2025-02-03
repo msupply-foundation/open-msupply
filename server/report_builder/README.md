@@ -425,3 +425,40 @@ The `path` argument is mandatory. It is the path to the dir of the source file o
 The report is rendered using the 'test-config.json' file located in the reports dir.
 A custom test-config file can be used if a report needs special parameters such as arguments (from json schema) added.
 `config` is an optional argument to the `show-reports` command. This is a path to a custom test-config file. If no config argument is supplied, the default test-config file is used.
+
+The config file uses the following structure:
+
+```json
+{
+    "//": "For forms it's entity id",
+    "data_id": "a109bb20-da6c-4d7a-a876-b0b06ffe9e91",
+    "store_id": "D0E298893F3945DABE80B138E25D3D15",
+    "//": "Login details",
+    "url": "http://localhost:8000",
+    "username": "admin",
+    "password": "pass",
+    "//": "Arguments for standard reports",
+    "arguments": {},
+    "//": "Locale to generate report. Defaults to en",
+    "locale": "",
+    "//": "Output file name",
+    "output_filename": "report_to_show"
+}
+```
+
+- data_id and store_id are the data and store id parameters used in whatever graphql query is being used to generate a report.
+- url is the server url from where the report will be generated
+- username and password are the login details which must authenticate with the store being accessed.
+- arguments are optional additional parameters which are typically supplied through the argument JSON form in the front end. These can be edited to render specific cases of a given report
+
+### Pull Requests with show command
+
+Pull requests with reports should be made as easeful as possible for the reviewer. The show command can be a helpful tool in this case.
+
+When making a PR with a custom report, add supplimentary oms data files (and custom test-config file if required) to the PR. This will allow a reviewer to immediately display the report.
+
+#### Pull requests with small iterations on a report
+
+When making a pull request for a new version of a report, large difs can make reviewing difficult.
+
+For this reason, it is easier for the reviewer if a preliminary PR is made first with the duplication of all files in a new report version, and a subsequent PR is made with the files changes. This provides a dif with only the relevant changes to the reviewer.
