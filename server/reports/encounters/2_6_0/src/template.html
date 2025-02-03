@@ -52,7 +52,14 @@ date(format="%d/%m/%Y") }}{% endif %} {% endmacro input %}
         {% endif %}
         <td>{{self::formatDate(datetime=encounter.startDatetime)}}</td>
         <td>{{encounter.daysLate}}</td>
-        <td>{{encounter.status}}</td>
+
+        {% if encounter.status == "LTFU" %}
+        <td>{{t(k="report.lost-to-follow-up", f="Lost to follow-up")}}</td>
+        {% elif encounter.status == "LATE" %}
+        <td>{{t(k="report.late", f="Late")}}</td>
+        {% else %}
+        <td>{{t(k="report.attending", f="Attending")}}</td>
+        {% endif %}
       </tr>
       {% endfor %}
     </tbody>
