@@ -111,6 +111,14 @@ export type RequestQueryVariables = Types.Exact<{
 
 export type RequestQuery = { __typename: 'Queries', requisition: { __typename: 'RecordNotFound' } | { __typename: 'RequisitionNode', id: string, createdDatetime: string, requisitionNumber: number, theirReference?: string | null, comment?: string | null, lines: { __typename: 'RequisitionLineConnector', nodes: Array<{ __typename: 'RequisitionLineNode', id: string, requestedQuantity: number, item: { __typename: 'ItemNode', id: string, code: string, name: string } }> }, user?: { __typename: 'UserNode', username: string } | null, program?: { __typename: 'ProgramNode', name: string } | null } };
 
+export type InsertLinesFromInternalOrderMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.BatchInboundShipmentInput;
+}>;
+
+
+export type InsertLinesFromInternalOrderMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', insertFromInternalOrderLines?: Array<{ __typename: 'InsertInboundShipmentLineFromInternalOrderLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } }> | null } };
+
 export const InboundLineFragmentDoc = gql`
     fragment InboundLine on InvoiceLineNode {
   __typename
@@ -827,6 +835,21 @@ export const RequestDocument = gql`
   }
 }
     ${LinkedRequestWithLinesFragmentDoc}`;
+export const InsertLinesFromInternalOrderDocument = gql`
+    mutation insertLinesFromInternalOrder($storeId: String!, $input: BatchInboundShipmentInput!) {
+  batchInboundShipment(storeId: $storeId, input: $input) {
+    insertFromInternalOrderLines {
+      id
+      response {
+        ... on InvoiceLineNode {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -867,6 +890,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     request(variables: RequestQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequestQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequestQuery>(RequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'request', 'query', variables);
+    },
+    insertLinesFromInternalOrder(variables: InsertLinesFromInternalOrderMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertLinesFromInternalOrderMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertLinesFromInternalOrderMutation>(InsertLinesFromInternalOrderDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertLinesFromInternalOrder', 'mutation', variables);
     }
   };
 }

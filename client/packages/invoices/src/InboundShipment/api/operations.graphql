@@ -745,3 +745,20 @@ query request($id: String!, $storeId: String!) {
     }
   }
 }
+
+mutation insertLinesFromInternalOrder(
+  $storeId: String!
+  $input: BatchInboundShipmentInput!
+) {
+  batchInboundShipment(storeId: $storeId, input: $input) {
+    insertFromInternalOrderLines {
+      id
+      response {
+        ... on InvoiceLineNode {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}

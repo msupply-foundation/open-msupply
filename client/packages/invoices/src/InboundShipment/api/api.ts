@@ -18,6 +18,7 @@ import {
   DeleteInboundShipmentServiceLineInput,
   RequisitionSortFieldInput,
   RequisitionNodeType,
+  InsertInboundShipmentLineFromInternalOrderLineInput,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA } from '../../utils';
@@ -107,6 +108,15 @@ const inboundParsers = {
       invoiceId: line.invoiceId,
       location: setNullableInput('id', line.location),
       itemVariantId: line.itemVariantId,
+    };
+  },
+  toInsertLineFromInternalOrder: (line: {
+    invoiceId: string;
+    requisitionLineId: string;
+  }): InsertInboundShipmentLineFromInternalOrderLineInput => {
+    return {
+      invoiceId: line.invoiceId,
+      requisitionLineId: line.requisitionLineId,
     };
   },
   toUpdateLine: (line: DraftInboundLine): UpdateInboundShipmentLineInput => ({
@@ -276,6 +286,20 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       input: inboundParsers.toUpdate(patch),
       storeId,
     }),
+  insertLinesFromInternalOrder: async (
+    lines: { invoiceId: string; requisitionLineId: string }[]
+  ) => {
+    const result = await sdk.insertLinesFromInternalOrder({
+      storeId,
+      input: {
+        insertFromInternalOrderLines: lines.map(
+          inboundParsers.toInsertLineFromInternalOrder
+        ),
+      },
+    });
+
+    return result;
+  },
   deleteLines: async (lines: { id: string }[]) => {
     return sdk.deleteInboundShipmentLines({
       storeId,
