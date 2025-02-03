@@ -4,7 +4,7 @@ use repository::{
     name_insurance_join_row::{
         InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinRowRepository,
     },
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -12,7 +12,9 @@ use crate::sync::translations::{
     insurance_provider::InsuranceProviderTranslator, name::NameTranslation,
 };
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
 
 /*
 {
@@ -78,6 +80,10 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
         "nameInsuranceJoin"
     }
 
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::NameInsuranceJoin)
+    }
+
     fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             NameTranslation.table_name(),
@@ -119,6 +125,22 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
         };
 
         Ok(PullTranslateResult::upsert(result))
+    }
+
+    fn should_translate_to_sync_record(
+        &self,
+        row: &ChangelogRow,
+        r#type: &ToSyncRecordTranslationType,
+    ) -> bool {
+        if row.table_name == ChangelogTableName::NameInsuranceJoin {
+            println!("should_translate_to_sync_record: {:?}", row.table_name);
+        }
+        match r#type {
+            ToSyncRecordTranslationType::PushToLegacyCentral => {
+                self.change_log_type().as_ref() == Some(&row.table_name)
+            }
+            _ => false,
+        }
     }
 
     fn try_translate_to_upsert_sync_record(

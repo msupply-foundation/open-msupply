@@ -20,7 +20,7 @@ impl MigrationFragment for Migrate {
                 CREATE TABLE name_insurance_join (
                     id TEXT NOT NULL PRIMARY KEY,
                     name_link_id TEXT NOT NULL REFERENCES name_link(id),
-                    name_insurance_id TEXT NOT NULL REFERENCES insurance_provider(id),
+                    insurance_provider_id TEXT NOT NULL REFERENCES insurance_provider(id),
                     policy_number_person TEXT,
                     policy_number_family TEXT,
                     policy_number TEXT NOT NULL,
