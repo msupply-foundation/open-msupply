@@ -91,7 +91,6 @@ impl Api {
     pub async fn upload_file(&self, path: PathBuf) -> Result<UploadedFile, Error> {
         let url = self.url.join("upload").unwrap();
 
-        println!("{}", url);
         let auth_cooke_value = format!(r#"auth={{"token": "{}"}}"#, self.token);
         let built_request = reqwest::Client::new()
             .post(url.clone())
@@ -126,7 +125,6 @@ async fn _gql(
         "variables": variables
     });
 
-    println!("{}", url);
     let mut client = reqwest::Client::new().post(url.clone());
 
     if let Some(token) = token {
