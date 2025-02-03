@@ -46,8 +46,8 @@ export const ListView = () => {
   const programReports = data?.nodes?.filter(
     report =>
       report?.context === ReportContext.Dispensary &&
+      store?.preferences?.omProgramModule &&
       (report?.subContext === 'HIVCareProgram' ||
-        // TODO: Also check vaccine module enabled?
         report.subContext === 'Encounters')
   );
   const onReportClick = (report: ReportRowFragment) => {
