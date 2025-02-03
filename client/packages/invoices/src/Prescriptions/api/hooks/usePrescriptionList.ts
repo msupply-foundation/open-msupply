@@ -13,9 +13,9 @@ import { sortFieldMap } from './utils';
 import { useDelete } from './usePrescriptionDelete';
 
 export type ListParams = {
-  first: number;
-  offset: number;
-  sortBy: SortBy<PrescriptionRowFragment>;
+  first?: number;
+  offset?: number;
+  sortBy?: SortBy<PrescriptionRowFragment>;
   filterBy: FilterByWithBoolean | null;
 };
 
@@ -56,7 +56,7 @@ export const usePrescriptionList = (queryParams: ListParams) => {
       first: first,
       offset: offset,
       key: sortFieldMap[sortBy.key] ?? InvoiceSortFieldInput.Status,
-      desc: sortBy.isDesc,
+      desc: sortBy.direction === 'desc',
       filter,
     });
     const { nodes, totalCount } = query?.invoices;
