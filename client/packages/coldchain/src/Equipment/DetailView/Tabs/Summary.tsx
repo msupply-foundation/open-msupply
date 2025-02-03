@@ -146,8 +146,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   const { localisedDate } = useFormatDateTime();
   const { storeId } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
-  const isGaps = useIsGapsStoreOnly();
-  console.log(isGaps);
+  const isGaps = useIsGapsStoreOnly();  
 
   if (!draft) return null;
 

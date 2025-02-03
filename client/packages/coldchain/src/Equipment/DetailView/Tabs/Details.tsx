@@ -156,6 +156,10 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
             </Typography>
           ) : (
             <>
+                {isGaps && <Typography>
+                  {/* Need to add to translate */}
+                  {'Non-editable properties are defined in the catalogue'}
+                </Typography>}
               {assetProperties &&
                 ArrayUtils.uniqBy(assetProperties, 'key').map(property => {
                   const isCatalogue =
