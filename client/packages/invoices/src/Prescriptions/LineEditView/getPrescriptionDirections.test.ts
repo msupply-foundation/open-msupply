@@ -6,7 +6,7 @@ const options = [
   { id: '3', name: 'tds', direction: 'THREE times a day' },
 ];
 
-describe('handleAbbreviations', () => {
+describe('getPrescriptionDirections', () => {
   describe('abbreviations entered (create)', () => {
     it('should return the expanded direction', () => {
       const input = '2t tds';
