@@ -23,7 +23,8 @@ type DialogButtonVariant =
   | 'copy'
   | 'delete'
   | 'export'
-  | 'close';
+  | 'close'
+  | 'select';
 
 interface DialogButtonProps {
   disabled?: boolean;
@@ -112,6 +113,12 @@ const getButtonProps = (
       return {
         icon: <ArrowLeftIcon />,
         labelKey: 'button.previous',
+        variant: 'contained',
+      };
+    case 'select':
+      return {
+        icon: <CheckIcon />,
+        labelKey: 'button.select',
         variant: 'contained',
       };
   }

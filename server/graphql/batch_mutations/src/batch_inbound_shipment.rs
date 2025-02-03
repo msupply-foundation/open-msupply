@@ -56,7 +56,6 @@ type ServiceResult = BatchInboundShipmentResult;
     name = "DeleteInboundShipmentServiceLineResponseWithId",
     params(inbound_shipment_line::service_line::delete::DeleteResponse)
 ))]
-
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
     pub response: T,
