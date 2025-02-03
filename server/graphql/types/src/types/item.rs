@@ -1,11 +1,11 @@
-use super::{ItemStatsNode, ItemVariantNode, StockLineConnector};
+use super::{ItemDirectionNode, ItemStatsNode, ItemVariantNode, StockLineConnector};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::{
     loader::{
-        ItemStatsLoaderInput, ItemVariantsByItemIdLoader, ItemsStatsForItemLoader,
-        ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, StockLineByItemAndStoreIdLoader,
-        StockLineByItemAndStoreIdLoaderInput,
+        ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemVariantsByItemIdLoader,
+        ItemsStatsForItemLoader, ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput,
+        StockLineByItemAndStoreIdLoader, StockLineByItemAndStoreIdLoaderInput,
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
@@ -141,6 +141,14 @@ impl ItemNode {
             .unwrap_or_default();
 
         Ok(ItemVariantNode::from_vec(result))
+    }
+
+    pub async fn item_directions(&self, ctx: &Context<'_>) -> Result<Vec<ItemDirectionNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemDirectionsByItemIdLoader>>();
+        let result = loader.load_one(self.row().id.clone()).await?;
+        let result = result.unwrap_or_default();
+
+        Ok(ItemDirectionNode::from_vec(result))
     }
 
     pub async fn msupply_universal_code(&self) -> String {
@@ -315,14 +323,14 @@ mod test {
     use super::*;
 
     #[actix_rt::test]
-    async fn graphq_test_item_node_details() {
+    async fn graphql_test_item_node_details() {
         #[derive(Clone)]
         struct TestQuery;
 
         let (_, _, _, settings) = setup_graphql_test(
             TestQuery,
             EmptyMutation,
-            "graphq_test_item_node_details",
+            "graphql_test_item_node_details",
             MockDataInserts::none(),
         )
         .await;
