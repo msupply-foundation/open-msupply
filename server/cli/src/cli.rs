@@ -15,7 +15,7 @@ use repository::{
     ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
 };
 use serde::{Deserialize, Serialize};
-use server::{cold_chain::config_cold_chain, configuration};
+use server::configuration;
 use service::{
     apis::login_v4::LoginUserInfoV4,
     auth_data::AuthData,
@@ -545,7 +545,11 @@ async fn main() -> anyhow::Result<()> {
             let report_json =
                 serde_json::to_value(report_data.template).expect("fail to convert report to json");
 
-            let test_config_path = Path::new("reports");
+            let test_config_path = if let Some(config) = config {
+                config
+            } else {
+                Path::new("reports").to_path_buf()
+            };
 
             let test_config_file = fs::File::open(test_config_path.join("test-config.json"))
                 .map_err(|e| {
@@ -562,25 +566,27 @@ async fn main() -> anyhow::Result<()> {
                 password: test_config.password,
             };
 
+            let output_name = format!("{}.html", test_config.output_filename.clone());
+
             let report_generate_data = ReportGenerateData {
                 report: report_json,
                 config: config,
                 store_id: Some(test_config.store_id),
                 store_name: None,
-                output_filename: Some(test_config.output_filename.clone()),
+                output_filename: Some(output_name.clone()),
                 format: Format::Html,
                 data_id: Some(test_config.data_id),
                 arguments: Some(test_config.arguments),
             };
 
-            spawn_blocking(|| generate_report_inner(report_generate_data)).await?;
+            let _ = spawn_blocking(|| generate_report_inner(report_generate_data)).await?;
 
-            let generated_file_path = current_dir()?.join(&(test_config.output_filename));
+            let generated_file_path = current_dir()?.join(&output_name);
 
             Command::new("open")
-                .arg(generated_file_path)
+                .arg(generated_file_path.clone())
                 .status()
-                .expect("failed to open file");
+                .expect(&format!("failed to open file {:?}", generated_file_path));
         }
     }
 
@@ -596,7 +602,7 @@ pub struct TestConfig {
     username: String,
     password: String,
     arguments: serde_json::Value,
-    locale: Option<String>,
+    _locale: Option<String>,
     output_filename: String,
 }
 
