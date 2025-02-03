@@ -140,6 +140,7 @@ fn transact_1_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: None,
         },
     )
 }
@@ -195,6 +196,7 @@ fn transact_1_push_record() -> TestSyncOutgoingRecord {
             currency_rate: 1.32,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: None
         }),
     }
 }
@@ -315,7 +317,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: None,
-            program_id: None,
+            program_id: Some("programID".to_string()),
         },
     )
 }
@@ -732,6 +734,7 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: None,
         },
     )
 }
@@ -788,6 +791,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             currency_rate: 1.0,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: None
         }),
     }
 }
@@ -923,6 +927,7 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: None,
         },
     )
 }
@@ -979,6 +984,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             currency_rate: 1.0,
             backdated_datetime: None,
             diagnosis_id: None,
+            program_id: None
         }),
     }
 }
@@ -1110,6 +1116,7 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             original_shipment_id: None,
             backdated_datetime: None,
             diagnosis_id: Some("503E901E00534F1797DF4F29E12F907D".to_string()),
+            program_id: None,
         },
     )
 }
@@ -1165,6 +1172,7 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             currency_rate: 1.0,
             backdated_datetime: None,
             diagnosis_id: Some("503E901E00534F1797DF4F29E12F907D".to_string()),
+            program_id: None
         }),
     }
 }

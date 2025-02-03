@@ -381,6 +381,7 @@ mod test {
                     colour: Some("colour input".to_string()),
                     backdated_datetime: None,
                     diagnosis_id: None,
+                    program_id: None
                 }
             );
             Ok(Invoice {
