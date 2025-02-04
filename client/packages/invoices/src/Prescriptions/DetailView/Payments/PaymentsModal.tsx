@@ -5,12 +5,6 @@ import { useDialog } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { usePrescription } from '../../api';
 
-// When there's a 0 cost for the prescription, no Payment window shows on finalise
-// If there are no insurance providers configured, no Payment window shows on finalise
-// Payment window shows correct total price for the prescription
-// The user can select an insurance policy (if configured for the current patient)
-// Insurance policy should show the discount rate and policy type (Family or Personal)
-
 interface PaymentsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -31,8 +25,6 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     data?.pricing.totalAfterTax
   );
 
-  console.log('lines', data);
-
   const fields = [
     {
       label: 'Total to be paid',
@@ -42,14 +34,15 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
         event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
       ): void => setTotalAfterTax(Number(event.target.value)),
     },
-    { label: 'Outstanding payment' }, // amount outstanding
-    { label: 'Type of payment' },
-    { label: 'Amount paid' },
-    { label: 'Change' },
-    { label: 'Note' },
-    { label: 'Insurance Scheme' },
-    { label: '% Covered' },
-    { label: 'Total to be paid by insurance' },
+    // Data not available yet!
+    // { label: 'Outstanding payment' }
+    // { label: 'Type of payment' },
+    // { label: 'Amount paid' },
+    // { label: 'Change' },
+    // { label: 'Note' },
+    // { label: 'Insurance Scheme' },
+    // { label: '% Covered' },
+    // { label: 'Total to be paid by insurance' },
   ];
 
   return (
