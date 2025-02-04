@@ -40,6 +40,18 @@ export type Scalars = {
   NaiveDateTime: { input: string; output: string; }
 };
 
+export type AbbreviationFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  text?: InputMaybe<StringFilterInput>;
+};
+
+export type AbbreviationNode = {
+  __typename: 'AbbreviationNode';
+  expansion: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  text: Scalars['String']['output'];
+};
+
 export type AccountBlocked = AuthTokenErrorInterface & {
   __typename: 'AccountBlocked';
   description: Scalars['String']['output'];
@@ -5697,6 +5709,7 @@ export enum PropertyNodeValueType {
 
 export type Queries = {
   __typename: 'Queries';
+  abbreviations: Array<AbbreviationNode>;
   /**
    * Returns active program events at a given date time.
    * This can also be achieved by using the program_events endpoint with the filter:
@@ -5863,6 +5876,11 @@ export type Queries = {
   vaccineCourse: VaccineCourseResponse;
   vaccineCourseDose: VaccineCourseDoseResponse;
   vaccineCourses: VaccineCoursesResponse;
+};
+
+
+export type QueriesAbbreviationsArgs = {
+  filter?: InputMaybe<AbbreviationFilterInput>;
 };
 
 
