@@ -54,6 +54,7 @@ fragment ProgramPatientRow on PatientNode {
   isDeceased
   dateOfDeath
   nextOfKinId
+  nextOfKinName
   programEnrolments {
     ... on ProgramEnrolmentConnector {
       __typename
