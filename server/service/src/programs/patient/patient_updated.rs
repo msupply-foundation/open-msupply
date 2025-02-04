@@ -67,6 +67,7 @@ pub(crate) fn patient_to_name_row(
         last_name,
         gender,
         next_of_kin_id,
+        next_of_kin_name,
         middle_name: _,
         date_of_birth_is_estimated: _,
         date_of_death,
@@ -140,7 +141,7 @@ pub(crate) fn patient_to_name_row(
         is_donor: existing_name.map(|n| n.is_donor).unwrap_or(false),
         on_hold: existing_name.map(|n| n.on_hold).unwrap_or(false),
         next_of_kin_id,
-        next_of_kin_name: None, //TODo
+        next_of_kin_name,
         created_datetime: existing_name
             .and_then(|n| n.created_datetime)
             .or(Some(update_timestamp.naive_utc())), // assume there is no earlier doc version
@@ -193,6 +194,7 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
         passport_number,
         socio_economics,
         next_of_kin_id,
+        next_of_kin_name,
     } = document_data;
     SchemaPatient {
         id: patient.id.clone(),
@@ -245,6 +247,7 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
         contacts,
         extension,
         next_of_kin_id,
+        next_of_kin_name,
     }
 }
 
