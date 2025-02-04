@@ -592,18 +592,17 @@ async fn main() -> anyhow::Result<()> {
                 arguments: Some(test_config.arguments),
             };
 
-            let res = spawn_blocking(|| generate_report_inner(report_generate_data)).await?;
+            // spawn blocking used to prevent the following error: "Cannot drop a runtime in a context where blocking is not allowed"
+            spawn_blocking(|| generate_report_inner(report_generate_data))
+                .await?
+                .map_err(|e| ReportError::FailedToGenerateReport(path, e.into()))?;
 
             let generated_file_path = current_dir()?.join(&output_name);
 
-            if let Err(res) = res {
-                return Err(ReportError::FailedToGenerateReport(path, res).into());
-            } else {
-                Command::new("open")
-                    .arg(generated_file_path.clone())
-                    .status()
-                    .expect(&format!("failed to open file {:?}", generated_file_path));
-            }
+            Command::new("open")
+                .arg(generated_file_path.clone())
+                .status()
+                .expect(&format!("failed to open file {:?}", generated_file_path));
         }
     }
 
