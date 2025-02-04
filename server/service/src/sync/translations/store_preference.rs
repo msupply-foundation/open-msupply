@@ -74,6 +74,9 @@ pub struct LegacyPrefData {
     #[serde(default)]
     #[serde(rename = "canLinkRequistionToSupplierInvoice")]
     pub manually_link_internal_order_to_inbound_shipment: bool,
+    #[serde(default)]
+    #[serde(rename = "editPrescribedQuantityOnPrescription")]
+    pub edit_prescribed_quantity_on_prescription: bool,
 }
 
 // Needs to be added to all_translators()
@@ -127,6 +130,7 @@ impl SyncTranslation for StorePreferenceTranslation {
             keep_requisition_lines_with_zero_requested_quantity_on_finalised,
             use_consumption_and_stock_from_customers_for_internal_orders,
             manually_link_internal_order_to_inbound_shipment,
+            edit_prescribed_quantity_on_prescription,
         } = data;
 
         let result = StorePreferenceRow {
@@ -152,6 +156,7 @@ impl SyncTranslation for StorePreferenceTranslation {
             keep_requisition_lines_with_zero_requested_quantity_on_finalised,
             use_consumption_and_stock_from_customers_for_internal_orders,
             manually_link_internal_order_to_inbound_shipment,
+            edit_prescribed_quantity_on_prescription,
         };
 
         Ok(PullTranslateResult::upsert(result))
