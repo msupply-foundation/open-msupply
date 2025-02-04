@@ -2913,6 +2913,7 @@ export type InsertPatientInput = {
   isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
   nextOfKinId?: InputMaybe<Scalars['String']['input']>;
+  nextOfKinName?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -8386,6 +8387,7 @@ export type UpdatePatientInput = {
   isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
   nextOfKinId?: InputMaybe<Scalars['String']['input']>;
+  nextOfKinName?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
 };
 
