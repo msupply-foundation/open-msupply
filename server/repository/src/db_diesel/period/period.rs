@@ -47,18 +47,6 @@ impl<'a> PeriodRepository<'a> {
         PeriodRepository { connection }
     }
 
-    pub fn count(
-        &self,
-        store_id: String,
-        filter: Option<PeriodFilter>,
-    ) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(store_id, None, filter);
-
-        Ok(query
-            .count()
-            .get_result(self.connection.lock().connection())?)
-    }
-
     pub fn query_by_filter(
         &self,
         store_id: String,

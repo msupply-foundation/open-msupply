@@ -312,6 +312,12 @@ Reports can be upserted using
 ./target/debug/remote_server_cli upsert-reports
 ```
 
+To overwrite any existing reports in the database, use the --overwrite flag
+
+```bash
+./target/debug/remote_server_cli upsert-reports --o
+```
+
 Because this command utilises the built cli, you will need to first run
 
 ```
