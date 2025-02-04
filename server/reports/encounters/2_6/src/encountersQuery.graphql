@@ -31,7 +31,9 @@ query encountersQuery(
           }
           programEnrolment {
             programEnrolmentId
-            status
+          }
+          previousEncounter {
+            startDatetime
           }
         }
       }
