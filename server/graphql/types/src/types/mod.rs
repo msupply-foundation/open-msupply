@@ -34,6 +34,9 @@ pub use self::invoice_query::*;
 pub mod invoice_line;
 pub use self::invoice_line::*;
 
+pub mod item_direction;
+pub use self::item_direction::*;
+
 pub mod store;
 pub use self::store::*;
 
