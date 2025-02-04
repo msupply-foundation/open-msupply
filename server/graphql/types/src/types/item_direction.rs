@@ -20,8 +20,8 @@ impl ItemDirectionNode {
         &self.item_direction.item_direction_row.id
     }
 
-    pub async fn item_link_id(&self) -> &str {
-        &self.item_direction.item_direction_row.item_link_id
+    pub async fn item_id(&self) -> &str {
+        &self.item_direction.item_row.id
     }
 
     pub async fn directions(&self) -> &str {
