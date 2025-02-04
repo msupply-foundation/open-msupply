@@ -45,6 +45,8 @@ import {
   Spacer,
   keyedItemArrayTester,
   KeyedItemArray,
+  ToolbarLayout,
+  toolbarLayoutTester,
 } from './components';
 import {
   AccordionGroup,
@@ -58,7 +60,6 @@ import {
   FORM_LABEL_COLUMN_WIDTH,
 } from './styleConstants';
 import { FormActionStructure } from '../useFormActions';
-import { ToolbarLayout, toolbarLayoutTester } from './components/ToolbarLayout';
 
 export type JsonType = string | number | boolean | null | undefined;
 
