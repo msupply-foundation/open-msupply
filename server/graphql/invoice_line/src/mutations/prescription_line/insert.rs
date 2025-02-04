@@ -23,6 +23,7 @@ pub struct InsertInput {
     pub invoice_id: String,
     pub stock_line_id: String,
     pub number_of_packs: f64,
+    pub prescribed_quantity: Option<f64>,
     pub note: Option<String>,
 }
 
@@ -151,6 +152,7 @@ impl InsertInput {
             invoice_id,
             stock_line_id,
             number_of_packs,
+            prescribed_quantity,
             note,
         } = self;
 
@@ -160,6 +162,7 @@ impl InsertInput {
             invoice_id,
             stock_line_id,
             number_of_packs,
+            prescribed_quantity,
             note,
             // Default
             total_before_tax: None,
@@ -534,6 +537,7 @@ mod test {
                     invoice_id: "invoice input".to_string(),
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
+                    prescribed_quantity: None,
                     total_before_tax: None,
                     note: None,
                     tax_percentage: None,

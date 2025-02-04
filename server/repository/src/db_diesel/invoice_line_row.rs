@@ -36,6 +36,7 @@ table! {
         tax_percentage -> Nullable<Double>,
         #[sql_name = "type"] type_ -> crate::db_diesel::invoice_line_row::InvoiceLineTypeMapping,
         number_of_packs -> Double,
+        prescribed_quantity -> Nullable<Double>,
         note -> Nullable<Text>,
         inventory_adjustment_reason_id -> Nullable<Text>,
         return_reason_id -> Nullable<Text>,
@@ -87,6 +88,7 @@ pub struct InvoiceLineRow {
     #[diesel(column_name = "type_")]
     pub r#type: InvoiceLineType,
     pub number_of_packs: f64,
+    pub prescribed_quantity: Option<f64>,
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
     pub return_reason_id: Option<String>,
