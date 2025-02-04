@@ -178,6 +178,7 @@ fn generate_stock_in_out_or_update(
             sell_price_per_pack: Some(sell_price_per_pack),
             total_before_tax: None,
             tax_percentage: None,
+            prescribed_quantity: None,
         })
     };
 
@@ -567,6 +568,7 @@ pub fn generate(
         original_shipment_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
+        program_id: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {

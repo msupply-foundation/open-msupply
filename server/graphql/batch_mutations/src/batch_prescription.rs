@@ -494,6 +494,7 @@ mod test {
                         id: "id1".to_string(),
                         patient_id: "id2".to_string(),
                         diagnosis_id: None,
+                        program_id: None,
                     },
                     result: Err(InsertPrescriptionError::PatientDoesNotExist),
                 }],

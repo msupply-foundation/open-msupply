@@ -68,6 +68,8 @@ fragment PrescriptionRow on InvoiceNode {
     code
     description
   }
+
+  programId
 }
 
 query prescriptions(
