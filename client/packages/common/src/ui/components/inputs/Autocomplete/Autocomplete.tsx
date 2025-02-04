@@ -139,6 +139,7 @@ export function Autocomplete<T>({
         popper: popper,
       }}
       sx={{
+        ...restOfAutocompleteProps.sx,
         background: theme =>
           disabled
             ? theme.palette.background.toolbar
