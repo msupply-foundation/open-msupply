@@ -166,6 +166,23 @@ export const Toolbar: FC = () => {
               />
             )}
             <InputWithLabelRow
+              label={t('label.reference')}
+              Input={
+                <Tooltip title={theirReferenceBuffer} placement="bottom-start">
+                  <BasicTextInput
+                    disabled={isDisabled}
+                    size="small"
+                    sx={{ width: 250 }}
+                    value={theirReferenceBuffer ?? ''}
+                    onChange={event => {
+                      setTheirReferenceBuffer(event.target.value);
+                      update({ theirReference: event.target.value });
+                    }}
+                  />
+                </Tooltip>
+              }
+            />
+            <InputWithLabelRow
               label={t('label.clinician')}
               Input={
                 <ClinicianSearchInput
@@ -190,53 +207,31 @@ export const Toolbar: FC = () => {
             marginLeft={3}
             maxWidth={'fit-content'}
           >
-            <>
+            <InputWithLabelRow
+              label={t('label.date')}
+              Input={
+                <DateTimePickerInput
+                  disabled={isDisabled}
+                  value={DateUtils.getDateOrNull(dateValue) ?? new Date()}
+                  format="P"
+                  onChange={handleDateChange}
+                  maxDate={new Date()}
+                />
+              }
+            />
+            {programs.length > 0 && (
               <InputWithLabelRow
-                label={t('label.date')}
+                label={t('label.program')}
                 Input={
-                  <DateTimePickerInput
+                  <ProgramSearchInput
                     disabled={isDisabled}
-                    value={DateUtils.getDateOrNull(dateValue) ?? new Date()}
-                    format="P"
-                    onChange={handleDateChange}
-                    maxDate={new Date()}
+                    programs={programs}
+                    selectedProgram={selectedProgram}
+                    onChange={handleProgramChange}
                   />
                 }
               />
-              <InputWithLabelRow
-                label={t('label.reference')}
-                Input={
-                  <Tooltip
-                    title={theirReferenceBuffer}
-                    placement="bottom-start"
-                  >
-                    <BasicTextInput
-                      disabled={isDisabled}
-                      size="small"
-                      sx={{ width: 250 }}
-                      value={theirReferenceBuffer ?? ''}
-                      onChange={event => {
-                        setTheirReferenceBuffer(event.target.value);
-                        update({ theirReference: event.target.value });
-                      }}
-                    />
-                  </Tooltip>
-                }
-              />
-              {programs.length > 0 && (
-                <InputWithLabelRow
-                  label={t('label.program')}
-                  Input={
-                    <ProgramSearchInput
-                      disabled={isDisabled}
-                      programs={programs}
-                      selectedProgram={selectedProgram}
-                      onChange={handleProgramChange}
-                    />
-                  }
-                />
-              )}
-            </>
+            )}
           </Box>
         </Grid>
         <Grid
