@@ -71,6 +71,7 @@ pub mod return_reason;
 pub use self::return_reason::*;
 
 pub mod diagnosis;
+pub mod patient_insurance;
 
 #[cfg(test)]
 mod tests;
