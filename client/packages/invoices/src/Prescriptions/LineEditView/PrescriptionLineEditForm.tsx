@@ -18,6 +18,7 @@ import {
   LocaleKey,
   NumUtils,
   ItemNode,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -85,6 +86,7 @@ export const PrescriptionLineEditForm: React.FC<
   const t = useTranslation();
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
+  const { store: { preferences } = {} } = useAuthContext();
 
   const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
   const [prescribedQuantity, setPrescribedQuantity] = useState(0);
@@ -276,20 +278,22 @@ export const PrescriptionLineEditForm: React.FC<
               flexDirection="row"
               gap={5}
             >
-              <Grid display="flex" alignItems="center" gap={1}>
-                <InputLabel sx={{ fontSize: 12 }}>
-                  {t('label.prescribed-quantity')}
-                </InputLabel>
-                <NumericTextInput
-                  autoFocus
-                  disabled={disabled}
-                  value={prescribedQuantity}
-                  onChange={handlePrescribedQuantityChange}
-                  min={0}
-                  decimalLimit={2}
-                  onBlur={() => {}}
-                />
-              </Grid>
+              {preferences?.editPrescribedQuantityOnPrescription && (
+                <Grid display="flex" alignItems="center" gap={1}>
+                  <InputLabel sx={{ fontSize: 12 }}>
+                    {t('label.prescribed-quantity')}
+                  </InputLabel>
+                  <NumericTextInput
+                    autoFocus
+                    disabled={disabled}
+                    value={prescribedQuantity}
+                    onChange={handlePrescribedQuantityChange}
+                    min={0}
+                    decimalLimit={2}
+                    onBlur={() => {}}
+                  />
+                </Grid>
+              )}
               <Grid display="flex" alignItems="center" gap={1}>
                 <InputLabel sx={{ fontSize: 12 }}>
                   {t('label.issue')}
