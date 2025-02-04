@@ -432,7 +432,7 @@ impl GeneralQueries {
     pub async fn abbreviations(
         &self,
         ctx: &Context<'_>,
-        filter: AbbreviationFilterInput,
+        filter: Option<AbbreviationFilterInput>,
     ) -> Result<Vec<AbbreviationNode>> {
         abbreviations(ctx, filter)
     }

@@ -25,7 +25,7 @@ impl AbbreviationFilterInput {
 
 pub fn abbreviations(
     ctx: &Context<'_>,
-    filter: AbbreviationFilterInput,
+    filter: Option<AbbreviationFilterInput>,
 ) -> Result<Vec<AbbreviationNode>> {
     validate_auth(
         ctx,
@@ -36,7 +36,8 @@ pub fn abbreviations(
     )?;
 
     let connection_manager = ctx.get_connection_manager();
-    let rows = get_all_abbreviations(connection_manager, filter.to_domain())?;
+    // let rows = get_all_abbreviations(connection_manager, filter.to_domain())?;
+    let rows = get_all_abbreviations(connection_manager, filter.map(|filter| filter.to_domain()))?;
 
     Ok(AbbreviationNode::from_vec(rows))
 }
