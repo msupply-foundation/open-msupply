@@ -16,9 +16,14 @@ import {
   withAjvProps,
 } from '@jsonforms/material-renderers';
 
+export const unrankedToolbarTester = and(
+  uiTypeIs('VerticalLayout'),
+  optionIs('variant', 'toolbar')
+);
+
 export const toolbarLayoutTester: RankedTester = rankWith(
   2,
-  and(uiTypeIs('VerticalLayout'), optionIs('variant', 'toolbar'))
+  unrankedToolbarTester
 );
 
 const UIComponent: FC<LayoutProps & AjvProps> = ({
