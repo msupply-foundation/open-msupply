@@ -58,6 +58,7 @@ import {
   FORM_LABEL_COLUMN_WIDTH,
 } from './styleConstants';
 import { FormActionStructure } from '../useFormActions';
+import { ToolbarLayout, toolbarLayoutTester } from './components/ToolbarLayout';
 
 export type JsonType = string | number | boolean | null | undefined;
 
@@ -202,6 +203,7 @@ const renderers = [
   { tester: noteTester, renderer: Note },
   { tester: spacerTester, renderer: Spacer },
   { tester: headerTester, renderer: Header },
+  { tester: toolbarLayoutTester, renderer: ToolbarLayout },
   // We should be able to remove materialRenderers once we are sure we have custom components to cover all cases.
   ...materialRenderers,
 ];
