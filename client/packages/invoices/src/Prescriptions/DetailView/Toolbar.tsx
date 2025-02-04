@@ -9,6 +9,9 @@ import {
   Formatter,
   DateUtils,
   useConfirmationModal,
+  useBufferState,
+  BasicTextInput,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { PatientSearchInput } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
@@ -25,8 +28,14 @@ export const Toolbar: FC = () => {
     isDisabled,
     rows: items,
   } = usePrescription();
-  const { id, patient, clinician, prescriptionDate, createdDatetime } =
-    data ?? {};
+  const {
+    id,
+    patient,
+    clinician,
+    prescriptionDate,
+    createdDatetime,
+    theirReference,
+  } = data ?? {};
   const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
     clinician ?? null
   );
@@ -47,6 +56,9 @@ export const Toolbar: FC = () => {
   };
 
   const t = useTranslation();
+
+  const [theirReferenceBuffer, setTheirReferenceBuffer] =
+    useBufferState(theirReference);
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
@@ -111,18 +123,40 @@ export const Toolbar: FC = () => {
             maxWidth={'fit-content'}
           >
             {patient && (
-              <InputWithLabelRow
-                label={t('label.patient')}
-                Input={
-                  <PatientSearchInput
-                    disabled={isDisabled}
-                    value={patient}
-                    onChange={async ({ id: patientId }) => {
-                      await update({ id, patientId });
-                    }}
-                  />
-                }
-              />
+              <>
+                <InputWithLabelRow
+                  label={t('label.patient')}
+                  Input={
+                    <PatientSearchInput
+                      disabled={isDisabled}
+                      value={patient}
+                      onChange={async ({ id: patientId }) => {
+                        await update({ id, patientId });
+                      }}
+                    />
+                  }
+                />
+                <InputWithLabelRow
+                  label={t('label.customer-ref')}
+                  Input={
+                    <Tooltip
+                      title={theirReferenceBuffer}
+                      placement="bottom-start"
+                    >
+                      <BasicTextInput
+                        disabled={isDisabled}
+                        size="small"
+                        sx={{ width: 250 }}
+                        value={theirReferenceBuffer ?? ''}
+                        onChange={event => {
+                          setTheirReferenceBuffer(event.target.value);
+                          update({ theirReference: event.target.value });
+                        }}
+                      />
+                    </Tooltip>
+                  }
+                />
+              </>
             )}
             <InputWithLabelRow
               label={t('label.clinician')}

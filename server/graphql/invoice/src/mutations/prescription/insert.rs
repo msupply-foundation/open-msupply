@@ -15,6 +15,7 @@ pub struct InsertInput {
     pub id: String,
     pub patient_id: String,
     pub diagnosis_id: Option<String>,
+    pub their_reference: Option<String>,
 }
 
 #[derive(Union)]
@@ -47,12 +48,14 @@ impl InsertInput {
         let InsertInput {
             id,
             patient_id,
+            their_reference,
             diagnosis_id,
         } = self;
 
         ServiceInput {
             id,
             patient_id,
+            their_reference,
             diagnosis_id,
         }
     }
