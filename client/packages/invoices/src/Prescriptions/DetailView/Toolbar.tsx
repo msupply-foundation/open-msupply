@@ -182,6 +182,15 @@ export const Toolbar: FC = () => {
                 </Tooltip>
               }
             />
+          </Box>
+          <Box
+            display="flex"
+            flexDirection="column"
+            gap={1}
+            flex={1}
+            marginLeft={3}
+            maxWidth={'fit-content'}
+          >
             <InputWithLabelRow
               label={t('label.clinician')}
               Input={
@@ -198,15 +207,6 @@ export const Toolbar: FC = () => {
                 />
               }
             />
-          </Box>
-          <Box
-            display="flex"
-            flexDirection="column"
-            gap={1}
-            flex={1}
-            marginLeft={3}
-            maxWidth={'fit-content'}
-          >
             <InputWithLabelRow
               label={t('label.date')}
               Input={
@@ -219,6 +219,15 @@ export const Toolbar: FC = () => {
                 />
               }
             />
+          </Box>
+          <Box
+            display="flex"
+            flexDirection="column"
+            gap={1}
+            flex={1}
+            marginLeft={3}
+            maxWidth={'fit-content'}
+          >
             {programs.length > 0 && (
               <InputWithLabelRow
                 label={t('label.program')}
