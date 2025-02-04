@@ -13,13 +13,17 @@ import {
   BasicTextInput,
   Tooltip,
 } from '@openmsupply-client/common';
-import { PatientSearchInput } from '@openmsupply-client/system';
+import {
+  PatientSearchInput,
+  ProgramSearchInput,
+} from '@openmsupply-client/system';
+import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 import { usePrescription } from '../api';
 import {
   Clinician,
   ClinicianSearchInput,
 } from '../../../../system/src/Clinician';
-import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
+import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
 
 export const Toolbar: FC = () => {
   const {
@@ -34,6 +38,7 @@ export const Toolbar: FC = () => {
     clinician,
     prescriptionDate,
     createdDatetime,
+    programId,
     theirReference,
   } = data ?? {};
   const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
@@ -44,6 +49,10 @@ export const Toolbar: FC = () => {
       DateUtils.getDateOrNull(createdDatetime) ??
       null
   );
+
+  const { data: programData } = useProgramList(true);
+  const programs = programData?.nodes ?? [];
+  const selectedProgram = programs.find(prog => prog.id === programId);
 
   const {
     delete: { deleteLines },
@@ -105,6 +114,26 @@ export const Toolbar: FC = () => {
     });
   };
 
+  const handleProgramChange = async (
+    newProgram: ProgramFragment | undefined
+  ) => {
+    if (!newProgram || !items || items.length === 0) {
+      // It's okay to *clear* program without losing current items
+      await update({ id, programId: newProgram?.id ?? null });
+      return;
+    }
+
+    getConfirmation({
+      onConfirm: async () => {
+        // For simplicity, we currently delete all items that have already been
+        // added when switching programs. We may wish to improve this in the
+        // future to only remove items that don't belong to the new program
+        await deleteAll();
+        await update({ id, programId: newProgram?.id });
+      },
+    });
+  };
+
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
@@ -161,35 +190,53 @@ export const Toolbar: FC = () => {
             marginLeft={3}
             maxWidth={'fit-content'}
           >
-            <InputWithLabelRow
-              label={t('label.date')}
-              Input={
-                <DateTimePickerInput
-                  disabled={isDisabled}
-                  value={DateUtils.getDateOrNull(dateValue) ?? new Date()}
-                  format="P"
-                  onChange={handleDateChange}
-                  maxDate={new Date()}
-                />
-              }
-            />
-            <InputWithLabelRow
-              label={t('label.reference')}
-              Input={
-                <Tooltip title={theirReferenceBuffer} placement="bottom-start">
-                  <BasicTextInput
+            <>
+              <InputWithLabelRow
+                label={t('label.date')}
+                Input={
+                  <DateTimePickerInput
                     disabled={isDisabled}
-                    size="small"
-                    sx={{ width: 250 }}
-                    value={theirReferenceBuffer ?? ''}
-                    onChange={event => {
-                      setTheirReferenceBuffer(event.target.value);
-                      update({ theirReference: event.target.value });
-                    }}
+                    value={DateUtils.getDateOrNull(dateValue) ?? new Date()}
+                    format="P"
+                    onChange={handleDateChange}
+                    maxDate={new Date()}
                   />
-                </Tooltip>
-              }
-            />
+                }
+              />
+              <InputWithLabelRow
+                label={t('label.reference')}
+                Input={
+                  <Tooltip
+                    title={theirReferenceBuffer}
+                    placement="bottom-start"
+                  >
+                    <BasicTextInput
+                      disabled={isDisabled}
+                      size="small"
+                      sx={{ width: 250 }}
+                      value={theirReferenceBuffer ?? ''}
+                      onChange={event => {
+                        setTheirReferenceBuffer(event.target.value);
+                        update({ theirReference: event.target.value });
+                      }}
+                    />
+                  </Tooltip>
+                }
+              />
+              {programs.length > 0 && (
+                <InputWithLabelRow
+                  label={t('label.program')}
+                  Input={
+                    <ProgramSearchInput
+                      disabled={isDisabled}
+                      programs={programs}
+                      selectedProgram={selectedProgram}
+                      onChange={handleProgramChange}
+                    />
+                  }
+                />
+              )}
+            </>
           </Box>
         </Grid>
         <Grid

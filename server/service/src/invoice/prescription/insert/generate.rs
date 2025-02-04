@@ -17,6 +17,7 @@ pub fn generate(
         id,
         patient_id,
         diagnosis_id,
+        program_id,
         their_reference,
     }: InsertPrescription,
 ) -> Result<InvoiceRow, RepositoryError> {
@@ -56,6 +57,7 @@ pub fn generate(
         original_shipment_id: None,
         backdated_datetime: None,
         diagnosis_id,
+        program_id,
     };
 
     Ok(result)
