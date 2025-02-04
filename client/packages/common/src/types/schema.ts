@@ -1097,7 +1097,7 @@ export type ConsumptionHistoryNode = {
 };
 
 export type ConsumptionOptionsInput = {
-  /** Defaults to 3 months */
+  /** Defaults to store preference amc_lookback_months */
   amcLookbackMonths?: InputMaybe<Scalars['Int']['input']>;
   /** Defaults to 12 */
   numberOfDataPoints?: InputMaybe<Scalars['Int']['input']>;
@@ -2932,6 +2932,7 @@ export type InsertPrescriptionInput = {
   diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
+  theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPrescriptionLineError = {
@@ -8397,6 +8398,7 @@ export type UpdatePrescriptionInput = {
   patientId?: InputMaybe<Scalars['String']['input']>;
   prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
   status?: InputMaybe<UpdatePrescriptionStatusInput>;
+  theirReference?: InputMaybe<NullableStringUpdate>;
 };
 
 export type UpdatePrescriptionLineError = {
