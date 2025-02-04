@@ -79,7 +79,7 @@ fn create_filtered_query(filter: Option<ItemDirectionFilter>) -> BoxedItemDirect
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, item_direction::id);
-        apply_equal_filter!(query, filter.item_id, item_direction::item_link_id);
+        apply_equal_filter!(query, filter.item_id, item::id);
     }
 
     query
