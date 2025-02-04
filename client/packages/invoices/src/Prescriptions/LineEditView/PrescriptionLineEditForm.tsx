@@ -194,8 +194,7 @@ export const PrescriptionLineEditForm: React.FC<
 
   const handlePrescribedQuantityChange = (inputPrescribedQuantity?: number) => {
     if (inputPrescribedQuantity == null) return;
-    if (preferences?.editPrescribedQuantityOnPrescription)
-      setPrescribedQuantity(inputPrescribedQuantity);
+    setPrescribedQuantity(inputPrescribedQuantity);
     handleIssueQuantityChange(inputPrescribedQuantity, 'prescribed');
   };
 
