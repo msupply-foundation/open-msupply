@@ -13,6 +13,7 @@ import {
   DeleteIcon,
   Action,
   ActionsFooter,
+  PrinterIcon,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, prescriptionStatuses } from '../../../utils';
 import { StatusChangeButton } from './StatusChangeButton';
@@ -90,6 +91,13 @@ export const FooterComponent: FC = () => {
       onClick: confirmAndDelete,
       disabled: isDisabled,
       disabledToastMessage: t('messages.cant-delete-generic'),
+    },
+    {
+      label: t('button.print-prescription-label'),
+      icon: <PrinterIcon />,
+      onClick: () => {},
+      disabled: isDisabled,
+      disabledToastMessage: t('heading.unable-to-print'),
     },
   ];
 
