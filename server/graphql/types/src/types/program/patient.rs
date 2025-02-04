@@ -211,6 +211,13 @@ impl PatientNode {
         &self.patient.next_of_kin_id
     }
 
+    /// This is a separately captured field than the nextOfKin node
+    /// to allow recording of next of kin name where a patient record for
+    /// the next of kin does not exist.
+    pub async fn next_of_kin_name(&self) -> &Option<String> {
+        &self.patient.next_of_kin_name
+    }
+
     pub async fn created_datetime(&self) -> Option<DateTime<Utc>> {
         self.patient.created_datetime.map(|created_datetime| {
             DateTime::<Utc>::from_naive_utc_and_offset(created_datetime, Utc)
