@@ -1,4 +1,4 @@
-use async_graphql::{Context, Enum, InputObject, Object, OutputType, Result, SimpleObject, Union};
+use async_graphql::{Context, Enum, InputObject, Object, Result, SimpleObject, Union};
 use chrono::NaiveDate;
 use graphql_core::{
     generic_filters::EqualFilterStringInput, standard_graphql_error::validate_auth, ContextExt,
@@ -80,7 +80,7 @@ impl PatientInsuranceNode {
 
 #[derive(SimpleObject)]
 pub struct PatientInsuranceConnector {
-    insurances: Vec<PatientInsuranceNode>,
+    nodes: Vec<PatientInsuranceNode>,
 }
 
 #[derive(Union)]
@@ -96,18 +96,18 @@ pub fn get_patient_insurances(
     filter: Option<PatientInsuranceFilterInput>,
     sort: Option<Vec<PatientInsuranceSortInput>>,
 ) -> Result<PatientInsuranceResponse> {
-    // let user = validate_auth(
-    //     ctx,
-    //     &ResourceAccessRequest {
-    //         resource: Resource::QueryName,
-    //         store_id: Some(store_id.clone()),
-    //     },
-    // )?;
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryName,
+            store_id: Some(store_id.clone()),
+        },
+    )?;
 
-    // let service_provider = ctx.service_provider();
-    // let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
-    let mock_data = NameInsuranceJoinRow {
+    let mock_data_1 = NameInsuranceJoinRow {
         id: "1".to_string(),
         name_link_id: "2".to_string(),
         insurance_provider_id: "3".to_string(),
@@ -121,12 +121,48 @@ pub fn get_patient_insurances(
         entered_by_id: Some("4".to_string()),
     };
 
-    let insurance = PatientInsuranceNode {
-        insurance: mock_data,
+    let mock_data_2 = NameInsuranceJoinRow {
+        id: "2".to_string(),
+        name_link_id: "3".to_string(),
+        insurance_provider_id: "4".to_string(),
+        policy_number_person: Some("54321".to_string()),
+        policy_number_family: Some("09876".to_string()),
+        policy_number: "445566".to_string(),
+        policy_type: InsurancePolicyType::Business,
+        discount_percentage: 15,
+        expiry_date: NaiveDate::from_ymd_opt(2024, 11, 30).expect("Invalid date"),
+        is_active: false,
+        entered_by_id: Some("5".to_string()),
+    };
+
+    let mock_data_3 = NameInsuranceJoinRow {
+        id: "3".to_string(),
+        name_link_id: "4".to_string(),
+        insurance_provider_id: "5".to_string(),
+        policy_number_person: Some("67890".to_string()),
+        policy_number_family: Some("12345".to_string()),
+        policy_number: "778899".to_string(),
+        policy_type: InsurancePolicyType::Personal,
+        discount_percentage: 20,
+        expiry_date: NaiveDate::from_ymd_opt(2023, 10, 29).expect("Invalid date"),
+        is_active: true,
+        entered_by_id: Some("6".to_string()),
+    };
+
+    let insurance_1 = PatientInsuranceNode {
+        insurance: mock_data_1,
+    };
+
+    let insurance_2 = PatientInsuranceNode {
+        insurance: mock_data_2,
+    };
+
+    let insurance_3 = PatientInsuranceNode {
+        insurance: mock_data_3,
     };
 
     let connector = PatientInsuranceConnector {
-        insurances: vec![insurance],
+        nodes: vec![insurance_1, insurance_2, insurance_3],
     };
 
     let response = PatientInsuranceResponse::Response(connector);

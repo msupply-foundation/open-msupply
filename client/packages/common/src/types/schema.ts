@@ -40,6 +40,18 @@ export type Scalars = {
   NaiveDateTime: { input: string; output: string; }
 };
 
+export type AbbreviationFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  text?: InputMaybe<StringFilterInput>;
+};
+
+export type AbbreviationNode = {
+  __typename: 'AbbreviationNode';
+  expansion: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  text: Scalars['String']['output'];
+};
+
 export type AccountBlocked = AuthTokenErrorInterface & {
   __typename: 'AccountBlocked';
   description: Scalars['String']['output'];
@@ -5239,6 +5251,45 @@ export type PatientFilterInput = {
   programEnrolmentName?: InputMaybe<StringFilterInput>;
 };
 
+export type PatientInsuranceConnector = {
+  __typename: 'PatientInsuranceConnector';
+  nodes: Array<PatientInsuranceNode>;
+};
+
+export type PatientInsuranceFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type PatientInsuranceNode = {
+  __typename: 'PatientInsuranceNode';
+  discountPercentage: Scalars['Int']['output'];
+  enteredById?: Maybe<Scalars['String']['output']>;
+  expiryDate: Scalars['NaiveDate']['output'];
+  id: Scalars['String']['output'];
+  insuranceProviderId: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  nameLinkId: Scalars['String']['output'];
+  policyNumber: Scalars['String']['output'];
+  policyNumberFamily?: Maybe<Scalars['String']['output']>;
+  policyNumberPerson?: Maybe<Scalars['String']['output']>;
+};
+
+export type PatientInsuranceResponse = PatientInsuranceConnector;
+
+export enum PatientInsuranceSortFieldInput {
+  Id = 'id'
+}
+
+export type PatientInsuranceSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: PatientInsuranceSortFieldInput;
+};
+
 export type PatientNode = {
   __typename: 'PatientNode';
   address1?: Maybe<Scalars['String']['output']>;
@@ -5697,6 +5748,7 @@ export enum PropertyNodeValueType {
 
 export type Queries = {
   __typename: 'Queries';
+  abbreviations: Array<AbbreviationNode>;
   /**
    * Returns active program events at a given date time.
    * This can also be achieved by using the program_events endpoint with the filter:
@@ -5772,6 +5824,7 @@ export type Queries = {
    * Provides an friendly shape to edit these lines before calling the insert/update mutations.
    */
   generateSupplierReturnLines: GenerateSupplierReturnLinesResponse;
+  getPatientInsurances: PatientInsuranceResponse;
   /** Query for "historical_stock_line" entries */
   historicalStockLines: StockLinesResponse;
   /** Available without authorisation in operational and initialisation states */
@@ -5863,6 +5916,11 @@ export type Queries = {
   vaccineCourse: VaccineCourseResponse;
   vaccineCourseDose: VaccineCourseDoseResponse;
   vaccineCourses: VaccineCoursesResponse;
+};
+
+
+export type QueriesAbbreviationsArgs = {
+  filter?: InputMaybe<AbbreviationFilterInput>;
 };
 
 
@@ -6132,6 +6190,13 @@ export type QueriesGenerateReportDefinitionArgs = {
 
 export type QueriesGenerateSupplierReturnLinesArgs = {
   input: GenerateSupplierReturnLinesInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesGetPatientInsurancesArgs = {
+  filter?: InputMaybe<PatientInsuranceFilterInput>;
+  sort?: InputMaybe<Array<PatientInsuranceSortInput>>;
   storeId: Scalars['String']['input'];
 };
 

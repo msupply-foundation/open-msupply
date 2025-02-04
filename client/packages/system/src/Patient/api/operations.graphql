@@ -231,3 +231,27 @@ query latestPatientEncounter(
     }
   }
 }
+
+query getPatientInsurances(
+  $storeId: String!
+  $filter: PatientInsuranceFilterInput
+  $sort: [PatientInsuranceSortInput!]
+) {
+  getPatientInsurances(storeId: $storeId, filter: $filter, sort: $sort) {
+    ... on PatientInsuranceConnector {
+      __typename
+      nodes {
+        id
+        expiryDate
+        insuranceProviderId
+        isActive
+        enteredById
+        discountPercentage
+        nameLinkId
+        policyNumber
+        policyNumberFamily
+        policyNumberPerson
+      }
+    }
+  }
+}
