@@ -123,40 +123,18 @@ export const Toolbar: FC = () => {
             maxWidth={'fit-content'}
           >
             {patient && (
-              <>
-                <InputWithLabelRow
-                  label={t('label.patient')}
-                  Input={
-                    <PatientSearchInput
-                      disabled={isDisabled}
-                      value={patient}
-                      onChange={async ({ id: patientId }) => {
-                        await update({ id, patientId });
-                      }}
-                    />
-                  }
-                />
-                <InputWithLabelRow
-                  label={t('label.customer-ref')}
-                  Input={
-                    <Tooltip
-                      title={theirReferenceBuffer}
-                      placement="bottom-start"
-                    >
-                      <BasicTextInput
-                        disabled={isDisabled}
-                        size="small"
-                        sx={{ width: 250 }}
-                        value={theirReferenceBuffer ?? ''}
-                        onChange={event => {
-                          setTheirReferenceBuffer(event.target.value);
-                          update({ theirReference: event.target.value });
-                        }}
-                      />
-                    </Tooltip>
-                  }
-                />
-              </>
+              <InputWithLabelRow
+                label={t('label.patient')}
+                Input={
+                  <PatientSearchInput
+                    disabled={isDisabled}
+                    value={patient}
+                    onChange={async ({ id: patientId }) => {
+                      await update({ id, patientId });
+                    }}
+                  />
+                }
+              />
             )}
             <InputWithLabelRow
               label={t('label.clinician')}
@@ -175,7 +153,14 @@ export const Toolbar: FC = () => {
               }
             />
           </Box>
-          <Box display="flex" flexDirection="column" flex={1} marginLeft={3}>
+          <Box
+            display="flex"
+            flexDirection="column"
+            gap={1}
+            flex={1}
+            marginLeft={3}
+            maxWidth={'fit-content'}
+          >
             <InputWithLabelRow
               label={t('label.date')}
               Input={
@@ -186,6 +171,23 @@ export const Toolbar: FC = () => {
                   onChange={handleDateChange}
                   maxDate={new Date()}
                 />
+              }
+            />
+            <InputWithLabelRow
+              label={t('label.reference')}
+              Input={
+                <Tooltip title={theirReferenceBuffer} placement="bottom-start">
+                  <BasicTextInput
+                    disabled={isDisabled}
+                    size="small"
+                    sx={{ width: 250 }}
+                    value={theirReferenceBuffer ?? ''}
+                    onChange={event => {
+                      setTheirReferenceBuffer(event.target.value);
+                      update({ theirReference: event.target.value });
+                    }}
+                  />
+                </Tooltip>
               }
             />
           </Box>
