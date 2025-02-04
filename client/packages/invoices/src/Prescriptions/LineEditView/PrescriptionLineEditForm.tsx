@@ -335,7 +335,10 @@ export const PrescriptionLineEditForm: React.FC<
                   decimalLimit={2}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
-                  {t('label.unit-plural', {
+                  {t('label.unit-plural_one', {
+                    // unit-plural_one has been specified to deactivate pluralisation.
+                    // This is to handle the case where units have not been entered for the item.
+                    // see https://github.com/msupply-foundation/open-msupply/issues/5978
                     count: issueUnitQuantity,
                     unit: item?.unitName,
                   })}
