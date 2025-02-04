@@ -1,249 +1,23 @@
 # Reports
 
-The report builder is a helper utility for generating report template definition files.
-Report template definition files are json files containing all information required by the remote-server to produce a data report.
+This repository contains source files for standard reports. Command-line interface (CLI) tools for generating reports, processing data, and upserting reports to OMS databases. 
 
-Editing the template definition json file directly would be quite cumbersome.
-The report builder aids the template designer to create the template definition file from a more convenient project structure, e.g. from a flat directory of Tera html templates and css files.
-The report builder also helps to test/print template definition files locally.
+This readme contains information on [source file structuring](#report-source-files), report related [CLI tools](#cli-tools), information on [development](#development) and [maintenance](#maintenance) of OMS reports.
 
-To summarise, the report builder has two functions:
+## Report Source Files
 
-1. **Build** a report template which can be uploaded straight to the central server
-2. **Print** a report template, e.g. to test a report template during development before uploading it.
+Source files for each report are located in their own directory. Within this directory are:
 
-## Project directory
+1. [report-manifest.json](#report-manifest)
+2. [src dir](#src-dir)
+3. (optional) [convert_data_js dir](#convert_data_js-dir)
+4. (optional) [argument_schemas dir](#argument_schemas-dir)
 
-The report builder expects files to be in a flat directory (no sub directories are currently supported).
-The `example` directory contains an example project.
-In this example, the `example/template.html` file is the main entry point for the report.
-It contains various examples and details on how to use various aspects of the template system, e.g. how to include other file, how include images or how to convert dates to the local timezone.
+A full tree diagram of the report source file structure can be viewed [here](#source-file-structure-diagram)
 
-There are three main template entry points:
+### report-manifest
 
-1. The main template file (e.g. `example/template.html`) which contains the report content
-2. An optional header template file to specify the report header (e.g. `example/header.html`)
-3. An optional footer template file to specify the report footer (e.g. `example/footer.html`)
-
-All files in the project dir should be text files.
-The reason for this is that all files will be bundled into a single json template definition file and, for this to work, binary files such as images needs to be encoded in base64.
-For example, an image could be encoded using a tools like:
-http://jpillora.com/base64-encoder/
-which generates a data URI (https://en.wikipedia.org/wiki/Data_URI_scheme) which can be used straight in `<img>` `src` tags (see example project).
-Note: don't upload sensitive data to online encoders.
-
-### Special file types:
-
-- **`*.graphql` files:**
-  A `*.graphql` file is used to specify a custom data query and must explicitly included through a command line argument (see usage section).
-  Files ending `*.graphql` are not directly included into the report definition.
-
-- **`*.json` files:**
-  Json files can contain some other information that can be accessed in the Tera template (through the `res` object, see example dir).
-  For example, instead of hard coding the timezone, as done in the example, the timeszone string could also stored in a json data file.
-
-- **`report-manifest.json`**
-  Manifest file to specify various report metadata.
-  The manifest file is added to the `res` object as a normal resource and thus can be accessed from within the Tera template.
-  The manifest file must have the following structure:
-
-```ts
-// report-manifest.json
-{
-  // Report context type
-  "context": "PATIENT" | "DISPENSARY" | ...
-}
-```
-
-## Usage
-
-To build the report builder from the Rust source code run the following command in the `report_builder` directory:
-
-```bash
-> cargo build
-# or
-> cargo build --release
-```
-
-Alternatively you can also just run it from the project dir
-
-```bash
-> cargo run -- {builder args go here}
-```
-
-There are two sub commands:
-
-```bash
-# Build a report definition template
-> report_builder build
-# Print a report definition template
-> report_builder print
-```
-
-To see a full list of command line argument options use the `--help` flag:
-
-```bash
-> report_builder build --help
-# Print a report definition template
-> report_builder print --help
-```
-
-### Build a report template definition
-
-For example, to build the example template including header and footer using the default stocktake query:
-
-```bash
-> report_builder build --dir path/to/project --template template.html --header header.html --footer footer.html --query-default stocktake
-```
-
-To use a custom query instead, do:
-
-```bash
-> report_builder build --dir path/to/project --template template.html --header header.html --footer footer.html --query-gql query.graphql
-```
-
-On default this will create an `output.json` template definition file which can be uploaded to the central server.
-(The output path can be configured using `--output` argument)
-
-### Print a report template definition
-
-To print a report definition template a running remote-server is required.
-Moreover, report_builder requires config details for how to access the remote-server.
-To provide this information create a config file, e.g. `config.yaml`:
-
-```yaml
-url: "https://demo-open.msupply.org"
-# standard omSupply username and password
-username: "username"
-password: "password"
-```
-
-The report builder will use this config file to authenticate with the remote-server and print/download the report to the local file system.
-The remote-server needs a store id (or store name) and a data id to print the report.
-For example, to print a report for a stocktake with id "d734fd45-064e-4ddd-9886-ea71a2797640" from store "80004C94067A4CE5A34FC343EB1B4306":
-
-```bash
-> report_builder print --report generated/output.json --config config.yaml --store-id 80004C94067A4CE5A34FC343EB1B4306 --data-id d734fd45-064e-4ddd-9886-ea71a2797640 --output report_pdf_name.pdf
-```
-
-If the store name instead of the store id is provided, the matching store id is automatically fetched from the central server.
-For example, the following works as well:
-
-```bash
-> report_builder print --report generated/output.json --config config.yaml --store-name "Gryffindor District Store" --data-id d734fd45-064e-4ddd-9886-ea71a2797640 --output report_pdf_name.pdf
-```
-
-### Report templates with arguments
-
-Some reports need additional arguments such as a time range.
-Report arguments are passed on as variable to the used GraphGl query.
-
-There is an example for a report with arguments in the `example_arguments` directory.
-To specify the arguments create a `arguments.json` file in the `report_builder` directory with the content:
-
-```json
-{
-  "creationDatetimeBeforeOrEqual": "2023-01-16T01:35:39.770Z"
-}
-```
-
-The required arguments are the same as the variables one would pass to the underlying GraphGl query,
-i.e. to learn about available parameters and types please look at the GraphGl query definition.
-
-To build the report run:
-
-```bash
-report_build -- build --dir ./example_arguments/ --template template.html --query-gql query.graphql
-report_build -- print --report generated/output.json --config config.yaml --store-id 80004C94067A4CE5A34FC343EB1B4306 --arguments-file ./arguments.json --output report_pdf_name.pdf
-```
-
-## References to other template definitions
-
-It's possible to refer to other template resources that already exist on the server, e.g. to refer to a common headers or icons.
-
-To refer to a resource from an existing report add a reference file like `icon1.ref.json` to the project with the content:
-
-```json
-{
-  "source": "existing_report_id"
-}
-```
-
-The existing report must contain an entry of name `icon1`.
-The template entry `icon1` can then be used in the Tera templates the same as any other entry.
-
-If there is a name conflict it is possible to rename referred template entries.
-For example, instead of `icon1` an alternative name can be used by using a reference file like `my_icon_name.ref.json`:
-
-```json
-{
-  "source": "existing_report_id",
-  "sourceName": "icon1"
-}
-```
-
-The entry `icon1` from the existing report can then be used under the name `my_icon_name`.
-
-## Translating reports
-
-Reports now have the option to allow for translations using the same localisation suite we use for front end translations.
-
-This can be implemented in the report by adding the following translation function in place of your text:
-
-```
-{{t(k="label.name", f="Name")}}
-```
-
-By default,
-
-Where the letters are short hand for the following:
-
-- t for translate
-  The name of the function
-- k for key
-  This is the locale key as is used in front end translations.
-- f for fallback
-  This is an optional fallback text if the translation cannot be found.
-- n for namespace
-  The file namespace where the translation key is. The .json extention is automatically added ie catalogue (which refers to the catalogue.json namespace).
-  By default, the translation in common.json translations will be used.
-  Note all translation files have been consolidated into the common.json namespace, so the namespace parameter is no longer user. However, functionality is retained in case we are needing customer specific namespaces in future.
-  If a specific namespace needs to be called, you can add this 'n' key into your function.
-
-```
-    {{t(k="label.name", n="catalogue", f="Name")}}
-```
-
-The current user language is passed through graphql when a user requests a report to be generated. This is the language used in translations.
-
-The translation function has a number of fallback translations which it will search through if the translation cannot be found.
-
-First it will look for the translation key within the nominated namespace and language
-Next it will fallback to the translation in the common.json namespace and nominated language
-Next it will fallback to the english translation of the nominated key and nominated namespace
-Next it will fallback to the english translation of the nominated key in the common.json namespace
-Next it will fallback to the fallback text provided in the report which by default will be in english
-
-If none of the above can be found, report will fail to render.
-
-# Standard Reports
-
-Builds 2.3.0 and above will include standard reports embedded in the binary. The 2.3.0 build includes the following reports:
-
-- Invoice Landscape
-- Item Usage
-- Stock Detail
-- Stock Status
-- Expiring Items
-
-Standard reports are upserted into the database on startup.
-These are built and added from the standard_reports.json file in reports/generated. This json file includes all standard reports, and all versions of each report.
-
-## Building standard reports
-
-Standard reports are built from html, css, and query files a similar way as from the reports repo with the following differences:
-
-Standard reports include a 'report-manifest.json' file which includes details of how the report is constructed.
+The `report-manifest.json` contains information required to build the report detailed below.
 Optional fields in the manifest json are marked as '// optional'
 
 ```json
@@ -288,101 +62,187 @@ Optional fields in the manifest json are marked as '// optional'
   "custom_wasm_function": "path to cusom wasm function",
   // optional
   // name of dir within the version dir of the report which includes js wasm function constructors.
-  "convert_data": "convert_data_js"
+  "convert_data": "convert_data_js",
+  // optional
+  // name of html header template of the report found within the src dir
+  "header": "header.html",
+  // optional
+  // name of html footer template of the report found within the src dir
+  "footer": "footer.html"
 }
 ```
 
-This report-manifest.json file takes the place of cli param inserts seen in bash scripts such as upsert.sh in the open-mSupply-reports repo.
+### src dir
 
-The command to build reports uses the build cli, so you will first need to run
+The src dir contains:
+1. The main template file `template.html` which contains the report content. The name of this must be `template.html`
+2. Header and footer html files. The names of these are specified in the [`report-manifest.json`](#report-manifest)
+2. graphql and sql query functions used by the report
+Graphql query files must be named in full as seen in the example [`report-manifest.json`](#report-manifest)
+sql files are named without suffix and within an array as seen in the example [`report-manifest.json`](#report-manifest)
+3. css files used to format the report
 
-```bash
-cargo build
+### convert_data_js dir
+
+A extism plugin function can be added to reports where further data conversion is required. This functionality will be built automatically by the report build cli when a convert_data_js dir path is specified in the [`report-manifest.json`](#report-manifest)
+
+The convert_data_js dir contains
+1. generated `dist` and `node_modules` dirs. These should not be edited and are generated automatically.
+2. `esbuild.js` and `package.json` files. These are identical for all reports and should be copied without editing.
+3. Optional `input.json` and `output.json` files used to validate tests where tests are added to validate data conversion functionality
+4. src dir containing data conversion functions.
+
+#### convert_data_js src dir
+
+This src dir contains
+1. convert_data.d.ts and. This is identical for all reports and should be copied without editing
+2. convert_data.js file. This should be identical and copied directly as all data processing should be done in the utils.js file. However some changes may be required here to pass the correct data structure.
+3. utils.js file containing all data conversion and processing
+4. Optional utils.test.ts file for validating data conversion
+
+### argument_schemas dir
+
+Argument schemas are used to present a JSON form on the front end for filter and other parameter input used to customise a report during render.
+
+This dir contains
+1. arguments_ui.json
+2. arguments.json
+
+These files must be compliant with JSON forms.
+
+### source file structure diagram
+
+```
+├── example-report
+   ├── argument_schemas (optional)
+   │   ├── argument_ui.json
+   |   └── arguments.json
+   ├── convert_data_js (optional)
+   │   ├── dist (generated)
+   |   ├── node_modules (generated)
+   |   ├── src
+   |   |   ├── convert_data.d.ts (copy)
+   |   |   ├── convert_data.js (copy)
+   |   |   ├── utils.js 
+   |   |   └── utils.test.js (optional)
+   |   ├── esbuild.js (copy)
+   |   ├── input.json (optional)
+   |   ├── output.json (optional)
+   |   └── package.json (copy)
+   ├──  src
+   |   ├── footer.html (optional)
+   |   ├── header.html (optional)
+   |   ├── style.css
+   |   ├── sql queries (optional, and possibly multiple)
+   |   ├── graphql query (optional)
+   |   └── template.html
+   └── report-manifest.json
 ```
 
-Standard reports in the reports dir can then be built into the generated json by running the following cli command:
+## CLI Tools
 
-```bash
-./target/debug/remote_server_cli build-reports
+Command line interface tools used in development and maintenance of reports are:
+
+### Build Reports
+
+`build-reports --path <optional-path>`
+
+Build reports command generates all reports into a json array. 
+
+It builds these reports from source files within the dir passed as an argument to this command. It will attempt to build a report from any dir containing a `report-manifest.json` file. Any file structure can be used as this command will search recursively through the directories.
+
+If no path is passed, the build-reports command defaults to the `reports` dir containing OMS standard reports.
+
+### Upsert Reports
+
+`upsert-reports --path <optional-path> --overwrite (optional)`
+
+Upsert reports command inserts or upserts reports from a json array located in the path passed as the `path` argument.
+
+This command will upsert if the `-o` or `--overwrite` flag is passed.
+If no overwrite flag is passed, it will default to insert.
+
+If no path is passed, it will look for in the `reports/generated/standard-reports.json` file for the array of standard reports.
+This file is a committed file.
+
+### Reload Embedded Reports
+
+`reload-embedded-reports`
+
+This command upserts and updates oms standard reports to the current branch.
+
+Open mSupply standard reports are embedded during building from the `reports/generated/standard-reports.json` file. Embedded reports are included in release builds, and are therefore accessible on testing builds where the OMS repo file structure is not available.
+
+This command is used to update standard reports to the current branch in databases on live or test builds.
+
+### Show Report
+
+`show-report --path <path-to-report-dir-containing-report-manifest.json> --config <optional-path-to-dir-containing-test-config.json>
+
+Show report replaces previously used print.sh and show.sh bash commands on the OMS reports repo.
+
+Running this command will generate and open an html file of the report.
+
+This command uses a `test-config.json` file located in the reports dir containing all arguments used to generate the report.
+
+A custom test-config.json file can be used to render with specific arguments by passing a path to a dir containing a report specific `test-config.json file`
+
+## Development
+
+Other functionality, and processes used in report development are:
+
+[Translating of reports](#translating-reports)
+[Standard vs custom reports]
+[Report versioning](#report-versioning)
+[Wasm functions](#wasm-functions)
+[Development processes](#development-processes)
+[File Structure]
+
+### Translating reports
+
+Reports have the option to allow for translations using the same localisation suite we use for front end translations.
+
+Translating functionality should be used in standard reports. Custom reports for specific clients typically are hard coded.
+
+This can be implemented in the report by adding the following translation function in place of your text:
+
+```
+{{t(k="label.name", f="Name")}}
 ```
 
-Reports can be upserted using
+By default,
 
-```bash
-./target/debug/remote_server_cli upsert-reports
+Where the letters are short hand for the following:
+
+- t for translate
+  The name of the function
+- k for key
+  This is the locale key as is used in front end translations.
+- f for fallback
+  This is an optional fallback text if the translation cannot be found.
+- n for namespace
+  The file namespace where the translation key is. The .json extention is automatically added ie catalogue (which refers to the catalogue.json namespace).
+  By default, the translation in common.json translations will be used.
+  Note all translation files have been consolidated into the common.json namespace, so the namespace parameter is no longer user. However, functionality is retained in case we are needing customer specific namespaces in future.
+  If a specific namespace needs to be called, you can add this 'n' key into your function.
+
+```
+    {{t(k="label.name", n="catalogue", f="Name")}}
 ```
 
-Because this command utilises the built cli, you will need to first run
+The current user language is passed through graphql when a user requests a report to be generated. This is the language used in translations.
 
-```
-cargo build
-```
+The translation function has a number of fallback translations which it will search through if the translation cannot be found.
 
-from the open-msupply/server dir.
+First it will look for the translation key within the nominated namespace and language
+Next it will fallback to the translation in the common.json namespace and nominated language
+Next it will fallback to the english translation of the nominated key and nominated namespace
+Next it will fallback to the english translation of the nominated key in the common.json namespace
+Next it will fallback to the fallback text provided in the report which by default will be in english
 
-### Wasm functions
+If none of the above can be found, report will fail to render.
 
-Report generations includes the ability to use custom wasm functions to further extend and customise data.
-OMS includes building of JS wasm functions by adding a "convert_data" dir in the version dir.
-See [the extism-js docs](https://github.com/extism/js-pdk) for more details on how to build wasm functions with js within OMS.
-
-`make sure extism-js version 1.3.0 and above is installed`, otherwise you may get `uncreacheable error` as per this [comment](https://github.com/msupply-foundation/open-msupply/issues/5312#issuecomment-2489548208)
-
-Alternatively wasm functions can be built externally using any compatible language using extism-PDK ([see wasm docs for more details](https://webassembly.org/getting-started/developers-guide/)), and added as a custom wasm function.
-
-> Note custom wasm data functions will be used if both custom functions and JS wasm function builder files are both specified
-
-#### Logging in wasm functions
-
-Console errors, infos, and logs in wasm functions are propagated up into the server under a info! macro callback. These can be saved to file, or logged to the server terminal for easy debugging.
-
-Log destination is configured in the base.yaml file under logging.
-
-## Standard reports versioning
-
-Standard reports include a version parameter to control what reports are used and displayed by the front end.
-Report use is controlled by version and code parameters. One report will be used per code.
-For a given code, priority is given first to custom reports of a code, and then standard reports if no custom reports exist. The report with the latest compatible version will be used for each report code.
-Version compatibility is measured by being less than or equal to the app major and minor version. Reports with the same major and minor versions but later patch versions are considered compatible with the app.
-
-> eg: 2.4.12 version report will be compatible with a 2.4.2 app. But a 2.5.0 report will not be compatible.
-
-In the case where there are custom reports, but none are compatible with the app version, the highest compatibly versioned standard report will be used.
-
-This system allows OMS to have multiple reports upserted (and later synced) to distributed instances of different versions, and be able to function with compatible reports.
-
-<!-- For example:
-
-for report_versions = [2.3.0, 2.3.5, 2.8.2, 2.8.3, 3.0.1, 3.5.1]
-if remote omSupply.version = 2.3 selected report = 2.3.5
-if remote omSupply.version = 2.4 selected report = 2.3.5
-if remote omSupply.version = 2.8 selected report = 2.8.3
-if remote omSupply.version = 3.2 selected report = 3.0.1
-if remote omSupply.version = 4.5 selected report = 3.5.1 -->
-
-### Adding a new standard report version or custom report
-
-The simplest way is to:
-
-- Copy the version dir of the report you want to make a custom or new standard report for, and paste it into the same location.
-- Bump the version number
-- Change the version dir name to match the version number.
-- Change the is_custom boolean to true if the report will be a custom report.
-
-> The dir names are for developer convenience only. The name and version of each report read by omSupply is from the report-manifest.json file.
-
-New report versions must be compatible with the matching major and minor versions of the OMS app.
-
-## Developing standard reports
-
-The easiest way to make and test new standard reports is through the 'open-msupply-reports' repo.
-Reports can be built and tested directly from the 'open-msupply' repo, but developers won't have access to print.sh or show.sh scripts with dummy data.
-
-Once changes are satisfactory, new reports can be moved directly into the OMS repo under a new version dir.
-
-> reports won't show up in OMS unless they are built into the generated json using the `build-reports` command, and then upserted with the `upsert-reports` command.
-
-## Localising JSON form fields
+#### Translating Argument UI Schema
 
 Fields in UI schema can be translated our inbuilt translating function.
 
@@ -410,6 +270,99 @@ Where value is the translated value of 'label.value' in our `common.json` transl
 The "label" of the ui schema controls the text displayed in the front end report filtering modal.
 
 This function could also be used on any other serialised json value such as patient json schema.
+
+### Standard and Custom Reports
+
+Reports are separated into standard and custom reports.
+
+Standard reports are included in the OMS repo, and all source files are committed.
+
+Custom reports, which can contain client specific data, are located in the private open-msupply-reports repo. This is to ensure confidentiality
+
+Standard reports are upserted into the database on startup.
+The committed json file `standard-reports.json` includes all standard reports, and all versions of each report. 
+
+Otherwise the `open-msupply` standard reports, and `open-msupply-reports` custom reports function in the same way. They can both be built and upserted as a json array using OMS [CLI tools](#cli-tools).
+
+### Report versioning
+
+Reports include a version parameter to control what reports are used and displayed by the front end.
+Report use is controlled by `version` and `code` parameters. One report will be presented by the front end per code.
+For a given code, priority is given first to custom reports of a code, and then standard reports if no custom reports exist. The report with the latest compatible version will be used for each report code.
+Version compatibility is measured by being less than or equal to the app major and minor version. Reports with the same major and minor versions but later patch versions are considered compatible with the app.
+
+> eg: 2.4.12 version report will be compatible with a 2.4.2 app. But a 2.5.0 report will not be compatible.
+
+In the case where there are custom reports, but none are compatible with the app version, the highest compatibly versioned standard report will be used.
+
+This system allows OMS to have multiple reports upserted (and later synced) to distributed instances of different versions, and be able to function with compatible reports.
+
+A report can be built as custom by editing the report-manifest.json to:
+
+```json
+"is_custom": true
+```
+
+<!-- For example:
+
+for report_versions = [2.3.0, 2.3.5, 2.8.2, 2.8.3, 3.0.1, 3.5.1]
+if remote omSupply.version = 2.3 selected report = 2.3.5
+if remote omSupply.version = 2.4 selected report = 2.3.5
+if remote omSupply.version = 2.8 selected report = 2.8.3
+if remote omSupply.version = 3.2 selected report = 3.0.1
+if remote omSupply.version = 4.5 selected report = 3.5.1 -->
+
+### Wasm functions
+
+Report generations includes the ability to use custom wasm functions to further extend and customise data.
+OMS includes building of JS wasm functions by adding a [convert_data_js](#convert_data_js-dir) dir in the report dir.
+
+See [the extism-js docs](https://github.com/extism/js-pdk) for more details on how to build wasm functions with js within OMS.
+
+`make sure extism-js version 1.3.0 and above is installed`, otherwise you may get `uncreacheable error` as per this [comment](https://github.com/msupply-foundation/open-msupply/issues/5312#issuecomment-2489548208)
+
+Alternatively wasm functions can be built externally using any compatible language using extism-PDK ([see wasm docs for more details](https://webassembly.org/getting-started/developers-guide/)), and added as a custom wasm function.
+
+> Note custom wasm data functions will be used if both custom functions and JS wasm function builder files are both specified
+
+#### Logging in wasm functions
+
+Console errors, infos, and logs in wasm functions are propagated up into the server under a info! macro callback. These can be saved to file, or logged to the server terminal for easy debugging.
+
+Log destination is configured in the `base.yaml` file under logging.
+
+### Development processes
+
+Creating a new report generates a large dif and can be difficult to review and test.
+
+#### sub-pr
+
+To reduce PR review overhead when making a new major or minior version of a report, it is encouraged to first make a sub pull request duplicating the report source files.
+
+This duplication can be quickly validated.
+
+A subsequent PR with changes to these source files is easier to review by identifying only relevant changes.
+
+#### patch overwriting
+
+The simplest way is to:
+
+- Copy the version dir of the report you want to make a custom or new standard report for, and paste it into the same location.
+- Bump the version number
+- Change the version dir name to match the version number.
+- Change the is_custom boolean to true if the report will be a custom report.
+
+> The dir names are for developer convenience only. The name and version of each report read by omSupply is from the report-manifest.json file.
+
+New report versions must be compatible with the matching major and minor versions of the OMS app.
+
+
+
+## Maintenance
+
+The OMS CLI provides tools for managing and developing reports within an omSupply instance. It allows users to build, upsert, and test reports, streamlining the development and deployment process.
+
+
 
 ## Report tools show command
 
