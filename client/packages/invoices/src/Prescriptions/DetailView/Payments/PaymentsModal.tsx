@@ -25,7 +25,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
 
   const fields = [
     {
-      label: 'Total to be paid',
+      label: t('label.total-to-be-paid'),
       type: 'number',
       value: data?.pricing.totalAfterTax,
     },
