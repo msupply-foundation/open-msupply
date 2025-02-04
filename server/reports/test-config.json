@@ -8,8 +8,6 @@
     "password": "pass",
     "//": "Arguments for standard reports",
     "arguments": {},
-    "//": "Locale to generate report. Defaults to en",
-    "locale": "",
     "//": "Output file name",
     "output_filename": "report_to_show"
 }
