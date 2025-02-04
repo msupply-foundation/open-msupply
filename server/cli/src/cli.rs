@@ -176,7 +176,8 @@ enum Action {
         /// Path to report source files which will be built and displayed
         #[clap(short, long)]
         path: PathBuf,
-        /// Optional test config path location for non standard test config file
+        /// Optional
+        /// Path to custom test config file
         #[clap(short, long)]
         config: Option<PathBuf>,
     },
