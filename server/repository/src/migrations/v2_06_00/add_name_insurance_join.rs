@@ -27,7 +27,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    CREATE TYPE insurance_policy_type AS ENUM ('Personal', 'Business');
+                    CREATE TYPE insurance_policy_type AS ENUM ('PERSONAL', 'BUSINESS');
                 "#
             )?;
         }
