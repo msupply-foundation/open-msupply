@@ -978,4 +978,4 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     }
   };
 }
-export type Sdk = ReturnType<typeof getSdk>;e Sdk = ReturnType<typeof getSdk>;
+export type Sdk = ReturnType<typeof getSdk>;
