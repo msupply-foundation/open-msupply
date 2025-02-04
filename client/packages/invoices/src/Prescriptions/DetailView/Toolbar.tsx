@@ -9,9 +9,9 @@ import {
   Formatter,
   DateUtils,
   useConfirmationModal,
-  useBufferState,
   BasicTextInput,
   Tooltip,
+  useDebouncedValueCallback,
 } from '@openmsupply-client/common';
 import {
   PatientSearchInput,
@@ -66,8 +66,12 @@ export const Toolbar: FC = () => {
 
   const t = useTranslation();
 
-  const [theirReferenceBuffer, setTheirReferenceBuffer] =
-    useBufferState(theirReference);
+  const [theirReferenceInput, setTheirReferenceInput] =
+    useState(theirReference);
+
+  const debouncedUpdate = useDebouncedValueCallback(update, [
+    theirReferenceInput,
+  ]);
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
@@ -168,15 +172,16 @@ export const Toolbar: FC = () => {
             <InputWithLabelRow
               label={t('label.reference')}
               Input={
-                <Tooltip title={theirReferenceBuffer} placement="bottom-start">
+                <Tooltip title={theirReferenceInput} placement="bottom-start">
                   <BasicTextInput
                     disabled={isDisabled}
                     size="small"
                     sx={{ width: 250 }}
-                    value={theirReferenceBuffer ?? ''}
+                    value={theirReferenceInput ?? ''}
                     onChange={event => {
-                      setTheirReferenceBuffer(event.target.value);
-                      update({ theirReference: event.target.value });
+                      setTheirReferenceInput(event.target.value);
+                      debouncedUpdate({ theirReference: event.target.value });
+                      // update({ theirReference: event.target.value });
                     }}
                   />
                 </Tooltip>
