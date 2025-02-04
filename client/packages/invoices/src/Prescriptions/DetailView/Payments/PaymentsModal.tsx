@@ -1,9 +1,17 @@
 import React, { FC, ReactElement } from 'react';
-import { DialogButton } from '@common/components';
-import { Grid, TextField } from '@openmsupply-client/common';
+import { DialogButton, InputWithLabelRow } from '@common/components';
+import { Grid, CurrencyInput } from '@openmsupply-client/common';
 import { useDialog } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { usePrescription } from '../../api';
+import { noop } from 'lodash';
+
+interface PaymentModalField {
+  label: string;
+  value?: number;
+  disabled?: boolean;
+  onChange: (value: number) => void;
+}
 
 interface PaymentsModalProps {
   isOpen: boolean;
@@ -23,11 +31,12 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     query: { data },
   } = usePrescription();
 
-  const fields = [
+  const fields: PaymentModalField[] = [
     {
       label: t('label.total-to-be-paid'),
-      type: 'number',
       value: data?.pricing.totalAfterTax,
+      disabled: true,
+      onChange: noop,
     },
     // Data not available yet!
     // { label: 'Outstanding payment' }
@@ -54,19 +63,18 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
         />
       }
     >
-      <Grid container spacing={3}>
-        {fields.map(({ type, label, value }, index) => (
+      <Grid container spacing={3} justifyContent="center">
+        {fields.map(({ label, value, disabled = false, onChange }, index) => (
           <Grid key={index} size={4}>
-            <TextField
-              fullWidth
-              type={type}
+            <InputWithLabelRow
               label={label}
-              value={value}
-              sx={{
-                '& .MuiInputBase-root': {
-                  borderRadius: 2,
-                },
-              }}
+              Input={
+                <CurrencyInput
+                  value={value}
+                  disabled={disabled}
+                  onChangeNumber={onChange}
+                />
+              }
             />
           </Grid>
         ))}
