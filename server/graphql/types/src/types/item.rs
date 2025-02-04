@@ -145,8 +145,10 @@ impl ItemNode {
 
     pub async fn item_directions(&self, ctx: &Context<'_>) -> Result<Vec<ItemDirectionNode>> {
         let loader = ctx.get_loader::<DataLoader<ItemDirectionsByItemIdLoader>>();
-        let result = loader.load_one(self.row().id.clone()).await?;
-        let result = result.unwrap_or_default();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
 
         Ok(ItemDirectionNode::from_vec(result))
     }
