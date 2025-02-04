@@ -85,6 +85,7 @@ pub fn generate(
             note: line.note.clone(),
             r#type: StockOutType::SupplierReturn,
             // Default
+            prescribed_quantity: None,
             tax_percentage: None,
             total_before_tax: None,
             location_id: None,

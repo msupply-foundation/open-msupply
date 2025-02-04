@@ -24,6 +24,7 @@ export const createStockOutPlaceholderRow = (
   sellPricePerPack: 0,
   costPricePerPack: 0,
   numberOfPacks: 0,
+  prescribedQuantity: 0,
   isCreated: true,
   isUpdated: false,
   invoiceId,
@@ -69,6 +70,7 @@ export const createDraftStockOutLineFromStockLine = ({
     isUpdated: false,
     type: InvoiceLineNodeType.StockOut,
     numberOfPacks: 0,
+    prescribedQuantity: 0,
     location: stockLine?.location,
     expiryDate: stockLine?.expiryDate,
     sellPricePerPack,
@@ -192,7 +194,8 @@ export const allocateQuantities =
   (
     newValue: number,
     issuePackSize: number | null,
-    allowPartialPacks: boolean = false
+    allowPartialPacks: boolean = false,
+    prescribedQuantity: number | null
   ) => {
     // if invalid quantity entered, don't allocate
     if (newValue < 0 || Number.isNaN(newValue)) {
@@ -266,6 +269,16 @@ export const allocateQuantities =
       });
     }
 
+    //  Prescribed Quantity should only be saved on the first allocated line.
+    //  Only one line should have prescribed quantity per item.
+    //  If the line with prescribed quantity is deleted or has 0 stock, save it to the next line.
+    //  Can be saved against a placeholder if no stock is allocated.
+    assignPrescribedQuantity(
+      newDraftStockOutLines,
+      prescribedQuantity,
+      placeholder
+    );
+
     if (status === InvoiceNodeStatus.New) {
       const placeholderIdx = newDraftStockOutLines.findIndex(
         ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
@@ -296,6 +309,7 @@ export const allocateQuantities =
         }
       }
     }
+
     return newDraftStockOutLines;
   };
 
@@ -390,6 +404,34 @@ const reduceBatchAllocation = ({
       };
     });
   return -toAllocate;
+};
+
+export const assignPrescribedQuantity = (
+  newDraftStockOutLines: DraftStockOutLine[],
+  prescribedQuantity: number | null,
+  placeholder: DraftStockOutLine | undefined
+) => {
+  let prescribedQuantityAssigned = false;
+
+  newDraftStockOutLines.forEach(stockOutLine => {
+    if (stockOutLine.numberOfPacks > 0 && !prescribedQuantityAssigned) {
+      stockOutLine.prescribedQuantity = prescribedQuantity;
+      prescribedQuantityAssigned = true;
+    } else {
+      stockOutLine.prescribedQuantity = 0;
+    }
+  });
+
+  // If no stock is allocated, assign it to the placeholder stock
+  if (!prescribedQuantityAssigned && placeholder) {
+    const placeholderIdx = newDraftStockOutLines.findIndex(
+      ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+    );
+    newDraftStockOutLines[placeholderIdx] = {
+      ...placeholder,
+      prescribedQuantity,
+    };
+  }
 };
 
 export const shouldUpdatePlaceholder = (
