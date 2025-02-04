@@ -45,6 +45,7 @@ import defaultPatientSchema from './DefaultPatientSchema.json';
 import defaultPatientUISchema from './DefaultPatientUISchema.json';
 import { VaccinationCardsListView } from '../VaccinationCard/ListView';
 import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
+import { InsuranceListView } from '../InsuranceView';
 
 const DEFAULT_SCHEMA: SchemaData = {
   formSchemaId: undefined,
@@ -296,6 +297,7 @@ export enum PatientTabValue {
   Encounters = 'encounters',
   ContactTracing = 'contact-tracing',
   Vaccinations = 'vaccinations',
+  Insurance = 'insurance',
 }
 
 /**
@@ -358,6 +360,10 @@ export const PatientView = () => {
         key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
         dir: 'desc' as 'desc' | 'asc',
       },
+    },
+    {
+      Component: <InsuranceListView />,
+      value: PatientTabValue.Insurance,
     },
   ];
 
