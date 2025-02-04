@@ -145,6 +145,7 @@ const DataRowComponent = <T extends RecordWithId>({
                       autocompleteName={column.autocompleteProvider?.(rowData)}
                       localisedText={localisedText}
                       localisedDate={localisedDate}
+                      {...column.cellProps}
                     />
                   }
                 </TableCell>

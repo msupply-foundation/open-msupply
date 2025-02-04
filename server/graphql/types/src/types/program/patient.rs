@@ -2,7 +2,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Local, NaiveDate, Utc};
 use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
-use graphql_core::loader::DocumentLoader;
+use graphql_core::loader::{DocumentLoader, PatientLoader};
 use graphql_core::{map_filter, ContextExt};
 
 use graphql_core::pagination::PaginationInput;
@@ -45,6 +45,7 @@ pub struct PatientFilterInput {
     pub identifier: Option<StringFilterInput>,
     pub date_of_death: Option<DateFilterInput>,
     pub program_enrolment_name: Option<StringFilterInput>,
+    pub next_of_kin_name: Option<StringFilterInput>,
 }
 
 impl From<PatientFilterInput> for PatientFilter {
@@ -66,6 +67,7 @@ impl From<PatientFilterInput> for PatientFilter {
             identifier: f.identifier.map(StringFilter::from),
             date_of_death: f.date_of_death.map(DateFilter::from),
             program_enrolment_name: f.program_enrolment_name.map(StringFilter::from),
+            next_of_kin_name: f.next_of_kin_name.map(StringFilter::from),
         }
     }
 }
@@ -205,10 +207,33 @@ impl PatientNode {
         self.patient.date_of_death
     }
 
+    pub async fn next_of_kin_id(&self) -> &Option<String> {
+        &self.patient.next_of_kin_id
+    }
+
     pub async fn created_datetime(&self) -> Option<DateTime<Utc>> {
         self.patient.created_datetime.map(|created_datetime| {
             DateTime::<Utc>::from_naive_utc_and_offset(created_datetime, Utc)
         })
+    }
+
+    pub async fn next_of_kin(&self, ctx: &Context<'_>) -> Result<Option<PatientNode>> {
+        let Some(next_of_kin_id) = &self.patient.next_of_kin_id else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
+
+        let result = loader
+            .load_one(next_of_kin_id.to_owned())
+            .await?
+            .map(|patient| PatientNode {
+                patient,
+                allowed_ctx: self.allowed_ctx.clone(),
+                store_id: self.store_id.clone(),
+            });
+
+        Ok(result)
     }
 
     pub async fn document(&self, ctx: &Context<'_>) -> Result<Option<DocumentNode>> {

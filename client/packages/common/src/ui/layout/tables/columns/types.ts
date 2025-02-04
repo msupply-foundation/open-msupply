@@ -90,6 +90,10 @@ export interface Column<T extends RecordWithId> {
   backgroundColor?: string;
 
   Cell: JSXElementConstructor<CellProps<T>>;
+  // For passing additional props to the above Cell -- ⚠️ use with caution as
+  // these are not properly typed
+  cellProps?: Record<string, unknown>;
+
   Header: JSXElementConstructor<HeaderProps<T>>;
 
   formatter: ColumnDataFormatter;

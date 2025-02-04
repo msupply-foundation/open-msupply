@@ -1,5 +1,6 @@
 use repository::{StorageConnection, StorePreferenceRow, StorePreferenceType, SyncBufferRow};
 use serde::{Deserialize, Serialize};
+use util::constants::DEFAULT_AMC_LOOKBACK_MONTHS;
 
 use crate::sync::sync_serde::string_to_f64;
 
@@ -137,7 +138,11 @@ impl SyncTranslation for StorePreferenceTranslation {
             om_program_module,
             vaccine_module,
             issue_in_foreign_currency,
-            monthly_consumption_look_back_period,
+            monthly_consumption_look_back_period: if monthly_consumption_look_back_period == 0.0 {
+                DEFAULT_AMC_LOOKBACK_MONTHS
+            } else {
+                monthly_consumption_look_back_period
+            },
             months_lead_time,
             months_overstock,
             months_understock,

@@ -14,6 +14,7 @@ export const sortFieldMap: Record<string, InvoiceSortFieldInput> = {
   comment: InvoiceSortFieldInput.Comment,
   invoiceNumber: InvoiceSortFieldInput.InvoiceNumber,
   status: InvoiceSortFieldInput.Status,
+  pickedDatetime: InvoiceSortFieldInput.PickedDatetime,
 };
 
 export const mapStatus = (patch: RecordPatch<PrescriptionRowFragment>) => {
@@ -31,10 +32,11 @@ export const createInputObject = (
   line: DraftStockOutLine,
   type: 'insert' | 'update' | 'delete'
 ) => {
-  const { id, numberOfPacks, stockLine, invoiceId, note } = line;
+  const { id, numberOfPacks, prescribedQuantity, stockLine, invoiceId, note } =
+    line;
 
   const stockLineId = stockLine?.id ?? '';
-  const output = { id, numberOfPacks, stockLineId, note };
+  const output = { id, numberOfPacks, stockLineId, note, prescribedQuantity };
 
   switch (type) {
     case 'delete':
