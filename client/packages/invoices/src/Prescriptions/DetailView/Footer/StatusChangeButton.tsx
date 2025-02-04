@@ -146,6 +146,7 @@ const useStatusChangeButton = () => {
     isEmptyLines,
     isDisabled,
     showPaymentWindow,
+    onConfirmStatusChange,
   };
 };
 
@@ -161,6 +162,7 @@ export const StatusChangeButton = () => {
     isEmptyLines,
     isDisabled,
     showPaymentWindow,
+    onConfirmStatusChange,
   } = useStatusChangeButton();
 
   const emptyLinesNotifications = useDisabledNotificationToast(
@@ -186,7 +188,11 @@ export const StatusChangeButton = () => {
         Icon={<ArrowRightIcon />}
         onClick={onStatusClick}
       />
-      <PaymentsModal isOpen={isOpen} onClose={onClose} />
+      <PaymentsModal
+        isOpen={isOpen}
+        onClose={onClose}
+        handleConfirm={onConfirmStatusChange}
+      />
     </>
   );
 };

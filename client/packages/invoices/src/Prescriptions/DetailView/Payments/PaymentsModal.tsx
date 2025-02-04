@@ -8,11 +8,13 @@ import { usePrescription } from '../../api';
 interface PaymentsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  handleConfirm: () => void;
 }
 
 export const PaymentsModal: FC<PaymentsModalProps> = ({
   isOpen,
   onClose,
+  handleConfirm,
 }): ReactElement => {
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
@@ -49,7 +51,15 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     <Modal
       width={900}
       title={t('title.payment')}
-      okButton={<DialogButton variant="save" onClick={onClose} />}
+      okButton={
+        <DialogButton
+          variant="save"
+          onClick={() => {
+            handleConfirm();
+            onClose();
+          }}
+        />
+      }
     >
       <Grid container spacing={3}>
         {fields.map(({ type, label, value, onChange }, index) => (
