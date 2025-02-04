@@ -19,6 +19,7 @@ pub struct InsertStockOutLine {
     pub invoice_id: String,
     pub stock_line_id: String,
     pub number_of_packs: f64,
+    pub prescribed_quantity: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<f64>,
     pub note: Option<String>,

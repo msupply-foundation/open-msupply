@@ -2,7 +2,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Local, NaiveDate, Utc};
 use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
-use graphql_core::loader::DocumentLoader;
+use graphql_core::loader::{DocumentLoader, PatientLoader};
 use graphql_core::{map_filter, ContextExt};
 
 use graphql_core::pagination::PaginationInput;
@@ -215,6 +215,25 @@ impl PatientNode {
         self.patient.created_datetime.map(|created_datetime| {
             DateTime::<Utc>::from_naive_utc_and_offset(created_datetime, Utc)
         })
+    }
+
+    pub async fn next_of_kin(&self, ctx: &Context<'_>) -> Result<Option<PatientNode>> {
+        let Some(next_of_kin_id) = &self.patient.next_of_kin_id else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
+
+        let result = loader
+            .load_one(next_of_kin_id.to_owned())
+            .await?
+            .map(|patient| PatientNode {
+                patient,
+                allowed_ctx: self.allowed_ctx.clone(),
+                store_id: self.store_id.clone(),
+            });
+
+        Ok(result)
     }
 
     pub async fn document(&self, ctx: &Context<'_>) -> Result<Option<DocumentNode>> {

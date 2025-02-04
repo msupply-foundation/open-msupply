@@ -3,9 +3,9 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type PartialStockLineFragment = { __typename: 'StockLineNode', id: string, itemId: string, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null };
+export type PartialStockLineFragment = { __typename: 'StockLineNode', id: string, itemId: string, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, costPricePerPack: number, sellPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null };
 
-export type StockOutLineFragment = { __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, invoiceId: string, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string } } | null };
+export type StockOutLineFragment = { __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, prescribedQuantity?: number | null, packSize: number, invoiceId: string, costPricePerPack: number, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, costPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string } } | null };
 
 export type DummyQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -19,6 +19,7 @@ export const PartialStockLineFragmentDoc = gql`
   availableNumberOfPacks
   totalNumberOfPacks
   onHold
+  costPricePerPack
   sellPricePerPack
   packSize
   expiryDate
@@ -43,8 +44,10 @@ export const StockOutLineFragmentDoc = gql`
   batch
   expiryDate
   numberOfPacks
+  prescribedQuantity
   packSize
   invoiceId
+  costPricePerPack
   sellPricePerPack
   note
   totalBeforeTax
@@ -75,6 +78,7 @@ export const StockOutLineFragmentDoc = gql`
     totalNumberOfPacks
     onHold
     sellPricePerPack
+    costPricePerPack
     packSize
     expiryDate
     item {

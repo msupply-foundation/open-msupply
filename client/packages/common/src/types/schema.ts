@@ -2932,6 +2932,7 @@ export type InsertPrescriptionInput = {
   diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
+  programId?: InputMaybe<Scalars['String']['input']>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -2949,6 +2950,7 @@ export type InsertPrescriptionLineInput = {
   invoiceId: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacks: Scalars['Float']['input'];
+  prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
   stockLineId: Scalars['String']['input'];
 };
 
@@ -3424,6 +3426,7 @@ export type InvoiceLineNode = {
   note?: Maybe<Scalars['String']['output']>;
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
+  prescribedQuantity?: Maybe<Scalars['Float']['output']>;
   pricing: PricingNode;
   returnReason?: Maybe<ReturnReasonNode>;
   returnReasonId?: Maybe<Scalars['String']['output']>;
@@ -3498,6 +3501,7 @@ export type InvoiceNode = {
   patient?: Maybe<PatientNode>;
   pickedDatetime?: Maybe<Scalars['DateTime']['output']>;
   pricing: PricingNode;
+  programId?: Maybe<Scalars['String']['output']>;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
    * Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
@@ -3650,6 +3654,7 @@ export type ItemFilterInput = {
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   /** Items that are part of a masterlist which is visible in this store OR there is available stock of that item in this store */
   isVisibleOrOnHand?: InputMaybe<Scalars['Boolean']['input']>;
+  masterListId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
 };
@@ -5258,6 +5263,7 @@ export type PatientNode = {
   isDeceased: Scalars['Boolean']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  nextOfKin?: Maybe<PatientNode>;
   nextOfKinId?: Maybe<Scalars['String']['output']>;
   phone?: Maybe<Scalars['String']['output']>;
   programEnrolments: ProgramEnrolmentResponse;
@@ -8262,6 +8268,7 @@ export type UpdateOutboundShipmentLineErrorInterface = {
 export type UpdateOutboundShipmentLineInput = {
   id: Scalars['String']['input'];
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   tax?: InputMaybe<TaxInput>;
 };
@@ -8397,6 +8404,7 @@ export type UpdatePrescriptionInput = {
   id: Scalars['String']['input'];
   patientId?: InputMaybe<Scalars['String']['input']>;
   prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
+  programId?: InputMaybe<NullableStringUpdate>;
   status?: InputMaybe<UpdatePrescriptionStatusInput>;
   theirReference?: InputMaybe<NullableStringUpdate>;
 };
@@ -8414,6 +8422,7 @@ export type UpdatePrescriptionLineInput = {
   id: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
 };
 
