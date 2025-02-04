@@ -80,7 +80,7 @@
           "label": "Next of Kin",
           "options": {
             "source": "user",
-            "searchFields": ["firstName", "lastName"],
+        "searchFields": ["name"],
             "saveFields": ["id", "name"],
             "elements": [
               {
