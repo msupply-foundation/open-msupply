@@ -5273,6 +5273,12 @@ export type PatientNode = {
   name: Scalars['String']['output'];
   nextOfKin?: Maybe<PatientNode>;
   nextOfKinId?: Maybe<Scalars['String']['output']>;
+  /**
+   * This is a separately captured field than the nextOfKin node
+   * to allow recording of next of kin name where a patient record for
+   * the next of kin does not exist.
+   */
+  nextOfKinName?: Maybe<Scalars['String']['output']>;
   phone?: Maybe<Scalars['String']['output']>;
   programEnrolments: ProgramEnrolmentResponse;
   website?: Maybe<Scalars['String']['output']>;
