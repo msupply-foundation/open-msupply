@@ -171,6 +171,7 @@ const createSearchFilter = (
       ? (data['gender'] as GenderType)
       : undefined,
     lastName: searchFields.includes('lastName') ? data['lastName'] : undefined,
+    name: searchFields.includes('name') ? data['name'] : undefined,
     identifier: searchFields.includes('identifier')
       ? data['identifier']
       : undefined,
