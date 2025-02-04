@@ -43,7 +43,7 @@ pub fn generate(
         tax_percentage: None,
         on_hold: false,
         comment: None,
-        their_reference: None,
+        their_reference,
         transport_reference: None,
         allocated_datetime: None,
         picked_datetime: None,
