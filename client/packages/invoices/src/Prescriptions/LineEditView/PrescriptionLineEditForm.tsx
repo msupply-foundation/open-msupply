@@ -18,6 +18,11 @@ import {
   LocaleKey,
   NumUtils,
   ItemNode,
+  useAuthContext,
+  DropdownMenu,
+  DropdownMenuItem,
+  TextArea,
+  InputWithLabelRow,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -34,6 +39,7 @@ import { DraftStockOutLine } from '../../types';
 import { isA } from '../../utils';
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
+import { getPrescriptionDirections } from './getPrescriptionDirections';
 
 interface PrescriptionLineEditFormProps {
   allocatedUnits: number;
@@ -43,7 +49,8 @@ interface PrescriptionLineEditFormProps {
   onChangeQuantity: (
     quantity: number,
     packSize: number | null,
-    isAutoAllocated: boolean
+    isAutoAllocated: boolean,
+    prescribedQuantity: number | null
   ) => DraftStockOutLine[] | undefined;
   packSizeController: PackSizeController;
   disabled: boolean;
@@ -82,21 +89,33 @@ export const PrescriptionLineEditForm: React.FC<
   programId,
 }) => {
   const t = useTranslation();
-  const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
-  const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
+  const { store: { preferences } = {} } = useAuthContext();
+
+  const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
+  const [prescribedQuantity, setPrescribedQuantity] = useState<number | null>(
+    null
+  );
+  const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
+  const [defaultDirection, setDefaultDirection] = useState<string>();
+  const [abbreviation, setAbbreviation] = useState<string>('');
 
   const debouncedSetAllocationAlerts = useDebounceCallback(
     warning => setAllocationAlerts(warning),
     []
   );
 
-  const allocate = (numPacks: number, packSize: number) => {
+  const allocate = (
+    numPacks: number,
+    packSize: number,
+    prescribedQuantity: number
+  ) => {
     const newAllocateQuantities = onChangeQuantity(
       numPacks,
       packSize === -1 || packSize === 1 ? null : packSize,
-      true
+      true,
+      prescribedQuantity
     );
     const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
     const allocatedQuantity =
@@ -147,15 +166,18 @@ export const PrescriptionLineEditForm: React.FC<
   // See https://github.com/msupply-foundation/open-msupply/issues/2727
   // and https://github.com/msupply-foundation/open-msupply/issues/3532
   const debouncedAllocate = useDebouncedValueCallback(
-    (numPacks, packSize) => {
-      allocate(numPacks, packSize);
+    (numPacks, packSize, prescribedQuantity) => {
+      allocate(numPacks, packSize, prescribedQuantity);
     },
     [],
     500,
     [draftPrescriptionLines] // this is needed to prevent a captured enclosure of onChangeQuantity
   );
 
-  const handleIssueQuantityChange = (inputUnitQuantity?: number) => {
+  const handleIssueQuantityChange = (
+    inputUnitQuantity?: number,
+    quantityType: 'issue' | 'prescribed' = 'issue'
+  ) => {
     // this method is also called onBlur... check that there actually has been a
     // change in quantity (to prevent triggering auto allocation if only focus
     // has moved)
@@ -170,13 +192,36 @@ export const PrescriptionLineEditForm: React.FC<
         : 1;
 
     const numPacks = quantity / packSize;
-    debouncedAllocate(numPacks, Number(packSize));
+    debouncedAllocate(
+      numPacks,
+      Number(packSize),
+      quantityType === 'prescribed' ? inputUnitQuantity : prescribedQuantity
+    );
+  };
+
+  const handlePrescribedQuantityChange = (inputPrescribedQuantity?: number) => {
+    if (inputPrescribedQuantity == null) return;
+    setPrescribedQuantity(inputPrescribedQuantity);
+    handleIssueQuantityChange(inputPrescribedQuantity, 'prescribed');
   };
 
   const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);
   const note = prescriptionLineWithNote?.note ?? '';
 
   useEffect(() => {
+    const selectedItem = items.find(
+      prescriptionItem => prescriptionItem.id === item?.id
+    );
+    if (preferences?.editPrescribedQuantityOnPrescription) {
+      const newPrescribedQuantity: number =
+        selectedItem?.lines?.find(
+          ({ prescribedQuantity }) =>
+            prescribedQuantity != null && prescribedQuantity > 0
+        )?.prescribedQuantity ?? 0;
+
+      setPrescribedQuantity(newPrescribedQuantity);
+    }
+
     const newIssueQuantity = Math.round(
       allocatedUnits / Math.abs(Number(packSizeController.selected?.value || 1))
     );
@@ -190,6 +235,32 @@ export const PrescriptionLineEditForm: React.FC<
   }, [packSizeController.selected?.value, allocatedUnits]);
 
   const key = item?.id ?? 'new';
+
+  //MOCK DATA FOR TESTING ABBREVIATIONS
+  interface Option {
+    id: string;
+    name: string;
+    direction: string;
+  }
+  const options: Option[] = [
+    { id: '1', name: 'One', direction: '1 per day in the AM' },
+    { id: '2', name: 'Two', direction: '2 per Day' },
+    { id: '3', name: '3_5', direction: '3 1/2 per day' },
+  ];
+  const defaultDirections = [
+    { id: '1', item_link_id: 'a', direction: '1 per day', priority: 2 },
+    { id: '2', item_link_id: 'b', direction: '2 per day', priority: 3 },
+    { id: '3', item_link_id: 'c', direction: '3 per day', priority: 1 },
+  ];
+
+  //END OF MOCK DATA
+
+  const saveAbbreviation = () => {
+    if (!abbreviation) return;
+
+    const note = getPrescriptionDirections(abbreviation, options);
+    updateNotes(note);
+  };
 
   return (
     <Grid
@@ -242,27 +313,43 @@ export const PrescriptionLineEditForm: React.FC<
               alignItems="center"
               display="flex"
               flexDirection="row"
-              justifyContent="flex-start"
-              gap={1}
+              gap={5}
             >
-              <Grid>
-                <InputLabel style={{ fontSize: 12 }}>
+              {preferences?.editPrescribedQuantityOnPrescription && (
+                <Grid display="flex" alignItems="center" gap={1}>
+                  <InputLabel sx={{ fontSize: 12 }}>
+                    {t('label.prescribed-quantity')}
+                  </InputLabel>
+                  <NumericTextInput
+                    autoFocus={
+                      preferences?.editPrescribedQuantityOnPrescription
+                    }
+                    disabled={disabled}
+                    value={prescribedQuantity ?? undefined}
+                    onChange={handlePrescribedQuantityChange}
+                    min={0}
+                    decimalLimit={2}
+                    onBlur={() => {}}
+                  />
+                </Grid>
+              )}
+              <Grid display="flex" alignItems="center" gap={1}>
+                <InputLabel sx={{ fontSize: 12 }}>
                   {t('label.issue')}
                 </InputLabel>
-              </Grid>
-              <Grid>
                 <NumericTextInput
-                  autoFocus
+                  autoFocus={!preferences?.editPrescribedQuantityOnPrescription}
                   disabled={disabled}
                   value={issueUnitQuantity}
                   onChange={handleIssueQuantityChange}
                   min={0}
                   decimalLimit={2}
                 />
-              </Grid>
-              <Grid>
-                <InputLabel style={{ fontSize: 12 }}>
-                  {t('label.unit-plural', {
+                <InputLabel sx={{ fontSize: 12 }}>
+                  {t('label.unit-plural_one', {
+                    // unit-plural_one has been specified to deactivate pluralisation.
+                    // This is to handle the case where units have not been entered for the item.
+                    // see https://github.com/msupply-foundation/open-msupply/issues/5978
                     count: issueUnitQuantity,
                     unit: item?.unitName,
                   })}
@@ -289,15 +376,75 @@ export const PrescriptionLineEditForm: React.FC<
           defaultExpanded={(isNew || !note) && !disabled}
           key={item?.id ?? 'new'}
         >
-          <BasicTextInput
-            value={note}
-            disabled={disabled}
-            onChange={e => {
-              updateNotes(e.target.value);
-            }}
-            fullWidth
-            style={{ flex: 1 }}
-          />
+          <Grid container paddingBottom={1} gap={1} width={'100%'}>
+            <InputWithLabelRow
+              label={t('label.abbreviation')}
+              Input={
+                <BasicTextInput
+                  value={abbreviation}
+                  disabled={disabled}
+                  onChange={e => {
+                    setAbbreviation(e.target.value);
+                    setDefaultDirection('');
+                  }}
+                  onBlur={saveAbbreviation}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      saveAbbreviation();
+                    }
+                  }}
+                  style={{ flex: 1 }}
+                />
+              }
+            />
+            <DropdownMenu
+              sx={{ flex: 1 }}
+              selectSx={{ width: '100%' }}
+              label={
+                defaultDirection
+                  ? defaultDirection
+                  : t('placeholder.item-directions')
+              }
+              disabled={disabled}
+            >
+              {defaultDirections
+                .sort((a, b) => a.priority - b.priority)
+                .map(
+                  direction =>
+                    direction && (
+                      <DropdownMenuItem
+                        key={direction.id}
+                        value={direction.direction}
+                        onClick={() => {
+                          updateNotes(direction.direction);
+                          setDefaultDirection(direction.direction);
+                          setAbbreviation('');
+                        }}
+                        sx={{ fontSize: 14 }}
+                      >
+                        {direction.direction}
+                      </DropdownMenuItem>
+                    )
+                )}
+            </DropdownMenu>
+          </Grid>
+          <Grid>
+            <InputWithLabelRow
+              label={t('label.directions')}
+              Input={
+                <TextArea
+                  value={note}
+                  disabled={disabled}
+                  onChange={e => {
+                    updateNotes(e.target.value);
+                    setAbbreviation('');
+                    setDefaultDirection('');
+                  }}
+                  style={{ flex: 1 }}
+                />
+              }
+            />
+          </Grid>
         </AccordionPanelSection>
       )}
       {/* {!item && <Box height={100} />} */}
