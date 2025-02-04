@@ -89,7 +89,9 @@ export const PrescriptionLineEditForm: React.FC<
   const { store: { preferences } = {} } = useAuthContext();
 
   const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
-  const [prescribedQuantity, setPrescribedQuantity] = useState(0);
+  const [prescribedQuantity, setPrescribedQuantity] = useState<number | null>(
+    null
+  );
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
 
   const debouncedSetAllocationAlerts = useDebounceCallback(
@@ -192,7 +194,8 @@ export const PrescriptionLineEditForm: React.FC<
 
   const handlePrescribedQuantityChange = (inputPrescribedQuantity?: number) => {
     if (inputPrescribedQuantity == null) return;
-    setPrescribedQuantity(inputPrescribedQuantity);
+    if (preferences?.editPrescribedQuantityOnPrescription)
+      setPrescribedQuantity(inputPrescribedQuantity);
     handleIssueQuantityChange(inputPrescribedQuantity, 'prescribed');
   };
 
@@ -203,13 +206,15 @@ export const PrescriptionLineEditForm: React.FC<
     const selectedItem = items.find(
       prescriptionItem => prescriptionItem.id === item?.id
     );
-    const newPrescribedQuantity: number =
-      selectedItem?.lines?.find(
-        ({ prescribedQuantity }) =>
-          prescribedQuantity != null && prescribedQuantity > 0
-      )?.prescribedQuantity ?? 0;
+    if (preferences?.editPrescribedQuantityOnPrescription) {
+      const newPrescribedQuantity: number =
+        selectedItem?.lines?.find(
+          ({ prescribedQuantity }) =>
+            prescribedQuantity != null && prescribedQuantity > 0
+        )?.prescribedQuantity ?? 0;
 
-    setPrescribedQuantity(newPrescribedQuantity);
+      setPrescribedQuantity(newPrescribedQuantity);
+    }
 
     const newIssueQuantity = Math.round(
       allocatedUnits / Math.abs(Number(packSizeController.selected?.value || 1))
@@ -284,9 +289,11 @@ export const PrescriptionLineEditForm: React.FC<
                     {t('label.prescribed-quantity')}
                   </InputLabel>
                   <NumericTextInput
-                    autoFocus
+                    autoFocus={
+                      preferences?.editPrescribedQuantityOnPrescription
+                    }
                     disabled={disabled}
-                    value={prescribedQuantity}
+                    value={prescribedQuantity ?? undefined}
                     onChange={handlePrescribedQuantityChange}
                     min={0}
                     decimalLimit={2}
@@ -299,6 +306,7 @@ export const PrescriptionLineEditForm: React.FC<
                   {t('label.issue')}
                 </InputLabel>
                 <NumericTextInput
+                  autoFocus={!preferences?.editPrescribedQuantityOnPrescription}
                   disabled={disabled}
                   value={issueUnitQuantity}
                   onChange={handleIssueQuantityChange}
