@@ -75,9 +75,21 @@
           "label": "Phone"
         },
         {
-          "type": "PatientSearch",
-          "scope": "#/properties/nextOfKinId",
-          "label": "Next of Kin"
+          "type": "Search",
+          "scope": "#/properties/nextOfKin",
+          "label": "Next of Kin",
+          "options": {
+            "source": "user",
+            "searchFields": ["firstName", "lastName"],
+            "saveFields": ["id", "name"],
+            "elements": [
+              {
+                "type": "Control",
+                "scope": "/properties/name",
+                "label": "Name"
+              }
+            ]
+          }
         }
       ]
     }
