@@ -177,7 +177,7 @@ enum Action {
         #[clap(short, long)]
         path: PathBuf,
         /// Optional
-        /// Path to custom test config file
+        /// Path to dir containing test-config.json file
         #[clap(short, long)]
         config: Option<PathBuf>,
     },
