@@ -33,30 +33,3 @@ impl Loader<String> for ItemDirectionsByItemIdLoader {
         Ok(map)
     }
 }
-
-pub struct ItemDirectionByItemDirectionIdLoader {
-    pub service_provider: Data<ServiceProvider>,
-}
-
-impl Loader<String> for ItemDirectionByItemDirectionIdLoader {
-    type Value = ItemDirection;
-    type Error = RepositoryError;
-
-    async fn load(
-        &self,
-        item_direction_ids: &[String],
-    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
-        let repo = ItemDirectionRepository::new(&service_context.connection);
-
-        let item_directions = repo.query_by_filter(
-            ItemDirectionFilter::new().id(EqualFilter::equal_any(item_direction_ids.to_vec())),
-        )?;
-
-        let mut map: HashMap<String, ItemDirection> = HashMap::new();
-        for direction in item_directions {
-            map.insert(direction.item_row.id.clone(), direction);
-        }
-        Ok(map)
-    }
-}
