@@ -140,6 +140,7 @@ pub(crate) fn patient_to_name_row(
         is_donor: existing_name.map(|n| n.is_donor).unwrap_or(false),
         on_hold: existing_name.map(|n| n.on_hold).unwrap_or(false),
         next_of_kin_id,
+        next_of_kin_name: None, //TODo
         created_datetime: existing_name
             .and_then(|n| n.created_datetime)
             .or(Some(update_timestamp.naive_utc())), // assume there is no earlier doc version
@@ -470,6 +471,7 @@ mod test {
             is_donor: name_row.is_donor,
             on_hold: name_row.on_hold,
             next_of_kin_id: None,
+            next_of_kin_name: None,
             created_datetime: Some(now.naive_utc()),
             is_deceased: true,
             national_health_number: Some("new nhn".to_string()),
