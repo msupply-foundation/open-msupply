@@ -41,7 +41,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
     isDisabled,
   } = usePrescription();
   const { status = InvoiceNodeStatus.New, prescriptionDate } = data ?? {};
-  const { updateQuantity, isLoading, updateNotes } = useDraftPrescriptionLines(
+  const { isLoading, updateQuantity, updateNotes } = useDraftPrescriptionLines(
     currentItem,
     draftPrescriptionLines,
     updateLines,
@@ -65,12 +65,13 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
   const onAllocate = (
     numPacks: number,
     packSize: number | null,
-    autoAllocated = false
+    autoAllocated = false,
+    prescribedQuantity: number | null
   ) => {
     const newAllocateQuantities = allocateQuantities(
       status,
       draftPrescriptionLines
-    )(numPacks, packSize, true);
+    )(numPacks, packSize, true, prescribedQuantity);
 
     // Don't make saveable (isDirty) if item is new and has no auto-allocatable
     // stock

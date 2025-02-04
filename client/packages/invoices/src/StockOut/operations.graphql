@@ -29,6 +29,7 @@ fragment StockOutLine on InvoiceLineNode {
   batch
   expiryDate
   numberOfPacks
+  prescribedQuantity
   packSize
   invoiceId
   costPricePerPack

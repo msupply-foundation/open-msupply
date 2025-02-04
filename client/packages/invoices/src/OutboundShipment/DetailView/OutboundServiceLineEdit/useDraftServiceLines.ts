@@ -28,6 +28,7 @@ const createDraftLine = ({
   totalAfterTax: 0,
   totalBeforeTax: 0,
   numberOfPacks: 0,
+  prescribedQuantity: 0,
   packSize: 0,
   sellPricePerPack: 0,
   costPricePerPack: 0,
