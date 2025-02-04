@@ -43,7 +43,8 @@ interface PrescriptionLineEditFormProps {
   onChangeQuantity: (
     quantity: number,
     packSize: number | null,
-    isAutoAllocated: boolean
+    isAutoAllocated: boolean,
+    prescribedQuantity: number | null
   ) => DraftStockOutLine[] | undefined;
   packSizeController: PackSizeController;
   disabled: boolean;
@@ -57,6 +58,7 @@ interface PrescriptionLineEditFormProps {
   hasExpired: boolean;
   isLoading: boolean;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
+  programId?: string;
 }
 
 export const PrescriptionLineEditForm: React.FC<
@@ -78,23 +80,31 @@ export const PrescriptionLineEditForm: React.FC<
   hasExpired,
   isLoading,
   updateQuantity,
+  programId,
 }) => {
   const t = useTranslation();
-  const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
-  const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
+
+  const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
+  const [prescribedQuantity, setPrescribedQuantity] = useState(0);
+  const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
 
   const debouncedSetAllocationAlerts = useDebounceCallback(
     warning => setAllocationAlerts(warning),
     []
   );
 
-  const allocate = (numPacks: number, packSize: number) => {
+  const allocate = (
+    numPacks: number,
+    packSize: number,
+    prescribedQuantity: number
+  ) => {
     const newAllocateQuantities = onChangeQuantity(
       numPacks,
       packSize === -1 || packSize === 1 ? null : packSize,
-      true
+      true,
+      prescribedQuantity
     );
     const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
     const allocatedQuantity =
@@ -145,15 +155,18 @@ export const PrescriptionLineEditForm: React.FC<
   // See https://github.com/msupply-foundation/open-msupply/issues/2727
   // and https://github.com/msupply-foundation/open-msupply/issues/3532
   const debouncedAllocate = useDebouncedValueCallback(
-    (numPacks, packSize) => {
-      allocate(numPacks, packSize);
+    (numPacks, packSize, prescribedQuantity) => {
+      allocate(numPacks, packSize, prescribedQuantity);
     },
     [],
     500,
     [draftPrescriptionLines] // this is needed to prevent a captured enclosure of onChangeQuantity
   );
 
-  const handleIssueQuantityChange = (inputUnitQuantity?: number) => {
+  const handleIssueQuantityChange = (
+    inputUnitQuantity?: number,
+    quantityType: 'issue' | 'prescribed' = 'issue'
+  ) => {
     // this method is also called onBlur... check that there actually has been a
     // change in quantity (to prevent triggering auto allocation if only focus
     // has moved)
@@ -168,13 +181,34 @@ export const PrescriptionLineEditForm: React.FC<
         : 1;
 
     const numPacks = quantity / packSize;
-    debouncedAllocate(numPacks, Number(packSize));
+    debouncedAllocate(
+      numPacks,
+      Number(packSize),
+      quantityType === 'prescribed' ? inputUnitQuantity : prescribedQuantity
+    );
+  };
+
+  const handlePrescribedQuantityChange = (inputPrescribedQuantity?: number) => {
+    if (inputPrescribedQuantity == null) return;
+    setPrescribedQuantity(inputPrescribedQuantity);
+    handleIssueQuantityChange(inputPrescribedQuantity, 'prescribed');
   };
 
   const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);
   const note = prescriptionLineWithNote?.note ?? '';
 
   useEffect(() => {
+    const selectedItem = items.find(
+      prescriptionItem => prescriptionItem.id === item?.id
+    );
+    const newPrescribedQuantity: number =
+      selectedItem?.lines?.find(
+        ({ prescribedQuantity }) =>
+          prescribedQuantity != null && prescribedQuantity > 0
+      )?.prescribedQuantity ?? 0;
+
+    setPrescribedQuantity(newPrescribedQuantity);
+
     const newIssueQuantity = Math.round(
       allocatedUnits / Math.abs(Number(packSizeController.selected?.value || 1))
     );
@@ -216,6 +250,7 @@ export const PrescriptionLineEditForm: React.FC<
                 ? undefined
                 : item => !items?.some(({ id }) => id === item.id)
             }
+            programId={programId}
           />
         </Grid>
       </AccordionPanelSection>
@@ -239,26 +274,34 @@ export const PrescriptionLineEditForm: React.FC<
               alignItems="center"
               display="flex"
               flexDirection="row"
-              justifyContent="flex-start"
-              gap={1}
+              gap={5}
             >
-              <Grid>
-                <InputLabel style={{ fontSize: 12 }}>
-                  {t('label.issue')}
+              <Grid display="flex" alignItems="center" gap={1}>
+                <InputLabel sx={{ fontSize: 12 }}>
+                  {t('label.prescribed-quantity')}
                 </InputLabel>
-              </Grid>
-              <Grid>
                 <NumericTextInput
                   autoFocus
+                  disabled={disabled}
+                  value={prescribedQuantity}
+                  onChange={handlePrescribedQuantityChange}
+                  min={0}
+                  decimalLimit={2}
+                  onBlur={() => {}}
+                />
+              </Grid>
+              <Grid display="flex" alignItems="center" gap={1}>
+                <InputLabel sx={{ fontSize: 12 }}>
+                  {t('label.issue')}
+                </InputLabel>
+                <NumericTextInput
                   disabled={disabled}
                   value={issueUnitQuantity}
                   onChange={handleIssueQuantityChange}
                   min={0}
                   decimalLimit={2}
                 />
-              </Grid>
-              <Grid>
-                <InputLabel style={{ fontSize: 12 }}>
+                <InputLabel sx={{ fontSize: 12 }}>
                   {t('label.unit-plural', {
                     count: issueUnitQuantity,
                     unit: item?.unitName,
@@ -293,7 +336,7 @@ export const PrescriptionLineEditForm: React.FC<
               updateNotes(e.target.value);
             }}
             fullWidth
-            style={{ flex: 1 }}
+            sx={{ flex: 1 }}
           />
         </AccordionPanelSection>
       )}

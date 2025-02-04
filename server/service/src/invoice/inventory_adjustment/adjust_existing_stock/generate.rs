@@ -86,6 +86,7 @@ pub fn generate(
         clinician_link_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
+        program_id: None,
     };
 
     let StockLineRow {
@@ -136,6 +137,7 @@ pub fn generate(
             note,
             number_of_packs: adjustment,
             // Default
+            prescribed_quantity: None,
             total_before_tax: None,
             tax_percentage: None,
             location_id: None,
