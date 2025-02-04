@@ -3641,6 +3641,14 @@ export type ItemCountsResponse = {
   total: Scalars['Int']['output'];
 };
 
+export type ItemDirectionNode = {
+  __typename: 'ItemDirectionNode';
+  directions: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  priority: Scalars['Int']['output'];
+};
+
 export type ItemFilterInput = {
   categoryId?: InputMaybe<Scalars['String']['input']>;
   categoryName?: InputMaybe<Scalars['String']['input']>;
@@ -3700,6 +3708,7 @@ export type ItemNode = {
   doses: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
+  itemDirections: Array<ItemDirectionNode>;
   margin: Scalars['Float']['output'];
   msupplyUniversalCode: Scalars['String']['output'];
   msupplyUniversalName: Scalars['String']['output'];
