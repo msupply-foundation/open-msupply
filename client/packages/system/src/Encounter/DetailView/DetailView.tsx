@@ -260,6 +260,7 @@ export const DetailView: FC = () => {
   // confirm to mark as visited
   const { isDirty: shouldMarkVisited, setIsDirty: setShouldMarkVisited } =
     useConfirmOnLeaving('encounter', {
+      allowRefresh: true,
       customConfirmation: proceed =>
         promptToMarkVisitedOnLeaving({
           onCancel: proceed,
