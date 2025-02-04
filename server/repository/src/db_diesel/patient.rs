@@ -210,19 +210,6 @@ impl<'a> PatientRepository<'a> {
                 query = query.or_filter(name::id.eq_any(sub_query))
             }
 
-            if next_of_kin_name.is_some() {
-                let sub_query = Self::create_filtered_query(
-                    Some(PatientFilter {
-                        name: next_of_kin_name,
-                        ..Default::default()
-                    }),
-                    None,
-                )
-                .select(name::id);
-
-                query = query.filter(name::next_of_kin_id.eq_any(sub_query.nullable()))
-            }
-
             if program_enrolment_name.is_some() {
                 let sub_query = ProgramEnrolmentRepository::create_filtered_query(Some(
                     ProgramEnrolmentFilter {
@@ -259,6 +246,8 @@ impl<'a> PatientRepository<'a> {
             apply_string_filter!(query, address2, name::address2);
             apply_string_filter!(query, country, name::country);
             apply_string_filter!(query, email, name::email);
+
+            apply_string_filter!(query, next_of_kin_name, name::next_of_kin_name);
         };
 
         // Only return active (not deleted) patients
@@ -418,23 +407,15 @@ mod tests {
         )
         .await;
 
-        let next_of_kin_patient_row = NameRow {
-            id: "patient_1".to_string(),
-            name: "Bestie guy".to_string(),
-            r#type: NameRowType::Patient,
-            ..Default::default()
-        };
-
         let patient_row = NameRow {
             id: "patient_2".to_string(),
             r#type: NameRowType::Patient,
-            next_of_kin_id: Some(next_of_kin_patient_row.id.clone()),
+            next_of_kin_name: Some("Bestie guy".to_string()),
             ..Default::default()
         };
 
         let name_repo = NameRowRepository::new(&connection);
 
-        name_repo.upsert_one(&next_of_kin_patient_row).unwrap();
         name_repo.upsert_one(&patient_row).unwrap();
 
         let result = PatientRepository::new(&connection)
