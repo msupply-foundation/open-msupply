@@ -7584,6 +7584,7 @@ export type StoreNodeNameArgs = {
 
 export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
+  editPrescribedQuantityOnPrescription: Scalars['Boolean']['output'];
   extraFieldsInRequisition: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   issueInForeignCurrency: Scalars['Boolean']['output'];

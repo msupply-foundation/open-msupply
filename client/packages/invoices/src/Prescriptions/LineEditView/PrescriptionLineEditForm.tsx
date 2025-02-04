@@ -18,6 +18,7 @@ import {
   LocaleKey,
   NumUtils,
   ItemNode,
+  useAuthContext,
   DropdownMenu,
   DropdownMenuItem,
   TextArea,
@@ -91,9 +92,12 @@ export const PrescriptionLineEditForm: React.FC<
   const t = useTranslation();
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
+  const { store: { preferences } = {} } = useAuthContext();
 
   const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
-  const [prescribedQuantity, setPrescribedQuantity] = useState(0);
+  const [prescribedQuantity, setPrescribedQuantity] = useState<number | null>(
+    null
+  );
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
   const [defaultDirection, setDefaultDirection] = useState<string>();
   const [abbreviation, setAbbreviation] = useState<string>('');
@@ -209,13 +213,15 @@ export const PrescriptionLineEditForm: React.FC<
     const selectedItem = items.find(
       prescriptionItem => prescriptionItem.id === item?.id
     );
-    const newPrescribedQuantity: number =
-      selectedItem?.lines?.find(
-        ({ prescribedQuantity }) =>
-          prescribedQuantity != null && prescribedQuantity > 0
-      )?.prescribedQuantity ?? 0;
+    if (preferences?.editPrescribedQuantityOnPrescription) {
+      const newPrescribedQuantity: number =
+        selectedItem?.lines?.find(
+          ({ prescribedQuantity }) =>
+            prescribedQuantity != null && prescribedQuantity > 0
+        )?.prescribedQuantity ?? 0;
 
-    setPrescribedQuantity(newPrescribedQuantity);
+      setPrescribedQuantity(newPrescribedQuantity);
+    }
 
     const newIssueQuantity = Math.round(
       allocatedUnits / Math.abs(Number(packSizeController.selected?.value || 1))
@@ -303,25 +309,30 @@ export const PrescriptionLineEditForm: React.FC<
               flexDirection="row"
               gap={5}
             >
-              <Grid display="flex" alignItems="center" gap={1}>
-                <InputLabel sx={{ fontSize: 12 }}>
-                  {t('label.prescribed-quantity')}
-                </InputLabel>
-                <NumericTextInput
-                  autoFocus
-                  disabled={disabled}
-                  value={prescribedQuantity}
-                  onChange={handlePrescribedQuantityChange}
-                  min={0}
-                  decimalLimit={2}
-                  onBlur={() => {}}
-                />
-              </Grid>
+              {preferences?.editPrescribedQuantityOnPrescription && (
+                <Grid display="flex" alignItems="center" gap={1}>
+                  <InputLabel sx={{ fontSize: 12 }}>
+                    {t('label.prescribed-quantity')}
+                  </InputLabel>
+                  <NumericTextInput
+                    autoFocus={
+                      preferences?.editPrescribedQuantityOnPrescription
+                    }
+                    disabled={disabled}
+                    value={prescribedQuantity ?? undefined}
+                    onChange={handlePrescribedQuantityChange}
+                    min={0}
+                    decimalLimit={2}
+                    onBlur={() => {}}
+                  />
+                </Grid>
+              )}
               <Grid display="flex" alignItems="center" gap={1}>
                 <InputLabel sx={{ fontSize: 12 }}>
                   {t('label.issue')}
                 </InputLabel>
                 <NumericTextInput
+                  autoFocus={!preferences?.editPrescribedQuantityOnPrescription}
                   disabled={disabled}
                   value={issueUnitQuantity}
                   onChange={handleIssueQuantityChange}
@@ -329,7 +340,10 @@ export const PrescriptionLineEditForm: React.FC<
                   decimalLimit={2}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
-                  {t('label.unit-plural', {
+                  {t('label.unit-plural_one', {
+                    // unit-plural_one has been specified to deactivate pluralisation.
+                    // This is to handle the case where units have not been entered for the item.
+                    // see https://github.com/msupply-foundation/open-msupply/issues/5978
                     count: issueUnitQuantity,
                     unit: item?.unitName,
                   })}
