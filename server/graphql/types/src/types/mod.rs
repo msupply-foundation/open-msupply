@@ -121,6 +121,8 @@ pub use self::reason_option::*;
 pub mod cold_storage_type;
 pub use self::cold_storage_type::*;
 
+pub mod abbreviation;
+pub use self::abbreviation::*;
 mod requisition_item_information;
 
 use async_graphql::*;
