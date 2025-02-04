@@ -262,6 +262,9 @@ export const JsonForm: FC<
           textAlign: 'right',
           whiteSpace: 'nowrap',
         },
+        '&:empty': {
+          display: 'none',
+        },
       }}
     >
       <ScrollFix />
