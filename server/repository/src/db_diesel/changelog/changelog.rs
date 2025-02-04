@@ -59,6 +59,7 @@ pub enum RowActionType {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
+    BackendPlugin,
     Number,
     Location,
     LocationMovement,
@@ -114,6 +115,7 @@ pub enum ChangelogTableName {
     Item,
     ContactForm,
     SystemLog,
+    InsuranceProvider,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -128,6 +130,7 @@ pub(crate) enum ChangeLogSyncStyle {
 impl ChangelogTableName {
     pub(crate) fn sync_style(&self) -> ChangeLogSyncStyle {
         match self {
+            ChangelogTableName::BackendPlugin => ChangeLogSyncStyle::Central,
             ChangelogTableName::Number => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Location => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::LocationMovement => ChangeLogSyncStyle::Legacy,
@@ -182,6 +185,7 @@ impl ChangelogTableName {
             ChangelogTableName::BundledItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::ContactForm => ChangeLogSyncStyle::RemoteToCentral,
             ChangelogTableName::SystemLog => ChangeLogSyncStyle::RemoteToCentral, // System Log records won't be synced to remote site on initialisation
+            ChangelogTableName::InsuranceProvider => ChangeLogSyncStyle::Legacy,
         }
     }
 }

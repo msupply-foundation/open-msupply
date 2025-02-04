@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   DownloadIcon,
@@ -16,8 +16,13 @@ import {
   Platform,
   useNavigate,
   RouteBuilder,
+  useCallbackWithPermission,
+  UserPermission,
 } from '@openmsupply-client/common';
-import { PatientSearchModal } from '@openmsupply-client/system';
+import {
+  CreatePatientModal,
+  PatientSearchModal,
+} from '@openmsupply-client/system';
 import { ListParams, usePrescriptionList, usePrescription } from '../api';
 import { prescriptionToCsv } from '../../utils';
 
@@ -28,12 +33,20 @@ export const AppBarButtonsComponent: FC<{
   const t = useTranslation();
   const navigate = useNavigate();
   const { success, error } = useNotification();
+  const [patientModalOpen, setPatientModalOpen] = useState(false);
+
   const {
     create: { create },
   } = usePrescription();
+
   const {
     query: { data, isLoading },
   } = usePrescriptionList(listParams);
+
+  const onCreatePatient = useCallbackWithPermission(
+    UserPermission.PatientMutate,
+    () => setPatientModalOpen(true)
+  );
 
   const csvExport = async () => {
     if (!data || !data?.nodes.length) {
@@ -78,6 +91,7 @@ export const AppBarButtonsComponent: FC<{
               errorSnack();
             }
           }}
+          openPatientModal={onCreatePatient}
         />
         <LoadingButton
           startIcon={<DownloadIcon />}
@@ -87,6 +101,9 @@ export const AppBarButtonsComponent: FC<{
           disabled={EnvUtils.platform === Platform.Android}
           label={t('button.export')}
         />
+        {patientModalOpen && (
+          <CreatePatientModal onClose={() => setPatientModalOpen(false)} />
+        )}
       </Grid>
     </AppBarButtonsPortal>
   );
