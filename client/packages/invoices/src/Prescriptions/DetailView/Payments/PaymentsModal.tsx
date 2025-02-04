@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FC, ReactElement, useState } from 'react';
+import React, { FC, ReactElement } from 'react';
 import { DialogButton } from '@common/components';
 import { Grid, TextField } from '@openmsupply-client/common';
 import { useDialog } from '@common/hooks';
@@ -23,18 +23,11 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     query: { data },
   } = usePrescription();
 
-  const [totalAfterTax, setTotalAfterTax] = useState(
-    data?.pricing.totalAfterTax
-  );
-
   const fields = [
     {
       label: 'Total to be paid',
       type: 'number',
-      value: totalAfterTax,
-      onChange: (
-        event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-      ): void => setTotalAfterTax(Number(event.target.value)),
+      value: data?.pricing.totalAfterTax,
     },
     // Data not available yet!
     // { label: 'Outstanding payment' }
@@ -62,14 +55,13 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
       }
     >
       <Grid container spacing={3}>
-        {fields.map(({ type, label, value, onChange }, index) => (
+        {fields.map(({ type, label, value }, index) => (
           <Grid key={index} size={4}>
             <TextField
               fullWidth
               type={type}
               label={label}
               value={value}
-              onChange={onChange}
               sx={{
                 '& .MuiInputBase-root': {
                   borderRadius: 2,
