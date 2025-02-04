@@ -1598,6 +1598,7 @@
   "placeholder.enter-facility-name": "Enter facility name",
   "placeholder.filter-by-status": "Filter by status",
   "placeholder.filter-items": "Filter items",
+  "placeholder.item-directions": "Item default directions",
   "placeholder.search-by": "Search by {{field}}",
   "placeholder.search-by-first-name": "Search by first name",
   "placeholder.search-by-identifier": "Search by ID",
