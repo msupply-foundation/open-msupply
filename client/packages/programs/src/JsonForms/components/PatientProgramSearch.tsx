@@ -6,7 +6,10 @@ import { DefaultFormRowSx, FORM_GAP, FORM_LABEL_WIDTH } from '../common';
 import { PatientProgramSearchInput } from '../../Components';
 import { DocumentRegistryFragment } from '../../api';
 
-export const programSearchTester = rankWith(10, uiTypeIs('ProgramSearch'));
+export const patientProgramSearchTester = rankWith(
+  10,
+  uiTypeIs('PatientProgramSearch')
+);
 
 const UIComponent = (props: ControlProps) => {
   const { handleChange, label, path } = props;
@@ -45,4 +48,5 @@ const UIComponentWrapper = (props: ControlProps) => {
   return <UIComponent {...props} />;
 };
 
-export const ProgramSearch = withJsonFormsControlProps(UIComponentWrapper);
+export const PatientProgramSearch =
+  withJsonFormsControlProps(UIComponentWrapper);
