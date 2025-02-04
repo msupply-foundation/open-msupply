@@ -378,6 +378,7 @@ export const PrescriptionLineEditForm: React.FC<
                   disabled={disabled}
                   onChange={e => {
                     updateNotes(e.target.value);
+                    setAbbreviation(''), setDefaultDirection('');
                   }}
                   style={{ flex: 1 }}
                 />
