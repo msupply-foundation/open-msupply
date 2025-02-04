@@ -2469,7 +2469,7 @@ export type InitialisationStatusNode = {
 };
 
 export enum InitialisationStatusType {
-  /** Fully initialised */
+  /** Fuly initialised */
   Initialised = 'INITIALISED',
   /** Sync settings were set and sync was attempted at least once */
   Initialising = 'INITIALISING',
@@ -3528,9 +3528,9 @@ export type InvoiceNodeOtherPartyArgs = {
 
 export enum InvoiceNodeStatus {
   /**
-   * General description: Outbound Shipment is ready for picking (all unallocated lines need to be fulfilled)
+   * General description: Outbound Shipment is ready for picking (all unallocated lines need to be fullfilled)
    * Outbound Shipment: Invoice can only be turned to allocated status when
-   * all unallocated lines are fulfilled
+   * all unallocated lines are fullfilled
    * Inbound Shipment: not applicable
    */
   Allocated = 'ALLOCATED',
@@ -3561,7 +3561,7 @@ export enum InvoiceNodeStatus {
    * Outbound Shipment: Becomes not editable
    * Inbound Shipment: For inter store stock transfers an inbound Shipment
    * becomes editable when this status is set as a result of corresponding
-   * outbound Shipment being changed to shipped (this is similar to New status)
+   * outbound Shipment being chagned to shipped (this is similar to New status)
    */
   Shipped = 'SHIPPED',
   /**
@@ -3641,6 +3641,14 @@ export type ItemCountsResponse = {
   total: Scalars['Int']['output'];
 };
 
+export type ItemDirectionNode = {
+  __typename: 'ItemDirectionNode';
+  directions: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  priority: Scalars['Int']['output'];
+};
+
 export type ItemFilterInput = {
   categoryId?: InputMaybe<Scalars['String']['input']>;
   categoryName?: InputMaybe<Scalars['String']['input']>;
@@ -3700,6 +3708,7 @@ export type ItemNode = {
   doses: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
+  itemDirections: Array<ItemDirectionNode>;
   margin: Scalars['Float']['output'];
   msupplyUniversalCode: Scalars['String']['output'];
   msupplyUniversalName: Scalars['String']['output'];
