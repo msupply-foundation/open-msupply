@@ -31,11 +31,10 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
   renderers,
   schema,
   uischema,
+  enabled,
   cells,
 }) => {
   const layout = uischema as VerticalLayout;
-
-  const enabled = true;
 
   return (
     <AppBarContentPortal>
