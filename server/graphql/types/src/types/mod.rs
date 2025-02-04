@@ -34,6 +34,9 @@ pub use self::invoice_query::*;
 pub mod invoice_line;
 pub use self::invoice_line::*;
 
+pub mod item_direction;
+pub use self::item_direction::*;
+
 pub mod store;
 pub use self::store::*;
 
@@ -118,6 +121,8 @@ pub use self::reason_option::*;
 pub mod cold_storage_type;
 pub use self::cold_storage_type::*;
 
+pub mod abbreviation;
+pub use self::abbreviation::*;
 mod requisition_item_information;
 
 use async_graphql::*;
