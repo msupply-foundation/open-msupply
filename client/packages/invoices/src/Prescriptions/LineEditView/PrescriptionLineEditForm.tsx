@@ -19,6 +19,10 @@ import {
   NumUtils,
   ItemNode,
   useAuthContext,
+  DropdownMenu,
+  DropdownMenuItem,
+  TextArea,
+  InputWithLabelRow,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -35,6 +39,7 @@ import { DraftStockOutLine } from '../../types';
 import { isA } from '../../utils';
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
+import { getPrescriptionDirections } from './getPrescriptionDirections';
 
 interface PrescriptionLineEditFormProps {
   allocatedUnits: number;
@@ -93,6 +98,8 @@ export const PrescriptionLineEditForm: React.FC<
     null
   );
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
+  const [defaultDirection, setDefaultDirection] = useState<string>();
+  const [abbreviation, setAbbreviation] = useState<string>('');
 
   const debouncedSetAllocationAlerts = useDebounceCallback(
     warning => setAllocationAlerts(warning),
@@ -229,6 +236,32 @@ export const PrescriptionLineEditForm: React.FC<
 
   const key = item?.id ?? 'new';
 
+  //MOCK DATA FOR TESTING ABBREVIATIONS
+  interface Option {
+    id: string;
+    name: string;
+    direction: string;
+  }
+  const options: Option[] = [
+    { id: '1', name: 'One', direction: '1 per day in the AM' },
+    { id: '2', name: 'Two', direction: '2 per Day' },
+    { id: '3', name: '3_5', direction: '3 1/2 per day' },
+  ];
+  const defaultDirections = [
+    { id: '1', item_link_id: 'a', direction: '1 per day', priority: 2 },
+    { id: '2', item_link_id: 'b', direction: '2 per day', priority: 3 },
+    { id: '3', item_link_id: 'c', direction: '3 per day', priority: 1 },
+  ];
+
+  //END OF MOCK DATA
+
+  const saveAbbreviation = () => {
+    if (!abbreviation) return;
+
+    const note = getPrescriptionDirections(abbreviation, options);
+    updateNotes(note);
+  };
+
   return (
     <Grid
       container
@@ -340,15 +373,75 @@ export const PrescriptionLineEditForm: React.FC<
           defaultExpanded={(isNew || !note) && !disabled}
           key={item?.id ?? 'new'}
         >
-          <BasicTextInput
-            value={note}
-            disabled={disabled}
-            onChange={e => {
-              updateNotes(e.target.value);
-            }}
-            fullWidth
-            sx={{ flex: 1 }}
-          />
+          <Grid container paddingBottom={1} gap={1} width={'100%'}>
+            <InputWithLabelRow
+              label={t('label.abbreviation')}
+              Input={
+                <BasicTextInput
+                  value={abbreviation}
+                  disabled={disabled}
+                  onChange={e => {
+                    setAbbreviation(e.target.value);
+                    setDefaultDirection('');
+                  }}
+                  onBlur={saveAbbreviation}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      saveAbbreviation();
+                    }
+                  }}
+                  style={{ flex: 1 }}
+                />
+              }
+            />
+            <DropdownMenu
+              sx={{ flex: 1 }}
+              selectSx={{ width: '100%' }}
+              label={
+                defaultDirection
+                  ? defaultDirection
+                  : t('placeholder.item-directions')
+              }
+              disabled={disabled}
+            >
+              {defaultDirections
+                .sort((a, b) => a.priority - b.priority)
+                .map(
+                  direction =>
+                    direction && (
+                      <DropdownMenuItem
+                        key={direction.id}
+                        value={direction.direction}
+                        onClick={() => {
+                          updateNotes(direction.direction);
+                          setDefaultDirection(direction.direction);
+                          setAbbreviation('');
+                        }}
+                        sx={{ fontSize: 14 }}
+                      >
+                        {direction.direction}
+                      </DropdownMenuItem>
+                    )
+                )}
+            </DropdownMenu>
+          </Grid>
+          <Grid>
+            <InputWithLabelRow
+              label={t('label.directions')}
+              Input={
+                <TextArea
+                  value={note}
+                  disabled={disabled}
+                  onChange={e => {
+                    updateNotes(e.target.value);
+                    setAbbreviation('');
+                    setDefaultDirection('');
+                  }}
+                  style={{ flex: 1 }}
+                />
+              }
+            />
+          </Grid>
         </AccordionPanelSection>
       )}
       {/* {!item && <Box height={100} />} */}
