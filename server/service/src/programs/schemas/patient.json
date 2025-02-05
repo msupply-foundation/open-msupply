@@ -243,6 +243,10 @@
           "description": "ID of the mSupply name record for the patient's next of kin",
           "type": "string"
         },
+        "nextOfKinName": {
+          "description": "Name of next of kin",
+          "type": "string"
+        },
         "socioEconomics": {
           "$ref": "#/definitions/SocioEconomics"
         }

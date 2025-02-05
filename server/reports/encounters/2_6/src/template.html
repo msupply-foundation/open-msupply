@@ -13,13 +13,8 @@ date(format="%d/%m/%Y") }}{% endif %} {% endmacro input %}
         <td>{{t(k="label.first-name", f="First Name")}}</td>
         <td>{{t(k="label.last-name", f="Last Name")}}</td>
         <td>{{t(k="label.date-of-birth", f="Date of birth")}}</td>
-        <td>
-          {{t(k="report.next-of-kin-first-name", f="Next of kin's first name")}}
-        </td>
-        <td>
-          {{t(k="report.next-of-kin-last-name", f="Next of kin's last name")}}
-        </td>
-        <td>{{t(k="report.next-of-kin-phone", f="Next of kin's phone")}}</td>
+        <td>{{t(k="label.next-of-kin", f="Next of kin")}}</td>
+        <td>{{t(k="label.phone", f="Phone")}}</td>
         <td>
           {{t(k="report.last-encounter-date", f="Last appointment date")}}
         </td>
@@ -35,15 +30,9 @@ date(format="%d/%m/%Y") }}{% endif %} {% endmacro input %}
         <td>{{encounter.patient.firstName}}</td>
         <td>{{encounter.patient.lastName}}</td>
         <td>{{self::formatDate(datetime=encounter.patient.dateOfBirth)}}</td>
-        {% if encounter.patient.nextOfKin %}
-        <td>{{encounter.patient.nextOfKin.firstName}}</td>
-        <td>{{encounter.patient.nextOfKin.lastName}}</td>
-        <td>{{encounter.patient.nextOfKin.phone}}</td>
-        {% else %}
-        <td></td>
-        <td></td>
-        <td></td>
-        {% endif %} {% if encounter.previousEncounter %}
+        <td>{{encounter.patient.nextOfKinName}}</td>
+        <td>{{encounter.patient.phone}}</td>
+        {% if encounter.previousEncounter %}
         <td>
           {{self::formatDate(datetime=encounter.previousEncounter.startDatetime)}}
         </td>
