@@ -85,6 +85,8 @@ export interface PersonSchema {
 
   notes?: NoteSchema[];
 
+  phone?: string;
+
   nextOfKin?: NextOfKinSchema;
 }
 
