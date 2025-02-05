@@ -18,6 +18,7 @@ export const useInsuranceColumns = () => {
     {
       label: 'label.provider-name',
       key: 'providerName',
+      accessor: ({ rowData }) => rowData.policyNumberFamily,
     },
     {
       label: 'label.policy-type',
@@ -26,7 +27,7 @@ export const useInsuranceColumns = () => {
     {
       label: 'label.discount-rate',
       key: 'discountRate',
-      accessor: ({ rowData }): number => rowData.discountPercentage,
+      accessor: ({ rowData }) => rowData.discountPercentage,
     },
     {
       label: 'label.expiry-date',
