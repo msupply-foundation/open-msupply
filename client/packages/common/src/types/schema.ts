@@ -40,6 +40,18 @@ export type Scalars = {
   NaiveDateTime: { input: string; output: string; }
 };
 
+export type AbbreviationFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  text?: InputMaybe<StringFilterInput>;
+};
+
+export type AbbreviationNode = {
+  __typename: 'AbbreviationNode';
+  expansion: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  text: Scalars['String']['output'];
+};
+
 export type AccountBlocked = AuthTokenErrorInterface & {
   __typename: 'AccountBlocked';
   description: Scalars['String']['output'];
@@ -2079,6 +2091,7 @@ export type EncounterNode = {
   name: Scalars['String']['output'];
   patient: PatientNode;
   patientId: Scalars['String']['output'];
+  previousEncounter?: Maybe<EncounterNode>;
   /** Returns the matching program enrolment for the patient of this encounter */
   programEnrolment?: Maybe<ProgramEnrolmentNode>;
   programEvents: ProgramEventResponse;
@@ -3642,6 +3655,14 @@ export type ItemCountsResponse = {
   total: Scalars['Int']['output'];
 };
 
+export type ItemDirectionNode = {
+  __typename: 'ItemDirectionNode';
+  directions: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  priority: Scalars['Int']['output'];
+};
+
 export type ItemFilterInput = {
   categoryId?: InputMaybe<Scalars['String']['input']>;
   categoryName?: InputMaybe<Scalars['String']['input']>;
@@ -3701,6 +3722,7 @@ export type ItemNode = {
   doses: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
+  itemDirections: Array<ItemDirectionNode>;
   margin: Scalars['Float']['output'];
   msupplyUniversalCode: Scalars['String']['output'];
   msupplyUniversalName: Scalars['String']['output'];
@@ -5689,6 +5711,7 @@ export enum PropertyNodeValueType {
 
 export type Queries = {
   __typename: 'Queries';
+  abbreviations: Array<AbbreviationNode>;
   /**
    * Returns active program events at a given date time.
    * This can also be achieved by using the program_events endpoint with the filter:
@@ -5855,6 +5878,11 @@ export type Queries = {
   vaccineCourse: VaccineCourseResponse;
   vaccineCourseDose: VaccineCourseDoseResponse;
   vaccineCourses: VaccineCoursesResponse;
+};
+
+
+export type QueriesAbbreviationsArgs = {
+  filter?: InputMaybe<AbbreviationFilterInput>;
 };
 
 
@@ -7558,6 +7586,7 @@ export type StoreNodeNameArgs = {
 
 export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
+  editPrescribedQuantityOnPrescription: Scalars['Boolean']['output'];
   extraFieldsInRequisition: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   issueInForeignCurrency: Scalars['Boolean']['output'];
