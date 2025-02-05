@@ -18,6 +18,7 @@ const Options = z
      *
      */
     dateOnly: z.boolean().optional(),
+    dateAsEndOfDay: z.boolean().optional(),
   })
   .strict()
   .optional();
@@ -58,6 +59,11 @@ const UIComponent = (props: ControlProps) => {
     }
   };
 
+  /** Hiii welcome back
+   * u added some nice things here but u nd to update encounter date to save right time zone!
+   * n also update report arg schema
+   */
+
   const sharedComponentProps = {
     value: DateUtils.getDateOrNull(data),
     onChange: (e: Date | null) => onChange(e),
@@ -65,7 +71,8 @@ const UIComponent = (props: ControlProps) => {
     readOnly: !!props.uischema.options?.['readonly'],
     disabled: !props.enabled,
     error: zErrors ?? error ?? customError ?? props.errors,
-    actions: ['clear', 'today'] as PickersActionBarAction[],
+    actions: ['clear', 'today', 'accept'] as PickersActionBarAction[],
+    dateAsEndOfDay: !!props.uischema.options?.['dateAsEndOfDay'],
   };
 
   return (
