@@ -1,10 +1,30 @@
 import React from 'react';
 import { usePatient } from '../api';
+import { useInsuranceColumns } from './columns';
+import {
+  createQueryParamsStore,
+  createTableStore,
+  DataTable,
+  TableProvider,
+} from '@openmsupply-client/common';
 
 export const InsuranceListView = () => {
-  const { data } = usePatient.document.getPatientInsurances();
+  const columns = useInsuranceColumns();
+  const { data, isLoading } = usePatient.document.getPatientInsurances();
 
-  console.log('data', data);
-
-  return <div>InsuranceListView</div>;
+  return (
+    <TableProvider
+      createStore={createTableStore}
+      queryParamsStore={createQueryParamsStore({
+        initialSortBy: { key: 'expiryDate' },
+      })}
+    >
+      <DataTable
+        id="insurance-list"
+        columns={columns}
+        data={data?.getPatientInsurances.nodes}
+        isLoading={isLoading}
+      />
+    </TableProvider>
+  );
 };
