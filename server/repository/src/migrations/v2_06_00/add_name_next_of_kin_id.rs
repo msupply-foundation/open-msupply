@@ -16,7 +16,7 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
-        // Reset translate all items on the next sync
+        // Reset translate all names on the next sync
         sql!(
             connection,
             r#"
