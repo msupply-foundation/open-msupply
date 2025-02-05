@@ -23,15 +23,14 @@ query encountersQuery(
             firstName
             lastName
             dateOfBirth
-            nextOfKin {
-              firstName
-              lastName
-              phone
-            }
+            phone
+            nextOfKinName
           }
           programEnrolment {
             programEnrolmentId
-            status
+          }
+          previousEncounter {
+            startDatetime
           }
         }
       }

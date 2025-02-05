@@ -31,6 +31,7 @@ const createDraftLine = ({
   prescribedQuantity: 0,
   packSize: 0,
   sellPricePerPack: 0,
+  costPricePerPack: 0,
   note: '',
   type: InvoiceLineNodeType.Service,
   isCreated: !seed,

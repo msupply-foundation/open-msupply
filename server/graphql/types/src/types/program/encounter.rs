@@ -4,7 +4,8 @@ use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
     loader::{
         ClinicianLoader, ClinicianLoaderInput, DocumentLoader, PatientLoader,
-        ProgramEnrolmentLoader, ProgramEnrolmentLoaderInput,
+        PreviousEncounterLoader, PreviousEncounterLoaderInput, ProgramEnrolmentLoader,
+        ProgramEnrolmentLoaderInput,
     },
     map_filter,
     pagination::PaginationInput,
@@ -492,5 +493,23 @@ impl EncounterNode {
             )?;
 
         Ok(suggested.map(|suggested| SuggestedNextEncounterNode { suggested }))
+    }
+
+    async fn previous_encounter(&self, ctx: &Context<'_>) -> Result<Option<EncounterNode>> {
+        let loader = ctx.get_loader::<DataLoader<PreviousEncounterLoader>>();
+
+        let result = loader
+            .load_one(PreviousEncounterLoaderInput {
+                encounter_id: self.encounter_row().id.clone(),
+                patient_id: self.patient_row().id.clone(),
+                current_encounter_start_datetime: self.encounter_row().start_datetime,
+            })
+            .await?;
+
+        Ok(result.map(|encounter| EncounterNode {
+            store_id: self.store_id.clone(),
+            encounter,
+            allowed_ctx: self.allowed_ctx.clone(),
+        }))
     }
 }

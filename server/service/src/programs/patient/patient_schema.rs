@@ -34,6 +34,7 @@ impl Default for SchemaPatient {
             contacts: Default::default(),
             extension: Default::default(),
             next_of_kin_id: Default::default(),
+            next_of_kin_name: Default::default(),
         }
     }
 }

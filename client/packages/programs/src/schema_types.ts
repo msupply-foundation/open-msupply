@@ -36,6 +36,13 @@ export interface AddressSchema {
   country?: string;
 }
 
+export interface NextOfKinSchema {
+  /** mSupply Patient id of next of kin */
+  id?: string;
+  /** Next of kin name */
+  name?: string;
+}
+
 export interface PersonSchema {
   /** mSupply Patient id */
   id?: string;
@@ -77,6 +84,8 @@ export interface PersonSchema {
   dateOfDeath?: string;
 
   notes?: NoteSchema[];
+
+  nextOfKin?: NextOfKinSchema;
 }
 
 export interface PatientSchema extends PersonSchema {
