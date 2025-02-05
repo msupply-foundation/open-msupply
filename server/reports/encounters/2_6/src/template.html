@@ -19,7 +19,7 @@ date(format="%d/%m/%Y") }}{% endif %} {% endmacro input %}
           {{t(k="report.last-encounter-date", f="Last appointment date")}}
         </td>
         <td>{{t(k="report.encounter-date", f="Appointment date")}}</td>
-        <td>{{t(k="report.days-late", f="Days late")}}</td>
+        <td>{{t(k="report.days-overdue", f="Days overdue")}}</td>
         <td>{{t(k="label.status", f="Status")}}</td>
       </tr>
     </thead>
@@ -47,7 +47,7 @@ date(format="%d/%m/%Y") }}{% endif %} {% endmacro input %}
         {% elif encounter.status == "LATE" %}
         <td>{{t(k="report.late", f="Late")}}</td>
         {% else %}
-        <td>{{t(k="report.attending", f="Attending")}}</td>
+        <td>{{t(k="report.planned", f="Planned")}}</td>
         {% endif %}
       </tr>
       {% endfor %}
