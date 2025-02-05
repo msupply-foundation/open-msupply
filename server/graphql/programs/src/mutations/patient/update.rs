@@ -27,6 +27,7 @@ pub struct UpdatePatientInput {
     pub is_deceased: Option<bool>,
     pub date_of_death: Option<NaiveDate>,
     pub next_of_kin_id: Option<String>,
+    pub next_of_kin_name: Option<String>,
 }
 
 #[derive(Union)]
@@ -50,6 +51,7 @@ pub fn update_patient(
         is_deceased,
         date_of_death,
         next_of_kin_id,
+        next_of_kin_name,
     }: UpdatePatientInput,
 ) -> Result<UpdatePatientResponse> {
     let user = validate_auth(
@@ -77,6 +79,7 @@ pub fn update_patient(
         is_deceased,
         date_of_death,
         next_of_kin_id,
+        next_of_kin_name,
     };
 
     match service_provider.patient_service.update_patient(

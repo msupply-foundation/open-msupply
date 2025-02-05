@@ -10,6 +10,7 @@ fragment PatientRow on PatientNode {
   phone
   gender
   email
+  nextOfKinName
   createdDatetime
   document {
     name
@@ -54,6 +55,7 @@ fragment ProgramPatientRow on PatientNode {
   isDeceased
   dateOfDeath
   nextOfKinId
+  nextOfKinName
   programEnrolments {
     ... on ProgramEnrolmentConnector {
       __typename
