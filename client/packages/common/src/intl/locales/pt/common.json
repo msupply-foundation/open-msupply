@@ -1504,5 +1504,6 @@
   "button.print-prescription-label": "Imprimir Etiquetas",
   "log.zero-quantities-for-invoice-created-before-store": "A quantidades de todas as linhas foram estabelecidas como 0 porque a factura foi criada antes do local.",
   "messages.confirm-delete-prescriptions_few": "Isto excluirá permanentemente {{count}} prescrições",
-  "messages.confirm-sensor-update": "Isto confirmará as mudanças realizadas para este sensor"
+  "messages.confirm-sensor-update": "Isto confirmará as mudanças realizadas para este sensor",
+  "message.arguments": "É possível customizar o que é mostrado no relatório especificando algumas das opções abaixo. Clique OK para ver o relatório."
 }
