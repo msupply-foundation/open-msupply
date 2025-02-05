@@ -181,7 +181,6 @@ export const Toolbar: FC = () => {
                     onChange={event => {
                       setTheirReferenceInput(event.target.value);
                       debouncedUpdate({ theirReference: event.target.value });
-                      // update({ theirReference: event.target.value });
                     }}
                   />
                 </Tooltip>
