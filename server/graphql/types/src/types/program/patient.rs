@@ -211,11 +211,16 @@ impl PatientNode {
         &self.patient.next_of_kin_id
     }
 
-    /// This is a separately captured field than the nextOfKin node
-    /// to allow recording of next of kin name where a patient record for
-    /// the next of kin does not exist.
-    pub async fn next_of_kin_name(&self) -> &Option<String> {
-        &self.patient.next_of_kin_name
+    /// If a next of kin link exists, returns the name of the next of kin patient.
+    /// Otherwise, this returns the plain text field, which allows for recording
+    /// next of kin name where a patient record for the next of kin does not exist.
+    pub async fn next_of_kin_name(&self, ctx: &Context<'_>) -> Result<Option<String>> {
+        if self.patient.next_of_kin_id.is_none() {
+            return Ok(self.patient.next_of_kin_name.clone());
+        };
+
+        let name = self.next_of_kin(ctx).await?.map(|p| p.patient.name);
+        Ok(name)
     }
 
     pub async fn created_datetime(&self) -> Option<DateTime<Utc>> {
