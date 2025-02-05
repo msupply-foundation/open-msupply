@@ -4,7 +4,6 @@ import { Grid, CurrencyInput } from '@openmsupply-client/common';
 import { useDialog } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { usePrescription } from '../../api';
-import { noop } from 'lodash';
 
 interface PaymentModalField {
   label: string;
@@ -36,7 +35,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
       label: t('label.total-to-be-paid'),
       value: data?.pricing.totalAfterTax,
       disabled: true,
-      onChange: noop,
+      onChange: () => {},
     },
     // Data not available yet!
     // { label: 'Outstanding payment' }
