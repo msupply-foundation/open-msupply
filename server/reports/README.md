@@ -2,7 +2,7 @@
 
 This repository contains source files for standard reports. Command-line interface (CLI) tools for generating reports, processing data, and upserting reports to OMS databases. 
 
-This readme contains information on [source file structuring](#report-source-files), report related [CLI tools](#cli-tools), information on [development](#development) and [maintenance](#maintenance) of OMS reports.
+This readme contains information on [source file structuring](#report-source-files), report related [CLI tools](#cli-tools), information on [development](#development) and [maintenance](#maintenance-support-info) of OMS reports.
 
 ## Report Source Files
 
@@ -42,7 +42,7 @@ Optional fields in the manifest json are marked as '// optional'
   // optional
   "queries": {
     // optional
-    // graphql file query name with extension
+    // GraphQL file query name with extension
     "gql": "query.graphql",
     // optional
     // vec of sql query file names without extension. report_builder will parse both postgres.sql, sqlite.sql, and agnostic .sql file type extensions.
@@ -59,7 +59,7 @@ Optional fields in the manifest json are marked as '// optional'
   },
   // optional
   // path to custom wasm data conversion function. Having a path to a custom function allows users to generate a function from a language other than JS
-  "custom_wasm_function": "path to cusom wasm function",
+  "custom_wasm_function": "path to custom wasm function",
   // optional
   // name of dir within the version dir of the report which includes js wasm function constructors.
   "convert_data": "convert_data_js",
@@ -77,8 +77,8 @@ Optional fields in the manifest json are marked as '// optional'
 The src dir contains:
 1. The main template file `template.html` which contains the report content. The name of this must be `template.html`
 2. Header and footer html files. The names of these are specified in the [`report-manifest.json`](#report-manifest)
-2. graphql and sql query functions used by the report
-Graphql query files must be named in full as seen in the example [`report-manifest.json`](#report-manifest)
+2. GraphQL and sql query functions used by the report
+GraphQL query files must be named in full as seen in the example [`report-manifest.json`](#report-manifest)
 sql files are named without suffix and within an array as seen in the example [`report-manifest.json`](#report-manifest)
 3. css files used to format the report
 
@@ -133,8 +133,8 @@ These files must be compliant with JSON forms.
    |   ├── footer.html (optional)
    |   ├── header.html (optional)
    |   ├── style.css
-   |   ├── sql queries (optional, and possibly multiple)
-   |   ├── graphql query (optional)
+   |   ├── SQL queries (optional, and possibly multiple)
+   |   ├── GraphQL query (optional)
    |   └── template.html
    └── report-manifest.json
 ```
@@ -204,13 +204,13 @@ Reports have the option to allow for translations using the same localisation su
 
 Translating functionality should be used in standard reports. Custom reports for specific clients typically are hard coded.
 
+##### Translating function
+
 This can be implemented in the report by adding the following translation function in place of your text:
 
 ```
 {{t(k="label.name", f="Name")}}
 ```
-
-By default,
 
 Where the letters are short hand for the following:
 
@@ -220,17 +220,14 @@ Where the letters are short hand for the following:
   This is the locale key as is used in front end translations.
 - f for fallback
   This is an optional fallback text if the translation cannot be found.
-- n for namespace
-  The file namespace where the translation key is. The .json extention is automatically added ie catalogue (which refers to the catalogue.json namespace).
+- n for namespace (depreciated - only common.json is used)
+  The file namespace where the translation key is. The .json extension is automatically added i.e. catalogue (which refers to the catalogue.json namespace).
   By default, the translation in common.json translations will be used.
-  Note all translation files have been consolidated into the common.json namespace, so the namespace parameter is no longer user. However, functionality is retained in case we are needing customer specific namespaces in future.
-  If a specific namespace needs to be called, you can add this 'n' key into your function.
+  Note all translation files have been consolidated into the common.json namespace, so the namespace parameter is no longer used. However, functionality is retained in case we are needing customer specific namespaces in future.
 
-```
-    {{t(k="label.name", n="catalogue", f="Name")}}
-```
+The current user language is passed through GraphQL when a user requests a report to be generated. This is the language used in translations.
 
-The current user language is passed through graphql when a user requests a report to be generated. This is the language used in translations.
+##### Translating search pattern
 
 The translation function has a number of fallback translations which it will search through if the translation cannot be found.
 
@@ -240,11 +237,11 @@ Next it will fallback to the english translation of the nominated key and nomina
 Next it will fallback to the english translation of the nominated key in the common.json namespace
 Next it will fallback to the fallback text provided in the report which by default will be in english
 
-If none of the above can be found, report will fail to render.
+If none of the above can be found, the report will fail to render.
 
 #### Translating Argument UI Schema
 
-Fields in UI schema can be translated our inbuilt translating function.
+Fields in UI schema can be translated using inbuilt translating function.
 
 Translations are invoked by adding by adding a identifying text key `T#` before a value in the json or ui schema.
 A translating function will step through the serialised json Value searching instances of this identifier. It will then strip it from the string, and translate the remaining string value.
@@ -293,7 +290,7 @@ Version compatibility is measured by being less than or equal to the app major a
 
 > eg: 2.4.12 version report will be compatible with a 2.4.2 app. But a 2.5.0 report will not be compatible.
 
-In the case where there are custom reports, but none are compatible with the app version, the highest compatibly versioned standard report will be used.
+In the case where there are custom reports, but none are compatible with the app version, the highest compatible versioned standard report will be used.
 
 This system allows OMS to have multiple reports upserted (and later synced) to distributed instances of different versions, and be able to function with compatible reports.
 
@@ -312,14 +309,15 @@ if remote omSupply.version = 2.8 selected report = 2.8.3
 if remote omSupply.version = 3.2 selected report = 3.0.1
 if remote omSupply.version = 4.5 selected report = 3.5.1 -->
 
+
 ### Wasm functions
 
-Report generations includes the ability to use custom wasm functions to further extend and customise data.
+Report generations include the ability to use custom wasm functions to further extend and customise data.
 OMS includes building of JS wasm functions by adding a [convert_data_js](#convert_data_js-dir) dir in the report dir.
 
 See [the extism-js docs](https://github.com/extism/js-pdk) for more details on how to build wasm functions with js within OMS.
 
-`make sure extism-js version 1.3.0 and above is installed`, otherwise you may get `uncreacheable error` as per this [comment](https://github.com/msupply-foundation/open-msupply/issues/5312#issuecomment-2489548208)
+`make sure extism-js version 1.3.0 and above is installed`, otherwise you may get `unreacheable error` as per this [comment](https://github.com/msupply-foundation/open-msupply/issues/5312#issuecomment-2489548208)
 
 Alternatively wasm functions can be built externally using any compatible language using extism-PDK ([see wasm docs for more details](https://webassembly.org/getting-started/developers-guide/)), and added as a custom wasm function.
 
@@ -335,83 +333,119 @@ Log destination is configured in the `base.yaml` file under logging.
 
 Creating a new report generates a large dif and can be difficult to review and test.
 
-#### sub-pr
+#### Pull Request Process
 
-To reduce PR review overhead when making a new major or minior version of a report, it is encouraged to first make a sub pull request duplicating the report source files.
+The following conventions have been adopted to increase ease of reviewing of pull requests:
+
+##### 1. Preliminary PRs
+
+To reduce PR review overhead when making a new major or minor version of a report, it is encouraged to first make a sub pull request duplicating the report source files.
 
 This duplication can be quickly validated.
 
 A subsequent PR with changes to these source files is easier to review by identifying only relevant changes.
 
-#### patch overwriting
+An example can be seen here of this process:
+- [Duplication PR](https://github.com/msupply-foundation/open-msupply/pull/6327)
+- [Changes PR](https://github.com/msupply-foundation/open-msupply/pull/6157) making changes to the newly duplicated reports.
 
-The simplest way is to:
+##### 2. Supplementary information
 
-- Copy the version dir of the report you want to make a custom or new standard report for, and paste it into the same location.
-- Bump the version number
-- Change the version dir name to match the version number.
-- Change the is_custom boolean to true if the report will be a custom report.
+Add all required supplementary information required so that a reviewer can immediately see the new report using the `show-report` command.
 
-> The dir names are for developer convenience only. The name and version of each report read by omSupply is from the report-manifest.json file.
+This may include:
+- An OMS database
+- An mSupply database
+- A custom test-config.json file
 
-New report versions must be compatible with the matching major and minor versions of the OMS app.
+Care must be taken with all reports and databases to [ensure client confidentiality](#client-confidentiality).
 
+#### New Report Patches
 
+When iterating on a patch, the version in the report-manifest.json needs to be bumped.
 
-## Maintenance
+##### Patches
+
+Report files can be overwritten for patch changes. 
+Reports of a new patch must be backwards compatible to open mSupply of the same major and minor version. Therefore we can reduce PR dif overhead, and committed file overhead in OMS, by editing a report if it is a patch change.
+
+Previous patch versions of a report can be accessed if necessary on old branches of open mSupply.
+
+#### Major or minor version change
+
+A copy of the source files must be made for major or minor report version changes.
+
+These changes should only be made when the api of the report is changed, causing it to no longer be compatible with the older version of open mSupply.
+
+In these cases, it is necessary to produce both versions of the report to ensure a report is available for remote OMS sites which might not have been updated to the latest version.
+
+Convention for file structures of report versions is:
+
+```
+└──  example-report
+   ├── 2_4
+   └── 2_5
+```
+
+Where 2_4 and 2_5 are directories containing source files of different versions of the same report.
+
+### File Structure
+
+#### Reports and Forms
+
+Reports are separated into 'reports' and 'forms' (previously picklists)
+
+##### Reports
+
+Use argument schemas to generate filtered reports based on user input.
+
+##### Forms
+
+Use inbuilt constant arguments, and are not customisable with front end user inputs.
+
+##### File Structure
+
+The full conventional file structure is as follows:
+
+```
+├── reports
+   ├──  clients
+   |   ├── client 1
+   |   |   ├── Reports
+   |   |   |   ├── expiring-items
+   |   |   |   |   ├── 2_6
+   |   |   |   |   └── 2_7
+   |   |   |   └── item-usage
+   |   |   |       └── 3_2
+   |   |   └── Forms
+   |   |       ├── repack
+   |   |       |   ├── 2_6
+   |   |       |   └── 2_7
+   |   |       └── requisition
+   |   |           └── 2_7 
+   |   └── client 2
+   |       └── Reports
+   |           └── expiring-items
+   |               ├── 2_6
+   |               └── 2_7
+   └── Other source files and helper functions
+```
+
+Where each 'version dir' ie 2_6 contains all the source files required to build that report as per the [source file diagram](#source-file-structure-diagram)
+
+### Client Confidentiality
+
+Client specific reports are confidential. Information regarding these reports must be kept out of the open-msupply repository.
+
+When sharing databases, ensure no client information is uploaded github. Share databases and client specific information through secure channels only.
+
+## Maintenance (support info)
 
 The OMS CLI provides tools for managing and developing reports within an omSupply instance. It allows users to build, upsert, and test reports, streamlining the development and deployment process.
 
+All sites will have embedded standard reports inserted on startup.
 
+Additional reports (both custom, and patched standard reports) can be upserted in bulk to open mSupply central servers via the `upsert-reports` command.
 
-## Report tools show command
+Reports will then be synced out from there to remote sites.
 
-Reports can be rendered during development using the show command
-
-```bash
-./target/debug/remote_server_cli show-report --path <path-to-your-report-dir> --config <config-file-path>
-```
-
-This command will render an html in the open mSupply directory. 
-The `path` argument is mandatory. It is the path to the dir of the source file of your report. This is the dir that contains 'report-manifest.json'
-
-The report is rendered using the 'test-config.json' file located in the reports dir.
-A custom test-config file can be used if a report needs special parameters such as arguments (from json schema) added.
-`config` is an optional argument to the `show-reports` command. This is a path to a custom test-config file. If no config argument is supplied, the default test-config file is used.
-
-The config file uses the following structure:
-
-```json
-{
-    "//": "For forms it's entity id",
-    "data_id": "a109bb20-da6c-4d7a-a876-b0b06ffe9e91",
-    "store_id": "D0E298893F3945DABE80B138E25D3D15",
-    "//": "Login details",
-    "url": "http://localhost:8000",
-    "username": "admin",
-    "password": "pass",
-    "//": "Arguments for standard reports",
-    "arguments": {},
-    "//": "Locale to generate report. Defaults to en",
-    "locale": "",
-    "//": "Output file name",
-    "output_filename": "report_to_show"
-}
-```
-
-- data_id and store_id are the data and store id parameters used in whatever graphql query is being used to generate a report.
-- url is the server url from where the report will be generated
-- username and password are the login details which must authenticate with the store being accessed.
-- arguments are optional additional parameters which are typically supplied through the argument JSON form in the front end. These can be edited to render specific cases of a given report
-
-### Pull Requests with show command
-
-Pull requests with reports should be made as easeful as possible for the reviewer. The show command can be a helpful tool in this case.
-
-When making a PR with a custom report, add supplimentary oms data files (and custom test-config file if required) to the PR. This will allow a reviewer to immediately display the report.
-
-#### Pull requests with small iterations on a report
-
-When making a pull request for a new version of a report, large difs can make reviewing difficult.
-
-For this reason, it is easier for the reviewer if a preliminary PR is made first with the duplication of all files in a new report version, and a subsequent PR is made with the files changes. This provides a dif with only the relevant changes to the reviewer.
