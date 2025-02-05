@@ -232,6 +232,19 @@ query latestPatientEncounter(
   }
 }
 
+fragment PatientInsurance on PatientInsuranceNode {
+  id
+  expiryDate
+  insuranceProviderId
+  isActive
+  enteredById
+  discountPercentage
+  nameLinkId
+  policyNumber
+  policyNumberFamily
+  policyNumberPerson
+}
+
 query getPatientInsurances(
   $storeId: String!
   $filter: PatientInsuranceFilterInput
@@ -241,16 +254,7 @@ query getPatientInsurances(
     ... on PatientInsuranceConnector {
       __typename
       nodes {
-        id
-        expiryDate
-        insuranceProviderId
-        isActive
-        enteredById
-        discountPercentage
-        nameLinkId
-        policyNumber
-        policyNumberFamily
-        policyNumberPerson
+        ...PatientInsurance
       }
     }
   }

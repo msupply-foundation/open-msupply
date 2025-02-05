@@ -90,6 +90,8 @@ export type LatestPatientEncounterQueryVariables = Types.Exact<{
 
 export type LatestPatientEncounterQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, type: string, startDatetime: string, suggestedNextEncounter?: { __typename: 'SuggestedNextEncounterNode', startDatetime: string, label?: string | null } | null }> } };
 
+export type PatientInsuranceFragment = { __typename: 'PatientInsuranceNode', id: string, expiryDate: string, insuranceProviderId: string, isActive: boolean, enteredById?: string | null, discountPercentage: number, nameLinkId: string, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null };
+
 export type GetPatientInsurancesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   filter?: Types.InputMaybe<Types.PatientInsuranceFilterInput>;
@@ -171,6 +173,20 @@ export const ProgramPatientRowFragmentDoc = gql`
       totalCount
     }
   }
+}
+    `;
+export const PatientInsuranceFragmentDoc = gql`
+    fragment PatientInsurance on PatientInsuranceNode {
+  id
+  expiryDate
+  insuranceProviderId
+  isActive
+  enteredById
+  discountPercentage
+  nameLinkId
+  policyNumber
+  policyNumberFamily
+  policyNumberPerson
 }
     `;
 export const PatientsDocument = gql`
@@ -330,21 +346,12 @@ export const GetPatientInsurancesDocument = gql`
     ... on PatientInsuranceConnector {
       __typename
       nodes {
-        id
-        expiryDate
-        insuranceProviderId
-        isActive
-        enteredById
-        discountPercentage
-        nameLinkId
-        policyNumber
-        policyNumberFamily
-        policyNumberPerson
+        ...PatientInsurance
       }
     }
   }
 }
-    `;
+    ${PatientInsuranceFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
