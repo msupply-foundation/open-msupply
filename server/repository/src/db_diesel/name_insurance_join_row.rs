@@ -25,7 +25,7 @@ table! {
     policy_number_family -> Nullable<Text>,
     policy_number -> Text,
     policy_type -> crate::db_diesel::name_insurance_join_row::InsurancePolicyTypeMapping,
-    discount_percentage -> Integer,
+    discount_percentage -> Double,
     expiry_date -> Date,
     is_active -> Bool,
     entered_by_id -> Nullable<Text>,
@@ -33,7 +33,7 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize,
 )]
 #[diesel(table_name = name_insurance_join)]
 pub struct NameInsuranceJoinRow {
@@ -44,7 +44,7 @@ pub struct NameInsuranceJoinRow {
     pub policy_number_family: Option<String>,
     pub policy_number: String,
     pub policy_type: InsurancePolicyType,
-    pub discount_percentage: i32,
+    pub discount_percentage: f64,
     pub expiry_date: chrono::NaiveDate,
     pub is_active: bool,
     pub entered_by_id: Option<String>,

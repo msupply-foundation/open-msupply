@@ -55,7 +55,7 @@ pub struct LegacyNameInsuranceJoinRow {
     pub ID: String,
     pub nameID: String,
     pub insuranceProviderID: String,
-    pub discountRate: i32,
+    pub discountRate: f64,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub enteredByID: Option<String>,
     pub expiryDate: NaiveDate,
