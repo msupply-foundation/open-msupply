@@ -1545,5 +1545,9 @@
   "messages.deleted-orders_one": "{{count}} pedidos excluídos",
   "messages.deleted-shipments_few": "Foram excluídos {{count}} envios",
   "messages.fetching-patient-data": "Obtendo dados do paciente...",
-  "messages.fetching-patient-data-done": "Obtendo dados do paciente... (Feito)"
+  "messages.fetching-patient-data-done": "Obtendo dados do paciente... (Feito)",
+  "messages.how-to-read-pending-encounters": "Descrição das colunas:\n*Estado: Estado do paciente no programa selecionado",
+  "messages.fridge-tag-import-successful": "Sucesso! Foram importados {{numberOfLogs}} registos e {{numberOfBreaches}} brechas.",
+  "messages.fetching-report-data": "Buscando dados do relatório...",
+  "messages.finalise-previous-form": "Finalize o formulário R&R anterior neste calendário para criar o seguinte"
 }
