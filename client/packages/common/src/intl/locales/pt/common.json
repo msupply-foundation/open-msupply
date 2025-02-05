@@ -1505,5 +1505,22 @@
   "log.zero-quantities-for-invoice-created-before-store": "A quantidades de todas as linhas foram estabelecidas como 0 porque a factura foi criada antes do local.",
   "messages.confirm-delete-prescriptions_few": "Isto excluirá permanentemente {{count}} prescrições",
   "messages.confirm-sensor-update": "Isto confirmará as mudanças realizadas para este sensor",
-  "message.arguments": "É possível customizar o que é mostrado no relatório especificando algumas das opções abaixo. Clique OK para ver o relatório."
+  "message.arguments": "É possível customizar o que é mostrado no relatório especificando algumas das opções abaixo. Clique OK para ver o relatório.",
+  "messages.deleted-item-variant": "Variante de artigo excluída com sucesso",
+  "messages.confirm-zero-quantity": "Não existem quantidades alocadas para este item! Clique OK novamente para confirmar.",
+  "messages.confirm-zero-quantity-status": "Existem linhas com quantidade 0 emitida. Se optar por proceder, estas serão removidas. Por favor 'Cancele' se gostaria de atualizar os artigos.",
+  "messages.deleted-lines_few": "{{count}} linhas excluídas",
+  "messages.confirm-not-fully-supplied_few": "Existem {{count}} linhas nessa requisição que não foram completamente fornecidas ao cliente.\n\nDesejas prosseguir?",
+  "messages.deleted-lines_many": "{{count}} linhas excluídas",
+  "messages.deleted-orders_few": "{{count}} pedidos excluídos",
+  "messages.deleted-orders_many": "{{count}} pedidos excluídos",
+  "messages.click-to-return-to-assets": "Não foi possível encontrar um ativo da cadeia de frios com essa ID. Clique OK para retornar à lista de equipamentos",
+  "messages.confirm-zero-shipment-lines_many": "Isto estabelecerá a quantidade igual a 0 para {{count}} linhas",
+  "messages.confirm-zero-shipment-lines_one": "Isto estabelecerá a quantidade igual a 0 para 1linha",
+  "messages.confirm-zero-shipment-lines_other": "Isto estabelecerá a quantidade igual a 0 para {{count}} linhas",
+  "messages.connected-to-printer": "Conectado com sucesso à impressora!",
+  "messages.cannot-bundle": "Não podes agrupar variantes de artigos com essa, porque esta variante já está agrupada com outros artigos",
+  "messages.confirm-not-fully-supplied_many": "Existem {{count}} linhas nessa requisição que não foram completamente fornecidas ao cliente.\n\nDesejas prosseguir?",
+  "messages.confirm-not-fully-supplied_one": "Existem {{count}} linhas nessa requisição que não foram completamente fornecidas ao cliente.\n\nDesejas prosseguir?",
+  "messages.confirm-not-fully-supplied_other": "Existem {{count}} linhas nessa requisição que não foram completamente fornecidas ao cliente.\n\nDesejas prosseguir?"
 }
