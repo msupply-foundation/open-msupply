@@ -209,7 +209,6 @@ export const Toolbar: FC = () => {
             gap={1}
             flex={1}
             marginLeft={3}
-            maxWidth={'fit-content'}
           >
             <InputWithLabelRow
               label={t('label.date')}
