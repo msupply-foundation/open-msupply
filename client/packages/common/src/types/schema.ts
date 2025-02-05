@@ -2091,6 +2091,7 @@ export type EncounterNode = {
   name: Scalars['String']['output'];
   patient: PatientNode;
   patientId: Scalars['String']['output'];
+  previousEncounter?: Maybe<EncounterNode>;
   /** Returns the matching program enrolment for the patient of this encounter */
   programEnrolment?: Maybe<ProgramEnrolmentNode>;
   programEvents: ProgramEventResponse;
