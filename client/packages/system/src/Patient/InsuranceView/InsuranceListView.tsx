@@ -22,7 +22,7 @@ export const InsuranceListView = () => {
       <DataTable
         id="insurance-list"
         columns={columns}
-        data={data?.getPatientInsurances.nodes}
+        data={data?.nodes}
         isLoading={isLoading}
       />
     </TableProvider>

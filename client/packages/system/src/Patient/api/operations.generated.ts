@@ -90,7 +90,7 @@ export type LatestPatientEncounterQueryVariables = Types.Exact<{
 
 export type LatestPatientEncounterQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, type: string, startDatetime: string, suggestedNextEncounter?: { __typename: 'SuggestedNextEncounterNode', startDatetime: string, label?: string | null } | null }> } };
 
-export type PatientInsuranceFragment = { __typename: 'PatientInsuranceNode', id: string, expiryDate: string, insuranceProviderId: string, isActive: boolean, enteredById?: string | null, discountPercentage: number, nameLinkId: string, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null };
+export type PatientInsuranceFragment = { __typename: 'PatientInsuranceNode', id: string, expiryDate: string, insuranceProviderId: string, isActive: boolean, enteredById?: string | null, discountPercentage: number, nameLinkId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null };
 
 export type GetPatientInsurancesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -99,7 +99,7 @@ export type GetPatientInsurancesQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetPatientInsurancesQuery = { __typename: 'Queries', getPatientInsurances: { __typename: 'PatientInsuranceConnector', nodes: Array<{ __typename: 'PatientInsuranceNode', id: string, expiryDate: string, insuranceProviderId: string, isActive: boolean, enteredById?: string | null, discountPercentage: number, nameLinkId: string, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null }> } };
+export type GetPatientInsurancesQuery = { __typename: 'Queries', getPatientInsurances: { __typename: 'PatientInsuranceConnector', nodes: Array<{ __typename: 'PatientInsuranceNode', id: string, expiryDate: string, insuranceProviderId: string, isActive: boolean, enteredById?: string | null, discountPercentage: number, nameLinkId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null }> } };
 
 export const PatientRowFragmentDoc = gql`
     fragment PatientRow on PatientNode {
@@ -184,6 +184,7 @@ export const PatientInsuranceFragmentDoc = gql`
   enteredById
   discountPercentage
   nameLinkId
+  policyType
   policyNumber
   policyNumberFamily
   policyNumberPerson

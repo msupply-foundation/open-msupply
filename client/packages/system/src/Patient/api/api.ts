@@ -50,6 +50,9 @@ export type CentralPatientSearchResponse =
 export type LinkPatientToStoreResponse =
   LinkPatientToStoreMutation['linkPatientToStore'];
 
+export type GetPatientInsuranceResponse =
+  GetPatientInsurancesQuery['getPatientInsurances'];
+
 export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
   get: {
     byId: async (nameId: string) => {
@@ -213,6 +216,6 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     (await sdk.latestPatientEncounter({ storeId, patientId, encounterType }))
       .encounters,
 
-  getPatientInsurances: async (): Promise<GetPatientInsurancesQuery> =>
-    await sdk.getPatientInsurances({ storeId }),
+  getPatientInsurances: async (): Promise<GetPatientInsuranceResponse> =>
+    (await sdk.getPatientInsurances({ storeId })).getPatientInsurances,
 });

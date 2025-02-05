@@ -240,6 +240,7 @@ fragment PatientInsurance on PatientInsuranceNode {
   enteredById
   discountPercentage
   nameLinkId
+  policyType
   policyNumber
   policyNumberFamily
   policyNumberPerson

@@ -4,6 +4,7 @@ use graphql_core::{
     generic_filters::EqualFilterStringInput, standard_graphql_error::validate_auth, ContextExt,
 };
 use repository::name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow};
+use serde::Serialize;
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -24,6 +25,22 @@ pub struct PatientInsuranceSortInput {
 #[derive(InputObject, Clone)]
 pub struct PatientInsuranceFilterInput {
     pub id: Option<EqualFilterStringInput>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum InsurancePolicyNodeType {
+    Personal,
+    Business,
+}
+impl InsurancePolicyNodeType {
+    pub fn from_domain(policy_type: &InsurancePolicyType) -> InsurancePolicyNodeType {
+        use InsurancePolicyType::*;
+        match policy_type {
+            Personal => InsurancePolicyNodeType::Personal,
+            Business => InsurancePolicyNodeType::Business,
+        }
+    }
 }
 
 #[derive(PartialEq, Debug)]
@@ -57,9 +74,9 @@ impl PatientInsuranceNode {
         &self.insurance.policy_number
     }
 
-    // pub async fn policy_type(&self) -> &InsurancePolicyType {
-    //     &self.insurance.policy_type
-    // }
+    pub async fn policy_type(&self) -> InsurancePolicyNodeType {
+        InsurancePolicyNodeType::from_domain(&self.insurance.policy_type)
+    }
 
     pub async fn discount_percentage(&self) -> i32 {
         self.insurance.discount_percentage
