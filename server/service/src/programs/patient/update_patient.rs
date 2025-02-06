@@ -49,6 +49,7 @@ fn generate(existing: NameRow, update: UpdatePatient) -> NameRow {
         is_deceased,
         date_of_death,
         next_of_kin_id,
+        next_of_kin_name,
     } = update;
 
     NameRow {
@@ -64,6 +65,7 @@ fn generate(existing: NameRow, update: UpdatePatient) -> NameRow {
         is_deceased: is_deceased.unwrap_or(false),
         national_health_number: code_2,
         next_of_kin_id,
+        next_of_kin_name,
         ..existing
     }
 }
@@ -82,6 +84,7 @@ pub struct UpdatePatient {
     pub is_deceased: Option<bool>,
     pub date_of_death: Option<NaiveDate>,
     pub next_of_kin_id: Option<String>,
+    pub next_of_kin_name: Option<String>,
 }
 
 pub(crate) fn update_patient(
