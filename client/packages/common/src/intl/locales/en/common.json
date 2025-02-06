@@ -1526,6 +1526,7 @@
   "messages.partial-pack-warning": "You have issued a non-whole number of packs. Are you sure you are able to do this? If not, you will need to issue {{nearestAbove}} units to issue in whole packs.",
   "messages.patient-data-required-for-search": "Please enter patient information",
   "messages.patients-create": "Click [Create new] to add a new patient with the details you entered on the previous tab, or click an existing patient below to view their details.",
+  "messages.no-patients-found": "No patients found",
   "messages.patients-found_few": "{{count}} patients found matching the supplied details",
   "messages.patients-found_many": "{{count}} patients found matching the supplied details",
   "messages.patients-found_one": "1 patient found matching the supplied details",
