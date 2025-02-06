@@ -5285,7 +5285,10 @@ export type PatientInsuranceNode = {
 export type PatientInsuranceResponse = PatientInsuranceConnector;
 
 export enum PatientInsuranceSortFieldInput {
-  Id = 'id'
+  ExpiryDate = 'expiryDate',
+  IsActive = 'isActive',
+  PolicyType = 'policyType',
+  ProviderName = 'providerName'
 }
 
 export type PatientInsuranceSortInput = {

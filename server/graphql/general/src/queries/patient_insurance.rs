@@ -10,7 +10,10 @@ use service::auth::{Resource, ResourceAccessRequest};
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum PatientInsuranceSortFieldInput {
-    Id,
+    ProviderName,
+    PolicyType,
+    ExpiryDate,
+    IsActive,
 }
 
 #[derive(InputObject)]
@@ -78,7 +81,7 @@ impl PatientInsuranceNode {
         InsurancePolicyNodeType::from_domain(&self.insurance.policy_type)
     }
 
-    pub async fn discount_percentage(&self) -> i32 {
+    pub async fn discount_percentage(&self) -> f64 {
         self.insurance.discount_percentage
     }
 
@@ -132,7 +135,7 @@ pub fn get_patient_insurances(
         policy_number_family: Some("67890".to_string()),
         policy_number: "112233".to_string(),
         policy_type: InsurancePolicyType::Personal,
-        discount_percentage: 10,
+        discount_percentage: 10.0,
         expiry_date: NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date"),
         is_active: true,
         entered_by_id: Some("4".to_string()),
@@ -146,7 +149,7 @@ pub fn get_patient_insurances(
         policy_number_family: Some("09876".to_string()),
         policy_number: "445566".to_string(),
         policy_type: InsurancePolicyType::Business,
-        discount_percentage: 15,
+        discount_percentage: 15.0,
         expiry_date: NaiveDate::from_ymd_opt(2024, 11, 30).expect("Invalid date"),
         is_active: false,
         entered_by_id: Some("5".to_string()),
@@ -160,7 +163,7 @@ pub fn get_patient_insurances(
         policy_number_family: Some("12345".to_string()),
         policy_number: "778899".to_string(),
         policy_type: InsurancePolicyType::Personal,
-        discount_percentage: 20,
+        discount_percentage: 20.0,
         expiry_date: NaiveDate::from_ymd_opt(2023, 10, 29).expect("Invalid date"),
         is_active: true,
         entered_by_id: Some("6".to_string()),
