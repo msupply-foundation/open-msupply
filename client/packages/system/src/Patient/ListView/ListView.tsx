@@ -102,6 +102,11 @@ const PatientListComponent: FC = () => {
       formatter: dateString =>
         dateString ? localisedDate((dateString as string) || '') : '',
     },
+    {
+      key: 'nextOfKinName',
+      label: 'label.next-of-kin',
+      sortable: false,
+    },
   ];
 
   if (store?.preferences.omProgramModule) {

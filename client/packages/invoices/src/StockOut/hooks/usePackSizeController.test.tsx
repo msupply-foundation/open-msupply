@@ -43,6 +43,7 @@ const testLine = ({
       id,
       expiryDate,
       sellPricePerPack: 0,
+      costPricePerPack: 0,
       totalBeforeTax: 0,
       totalAfterTax: 0,
       item: {
@@ -65,6 +66,7 @@ const testLine = ({
         totalNumberOfPacks,
         availableNumberOfPacks,
         onHold,
+        costPricePerPack: 0,
         sellPricePerPack: 0,
         itemId,
         packSize,

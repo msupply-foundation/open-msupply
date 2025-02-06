@@ -4,6 +4,7 @@ fragment PartialStockLine on StockLineNode {
   availableNumberOfPacks
   totalNumberOfPacks
   onHold
+  costPricePerPack
   sellPricePerPack
   packSize
   expiryDate
@@ -31,6 +32,7 @@ fragment StockOutLine on InvoiceLineNode {
   prescribedQuantity
   packSize
   invoiceId
+  costPricePerPack
   sellPricePerPack
   note
   totalBeforeTax
@@ -64,6 +66,7 @@ fragment StockOutLine on InvoiceLineNode {
     totalNumberOfPacks
     onHold
     sellPricePerPack
+    costPricePerPack
     packSize
     expiryDate
     item {
