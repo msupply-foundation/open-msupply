@@ -65,7 +65,7 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
           onChange={(_, name) => {
             if (name && !(name instanceof Array)) onChange(name);
           }}
-          noOptionsText=""
+          noOptionsText={t('messages.no-patients-found')}
         />
       </Box>
       <Box p={2}>
