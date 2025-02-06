@@ -135,6 +135,7 @@ fn name_1() -> TestSyncIncomingRecord {
             is_donor: false,
             on_hold: true,
             next_of_kin_id: None,
+            next_of_kin_name: None,
             address1: Some("address1".to_string()),
             address2: Some("address2".to_string()),
             created_datetime: Some(
@@ -276,6 +277,7 @@ fn name_2() -> TestSyncIncomingRecord {
             is_donor: false,
             on_hold: false,
             next_of_kin_id: Some(NAME_1.0.to_string()),
+            next_of_kin_name: None,
             created_datetime: None,
             is_deceased: false,
             national_health_number: None,
@@ -412,6 +414,7 @@ fn name_3() -> TestSyncIncomingRecord {
             is_donor: false,
             on_hold: false,
             next_of_kin_id: None,
+            next_of_kin_name: None,
             created_datetime: None,
             is_deceased: false,
             national_health_number: Some("NHN002".to_string()),
@@ -476,7 +479,7 @@ const NAME_4: (&str, &str) = (
       "Blood_Group": "",
       "marital_status": "",
       "Benchmark": false,
-      "next_of_kin_relative": "",
+      "next_of_kin_relative": "Fun Parent",
       "mother_id": "",
       "postal_address3": "",
       "postal_address4": "",
@@ -549,6 +552,7 @@ fn name_4() -> TestSyncIncomingRecord {
             is_donor: false,
             on_hold: false,
             next_of_kin_id: None,
+            next_of_kin_name: Some("Fun Parent".to_string()),
             created_datetime: Some(
                 NaiveDate::from_ymd_opt(2022, 5, 22)
                     .unwrap()
@@ -591,6 +595,7 @@ fn name_push_record_1() -> TestSyncOutgoingRecord {
             is_donor: false,
             on_hold: true,
             next_of_kin_id: None,
+            next_of_kin_name: None,
             address1: Some("address1".to_string()),
             address2: Some("address2".to_string()),
             created_date: Some(NaiveDate::from_ymd_opt(2022, 5, 22).unwrap()),
@@ -635,6 +640,7 @@ fn name_push_record_2() -> TestSyncOutgoingRecord {
             is_donor: false,
             on_hold: false,
             next_of_kin_id: None,
+            next_of_kin_name: Some("Fun Parent".to_string()),
             is_deceased: true,
             national_health_number: Some("NHN003".to_string()),
             female: true,

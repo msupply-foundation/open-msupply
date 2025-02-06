@@ -7,6 +7,8 @@ import {
   useDetailPanel,
   useTranslation,
   InfoOutlineIcon,
+  LoadingButton,
+  PrinterIcon,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { Draft } from '../..';
@@ -26,6 +28,12 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        <LoadingButton
+          variant="outlined"
+          startIcon={<PrinterIcon />}
+          isLoading={false}
+          label={t('button.print-prescription-label')}
+        />
         <ButtonWithIcon
           label={t('button.history')}
           Icon={<InfoOutlineIcon />}

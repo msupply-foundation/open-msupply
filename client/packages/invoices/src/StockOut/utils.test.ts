@@ -41,6 +41,7 @@ const createTestLine = ({
       totalAfterTax: 0,
       totalBeforeTax: 0,
       sellPricePerPack: 0,
+      costPricePerPack: 0,
       itemName: '',
       item: {
         id: itemId,
@@ -63,6 +64,7 @@ const createTestLine = ({
         availableNumberOfPacks,
         onHold,
         sellPricePerPack: 0,
+        costPricePerPack: 0,
         itemId,
         packSize,
         item: {
