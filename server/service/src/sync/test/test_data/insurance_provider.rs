@@ -4,9 +4,9 @@ use repository::InsuranceProviderRow;
 const TABLE_NAME: &str = "insuranceProvider";
 
 const INSURANCE_PROVIDER_1: (&str, &str) = (
-    "3CB14F143AFF4232889615B52EC56A1D",
+    "INSURANCE_PROVIDER_1_ID",
     r#"{
-        "ID": "3CB14F143AFF4232889615B52EC56A1D",
+        "ID": "INSURANCE_PROVIDER_1_ID",
         "comment": "Test",
         "isActive": true,
         "prescriptionValidityDays": 30,
