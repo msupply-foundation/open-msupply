@@ -3,7 +3,7 @@ use crate::{
 };
 use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineSort,
-    InvoiceRepository, PaginationOption, RepositoryError,
+    PaginationOption, RepositoryError,
 };
 
 pub const MAX_LIMIT: u32 = 1000;
@@ -37,18 +37,13 @@ pub fn get_invoice_line(
 pub fn get_invoice_lines(
     ctx: &ServiceContext,
     store_id: &str,
-    invoice_id: &str,
     pagination: Option<PaginationOption>,
     filter: Option<InvoiceLineFilter>,
     sort: Option<InvoiceLineSort>,
 ) -> Result<ListResult<InvoiceLine>, GetInvoiceLinesError> {
-    let invoice = InvoiceRepository::new(&ctx.connection).find_one_by_id(invoice_id)?;
-    if invoice.0.store_id != store_id {
-        return Err(GetInvoiceLinesError::InvalidStore);
-    }
     let filter = filter
         .unwrap_or_default()
-        .invoice_id(EqualFilter::equal_to(invoice_id));
+        .store_id(EqualFilter::equal_to(store_id));
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)
         .map_err(GetInvoiceLinesError::ListError)?;
 
