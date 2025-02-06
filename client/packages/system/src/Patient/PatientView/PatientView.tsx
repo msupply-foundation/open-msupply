@@ -37,6 +37,7 @@ import {
   usePatientModalStore,
   usePatientStore,
   useProgramEnrolments,
+  PatientSchema,
 } from '@openmsupply-client/programs';
 import { Footer } from './Footer';
 import { ContactTraceListView, CreateContactTraceModal } from '../ContactTrace';
@@ -165,7 +166,13 @@ const PatientDetailView = ({
           isDeceased: currentPatient.isDeceased ?? undefined,
           phone: currentPatient.phone ?? undefined,
           address1: currentPatient.address1 ?? undefined,
-          nextOfKinId: currentPatient.nextOfKinId ?? undefined,
+          nextOfKin:
+            currentPatient.nextOfKinId || currentPatient.nextOfKinName
+              ? {
+                  id: currentPatient.nextOfKinId ?? undefined,
+                  name: currentPatient.nextOfKinName ?? undefined,
+                }
+              : undefined,
         },
         isCreating: false,
       };
@@ -204,12 +211,18 @@ const PatientDetailView = ({
         isCreating: isCreatingPatient,
         schema: DEFAULT_SCHEMA,
         save: async (data: unknown) => {
+          const patientData = data as PatientSchema;
           const newData = Object.fromEntries(
             Object.entries(data ?? {}).filter(
-              ([key]) => key !== 'dateOfBirthIsEstimated'
+              ([key]) => key !== 'dateOfBirthIsEstimated' && key !== 'nextOfKin'
             )
           );
-          await handlePatientSave(newData);
+          // map nextOfKin object to individual fields
+          await handlePatientSave({
+            ...newData,
+            nextOfKinId: patientData?.nextOfKin?.id,
+            nextOfKinName: patientData?.nextOfKin?.name,
+          });
         },
       };
 
