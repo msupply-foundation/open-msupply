@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(RustEmbed)]
 // Relative to server/Cargo.toml
-#[folder = "../reports/generated"]
+#[folder = "../../standard_reports/generated"]
 #[exclude = "*.DS_Store"]
 pub struct EmbeddedStandardReports;
 

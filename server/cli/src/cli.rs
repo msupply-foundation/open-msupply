@@ -403,7 +403,7 @@ async fn main() -> anyhow::Result<()> {
         Action::BuildReports { path } => {
             let base_reports_dir = match path.clone() {
                 Some(path) => path,
-                None => PathBuf::new().join("reports"),
+                None => PathBuf::new().join("../standard_reports"),
             };
 
             let mut reports_data = ReportsData { reports: vec![] };
@@ -446,7 +446,7 @@ async fn main() -> anyhow::Result<()> {
             };
         }
         Action::UpsertReports { path, overwrite } => {
-            let standard_reports_dir = Path::new("reports")
+            let standard_reports_dir = Path::new("../standard_reports")
                 .join("generated")
                 .join("standard_reports.json");
 
