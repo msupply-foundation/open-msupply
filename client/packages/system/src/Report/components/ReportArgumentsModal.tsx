@@ -6,6 +6,8 @@ import {
   JsonForm,
   patientProgramSearchTester,
   PatientProgramSearch,
+  programSearchTester,
+  ProgramSearch,
 } from '@openmsupply-client/programs';
 import { ReportRowFragment } from '../api';
 import { useDialog, useUrlQuery } from '@common/hooks';
@@ -21,6 +23,7 @@ export type ReportArgumentsModalProps = {
 
 const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: patientProgramSearchTester, renderer: PatientProgramSearch },
+  { tester: programSearchTester, renderer: ProgramSearch },
 ];
 
 export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
