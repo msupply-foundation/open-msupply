@@ -70,6 +70,16 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_name_link_id(
+        &self,
+        name_link_id: &str,
+    ) -> Result<Vec<NameInsuranceJoinRow>, RepositoryError> {
+        let result = name_insurance_join::table
+            .filter(name_insurance_join::name_link_id.eq(name_link_id))
+            .get_results(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
     pub fn upsert_one(&self, row: &NameInsuranceJoinRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(name_insurance_join::table)
             .values(row)
