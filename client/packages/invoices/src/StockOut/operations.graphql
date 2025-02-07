@@ -47,11 +47,6 @@ fragment StockOutLine on InvoiceLineNode {
     name
     code
     unitName
-    # itemDirections {
-    #   directions
-    #   id
-    #   priority
-    # }
   }
 
   location {
