@@ -1,0 +1,15 @@
+{
+  "name": "plugin_example_stock_donor",
+  "version": "1.0.0",
+  "main": "plugin.js",
+  "scripts": {
+    "build-plugin": "rm -rf dist && mkdir dist && rm -rf ../../../../server/app_data/plugins/ShippingStatus/ && mkdir -p ../../../../server/app_data/plugins/ShippingStatus/ && NODE_ENV=production webpack && cp dist/* ../../../../server/app_data/plugins/ShippingStatus/"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "webpack": "^5.76.2",
+    "webpack-cli": "^5.0.1",
+    "webpack-dev-server": "^4.12.0",
+    "ts-loader": "^9.4.4"
+  }
+}

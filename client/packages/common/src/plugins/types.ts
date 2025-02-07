@@ -14,3 +14,10 @@ export type Plugins = {
     columns: ColumnDefinition<StockLineRowFragment>[];
   };
 };
+
+type PluginData<D> = { relatedRecordId: string; data: D };
+export type PluginDataStore<T, D> = {
+  data: PluginData<D>[];
+  set: (data: PluginData<D>[]) => void;
+  getById: (row: T) => PluginData<D> | undefined;
+};

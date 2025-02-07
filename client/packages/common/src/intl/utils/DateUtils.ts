@@ -239,6 +239,7 @@ export const useFormatDateTime = () => {
 
   const localisedDistanceToNow = (date: Date | string | number) => {
     const d = dateInputHandler(date);
+    console.log(isValid(d) ? formatDistanceToNow(d, { locale }) : '');
     return isValid(d) ? formatDistanceToNow(d, { locale }) : '';
   };
 

@@ -5,8 +5,6 @@ import {
   PluginNode,
   Plugins,
 } from '@openmsupply-client/common';
-import { useEffect } from 'react';
-import { usePlugins } from './api/usePlugins';
 
 // PLUGIN PROVIDER
 type PluginProvider = {
@@ -31,10 +29,6 @@ export const usePluginProvider = create<PluginProvider>(set => {
 });
 
 // PLUGINS INIT
-
-// Used for local plugins in dev mode
-declare const LOCAL_PLUGINS: { fileName: string }[];
-// LOAD REACT PLUGIN
 
 // LOAD REMOTE PLUGIN
 type Factory = Promise<() => { default: Plugins }>;
@@ -113,36 +107,4 @@ export const loadRemotePlugin = async (
     console.error(e);
     throw new Error('Failed to load plugin');
   }
-};
-
-export const useInitPlugins = () => {
-  const { addPlugins } = usePluginProvider();
-  const { query } = usePlugins();
-
-  const initRemotePlugins = async () => {
-    const plugins = await query();
-
-    for (const plugin of plugins) {
-      let pluginBundle = await loadRemotePlugin(plugin);
-      addPlugins(pluginBundle);
-    }
-  };
-
-  // For hot reloading in dev mode plugins will be loaded from ./plugin folder
-  const initLocalPlugins = async () => {
-    for (const plugin of LOCAL_PLUGINS) {
-      let pluginBundle = await import(
-        // Webpack will actually try to load everything in plugins directory
-        // which causes issues
-        /* webpackExclude: /node_modules/ */
-        `./plugins/${plugin.fileName}/src/plugin.tsx`
-      );
-      addPlugins(pluginBundle.default);
-    }
-  };
-
-  useEffect(() => {
-    if (process.env['NODE_ENV'] === 'production') initRemotePlugins();
-    else initLocalPlugins();
-  }, []);
 };

@@ -141,10 +141,10 @@ impl<'a> StockLineRepository<'a> {
             .limit(pagination.limit as i64);
 
         // Debug diesel query
-        // println!(
-        //     "{}",
-        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
-        // );
+        println!(
+            "{}",
+            diesel::debug_query::<DBType, _>(&final_query).to_string()
+        );
 
         let result = final_query.load::<StockLineJoin>(self.connection.lock().connection())?;
 
