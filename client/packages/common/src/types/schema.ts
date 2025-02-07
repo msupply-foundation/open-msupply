@@ -2926,6 +2926,7 @@ export type InsertPatientInput = {
   isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
   nextOfKinId?: InputMaybe<Scalars['String']['input']>;
+  nextOfKinName?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -2946,6 +2947,7 @@ export type InsertPrescriptionInput = {
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
   programId?: InputMaybe<Scalars['String']['input']>;
+  theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPrescriptionLineError = {
@@ -5286,6 +5288,12 @@ export type PatientNode = {
   name: Scalars['String']['output'];
   nextOfKin?: Maybe<PatientNode>;
   nextOfKinId?: Maybe<Scalars['String']['output']>;
+  /**
+   * If a next of kin link exists, returns the name of the next of kin patient.
+   * Otherwise, this returns the plain text field, which allows for recording
+   * next of kin name where a patient record for the next of kin does not exist.
+   */
+  nextOfKinName?: Maybe<Scalars['String']['output']>;
   phone?: Maybe<Scalars['String']['output']>;
   programEnrolments: ProgramEnrolmentResponse;
   website?: Maybe<Scalars['String']['output']>;
@@ -5321,6 +5329,7 @@ export type PatientSearchInput = {
   gender?: InputMaybe<GenderType>;
   identifier?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type PatientSearchNode = {
@@ -8400,6 +8409,7 @@ export type UpdatePatientInput = {
   isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
   nextOfKinId?: InputMaybe<Scalars['String']['input']>;
+  nextOfKinName?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -8434,6 +8444,7 @@ export type UpdatePrescriptionInput = {
   prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
   programId?: InputMaybe<NullableStringUpdate>;
   status?: InputMaybe<UpdatePrescriptionStatusInput>;
+  theirReference?: InputMaybe<NullableStringUpdate>;
 };
 
 export type UpdatePrescriptionLineError = {

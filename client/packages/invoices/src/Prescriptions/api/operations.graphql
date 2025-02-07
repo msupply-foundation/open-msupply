@@ -62,6 +62,8 @@ fragment PrescriptionRow on InvoiceNode {
 
   currencyRate
 
+  theirReference
+
   diagnosisId
   diagnosis {
     id
@@ -184,6 +186,7 @@ query prescriptions(
       __typename
       nodes {
         ...PrescriptionRow
+        theirReference
       }
       totalCount
     }
