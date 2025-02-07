@@ -171,6 +171,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         backend_plugin::boxed(),
         insurance_provider::boxed(),
         name_insurance_join::boxed(),
+        report::boxed(),
     ]
 }
 

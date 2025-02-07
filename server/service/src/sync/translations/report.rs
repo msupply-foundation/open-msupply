@@ -1,13 +1,14 @@
-use crate::sync::{
-    sync_serde::empty_str_as_option_string, translations::form_schema::FormSchemaTranslation,
-};
+use crate::sync::sync_serde::empty_str_as_option_string;
 use repository::{
-    ContextType, ReportRow, ReportRowDelete, ReportType, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ContextType, ReportRow, ReportRowDelete, ReportRowRepository,
+    ReportType, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
 
-use super::{PullTranslateResult, SyncTranslation};
+use super::{
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyReportEditor {
@@ -73,61 +74,97 @@ impl SyncTranslation for ReportTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![FormSchemaTranslation.table_name()]
+        vec![]
     }
 
-    fn try_translate_from_upsert_sync_record(
+    // Only translating and pulling from central server
+    fn should_translate_to_sync_record(
         &self,
-        _: &StorageConnection,
-        sync_record: &SyncBufferRow,
-    ) -> Result<PullTranslateResult, anyhow::Error> {
-        let LegacyReportRow {
-            id,
-            report_name,
-            editor,
-            context,
-            template,
-            comment,
-            sub_context,
-            argument_schema_id,
-        } = serde_json::from_str::<LegacyReportRow>(&sync_record.data)?;
-
-        let r#type = match editor {
-            LegacyReportEditor::OmSupply => ReportType::OmSupply,
-            LegacyReportEditor::Others => return Ok(PullTranslateResult::NotMatched),
-        };
-        let context = match context {
-            LegacyReportContext::CustomerInvoice => ContextType::OutboundShipment,
-            LegacyReportContext::SupplierInvoice => ContextType::InboundShipment,
-            LegacyReportContext::Requisition => ContextType::Requisition,
-            LegacyReportContext::Stocktake => ContextType::Stocktake,
-            LegacyReportContext::Patient => ContextType::Patient,
-            LegacyReportContext::Dispensary => ContextType::Dispensary,
-            LegacyReportContext::Repack => ContextType::Repack,
-            LegacyReportContext::Report => ContextType::Report,
-            LegacyReportContext::Others => {
-                return Ok(PullTranslateResult::Ignored(
-                    "Unsupported report context".to_string(),
-                ))
+        row: &ChangelogRow,
+        r#type: &ToSyncRecordTranslationType,
+    ) -> bool {
+        match r#type {
+            ToSyncRecordTranslationType::PullFromOmSupplyCentral => {
+                self.change_log_type().as_ref() == Some(&row.table_name)
             }
-        };
-
-        let result = ReportRow {
-            id: id.clone(),
-            name: report_name,
-            r#type,
-            template,
-            context,
-            comment,
-            sub_context,
-            argument_schema_id,
-            is_custom: true,
-            version: "1.0".to_string(),
-            code: id,
-        };
-
-        Ok(PullTranslateResult::upsert(result))
+            _ => false,
+        }
     }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::Report)
+    }
+
+    fn try_translate_to_upsert_sync_record(
+        &self,
+        connection: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        let row = ReportRowRepository::new(connection)
+            .find_one_by_id(&changelog.record_id)?
+            .ok_or(anyhow::Error::msg(format!(
+                "Report row ({}) not found",
+                changelog.record_id
+            )))?;
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(row)?,
+        ))
+    }
+
+    // fn try_translate_from_upsert_sync_record(
+    //     &self,
+    //     _: &StorageConnection,
+    //     sync_record: &SyncBufferRow,
+    // ) -> Result<PullTranslateResult, anyhow::Error> {
+    //     let LegacyReportRow {
+    //         id,
+    //         report_name,
+    //         editor,
+    //         context,
+    //         template,
+    //         comment,
+    //         sub_context,
+    //         argument_schema_id,
+    //     } = serde_json::from_str::<LegacyReportRow>(&sync_record.data)?;
+
+    //     let r#type = match editor {
+    //         LegacyReportEditor::OmSupply => ReportType::OmSupply,
+    //         LegacyReportEditor::Others => return Ok(PullTranslateResult::NotMatched),
+    //     };
+    //     let context = match context {
+    //         LegacyReportContext::CustomerInvoice => ContextType::OutboundShipment,
+    //         LegacyReportContext::SupplierInvoice => ContextType::InboundShipment,
+    //         LegacyReportContext::Requisition => ContextType::Requisition,
+    //         LegacyReportContext::Stocktake => ContextType::Stocktake,
+    //         LegacyReportContext::Patient => ContextType::Patient,
+    //         LegacyReportContext::Dispensary => ContextType::Dispensary,
+    //         LegacyReportContext::Repack => ContextType::Repack,
+    //         LegacyReportContext::Report => ContextType::Report,
+    //         LegacyReportContext::Others => {
+    //             return Ok(PullTranslateResult::Ignored(
+    //                 "Unsupported report context".to_string(),
+    //             ))
+    //         }
+    //     };
+
+    //     let result = ReportRow {
+    //         id: id.clone(),
+    //         name: report_name,
+    //         r#type,
+    //         template,
+    //         context,
+    //         comment,
+    //         sub_context,
+    //         argument_schema_id,
+    //         is_custom: true,
+    //         version: "1.0".to_string(),
+    //         code: id,
+    //     };
+
+    //     Ok(PullTranslateResult::upsert(result))
+    // }
 
     fn try_translate_from_delete_sync_record(
         &self,
@@ -140,35 +177,35 @@ impl SyncTranslation for ReportTranslation {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//     use repository::{mock::MockDataInserts, test_db::setup_all};
 
-    #[actix_rt::test]
-    async fn test_report_translation() {
-        use crate::sync::test::test_data::report as test_data;
-        let translator = ReportTranslation {};
+//     #[actix_rt::test]
+//     async fn test_report_translation() {
+//         use crate::sync::test::test_data::report as test_data;
+//         let translator = ReportTranslation {};
 
-        let (_, connection, _, _) =
-            setup_all("test_report_translation", MockDataInserts::none()).await;
+//         let (_, connection, _, _) =
+//             setup_all("test_report_translation", MockDataInserts::none()).await;
 
-        for record in test_data::test_pull_upsert_records() {
-            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
-            let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
-                .unwrap();
+//         for record in test_data::test_pull_upsert_records() {
+//             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+//             let translation_result = translator
+//                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+//                 .unwrap();
 
-            assert_eq!(translation_result, record.translated_record);
-        }
+//             assert_eq!(translation_result, record.translated_record);
+//         }
 
-        for record in test_data::test_pull_delete_records() {
-            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
-            let translation_result = translator
-                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
-                .unwrap();
+//         for record in test_data::test_pull_delete_records() {
+//             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+//             let translation_result = translator
+//                 .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
+//                 .unwrap();
 
-            assert_eq!(translation_result, record.translated_record);
-        }
-    }
-}
+//             assert_eq!(translation_result, record.translated_record);
+//         }
+//     }
+// }
