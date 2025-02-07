@@ -25,12 +25,15 @@ import {
   UserPermission,
   EnvUtils,
   useDrawer,
-  Breadcrumbs
-} from '@openmsupply-client/common'
-import { AppRoute, ExternalURL, useExternalUrl } from 'packages/config/src/routes';
-import { SyncNavLink } from '../AppDrawer/SyncNavLink'; import { ColdChainNav } from '../Navigation/ColdChainNav';
-;
-
+  Breadcrumbs,
+} from '@openmsupply-client/common';
+import {
+  AppRoute,
+  ExternalURL,
+  useExternalUrl,
+} from 'packages/config/src/routes';
+import { SyncNavLink } from '../AppDrawer/SyncNavLink';
+import { ColdChainNav } from '../Navigation/ColdChainNav';
 const commonListContainerStyles = {
   alignItems: 'flex-start',
   display: 'flex',
@@ -58,11 +61,11 @@ const StyledDrawer = styled(Box, {
   background: theme.palette.background.drawer,
   position: 'fixed',
   display: isOpen ? 'flex' : 'none',
-  flexDirection: "column",
+  flexDirection: 'column',
   height: '80%',
   borderRadius: '0 0 8px 8px',
-  width: "100%",
-  overflow: "hidden",
+  width: '100%',
+  overflow: 'hidden',
   boxShadow: theme.shadows[7],
   zIndex: theme.zIndex.drawer,
   padding: '.25em',
@@ -93,8 +96,9 @@ export const MobileNavBar = () => {
   };
 
   const publicDocsUrl = useExternalUrl(ExternalURL.PublicDocs);
-  const docsUrl = `${publicDocsUrl}${EnvUtils.mapRoute(location.pathname).docs
-    }`;
+  const docsUrl = `${publicDocsUrl}${
+    EnvUtils.mapRoute(location.pathname).docs
+  }`;
 
   const handleLogout = () => {
     navigate(RouteBuilder.create(AppRoute.Login).build());
@@ -109,19 +113,23 @@ export const MobileNavBar = () => {
 
   return (
     <Box>
-      <AppBar component="nav" position='static' sx={{
-        flexDirection: 'row-reverse',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        background: theme.palette.background.drawer,
-      }}>
+      <AppBar
+        component="nav"
+        position="static"
+        sx={{
+          flexDirection: 'row-reverse',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: theme.palette.background.drawer,
+        }}
+      >
         <Toolbar>
           <IconButton
             color="inherit"
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 1, color: "black" }}
+            sx={{ mr: 1, color: 'black' }}
           >
             {drawer.isOpen ? <CloseIcon /> : <MenuIcon />}
           </IconButton>
@@ -167,4 +175,4 @@ export const MobileNavBar = () => {
       </StyledDrawer>
     </Box>
   );
-}
+};
