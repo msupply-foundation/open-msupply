@@ -35,7 +35,7 @@ import {
   StockOutAlerts,
   getAllocationAlerts,
 } from '../../StockOut';
-import { DraftStockOutLine } from '../../types';
+import { DraftPrescriptionLine } from '../../types';
 import { isA } from '../../utils';
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
@@ -52,14 +52,14 @@ interface PrescriptionLineEditFormProps {
     packSize: number | null,
     isAutoAllocated: boolean,
     prescribedQuantity: number | null
-  ) => DraftStockOutLine[] | undefined;
+  ) => DraftPrescriptionLine[] | undefined;
   packSizeController: PackSizeController;
   disabled: boolean;
   isNew: boolean;
   canAutoAllocate: boolean;
   isAutoAllocated: boolean;
   updateNotes: (note: string) => void;
-  draftPrescriptionLines: DraftStockOutLine[];
+  draftPrescriptionLines: DraftPrescriptionLine[];
   showZeroQuantityConfirmation: boolean;
   hasOnHold: boolean;
   hasExpired: boolean;
@@ -452,7 +452,7 @@ interface TableProps {
   isLoading: boolean;
   packSizeController: PackSizeController;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
-  draftPrescriptionLines: DraftStockOutLine[];
+  draftPrescriptionLines: DraftPrescriptionLine[];
   allocatedUnits: number;
   isDisabled: boolean;
 }
@@ -513,7 +513,7 @@ const TableWrapper: React.FC<TableProps> = ({
 };
 
 const summarise = (
-  lines: DraftStockOutLine[],
+  lines: DraftPrescriptionLine[],
   t: TypedTFunction<LocaleKey>
 ) => {
   // Count how many of each pack size

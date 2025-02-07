@@ -23,6 +23,9 @@ fragment StockLine on StockLineNode {
     code
     unitName
     doses
+    itemDirections {
+      ...ItemDirection
+    }
   }
   note
   onHold
@@ -120,6 +123,13 @@ fragment ItemVariant on ItemVariantNode {
   }
   bundlesWith {
     ...BundledItem
+  }
+}
+
+fragment ItemWithDirections on ItemNode {
+  __typename
+  itemDirections {
+    ...ItemDirection
   }
 }
 
