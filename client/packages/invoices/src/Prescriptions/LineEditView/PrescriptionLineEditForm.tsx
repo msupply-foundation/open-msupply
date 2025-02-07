@@ -26,7 +26,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
-  ItemRowFragment,
+  ItemRowWithDirectionsFragment,
 } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
 import { PackSizeController } from '../../StockOut';
@@ -45,8 +45,8 @@ import { useAbbreviations } from './api/hooks/useAbbreviations';
 interface PrescriptionLineEditFormProps {
   allocatedUnits: number;
   availableUnits: number;
-  item: ItemRowFragment | null;
-  onChangeItem: (newItem: ItemRowFragment | null) => void;
+  item: ItemRowWithDirectionsFragment | null;
+  onChangeItem: (newItem: ItemRowWithDirectionsFragment | null) => void;
   onChangeQuantity: (
     quantity: number,
     packSize: number | null,
@@ -237,16 +237,6 @@ export const PrescriptionLineEditForm: React.FC<
 
   const key = item?.id ?? 'new';
 
-  // //MOCK DATA FOR TESTING ABBREVIATIONS
-
-  const defaultDirections = [
-    { id: '1', item_link_id: 'a', direction: '1 per day', priority: 2 },
-    { id: '2', item_link_id: 'b', direction: '2 per day', priority: 3 },
-    { id: '3', item_link_id: 'c', direction: '3 per day', priority: 1 },
-  ];
-
-  // //END OF MOCK DATA
-
   const { data: options = [] } = useAbbreviations();
 
   const saveAbbreviation = () => {
@@ -255,6 +245,8 @@ export const PrescriptionLineEditForm: React.FC<
     const note = getPrescriptionDirections(abbreviation, options);
     updateNotes(note);
   };
+
+  console.log('directions', item?.itemDirections);
 
   return (
     <Grid
@@ -401,22 +393,22 @@ export const PrescriptionLineEditForm: React.FC<
               }
               disabled={disabled}
             >
-              {defaultDirections
+              {item.itemDirections
                 .sort((a, b) => a.priority - b.priority)
                 .map(
                   direction =>
                     direction && (
                       <DropdownMenuItem
                         key={direction.id}
-                        value={direction.direction}
+                        value={direction.directions}
                         onClick={() => {
-                          updateNotes(direction.direction);
-                          setDefaultDirection(direction.direction);
+                          updateNotes(direction.directions);
+                          setDefaultDirection(direction.directions);
                           setAbbreviation('');
                         }}
                         sx={{ fontSize: 14 }}
                       >
-                        {direction.direction}
+                        {direction.directions}
                       </DropdownMenuItem>
                     )
                 )}
@@ -448,7 +440,7 @@ export const PrescriptionLineEditForm: React.FC<
 
 interface TableProps {
   canAutoAllocate: boolean;
-  currentItem: ItemRowFragment | null;
+  currentItem: ItemRowWithDirectionsFragment | null;
   isLoading: boolean;
   packSizeController: PackSizeController;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
