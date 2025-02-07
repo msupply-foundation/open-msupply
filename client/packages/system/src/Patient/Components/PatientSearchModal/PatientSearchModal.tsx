@@ -68,7 +68,7 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
           noOptionsText={t('messages.no-patients-found')}
         />
       </Box>
-      <Box p={2}>
+      <Box marginTop="100%" padding={2}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.create-new-patient')}
