@@ -1,7 +1,9 @@
-use super::{form_schema_row::form_schema, StorageConnection};
+use super::{
+    form_schema_row::form_schema, report_row::report::dsl as report_dsl, ChangeLogInsertRow,
+    ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
+};
 
-use crate::repository_error::RepositoryError;
-use crate::{Delete, Upsert};
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 use clap::ValueEnum;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -54,7 +56,9 @@ joinable!(report -> form_schema (argument_schema_id));
 
 allow_tables_to_appear_in_same_query!(report, form_schema);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(
+    Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Serialize, Deserialize,
+)]
 #[diesel(table_name = report)]
 pub struct ReportRow {
     pub id: String,
@@ -128,20 +132,46 @@ impl<'a> ReportRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn upsert_one(&self, row: &ReportRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &ReportRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(report::table)
             .values(row)
             .on_conflict(report::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(&row.id, RowActionType::Upsert)
+    }
+
+    fn insert_changelog(&self, uid: &str, action: RowActionType) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::Report,
+            record_id: uid.to_string(),
+            row_action: action,
+            store_id: None,
+            name_link_id: None,
+        };
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(report::table.filter(report::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+}
+
+impl Upsert for ReportRow {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log = ReportRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log)) // Table not in Changelog
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ReportRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 
@@ -157,21 +187,6 @@ impl Delete for ReportRowDelete {
         assert_eq!(
             ReportRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
-        )
-    }
-}
-
-impl Upsert for ReportRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ReportRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ReportRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
         )
     }
 }
