@@ -160,21 +160,6 @@ impl<'a> ReportRowRepository<'a> {
     }
 }
 
-impl Upsert for ReportRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log = ReportRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log)) // Table not in Changelog
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ReportRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct ReportRowDelete(pub String);
 impl Delete for ReportRowDelete {
@@ -187,6 +172,21 @@ impl Delete for ReportRowDelete {
         assert_eq!(
             ReportRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
+        )
+    }
+}
+
+impl Upsert for ReportRow {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log = ReportRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log)) // Table not in Changelog
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ReportRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
         )
     }
 }
