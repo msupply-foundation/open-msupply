@@ -10,11 +10,15 @@ export type StockLineFragment = { __typename: 'StockLineNode', availableNumberOf
 
 export type ItemRowFragment = { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null };
 
+export type ItemRowWithDirectionsFragment = { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> };
+
+export type ItemDirectionFragment = { __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number };
+
 export type ItemWithPackSizeFragment = { __typename: 'ItemNode', defaultPackSize: number, id: string, code: string, name: string, unitName?: string | null };
 
-export type ItemStockOnHandFragment = { __typename: 'ItemNode', availableStockOnHand: number, defaultPackSize: number, id: string, code: string, name: string, unitName?: string | null };
+export type ItemStockOnHandFragment = { __typename: 'ItemNode', availableStockOnHand: number, defaultPackSize: number, id: string, code: string, name: string, unitName?: string | null, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> };
 
-export type ItemRowWithStatsFragment = { __typename: 'ItemNode', availableStockOnHand: number, defaultPackSize: number, id: string, code: string, name: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, monthsOfStockOnHand?: number | null, totalConsumption: number, stockOnHand: number } };
+export type ItemRowWithStatsFragment = { __typename: 'ItemNode', availableStockOnHand: number, defaultPackSize: number, id: string, code: string, name: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, monthsOfStockOnHand?: number | null, totalConsumption: number, stockOnHand: number }, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> };
 
 export type ColdStorageTypeFragment = { __typename: 'ColdStorageTypeNode', id: string, name: string, minTemperature: number, maxTemperature: number };
 
@@ -25,10 +29,6 @@ export type BundledItemVariantFragment = { __typename: 'ItemVariantNode', id: st
 export type BundledItemFragment = { __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null };
 
 export type ItemVariantFragment = { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, minTemperature: number, maxTemperature: number } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }>, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }>, bundlesWith: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }> };
-
-export type ItemWithDirectionsFragment = { __typename: 'ItemNode', itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> };
-
-export type ItemDirectionFragment = { __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number };
 
 export type ItemFragment = { __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: string, defaultPackSize: number, doses: number, isVaccine: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength?: string | null, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableStockOnHand: number, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, costPricePerPack: number, storeId: string, totalNumberOfPacks: number, itemVariantId?: string | null, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null, doses: number, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> } }> }, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, monthsOfStockOnHand?: number | null, totalConsumption: number, stockOnHand: number }, variants: Array<{ __typename: 'ItemVariantNode', id: string, name: string, itemId: string, manufacturerId?: string | null, coldStorageTypeId?: string | null, manufacturer?: { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | null, coldStorageType?: { __typename: 'ColdStorageTypeNode', id: string, name: string, minTemperature: number, maxTemperature: number } | null, packagingVariants: Array<{ __typename: 'PackagingVariantNode', id: string, name: string, packagingLevel: number, packSize?: number | null, volumePerUnit?: number | null }>, bundledItemVariants: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }>, bundlesWith: Array<{ __typename: 'BundledItemNode', id: string, ratio: number, principalItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null, bundledItemVariant?: { __typename: 'ItemVariantNode', id: string, name: string, itemId: string, itemName: string } | null }> }>, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> };
 
@@ -66,7 +66,7 @@ export type ItemStockOnHandQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemStockOnHandQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', availableStockOnHand: number, defaultPackSize: number, id: string, code: string, name: string, unitName?: string | null }> } };
+export type ItemStockOnHandQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', availableStockOnHand: number, defaultPackSize: number, id: string, code: string, name: string, unitName?: string | null, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> }> } };
 
 export type ItemsWithStatsFragment = { __typename: 'ItemNode', code: string, id: string, name: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, monthsOfStockOnHand?: number | null, totalConsumption: number, stockOnHand: number } };
 
@@ -193,12 +193,32 @@ export const ItemWithPackSizeFragmentDoc = gql`
   defaultPackSize
 }
     ${ItemRowFragmentDoc}`;
+export const ItemDirectionFragmentDoc = gql`
+    fragment ItemDirection on ItemDirectionNode {
+  __typename
+  directions
+  id
+  itemId
+  priority
+}
+    `;
+export const ItemRowWithDirectionsFragmentDoc = gql`
+    fragment ItemRowWithDirections on ItemNode {
+  ...ItemRow
+  itemDirections {
+    ...ItemDirection
+  }
+}
+    ${ItemRowFragmentDoc}
+${ItemDirectionFragmentDoc}`;
 export const ItemStockOnHandFragmentDoc = gql`
     fragment ItemStockOnHand on ItemNode {
   ...ItemWithPackSize
   availableStockOnHand(storeId: $storeId)
+  ...ItemRowWithDirections
 }
-    ${ItemWithPackSizeFragmentDoc}`;
+    ${ItemWithPackSizeFragmentDoc}
+${ItemRowWithDirectionsFragmentDoc}`;
 export const ItemRowWithStatsFragmentDoc = gql`
     fragment ItemRowWithStats on ItemNode {
   ...ItemStockOnHand
@@ -213,23 +233,6 @@ export const ItemRowWithStatsFragmentDoc = gql`
   }
 }
     ${ItemStockOnHandFragmentDoc}`;
-export const ItemDirectionFragmentDoc = gql`
-    fragment ItemDirection on ItemDirectionNode {
-  __typename
-  directions
-  id
-  itemId
-  priority
-}
-    `;
-export const ItemWithDirectionsFragmentDoc = gql`
-    fragment ItemWithDirections on ItemNode {
-  __typename
-  itemDirections {
-    ...ItemDirection
-  }
-}
-    ${ItemDirectionFragmentDoc}`;
 export const StockLineFragmentDoc = gql`
     fragment StockLine on StockLineNode {
   availableNumberOfPacks

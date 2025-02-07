@@ -14,10 +14,10 @@ import {
 import { allocateQuantities } from '../api/hooks/utils';
 import { DraftPrescriptionLine } from '../../types';
 import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
-import { ItemRowFragment } from '@openmsupply-client/system';
+import { ItemRowWithDirectionsFragment } from '@openmsupply-client/system';
 
 interface PrescriptionLineEditProps {
-  item: ItemRowFragment | null;
+  item: ItemRowWithDirectionsFragment | null;
   draftLines: DraftPrescriptionLine[];
   updateLines: (lines: DraftPrescriptionLine[]) => void;
   setIsDirty: (dirty: boolean) => void;
@@ -103,7 +103,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
       disabled={isDisabled}
       isNew={isNew}
       packSizeController={packSizeController}
-      onChangeItem={(item: ItemRowFragment | null) => {
+      onChangeItem={(item: ItemRowWithDirectionsFragment | null) => {
         setIsAutoAllocated(false);
         setCurrentItem(item);
       }}
