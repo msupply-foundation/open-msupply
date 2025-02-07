@@ -5355,6 +5355,12 @@ export type PeriodSchedulesConnector = {
 
 export type PeriodSchedulesResponse = PeriodSchedulesConnector;
 
+export type PluginDataConnector = {
+  __typename: 'PluginDataConnector';
+  nodes: Array<PluginDataNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type PluginDataFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   pluginName?: InputMaybe<EqualFilterStringInput>;
@@ -5367,13 +5373,13 @@ export type PluginDataNode = {
   __typename: 'PluginDataNode';
   data: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  pluginName: Scalars['String']['output'];
+  pluginCode: Scalars['String']['output'];
   relatedRecordId: Scalars['String']['output'];
   relatedRecordType: RelatedRecordNodeType;
   storeId: Scalars['String']['output'];
 };
 
-export type PluginDataResponse = NodeError | PluginDataNode;
+export type PluginDataResponse = PluginDataConnector;
 
 export enum PluginDataSortFieldInput {
   Id = 'id',

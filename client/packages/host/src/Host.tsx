@@ -23,6 +23,7 @@ import {
   createBrowserRouter,
   createRoutesFromElements,
   RouterProvider,
+  useInitPlugins,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
@@ -30,7 +31,6 @@ import { Site } from './Site';
 import { ErrorAlert } from './components/ErrorAlert';
 import { Discovery } from './components/Discovery';
 import { Android } from './components/Android';
-import { useInitPlugins } from './plugins';
 import { BackButtonHandler } from './BackButtonHandler';
 
 const appVersion = require('../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires

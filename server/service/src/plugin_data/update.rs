@@ -56,7 +56,7 @@ fn validate(ctx: &ServiceContext, input: &UpdatePluginData) -> Result<(), Update
     if input.related_record_type != plugin_data.related_record_type {
         return Err(UpdatePluginDataError::RelatedRecordTypeDoesNotMatch);
     }
-    if input.plugin_name != plugin_data.plugin_name {
+    if input.plugin_name != plugin_data.plugin_code {
         return Err(UpdatePluginDataError::PluginNameDoesNotMatch);
     }
 
@@ -131,7 +131,7 @@ mod test {
         fn plugin_data_donor() -> PluginDataRow {
             PluginDataRow {
                 id: "plugin_data".to_string(),
-                plugin_name: "plugin_name".to_string(),
+                plugin_code: "plugin_name".to_string(),
                 related_record_id: "related_record_id".to_string(),
                 related_record_type: RelatedRecordType::StockLine,
                 store_id: mock_store_a().id.clone(),
