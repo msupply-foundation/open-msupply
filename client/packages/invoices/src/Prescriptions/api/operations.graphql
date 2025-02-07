@@ -412,3 +412,18 @@ query diagnosesActive {
     ...diagnosis
   }
 }
+
+fragment Abbreviation on AbbreviationNode {
+  __typename
+  expansion
+  id
+  text
+}
+
+query abbreviations($filter: AbbreviationFilterInput) {
+  abbreviations(filter: $filter) {
+    ... on AbbreviationNode {
+      ...Abbreviation
+    }
+  }
+}
