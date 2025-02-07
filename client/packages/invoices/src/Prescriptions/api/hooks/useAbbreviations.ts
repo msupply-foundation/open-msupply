@@ -1,5 +1,5 @@
 import { AbbreviationNode, useGql, useQuery } from 'packages/common/src';
-import { getSdk } from '../../LineEditView/api/operations.generated';
+import { getSdk } from '../../api/operations.generated';
 import { ABBREVIATION } from './keys';
 export const useAbbreviationsGraphQl = () => {
   const { client } = useGql();
