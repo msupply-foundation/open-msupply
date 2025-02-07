@@ -72,7 +72,7 @@ pub use self::return_reason::*;
 
 pub mod abbreviation;
 pub mod diagnosis;
-pub mod patient_insurance;
+pub mod insurances;
 
 #[cfg(test)]
 mod tests;
