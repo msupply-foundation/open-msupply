@@ -25,6 +25,7 @@ pub struct InsertPatientInput {
     pub is_deceased: Option<bool>,
     pub date_of_death: Option<NaiveDate>,
     pub next_of_kin_id: Option<String>,
+    pub next_of_kin_name: Option<String>,
 }
 
 #[derive(Union)]
@@ -96,6 +97,7 @@ impl InsertPatientInput {
             date_of_death,
             is_deceased,
             next_of_kin_id,
+            next_of_kin_name,
         } = self;
 
         ServiceInput {
@@ -111,6 +113,7 @@ impl InsertPatientInput {
             date_of_death,
             is_deceased,
             next_of_kin_id,
+            next_of_kin_name,
             r#type: NameRowType::Patient,
         }
     }
