@@ -3,6 +3,7 @@ import {
   usePluginProvider,
   usePlugins,
 } from '@openmsupply-client/common';
+import { Environment } from 'packages/config/src';
 import { useEffect } from 'react';
 
 // Used for local plugins in dev mode
@@ -37,7 +38,11 @@ export const useInitPlugins = () => {
     }
   };
   useEffect(() => {
-    if (process.env['NODE_ENV'] === 'production') initRemotePlugins();
+    if (
+      process.env['NODE_ENV'] === 'production' ||
+      Environment.LOAD_REMOTE_PLUGINS
+    )
+      initRemotePlugins();
     else initLocalPlugins();
   }, []);
 };

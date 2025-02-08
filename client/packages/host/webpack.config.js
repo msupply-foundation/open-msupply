@@ -120,6 +120,7 @@ module.exports = env => {
       new ReactRefreshWebpackPlugin(),
       new webpack.DefinePlugin({
         FEATURE_EXAMPLE: env.FEATURE_EXAMPLE,
+        LOAD_REMOTE_PLUGINS: env.LOAD_REMOTE_PLUGINS,
         API_HOST: JSON.stringify(env.API_HOST),
         LOCAL_PLUGINS: JSON.stringify(localPlugins),
         LANG_VERSION: Date.now(),

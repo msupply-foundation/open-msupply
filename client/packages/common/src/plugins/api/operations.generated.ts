@@ -3,17 +3,16 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type PluginsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+export type FrontendPluginMetadataQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type PluginsQuery = { __typename: 'Queries', plugins: Array<{ __typename: 'PluginNode', config: string, name: string, path: string }> };
+export type FrontendPluginMetadataQuery = { __typename: 'Queries', frontendPluginMetadata: Array<{ __typename: 'FrontendPluginMetadataNode', code: string, path: string }> };
 
 
-export const PluginsDocument = gql`
-    query plugins {
-  plugins {
-    config
-    name
+export const FrontendPluginMetadataDocument = gql`
+    query frontendPluginMetadata {
+  frontendPluginMetadata {
+    code
     path
   }
 }
@@ -26,8 +25,8 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    plugins(variables?: PluginsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PluginsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PluginsQuery>(PluginsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'plugins', 'query', variables);
+    frontendPluginMetadata(variables?: FrontendPluginMetadataQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<FrontendPluginMetadataQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<FrontendPluginMetadataQuery>(FrontendPluginMetadataDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'frontendPluginMetadata', 'query', variables);
     }
   };
 }

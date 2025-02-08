@@ -12,6 +12,7 @@ module.exports = {
   entry: './src/plugin.tsx',
   output: {
     path: path.resolve(__dirname, 'dist'),
+    filename: '[name][fullhash].[ext]',
     asyncChunks: false,
     publicPath: 'auto',
     clean: true,
@@ -43,9 +44,6 @@ module.exports = {
       exposes: { plugin: './src/plugin' },
       shared: {
         ...dependencies,
-        '@openmsupply-client/common': {
-          import: false,
-        },
         react: {
           eager: true,
           singleton: true,

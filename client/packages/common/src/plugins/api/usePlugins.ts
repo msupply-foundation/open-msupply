@@ -6,8 +6,8 @@ export const usePlugins = () => {
   const api = getSdk(client);
 
   const mutationFn = async () => {
-    const query = await api.plugins();
-    return query?.plugins || [];
+    const query = await api.frontendPluginMetadata();
+    return query?.frontendPluginMetadata || [];
   };
 
   const query = useMutation({ mutationFn });

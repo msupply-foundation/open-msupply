@@ -2347,6 +2347,12 @@ export type FormSchemaSortInput = {
   key: FormSchemaSortFieldInput;
 };
 
+export type FrontendPluginMetadataNode = {
+  __typename: 'FrontendPluginMetadataNode';
+  code: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+};
+
 export type FullSyncStatusNode = {
   __typename: 'FullSyncStatusNode';
   error?: Maybe<SyncErrorNode>;
@@ -5403,13 +5409,6 @@ export type PluginInfoNode = {
   backendPluginCodes: Array<Scalars['String']['output']>;
 };
 
-export type PluginNode = {
-  __typename: 'PluginNode';
-  config: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  path: Scalars['String']['output'];
-};
-
 export type PricingNode = {
   __typename: 'PricingNode';
   foreignCurrencyTotalAfterTax?: Maybe<Scalars['Float']['output']>;
@@ -5741,6 +5740,7 @@ export type Queries = {
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
+  frontendPluginMetadata: Array<FrontendPluginMetadataNode>;
   /**
    * Generates new customer_return lines in memory, based on supplier return line ids.
    * Optionally includes existing customer_return lines for a specific item in a return.
@@ -5806,7 +5806,6 @@ export type Queries = {
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
   pluginData: PluginDataResponse;
-  plugins: Array<PluginNode>;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
   programIndicators: ProgramIndicatorResponse;

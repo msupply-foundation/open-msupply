@@ -11,8 +11,9 @@ use crate::{
 };
 use chrono::Duration;
 use repository::{
-    ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, PluginType, RepositoryError,
-    RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
+    BackendPluginType, ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter,
+    RepositoryError, RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow,
+    StorageConnection,
 };
 use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now_with_offset};
 
@@ -70,7 +71,7 @@ pub fn get_item_stats(
         item_ids: item_ids.clone(),
     };
 
-    let amc_by_item = match PluginInstance::get_one(PluginType::Amc) {
+    let amc_by_item = match PluginInstance::get_one(BackendPluginType::Amc) {
         Some(plugin) => amc::Trait::call(&(*plugin), input),
         None => amc::Trait::call(&DefaultAmc, input),
     }?;

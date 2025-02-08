@@ -6,6 +6,7 @@ use base64::{prelude::BASE64_STANDARD, Engine};
 
 use repository::{
     BackendPluginRow, BackendPluginType, BackendPluginTypes, BackendPluginVariantType,
+    FrontendPluginRow,
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
@@ -87,22 +88,11 @@ where
         variant,
     })
 }
-#[derive(Serialize, Deserialize)]
-pub struct FrontendPluginFile {
-    pub file_name: String,
-    pub file_content_base64: String,
-}
-#[derive(Serialize, Deserialize)]
-pub struct FrontEndPluginRow {
-    pub code: String,
-    pub entry_point: String,
-    pub files: Vec<FrontendPluginFile>,
-}
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct PluginBundle {
     pub backend_plugins: Vec<BackendPluginRow>,
-    pub frontend_plugins: Vec<FrontEndPluginRow>,
+    pub frontend_plugins: Vec<FrontendPluginRow>,
 }
 
 impl PluginInstance {

@@ -32,7 +32,7 @@ use crate::{
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     name::{NameService, NameServiceTrait},
-    plugin::{PluginService, PluginServiceTrait},
+    plugin::{FrontendPluginCache, PluginService, PluginServiceTrait},
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     pricing::{PricingService, PricingServiceTrait},
     processors::ProcessorsTrigger,
@@ -167,11 +167,14 @@ pub struct ServiceProvider {
     pub email_service: Box<dyn EmailServiceTrait>,
     // Contact Form
     pub contact_form_service: Box<dyn ContactFormServiceTrait>,
+    // Cache
+    pub(crate) frontend_plugins_cache: FrontendPluginCache,
 }
 
 pub struct ServiceContext {
     pub connection: StorageConnection,
     pub(crate) processors_trigger: ProcessorsTrigger,
+    pub(crate) frontend_plugins_cache: FrontendPluginCache,
     pub user_id: String,
     pub store_id: String,
 }
@@ -263,6 +266,7 @@ impl ServiceProvider {
             email_service: Box::new(EmailService::new(mail_settings.clone())),
             contact_form_service: Box::new(ContactFormService {}),
             plugin_service: Box::new(PluginService {}),
+            frontend_plugins_cache: FrontendPluginCache::new(),
         }
     }
 
@@ -273,6 +277,7 @@ impl ServiceProvider {
             processors_trigger: self.processors_trigger.clone(),
             user_id: "".to_string(),
             store_id: "".to_string(),
+            frontend_plugins_cache: self.frontend_plugins_cache.clone(),
         })
     }
 
@@ -286,6 +291,7 @@ impl ServiceProvider {
             processors_trigger: self.processors_trigger.clone(),
             user_id,
             store_id,
+            frontend_plugins_cache: self.frontend_plugins_cache.clone(),
         })
     }
 
@@ -303,6 +309,7 @@ impl ServiceContext {
             processors_trigger: ProcessorsTrigger::new_void(),
             user_id: "".to_string(),
             store_id: "".to_string(),
+            frontend_plugins_cache: FrontendPluginCache::new(),
         }
     }
 }

@@ -1,10 +1,11 @@
 import {
   create,
+  FrontendPluginMetadataNode,
   isArray,
   mergeWith,
-  PluginNode,
   Plugins,
 } from '@openmsupply-client/common';
+import { Environment } from 'packages/config/src';
 
 // PLUGIN PROVIDER
 type PluginProvider = {
@@ -38,27 +39,29 @@ type Container = {
   init: (shareScope: unknown) => Promise<void>;
 };
 
-export const fetchPlugin = (pluginNode: PluginNode): Promise<Container> =>
+export const fetchPlugin = (
+  pluginNode: FrontendPluginMetadataNode
+): Promise<Container> =>
   new Promise((resolve, reject) => {
     // We define a script tag to use the browser for fetching the plugin js file
     const script = document.createElement('script');
-    script.src = `${pluginNode.path}}/${pluginNode.name}.js`;
+    script.src = `${Environment.API_HOST}/frontend_plugins/${pluginNode.path}`;
     script.onerror = err => {
       const message = typeof err === 'string' ? err : 'unknown';
       reject(
         new Error(
-          `Failed to fetch remote: ${pluginNode.name}. Error: ${message}`
+          `Failed to fetch remote: ${pluginNode.code}. Error: ${message}`
         )
       );
     };
 
     // When the script is loaded we need to resolve the promise back to Module Federation
     script.onload = () => {
-      // The script is now loaded on window using the name defined within the remote
+      // The script is now loaded on window using the code defined within the remote
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const container = window[pluginNode.name as any] as unknown as Container;
+      const container = window[pluginNode.code as any] as unknown as Container;
       if (!container)
-        reject(new Error(`Failed to load plugin: ${pluginNode.name}`));
+        reject(new Error(`Failed to load plugin: ${pluginNode.code}`));
 
       const proxy = {
         get: async (request: string) => container.get(request),
@@ -75,11 +78,11 @@ declare const __webpack_init_sharing__: (shareScope: string) => Promise<void>;
 declare const __webpack_share_scopes__: Record<string, unknown>;
 
 export const loadRemotePlugin = async (
-  pluginNode: PluginNode
+  pluginNode: FrontendPluginMetadataNode
 ): Promise<Plugins> => {
   try {
     // Check if this plugin has already been loaded
-    if (!(pluginNode.name in window)) {
+    if (!(pluginNode.code in window)) {
       // Initializes the shared scope. Fills it with known provided modules from this build and all remotes
       await __webpack_init_sharing__('default');
       // Fetch the plugin app
@@ -89,9 +92,9 @@ export const loadRemotePlugin = async (
     }
     // `container` is the plugin app
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const container = window[pluginNode.name as any] as unknown as Container;
+    const container = window[pluginNode.code as any] as unknown as Container;
     if (!container)
-      throw new Error(`Failed to load plugin: ${pluginNode.name}`);
+      throw new Error(`Failed to load plugin: ${pluginNode.code}`);
 
     // The module passed to get() must match the `exposes` item in our plugin app's webpack.config
     // this is always set as "plugin" in plugin's webpack
@@ -100,7 +103,7 @@ export const loadRemotePlugin = async (
     // `Module` is the React Component exported from the plugin
     const Module = factory?.();
     if (!Module?.default)
-      throw new Error(`Failed to load plugin: ${pluginNode.name}`);
+      throw new Error(`Failed to load plugin: ${pluginNode.code}`);
 
     return Module.default;
   } catch (e) {

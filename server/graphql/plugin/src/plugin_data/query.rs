@@ -1,9 +1,8 @@
-use crate::types::{PluginDataConnector, PluginDataNode, RelatedRecordNodeType};
+use crate::types::{PluginDataConnector, RelatedRecordNodeType};
 use async_graphql::*;
 use graphql_core::{
     generic_filters::EqualFilterStringInput,
     map_filter,
-    simple_generic_errors::{NodeError, NodeErrorInterface},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };

@@ -9,6 +9,7 @@ mod add_name_next_of_kin_id;
 mod add_program_deleted_datetime;
 mod add_program_id_to_invoice;
 mod backend_plugins;
+mod frontend_plugins;
 mod plugin_data;
 pub(crate) struct V2_06_00;
 
@@ -32,6 +33,7 @@ impl Migration for V2_06_00 {
             Box::new(add_program_id_to_invoice::Migrate),
             Box::new(add_insurance_provider::Migrate),
             Box::new(plugin_data::Migrate),
+            Box::new(frontend_plugins::Migrate),
         ]
     }
 }

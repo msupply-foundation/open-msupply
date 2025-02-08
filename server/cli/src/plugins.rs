@@ -1,5 +1,4 @@
 use std::{
-    convert::TryInto,
     ffi::OsStr,
     fs,
     path::PathBuf,
@@ -9,13 +8,14 @@ use std::{
 use base64::{prelude::BASE64_STANDARD, Engine};
 use cli::{queries_mutations::INSTALL_PLUGINS, Api, ApiError};
 use log::{info, warn};
-use repository::{BackendPluginRow, BackendPluginTypes, BackendPluginVariantType};
+use repository::{
+    BackendPluginRow, BackendPluginTypes, BackendPluginVariantType, FrontendPluginFile,
+    FrontendPluginFiles, FrontendPluginRow,
+};
 use reqwest::Url;
 use serde::Deserialize;
 use serde_json::json;
-use service::backend_plugin::plugin_provider::{
-    FrontEndPluginRow, FrontendPluginFile, PluginBundle,
-};
+use service::backend_plugin::plugin_provider::PluginBundle;
 
 use thiserror::Error as ThisError;
 #[derive(ThisError, Debug)]
@@ -288,10 +288,11 @@ fn process_frontend_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Resul
         ));
     };
 
-    bundle.frontend_plugins.push(FrontEndPluginRow {
+    bundle.frontend_plugins.push(FrontendPluginRow {
+        id: code.clone(),
         code,
         entry_point,
-        files,
+        files: FrontendPluginFiles(files),
     });
 
     // Clean up

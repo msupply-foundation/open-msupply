@@ -1,5 +1,6 @@
 declare const API_HOST: string;
 declare const FEATURE_EXAMPLE: boolean;
+declare const LOAD_REMOTE_PLUGINS: boolean;
 
 // For production, API is on the same domain/ip and port as web app, available through sub-route
 // i.e. web app is on https://my.openmsupply.com/, then graphql will be available https://my.openmsupply.com/graphql
@@ -42,6 +43,8 @@ export const Environment = {
 
   FEATURE_EXAMPLE:
     typeof FEATURE_EXAMPLE === 'undefined' ? false : FEATURE_EXAMPLE,
+  LOAD_REMOTE_PLUGINS:
+    typeof LOAD_REMOTE_PLUGINS === 'undefined' ? false : LOAD_REMOTE_PLUGINS,
 };
 
 export default Environment;
