@@ -10,21 +10,21 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum PluginType {
+pub enum BackendPluginType {
     Amc,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
-pub struct PluginTypes(pub Vec<PluginType>);
+pub struct BackendPluginTypes(pub Vec<BackendPluginType>);
 
-impl From<String> for PluginTypes {
+impl From<String> for BackendPluginTypes {
     fn from(value: String) -> Self {
         serde_json::from_str(&value).unwrap_or_default()
     }
 }
 
-impl From<PluginTypes> for String {
-    fn from(value: PluginTypes) -> Self {
+impl From<BackendPluginTypes> for String {
+    fn from(value: BackendPluginTypes) -> Self {
         serde_json::to_string(&value).unwrap_or_default()
     }
 }
@@ -33,7 +33,7 @@ impl From<PluginTypes> for String {
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[cfg_attr(test, derive(strum::EnumIter))]
-pub enum PluginVariantType {
+pub enum BackendPluginVariantType {
     #[default]
     BoaJs,
 }
@@ -44,7 +44,7 @@ table! {
       code -> Text,
       bundle_base64 -> Text,
       types -> Text,
-      variant_type  -> crate::db_diesel::backend_plugin_row::PluginVariantTypeMapping,
+      variant_type  -> crate::db_diesel::backend_plugin_row::BackendPluginVariantTypeMapping,
   }
 }
 
@@ -58,8 +58,8 @@ pub struct BackendPluginRow {
     pub bundle_base64: String,
     #[diesel(serialize_as = String)]
     #[diesel(deserialize_as = String)]
-    pub types: PluginTypes,
-    pub variant_type: PluginVariantType,
+    pub types: BackendPluginTypes,
+    pub variant_type: BackendPluginVariantType,
 }
 
 pub struct BackendPluginRowRepository<'a> {
@@ -174,7 +174,7 @@ mod test {
 
         let repo = BackendPluginRowRepository::new(&connection);
         // Try upsert all plugin_variant types, confirm that diesel enums match postgres
-        for variant in PluginVariantType::iter() {
+        for variant in BackendPluginVariantType::iter() {
             let id = format!("{:?}", variant);
             let result = repo.upsert_one(BackendPluginRow {
                 id: id.clone(),
@@ -201,7 +201,7 @@ mod test {
         let repo = BackendPluginRowRepository::new(&connection);
         let id = "backend_plugin_row".to_string();
 
-        let types = PluginTypes(vec![PluginType::Amc, PluginType::Amc]);
+        let types = BackendPluginTypes(vec![BackendPluginType::Amc, BackendPluginType::Amc]);
         let _ = repo.upsert_one(BackendPluginRow {
             id: id.clone(),
             types: types.clone(),

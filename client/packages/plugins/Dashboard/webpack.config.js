@@ -13,6 +13,8 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     asyncChunks: false,
+    publicPath: 'auto',
+    clean: true,
   },
   resolve: {
     extensions: ['.js', '.css', '.ts', '.tsx'],

@@ -4,7 +4,9 @@ use actix_web::web::Data;
 
 use base64::{prelude::BASE64_STANDARD, Engine};
 
-use repository::{BackendPluginRow, PluginType, PluginTypes, PluginVariantType};
+use repository::{
+    BackendPluginRow, BackendPluginType, BackendPluginTypes, BackendPluginVariantType,
+};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
 
@@ -21,13 +23,13 @@ pub struct PluginError {
 }
 
 pub struct Plugin {
-    types: PluginTypes,
+    types: BackendPluginTypes,
     code: String,
     instance: Arc<PluginInstance>,
 }
 
 impl Plugin {
-    fn has_type(&self, r#type: &PluginType) -> bool {
+    fn has_type(&self, r#type: &BackendPluginType) -> bool {
         self.types.0.contains(r#type)
     }
 }
@@ -85,14 +87,26 @@ where
         variant,
     })
 }
+#[derive(Serialize, Deserialize)]
+pub struct FrontendPluginFile {
+    pub file_name: String,
+    pub file_content_base64: String,
+}
+#[derive(Serialize, Deserialize)]
+pub struct FrontEndPluginRow {
+    pub code: String,
+    pub entry_point: String,
+    pub files: Vec<FrontendPluginFile>,
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct PluginBundle {
     pub backend_plugins: Vec<BackendPluginRow>,
+    pub frontend_plugins: Vec<FrontEndPluginRow>,
 }
 
 impl PluginInstance {
-    pub fn get_one(r#type: PluginType) -> Option<Arc<PluginInstance>> {
+    pub fn get_one(r#type: BackendPluginType) -> Option<Arc<PluginInstance>> {
         let plugin_instance = {
             let plugins = PLUGINS.read().unwrap();
 
@@ -116,7 +130,7 @@ impl PluginInstance {
         let plugin_bundle = BASE64_STANDARD.decode(bundle_base64).unwrap();
 
         let plugin = match variant_type {
-            PluginVariantType::BoaJs => PluginInstance::BoaJs(plugin_bundle),
+            BackendPluginVariantType::BoaJs => PluginInstance::BoaJs(plugin_bundle),
         };
 
         let instance = Arc::new(plugin);
