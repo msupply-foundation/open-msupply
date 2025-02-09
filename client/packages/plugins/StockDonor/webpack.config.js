@@ -3,7 +3,6 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 const prod = process.env.NODE_ENV === 'production';
 
-const { dependencies } = require('../../common/package.json');
 const path = require('path');
 const { name } = require('./package.json');
 
@@ -12,7 +11,9 @@ module.exports = {
   entry: './src/plugin.tsx',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: '[name][fullhash].[ext]',
+    // 'asyncChunks' should produce one js bundle, this can be remove or changed to "filename: '[name][fullhash].[ext]"
+    // but it produces a larger less compressible overall bundle, which is not ideal for sync but can be used for
+    // central server only plugins
     asyncChunks: false,
     publicPath: 'auto',
     clean: true,
@@ -43,18 +44,27 @@ module.exports = {
       name,
       exposes: { plugin: './src/plugin' },
       shared: {
-        ...dependencies,
+        '@openmsupply-client/common': {
+          // Required version 'false' just means use whatever version is give by the host
+          requiredVersion: false,
+          singleton: true,
+          eager: true,
+        },
         react: {
           eager: true,
           singleton: true,
-          requiredVersion: dependencies['react'],
+          requiredVersion: false,
         },
         'react-dom': {
           eager: true,
           singleton: true,
-          requiredVersion: dependencies['react-dom'],
+          requiredVersion: false,
         },
-        'react-singleton-context': { singleton: true, eager: true },
+        'react-singleton-context': {
+          singleton: true,
+          eager: true,
+          requiredVersion: false,
+        },
       },
     }),
   ],

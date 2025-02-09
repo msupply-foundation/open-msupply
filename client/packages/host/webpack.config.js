@@ -151,6 +151,13 @@ module.exports = env => {
         name: 'host',
         shared: [
           {
+            '@openmsupply-client/common': {
+              singleton: true,
+              eager: true,
+              // Version here needs to be specified to avoid webpack warnings, since this is the host it would
+              // share the current state of @openmsupply-client/common
+              requiredVersion: require('../common/package.json').version,
+            },
             react: {
               singleton: true,
               eager: true,
@@ -161,7 +168,13 @@ module.exports = env => {
               eager: true,
               requiredVersion: dependencies['react-dom'],
             },
-            'react-singleton-context': { singleton: true, eager: true },
+            'react-singleton-context': {
+              singleton: true,
+              eager: true,
+              requiredVersion: require('../common/package.json').dependencies[
+                'react-singleton-context'
+              ],
+            },
           },
         ],
       }),

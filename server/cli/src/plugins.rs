@@ -262,6 +262,12 @@ fn process_frontend_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Resul
             continue;
         }
 
+        if file_name.contains("LICENSE") {
+            continue;
+        }
+
+        info!("bundling files {file_name}");
+
         let file = FrontendPluginFile {
             file_name,
             file_content_base64: BASE64_STANDARD.encode(
@@ -269,10 +275,6 @@ fn process_frontend_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Resul
                     .map_err(|e| Error::FailedToReadBundleFile(next_path.clone(), e))?,
             ),
         };
-
-        if file.file_name.starts_with(&code) {
-            entry = Some(file.file_name.clone())
-        }
 
         if file.file_name.starts_with(&code) {
             entry = Some(file.file_name.clone())
@@ -294,20 +296,6 @@ fn process_frontend_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Resul
         entry_point,
         files: FrontendPluginFiles(files),
     });
-
-    // Clean up
-
-    // let bundle_base64 = BASE64_STANDARD
-    //     .encode(fs::read(bundle_path).map_err(|e| Error::FailedToReadBundleFile(path.clone(), e))?);
-
-    // bundle.backend_plugins.push(BackendPluginRow {
-    //     // TODO for now id = code in the future id = code + version (similar to reports)
-    //     id: code.clone(),
-    //     bundle_base64,
-    //     variant_type,
-    //     types,
-    //     code,
-    // });
 
     Ok(())
 }
