@@ -7,7 +7,7 @@ import { Environment } from 'packages/config/src';
 import { useEffect } from 'react';
 
 // Used for local plugins in dev mode
-declare const LOCAL_PLUGINS: { name: string }[];
+declare const LOCAL_PLUGINS: { pluginPath: string }[];
 
 export const useInitPlugins = () => {
   const { addPlugins } = usePluginProvider();
@@ -32,7 +32,7 @@ export const useInitPlugins = () => {
         // which causes issues
         /* webpackExclude: /node_modules/ */
         /* webpackExclude: /operations.graphql/ */
-        `../../plugins/${plugin.name}/src/plugin.tsx`
+        `../../plugins/${plugin.pluginPath}/src/plugin.tsx`
       );
       addPlugins(pluginBundle.default);
     }
