@@ -26,6 +26,7 @@ pub fn generate_create_prescription(
         patient_id,
         diagnosis_id: None,
         program_id: None,
+        their_reference: None,
     };
 
     let number_of_packs =
@@ -40,6 +41,7 @@ pub fn generate_create_prescription(
         number_of_packs,
 
         // default
+        prescribed_quantity: None,
         total_before_tax: None,
         tax_percentage: None,
         note: None,
@@ -65,6 +67,7 @@ pub fn generate_create_prescription(
         backdated_datetime: None,
         diagnosis_id: None,
         program_id: None,
+        their_reference: None,
     };
 
     CreatePrescription {
