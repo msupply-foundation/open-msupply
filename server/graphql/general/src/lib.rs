@@ -442,10 +442,11 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
+        name_link_id: String,
         filter: Option<InsuranceFilterInput>,
         sort: Option<Vec<InsuranceSortInput>>,
     ) -> Result<InsuranceResponse> {
-        insurances(ctx, store_id, filter, sort)
+        insurances(ctx, store_id, name_link_id, filter, sort)
     }
 }
 

@@ -123,13 +123,14 @@ pub enum InsuranceResponse {
 pub fn insurances(
     ctx: &Context<'_>,
     store_id: String,
+    name_link_id: String,
     filter: Option<InsuranceFilterInput>,
     sort: Option<Vec<InsuranceSortInput>>,
 ) -> Result<InsuranceResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryName,
+            resource: Resource::QueryInsurances,
             store_id: Some(store_id.clone()),
         },
     )?;
@@ -139,7 +140,7 @@ pub fn insurances(
 
     let result = service_provider
         .insurance_service
-        .get_insurances(&service_context.connection, "")
+        .get_insurances(&service_context.connection, &name_link_id)
         .map_err(StandardGraphqlError::from_repository_error)?;
 
     Ok(InsuranceResponse::Response(
