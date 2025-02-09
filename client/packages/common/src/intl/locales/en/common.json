@@ -1213,6 +1213,7 @@
   "message.database-not-local": "Database is running on a server, so can't be downloaded here",
   "message.database-not-sqlite": "Database download is only available for SQLite databases",
   "message.failed-to-create-requisition": "Failed to create requisition!",
+  "message.no-directions": "No default directions available",
   "message.no-supplier": "Inventory Adjustment",
   "message.nothing-to-copy": "Nothing to copy",
   "message.nothing-to-save": "Nothing to save",

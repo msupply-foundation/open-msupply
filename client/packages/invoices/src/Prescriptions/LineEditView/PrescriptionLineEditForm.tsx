@@ -400,23 +400,29 @@ export const PrescriptionLineEditForm: React.FC<
               }
               disabled={disabled}
             >
-              {item.itemDirections
-                .sort((a, b) => a.priority - b.priority)
-                .map(
-                  direction =>
-                    direction && (
-                      <DropdownMenuItem
-                        key={direction.id}
-                        value={defaultDirection}
-                        onClick={() => {
-                          saveDefaultDirection(direction.directions);
-                        }}
-                        sx={{ fontSize: 14 }}
-                      >
-                        {direction.directions}
-                      </DropdownMenuItem>
-                    )
-                )}
+              {item.itemDirections.length == 0 ? (
+                <DropdownMenuItem sx={{ fontSize: 14 }}>
+                  {t('message.no-directions')}
+                </DropdownMenuItem>
+              ) : (
+                item.itemDirections
+                  .sort((a, b) => a.priority - b.priority)
+                  .map(
+                    direction =>
+                      direction && (
+                        <DropdownMenuItem
+                          key={direction.id}
+                          value={defaultDirection}
+                          onClick={() => {
+                            saveDefaultDirection(direction.directions);
+                          }}
+                          sx={{ fontSize: 14 }}
+                        >
+                          {direction.directions}
+                        </DropdownMenuItem>
+                      )
+                  )
+              )}
             </DropdownMenu>
           </Grid>
           <Grid>
