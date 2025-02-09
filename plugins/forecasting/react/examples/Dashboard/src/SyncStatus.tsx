@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  BrowserRouter,
   QueryClientProviderProxy,
   ThemeProviderProxy,
 } from '@openmsupply-client/common';
@@ -10,9 +9,7 @@ import SyncStatusWidget from './SyncStatusWidget';
 const SyncStatus: React.FC<PropsWithChildrenOnly> = () => (
   <ThemeProviderProxy>
     <QueryClientProviderProxy>
-      <BrowserRouter>
-        <SyncStatusWidget />
-      </BrowserRouter>
+      <SyncStatusWidget />
     </QueryClientProviderProxy>
   </ThemeProviderProxy>
 );

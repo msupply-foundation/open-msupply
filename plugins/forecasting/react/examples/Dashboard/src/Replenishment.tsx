@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  BrowserRouter,
   QueryClientProviderProxy,
   ThemeProviderProxy,
 } from '@openmsupply-client/common';
@@ -10,9 +9,7 @@ import ReplenishmentWidget from './ReplenishmentWidget';
 const Replenishment: React.FC<PropsWithChildrenOnly> = () => (
   <ThemeProviderProxy>
     <QueryClientProviderProxy>
-      <BrowserRouter>
-        <ReplenishmentWidget />
-      </BrowserRouter>
+      <ReplenishmentWidget />
     </QueryClientProviderProxy>
   </ThemeProviderProxy>
 );

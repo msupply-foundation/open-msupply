@@ -1,27 +1,56 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
+  ArrayElement,
   BasicCellLayout,
   CellProps,
   ColumnDefinition,
+  create,
+  PluginDataStore,
+  Plugins,
   QueryClientProviderProxy,
-  RecordWithId,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '@openmsupply-client/system';
 import { usePluginData } from './api';
 
-const DonorColumn = <T extends RecordWithId>({ rowData }: CellProps<T>) => {
-  const { data } = usePluginData.data(rowData?.id ?? '');
+const useColumnStore = create<PluginDataStore<StockLineRowFragment, string>>(
+  (set, get) => ({
+    data: [],
+    set: data => set(state => ({ ...state, data })),
+    getById: row =>
+      get().data.find(({ relatedRecordId }) => relatedRecordId == row.id),
+  })
+);
 
-  return <BasicCellLayout>{data?.data ?? ''}</BasicCellLayout>;
+type StockDonorColumn = NonNullable<ArrayElement<Plugins['stockColumn']>>;
+
+export const StateLoader: ArrayElement<StockDonorColumn['StateLoader']> = ({
+  stockLines,
+}) => {
+  const { set } = useColumnStore();
+  const { data } = usePluginData.data(stockLines.map(({ id }) => id));
+
+  useEffect(() => {
+    if (!!data) {
+      set(data);
+    }
+  }, [data]);
+
+  return <></>;
 };
 
-const Column = <T extends RecordWithId>(props: CellProps<T>) => (
+const DonorColumn = ({ rowData }: CellProps<StockLineRowFragment>) => {
+  const { getById } = useColumnStore();
+
+  return <BasicCellLayout>{getById(rowData)?.data || ''}</BasicCellLayout>;
+};
+
+const Column = (props: CellProps<StockLineRowFragment>) => (
   <QueryClientProviderProxy>
     <DonorColumn {...props} />
   </QueryClientProviderProxy>
 );
 
-const StockDonorColumn: ColumnDefinition<StockLineRowFragment> = {
+export const StockDonorColumn: ColumnDefinition<StockLineRowFragment> = {
   Cell: Column,
   key: 'stock-donor',
   label: 'label.donor',
@@ -29,5 +58,3 @@ const StockDonorColumn: ColumnDefinition<StockLineRowFragment> = {
   sortable: false,
   order: 103,
 };
-
-export default StockDonorColumn;
