@@ -1,19 +1,22 @@
 const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin');
-const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin');
-const CopyPlugin = require('copy-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 const prod = process.env.NODE_ENV === 'production';
-const { dependencies } = require('./package.json');
+
 const path = require('path');
+const { name } = require('./package.json');
 
 module.exports = {
   mode: prod ? 'production' : 'development',
-  entry: './src/index.ts',
+  entry: './src/plugin.tsx',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    library: 'module',
-    libraryTarget: 'umd',
+    // 'asyncChunks' should produce one js bundle, this can be remove or changed to "filename: '[name][fullhash].[ext]"
+    // but it produces a larger less compressible overall bundle, which is not ideal for sync but can be used for
+    // central server only plugins
+    asyncChunks: false,
+    publicPath: 'auto',
+    clean: true,
   },
   resolve: {
     extensions: ['.js', '.css', '.ts', '.tsx'],
@@ -38,34 +41,31 @@ module.exports = {
   devtool: prod ? undefined : 'source-map',
   plugins: [
     new ModuleFederationPlugin({
-      name: 'Dashboard',
-      remotes: {},
-      exposes: {
-        SyncStatus: './src/SyncStatus.tsx',
-        SyncStatusWidget: './src/SyncStatusWidget.tsx',
-        Replenishment: './src/Replenishment.tsx',
-        ReplenishmentWidget: './src/ReplenishmentWidget.tsx',
-      },
+      name,
+      exposes: { plugin: './src/plugin' },
       shared: {
-        ...dependencies,
+        '@openmsupply-client/common': {
+          // Required version 'false' just means use whatever version is give by the host
+          requiredVersion: false,
+          singleton: true,
+          eager: true,
+        },
         react: {
           eager: true,
           singleton: true,
-          requiredVersion: dependencies['react'],
+          requiredVersion: false,
         },
         'react-dom': {
           eager: true,
           singleton: true,
-          requiredVersion: dependencies['react-dom'],
+          requiredVersion: false,
         },
-        'react-singleton-context': { singleton: true, eager: true },
+        'react-singleton-context': {
+          singleton: true,
+          eager: true,
+          requiredVersion: false,
+        },
       },
-    }),
-    new CopyPlugin({
-      patterns: [{ from: './plugin.json', to: 'plugin.json' }],
-    }),
-    new LimitChunkCountPlugin({
-      maxChunks: 1,
     }),
   ],
   devServer: {

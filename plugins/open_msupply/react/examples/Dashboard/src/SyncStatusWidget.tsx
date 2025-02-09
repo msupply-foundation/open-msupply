@@ -2,7 +2,6 @@ import React, { PropsWithChildren } from 'react';
 import {
   DateUtils,
   ErrorWithDetails,
-  Formatter,
   Grid,
   RadioIcon,
   Typography,
@@ -14,20 +13,17 @@ import { mapSyncError, useSync } from '@openmsupply-client/system';
 
 const FormattedSyncDate = ({ date }: { date: Date | null }) => {
   const t = useTranslation('common');
-  const { localisedDistanceToNow, relativeDateTime } = useFormatDateTime();
+  const { localisedDistanceToNow } = useFormatDateTime();
 
   if (!date) return null;
 
-  const relativeTime = `( ${t('messages.ago', {
+  const relativeTime = `${t('messages.ago', {
     time: localisedDistanceToNow(date),
-  })} )`;
+  })}`;
 
   return (
     <Grid display="flex" container gap={1}>
-      <Grid item flex={0} style={{ whiteSpace: 'nowrap' }}>
-        {Formatter.sentenceCase(relativeDateTime(date))}
-      </Grid>
-      <Grid item flex={1} style={{ whiteSpace: 'nowrap' }}>
+      <Grid flex={1} style={{ whiteSpace: 'nowrap' }}>
         {relativeTime}
       </Grid>
     </Grid>
@@ -40,7 +36,7 @@ const Row: React.FC<PropsWithChildren<{ title: string }>> = ({
 }) => (
   <Grid container paddingBottom={2}>
     <Grid alignItems="center" display="flex">
-      <Grid item style={{ marginInlineEnd: 8 }}>
+      <Grid style={{ marginInlineEnd: 8 }}>
         <RadioIcon
           color="secondary"
           style={{
@@ -50,7 +46,7 @@ const Row: React.FC<PropsWithChildren<{ title: string }>> = ({
           }}
         />
       </Grid>
-      <Grid item>
+      <Grid>
         <Typography color="secondary" style={{ fontSize: 12, fontWeight: 500 }}>
           {title}
         </Typography>
@@ -82,7 +78,7 @@ const SyncStatusWidget = () => {
             {...mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error')}
           />
         )}
-        <Row title={t('sync-info.last-sync')}>
+        <Row title={t('sync-info.last-sync-start')}>
           <FormattedSyncDate
             date={DateUtils.getDateOrNull(syncStatus?.summary?.started ?? null)}
           />

@@ -5,7 +5,7 @@ import { getSdk } from '../../operations.generated';
 export const usePluginApi = () => {
   const keys = {
     base: () => ['plugin-stock-donor'] as const,
-    data: (id: string) => [...keys.base(), storeId, id] as const,
+    data: (ids: string[]) => [...keys.base(), storeId, ids] as const,
   };
 
   const { client } = useGql();

@@ -1,24 +1,20 @@
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
 import {
-  BrowserRouter,
+  ArrayElement,
+  Plugins,
   QueryClientProviderProxy,
   ThemeProviderProxy,
 } from '@openmsupply-client/common';
 import StockDonorEditInput from './StockDonorEditInput';
-import { StockLineRowFragment } from '@openmsupply-client/system';
 
-export interface StockDonorEditProps {
-  data: StockLineRowFragment;
-}
+export type StockDonorEditPlugin = NonNullable<
+  ArrayElement<Plugins['stockEditForm']>
+>;
 
-const StockDonorEdit: React.FC<PropsWithChildren<StockDonorEditProps>> = ({
-  data,
-}) => (
+const StockDonorEdit: StockDonorEditPlugin = ({ stockLine, events }) => (
   <ThemeProviderProxy>
     <QueryClientProviderProxy>
-      <BrowserRouter>
-        <StockDonorEditInput data={data} />
-      </BrowserRouter>
+      <StockDonorEditInput stockLine={stockLine} events={events} />
     </QueryClientProviderProxy>
   </ThemeProviderProxy>
 );
