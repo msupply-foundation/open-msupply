@@ -1,6 +1,10 @@
 import React, { FC, ReactElement } from 'react';
 import { DialogButton, InputWithLabelRow } from '@common/components';
-import { Grid, CurrencyInput } from '@openmsupply-client/common';
+import {
+  Grid,
+  CurrencyInput,
+  usePluginElements,
+} from '@openmsupply-client/common';
 import { useDialog } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { usePrescription } from '../../api';
@@ -30,6 +34,13 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     query: { data },
   } = usePrescription();
 
+  const plugins = usePluginElements({
+    type: 'PrescriptionPaymentSection',
+    data: {
+      prescriptionData: data ?? undefined,
+    },
+  });
+
   const fields: PaymentModalField[] = [
     {
       label: t('label.total-to-be-paid'),
@@ -52,6 +63,14 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     <Modal
       width={900}
       title={t('title.payment')}
+      cancelButton={
+        <DialogButton
+          variant="cancel"
+          onClick={() => {
+            onClose();
+          }}
+        />
+      }
       okButton={
         <DialogButton
           variant="save"
@@ -62,22 +81,26 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
         />
       }
     >
-      <Grid container spacing={3} justifyContent="center">
-        {fields.map(({ label, value, disabled = false, onChange }, index) => (
-          <Grid key={index} size={4}>
-            <InputWithLabelRow
-              label={label}
-              Input={
-                <CurrencyInput
-                  value={value}
-                  disabled={disabled}
-                  onChangeNumber={onChange}
-                />
-              }
-            />
-          </Grid>
-        ))}
-      </Grid>
+      <>
+        <Grid container spacing={3} justifyContent="center">
+          {fields.map(({ label, value, disabled = false, onChange }, index) => (
+            <Grid key={index} size={4}>
+              <InputWithLabelRow
+                label={label}
+                Input={
+                  <CurrencyInput
+                    value={value}
+                    disabled={disabled}
+                    onChangeNumber={onChange}
+                  />
+                }
+              />
+            </Grid>
+          ))}
+        </Grid>
+        {plugins.length > 0 && <hr />}
+        {plugins}
+      </>
     </Modal>
   );
 };

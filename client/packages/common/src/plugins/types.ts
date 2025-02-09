@@ -2,10 +2,10 @@ import { FunctionComponent } from 'react';
 import { ColumnDefinition, RecordWithId } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '@openmsupply-client/system';
 import { InboundFragment } from '@openmsupply-client/invoices';
+import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 
-type extractDataType<Type> = Type extends ComponentPluginBase<infer DataType>
-  ? DataType
-  : never;
+type extractDataType<Type> =
+  Type extends ComponentPluginBase<infer DataType> ? DataType : never;
 
 export type ComponentPluginData<T> = extractDataType<
   Extract<ComponentPlugin, { type: T }>
@@ -33,11 +33,16 @@ export interface ColumnPluginBase<T extends RecordWithId> {
 export type ComponentPluginType =
   | 'Dashboard'
   | 'InboundShipmentAppBar'
-  | 'StockEditForm';
+  | 'StockEditForm'
+  | 'PrescriptionPaymentSection';
 
 export type ColumnPluginType = 'Stock';
 
 export type EventType = 'onSaveStockEditForm' | 'onChangeStockEditForm';
+
+export type PrescriptionPaymentComponentPlugin = {
+  type: 'PrescriptionPaymentSection';
+} & ComponentPluginBase<PrescriptionPaymentComponentProps>;
 
 export type StockComponentPlugin = {
   type: 'StockEditForm';
@@ -58,7 +63,8 @@ export type DashboardPlugin = {
 export type ComponentPlugin =
   | StockComponentPlugin
   | InboundShipmentComponentPlugin
-  | DashboardPlugin;
+  | DashboardPlugin
+  | PrescriptionPaymentComponentPlugin;
 
 export type ColumnPlugin = StockColumnPlugin;
 
