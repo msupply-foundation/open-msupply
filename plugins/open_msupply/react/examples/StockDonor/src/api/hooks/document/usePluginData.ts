@@ -1,12 +1,12 @@
 import { useQuery } from '@openmsupply-client/common';
 import { usePluginApi } from '../utils/usePluginApi';
 
-export const usePluginData = (stockLineId: string) => {
+export const usePluginData = (stockLineIds: string[]) => {
   const api = usePluginApi();
 
   return useQuery(
-    api.keys.data(stockLineId),
-    async () => api.get.pluginData(stockLineId),
+    api.keys.data(stockLineIds),
+    async () => api.get.pluginData(stockLineIds),
     {
       retry: false,
       onError: () => {},

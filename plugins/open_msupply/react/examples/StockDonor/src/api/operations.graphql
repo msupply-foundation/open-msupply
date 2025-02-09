@@ -1,20 +1,18 @@
-query pluginData($storeId: String!, $stockLineId: String!) {
+query pluginData($storeId: String!, $stockLineIds: [String!]) {
   pluginData(
     storeId: $storeId
     type: STOCK_LINE
-    filter: { relatedRecordId: { equalTo: $stockLineId } }
+    filter: { relatedRecordId: { equalAny: $stockLineIds } }
   ) {
-    ... on NodeError {
+    ... on PluginDataConnector {
       __typename
-      error {
-        description
+      nodes {
+        __typename
+        id
+        data
+        pluginCode
+        relatedRecordId
       }
-    }
-    ... on PluginDataNode {
-      __typename
-      id
-      data
-      pluginName
     }
   }
 }
@@ -28,7 +26,7 @@ mutation insertPluginData($storeId: String!, $input: InsertPluginDataInput!) {
   }
 }
 
-mutation updatePluginData($storeId: String!, $input: InsertPluginDataInput!) {
+mutation updatePluginData($storeId: String!, $input: UpdatePluginDataInput!) {
   updatePluginData(input: $input, storeId: $storeId) {
     ... on PluginDataNode {
       __typename

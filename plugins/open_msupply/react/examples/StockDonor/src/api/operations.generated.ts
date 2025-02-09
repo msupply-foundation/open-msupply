@@ -1,16 +1,15 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type PluginDataQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  stockLineId: Types.Scalars['String']['input'];
+  stockLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
 }>;
 
 
-export type PluginDataQuery = { __typename: 'Queries', pluginData: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'PluginDataNode', id: string, data: string, pluginName: string } };
+export type PluginDataQuery = { __typename: 'Queries', pluginData: { __typename: 'PluginDataConnector', nodes: Array<{ __typename: 'PluginDataNode', id: string, data: string, pluginCode: string, relatedRecordId: string }> } };
 
 export type InsertPluginDataMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -22,7 +21,7 @@ export type InsertPluginDataMutation = { __typename: 'Mutations', insertPluginDa
 
 export type UpdatePluginDataMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  input: Types.InsertPluginDataInput;
+  input: Types.UpdatePluginDataInput;
 }>;
 
 
@@ -30,23 +29,21 @@ export type UpdatePluginDataMutation = { __typename: 'Mutations', updatePluginDa
 
 
 export const PluginDataDocument = gql`
-    query pluginData($storeId: String!, $stockLineId: String!) {
+    query pluginData($storeId: String!, $stockLineIds: [String!]) {
   pluginData(
     storeId: $storeId
     type: STOCK_LINE
-    filter: {relatedRecordId: {equalTo: $stockLineId}}
+    filter: {relatedRecordId: {equalAny: $stockLineIds}}
   ) {
-    ... on NodeError {
+    ... on PluginDataConnector {
       __typename
-      error {
-        description
+      nodes {
+        __typename
+        id
+        data
+        pluginCode
+        relatedRecordId
       }
-    }
-    ... on PluginDataNode {
-      __typename
-      id
-      data
-      pluginName
     }
   }
 }
@@ -62,7 +59,7 @@ export const InsertPluginDataDocument = gql`
 }
     `;
 export const UpdatePluginDataDocument = gql`
-    mutation updatePluginData($storeId: String!, $input: InsertPluginDataInput!) {
+    mutation updatePluginData($storeId: String!, $input: UpdatePluginDataInput!) {
   updatePluginData(input: $input, storeId: $storeId) {
     ... on PluginDataNode {
       __typename
@@ -72,73 +69,22 @@ export const UpdatePluginDataDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     pluginData(variables: PluginDataQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PluginDataQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PluginDataQuery>(PluginDataDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'pluginData', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<PluginDataQuery>(PluginDataDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'pluginData', 'query', variables);
     },
     insertPluginData(variables: InsertPluginDataMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertPluginDataMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertPluginDataMutation>(InsertPluginDataDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPluginData', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertPluginDataMutation>(InsertPluginDataDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPluginData', 'mutation', variables);
     },
     updatePluginData(variables: UpdatePluginDataMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdatePluginDataMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdatePluginDataMutation>(UpdatePluginDataDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updatePluginData', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdatePluginDataMutation>(UpdatePluginDataDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updatePluginData', 'mutation', variables);
     }
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockPluginDataQuery((req, res, ctx) => {
- *   const { storeId, stockLineId } = req.variables;
- *   return res(
- *     ctx.data({ pluginData })
- *   )
- * })
- */
-export const mockPluginDataQuery = (resolver: ResponseResolver<GraphQLRequest<PluginDataQueryVariables>, GraphQLContext<PluginDataQuery>, any>) =>
-  graphql.query<PluginDataQuery, PluginDataQueryVariables>(
-    'pluginData',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertPluginDataMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ insertPluginData })
- *   )
- * })
- */
-export const mockInsertPluginDataMutation = (resolver: ResponseResolver<GraphQLRequest<InsertPluginDataMutationVariables>, GraphQLContext<InsertPluginDataMutation>, any>) =>
-  graphql.mutation<InsertPluginDataMutation, InsertPluginDataMutationVariables>(
-    'insertPluginData',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdatePluginDataMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ updatePluginData })
- *   )
- * })
- */
-export const mockUpdatePluginDataMutation = (resolver: ResponseResolver<GraphQLRequest<UpdatePluginDataMutationVariables>, GraphQLContext<UpdatePluginDataMutation>, any>) =>
-  graphql.mutation<UpdatePluginDataMutation, UpdatePluginDataMutationVariables>(
-    'updatePluginData',
-    resolver
-  )

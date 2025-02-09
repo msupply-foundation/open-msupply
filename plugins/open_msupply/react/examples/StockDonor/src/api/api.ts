@@ -18,16 +18,16 @@ const pluginParsers = {
 
 export const getPluginQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    pluginData: async (stockLineId: string) => {
+    pluginData: async (stockLineIds: string[]) => {
       const result = await sdk.pluginData({
         storeId,
-        stockLineId,
+        stockLineIds,
       });
 
       const { pluginData } = result;
 
-      if (pluginData?.__typename === 'PluginDataNode') {
-        return pluginData;
+      if (pluginData?.__typename === 'PluginDataConnector') {
+        return pluginData.nodes;
       }
       return undefined;
     },
