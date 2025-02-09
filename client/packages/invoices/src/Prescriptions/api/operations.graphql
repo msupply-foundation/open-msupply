@@ -44,6 +44,8 @@ fragment PrescriptionRow on InvoiceNode {
     id
     name
     code
+    gender
+    dateOfBirth
     isDeceased
   }
 
