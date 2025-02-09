@@ -35,6 +35,7 @@ pub struct UpdatePrescription {
     pub backdated_datetime: Option<NaiveDateTime>,
     pub diagnosis_id: Option<NullableUpdate<String>>,
     pub program_id: Option<NullableUpdate<String>>,
+    pub their_reference: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -325,13 +326,12 @@ mod test {
                 id: prescription().id,
                 status: None,
                 patient_id: Some(mock_patient_b().id),
-                clinician_id: Some(NullableUpdate {
-                    value: Some(clinician().id),
-                }),
+                clinician_id: Some(NullableUpdate{value:Some(clinician().id),}),
                 comment: Some("test_comment".to_string()),
                 colour: Some("test_colour".to_string()),
                 backdated_datetime: None,
                 diagnosis_id: None,
+                their_reference: None, 
                 program_id: None,
             }
         }
@@ -358,6 +358,7 @@ mod test {
                     backdated_datetime: _,
                     diagnosis_id: _,
                     program_id: _,
+                    their_reference: _,
                 } = get_update();
                 u.name_link_id = patient_id.unwrap();
                 u.clinician_link_id = clinician_id.unwrap().value;
