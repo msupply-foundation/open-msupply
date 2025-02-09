@@ -1,9 +1,8 @@
 {
   "//": "This is also plugin code, and must snake case (since it's used as federation module name",
-  "name": "plugin_example_dashboard",
+  "name": "plugin_examples",
   "//": "Must be set for plugin generation CLI to consider this file as plugin",
   "isOpenMsupplyPlugin": true,
-  "//": "To do, about version",
   "version": "1.0.0",
   "main": "plugin.js",
   "scripts": {
