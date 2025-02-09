@@ -364,16 +364,12 @@ Care must be taken with all reports and databases to [ensure client confidential
 
 When iterating on a patch, the version in the report-manifest.json needs to be bumped.
 
-##### Patches
+#### Developing Major or Minor Version Changes
 
-Report files can be overwritten for patch changes. 
-Reports of a new patch must be backwards compatible to open mSupply of the same major and minor version. Therefore we can reduce PR dif overhead, and committed file overhead in OMS, by editing a report if it is a patch change.
-
-Previous patch versions of a report can be accessed if necessary on old branches of open mSupply.
-
-#### Major or minor version change
-
-A copy of the source files must be made for major or minor report version changes.
+A copy of the source files must be made for major or minor report version changes. TThis process involves:
+- Copying the entire version dir
+- Renaming the version dir to the new changes
+- Making changes to the new report dir 
 
 These changes should only be made when the api of the report is changed, causing it to no longer be compatible with the older version of open mSupply.
 
@@ -388,6 +384,13 @@ Convention for file structures of report versions is:
 ```
 
 Where 2_4 and 2_5 are directories containing source files of different versions of the same report.
+
+##### Patches
+
+Report files can be overwritten for patch changes. 
+Reports of a new patch must be backwards compatible to open mSupply of the same major and minor version. Therefore we can reduce PR dif overhead, and committed file overhead in OMS, by editing a report if it is a patch change.
+
+Previous patch versions of a report can be accessed if necessary on old branches of open mSupply.
 
 ### File Structure
 
