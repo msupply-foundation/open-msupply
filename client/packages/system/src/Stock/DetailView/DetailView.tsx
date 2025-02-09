@@ -54,8 +54,6 @@ export const StockLineDetailView: React.FC = () => {
     data,
   });
 
-  console.log('plugins', plugins);
-
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.item.name ?? '' });
   }, [setCustomBreadcrumbs, data]);
