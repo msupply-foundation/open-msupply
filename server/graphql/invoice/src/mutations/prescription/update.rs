@@ -30,6 +30,7 @@ pub struct UpdateInput {
     pub colour: Option<String>,
     pub diagnosis_id: Option<NullableUpdateInput<String>>,
     pub program_id: Option<NullableUpdateInput<String>>,
+    pub their_reference: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -104,6 +105,7 @@ impl UpdateInput {
             prescription_date,
             diagnosis_id,
             program_id,
+            their_reference
         } = self;
 
         ServiceInput {
@@ -121,6 +123,9 @@ impl UpdateInput {
             }),
             program_id: program_id.map(|program_id| NullableUpdate {
                 value: program_id.value,
+            }),
+            their_reference: their_reference.map(|their_reference| NullableUpdate {
+                value: their_reference.value,
             }),
         }
     }
@@ -381,7 +386,8 @@ mod test {
                     colour: Some("colour input".to_string()),
                     backdated_datetime: None,
                     diagnosis_id: None,
-                    program_id: None
+                    program_id: None,
+                    their_reference: None,
                 }
             );
             Ok(Invoice {

@@ -27,12 +27,15 @@ describe('getDisplayAge', () => {
 
   it('returns age in months and days when patient is less than 1 year old', () => {
     const threeMonthsAgo = DateUtils.addMonths(today, -3);
-    const dayOffset =
-      DateUtils.getDaysInMonth(today) -
-      DateUtils.getDaysInMonth(threeMonthsAgo);
     const dob = DateUtils.addDays(threeMonthsAgo, -2);
+
+    const dayOffset =
+      DateUtils.getDaysInMonth(today) - DateUtils.getDaysInMonth(dob);
+
     const result = getDisplayAge(dob);
-    expect(result).toBe(`3 months, ${2 + dayOffset} days`);
+    expect(result).toBe(
+      `3 months, ${2 + (dayOffset > 0 ? dayOffset : 0)} days`
+    );
   });
 
   it('returns age in days when patient is less than 1 month old', () => {

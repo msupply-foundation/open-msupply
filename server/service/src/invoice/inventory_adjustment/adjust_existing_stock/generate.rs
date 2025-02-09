@@ -137,6 +137,7 @@ pub fn generate(
             note,
             number_of_packs: adjustment,
             // Default
+            prescribed_quantity: None,
             total_before_tax: None,
             tax_percentage: None,
             location_id: None,

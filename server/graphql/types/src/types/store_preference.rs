@@ -79,6 +79,12 @@ impl StorePreferenceNode {
             .store_preference
             .use_consumption_and_stock_from_customers_for_internal_orders
     }
+
+    pub async fn edit_prescribed_quantity_on_prescription(&self) -> &bool {
+        &self
+            .store_preference
+            .edit_prescribed_quantity_on_prescription
+    }
 }
 
 impl StorePreferenceNode {

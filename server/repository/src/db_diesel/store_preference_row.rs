@@ -28,6 +28,7 @@ table! {
         keep_requisition_lines_with_zero_requested_quantity_on_finalised -> Bool,
         use_consumption_and_stock_from_customers_for_internal_orders -> Bool,
         manually_link_internal_order_to_inbound_shipment -> Bool,
+        edit_prescribed_quantity_on_prescription -> Bool,
     }
 }
 
@@ -65,6 +66,7 @@ pub struct StorePreferenceRow {
     pub keep_requisition_lines_with_zero_requested_quantity_on_finalised: bool,
     pub use_consumption_and_stock_from_customers_for_internal_orders: bool,
     pub manually_link_internal_order_to_inbound_shipment: bool,
+    pub edit_prescribed_quantity_on_prescription: bool,
 }
 
 impl Default for StorePreferenceRow {
@@ -87,6 +89,7 @@ impl Default for StorePreferenceRow {
             keep_requisition_lines_with_zero_requested_quantity_on_finalised: false,
             use_consumption_and_stock_from_customers_for_internal_orders: false,
             manually_link_internal_order_to_inbound_shipment: false,
+            edit_prescribed_quantity_on_prescription: false,
 
             // Default
             id: Default::default(),

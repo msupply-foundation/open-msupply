@@ -34,6 +34,7 @@ pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
 pub(crate) mod name;
+pub(crate) mod name_insurance_join;
 pub(crate) mod name_oms_fields;
 pub(crate) mod name_property;
 pub(crate) mod name_store_join;
@@ -145,6 +146,7 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingR
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
     test_records.append(&mut currency::test_pull_upsert_records());
     test_records.append(&mut indicator_value::test_pull_upsert_records());
+    test_records.append(&mut name_insurance_join::test_pull_upsert_records());
 
     // Open mSupply central
     test_records.append(&mut rnr_form::test_pull_upsert_records());
@@ -203,6 +205,7 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut barcode::test_push_records());
     test_records.append(&mut name_store_join::test_push_upsert());
     test_records.append(&mut name_to_name_store_join::test_push_records());
+    test_records.append(&mut name_insurance_join::test_push_records());
 
     test_records
 }

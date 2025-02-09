@@ -4,5 +4,5 @@ export const translateReportName = (
   t: ReturnType<typeof useTranslation>,
   reportName: string
 ) => {
-  return t(`report.${reportName.replace(' ', '-').toLowerCase()}` as LocaleKey);
+  return t(`report.${reportName.replace(/ /g, '-').toLowerCase()}` as LocaleKey);
 };

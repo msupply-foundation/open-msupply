@@ -135,6 +135,18 @@
       ],
       "type": "string"
     },
+    "NextOfKin": {
+      "properties": {
+        "id": {
+          "description": "ID of the mSupply name record for the patient's next of kin",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the patient's next of kin",
+          "type": "string"
+        }
+      }
+    },
     "Note": {
       "properties": {
         "authorId": {
@@ -239,9 +251,9 @@
           "description": "1601000122107 Passport Number",
           "type": "string"
         },
-        "nextOfKinId": {
-          "description": "ID of the mSupply name record for the patient's next of kin",
-          "type": "string"
+        "nextOfKin": {
+          "description": "Next of kin info for the patient",
+          "$ref": "#/definitions/NextOfKin"
         },
         "socioEconomics": {
           "$ref": "#/definitions/SocioEconomics"

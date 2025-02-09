@@ -23,6 +23,7 @@ pub struct InsertPatient {
     pub date_of_death: Option<NaiveDate>,
     pub r#type: NameRowType,
     pub next_of_kin_id: Option<String>,
+    pub next_of_kin_name: Option<String>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -67,6 +68,7 @@ fn generate(input: InsertPatient, store_id: &str) -> NameRow {
         is_deceased,
         r#type,
         next_of_kin_id,
+        next_of_kin_name,
     } = input;
 
     NameRow {
@@ -88,6 +90,7 @@ fn generate(input: InsertPatient, store_id: &str) -> NameRow {
         national_health_number: code_2,
         created_datetime: Some(Utc::now().naive_utc()),
         next_of_kin_id,
+        next_of_kin_name,
         ..Default::default()
     }
 }

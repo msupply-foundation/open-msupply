@@ -9,6 +9,9 @@ import {
   Formatter,
   DateUtils,
   useConfirmationModal,
+  BasicTextInput,
+  Tooltip,
+  useDebouncedValueCallback,
 } from '@openmsupply-client/common';
 import {
   PatientSearchInput,
@@ -36,6 +39,7 @@ export const Toolbar: FC = () => {
     prescriptionDate,
     createdDatetime,
     programId,
+    theirReference,
   } = data ?? {};
   const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
     clinician ?? null
@@ -61,6 +65,13 @@ export const Toolbar: FC = () => {
   };
 
   const t = useTranslation();
+
+  const [theirReferenceInput, setTheirReferenceInput] =
+    useState(theirReference);
+
+  const debouncedUpdate = useDebouncedValueCallback(update, [
+    theirReferenceInput,
+  ]);
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
@@ -159,6 +170,23 @@ export const Toolbar: FC = () => {
               />
             )}
             <InputWithLabelRow
+              label={t('label.reference')}
+              Input={
+                <Tooltip title={theirReferenceInput} placement="bottom-start">
+                  <BasicTextInput
+                    disabled={isDisabled}
+                    size="small"
+                    sx={{ width: 250 }}
+                    value={theirReferenceInput ?? ''}
+                    onChange={event => {
+                      setTheirReferenceInput(event.target.value);
+                      debouncedUpdate({ theirReference: event.target.value });
+                    }}
+                  />
+                </Tooltip>
+              }
+            />
+            <InputWithLabelRow
               label={t('label.clinician')}
               Input={
                 <ClinicianSearchInput
@@ -178,9 +206,9 @@ export const Toolbar: FC = () => {
           <Box
             display="flex"
             flexDirection="column"
+            gap={1}
             flex={1}
             marginLeft={3}
-            gap={1}
           >
             <InputWithLabelRow
               label={t('label.date')}

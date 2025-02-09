@@ -2,7 +2,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Local, NaiveDate, Utc};
 use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
-use graphql_core::loader::DocumentLoader;
+use graphql_core::loader::{DocumentLoader, PatientLoader};
 use graphql_core::{map_filter, ContextExt};
 
 use graphql_core::pagination::PaginationInput;
@@ -211,10 +211,41 @@ impl PatientNode {
         &self.patient.next_of_kin_id
     }
 
+    /// If a next of kin link exists, returns the name of the next of kin patient.
+    /// Otherwise, this returns the plain text field, which allows for recording
+    /// next of kin name where a patient record for the next of kin does not exist.
+    pub async fn next_of_kin_name(&self, ctx: &Context<'_>) -> Result<Option<String>> {
+        if self.patient.next_of_kin_id.is_none() {
+            return Ok(self.patient.next_of_kin_name.clone());
+        };
+
+        let name = self.next_of_kin(ctx).await?.map(|p| p.patient.name);
+        Ok(name)
+    }
+
     pub async fn created_datetime(&self) -> Option<DateTime<Utc>> {
         self.patient.created_datetime.map(|created_datetime| {
             DateTime::<Utc>::from_naive_utc_and_offset(created_datetime, Utc)
         })
+    }
+
+    pub async fn next_of_kin(&self, ctx: &Context<'_>) -> Result<Option<PatientNode>> {
+        let Some(next_of_kin_id) = &self.patient.next_of_kin_id else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
+
+        let result = loader
+            .load_one(next_of_kin_id.to_owned())
+            .await?
+            .map(|patient| PatientNode {
+                patient,
+                allowed_ctx: self.allowed_ctx.clone(),
+                store_id: self.store_id.clone(),
+            });
+
+        Ok(result)
     }
 
     pub async fn document(&self, ctx: &Context<'_>) -> Result<Option<DocumentNode>> {

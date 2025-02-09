@@ -77,10 +77,12 @@ fn generate_line(
         id,
         invoice_id,
         number_of_packs,
+        prescribed_quantity,
         total_before_tax,
         total_after_tax,
         tax_percentage,
         r#type,
+        note,
         foreign_currency_price_before_tax,
         sell_price_per_pack: invoice_line_sell_price_per_pack,
         cost_price_per_pack: invoice_line_cost_price_per_pack,
@@ -119,6 +121,7 @@ fn generate_line(
         sell_price_per_pack,
         cost_price_per_pack,
         number_of_packs,
+        prescribed_quantity,
         item_name,
         item_code,
         stock_line_id: Some(stock_line_id),
@@ -126,7 +129,7 @@ fn generate_line(
         total_after_tax,
         tax_percentage,
         r#type,
-        note: input.note,
+        note,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
         foreign_currency_price_before_tax,
@@ -149,6 +152,16 @@ fn generate_line(
 
     if let Some(tax) = input.tax {
         update_line.tax_percentage = tax.percentage;
+    }
+
+    // Update the note only if a new value is provided;
+    // otherwise, retain the existing value.
+    if let Some(note) = input.note {
+        update_line.note = Some(note);
+    }
+
+    if let Some(prescribed_quantity) = input.prescribed_quantity {
+        update_line.prescribed_quantity = Some(prescribed_quantity);
     }
 
     update_line.total_after_tax =

@@ -39,11 +39,6 @@ impl SyncTranslation for InsuranceProviderTranslator {
         _connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        println!(
-            "Translating insurance provider record: {}",
-            sync_record.data
-        );
-
         let LegacyInsuranceProvider {
             id,
             comment,

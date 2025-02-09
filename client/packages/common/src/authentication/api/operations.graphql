@@ -22,6 +22,7 @@ fragment UserStoreNode on UserStoreNode {
     extraFieldsInRequisition
     manuallyLinkInternalOrderToInboundShipment
     useConsumptionAndStockFromCustomersForInternalOrders
+    editPrescribedQuantityOnPrescription
   }
   createdDate
   homeCurrencyCode

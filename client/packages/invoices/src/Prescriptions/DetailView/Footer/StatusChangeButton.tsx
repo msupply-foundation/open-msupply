@@ -9,12 +9,15 @@ import {
   useConfirmationModal,
   InvoiceLineNodeType,
   useDisabledNotificationToast,
+  useEditModal,
 } from '@openmsupply-client/common';
 import {
   getNextPrescriptionStatus,
   getStatusTranslation,
 } from '../../../utils';
 import { usePrescription } from '../../api';
+import { PaymentsModal } from '../Payments';
+import { Draft } from '../../..';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus | undefined,
@@ -75,8 +78,8 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { success, error } = useNotification();
   const t = useTranslation();
+  const { success, error } = useNotification();
   const {
     query: { data },
     update: { update },
@@ -84,9 +87,20 @@ const useStatusChangeButton = () => {
   } = usePrescription();
 
   const { status, lines } = data ?? {};
+
   const hasLinesToPrune =
     data?.status !== InvoiceNodeStatus.Verified &&
     (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
+
+  const showPaymentWindow =
+    lines != null &&
+    lines.nodes.filter(({ totalAfterTax }) => totalAfterTax > 0).length > 0;
+
+  const isEmptyLines =
+    lines?.totalCount === 0 ||
+    lines?.nodes?.every(
+      line => line.type === InvoiceLineNodeType.UnallocatedStock
+    );
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),
@@ -129,44 +143,56 @@ const useStatusChangeButton = () => {
     selectedOption,
     setSelectedOption,
     getConfirmation,
-    lines,
+    isEmptyLines,
     isDisabled,
+    showPaymentWindow,
+    onConfirmStatusChange,
   };
 };
 
 export const StatusChangeButton = () => {
+  const t = useTranslation();
+  const { onOpen, onClose, isOpen } = useEditModal<Draft>();
+
   const {
     options,
     selectedOption,
     setSelectedOption,
     getConfirmation,
-    lines,
+    isEmptyLines,
     isDisabled,
+    showPaymentWindow,
+    onConfirmStatusChange,
   } = useStatusChangeButton();
-  const t = useTranslation();
-  const noLines =
-    lines?.totalCount === 0 ||
-    lines?.nodes?.every(l => l.type === InvoiceLineNodeType.UnallocatedStock);
 
-  const noLinesNotification = useDisabledNotificationToast(
+  const emptyLinesNotifications = useDisabledNotificationToast(
     t('messages.no-lines')
   );
 
   const onStatusClick = () => {
-    if (noLines) return noLinesNotification();
+    if (isEmptyLines) return emptyLinesNotifications();
+    if (showPaymentWindow) return onOpen();
     return getConfirmation();
   };
+
   if (!selectedOption) return null;
   if (isDisabled) return null;
 
   return (
-    <SplitButton
-      label={noLines ? t('messages.no-lines') : ''}
-      options={options}
-      selectedOption={selectedOption}
-      onSelectOption={setSelectedOption}
-      Icon={<ArrowRightIcon />}
-      onClick={onStatusClick}
-    />
+    <>
+      <SplitButton
+        label={isEmptyLines ? t('messages.no-lines') : ''}
+        options={options}
+        selectedOption={selectedOption}
+        onSelectOption={setSelectedOption}
+        Icon={<ArrowRightIcon />}
+        onClick={onStatusClick}
+      />
+      <PaymentsModal
+        isOpen={isOpen}
+        onClose={onClose}
+        handleConfirm={onConfirmStatusChange}
+      />
+    </>
   );
 };

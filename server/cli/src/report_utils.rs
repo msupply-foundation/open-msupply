@@ -8,11 +8,10 @@ use std::{
     path::PathBuf,
     process::{Command, Stdio},
 };
-
 use thiserror::Error as ThisError;
 
 #[derive(ThisError, Debug)]
-pub enum Error {
+pub enum ReportError {
     #[error("Failed to read dir {0}")]
     FailedToReadDir(PathBuf, #[source] std::io::Error),
     #[error("Failed to get file or dir {0}")]
@@ -41,7 +40,15 @@ pub enum Error {
     FailedToGenerateArgumentSchema(PathBuf),
     #[error("Failed to write reports json {0}")]
     FailedToWriteReportsFile(PathBuf, #[source] std::io::Error),
+    #[error("Failed to open test-config file {0}")]
+    CannotOpenTestConfigFile(PathBuf, #[source] std::io::Error),
+    #[error("Failed to read test-config file {0}")]
+    CannotReadTestConfigFile(PathBuf, #[source] serde_json::Error),
+    #[error("Failed to generate report {0} {1}")]
+    FailedToGenerateReport(PathBuf, anyhow::Error),
 }
+
+use ReportError as Error;
 
 pub fn generate_reports_recursive(
     reports_data: &mut ReportsData,
@@ -77,6 +84,12 @@ pub fn generate_reports_recursive(
 }
 
 fn process_report(reports_data: &mut ReportsData, path: &PathBuf) -> Result<(), Error> {
+    let report_data = generate_report_data(path)?;
+    reports_data.reports.push(report_data);
+    Ok(())
+}
+
+pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
     // install esbuild depedencies
 
     if let Err(e) = run_yarn_install(&path) {
@@ -147,7 +160,7 @@ fn process_report(reports_data: &mut ReportsData, path: &PathBuf) -> Result<(), 
         (None, None) => None,
     };
 
-    let report_data = ReportData {
+    Ok(ReportData {
         id,
         name: report_name,
         r#type: repository::ReportType::OmSupply,
@@ -160,11 +173,7 @@ fn process_report(reports_data: &mut ReportsData, path: &PathBuf) -> Result<(), 
         version: version.to_string(),
         code,
         form_schema: form_schema_json,
-    };
-
-    reports_data.reports.push(report_data);
-
-    Ok(())
+    })
 }
 
 fn run_yarn_install(directory: &PathBuf) -> Result<(), Error> {

@@ -1,85 +1,102 @@
 {
-  "type": "VerticalLayout",
+  "type": "HorizontalLayout",
   "elements": [
     {
-      "type": "Group",
-      "label": "Patient Information",
+      "type": "VerticalLayout",
       "elements": [
         {
-          "type": "IdGenerator",
-          "label": "Code",
-          "scope": "#/properties/code",
-          "options": {
-            "parts": [
-              {
-                "type": "StoreName",
-                "mutations": [{ "firstNChars": 3 }, { "toUpperCase": true }]
-              },
-              {
-                "type": "Number",
-                "numberName": "PatientCode",
-                "mutations": [{ "padString": "0000" }]
+          "type": "Group",
+          "label": "Patient Information",
+          "elements": [
+            {
+              "type": "IdGenerator",
+              "label": "Code",
+              "scope": "#/properties/code",
+              "options": {
+                "parts": [
+                  {
+                    "type": "StoreName",
+                    "mutations": [{ "firstNChars": 3 }, { "toUpperCase": true }]
+                  },
+                  {
+                    "type": "Number",
+                    "numberName": "PatientCode",
+                    "mutations": [{ "padString": "0000" }]
+                  }
+                ],
+                "allowManualEntry": true,
+                "validations": [
+                  {
+                    "type": "UniquePatientCode"
+                  }
+                ]
               }
-            ],
-            "allowManualEntry": true,
-            "validations": [
-              {
-                "type": "UniquePatientCode"
+            },
+            {
+              "type": "Control",
+              "label": "Code 2",
+              "scope": "#/properties/code2"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/firstName",
+              "label": "First Name"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/lastName",
+              "label": "Last Name"
+            },
+            {
+              "type": "DateOfBirth",
+              "label": "Date of Birth",
+              "scope": "#"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/gender",
+              "label": "Gender",
+              "options": {
+                "show": [
+                  ["MALE", "Male"],
+                  ["FEMALE", "Female"],
+                  ["TRANSGENDER_MALE", "Transgender Male"],
+                  ["TRANSGENDER_FEMALE", "Transgender Female"],
+                  ["NON_BINARY", "Non-binary"],
+                  ["UNKOWN", "Unknown"]
+                ]
               }
-            ]
-          }
-        },
-        {
-          "type": "Control",
-          "label": "Code 2",
-          "scope": "#/properties/code2"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/firstName",
-          "label": "First Name"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/lastName",
-          "label": "Last Name"
-        },
-        {
-          "type": "DateOfBirth",
-          "label": "Date of Birth",
-          "scope": "#"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/gender",
-          "label": "Gender",
-          "options": {
-            "show": [
-              ["MALE", "Male"],
-              ["FEMALE", "Female"],
-              ["TRANSGENDER_MALE", "Transgender Male"],
-              ["TRANSGENDER_FEMALE", "Transgender Female"],
-              ["NON_BINARY", "Non-binary"],
-              ["UNKOWN", "Unknown"]
-            ]
-          }
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/address1",
-          "label": "Address"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/phone",
-          "label": "Phone"
-        },
-        {
-          "type": "PatientSearch",
-          "scope": "#/properties/nextOfKinId",
-          "label": "Next of Kin"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/address1",
+              "label": "Address"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/phone",
+              "label": "Phone"
+            }
+          ]
         }
       ]
+    },
+    {
+      "type": "Search",
+      "scope": "#/properties/nextOfKin",
+      "label": "Next of Kin",
+      "options": {
+        "source": "user",
+        "searchFields": ["name"],
+        "saveFields": ["id", "name"],
+        "elements": [
+          {
+            "type": "Control",
+            "scope": "/properties/name",
+            "label": "Name"
+          }
+        ]
+      }
     }
   ]
 }
