@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Grid,
   BasicTextInput,
@@ -99,7 +99,7 @@ export const PrescriptionLineEditForm: React.FC<
     null
   );
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
-  const [defaultDirection, setDefaultDirection] = useState<string>();
+  const [defaultDirection, setDefaultDirection] = useState<string>('');
   const [abbreviation, setAbbreviation] = useState<string>('');
 
   const debouncedSetAllocationAlerts = useDebounceCallback(
@@ -241,12 +241,20 @@ export const PrescriptionLineEditForm: React.FC<
 
   const saveAbbreviation = () => {
     if (!abbreviation) return;
-
     const note = getPrescriptionDirections(abbreviation, options);
     updateNotes(note);
+    setDefaultDirection('');
   };
 
-  console.log('directions', item?.itemDirections);
+  const saveDefaultDirection = useCallback(
+    (direction: string) => {
+      setDefaultDirection(direction);
+      const note = getPrescriptionDirections(direction, options);
+      updateNotes(note);
+      setAbbreviation('');
+    },
+    [defaultDirection]
+  );
 
   return (
     <Grid
@@ -371,7 +379,6 @@ export const PrescriptionLineEditForm: React.FC<
                   disabled={disabled}
                   onChange={e => {
                     setAbbreviation(e.target.value);
-                    setDefaultDirection('');
                   }}
                   onBlur={saveAbbreviation}
                   onKeyDown={e => {
@@ -400,11 +407,9 @@ export const PrescriptionLineEditForm: React.FC<
                     direction && (
                       <DropdownMenuItem
                         key={direction.id}
-                        value={direction.directions}
+                        value={defaultDirection}
                         onClick={() => {
-                          updateNotes(direction.directions);
-                          setDefaultDirection(direction.directions);
-                          setAbbreviation('');
+                          saveDefaultDirection(direction.directions);
                         }}
                         sx={{ fontSize: 14 }}
                       >
