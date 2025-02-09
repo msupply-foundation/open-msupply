@@ -344,6 +344,15 @@ export const PrescriptionLineEditForm: React.FC<
                   onChange={handleIssueQuantityChange}
                   min={0}
                   decimalLimit={2}
+                  slotProps={{
+                    htmlInput: {
+                      sx: {
+                        backgroundColor: disabled
+                          ? undefined
+                          : 'background.white',
+                      },
+                    },
+                  }}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
                   {t('label.unit-plural_one', {
