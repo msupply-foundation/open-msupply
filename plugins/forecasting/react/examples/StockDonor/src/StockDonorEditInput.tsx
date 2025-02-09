@@ -3,11 +3,9 @@ import {
   BasicTextInput,
   InputWithLabelRow,
   InputWithLabelRowProps,
-  PluginEventListener,
-  usePluginEvents,
   useTranslation,
 } from '@openmsupply-client/common';
-import { StockDonorEditProps } from './StockDonorEdit';
+import { StockDonorEditPlugin } from './StockDonorEdit';
 import { usePluginData } from './api';
 
 const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
@@ -25,27 +23,21 @@ const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
   />
 );
 
-const StockDonorEditInput = ({ data: stockLine }: StockDonorEditProps) => {
+const StockDonorEditInput: StockDonorEditPlugin = ({ stockLine, events }) => {
   const t = useTranslation('common');
   const [donor, setDonor] = React.useState<string>('');
-  const { addEventListener, removeEventListener, dispatchEvent } =
-    usePluginEvents();
-  const { data } = usePluginData.data(stockLine?.id ?? '');
+  const { data: stockLineNodes } = usePluginData.data([stockLine?.id ?? '']);
+  const data = stockLineNodes?.[0];
   const { mutate } = data?.id ? usePluginData.update() : usePluginData.insert();
 
-  const onSave = useCallback(() => {
+  const onSave = useCallback(async () => {
     mutate({ id: data?.id, data: donor, stockLineId: stockLine?.id });
   }, [donor, stockLine, mutate, data?.id]);
 
   useEffect(() => {
-    const listener: PluginEventListener = {
-      eventType: 'onSaveStockEditForm',
-      listener: onSave,
-    };
-    addEventListener(listener);
-
-    return () => removeEventListener(listener);
-  }, [onSave, addEventListener, removeEventListener]);
+    const unmountEvent = events.mountEvent(onSave);
+    return unmountEvent;
+  }, [onSave]);
 
   useEffect(() => {
     if (data !== undefined) setDonor(data?.data ?? '');
@@ -59,11 +51,12 @@ const StockDonorEditInput = ({ data: stockLine }: StockDonorEditProps) => {
           value={donor}
           onChange={e => {
             setDonor(e.target.value);
-            dispatchEvent('onChangeStockEditForm', new Event(stockLine.id));
+            events.setIsDirty(true);
           }}
         />
       }
     />
   );
 };
+
 export default StockDonorEditInput;

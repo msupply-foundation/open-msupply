@@ -52,9 +52,6 @@ const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               },
               { onError }
             );
-            // the onCreate function calls useNavigate, which won't work from a plugin
-            // as the routes are not defined in the plugin. So we just reload the page
-            window.location.replace(window.location.href);
           }}
         />
       ) : null}
@@ -65,12 +62,12 @@ const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
           flex={1}
           flexDirection="column"
         >
-          <Grid item>
+          <Grid>
             <StatsPanel
               error={error as ApiException}
               isError={isError}
               isLoading={isLoading}
-              title={t('inbound-shipments', { ns: 'app' })}
+              title={t('inbound-shipment', { ns: 'app' })}
               stats={[
                 {
                   label: t('label.today', { ns: 'dashboard' }),
@@ -89,7 +86,7 @@ const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               ]}
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <StatsPanel
               error={requisitionCountError as ApiException}
               isError={isRequisitionCountError}
@@ -104,7 +101,6 @@ const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
             />
           </Grid>
           <Grid
-            item
             flex={1}
             container
             justifyContent="flex-end"
