@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { StandardTextFieldProps } from '@mui/material/TextField';
 import { BasicTextInput } from '../TextInput';
+import merge from 'lodash/merge';
 
 export const TextArea: FC<StandardTextFieldProps> = ({
   value,
@@ -14,12 +15,14 @@ export const TextArea: FC<StandardTextFieldProps> = ({
   <BasicTextInput
     sx={{ width: '100%' }}
     slotProps={{
-      input: {
-        ...slotProps?.input,
-        sx: {
-          backgroundColor: 'white',
+      input: merge(
+        {
+          sx: {
+            backgroundColor: 'background.white',
+          },
         },
-      },
+        slotProps?.input
+      ),
     }}
     multiline
     value={value}
