@@ -8,15 +8,6 @@ const dependencies = require('./package.json').dependencies;
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
-const fs = require('fs');
-
-const localPlugins = fs
-  .readdirSync('../plugins')
-  .map(fileName => ({
-    name: fileName,
-    fullFileName: path.join('../plugins/', fileName),
-  }))
-  .filter(({ fullFileName }) => fs.lstatSync(fullFileName).isDirectory());
 class DummyWebpackPlugin {
   apply(compiler) {
     compiler.hooks.run.tap('DummyWebpackPlugin', () => {});
@@ -122,7 +113,7 @@ module.exports = env => {
         FEATURE_EXAMPLE: env.FEATURE_EXAMPLE,
         LOAD_REMOTE_PLUGINS: env.LOAD_REMOTE_PLUGINS,
         API_HOST: JSON.stringify(env.API_HOST),
-        LOCAL_PLUGINS: JSON.stringify(localPlugins),
+        LOCAL_PLUGINS: JSON.stringify(require('./getLocalPlugins.js')),
         LANG_VERSION: Date.now(),
       }),
       bundleAnalyzerPlugin,
