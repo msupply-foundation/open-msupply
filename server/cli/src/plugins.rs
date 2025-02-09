@@ -2,6 +2,7 @@ use std::{ffi::OsStr, fs, path::PathBuf};
 
 use base64::{prelude::BASE64_STANDARD, Engine};
 use cli::{queries_mutations::INSTALL_PLUGINS, Api, ApiError};
+use log::info;
 use repository::{BackendPluginRow, PluginTypes, PluginVariantType};
 use reqwest::Url;
 use serde::Deserialize;
@@ -185,7 +186,7 @@ pub(super) async fn install_plugin_bundle(
         )
         .await?;
 
-    println!(
+    info!(
         "Result:{}",
         serde_json::to_string_pretty(&upload_result).unwrap()
     );
@@ -209,24 +210,14 @@ pub(super) async fn generate_and_install_plugin_bundle(
         out_file: out_file.clone(),
     })?;
 
-    let api = Api::new_with_token(url.clone(), username, password).await?;
-
-    let uploaded_file = api.upload_file(out_file.clone()).await?;
-
+    install_plugin_bundle(InstallPluginBundle {
+        path: out_file.clone(),
+        url,
+        username,
+        password,
+    })
+    .await?;
     fs::remove_file(out_file.clone()).map_err(|e| Error::FiledToRemoveTempFile(e, out_file))?;
-
-    let upload_result = api
-        .gql(
-            INSTALL_PLUGINS,
-            json!( { "fileId": uploaded_file.file_id} ),
-            Some("CentralServerMutationNode"),
-        )
-        .await?;
-
-    println!(
-        "Result:{}",
-        serde_json::to_string_pretty(&upload_result).unwrap()
-    );
 
     Ok(())
 }
