@@ -90,11 +90,12 @@ const useSaveLines = (id: string, invoiceNum: number) => {
         ),
       updatePrescriptionLines: draftPrescriptionLines
         .filter(
-          ({ type, isCreated, isUpdated, numberOfPacks }) =>
+          ({ type, isCreated, isUpdated, numberOfPacks, prescribedQuantity }) =>
             !isCreated &&
             isUpdated &&
             type === InvoiceLineNodeType.StockOut &&
-            numberOfPacks > 0
+            numberOfPacks > 0 &&
+            (prescribedQuantity ?? 0) >= 0
         )
         .map(
           line =>
@@ -120,6 +121,7 @@ const useSaveLines = (id: string, invoiceNum: number) => {
               clinicianId: setNullableInput('clinicianId', patch),
               diagnosisId: setNullableInput('diagnosisId', patch),
               programId: setNullableInput('programId', patch),
+              theirReference: setNullableInput('theirReference', patch),
             },
           ]
         : undefined,
