@@ -2360,6 +2360,12 @@ export type FormSchemaSortInput = {
   key: FormSchemaSortFieldInput;
 };
 
+export type FrontendPluginMetadataNode = {
+  __typename: 'FrontendPluginMetadataNode';
+  code: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+};
+
 export type FullSyncStatusNode = {
   __typename: 'FullSyncStatusNode';
   error?: Maybe<SyncErrorNode>;
@@ -5389,6 +5395,12 @@ export type PeriodSchedulesConnector = {
 
 export type PeriodSchedulesResponse = PeriodSchedulesConnector;
 
+export type PluginDataConnector = {
+  __typename: 'PluginDataConnector';
+  nodes: Array<PluginDataNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type PluginDataFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   pluginName?: InputMaybe<EqualFilterStringInput>;
@@ -5401,13 +5413,13 @@ export type PluginDataNode = {
   __typename: 'PluginDataNode';
   data: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  pluginName: Scalars['String']['output'];
+  pluginCode: Scalars['String']['output'];
   relatedRecordId: Scalars['String']['output'];
   relatedRecordType: RelatedRecordNodeType;
   storeId: Scalars['String']['output'];
 };
 
-export type PluginDataResponse = NodeError | PluginDataNode;
+export type PluginDataResponse = PluginDataConnector;
 
 export enum PluginDataSortFieldInput {
   Id = 'id',
@@ -5429,13 +5441,6 @@ export type PluginDataSortInput = {
 export type PluginInfoNode = {
   __typename: 'PluginInfoNode';
   backendPluginCodes: Array<Scalars['String']['output']>;
-};
-
-export type PluginNode = {
-  __typename: 'PluginNode';
-  config: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  path: Scalars['String']['output'];
 };
 
 export type PricingNode = {
@@ -5770,6 +5775,7 @@ export type Queries = {
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
+  frontendPluginMetadata: Array<FrontendPluginMetadataNode>;
   /**
    * Generates new customer_return lines in memory, based on supplier return line ids.
    * Optionally includes existing customer_return lines for a specific item in a return.
@@ -5835,7 +5841,6 @@ export type Queries = {
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
   pluginData: PluginDataResponse;
-  plugins: Array<PluginNode>;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
   programIndicators: ProgramIndicatorResponse;
