@@ -1,12 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
   useTranslation,
   DetailTabs,
-  usePluginElements,
-  usePluginEvents,
-  PluginEventListener,
   useBreadcrumbs,
   useParams,
   useConfirmationModal,
@@ -16,6 +13,7 @@ import {
   StockLineNode,
   useCallbackWithPermission,
   UserPermission,
+  usePluginEvents,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButtons';
@@ -36,8 +34,7 @@ export const StockLineDetailView: React.FC = () => {
     isDirty,
     update: { update, isUpdating },
   } = useStockLine(id);
-  const { dispatchEvent, addEventListener, removeEventListener } =
-    usePluginEvents();
+  const pluginEvents = usePluginEvents<{ id: string }, void>();
   const {
     urlQuery: { tab },
   } = useUrlQuery();
@@ -48,33 +45,15 @@ export const StockLineDetailView: React.FC = () => {
   const repackModalController = useToggle();
   const adjustmentModalController = useToggle();
 
-  const [hasPluginChanged, setHasPluginChanged] = useState(false);
-  const plugins = usePluginElements({
-    type: 'StockEditForm',
-    data,
-  });
-
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.item.name ?? '' });
   }, [setCustomBreadcrumbs, data]);
 
-  const onPluginChange = () => setHasPluginChanged(true);
-  useEffect(() => {
-    const listener: PluginEventListener = {
-      eventType: 'onChangeStockEditForm',
-      listener: onPluginChange,
-    };
-
-    addEventListener(listener);
-
-    return () => removeEventListener(listener);
-  }, [addEventListener, removeEventListener]);
-
   const showSaveConfirmation = useConfirmationModal({
     onConfirm: () => {
       update()
-        .then(() => {
-          dispatchEvent('onSaveStockEditForm', new Event(draft.id));
+        .then(async () => {
+          await pluginEvents.dispatchEvent({ id: draft.id });
           const successSnack = success(t('success.data-saved'));
           successSnack();
         })
@@ -109,7 +88,7 @@ export const StockLineDetailView: React.FC = () => {
           loading={isLoading}
           draft={draft}
           onUpdate={updatePatch}
-          plugins={plugins}
+          pluginEvents={pluginEvents}
         />
       ),
       value: t('label.details'),
@@ -128,7 +107,7 @@ export const StockLineDetailView: React.FC = () => {
     isSaving: isUpdating,
     showSaveConfirmation,
     showCancelConfirmation,
-    disabled: !isDirty && !hasPluginChanged,
+    disabled: !isDirty && !pluginEvents.isDirty,
     isDirty,
   };
 
