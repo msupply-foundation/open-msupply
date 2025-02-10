@@ -1,4 +1,10 @@
 // To upload to server (from this dir):
+// cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i './service/src/backend_plugin/examples/amc' -u 'http://localhost:8000' --username 'test' --password 'pass'
+// OR
+// cargo run --bin remote_server_cli -- generate-plugin-bundle -i './service/src/backend_plugin/examples/amc' -o 'check.json'
+// Can install via CLI
+// cargo run --bin remote_server_cli -- install-plugin-bundle --path 'check.json' -u 'http://localhost:8000' --username 'test' --password 'pass'
+// Or can install via curl
 // cargo run --bin remote_server_cli -- generate-plugin-bundle -i './service/src/backend_plugin/examples/amc' -o 'check.json'
 // curl -H 'Content-Type: application/json' --data '{"query":"query MyQuery {authToken(password: \"pass\", username: \"Admin\") {... on AuthToken {token}... on AuthTokenError {error {description}}}}","variables":{}}' 'http://localhost:8000/graphql'
 // TOKEN=token from above
@@ -35,6 +41,9 @@ let plugins = {
 
     const sql_result = sql(sql_statement);
     const response = {};
+
+    // Fill all item_ids with default
+    item_ids.forEach((itemId) => (response[itemId] = { average_monthly_consumption: 1 }));
 
     sql_result.forEach(({ item_id, consumption }) => {
       response[item_id] = {
