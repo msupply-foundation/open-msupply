@@ -47,7 +47,6 @@ const UIComponent = (props: ControlProps) => {
       handleChange('before', endOfDay.toISOString());
     }
   };
-  console.log('Core Data', core?.data);
 
   return (
     <DetailInputWithLabelRow
