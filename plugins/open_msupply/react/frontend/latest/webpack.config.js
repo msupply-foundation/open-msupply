@@ -7,7 +7,4 @@ const pluginName = require('./package.json').name;
 const distDir = path.resolve(__dirname, 'dist');
 const extendConfig = {};
 
-module.exports = merge(
-  generateBaseConfig({ pluginName, distDir }),
-  extendConfig
-);
+module.exports = merge(generateBaseConfig({ pluginName, distDir }), extendConfig);
