@@ -32,8 +32,7 @@ export const usePatientApi = () => {
         patientId,
         encounterType,
       ] as const,
-    getPatientInsurances: () =>
-      [...keys.base(), 'getPatientInsurances'] as const,
+    insurances: () => [...keys.base(), 'insurances'] as const,
   };
   const { client } = useGql();
   const queries = getPatientQueries(getSdk(client), storeId);

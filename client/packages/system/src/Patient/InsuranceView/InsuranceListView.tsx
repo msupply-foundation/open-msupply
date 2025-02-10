@@ -10,7 +10,8 @@ import {
 
 export const InsuranceListView = () => {
   const columns = useInsuranceColumns();
-  const { data, isLoading } = usePatient.document.getPatientInsurances();
+  const patientId = usePatient.utils.id();
+  const { data, isLoading } = usePatient.document.insurances(patientId);
 
   return (
     <TableProvider

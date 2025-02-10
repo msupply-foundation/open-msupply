@@ -234,7 +234,7 @@ query latestPatientEncounter(
   }
 }
 
-fragment PatientInsurance on PatientInsuranceNode {
+fragment Insurance on InsuranceNode {
   id
   expiryDate
   insuranceProviderId
@@ -248,16 +248,22 @@ fragment PatientInsurance on PatientInsuranceNode {
   policyNumberPerson
 }
 
-query getPatientInsurances(
+query insurances(
   $storeId: String!
-  $filter: PatientInsuranceFilterInput
-  $sort: [PatientInsuranceSortInput!]
+  $nameLinkId: String!
+  $filter: InsuranceFilterInput
+  $sort: [InsuranceSortInput!]
 ) {
-  getPatientInsurances(storeId: $storeId, filter: $filter, sort: $sort) {
-    ... on PatientInsuranceConnector {
+  insurances(
+    storeId: $storeId
+    nameLinkId: $nameLinkId
+    filter: $filter
+    sort: $sort
+  ) {
+    ... on InsuranceConnector {
       __typename
       nodes {
-        ...PatientInsurance
+        ...Insurance
       }
     }
   }

@@ -90,16 +90,17 @@ export type LatestPatientEncounterQueryVariables = Types.Exact<{
 
 export type LatestPatientEncounterQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, type: string, startDatetime: string, suggestedNextEncounter?: { __typename: 'SuggestedNextEncounterNode', startDatetime: string, label?: string | null } | null }> } };
 
-export type PatientInsuranceFragment = { __typename: 'PatientInsuranceNode', id: string, expiryDate: string, insuranceProviderId: string, isActive: boolean, enteredById?: string | null, discountPercentage: number, nameLinkId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null };
+export type InsuranceFragment = { __typename: 'InsuranceNode', id: string, expiryDate: string, insuranceProviderId: string, isActive: boolean, enteredById?: string | null, discountPercentage: number, nameLinkId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null };
 
-export type GetPatientInsurancesQueryVariables = Types.Exact<{
+export type InsurancesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  filter?: Types.InputMaybe<Types.PatientInsuranceFilterInput>;
-  sort?: Types.InputMaybe<Array<Types.PatientInsuranceSortInput> | Types.PatientInsuranceSortInput>;
+  nameLinkId: Types.Scalars['String']['input'];
+  filter?: Types.InputMaybe<Types.InsuranceFilterInput>;
+  sort?: Types.InputMaybe<Array<Types.InsuranceSortInput> | Types.InsuranceSortInput>;
 }>;
 
 
-export type GetPatientInsurancesQuery = { __typename: 'Queries', getPatientInsurances: { __typename: 'PatientInsuranceConnector', nodes: Array<{ __typename: 'PatientInsuranceNode', id: string, expiryDate: string, insuranceProviderId: string, isActive: boolean, enteredById?: string | null, discountPercentage: number, nameLinkId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null }> } };
+export type InsurancesQuery = { __typename: 'Queries', insurances: { __typename: 'InsuranceConnector', nodes: Array<{ __typename: 'InsuranceNode', id: string, expiryDate: string, insuranceProviderId: string, isActive: boolean, enteredById?: string | null, discountPercentage: number, nameLinkId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null }> } };
 
 export const PatientRowFragmentDoc = gql`
     fragment PatientRow on PatientNode {
@@ -177,8 +178,8 @@ export const ProgramPatientRowFragmentDoc = gql`
   }
 }
     `;
-export const PatientInsuranceFragmentDoc = gql`
-    fragment PatientInsurance on PatientInsuranceNode {
+export const InsuranceFragmentDoc = gql`
+    fragment Insurance on InsuranceNode {
   id
   expiryDate
   insuranceProviderId
@@ -343,18 +344,23 @@ export const LatestPatientEncounterDocument = gql`
   }
 }
     `;
-export const GetPatientInsurancesDocument = gql`
-    query getPatientInsurances($storeId: String!, $filter: PatientInsuranceFilterInput, $sort: [PatientInsuranceSortInput!]) {
-  getPatientInsurances(storeId: $storeId, filter: $filter, sort: $sort) {
-    ... on PatientInsuranceConnector {
+export const InsurancesDocument = gql`
+    query insurances($storeId: String!, $nameLinkId: String!, $filter: InsuranceFilterInput, $sort: [InsuranceSortInput!]) {
+  insurances(
+    storeId: $storeId
+    nameLinkId: $nameLinkId
+    filter: $filter
+    sort: $sort
+  ) {
+    ... on InsuranceConnector {
       __typename
       nodes {
-        ...PatientInsurance
+        ...Insurance
       }
     }
   }
 }
-    ${PatientInsuranceFragmentDoc}`;
+    ${InsuranceFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -393,8 +399,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     latestPatientEncounter(variables: LatestPatientEncounterQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LatestPatientEncounterQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<LatestPatientEncounterQuery>(LatestPatientEncounterDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'latestPatientEncounter', 'query', variables);
     },
-    getPatientInsurances(variables: GetPatientInsurancesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GetPatientInsurancesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetPatientInsurancesQuery>(GetPatientInsurancesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'getPatientInsurances', 'query', variables);
+    insurances(variables: InsurancesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsurancesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsurancesQuery>(InsurancesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insurances', 'query', variables);
     }
   };
 }
