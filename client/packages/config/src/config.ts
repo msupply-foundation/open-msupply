@@ -1,5 +1,7 @@
 declare const API_HOST: string;
 declare const FEATURE_EXAMPLE: boolean;
+// Used to load plugins via server during dev rather then from local dir, to test remote loading
+// `yarn start -- -- -env LOAD_REMOTE_PLUGINS=true`
 declare const LOAD_REMOTE_PLUGINS: boolean;
 
 // For production, API is on the same domain/ip and port as web app, available through sub-route
