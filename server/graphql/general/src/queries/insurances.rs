@@ -72,15 +72,15 @@ impl InsuranceNode {
         &self.row().insurance_provider_id
     }
 
-    pub async fn policy_number_person(&self) -> Option<&str> {
-        self.row().policy_number_person.as_deref()
+    pub async fn policy_number_person(&self) -> &Option<String> {
+        &self.row().policy_number_person
     }
 
-    pub async fn policy_number_family(&self) -> Option<&str> {
-        self.row().policy_number_family.as_deref()
+    pub async fn policy_number_family(&self) -> &Option<String> {
+        &self.row().policy_number_family
     }
 
-    pub async fn policy_number(&self) -> &str {
+    pub async fn policy_number(&self) -> &String {
         &self.row().policy_number
     }
 
@@ -88,20 +88,20 @@ impl InsuranceNode {
         InsurancePolicyNodeType::from_domain(&self.row().policy_type)
     }
 
-    pub async fn discount_percentage(&self) -> f64 {
-        self.row().discount_percentage
+    pub async fn discount_percentage(&self) -> &f64 {
+        &self.row().discount_percentage
     }
 
-    pub async fn expiry_date(&self) -> NaiveDate {
-        self.row().expiry_date
+    pub async fn expiry_date(&self) -> &NaiveDate {
+        &self.row().expiry_date
     }
 
-    pub async fn is_active(&self) -> bool {
-        self.row().is_active
+    pub async fn is_active(&self) -> &bool {
+        &self.row().is_active
     }
 
-    pub async fn entered_by_id(&self) -> Option<&str> {
-        self.row().entered_by_id.as_deref()
+    pub async fn entered_by_id(&self) -> &Option<String> {
+        &self.row().entered_by_id
     }
 }
 
