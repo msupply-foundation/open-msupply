@@ -15,6 +15,7 @@ impl MigrationFragment for Migrate {
                     id TEXT NOT NULL PRIMARY KEY,
                     code TEXT NOT NULL,
                     entry_point TEXT NOT NULL,
+                    types TEXT NOT NULL,
                     files TEXT NOT NULL
                 );
             "#

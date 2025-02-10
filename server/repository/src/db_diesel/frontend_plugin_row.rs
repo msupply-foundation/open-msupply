@@ -29,6 +29,21 @@ impl From<FrontendPluginFiles> for String {
     }
 }
 
+#[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
+pub struct FrontendPluginTypes(pub Vec<String>);
+
+impl From<String> for FrontendPluginTypes {
+    fn from(value: String) -> Self {
+        serde_json::from_str(&value).unwrap_or_default()
+    }
+}
+
+impl From<FrontendPluginTypes> for String {
+    fn from(value: FrontendPluginTypes) -> Self {
+        serde_json::to_string(&value).unwrap_or_default()
+    }
+}
+
 #[derive(DbEnum, Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -43,6 +58,7 @@ table! {
       id -> Text,
       code -> Text,
       entry_point -> Text,
+      types -> Text,
       files -> Text,
   }
 }
@@ -55,6 +71,9 @@ pub struct FrontendPluginRow {
     pub id: String,
     pub code: String,
     pub entry_point: String,
+    #[diesel(serialize_as = String)]
+    #[diesel(deserialize_as = String)]
+    pub types: FrontendPluginTypes,
     #[diesel(serialize_as = String)]
     #[diesel(deserialize_as = String)]
     pub files: FrontendPluginFiles,
