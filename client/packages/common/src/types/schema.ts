@@ -2947,6 +2947,7 @@ export type InsertPrescriptionInput = {
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
   programId?: InputMaybe<Scalars['String']['input']>;
+  theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPrescriptionLineError = {
@@ -8443,6 +8444,7 @@ export type UpdatePrescriptionInput = {
   prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
   programId?: InputMaybe<NullableStringUpdate>;
   status?: InputMaybe<UpdatePrescriptionStatusInput>;
+  theirReference?: InputMaybe<NullableStringUpdate>;
 };
 
 export type UpdatePrescriptionLineError = {
