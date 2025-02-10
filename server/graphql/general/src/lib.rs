@@ -40,10 +40,7 @@ use queries::{
     currency::currencies,
     display_settings::{display_settings, DisplaySettingsHash, DisplaySettingsNode},
     initialisation_status::{initialisation_status, InitialisationStatusNode},
-    patient_insurance::{
-        get_patient_insurances, PatientInsuranceFilterInput, PatientInsuranceResponse,
-        PatientInsuranceSortInput,
-    },
+    insurances::{insurances, InsuranceFilterInput, InsuranceResponse, InsuranceSortInput},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
     sync_settings::{sync_settings, SyncSettingsNode},
 };
@@ -67,16 +64,6 @@ impl GeneralQueries {
         #[graphql(desc = "Password")] password: String,
     ) -> Result<AuthTokenResponse> {
         login(ctx, &username, &password).await
-    }
-
-    pub async fn get_patient_insurances(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        filter: Option<PatientInsuranceFilterInput>,
-        sort: Option<Vec<PatientInsuranceSortInput>>,
-    ) -> Result<PatientInsuranceResponse> {
-        get_patient_insurances(ctx, store_id, filter, sort)
     }
 
     pub async fn item_price(
@@ -449,6 +436,17 @@ impl GeneralQueries {
         filter: Option<AbbreviationFilterInput>,
     ) -> Result<Vec<AbbreviationNode>> {
         abbreviations(ctx, filter)
+    }
+
+    pub async fn insurances(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        name_link_id: String,
+        filter: Option<InsuranceFilterInput>,
+        sort: Option<Vec<InsuranceSortInput>>,
+    ) -> Result<InsuranceResponse> {
+        insurances(ctx, store_id, name_link_id, filter, sort)
     }
 }
 

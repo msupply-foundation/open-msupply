@@ -3288,10 +3288,51 @@ export type InsertVaccineCourseInput = {
 
 export type InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode;
 
+export type InsuranceConnector = {
+  __typename: 'InsuranceConnector';
+  nodes: Array<InsuranceNode>;
+};
+
+export type InsuranceFilterInput = {
+  insuranceProviderId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type InsuranceNode = {
+  __typename: 'InsuranceNode';
+  discountPercentage: Scalars['Float']['output'];
+  enteredById?: Maybe<Scalars['String']['output']>;
+  expiryDate: Scalars['NaiveDate']['output'];
+  id: Scalars['String']['output'];
+  insuranceProviderId: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  nameLinkId: Scalars['String']['output'];
+  policyNumber: Scalars['String']['output'];
+  policyNumberFamily?: Maybe<Scalars['String']['output']>;
+  policyNumberPerson?: Maybe<Scalars['String']['output']>;
+  policyType: InsurancePolicyNodeType;
+};
+
 export enum InsurancePolicyNodeType {
   Business = 'BUSINESS',
   Personal = 'PERSONAL'
 }
+
+export type InsuranceResponse = InsuranceConnector;
+
+export enum InsuranceSortFieldInput {
+  ExpiryDate = 'expiryDate',
+  IsActive = 'isActive'
+}
+
+export type InsuranceSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: InsuranceSortFieldInput;
+};
 
 export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & ScannedDataParseErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpsertBundledItemErrorInterface & UpsertItemVariantErrorInterface & {
   __typename: 'InternalError';
@@ -5258,49 +5299,6 @@ export type PatientFilterInput = {
   programEnrolmentName?: InputMaybe<StringFilterInput>;
 };
 
-export type PatientInsuranceConnector = {
-  __typename: 'PatientInsuranceConnector';
-  nodes: Array<PatientInsuranceNode>;
-};
-
-export type PatientInsuranceFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-};
-
-export type PatientInsuranceNode = {
-  __typename: 'PatientInsuranceNode';
-  discountPercentage: Scalars['Int']['output'];
-  enteredById?: Maybe<Scalars['String']['output']>;
-  expiryDate: Scalars['NaiveDate']['output'];
-  id: Scalars['String']['output'];
-  insuranceProviderId: Scalars['String']['output'];
-  isActive: Scalars['Boolean']['output'];
-  nameLinkId: Scalars['String']['output'];
-  policyNumber: Scalars['String']['output'];
-  policyNumberFamily?: Maybe<Scalars['String']['output']>;
-  policyNumberPerson?: Maybe<Scalars['String']['output']>;
-  policyType: InsurancePolicyNodeType;
-};
-
-export type PatientInsuranceResponse = PatientInsuranceConnector;
-
-export enum PatientInsuranceSortFieldInput {
-  ExpiryDate = 'expiryDate',
-  IsActive = 'isActive',
-  PolicyType = 'policyType',
-  ProviderName = 'providerName'
-}
-
-export type PatientInsuranceSortInput = {
-  /**
-   * Sort query result is sorted descending or ascending (if not provided the default is
-   * ascending)
-   */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Sort query result by `key` */
-  key: PatientInsuranceSortFieldInput;
-};
-
 export type PatientNode = {
   __typename: 'PatientNode';
   address1?: Maybe<Scalars['String']['output']>;
@@ -5842,12 +5840,12 @@ export type Queries = {
    * Provides an friendly shape to edit these lines before calling the insert/update mutations.
    */
   generateSupplierReturnLines: GenerateSupplierReturnLinesResponse;
-  getPatientInsurances: PatientInsuranceResponse;
   /** Query for "historical_stock_line" entries */
   historicalStockLines: StockLinesResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
+  insurances: InsuranceResponse;
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
@@ -6212,13 +6210,6 @@ export type QueriesGenerateSupplierReturnLinesArgs = {
 };
 
 
-export type QueriesGetPatientInsurancesArgs = {
-  filter?: InputMaybe<PatientInsuranceFilterInput>;
-  sort?: InputMaybe<Array<PatientInsuranceSortInput>>;
-  storeId: Scalars['String']['input'];
-};
-
-
 export type QueriesHistoricalStockLinesArgs = {
   datetime?: InputMaybe<Scalars['DateTime']['input']>;
   itemId: Scalars['String']['input'];
@@ -6228,6 +6219,14 @@ export type QueriesHistoricalStockLinesArgs = {
 
 export type QueriesInsertPrescriptionArgs = {
   input: InsertPrescriptionInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesInsurancesArgs = {
+  filter?: InputMaybe<InsuranceFilterInput>;
+  nameLinkId: Scalars['String']['input'];
+  sort?: InputMaybe<Array<InsuranceSortInput>>;
   storeId: Scalars['String']['input'];
 };
 

@@ -1,11 +1,28 @@
 use super::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, EqualFilter, RowActionType,
+    StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Upsert};
+use crate::{
+    diesel_macros::{apply_equal_filter, apply_sort},
+    repository_error::RepositoryError,
+    Sort, Upsert,
+};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Default, PartialEq, Debug)]
+pub struct NameInsuranceJoinFilter {
+    pub insurance_provider_id: Option<EqualFilter<String>>,
+}
+
+pub enum NameInsuranceJoinSortField {
+    ExpiryDate,
+    IsActive,
+}
+
+pub type NameInsuranceJoinSort = Sort<NameInsuranceJoinSortField>;
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -67,6 +84,41 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
             .filter(name_insurance_join::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_many_by_name_link_id(
+        &self,
+        name_link_id: &str,
+        filter: Option<NameInsuranceJoinFilter>,
+        sort: Option<NameInsuranceJoinSort>,
+    ) -> Result<Vec<NameInsuranceJoinRow>, RepositoryError> {
+        let mut query = name_insurance_join::table
+            .filter(name_insurance_join::name_link_id.eq(name_link_id))
+            .into_boxed();
+
+        if let Some(filter) = filter {
+            apply_equal_filter!(
+                query,
+                filter.insurance_provider_id,
+                name_insurance_join::insurance_provider_id
+            );
+        }
+
+        if let Some(sort) = sort {
+            match sort.key {
+                NameInsuranceJoinSortField::ExpiryDate => {
+                    apply_sort!(query, sort, name_insurance_join::expiry_date);
+                }
+                NameInsuranceJoinSortField::IsActive => {
+                    apply_sort!(query, sort, name_insurance_join::is_active);
+                }
+            }
+        } else {
+            query = query.order(name_insurance_join::id.asc())
+        }
+
+        let result = query.load::<NameInsuranceJoinRow>(self.connection.lock().connection())?;
         Ok(result)
     }
 
