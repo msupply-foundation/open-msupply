@@ -19,6 +19,7 @@ use general_processor::{process_records, ProcessorError};
 
 mod contact_form;
 mod general_processor;
+mod load_plugin;
 pub use general_processor::ProcessorType;
 #[cfg(test)]
 mod test_helpers;
