@@ -1,10 +1,14 @@
-use async_graphql::{Context, Enum, InputObject, Object, Result, SimpleObject, Union};
+use async_graphql::{
+    dataloader::DataLoader, Context, Enum, InputObject, Object, Result, SimpleObject, Union,
+};
 use chrono::NaiveDate;
 use graphql_core::{
     generic_filters::EqualFilterStringInput,
+    loader::InsuranceProviderByIdLoader,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::InsuranceProviderNode;
 use repository::{
     name_insurance_join_row::{
         InsurancePolicyType, NameInsuranceJoinFilter, NameInsuranceJoinRow, NameInsuranceJoinSort,
@@ -61,64 +65,64 @@ pub struct InsuranceNode {
 #[Object]
 impl InsuranceNode {
     pub async fn id(&self) -> &str {
-        &self.insurance.id
+        &self.row().id
     }
 
     pub async fn name_link_id(&self) -> &str {
-        &self.insurance.name_link_id
+        &self.row().name_link_id
     }
 
     pub async fn insurance_provider_id(&self) -> &str {
-        &self.insurance.insurance_provider_id
+        &self.row().insurance_provider_id
     }
 
     pub async fn policy_number_person(&self) -> Option<&str> {
-        self.insurance.policy_number_person.as_deref()
+        self.row().policy_number_person.as_deref()
     }
 
     pub async fn policy_number_family(&self) -> Option<&str> {
-        self.insurance.policy_number_family.as_deref()
+        self.row().policy_number_family.as_deref()
     }
 
     pub async fn policy_number(&self) -> &str {
-        &self.insurance.policy_number
+        &self.row().policy_number
     }
 
     pub async fn policy_type(&self) -> InsurancePolicyNodeType {
-        InsurancePolicyNodeType::from_domain(&self.insurance.policy_type)
+        InsurancePolicyNodeType::from_domain(&self.row().policy_type)
     }
 
     pub async fn discount_percentage(&self) -> f64 {
-        self.insurance.discount_percentage
+        self.row().discount_percentage
     }
 
     pub async fn expiry_date(&self) -> NaiveDate {
-        self.insurance.expiry_date
+        self.row().expiry_date
     }
 
     pub async fn is_active(&self) -> bool {
-        self.insurance.is_active
+        self.row().is_active
     }
 
     pub async fn entered_by_id(&self) -> Option<&str> {
-        self.insurance.entered_by_id.as_deref()
+        self.row().entered_by_id.as_deref()
+    }
+
+    pub async fn insurance_providers(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<InsuranceProviderNode>> {
+        let insurance_provider_id = &self.row().insurance_provider_id;
+
+        let loader = ctx.get_loader::<DataLoader<InsuranceProviderByIdLoader>>();
+        let result = loader.load_one(insurance_provider_id.clone()).await?;
+        Ok(result.map(InsuranceProviderNode::from_domain))
     }
 }
 
 #[derive(SimpleObject)]
 pub struct InsuranceConnector {
     nodes: Vec<InsuranceNode>,
-}
-
-impl InsuranceConnector {
-    pub fn from_domain(insurances: Vec<NameInsuranceJoinRow>) -> InsuranceConnector {
-        InsuranceConnector {
-            nodes: insurances
-                .into_iter()
-                .map(|insurance| InsuranceNode { insurance })
-                .collect(),
-        }
-    }
 }
 
 #[derive(Union)]
@@ -158,6 +162,27 @@ pub fn insurances(
     Ok(InsuranceResponse::Response(
         InsuranceConnector::from_domain(result),
     ))
+}
+
+impl InsuranceConnector {
+    pub fn from_domain(insurances: Vec<NameInsuranceJoinRow>) -> InsuranceConnector {
+        InsuranceConnector {
+            nodes: insurances
+                .into_iter()
+                .map(InsuranceNode::from_domain)
+                .collect(),
+        }
+    }
+}
+
+impl InsuranceNode {
+    pub fn from_domain(insurance: NameInsuranceJoinRow) -> InsuranceNode {
+        InsuranceNode { insurance }
+    }
+
+    pub fn row(&self) -> &NameInsuranceJoinRow {
+        &self.insurance
+    }
 }
 
 impl InsuranceFilterInput {
