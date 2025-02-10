@@ -146,7 +146,7 @@ pub fn insurances(
 
     let result = service_provider
         .insurance_service
-        .get_insurances(
+        .insurances(
             &service_context.connection,
             &name_link_id,
             filter.map(|filter| filter.to_domain()),
