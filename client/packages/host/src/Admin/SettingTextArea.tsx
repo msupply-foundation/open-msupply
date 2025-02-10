@@ -75,11 +75,9 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
               minRows={10}
               style={{ padding: '0 0 0 50px' }}
               slotProps={{
-                htmlInput: {
+                input: {
                   sx: {
-                    borderColor: 'gray.main',
-                    borderStyle: 'solid',
-                    borderWidth: '1px',
+                    border: theme => `1px solid ${theme.palette.gray.main}`,
                     borderRadius: '5px',
                     padding: '3px',
                   },
