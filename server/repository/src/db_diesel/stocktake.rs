@@ -24,6 +24,7 @@ pub struct StocktakeFilter {
     pub stocktake_date: Option<DateFilter>,
     pub finalised_datetime: Option<DatetimeFilter>,
     pub is_locked: Option<bool>,
+    pub is_program_stocktake: Option<bool>,
 }
 
 impl StocktakeFilter {
@@ -85,6 +86,11 @@ impl StocktakeFilter {
         self.is_locked = Some(filter);
         self
     }
+
+    pub fn is_program_stocktake(mut self, filter: bool) -> Self {
+        self.is_program_stocktake = Some(filter);
+        self
+    }
 }
 
 pub enum StocktakeSortField {
@@ -126,6 +132,9 @@ fn create_filtered_query(filter: Option<StocktakeFilter>) -> BoxedStocktakeQuery
 
         if let Some(value) = f.is_locked {
             query = query.filter(stocktake::is_locked.eq(value));
+        }
+        if let Some(_) = f.is_program_stocktake {
+            query = query.filter(stocktake::program_id.is_not_null());
         }
     }
     query
