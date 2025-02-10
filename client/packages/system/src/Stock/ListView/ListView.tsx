@@ -158,7 +158,7 @@ const StockListComponent: FC = () => {
       sortBy,
       onChangeSortBy: updateSortQuery,
     },
-    [sortBy, plugins.stockColumn?.columns.length || 0]
+    [sortBy, plugins.stockColumn?.columns]
   );
 
   return (
