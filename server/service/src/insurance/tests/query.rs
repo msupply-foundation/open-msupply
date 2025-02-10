@@ -87,7 +87,7 @@ mod query {
         insurance_repo.upsert_one(&insurance_b).unwrap();
 
         let result = service
-            .get_insurances(&connection, &name_link_a.id)
+            .insurances(&connection, &name_link_a.id, None, None)
             .unwrap();
 
         assert!(result.contains(&insurance_a));

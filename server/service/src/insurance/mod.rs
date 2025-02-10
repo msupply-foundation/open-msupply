@@ -5,18 +5,18 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
-use self::query::get_insurances;
+use self::query::insurances;
 mod query;
 
 pub trait InsuranceServiceTrait: Sync + Send {
-    fn get_insurances(
+    fn insurances(
         &self,
         connection: &StorageConnection,
         name_link_id: &str,
         filter: Option<NameInsuranceJoinFilter>,
         sort: Option<NameInsuranceJoinSort>,
     ) -> Result<Vec<NameInsuranceJoinRow>, RepositoryError> {
-        get_insurances(connection, name_link_id, filter, sort)
+        insurances(connection, name_link_id, filter, sort)
     }
 }
 

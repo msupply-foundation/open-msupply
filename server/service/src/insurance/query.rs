@@ -6,7 +6,7 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
-pub fn get_insurances(
+pub fn insurances(
     connection: &StorageConnection,
     name_link_id: &str,
     filter: Option<NameInsuranceJoinFilter>,
