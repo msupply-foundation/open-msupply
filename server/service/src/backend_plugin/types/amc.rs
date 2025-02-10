@@ -4,12 +4,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ts_rs::TS;
 
-#[derive(Clone, Deserialize, Serialize, TS)]
+#[derive(TS, Clone, Deserialize, Serialize)]
 pub struct AverageMonthlyConsumptionItem {
     pub average_monthly_consumption: Option<f64>,
 }
 
-#[derive(Clone, Deserialize, Serialize, TS)]
+#[derive(TS, Clone, Deserialize, Serialize)]
 pub struct Input {
     pub store_id: String,
     pub amc_lookback_months: f64,
