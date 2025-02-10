@@ -10,17 +10,26 @@ import { Environment } from 'packages/config/src';
 // PLUGIN PROVIDER
 type PluginProvider = {
   plugins: Plugins;
-  addPlugins: (_: Plugins) => void;
+  // When plugin is reloaded with the same code it will be merged with existing plugins
+  // this will allow us to remove duplicates
+  cachedPlugins: { [code: string]: Plugins };
+  addPlugins: (_: Plugins, code: string) => void;
 };
 
 export const usePluginProvider = create<PluginProvider>(set => {
   return {
     plugins: {},
-    addPlugins: plugins => {
+    cachedPlugins: {},
+    addPlugins: (plugins, code) => {
       set(state => {
+        const newCachedPlugins = { ...state.cachedPlugins, [code]: plugins };
         // Here can determine if version is suitable
-        const newPlugins = mergeWith(state.plugins, plugins, (a, b) =>
-          isArray(a) ? a.concat(b) : undefined
+        const newPlugins = Object.values(newCachedPlugins).reduce(
+          (acc, plugins) =>
+            mergeWith(acc, plugins, (a, b) =>
+              isArray(a) ? a.concat(b) : undefined
+            ),
+          {}
         );
 
         return { ...state, plugins: newPlugins };

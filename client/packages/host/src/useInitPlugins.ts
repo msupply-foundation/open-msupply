@@ -7,7 +7,7 @@ import { Environment } from 'packages/config/src';
 import { useEffect } from 'react';
 
 // Used for local plugins in dev mode
-declare const LOCAL_PLUGINS: { pluginPath: string }[];
+declare const LOCAL_PLUGINS: { pluginPath: string; pluginCode: string }[];
 
 export const useInitPlugins = () => {
   const { addPlugins } = usePluginProvider();
@@ -18,7 +18,7 @@ export const useInitPlugins = () => {
 
     for (const plugin of plugins) {
       let pluginBundle = await loadRemotePlugin(plugin);
-      addPlugins(pluginBundle);
+      addPlugins(pluginBundle, plugin.code);
     }
   };
 
@@ -34,7 +34,7 @@ export const useInitPlugins = () => {
         /* webpackExclude: /operations.graphql/ */
         `../../plugins/${plugin.pluginPath}/src/plugin.tsx`
       );
-      addPlugins(pluginBundle.default);
+      addPlugins(pluginBundle.default, plugin.pluginCode);
     }
   };
   useEffect(() => {
