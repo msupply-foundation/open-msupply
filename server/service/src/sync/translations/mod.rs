@@ -104,7 +104,6 @@ pub(crate) fn all_translators() -> SyncTranslators {
         program_indicator::boxed(),
         indicator_attribute::boxed(),
         indicator_value::boxed(),
-        report::boxed(),
         reason::boxed(),
         store_preference::boxed(),
         form_schema::boxed(),
