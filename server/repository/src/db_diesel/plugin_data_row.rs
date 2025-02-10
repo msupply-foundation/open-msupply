@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 table! {
     plugin_data (id) {
         id -> Text,
-        plugin_name -> Text,
+        plugin_code -> Text,
         related_record_id -> Text,
         related_record_type -> crate::db_diesel::plugin_data_row::RelatedRecordTypeMapping,
         store_id -> Text,
@@ -31,7 +31,7 @@ pub enum RelatedRecordType {
 #[diesel(table_name = plugin_data)]
 pub struct PluginDataRow {
     pub id: String,
-    pub plugin_name: String,
+    pub plugin_code: String,
     pub related_record_id: String,
     pub related_record_type: RelatedRecordType,
     pub store_id: String,
