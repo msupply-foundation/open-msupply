@@ -50,10 +50,8 @@ Optional fields in the manifest json are marked as '// optional'
   },
   // optional
   "arguments": {
-    // optional
     // location of schema file json relative to the version dir
     "schema": "argument_schemas/arguments.json",
-    // optional
     // location of ui schema file json relative to the version dir
     "ui": "argument_schemas/arguments_ui.json"
   },
@@ -95,7 +93,7 @@ The convert_data_js dir contains
 #### convert_data_js src dir
 
 This src dir contains
-1. convert_data.d.ts and. This is identical for all reports and should be copied without editing
+1. convert_data.d.ts file. This is identical for all reports and should be copied without editing
 2. convert_data.js file. This should be identical and copied directly as all data processing should be done in the utils.js file. However some changes may be required here to pass the correct data structure.
 3. utils.js file containing all data conversion and processing
 4. Optional utils.test.ts file for validating data conversion
@@ -329,27 +327,44 @@ Console errors, infos, and logs in wasm functions are propagated up into the ser
 
 Log destination is configured in the `base.yaml` file under logging.
 
-### Development processes
+#### Developing Reports
 
-Creating a new report generates a large dif and can be difficult to review and test.
+#### New Report Versions
 
-#### Pull Request Process
+When iterating on a report, the version in the report-manifest.json needs to be bumped.
 
-The following conventions have been adopted to increase ease of reviewing of pull requests:
+##### Latest Directory 
 
-##### 1. Preliminary PRs
+All report directories contain a report version dir called `latest`
+When making changes to a report, changes should be made in the `latest` dir source files.
 
-To reduce PR review overhead when making a new major or minor version of a report, it is encouraged to first make a sub pull request duplicating the report source files.
+Where these changes would require a major or minor version change (ie from an API change):
+1. First make a copy of the `latest` dir with the name of the current major and minor version of the `latest` dir
+2. Next bump the version of `latest` and make the changes that are required.
 
-This duplication can be quickly validated.
+This allows reviewers to focus only on the dif of the `latest` dir.
+New version dirs can easily be ignored as duplicates of the previous iteration of `latest`
 
-A subsequent PR with changes to these source files is easier to review by identifying only relevant changes.
+It is necessary to produce all versions of each report to ensure a report is available for remote OMS sites which might not have been updated to the latest version.
 
-An example can be seen here of this process:
-- [Duplication PR](https://github.com/msupply-foundation/open-msupply/pull/6327)
-- [Changes PR](https://github.com/msupply-foundation/open-msupply/pull/6157) making changes to the newly duplicated reports.
+Convention for file structures of report versions is:
 
-##### 2. Supplementary information
+```
+└──  example-report
+   ├── 2_4
+   └── latest
+```
+
+Where 2_4 and latest are directories containing source files of different versions of the same report.
+
+##### Patches
+
+Report files can be overwritten for patch changes. 
+Reports of a new patch must be backwards compatible to open mSupply of the same major and minor version. Therefore we can reduce PR dif overhead, and committed file overhead in OMS, by editing a report if it is a patch change.
+
+Previous patch versions of a report can be accessed if necessary on old branches of open mSupply.
+
+##### Supplementary information
 
 Add all required supplementary information required so that a reviewer can immediately see the new report using the `show-report` command.
 
@@ -359,38 +374,6 @@ This may include:
 - A custom test-config.json file
 
 Care must be taken with all reports and databases to [ensure client confidentiality](#client-confidentiality).
-
-#### New Report Patches
-
-When iterating on a patch, the version in the report-manifest.json needs to be bumped.
-
-#### Developing Major or Minor Version Changes
-
-A copy of the source files must be made for major or minor report version changes. TThis process involves:
-- Copying the entire version dir
-- Renaming the version dir to the new changes
-- Making changes to the new report dir 
-
-These changes should only be made when the api of the report is changed, causing it to no longer be compatible with the older version of open mSupply.
-
-In these cases, it is necessary to produce both versions of the report to ensure a report is available for remote OMS sites which might not have been updated to the latest version.
-
-Convention for file structures of report versions is:
-
-```
-└──  example-report
-   ├── 2_4
-   └── 2_5
-```
-
-Where 2_4 and 2_5 are directories containing source files of different versions of the same report.
-
-##### Patches
-
-Report files can be overwritten for patch changes. 
-Reports of a new patch must be backwards compatible to open mSupply of the same major and minor version. Therefore we can reduce PR dif overhead, and committed file overhead in OMS, by editing a report if it is a patch change.
-
-Previous patch versions of a report can be accessed if necessary on old branches of open mSupply.
 
 ### File Structure
 
@@ -417,20 +400,20 @@ The full conventional file structure is as follows:
    |   |   ├── Reports
    |   |   |   ├── expiring-items
    |   |   |   |   ├── 2_6
-   |   |   |   |   └── 2_7
+   |   |   |   |   └── latest
    |   |   |   └── item-usage
-   |   |   |       └── 3_2
+   |   |   |       └── latest
    |   |   └── Forms
    |   |       ├── repack
    |   |       |   ├── 2_6
-   |   |       |   └── 2_7
+   |   |       |   └── latest
    |   |       └── requisition
-   |   |           └── 2_7 
+   |   |           └── latest 
    |   └── client 2
    |       └── Reports
    |           └── expiring-items
    |               ├── 2_6
-   |               └── 2_7
+   |               └── latest
    └── Other source files and helper functions
 ```
 
