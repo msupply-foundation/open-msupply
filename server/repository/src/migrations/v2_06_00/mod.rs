@@ -12,6 +12,7 @@ mod add_program_deleted_datetime;
 mod add_program_id_to_invoice;
 mod backend_plugins;
 mod prescribed_quantity_store_pref;
+mod printer_configuration_create_table;
 
 pub(crate) struct V2_06_00;
 
@@ -37,6 +38,7 @@ impl Migration for V2_06_00 {
             Box::new(prescribed_quantity_store_pref::Migrate),
             Box::new(add_name_next_of_kin_name::Migrate),
             Box::new(add_name_insurance_join::Migrate),
+            Box::new(printer_configuration_create_table::Migrate),
         ]
     }
 }
