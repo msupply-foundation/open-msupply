@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "noImplicitAny": true,
+        "module": "ESNext",
+        "target": "ESNext",
+        "moduleResolution": "node",
+        "declaration": true,
+        "strict": true,
+        "esModuleInterop": true,
+        "paths": {
+            "@backendPlugins": [
+                "./backendTypes/types.ts"
+            ]
+        }
+    }
+}
