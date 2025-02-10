@@ -15,7 +15,7 @@ Source files for each report are located in their own directory and have the fol
 
 A full tree diagram of the report source file structure can be viewed [here](#source-file-structure-diagram)
 
-### report-manifest
+### Report manifest
 
 The `report-manifest.json` contains information required to build the report detailed below.
 Optional fields in the manifest json are marked as '// optional'
