@@ -36,7 +36,11 @@ const plugins = [
     } catch (e) {
       return false;
     }
-  });
+  })
+  .map(({ fullPluginPath, pluginPath }) => ({
+    pluginPath,
+    pluginCode: require(path.join(fullPluginPath, 'package.json')).name,
+  }));
 
 console.log('local plugins', plugins);
 
