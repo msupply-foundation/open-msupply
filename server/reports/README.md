@@ -17,7 +17,7 @@ A full tree diagram of the report source file structure can be viewed [here](#so
 
 ### Report manifest
 
-The `report-manifest.json` contains information required to build the report detailed below.
+The `report-manifest.json` file contains information required to build the report.
 Optional fields in the manifest json are marked as '// optional'
 
 ```json
