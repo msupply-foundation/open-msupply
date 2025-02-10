@@ -1,0 +1,27 @@
+{
+    "//": "As a backend plugins, unlike frontend plugins 'types' here is important, it indicates to backend where this plugin should be called",
+    "name": "amc_check",
+    "omSupplyPlugin": {
+        "target": "backend",
+        "types": [
+            "AMC"
+        ],
+        "variant_type": "BOA_JS"
+    },
+    "version": "1.0.0",
+    "main": "plugin.js",
+    "scripts": {
+        "build-plugin": "webpack"
+    },
+    "license": "MIT",
+    "devDependencies": {
+        "@types/lodash": "^4.17.15",
+        "ts-loader": "^9.4.4",
+        "typescript": "^5.0.2",
+        "webpack": "^5.76.2",
+        "webpack-cli": "^5.0.1"
+    },
+    "dependencies": {
+        "lodash": "^4.17.21"
+    }
+}
