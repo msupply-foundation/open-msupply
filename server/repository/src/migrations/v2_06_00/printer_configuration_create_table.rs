@@ -14,8 +14,8 @@ impl MigrationFragment for Migrate {
             CREATE TABLE printer_configuration (
                 id TEXT NOT NULL PRIMARY KEY,
                 address TEXT NOT NULL,
-                port INTEGER NOT NULL
-                label_width INTEGER NOT NULL
+                port INTEGER NOT NULL,
+                label_width INTEGER NOT NULL,
                 label_height INTEGER NOT NULL
             );
         "#
