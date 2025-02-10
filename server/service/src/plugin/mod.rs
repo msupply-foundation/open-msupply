@@ -151,7 +151,7 @@ pub trait PluginServiceTrait: Sync + Send {
                 BASE64_STANDARD.decode(file_content_base64).unwrap(),
             );
         }
-        info!("{code}");
+
         let mut plugins = ctx.frontend_plugins_cache.0.write().unwrap();
         // Remove all plugins with this code
         (*plugins).remove(&code);
@@ -164,7 +164,6 @@ pub trait PluginServiceTrait: Sync + Send {
                 files_content,
             },
         );
-        info!("{}", plugins.len());
     }
 
     fn get_frontend_plugins_metadata(&self, ctx: &ServiceContext) -> Vec<FrontendPluginMetadata> {
@@ -180,8 +179,9 @@ pub trait PluginServiceTrait: Sync + Send {
         uploaded_file: UploadedFile,
     ) -> Result<PluginBundle, InstallUploadedPluginError> {
         let plugin_bundle: PluginBundle = uploaded_file.as_json_file(settings)?;
-        ctx.connection
-            .transaction_sync(|connection| {
+        let result_bundle = ctx
+            .connection
+            .transaction_sync::<_, RepositoryError, _>(|connection| {
                 let backend_repo = BackendPluginRowRepository::new(connection);
                 let frontend_repo = FrontendPluginRowRepository::new(connection);
 
@@ -193,12 +193,13 @@ pub trait PluginServiceTrait: Sync + Send {
                     frontend_repo.upsert_one(row.clone())?;
                 }
 
-                ctx.processors_trigger
-                    .trigger_processor(ProcessorType::LoadPlugin);
-
                 Ok(plugin_bundle)
             })
-            .map_err(|error| error.to_inner_error())
+            .map_err(|error| error.to_inner_error())?;
+
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::LoadPlugin);
+        Ok(result_bundle)
     }
 }
 
