@@ -91,6 +91,7 @@ pub(crate) fn generate_plugin_bundle(
 
     let mut bundle = PluginBundle {
         backend_plugins: Vec::new(),
+        frontend_plugins: Vec::new(),
     };
 
     generate_bundle_recursive(&mut bundle, &ignore_paths, manifest_name, &in_dir)?;
