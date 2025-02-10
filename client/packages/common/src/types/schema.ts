@@ -3378,6 +3378,7 @@ export type InvoiceFilterInput = {
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
+  isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
   nameId?: InputMaybe<EqualFilterStringInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3514,7 +3515,7 @@ export type InvoiceNode = {
   patient?: Maybe<PatientNode>;
   pickedDatetime?: Maybe<Scalars['DateTime']['output']>;
   pricing: PricingNode;
-  programId?: Maybe<Scalars['String']['output']>;
+  program?: Maybe<ProgramNode>;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
    * Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
@@ -3522,6 +3523,7 @@ export type InvoiceNode = {
   requisition?: Maybe<RequisitionNode>;
   shippedDatetime?: Maybe<Scalars['DateTime']['output']>;
   status: InvoiceNodeStatus;
+  store?: Maybe<StoreNode>;
   taxPercentage?: Maybe<Scalars['Float']['output']>;
   theirReference?: Maybe<Scalars['String']['output']>;
   transportReference?: Maybe<Scalars['String']['output']>;
@@ -7448,6 +7450,7 @@ export type StocktakeFilterInput = {
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isLocked?: InputMaybe<Scalars['Boolean']['input']>;
+  isProgramStocktake?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<EqualFilterStocktakeStatusInput>;
   stocktakeDate?: InputMaybe<DateFilterInput>;
   stocktakeNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -7531,6 +7534,7 @@ export type StocktakeNode = {
   inventoryReductionId?: Maybe<Scalars['String']['output']>;
   isLocked: Scalars['Boolean']['output'];
   lines: StocktakeLineConnector;
+  program?: Maybe<ProgramNode>;
   status: StocktakeNodeStatus;
   stocktakeDate?: Maybe<Scalars['NaiveDate']['output']>;
   stocktakeNumber: Scalars['Int']['output'];
