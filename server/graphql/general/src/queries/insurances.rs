@@ -5,7 +5,13 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow};
+use repository::{
+    name_insurance_join_row::{
+        InsurancePolicyType, NameInsuranceJoinFilter, NameInsuranceJoinRow, NameInsuranceJoinSort,
+        NameInsuranceJoinSortField,
+    },
+    EqualFilter,
+};
 use serde::Serialize;
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -27,7 +33,7 @@ pub struct InsuranceSortInput {
 
 #[derive(InputObject, Clone)]
 pub struct InsuranceFilterInput {
-    pub id: Option<EqualFilterStringInput>,
+    pub insurance_provider_id: Option<EqualFilterStringInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -140,10 +146,44 @@ pub fn insurances(
 
     let result = service_provider
         .insurance_service
-        .get_insurances(&service_context.connection, &name_link_id)
+        .get_insurances(
+            &service_context.connection,
+            &name_link_id,
+            filter.map(|filter| filter.to_domain()),
+            sort.and_then(|mut sort_list| sort_list.pop())
+                .map(|sort| sort.to_domain()),
+        )
         .map_err(StandardGraphqlError::from_repository_error)?;
 
     Ok(InsuranceResponse::Response(
         InsuranceConnector::from_domain(result),
     ))
+}
+
+impl InsuranceFilterInput {
+    pub fn to_domain(self) -> NameInsuranceJoinFilter {
+        let InsuranceFilterInput {
+            insurance_provider_id,
+        } = self;
+
+        NameInsuranceJoinFilter {
+            insurance_provider_id: insurance_provider_id.map(EqualFilter::from),
+        }
+    }
+}
+
+impl InsuranceSortInput {
+    pub fn to_domain(self) -> NameInsuranceJoinSort {
+        use InsuranceSortFieldInput as from;
+        use NameInsuranceJoinSortField as to;
+        let key = match self.key {
+            from::ExpiryDate => to::ExpiryDate,
+            from::IsActive => to::IsActive,
+        };
+
+        NameInsuranceJoinSort {
+            key,
+            desc: self.desc,
+        }
+    }
 }
