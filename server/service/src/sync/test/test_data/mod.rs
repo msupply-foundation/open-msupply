@@ -48,7 +48,6 @@ pub(crate) mod program_indicator;
 pub(crate) mod program_requisition_settings;
 pub(crate) mod property;
 pub(crate) mod reason;
-pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
 pub(crate) mod rnr_form;
@@ -87,7 +86,6 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut period::test_pull_upsert_records());
     test_records.append(&mut name::test_pull_upsert_records());
     test_records.append(&mut name_tag::test_pull_upsert_records());
-    // test_records.append(&mut report::test_pull_upsert_records());
     test_records.append(&mut store::test_pull_upsert_records());
     test_records.append(&mut unit::test_pull_upsert_records());
     test_records.append(&mut reason::test_pull_upsert_records());
@@ -122,6 +120,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut system_log::test_pull_upsert_records());
     test_records.append(&mut contact_form::test_pull_upsert_records());
     test_records.append(&mut backend_plugin::test_pull_upsert_records());
+    test_records.append(&mut om_report::test_pull_upsert_records());
 
     test_records
 }
@@ -153,7 +152,6 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingR
     test_records.append(&mut rnr_form::test_pull_upsert_records());
     test_records.append(&mut rnr_form_line::test_pull_upsert_records());
     test_records.append(&mut vaccination::test_pull_upsert_records());
-    test_records.append(&mut om_report::test_pull_upsert_records());
 
     test_records
 }
@@ -165,7 +163,6 @@ pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut item::test_pull_delete_records());
     test_records.append(&mut currency::test_pull_delete_records());
     test_records.append(&mut master_list_name_join::test_pull_delete_records());
-    test_records.append(&mut report::test_pull_delete_records());
     test_records.append(&mut store::test_pull_delete_records());
     test_records.append(&mut unit::test_pull_delete_records());
 
