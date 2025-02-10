@@ -31,7 +31,7 @@ const UIComponent = (props: ControlProps) => {
     : null;
   const { data, isLoading } = usePeriodList(
     programId,
-    options?.findByProgram ? !!programId : false
+    options?.findByProgram ? !!programId : true
   );
 
   const onChange = async (period: PeriodFragment) => {
