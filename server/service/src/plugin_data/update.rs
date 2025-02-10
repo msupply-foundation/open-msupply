@@ -171,6 +171,8 @@ mod test {
         let plugin_data = service
             .get_plugin_data(&context, None, None)
             .unwrap()
+            .rows
+            .pop()
             .unwrap()
             .plugin_data;
         let donor = plugin_data_donor();
