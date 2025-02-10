@@ -6,7 +6,7 @@ This readme contains information on [source file structuring](#report-source-fil
 
 ## Report Source Files
 
-Source files for each report are located in their own directory. Within this directory are:
+Source files for each report are located in their own directory and have the following structure:
 
 1. [report-manifest.json](#report-manifest)
 2. [src dir](#src-dir)
