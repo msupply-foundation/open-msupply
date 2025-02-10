@@ -3,6 +3,7 @@ import {
   AppSxProp,
   DataTable,
   NothingHere,
+  usePluginProvider,
   useRowStyle,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -35,29 +36,35 @@ const useHighlightPlaceholderRows = (
 export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
   const t = useTranslation();
   const { lines, columns, itemFilter } = useRequest.line.list();
+  const { plugins } = usePluginProvider();
   const { on } = useHideOverStocked();
   const isDisabled = useRequest.utils.isDisabled();
   const isFiltered = !!itemFilter || on;
   useHighlightPlaceholderRows(lines);
 
   return (
-    <DataTable
-      id="internal-order-detail"
-      onRowClick={onRowClick}
-      columns={columns}
-      data={lines}
-      enableColumnSelection
-      noDataElement={
-        <NothingHere
-          body={t(
-            isFiltered
-              ? 'error.no-items-filter-on'
-              : 'error.no-requisition-items'
-          )}
-          onCreate={isDisabled ? undefined : onAddItem}
-          buttonText={t('button.add-item')}
-        />
-      }
-    />
+    <>
+      {plugins.internalOrderColumn?.StateLoader?.map((StateLoader, index) => (
+        <StateLoader key={index} stockLines={lines} />
+      ))}
+      <DataTable
+        id="internal-order-detail"
+        onRowClick={onRowClick}
+        columns={columns}
+        data={lines}
+        enableColumnSelection
+        noDataElement={
+          <NothingHere
+            body={t(
+              isFiltered
+                ? 'error.no-items-filter-on'
+                : 'error.no-requisition-items'
+            )}
+            onCreate={isDisabled ? undefined : onAddItem}
+            buttonText={t('button.add-item')}
+          />
+        }
+      />
+    </>
   );
 };

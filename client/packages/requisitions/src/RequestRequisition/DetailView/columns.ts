@@ -1,4 +1,3 @@
-import { RequestLineFragment } from '../api';
 import {
   useTranslation,
   ColumnAlign,
@@ -12,9 +11,13 @@ import {
   TooltipTextCell,
   useAuthContext,
   getLinesFromRow,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
-import { PackQuantityCell } from '@openmsupply-client/system';
+import {
+  PackQuantityCell,
+  RequestLineFragment,
+} from '@openmsupply-client/system';
 import { useRequestRequisitionLineErrorContext } from '../context';
 
 const useStockOnHand: ColumnDataAccessor<RequestLineFragment, string> = ({
@@ -48,6 +51,7 @@ export const useRequestColumns = () => {
   const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
   const { store } = useAuthContext();
   const { getError } = useRequestRequisitionLineErrorContext();
+  const { plugins } = usePluginProvider();
 
   const columnDefinitions: ColumnDescription<RequestLineFragment>[] = [
     GenericColumnKey.Selection,
@@ -103,6 +107,7 @@ export const useRequestColumns = () => {
         getSortValue: rowData => rowData.itemStats.averageMonthlyConsumption,
       },
     ],
+    ...(plugins.internalOrderColumn?.columns || []),
   ];
 
   if (
@@ -258,7 +263,7 @@ export const useRequestColumns = () => {
       onChangeSortBy: updateSortQuery,
       sortBy,
     },
-    [updateSortQuery, sortBy]
+    [updateSortQuery, sortBy, plugins.internalOrderColumn?.columns]
   );
 
   return { columns, sortBy, onChangeSortBy: updateSortQuery };

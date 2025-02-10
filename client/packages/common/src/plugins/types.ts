@@ -1,5 +1,8 @@
 import { ColumnDefinition, UsePluginEvents } from '@openmsupply-client/common';
-import { StockLineRowFragment } from '@openmsupply-client/system';
+import {
+  RequestLineFragment,
+  StockLineRowFragment,
+} from '@openmsupply-client/system';
 import { InboundFragment } from '@openmsupply-client/invoices';
 
 export type Plugins = {
@@ -12,6 +15,10 @@ export type Plugins = {
   stockColumn?: {
     StateLoader: React.ComponentType<{ stockLines: StockLineRowFragment[] }>[];
     columns: ColumnDefinition<StockLineRowFragment>[];
+  };
+  internalOrderColumn?: {
+    StateLoader: React.ComponentType<{ stockLines: RequestLineFragment[] }>[];
+    columns: ColumnDefinition<RequestLineFragment>[];
   };
 };
 
