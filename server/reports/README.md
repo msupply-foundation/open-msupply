@@ -15,7 +15,7 @@ Source files for each report are located in their own directory and have the fol
 
 A full tree diagram of the report source file structure can be viewed [here](#source-file-structure-diagram)
 
-### Report manifest
+### Report Manifest
 
 The `report-manifest.json` file contains information required to build the report.
 Optional fields in the manifest json are marked as '// optional'
@@ -25,7 +25,7 @@ Optional fields in the manifest json are marked as '// optional'
   // is_custom is specified as false for standard reports and by default true for other reports.
   // custom reports will override standard reports of the same report code.
   "is_custom": false,
-  // open mSupply needs to know the report version
+  // open mSupply identifies the report version from the manifest json
   "version": "2.3.0",
   // The code is the unique identifier of a report group inclusive of all versions of that report.
   // Each different version of a standard report will have the same code.
@@ -161,7 +161,6 @@ This command will upsert if the `-o` or `--overwrite` flag is passed.
 If no overwrite flag is passed, it will default to insert.
 
 If no path is passed, it will look for in the `reports/generated/standard-reports.json` file for the array of standard reports.
-This file is a committed file.
 
 ### Reload Embedded Reports
 
@@ -218,10 +217,6 @@ Where the letters are short hand for the following:
   This is the locale key as is used in front end translations.
 - f for fallback
   This is an optional fallback text if the translation cannot be found.
-- n for namespace (depreciated - only common.json is used)
-  The file namespace where the translation key is. The .json extension is automatically added i.e. catalogue (which refers to the catalogue.json namespace).
-  By default, the translation in common.json translations will be used.
-  Note all translation files have been consolidated into the common.json namespace, so the namespace parameter is no longer used. However, functionality is retained in case we are needing customer specific namespaces in future.
 
 The current user language is passed through GraphQL when a user requests a report to be generated. This is the language used in translations.
 
@@ -229,9 +224,8 @@ The current user language is passed through GraphQL when a user requests a repor
 
 The translation function has a number of fallback translations which it will search through if the translation cannot be found.
 
-First it will look for the translation key within the nominated namespace and language
-Next it will fallback to the translation in the common.json namespace and nominated language
-Next it will fallback to the english translation of the nominated key and nominated namespace
+First it will fallback to the translation in the common.json namespace and nominated language
+Next it will fallback to the translation in common.json namespace in the base language (if language selected is a dialect)
 Next it will fallback to the english translation of the nominated key in the common.json namespace
 Next it will fallback to the fallback text provided in the report which by default will be in english
 
@@ -363,17 +357,6 @@ Report files can be overwritten for patch changes.
 Reports of a new patch must be backwards compatible to open mSupply of the same major and minor version. Therefore we can reduce PR dif overhead, and committed file overhead in OMS, by editing a report if it is a patch change.
 
 Previous patch versions of a report can be accessed if necessary on old branches of open mSupply.
-
-##### Supplementary information
-
-Add all required supplementary information required so that a reviewer can immediately see the new report using the `show-report` command.
-
-This may include:
-- An OMS database
-- An mSupply database
-- A custom test-config.json file
-
-Care must be taken with all reports and databases to [ensure client confidentiality](#client-confidentiality).
 
 ### File Structure
 
