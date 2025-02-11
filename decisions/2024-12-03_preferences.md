@@ -99,6 +99,7 @@ _Pros:_
 - Consistency with OG can be easier to reason about between systems (provided it the OG pattern isn't hard to reason about to begin with...)
 - Just 1 table and logic (i.e. 1 repo etc.)
 - Generally flexible and battle tested
+-  Preferences rust struct gives single source of the all preferences defined in the system
 
 _Cons:_
 
