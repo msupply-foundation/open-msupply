@@ -16,6 +16,7 @@
 // Above would add uploaded plugin to backend_plugin table and bind it
 
 import { BackendPlugins } from '@backendPlugins';
+// Tree shaking working
 import zipObject from 'lodash/zipObject';
 
 // TODO Should come from settings
