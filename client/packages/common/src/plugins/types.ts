@@ -6,6 +6,8 @@ export type Plugins = {
   stockEditForm?: React.ComponentType<{
     stockLine: StockLineRowFragment;
     events: UsePluginEvents<{ id: string }, void>;
+    disableSaveButton: () => void;
+    enableSaveButton: () => void;
   }>[];
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
   dashboard?: React.ComponentType[];

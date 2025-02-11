@@ -50,6 +50,8 @@ export const StockLineForm: FC<StockLineFormProps> = ({
   const showItemVariantsInput = useIsItemVariantsEnabled();
   const { plugins } = usePluginProvider();
 
+  const enable = () => console.log('enable');
+  const disable = () => console.log('disable');
   const supplierName = draft.supplierName
     ? draft.supplierName
     : t('message.no-supplier');
@@ -169,7 +171,13 @@ export const StockLineForm: FC<StockLineFormProps> = ({
             />
           )}
           {plugins.stockEditForm?.map((Plugin, index) => (
-            <Plugin key={index} stockLine={draft} events={pluginEvents} />
+            <Plugin
+              enableSaveButton={enable}
+              disableSaveButton={disable}
+              key={index}
+              stockLine={draft}
+              events={pluginEvents}
+            />
           ))}
         </Grid>
         <Grid container flex={1} flexBasis="50%" flexDirection="column" gap={1}>
