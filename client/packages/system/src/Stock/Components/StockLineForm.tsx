@@ -31,7 +31,7 @@ interface StockLineFormProps {
   draft: StockLineRowFragment;
   loading: boolean;
   onUpdate: (patch: Partial<StockLineRowFragment>) => void;
-  pluginEvents: UsePluginEvents<{ id: string }, void>;
+  pluginEvents: UsePluginEvents<{ isDirty: boolean }>;
   packEditable?: boolean;
   isInModal?: boolean;
 }

@@ -5,7 +5,7 @@ import { InboundFragment } from '@openmsupply-client/invoices';
 export type Plugins = {
   stockEditForm?: React.ComponentType<{
     stockLine: StockLineRowFragment;
-    events: UsePluginEvents<{ id: string }, void>;
+    events: UsePluginEvents<{ isDirty: boolean }>;
   }>[];
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
   dashboard?: React.ComponentType[];

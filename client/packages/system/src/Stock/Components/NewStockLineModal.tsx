@@ -35,7 +35,9 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   const t = useTranslation();
   const navigate = useNavigate();
   const { success } = useNotification();
-  const pluginEvents = usePluginEvents<{ id: string }, void>();
+  const pluginEvents = usePluginEvents({
+    isDirty: false,
+  });
 
   const { Modal } = useDialog({ isOpen, onClose });
 
