@@ -5,8 +5,14 @@ type Event<EventInput, EventResult> = (
   input: EventInput
 ) => Promise<EventResult>;
 
-export const usePluginEvents = <EventInput, EventResult>() => {
-  const [isDirty, setIsDirty] = useState(false);
+export const usePluginEvents = <
+  State,
+  EventInput = { id: string },
+  EventResult = void,
+>(
+  defautlState: State
+) => {
+  const [state, setState] = useState<State>(defautlState);
   const [events, setEvents] = useState<
     {
       id: string;
@@ -15,8 +21,8 @@ export const usePluginEvents = <EventInput, EventResult>() => {
   >([]);
 
   return {
-    isDirty,
-    setIsDirty,
+    state,
+    setState,
     dispatchEvent: async (input: EventInput) => {
       for (const eventInstance of events) {
         await eventInstance.event(input);
@@ -35,6 +41,8 @@ export const usePluginEvents = <EventInput, EventResult>() => {
   };
 };
 
-export type UsePluginEvents<EventInput, EventResult> = ReturnType<
-  typeof usePluginEvents<EventInput, EventResult>
->;
+export type UsePluginEvents<
+  State,
+  EventInput = { id: string },
+  EventResult = void,
+> = ReturnType<typeof usePluginEvents<State, EventInput, EventResult>>;

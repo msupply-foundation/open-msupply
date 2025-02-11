@@ -34,7 +34,7 @@ export const StockLineDetailView: React.FC = () => {
     isDirty,
     update: { update, isUpdating },
   } = useStockLine(id);
-  const pluginEvents = usePluginEvents<{ id: string }, void>();
+  const pluginEvents = usePluginEvents({ isDirty: false });
   const {
     urlQuery: { tab },
   } = useUrlQuery();
@@ -107,7 +107,7 @@ export const StockLineDetailView: React.FC = () => {
     isSaving: isUpdating,
     showSaveConfirmation,
     showCancelConfirmation,
-    disabled: !isDirty && !pluginEvents.isDirty,
+    disabled: !isDirty && !pluginEvents.state.isDirty,
     isDirty,
   };
 
