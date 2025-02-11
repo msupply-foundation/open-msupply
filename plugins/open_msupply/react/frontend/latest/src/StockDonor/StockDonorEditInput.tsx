@@ -51,7 +51,7 @@ const StockDonorEditInput: StockDonorEditPlugin = ({ stockLine, events }) => {
           value={donor}
           onChange={e => {
             setDonor(e.target.value);
-            events.setIsDirty(true);
+            events.setState({ isDirty: false });
           }}
         />
       }
