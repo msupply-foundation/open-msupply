@@ -3,7 +3,7 @@ import {
   usePluginProvider,
   usePlugins,
 } from '@openmsupply-client/common';
-import { Environment } from 'packages/config/src';
+import { Environment } from '@openmsupply-client/config/src';
 import { useEffect } from 'react';
 
 // Used for local plugins in dev mode
