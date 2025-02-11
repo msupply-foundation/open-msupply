@@ -13,6 +13,7 @@ impl MigrationFragment for Migrate {
             r#"
             CREATE TABLE printer_configuration (
                 id TEXT NOT NULL PRIMARY KEY,
+                description TEXT NOT NULL,
                 address TEXT NOT NULL,
                 port INTEGER NOT NULL,
                 label_width INTEGER NOT NULL,

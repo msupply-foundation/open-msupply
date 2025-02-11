@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 table! {
     printer_configuration (id) {
     id -> Text,
+    description -> Text,
     address -> Text,
     port -> Integer,
     label_width -> Integer,
@@ -20,6 +21,7 @@ table! {
 #[diesel(table_name = printer_configuration)]
 pub struct PrinterConfigurationRow {
     pub id: String,
+    pub description: String,
     pub address: String,
     pub port: i32,
     pub label_width: i32,

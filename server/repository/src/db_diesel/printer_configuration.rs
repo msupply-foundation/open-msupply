@@ -2,14 +2,15 @@ use super::{
     printer_configuration_row::printer_configuration, PrinterConfigurationRow, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, DBType, EqualFilter};
+use crate::{repository_error::RepositoryError, DBType};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 pub type PrinterConfiguration = PrinterConfigurationRow;
 
 #[derive(Clone, Default, PartialEq, Debug)]
 pub struct PrinterConfigurationFilter {
-    pub id: Option<EqualFilter<String>>,
+    pub id: String,
+    pub description: String,
     pub address: String,
     pub port: u16,
     pub label_width: i32,
