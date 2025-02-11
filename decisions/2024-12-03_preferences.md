@@ -91,6 +91,8 @@ The OG pref table is battle tested for over a decade:
 - We store the pref data in an JSON text field. We deserialize this into a struct in the rust code to which provides sensible defaults for anything missing.
   - This does mean that sync does not validate the `data` field, that validation occurs when the record is accessed. Though, we could quickly deserialize at sync buffer integration time just to check!
 - We can drop the `store_preference` table, but keep the repo the same for now, just querying from `preference` instead.
+- The list of preferences is defined by a single struct in the backend. The backend is responsible for merging Global, Store, and potentially if required `User Prefs/Machine Prefs`.
+The single struct can have additional complexity, e.g. struct within structs as required. This may require additional mapping to graphql though.
 
 _Pros:_
 
