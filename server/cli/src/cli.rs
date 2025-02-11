@@ -485,7 +485,7 @@ async fn main() -> anyhow::Result<()> {
 
             for file_path in file_list {
                 let json_file = fs::File::open(file_path.clone())
-                .expect(&format!(
+                .unwrap_or_else(|_| panic!(
                     "{} not found for report",
                     file_path.display()
                 ));
