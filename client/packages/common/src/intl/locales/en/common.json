@@ -1204,7 +1204,7 @@
   "message.all-lines-have-no-supply-quantity": "There is no supply quantity specified for all of the unfulfilled lines of this requisition. Please specify a supply quantity for at least one line.",
   "message.already-saving": "Already saving...",
   "message.arguments": "You can customize what is shown on the report by specifying some of the optional details below. Click OK to view the report.",
-  "message.cannot-delete-line-linked-to-shipment": "Cannot delete a line that is linked to a shipment",
+  "message.cannot-delete-line-linked-to-shipment": "Cannot delete line/s as there are one or more lines that are linked to one or more shipments",
   "message.coming-soon": "Coming soon...",
   "message.confirm-delete-encounter": "Are you sure?",
   "message.confirm-save-new": "Click OK to save the new item, or Cancel to continue editing",
