@@ -1,6 +1,6 @@
 use repository::{
-    requisition_row::RequisitionType, RepositoryError, RequisitionLineRowRepository,
-    RequisitionStatus, StorageConnection,
+    requisition_row::RequisitionType, EqualFilter, InvoiceLineFilter, InvoiceLineRepository,
+    RepositoryError, RequisitionLineRowRepository, RequisitionStatus, StorageConnection,
 };
 
 use crate::{
@@ -23,6 +23,8 @@ pub enum DeleteResponseRequisitionLineError {
     CannotEditRequisition,
     DatabaseError(RepositoryError),
     CannotDeleteLineFromTransferredRequisition,
+    CannotDeleteLineLinkedToShipment,
+    InvoiceDoesNotExist,
 }
 
 type OutError = DeleteResponseRequisitionLineError;
@@ -70,6 +72,16 @@ fn validate(
 
     if requisition_row.linked_requisition_id.is_some() {
         return Err(OutError::CannotDeleteLineFromTransferredRequisition);
+    }
+
+    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new().requisition_id(EqualFilter::equal_to(&requisition_row.id)),
+    )?;
+
+    if invoice_lines.iter().any(|invoice_line| {
+        requisition_line_row.item_link_id == invoice_line.invoice_line_row.item_link_id
+    }) {
+        return Err(OutError::CannotDeleteLineLinkedToShipment);
     }
 
     Ok(())
