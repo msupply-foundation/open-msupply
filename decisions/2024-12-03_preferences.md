@@ -88,7 +88,7 @@ The OG pref table is battle tested for over a decade:
 - We create a `preference` (or `pref`?) table with `id`, `item`, `store_id`, `user_id`, `machine_id` and `data` fields.
 - The lack of typing that ailed OG can readily be addressed with a big struct in OMS. Thus structs may carry through to the frontend gql types as appropriate.
 - Sync needs deeper thought, but at a glance: store prefs are easily identified and synced by the `store_id`. `user_id` could be added to `change_log` to handle that (if needed to sync... or we sync users and their prefs everywhere 😉). Perhaps it's OK to not sync and lose machine_id records.
-- We store the pref data in an JSON text field. We deserialize this with serde into structs for each pref as expected.
+- We store the pref data in an JSON text field. We deserialize this into a struct in the rust code to which provides sensible defaults for anything missing.
   - This does mean that sync does not validate the `data` field, that validation occurs when the record is accessed. Though, we could quickly deserialize at sync buffer integration time just to check!
 - We can drop the `store_preference` table, but keep the repo the same for now, just querying from `preference` instead.
 
