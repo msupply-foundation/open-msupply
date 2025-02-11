@@ -5,7 +5,7 @@ import {
   mergeWith,
   Plugins,
 } from '@openmsupply-client/common';
-import { Environment } from 'packages/config/src';
+import { Environment } from '@openmsupply-client/config/src';
 
 // PLUGIN PROVIDER
 type PluginProvider = {
