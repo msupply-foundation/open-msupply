@@ -119,7 +119,7 @@ export const RequestLineEdit = ({
                   />
                 }
                 labelWidth={LABEL_WIDTH}
-                label={t('label.stock-on-hand')}
+                label={t('label.our-soh')}
                 sx={{ marginBottom: 1 }}
               />
               {isProgram && useConsumptionData && (
