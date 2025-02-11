@@ -6,7 +6,7 @@ import { useLocation } from '@openmsupply-client/common';
 
 import React from 'react';
 
-export const UserGuide: React.FC = () => {
+export const UserGuide = () => {
   const location = useLocation();
   const t = useTranslation();
   const publicDocsUrl = useExternalUrl(ExternalURL.PublicDocs);
