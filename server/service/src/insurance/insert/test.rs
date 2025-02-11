@@ -19,27 +19,30 @@ mod insert {
             setup_all("insert_insurances_errors", MockDataInserts::none().names()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider
-            .context("insurance_provider_a".to_string(), "".to_string())
-            .unwrap();
+        let context = service_provider.basic_context().unwrap();
         let service = service_provider.insurance_service;
 
+        // Insert the insurance record
+        let input = InsertInsurance {
+            id: "insurance_a".to_string(),
+            name_link_id: mock_name_a().id.clone(),
+            insurance_provider_id: "insurance_provider_a".to_string(),
+            policy_number_person: Some("policy_number_person_a".to_string()),
+            policy_number: "policy_number_a".to_string(),
+            policy_type: InsurancePolicyType::Personal,
+            discount_percentage: 10.0,
+            expiry_date: NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date"),
+            is_active: true,
+            provider_name: "Insurance Provider 1".to_string(),
+        };
+
+        let result = service.insert_insurance(&context, input.clone()).unwrap();
+        assert_eq!(result.id, input.id);
+
+        // Attempt to insert the same insurance again
+        // InsuranceAlreadyExists
         assert_eq!(
-            service.insert_insurance(
-                &context,
-                InsertInsurance {
-                    id: "insurance_a".to_string(),
-                    name_link_id: mock_name_a().id.clone(),
-                    insurance_provider_id: "insurance_provider_a".to_string(),
-                    policy_number_person: Some("policy_number_person_a".to_string()),
-                    policy_number: "policy_number_a".to_string(),
-                    policy_type: InsurancePolicyType::Personal,
-                    discount_percentage: 10.0,
-                    expiry_date: NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date"),
-                    is_active: true,
-                    provider_name: "Insurance Provider 1".to_string(),
-                }
-            ),
+            service.insert_insurance(&context, input.clone()),
             Err(InsertInsuranceError::InsuranceAlreadyExists)
         );
     }
