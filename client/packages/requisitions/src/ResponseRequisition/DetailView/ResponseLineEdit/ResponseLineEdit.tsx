@@ -120,7 +120,6 @@ export const ResponseLineEdit = ({
                     width={INPUT_WIDTH}
                     value={data?.responseStoreStats.stockOnHand}
                     disabled={true}
-                    autoFocus
                   />
                 }
                 labelWidth={LABEL_WIDTH}

@@ -115,7 +115,6 @@ export const RequestLineEdit = ({
                     width={INPUT_WIDTH}
                     value={draft?.itemStats.availableStockOnHand}
                     disabled
-                    autoFocus
                   />
                 }
                 labelWidth={LABEL_WIDTH}
