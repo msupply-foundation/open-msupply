@@ -569,6 +569,9 @@ pub fn generate(
         backdated_datetime: None,
         diagnosis_id: None,
         program_id: None,
+        name_insurance_join_id: None,
+        insurance_discount_amount: None,
+        insurance_discount_rate: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {

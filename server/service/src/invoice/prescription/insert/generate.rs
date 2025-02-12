@@ -58,6 +58,9 @@ pub fn generate(
         backdated_datetime: None,
         diagnosis_id,
         program_id,
+        name_insurance_join_id: None,
+        insurance_discount_amount: None,
+        insurance_discount_rate: None,
     };
 
     Ok(result)
