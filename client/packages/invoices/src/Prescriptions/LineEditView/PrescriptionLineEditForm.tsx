@@ -228,7 +228,7 @@ export const PrescriptionLineEditForm: React.FC<
     if (newIssueQuantity !== issueUnitQuantity)
       setIssueUnitQuantity(newIssueQuantity);
     setAllocationAlerts([]);
-  }, [item?.id]);
+  }, [item?.id, allocatedUnits]);
 
   useEffect(() => {
     if (!isAutoAllocated) setIssueUnitQuantity(allocatedUnits);
