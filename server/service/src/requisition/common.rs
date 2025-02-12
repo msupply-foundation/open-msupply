@@ -104,6 +104,7 @@ pub struct CheckExceededOrdersForPeriod<'a> {
     pub program_order_type_id: &'a str,
     pub max_orders_per_period: i64,
     pub requisition_type: RequisitionType,
+    pub other_party_id: Option<&'a str>,
 }
 
 pub fn check_exceeded_max_orders_for_period(
@@ -116,11 +117,15 @@ pub fn check_exceeded_max_orders_for_period(
     // TODO add check which matches lower case as per in period_is_available function
     match order_type {
         Some(order_type) => {
-            let filter = RequisitionFilter::new()
+            let mut filter = RequisitionFilter::new()
                 .program_id(EqualFilter::equal_to(input.program_id))
                 .order_type(EqualFilter::equal_to(&order_type.name))
                 .period_id(EqualFilter::equal_to(input.period_id))
                 .r#type(input.requisition_type.equal_to());
+
+            if let Some(other_party_id) = input.other_party_id {
+                filter = filter.name_id(EqualFilter::equal_to(other_party_id));
+            };
 
             let current_orders = RequisitionRepository::new(connection).count(Some(filter))?;
 
