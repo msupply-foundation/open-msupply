@@ -110,6 +110,7 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub linked_transaction_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "nameInsuranceJoinID")]
     pub name_insurance_join_id: Option<String>,
     pub insurance_discount_amount: Option<f64>,
     pub insurance_discount_rate: Option<f64>,
