@@ -1,6 +1,6 @@
 use super::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, EqualFilter, RowActionType,
-    StorageConnection,
+    name_link, name_row::name, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    EqualFilter, RowActionType, StorageConnection,
 };
 
 use crate::{
@@ -8,6 +8,7 @@ use crate::{
     repository_error::RepositoryError,
     Sort, Upsert,
 };
+use diesel::helper_types::{InnerJoin, IntoBoxed};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -49,6 +50,10 @@ table! {
   }
 }
 
+joinable!(name_insurance_join -> name_link (name_link_id));
+allow_tables_to_appear_in_same_query!(name_insurance_join, name_link);
+allow_tables_to_appear_in_same_query!(name_insurance_join, name);
+
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize,
 )]
@@ -87,14 +92,16 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_name_link_id(
+    pub fn find_many_by_name_id(
         &self,
-        name_link_id: &str,
+        name_id: &str,
         filter: Option<NameInsuranceJoinFilter>,
         sort: Option<NameInsuranceJoinSort>,
     ) -> Result<Vec<NameInsuranceJoinRow>, RepositoryError> {
         let mut query = name_insurance_join::table
-            .filter(name_insurance_join::name_link_id.eq(name_link_id))
+            .inner_join(name_link::table.inner_join(name::table))
+            .filter(name::id.eq(name_id))
+            .select(name_insurance_join::all_columns)
             .into_boxed();
 
         if let Some(filter) = filter {
