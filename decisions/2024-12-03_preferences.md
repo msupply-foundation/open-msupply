@@ -148,4 +148,14 @@ _Cons:_
 
 ## Decision
 
-TBD
+Option 1
+
+
+The list of available prefs will be defined by a struct in the Rust backend and available in graphql.
+The UI will be manually created for each new pref as added to the struct.
+This approach allows us to start small, with just Booleans for Global and Store Prefs initially, but can be expanded to more complex scenarios as required.
+
+### Consequences
+
+-  New prefs will required additional configuration UI to be manually created. But it should be a simple copy and paste type job
+- There's still some potential risk for incompatible changes to come via sync to an old version for example. We'll need to be vigilant in code reviews to avoid this issue, and potentially favour creating new prefs if say a boolean pref needs to become a number for example. 
