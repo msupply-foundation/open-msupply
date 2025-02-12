@@ -2,8 +2,8 @@
 
 - _Date_: 2024-12-03
 - _Deciders_: @Chris-Petty, @CarlosNZ, @jmbrunskill, @andreievg
-- _Status_: DRAFT
-- _Outcome_: TBD
+- _Status_: DECIDED 
+- _Outcome_: Option 1 - pref table with good type definitions
 
 ## Context
 
@@ -99,7 +99,7 @@ _Pros:_
 - Consistency with OG can be easier to reason about between systems (provided it the OG pattern isn't hard to reason about to begin with...)
 - Just 1 table and logic (i.e. 1 repo etc.)
 - Generally flexible and battle tested
--  Preferences rust struct gives single source of the all preferences defined in the system
+- Preferences rust struct gives single source of the all preferences defined in the system
 
 _Cons:_
 
@@ -149,7 +149,6 @@ _Cons:_
 ## Decision
 
 Option 1
-
 
 The list of available prefs will be defined by a struct in the Rust backend and available in graphql.
 The UI will be manually created for each new pref as added to the struct.
