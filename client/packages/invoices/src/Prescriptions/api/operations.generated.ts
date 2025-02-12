@@ -76,6 +76,15 @@ export type DiagnosesActiveQueryVariables = Types.Exact<{ [key: string]: never; 
 
 export type DiagnosesActiveQuery = { __typename: 'Queries', diagnosesActive: Array<{ __typename: 'DiagnosisNode', id: string, code: string, description: string }> };
 
+export type AbbreviationFragment = { __typename: 'AbbreviationNode', expansion: string, id: string, text: string };
+
+export type AbbreviationsQueryVariables = Types.Exact<{
+  filter?: Types.InputMaybe<Types.AbbreviationFilterInput>;
+}>;
+
+
+export type AbbreviationsQuery = { __typename: 'Queries', abbreviations: Array<{ __typename: 'AbbreviationNode', expansion: string, id: string, text: string }> };
+
 export const PrescriptionRowFragmentDoc = gql`
     fragment PrescriptionRow on InvoiceNode {
   __typename
@@ -156,6 +165,14 @@ export const DiagnosisFragmentDoc = gql`
   id
   code
   description
+}
+    `;
+export const AbbreviationFragmentDoc = gql`
+    fragment Abbreviation on AbbreviationNode {
+  __typename
+  expansion
+  id
+  text
 }
     `;
 export const PrescriptionsDocument = gql`
@@ -473,6 +490,15 @@ export const DiagnosesActiveDocument = gql`
   }
 }
     ${DiagnosisFragmentDoc}`;
+export const AbbreviationsDocument = gql`
+    query abbreviations($filter: AbbreviationFilterInput) {
+  abbreviations(filter: $filter) {
+    ... on AbbreviationNode {
+      ...Abbreviation
+    }
+  }
+}
+    ${AbbreviationFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -504,6 +530,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     diagnosesActive(variables?: DiagnosesActiveQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DiagnosesActiveQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DiagnosesActiveQuery>(DiagnosesActiveDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'diagnosesActive', 'query', variables);
+    },
+    abbreviations(variables?: AbbreviationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AbbreviationsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AbbreviationsQuery>(AbbreviationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'abbreviations', 'query', variables);
     }
   };
 }
