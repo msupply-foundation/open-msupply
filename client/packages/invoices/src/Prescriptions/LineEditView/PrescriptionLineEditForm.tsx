@@ -40,7 +40,7 @@ import { isA } from '../../utils';
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 import { getPrescriptionDirections } from './getPrescriptionDirections';
-import { useAbbreviations } from './api/hooks/useAbbreviations';
+import { useAbbreviations } from '../api/hooks/useAbbreviations';
 
 interface PrescriptionLineEditFormProps {
   allocatedUnits: number;
@@ -229,7 +229,7 @@ export const PrescriptionLineEditForm: React.FC<
     if (newIssueQuantity !== issueUnitQuantity)
       setIssueUnitQuantity(newIssueQuantity);
     setAllocationAlerts([]);
-  }, [item?.id]);
+  }, [item?.id, allocatedUnits]);
 
   useEffect(() => {
     if (!isAutoAllocated) setIssueUnitQuantity(allocatedUnits);
