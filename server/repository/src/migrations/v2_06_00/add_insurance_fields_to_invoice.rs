@@ -12,13 +12,12 @@ impl MigrationFragment for Migrate {
             connection,
             r#"
                 ALTER TABLE invoice
-                    ADD COLUMN IF NOT EXISTS
-                        name_insurance_join_id TEXT
-                    REFERENCES name_insurance_join (id),
-                    ADD COLUMN IF NOT EXISTS
-                        insurance_discount_amount {DOUBLE},
-                    ADD COLUMN IF NOT EXISTS
-                        insurance_discount_rate {DOUBLE};
+                    ADD COLUMN name_insurance_join_id TEXT
+                    REFERENCES name_insurance_join (id);
+                ALTER TABLE invoice
+                    ADD COLUMN insurance_discount_amount {DOUBLE};
+                ALTER TABLE invoice
+                    ADD COLUMN insurance_discount_rate {DOUBLE};
             "#
         )?;
 
