@@ -4,13 +4,9 @@ import {
 	ButtonWithIcon,
 	useTranslation,
 	XCircleIcon,
-	useBreadcrumbs,
-	DeleteIcon,
+	useBreadcrumbs,	
 	LoadingButton,
-	// useAuthContext,
-	// UserPermission,
 } from '@openmsupply-client/common';
-import { useAssets } from '../../../Equipment/api';
 
 interface FooterProps {
 	isSaving: boolean;
@@ -24,9 +20,7 @@ export const Footer: FC<FooterProps> = ({
 	showSaveConfirmation
 }) => {
 	const t = useTranslation();
-	const { navigateUpOne } = useBreadcrumbs();
-	const { data } = useAssets.document.get();
-	const onDelete = useAssets.document.delete(data?.id || '');
+	const { navigateUpOne } = useBreadcrumbs();	
 
 	return (
 		<Box
@@ -46,27 +40,18 @@ export const Footer: FC<FooterProps> = ({
 		>
 
 			<ButtonWithIcon
-				shrinkThreshold="lg"
+				shouldShrink={false}
 				Icon={<XCircleIcon />}
 				label={t('button.close')}
 				color="secondary"
 				sx={{ fontSize: '12px' }}
 				onClick={() => navigateUpOne()}
 			/>
-			<ButtonWithIcon
-				shrinkThreshold="lg"
-				Icon={<DeleteIcon />}
-				label={t('button.delete')}
-				color="error"
-				sx={{ fontSize: '12px' }}
-				onClick={onDelete}
-			/>
 			<LoadingButton
 				color="secondary"
 				shouldShrink={false}
 				disabled={
-					!isDirty // ||
-					// !userHasPermission(UserPermission.AssetMutate)
+					!isDirty
 				}
 				isLoading={isSaving}
 				onClick={showSaveConfirmation}
