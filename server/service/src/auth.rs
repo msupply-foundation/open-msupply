@@ -134,8 +134,6 @@ pub enum Resource {
     // contact form
     MutateContactForm,
     NoPermissionRequired,
-    // insurances
-    QueryInsurances,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -599,9 +597,6 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     // contact form
     map.insert(Resource::MutateContactForm, PermissionDSL::HasStoreAccess);
-
-    // insurances
-    map.insert(Resource::QueryInsurances, PermissionDSL::HasStoreAccess);
 
     map
 }

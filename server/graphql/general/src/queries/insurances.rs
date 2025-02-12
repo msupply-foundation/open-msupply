@@ -1,16 +1,11 @@
 use async_graphql::{Context, Enum, InputObject, Object, Result, SimpleObject, Union};
 use chrono::NaiveDate;
 use graphql_core::{
-    generic_filters::EqualFilterStringInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{
-    name_insurance_join_row::{
-        InsurancePolicyType, NameInsuranceJoinFilter, NameInsuranceJoinRow, NameInsuranceJoinSort,
-        NameInsuranceJoinSortField,
-    },
-    EqualFilter,
+use repository::name_insurance_join_row::{
+    InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinSort, NameInsuranceJoinSortField,
 };
 use serde::Serialize;
 use service::auth::{Resource, ResourceAccessRequest};
@@ -29,11 +24,6 @@ pub struct InsuranceSortInput {
     /// Sort query result is sorted descending or ascending (if not provided the default is
     /// ascending)
     desc: Option<bool>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct InsuranceFilterInput {
-    pub insurance_provider_id: Option<EqualFilterStringInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -62,10 +52,6 @@ pub struct InsuranceNode {
 impl InsuranceNode {
     pub async fn id(&self) -> &str {
         &self.row().id
-    }
-
-    pub async fn name_link_id(&self) -> &str {
-        &self.row().name_link_id
     }
 
     pub async fn insurance_provider_id(&self) -> &str {
@@ -99,10 +85,6 @@ impl InsuranceNode {
     pub async fn is_active(&self) -> &bool {
         &self.row().is_active
     }
-
-    pub async fn entered_by_id(&self) -> &Option<String> {
-        &self.row().entered_by_id
-    }
 }
 
 #[derive(SimpleObject)]
@@ -118,14 +100,13 @@ pub enum InsuranceResponse {
 pub fn insurances(
     ctx: &Context<'_>,
     store_id: String,
-    name_link_id: String,
-    filter: Option<InsuranceFilterInput>,
+    name_id: String,
     sort: Option<Vec<InsuranceSortInput>>,
 ) -> Result<InsuranceResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryInsurances,
+            resource: Resource::QueryPatient,
             store_id: Some(store_id.clone()),
         },
     )?;
@@ -137,8 +118,7 @@ pub fn insurances(
         .insurance_service
         .insurances(
             &service_context.connection,
-            &name_link_id,
-            filter.map(|filter| filter.to_domain()),
+            &name_id,
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
         )
@@ -167,18 +147,6 @@ impl InsuranceNode {
 
     pub fn row(&self) -> &NameInsuranceJoinRow {
         &self.insurance
-    }
-}
-
-impl InsuranceFilterInput {
-    pub fn to_domain(self) -> NameInsuranceJoinFilter {
-        let InsuranceFilterInput {
-            insurance_provider_id,
-        } = self;
-
-        NameInsuranceJoinFilter {
-            insurance_provider_id: insurance_provider_id.map(EqualFilter::from),
-        }
     }
 }
 

@@ -40,7 +40,7 @@ use queries::{
     currency::currencies,
     display_settings::{display_settings, DisplaySettingsHash, DisplaySettingsNode},
     initialisation_status::{initialisation_status, InitialisationStatusNode},
-    insurances::{insurances, InsuranceFilterInput, InsuranceResponse, InsuranceSortInput},
+    insurances::{insurances, InsuranceResponse, InsuranceSortInput},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
     sync_settings::{sync_settings, SyncSettingsNode},
 };
@@ -442,11 +442,10 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        name_link_id: String,
-        filter: Option<InsuranceFilterInput>,
+        name_id: String,
         sort: Option<Vec<InsuranceSortInput>>,
     ) -> Result<InsuranceResponse> {
-        insurances(ctx, store_id, name_link_id, filter, sort)
+        insurances(ctx, store_id, name_id, sort)
     }
 }
 

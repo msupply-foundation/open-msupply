@@ -1,21 +1,12 @@
 use super::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, EqualFilter, RowActionType,
-    StorageConnection,
+    name_link, name_row::name, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    RowActionType, StorageConnection,
 };
 
-use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort},
-    repository_error::RepositoryError,
-    Sort, Upsert,
-};
+use crate::{diesel_macros::apply_sort, repository_error::RepositoryError, Sort, Upsert};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
-
-#[derive(Clone, Default, PartialEq, Debug)]
-pub struct NameInsuranceJoinFilter {
-    pub insurance_provider_id: Option<EqualFilter<String>>,
-}
 
 pub enum NameInsuranceJoinSortField {
     ExpiryDate,
@@ -48,6 +39,10 @@ table! {
     entered_by_id -> Nullable<Text>,
   }
 }
+
+joinable!(name_insurance_join -> name_link (name_link_id));
+allow_tables_to_appear_in_same_query!(name_insurance_join, name_link);
+allow_tables_to_appear_in_same_query!(name_insurance_join, name);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize,
@@ -87,23 +82,16 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_name_link_id(
+    pub fn find_many_by_name_id(
         &self,
-        name_link_id: &str,
-        filter: Option<NameInsuranceJoinFilter>,
+        name_id: &str,
         sort: Option<NameInsuranceJoinSort>,
     ) -> Result<Vec<NameInsuranceJoinRow>, RepositoryError> {
         let mut query = name_insurance_join::table
-            .filter(name_insurance_join::name_link_id.eq(name_link_id))
+            .inner_join(name_link::table.inner_join(name::table))
+            .filter(name::id.eq(name_id))
+            .select(name_insurance_join::all_columns)
             .into_boxed();
-
-        if let Some(filter) = filter {
-            apply_equal_filter!(
-                query,
-                filter.insurance_provider_id,
-                name_insurance_join::insurance_provider_id
-            );
-        }
 
         if let Some(sort) = sort {
             match sort.key {

@@ -1,7 +1,5 @@
 use repository::{
-    name_insurance_join_row::{
-        NameInsuranceJoinFilter, NameInsuranceJoinRow, NameInsuranceJoinSort,
-    },
+    name_insurance_join_row::{NameInsuranceJoinRow, NameInsuranceJoinSort},
     RepositoryError, StorageConnection,
 };
 
@@ -12,11 +10,10 @@ pub trait InsuranceServiceTrait: Sync + Send {
     fn insurances(
         &self,
         connection: &StorageConnection,
-        name_link_id: &str,
-        filter: Option<NameInsuranceJoinFilter>,
+        name_id: &str,
         sort: Option<NameInsuranceJoinSort>,
     ) -> Result<Vec<NameInsuranceJoinRow>, RepositoryError> {
-        insurances(connection, name_link_id, filter, sort)
+        insurances(connection, name_id, sort)
     }
 }
 
