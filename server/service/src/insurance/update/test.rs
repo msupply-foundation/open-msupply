@@ -62,13 +62,12 @@ mod update {
         // update the insurance record
         let input = UpdateInsurance {
             id: "insurance_a".to_string(),
-            name_link_id: Some(mock_name_a().id.clone()),
-            insurance_provider_id: Some("insurance_provider_a".to_string()),
             policy_number: Some("policy_number_a".to_string()),
             policy_type: Some(InsurancePolicyType::Personal),
             discount_percentage: Some(10.0),
             expiry_date: Some(NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date")),
             is_active: Some(true),
+            provider_name: Some("Insurance Provider 1".to_string()),
         };
 
         let result = service.update_insurance(&context, input.clone()).unwrap();
@@ -134,23 +133,17 @@ mod update {
         // Update the insurance record
         let input = UpdateInsurance {
             id: "insurance_a".to_string(),
-            name_link_id: Some(mock_name_a().id.clone()),
-            insurance_provider_id: Some("insurance_provider_a".to_string()),
             policy_number: Some("policy_number_updated".to_string()),
             policy_type: Some(InsurancePolicyType::Business),
             discount_percentage: Some(15.0),
             expiry_date: Some(NaiveDate::from_ymd_opt(2026, 12, 31).expect("Invalid date")),
             is_active: Some(false),
+            provider_name: Some("Insurance Provider 1".to_string()),
         };
 
         let result = service.update_insurance(&context, input.clone()).unwrap();
 
         assert_eq!(result.id, input.id);
-        assert_eq!(result.name_link_id, input.name_link_id.clone().unwrap());
-        assert_eq!(
-            result.insurance_provider_id,
-            input.insurance_provider_id.clone().unwrap()
-        );
         assert_eq!(result.policy_number, input.policy_number.clone().unwrap());
         assert_eq!(result.policy_type, input.policy_type.unwrap());
         assert_eq!(
