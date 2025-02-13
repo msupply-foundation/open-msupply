@@ -338,7 +338,6 @@ impl SyncTranslation for InvoiceTranslation {
             shipped_datetime: mapping.shipped_datetime,
             delivered_datetime: mapping.delivered_datetime,
             verified_datetime: mapping.verified_datetime,
-            cancelled_datetime: None, // TODO enable cancelled status to sync with mSupply https://github.com/msupply-foundation/open-msupply/issues/6495
             colour: mapping.colour,
 
             requisition_id: data.requisition_ID,
@@ -398,7 +397,6 @@ impl SyncTranslation for InvoiceTranslation {
                     shipped_datetime,
                     delivered_datetime,
                     verified_datetime,
-                    cancelled_datetime,
                     colour,
                     requisition_id,
                     linked_invoice_id,
