@@ -22,19 +22,9 @@ pub fn insert_insurance(
     let insurance = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&input, connection)?;
+            validate(&input.id, connection)?;
 
-            check_insurance_provider(
-                connection,
-                InsuranceProviderRow {
-                    id: input.insurance_provider_id.clone(),
-                    is_active: input.is_active,
-                    provider_name: input.provider_name.clone(),
-                    prescription_validity_days: None,
-                    comment: None,
-                },
-                input.expiry_date,
-            )?;
+            insert_insurance_provider(connection, &input)?;
 
             let new_insurance = generate(GenerateInput {
                 insert_input: input.clone(),
@@ -47,33 +37,28 @@ pub fn insert_insurance(
     Ok(insurance)
 }
 
-fn check_insurance_provider(
+pub fn insert_insurance_provider(
     connection: &StorageConnection,
-    input: InsuranceProviderRow,
-    expiry_date: chrono::NaiveDate,
-) -> Result<(), RepositoryError> {
-    let InsuranceProviderRow {
-        id,
-        is_active,
-        provider_name,
-        ..
-    } = input;
-    let repo = InsuranceProviderRowRepository::new(connection);
+    input: &InsertInsurance,
+) -> Result<(), InsertInsuranceError> {
+    let insurance_provider_repository = InsuranceProviderRowRepository::new(connection);
 
-    let today = Utc::now().date_naive();
-    let days = Some(expiry_date.signed_duration_since(today).num_days() as i32);
+    let insurance_provider_not_exists = insurance_provider_repository
+        .find_one_by_id(&input.insurance_provider_id)?
+        .is_none();
 
-    // find insurance provider
-    // if not found then we create it
-    if repo.find_one_by_id(&id)?.is_none() {
-        let new_insurance_provider = InsuranceProviderRow {
-            id: id,
-            is_active: is_active,
-            provider_name: provider_name,
-            prescription_validity_days: days,
+    if insurance_provider_not_exists {
+        let today = Utc::now().date_naive();
+
+        let valid_days = Some(input.expiry_date.signed_duration_since(today).num_days() as i32);
+
+        insurance_provider_repository.upsert_one(&InsuranceProviderRow {
+            id: input.insurance_provider_id.clone(),
+            is_active: input.is_active,
+            provider_name: input.provider_name.clone(),
+            prescription_validity_days: valid_days,
             comment: None,
-        };
-        repo.upsert_one(&new_insurance_provider)?;
+        })?;
     }
 
     Ok(())

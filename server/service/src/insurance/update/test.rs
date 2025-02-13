@@ -59,7 +59,7 @@ mod update {
             )
             .unwrap();
 
-        // update the insurance record
+        // Update the insurance record
         let input = UpdateInsurance {
             id: "insurance_a".to_string(),
             policy_number: Some("policy_number_a".to_string()),
@@ -118,7 +118,7 @@ mod update {
                 InsertInsurance {
                     id: "insurance_a".to_string(),
                     name_link_id: mock_name_a().id.clone(),
-                    insurance_provider_id: "insurance_provider_a".to_string(),
+                    insurance_provider_id: "insurance_provider_id".to_string(),
                     policy_number_person: Some("policy_number_person_a".to_string()),
                     policy_number: "policy_number_a".to_string(),
                     policy_type: InsurancePolicyType::Personal,
@@ -141,16 +141,34 @@ mod update {
             provider_name: Some("Insurance Provider 1".to_string()),
         };
 
-        let result = service.update_insurance(&context, input.clone()).unwrap();
+        // Check that the insurance record was updated
+        let new_insurance = service.update_insurance(&context, input.clone()).unwrap();
 
-        assert_eq!(result.id, input.id);
-        assert_eq!(result.policy_number, input.policy_number.clone().unwrap());
-        assert_eq!(result.policy_type, input.policy_type.unwrap());
+        assert_eq!(new_insurance.id, input.id);
         assert_eq!(
-            result.discount_percentage,
+            new_insurance.policy_number,
+            input.policy_number.clone().unwrap()
+        );
+        assert_eq!(new_insurance.policy_type, input.policy_type.unwrap());
+        assert_eq!(
+            new_insurance.discount_percentage,
             input.discount_percentage.unwrap()
         );
-        assert_eq!(result.expiry_date, input.expiry_date.unwrap());
-        assert_eq!(result.is_active, input.is_active.unwrap());
+        assert_eq!(new_insurance.expiry_date, input.expiry_date.unwrap());
+        assert_eq!(new_insurance.is_active, input.is_active.unwrap());
+
+        // Check that the insurance provider record was updated
+        let insurance_provider_row = insurance_provider_repository
+            .find_one_by_id(&new_insurance.insurance_provider_id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            insurance_provider_row.provider_name,
+            input.provider_name.unwrap()
+        );
+        // expiry date is 2026-12-31 -> 686 days
+        assert_eq!(insurance_provider_row.prescription_validity_days, Some(686));
+        assert_eq!(insurance_provider_row.is_active, input.is_active.unwrap());
     }
 }

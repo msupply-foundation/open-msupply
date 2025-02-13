@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{NaiveDate, Utc};
 use repository::{
     name_insurance_join_row::{
         InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinRowRepository,
@@ -22,25 +22,19 @@ pub fn update_insurance(
     let insurance = ctx
         .connection
         .transaction_sync(|connection| {
-            let insurance_row = validate(connection, &input.clone())?;
-            let updated_insurance_row = generate(GenerateInput {
+            let insurance = validate(connection, &input.clone())?;
+            let new_insurance = generate(GenerateInput {
                 update_input: input.clone(),
-                name_insurance_join_row: insurance_row,
+                name_insurance_join_row: insurance,
             });
 
-            if let Some(provider_name) = &input.provider_name {
-                update_insurance_provider(
-                    connection,
-                    Some(updated_insurance_row.insurance_provider_id.clone()),
-                    Some(provider_name.clone()),
-                )?;
-            }
+            update_insurance_provider(connection, &input, &new_insurance.insurance_provider_id)?;
 
-            let repository = NameInsuranceJoinRowRepository::new(connection);
+            let insurance_repository = NameInsuranceJoinRowRepository::new(connection);
 
-            repository.upsert_one(&updated_insurance_row)?;
+            insurance_repository.upsert_one(&new_insurance)?;
 
-            match repository.find_one_by_id(&updated_insurance_row.id)? {
+            match insurance_repository.find_one_by_id(&new_insurance.id)? {
                 Some(insurance) => Ok(insurance),
                 None => Err(UpdateInsuranceError::UpdatedRecordNotFound),
             }
@@ -50,24 +44,43 @@ pub fn update_insurance(
     Ok(insurance)
 }
 
-pub fn update_insurance_provider(
+fn update_insurance_provider(
     connection: &StorageConnection,
-    insurance_provider_id: Option<String>,
-    provider_name: Option<String>,
-) -> Result<Option<InsuranceProviderRow>, RepositoryError> {
-    match (insurance_provider_id, provider_name) {
-        (Some(id), Some(provider_name)) => {
-            let mut existing_provider = InsuranceProviderRowRepository::new(connection)
-                .find_one_by_id(&id)?
-                .ok_or(RepositoryError::NotFound)?;
+    input: &UpdateInsurance,
+    insurance_provider_id: &String,
+) -> Result<(), UpdateInsuranceError> {
+    let insurance_provider_repository = InsuranceProviderRowRepository::new(connection);
 
-            existing_provider.provider_name = provider_name;
+    let insurance_provider_row =
+        insurance_provider_repository.find_one_by_id(insurance_provider_id)?;
 
-            InsuranceProviderRowRepository::new(connection).upsert_one(&existing_provider)?;
-            Ok(Some(existing_provider))
-        }
-        _ => Ok(None),
+    if let Some(insurance_provider_row) = insurance_provider_row {
+        let today = Utc::now().date_naive();
+
+        let valid_days = input
+            .expiry_date
+            .map(|expiry_date| expiry_date.signed_duration_since(today).num_days() as i32);
+
+        let prescription_validity_days =
+            valid_days.or(insurance_provider_row.prescription_validity_days);
+
+        let provider_name = input
+            .provider_name
+            .clone()
+            .unwrap_or(insurance_provider_row.provider_name);
+
+        let new_insurance_provider = InsuranceProviderRow {
+            id: insurance_provider_id.clone(),
+            provider_name,
+            prescription_validity_days,
+            comment: insurance_provider_row.comment,
+            is_active: input.is_active.unwrap_or(insurance_provider_row.is_active),
+        };
+
+        insurance_provider_repository.upsert_one(&new_insurance_provider)?;
     }
+
+    Ok(())
 }
 
 #[derive(Default, Clone)]
