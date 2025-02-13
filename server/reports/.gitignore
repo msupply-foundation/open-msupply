@@ -1,9 +1,0 @@
-# ignore all built wasm functions
-target/
-*.wasm
-
-# Dependency directories
-**/node_modules/
-/**/dist/
-/**/package-lock.json
-/**/yarn.lock
