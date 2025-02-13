@@ -143,7 +143,7 @@ fn transact_1_pull_record() -> TestSyncIncomingRecord {
             program_id: None,
             name_insurance_join_id: Some("NAME_INSURANCE_JOIN_1_ID".to_string()),
             insurance_discount_amount: Some(10.0),
-            insurance_discount_rate: Some(2.5),
+            insurance_discount_percentage: Some(2.5),
         },
     )
 }
@@ -202,7 +202,7 @@ fn transact_1_push_record() -> TestSyncOutgoingRecord {
             program_id: None,
             name_insurance_join_id: Some("NAME_INSURANCE_JOIN_1_ID".to_string()),
             insurance_discount_amount: Some(10.0),
-            insurance_discount_rate: Some(2.5),
+            insurance_discount_percentage: Some(2.5),
         }),
     }
 }
@@ -326,7 +326,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             program_id: Some("missing_program".to_string()),
             name_insurance_join_id: None,
             insurance_discount_amount: None,
-            insurance_discount_rate: None,
+            insurance_discount_percentage: None,
         },
     )
 }
@@ -380,7 +380,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             program_id: Some("missing_program".to_string()),
             name_insurance_join_id: None,
             insurance_discount_amount: None,
-            insurance_discount_rate: None,
+            insurance_discount_percentage: None,
         }),
     }
 }
@@ -537,7 +537,7 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             program_id: None,
             name_insurance_join_id: None,
             insurance_discount_amount: None,
-            insurance_discount_rate: None,
+            insurance_discount_percentage: None,
         },
     )
 }
@@ -616,7 +616,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             program_id: None,
             name_insurance_join_id: None,
             insurance_discount_amount: None,
-            insurance_discount_rate: None,
+            insurance_discount_percentage: None,
         }),
     }
 }
@@ -755,7 +755,7 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             program_id: None,
             name_insurance_join_id: None,
             insurance_discount_amount: None,
-            insurance_discount_rate: None,
+            insurance_discount_percentage: None,
         },
     )
 }
@@ -815,7 +815,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             program_id: None,
             name_insurance_join_id: None,
             insurance_discount_amount: None,
-            insurance_discount_rate: None,
+            insurance_discount_percentage: None,
         }),
     }
 }
@@ -954,7 +954,7 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             program_id: None,
             name_insurance_join_id: None,
             insurance_discount_amount: None,
-            insurance_discount_rate: None,
+            insurance_discount_percentage: None,
         },
     )
 }
@@ -1014,7 +1014,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             program_id: None,
             name_insurance_join_id: None,
             insurance_discount_amount: None,
-            insurance_discount_rate: None,
+            insurance_discount_percentage: None,
         }),
     }
 }
@@ -1149,7 +1149,7 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             program_id: None,
             name_insurance_join_id: None,
             insurance_discount_amount: None,
-            insurance_discount_rate: None,
+            insurance_discount_percentage: None,
         },
     )
 }
@@ -1208,7 +1208,7 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             program_id: None,
             name_insurance_join_id: None,
             insurance_discount_amount: None,
-            insurance_discount_rate: None,
+            insurance_discount_percentage: None,
         }),
     }
 }

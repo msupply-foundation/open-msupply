@@ -118,7 +118,7 @@ pub struct LegacyTransactRow {
     pub insurance_discount_amount: Option<f64>,
     #[serde(deserialize_with = "zero_f64_as_none")]
     #[serde(rename = "insuranceDiscountRate")]
-    pub insurance_discount_rate: Option<f64>,
+    pub insurance_discount_percentage: Option<f64>,
 
     /// creation time
     #[serde(serialize_with = "date_to_isostring")]
@@ -360,7 +360,7 @@ impl SyncTranslation for InvoiceTranslation {
             program_id: data.program_id,
             name_insurance_join_id: data.name_insurance_join_id,
             insurance_discount_amount: data.insurance_discount_amount,
-            insurance_discount_rate: data.insurance_discount_rate,
+            insurance_discount_percentage: data.insurance_discount_percentage,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -425,7 +425,7 @@ impl SyncTranslation for InvoiceTranslation {
                     program_id,
                     name_insurance_join_id,
                     insurance_discount_amount,
-                    insurance_discount_rate,
+                    insurance_discount_percentage,
                 },
             name_row,
             clinician_row,
@@ -498,7 +498,7 @@ impl SyncTranslation for InvoiceTranslation {
             program_id,
             name_insurance_join_id,
             insurance_discount_amount,
-            insurance_discount_rate,
+            insurance_discount_percentage,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
