@@ -41,7 +41,6 @@ impl From<SingleRecordError> for UpdateInsuranceError {
 #[derive(Default, Clone)]
 pub struct UpdateInsurance {
     pub id: String,
-    pub policy_number: Option<String>,
     pub policy_type: Option<InsurancePolicyType>,
     pub discount_percentage: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
