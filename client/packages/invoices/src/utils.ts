@@ -186,11 +186,11 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
     case InvoiceNodeStatus.Allocated:
     // Inbound shipments can be edited when having been delivered
     case InvoiceNodeStatus.Delivered:
-    case InvoiceNodeStatus.Cancelled:
       return false;
     case InvoiceNodeStatus.Picked:
     case InvoiceNodeStatus.Shipped:
     case InvoiceNodeStatus.Verified:
+    case InvoiceNodeStatus.Cancelled:
       return true;
     default:
       return noOtherVariants(inbound.status);
