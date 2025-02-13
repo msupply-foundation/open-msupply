@@ -1,6 +1,9 @@
-use async_graphql::{Context, Enum, InputObject, Object, Result, SimpleObject, Union};
+use async_graphql::{
+    dataloader::DataLoader, Context, Enum, InputObject, Object, Result, SimpleObject, Union,
+};
 use chrono::NaiveDate;
 use graphql_core::{
+    loader::InsuranceProviderByIdLoader,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -9,6 +12,8 @@ use repository::name_insurance_join_row::{
 };
 use serde::Serialize;
 use service::auth::{Resource, ResourceAccessRequest};
+
+use crate::types::InsuranceProviderNode;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -84,6 +89,17 @@ impl InsuranceNode {
 
     pub async fn is_active(&self) -> &bool {
         &self.row().is_active
+    }
+
+    pub async fn insurance_providers(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<InsuranceProviderNode>> {
+        let insurance_provider_id = &self.row().insurance_provider_id;
+
+        let loader = ctx.get_loader::<DataLoader<InsuranceProviderByIdLoader>>();
+        let result = loader.load_one(insurance_provider_id.clone()).await?;
+        Ok(result.map(InsuranceProviderNode::from_domain))
     }
 }
 
