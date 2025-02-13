@@ -1,13 +1,27 @@
 use insert::{insert_insurance, InsertInsurance, InsertInsuranceError};
-use repository::name_insurance_join_row::NameInsuranceJoinRow;
+use query::insurances;
+use repository::{
+    name_insurance_join_row::{NameInsuranceJoinRow, NameInsuranceJoinSort},
+    RepositoryError, StorageConnection,
+};
 use update::{update_insurance, UpdateInsurance, UpdateInsuranceError};
 
 use crate::service_provider::ServiceContext;
 
 pub mod insert;
+pub mod query;
 pub mod update;
 
 pub trait InsuranceServiceTrait: Sync + Send {
+    fn insurances(
+        &self,
+        connection: &StorageConnection,
+        name_id: &str,
+        sort: Option<NameInsuranceJoinSort>,
+    ) -> Result<Vec<NameInsuranceJoinRow>, RepositoryError> {
+        insurances(connection, name_id, sort)
+    }
+
     fn insert_insurance(
         &self,
         ctx: &ServiceContext,

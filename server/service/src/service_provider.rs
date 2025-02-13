@@ -119,6 +119,7 @@ pub struct ServiceProvider {
     pub form_schema_service: Box<dyn FormSchemaServiceTrait>,
     pub insurance_service: Box<dyn InsuranceServiceTrait>,
     pub patient_service: Box<dyn PatientServiceTrait>,
+    pub insurance_service: Box<dyn InsuranceServiceTrait>,
     pub program_enrolment_service: Box<dyn ProgramEnrolmentServiceTrait>,
     pub encounter_service: Box<dyn EncounterServiceTrait>,
     pub program_event_service: Box<dyn ProgramEventServiceTrait>,
