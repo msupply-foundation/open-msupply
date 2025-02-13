@@ -12,7 +12,7 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 
 pub type PrinterConfiguration = PrinterConfigurationRow;
 
-#[derive(Clone, Default, PartialEq, Debug)]
+#[derive(Clone, Default)]
 pub struct PrinterConfigurationFilter {
     pub id: Option<EqualFilter<String>>,
     pub description: Option<StringFilter>,
@@ -28,12 +28,12 @@ impl PrinterConfigurationFilter {
         self.id = Some(filter);
         self
     }
-    pub fn description(mut self, filter: EqualFilter<String>) -> Self {
-        self.id = Some(filter);
+    pub fn description(mut self, filter: StringFilter) -> Self {
+        self.description = Some(filter);
         self
     }
     pub fn address(mut self, filter: EqualFilter<String>) -> Self {
-        self.id = Some(filter);
+        self.address = Some(filter);
         self
     }
 }
@@ -51,7 +51,7 @@ impl<'a> PrinterConfigurationRepository<'a> {
         &self,
         filter: Option<PrinterConfigurationFilter>,
     ) -> Result<i64, RepositoryError> {
-        let query = Self::create_filtered_query(filter);
+        let query = create_filtered_query(filter);
 
         Ok(query
             .count()
@@ -69,30 +69,30 @@ impl<'a> PrinterConfigurationRepository<'a> {
         &self,
         filter: Option<PrinterConfigurationFilter>,
     ) -> Result<Vec<PrinterConfiguration>, RepositoryError> {
-        let query = Self::create_filtered_query(filter);
+        let query = create_filtered_query(filter);
 
         let result = query.load::<PrinterConfiguration>(self.connection.lock().connection())?;
 
         Ok(result)
     }
+}
 
-    pub fn create_filtered_query(
-        filter: Option<PrinterConfigurationFilter>,
-    ) -> BoxedPrinterConfigurationQuery {
-        let mut query = printer_configuration::table.into_boxed();
+pub fn create_filtered_query(
+    filter: Option<PrinterConfigurationFilter>,
+) -> BoxedPrinterConfigurationQuery {
+    let mut query = printer_configuration::table.into_boxed();
 
-        if let Some(filter) = filter {
-            apply_equal_filter!(query, filter.id, printer_configuration::id);
-            apply_string_filter!(
-                query,
-                filter.description,
-                printer_configuration::description
-            );
-            apply_equal_filter!(query, filter.address, printer_configuration::address);
-        }
-
-        query
+    if let Some(filter) = filter {
+        apply_equal_filter!(query, filter.id, printer_configuration::id);
+        apply_string_filter!(
+            query,
+            filter.description,
+            printer_configuration::description
+        );
+        apply_equal_filter!(query, filter.address, printer_configuration::address);
     }
+
+    query
 }
 
 type BoxedPrinterConfigurationQuery = IntoBoxed<'static, printer_configuration::table, DBType>;
