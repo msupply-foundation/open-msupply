@@ -2,7 +2,8 @@ import { LocaleKey, useTranslation } from '@common/intl';
 
 export const translateReportName = (
   t: ReturnType<typeof useTranslation>,
-  reportName: string
+  reportName: String
 ) => {
-  return t(`report.${reportName.replace(/ /g, '-').toLowerCase()}` as LocaleKey);
+  let key = `report.${reportName.replace(/ /g, '-').toLowerCase()}` as LocaleKey
+  return (key == t(key)) ? reportName.toString() : t(key);
 };
