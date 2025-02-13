@@ -109,7 +109,7 @@
   "button.view-prescription": "Ver Prescrição",
   "button.zero-line-quantity": "Definir quantidades igual a 0",
   "catalogue": "Catálogo",
-  "cmdk.drawer-toggle": "Alternar Menu",
+  "cmdk.drawer-toggle": "Navegação mostrar/ esconder",
   "cmdk.goto-cold-chain-equipment": "Vá até: equipamento de cadeia de frios",
   "cmdk.goto-cold-chain-monitoring": "Vá até: monitoramento de cadeia de frios",
   "cmdk.goto-customer-requisition": "Ir a: Requisição de Clientes",
@@ -127,8 +127,8 @@
   "cmdk.goto-stock": "Ir para: Inventário",
   "cmdk.goto-stocktakes": "Ir para: Inventários",
   "cmdk.goto-suppliers": "Ir para: Fornecedores",
-  "cmdk.more-info-close": "Fechar o painel de mais informações",
-  "cmdk.more-info-open": "Abrir o painel de mais informações",
+  "cmdk.more-info-close": "Esconder: o painel de Mais informações",
+  "cmdk.more-info-open": "Mostrar: o painel de Mais informações",
   "cmdk.placeholder": "Digite um comando ou busca",
   "cold-chain": "Cadeia de frios",
   "contact-trace": "Rastreio de Contatos",
@@ -1733,5 +1733,6 @@
   "messages.import-generic": "Importação realizada com sucesso",
   "reason.offsite-for-repairs": "Fora do local para reparações",
   "report.actual-stock": "Stock Real",
-  "placeholder.item-directions": "Direcções predefinidas do item"
+  "placeholder.item-directions": "Direcções predefinidas do item",
+  "heading.keyboard-shortcuts": "Atalhos de teclado"
 }

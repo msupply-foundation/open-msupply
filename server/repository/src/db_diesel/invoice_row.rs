@@ -87,6 +87,7 @@ pub enum InvoiceStatus {
     Shipped,
     Delivered,
     Verified,
+    Cancelled,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
