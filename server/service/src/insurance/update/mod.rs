@@ -3,7 +3,7 @@ use repository::{
     name_insurance_join_row::{
         InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinRowRepository,
     },
-    RepositoryError,
+    InsuranceProviderRow, InsuranceProviderRowRepository, RepositoryError, StorageConnection,
 };
 
 use crate::{service_provider::ServiceContext, SingleRecordError};
@@ -15,25 +15,6 @@ mod validate;
 use generate::{generate, GenerateInput};
 use validate::validate;
 
-#[derive(PartialEq, Debug)]
-pub enum UpdateInsuranceError {
-    InsuranceDoesNotExist,
-    UpdatedRecordNotFound,
-    DatabaseError(RepositoryError),
-}
-
-#[derive(Default, Clone)]
-pub struct UpdateInsurance {
-    pub id: String,
-    pub name_link_id: Option<String>,
-    pub insurance_provider_id: Option<String>,
-    pub policy_number: Option<String>,
-    pub policy_type: Option<InsurancePolicyType>,
-    pub discount_percentage: Option<f64>,
-    pub expiry_date: Option<NaiveDate>,
-    pub is_active: Option<bool>,
-}
-
 pub fn update_insurance(
     ctx: &ServiceContext,
     input: UpdateInsurance,
@@ -41,11 +22,19 @@ pub fn update_insurance(
     let insurance = ctx
         .connection
         .transaction_sync(|connection| {
-            let insurance_row = validate(connection, &input)?;
+            let insurance_row = validate(connection, &input.clone())?;
             let updated_insurance_row = generate(GenerateInput {
-                update_input: input,
+                update_input: input.clone(),
                 name_insurance_join_row: insurance_row,
             });
+
+            if let Some(provider_name) = &input.provider_name {
+                update_insurance_provider(
+                    connection,
+                    Some(updated_insurance_row.insurance_provider_id.clone()),
+                    Some(provider_name.clone()),
+                )?;
+            }
 
             let repository = NameInsuranceJoinRowRepository::new(connection);
 
@@ -59,6 +48,44 @@ pub fn update_insurance(
         .map_err(|error| error.to_inner_error())?;
 
     Ok(insurance)
+}
+
+pub fn update_insurance_provider(
+    connection: &StorageConnection,
+    insurance_provider_id: Option<String>,
+    provider_name: Option<String>,
+) -> Result<Option<InsuranceProviderRow>, RepositoryError> {
+    match (insurance_provider_id, provider_name) {
+        (Some(id), Some(provider_name)) => {
+            let mut existing_provider = InsuranceProviderRowRepository::new(connection)
+                .find_one_by_id(&id)?
+                .ok_or(RepositoryError::NotFound)?;
+
+            existing_provider.provider_name = provider_name;
+
+            InsuranceProviderRowRepository::new(connection).upsert_one(&existing_provider)?;
+            Ok(Some(existing_provider))
+        }
+        _ => Ok(None),
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct UpdateInsurance {
+    pub id: String,
+    pub policy_number: Option<String>,
+    pub policy_type: Option<InsurancePolicyType>,
+    pub discount_percentage: Option<f64>,
+    pub expiry_date: Option<NaiveDate>,
+    pub is_active: Option<bool>,
+    pub provider_name: Option<String>,
+}
+
+#[derive(PartialEq, Debug)]
+pub enum UpdateInsuranceError {
+    InsuranceDoesNotExist,
+    UpdatedRecordNotFound,
+    DatabaseError(RepositoryError),
 }
 
 impl From<RepositoryError> for UpdateInsuranceError {
