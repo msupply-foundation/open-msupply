@@ -15,6 +15,40 @@ mod validate;
 use generate::{generate, GenerateInput};
 use validate::validate;
 
+#[derive(PartialEq, Debug)]
+pub enum UpdateInsuranceError {
+    InsuranceDoesNotExist,
+    UpdatedRecordNotFound,
+    DatabaseError(RepositoryError),
+}
+
+impl From<RepositoryError> for UpdateInsuranceError {
+    fn from(error: RepositoryError) -> Self {
+        UpdateInsuranceError::DatabaseError(error)
+    }
+}
+
+impl From<SingleRecordError> for UpdateInsuranceError {
+    fn from(error: SingleRecordError) -> Self {
+        use UpdateInsuranceError::*;
+        match error {
+            SingleRecordError::DatabaseError(error) => DatabaseError(error),
+            SingleRecordError::NotFound(_) => UpdatedRecordNotFound,
+        }
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct UpdateInsurance {
+    pub id: String,
+    pub policy_number: Option<String>,
+    pub policy_type: Option<InsurancePolicyType>,
+    pub discount_percentage: Option<f64>,
+    pub expiry_date: Option<NaiveDate>,
+    pub is_active: Option<bool>,
+    pub provider_name: Option<String>,
+}
+
 pub fn update_insurance(
     ctx: &ServiceContext,
     input: UpdateInsurance,
@@ -81,38 +115,4 @@ fn update_insurance_provider(
     }
 
     Ok(())
-}
-
-#[derive(Default, Clone)]
-pub struct UpdateInsurance {
-    pub id: String,
-    pub policy_number: Option<String>,
-    pub policy_type: Option<InsurancePolicyType>,
-    pub discount_percentage: Option<f64>,
-    pub expiry_date: Option<NaiveDate>,
-    pub is_active: Option<bool>,
-    pub provider_name: Option<String>,
-}
-
-#[derive(PartialEq, Debug)]
-pub enum UpdateInsuranceError {
-    InsuranceDoesNotExist,
-    UpdatedRecordNotFound,
-    DatabaseError(RepositoryError),
-}
-
-impl From<RepositoryError> for UpdateInsuranceError {
-    fn from(error: RepositoryError) -> Self {
-        UpdateInsuranceError::DatabaseError(error)
-    }
-}
-
-impl From<SingleRecordError> for UpdateInsuranceError {
-    fn from(error: SingleRecordError) -> Self {
-        use UpdateInsuranceError::*;
-        match error {
-            SingleRecordError::DatabaseError(error) => DatabaseError(error),
-            SingleRecordError::NotFound(_) => UpdatedRecordNotFound,
-        }
-    }
 }
