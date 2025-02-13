@@ -338,6 +338,7 @@ impl SyncTranslation for InvoiceTranslation {
             shipped_datetime: mapping.shipped_datetime,
             delivered_datetime: mapping.delivered_datetime,
             verified_datetime: mapping.verified_datetime,
+            cancelled_datetime: None, // TODO enable cancelled status to sync with mSupply https://github.com/msupply-foundation/open-msupply/issues/6495
             colour: mapping.colour,
 
             requisition_id: data.requisition_ID,
@@ -397,6 +398,7 @@ impl SyncTranslation for InvoiceTranslation {
                     shipped_datetime,
                     delivered_datetime,
                     verified_datetime,
+                    cancelled_datetime,
                     colour,
                     requisition_id,
                     linked_invoice_id,
@@ -740,6 +742,7 @@ fn legacy_invoice_status(t: &InvoiceType, status: &InvoiceStatus) -> Option<Lega
             InvoiceStatus::Shipped => LegacyTransactStatus::Fn,
             InvoiceStatus::Delivered => LegacyTransactStatus::Fn,
             InvoiceStatus::Verified => LegacyTransactStatus::Fn,
+            InvoiceStatus::Cancelled => LegacyTransactStatus::Fn, // TODO enable cancelled status to sync with mSupply https://github.com/msupply-foundation/open-msupply/issues/6495
         },
         InvoiceType::InboundShipment | InvoiceType::CustomerReturn => match status {
             InvoiceStatus::New => LegacyTransactStatus::Nw,
@@ -748,6 +751,7 @@ fn legacy_invoice_status(t: &InvoiceType, status: &InvoiceStatus) -> Option<Lega
             InvoiceStatus::Shipped => LegacyTransactStatus::Nw,
             InvoiceStatus::Delivered => LegacyTransactStatus::Cn,
             InvoiceStatus::Verified => LegacyTransactStatus::Fn,
+            InvoiceStatus::Cancelled => LegacyTransactStatus::Fn, // TODO enable cancelled status to sync with mSupply https://github.com/msupply-foundation/open-msupply/issues/6495
         },
         InvoiceType::Prescription => match status {
             InvoiceStatus::New => LegacyTransactStatus::Nw,
@@ -756,6 +760,7 @@ fn legacy_invoice_status(t: &InvoiceType, status: &InvoiceStatus) -> Option<Lega
             InvoiceStatus::Shipped => LegacyTransactStatus::Fn,
             InvoiceStatus::Delivered => LegacyTransactStatus::Fn,
             InvoiceStatus::Verified => LegacyTransactStatus::Fn,
+            InvoiceStatus::Cancelled => LegacyTransactStatus::Fn, // TODO enable cancelled status to sync with mSupply https://github.com/msupply-foundation/open-msupply/issues/6495
         },
         InvoiceType::InventoryAddition | InvoiceType::InventoryReduction | InvoiceType::Repack => {
             match status {
@@ -765,6 +770,7 @@ fn legacy_invoice_status(t: &InvoiceType, status: &InvoiceStatus) -> Option<Lega
                 InvoiceStatus::Shipped => LegacyTransactStatus::Nw,
                 InvoiceStatus::Delivered => LegacyTransactStatus::Nw,
                 InvoiceStatus::Verified => LegacyTransactStatus::Fn,
+                InvoiceStatus::Cancelled => LegacyTransactStatus::Fn, // TODO enable cancelled status to sync with mSupply https://github.com/msupply-foundation/open-msupply/issues/6495
             }
         }
     };

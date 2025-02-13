@@ -87,6 +87,7 @@ pub struct InvoiceLineFilter {
     pub picked_datetime: Option<DatetimeFilter>,
     pub delivered_datetime: Option<DatetimeFilter>,
     pub verified_datetime: Option<DatetimeFilter>,
+    pub cancelled_datetime: Option<DatetimeFilter>,
 }
 
 impl InvoiceLineFilter {
@@ -161,6 +162,11 @@ impl InvoiceLineFilter {
 
     pub fn delivered_datetime(mut self, filter: DatetimeFilter) -> Self {
         self.delivered_datetime = Some(filter);
+        self
+    }
+
+    pub fn cancelled_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.cancelled_datetime = Some(filter);
         self
     }
 }
@@ -294,6 +300,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
             picked_datetime,
             delivered_datetime,
             verified_datetime,
+            cancelled_datetime,
         } = f;
 
         apply_equal_filter!(query, id, invoice_line::id);
@@ -310,6 +317,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         apply_date_time_filter!(query, picked_datetime, invoice::picked_datetime);
         apply_date_time_filter!(query, delivered_datetime, invoice::delivered_datetime);
         apply_date_time_filter!(query, verified_datetime, invoice::verified_datetime);
+        apply_date_time_filter!(query, cancelled_datetime, invoice::cancelled_datetime);
     }
 
     query

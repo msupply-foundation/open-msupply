@@ -129,6 +129,7 @@ fn transact_1_pull_record() -> TestSyncIncomingRecord {
                     .unwrap()
                     + Duration::seconds(47046),
             ),
+            cancelled_datetime: None,
             verified_datetime: None,
             colour: None,
             requisition_id: None,
@@ -307,6 +308,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             shipped_datetime: None,
             delivered_datetime: None,
             verified_datetime: None,
+            cancelled_datetime: None,
             colour: None,
             requisition_id: None,
             linked_invoice_id: None,
@@ -512,6 +514,7 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
                     .and_hms_opt(14, 33, 0)
                     .unwrap(),
             ),
+            cancelled_datetime: None,
             colour: Some("SomeColour".to_string()),
             requisition_id: None,
             linked_invoice_id: None,
@@ -714,6 +717,7 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
             ),
+            cancelled_datetime: None,
             comment: Some("Stocktake 1; Added stock".to_string()),
             tax_percentage: Some(0.0),
 
@@ -907,6 +911,7 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
             ),
+            cancelled_datetime: None,
             comment: Some("Stocktake 2; Reduced stock".to_string()),
             tax_percentage: Some(0.0),
 
@@ -1106,6 +1111,7 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             shipped_datetime: None,
             delivered_datetime: None,
             verified_datetime: None,
+            cancelled_datetime: None,
             colour: None,
             requisition_id: None,
             linked_invoice_id: None,

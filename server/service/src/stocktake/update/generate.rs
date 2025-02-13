@@ -560,6 +560,7 @@ pub fn generate(
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
+        cancelled_datetime: None,
         colour: None,
         requisition_id: None,
         linked_invoice_id: None,

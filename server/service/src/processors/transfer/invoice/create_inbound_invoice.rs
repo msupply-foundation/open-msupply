@@ -236,6 +236,7 @@ fn generate_inbound_invoice(
         allocated_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
+        cancelled_datetime: None,
         clinician_link_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
