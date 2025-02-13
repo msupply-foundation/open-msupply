@@ -90,17 +90,16 @@ export type LatestPatientEncounterQueryVariables = Types.Exact<{
 
 export type LatestPatientEncounterQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, type: string, startDatetime: string, suggestedNextEncounter?: { __typename: 'SuggestedNextEncounterNode', startDatetime: string, label?: string | null } | null }> } };
 
-export type InsuranceFragment = { __typename: 'InsuranceNode', id: string, expiryDate: string, insuranceProviderId: string, isActive: boolean, enteredById?: string | null, discountPercentage: number, nameLinkId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null };
+export type InsuranceFragment = { __typename: 'InsuranceNode', id: string, policyNumber: string, policyType: Types.InsurancePolicyNodeType, discountPercentage: number, expiryDate: string, isActive: boolean, insuranceProviders?: { __typename: 'InsuranceProviderNode', id: string, providerName: string } | null };
 
 export type InsurancesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  nameLinkId: Types.Scalars['String']['input'];
-  filter?: Types.InputMaybe<Types.InsuranceFilterInput>;
+  nameId: Types.Scalars['String']['input'];
   sort?: Types.InputMaybe<Array<Types.InsuranceSortInput> | Types.InsuranceSortInput>;
 }>;
 
 
-export type InsurancesQuery = { __typename: 'Queries', insurances: { __typename: 'InsuranceConnector', nodes: Array<{ __typename: 'InsuranceNode', id: string, expiryDate: string, insuranceProviderId: string, isActive: boolean, enteredById?: string | null, discountPercentage: number, nameLinkId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null }> } };
+export type InsurancesQuery = { __typename: 'Queries', insurances: { __typename: 'InsuranceConnector', nodes: Array<{ __typename: 'InsuranceNode', id: string, policyNumber: string, policyType: Types.InsurancePolicyNodeType, discountPercentage: number, expiryDate: string, isActive: boolean, insuranceProviders?: { __typename: 'InsuranceProviderNode', id: string, providerName: string } | null }> } };
 
 export const PatientRowFragmentDoc = gql`
     fragment PatientRow on PatientNode {
@@ -181,16 +180,15 @@ export const ProgramPatientRowFragmentDoc = gql`
 export const InsuranceFragmentDoc = gql`
     fragment Insurance on InsuranceNode {
   id
-  expiryDate
-  insuranceProviderId
-  isActive
-  enteredById
-  discountPercentage
-  nameLinkId
-  policyType
   policyNumber
-  policyNumberFamily
-  policyNumberPerson
+  policyType
+  discountPercentage
+  expiryDate
+  isActive
+  insuranceProviders {
+    id
+    providerName
+  }
 }
     `;
 export const PatientsDocument = gql`
@@ -345,13 +343,8 @@ export const LatestPatientEncounterDocument = gql`
 }
     `;
 export const InsurancesDocument = gql`
-    query insurances($storeId: String!, $nameLinkId: String!, $filter: InsuranceFilterInput, $sort: [InsuranceSortInput!]) {
-  insurances(
-    storeId: $storeId
-    nameLinkId: $nameLinkId
-    filter: $filter
-    sort: $sort
-  ) {
+    query insurances($storeId: String!, $nameId: String!, $sort: [InsuranceSortInput!]) {
+  insurances(storeId: $storeId, nameId: $nameId, sort: $sort) {
     ... on InsuranceConnector {
       __typename
       nodes {

@@ -2947,6 +2947,7 @@ export type InsertPrescriptionInput = {
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
   programId?: InputMaybe<Scalars['String']['input']>;
+  theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPrescriptionLineError = {
@@ -3293,19 +3294,14 @@ export type InsuranceConnector = {
   nodes: Array<InsuranceNode>;
 };
 
-export type InsuranceFilterInput = {
-  insuranceProviderId?: InputMaybe<EqualFilterStringInput>;
-};
-
 export type InsuranceNode = {
   __typename: 'InsuranceNode';
   discountPercentage: Scalars['Float']['output'];
-  enteredById?: Maybe<Scalars['String']['output']>;
   expiryDate: Scalars['NaiveDate']['output'];
   id: Scalars['String']['output'];
   insuranceProviderId: Scalars['String']['output'];
+  insuranceProviders?: Maybe<InsuranceProviderNode>;
   isActive: Scalars['Boolean']['output'];
-  nameLinkId: Scalars['String']['output'];
   policyNumber: Scalars['String']['output'];
   policyNumberFamily?: Maybe<Scalars['String']['output']>;
   policyNumberPerson?: Maybe<Scalars['String']['output']>;
@@ -3316,6 +3312,15 @@ export enum InsurancePolicyNodeType {
   Business = 'BUSINESS',
   Personal = 'PERSONAL'
 }
+
+export type InsuranceProviderNode = {
+  __typename: 'InsuranceProviderNode';
+  comment?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  prescriptionValidityDays?: Maybe<Scalars['Int']['output']>;
+  providerName: Scalars['String']['output'];
+};
 
 export type InsuranceResponse = InsuranceConnector;
 
@@ -6224,8 +6229,7 @@ export type QueriesInsertPrescriptionArgs = {
 
 
 export type QueriesInsurancesArgs = {
-  filter?: InputMaybe<InsuranceFilterInput>;
-  nameLinkId: Scalars['String']['input'];
+  nameId: Scalars['String']['input'];
   sort?: InputMaybe<Array<InsuranceSortInput>>;
   storeId: Scalars['String']['input'];
 };
@@ -8498,6 +8502,7 @@ export type UpdatePrescriptionInput = {
   prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
   programId?: InputMaybe<NullableStringUpdate>;
   status?: InputMaybe<UpdatePrescriptionStatusInput>;
+  theirReference?: InputMaybe<NullableStringUpdate>;
 };
 
 export type UpdatePrescriptionLineError = {

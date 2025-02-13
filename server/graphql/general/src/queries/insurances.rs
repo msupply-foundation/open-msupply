@@ -1,19 +1,19 @@
-use async_graphql::{Context, Enum, InputObject, Object, Result, SimpleObject, Union};
+use async_graphql::{
+    dataloader::DataLoader, Context, Enum, InputObject, Object, Result, SimpleObject, Union,
+};
 use chrono::NaiveDate;
 use graphql_core::{
-    generic_filters::EqualFilterStringInput,
+    loader::InsuranceProviderByIdLoader,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{
-    name_insurance_join_row::{
-        InsurancePolicyType, NameInsuranceJoinFilter, NameInsuranceJoinRow, NameInsuranceJoinSort,
-        NameInsuranceJoinSortField,
-    },
-    EqualFilter,
+use repository::name_insurance_join_row::{
+    InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinSort, NameInsuranceJoinSortField,
 };
 use serde::Serialize;
 use service::auth::{Resource, ResourceAccessRequest};
+
+use crate::types::InsuranceProviderNode;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -29,11 +29,6 @@ pub struct InsuranceSortInput {
     /// Sort query result is sorted descending or ascending (if not provided the default is
     /// ascending)
     desc: Option<bool>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct InsuranceFilterInput {
-    pub insurance_provider_id: Option<EqualFilterStringInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -61,64 +56,56 @@ pub struct InsuranceNode {
 #[Object]
 impl InsuranceNode {
     pub async fn id(&self) -> &str {
-        &self.insurance.id
-    }
-
-    pub async fn name_link_id(&self) -> &str {
-        &self.insurance.name_link_id
+        &self.row().id
     }
 
     pub async fn insurance_provider_id(&self) -> &str {
-        &self.insurance.insurance_provider_id
+        &self.row().insurance_provider_id
     }
 
-    pub async fn policy_number_person(&self) -> Option<&str> {
-        self.insurance.policy_number_person.as_deref()
+    pub async fn policy_number_person(&self) -> &Option<String> {
+        &self.row().policy_number_person
     }
 
-    pub async fn policy_number_family(&self) -> Option<&str> {
-        self.insurance.policy_number_family.as_deref()
+    pub async fn policy_number_family(&self) -> &Option<String> {
+        &self.row().policy_number_family
     }
 
-    pub async fn policy_number(&self) -> &str {
-        &self.insurance.policy_number
+    pub async fn policy_number(&self) -> &String {
+        &self.row().policy_number
     }
 
     pub async fn policy_type(&self) -> InsurancePolicyNodeType {
-        InsurancePolicyNodeType::from_domain(&self.insurance.policy_type)
+        InsurancePolicyNodeType::from_domain(&self.row().policy_type)
     }
 
-    pub async fn discount_percentage(&self) -> f64 {
-        self.insurance.discount_percentage
+    pub async fn discount_percentage(&self) -> &f64 {
+        &self.row().discount_percentage
     }
 
-    pub async fn expiry_date(&self) -> NaiveDate {
-        self.insurance.expiry_date
+    pub async fn expiry_date(&self) -> &NaiveDate {
+        &self.row().expiry_date
     }
 
-    pub async fn is_active(&self) -> bool {
-        self.insurance.is_active
+    pub async fn is_active(&self) -> &bool {
+        &self.row().is_active
     }
 
-    pub async fn entered_by_id(&self) -> Option<&str> {
-        self.insurance.entered_by_id.as_deref()
+    pub async fn insurance_providers(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<InsuranceProviderNode>> {
+        let insurance_provider_id = &self.row().insurance_provider_id;
+
+        let loader = ctx.get_loader::<DataLoader<InsuranceProviderByIdLoader>>();
+        let result = loader.load_one(insurance_provider_id.clone()).await?;
+        Ok(result.map(InsuranceProviderNode::from_domain))
     }
 }
 
 #[derive(SimpleObject)]
 pub struct InsuranceConnector {
     nodes: Vec<InsuranceNode>,
-}
-
-impl InsuranceConnector {
-    pub fn from_domain(insurances: Vec<NameInsuranceJoinRow>) -> InsuranceConnector {
-        InsuranceConnector {
-            nodes: insurances
-                .into_iter()
-                .map(|insurance| InsuranceNode { insurance })
-                .collect(),
-        }
-    }
 }
 
 #[derive(Union)]
@@ -129,14 +116,13 @@ pub enum InsuranceResponse {
 pub fn insurances(
     ctx: &Context<'_>,
     store_id: String,
-    name_link_id: String,
-    filter: Option<InsuranceFilterInput>,
+    name_id: String,
     sort: Option<Vec<InsuranceSortInput>>,
 ) -> Result<InsuranceResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryInsurances,
+            resource: Resource::QueryPatient,
             store_id: Some(store_id.clone()),
         },
     )?;
@@ -148,8 +134,7 @@ pub fn insurances(
         .insurance_service
         .insurances(
             &service_context.connection,
-            &name_link_id,
-            filter.map(|filter| filter.to_domain()),
+            &name_id,
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
         )
@@ -160,15 +145,24 @@ pub fn insurances(
     ))
 }
 
-impl InsuranceFilterInput {
-    pub fn to_domain(self) -> NameInsuranceJoinFilter {
-        let InsuranceFilterInput {
-            insurance_provider_id,
-        } = self;
-
-        NameInsuranceJoinFilter {
-            insurance_provider_id: insurance_provider_id.map(EqualFilter::from),
+impl InsuranceConnector {
+    pub fn from_domain(insurances: Vec<NameInsuranceJoinRow>) -> InsuranceConnector {
+        InsuranceConnector {
+            nodes: insurances
+                .into_iter()
+                .map(InsuranceNode::from_domain)
+                .collect(),
         }
+    }
+}
+
+impl InsuranceNode {
+    pub fn from_domain(insurance: NameInsuranceJoinRow) -> InsuranceNode {
+        InsuranceNode { insurance }
+    }
+
+    pub fn row(&self) -> &NameInsuranceJoinRow {
+        &self.insurance
     }
 }
 
