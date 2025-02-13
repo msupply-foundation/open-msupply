@@ -11,15 +11,15 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
 };
 
-use super::contact_form::QueueContactEmailProcessor;
+use super::{contact_form::QueueContactEmailProcessor, load_plugin::LoadPlugin};
 
 #[derive(Error, Debug)]
 pub(crate) enum ProcessorError {
-    #[error("{0:?} not found: {1:?}")]
+    #[error("{0} not found: {1}")]
     RecordNotFound(String, String),
-    #[error("{0:?}")]
-    DatabaseError(RepositoryError),
-    #[error("{0:?}")]
+    #[error("Database error")]
+    DatabaseError(#[from] RepositoryError),
+    #[error("Error in email service {0:?}")]
     EmailServiceError(EmailServiceError),
 }
 
@@ -28,12 +28,14 @@ const CHANGELOG_BATCH_SIZE: u32 = 20;
 #[derive(Clone)]
 pub enum ProcessorType {
     ContactFormEmail,
+    LoadPlugin,
 }
 
 impl ProcessorType {
     pub(super) fn get_processor(&self) -> Box<dyn Processor> {
         match self {
             ProcessorType::ContactFormEmail => Box::new(QueueContactEmailProcessor),
+            ProcessorType::LoadPlugin => Box::new(LoadPlugin),
         }
     }
 }

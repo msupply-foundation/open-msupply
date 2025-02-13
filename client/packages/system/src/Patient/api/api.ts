@@ -215,8 +215,6 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     (await sdk.latestPatientEncounter({ storeId, patientId, encounterType }))
       .encounters,
 
-  insurances: async (
-    nameLinkId: string
-  ): Promise<GetPatientInsuranceResponse> =>
-    (await sdk.insurances({ storeId, nameLinkId })).insurances,
+  insurances: async (nameId: string): Promise<GetPatientInsuranceResponse> =>
+    (await sdk.insurances({ storeId, nameId })).insurances,
 });

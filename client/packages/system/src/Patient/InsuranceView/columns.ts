@@ -4,13 +4,12 @@ import {
   ColumnFormat,
   useColumns,
 } from '@openmsupply-client/common';
-
-import { PatientInsuranceFragment } from '../api/operations.generated';
+import { InsuranceFragment } from '../api/operations.generated';
 
 type Status = 'Active' | 'Inactive';
 
 export const useInsuranceColumns = () => {
-  const columns: ColumnDescription<PatientInsuranceFragment>[] = [
+  const columns: ColumnDescription<InsuranceFragment>[] = [
     {
       label: 'label.policy-number',
       key: 'policyNumber',
@@ -18,7 +17,7 @@ export const useInsuranceColumns = () => {
     {
       label: 'label.provider-name',
       key: 'providerName',
-      accessor: ({ rowData }) => rowData.policyNumberFamily,
+      accessor: ({ rowData }) => rowData.insuranceProviders?.providerName,
     },
     {
       label: 'label.policy-type',

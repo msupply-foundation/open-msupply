@@ -236,30 +236,23 @@ query latestPatientEncounter(
 
 fragment Insurance on InsuranceNode {
   id
-  expiryDate
-  insuranceProviderId
-  isActive
-  enteredById
-  discountPercentage
-  nameLinkId
-  policyType
   policyNumber
-  policyNumberFamily
-  policyNumberPerson
+  policyType
+  discountPercentage
+  expiryDate
+  isActive
+  insuranceProviders {
+    id
+    providerName
+  }
 }
 
 query insurances(
   $storeId: String!
-  $nameLinkId: String!
-  $filter: InsuranceFilterInput
+  $nameId: String!
   $sort: [InsuranceSortInput!]
 ) {
-  insurances(
-    storeId: $storeId
-    nameLinkId: $nameLinkId
-    filter: $filter
-    sort: $sort
-  ) {
+  insurances(storeId: $storeId, nameId: $nameId, sort: $sort) {
     ... on InsuranceConnector {
       __typename
       nodes {
