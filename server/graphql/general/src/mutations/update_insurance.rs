@@ -30,7 +30,6 @@ impl UpdateInsurancePolicyNodeType {
 #[derive(InputObject)]
 pub struct UpdateInsuranceInput {
     pub id: String,
-    pub policy_number: Option<String>,
     pub policy_type: Option<UpdateInsurancePolicyNodeType>,
     pub discount_percentage: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
@@ -42,7 +41,6 @@ impl UpdateInsuranceInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInsuranceInput {
             id,
-            policy_number,
             policy_type,
             discount_percentage,
             expiry_date,
@@ -52,7 +50,6 @@ impl UpdateInsuranceInput {
 
         ServiceInput {
             id,
-            policy_number,
             policy_type: policy_type.map(|t| t.to_domain()),
             discount_percentage,
             expiry_date,
