@@ -66,7 +66,6 @@ impl InvoiceLineFilterInput {
             picked_datetime: None,
             delivered_datetime: None,
             verified_datetime: None,
-            cancelled_datetime: None,
         }
     }
 }
@@ -94,7 +93,6 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
             picked_datetime: None,
             delivered_datetime: None,
             verified_datetime: None,
-            cancelled_datetime: None,
         }
     }
 }

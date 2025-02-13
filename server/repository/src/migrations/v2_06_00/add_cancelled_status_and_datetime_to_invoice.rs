@@ -1,5 +1,4 @@
 use crate::migrations::*;
-use crate::migrations::DATETIME;
 pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
@@ -13,7 +12,6 @@ impl MigrationFragment for Migrate {
                 connection,
                 r#"
                 ALTER TYPE invoice_status ADD VALUE IF NOT EXISTS 'CANCELLED';
-                ALTER TABLE invoice ADD COLUMN IF NOT EXISTS cancelled_datetime {DATETIME};
                 "#,
             )?;
         }
@@ -43,7 +41,6 @@ impl MigrationFragment for Migrate {
                     shipped_datetime TEXT,
                     delivered_datetime TEXT,
                     verified_datetime TEXT,
-                    cancelled_datetime TEXT,
                     colour TEXT,
                     requisition_id TEXT,
                     linked_invoice_id TEXT,
@@ -60,11 +57,7 @@ impl MigrationFragment for Migrate {
                     program_id TEXT REFERENCES program (id)
                 );
 
-                INSERT INTO invoice_new (id, name_store_id, user_id, store_id, invoice_number, on_hold, 
-                comment, their_reference, transport_reference, created_datetime, allocated_datetime, picked_datetime, 
-                shipped_datetime, delivered_datetime, verified_datetime, colour, requisition_id, linked_invoice_id, 
-                tax_percentage, status, "type", currency_id, currency_rate, name_link_id, clinician_link_id, 
-                original_shipment_id, backdated_datetime, diagnosis_id, program_id) SELECT id, name_store_id, user_id, store_id, invoice_number, on_hold, 
+                INSERT INTO invoice_new SELECT id, name_store_id, user_id, store_id, invoice_number, on_hold, 
                 comment, their_reference, transport_reference, created_datetime, allocated_datetime, picked_datetime, 
                 shipped_datetime, delivered_datetime, verified_datetime, colour, requisition_id, linked_invoice_id, 
                 tax_percentage, status, "type", currency_id, currency_rate, name_link_id, clinician_link_id, 

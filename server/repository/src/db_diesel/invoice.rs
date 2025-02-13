@@ -49,7 +49,6 @@ pub struct InvoiceFilter {
     pub shipped_datetime: Option<DatetimeFilter>,
     pub delivered_datetime: Option<DatetimeFilter>,
     pub verified_datetime: Option<DatetimeFilter>,
-    pub cancelled_datetime: Option<DatetimeFilter>,
     pub colour: Option<EqualFilter<String>>,
     pub requisition_id: Option<EqualFilter<String>>,
     pub linked_invoice_id: Option<EqualFilter<String>>,
@@ -68,7 +67,6 @@ pub enum InvoiceSortField {
     ShippedDatetime,
     DeliveredDatetime,
     VerifiedDatetime,
-    CancelledDatetime,
     TheirReference,
     TransportReference,
     InvoiceDatetime,
@@ -153,9 +151,6 @@ impl<'a> InvoiceRepository<'a> {
                 }
                 InvoiceSortField::VerifiedDatetime => {
                     apply_sort!(query, sort, invoice::verified_datetime);
-                }
-                InvoiceSortField::CancelledDatetime => {
-                    apply_sort!(query, sort, invoice::cancelled_datetime);
                 }
                 InvoiceSortField::OtherPartyName => {
                     apply_sort_no_case!(query, sort, name::name_);
@@ -246,7 +241,6 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
             shipped_datetime,
             delivered_datetime,
             verified_datetime,
-            cancelled_datetime,
             colour,
             requisition_id,
             linked_invoice_id,
@@ -279,7 +273,6 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
         apply_date_time_filter!(query, shipped_datetime, invoice::shipped_datetime);
         apply_date_time_filter!(query, delivered_datetime, invoice::delivered_datetime);
         apply_date_time_filter!(query, verified_datetime, invoice::verified_datetime);
-        apply_date_time_filter!(query, cancelled_datetime, invoice::cancelled_datetime);
 
         if let Some(stock_line_id) = stock_line_id {
             let invoice_line_query = invoice_line::table
@@ -387,11 +380,6 @@ impl InvoiceFilter {
 
     pub fn verified_datetime(mut self, filter: DatetimeFilter) -> Self {
         self.verified_datetime = Some(filter);
-        self
-    }
-
-    pub fn cancelled_datetime(mut self, filter: DatetimeFilter) -> Self {
-        self.cancelled_datetime = Some(filter);
         self
     }
 

@@ -81,7 +81,6 @@ pub fn generate(
         shipped_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
-        cancelled_datetime: None,
         linked_invoice_id: None,
         requisition_id: None,
         clinician_link_id: None,

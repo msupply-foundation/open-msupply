@@ -51,7 +51,6 @@ pub fn generate(
         shipped_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
-        cancelled_datetime: None,
         colour: None,
         linked_invoice_id: None,
         tax_percentage: None,
