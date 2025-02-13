@@ -33,7 +33,7 @@ impl PrinterConfigurationFilter {
         self
     }
     pub fn address(mut self, filter: EqualFilter<String>) -> Self {
-        self.id = Some(filter);
+        self.address = Some(filter);
         self
     }
 }
