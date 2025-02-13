@@ -28,7 +28,6 @@ impl PrinterConfigurationFilter {
         self.id = Some(filter);
         self
     }
-    pub fn description(mut self, filter: EqualFilter<String>) -> Self {
     pub fn description(mut self, filter: StringFilter) -> Self {
         self.description = Some(filter);
         self
