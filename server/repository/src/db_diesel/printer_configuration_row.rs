@@ -16,7 +16,7 @@ label_height -> Integer,
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
 )]
 #[diesel(table_name = printer_configuration)]
 pub struct PrinterConfigurationRow {

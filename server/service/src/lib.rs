@@ -60,6 +60,7 @@ pub mod plugin;
 pub mod plugin_data;
 pub mod pricing;
 pub mod print;
+pub mod printer_configuration;
 pub mod processors;
 pub mod program;
 pub mod programs;

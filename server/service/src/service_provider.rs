@@ -35,6 +35,7 @@ use crate::{
     plugin::{PluginService, PluginServiceTrait},
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     pricing::{PricingService, PricingServiceTrait},
+    printer_configuration::{PrinterConfigurationService, PrinterConfigurationServiceTrait},
     processors::ProcessorsTrigger,
     program::ProgramServiceTrait,
     programs::{
@@ -156,6 +157,8 @@ pub struct ServiceProvider {
     pub vaccine_course_service: Box<dyn VaccineCourseServiceTrait>,
     // Vaccinations
     pub vaccination_service: Box<dyn VaccinationServiceTrait>,
+    // Printer Configuration
+    pub printer_configuration_service: Box<dyn PrinterConfigurationServiceTrait>,
     // Programs
     pub program_service: Box<dyn ProgramServiceTrait>,
     pub pricing_service: Box<dyn PricingServiceTrait>,
@@ -263,6 +266,7 @@ impl ServiceProvider {
             email_service: Box::new(EmailService::new(mail_settings.clone())),
             contact_form_service: Box::new(ContactFormService {}),
             plugin_service: Box::new(PluginService {}),
+            printer_configuration_service: Box::new(PrinterConfigurationService {}),
         }
     }
 
