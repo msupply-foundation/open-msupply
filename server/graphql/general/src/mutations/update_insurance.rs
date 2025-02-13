@@ -11,75 +11,27 @@ use service::{
     insurance::update::{UpdateInsurance as ServiceInput, UpdateInsuranceError as ServiceError},
 };
 
-pub fn update_insurance(
-    ctx: &Context<'_>,
-    store_id: &str,
-    input: UpdateInsuranceInput,
-) -> Result<UpdateInsuranceResponse> {
-    let user = validate_auth(
-        ctx,
-        &ResourceAccessRequest {
-            resource: Resource::MutatePatient,
-            store_id: Some(store_id.to_string()),
-        },
-    )?;
-
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
-
-    map_response(
-        service_provider
-            .insurance_service
-            .update_insurance(&service_context, input.to_domain()),
-    )
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum UpdateInsurancePolicyNodeType {
+    Personal,
+    Business,
 }
 
-pub fn map_response(
-    from: Result<NameInsuranceJoinRow, ServiceError>,
-) -> Result<UpdateInsuranceResponse> {
-    match from {
-        Ok(insurance) => Ok(UpdateInsuranceResponse::Response(InsuranceNode {
-            id: insurance.id,
-        })),
-        Err(error) => map_error(error),
-    }
-}
-
-fn map_error(error: ServiceError) -> Result<UpdateInsuranceResponse> {
-    use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
-
-    let graphql_error = match error {
-        ServiceError::InsuranceDoesNotExist | ServiceError::UpdatedRecordNotFound => {
-            BadUserInput(formatted_error)
+impl UpdateInsurancePolicyNodeType {
+    pub fn to_domain(&self) -> InsurancePolicyType {
+        match self {
+            UpdateInsurancePolicyNodeType::Personal => InsurancePolicyType::Personal,
+            UpdateInsurancePolicyNodeType::Business => InsurancePolicyType::Business,
         }
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
-    };
-
-    Err(graphql_error.extend())
-}
-
-pub struct InsuranceNode {
-    pub id: String,
-}
-
-#[Object]
-impl InsuranceNode {
-    pub async fn id(&self) -> &str {
-        &self.id
     }
-}
-
-#[derive(Union)]
-pub enum UpdateInsuranceResponse {
-    Response(InsuranceNode),
 }
 
 #[derive(InputObject)]
 pub struct UpdateInsuranceInput {
     pub id: String,
     pub policy_number: Option<String>,
-    pub policy_type: Option<InsurancePolicyNodeType>,
+    pub policy_type: Option<UpdateInsurancePolicyNodeType>,
     pub discount_percentage: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
     pub is_active: Option<bool>,
@@ -110,18 +62,66 @@ impl UpdateInsuranceInput {
     }
 }
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum InsurancePolicyNodeType {
-    Personal,
-    Business,
+pub struct UpdateInsuranceNode {
+    pub id: String,
 }
 
-impl InsurancePolicyNodeType {
-    pub fn to_domain(&self) -> InsurancePolicyType {
-        match self {
-            InsurancePolicyNodeType::Personal => InsurancePolicyType::Personal,
-            InsurancePolicyNodeType::Business => InsurancePolicyType::Business,
-        }
+#[Object]
+impl UpdateInsuranceNode {
+    pub async fn id(&self) -> &str {
+        &self.id
     }
+}
+
+#[derive(Union)]
+pub enum UpdateInsuranceResponse {
+    Response(UpdateInsuranceNode),
+}
+
+pub fn update_insurance(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: UpdateInsuranceInput,
+) -> Result<UpdateInsuranceResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutatePatient,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+
+    map_response(
+        service_provider
+            .insurance_service
+            .update_insurance(&service_context, input.to_domain()),
+    )
+}
+
+pub fn map_response(
+    from: Result<NameInsuranceJoinRow, ServiceError>,
+) -> Result<UpdateInsuranceResponse> {
+    match from {
+        Ok(insurance) => Ok(UpdateInsuranceResponse::Response(UpdateInsuranceNode {
+            id: insurance.id,
+        })),
+        Err(error) => map_error(error),
+    }
+}
+
+fn map_error(error: ServiceError) -> Result<UpdateInsuranceResponse> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        ServiceError::InsuranceDoesNotExist | ServiceError::UpdatedRecordNotFound => {
+            BadUserInput(formatted_error)
+        }
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }

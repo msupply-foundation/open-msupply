@@ -11,7 +11,6 @@ pub fn generate(GenerateInput { insert_input }: GenerateInput) -> NameInsuranceJ
         id,
         name_link_id,
         insurance_provider_id,
-        policy_number_person,
         policy_number,
         policy_type,
         discount_percentage,
@@ -25,13 +24,13 @@ pub fn generate(GenerateInput { insert_input }: GenerateInput) -> NameInsuranceJ
         id,
         name_link_id,
         insurance_provider_id,
-        policy_number_person,
-        policy_number_family: None,
         policy_number,
         policy_type,
         discount_percentage,
         expiry_date,
         is_active,
         entered_by_id: None,
+        policy_number_family: None,
+        policy_number_person: None,
     }
 }

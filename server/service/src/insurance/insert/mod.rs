@@ -15,6 +15,41 @@ mod validate;
 use generate::{generate, GenerateInput};
 use validate::validate;
 
+#[derive(PartialEq, Debug)]
+pub enum InsertInsuranceError {
+    InsuranceAlreadyExists,
+    CreatedRecordNotFound,
+    DatabaseError(RepositoryError),
+}
+
+impl From<RepositoryError> for InsertInsuranceError {
+    fn from(error: RepositoryError) -> Self {
+        InsertInsuranceError::DatabaseError(error)
+    }
+}
+
+impl From<SingleRecordError> for InsertInsuranceError {
+    fn from(error: SingleRecordError) -> Self {
+        use InsertInsuranceError::*;
+        match error {
+            SingleRecordError::DatabaseError(error) => DatabaseError(error),
+            SingleRecordError::NotFound(_) => CreatedRecordNotFound,
+        }
+    }
+}
+#[derive(PartialEq, Debug, Clone, Default)]
+pub struct InsertInsurance {
+    pub id: String,
+    pub name_link_id: String,
+    pub insurance_provider_id: String,
+    pub policy_number: String,
+    pub policy_type: InsurancePolicyType,
+    pub discount_percentage: f64,
+    pub expiry_date: chrono::NaiveDate,
+    pub is_active: bool,
+    pub provider_name: String,
+}
+
 pub fn insert_insurance(
     ctx: &ServiceContext,
     input: InsertInsurance,
@@ -62,41 +97,4 @@ pub fn insert_insurance_provider(
     }
 
     Ok(())
-}
-
-#[derive(PartialEq, Debug, Clone, Default)]
-pub struct InsertInsurance {
-    pub id: String,
-    pub name_link_id: String,
-    pub insurance_provider_id: String,
-    pub policy_number_person: Option<String>,
-    pub policy_number: String,
-    pub policy_type: InsurancePolicyType,
-    pub discount_percentage: f64,
-    pub expiry_date: chrono::NaiveDate,
-    pub is_active: bool,
-    pub provider_name: String,
-}
-
-#[derive(PartialEq, Debug)]
-pub enum InsertInsuranceError {
-    InsuranceAlreadyExists,
-    CreatedRecordNotFound,
-    DatabaseError(RepositoryError),
-}
-
-impl From<RepositoryError> for InsertInsuranceError {
-    fn from(error: RepositoryError) -> Self {
-        InsertInsuranceError::DatabaseError(error)
-    }
-}
-
-impl From<SingleRecordError> for InsertInsuranceError {
-    fn from(error: SingleRecordError) -> Self {
-        use InsertInsuranceError::*;
-        match error {
-            SingleRecordError::DatabaseError(error) => DatabaseError(error),
-            SingleRecordError::NotFound(_) => CreatedRecordNotFound,
-        }
-    }
 }
