@@ -61,7 +61,6 @@ mod update {
         // Update the insurance record
         let input = UpdateInsurance {
             id: "insurance_a".to_string(),
-            policy_number: Some("policy_number_a".to_string()),
             policy_type: Some(InsurancePolicyType::Personal),
             discount_percentage: Some(10.0),
             expiry_date: Some(NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date")),
@@ -131,7 +130,6 @@ mod update {
         // Update the insurance record
         let input = UpdateInsurance {
             id: "insurance_a".to_string(),
-            policy_number: Some("policy_number_updated".to_string()),
             policy_type: Some(InsurancePolicyType::Business),
             discount_percentage: Some(15.0),
             expiry_date: Some(NaiveDate::from_ymd_opt(2026, 12, 31).expect("Invalid date")),
@@ -143,10 +141,6 @@ mod update {
         let new_insurance = service.update_insurance(&context, input.clone()).unwrap();
 
         assert_eq!(new_insurance.id, input.id);
-        assert_eq!(
-            new_insurance.policy_number,
-            input.policy_number.clone().unwrap()
-        );
         assert_eq!(new_insurance.policy_type, input.policy_type.unwrap());
         assert_eq!(
             new_insurance.discount_percentage,
