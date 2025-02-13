@@ -55,6 +55,7 @@ export const prescriptionStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Picked,
   InvoiceNodeStatus.Verified,
+  InvoiceNodeStatus.Cancelled,
 ];
 
 export const supplierReturnStatuses: InvoiceNodeStatus[] = [
@@ -85,6 +86,7 @@ const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   DELIVERED: 'label.delivered',
   NEW: 'label.new',
   VERIFIED: 'label.verified',
+  CANCELLED: 'label.cancelled',
 };
 
 export const getStatusTranslation = (status: InvoiceNodeStatus): LocaleKey => {
@@ -188,6 +190,7 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
     case InvoiceNodeStatus.Picked:
     case InvoiceNodeStatus.Shipped:
     case InvoiceNodeStatus.Verified:
+    case InvoiceNodeStatus.Cancelled:
       return true;
     default:
       return noOtherVariants(inbound.status);
