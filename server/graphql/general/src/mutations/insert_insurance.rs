@@ -46,14 +46,14 @@ fn map_error(error: ServiceError) -> Result<InsertInsuranceResponse> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
-    let graph_error = match error {
+    let graphql_error = match error {
         ServiceError::InsuranceAlreadyExists | ServiceError::CreatedRecordNotFound => {
             BadUserInput(formatted_error)
         }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
-    Err(graph_error.extend())
+    Err(graphql_error.extend())
 }
 
 pub struct InsuranceNode {
