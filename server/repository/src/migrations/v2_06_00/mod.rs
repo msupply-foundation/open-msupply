@@ -1,8 +1,10 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_cancelled_status_to_invoice;
 mod add_create_invoice_from_requisition_permission;
 mod add_index_to_sync_buffer;
+mod add_insurance_fields_to_invoice;
 mod add_insurance_provider;
 mod add_invoice_line_prescribed_quantity;
 mod add_load_plugin_processor_pg_enum_type;
@@ -13,7 +15,6 @@ mod add_program_deleted_datetime;
 mod add_program_id_to_invoice;
 mod backend_plugins;
 mod prescribed_quantity_store_pref;
-mod add_cancelled_status_to_invoice;
 
 pub(crate) struct V2_06_00;
 
@@ -40,6 +41,7 @@ impl Migration for V2_06_00 {
             Box::new(prescribed_quantity_store_pref::Migrate),
             Box::new(add_name_next_of_kin_name::Migrate),
             Box::new(add_name_insurance_join::Migrate),
+            Box::new(add_insurance_fields_to_invoice::Migrate),
             Box::new(add_cancelled_status_to_invoice::Migrate),
         ]
     }
