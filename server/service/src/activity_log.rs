@@ -118,6 +118,8 @@ pub fn log_type_from_invoice_status(status: &InvoiceStatus, prescription: bool) 
         from::Delivered => to::InvoiceStatusDelivered,
         from::Verified if prescription => to::PrescriptionStatusVerified,
         from::Verified => to::InvoiceStatusVerified,
+        from::Cancelled if prescription => to::PrescriptionStatusCancelled,
+        from::Cancelled => to::InvoiceStatusCancelled,
     }
 }
 
