@@ -49,7 +49,7 @@ table! {
         program_id -> Nullable<Text>,
         name_insurance_join_id -> Nullable<Text>,
         insurance_discount_amount -> Nullable<Double>,
-        insurance_discount_rate -> Nullable<Double>
+        insurance_discount_percentage -> Nullable<Double>
     }
 }
 
@@ -128,7 +128,7 @@ pub struct InvoiceRow {
     pub program_id: Option<String>,
     pub name_insurance_join_id: Option<String>,
     pub insurance_discount_amount: Option<f64>,
-    pub insurance_discount_rate: Option<f64>,
+    pub insurance_discount_percentage: Option<f64>,
 }
 
 impl Default for InvoiceRow {
@@ -166,7 +166,7 @@ impl Default for InvoiceRow {
             program_id: Default::default(),
             name_insurance_join_id: Default::default(),
             insurance_discount_amount: Default::default(),
-            insurance_discount_rate: Default::default(),
+            insurance_discount_percentage: Default::default(),
         }
     }
 }

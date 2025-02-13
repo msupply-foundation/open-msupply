@@ -17,7 +17,7 @@ impl MigrationFragment for Migrate {
                 ALTER TABLE invoice
                     ADD COLUMN insurance_discount_amount {DOUBLE};
                 ALTER TABLE invoice
-                    ADD COLUMN insurance_discount_rate {DOUBLE};
+                    ADD COLUMN insurance_discount_percentage {DOUBLE};
             "#
         )?;
 

@@ -71,7 +71,7 @@ pub fn generate(
         program_id: None,
         name_insurance_join_id: None,
         insurance_discount_amount: None,
-        insurance_discount_rate: None,
+        insurance_discount_percentage: None,
     };
 
     let lines_with_packs: Vec<CustomerReturnLineInput> = customer_return_lines
