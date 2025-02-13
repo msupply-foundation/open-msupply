@@ -1,11 +1,12 @@
 use crate::sync::{
     sync_serde::{
         date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
-        empty_str_as_option_string, naive_time, zero_date_as_option,
+        empty_str_as_option_string, naive_time, zero_date_as_option, zero_f64_as_none,
     },
     translations::{
         clinician::ClinicianTranslation, currency::CurrencyTranslation,
-        diagnosis::DiagnosisTranslation, name::NameTranslation, store::StoreTranslation,
+        diagnosis::DiagnosisTranslation, name::NameTranslation,
+        name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -112,7 +113,11 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "nameInsuranceJoinID")]
     pub name_insurance_join_id: Option<String>,
+    #[serde(deserialize_with = "zero_f64_as_none")]
+    #[serde(rename = "insuranceDiscountAmount")]
     pub insurance_discount_amount: Option<f64>,
+    #[serde(deserialize_with = "zero_f64_as_none")]
+    #[serde(rename = "insuranceDiscountRate")]
     pub insurance_discount_rate: Option<f64>,
 
     /// creation time
@@ -257,6 +262,7 @@ impl SyncTranslation for InvoiceTranslation {
             ClinicianTranslation.table_name(),
             CurrencyTranslation.table_name(),
             DiagnosisTranslation.table_name(),
+            NameInsuranceJoinTranslation.table_name(),
         ]
     }
 
