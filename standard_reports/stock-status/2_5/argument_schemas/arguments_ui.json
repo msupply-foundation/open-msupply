@@ -1,0 +1,61 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/itemCode",
+      "label": "T#report.item-code",
+      "options": {
+        "useDebounce": false
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/itemName",
+      "label": "T#report.item-name",
+      "options": {
+        "useDebounce": false
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/monthlyConsumptionLookBackPeriod",
+      "label": "T#report.amc-lookback",
+      "options": {
+        "readonly": true
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/monthsOverstock",
+      "label": "T#label.max-months-of-stock",
+      "options": {
+        "readonly": true
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/monthsUnderstock",
+      "label": "T#label.min-months-of-stock",
+      "options": {
+        "readonly": true
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/sort",
+      "label": "T#report.sort-by",
+      "options": {
+        "show": [
+          ["name", "item"],
+          ["code", "code"]
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/dir",
+      "label": "T#report.sort-direction"
+    }
+  ]
+}

@@ -11,9 +11,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(RustEmbed)]
 // Relative to server/Cargo.toml
-#[folder = "../reports/generated"]
+#[folder = "../../standard_reports/generated"]
 #[exclude = "*.DS_Store"]
 pub struct EmbeddedStandardReports;
+
+#[derive(RustEmbed)]
+// Relative to server/Cargo.toml
+#[folder = "../../standard_forms/generated"]
+#[exclude = "*.DS_Store"]
+pub struct EmbeddedStandardForms;
 
 #[derive(Debug, Error)]
 #[error("No standard reports found")]
@@ -28,6 +34,14 @@ impl StandardReports {
         info!("upserting standard reports...");
         for file in EmbeddedStandardReports::iter() {
             if let Some(content) = EmbeddedStandardReports::get(&file) {
+                let json_data = content.data;
+                let reports_data: ReportsData = serde_json::from_slice(&json_data)?;
+                StandardReports::upsert_reports(reports_data, con, overwrite)?;
+            }
+        }
+        info!("upserting standard forms...");
+        for file in EmbeddedStandardForms::iter() {
+            if let Some(content) = EmbeddedStandardForms::get(&file) {
                 let json_data = content.data;
                 let reports_data: ReportsData = serde_json::from_slice(&json_data)?;
                 StandardReports::upsert_reports(reports_data, con, overwrite)?;

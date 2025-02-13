@@ -3,6 +3,7 @@ use thiserror::Error;
 
 use crate::{
     backend_plugin::plugin_provider::{PluginBundle, PluginInstance},
+    processors::ProcessorType,
     service_provider::ServiceContext,
     settings::Settings,
     UploadedFile, UploadedFileJsonError,
@@ -43,6 +44,15 @@ pub trait PluginServiceTrait: Sync + Send {
         uploaded_file.as_json_file(settings)
     }
 
+    fn reload_all_plugins(&self, ctx: &ServiceContext) -> Result<(), RepositoryError> {
+        let repo = BackendPluginRowRepository::new(&ctx.connection);
+        for row in repo.all()? {
+            PluginInstance::bind(row);
+        }
+
+        Ok(())
+    }
+
     fn install_uploaded_plugin(
         &self,
         ctx: &ServiceContext,
@@ -56,9 +66,10 @@ pub trait PluginServiceTrait: Sync + Send {
 
                 for row in plugin_bundle.backend_plugins.clone() {
                     backend_repo.upsert_one(row.clone())?;
-                    // Bind plugin to provider (this would ideally happen via processor, going over changelog)
-                    PluginInstance::bind(row)
                 }
+
+                ctx.processors_trigger
+                    .trigger_processor(ProcessorType::LoadPlugin);
 
                 Ok(plugin_bundle)
             })
