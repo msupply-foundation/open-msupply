@@ -69,7 +69,7 @@ pub enum InvoiceNodeStatus {
     /// Outbound Shipment: Status is updated based on corresponding inbound Shipment
     /// Inbound Shipment: Becomes not editable
     Verified,
-    // TODO: does further clarification need added for the cancelled status?
+    // Cancelled only applies to Verified Transactions, they're treated like a customer return with a reverse transaction created to undo the original transaction in the ledger
     Cancelled,
 }
 
