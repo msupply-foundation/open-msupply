@@ -1,9 +1,9 @@
 import { getPrescriptionDirections } from './getPrescriptionDirections';
 
 const options = [
-  { id: '1', name: '2t', direction: 'Take TWO tablets' },
-  { id: '2', name: '1m', direction: 'ONE month' },
-  { id: '3', name: 'tds', direction: 'THREE times a day' },
+  { id: '1', text: '2t', expansion: 'Take TWO tablets' },
+  { id: '2', text: '1m', expansion: 'ONE month' },
+  { id: '3', text: 'tds', expansion: 'THREE times a day' },
 ];
 
 describe('getPrescriptionDirections', () => {
