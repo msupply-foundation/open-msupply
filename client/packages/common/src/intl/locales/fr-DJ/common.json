@@ -34,7 +34,7 @@
   "button.ok-and-next": "OK, suivant",
   "button.open-the-menu": "Ouvrir le menu",
   "button.order-more": "Nouvelle commande",
-  "button.reduce-lines-to-zero": "Réduire les lignes à 0",
+  "button.reduce-lines-to-zero": "Réduire à 0",
   "button.refresh": "Rafraîchir",
   "button.repack": "Reconditionnement",
   "button.view-details": "Afficher les détails",
@@ -87,7 +87,7 @@
   "button.add-program": "Ajouter un programme",
   "button.adjust": "Ajuster",
   "button.allocate-lines": "Attribuer des lignes de réservation",
-  "button.change-location": "Modifier l'emplacement des lignes",
+  "button.change-location": "Modifier l'emplacement",
   "button.close-the-menu": "Fermer le menu",
   "button.requested-to-suggested": "Utiliser Quantités Suggérées",
   "button.retry": "Réessayer",
@@ -100,7 +100,7 @@
   "button.close": "Fermer",
   "button.create": "Créer",
   "button.delete": "Supprimer",
-  "button.delete-lines": "Supprimer les lignes sélectionnées",
+  "button.delete-lines": "Supprimer",
   "breadcrumb.item": "#{{id}}",
   "button.add-item": "Ajouter article",
   "button.allocate": "Allouer",
@@ -139,5 +139,9 @@
   "button.login": "Connexion",
   "button.next": "Suivant",
   "button.previous": "Précédent",
-  "button.send": "Envoyer"
+  "button.send": "Envoyer",
+  "button.continue": "Continuer",
+  "button.create-new-patient": "Créer un nouveau patient",
+  "button.history": "Historique",
+  "button.connect": "Connexion"
 }
