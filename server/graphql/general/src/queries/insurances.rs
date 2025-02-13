@@ -7,12 +7,13 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::InsuranceProviderNode;
 use repository::name_insurance_join_row::{
     InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinSort, NameInsuranceJoinSortField,
 };
 use serde::Serialize;
 use service::auth::{Resource, ResourceAccessRequest};
+
+use crate::types::InsuranceProviderNode;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
