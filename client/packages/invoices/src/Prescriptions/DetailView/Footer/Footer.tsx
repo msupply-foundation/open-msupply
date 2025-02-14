@@ -30,11 +30,11 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
     [InvoiceNodeStatus.New]: null,
     [InvoiceNodeStatus.Picked]: null,
     [InvoiceNodeStatus.Verified]: null,
+    [InvoiceNodeStatus.Cancelled]: null,
     // placeholder not used in prescriptions
     [InvoiceNodeStatus.Allocated]: null,
     [InvoiceNodeStatus.Shipped]: null,
     [InvoiceNodeStatus.Delivered]: null,
-    [InvoiceNodeStatus.Cancelled]: null,
   };
 
   if (statusIdx >= 0) {
@@ -45,6 +45,9 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
   }
   if (statusIdx >= 2) {
     statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
+  }
+  if (statusIdx >= 3) {
+    statusLog[InvoiceNodeStatus.Cancelled] = invoice.verifiedDatetime;
   }
 
   return statusLog;
@@ -102,6 +105,12 @@ export const FooterComponent: FC = () => {
     },
   ];
 
+  const statusList = prescriptionStatuses.filter(status => {
+    return data?.status === InvoiceNodeStatus.Cancelled
+      ? true
+      : status !== InvoiceNodeStatus.Cancelled;
+  });
+
   return (
     <AppFooterPortal
       Content={
@@ -121,7 +130,7 @@ export const FooterComponent: FC = () => {
               height={64}
             >
               <StatusCrumbs
-                statuses={prescriptionStatuses}
+                statuses={statusList}
                 statusLog={createStatusLog(data)}
                 statusFormatter={getStatusTranslator(t)}
               />
