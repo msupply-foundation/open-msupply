@@ -12,6 +12,7 @@ import {
   RouteBuilder,
   InvoiceNodeStatus,
   useConfirmationModal,
+  MinusCircleIcon,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
@@ -78,7 +79,7 @@ export const SidePanelComponent = () => {
           )}
           {canCancel && (
             <DetailPanelAction
-              icon={<DeleteIcon />}
+              icon={<MinusCircleIcon />}
               title={t('label.cancel')}
               onClick={onCancel}
             />
