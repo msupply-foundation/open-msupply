@@ -2993,6 +2993,17 @@ export type InsertPrinterConfigurationErrorInterface = {
   description: Scalars['String']['output'];
 };
 
+export type InsertPrinterConfigurationInput = {
+  address: Scalars['String']['input'];
+  description: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  labelHeight: Scalars['Int']['input'];
+  labelWidth: Scalars['Int']['input'];
+  port: Scalars['Int']['input'];
+};
+
+export type InsertPrinterConfigurationResponse = InsertError | PrinterConfigurationNode;
+
 export type InsertProgramEnrolmentInput = {
   /** Program document data */
   data: Scalars['JSON']['input'];
@@ -4215,6 +4226,7 @@ export type Mutations = {
   insertPluginData: InsertPluginDataResponse;
   insertPrescription: InsertPrescriptionResponse;
   insertPrescriptionLine: InsertPrescriptionLineResponse;
+  insertPrinterConfiguration: InsertPrinterConfigurationResponse;
   /**
    * Enrols a patient into a program by adding a program document to the patient's documents.
    * Every patient can only have one program document of each program type.
@@ -4290,7 +4302,6 @@ export type Mutations = {
   updateTemperatureBreach: UpdateTemperatureBreachResponse;
   updateUser: UpdateUserResponse;
   updateVaccination: UpdateVaccinationResponse;
-  upsertPrinterConfiguration: UpsertPrinterConfigurationResponse;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
 };
@@ -4619,6 +4630,12 @@ export type MutationsInsertPrescriptionArgs = {
 
 export type MutationsInsertPrescriptionLineArgs = {
   input: InsertPrescriptionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertPrinterConfigurationArgs = {
+  input: InsertPrinterConfigurationInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4958,12 +4975,6 @@ export type MutationsUpdateTemperatureBreachArgs = {
 
 export type MutationsUpdateVaccinationArgs = {
   input: UpdateVaccinationInput;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type MutationsUpsertPrinterConfigurationArgs = {
-  input: UpsertPrinterConfigurationInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -8970,17 +8981,6 @@ export type UpsertLogLevelResponse = {
 };
 
 export type UpsertPackVariantResponse = ItemVariantNode | UpsertItemVariantError;
-
-export type UpsertPrinterConfigurationInput = {
-  address: Scalars['String']['input'];
-  description: Scalars['String']['input'];
-  id: Scalars['String']['input'];
-  labelHeight: Scalars['Int']['input'];
-  labelWidth: Scalars['Int']['input'];
-  port: Scalars['Int']['input'];
-};
-
-export type UpsertPrinterConfigurationResponse = InsertError | PrinterConfigurationNode;
 
 export type UpsertVaccineCourseDoseInput = {
   customAgeLabel?: InputMaybe<Scalars['String']['input']>;
