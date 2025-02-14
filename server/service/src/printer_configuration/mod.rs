@@ -1,4 +1,4 @@
-pub use self::upsert::*;
+pub use self::insert::*;
 use crate::service_provider::ServiceContext;
 use query::get_printer_configurations;
 use repository::{
@@ -6,13 +6,14 @@ use repository::{
     PrinterConfigurationRow, RepositoryError, StorageConnection,
 };
 
-mod generate;
+mod insert;
 mod query;
-mod upsert;
+mod update;
 mod validate;
 
-pub use generate::generate;
-pub use validate::validate;
+pub use update::{
+    update_printer_configuration, UpdatePrinterConfiguration, UpdatePrinterConfigurationError,
+};
 
 pub trait PrinterConfigurationServiceTrait: Sync + Send {
     fn get_printer_configurations(
@@ -23,12 +24,20 @@ pub trait PrinterConfigurationServiceTrait: Sync + Send {
         get_printer_configurations(connection, filter)
     }
 
-    fn upsert_printer_configuration(
+    fn insert_printer_configuration(
         &self,
         ctx: &ServiceContext,
-        input: UpsertPrinterConfiguration,
-    ) -> Result<PrinterConfigurationRow, UpsertPrinterConfigurationError> {
-        upsert_printer_configuration(ctx, input)
+        input: InsertPrinterConfiguration,
+    ) -> Result<PrinterConfigurationRow, InsertPrinterConfigurationError> {
+        insert_printer_configuration(ctx, input)
+    }
+
+    fn update_printer_configuration(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdatePrinterConfiguration,
+    ) -> Result<PrinterConfigurationRow, UpdatePrinterConfigurationError> {
+        update_printer_configuration(ctx, input)
     }
 }
 pub struct PrinterConfigurationService {}
