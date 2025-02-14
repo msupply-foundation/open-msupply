@@ -9,6 +9,7 @@ export {
   KBarResults,
   useRegisterActions,
   useMatches,
+  useKBar,
 } from 'kbar';
 
 export {
