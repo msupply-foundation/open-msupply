@@ -7,7 +7,6 @@ use crate::service_provider::ServiceContext;
 
 #[derive(PartialEq, Debug)]
 pub enum InsertPrinterConfigurationError {
-    PrinterConfigurationDoesNotExist,
     DuplicatePrinterConfiguration,
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
@@ -47,6 +46,7 @@ pub fn generate(
     }
 }
 
+#[derive(Default)]
 pub struct InsertPrinterConfiguration {
     pub id: String,
     pub description: String,

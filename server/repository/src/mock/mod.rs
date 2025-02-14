@@ -30,6 +30,7 @@ mod name_tag;
 mod number;
 mod option;
 mod period_and_period_schedule;
+mod printer_configuration;
 mod program;
 pub mod program_enrolment;
 mod program_indicator;
@@ -97,6 +98,7 @@ pub use name_tag::*;
 pub use number::*;
 pub use option::*;
 pub use period_and_period_schedule::*;
+pub use printer_configuration::*;
 pub use program::*;
 pub use program_enrolment::*;
 pub use program_indicator::*;
@@ -230,6 +232,7 @@ pub struct MockData {
     pub contact_form: Vec<ContactFormRow>,
     pub reports: Vec<crate::ReportRow>,
     pub backend_plugin: Vec<BackendPluginRow>,
+    pub printer_configuration: Vec<PrinterConfigurationRow>,
 }
 
 impl MockData {
@@ -315,6 +318,7 @@ pub struct MockDataInserts {
     pub contact_form: bool,
     pub reports: bool,
     pub backend_plugin: bool,
+    pub printer_configuration: bool,
 }
 
 impl MockDataInserts {
@@ -389,6 +393,7 @@ impl MockDataInserts {
             contact_form: true,
             reports: true,
             backend_plugin: true,
+            printer_configuration: true,
         }
     }
 
@@ -731,6 +736,11 @@ impl MockDataInserts {
         self.backend_plugin = true;
         self
     }
+
+    pub fn printer_configuration(mut self) -> Self {
+        self.printer_configuration = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -824,6 +834,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             options: mock_options(),
             contact_form: mock_contact_form(),
             reports: mock_reports(),
+            printer_configuration: mock_printer_configuration(),
             ..Default::default()
         },
     );
@@ -1369,6 +1380,13 @@ pub fn insert_mock_data(
                 repo.upsert_one(row.clone()).unwrap();
             }
         }
+
+        if inserts.printer_configuration {
+            let repo = PrinterConfigurationRowRepository::new(connection);
+            for row in &mock_data.printer_configuration {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1447,6 +1465,7 @@ impl MockData {
             mut contact_form,
             mut reports,
             backend_plugin: _,
+            mut printer_configuration,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1520,6 +1539,9 @@ impl MockData {
         self.options.append(&mut options);
         self.contact_form.append(&mut contact_form);
         self.reports.append(&mut reports);
+        self.printer_configuration
+            .append(&mut printer_configuration);
+
         self
     }
 }
