@@ -46,7 +46,7 @@ import defaultPatientSchema from './DefaultPatientSchema.json';
 import defaultPatientUISchema from './DefaultPatientUISchema.json';
 import { VaccinationCardsListView } from '../VaccinationCard/ListView';
 import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
-import { InsuranceListView } from '../InsuranceView';
+import { InsuranceListView } from '../Insurance';
 
 const DEFAULT_SCHEMA: SchemaData = {
   formSchemaId: undefined,
