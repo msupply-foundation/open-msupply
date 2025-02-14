@@ -106,11 +106,12 @@ export const FooterComponent: FC = () => {
     },
   ];
 
-  const statusList = prescriptionStatuses.filter(status => {
-    return data?.status === InvoiceNodeStatus.Cancelled
+  // Don't show "Cancelled" status unless this prescription is already cancelled
+  const statusList = prescriptionStatuses.filter(status =>
+    data?.status === InvoiceNodeStatus.Cancelled
       ? true
-      : status !== InvoiceNodeStatus.Cancelled;
-  });
+      : status !== InvoiceNodeStatus.Cancelled
+  );
 
   return (
     <AppFooterPortal
