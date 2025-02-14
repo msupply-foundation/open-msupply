@@ -6,12 +6,21 @@ import {
   createTableStore,
   DataTable,
   TableProvider,
+  useUrlQuery,
 } from '@openmsupply-client/common';
+
+import {
+  PatientModal,
+  usePatientModalStore,
+} from '@openmsupply-client/programs';
 
 export const InsuranceListView = () => {
   const columns = useInsuranceColumns();
   const patientId = usePatient.utils.id();
   const { data, isLoading } = usePatient.document.insurances(patientId);
+
+  const { setModal } = usePatientModalStore();
+  const { updateQuery } = useUrlQuery();
 
   return (
     <TableProvider
@@ -25,6 +34,10 @@ export const InsuranceListView = () => {
         columns={columns}
         data={data?.nodes}
         isLoading={isLoading}
+        onRowClick={row => {
+          updateQuery({ insuranceId: row.id });
+          setModal(PatientModal.Insurance);
+        }}
       />
     </TableProvider>
   );

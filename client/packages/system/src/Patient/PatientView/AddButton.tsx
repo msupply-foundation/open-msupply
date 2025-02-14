@@ -31,6 +31,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
     SplitButtonOption<PatientModal>,
     SplitButtonOption<PatientModal>,
     SplitButtonOption<PatientModal>,
+    SplitButtonOption<PatientModal>,
   ] = useMemo(
     () => [
       {
@@ -47,10 +48,12 @@ export const AddButton: React.FC<AddButtonProps> = ({
         value: PatientModal.ContactTraceSearch,
         label: t('button.add-contact-trace'),
       },
+      { value: PatientModal.Insurance, label: t('button.add-insurance') },
     ],
     [disableEncounterButton, t]
   );
-  const [programOption, encounterOption, contactTraceOption] = options;
+  const [programOption, encounterOption, contactTraceOption, insuranceOption] =
+    options;
 
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<PatientModal>
@@ -67,6 +70,9 @@ export const AddButton: React.FC<AddButtonProps> = ({
         break;
       case PatientTabValue.ContactTracing:
         setSelectedOption(contactTraceOption);
+        break;
+      case PatientTabValue.Insurance:
+        setSelectedOption(insuranceOption);
         break;
     }
   }, [contactTraceOption, currentUrlTab, encounterOption, programOption]);
