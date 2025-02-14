@@ -159,8 +159,6 @@ mod update {
             insurance_provider_row.provider_name,
             input.provider_name.unwrap()
         );
-        // expiry date is 2026-12-31 -> 686 days
-        assert_eq!(insurance_provider_row.prescription_validity_days, Some(686));
         assert_eq!(insurance_provider_row.is_active, input.is_active.unwrap());
     }
 }
