@@ -1812,5 +1812,6 @@
   "label.ward": "Service",
   "messages.confirm-not-fully-supplied_other": "Il y a {{count}} lignes dans cette réquisition qui n'ont pas été entièrement fournies au client.\n\nSouhaitez-vous continuer ?",
   "report.stat": "Statut",
-  "label.cancelled": "Annulé"
+  "label.cancelled": "Annulé",
+  "messages.how-to-read-pending-encounters": "Description des colonnes : \n* Statut : Statut du patient dans le programme sélectionné"
 }
