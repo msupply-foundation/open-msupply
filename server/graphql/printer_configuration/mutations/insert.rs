@@ -1,8 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{
-        RecordAlreadyExist, RecordNotFound, RecordProgramCombinationAlreadyExists,
-    },
+    simple_generic_errors::{RecordAlreadyExist, RecordNotFound},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -37,7 +35,6 @@ pub enum InsertPrinterConfigurationResponse {
 #[graphql(name = "InsertPrinterConfigurationErrorInterface")]
 #[graphql(field(name = "description", ty = "String"))]
 pub enum InsertErrorInterface {
-    PrinterConfigurationDoesNotExist(RecordProgramCombinationAlreadyExists),
     DuplicatePrinterConfiguration(RecordAlreadyExist),
     CreatedRecordNotFound(RecordNotFound),
 }
@@ -107,9 +104,6 @@ fn map_error(error: InsertPrinterConfigurationError) -> Result<InsertErrorInterf
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        InsertPrinterConfigurationError::PrinterConfigurationDoesNotExist => {
-            BadUserInput(formatted_error)
-        }
         InsertPrinterConfigurationError::DuplicatePrinterConfiguration => {
             BadUserInput(formatted_error)
         }

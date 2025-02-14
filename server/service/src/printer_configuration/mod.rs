@@ -42,3 +42,6 @@ pub trait PrinterConfigurationServiceTrait: Sync + Send {
 }
 pub struct PrinterConfigurationService {}
 impl PrinterConfigurationServiceTrait for PrinterConfigurationService {}
+
+#[cfg(test)]
+mod tests;

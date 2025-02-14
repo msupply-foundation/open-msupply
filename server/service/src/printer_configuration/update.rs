@@ -47,7 +47,7 @@ pub fn generate(
         ..existing
     }
 }
-
+#[derive(Default)]
 pub struct UpdatePrinterConfiguration {
     pub id: String,
     pub description: String,
