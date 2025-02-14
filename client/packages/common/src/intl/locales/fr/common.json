@@ -183,7 +183,7 @@
   "description.rnr-consumed": "La quantité d'articles distribuée durant cette période (par Bons de Livraison ou Prescriptions)",
   "description.rnr-consumed-adjusted": "Montre la consommation ajustée prenant en compte les jours de rupture =(Consommation x Nombre de jours dans la période)/(Nombre de jours dans la période - Durée cumulée des ruptures)",
   "description.rnr-final-balance": "Niveau de stock à la fin de la période = Solde Initial + Q reçue - Q consommée ± Ajustements",
-  "description.rnr-initial-balance": "Stock disponible au début de la période. Ceci est tiré du formulaire rapport-réquisition précédent, si disponible, ou calculé en utilisant le stock disponible à la date de début de la période.",
+  "description.rnr-initial-balance": "Stock disponible au début de la période. Ceci est tiré du formulaire R&R précédent, si disponible, ou calculé en utilisant le stock disponible à la date de début de la période.",
   "description.rnr-losses": "Enregistrer manuellement les pertes de cet article durant la période",
   "description.rnr-low-stock": "! = Le solde final est inférieur à la moitié du maximum, !! = moins d'un quart (25%)",
   "description.rnr-maximum-quantity": "La quantité cible de stock disponible. = CMM x Préférence du dépôt 'Seuil pour l'excès de stock'",
