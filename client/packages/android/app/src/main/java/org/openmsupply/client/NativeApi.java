@@ -132,9 +132,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         // /android loader or not
         if (!webView.getUrl().matches(DEFAULT_URL))
             return;
-        // Initial load, display splash screen and wait for the server to start
-        webView.post(() -> webView.loadData(SplashPage.encodedHtml, "text/html", "base64"));
-        // advertiseService();
+
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
