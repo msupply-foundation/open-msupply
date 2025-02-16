@@ -217,4 +217,8 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
 
   insurances: async (nameId: string): Promise<GetPatientInsuranceResponse> =>
     (await sdk.insurances({ storeId, nameId })).insurances,
+
+  // insertInsurance
+
+  // updateInsurance
 });

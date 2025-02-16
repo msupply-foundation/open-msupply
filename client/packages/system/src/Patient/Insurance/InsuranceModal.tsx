@@ -23,6 +23,15 @@ import {
 import { Box, Stack } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 
+const DEFAULT_INSURANCE = {
+  policyNumber: '',
+  providerName: '',
+  policyType: '',
+  isActive: undefined as boolean | undefined,
+  discountRate: 0,
+  expiryDate: '',
+};
+
 // If theres no insurance ID passed we create an insurance
 // If there's no ID don't let editing of policy number
 
@@ -30,10 +39,13 @@ export const InsuranceModal: FC = (): ReactElement => {
   const t = useTranslation();
   const { current, setModal } = usePatientModalStore();
 
-  const patientId = usePatient.utils.id();
-  const { data } = usePatient.document.insurances(patientId);
   const { urlQuery } = useUrlQuery();
   const insuranceId = urlQuery['insuranceId'];
+  const patientId = usePatient.utils.id();
+  const { data } = usePatient.document.insurances(patientId);
+
+  // This needs to be refactored to call the API to fetch a single insurance record.
+  // Note: The endpoint for fetching a single insurance record needs to be created.
   const selectedInsurance = data?.nodes.find(({ id }) => id === insuranceId);
 
   const { Modal } = useDialog({
@@ -42,14 +54,7 @@ export const InsuranceModal: FC = (): ReactElement => {
     disableBackdrop: true,
   });
 
-  const [insurance, setInsurance] = useState({
-    policyNumber: '',
-    providerName: '',
-    policyType: '',
-    isActive: false,
-    discountRate: 0,
-    expiryDate: '',
-  });
+  const [insurance, setInsurance] = useState(DEFAULT_INSURANCE);
 
   useEffect(() => {
     if (selectedInsurance) {
@@ -62,14 +67,7 @@ export const InsuranceModal: FC = (): ReactElement => {
         expiryDate: selectedInsurance.expiryDate,
       });
     } else {
-      setInsurance({
-        policyNumber: '',
-        providerName: '',
-        policyType: '',
-        isActive: false,
-        discountRate: 0,
-        expiryDate: '',
-      });
+      setInsurance(DEFAULT_INSURANCE);
     }
   }, [selectedInsurance]);
 
