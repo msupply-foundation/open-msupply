@@ -80,7 +80,7 @@ export const SidePanelComponent = () => {
           {canCancel && (
             <DetailPanelAction
               icon={<MinusCircleIcon />}
-              title={t('label.cancel')}
+              title={t('label.cancel-prescription')}
               onClick={onCancel}
             />
           )}
