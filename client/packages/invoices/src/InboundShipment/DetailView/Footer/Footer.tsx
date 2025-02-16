@@ -34,6 +34,7 @@ const createStatusLog = (invoice: InboundFragment) => {
     [InvoiceNodeStatus.Verified]: null,
     // Placeholder for typescript, not used in inbounds
     [InvoiceNodeStatus.Allocated]: null,
+    [InvoiceNodeStatus.Cancelled]: null,
   };
 
   if (statusIdx >= 0) {
