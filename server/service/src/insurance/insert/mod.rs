@@ -1,10 +1,8 @@
-use chrono::Utc;
 use repository::{
     name_insurance_join_row::{
         InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinRowRepository,
     },
-    InsuranceProviderRow, InsuranceProviderRowRepository, RepositoryError, StorageConnection,
-    TransactionError,
+    RepositoryError, TransactionError,
 };
 
 use crate::{service_provider::ServiceContext, SingleRecordError};
@@ -42,12 +40,12 @@ pub struct InsertInsurance {
     pub id: String,
     pub name_link_id: String,
     pub insurance_provider_id: String,
-    pub policy_number: String,
+    pub policy_number_personal: String,
+    pub policy_number_family: String,
     pub policy_type: InsurancePolicyType,
     pub discount_percentage: f64,
     pub expiry_date: chrono::NaiveDate,
     pub is_active: bool,
-    pub provider_name: String,
 }
 
 pub fn insert_insurance(
@@ -59,8 +57,6 @@ pub fn insert_insurance(
         .transaction_sync(|connection| {
             validate(&input.id, connection)?;
 
-            insert_insurance_provider(connection, &input)?;
-
             let new_insurance = generate(GenerateInput {
                 insert_input: input.clone(),
             });
@@ -70,31 +66,4 @@ pub fn insert_insurance(
         })
         .map_err(|error: TransactionError<InsertInsuranceError>| error.to_inner_error())?;
     Ok(insurance)
-}
-
-pub fn insert_insurance_provider(
-    connection: &StorageConnection,
-    input: &InsertInsurance,
-) -> Result<(), InsertInsuranceError> {
-    let insurance_provider_repository = InsuranceProviderRowRepository::new(connection);
-
-    let insurance_provider_not_exists = insurance_provider_repository
-        .find_one_by_id(&input.insurance_provider_id)?
-        .is_none();
-
-    if insurance_provider_not_exists {
-        let today = Utc::now().date_naive();
-
-        let valid_days = Some(input.expiry_date.signed_duration_since(today).num_days() as i32);
-
-        insurance_provider_repository.upsert_one(&InsuranceProviderRow {
-            id: input.insurance_provider_id.clone(),
-            is_active: input.is_active,
-            provider_name: input.provider_name.clone(),
-            prescription_validity_days: valid_days,
-            comment: None,
-        })?;
-    }
-
-    Ok(())
 }
