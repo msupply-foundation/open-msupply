@@ -23,7 +23,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
   disableEncounterButton,
 }) => {
   const t = useTranslation();
-  const { urlQuery } = useUrlQuery();
+  const { urlQuery, updateQuery } = useUrlQuery();
   const currentUrlTab = urlQuery['tab'];
   const { setModal: selectModal, reset } = usePatientModalStore();
 
@@ -78,12 +78,14 @@ export const AddButton: React.FC<AddButtonProps> = ({
   }, [contactTraceOption, currentUrlTab, encounterOption, programOption]);
 
   const onSelectOption = (option: SplitButtonOption<PatientModal>) => {
+    updateQuery({ insuranceId: undefined });
     setSelectedOption(option);
     reset();
     selectModal(option?.value);
   };
 
   const onClick = () => {
+    updateQuery({ insuranceId: undefined });
     reset();
     selectModal(selectedOption?.value);
   };
