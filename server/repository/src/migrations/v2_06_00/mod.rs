@@ -16,6 +16,7 @@ mod add_program_id_to_invoice;
 mod backend_plugins;
 mod prescribed_quantity_store_pref;
 mod printer_create_table;
+mod report_add_prescriptions_context;
 
 pub(crate) struct V2_06_00;
 
@@ -45,6 +46,7 @@ impl Migration for V2_06_00 {
             Box::new(printer_create_table::Migrate),
             Box::new(add_insurance_fields_to_invoice::Migrate),
             Box::new(add_cancelled_status_to_invoice::Migrate),
+            Box::new(report_add_prescriptions_context::Migrate),
         ]
     }
 }
