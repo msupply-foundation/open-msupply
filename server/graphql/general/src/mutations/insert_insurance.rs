@@ -10,16 +10,16 @@ use service::{
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum InsertInsurancePolicyNodeType {
+pub enum InsurancePolicyNodeType {
     Personal,
     Business,
 }
 
-impl InsertInsurancePolicyNodeType {
+impl InsurancePolicyNodeType {
     pub fn to_domain(&self) -> InsurancePolicyType {
         match self {
-            InsertInsurancePolicyNodeType::Personal => InsurancePolicyType::Personal,
-            InsertInsurancePolicyNodeType::Business => InsurancePolicyType::Business,
+            InsurancePolicyNodeType::Personal => InsurancePolicyType::Personal,
+            InsurancePolicyNodeType::Business => InsurancePolicyType::Business,
         }
     }
 }
@@ -27,40 +27,40 @@ impl InsertInsurancePolicyNodeType {
 #[derive(InputObject)]
 pub struct InsertInsuranceInput {
     pub id: String,
-    pub name_link_id: String,
+    pub name_id: String,
     pub insurance_provider_id: String,
-    pub policy_number: String,
-    pub policy_type: InsertInsurancePolicyNodeType,
+    pub policy_number_personal: String,
+    pub policy_number_family: String,
+    pub policy_type: InsurancePolicyNodeType,
     pub discount_percentage: f64,
     pub expiry_date: chrono::NaiveDate,
     pub is_active: bool,
-    pub provider_name: String,
 }
 
 impl InsertInsuranceInput {
     pub fn to_domain(self) -> ServiceInput {
         let InsertInsuranceInput {
             id,
-            name_link_id,
+            name_id,
             insurance_provider_id,
-            policy_number,
+            policy_number_family,
+            policy_number_personal,
             policy_type,
             discount_percentage,
             expiry_date,
             is_active,
-            provider_name,
         } = self;
 
         ServiceInput {
             id,
-            name_link_id,
+            name_link_id: name_id,
             insurance_provider_id,
-            policy_number,
+            policy_number_family,
+            policy_number_personal,
             policy_type: policy_type.to_domain(),
             discount_percentage,
             expiry_date,
             is_active,
-            provider_name,
         }
     }
 }

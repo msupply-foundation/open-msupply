@@ -5,7 +5,7 @@ mod insert {
         mock::{mock_name_a, MockDataInserts},
         name_insurance_join_row::InsurancePolicyType,
         test_db::setup_all,
-        InsuranceProviderRowRepository,
+        InsuranceProviderRow, InsuranceProviderRowRepository,
     };
 
     use crate::{
@@ -22,17 +22,30 @@ mod insert {
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.insurance_service;
 
+        // Insert the insurance provider record
+        let insurance_provider_a = InsuranceProviderRow {
+            id: "insurance_provider_id".to_string(),
+            provider_name: "insurance_provider_a".to_string(),
+            comment: Some("Test".to_string()),
+            is_active: true,
+            prescription_validity_days: Some(30),
+        };
+
+        InsuranceProviderRowRepository::new(&context.connection)
+            .upsert_one(&insurance_provider_a)
+            .unwrap();
+
         // Insert the insurance record
         let input = InsertInsurance {
             id: "insurance_a".to_string(),
             name_link_id: mock_name_a().id.clone(),
-            insurance_provider_id: "insurance_provider_a".to_string(),
-            policy_number: "policy_number_a".to_string(),
+            insurance_provider_id: "insurance_provider_id".to_string(),
+            policy_number_family: "123".to_string(),
+            policy_number_personal: "ABC".to_string(),
             policy_type: InsurancePolicyType::Personal,
             discount_percentage: 10.0,
             expiry_date: NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date"),
             is_active: true,
-            provider_name: "Insurance Provider 1".to_string(),
         };
 
         let result = service.insert_insurance(&context, input.clone()).unwrap();
@@ -55,29 +68,35 @@ mod insert {
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.insurance_service;
 
+        let insurance_provider_a = InsuranceProviderRow {
+            id: "insurance_provider_id".to_string(),
+            provider_name: "insurance_provider_a".to_string(),
+            comment: Some("Test".to_string()),
+            is_active: true,
+            prescription_validity_days: Some(30),
+        };
+
+        InsuranceProviderRowRepository::new(&context.connection)
+            .upsert_one(&insurance_provider_a)
+            .unwrap();
+
         let input = InsertInsurance {
             id: "insurance_a".to_string(),
             name_link_id: mock_name_a().id.clone(),
-            insurance_provider_id: "insurance_provider_a".to_string(),
-            policy_number: "policy_number_a".to_string(),
+            insurance_provider_id: "insurance_provider_id".to_string(),
+            policy_number_family: "123".to_string(),
+            policy_number_personal: "ABC".to_string(),
             policy_type: InsurancePolicyType::Personal,
             discount_percentage: 10.0,
             expiry_date: NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date"),
             is_active: true,
-            provider_name: "Insurance Provider 1".to_string(),
         };
 
         let result = service.insert_insurance(&context, input.clone()).unwrap();
 
         assert_eq!(result.id, input.id);
 
-        // Check that insurance provider got created
-        let repo = InsuranceProviderRowRepository::new(&context.connection);
-        let insurance_provider = repo
-            .find_one_by_id(&input.insurance_provider_id)
-            .unwrap()
-            .unwrap();
-
-        assert_eq!(insurance_provider.id, input.insurance_provider_id);
+        // check policy number
+        assert_eq!(result.policy_number, "123-ABC");
     }
 }
