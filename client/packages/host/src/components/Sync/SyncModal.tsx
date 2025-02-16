@@ -97,11 +97,14 @@ export const SyncModal = ({
     isLoading,
     onManualSync,
   } = useHostSync(open);
-  const { updateUserIsLoading, updateUser } = useAuthContext();
+  const { updateUserIsLoading, updateUser, setStore, store } = useAuthContext();
 
   const sync = async () => {
     await updateUser();
     await onManualSync();
+    if (!!store) {
+      await setStore(store);
+    }
   };
   const durationAsDate = new Date(
     0,

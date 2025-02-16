@@ -11,7 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-            CREATE TABLE printer_configuration (
+            CREATE TABLE printer (
                 id TEXT NOT NULL PRIMARY KEY,
                 description TEXT NOT NULL,
                 address TEXT NOT NULL,
