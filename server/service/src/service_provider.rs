@@ -22,6 +22,7 @@ use crate::{
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
     },
     email::{EmailService, EmailServiceTrait},
+    insurance::{InsuranceService, InsuranceServiceTrait},
     invoice::{InvoiceService, InvoiceServiceTrait},
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
     item::ItemServiceTrait,
@@ -117,6 +118,7 @@ pub struct ServiceProvider {
     pub document_registry_service: Box<dyn DocumentRegistryServiceTrait>,
     pub form_schema_service: Box<dyn FormSchemaServiceTrait>,
     pub patient_service: Box<dyn PatientServiceTrait>,
+    pub insurance_service: Box<dyn InsuranceServiceTrait>,
     pub program_enrolment_service: Box<dyn ProgramEnrolmentServiceTrait>,
     pub encounter_service: Box<dyn EncounterServiceTrait>,
     pub program_event_service: Box<dyn ProgramEventServiceTrait>,
@@ -266,6 +268,7 @@ impl ServiceProvider {
             email_service: Box::new(EmailService::new(mail_settings.clone())),
             contact_form_service: Box::new(ContactFormService {}),
             plugin_service: Box::new(PluginService {}),
+            insurance_service: Box::new(InsuranceService {}),
             frontend_plugins_cache: FrontendPluginCache::new(),
         }
     }
