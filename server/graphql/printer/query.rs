@@ -5,28 +5,25 @@ use graphql_core::{
     standard_graphql_error::validate_auth,
     ContextExt,
 };
-use graphql_types::types::{PrinterConfigurationConnector, PrinterConfigurationNode};
+use graphql_types::types::{PrinterConnector, PrinterNode};
 
-use repository::{printer_configuration::PrinterConfigurationFilter, EqualFilter, StringFilter};
+use repository::{printer::PrinterFilter, EqualFilter, StringFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Union)]
-pub enum PrinterConfigurationResponse {
+pub enum PrinterResponse {
     Error(NodeError),
-    Response(PrinterConfigurationNode),
+    Response(PrinterNode),
 }
 
 #[derive(InputObject, Clone)]
-pub struct PrinterConfigurationFilterInput {
+pub struct PrinterFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub description: Option<StringFilterInput>,
     pub address: Option<EqualFilterStringInput>,
 }
 
-pub fn printer_configurations(
-    ctx: &Context<'_>,
-    filter: Option<PrinterConfigurationFilterInput>,
-) -> Result<PrinterConfigurationConnector> {
+pub fn printers(ctx: &Context<'_>, filter: Option<PrinterFilterInput>) -> Result<PrinterConnector> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -38,18 +35,18 @@ pub fn printer_configurations(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let printer_configuration_service = &service_provider.printer_configuration_service;
-    let printer_configurations = printer_configuration_service
-        .get_printer_configurations(&context.connection, filter.map(|f| f.to_domain()))?;
+    let printer_service = &service_provider.printer_service;
+    let printers =
+        printer_service.get_printers(&context.connection, filter.map(|f| f.to_domain()))?;
 
-    let response = PrinterConfigurationConnector::from_vec(printer_configurations);
+    let response = PrinterConnector::from_vec(printers);
 
     Ok(response)
 }
 
-impl PrinterConfigurationFilterInput {
-    pub fn to_domain(self) -> PrinterConfigurationFilter {
-        PrinterConfigurationFilter {
+impl PrinterFilterInput {
+    pub fn to_domain(self) -> PrinterFilter {
+        PrinterFilter {
             id: self.id.map(EqualFilter::from),
             description: self.description.map(StringFilter::from),
             address: self.address.map(EqualFilter::from),

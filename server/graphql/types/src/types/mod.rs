@@ -125,8 +125,8 @@ pub mod abbreviation;
 pub use self::abbreviation::*;
 mod requisition_item_information;
 
-pub mod printer_configuration;
-pub use self::printer_configuration::*;
+pub mod printer;
+pub use self::printer::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);

@@ -1,5 +1,5 @@
 use repository::{
-    printer_configuration_row::{PrinterConfigurationRow, PrinterConfigurationRowRepository},
+    printer_row::{PrinterRow, PrinterRowRepository},
     RepositoryError, StorageConnection,
 };
 
@@ -7,28 +7,25 @@ use super::validate::validate_printer_exists;
 use crate::service_provider::ServiceContext;
 
 #[derive(PartialEq, Debug)]
-pub enum UpdatePrinterConfigurationError {
-    PrinterConfigurationDoesNotExist,
+pub enum UpdatePrinterError {
+    PrinterDoesNotExist,
     DatabaseError(RepositoryError),
     InternalError(String),
 }
 
 pub fn validate(
     connection: &StorageConnection,
-    input: &UpdatePrinterConfiguration,
-) -> Result<PrinterConfigurationRow, UpdatePrinterConfigurationError> {
+    input: &UpdatePrinter,
+) -> Result<PrinterRow, UpdatePrinterError> {
     let Some(existing) = validate_printer_exists(connection, input)? else {
-        return Err(UpdatePrinterConfigurationError::PrinterConfigurationDoesNotExist);
+        return Err(UpdatePrinterError::PrinterDoesNotExist);
     };
 
     Ok(existing)
 }
 
-pub fn generate(
-    existing: PrinterConfigurationRow,
-    update: UpdatePrinterConfiguration,
-) -> PrinterConfigurationRow {
-    let UpdatePrinterConfiguration {
+pub fn generate(existing: PrinterRow, update: UpdatePrinter) -> PrinterRow {
+    let UpdatePrinter {
         id,
         description,
         address,
@@ -37,7 +34,7 @@ pub fn generate(
         label_height,
     } = update;
 
-    PrinterConfigurationRow {
+    PrinterRow {
         id,
         description,
         address,
@@ -48,7 +45,7 @@ pub fn generate(
     }
 }
 #[derive(Default)]
-pub struct UpdatePrinterConfiguration {
+pub struct UpdatePrinter {
     pub id: String,
     pub description: String,
     pub address: String,
@@ -57,29 +54,29 @@ pub struct UpdatePrinterConfiguration {
     pub label_height: i32,
 }
 
-pub fn update_printer_configuration(
+pub fn update_printer(
     ctx: &ServiceContext,
-    input: UpdatePrinterConfiguration,
-) -> Result<PrinterConfigurationRow, UpdatePrinterConfigurationError> {
+    input: UpdatePrinter,
+) -> Result<PrinterRow, UpdatePrinterError> {
     let result = ctx
         .connection
         .transaction_sync(|connection| {
             let existing = validate(connection, &input)?;
             let row = generate(existing, input);
-            let repo = PrinterConfigurationRowRepository::new(connection);
+            let repo = PrinterRowRepository::new(connection);
 
             repo.upsert_one(&row)?;
 
             repo.find_one_by_id(&row.id)?
-                .ok_or(UpdatePrinterConfigurationError::PrinterConfigurationDoesNotExist)
+                .ok_or(UpdatePrinterError::PrinterDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
     Ok(result)
 }
 
-impl From<RepositoryError> for UpdatePrinterConfigurationError {
+impl From<RepositoryError> for UpdatePrinterError {
     fn from(error: RepositoryError) -> Self {
-        UpdatePrinterConfigurationError::DatabaseError(error)
+        UpdatePrinterError::DatabaseError(error)
     }
 }

@@ -30,7 +30,7 @@ mod name_tag;
 mod number;
 mod option;
 mod period_and_period_schedule;
-mod printer_configuration;
+mod printer;
 mod program;
 pub mod program_enrolment;
 mod program_indicator;
@@ -98,7 +98,7 @@ pub use name_tag::*;
 pub use number::*;
 pub use option::*;
 pub use period_and_period_schedule::*;
-pub use printer_configuration::*;
+pub use printer::*;
 pub use program::*;
 pub use program_enrolment::*;
 pub use program_indicator::*;
@@ -232,7 +232,7 @@ pub struct MockData {
     pub contact_form: Vec<ContactFormRow>,
     pub reports: Vec<crate::ReportRow>,
     pub backend_plugin: Vec<BackendPluginRow>,
-    pub printer_configuration: Vec<PrinterConfigurationRow>,
+    pub printer: Vec<PrinterRow>,
 }
 
 impl MockData {
@@ -318,7 +318,7 @@ pub struct MockDataInserts {
     pub contact_form: bool,
     pub reports: bool,
     pub backend_plugin: bool,
-    pub printer_configuration: bool,
+    pub printer: bool,
 }
 
 impl MockDataInserts {
@@ -393,7 +393,7 @@ impl MockDataInserts {
             contact_form: true,
             reports: true,
             backend_plugin: true,
-            printer_configuration: true,
+            printer: true,
         }
     }
 
@@ -737,8 +737,8 @@ impl MockDataInserts {
         self
     }
 
-    pub fn printer_configuration(mut self) -> Self {
-        self.printer_configuration = true;
+    pub fn printer(mut self) -> Self {
+        self.printer = true;
         self
     }
 }
@@ -834,7 +834,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             options: mock_options(),
             contact_form: mock_contact_form(),
             reports: mock_reports(),
-            printer_configuration: mock_printer_configuration(),
+            printer: mock_printer(),
             ..Default::default()
         },
     );
@@ -1381,9 +1381,9 @@ pub fn insert_mock_data(
             }
         }
 
-        if inserts.printer_configuration {
-            let repo = PrinterConfigurationRowRepository::new(connection);
-            for row in &mock_data.printer_configuration {
+        if inserts.printer {
+            let repo = PrinterRowRepository::new(connection);
+            for row in &mock_data.printer {
                 repo.upsert_one(row).unwrap();
             }
         }
@@ -1465,7 +1465,7 @@ impl MockData {
             mut contact_form,
             mut reports,
             backend_plugin: _,
-            mut printer_configuration,
+            mut printer,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1539,8 +1539,7 @@ impl MockData {
         self.options.append(&mut options);
         self.contact_form.append(&mut contact_form);
         self.reports.append(&mut reports);
-        self.printer_configuration
-            .append(&mut printer_configuration);
+        self.printer.append(&mut printer);
 
         self
     }

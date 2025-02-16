@@ -115,6 +115,7 @@ export enum ActivityLogNodeType {
   InvoiceDeleted = 'INVOICE_DELETED',
   InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
   InvoiceStatusAllocated = 'INVOICE_STATUS_ALLOCATED',
+  InvoiceStatusCancelled = 'INVOICE_STATUS_CANCELLED',
   InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
   InvoiceStatusShipped = 'INVOICE_STATUS_SHIPPED',
@@ -2694,7 +2695,7 @@ export type InsertEncounterResponse = EncounterNode;
 
 export type InsertError = {
   __typename: 'InsertError';
-  error: InsertPrinterConfigurationErrorInterface;
+  error: InsertPrinterErrorInterface;
 };
 
 export type InsertErrorInterface = {
@@ -2990,11 +2991,11 @@ export type InsertPrescriptionResponseWithId = {
   response: InsertPrescriptionResponse;
 };
 
-export type InsertPrinterConfigurationErrorInterface = {
+export type InsertPrinterErrorInterface = {
   description: Scalars['String']['output'];
 };
 
-export type InsertPrinterConfigurationInput = {
+export type InsertPrinterInput = {
   address: Scalars['String']['input'];
   description: Scalars['String']['input'];
   id: Scalars['String']['input'];
@@ -3003,7 +3004,7 @@ export type InsertPrinterConfigurationInput = {
   port: Scalars['Int']['input'];
 };
 
-export type InsertPrinterConfigurationResponse = InsertError | PrinterConfigurationNode;
+export type InsertPrinterResponse = InsertError | PrinterNode;
 
 export type InsertProgramEnrolmentInput = {
   /** Program document data */
@@ -3309,6 +3310,56 @@ export type InsertVaccineCourseInput = {
 };
 
 export type InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode;
+
+export type InsuranceConnector = {
+  __typename: 'InsuranceConnector';
+  nodes: Array<InsuranceNode>;
+};
+
+export type InsuranceNode = {
+  __typename: 'InsuranceNode';
+  discountPercentage: Scalars['Float']['output'];
+  expiryDate: Scalars['NaiveDate']['output'];
+  id: Scalars['String']['output'];
+  insuranceProviderId: Scalars['String']['output'];
+  insuranceProviders?: Maybe<InsuranceProviderNode>;
+  isActive: Scalars['Boolean']['output'];
+  policyNumber: Scalars['String']['output'];
+  policyNumberFamily?: Maybe<Scalars['String']['output']>;
+  policyNumberPerson?: Maybe<Scalars['String']['output']>;
+  policyType: InsurancePolicyNodeType;
+};
+
+export enum InsurancePolicyNodeType {
+  Business = 'BUSINESS',
+  Personal = 'PERSONAL'
+}
+
+export type InsuranceProviderNode = {
+  __typename: 'InsuranceProviderNode';
+  comment?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  prescriptionValidityDays?: Maybe<Scalars['Int']['output']>;
+  providerName: Scalars['String']['output'];
+};
+
+export type InsuranceResponse = InsuranceConnector;
+
+export enum InsuranceSortFieldInput {
+  ExpiryDate = 'expiryDate',
+  IsActive = 'isActive'
+}
+
+export type InsuranceSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: InsuranceSortFieldInput;
+};
 
 export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & ScannedDataParseErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpsertBundledItemErrorInterface & UpsertItemVariantErrorInterface & {
   __typename: 'InternalError';
@@ -4228,7 +4279,7 @@ export type Mutations = {
   insertPluginData: InsertPluginDataResponse;
   insertPrescription: InsertPrescriptionResponse;
   insertPrescriptionLine: InsertPrescriptionLineResponse;
-  insertPrinterConfiguration: InsertPrinterConfigurationResponse;
+  insertPrinter: InsertPrinterResponse;
   /**
    * Enrols a patient into a program by adding a program document to the patient's documents.
    * Every patient can only have one program document of each program type.
@@ -4281,6 +4332,7 @@ export type Mutations = {
   updatePluginData: UpdatePluginDataResponse;
   updatePrescription: UpdatePrescriptionResponse;
   updatePrescriptionLine: UpdatePrescriptionLineResponse;
+  updatePrinter: UpdatePrinterResponse;
   /** Updates an existing program document belonging to a patient. */
   updateProgramEnrolment: UpdateProgramEnrolmentResponse;
   /**
@@ -4636,8 +4688,8 @@ export type MutationsInsertPrescriptionLineArgs = {
 };
 
 
-export type MutationsInsertPrinterConfigurationArgs = {
-  input: InsertPrinterConfigurationInput;
+export type MutationsInsertPrinterArgs = {
+  input: InsertPrinterInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4876,6 +4928,12 @@ export type MutationsUpdatePrescriptionArgs = {
 
 export type MutationsUpdatePrescriptionLineArgs = {
   input: UpdatePrescriptionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdatePrinterArgs = {
+  input: UpdatePrinterInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5516,20 +5574,20 @@ export type PrintReportSortInput = {
   key: Scalars['String']['input'];
 };
 
-export type PrinterConfigurationConnector = {
-  __typename: 'PrinterConfigurationConnector';
-  nodes: Array<PrinterConfigurationNode>;
+export type PrinterConnector = {
+  __typename: 'PrinterConnector';
+  nodes: Array<PrinterNode>;
   totalCount: Scalars['Int']['output'];
 };
 
-export type PrinterConfigurationFilterInput = {
+export type PrinterFilterInput = {
   address?: InputMaybe<EqualFilterStringInput>;
   description?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
 };
 
-export type PrinterConfigurationNode = {
-  __typename: 'PrinterConfigurationNode';
+export type PrinterNode = {
+  __typename: 'PrinterNode';
   address: Scalars['String']['output'];
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
@@ -5851,6 +5909,7 @@ export type Queries = {
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
+  insurances: InsuranceResponse;
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
@@ -5887,7 +5946,7 @@ export type Queries = {
   patients: PatientResponse;
   pluginData: PluginDataResponse;
   plugins: Array<PluginNode>;
-  printerConfigurations: PrinterConfigurationConnector;
+  printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
   programIndicators: ProgramIndicatorResponse;
@@ -6229,6 +6288,13 @@ export type QueriesInsertPrescriptionArgs = {
 };
 
 
+export type QueriesInsurancesArgs = {
+  nameId: Scalars['String']['input'];
+  sort?: InputMaybe<Array<InsuranceSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesInventoryAdjustmentReasonsArgs = {
   filter?: InputMaybe<InventoryAdjustmentReasonFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -6379,8 +6445,8 @@ export type QueriesPluginDataArgs = {
 };
 
 
-export type QueriesPrinterConfigurationsArgs = {
-  filter?: InputMaybe<PrinterConfigurationFilterInput>;
+export type QueriesPrintersArgs = {
+  filter?: InputMaybe<PrinterFilterInput>;
 };
 
 
@@ -6702,7 +6768,7 @@ export type ReasonOptionSortInput = {
   key: ReasonOptionSortFieldInput;
 };
 
-export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & InsertPrinterConfigurationErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & {
+export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & InsertPrinterErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdatePrinterErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
 };
@@ -6712,12 +6778,12 @@ export type RecordBelongsToAnotherStore = DeleteAssetErrorInterface & DeleteAsse
   description: Scalars['String']['output'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCustomerReturnErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteSupplierReturnErrorInterface & DeleteVaccineCourseErrorInterface & InsertPrinterConfigurationErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & ScannedDataParseErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateIndicatorValueErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateNamePropertiesErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateReturnOtherPartyErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCustomerReturnErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteSupplierReturnErrorInterface & DeleteVaccineCourseErrorInterface & InsertPrinterErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & ScannedDataParseErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateIndicatorValueErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateNamePropertiesErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdatePrinterErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateReturnOtherPartyErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String']['output'];
 };
 
-export type RecordProgramCombinationAlreadyExists = InsertPrinterConfigurationErrorInterface & InsertVaccineCourseErrorInterface & UpdateVaccineCourseErrorInterface & {
+export type RecordProgramCombinationAlreadyExists = InsertVaccineCourseErrorInterface & UpdatePrinterErrorInterface & UpdateVaccineCourseErrorInterface & {
   __typename: 'RecordProgramCombinationAlreadyExists';
   description: Scalars['String']['output'];
 };
@@ -8167,6 +8233,11 @@ export type UpdateEncounterInput = {
 
 export type UpdateEncounterResponse = EncounterNode;
 
+export type UpdateError = {
+  __typename: 'UpdateError';
+  error: UpdatePrinterErrorInterface;
+};
+
 export type UpdateErrorInterface = {
   description: Scalars['String']['output'];
 };
@@ -8541,6 +8612,21 @@ export enum UpdatePrescriptionStatusInput {
   Picked = 'PICKED',
   Verified = 'VERIFIED'
 }
+
+export type UpdatePrinterErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpdatePrinterInput = {
+  address: Scalars['String']['input'];
+  description: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  labelHeight: Scalars['Int']['input'];
+  labelWidth: Scalars['Int']['input'];
+  port: Scalars['Int']['input'];
+};
+
+export type UpdatePrinterResponse = PrinterNode | UpdateError;
 
 export type UpdateProgramEnrolmentInput = {
   /** Program document data */

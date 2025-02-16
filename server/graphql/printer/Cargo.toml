@@ -1,5 +1,5 @@
 [package]
-name = "graphql_printer_configuration"
+name = "graphql_printer"
 version = "0.1.0"
 edition = "2018"
 

@@ -36,7 +36,7 @@ graphql_types = { path = "types" }
 graphql_batch_mutations = { path = "batch_mutations" }
 graphql_stock_line = { path = "stock_line" }
 graphql_repack = { path = "repack" }
-graphql_printer_configuration = { path = "printer_configuration" }
+graphql_printer = { path = "printer" }
 graphql_form_schema = { path = "form_schema" }
 graphql_clinician = { path = "clinician" }
 graphql_plugin = { path = "plugin" }
