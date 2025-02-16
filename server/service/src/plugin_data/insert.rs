@@ -57,7 +57,7 @@ fn generate(
 ) -> PluginDataRow {
     PluginDataRow {
         id,
-        plugin_name,
+        plugin_code: plugin_name,
         related_record_id,
         related_record_type,
         store_id: store_id.to_string(),
@@ -131,6 +131,8 @@ mod test {
         let plugin_data = service
             .get_plugin_data(&context, None, None)
             .unwrap()
+            .rows
+            .pop()
             .unwrap()
             .plugin_data;
 
@@ -138,7 +140,7 @@ mod test {
             plugin_data,
             PluginDataRow {
                 id: "new_id".to_string(),
-                plugin_name: "new_plugin_name".to_string(),
+                plugin_code: "new_plugin_name".to_string(),
                 related_record_id: "new_related_record_id".to_string(),
                 related_record_type: RelatedRecordType::StockLine,
                 data: "hogwarts".to_string(),

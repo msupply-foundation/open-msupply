@@ -1,9 +1,8 @@
-use crate::types::{PluginDataNode, RelatedRecordNodeType};
+use crate::types::{PluginDataConnector, RelatedRecordNodeType};
 use async_graphql::*;
 use graphql_core::{
     generic_filters::EqualFilterStringInput,
     map_filter,
-    simple_generic_errors::{NodeError, NodeErrorInterface},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -12,8 +11,7 @@ use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Union)]
 pub enum PluginDataResponse {
-    Response(PluginDataNode),
-    Error(NodeError),
+    Response(PluginDataConnector),
 }
 
 #[derive(InputObject, Clone)]
@@ -79,14 +77,9 @@ pub fn get_plugin_data(
         )
         .map_err(StandardGraphqlError::from_repository_error)?;
 
-    let response = match plugin_data {
-        Some(plugin_data) => PluginDataResponse::Response(PluginDataNode::from_domain(plugin_data)),
-        None => PluginDataResponse::Error(NodeError {
-            error: NodeErrorInterface::record_not_found(),
-        }),
-    };
-
-    Ok(response)
+    Ok(PluginDataResponse::Response(
+        PluginDataConnector::from_domain(plugin_data),
+    ))
 }
 
 fn map_resource_type(from: RelatedRecordNodeType) -> Resource {
@@ -102,7 +95,7 @@ impl PluginDataFilterInput {
     pub fn to_domain(self) -> PluginDataFilter {
         PluginDataFilter {
             id: self.id.map(EqualFilter::from),
-            plugin_name: self.plugin_name.map(EqualFilter::from),
+            plugin_code: self.plugin_name.map(EqualFilter::from),
             related_record_id: self.related_record_id.map(EqualFilter::from),
             related_record_type: self
                 .related_record_type
