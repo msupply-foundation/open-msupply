@@ -6,14 +6,14 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::PrinterConfigurationNode;
+use graphql_types::types::PrinterNode;
 
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    printer_configuration::{UpdatePrinterConfiguration, UpdatePrinterConfigurationError},
+    printer::{UpdatePrinter, UpdatePrinterError},
 };
 #[derive(InputObject)]
-pub struct UpdatePrinterConfigurationInput {
+pub struct UpdatePrinterInput {
     pub id: String,
     pub description: String,
     pub address: String,
@@ -28,30 +28,30 @@ pub struct UpdateError {
 }
 
 #[derive(Union)]
-pub enum UpdatePrinterConfigurationResponse {
+pub enum UpdatePrinterResponse {
     Error(UpdateError),
-    Response(PrinterConfigurationNode),
+    Response(PrinterNode),
 }
 
 #[derive(Interface)]
-#[graphql(name = "UpdatePrinterConfigurationErrorInterface")]
+#[graphql(name = "UpdatePrinterErrorInterface")]
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateErrorInterface {
-    PrinterConfigurationDoesNotExist(RecordProgramCombinationAlreadyExists),
-    DuplicatePrinterConfiguration(RecordAlreadyExist),
+    PrinterDoesNotExist(RecordProgramCombinationAlreadyExists),
+    DuplicatePrinter(RecordAlreadyExist),
     CreatedRecordNotFound(RecordNotFound),
 }
 
-impl From<UpdatePrinterConfigurationInput> for UpdatePrinterConfiguration {
+impl From<UpdatePrinterInput> for UpdatePrinter {
     fn from(
-        UpdatePrinterConfigurationInput {
+        UpdatePrinterInput {
             id,
             description,
             address,
             port,
             label_width,
             label_height,
-        }: UpdatePrinterConfigurationInput,
+        }: UpdatePrinterInput,
     ) -> Self {
         Self {
             id,
@@ -64,11 +64,11 @@ impl From<UpdatePrinterConfigurationInput> for UpdatePrinterConfiguration {
     }
 }
 
-pub fn update_printer_configuration(
+pub fn update_printer(
     ctx: &Context<'_>,
     store_id: String,
-    input: UpdatePrinterConfigurationInput,
-) -> Result<UpdatePrinterConfigurationResponse> {
+    input: UpdatePrinterInput,
+) -> Result<UpdatePrinterResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -81,31 +81,25 @@ pub fn update_printer_configuration(
     let service_context = service_provider.basic_context()?;
 
     let result = service_provider
-        .printer_configuration_service
-        .update_printer_configuration(&service_context, input.into());
+        .printer_service
+        .update_printer(&service_context, input.into());
     let result = match result {
-        Ok(printer_configuration) => UpdatePrinterConfigurationResponse::Response(
-            PrinterConfigurationNode::from_domain(printer_configuration),
-        ),
-        Err(error) => UpdatePrinterConfigurationResponse::Error(UpdateError {
+        Ok(printer) => UpdatePrinterResponse::Response(PrinterNode::from_domain(printer)),
+        Err(error) => UpdatePrinterResponse::Error(UpdateError {
             error: map_error(error)?,
         }),
     };
     Ok(result)
 }
 
-fn map_error(error: UpdatePrinterConfigurationError) -> Result<UpdateErrorInterface> {
+fn map_error(error: UpdatePrinterError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        UpdatePrinterConfigurationError::PrinterConfigurationDoesNotExist => {
-            BadUserInput(formatted_error)
-        }
-        UpdatePrinterConfigurationError::DatabaseError(_) => InternalError(formatted_error),
-        UpdatePrinterConfigurationError::InternalError(formatted_error) => {
-            InternalError(formatted_error)
-        }
+        UpdatePrinterError::PrinterDoesNotExist => BadUserInput(formatted_error),
+        UpdatePrinterError::DatabaseError(_) => InternalError(formatted_error),
+        UpdatePrinterError::InternalError(formatted_error) => InternalError(formatted_error),
     };
     Err(graphql_error.extend())
 }

@@ -4041,7 +4041,7 @@ dependencies = [
  "graphql_item_variant",
  "graphql_location",
  "graphql_plugin",
- "graphql_printer_configuration",
+ "graphql_printer",
  "graphql_programs",
  "graphql_repack",
  "graphql_reports",
@@ -4412,7 +4412,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "graphql_printer_configuration"
+name = "graphql_printer"
 version = "0.1.0"
 dependencies = [
  "actix-rt",
