@@ -15,7 +15,7 @@ pub struct PluginData {
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct PluginDataFilter {
     pub id: Option<EqualFilter<String>>,
-    pub plugin_name: Option<EqualFilter<String>>,
+    pub plugin_code: Option<EqualFilter<String>>,
     pub related_record_id: Option<EqualFilter<String>>,
     pub related_record_type: Option<EqualFilter<RelatedRecordType>>,
     pub store_id: Option<EqualFilter<String>>,
@@ -68,7 +68,7 @@ impl<'a> PluginDataRepository<'a> {
                     apply_sort_no_case!(query, sort, plugin_data::id);
                 }
                 PluginDataSortField::PluginName => {
-                    apply_sort_no_case!(query, sort, plugin_data::plugin_name);
+                    apply_sort_no_case!(query, sort, plugin_data::plugin_code);
                 }
                 PluginDataSortField::RelatedRecordId => {
                     apply_sort_no_case!(query, sort, plugin_data::related_record_id);
@@ -78,7 +78,7 @@ impl<'a> PluginDataRepository<'a> {
                 }
             }
         } else {
-            query = query.order(plugin_data::plugin_name.asc());
+            query = query.order(plugin_data::plugin_code.asc());
         }
 
         let results = query
@@ -97,7 +97,7 @@ fn create_filtered_query(filter: Option<PluginDataFilter>) -> BoxedPluginQuery {
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, plugin_data::id);
-        apply_equal_filter!(query, filter.plugin_name, plugin_data::plugin_name);
+        apply_equal_filter!(query, filter.plugin_code, plugin_data::plugin_code);
         apply_equal_filter!(
             query,
             filter.related_record_id,
@@ -131,7 +131,7 @@ impl PluginDataFilter {
     }
 
     pub fn plugin_name(mut self, filter: EqualFilter<String>) -> Self {
-        self.plugin_name = Some(filter);
+        self.plugin_code = Some(filter);
         self
     }
 

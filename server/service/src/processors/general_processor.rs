@@ -1,6 +1,6 @@
 use repository::{
     ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, KeyType,
-    RepositoryError, StorageConnection, TransactionError,
+    RepositoryError, TransactionError,
 };
 use thiserror::Error;
 
@@ -11,15 +11,15 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
 };
 
-use super::contact_form::QueueContactEmailProcessor;
+use super::{contact_form::QueueContactEmailProcessor, load_plugin::LoadPlugin};
 
 #[derive(Error, Debug)]
 pub(crate) enum ProcessorError {
-    #[error("{0:?} not found: {1:?}")]
+    #[error("{0} not found: {1}")]
     RecordNotFound(String, String),
-    #[error("{0:?}")]
-    DatabaseError(RepositoryError),
-    #[error("{0:?}")]
+    #[error("Database error")]
+    DatabaseError(#[from] RepositoryError),
+    #[error("Error in email service {0:?}")]
     EmailServiceError(EmailServiceError),
 }
 
@@ -28,12 +28,14 @@ const CHANGELOG_BATCH_SIZE: u32 = 20;
 #[derive(Clone)]
 pub enum ProcessorType {
     ContactFormEmail,
+    LoadPlugin,
 }
 
 impl ProcessorType {
     pub(super) fn get_processor(&self) -> Box<dyn Processor> {
         match self {
             ProcessorType::ContactFormEmail => Box::new(QueueContactEmailProcessor),
+            ProcessorType::LoadPlugin => Box::new(LoadPlugin),
         }
     }
 }
@@ -74,7 +76,7 @@ pub(crate) fn process_records(
 
         for log in logs {
             // Try record against all of the processors
-            let result = processor.try_process_record_common(&ctx, &log);
+            let result = processor.try_process_record_common(&ctx, &service_provider, &log);
             if let Err(e) = result {
                 log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
             }
@@ -112,11 +114,12 @@ pub(super) trait Processor {
     fn try_process_record_common(
         &self,
         ctx: &ServiceContext,
+        service_provider: &ServiceProvider,
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
         let result = ctx
             .connection
-            .transaction_sync(|connection| self.try_process_record(connection, changelog))
+            .transaction_sync(|_| self.try_process_record(ctx, service_provider, changelog))
             .map_err(ProcessorError::from)?;
 
         if let Some(result) = &result {
@@ -128,7 +131,8 @@ pub(super) trait Processor {
 
     fn try_process_record(
         &self,
-        connection: &StorageConnection,
+        ctx: &ServiceContext,
+        service_provider: &ServiceProvider,
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError>;
 }

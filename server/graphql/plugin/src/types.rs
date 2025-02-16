@@ -1,5 +1,6 @@
 use async_graphql::*;
 use repository::{PluginData, PluginDataRow, RelatedRecordType};
+use service::ListResult;
 
 #[derive(PartialEq, Debug)]
 pub struct PluginDataNode {
@@ -23,8 +24,8 @@ impl PluginDataNode {
         &self.row().id
     }
 
-    pub async fn plugin_name(&self) -> &str {
-        &self.row().plugin_name
+    pub async fn plugin_code(&self) -> &str {
+        &self.row().plugin_code
     }
 
     pub async fn related_record_id(&self) -> &str {
@@ -75,10 +76,11 @@ impl PluginDataNode {
 }
 
 impl PluginDataConnector {
-    pub fn from_vec(plugin_data: Vec<PluginData>) -> PluginDataConnector {
+    pub fn from_domain(plugin_data: ListResult<PluginData>) -> PluginDataConnector {
         PluginDataConnector {
-            total_count: plugin_data.len() as u32,
+            total_count: plugin_data.count,
             nodes: plugin_data
+                .rows
                 .into_iter()
                 .map(PluginDataNode::from_domain)
                 .collect(),

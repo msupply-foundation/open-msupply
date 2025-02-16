@@ -1,27 +1,34 @@
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
-use service::plugin::plugin_files::PluginFileService;
+use graphql_core::ContextExt;
+use service::plugin::FrontendPluginMetadata;
 
 #[derive(PartialEq, Debug, SimpleObject)]
-pub struct PluginNode {
-    pub config: String,
-    pub name: String,
+pub struct FrontendPluginMetadataNode {
+    pub code: String,
     pub path: String,
 }
 
-pub fn get_plugins(ctx: &Context<'_>) -> Result<Vec<PluginNode>, Error> {
-    let settings = ctx.get_settings();
-    let validated_plugins = ctx.get_validated_plugins();
-    let plugins = PluginFileService::plugin_files(validated_plugins, &settings.server.base_dir)
-        .map_err(|err| StandardGraphqlError::InternalError(format!("{:?}", err)))?;
-    let plugins: Vec<PluginNode> = plugins
+pub fn frontend_plugin_metadata(
+    ctx: &Context<'_>,
+) -> Result<Vec<FrontendPluginMetadataNode>, Error> {
+    let service_provider = ctx.service_provider();
+    let context = service_provider.basic_context()?;
+
+    let plugins = service_provider
+        .plugin_service
+        .get_frontend_plugins_metadata(&context)
         .into_iter()
-        .map(|plugin| PluginNode {
-            config: plugin.config,
-            name: plugin.name,
-            path: plugin.path,
-        })
+        .map(FrontendPluginMetadataNode::from_domain)
         .collect();
 
     Ok(plugins)
+}
+
+impl FrontendPluginMetadataNode {
+    fn from_domain(FrontendPluginMetadata { code, entry_point }: FrontendPluginMetadata) -> Self {
+        Self {
+            path: format!("{code}/{entry_point}"),
+            code,
+        }
+    }
 }

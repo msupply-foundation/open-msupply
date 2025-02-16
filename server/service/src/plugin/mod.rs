@@ -1,8 +1,20 @@
-use repository::{BackendPluginRowRepository, RepositoryError};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
+
+use base64::{prelude::BASE64_STANDARD, Engine};
+use log::info;
+use repository::{
+    BackendPluginRowRepository, FrontendPluginFile, FrontendPluginRow, FrontendPluginRowRepository,
+    RepositoryError,
+};
+use serde::Deserialize;
 use thiserror::Error;
 
 use crate::{
     backend_plugin::plugin_provider::{PluginBundle, PluginInstance},
+    processors::ProcessorType,
     service_provider::ServiceContext,
     settings::Settings,
     UploadedFile, UploadedFileJsonError,
@@ -33,6 +45,43 @@ pub enum InstallUploadedPluginError {
     DatabaseError(#[from] RepositoryError),
 }
 
+#[derive(Clone, Debug)]
+pub struct FrontendPluginMetadata {
+    pub code: String,
+    pub entry_point: String,
+}
+
+#[derive(Debug)]
+pub struct FrontendPlugin {
+    metadata: FrontendPluginMetadata,
+    /// In FrontendPluginRow.files file content is stored as base64_string
+    /// This structure will help cache and server file content as a string
+    files_content: HashMap<String /* file name */, Vec<u8>>,
+}
+
+#[derive(Clone)]
+pub struct FrontendPluginCache(Arc<RwLock<HashMap<String /* plugin code */, FrontendPlugin>>>);
+
+impl FrontendPluginCache {
+    pub(crate) fn new() -> Self {
+        Self(Arc::new(RwLock::new(HashMap::new())))
+    }
+}
+
+#[derive(Deserialize, Debug)]
+pub struct FrontendPluginFileRequest {
+    plugin_code: String,
+    filename: String,
+}
+
+#[derive(Debug, Error)]
+pub enum FrontendPluginFileRequestError {
+    #[error("Plugin code can't be found")]
+    CannotFindPluginCode,
+    #[error("Plugin file can't be found")]
+    CannotFindFile,
+}
+
 // TODO should really pass through StaticFileService
 pub trait PluginServiceTrait: Sync + Send {
     fn get_uploaded_plugin_info(
@@ -43,6 +92,86 @@ pub trait PluginServiceTrait: Sync + Send {
         uploaded_file.as_json_file(settings)
     }
 
+    fn reload_all_plugins(&self, ctx: &ServiceContext) -> Result<(), RepositoryError> {
+        let repo = BackendPluginRowRepository::new(&ctx.connection);
+        for row in repo.all()? {
+            PluginInstance::bind(row);
+        }
+
+        let repo = FrontendPluginRowRepository::new(&ctx.connection);
+        for row in repo.all()? {
+            self.bind_frontend_plugin(ctx, row);
+        }
+
+        Ok(())
+    }
+
+    fn get_frontend_plugin_file(
+        &self,
+        ctx: &ServiceContext,
+        FrontendPluginFileRequest {
+            plugin_code,
+            filename,
+        }: &FrontendPluginFileRequest,
+    ) -> Result<Vec<u8>, FrontendPluginFileRequestError> {
+        use FrontendPluginFileRequestError as Error;
+        let plugins = ctx.frontend_plugins_cache.0.read().unwrap();
+
+        let plugin = plugins
+            .get(plugin_code)
+            .ok_or(Error::CannotFindPluginCode)?;
+
+        let file_content = plugin
+            .files_content
+            .get(filename)
+            .ok_or(Error::CannotFindFile)?;
+
+        Ok(file_content.clone())
+    }
+
+    fn bind_frontend_plugin(
+        &self,
+        ctx: &ServiceContext,
+        FrontendPluginRow {
+            code,
+            entry_point,
+            files,
+            ..
+        }: FrontendPluginRow,
+    ) {
+        let mut files_content = HashMap::new();
+        // Prepare
+        for FrontendPluginFile {
+            file_name,
+            file_content_base64,
+        } in files.0.into_iter()
+        {
+            files_content.insert(
+                file_name,
+                BASE64_STANDARD.decode(file_content_base64).unwrap(),
+            );
+        }
+
+        let mut plugins = ctx.frontend_plugins_cache.0.write().unwrap();
+        // Remove all plugins with this code
+        (*plugins).remove(&code);
+
+        // Add plugin with this code
+        (*plugins).insert(
+            code.clone(),
+            FrontendPlugin {
+                metadata: FrontendPluginMetadata { code, entry_point },
+                files_content,
+            },
+        );
+    }
+
+    fn get_frontend_plugins_metadata(&self, ctx: &ServiceContext) -> Vec<FrontendPluginMetadata> {
+        let plugins = ctx.frontend_plugins_cache.0.read().unwrap();
+
+        plugins.iter().map(|(_, p)| p.metadata.clone()).collect()
+    }
+
     fn install_uploaded_plugin(
         &self,
         ctx: &ServiceContext,
@@ -50,19 +179,27 @@ pub trait PluginServiceTrait: Sync + Send {
         uploaded_file: UploadedFile,
     ) -> Result<PluginBundle, InstallUploadedPluginError> {
         let plugin_bundle: PluginBundle = uploaded_file.as_json_file(settings)?;
-        ctx.connection
-            .transaction_sync(|connection| {
+        let result_bundle = ctx
+            .connection
+            .transaction_sync::<_, RepositoryError, _>(|connection| {
                 let backend_repo = BackendPluginRowRepository::new(connection);
+                let frontend_repo = FrontendPluginRowRepository::new(connection);
 
                 for row in plugin_bundle.backend_plugins.clone() {
                     backend_repo.upsert_one(row.clone())?;
-                    // Bind plugin to provider (this would ideally happen via processor, going over changelog)
-                    PluginInstance::bind(row)
+                }
+
+                for row in plugin_bundle.frontend_plugins.clone() {
+                    frontend_repo.upsert_one(row.clone())?;
                 }
 
                 Ok(plugin_bundle)
             })
-            .map_err(|error| error.to_inner_error())
+            .map_err(|error| error.to_inner_error())?;
+
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::LoadPlugin);
+        Ok(result_bundle)
     }
 }
 
@@ -124,6 +261,7 @@ mod test {
                 id: "second".to_string(),
                 ..Default::default()
             }],
+            ..Default::default()
         };
         let bundle_stringified = serde_json::to_string(&test_bundle).unwrap();
 
