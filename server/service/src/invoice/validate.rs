@@ -48,10 +48,7 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
         InvoiceType::Prescription => {
             matches!(
                 status,
-                InvoiceStatus::New
-                    | InvoiceStatus::Allocated
-                    | InvoiceStatus::Picked
-                    | InvoiceStatus::Verified
+                InvoiceStatus::New | InvoiceStatus::Allocated | InvoiceStatus::Picked
             )
         }
         InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => {
