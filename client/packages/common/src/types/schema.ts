@@ -121,6 +121,7 @@ export enum ActivityLogNodeType {
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
   PrescriptionCreated = 'PRESCRIPTION_CREATED',
   PrescriptionDeleted = 'PRESCRIPTION_DELETED',
+  PrescriptionStatusCancelled = 'PRESCRIPTION_STATUS_CANCELLED',
   PrescriptionStatusPicked = 'PRESCRIPTION_STATUS_PICKED',
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
   ProgramCreated = 'PROGRAM_CREATED',
@@ -3569,6 +3570,7 @@ export enum InvoiceNodeStatus {
    * Inbound Shipment: not applicable
    */
   Allocated = 'ALLOCATED',
+  Cancelled = 'CANCELLED',
   /**
    * General description: Inbound Shipment was received
    * Outbound Shipment: Status is updated based on corresponding inbound Shipment

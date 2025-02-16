@@ -89,3 +89,20 @@ pub fn string_to_f64<'de, D: Deserializer<'de>>(d: D) -> Result<f64, D::Error> {
     let s: String = String::deserialize(d)?;
     Ok(s.parse().unwrap_or(0.0))
 }
+
+pub fn zero_f64_as_none<'de, D: Deserializer<'de>>(d: D) -> Result<Option<f64>, D::Error> {
+    let value = Value::deserialize(d)?;
+    match value {
+        Value::Number(n) => {
+            let f = n.as_f64().unwrap_or(0.0);
+            if f == 0.0 {
+                Ok(None)
+            } else {
+                Ok(Some(f))
+            }
+        }
+        _ => Err(Error::custom(
+            "zero_f64_as_none Expected a string or number",
+        )),
+    }
+}
