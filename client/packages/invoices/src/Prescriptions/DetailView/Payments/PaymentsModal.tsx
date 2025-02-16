@@ -1,10 +1,6 @@
 import React, { FC, ReactElement } from 'react';
 import { DialogButton, InputWithLabelRow } from '@common/components';
-import {
-  Grid,
-  CurrencyInput,
-  usePluginElements,
-} from '@openmsupply-client/common';
+import { Grid, CurrencyInput, usePlugins } from '@openmsupply-client/common';
 import { useDialog } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { usePrescription } from '../../api';
@@ -34,12 +30,12 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     query: { data },
   } = usePrescription();
 
-  const plugins = usePluginElements({
-    type: 'PrescriptionPaymentSection',
-    data: {
-      prescriptionData: data ?? undefined,
-    },
-  });
+  // const plugins = usePlugins({
+  //   type: 'PrescriptionPaymentSection',
+  //   data: {
+  //     prescriptionData: data ?? undefined,
+  //   },
+  // });
 
   const fields: PaymentModalField[] = [
     {
@@ -98,8 +94,8 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
             </Grid>
           ))}
         </Grid>
-        {plugins.length > 0 && <hr />}
-        {plugins}
+        {/* {plugins.length > 0 && <hr />}
+        {plugins} */}
       </>
     </Modal>
   );
