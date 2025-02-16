@@ -42,7 +42,7 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
   return (
     <BasicModal open={open} onClose={handleClose} height={modalHeight}>
       <ModalTitle title={t('label.patients')} />
-      <Box padding={2}>
+      <Box sx={{ flexGrow: 1 }} padding={2}>
         <Box>
           <Typography variant="body1">
             {isSuccess && patients.length > 0
@@ -65,10 +65,10 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
           onChange={(_, name) => {
             if (name && !(name instanceof Array)) onChange(name);
           }}
-          noOptionsText=""
+          noOptionsText={t('messages.no-patients-found')}
         />
       </Box>
-      <Box p={2}>
+      <Box padding={2}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.create-new-patient')}
