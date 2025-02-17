@@ -43,12 +43,11 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        invoice_id: &str,
         pagination: Option<PaginationOption>,
         filter: Option<InvoiceLineFilter>,
         sort: Option<InvoiceLineSort>,
     ) -> Result<ListResult<InvoiceLine>, GetInvoiceLinesError> {
-        get_invoice_lines(ctx, store_id, invoice_id, pagination, filter, sort)
+        get_invoice_lines(ctx, store_id, pagination, filter, sort)
     }
 
     // Stock out: Outbound Shipment/Supplier Return/Prescription

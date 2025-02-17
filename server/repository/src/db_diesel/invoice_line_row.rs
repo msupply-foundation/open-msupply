@@ -53,6 +53,7 @@ joinable!(invoice_line -> inventory_adjustment_reason (inventory_adjustment_reas
 joinable!(invoice_line -> return_reason (return_reason_id));
 allow_tables_to_appear_in_same_query!(invoice_line, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line, name_link);
+allow_tables_to_appear_in_same_query!(invoice_line, inventory_adjustment_reason);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
