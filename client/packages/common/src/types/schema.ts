@@ -8609,6 +8609,7 @@ export type UpdatePrescriptionResponseWithId = {
 };
 
 export enum UpdatePrescriptionStatusInput {
+  Cancelled = 'CANCELLED',
   Picked = 'PICKED',
   Verified = 'VERIFIED'
 }
