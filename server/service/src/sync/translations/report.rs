@@ -20,10 +20,7 @@ impl SyncTranslation for OmReportTranslator {
         "om_report"
     }
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![
-            FormSchemaTranslation.table_name(),
-            OmFormSchemaTranslation.table_name(),
-        ]
+        vec![OmFormSchemaTranslation.table_name()]
     }
     fn try_translate_from_upsert_sync_record(
         &self,
