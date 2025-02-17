@@ -1,8 +1,9 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc};
 use repository::{
-    Invoice, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, RepositoryError,
-    StockLineRowRepository,
+    Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
+    RepositoryError, StockLineRowRepository, StorageConnection,
 };
+use util::uuid::uuid;
 
 use crate::{
     activity_log::{activity_log_entry, log_type_from_invoice_status},
@@ -96,6 +97,10 @@ pub fn update_prescription(
                     None,
                     None,
                 )?;
+
+                if patch.status == Some(UpdatePrescriptionStatus::Cancelled) {
+                    create_reverse_prescription(connection, &update_invoice)?;
+                }
             }
 
             get_invoice(ctx, None, &update_invoice.id)
@@ -105,6 +110,38 @@ pub fn update_prescription(
         .map_err(|error| error.to_inner_error())?;
 
     Ok(invoice)
+}
+
+pub fn create_reverse_prescription(
+    connection: &StorageConnection,
+    orig_invoice: &InvoiceRow,
+) -> Result<(), UpdatePrescriptionError> {
+    // Create a new invoice row based on original invoice
+    let mut new_invoice = orig_invoice.clone();
+
+    new_invoice.id = uuid();
+    new_invoice.linked_invoice_id = Some(orig_invoice.id.clone());
+    new_invoice.is_cancellation = true;
+    new_invoice.verified_datetime = Some(Utc::now().naive_utc());
+    new_invoice.status = InvoiceStatus::Verified;
+    InvoiceRowRepository::new(connection).upsert_one(&new_invoice)?;
+
+    // Fetch lines from original invoice
+    let line_repo = InvoiceLineRowRepository::new(connection);
+    let lines = line_repo.find_many_by_invoice_id(&orig_invoice.id)?;
+
+    // Reverse the stock direction of each line and update DB
+    for mut line in lines {
+        line.id = uuid();
+        line.invoice_id = new_invoice.id.clone();
+        line.r#type = match line.r#type {
+            repository::InvoiceLineType::StockIn => repository::InvoiceLineType::StockOut,
+            _ => line.r#type,
+        };
+        line_repo.upsert_one(&line)?;
+    }
+
+    Ok(())
 }
 
 impl UpdatePrescriptionStatus {
