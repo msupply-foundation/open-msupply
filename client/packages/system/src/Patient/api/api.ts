@@ -23,6 +23,7 @@ import {
   ProgramPatientRowFragment,
   LatestPatientEncounterQuery,
   InsurancesQuery,
+  InsuranceProvidersQuery,
 } from './operations.generated';
 
 export type ListParams = {
@@ -56,7 +57,9 @@ export type CentralPatientSearchResponse =
 export type LinkPatientToStoreResponse =
   LinkPatientToStoreMutation['linkPatientToStore'];
 
-export type GetPatientInsuranceResponse = InsurancesQuery['insurances'];
+type InsurancesResponse = InsurancesQuery['insurances'];
+
+type InsuranceProvidersResponse = InsuranceProvidersQuery['insuranceProviders'];
 
 export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
   get: {
@@ -224,7 +227,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
   insurances: async ({
     nameId,
     sortBy,
-  }: InsuranceListParams): Promise<GetPatientInsuranceResponse> => {
+  }: InsuranceListParams): Promise<InsurancesResponse> => {
     const key = sortBy?.key as InsuranceSortFieldInput;
 
     const result = await sdk.insurances({
@@ -235,4 +238,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
 
     return result.insurances;
   },
+
+  insuranceProviders: async (): Promise<InsuranceProvidersResponse> =>
+    (await sdk.insuranceProviders({ storeId })).insuranceProviders,
 });

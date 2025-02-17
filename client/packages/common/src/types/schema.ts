@@ -3343,6 +3343,21 @@ export type InsuranceProviderNode = {
   providerName: Scalars['String']['output'];
 };
 
+export type InsuranceProvidersConnector = {
+  __typename: 'InsuranceProvidersConnector';
+  nodes: Array<InsuranceProvidersNode>;
+};
+
+export type InsuranceProvidersNode = {
+  __typename: 'InsuranceProvidersNode';
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  prescriptionValidityDays?: Maybe<Scalars['Int']['output']>;
+  providerName: Scalars['String']['output'];
+};
+
+export type InsuranceProvidersResponse = InsuranceProvidersConnector;
+
 export type InsuranceResponse = InsuranceConnector;
 
 export enum InsuranceSortFieldInput {
@@ -5886,6 +5901,7 @@ export type Queries = {
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
+  insuranceProviders: InsuranceProvidersResponse;
   insurances: InsuranceResponse;
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
@@ -6260,6 +6276,11 @@ export type QueriesHistoricalStockLinesArgs = {
 
 export type QueriesInsertPrescriptionArgs = {
   input: InsertPrescriptionInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesInsuranceProvidersArgs = {
   storeId: Scalars['String']['input'];
 };
 

@@ -1,51 +1,53 @@
-import { Autocomplete, InputWithLabelRow } from '@common/components';
-import { useTranslation } from '@common/intl';
-import { InsurancePolicyNodeType } from '@common/types';
 import React, { FC, ReactElement } from 'react';
 
+import { useTranslation } from '@common/intl';
+import { Autocomplete, InputWithLabelRow } from '@common/components';
+
+import { usePatient } from '../../api';
+
 interface InsuranceProvidersSelectProps {
+  insuranceProviderId: string;
   onChange: (value: string) => void;
 }
 
 export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
+  insuranceProviderId,
   onChange,
 }): ReactElement => {
   const t = useTranslation();
+  const { data } = usePatient.document.insuranceProviders();
+  const insuranceProviders = data?.nodes ?? [];
 
-  // add graphql call to get insurance providers
+  const options = insuranceProviders.map(({ providerName }) => {
+    return {
+      label: providerName,
+      value: providerName,
+    };
+  });
+
+  const defaultOption =
+    insuranceProviders.find(({ id }) => id === insuranceProviderId)
+      ?.providerName ?? '';
 
   return (
     <InputWithLabelRow
       label={t('label.provider-name')}
       Input={
         <Autocomplete
-          options={[
-            {
-              label: t('label.personal'),
-              value: InsurancePolicyNodeType.Personal,
-            },
-            {
-              label: t('label.business'),
-              value: InsurancePolicyNodeType.Business,
-            },
-          ]}
+          options={options}
           getOptionLabel={option => option.label}
-          defaultValue={{
-            label: InsurancePolicyNodeType.Personal
-              ? t('label.personal')
-              : t('label.business'),
-            value: InsurancePolicyNodeType.Personal
-              ? InsurancePolicyNodeType.Personal
-              : InsurancePolicyNodeType.Business,
+          value={{
+            label: defaultOption,
+            value: defaultOption,
           }}
           onChange={(_, option) => {
             if (option) {
               onChange(option.value);
             }
           }}
-          sx={{ '& .MuiAutocomplete-root': { flexGrow: 1 } }}
         />
       }
+      sx={{ '& .MuiAutocomplete-root': { flexGrow: 1, borderRadius: 1 } }}
     />
   );
 };
