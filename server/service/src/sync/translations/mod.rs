@@ -41,6 +41,7 @@ pub(crate) mod name_property;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
+pub(crate) mod om_form_schema;
 pub(crate) mod packaging_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
@@ -107,6 +108,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         reason::boxed(),
         store_preference::boxed(),
         form_schema::boxed(),
+        om_form_schema::boxed(),
         document_registry::boxed(),
         property::boxed(),
         name_property::boxed(),

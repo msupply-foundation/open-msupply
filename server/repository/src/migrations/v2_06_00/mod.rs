@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_cancelled_status_to_invoice;
 mod add_create_invoice_from_requisition_permission;
+mod add_form_schema_sync;
 mod add_index_to_sync_buffer;
 mod add_insurance_fields_to_invoice;
 mod add_insurance_provider;
@@ -47,6 +48,7 @@ impl Migration for V2_06_00 {
             Box::new(add_insurance_fields_to_invoice::Migrate),
             Box::new(add_cancelled_status_to_invoice::Migrate),
             Box::new(add_report_sync::Migrate),
+            Box::new(add_form_schema_sync::Migrate),
         ]
     }
 }
