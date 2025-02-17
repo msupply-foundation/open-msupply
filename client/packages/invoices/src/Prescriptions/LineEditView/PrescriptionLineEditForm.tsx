@@ -40,6 +40,7 @@ import { isA } from '../../utils';
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 import { getPrescriptionDirections } from './getPrescriptionDirections';
+import { useAbbreviations } from '../api/hooks/useAbbreviations';
 
 interface PrescriptionLineEditFormProps {
   allocatedUnits: number;
@@ -228,7 +229,7 @@ export const PrescriptionLineEditForm: React.FC<
     if (newIssueQuantity !== issueUnitQuantity)
       setIssueUnitQuantity(newIssueQuantity);
     setAllocationAlerts([]);
-  }, [item?.id]);
+  }, [item?.id, allocatedUnits]);
 
   useEffect(() => {
     if (!isAutoAllocated) setIssueUnitQuantity(allocatedUnits);
@@ -236,24 +237,17 @@ export const PrescriptionLineEditForm: React.FC<
 
   const key = item?.id ?? 'new';
 
-  //MOCK DATA FOR TESTING ABBREVIATIONS
-  interface Option {
-    id: string;
-    name: string;
-    direction: string;
-  }
-  const options: Option[] = [
-    { id: '1', name: 'One', direction: '1 per day in the AM' },
-    { id: '2', name: 'Two', direction: '2 per Day' },
-    { id: '3', name: '3_5', direction: '3 1/2 per day' },
-  ];
+  // //MOCK DATA FOR TESTING ABBREVIATIONS
+
   const defaultDirections = [
     { id: '1', item_link_id: 'a', direction: '1 per day', priority: 2 },
     { id: '2', item_link_id: 'b', direction: '2 per day', priority: 3 },
     { id: '3', item_link_id: 'c', direction: '3 per day', priority: 1 },
   ];
 
-  //END OF MOCK DATA
+  // //END OF MOCK DATA
+
+  const { data: options = [] } = useAbbreviations();
 
   const saveAbbreviation = () => {
     if (!abbreviation) return;
@@ -344,6 +338,15 @@ export const PrescriptionLineEditForm: React.FC<
                   onChange={handleIssueQuantityChange}
                   min={0}
                   decimalLimit={2}
+                  slotProps={{
+                    htmlInput: {
+                      sx: {
+                        backgroundColor: disabled
+                          ? undefined
+                          : 'background.white',
+                      },
+                    },
+                  }}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
                   {t('label.unit-plural_one', {
