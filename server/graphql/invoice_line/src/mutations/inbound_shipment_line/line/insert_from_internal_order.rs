@@ -68,7 +68,6 @@ fn map_error(error: ServiceError) -> Result<InsertFromInternalOrderResponse> {
         | NotAnInboundShipment
         | RequisitionLineDoesNotExist
         | RequisitionNotLinkedToInvoice
-        | CannotAddLineFromInternalOrder
         | ItemDoesNotExist => StandardGraphqlError::BadUserInput(formatted_error),
         NewlyCreatedLineDoesNotExist | DatabaseError(_) => {
             StandardGraphqlError::InternalError(formatted_error)

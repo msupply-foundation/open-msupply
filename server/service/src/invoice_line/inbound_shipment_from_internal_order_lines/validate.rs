@@ -4,7 +4,6 @@ use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_store},
     invoice_line::validate::check_item_exists,
     requisition_line::common::check_requisition_line_exists,
-    store_preference::get_store_preferences,
 };
 
 use super::{InsertFromInternalOrderLine, InsertFromInternalOrderLineError};
@@ -22,15 +21,8 @@ pub fn validate(
 ) -> Result<ValidateResults, InsertFromInternalOrderLineError> {
     use InsertFromInternalOrderLineError::*;
 
-    let store_preference = get_store_preferences(connection, store_id)?;
-
     let invoice =
         check_invoice_exists(&input.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
-    if !store_preference.manually_link_internal_order_to_inbound_shipment
-        || invoice.linked_invoice_id.is_some()
-    {
-        return Err(CannotAddLineFromInternalOrder);
-    }
 
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);

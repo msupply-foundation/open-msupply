@@ -237,7 +237,7 @@ Builds 2.3.0 and above will include standard reports embedded in the binary. The
 - Expiring Items
 
 Standard reports are upserted into the database on startup.
-These are built and added from the standard_reports.json file in reports/generated. This json file includes all standard reports, and all versions of each report.
+These are built and added from the standard_reports.json file in ../standard_reports/generated. This json file includes all standard reports, and all versions of each report.
 
 ## Building standard reports
 
@@ -310,6 +310,12 @@ Reports can be upserted using
 
 ```bash
 ./target/debug/remote_server_cli upsert-reports
+```
+
+To overwrite any existing reports in the database, use the --overwrite flag
+
+```bash
+./target/debug/remote_server_cli upsert-reports --o
 ```
 
 Because this command utilises the built cli, you will need to first run
@@ -410,3 +416,55 @@ Where value is the translated value of 'label.value' in our `common.json` transl
 The "label" of the ui schema controls the text displayed in the front end report filtering modal.
 
 This function could also be used on any other serialised json value such as patient json schema.
+
+## Report tools show command
+
+Reports can be rendered during development using the show command
+
+```bash
+./target/debug/remote_server_cli show-report --path <path-to-your-report-dir> --config <config-file-path>
+```
+
+This command will render an html in the open mSupply directory. 
+The `path` argument is mandatory. It is the path to the dir of the source file of your report. This is the dir that contains 'report-manifest.json'
+
+The report is rendered using the 'test-config.json' file located in the reports dir.
+A custom test-config file can be used if a report needs special parameters such as arguments (from json schema) added.
+`config` is an optional argument to the `show-reports` command. This is a path to a custom test-config file. If no config argument is supplied, the default test-config file is used.
+
+The config file uses the following structure:
+
+```json
+{
+    "//": "For forms it's entity id",
+    "data_id": "a109bb20-da6c-4d7a-a876-b0b06ffe9e91",
+    "store_id": "D0E298893F3945DABE80B138E25D3D15",
+    "//": "Login details",
+    "url": "http://localhost:8000",
+    "username": "admin",
+    "password": "pass",
+    "//": "Arguments for standard reports",
+    "arguments": {},
+    "//": "Locale to generate report. Defaults to en",
+    "locale": "",
+    "//": "Output file name",
+    "output_filename": "report_to_show"
+}
+```
+
+- data_id and store_id are the data and store id parameters used in whatever graphql query is being used to generate a report.
+- url is the server url from where the report will be generated
+- username and password are the login details which must authenticate with the store being accessed.
+- arguments are optional additional parameters which are typically supplied through the argument JSON form in the front end. These can be edited to render specific cases of a given report
+
+### Pull Requests with show command
+
+Pull requests with reports should be made as easeful as possible for the reviewer. The show command can be a helpful tool in this case.
+
+When making a PR with a custom report, add supplimentary oms data files (and custom test-config file if required) to the PR. This will allow a reviewer to immediately display the report.
+
+#### Pull requests with small iterations on a report
+
+When making a pull request for a new version of a report, large difs can make reviewing difficult.
+
+For this reason, it is easier for the reviewer if a preliminary PR is made first with the duplication of all files in a new report version, and a subsequent PR is made with the files changes. This provides a dif with only the relevant changes to the reviewer.

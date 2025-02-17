@@ -1,6 +1,16 @@
 import React, { FC, useState } from 'react';
+import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
 
-import { JsonData, JsonForm } from '@openmsupply-client/programs';
+import {
+  JsonData,
+  JsonForm,
+  patientProgramSearchTester,
+  PatientProgramSearch,
+  programSearchTester,
+  ProgramSearch,
+  periodSearchTester,
+  PeriodSearch,
+} from '@openmsupply-client/programs';
 import { ReportRowFragment } from '../api';
 import { useDialog, useUrlQuery } from '@common/hooks';
 import { DialogButton, Typography } from '@common/components';
@@ -12,6 +22,12 @@ export type ReportArgumentsModalProps = {
   onReset: () => void;
   onArgumentsSelected: (report: ReportRowFragment, args: JsonData) => void;
 };
+
+const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
+  { tester: patientProgramSearchTester, renderer: PatientProgramSearch },
+  { tester: programSearchTester, renderer: ProgramSearch },
+  { tester: periodSearchTester, renderer: PeriodSearch },
+];
 
 export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
   report,
@@ -28,7 +44,6 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
     monthsUnderstock,
     monthsItemsExpire,
   } = store?.preferences ?? {};
-
 
   const [data, setData] = useState<JsonData>({
     monthlyConsumptionLookBackPeriod,
@@ -82,6 +97,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
           updateData={(newData: JsonData) => {
             setData(newData);
           }}
+          additionalRenderers={additionalRenderers}
         />
       </>
     </Modal>

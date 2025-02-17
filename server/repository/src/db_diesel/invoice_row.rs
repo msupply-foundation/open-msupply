@@ -46,6 +46,10 @@ table! {
         original_shipment_id -> Nullable<Text>,
         backdated_datetime -> Nullable<Timestamp>,
         diagnosis_id -> Nullable<Text>,
+        program_id -> Nullable<Text>,
+        name_insurance_join_id -> Nullable<Text>,
+        insurance_discount_amount -> Nullable<Double>,
+        insurance_discount_percentage -> Nullable<Double>
     }
 }
 
@@ -86,6 +90,7 @@ pub enum InvoiceStatus {
     Shipped,
     Delivered,
     Verified,
+    Cancelled,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
@@ -121,6 +126,10 @@ pub struct InvoiceRow {
     pub original_shipment_id: Option<String>,
     pub backdated_datetime: Option<NaiveDateTime>,
     pub diagnosis_id: Option<String>,
+    pub program_id: Option<String>,
+    pub name_insurance_join_id: Option<String>,
+    pub insurance_discount_amount: Option<f64>,
+    pub insurance_discount_percentage: Option<f64>,
 }
 
 impl Default for InvoiceRow {
@@ -155,6 +164,10 @@ impl Default for InvoiceRow {
             original_shipment_id: Default::default(),
             backdated_datetime: Default::default(),
             diagnosis_id: Default::default(),
+            program_id: Default::default(),
+            name_insurance_join_id: Default::default(),
+            insurance_discount_amount: Default::default(),
+            insurance_discount_percentage: Default::default(),
         }
     }
 }
