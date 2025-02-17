@@ -1836,5 +1836,6 @@
   "report.viral-load-eligibility": "Éligibilité à la charge virale",
   "messages.partial-pack-warning": "Vous avez délivré un nombre non entier d'emballages. Êtes-vous sûr de pouvoir le faire ? Si ce n'est pas le cas, vous devrez délivrer {{nearestAbove}} unités pour délivrer des emballages entiers.",
   "placeholder.item-directions": "Instructions par défaut de l'article",
-  "report.icfpt-eligibility": "Éligibilité à l'ICFPT"
+  "report.icfpt-eligibility": "Éligibilité à l'ICFPT",
+  "label.cancel-prescription": "Annulé prescription"
 }
