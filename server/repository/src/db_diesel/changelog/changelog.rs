@@ -118,6 +118,7 @@ pub enum ChangelogTableName {
     InsuranceProvider,
     NameInsuranceJoin,
     Report,
+    FormSchema,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -190,6 +191,7 @@ impl ChangelogTableName {
             ChangelogTableName::InsuranceProvider => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::NameInsuranceJoin => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Report => ChangeLogSyncStyle::Central,
+            ChangelogTableName::FormSchema => ChangeLogSyncStyle::Central,
         }
     }
 }

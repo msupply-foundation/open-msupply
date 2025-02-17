@@ -40,6 +40,7 @@ pub(crate) mod name_property;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
+pub(crate) mod om_form_schema;
 pub(crate) mod om_report;
 pub(crate) mod packaging_variant;
 pub(crate) mod period;
@@ -121,6 +122,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut contact_form::test_pull_upsert_records());
     test_records.append(&mut backend_plugin::test_pull_upsert_records());
     test_records.append(&mut om_report::test_pull_upsert_records());
+    test_records.append(&mut om_form_schema::test_pull_upsert_records());
 
     test_records
 }
@@ -225,6 +227,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut property::test_v6_central_push_records());
     test_records.append(&mut backend_plugin::test_v6_central_push_records());
     test_records.append(&mut om_report::test_v6_central_push_records());
+    test_records.append(&mut om_form_schema::test_v6_central_push_records());
 
     // Remote
     test_records.append(&mut asset::test_v6_records());
