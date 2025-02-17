@@ -164,7 +164,6 @@ pub trait PluginServiceTrait: Sync + Send {
                 files_content,
             },
         );
-        info!("{}", plugins.len());
     }
 
     fn get_frontend_plugins_metadata(&self, ctx: &ServiceContext) -> Vec<FrontendPluginMetadata> {
