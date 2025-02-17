@@ -22,6 +22,7 @@ use self::generate::GenerateResult;
 pub enum UpdatePrescriptionStatus {
     Picked,
     Verified,
+    Cancelled,
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -34,6 +35,8 @@ pub struct UpdatePrescription {
     pub colour: Option<String>,
     pub backdated_datetime: Option<NaiveDateTime>,
     pub diagnosis_id: Option<NullableUpdate<String>>,
+    pub program_id: Option<NullableUpdate<String>>,
+    pub their_reference: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -109,6 +112,7 @@ impl UpdatePrescriptionStatus {
         match self {
             UpdatePrescriptionStatus::Picked => InvoiceStatus::Picked,
             UpdatePrescriptionStatus::Verified => InvoiceStatus::Verified,
+            UpdatePrescriptionStatus::Cancelled => InvoiceStatus::Cancelled,
         }
     }
 
@@ -331,6 +335,8 @@ mod test {
                 colour: Some("test_colour".to_string()),
                 backdated_datetime: None,
                 diagnosis_id: None,
+                their_reference: None,
+                program_id: None,
             }
         }
 
@@ -355,6 +361,8 @@ mod test {
                     colour,
                     backdated_datetime: _,
                     diagnosis_id: _,
+                    program_id: _,
+                    their_reference: _,
                 } = get_update();
                 u.name_link_id = patient_id.unwrap();
                 u.clinician_link_id = clinician_id.unwrap().value;

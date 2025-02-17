@@ -29,12 +29,15 @@ pub struct UpdateInput {
     pub comment: Option<String>,
     pub colour: Option<String>,
     pub diagnosis_id: Option<NullableUpdateInput<String>>,
+    pub program_id: Option<NullableUpdateInput<String>>,
+    pub their_reference: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum UpdatePrescriptionStatusInput {
     Picked,
     Verified,
+    Cancelled,
 }
 
 #[derive(SimpleObject)]
@@ -102,6 +105,8 @@ impl UpdateInput {
             colour,
             prescription_date,
             diagnosis_id,
+            program_id,
+            their_reference,
         } = self;
 
         ServiceInput {
@@ -116,6 +121,12 @@ impl UpdateInput {
             backdated_datetime: prescription_date.map(|date| date.naive_utc()),
             diagnosis_id: diagnosis_id.map(|diagnosis_id| NullableUpdate {
                 value: diagnosis_id.value,
+            }),
+            program_id: program_id.map(|program_id| NullableUpdate {
+                value: program_id.value,
+            }),
+            their_reference: their_reference.map(|their_reference| NullableUpdate {
+                value: their_reference.value,
             }),
         }
     }
@@ -176,6 +187,7 @@ impl UpdatePrescriptionStatusInput {
         match self {
             UpdatePrescriptionStatusInput::Picked => Picked,
             UpdatePrescriptionStatusInput::Verified => Verified,
+            UpdatePrescriptionStatusInput::Cancelled => Cancelled,
         }
     }
 }
@@ -376,6 +388,8 @@ mod test {
                     colour: Some("colour input".to_string()),
                     backdated_datetime: None,
                     diagnosis_id: None,
+                    program_id: None,
+                    their_reference: None,
                 }
             );
             Ok(Invoice {

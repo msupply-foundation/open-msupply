@@ -1,8 +1,9 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
     DateFilter, EqualFilter, ItemRowRepository, ItemType, MasterListLineFilter,
-    MasterListLineRepository, NumberRowType, RepositoryError, StockLineFilter, StockLineRepository,
-    StockLineRow, StocktakeLineRow, StocktakeRow, StocktakeStatus, StorageConnection,
+    MasterListLineRepository, NumberRowType, ProgramRowRepository, RepositoryError,
+    StockLineFilter, StockLineRepository, StockLineRow, StocktakeLineRow, StocktakeRow,
+    StocktakeStatus, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -27,9 +28,13 @@ pub fn generate(
     }: InsertStocktake,
 ) -> Result<(StocktakeRow, Vec<StocktakeLineRow>), RepositoryError> {
     let stocktake_number = next_number(connection, &NumberRowType::Stocktake, store_id)?;
+    let mut program_id = None;
 
     let master_list_lines = match master_list_id {
         Some(master_list_id) => {
+            program_id = ProgramRowRepository::new(connection)
+                .find_one_by_id(&master_list_id)?
+                .map(|r| r.id);
             generate_lines_from_master_list(connection, store_id, &id, &master_list_id)?
         }
         None => Vec::new(),
@@ -77,6 +82,7 @@ pub fn generate(
             user_id: user_id.to_string(),
             store_id: store_id.to_string(),
             is_locked: is_locked.unwrap_or(false),
+            program_id,
             // Default
             finalised_datetime: None,
             inventory_addition_id: None,

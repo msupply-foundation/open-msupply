@@ -9,14 +9,21 @@ import {
   Formatter,
   DateUtils,
   useConfirmationModal,
+  BasicTextInput,
+  Tooltip,
+  useDebouncedValueCallback,
 } from '@openmsupply-client/common';
-import { PatientSearchInput } from '@openmsupply-client/system';
+import {
+  PatientSearchInput,
+  ProgramSearchInput,
+} from '@openmsupply-client/system';
+import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 import { usePrescription } from '../api';
 import {
   Clinician,
   ClinicianSearchInput,
 } from '../../../../system/src/Clinician';
-import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
+import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
 
 export const Toolbar: FC = () => {
   const {
@@ -25,8 +32,15 @@ export const Toolbar: FC = () => {
     isDisabled,
     rows: items,
   } = usePrescription();
-  const { id, patient, clinician, prescriptionDate, createdDatetime } =
-    data ?? {};
+  const {
+    id,
+    patient,
+    clinician,
+    prescriptionDate,
+    createdDatetime,
+    programId,
+    theirReference,
+  } = data ?? {};
   const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
     clinician ?? null
   );
@@ -35,6 +49,10 @@ export const Toolbar: FC = () => {
       DateUtils.getDateOrNull(createdDatetime) ??
       null
   );
+
+  const { data: programData } = useProgramList(true);
+  const programs = programData?.nodes ?? [];
+  const selectedProgram = programs.find(prog => prog.id === programId);
 
   const {
     delete: { deleteLines },
@@ -47,6 +65,13 @@ export const Toolbar: FC = () => {
   };
 
   const t = useTranslation();
+
+  const [theirReferenceInput, setTheirReferenceInput] =
+    useState(theirReference);
+
+  const debouncedUpdate = useDebouncedValueCallback(update, [
+    theirReferenceInput,
+  ]);
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
@@ -93,6 +118,26 @@ export const Toolbar: FC = () => {
     });
   };
 
+  const handleProgramChange = async (
+    newProgram: ProgramFragment | undefined
+  ) => {
+    if (!newProgram || !items || items.length === 0) {
+      // It's okay to *clear* program without losing current items
+      await update({ id, programId: newProgram?.id ?? null });
+      return;
+    }
+
+    getConfirmation({
+      onConfirm: async () => {
+        // For simplicity, we currently delete all items that have already been
+        // added when switching programs. We may wish to improve this in the
+        // future to only remove items that don't belong to the new program
+        await deleteAll();
+        await update({ id, programId: newProgram?.id });
+      },
+    });
+  };
+
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
@@ -125,6 +170,23 @@ export const Toolbar: FC = () => {
               />
             )}
             <InputWithLabelRow
+              label={t('label.reference')}
+              Input={
+                <Tooltip title={theirReferenceInput} placement="bottom-start">
+                  <BasicTextInput
+                    disabled={isDisabled}
+                    size="small"
+                    sx={{ width: 250 }}
+                    value={theirReferenceInput ?? ''}
+                    onChange={event => {
+                      setTheirReferenceInput(event.target.value);
+                      debouncedUpdate({ theirReference: event.target.value });
+                    }}
+                  />
+                </Tooltip>
+              }
+            />
+            <InputWithLabelRow
               label={t('label.clinician')}
               Input={
                 <ClinicianSearchInput
@@ -141,7 +203,13 @@ export const Toolbar: FC = () => {
               }
             />
           </Box>
-          <Box display="flex" flexDirection="column" flex={1} marginLeft={3}>
+          <Box
+            display="flex"
+            flexDirection="column"
+            gap={1}
+            flex={1}
+            marginLeft={3}
+          >
             <InputWithLabelRow
               label={t('label.date')}
               Input={
@@ -154,6 +222,19 @@ export const Toolbar: FC = () => {
                 />
               }
             />
+            {programs.length > 0 && (
+              <InputWithLabelRow
+                label={t('label.program')}
+                Input={
+                  <ProgramSearchInput
+                    disabled={isDisabled}
+                    programs={programs}
+                    selectedProgram={selectedProgram}
+                    onChange={handleProgramChange}
+                  />
+                }
+              />
+            )}
           </Box>
         </Grid>
         <Grid
