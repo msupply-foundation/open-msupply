@@ -20,11 +20,18 @@ import {
   PatientModal,
   usePatientModalStore,
 } from '@openmsupply-client/programs';
-import { Box, Stack } from '@openmsupply-client/common';
+import {
+  Box,
+  InsurancePolicyNodeType,
+  Stack,
+} from '@openmsupply-client/common';
 import { usePatient } from '../api';
+import { InsurancePolicySelect } from './components';
 
 const DEFAULT_INSURANCE = {
   policyNumber: '',
+  policyNumberFamily: '',
+  policyNumberPerson: '',
   providerName: '',
   policyType: '',
   isActive: undefined as boolean | undefined,
@@ -43,6 +50,8 @@ export const InsuranceModal: FC = (): ReactElement => {
   const nameId = usePatient.utils.id();
   const { data } = usePatient.document.insurances({ nameId });
 
+  const [insurance, setInsurance] = useState(DEFAULT_INSURANCE);
+
   const selectedInsurance = data?.nodes.find(({ id }) => id === insuranceId);
 
   const { Modal } = useDialog({
@@ -51,12 +60,12 @@ export const InsuranceModal: FC = (): ReactElement => {
     disableBackdrop: true,
   });
 
-  const [insurance, setInsurance] = useState(DEFAULT_INSURANCE);
-
   useEffect(() => {
     if (selectedInsurance) {
       setInsurance({
         policyNumber: selectedInsurance.policyNumber,
+        policyNumberFamily: selectedInsurance.policyNumberFamily ?? '',
+        policyNumberPerson: selectedInsurance.policyNumberPerson ?? '',
         providerName: selectedInsurance.insuranceProviders?.providerName ?? '',
         policyType: selectedInsurance.policyType,
         isActive: selectedInsurance.isActive,
@@ -77,6 +86,8 @@ export const InsuranceModal: FC = (): ReactElement => {
     (field: string) => (event: ChangeEvent<HTMLInputElement>) =>
       setInsurance({ ...insurance, [field]: event.target.value });
 
+  console.log(selectedInsurance);
+
   return (
     <Modal
       width={800}
@@ -89,30 +100,29 @@ export const InsuranceModal: FC = (): ReactElement => {
       <Stack gap={8} flexDirection="row">
         <Box display="flex" flexDirection="column" gap={2}>
           <InputWithLabelRow
-            label={t('label.policy-number')}
+            label={t('label.policy-number-family')}
             Input={
               <BasicTextInput
-                value={insurance.policyNumber}
-                onChange={handleInputChange('policyNumber')}
+                value={insurance.policyNumberFamily}
+                onChange={handleInputChange('policyNumberFamily')}
               />
             }
           />
           <InputWithLabelRow
-            label={t('label.provider-name')}
+            label={t('label.policy-number-person')}
             Input={
               <BasicTextInput
-                value={insurance.providerName}
-                onChange={handleInputChange('providerName')}
+                value={insurance.policyNumberPerson}
+                onChange={handleInputChange('policyNumberPerson')}
               />
             }
           />
-          <InputWithLabelRow
-            label={t('label.policy-type')}
-            Input={
-              <BasicTextInput
-                value={insurance.policyType}
-                onChange={handleInputChange('policyType')}
-              />
+          <InsurancePolicySelect
+            onChange={(value: string) =>
+              setInsurance({
+                ...insurance,
+                policyType: value as InsurancePolicyNodeType,
+              })
             }
           />
           <Box pt={2}>
@@ -154,21 +164,32 @@ export const InsuranceModal: FC = (): ReactElement => {
           </Box>
         </Box>
         <Box display="flex" flexDirection="column" gap={2}>
-          <InputWithLabelRow
-            label={t('label.discount-rate')}
-            Input={
-              <BasicTextInput
-                value={insurance.discountRate}
-                onChange={handleInputChange('discountRate')}
-              />
-            }
-          />
+          {/* <BaseDatePickerInput value={insurance.expiryDate} /> */}
           <InputWithLabelRow
             label={t('label.expiry-date')}
             Input={
               <BasicTextInput
                 value={insurance.expiryDate}
                 onChange={handleInputChange('expiryDate')}
+              />
+            }
+          />
+          {/* convert to dropdown */}
+          <InputWithLabelRow
+            label={t('label.provider-name')}
+            Input={
+              <BasicTextInput
+                value={insurance.providerName}
+                onChange={handleInputChange('providerName')}
+              />
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.discount-rate')}
+            Input={
+              <BasicTextInput
+                value={insurance.discountRate}
+                onChange={handleInputChange('discountRate')}
               />
             }
           />

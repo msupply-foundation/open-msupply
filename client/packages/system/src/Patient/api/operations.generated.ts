@@ -90,7 +90,7 @@ export type LatestPatientEncounterQueryVariables = Types.Exact<{
 
 export type LatestPatientEncounterQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, type: string, startDatetime: string, suggestedNextEncounter?: { __typename: 'SuggestedNextEncounterNode', startDatetime: string, label?: string | null } | null }> } };
 
-export type InsuranceFragment = { __typename: 'InsuranceNode', id: string, policyNumber: string, policyType: Types.InsurancePolicyNodeType, discountPercentage: number, expiryDate: string, isActive: boolean, insuranceProviders?: { __typename: 'InsuranceProviderNode', id: string, providerName: string } | null };
+export type InsuranceFragment = { __typename: 'InsuranceNode', id: string, insuranceProviderId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null, discountPercentage: number, expiryDate: string, isActive: boolean, insuranceProviders?: { __typename: 'InsuranceProviderNode', id: string, providerName: string } | null };
 
 export type InsurancesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -99,7 +99,7 @@ export type InsurancesQueryVariables = Types.Exact<{
 }>;
 
 
-export type InsurancesQuery = { __typename: 'Queries', insurances: { __typename: 'InsuranceConnector', nodes: Array<{ __typename: 'InsuranceNode', id: string, policyNumber: string, policyType: Types.InsurancePolicyNodeType, discountPercentage: number, expiryDate: string, isActive: boolean, insuranceProviders?: { __typename: 'InsuranceProviderNode', id: string, providerName: string } | null }> } };
+export type InsurancesQuery = { __typename: 'Queries', insurances: { __typename: 'InsuranceConnector', nodes: Array<{ __typename: 'InsuranceNode', id: string, insuranceProviderId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null, discountPercentage: number, expiryDate: string, isActive: boolean, insuranceProviders?: { __typename: 'InsuranceProviderNode', id: string, providerName: string } | null }> } };
 
 export const PatientRowFragmentDoc = gql`
     fragment PatientRow on PatientNode {
@@ -180,8 +180,11 @@ export const ProgramPatientRowFragmentDoc = gql`
 export const InsuranceFragmentDoc = gql`
     fragment Insurance on InsuranceNode {
   id
-  policyNumber
+  insuranceProviderId
   policyType
+  policyNumber
+  policyNumberFamily
+  policyNumberPerson
   discountPercentage
   expiryDate
   isActive

@@ -236,8 +236,11 @@ query latestPatientEncounter(
 
 fragment Insurance on InsuranceNode {
   id
-  policyNumber
+  insuranceProviderId
   policyType
+  policyNumber
+  policyNumberFamily
+  policyNumberPerson
   discountPercentage
   expiryDate
   isActive

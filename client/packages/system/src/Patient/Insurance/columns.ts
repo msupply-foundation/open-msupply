@@ -33,6 +33,9 @@ export const useInsuranceColumns = ({
     {
       label: 'label.policy-type',
       key: 'policyType',
+      accessor: ({ rowData }) =>
+        rowData.policyType.charAt(0).toUpperCase() +
+        rowData.policyType.slice(1).toLowerCase(),
       sortable: false,
     },
     {
