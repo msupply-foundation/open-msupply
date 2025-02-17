@@ -289,6 +289,9 @@ impl Synchroniser {
         ctx.processors_trigger
             .trigger_processor(ProcessorType::ContactFormEmail);
 
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::LoadPlugin);
+
         Ok(())
     }
 }
