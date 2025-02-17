@@ -3,19 +3,20 @@ use chrono::NaiveDate;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
+use graphql_types::types::IdResponse;
 use repository::name_insurance_join_row::NameInsuranceJoinRow;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     insurance::update::{UpdateInsurance as ServiceInput, UpdateInsuranceError as ServiceError},
 };
 
-use super::insert_insurance::InsurancePolicyNodeType;
+use crate::types::InsurancePolicyNodeType as UpdateInsurancePolicyNodeType;
 
 #[derive(InputObject)]
 pub struct UpdateInsuranceInput {
     pub id: String,
     pub insurance_provider_id: Option<String>,
-    pub policy_type: Option<InsurancePolicyNodeType>,
+    pub policy_type: Option<UpdateInsurancePolicyNodeType>,
     pub discount_percentage: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
     pub is_active: Option<bool>,
@@ -43,20 +44,9 @@ impl UpdateInsuranceInput {
     }
 }
 
-pub struct UpdateInsuranceNode {
-    pub id: String,
-}
-
-#[Object]
-impl UpdateInsuranceNode {
-    pub async fn id(&self) -> &str {
-        &self.id
-    }
-}
-
 #[derive(Union)]
 pub enum UpdateInsuranceResponse {
-    Response(UpdateInsuranceNode),
+    Response(IdResponse),
 }
 
 pub fn update_insurance(
@@ -86,9 +76,7 @@ pub fn map_response(
     from: Result<NameInsuranceJoinRow, ServiceError>,
 ) -> Result<UpdateInsuranceResponse> {
     match from {
-        Ok(insurance) => Ok(UpdateInsuranceResponse::Response(UpdateInsuranceNode {
-            id: insurance.id,
-        })),
+        Ok(insurance) => Ok(UpdateInsuranceResponse::Response(IdResponse(insurance.id))),
         Err(error) => map_error(error),
     }
 }
