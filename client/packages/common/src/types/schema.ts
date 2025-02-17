@@ -3431,6 +3431,7 @@ export type InvoiceFilterInput = {
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
+  isCancellation?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
   nameId?: InputMaybe<EqualFilterStringInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3540,6 +3541,7 @@ export type InvoiceNode = {
   __typename: 'InvoiceNode';
   allocatedDatetime?: Maybe<Scalars['DateTime']['output']>;
   backdatedDatetime?: Maybe<Scalars['DateTime']['output']>;
+  cancelledDatetime?: Maybe<Scalars['DateTime']['output']>;
   clinician?: Maybe<ClinicianNode>;
   clinicianId?: Maybe<Scalars['String']['output']>;
   colour?: Maybe<Scalars['String']['output']>;
@@ -3629,7 +3631,7 @@ export enum InvoiceNodeStatus {
    * Outbound Shipment: Becomes not editable
    * Inbound Shipment: For inter store stock transfers an inbound Shipment
    * becomes editable when this status is set as a result of corresponding
-   * outbound Shipment being chagned to shipped (this is similar to New status)
+   * outbound Shipment being changed to shipped (this is similar to New status)
    */
   Shipped = 'SHIPPED',
   /**

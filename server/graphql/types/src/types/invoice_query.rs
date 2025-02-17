@@ -59,7 +59,7 @@ pub enum InvoiceNodeStatus {
     /// Outbound Shipment: Becomes not editable
     /// Inbound Shipment: For inter store stock transfers an inbound Shipment
     /// becomes editable when this status is set as a result of corresponding
-    /// outbound Shipment being chagned to shipped (this is similar to New status)
+    /// outbound Shipment being changed to shipped (this is similar to New status)
     Shipped,
     /// General description: Inbound Shipment was received
     /// Outbound Shipment: Status is updated based on corresponding inbound Shipment
@@ -181,6 +181,12 @@ impl InvoiceNode {
     pub async fn backdated_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .backdated_datetime
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    }
+
+    pub async fn cancelled_datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .cancelled_datetime
             .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 

@@ -53,6 +53,7 @@ pub struct InvoiceFilter {
     pub requisition_id: Option<EqualFilter<String>>,
     pub linked_invoice_id: Option<EqualFilter<String>>,
     pub stock_line_id: Option<String>,
+    pub is_cancellation: Option<bool>,
 }
 
 pub enum InvoiceSortField {
@@ -245,6 +246,7 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
             requisition_id,
             linked_invoice_id,
             stock_line_id,
+            is_cancellation,
         } = f;
 
         apply_equal_filter!(query, id, invoice::id);
@@ -265,6 +267,9 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
 
         if let Some(value) = on_hold {
             query = query.filter(invoice::on_hold.eq(value));
+        }
+        if let Some(value) = is_cancellation {
+            query = query.filter(invoice::is_cancellation.eq(value));
         }
 
         apply_date_time_filter!(query, created_datetime, invoice::created_datetime);
