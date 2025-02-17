@@ -124,6 +124,7 @@ impl SyncTranslation for ReportTranslation {
             is_custom: true,
             version: "1.0".to_string(),
             code: id,
+            is_active: true,
         };
 
         Ok(PullTranslateResult::upsert(result))
