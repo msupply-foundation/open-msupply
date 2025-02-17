@@ -27,11 +27,13 @@ import {
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { InsurancePolicySelect } from './components';
+import { InsuranceProvidersSelect } from './components/InsuranceProvidersSelect';
 
 const DEFAULT_INSURANCE = {
   policyNumberFamily: '',
   policyNumberPerson: '',
   providerName: '',
+  insuranceProviderId: '',
   policyType: '',
   isActive: undefined as boolean | undefined,
   discountRate: 0,
@@ -48,6 +50,7 @@ export const InsuranceModal: FC = (): ReactElement => {
   const nameId = usePatient.utils.id();
   const { data } = usePatient.document.insurances({ nameId });
   const selectedInsurance = data?.nodes.find(({ id }) => id === insuranceId);
+
   const [insurance, setInsurance] = useState(DEFAULT_INSURANCE);
 
   const { Modal } = useDialog({
@@ -61,6 +64,7 @@ export const InsuranceModal: FC = (): ReactElement => {
       const {
         policyNumberFamily,
         policyNumberPerson,
+        insuranceProviderId,
         insuranceProviders,
         policyType,
         isActive,
@@ -72,6 +76,7 @@ export const InsuranceModal: FC = (): ReactElement => {
         policyType,
         isActive,
         expiryDate,
+        insuranceProviderId: insuranceProviderId ?? '',
         policyNumberFamily: policyNumberFamily ?? '',
         policyNumberPerson: policyNumberPerson ?? '',
         providerName: insuranceProviders?.providerName ?? '',
@@ -82,25 +87,25 @@ export const InsuranceModal: FC = (): ReactElement => {
     }
   }, [selectedInsurance]);
 
-  const title =
-    current === PatientModal.Insurance
-      ? t('title.new-insurance')
-      : t('title.edit-insurance');
-
   const handleInputChange =
     (field: string) => (event: ChangeEvent<HTMLInputElement>) =>
       setInsurance({ ...insurance, [field]: event.target.value });
 
-  console.log(selectedInsurance);
-
   return (
     <Modal
       width={800}
-      title={title}
+      title={
+        current === PatientModal.Insurance
+          ? t('title.new-insurance')
+          : t('title.edit-insurance')
+      }
       cancelButton={
         <DialogButton variant="cancel" onClick={() => setModal(undefined)} />
       }
       okButton={<DialogButton variant="save" onClick={() => {}} />}
+      sx={{
+        '& .MuiDialogContent-root': { display: 'flex', alignItems: 'center' },
+      }}
     >
       <Stack gap={8} flexDirection="row">
         <Box display="flex" flexDirection="column" gap={2}>
@@ -123,6 +128,7 @@ export const InsuranceModal: FC = (): ReactElement => {
             }
           />
           <InsurancePolicySelect
+            policyType={insurance.policyType}
             onChange={(value: string) =>
               setInsurance({
                 ...insurance,
@@ -179,15 +185,11 @@ export const InsuranceModal: FC = (): ReactElement => {
               />
             }
           />
-          {/* convert to dropdown */}
-          <InputWithLabelRow
-            label={t('label.provider-name')}
-            Input={
-              <BasicTextInput
-                value={insurance.providerName}
-                onChange={handleInputChange('providerName')}
-              />
-            }
+          <InsuranceProvidersSelect
+            insuranceProviderId={insurance.insuranceProviderId}
+            onChange={(value: string) => {
+              setInsurance({ ...insurance, providerName: value });
+            }}
           />
           <InputWithLabelRow
             label={t('label.discount-rate')}

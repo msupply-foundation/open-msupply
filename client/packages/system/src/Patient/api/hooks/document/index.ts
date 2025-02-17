@@ -8,6 +8,7 @@ import { useUpdateProgramPatient } from './useUpdateProgramPatient';
 import { useDocument } from '@openmsupply-client/programs';
 import { useLatestPatientEncounter } from './useLatestPatientEncounter';
 import { useInsurances } from './useInsurances';
+import { useInsuranceProviders } from './useInsuranceProviders';
 
 export const Document = {
   usePatient,
@@ -21,4 +22,5 @@ export const Document = {
   usePatientsPromise,
   useLatestPatientEncounter,
   useInsurances,
+  useInsuranceProviders,
 };

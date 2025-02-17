@@ -264,3 +264,37 @@ query insurances(
     }
   }
 }
+
+mutation insertInsurance($storeId: String!, $input: InsertInsuranceInput!) {
+  insertInsurance(storeId: $storeId, input: $input) {
+    ... on IdResponse {
+      id
+    }
+  }
+}
+
+mutation updateInsurance($storeId: String!, $input: UpdateInsuranceInput!) {
+  updateInsurance(storeId: $storeId, input: $input) {
+    ... on IdResponse {
+      id
+    }
+  }
+}
+
+fragment InsuranceProviders on InsuranceProvidersNode {
+  id
+  providerName
+  isActive
+  prescriptionValidityDays
+}
+
+query insuranceProviders($storeId: String!) {
+  insuranceProviders(storeId: $storeId) {
+    ... on InsuranceProvidersConnector {
+      __typename
+      nodes {
+        ...InsuranceProviders
+      }
+    }
+  }
+}
