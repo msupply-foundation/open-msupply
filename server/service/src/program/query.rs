@@ -1,7 +1,7 @@
 use repository::{
     EqualFilter, PaginationOption, PeriodFilter, PeriodRepository, PeriodRow, ProgramFilter,
     ProgramRepository, ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramSort,
-    RepositoryError, StorageConnection,
+    StorageConnection,
 };
 
 use crate::{get_default_pagination, i64_to_u32, ListError, ListResult, SingleRecordError};
