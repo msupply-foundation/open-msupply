@@ -73,11 +73,12 @@ fn generate_line(
         number_of_packs: requested_quantity,
         item_name,
         item_code,
-        // Deafults
+        tax_percentage,
+        // Defaults
         stock_line_id: None,
+        prescribed_quantity: None,
         total_before_tax: 0.0,
         total_after_tax: 0.0,
-        tax_percentage,
         sell_price_per_pack: 0.0,
         cost_price_per_pack: 0.0,
         batch: None,
