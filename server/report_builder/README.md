@@ -237,7 +237,7 @@ Builds 2.3.0 and above will include standard reports embedded in the binary. The
 - Expiring Items
 
 Standard reports are upserted into the database on startup.
-These are built and added from the standard_reports.json file in reports/generated. This json file includes all standard reports, and all versions of each report.
+These are built and added from the standard_reports.json file in ../standard_reports/generated. This json file includes all standard reports, and all versions of each report.
 
 ## Building standard reports
 
@@ -310,6 +310,12 @@ Reports can be upserted using
 
 ```bash
 ./target/debug/remote_server_cli upsert-reports
+```
+
+To overwrite any existing reports in the database, use the --overwrite flag
+
+```bash
+./target/debug/remote_server_cli upsert-reports --o
 ```
 
 Because this command utilises the built cli, you will need to first run

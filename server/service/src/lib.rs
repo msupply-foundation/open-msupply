@@ -6,7 +6,7 @@ use repository::location::{LocationFilter, LocationRepository};
 use repository::{EqualFilter, Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
 use repository::{RepositoryError, StorageConnection};
 use serde::de::DeserializeOwned;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use service_provider::ServiceContext;
 use settings::Settings;
 use static_files::{StaticFile, StaticFileCategory, StaticFileService};
@@ -39,6 +39,7 @@ pub mod diagnosis;
 pub mod display_settings_service;
 pub mod document;
 pub mod email;
+pub mod insurance;
 pub mod inventory_adjustment_reason;
 pub mod invoice;
 pub mod invoice_line;
@@ -343,7 +344,7 @@ fn check_item_variant_exists(
     return Ok(variant);
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct UploadedFile {
     pub file_id: String,
