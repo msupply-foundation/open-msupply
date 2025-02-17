@@ -237,7 +237,7 @@ Builds 2.3.0 and above will include standard reports embedded in the binary. The
 - Expiring Items
 
 Standard reports are upserted into the database on startup.
-These are built and added from the standard_reports.json file in reports/generated. This json file includes all standard reports, and all versions of each report.
+These are built and added from the standard_reports.json file in ../standard_reports/generated. This json file includes all standard reports, and all versions of each report.
 
 ## Building standard reports
 
