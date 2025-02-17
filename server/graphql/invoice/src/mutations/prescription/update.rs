@@ -37,6 +37,7 @@ pub struct UpdateInput {
 pub enum UpdatePrescriptionStatusInput {
     Picked,
     Verified,
+    Cancelled,
 }
 
 #[derive(SimpleObject)]
@@ -105,7 +106,7 @@ impl UpdateInput {
             prescription_date,
             diagnosis_id,
             program_id,
-            their_reference
+            their_reference,
         } = self;
 
         ServiceInput {
@@ -186,6 +187,7 @@ impl UpdatePrescriptionStatusInput {
         match self {
             UpdatePrescriptionStatusInput::Picked => Picked,
             UpdatePrescriptionStatusInput::Verified => Verified,
+            UpdatePrescriptionStatusInput::Cancelled => Cancelled,
         }
     }
 }

@@ -13,6 +13,7 @@ import {
   InsertProgramPatientInput,
   UpdateProgramPatientInput,
   FilterByWithBoolean,
+  InsuranceSortFieldInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -42,6 +43,11 @@ export type EncounterListParams = {
   sortBy: SortRule<EncounterSortFieldInput>;
   filterBy?: FilterByWithBoolean | null;
   pagination?: PaginationInput;
+};
+
+export type InsuranceListParams = {
+  nameId: string;
+  sortBy?: SortBy<InsuranceSortFieldInput>;
 };
 
 export type CentralPatientSearchResponse =
@@ -215,10 +221,18 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     (await sdk.latestPatientEncounter({ storeId, patientId, encounterType }))
       .encounters,
 
-  insurances: async (nameId: string): Promise<GetPatientInsuranceResponse> =>
-    (await sdk.insurances({ storeId, nameId })).insurances,
+  insurances: async ({
+    nameId,
+    sortBy,
+  }: InsuranceListParams): Promise<GetPatientInsuranceResponse> => {
+    const key = sortBy?.key as InsuranceSortFieldInput;
 
-  // insertInsurance
+    const result = await sdk.insurances({
+      storeId,
+      nameId,
+      sort: key ? { key, desc: !!sortBy?.isDesc } : undefined,
+    });
 
-  // updateInsurance
+    return result.insurances;
+  },
 });

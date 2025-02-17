@@ -3,76 +3,50 @@ use chrono::NaiveDate;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
-use repository::name_insurance_join_row::InsurancePolicyType;
+use graphql_types::types::IdResponse;
 use repository::name_insurance_join_row::NameInsuranceJoinRow;
-use serde::Serialize;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     insurance::update::{UpdateInsurance as ServiceInput, UpdateInsuranceError as ServiceError},
 };
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum UpdateInsurancePolicyNodeType {
-    Personal,
-    Business,
-}
-
-impl UpdateInsurancePolicyNodeType {
-    pub fn to_domain(&self) -> InsurancePolicyType {
-        match self {
-            UpdateInsurancePolicyNodeType::Personal => InsurancePolicyType::Personal,
-            UpdateInsurancePolicyNodeType::Business => InsurancePolicyType::Business,
-        }
-    }
-}
+use crate::types::InsurancePolicyNodeType as UpdateInsurancePolicyNodeType;
 
 #[derive(InputObject)]
 pub struct UpdateInsuranceInput {
     pub id: String,
+    pub insurance_provider_id: Option<String>,
     pub policy_type: Option<UpdateInsurancePolicyNodeType>,
     pub discount_percentage: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
     pub is_active: Option<bool>,
-    pub provider_name: Option<String>,
 }
 
 impl UpdateInsuranceInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInsuranceInput {
             id,
+            insurance_provider_id,
             policy_type,
             discount_percentage,
             expiry_date,
             is_active,
-            provider_name,
         } = self;
 
         ServiceInput {
             id,
+            insurance_provider_id,
             policy_type: policy_type.map(|t| t.to_domain()),
             discount_percentage,
             expiry_date,
             is_active,
-            provider_name,
         }
-    }
-}
-
-pub struct UpdateInsuranceNode {
-    pub id: String,
-}
-
-#[Object]
-impl UpdateInsuranceNode {
-    pub async fn id(&self) -> &str {
-        &self.id
     }
 }
 
 #[derive(Union)]
 pub enum UpdateInsuranceResponse {
-    Response(UpdateInsuranceNode),
+    Response(IdResponse),
 }
 
 pub fn update_insurance(
@@ -102,9 +76,7 @@ pub fn map_response(
     from: Result<NameInsuranceJoinRow, ServiceError>,
 ) -> Result<UpdateInsuranceResponse> {
     match from {
-        Ok(insurance) => Ok(UpdateInsuranceResponse::Response(UpdateInsuranceNode {
-            id: insurance.id,
-        })),
+        Ok(insurance) => Ok(UpdateInsuranceResponse::Response(IdResponse(insurance.id))),
         Err(error) => map_error(error),
     }
 }

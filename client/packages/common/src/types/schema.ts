@@ -115,6 +115,7 @@ export enum ActivityLogNodeType {
   InvoiceDeleted = 'INVOICE_DELETED',
   InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
   InvoiceStatusAllocated = 'INVOICE_STATUS_ALLOCATED',
+  InvoiceStatusCancelled = 'INVOICE_STATUS_CANCELLED',
   InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
   InvoiceStatusShipped = 'INVOICE_STATUS_SHIPPED',
@@ -8541,6 +8542,7 @@ export type UpdatePrescriptionResponseWithId = {
 };
 
 export enum UpdatePrescriptionStatusInput {
+  Cancelled = 'CANCELLED',
   Picked = 'PICKED',
   Verified = 'VERIFIED'
 }

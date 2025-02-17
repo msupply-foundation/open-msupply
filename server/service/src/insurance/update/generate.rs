@@ -15,15 +15,17 @@ pub fn generate(
 ) -> NameInsuranceJoinRow {
     let UpdateInsurance {
         id,
+        insurance_provider_id,
         policy_type,
         discount_percentage,
         expiry_date,
         is_active,
-        ..
     } = update_input;
 
     NameInsuranceJoinRow {
         id,
+        insurance_provider_id: insurance_provider_id
+            .unwrap_or(name_insurance_join_row.insurance_provider_id),
         policy_type: policy_type.unwrap_or(name_insurance_join_row.policy_type),
         discount_percentage: discount_percentage
             .unwrap_or(name_insurance_join_row.discount_percentage),

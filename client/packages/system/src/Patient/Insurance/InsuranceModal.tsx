@@ -32,7 +32,6 @@ const DEFAULT_INSURANCE = {
   expiryDate: '',
 };
 
-// If theres no insurance ID passed we create an insurance
 // If there's no ID don't let editing of policy number
 
 export const InsuranceModal: FC = (): ReactElement => {
@@ -41,11 +40,9 @@ export const InsuranceModal: FC = (): ReactElement => {
 
   const { urlQuery } = useUrlQuery();
   const insuranceId = urlQuery['insuranceId'];
-  const patientId = usePatient.utils.id();
-  const { data } = usePatient.document.insurances(patientId);
+  const nameId = usePatient.utils.id();
+  const { data } = usePatient.document.insurances({ nameId });
 
-  // This needs to be refactored to call the API to fetch a single insurance record.
-  // Note: The endpoint for fetching a single insurance record needs to be created.
   const selectedInsurance = data?.nodes.find(({ id }) => id === insuranceId);
 
   const { Modal } = useDialog({
