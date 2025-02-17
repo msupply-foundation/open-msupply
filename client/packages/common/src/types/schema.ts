@@ -115,12 +115,14 @@ export enum ActivityLogNodeType {
   InvoiceDeleted = 'INVOICE_DELETED',
   InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
   InvoiceStatusAllocated = 'INVOICE_STATUS_ALLOCATED',
+  InvoiceStatusCancelled = 'INVOICE_STATUS_CANCELLED',
   InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
   InvoiceStatusShipped = 'INVOICE_STATUS_SHIPPED',
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
   PrescriptionCreated = 'PRESCRIPTION_CREATED',
   PrescriptionDeleted = 'PRESCRIPTION_DELETED',
+  PrescriptionStatusCancelled = 'PRESCRIPTION_STATUS_CANCELLED',
   PrescriptionStatusPicked = 'PRESCRIPTION_STATUS_PICKED',
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
   ProgramCreated = 'PROGRAM_CREATED',
@@ -3289,6 +3291,56 @@ export type InsertVaccineCourseInput = {
 
 export type InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode;
 
+export type InsuranceConnector = {
+  __typename: 'InsuranceConnector';
+  nodes: Array<InsuranceNode>;
+};
+
+export type InsuranceNode = {
+  __typename: 'InsuranceNode';
+  discountPercentage: Scalars['Float']['output'];
+  expiryDate: Scalars['NaiveDate']['output'];
+  id: Scalars['String']['output'];
+  insuranceProviderId: Scalars['String']['output'];
+  insuranceProviders?: Maybe<InsuranceProviderNode>;
+  isActive: Scalars['Boolean']['output'];
+  policyNumber: Scalars['String']['output'];
+  policyNumberFamily?: Maybe<Scalars['String']['output']>;
+  policyNumberPerson?: Maybe<Scalars['String']['output']>;
+  policyType: InsurancePolicyNodeType;
+};
+
+export enum InsurancePolicyNodeType {
+  Business = 'BUSINESS',
+  Personal = 'PERSONAL'
+}
+
+export type InsuranceProviderNode = {
+  __typename: 'InsuranceProviderNode';
+  comment?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  prescriptionValidityDays?: Maybe<Scalars['Int']['output']>;
+  providerName: Scalars['String']['output'];
+};
+
+export type InsuranceResponse = InsuranceConnector;
+
+export enum InsuranceSortFieldInput {
+  ExpiryDate = 'expiryDate',
+  IsActive = 'isActive'
+}
+
+export type InsuranceSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: InsuranceSortFieldInput;
+};
+
 export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & ScannedDataParseErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpsertBundledItemErrorInterface & UpsertItemVariantErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String']['output'];
@@ -3549,6 +3601,7 @@ export enum InvoiceNodeStatus {
    * Inbound Shipment: not applicable
    */
   Allocated = 'ALLOCATED',
+  Cancelled = 'CANCELLED',
   /**
    * General description: Inbound Shipment was received
    * Outbound Shipment: Status is updated based on corresponding inbound Shipment
@@ -5367,6 +5420,12 @@ export type PatientSortInput = {
   key: PatientSortFieldInput;
 };
 
+export type PeriodConnector = {
+  __typename: 'PeriodConnector';
+  nodes: Array<PeriodNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type PeriodNode = {
   __typename: 'PeriodNode';
   endDate: Scalars['NaiveDate']['output'];
@@ -5388,6 +5447,8 @@ export type PeriodSchedulesConnector = {
 };
 
 export type PeriodSchedulesResponse = PeriodSchedulesConnector;
+
+export type PeriodsResponse = PeriodConnector;
 
 export type PluginDataFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
@@ -5800,6 +5861,7 @@ export type Queries = {
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
+  insurances: InsuranceResponse;
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
@@ -5834,6 +5896,7 @@ export type Queries = {
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
+  periods: PeriodsResponse;
   pluginData: PluginDataResponse;
   plugins: Array<PluginNode>;
   programEnrolments: ProgramEnrolmentResponse;
@@ -6177,6 +6240,13 @@ export type QueriesInsertPrescriptionArgs = {
 };
 
 
+export type QueriesInsurancesArgs = {
+  nameId: Scalars['String']['input'];
+  sort?: InputMaybe<Array<InsuranceSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesInventoryAdjustmentReasonsArgs = {
   filter?: InputMaybe<InventoryAdjustmentReasonFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -6315,6 +6385,12 @@ export type QueriesPatientsArgs = {
   filter?: InputMaybe<PatientFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<PatientSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesPeriodsArgs = {
+  programId?: InputMaybe<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -6807,6 +6883,8 @@ export type RequisitionFilterInput = {
   orderType?: InputMaybe<EqualFilterStringInput>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<StringFilterInput>;
+  periodId?: InputMaybe<EqualFilterStringInput>;
+  programId?: InputMaybe<EqualFilterStringInput>;
   requisitionNumber?: InputMaybe<EqualFilterBigNumberInput>;
   sentDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterRequisitionStatusInput>;
@@ -8481,6 +8559,7 @@ export type UpdatePrescriptionResponseWithId = {
 };
 
 export enum UpdatePrescriptionStatusInput {
+  Cancelled = 'CANCELLED',
   Picked = 'PICKED',
   Verified = 'VERIFIED'
 }
