@@ -2422,6 +2422,11 @@ export type Gs1DataElement = {
   data: Scalars['String']['input'];
 };
 
+export type IdResponse = {
+  __typename: 'IdResponse';
+  id: Scalars['String']['output'];
+};
+
 export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
@@ -2792,6 +2797,20 @@ export type InsertInboundShipmentServiceLineResponseWithId = {
   id: Scalars['String']['output'];
   response: InsertInboundShipmentServiceLineResponse;
 };
+
+export type InsertInsuranceInput = {
+  discountPercentage: Scalars['Float']['input'];
+  expiryDate: Scalars['NaiveDate']['input'];
+  id: Scalars['String']['input'];
+  insuranceProviderId: Scalars['String']['input'];
+  isActive: Scalars['Boolean']['input'];
+  nameId: Scalars['String']['input'];
+  policyNumberFamily: Scalars['String']['input'];
+  policyNumberPersonal: Scalars['String']['input'];
+  policyType: InsurancePolicyNodeType;
+};
+
+export type InsertInsuranceResponse = IdResponse;
 
 export type InsertInventoryAdjustmentErrorInterface = {
   description: Scalars['String']['output'];
@@ -4249,6 +4268,7 @@ export type Mutations = {
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
+  insertInsurance: InsertInsuranceResponse;
   insertLocation: InsertLocationResponse;
   insertOutboundShipment: InsertOutboundShipmentResponse;
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
@@ -4297,6 +4317,7 @@ export type Mutations = {
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
   updateIndicatorValue: UpdateIndicatorValueResponse;
+  updateInsurance: UpdateInsuranceResponse;
   updateLabelPrinterSettings: UpdateLabelPrinterSettingsResponse;
   updateLocation: UpdateLocationResponse;
   updateLogLevel: UpsertLogLevelResponse;
@@ -4612,6 +4633,12 @@ export type MutationsInsertInboundShipmentServiceLineArgs = {
 };
 
 
+export type MutationsInsertInsuranceArgs = {
+  input: InsertInsuranceInput;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type MutationsInsertLocationArgs = {
   input: InsertLocationInput;
   storeId: Scalars['String']['input'];
@@ -4823,6 +4850,12 @@ export type MutationsUpdateInboundShipmentServiceLineArgs = {
 
 export type MutationsUpdateIndicatorValueArgs = {
   input: UpdateIndicatorValueInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdateInsuranceArgs = {
+  input: UpdateInsuranceInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -8283,6 +8316,17 @@ export type UpdateIndicatorValueInput = {
 };
 
 export type UpdateIndicatorValueResponse = IndicatorValueNode | UpdateIndicatorValueError;
+
+export type UpdateInsuranceInput = {
+  discountPercentage?: InputMaybe<Scalars['Float']['input']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  insuranceProviderId?: InputMaybe<Scalars['String']['input']>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  policyType?: InputMaybe<InsurancePolicyNodeType>;
+};
+
+export type UpdateInsuranceResponse = IdResponse;
 
 export type UpdateLabelPrinterSettingsError = {
   __typename: 'UpdateLabelPrinterSettingsError';
