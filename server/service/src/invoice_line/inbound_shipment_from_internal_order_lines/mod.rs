@@ -85,8 +85,8 @@ mod test {
             mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceRow, InvoiceStatus, InvoiceType, RequisitionLineRow, RequisitionRow,
-        StorePreferenceRow,
+        EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRow,
+        InvoiceStatus, InvoiceType, RequisitionLineRow, RequisitionRow, StorePreferenceRow,
     };
 
     use crate::{
@@ -277,5 +277,49 @@ mod test {
             ),
             Err(ServiceError::RequisitionNotLinkedToInvoice)
         );
+    }
+
+    #[actix_rt::test]
+    async fn insert_from_internal_order_line_success() {
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_from_internal_order_line",
+            MockDataInserts::all(),
+            MockData {
+                store_preferences: vec![store_pref()],
+                requisitions: vec![requisition_test()],
+                requisition_lines: vec![requisition_line_test()],
+                invoices: vec![invoice_linked_to_requisition()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        let result = insert_from_internal_order_line(
+            &context,
+            InsertFromInternalOrderLine {
+                invoice_id: invoice_linked_to_requisition().id,
+                requisition_line_id: requisition_line_test().id,
+            },
+        )
+        .unwrap();
+
+        let InvoiceLine {
+            invoice_line_row: inbound_line,
+            ..
+        } = InvoiceLineRepository::new(&connection)
+            .query_by_filter(
+                InvoiceLineFilter::new()
+                    .invoice_id(EqualFilter::equal_to(&invoice_linked_to_requisition().id)),
+            )
+            .unwrap()
+            .pop()
+            .unwrap();
+
+        assert_eq!(result.invoice_line_row, inbound_line);
     }
 }
