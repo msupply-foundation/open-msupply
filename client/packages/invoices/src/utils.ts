@@ -11,6 +11,7 @@ import {
   Formatter,
   TypedTFunction,
   noOtherVariants,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
@@ -215,7 +216,10 @@ export const isCustomerReturnDisabled = (
 export const isPrescriptionDisabled = (
   prescription: PrescriptionRowFragment
 ): boolean => {
-  return prescription.status === InvoiceNodeStatus.Verified;
+  return (
+    prescription.status === InvoiceNodeStatus.Verified ||
+    prescription.status === InvoiceNodeStatus.Cancelled
+  );
 };
 
 export const isInboundListItemDisabled = (
@@ -276,6 +280,11 @@ export const canDeleteInvoice = (
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Allocated ||
   invoice.status === InvoiceNodeStatus.Picked;
+
+export const canCancelInvoice = (invoice: PrescriptionRowFragment) =>
+  // TO-DO Pass in preferences and check preference enabled
+  invoice.type === InvoiceNodeType.Prescription &&
+  invoice.status === InvoiceNodeStatus.Verified;
 
 export const canDeleteSupplierReturn = (
   SupplierReturn: SupplierReturnRowFragment
