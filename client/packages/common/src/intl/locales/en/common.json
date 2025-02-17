@@ -1269,7 +1269,7 @@
   "messages.cant-download-android": "File cannot be downloaded on this device",
   "messages.cant-return-shipment": "Cannot process return of lines until the status is 'Shipped'",
   "messages.cant-return-shipment-replenishment": "Cannot return lines until the status is 'Delivered'",
-  "messages.cant-send-order": "Cannot send Internal Order because there are no lines",
+  "messages.cant-send-order": "Cannot send Internal Order because there are no lines or because all lines have a requested quantity of 0",
   "messages.catalogue-property": "This property is defined in the catalogue",
   "messages.cce-created": "CCE created successfully",
   "messages.change-server": "Change server",
