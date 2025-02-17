@@ -19,7 +19,6 @@ import {
   usePrintReport,
 } from 'packages/system/src/Report';
 import { JsonData } from '@openmsupply-client/programs';
-import { usePrescriptionId } from '../api/hooks/usePrescriptionId';
 
 interface AppBarButtonProps {
   onAddItem: (draft?: Draft) => void;
@@ -30,15 +29,14 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
   onViewHistory,
 }) => {
-  const { isDisabled } = usePrescription();
+  const { isDisabled, query: data } = usePrescription();
   const { OpenButton } = useDetailPanel();
   const { print, isPrinting } = usePrintReport();
-  const prescriptionId = usePrescriptionId();
   const printReport = (
     report: ReportRowFragment,
     args: JsonData | undefined
   ) => {
-    print({ reportId: report.id, dataId: prescriptionId, args });
+    print({ reportId: report.id, dataId: data?.data?.id, args });
   };
   const t = useTranslation();
   return (
