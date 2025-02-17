@@ -15,6 +15,10 @@ impl MigrationFragment for Migrate {
                 ALTER TYPE activity_log_type
                 ADD VALUE IF NOT EXISTS
                     'PRESCRIPTION_STATUS_CANCELLED' AFTER 'PRESCRIPTION_STATUS_VERIFIED';
+                
+                ALTER TABLE invoice
+                ADD COLUMN is_cancellation BOOLEAN NOT NULL DEFAULT FALSE,
+                ADD COLUMN cancelled_datetime {DATETIME};
                 "#,
             )?;
         }
