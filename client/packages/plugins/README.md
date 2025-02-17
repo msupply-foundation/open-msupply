@@ -19,7 +19,7 @@ When the app is loaded, all available plugins are read (the process differs slig
 
 Plugin can implement any interfaces defined in [Plugins type](../common/src/plugins/types.ts), for examples a React component a simple function or an object, and can implement multiple instances of the same interface. Plugins are accessed by core frontend functionality with usePluginProvider hook, and any related data is passed to that plugin as props.
 
-Like data an event can be provided to a plugin component, to allow event driven interaction between the core and the plugins, like being able to set isDirty state or invoke plugin action when save button is pressed, you can see it in example repository, [responding to on save even](https://github.com/msupply-foundation/open-msupply-plugins/blob/13f5786bc6b2bc97152c423e1d3619b422550e69/frontend/latest/src/StockDonor/StockDonorEditInput.tsx#L38) and setting [isDirty state](https://github.com/msupply-foundation/open-msupply-plugins/blob/13f5786bc6b2bc97152c423e1d3619b422550e69/frontend/latest/src/StockDonor/StockDonorEditInput.tsx#L53-L54).
+Like data an event can be provided to a plugin component, to allow event driven interaction between the core and the plugins, for example being able to set isDirty state or invoke plugin action when save button is pressed, see more on events below.
 
 Webpack module federation is used to bundle and serve the plugins.
 
@@ -52,13 +52,18 @@ events: UsePluginEvents<{ isReady: boolean }, { validateThisString: string }, 'o
 const pluginEvents = usePluginEvents<_, { validateThisString: string }, 'ok' | { error: 'string' }>({ isReady: false });
 // When asking for validation
 const validate = async(validateThisString: string) => {
-   let validationResult = await pluginEvents.dispatchEvent({ id: draft.id });
+   let validationResult = await pluginEvents.dispatchEvent({ validateThisString: 'good'});
    if (validationResult == 'ok') {
       closeModal()
    }
    error(validationResult.error) // This is a toast
    setError(validationResult.error)
 }
+// Checking for isReady
+<div>
+  {pluginEvents.state.isReady && {'i am ready'}}
+</div>
+
 // ### in Plugin
 // events should come as parameters to component
 useEffect(() => {
@@ -71,14 +76,20 @@ useEffect(() => {
   );
   return unmountEvent; // mountEvent return a handler to unmountEvent
 }, []);
+// Setting isReady 
 
+useEffect(() => {
+  events.setState({isReady: true})
+}, [somethingChanged])
 ```
 
 Of course in above example the types should be defined once and shared (even though typescript guarantees they are valid it's a bit verbose)
 
-TODO O actually tried to share types but had typescript error when doing `const pluginEvents: SomeConcreteTypeOfUsePluginEvent = usePluginEvents>({ isReady: false });` <- said that (boolean is not false ¯\_(ツ)_/¯)
+TODO actually tried to share types but had typescript error when doing `const pluginEvents: SomeConcreteTypeOfUsePluginEvent = usePluginEvents>({ isReady: false });` <- said that (boolean is not false ¯\_(ツ)_/¯)
 
 ### Plugin data
+
+TODO update this
 
 Plugins can store data in the `plugin_data` table. The following methods are available in the graphQL API for interacting with plugin data:
 
@@ -100,7 +111,7 @@ These functions can be implemented within your plugin and used to fetch and upda
 
 You can watch [this video for example](https://drive.google.com/file/d/1JnmPU9hRaQD4R1hTDKbbNj78FnM2l00A/view?usp=drive_link) TODO make public
 
-The simplest way to begin is by cloning (forking for now or just copy and create new repo, until we have a template), this repository https://github.com/msupply-foundation/open-msupply-plugin, then add it as submodule to `client/packages/plugins/` using this command: `git submodule add https://github.com/andreievg/open-msupply-plugins-andrei client/packages/plugins/mynewplugin`, note the 'mynewplugin` can be anything. The inner repository and core will be treated at two different repositories, changes in them will only be reflected in relative repositories (i.e. you can add the inner repository as local repository in github desktop). Make sure that you don't commit the `.gitmodule` or the single `client/packages/plugins/{your plugin name}` to the core.
+The simplest way to begin is by cloning (forking for now or just copy and create new repo, until we have a template), this repository https://github.com/msupply-foundation/open-msupply-plugin, then add it as submodule to `client/packages/plugins/` using this command: `git submodule add https://github.com/andreievg/open-msupply-plugins-andrei client/packages/plugins/mynewplugin`, note the `mynewplugin` can be anything. The inner repository and core will be treated at two different repositories, changes in them will only be reflected in relative repositories (i.e. you can add the inner repository as local repository in github desktop). Make sure that you don't commit the `.gitmodule` or the single `client/packages/plugins/{your plugin name}` to the core.
 
 You would need to change [name](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/package.json#L3) in package.json, which is also the plugin code and unique identifier (every plugin should have unique code). You should also add types that are implemented, in the future those will be displayed before plugin is installed, for validation form the user, for frontend plugins they are not essential though. TODO these types can be looked up when building, both for front end and backed plugin, by running ts-node and inspecting import { plugins } from './plugins.tsx' or '.ts'. 
 
