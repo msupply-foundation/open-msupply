@@ -30,6 +30,9 @@ use self::stock_in_line::*;
 pub mod update_return_reason_id;
 use self::update_return_reason_id::*;
 
+pub mod inbound_shipment_from_internal_order_lines;
+use self::inbound_shipment_from_internal_order_lines::*;
+
 pub trait InvoiceLineServiceTrait: Sync + Send {
     fn get_invoice_line(
         &self,
@@ -107,6 +110,14 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         input: InsertInboundShipmentServiceLine,
     ) -> Result<InvoiceLine, InsertInboundShipmentServiceLineError> {
         insert_inbound_shipment_service_line(ctx, input)
+    }
+
+    fn insert_from_internal_order_line(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertFromInternalOrderLine,
+    ) -> Result<InvoiceLine, InsertFromInternalOrderLineError> {
+        insert_from_internal_order_line(ctx, input)
     }
 
     fn update_inbound_shipment_service_line(
