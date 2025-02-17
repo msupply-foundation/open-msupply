@@ -5420,6 +5420,12 @@ export type PatientSortInput = {
   key: PatientSortFieldInput;
 };
 
+export type PeriodConnector = {
+  __typename: 'PeriodConnector';
+  nodes: Array<PeriodNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type PeriodNode = {
   __typename: 'PeriodNode';
   endDate: Scalars['NaiveDate']['output'];
@@ -5441,6 +5447,8 @@ export type PeriodSchedulesConnector = {
 };
 
 export type PeriodSchedulesResponse = PeriodSchedulesConnector;
+
+export type PeriodsResponse = PeriodConnector;
 
 export type PluginDataFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
@@ -5888,6 +5896,7 @@ export type Queries = {
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
+  periods: PeriodsResponse;
   pluginData: PluginDataResponse;
   plugins: Array<PluginNode>;
   programEnrolments: ProgramEnrolmentResponse;
@@ -6380,6 +6389,12 @@ export type QueriesPatientsArgs = {
 };
 
 
+export type QueriesPeriodsArgs = {
+  programId?: InputMaybe<Scalars['String']['input']>;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesPluginDataArgs = {
   filter?: InputMaybe<PluginDataFilterInput>;
   sort?: InputMaybe<Array<PluginDataSortInput>>;
@@ -6868,6 +6883,8 @@ export type RequisitionFilterInput = {
   orderType?: InputMaybe<EqualFilterStringInput>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<StringFilterInput>;
+  periodId?: InputMaybe<EqualFilterStringInput>;
+  programId?: InputMaybe<EqualFilterStringInput>;
   requisitionNumber?: InputMaybe<EqualFilterBigNumberInput>;
   sentDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterRequisitionStatusInput>;
