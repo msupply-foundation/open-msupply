@@ -185,6 +185,20 @@ enum Action {
         #[clap(short, long)]
         config: Option<PathBuf>,
     },
+    /// Enable or disable a report in the database.
+    ToggleReport {
+        /// Code of the report to toggle
+        #[clap(short, long)]
+        code: String,
+
+        /// Set is_enabled to true
+        #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="disable")]
+        enable: bool,
+
+        /// Set is_enabled to false
+        #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="enable")]
+        disable: bool,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -625,6 +639,29 @@ async fn main() -> anyhow::Result<()> {
                 .arg(generated_file_path.clone())
                 .status()
                 .expect(&format!("failed to open file {:?}", generated_file_path));
+        },
+        Action::ToggleReport { code, enable, disable } => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+
+            let filter = ReportFilter::new().code(EqualFilter::equal_to(&code));
+            let report_list = ReportRepository::new(&con).query_by_filter(filter)?;
+            let row_repository = ReportRowRepository::new(&con);
+
+            for mut report in report_list {
+                report.report_row.is_active = {
+                    if enable {
+                        true
+                    } else if disable{
+                        false
+                    } else {
+                        !report.report_row.is_active
+                    }
+                };
+                row_repository.upsert_one(
+                    &report.report_row
+                )?;
+            }
         }
     }
 
