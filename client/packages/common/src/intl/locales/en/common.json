@@ -1663,6 +1663,7 @@
   "report.counted-packs": "Counted packs",
   "report.created-date": "Created date",
   "report.days-overdue": "Days overdue",
+  "report.days-until-expired": "Days until expired",
   "report.encounter-date": "Appointment date",
   "report.entered-code": "Entered code",
   "report.entered-date": "Entered date",

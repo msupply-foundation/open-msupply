@@ -60,12 +60,12 @@
       "label": "T#report.sort-by",
       "options": {
         "show": [
-          ["item.name", "item"],
-          ["item.code", "code"],
-          ["expiryDate", "expiry date"],
-          ["daysUntilExpired", "days until expired"],
-          ["stockAtRisk", "stock at risk"],
-          ["expectedUsage", "expected usage"]
+          ["item.name", "T#report.item-name"],
+          ["item.code", "T#label.code"],
+          ["expiryDate", "T#report.expiry-date"],
+          ["daysUntilExpired", "T#report.days-until-expired"],
+          ["stockAtRisk", "T#report.stock-at-risk"],
+          ["expectedUsage", "T#report.expected-usage"]
         ]
       }
     },
