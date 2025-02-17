@@ -87,7 +87,7 @@ const AddFromInternalOrderComponent = ({
 
   return (
     <Modal
-      title={t('header.link-internal-order')}
+      title={t('header.add-lines-from-internal-order')}
       width={width * 0.5}
       height={height * 0.8}
       okButton={<DialogButton variant="select" onClick={onSelect} />}
