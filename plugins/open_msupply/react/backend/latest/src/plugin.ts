@@ -1,5 +1,5 @@
-// To upload to server (from this dir):
-// cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i './service/src/backend_plugin/examples/amc' -u 'http://localhost:8000' --username 'test' --password 'pass'
+// To upload to server (after adding submodule to openmsupply repo locally)
+// cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/{plugin name}/backend' -u 'http://localhost:8000' --username 'test' --password 'pass'
 
 import { BackendPlugins } from '@backendPlugins';
 // Tree shaking working
