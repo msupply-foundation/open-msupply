@@ -7,17 +7,19 @@ import {
   UpdatePrescriptionStatusInput,
   NumberInputCell,
   CellProps,
+  FnUtils,
+  SortUtils,
 } from '@openmsupply-client/common';
-import { FnUtils, SortUtils } from '@common/utils';
 import {
   PartialPrescriptionLineFragment,
   PrescriptionLineFragment,
   PrescriptionRowFragment,
 } from '../operations.generated';
 import React from 'react';
-import { DraftPrescriptionLine } from 'packages/invoices/src/types';
-import { ItemPriceFragment } from 'packages/invoices/src/OutboundShipment/api/operations.generated';
+
 import { getPackQuantityCellId } from '../../../utils';
+import { DraftPrescriptionLine } from '../../../types';
+import { ItemPriceFragment } from '../../../OutboundShipment/api/operations.generated';
 
 export const sortFieldMap: Record<string, InvoiceSortFieldInput> = {
   createdDateTime: InvoiceSortFieldInput.CreatedDatetime,
@@ -35,6 +37,8 @@ export const mapStatus = (patch: RecordPatch<PrescriptionRowFragment>) => {
       return UpdatePrescriptionStatusInput.Picked;
     case InvoiceNodeStatus.Verified:
       return UpdatePrescriptionStatusInput.Verified;
+    case InvoiceNodeStatus.Cancelled:
+      return UpdatePrescriptionStatusInput.Cancelled;
     default:
       return undefined;
   }
