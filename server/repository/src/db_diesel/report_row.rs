@@ -43,6 +43,7 @@ table! {
       is_custom -> Bool,
       version -> Text,
       code -> Text,
+      is_active -> Bool,
   }
 }
 
@@ -66,6 +67,7 @@ pub struct ReportRow {
     pub is_custom: bool,
     pub version: String,
     pub code: String,
+    pub is_active: bool,
 }
 
 impl Default for ReportRow {
@@ -81,6 +83,7 @@ impl Default for ReportRow {
             is_custom: true,
             version: Default::default(),
             code: Default::default(),
+            is_active: true,
         }
     }
 }
@@ -92,6 +95,7 @@ pub struct ReportMetaDataRow {
     pub is_custom: bool,
     pub version: String,
     pub code: String,
+    pub is_active: bool,
 }
 
 impl Default for ReportMetaDataRow {
@@ -101,6 +105,7 @@ impl Default for ReportMetaDataRow {
             is_custom: true,
             version: Default::default(),
             code: Default::default(),
+            is_active: true,
         }
     }
 }
