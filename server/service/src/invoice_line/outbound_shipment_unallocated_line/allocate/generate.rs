@@ -156,6 +156,7 @@ fn generate_new_line(
         stock_line_id: stock_line_row.id.clone(),
         number_of_packs: packs_to_allocate,
         // Default
+        prescribed_quantity: None,
         total_before_tax: None,
         tax_percentage: None,
         note: None,
@@ -182,6 +183,7 @@ fn try_allocate_existing_line(
                 id: line_row.id,
                 r#type: Some(StockOutType::OutboundShipment),
                 number_of_packs: Some(line_row.number_of_packs + number_of_packs_to_add),
+                prescribed_quantity: None,
                 stock_line_id: None,
                 total_before_tax: None,
                 tax: None,

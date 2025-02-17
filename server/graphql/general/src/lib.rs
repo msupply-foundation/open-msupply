@@ -6,13 +6,14 @@ pub mod types;
 pub use self::queries::sync_status::*;
 use self::queries::*;
 
+use abbreviation::abbreviations;
 use diagnosis::diagnoses_active;
 use graphql_core::pagination::PaginationInput;
 use service::sync::CentralServerConfig;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
-    CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, DiagnosisNode,
+    AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, DiagnosisNode,
     MasterListFilterInput, StorePreferenceNode,
 };
 use mutations::{
@@ -35,9 +36,11 @@ use mutations::{
     update_user,
 };
 use queries::{
+    abbreviation::AbbreviationFilterInput,
     currency::currencies,
     display_settings::{display_settings, DisplaySettingsHash, DisplaySettingsNode},
     initialisation_status::{initialisation_status, InitialisationStatusNode},
+    insurances::{insurances, InsuranceResponse, InsuranceSortInput},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
     sync_settings::{sync_settings, SyncSettingsNode},
 };
@@ -425,6 +428,24 @@ impl GeneralQueries {
 
     pub async fn diagnoses_active(&self, ctx: &Context<'_>) -> Result<Vec<DiagnosisNode>> {
         diagnoses_active(ctx)
+    }
+
+    pub async fn abbreviations(
+        &self,
+        ctx: &Context<'_>,
+        filter: Option<AbbreviationFilterInput>,
+    ) -> Result<Vec<AbbreviationNode>> {
+        abbreviations(ctx, filter)
+    }
+
+    pub async fn insurances(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        name_id: String,
+        sort: Option<Vec<InsuranceSortInput>>,
+    ) -> Result<InsuranceResponse> {
+        insurances(ctx, store_id, name_id, sort)
     }
 }
 

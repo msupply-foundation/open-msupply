@@ -11,4 +11,7 @@ export * from './ProgramEvent';
 export * from './HistoricEncounterData';
 export * from './BloodPressure';
 export * from './PatientSearch';
+export * from './PatientProgramSearch';
 export * from './Prescription/Prescription';
+export * from './ProgramSearch';
+export * from './PeriodSearch';

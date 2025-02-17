@@ -457,7 +457,6 @@ mod test {
         let invoice_lines = get_invoice_lines(
             &context,
             &invoice.clone().store_id,
-            &invoice.clone().id,
             None,
             Some(filter),
             None,
@@ -511,7 +510,6 @@ mod test {
         let invoice_lines = get_invoice_lines(
             &context,
             &invoice.clone().store_id,
-            &invoice.clone().id,
             None,
             Some(filter),
             None,
@@ -552,7 +550,6 @@ mod test {
         let invoice_lines = get_invoice_lines(
             &context,
             &invoice.clone().store_id,
-            &invoice.clone().id,
             None,
             Some(filter),
             None,
@@ -621,7 +618,6 @@ mod test {
         let invoice_lines = get_invoice_lines(
             &context,
             &invoice.clone().store_id,
-            &invoice.clone().id,
             None,
             Some(filter),
             None,
@@ -678,7 +674,6 @@ mod test {
         let invoice_lines = get_invoice_lines(
             &context,
             &invoice.clone().store_id,
-            &invoice.clone().id,
             None,
             Some(filter),
             None,
@@ -718,7 +713,6 @@ mod test {
         let invoice_lines = get_invoice_lines(
             &context,
             &invoice.clone().store_id,
-            &invoice.clone().id,
             None,
             Some(filter),
             None,
@@ -771,7 +765,6 @@ mod test {
         let invoice_lines = get_invoice_lines(
             &context,
             &invoice.clone().store_id,
-            &invoice.clone().id,
             None,
             Some(filter),
             None,

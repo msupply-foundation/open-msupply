@@ -5,6 +5,10 @@ use clap::{ArgAction, Parser};
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
 
+use report_builder::{
+    print::{generate_report_inner, Config, ReportGenerateData},
+    Format,
+};
 use repository::{
     get_storage_connection_manager, schema_from_row, test_db, ContextType, EqualFilter,
     FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository, ReportFilter,
@@ -19,7 +23,7 @@ use service::{
     plugin::validation::sign_plugin,
     service_provider::{ServiceContext, ServiceProvider},
     settings::Settings,
-    standard_reports::{ReportsData, StandardReports},
+    standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
         file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_status::logger::SyncLogger,
         synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
@@ -28,11 +32,14 @@ use service::{
 };
 use simple_log::LogConfigBuilder;
 use std::{
+    env::current_dir,
     ffi::OsStr,
     fs,
     path::{Path, PathBuf},
+    process::Command,
     sync::{Arc, RwLock},
 };
+use tokio::task::spawn_blocking;
 use util::inline_init;
 
 mod backup;
@@ -41,7 +48,7 @@ use backup::*;
 mod plugins;
 use plugins::*;
 
-use cli::{generate_reports_recursive, RefreshDatesRepository};
+use cli::{generate_report_data, generate_reports_recursive, RefreshDatesRepository, ReportError};
 
 const DATA_EXPORT_FOLDER: &str = "data";
 
@@ -149,15 +156,34 @@ enum Action {
     BuildReports {
         /// Optional reports path. If supplied, this dir should be the same structure as per standard reports.
         /// Will generate a json of all reports within this directory
-        #[clap(short, long)]
-        path: Option<PathBuf>,
+        #[clap(short, long, num_args=0..)]
+        path: Option<Vec<PathBuf>>,
     },
     /// Will generate a plugin bundle
     GeneratePluginBundle(GeneratePluginBundle),
+    /// Will insert generated plugin bundle
+    InstallPluginBundle(InstallPluginBundle),
+    /// Will generate and then install  plugin bundle
+    GenerateAndInstallPluginBundle(GenerateAndInstallPluginBundle),
     UpsertReports {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
+        #[clap(short, long, num_args=0..)]
+        path: Option<Vec<PathBuf>>,
+
+        /// Overwrite any pre-existing reports
+        #[clap(short, long, action = ArgAction::SetTrue)]
+        overwrite: bool,
+    },
+    /// Reload and overwrite the embedded reports
+    ReloadEmbeddedReports,
+    ShowReport {
+        /// Path to report source files which will be built and displayed
         #[clap(short, long)]
-        path: Option<PathBuf>,
+        path: PathBuf,
+        /// Optional
+        /// Path to dir containing test-config.json file
+        #[clap(short, long)]
+        config: Option<PathBuf>,
     },
 }
 
@@ -395,70 +421,82 @@ async fn main() -> anyhow::Result<()> {
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
         Action::BuildReports { path } => {
-            let base_reports_dir = match path.clone() {
+            let dir_list = match path.clone() {
                 Some(path) => path,
-                None => PathBuf::new().join("reports"),
+                None => vec![PathBuf::new().join("../standard_reports"),
+                             PathBuf::new().join("../standard_forms")],
             };
 
-            let mut reports_data = ReportsData { reports: vec![] };
-            let ignore_paths = vec![OsStr::new("node_modules")];
-            let manifest_name = OsStr::new("report-manifest.json");
+            for base_dir in dir_list {
+                let mut reports_data = ReportsData { reports: vec![] };
+                let ignore_paths = vec![OsStr::new("node_modules")];
+                let manifest_name = OsStr::new("report-manifest.json");
 
-            generate_reports_recursive(
-                &mut reports_data,
-                &ignore_paths,
-                manifest_name,
-                &base_reports_dir,
-            )?;
+                generate_reports_recursive(
+                    &mut reports_data,
+                    &ignore_paths,
+                    manifest_name,
+                    &base_dir,
+                )?;
 
-            let output_name = if path.is_some() {
-                "reports.json"
-            } else {
-                "standard_reports.json"
-            };
+                let output_name = if path.is_some() {
+                    "reports.json"
+                } else {
+                    // Name the output after the base_dir
+                    // standard_reports.json and standard_forms.json
+                    &format!("{}.json", base_dir.file_stem().unwrap().to_str().unwrap())
+                };
 
-            let output_path = base_reports_dir.join("generated").join(output_name);
+                let output_path = base_dir.join("generated").join(output_name);
 
-            fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
-                "Invalid output path: {:?}",
-                output_path
-            )))?)?;
+                fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
+                    "Invalid output path: {:?}",
+                    output_path
+                )))?)?;
 
-            fs::write(&output_path, serde_json::to_string_pretty(&reports_data)?).map_err(
-                |_| {
-                    anyhow::Error::msg(format!(
-                        "Failed to write to {:?}. Does output dir exist?",
-                        output_path
-                    ))
-                },
-            )?;
+                fs::write(&output_path, serde_json::to_string_pretty(&reports_data)?).map_err(
+                    |_| {
+                        anyhow::Error::msg(format!(
+                            "Failed to write to {:?}. Does output dir exist?",
+                            output_path
+                        ))
+                    },
+                )?;
 
-            if let Some(path) = path {
-                info!("All reports built in custom path {:?}", path);
-            } else {
-                info!("All standard reports built")
-            };
+                if path.is_some() {
+                    info!("All reports built in custom path {:?}", base_dir.display());
+                } else {
+                    info!("All standard reports built in path {:?}", base_dir.display())
+                };
+            }
         }
-        Action::UpsertReports { path } => {
-            let standard_reports_dir = Path::new("reports")
+        Action::UpsertReports { path, overwrite } => {
+            let standard_reports_dir = Path::new("../standard_reports")
                 .join("generated")
                 .join("standard_reports.json");
+            let standard_forms_dir = Path::new("../standard_forms")
+                .join("generated")
+                .join("standard_forms.json");
 
-            let json_file = match path {
-                Some(path) => fs::File::open(path),
-                None => fs::File::open(standard_reports_dir.clone()),
+            let file_list = match path {
+                Some(path) => path,
+                None => vec![standard_reports_dir, standard_forms_dir],
+            };
+
+            for file_path in file_list {
+                let json_file = fs::File::open(file_path.clone())
+                .unwrap_or_else(|_| panic!(
+                    "{} not found for report",
+                    file_path.display()
+                ));
+                let reports_data: ReportsData =
+                    serde_json::from_reader(json_file).expect("json incorrectly formatted for report");
+    
+                let connection_manager = get_storage_connection_manager(&settings.database);
+                let con = connection_manager.connection()?;
+    
+                StandardReports::upsert_reports(reports_data, &con, overwrite)?;
             }
-            .expect(&format!(
-                "{} not found for report",
-                standard_reports_dir.display()
-            ));
-            let reports_data: ReportsData =
-                serde_json::from_reader(json_file).expect("json incorrectly formatted for report");
-
-            let connection_manager = get_storage_connection_manager(&settings.database);
-            let con = connection_manager.connection()?;
-
-            let _ = StandardReports::upsert_reports(reports_data, &con);
         }
         Action::UpsertReport {
             id,
@@ -515,6 +553,12 @@ async fn main() -> anyhow::Result<()> {
 
             info!("Report upserted");
         }
+        Action::ReloadEmbeddedReports => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+
+            StandardReports::load_reports(&con, true)?;
+        }
         Action::Backup => {
             backup(&settings)?;
         }
@@ -524,9 +568,80 @@ async fn main() -> anyhow::Result<()> {
         Action::GeneratePluginBundle(arguments) => {
             generate_plugin_bundle(arguments)?;
         }
+        Action::InstallPluginBundle(arguments) => {
+            install_plugin_bundle(arguments).await?;
+        }
+        Action::GenerateAndInstallPluginBundle(arguments) => {
+            generate_and_install_plugin_bundle(arguments).await?;
+        }
+        Action::ShowReport { path, config } => {
+            let report_data: ReportData = generate_report_data(&path)?;
+
+            let report_json =
+                serde_json::to_value(report_data.template).expect("fail to convert report to json");
+
+            let test_config_path = if let Some(config) = config {
+                config
+            } else {
+                Path::new("reports").to_path_buf()
+            };
+
+            let test_config_file = fs::File::open(test_config_path.join("test-config.json"))
+                .map_err(|e| {
+                    ReportError::CannotOpenTestConfigFile(test_config_path.to_path_buf(), e)
+                })?;
+            let test_config: TestConfig =
+                serde_json::from_reader(test_config_file).map_err(|e| {
+                    ReportError::CannotReadTestConfigFile(test_config_path.clone().to_path_buf(), e)
+                })?;
+
+            let config = Config {
+                url: test_config.url,
+                username: test_config.username,
+                password: test_config.password,
+            };
+
+            let output_name = format!("{}.html", test_config.output_filename.clone());
+
+            let report_generate_data = ReportGenerateData {
+                report: report_json,
+                config: config,
+                store_id: Some(test_config.store_id),
+                store_name: None,
+                output_filename: Some(output_name.clone()),
+                format: Format::Html,
+                data_id: Some(test_config.data_id),
+                arguments: Some(test_config.arguments),
+            };
+
+            // spawn blocking used to prevent the following error: "Cannot drop a runtime in a context where blocking is not allowed"
+            spawn_blocking(|| generate_report_inner(report_generate_data))
+                .await?
+                .map_err(|e| ReportError::FailedToGenerateReport(path, e.into()))?;
+
+            let generated_file_path = current_dir()?.join(&output_name);
+
+            Command::new("open")
+                .arg(generated_file_path.clone())
+                .status()
+                .expect(&format!("failed to open file {:?}", generated_file_path));
+        }
     }
 
     Ok(())
+}
+
+#[derive(serde::Deserialize, Clone)]
+
+pub struct TestConfig {
+    data_id: String,
+    store_id: String,
+    url: String,
+    username: String,
+    password: String,
+    arguments: serde_json::Value,
+    _locale: Option<String>,
+    output_filename: String,
 }
 
 fn export_paths(name: &str) -> (PathBuf, PathBuf, PathBuf) {

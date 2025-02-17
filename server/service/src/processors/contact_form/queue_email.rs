@@ -1,24 +1,26 @@
 use repository::{
     contact_form::{ContactForm, ContactFormFilter, ContactFormRepository},
     contact_form_row::ContactType,
-    ChangelogRow, EqualFilter, StorageConnection,
+    ChangelogRow, ChangelogTableName, EqualFilter, KeyType, StorageConnection,
 };
 use tera::{Context, Tera};
 use util::constants::{FEEDBACK_EMAIL, SUPPORT_EMAIL};
 
-use crate::email::{
-    enqueue::{enqueue_email, EnqueueEmailData},
-    EmailServiceError,
+use crate::{
+    email::{
+        enqueue::{enqueue_email, EnqueueEmailData},
+        EmailServiceError,
+    },
+    processors::general_processor::{Processor, ProcessorError},
+    sync::CentralServerConfig,
 };
 use nanohtml2text::html2text;
-
-use super::{ContactFormProcessor, ProcessCentralRecordsError};
 
 const DESCRIPTION: &str = "Adds an email to the queue from a contact form";
 
 pub(crate) struct QueueContactEmailProcessor;
 
-impl ContactFormProcessor for QueueContactEmailProcessor {
+impl Processor for QueueContactEmailProcessor {
     fn get_description(&self) -> String {
         DESCRIPTION.to_string()
     }
@@ -29,13 +31,13 @@ impl ContactFormProcessor for QueueContactEmailProcessor {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<String>, ProcessCentralRecordsError> {
+    ) -> Result<Option<String>, ProcessorError> {
         let filter = ContactFormFilter::new().id(EqualFilter::equal_to(&changelog.record_id));
 
         let contact_form = ContactFormRepository::new(connection)
             .query_one(filter)
-            .map_err(ProcessCentralRecordsError::DatabaseError)?
-            .ok_or(ProcessCentralRecordsError::RecordNotFound(
+            .map_err(ProcessorError::DatabaseError)?
+            .ok_or(ProcessorError::RecordNotFound(
                 "Contact Form".to_string(),
                 changelog.record_id.clone(),
             ))?;
@@ -50,7 +52,7 @@ impl ContactFormProcessor for QueueContactEmailProcessor {
                     contact_form.contact_form_row.id,
                     e
                 );
-                return Err(ProcessCentralRecordsError::EmailServiceError(e));
+                return Err(ProcessorError::EmailServiceError(e));
             }
         };
 
@@ -75,6 +77,19 @@ impl ContactFormProcessor for QueueContactEmailProcessor {
         };
 
         Ok(Some("success".to_string()))
+    }
+
+    fn change_log_table_names(&self) -> Vec<ChangelogTableName> {
+        vec![ChangelogTableName::ContactForm]
+    }
+
+    fn cursor_type(&self) -> KeyType {
+        KeyType::ContactFormProcessorCursor
+    }
+
+    // Only run on central server
+    fn should_run(&self) -> bool {
+        CentralServerConfig::is_central_server()
     }
 }
 

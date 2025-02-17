@@ -203,6 +203,8 @@ const useUpdate = (id: string) => {
       status: mapStatus(patch),
       clinicianId: setNullableInput('clinicianId', patch),
       diagnosisId: setNullableInput('diagnosisId', patch),
+      programId: setNullableInput('programId', patch),
+      theirReference: setNullableInput('theirReference', patch),
     };
     const result =
       (await prescriptionApi.upsertPrescription({

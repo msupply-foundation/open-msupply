@@ -96,7 +96,7 @@ pub async fn start_server(
     info!("Run DB migrations...done");
 
     // Upsert standard reports
-    StandardReports::load_reports(&connection_manager.connection().unwrap()).unwrap();
+    StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");
@@ -147,11 +147,14 @@ pub async fn start_server(
     }
 
     // PLUGIN CONTEXT
-
     PluginContext {
         service_provider: service_provider.clone(),
     }
     .bind();
+    service_provider
+        .plugin_service
+        .reload_all_plugins(&service_context)
+        .unwrap();
 
     // SET LOG CALLBACK FOR WASM FUNCTIONS
     info!("Setting wasm function log callback..");
