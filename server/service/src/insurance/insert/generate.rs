@@ -44,9 +44,11 @@ fn compose_policy_number(
     policy_number_personal: Option<String>,
 ) -> String {
     match (policy_number_family, policy_number_personal) {
-        (Some(family), Some(personal)) => format!("{}-{}", family, personal),
-        (Some(family), None) => family,
-        (None, Some(personal)) => personal,
-        (None, None) => "".to_string(),
+        (Some(family), Some(personal)) if !family.is_empty() && !personal.is_empty() => {
+            format!("{}-{}", family, personal)
+        }
+        (Some(family), _) if !family.is_empty() => family,
+        (_, Some(personal)) if !personal.is_empty() => personal,
+        _ => "".to_string(),
     }
 }
