@@ -185,7 +185,7 @@
   "description.rnr-final-balance": "Niveau de stock à la fin de la période = Solde Initial + Q reçue - Q consommée ± Ajustements",
   "description.rnr-initial-balance": "Stock disponible au début de la période. Ceci est tiré du formulaire R&R précédent, si disponible, ou calculé en utilisant le stock disponible à la date de début de la période.",
   "description.rnr-losses": "Enregistrer manuellement les pertes de cet article durant la période",
-  "description.rnr-low-stock": "! = Le solde final est inférieur à la moitié du maximum, !! = moins d'un quart (25%)",
+  "description.rnr-low-stock": "! = Le solde final est inférieur à la moitié du maximum, ! ! = moins d'un quart (25%)",
   "description.rnr-maximum-quantity": "La quantité cible de stock disponible. = CMM x Préférence du dépôt 'Seuil pour l'excès de stock'",
   "description.rnr-minimum-quantity": "La quantité minimale de stock disponible à maintenir. = CMM x Préférence du dépôt 'Seuil de sous-stock'",
   "description.rnr-received": "La quantité de produits reçue durant cette période (par Bons de Réception)",
@@ -1837,5 +1837,10 @@
   "messages.partial-pack-warning": "Vous avez délivré un nombre non entier d'emballages. Êtes-vous sûr de pouvoir le faire ? Si ce n'est pas le cas, vous devrez délivrer {{nearestAbove}} unités pour délivrer des emballages entiers.",
   "placeholder.item-directions": "Instructions par défaut de l'article",
   "report.icfpt-eligibility": "Éligibilité à l'ICFPT",
-  "label.cancel-prescription": "Annulé prescription"
+  "label.cancel-prescription": "Annulé prescription",
+  "label.discount-rate": "Escompte (%)",
+  "label.expiry-date": "Date d'expiration",
+  "label.insurance": "Assurance",
+  "label.is-active": "Est actif ?",
+  "heading.other": "Autre"
 }
