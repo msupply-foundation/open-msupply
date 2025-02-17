@@ -1,0 +1,14 @@
+{
+  "is_custom": false,
+  "version": "2.5.0",
+  "code": "outbound-invoice-portrait-with-logo",
+  "context": "OUTBOUND_SHIPMENT",
+  "sub_context": "picklist",
+  "name": "outbound-invoice-portrait-with-logo",
+  "queries": {
+    "gql": "picklist.graphql"
+  },
+  "arguments": {},
+  "header": "header.html",
+  "footer": "footer.html"
+}

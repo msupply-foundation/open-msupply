@@ -69,6 +69,8 @@ pub enum InvoiceNodeStatus {
     /// Outbound Shipment: Status is updated based on corresponding inbound Shipment
     /// Inbound Shipment: Becomes not editable
     Verified,
+    // Cancelled only applies to Verified Transactions, they're treated like a customer return with a reverse transaction created to undo the original transaction in the ledger
+    Cancelled,
 }
 
 pub struct InvoiceNode {
@@ -513,6 +515,7 @@ impl InvoiceNodeStatus {
             Shipped => InvoiceStatus::Shipped,
             Delivered => InvoiceStatus::Delivered,
             Verified => InvoiceStatus::Verified,
+            Cancelled => InvoiceStatus::Cancelled,
         }
     }
 
@@ -525,6 +528,7 @@ impl InvoiceNodeStatus {
             Shipped => InvoiceNodeStatus::Shipped,
             Delivered => InvoiceNodeStatus::Delivered,
             Verified => InvoiceNodeStatus::Verified,
+            Cancelled => InvoiceNodeStatus::Cancelled,
         }
     }
 }
