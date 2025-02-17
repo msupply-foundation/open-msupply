@@ -100,7 +100,9 @@ fn map_error(error: InsertPrinterError) -> Result<InsertErrorInterface> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        InsertPrinterError::DuplicatePrinter => BadUserInput(formatted_error),
+        InsertPrinterError::DuplicatePrinterId => BadUserInput(formatted_error),
+        InsertPrinterError::DuplicatePrinterDescription => BadUserInput(formatted_error),
+        InsertPrinterError::DuplicatePrinterAddress => BadUserInput(formatted_error),
         InsertPrinterError::CreatedRecordNotFound => BadUserInput(formatted_error),
         InsertPrinterError::DatabaseError(_) => InternalError(formatted_error),
         InsertPrinterError::InternalError(formatted_error) => InternalError(formatted_error),
