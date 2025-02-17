@@ -29,7 +29,6 @@ import { usePatient } from '../api';
 import { InsurancePolicySelect } from './components';
 
 const DEFAULT_INSURANCE = {
-  policyNumber: '',
   policyNumberFamily: '',
   policyNumberPerson: '',
   providerName: '',
@@ -39,20 +38,17 @@ const DEFAULT_INSURANCE = {
   expiryDate: '',
 };
 
-// If there's no ID don't let editing of policy number
-
 export const InsuranceModal: FC = (): ReactElement => {
   const t = useTranslation();
   const { current, setModal } = usePatientModalStore();
 
   const { urlQuery } = useUrlQuery();
   const insuranceId = urlQuery['insuranceId'];
+
   const nameId = usePatient.utils.id();
   const { data } = usePatient.document.insurances({ nameId });
-
-  const [insurance, setInsurance] = useState(DEFAULT_INSURANCE);
-
   const selectedInsurance = data?.nodes.find(({ id }) => id === insuranceId);
+  const [insurance, setInsurance] = useState(DEFAULT_INSURANCE);
 
   const { Modal } = useDialog({
     isOpen: current === PatientModal.Insurance,
@@ -62,15 +58,24 @@ export const InsuranceModal: FC = (): ReactElement => {
 
   useEffect(() => {
     if (selectedInsurance) {
+      const {
+        policyNumberFamily,
+        policyNumberPerson,
+        insuranceProviders,
+        policyType,
+        isActive,
+        discountPercentage,
+        expiryDate,
+      } = selectedInsurance;
+
       setInsurance({
-        policyNumber: selectedInsurance.policyNumber,
-        policyNumberFamily: selectedInsurance.policyNumberFamily ?? '',
-        policyNumberPerson: selectedInsurance.policyNumberPerson ?? '',
-        providerName: selectedInsurance.insuranceProviders?.providerName ?? '',
-        policyType: selectedInsurance.policyType,
-        isActive: selectedInsurance.isActive,
-        discountRate: selectedInsurance.discountPercentage,
-        expiryDate: selectedInsurance.expiryDate,
+        policyType,
+        isActive,
+        expiryDate,
+        policyNumberFamily: policyNumberFamily ?? '',
+        policyNumberPerson: policyNumberPerson ?? '',
+        providerName: insuranceProviders?.providerName ?? '',
+        discountRate: discountPercentage,
       });
     } else {
       setInsurance(DEFAULT_INSURANCE);
