@@ -23,6 +23,8 @@ export const mapStatus = (patch: RecordPatch<PrescriptionRowFragment>) => {
       return UpdatePrescriptionStatusInput.Picked;
     case InvoiceNodeStatus.Verified:
       return UpdatePrescriptionStatusInput.Verified;
+    case InvoiceNodeStatus.Cancelled:
+      return UpdatePrescriptionStatusInput.Cancelled;
     default:
       return undefined;
   }
