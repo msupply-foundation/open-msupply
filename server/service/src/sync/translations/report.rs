@@ -1,6 +1,4 @@
-use crate::sync::translations::{
-    form_schema::FormSchemaTranslation, om_form_schema::OmFormSchemaTranslation,
-};
+use crate::sync::translations::om_form_schema::OmFormSchemaTranslation;
 
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
