@@ -21,6 +21,9 @@ pub fn get_invoices(
 
     let mut filter = filter.unwrap_or_default();
     filter.store_id = store_id_option.map(EqualFilter::equal_to);
+    // For invoice list we don't want to show any that are cancellation
+    // reversals
+    filter.is_cancellation = Some(false);
 
     Ok(ListResult {
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
