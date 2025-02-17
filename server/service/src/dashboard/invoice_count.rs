@@ -124,7 +124,8 @@ fn invoices_count(
             invoice_filter = invoice_filter.verified_datetime(datetime_filter)
         }
         InvoiceStatus::Cancelled => {
-             invoice_filter = invoice_filter. verified_datetime(datetime_filter)
+            // TO-DO: I don't think this is correct
+            invoice_filter = invoice_filter.verified_datetime(datetime_filter)
         }
     }
     repo.count(Some(invoice_filter))
