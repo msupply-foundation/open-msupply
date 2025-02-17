@@ -79,6 +79,7 @@ export const AddButton = ({
         selectedOption={selectedOption}
         onSelectOption={onSelectOption}
         onClick={handleOptionSelection}
+        isDisabled={disable}
         openFrom="bottom"
       />
 
