@@ -4,7 +4,6 @@ use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_store},
     invoice_line::validate::check_item_exists,
     requisition_line::common::check_requisition_line_exists,
-    store_preference::get_store_preferences,
 };
 
 use super::{InsertFromInternalOrderLine, InsertFromInternalOrderLineError};
