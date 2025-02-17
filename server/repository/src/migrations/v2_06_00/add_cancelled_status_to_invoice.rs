@@ -12,6 +12,9 @@ impl MigrationFragment for Migrate {
                 connection,
                 r#"
                 ALTER TYPE invoice_status ADD VALUE IF NOT EXISTS 'CANCELLED';
+                ALTER TYPE activity_log_type
+                ADD VALUE IF NOT EXISTS
+                    'PRESCRIPTION_STATUS_CANCELLED' AFTER 'PRESCRIPTION_STATUS_VERIFIED';
                 "#,
             )?;
         }
