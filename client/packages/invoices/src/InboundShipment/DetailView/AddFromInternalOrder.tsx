@@ -24,9 +24,7 @@ export const useInternalOrderLineColumns = (requisitionId: string) => {
   const { data, isLoading } = useInbound.document.listInternalOrderLines(
     requisitionId ?? ''
   );
-  const sortedLines = data?.lines?.nodes?.sort(
-    (a, b) => b.requestedQuantity - a.requestedQuantity
-  );
+  const lines = data?.lines?.nodes;
 
   const columns = useColumns<LinkedRequestLineFragment>([
     [
@@ -53,7 +51,7 @@ export const useInternalOrderLineColumns = (requisitionId: string) => {
     ['requestedQuantity'],
   ]);
 
-  return { columns, sortedLines, isLoading };
+  return { columns, lines, isLoading };
 };
 
 const AddFromInternalOrderComponent = ({
@@ -65,14 +63,12 @@ const AddFromInternalOrderComponent = ({
   const t = useTranslation();
   const { width, height } = useWindowDimensions();
   const { Modal } = useDialog({ isOpen, onClose });
-  const { columns, sortedLines, isLoading } = useInternalOrderLineColumns(
+  const { columns, lines, isLoading } = useInternalOrderLineColumns(
     requisitionId ?? ''
   );
   const { mutateAsync } = useInbound.lines.insertFromInternalOrder();
   const selectedRows = useTableStore(state => {
-    return (
-      sortedLines?.filter(({ id }) => state.rowState[id]?.isSelected) ?? []
-    );
+    return lines?.filter(({ id }) => state.rowState[id]?.isSelected) ?? [];
   });
 
   const onSelect = async () => {
@@ -96,7 +92,7 @@ const AddFromInternalOrderComponent = ({
       <DataTable
         id="link-internal-order-to-inbound"
         columns={columns}
-        data={sortedLines}
+        data={lines}
         isLoading={isLoading}
         dense
       />
