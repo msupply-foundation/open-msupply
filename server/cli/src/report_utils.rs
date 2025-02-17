@@ -172,6 +172,7 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
         version: version.to_string(),
         code,
         form_schema: form_schema_json,
+        is_active: true,
     })
 }
 

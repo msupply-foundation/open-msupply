@@ -548,6 +548,7 @@ async fn main() -> anyhow::Result<()> {
                 is_custom: true,
                 version: "1.0".to_string(),
                 code: id,
+                is_active: true,
             })?;
 
             info!("Report upserted");

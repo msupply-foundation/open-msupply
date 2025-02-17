@@ -215,6 +215,7 @@ impl ReportFilterInput {
             sub_context: self.sub_context.map(EqualFilter::from),
             code: None,
             is_custom: None,
+            is_active: None,
         }
     }
 }
