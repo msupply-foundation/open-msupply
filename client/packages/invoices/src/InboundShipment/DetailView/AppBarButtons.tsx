@@ -9,7 +9,6 @@ import {
   LoadingButton,
   useUrlQueryParams,
   usePluginElements,
-  InvoiceNodeStatus,
   useAuthContext,
 } from '@openmsupply-client/common';
 import { useInbound } from '../api';
@@ -42,8 +41,7 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
   const disableInternalOrderButton =
     !store?.preferences.manuallyLinkInternalOrderToInboundShipment ||
     !!data?.linkedShipment ||
-    !data?.requisition ||
-    data?.status !== InvoiceNodeStatus.New;
+    !data?.requisition;
 
   const printReport = (
     report: ReportRowFragment,
@@ -66,9 +64,7 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
           requisitionId={data?.requisition?.id ?? ''}
           invoiceId={data?.id ?? ''}
           disable={isDisabled}
-          disableAddFromMasterListButton={
-            data?.status !== InvoiceNodeStatus.New
-          }
+          disableAddFromMasterListButton={!!data?.linkedShipment}
           disableAddFromInternalOrderButton={disableInternalOrderButton}
         />
         {pluginButtons}
