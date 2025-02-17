@@ -54,6 +54,7 @@ pub enum ActivityLogNodeType {
     PrescriptionDeleted,
     PrescriptionStatusPicked,
     PrescriptionStatusVerified,
+    PrescriptionStatusCancelled,
     SensorLocationChanged,
     AssetCreated,
     AssetUpdated,
@@ -79,6 +80,7 @@ pub enum ActivityLogNodeType {
     DemographicIndicatorUpdated,
     DemographicProjectionCreated,
     DemographicProjectionUpdated,
+    InvoiceStatusCancelled,
 }
 
 #[Object]
@@ -213,6 +215,8 @@ impl ActivityLogNodeType {
             from::DemographicIndicatorUpdated => to::DemographicIndicatorUpdated,
             from::DemographicProjectionCreated => to::DemographicProjectionCreated,
             from::DemographicProjectionUpdated => to::DemographicProjectionUpdated,
+            from::InvoiceStatusCancelled => to::InvoiceStatusCancelled,
+            from::PrescriptionStatusCancelled => to::PrescriptionStatusCancelled,
         }
     }
 
@@ -277,6 +281,8 @@ impl ActivityLogNodeType {
             from::DemographicIndicatorUpdated => to::DemographicIndicatorUpdated,
             from::DemographicProjectionCreated => to::DemographicProjectionCreated,
             from::DemographicProjectionUpdated => to::DemographicProjectionUpdated,
+            from::PrescriptionStatusCancelled => to::PrescriptionStatusCancelled,
+            from::InvoiceStatusCancelled => to::InvoiceStatusCancelled,
         }
     }
 }

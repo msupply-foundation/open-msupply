@@ -447,6 +447,7 @@ impl InvoiceStatus {
             InvoiceStatus::Shipped => 4,
             InvoiceStatus::Delivered => 5,
             InvoiceStatus::Verified => 6,
+            InvoiceStatus::Cancelled => 7,
         }
     }
 }
