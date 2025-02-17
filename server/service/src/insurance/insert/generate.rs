@@ -11,26 +11,44 @@ pub fn generate(GenerateInput { insert_input }: GenerateInput) -> NameInsuranceJ
         id,
         name_link_id,
         insurance_provider_id,
-        policy_number,
+        policy_number_family,
+        policy_number_personal,
         policy_type,
         discount_percentage,
         expiry_date,
         is_active,
-        // Ingore insurance_provider_name - not a field in NameInsuranceJoinRow
-        ..
     } = insert_input;
+
+    let policy_number = compose_policy_number(
+        Some(policy_number_family.clone()),
+        Some(policy_number_personal.clone()),
+    );
 
     NameInsuranceJoinRow {
         id,
         name_link_id,
         insurance_provider_id,
         policy_number,
+        policy_number_family: Some(policy_number_family),
+        policy_number_person: Some(policy_number_personal),
         policy_type,
         discount_percentage,
         expiry_date,
         is_active,
         entered_by_id: None,
-        policy_number_family: None,
-        policy_number_person: None,
+    }
+}
+
+fn compose_policy_number(
+    policy_number_family: Option<String>,
+    policy_number_personal: Option<String>,
+) -> String {
+    match (policy_number_family, policy_number_personal) {
+        (Some(family), Some(personal)) if !family.is_empty() && !personal.is_empty() => {
+            format!("{}-{}", family, personal)
+        }
+        (Some(family), _) if !family.is_empty() => family,
+        (_, Some(personal)) if !personal.is_empty() => personal,
+        _ => "".to_string(),
     }
 }

@@ -1,85 +1,60 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use repository::name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow};
-use serde::Serialize;
+use graphql_types::types::IdResponse;
+use repository::name_insurance_join_row::NameInsuranceJoinRow;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     insurance::insert::{InsertInsurance as ServiceInput, InsertInsuranceError as ServiceError},
 };
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum InsertInsurancePolicyNodeType {
-    Personal,
-    Business,
-}
-
-impl InsertInsurancePolicyNodeType {
-    pub fn to_domain(&self) -> InsurancePolicyType {
-        match self {
-            InsertInsurancePolicyNodeType::Personal => InsurancePolicyType::Personal,
-            InsertInsurancePolicyNodeType::Business => InsurancePolicyType::Business,
-        }
-    }
-}
+use crate::types::InsurancePolicyNodeType as InsertInsurancePolicyNodeType;
 
 #[derive(InputObject)]
 pub struct InsertInsuranceInput {
     pub id: String,
-    pub name_link_id: String,
+    pub name_id: String,
     pub insurance_provider_id: String,
-    pub policy_number: String,
+    pub policy_number_personal: String,
+    pub policy_number_family: String,
     pub policy_type: InsertInsurancePolicyNodeType,
     pub discount_percentage: f64,
     pub expiry_date: chrono::NaiveDate,
     pub is_active: bool,
-    pub provider_name: String,
 }
 
 impl InsertInsuranceInput {
     pub fn to_domain(self) -> ServiceInput {
         let InsertInsuranceInput {
             id,
-            name_link_id,
+            name_id,
             insurance_provider_id,
-            policy_number,
+            policy_number_family,
+            policy_number_personal,
             policy_type,
             discount_percentage,
             expiry_date,
             is_active,
-            provider_name,
         } = self;
 
         ServiceInput {
             id,
-            name_link_id,
+            name_link_id: name_id,
             insurance_provider_id,
-            policy_number,
+            policy_number_family,
+            policy_number_personal,
             policy_type: policy_type.to_domain(),
             discount_percentage,
             expiry_date,
             is_active,
-            provider_name,
         }
-    }
-}
-
-pub struct InsertInsuranceNode {
-    pub id: String,
-}
-
-#[Object]
-impl InsertInsuranceNode {
-    pub async fn id(&self) -> &str {
-        &self.id
     }
 }
 
 #[derive(Union)]
 #[graphql(name = "InsertInsuranceResponse")]
 pub enum InsertInsuranceResponse {
-    Response(InsertInsuranceNode),
+    Response(IdResponse),
 }
 
 pub fn insert_insurance(
@@ -109,9 +84,7 @@ pub fn map_response(
     from: Result<NameInsuranceJoinRow, ServiceError>,
 ) -> Result<InsertInsuranceResponse> {
     match from {
-        Ok(insurance) => Ok(InsertInsuranceResponse::Response(InsertInsuranceNode {
-            id: insurance.id,
-        })),
+        Ok(insurance) => Ok(InsertInsuranceResponse::Response(IdResponse(insurance.id))),
         Err(error) => map_error(error),
     }
 }

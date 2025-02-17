@@ -2,7 +2,7 @@ use repository::{
     name_insurance_join_row::{
         NameInsuranceJoinRow, NameInsuranceJoinRowRepository, NameInsuranceJoinSort,
     },
-    RepositoryError, StorageConnection,
+    EqualFilter, PatientFilter, PatientRepository, RepositoryError, StorageConnection,
 };
 
 pub fn insurances(
@@ -10,10 +10,17 @@ pub fn insurances(
     name_id: &str,
     sort: Option<NameInsuranceJoinSort>,
 ) -> Result<Vec<NameInsuranceJoinRow>, RepositoryError> {
-    let repository = NameInsuranceJoinRowRepository::new(connection);
-    let result = repository.find_many_by_name_id(name_id, sort)?;
+    let patient = PatientRepository::new(connection).query_one(
+        PatientFilter::new().id(EqualFilter::equal_to(name_id)),
+        None,
+    )?;
 
-    Ok(result)
+    match patient {
+        Some(_) => {
+            NameInsuranceJoinRowRepository::new(connection).find_many_by_name_id(name_id, sort)
+        }
+        None => Err(RepositoryError::NotFound),
+    }
 }
 
 #[cfg(test)]
@@ -21,30 +28,37 @@ mod query {
     use crate::service_provider::ServiceProvider;
     use chrono::NaiveDate;
     use repository::{
-        mock::MockDataInserts,
+        mock::{mock_patient, MockDataInserts},
         name_insurance_join_row::{
             InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinRowRepository,
         },
         test_db::setup_all,
-        InsuranceProviderRow, InsuranceProviderRowRepository, NameLinkRow, NameLinkRowRepository,
+        InsuranceProviderRow, InsuranceProviderRowRepository, RepositoryError,
     };
 
     #[actix_rt::test]
-    async fn get_insurances() {
+    async fn get_insurances_errors() {
         let (_, connection, connection_manager, _) =
-            setup_all("test_get_insurances", MockDataInserts::none().names()).await;
+            setup_all("get_insurances_errors", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let service = service_provider.insurance_service;
+
+        // Patient does not exist
+        assert_eq!(
+            service.insurances(&connection, "invalid_id", None),
+            Err(RepositoryError::NotFound)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn get_insurances_success() {
+        let (_, connection, connection_manager, _) =
+            setup_all("get_insurances_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.insurance_service;
-
-        // Create a Name Link entry
-        let name_link_a = NameLinkRow {
-            id: "name_a".to_string(),
-            name_id: "name_a".to_string(),
-        };
-        let name_link_repo = NameLinkRowRepository::new(&connection);
-        name_link_repo.upsert_one(&name_link_a).unwrap();
 
         // Create insurance provider entries
         let insurance_provider_a = InsuranceProviderRow {
@@ -74,7 +88,7 @@ mod query {
         // Create insurance entries
         let insurance_a = NameInsuranceJoinRow {
             id: "1".to_string(),
-            name_link_id: name_link_a.id.clone(),
+            name_link_id: mock_patient().id.clone(),
             insurance_provider_id: insurance_provider_a.id.clone(),
             policy_number_person: Some("12345".to_string()),
             policy_number_family: Some("67890".to_string()),
@@ -88,7 +102,7 @@ mod query {
 
         let insurance_b = NameInsuranceJoinRow {
             id: "2".to_string(),
-            name_link_id: name_link_a.id.clone(),
+            name_link_id: mock_patient().id.clone(),
             insurance_provider_id: insurance_provider_b.id.clone(),
             policy_number_person: Some("54321".to_string()),
             policy_number_family: Some("09876".to_string()),
@@ -105,7 +119,7 @@ mod query {
         insurance_repo.upsert_one(&insurance_b).unwrap();
 
         let result = service
-            .insurances(&connection, &name_link_a.id, None)
+            .insurances(&connection, &mock_patient().id, None)
             .unwrap();
 
         assert!(result.contains(&insurance_a));

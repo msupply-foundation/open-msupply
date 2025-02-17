@@ -7,6 +7,7 @@ import {
   DataTable,
   TableProvider,
   useUrlQuery,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 
 import {
@@ -15,12 +16,26 @@ import {
 } from '@openmsupply-client/programs';
 
 export const InsuranceListView = () => {
-  const columns = useInsuranceColumns();
-  const patientId = usePatient.utils.id();
-  const { data, isLoading } = usePatient.document.insurances(patientId);
-
-  const { setModal } = usePatientModalStore();
+  const nameId = usePatient.utils.id();
   const { updateQuery } = useUrlQuery();
+  const { setModal } = usePatientModalStore();
+
+  const {
+    updateSortQuery,
+    queryParams: { sortBy },
+  } = useUrlQueryParams({
+    initialSort: { key: 'expiryDate', dir: 'asc' },
+  });
+
+  const columns = useInsuranceColumns({
+    sortBy,
+    onChangeSortBy: updateSortQuery,
+  });
+
+  const { data, isLoading } = usePatient.document.insurances({
+    nameId,
+    sortBy,
+  });
 
   return (
     <TableProvider

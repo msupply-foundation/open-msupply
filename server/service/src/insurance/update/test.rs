@@ -34,9 +34,7 @@ mod update {
             prescription_validity_days: Some(30),
         };
 
-        let insurance_provider_repository =
-            InsuranceProviderRowRepository::new(&context.connection);
-        insurance_provider_repository
+        InsuranceProviderRowRepository::new(&context.connection)
             .upsert_one(&insurance_provider_a)
             .unwrap();
 
@@ -47,13 +45,13 @@ mod update {
                 InsertInsurance {
                     id: "insurance_a".to_string(),
                     name_link_id: mock_name_a().id.clone(),
-                    insurance_provider_id: "insurance_provider_a".to_string(),
-                    policy_number: "policy_number_a".to_string(),
+                    insurance_provider_id: "insurance_provider_id".to_string(),
+                    policy_number_family: "123".to_string(),
+                    policy_number_personal: "ABC".to_string(),
                     policy_type: InsurancePolicyType::Personal,
                     discount_percentage: 10.0,
                     expiry_date: NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date"),
                     is_active: true,
-                    provider_name: "Insurance Provider 1".to_string(),
                 },
             )
             .unwrap();
@@ -61,11 +59,11 @@ mod update {
         // Update the insurance record
         let input = UpdateInsurance {
             id: "insurance_a".to_string(),
+            insurance_provider_id: Some("insurance_provider_id".to_string()),
             policy_type: Some(InsurancePolicyType::Personal),
             discount_percentage: Some(10.0),
             expiry_date: Some(NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date")),
             is_active: Some(true),
-            provider_name: Some("Insurance Provider 1".to_string()),
         };
 
         let result = service.update_insurance(&context, input.clone()).unwrap();
@@ -103,9 +101,7 @@ mod update {
             prescription_validity_days: Some(30),
         };
 
-        let insurance_provider_repository =
-            InsuranceProviderRowRepository::new(&context.connection);
-        insurance_provider_repository
+        InsuranceProviderRowRepository::new(&context.connection)
             .upsert_one(&insurance_provider_a)
             .unwrap();
 
@@ -117,12 +113,12 @@ mod update {
                     id: "insurance_a".to_string(),
                     name_link_id: mock_name_a().id.clone(),
                     insurance_provider_id: "insurance_provider_id".to_string(),
-                    policy_number: "policy_number_a".to_string(),
+                    policy_number_family: "123".to_string(),
+                    policy_number_personal: "ABC".to_string(),
                     policy_type: InsurancePolicyType::Personal,
                     discount_percentage: 10.0,
                     expiry_date: NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date"),
                     is_active: true,
-                    provider_name: "Insurance Provider 1".to_string(),
                 },
             )
             .unwrap();
@@ -130,11 +126,11 @@ mod update {
         // Update the insurance record
         let input = UpdateInsurance {
             id: "insurance_a".to_string(),
+            insurance_provider_id: Some("insurance_provider_id".to_string()),
             policy_type: Some(InsurancePolicyType::Business),
             discount_percentage: Some(15.0),
             expiry_date: Some(NaiveDate::from_ymd_opt(2026, 12, 31).expect("Invalid date")),
             is_active: Some(false),
-            provider_name: Some("Insurance Provider 1".to_string()),
         };
 
         // Check that the insurance record was updated
@@ -148,17 +144,5 @@ mod update {
         );
         assert_eq!(new_insurance.expiry_date, input.expiry_date.unwrap());
         assert_eq!(new_insurance.is_active, input.is_active.unwrap());
-
-        // Check that the insurance provider record was updated
-        let insurance_provider_row = insurance_provider_repository
-            .find_one_by_id(&new_insurance.insurance_provider_id)
-            .unwrap()
-            .unwrap();
-
-        assert_eq!(
-            insurance_provider_row.provider_name,
-            input.provider_name.unwrap()
-        );
-        assert_eq!(insurance_provider_row.is_active, input.is_active.unwrap());
     }
 }
