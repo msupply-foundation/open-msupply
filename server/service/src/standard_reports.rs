@@ -11,9 +11,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(RustEmbed)]
 // Relative to server/Cargo.toml
-#[folder = "../reports/generated"]
+#[folder = "../../standard_reports/generated"]
 #[exclude = "*.DS_Store"]
 pub struct EmbeddedStandardReports;
+
+#[derive(RustEmbed)]
+// Relative to server/Cargo.toml
+#[folder = "../../standard_forms/generated"]
+#[exclude = "*.DS_Store"]
+pub struct EmbeddedStandardForms;
 
 #[derive(Debug, Error)]
 #[error("No standard reports found")]
@@ -24,13 +30,21 @@ pub struct StandardReports;
 
 impl StandardReports {
     // Load embedded reports
-    pub fn load_reports(con: &StorageConnection) -> Result<(), anyhow::Error> {
+    pub fn load_reports(con: &StorageConnection, overwrite: bool) -> Result<(), anyhow::Error> {
         info!("upserting standard reports...");
         for file in EmbeddedStandardReports::iter() {
             if let Some(content) = EmbeddedStandardReports::get(&file) {
                 let json_data = content.data;
                 let reports_data: ReportsData = serde_json::from_slice(&json_data)?;
-                StandardReports::upsert_reports(reports_data, con)?;
+                StandardReports::upsert_reports(reports_data, con, overwrite)?;
+            }
+        }
+        info!("upserting standard forms...");
+        for file in EmbeddedStandardForms::iter() {
+            if let Some(content) = EmbeddedStandardForms::get(&file) {
+                let json_data = content.data;
+                let reports_data: ReportsData = serde_json::from_slice(&json_data)?;
+                StandardReports::upsert_reports(reports_data, con, overwrite)?;
             }
         }
         Ok(())
@@ -39,6 +53,7 @@ impl StandardReports {
     pub fn upsert_reports(
         reports_data: ReportsData,
         con: &StorageConnection,
+        overwrite: bool,
     ) -> Result<(), anyhow::Error> {
         let mut num_std_reports = 0;
         for report in reports_data.reports {
@@ -46,7 +61,7 @@ impl StandardReports {
                 ReportFilter::new().id(EqualFilter::equal_to(&report.id)),
             ))?;
 
-            if existing_report_count == 0 {
+            if existing_report_count == 0 || overwrite {
                 if let Some(form_schema_json) = &report.form_schema {
                     // TODO: Look up existing json schema and use it's ID to be safe...
                     FormSchemaRowRepository::new(con).upsert_one(form_schema_json)?;

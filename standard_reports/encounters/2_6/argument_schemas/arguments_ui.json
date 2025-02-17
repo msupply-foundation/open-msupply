@@ -1,0 +1,26 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "PatientProgramSearch",
+      "scope": "#/properties/programId",
+      "label": "T#label.program"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/after",
+      "label": "T#label.from-date",
+      "options": {
+        "dateOnly": true
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/before",
+      "label": "T#label.to-date",
+      "options": {
+        "dateOnly": true
+      }
+    }
+  ]
+}

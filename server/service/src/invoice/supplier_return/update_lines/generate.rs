@@ -44,6 +44,7 @@ pub fn generate(
             note: line.note,
             r#type: StockOutType::SupplierReturn,
             // Default
+            prescribed_quantity: None,
             tax_percentage: None,
             total_before_tax: None,
             location_id: None,
@@ -63,6 +64,7 @@ pub fn generate(
             id: line.id,
             stock_line_id: Some(line.stock_line_id),
             number_of_packs: Some(line.number_of_packs),
+            prescribed_quantity: None,
             note: line.note,
             r#type: Some(StockOutType::SupplierReturn),
             tax: None,

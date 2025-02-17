@@ -122,9 +122,9 @@ impl<'a> PatientRepository<'a> {
                     apply_sort_no_case!(query, sort, name::first_name)
                 }
                 PatientSortField::LastName => apply_sort_no_case!(query, sort, name::last_name),
-                PatientSortField::Gender => apply_sort_no_case!(query, sort, name::gender),
+                PatientSortField::Gender => apply_sort!(query, sort, name::gender),
                 PatientSortField::DateOfBirth => {
-                    apply_sort_no_case!(query, sort, name::date_of_birth)
+                    apply_sort!(query, sort, name::date_of_birth)
                 }
                 PatientSortField::Phone => apply_sort_no_case!(query, sort, name::phone),
                 PatientSortField::Address1 => apply_sort_no_case!(query, sort, name::address1),
@@ -213,14 +213,16 @@ impl<'a> PatientRepository<'a> {
             if next_of_kin_name.is_some() {
                 let sub_query = Self::create_filtered_query(
                     Some(PatientFilter {
-                        name: next_of_kin_name,
+                        name: next_of_kin_name.clone(),
                         ..Default::default()
                     }),
                     None,
                 )
                 .select(name::id);
 
-                query = query.filter(name::next_of_kin_id.eq_any(sub_query.nullable()))
+                query = query.filter(name::next_of_kin_id.eq_any(sub_query.nullable()));
+
+                apply_string_or_filter!(query, next_of_kin_name, name::next_of_kin_name);
             }
 
             if program_enrolment_name.is_some() {
@@ -419,23 +421,33 @@ mod tests {
         .await;
 
         let next_of_kin_patient_row = NameRow {
-            id: "patient_1".to_string(),
+            id: "next_of_kin".to_string(),
             name: "Bestie guy".to_string(),
             r#type: NameRowType::Patient,
             ..Default::default()
         };
 
-        let patient_row = NameRow {
+        let patient_1_row = NameRow {
+            id: "patient_1".to_string(),
+            // NOK recorded via next_of_kin_id
+            next_of_kin_id: Some(next_of_kin_patient_row.id.clone()),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+
+        let patient_2_row = NameRow {
             id: "patient_2".to_string(),
             r#type: NameRowType::Patient,
-            next_of_kin_id: Some(next_of_kin_patient_row.id.clone()),
+            // NOK recorded via name plaintext
+            next_of_kin_name: Some("Bestie guy".to_string()),
             ..Default::default()
         };
 
         let name_repo = NameRowRepository::new(&connection);
 
         name_repo.upsert_one(&next_of_kin_patient_row).unwrap();
-        name_repo.upsert_one(&patient_row).unwrap();
+        name_repo.upsert_one(&patient_1_row).unwrap();
+        name_repo.upsert_one(&patient_2_row).unwrap();
 
         let result = PatientRepository::new(&connection)
             .query_by_filter(
@@ -443,7 +455,8 @@ mod tests {
                 None,
             )
             .unwrap();
-        result.first().unwrap();
+
+        assert_eq!(result.len(), 2);
     }
 
     #[actix_rt::test]
