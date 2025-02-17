@@ -40,7 +40,7 @@ const UIComponent = (props: ControlProps) => {
     if (path === 'periodId') {
       handleChange(path, period.id);
     } else {
-      // date range so we can use it in if no period id is saved
+      // date range so we can use it if no period id is saved
       handleChange(path, new Date(period.startDate).toISOString());
       const endOfDay = new Date(period.endDate);
       endOfDay.setHours(24, 59, 59, 999);

@@ -35,6 +35,7 @@ pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
 pub(crate) mod name;
+pub(crate) mod name_insurance_join;
 pub(crate) mod name_oms_fields;
 pub(crate) mod name_property;
 pub(crate) mod name_store_join;
@@ -169,6 +170,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         system_log::boxed(),
         backend_plugin::boxed(),
         insurance_provider::boxed(),
+        name_insurance_join::boxed(),
     ]
 }
 

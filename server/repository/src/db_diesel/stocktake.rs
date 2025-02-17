@@ -133,7 +133,7 @@ fn create_filtered_query(filter: Option<StocktakeFilter>) -> BoxedStocktakeQuery
         if let Some(value) = f.is_locked {
             query = query.filter(stocktake::is_locked.eq(value));
         }
-        if let Some(_) = f.is_program_stocktake {
+        if f.is_program_stocktake.is_some() {
             query = query.filter(stocktake::program_id.is_not_null());
         }
     }

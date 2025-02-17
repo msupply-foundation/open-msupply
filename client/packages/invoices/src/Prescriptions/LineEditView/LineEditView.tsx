@@ -29,6 +29,7 @@ export const PrescriptionLineEditView = () => {
 
   const {
     query: { data, loading: isLoading },
+    isDisabled,
   } = usePrescription();
 
   const {
@@ -167,7 +168,7 @@ export const PrescriptionLineEditView = () => {
               .addPart(AppRoute.Prescription)
               .addPart(String(invoiceNumber))}
             enteredLineIds={enteredLineIds}
-            showNew={status !== InvoiceNodeStatus.Verified}
+            showNew={!isDisabled}
             isDirty={isDirty.current}
             handleSaveNew={onSave}
             scrollRef={scrollRef}
