@@ -98,6 +98,8 @@ fn map_error(error: UpdatePrinterError) -> Result<UpdateErrorInterface> {
 
     let graphql_error = match error {
         UpdatePrinterError::PrinterDoesNotExist => BadUserInput(formatted_error),
+        UpdatePrinterError::DuplicatePrinterDescription => BadUserInput(formatted_error),
+        UpdatePrinterError::DuplicatePrinterAddress => BadUserInput(formatted_error),
         UpdatePrinterError::DatabaseError(_) => InternalError(formatted_error),
         UpdatePrinterError::InternalError(formatted_error) => InternalError(formatted_error),
     };

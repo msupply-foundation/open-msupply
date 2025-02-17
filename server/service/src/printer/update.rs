@@ -3,11 +3,13 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
-use super::validate::validate_printer_exists;
+use super::validate::*;
 use crate::service_provider::ServiceContext;
 
 #[derive(PartialEq, Debug)]
 pub enum UpdatePrinterError {
+    DuplicatePrinterDescription,
+    DuplicatePrinterAddress,
     PrinterDoesNotExist,
     DatabaseError(RepositoryError),
     InternalError(String),
@@ -20,6 +22,14 @@ pub fn validate(
     let Some(existing) = validate_printer_exists(connection, input)? else {
         return Err(UpdatePrinterError::PrinterDoesNotExist);
     };
+
+    if !check_printer_description_is_unique(connection, input.description.clone(), &input.id)? {
+        return Err(UpdatePrinterError::DuplicatePrinterDescription);
+    }
+
+    if !check_printer_address_is_unique(connection, input.address.clone(), &input.id)? {
+        return Err(UpdatePrinterError::DuplicatePrinterAddress);
+    }
 
     Ok(existing)
 }

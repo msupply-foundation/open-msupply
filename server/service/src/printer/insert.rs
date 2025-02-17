@@ -5,9 +5,13 @@ use repository::{
 
 use crate::service_provider::ServiceContext;
 
+use super::validate::*;
+
 #[derive(PartialEq, Debug)]
 pub enum InsertPrinterError {
-    DuplicatePrinter,
+    DuplicatePrinterId,
+    DuplicatePrinterDescription,
+    DuplicatePrinterAddress,
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
     InternalError(String),
@@ -20,8 +24,16 @@ pub fn validate(
     let printer = PrinterRowRepository::new(connection).find_one_by_id(&input.id)?;
 
     if printer.is_some() {
-        return Err(InsertPrinterError::DuplicatePrinter);
-    };
+        return Err(InsertPrinterError::DuplicatePrinterId);
+    }
+
+    if !check_printer_description_is_unique(connection, input.description.clone(), &input.id)? {
+        return Err(InsertPrinterError::DuplicatePrinterDescription);
+    }
+
+    if !check_printer_address_is_unique(connection, input.address.clone(), &input.id)? {
+        return Err(InsertPrinterError::DuplicatePrinterAddress);
+    }
 
     Ok(())
 }
