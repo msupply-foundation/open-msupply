@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_cancelled_status_to_invoice;
 mod add_create_invoice_from_requisition_permission;
+mod add_form_schema_sync;
 mod add_index_to_sync_buffer;
 mod add_insurance_fields_to_invoice;
 mod add_insurance_provider;
@@ -14,6 +15,7 @@ mod add_name_next_of_kin_name;
 mod add_program_deleted_datetime;
 mod add_program_id_on_stocktake;
 mod add_program_id_to_invoice;
+mod add_report_sync;
 mod backend_plugins;
 mod drop_legacy_reports;
 mod prescribed_quantity_store_pref;
@@ -51,6 +53,8 @@ impl Migration for V2_06_00 {
             Box::new(add_cancelled_status_to_invoice::Migrate),
             Box::new(drop_legacy_reports::Migrate),
             Box::new(reinitialise_reports::Migrate),
+            Box::new(add_report_sync::Migrate),
+            Box::new(add_form_schema_sync::Migrate),
         ]
     }
 }
