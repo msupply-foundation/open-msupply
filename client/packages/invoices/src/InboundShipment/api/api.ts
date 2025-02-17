@@ -19,6 +19,7 @@ import {
   RequisitionSortFieldInput,
   RequisitionNodeType,
   InsertInboundShipmentLineFromInternalOrderLineInput,
+  RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA } from '../../utils';
@@ -223,6 +224,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     listInternalOrders: async (otherPartyId: string) => {
       const filter = {
         type: { equalTo: RequisitionNodeType.Request },
+        status: { equalTo: RequisitionNodeStatus.Sent },
         otherPartyId: { equalTo: otherPartyId },
       };
       const result = await sdk.requests({
