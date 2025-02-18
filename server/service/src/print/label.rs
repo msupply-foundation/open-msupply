@@ -47,9 +47,9 @@ pub fn print_qr_code(
 pub struct PrescriptionLabelData {
     item_name: String,
     item_directions: String,
-    patient_details: String,
-    warning: Option<String>,
-    details: String,
+    patient_details: String, // e.g patient name, possibly code etc.
+    warning: Option<String>, // Some items come with a defined warning (OG field "Message") that should be printed on all labels regardless of directions e.g. avoid sun exposure, avoid alcohol...
+    details: String, // General details to include e.g. store name, prescriber name, date/time...
 }
 
 pub fn print_prescription_label(
@@ -60,8 +60,8 @@ pub fn print_prescription_label(
         item_name,
         item_directions,
         patient_details,
-        details,
         warning,
+        details,
     } = label_data;
     let warning = warning.unwrap_or_default();
 
@@ -96,7 +96,7 @@ pub fn print_prescription_label(
         ^FD{details}^FS
         ^XZ"#
     );
-    let printer = Jetdirect::new(settings.address, settings.port); // This (and QR labels!) should be moved to using the new printer config table in some manner. Either FE sends the details or backend does query to get them (FE should probably already have them though)
+    let printer = Jetdirect::new(settings.address, settings.port);
     printer.send_string(payload, Mode::Print)
 }
 
