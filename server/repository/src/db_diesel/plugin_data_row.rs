@@ -24,6 +24,7 @@ joinable!(plugin_data -> store (store_id));
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RelatedRecordType {
     StockLine,
+    Invoice, // TODO: Postgres enum! Maybe we just make this a string? Or ChangeLogTableName?
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
