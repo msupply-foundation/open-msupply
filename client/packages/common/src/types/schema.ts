@@ -680,6 +680,7 @@ export type BatchInboundShipmentInput = {
   deleteInboundShipmentLines?: InputMaybe<Array<DeleteInboundShipmentLineInput>>;
   deleteInboundShipmentServiceLines?: InputMaybe<Array<DeleteInboundShipmentServiceLineInput>>;
   deleteInboundShipments?: InputMaybe<Array<DeleteInboundShipmentInput>>;
+  insertFromInternalOrderLines?: InputMaybe<Array<InsertInboundShipmentLineFromInternalOrderLineInput>>;
   insertInboundShipmentLines?: InputMaybe<Array<InsertInboundShipmentLineInput>>;
   insertInboundShipmentServiceLines?: InputMaybe<Array<InsertInboundShipmentServiceLineInput>>;
   insertInboundShipments?: InputMaybe<Array<InsertInboundShipmentInput>>;
@@ -693,6 +694,7 @@ export type BatchInboundShipmentResponse = {
   deleteInboundShipmentLines?: Maybe<Array<DeleteInboundShipmentLineResponseWithId>>;
   deleteInboundShipmentServiceLines?: Maybe<Array<DeleteInboundShipmentServiceLineResponseWithId>>;
   deleteInboundShipments?: Maybe<Array<DeleteInboundShipmentResponseWithId>>;
+  insertFromInternalOrderLines?: Maybe<Array<InsertInboundShipmentLineFromInternalOrderLineResponseWithId>>;
   insertInboundShipmentLines?: Maybe<Array<InsertInboundShipmentLineResponseWithId>>;
   insertInboundShipmentServiceLines?: Maybe<Array<InsertInboundShipmentServiceLineResponseWithId>>;
   insertInboundShipments?: Maybe<Array<InsertInboundShipmentResponseWithId>>;
@@ -2706,6 +2708,8 @@ export type InsertFormSchemaInput = {
 
 export type InsertFormSchemaResponse = FormSchemaNode;
 
+export type InsertFromInternalOrderResponse = InvoiceLineNode;
+
 export type InsertInboundShipmentError = {
   __typename: 'InsertInboundShipmentError';
   error: InsertInboundShipmentErrorInterface;
@@ -2732,6 +2736,17 @@ export type InsertInboundShipmentLineError = {
 
 export type InsertInboundShipmentLineErrorInterface = {
   description: Scalars['String']['output'];
+};
+
+export type InsertInboundShipmentLineFromInternalOrderLineInput = {
+  invoiceId: Scalars['String']['input'];
+  requisitionLineId: Scalars['String']['input'];
+};
+
+export type InsertInboundShipmentLineFromInternalOrderLineResponseWithId = {
+  __typename: 'InsertInboundShipmentLineFromInternalOrderLineResponseWithId';
+  id: Scalars['String']['output'];
+  response: InsertFromInternalOrderResponse;
 };
 
 export type InsertInboundShipmentLineInput = {
@@ -3462,6 +3477,7 @@ export type InvoiceLineConnector = {
 
 export type InvoiceLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
+  inventoryAdjustmentReason?: InputMaybe<EqualFilterStringInput>;
   invoiceId?: InputMaybe<EqualFilterStringInput>;
   invoiceStatus?: InputMaybe<EqualFilterInvoiceStatusInput>;
   invoiceType?: InputMaybe<EqualFilterInvoiceTypeInput>;
@@ -3472,6 +3488,7 @@ export type InvoiceLineFilterInput = {
   stockLineId?: InputMaybe<EqualFilterStringInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
   type?: InputMaybe<EqualFilterInvoiceLineTypeInput>;
+  verifiedDatetime?: InputMaybe<DatetimeFilterInput>;
 };
 
 export type InvoiceLineNode = {
@@ -3481,6 +3498,7 @@ export type InvoiceLineNode = {
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   foreignCurrencyPriceBeforeTax?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
+  inventoryAdjustmentReason?: Maybe<InventoryAdjustmentReasonNode>;
   invoiceId: Scalars['String']['output'];
   item: ItemNode;
   itemCode: Scalars['String']['output'];
@@ -3569,6 +3587,7 @@ export type InvoiceNode = {
   pickedDatetime?: Maybe<Scalars['DateTime']['output']>;
   pricing: PricingNode;
   program?: Maybe<ProgramNode>;
+  programId?: Maybe<Scalars['String']['output']>;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
    * Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
@@ -5428,6 +5447,10 @@ export type PeriodConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type PeriodFilterInput = {
+  endDate?: InputMaybe<DateFilterInput>;
+};
+
 export type PeriodNode = {
   __typename: 'PeriodNode';
   endDate: Scalars['NaiveDate']['output'];
@@ -6277,7 +6300,6 @@ export type QueriesInvoiceCountsArgs = {
 
 export type QueriesInvoiceLinesArgs = {
   filter?: InputMaybe<InvoiceLineFilterInput>;
-  invoiceId: Scalars['String']['input'];
   page?: InputMaybe<PaginationInput>;
   reportSort?: InputMaybe<PrintReportSortInput>;
   sort?: InputMaybe<Array<InvoiceLineSortInput>>;
@@ -6392,6 +6414,8 @@ export type QueriesPatientsArgs = {
 
 
 export type QueriesPeriodsArgs = {
+  filter?: InputMaybe<PeriodFilterInput>;
+  page?: InputMaybe<PaginationInput>;
   programId?: InputMaybe<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };
