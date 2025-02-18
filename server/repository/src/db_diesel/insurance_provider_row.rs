@@ -48,6 +48,16 @@ impl<'a> InsuranceProviderRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_ids(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<InsuranceProviderRow>, RepositoryError> {
+        insurance_provider::table
+            .filter(insurance_provider::id.eq_any(ids))
+            .load::<InsuranceProviderRow>(self.connection.lock().connection())
+            .map_err(RepositoryError::from)
+    }
+
     pub fn upsert_one(&self, row: &InsuranceProviderRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(insurance_provider::table)
             .values(row)

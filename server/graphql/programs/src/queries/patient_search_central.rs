@@ -121,6 +121,7 @@ impl CentralPatientSearchInput {
             date_of_birth: self.date_of_birth,
             gender: None,
             identifier: None,
+            name: None,
         }
     }
 }

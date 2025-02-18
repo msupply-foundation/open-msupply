@@ -81,6 +81,7 @@ impl From<DatetimeFilterInput> for DatetimeFilter {
             before_or_equal_to: f.before_or_equal_to.map(|t| t.naive_utc()),
             after_or_equal_to: f.after_or_equal_to.map(|t| t.naive_utc()),
             is_null: None,
+            before: None,
         }
     }
 }
