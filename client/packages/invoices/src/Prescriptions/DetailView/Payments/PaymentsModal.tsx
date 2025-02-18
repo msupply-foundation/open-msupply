@@ -1,16 +1,15 @@
-import React, { FC, ReactElement } from 'react';
-import { DialogButton, InputWithLabelRow } from '@common/components';
-import { Grid, CurrencyInput } from '@openmsupply-client/common';
+import React, { FC, ReactElement, useEffect, useState } from 'react';
+import {
+  Autocomplete,
+  BasicTextInput,
+  DialogButton,
+  InputWithLabelRow,
+} from '@common/components';
+import { CurrencyInput, Stack } from '@openmsupply-client/common';
 import { useDialog } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { usePrescription } from '../../api';
-
-interface PaymentModalField {
-  label: string;
-  value?: number;
-  disabled?: boolean;
-  onChange: (value: number) => void;
-}
+import { usePatient } from '@openmsupply-client/system/src';
 
 interface PaymentsModalProps {
   isOpen: boolean;
@@ -25,33 +24,47 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
 }): ReactElement => {
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
+  const [insuranceId, setInsuranceId] = useState<string>();
+  const [discountRate, setDiscountRate] = useState(0);
+  const [totalToBePaid, setTotalToBePaid] = useState(0);
 
   const {
-    query: { data },
+    query: { data: prescriptionData },
   } = usePrescription();
 
-  const fields: PaymentModalField[] = [
-    {
-      label: t('label.total-to-be-paid'),
-      value: data?.pricing.totalAfterTax,
-      disabled: true,
-      onChange: () => {},
-    },
-    // Data not available yet!
-    // { label: 'Outstanding payment' }
-    // { label: 'Type of payment' },
-    // { label: 'Amount paid' },
-    // { label: 'Change' },
-    // { label: 'Note' },
-    // { label: 'Insurance Scheme' },
-    // { label: '% Covered' },
-    // { label: 'Total to be paid by insurance' },
-  ];
+  const nameId = prescriptionData?.patientId ?? '';
+  const { data: insuranceData } = usePatient.document.insurances({
+    nameId,
+  });
+
+  const selectedInsurance = insuranceData?.nodes.find(
+    ({ insuranceProviders }) => insuranceProviders?.id === insuranceId
+  );
+
+  const insuranceOptions =
+    insuranceData?.nodes.map(({ insuranceProviders }) => ({
+      label: insuranceProviders?.providerName ?? '',
+      value: insuranceProviders?.id ?? '',
+    })) ?? [];
+
+  useEffect(() => {
+    if (!prescriptionData) return;
+
+    const totalAfterTax = prescriptionData?.pricing.totalAfterTax ?? 0;
+    const discountPercentage = selectedInsurance?.discountPercentage ?? 0;
+
+    setDiscountRate(discountPercentage);
+
+    const discountAmount = (totalAfterTax * discountPercentage) / 100;
+    const newTotalToBePaid = totalAfterTax - discountAmount;
+    setTotalToBePaid(newTotalToBePaid);
+  }, [selectedInsurance]);
 
   return (
     <Modal
-      width={900}
+      width={350}
       title={t('title.payment')}
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
         <DialogButton
           variant="save"
@@ -62,22 +75,53 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
         />
       }
     >
-      <Grid container spacing={3} justifyContent="center">
-        {fields.map(({ label, value, disabled = false, onChange }, index) => (
-          <Grid key={index} size={4}>
-            <InputWithLabelRow
-              label={label}
-              Input={
-                <CurrencyInput
-                  value={value}
-                  disabled={disabled}
-                  onChangeNumber={onChange}
-                />
-              }
+      <Stack gap={2}>
+        <InputWithLabelRow
+          label={t('label.total-to-be-paid')}
+          Input={
+            <CurrencyInput
+              value={prescriptionData?.pricing.totalAfterTax}
+              disabled
+              onChangeNumber={() => {}}
             />
-          </Grid>
-        ))}
-      </Grid>
+          }
+        />
+        <InputWithLabelRow
+          label={t('label.provider-name')}
+          Input={
+            <Autocomplete
+              options={insuranceOptions}
+              getOptionLabel={option => option.label}
+              value={{
+                label:
+                  selectedInsurance?.insuranceProviders?.providerName ?? '',
+                value: selectedInsurance?.insuranceProviders?.id ?? '',
+              }}
+              onChange={(_, option) => {
+                if (option) {
+                  setInsuranceId(option.value);
+                }
+              }}
+            />
+          }
+          sx={{ '& .MuiAutocomplete-root': { flexGrow: 1, borderRadius: 1 } }}
+        />
+        <InputWithLabelRow
+          label={t('label.discount-rate')}
+          Input={<BasicTextInput disabled value={discountRate} />}
+        />
+        <InputWithLabelRow
+          label={t('label.total-to-be-paid')}
+          Input={
+            <CurrencyInput
+              key={totalToBePaid}
+              disabled
+              value={totalToBePaid}
+              onChangeNumber={() => {}}
+            />
+          }
+        />
+      </Stack>
     </Modal>
   );
 };
