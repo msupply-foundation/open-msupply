@@ -1,19 +1,5 @@
-// To upload to server (from this dir):
-// cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i './service/src/backend_plugin/examples/amc' -u 'http://localhost:8000' --username 'test' --password 'pass'
-// OR
-// cargo run --bin remote_server_cli -- generate-plugin-bundle -i './service/src/backend_plugin/examples/amc' -o 'check.json'
-// Can install via CLI
-// cargo run --bin remote_server_cli -- install-plugin-bundle --path 'check.json' -u 'http://localhost:8000' --username 'test' --password 'pass'
-// Or can install via curl
-// cargo run --bin remote_server_cli -- generate-plugin-bundle -i './service/src/backend_plugin/examples/amc' -o 'check.json'
-// curl -H 'Content-Type: application/json' --data '{"query":"query MyQuery {authToken(password: \"pass\", username: \"Admin\") {... on AuthToken {token}... on AuthTokenError {error {description}}}}","variables":{}}' 'http://localhost:8000/graphql'
-// TOKEN=token from above
-// curl --form files='@check.json' -v -H 'Cookie: auth={"token":"'$TOKEN'"}' 'http://localhost:8000/upload'
-// FILE_ID=file id from above
-// curl -H 'Authorization: Bearer '${TOKEN} -H 'Content-Type: application/json' --data '{"query":"query MyQuery { centralServer { plugin { uploadedPluginInfo(fileId: \"'$FILE_ID'\") {... on PluginInfoNode {backendPluginCodes}... on UploadedPluginError {error}}} }}","variables":{}}' 'http://localhost:8000/graphql'
-// Above would list codes in the bundle, next to add plugins
-// curl -H 'Authorization: Bearer '${TOKEN} -H 'Content-Type: application/json' --data '{"query":"mutation MyMutation { centralServer { plugins { installUploadedPlugin(fileId: \"'$FILE_ID'\") { backendPluginCodes } } } }" }' 'http://localhost:8000/graphql'
-// Above would add uploaded plugin to backend_plugin table and bind it
+// To upload to server (after adding submodule to openmsupply repo locally)
+// cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/{plugin name}/backend' -u 'http://localhost:8000' --username 'test' --password 'pass'
 
 import { BackendPlugins } from '@backendPlugins';
 // Tree shaking working
@@ -54,8 +40,7 @@ const plugins: BackendPlugins = {
 
     sql_result.forEach(({ item_id, consumption }) => {
       response[item_id] = {
-        average_monthly_consumption:
-          consumption / (DAY_LOOKBACK / DAYS_IN_MONTH),
+        average_monthly_consumption: consumption / (DAY_LOOKBACK / DAYS_IN_MONTH),
       };
     });
 
