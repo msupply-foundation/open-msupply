@@ -67,34 +67,32 @@ pub fn print_prescription_label(
 
     let payload = format!(
         r#"
-        ^XA
-        ^A0,40
-        ^FO20,10
-        ^FB500,1,0,C
-        ^FD{item_name}^FS
+^XA
+^A0,25
+^FO20,10
+^FB550,1,0,C
+^FD{item_name}\&^FS
 
-        ^FO20,50^GB500,1,2^FS ; Horizontal line
+^FO20,50
+^GB550,2,2^FS
 
-        ^A0,30
-        ^FO20,60
-        ^FB500,3,0,L
-        ^FD{item_directions}^FS
-        
-        ^A0,30
-        ^FO20,160
-        ^FB500,3,0,L
-        ^FD{warning}^FS
+^A0,25
+^FO20,60
+^FB550,6,0,L
+^FD{item_directions}\&{warning}^FS
 
-        ^A0,20
-        ^FO20,210
-        ^FD{patient_details}^FS
+^FO20,210
+^GB550,2,2^FS
 
-        ^FO20,230^GB500,1,2^FS ; Horizontal line
+^A0,25
+^FO20,220
+^FD{patient_details}^FS
 
-        ^A0,20
-        ^FO20,250
-        ^FD{details}^FS
-        ^XZ"#
+^A0,25
+^FO20,250
+^FD{details}^FS
+^XZ
+"#
     );
     let printer = Jetdirect::new(settings.address, settings.port);
     printer.send_string(payload, Mode::Print)
