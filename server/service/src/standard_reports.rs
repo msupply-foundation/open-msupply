@@ -77,7 +77,7 @@ impl StandardReports {
                     is_custom: report.is_custom,
                     version: report.version,
                     code: report.code,
-                    is_active: report.is_active,
+                    is_active: true,
                 })?;
                 num_std_reports += 1;
             }
@@ -105,5 +105,4 @@ pub struct ReportData {
     pub version: String,
     pub code: String,
     pub form_schema: Option<FormSchemaJson>,
-    pub is_active: bool,
 }
