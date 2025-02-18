@@ -17,7 +17,7 @@ import {
   ReportRowFragment,
   ReportSelector,
   usePrintReport,
-} from 'packages/system/src/Report';
+} from '../../../../system/src/Report';
 import { JsonData } from '@openmsupply-client/programs';
 
 interface AppBarButtonProps {
