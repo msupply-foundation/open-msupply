@@ -47,8 +47,8 @@
       "label": "T#report.sort-by",
       "options": {
         "show": [
-          ["name", "item"],
-          ["code", "code"]
+          ["name", "T#report.item-name"],
+          ["code", "T#label.code"]
         ]
       }
     },
