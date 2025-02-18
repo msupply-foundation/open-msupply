@@ -233,6 +233,7 @@ pub struct MockData {
     pub reports: Vec<crate::ReportRow>,
     pub backend_plugin: Vec<BackendPluginRow>,
     pub printer: Vec<PrinterRow>,
+    pub store_preferences: Vec<StorePreferenceRow>,
 }
 
 impl MockData {
@@ -319,6 +320,7 @@ pub struct MockDataInserts {
     pub reports: bool,
     pub backend_plugin: bool,
     pub printer: bool,
+    pub store_preferences: bool,
 }
 
 impl MockDataInserts {
@@ -394,6 +396,7 @@ impl MockDataInserts {
             reports: true,
             backend_plugin: true,
             printer: true,
+            store_preferences: true,
         }
     }
 
@@ -739,6 +742,11 @@ impl MockDataInserts {
 
     pub fn printer(mut self) -> Self {
         self.printer = true;
+        self
+    }
+
+    pub fn store_preferences(mut self) -> Self {
+        self.store_preferences = true;
         self
     }
 }
@@ -1387,6 +1395,12 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.store_preferences {
+            let repo = StorePreferenceRowRepository::new(connection);
+            for row in &mock_data.store_preferences {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1466,6 +1480,7 @@ impl MockData {
             mut reports,
             backend_plugin: _,
             mut printer,
+            mut store_preferences,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1541,6 +1556,7 @@ impl MockData {
         self.reports.append(&mut reports);
         self.printer.append(&mut printer);
 
+        self.store_preferences.append(&mut store_preferences);
         self
     }
 }

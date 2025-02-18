@@ -66,7 +66,7 @@ query InvoiceQuery($storeId: String, $dataId: String, $sort: PrintReportSortInpu
       currencyRate
     }
   }
-  invoiceLines(storeId: $storeId, invoiceId: $dataId, reportSort: $sort) {
+  invoiceLines(storeId: $storeId, filter: { invoiceId: { equalTo: $dataId } }, reportSort: $sort) {
     ... on InvoiceLineConnector {
       nodes {
         batch

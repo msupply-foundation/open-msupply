@@ -1,8 +1,6 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarButtonsPortal,
-  ButtonWithIcon,
-  PlusCircleIcon,
   Grid,
   useDetailPanel,
   useTranslation,
@@ -11,6 +9,7 @@ import {
   LoadingButton,
   useUrlQueryParams,
   usePluginElements,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { useInbound } from '../api';
 import {
@@ -18,20 +17,19 @@ import {
   ReportRowFragment,
   usePrintReport,
 } from '@openmsupply-client/system';
-import { AddFromMasterListButton } from './AddFromMasterListButton';
 import { JsonData } from '@openmsupply-client/programs';
+import { AddButton } from './AddButton';
 
 interface AppBarButtonProps {
   onAddItem: (newState: boolean) => void;
 }
 
-export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
-  onAddItem,
-}) => {
+export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
+  const t = useTranslation();
+  const { store } = useAuthContext();
   const isDisabled = useInbound.utils.isDisabled();
   const { data } = useInbound.document.get();
   const { OpenButton } = useDetailPanel();
-  const t = useTranslation();
   const { print, isPrinting } = usePrintReport();
   const {
     queryParams: { sortBy },
@@ -40,6 +38,10 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     type: 'InboundShipmentAppBar',
     data,
   });
+  const disableInternalOrderButton =
+    !store?.preferences.manuallyLinkInternalOrderToInboundShipment ||
+    !!data?.linkedShipment ||
+    !data?.requisition;
 
   const printReport = (
     report: ReportRowFragment,
@@ -57,13 +59,14 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <ButtonWithIcon
-          disabled={isDisabled}
-          label={t('button.add-item')}
-          Icon={<PlusCircleIcon />}
-          onClick={() => onAddItem(true)}
+        <AddButton
+          onAddItem={onAddItem}
+          requisitionId={data?.requisition?.id ?? ''}
+          invoiceId={data?.id ?? ''}
+          disable={isDisabled}
+          disableAddFromMasterListButton={!!data?.linkedShipment}
+          disableAddFromInternalOrderButton={disableInternalOrderButton}
         />
-        <AddFromMasterListButton />
         {pluginButtons}
         <ReportSelector
           context={ReportContext.InboundShipment}
