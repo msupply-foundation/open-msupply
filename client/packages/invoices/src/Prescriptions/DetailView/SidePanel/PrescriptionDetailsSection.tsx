@@ -20,10 +20,6 @@ import {
   ProgramSearchInput,
 } from '@openmsupply-client/system';
 import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
-// import {
-//   Clinician,
-//   ClinicianSearchInput,
-// } from '../../../../../system/src/Clinician';
 
 export const PrescriptionDetailsSectionComponent: FC = () => {
   const t = useTranslation();
