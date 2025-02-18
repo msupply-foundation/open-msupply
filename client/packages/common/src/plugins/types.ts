@@ -8,6 +8,7 @@ export type Plugins = {
     stockLine: StockLineRowFragment;
     events: UsePluginEvents<{ isDirty: boolean }>;
   }>[];
+  prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
   dashboard?: React.ComponentType[];
   stockColumn?: {
