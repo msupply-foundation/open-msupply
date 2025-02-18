@@ -4,12 +4,12 @@ use repository::{StocktakeRow, StocktakeStatus};
 use serde::Serialize;
 
 use graphql_core::{
-    loader::{InvoiceByIdLoader, StocktakeLineByStocktakeIdLoader, UserLoader},
+    loader::{InvoiceByIdLoader, ProgramByIdLoader, StocktakeLineByStocktakeIdLoader, UserLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 
-use super::{InvoiceNode, StocktakeLineConnector, UserNode};
+use super::{program_node::ProgramNode, InvoiceNode, StocktakeLineConnector, UserNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
@@ -126,6 +126,23 @@ impl StocktakeNode {
             None => StocktakeLineConnector::empty(),
             Some(lines) => StocktakeLineConnector::from_domain_vec(lines),
         };
+
+        Ok(result)
+    }
+
+    pub async fn program(&self, ctx: &Context<'_>) -> Result<Option<ProgramNode>> {
+        let Some(program_id) = self.stocktake.program_id.clone() else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<ProgramByIdLoader>>();
+
+        let result = loader
+            .load_one(program_id)
+            .await?
+            .map(|program| ProgramNode {
+                program_row: program,
+            });
 
         Ok(result)
     }

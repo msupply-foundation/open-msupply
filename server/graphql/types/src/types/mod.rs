@@ -121,12 +121,25 @@ pub use self::reason_option::*;
 pub mod cold_storage_type;
 pub use self::cold_storage_type::*;
 
+pub mod abbreviation;
+pub use self::abbreviation::*;
 mod requisition_item_information;
+
+pub mod printer;
+pub use self::printer::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]
 impl DeleteResponse {
+    pub async fn id(&self) -> &str {
+        &self.0
+    }
+}
+
+pub struct IdResponse(pub String);
+#[Object]
+impl IdResponse {
     pub async fn id(&self) -> &str {
         &self.0
     }

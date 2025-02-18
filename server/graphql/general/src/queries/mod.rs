@@ -70,7 +70,9 @@ pub use self::generate_supplier_return_lines::*;
 pub mod return_reason;
 pub use self::return_reason::*;
 
+pub mod abbreviation;
 pub mod diagnosis;
+pub mod insurances;
 
 #[cfg(test)]
 mod tests;

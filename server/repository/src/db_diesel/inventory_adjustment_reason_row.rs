@@ -1,6 +1,13 @@
 use super::StorageConnection;
 
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    db_diesel::{
+        invoice_row::invoice, item_link_row::item_link, item_row::item, location_row::location,
+        stock_line_row::stock_line,
+    },
+    repository_error::RepositoryError,
+    Delete, Upsert,
+};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -14,6 +21,12 @@ table! {
         reason -> Text,
     }
 }
+
+allow_tables_to_appear_in_same_query!(inventory_adjustment_reason, item_link);
+allow_tables_to_appear_in_same_query!(inventory_adjustment_reason, item);
+allow_tables_to_appear_in_same_query!(inventory_adjustment_reason, location);
+allow_tables_to_appear_in_same_query!(inventory_adjustment_reason, invoice);
+allow_tables_to_appear_in_same_query!(inventory_adjustment_reason, stock_line);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
