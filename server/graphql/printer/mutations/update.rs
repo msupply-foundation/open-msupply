@@ -1,8 +1,5 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{
-        RecordAlreadyExist, RecordNotFound, RecordProgramCombinationAlreadyExists,
-    },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -22,46 +19,9 @@ pub struct UpdatePrinterInput {
     pub label_height: i32,
 }
 
-#[derive(SimpleObject)]
-pub struct UpdateError {
-    pub error: UpdateErrorInterface,
-}
-
 #[derive(Union)]
 pub enum UpdatePrinterResponse {
-    Error(UpdateError),
     Response(PrinterNode),
-}
-
-#[derive(Interface)]
-#[graphql(name = "UpdatePrinterErrorInterface")]
-#[graphql(field(name = "description", ty = "String"))]
-pub enum UpdateErrorInterface {
-    PrinterDoesNotExist(RecordProgramCombinationAlreadyExists),
-    DuplicatePrinter(RecordAlreadyExist),
-    CreatedRecordNotFound(RecordNotFound),
-}
-
-impl From<UpdatePrinterInput> for UpdatePrinter {
-    fn from(
-        UpdatePrinterInput {
-            id,
-            description,
-            address,
-            port,
-            label_width,
-            label_height,
-        }: UpdatePrinterInput,
-    ) -> Self {
-        Self {
-            id,
-            description,
-            address,
-            port,
-            label_width,
-            label_height,
-        }
-    }
 }
 
 pub fn update_printer(
@@ -79,28 +39,45 @@ pub fn update_printer(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    let result = service_provider
-        .printer_service
-        .update_printer(&service_context, input.into());
-    let result = match result {
+    let UpdatePrinterInput {
+        id,
+        description,
+        address,
+        port,
+        label_width,
+        label_height,
+    } = input;
+
+    let result = service_provider.printer_service.update_printer(
+        &service_context,
+        UpdatePrinter {
+            id,
+            description,
+            address,
+            port,
+            label_width,
+            label_height,
+        },
+    );
+
+    let response = match result {
         Ok(printer) => UpdatePrinterResponse::Response(PrinterNode::from_domain(printer)),
-        Err(error) => UpdatePrinterResponse::Error(UpdateError {
-            error: map_error(error)?,
-        }),
+
+        Err(error) => map_error(error)?,
     };
-    Ok(result)
+    Ok(response)
 }
 
-fn map_error(error: UpdatePrinterError) -> Result<UpdateErrorInterface> {
+fn map_error(error: UpdatePrinterError) -> Result<UpdatePrinterResponse> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        UpdatePrinterError::PrinterDoesNotExist => BadUserInput(formatted_error),
-        UpdatePrinterError::DuplicatePrinterDescription => BadUserInput(formatted_error),
-        UpdatePrinterError::DuplicatePrinterAddress => BadUserInput(formatted_error),
+        UpdatePrinterError::PrinterDoesNotExist
+        | UpdatePrinterError::DuplicatePrinterDescription
+        | UpdatePrinterError::DuplicatePrinterAddress => BadUserInput(formatted_error),
         UpdatePrinterError::DatabaseError(_) => InternalError(formatted_error),
-        UpdatePrinterError::InternalError(formatted_error) => InternalError(formatted_error),
+        UpdatePrinterError::InternalError(_) => InternalError(formatted_error),
     };
     Err(graphql_error.extend())
 }
