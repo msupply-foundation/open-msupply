@@ -138,6 +138,7 @@ mod update {
 
         assert_eq!(new_insurance.id, input.id);
         assert_eq!(new_insurance.policy_type, input.policy_type.unwrap());
+        assert_eq!(new_insurance.policy_number, "123-ABC");
         assert_eq!(
             new_insurance.discount_percentage,
             input.discount_percentage.unwrap()

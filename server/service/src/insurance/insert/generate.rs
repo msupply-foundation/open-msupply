@@ -39,16 +39,17 @@ pub fn generate(GenerateInput { insert_input }: GenerateInput) -> NameInsuranceJ
     }
 }
 
-fn compose_policy_number(
+pub fn compose_policy_number(
     policy_number_family: Option<String>,
     policy_number_person: Option<String>,
 ) -> String {
-    match (policy_number_family, policy_number_person) {
-        (Some(family), Some(personal)) if !family.is_empty() && !personal.is_empty() => {
-            format!("{}-{}", family, personal)
-        }
-        (Some(family), _) if !family.is_empty() => family,
-        (_, Some(personal)) if !personal.is_empty() => personal,
-        _ => "".to_string(),
-    }
+    let v = vec![policy_number_family, policy_number_person];
+    let policy_number = v
+        .into_iter()
+        .flatten()
+        .filter(|n| !n.is_empty())
+        .collect::<Vec<_>>()
+        .join("-");
+
+    policy_number
 }
