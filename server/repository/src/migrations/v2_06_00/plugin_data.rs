@@ -4,7 +4,7 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "plugin_data"
+        "plugin_data_update"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
