@@ -15,7 +15,7 @@ use service::{
 pub struct UpdatePluginDataInput {
     pub id: String,
     pub store_id: Option<String>,
-    pub plugin_name: String,
+    pub plugin_code: String,
     pub related_record_id: Option<String>,
     pub data_identifier: String,
     pub data: String,
@@ -83,7 +83,7 @@ impl UpdatePluginDataInput {
         ServiceInput {
             id: self.id,
             store_id: self.store_id,
-            plugin_name: self.plugin_name,
+            plugin_code: self.plugin_code,
             related_record_id: self.related_record_id,
             data_identifier: self.data_identifier,
             data: self.data,
