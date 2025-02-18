@@ -36,7 +36,7 @@ impl PrinterNode {
     }
 
     pub async fn label_height(&self) -> i32 {
-        self.row().label_height.clone()
+        self.row().label_height
     }
 }
 
@@ -78,5 +78,3 @@ impl PrinterConnector {
         PrinterConnector { total_count, nodes }
     }
 }
-
-//TODO: add tests

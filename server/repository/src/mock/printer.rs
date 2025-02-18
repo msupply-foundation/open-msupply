@@ -22,6 +22,6 @@ pub fn mock_printer_b() -> PrinterRow {
     }
 }
 
-pub fn mock_printer() -> Vec<PrinterRow> {
+pub fn mock_printers() -> Vec<PrinterRow> {
     vec![mock_printer_a(), mock_printer_b()]
 }

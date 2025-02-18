@@ -66,14 +66,13 @@ impl From<UpdatePrinterInput> for UpdatePrinter {
 
 pub fn update_printer(
     ctx: &Context<'_>,
-    store_id: String,
     input: UpdatePrinterInput,
 ) -> Result<UpdatePrinterResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateItems,
-            store_id: Some(store_id.to_string()),
+            resource: Resource::NoPermissionRequired,
+            store_id: None,
         },
     )?;
 

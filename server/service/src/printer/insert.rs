@@ -9,7 +9,7 @@ use super::validate::*;
 
 #[derive(PartialEq, Debug)]
 pub enum InsertPrinterError {
-    DuplicatePrinterId,
+    PrinterAlreadyExists,
     DuplicatePrinterDescription,
     DuplicatePrinterAddress,
     CreatedRecordNotFound,
@@ -24,7 +24,7 @@ pub fn validate(
     let printer = PrinterRowRepository::new(connection).find_one_by_id(&input.id)?;
 
     if printer.is_some() {
-        return Err(InsertPrinterError::DuplicatePrinterId);
+        return Err(InsertPrinterError::PrinterAlreadyExists);
     }
 
     if !check_printer_description_is_unique(connection, input.description.clone(), &input.id)? {
@@ -80,7 +80,6 @@ pub fn insert_printer(
             let repo = PrinterRowRepository::new(connection);
 
             repo.upsert_one(&new_printer)?;
-            println!(" new {} ", "result");
             repo.find_one_by_id(&new_printer.id)?
                 .ok_or(InsertPrinterError::CreatedRecordNotFound)
         })
