@@ -2806,7 +2806,7 @@ export type InsertInsuranceInput = {
   isActive: Scalars['Boolean']['input'];
   nameId: Scalars['String']['input'];
   policyNumberFamily: Scalars['String']['input'];
-  policyNumberPersonal: Scalars['String']['input'];
+  policyNumberPerson: Scalars['String']['input'];
   policyType: InsurancePolicyNodeType;
 };
 

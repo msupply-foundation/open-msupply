@@ -11,15 +11,15 @@ import {
 } from '@common/components';
 
 import {
-  PatientModal,
-  usePatientModalStore,
-} from '@openmsupply-client/programs';
-import {
   Box,
   FnUtils,
   InsurancePolicyNodeType,
   Stack,
 } from '@openmsupply-client/common';
+import {
+  PatientModal,
+  usePatientModalStore,
+} from '@openmsupply-client/programs';
 
 import { usePatient } from '../../../api';
 import { InsurancePolicySelect } from '../InsurancePolicySelect';
@@ -29,7 +29,7 @@ import { InsuranceStatusToggle } from '../InsuranceStatusToggle';
 const DEFAULT_INSURANCE = {
   id: '',
   policyNumberFamily: '',
-  policyNumberPersonal: '',
+  policyNumberPerson: '',
   insuranceProviderId: '',
   policyType: '' as InsurancePolicyNodeType,
   isActive: false,
@@ -60,24 +60,22 @@ export const InsuranceModal: FC = (): ReactElement => {
 
   const { mutateAsync: updateInsurance } =
     usePatient.document.updateInsurance();
-  const { mutateAsync: insertInsurance } =
-    usePatient.document.insertInsurance();
 
   const handleInsuranceUpdate = async (): Promise<void> => {
+    const { policyNumberFamily, policyNumberPerson, ...insuranceInput } =
+      insurance;
     try {
-      await updateInsurance({
-        id: insurance.id,
-        expiryDate: insurance.expiryDate,
-        discountPercentage: insurance.discountPercentage,
-        insuranceProviderId: insurance.insuranceProviderId,
-        isActive: insurance.isActive,
-        policyType: insurance.policyType,
-      });
-      success('success');
+      await updateInsurance(insuranceInput);
+      success(t('messages.insurance-saved'))();
     } catch (e) {
-      error(e as string);
+      error(
+        t('messages.error-saving-insurances', { error: (e as Error).message })
+      )();
     }
   };
+
+  const { mutateAsync: insertInsurance } =
+    usePatient.document.insertInsurance();
 
   const handleInsuranceInsert = async (): Promise<void> => {
     try {
@@ -86,9 +84,11 @@ export const InsuranceModal: FC = (): ReactElement => {
         id: FnUtils.generateUUID(),
         nameId,
       });
-      success('success');
+      success(t('messages.insurance-created'))();
     } catch (e) {
-      error(e as string);
+      error(
+        t('messages.error-saving-insurances', { error: (e as Error).message })
+      )();
     }
   };
 
@@ -100,26 +100,13 @@ export const InsuranceModal: FC = (): ReactElement => {
 
   useEffect(() => {
     if (selectedInsurance) {
-      const {
-        id,
-        policyNumberFamily,
-        policyNumberPerson,
-        insuranceProviderId,
-        policyType,
-        isActive,
-        discountPercentage,
-        expiryDate,
-      } = selectedInsurance;
+      const { insuranceProviders, policyNumber, ...insuranceDetails } =
+        selectedInsurance;
 
       setInsurance({
-        id,
-        policyType,
-        isActive,
-        expiryDate,
-        insuranceProviderId: insuranceProviderId ?? '',
-        policyNumberFamily: policyNumberFamily ?? '',
-        policyNumberPersonal: policyNumberPerson ?? '',
-        discountPercentage: discountPercentage,
+        ...insuranceDetails,
+        policyNumberFamily: insuranceDetails.policyNumberFamily ?? '',
+        policyNumberPerson: insuranceDetails.policyNumberPerson ?? '',
       });
     } else {
       setInsurance(DEFAULT_INSURANCE);
@@ -164,11 +151,11 @@ export const InsuranceModal: FC = (): ReactElement => {
             Input={
               <BasicTextInput
                 disabled={haveInsuranceId}
-                value={insurance.policyNumberPersonal}
+                value={insurance.policyNumberPerson}
                 onChange={event => {
                   setInsurance({
                     ...insurance,
-                    policyNumberPersonal: event.target.value,
+                    policyNumberPerson: event.target.value,
                   });
                 }}
               />
