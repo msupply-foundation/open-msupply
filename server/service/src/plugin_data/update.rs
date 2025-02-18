@@ -10,7 +10,7 @@ pub enum UpdatePluginDataError {
     PluginDataDoesNotExist,
     RelatedRecordDoesNotMatch,
     RelatedRecordTypeDoesNotMatch,
-    PluginNameDoesNotMatch,
+    PluginCodeDoesNotMatch,
     DatabaseError(RepositoryError),
     InternalError(String),
 }
@@ -61,7 +61,7 @@ fn validate(
         return Err(UpdatePluginDataError::RelatedRecordTypeDoesNotMatch);
     }
     if input.plugin_code != plugin_data.plugin_code {
-        return Err(UpdatePluginDataError::PluginNameDoesNotMatch);
+        return Err(UpdatePluginDataError::PluginCodeDoesNotMatch);
     }
 
     if plugin_data.store_id.is_none() && !CentralServerConfig::is_central_server() {
