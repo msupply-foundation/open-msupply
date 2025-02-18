@@ -40,7 +40,7 @@ pub struct InsertInsurance {
     pub id: String,
     pub name_link_id: String,
     pub insurance_provider_id: String,
-    pub policy_number_personal: String,
+    pub policy_number_person: String,
     pub policy_number_family: String,
     pub policy_type: InsurancePolicyType,
     pub discount_percentage: f64,
