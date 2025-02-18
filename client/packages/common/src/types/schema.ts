@@ -5440,7 +5440,7 @@ export type PluginDataSortInput = {
 
 export type PluginInfoNode = {
   __typename: 'PluginInfoNode';
-  backendPluginCodes: Array<Scalars['String']['output']>;
+  pluginInfo: Scalars['JSON']['output'];
 };
 
 export type PricingNode = {
