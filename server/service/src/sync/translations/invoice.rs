@@ -414,7 +414,8 @@ impl SyncTranslation for InvoiceTranslation {
                     shipped_datetime,
                     delivered_datetime,
                     verified_datetime,
-                    cancelled_datetime,
+                    // TO-DO: Sync this field
+                    cancelled_datetime: _,
                     colour,
                     requisition_id,
                     linked_invoice_id,
@@ -430,7 +431,8 @@ impl SyncTranslation for InvoiceTranslation {
                     name_insurance_join_id,
                     insurance_discount_amount,
                     insurance_discount_percentage,
-                    is_cancellation,
+                    // TO-DO: Sync this field
+                    is_cancellation: _,
                 },
             name_row,
             clinician_row,
