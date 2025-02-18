@@ -92,11 +92,10 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
               />
             </Grid>
           ))}
-          {plugins.prescriptionPaymentForm?.map(
-            (Plugin, index) =>
-              data && <Plugin key={index} prescriptionData={data} />
-          )}
         </Grid>
+        {plugins.prescriptionPaymentForm?.map((Plugin, index) =>
+          data ? <Plugin key={index} prescriptionData={data} /> : null
+        )}
       </>
     </Modal>
   );
