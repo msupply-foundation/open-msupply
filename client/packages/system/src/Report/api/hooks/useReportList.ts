@@ -49,6 +49,7 @@ export const useReportList = ({
           ...filterBy,
           ...(context ? { context: { equalTo: context } } : null),
           ...(subContext ? { subContext: { equalTo: subContext } } : null),
+          isActive: true,
         },
         key: sortBy.key as ReportSortFieldInput,
         desc: sortBy.isDesc,
