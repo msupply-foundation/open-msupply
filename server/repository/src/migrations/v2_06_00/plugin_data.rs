@@ -2,11 +2,6 @@ use crate::migrations::*;
 
 pub(crate) struct Migrate;
 
-#[cfg(not(feature = "postgres"))]
-const RELATED_RECORD_TYPE: &str = "TEXT";
-#[cfg(feature = "postgres")]
-const RELATED_RECORD_TYPE: &str = "related_record_type";
-
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
         "plugin_data"
@@ -19,10 +14,10 @@ impl MigrationFragment for Migrate {
             DROP TABLE plugin_data;
             CREATE TABLE plugin_data (
                 id TEXT NOT NULL PRIMARY KEY,
+                store_id TEXT  REFERENCES store(id),
                 plugin_code TEXT NOT NULL,
-                related_record_id TEXT NOT NULL,
-                related_record_type {RELATED_RECORD_TYPE} NOT NULL,
-                store_id TEXT NOT NULL REFERENCES store(id),
+                related_record_id TEXT,
+                data_identifier TEXT NOT NULL,
                 data TEXT NOT NULL
             );
         "#,

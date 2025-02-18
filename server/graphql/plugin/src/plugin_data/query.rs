@@ -1,8 +1,7 @@
-use crate::types::{PluginDataConnector, RelatedRecordNodeType};
+use crate::types::PluginDataConnector;
 use async_graphql::*;
 use graphql_core::{
     generic_filters::EqualFilterStringInput,
-    map_filter,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -15,28 +14,19 @@ pub enum PluginDataResponse {
 }
 
 #[derive(InputObject, Clone)]
-pub struct EqualFilterRelatedRecordTypeInput {
-    pub equal_to: Option<RelatedRecordNodeType>,
-    pub equal_any: Option<Vec<RelatedRecordNodeType>>,
-    pub not_equal_to: Option<RelatedRecordNodeType>,
-}
-
-#[derive(InputObject, Clone)]
 pub struct PluginDataFilterInput {
     pub id: Option<EqualFilterStringInput>,
+    pub store_id: Option<EqualFilterStringInput>,
     pub plugin_name: Option<EqualFilterStringInput>,
     pub related_record_id: Option<EqualFilterStringInput>,
-    pub related_record_type: Option<EqualFilterRelatedRecordTypeInput>,
-    pub store_id: Option<EqualFilterStringInput>,
+    pub data_identifier: Option<EqualFilterStringInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum PluginDataSortFieldInput {
     Id,
-    PluginName,
-    RelatedRecordId,
-    RelatedRecordType,
+    PluginCode,
 }
 
 #[derive(InputObject)]
@@ -51,16 +41,13 @@ pub struct PluginDataSortInput {
 pub fn get_plugin_data(
     ctx: &Context<'_>,
     store_id: &str,
-    r#type: RelatedRecordNodeType,
     filter: Option<PluginDataFilterInput>,
     sort: Option<Vec<PluginDataSortInput>>,
 ) -> Result<PluginDataResponse> {
-    let resource = map_resource_type(r#type);
-
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource,
+            resource: Resource::ReadPluginData,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -82,25 +69,14 @@ pub fn get_plugin_data(
     ))
 }
 
-fn map_resource_type(from: RelatedRecordNodeType) -> Resource {
-    use RelatedRecordNodeType as from;
-    use Resource as to;
-
-    match from {
-        from::StockLine => to::QueryStockLine,
-    }
-}
-
 impl PluginDataFilterInput {
     pub fn to_domain(self) -> PluginDataFilter {
         PluginDataFilter {
             id: self.id.map(EqualFilter::from),
+            store_id: self.store_id.map(EqualFilter::from),
             plugin_code: self.plugin_name.map(EqualFilter::from),
             related_record_id: self.related_record_id.map(EqualFilter::from),
-            related_record_type: self
-                .related_record_type
-                .map(|r| map_filter!(r, RelatedRecordNodeType::to_domain)),
-            store_id: self.store_id.map(EqualFilter::from),
+            data_identifier: self.data_identifier.map(EqualFilter::from),
         }
     }
 }
@@ -111,9 +87,7 @@ impl PluginDataSortInput {
         use PluginDataSortFieldInput as from;
         let key = match self.key {
             from::Id => to::Id,
-            from::PluginName => to::PluginName,
-            from::RelatedRecordId => to::RelatedRecordId,
-            from::RelatedRecordType => to::RelatedRecordType,
+            from::PluginCode => to::PluginCode,
         };
 
         PluginDataSort {
