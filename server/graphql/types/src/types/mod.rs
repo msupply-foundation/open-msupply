@@ -136,3 +136,11 @@ impl DeleteResponse {
         &self.0
     }
 }
+
+pub struct IdResponse(pub String);
+#[Object]
+impl IdResponse {
+    pub async fn id(&self) -> &str {
+        &self.0
+    }
+}
