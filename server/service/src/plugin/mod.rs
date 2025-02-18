@@ -4,7 +4,6 @@ use std::{
 };
 
 use base64::{prelude::BASE64_STANDARD, Engine};
-use log::info;
 use repository::{
     BackendPluginRowRepository, FrontendPluginFile, FrontendPluginRow, FrontendPluginRowRepository,
     RepositoryError,

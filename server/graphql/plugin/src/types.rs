@@ -1,5 +1,5 @@
 use async_graphql::*;
-use repository::{PluginData, PluginDataRow, RelatedRecordType};
+use repository::{PluginData, PluginDataRow};
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]
@@ -13,11 +13,6 @@ pub struct PluginDataConnector {
     nodes: Vec<PluginDataNode>,
 }
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq)]
-pub enum RelatedRecordNodeType {
-    StockLine,
-}
-
 #[Object]
 impl PluginDataNode {
     pub async fn id(&self) -> &str {
@@ -28,40 +23,20 @@ impl PluginDataNode {
         &self.row().plugin_code
     }
 
-    pub async fn related_record_id(&self) -> &str {
-        &self.row().related_record_id
+    pub async fn related_record_id(&self) -> Option<String> {
+        self.row().related_record_id.to_owned()
     }
 
-    pub async fn related_record_type(&self) -> RelatedRecordNodeType {
-        RelatedRecordNodeType::from_domain(&self.row().related_record_type)
+    pub async fn data_identifier(&self) -> &str {
+        &self.row().data_identifier
     }
 
-    pub async fn store_id(&self) -> &str {
-        &self.row().store_id
+    pub async fn store_id(&self) -> Option<String> {
+        self.row().store_id.to_owned()
     }
 
     pub async fn data(&self) -> &String {
         &self.row().data
-    }
-}
-
-impl RelatedRecordNodeType {
-    pub fn from_domain(from: &RelatedRecordType) -> RelatedRecordNodeType {
-        use RelatedRecordNodeType as to;
-        use RelatedRecordType as from;
-
-        match from {
-            from::StockLine => to::StockLine,
-        }
-    }
-
-    pub fn to_domain(self) -> RelatedRecordType {
-        use RelatedRecordNodeType as from;
-        use RelatedRecordType as to;
-
-        match self {
-            from::StockLine => to::StockLine,
-        }
     }
 }
 
