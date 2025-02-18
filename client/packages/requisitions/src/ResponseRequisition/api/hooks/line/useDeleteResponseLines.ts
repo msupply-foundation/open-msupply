@@ -31,7 +31,7 @@ export const useDeleteResponseLines = () => {
 
   const onDelete = async () => {
     let result = await mutateAsync(selectedRows).catch(err => {
-      throw err;
+      console.error(err);
     });
     errorsContext.unsetAll();
 
