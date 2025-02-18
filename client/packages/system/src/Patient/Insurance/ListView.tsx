@@ -5,6 +5,7 @@ import {
   createQueryParamsStore,
   createTableStore,
   DataTable,
+  NothingHere,
   TableProvider,
   useUrlQuery,
   useUrlQueryParams,
@@ -53,6 +54,7 @@ export const InsuranceListView = () => {
           updateQuery({ insuranceId: row.id });
           setModal(PatientModal.Insurance);
         }}
+        noDataElement={<NothingHere />}
       />
     </TableProvider>
   );
