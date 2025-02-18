@@ -31,7 +31,7 @@ mod test {
             },
         );
 
-        assert_eq!(result, Err(InsertPrinterError::DuplicatePrinterId));
+        assert_eq!(result, Err(InsertPrinterError::PrinterAlreadyExists));
 
         //Printer description already exists
         let result = service.insert_printer(
