@@ -83,7 +83,7 @@ impl UpdatePluginDataInput {
         ServiceInput {
             id: self.id,
             store_id: self.store_id,
-            plugin_name: self.plugin_name,
+            plugin_code: self.plugin_code,
             related_record_id: self.related_record_id,
             data_identifier: self.data_identifier,
             data: self.data,

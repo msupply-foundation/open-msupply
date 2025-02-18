@@ -8412,7 +8412,7 @@ export type UpdatePluginDataInput = {
   data: Scalars['String']['input'];
   dataIdentifier: Scalars['String']['input'];
   id: Scalars['String']['input'];
-  pluginName: Scalars['String']['input'];
+  pluginCode: Scalars['String']['input'];
   relatedRecordId?: InputMaybe<Scalars['String']['input']>;
   storeId?: InputMaybe<Scalars['String']['input']>;
 };

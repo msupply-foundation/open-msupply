@@ -10,9 +10,9 @@ export const usePluginEvents = <
   EventInput = { id: string },
   EventResult = void,
 >(
-  defautlState: State
+  defaultState: State
 ) => {
-  const [state, setState] = useState<State>(defautlState);
+  const [state, setState] = useState<State>(defaultState);
   const [events, setEvents] = useState<
     {
       id: string;
