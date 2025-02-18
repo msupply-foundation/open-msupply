@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 declare const LOCAL_PLUGINS: { pluginPath: string; pluginCode: string }[];
 
 export const useInitPlugins = () => {
-  const { addPlugins } = usePluginProvider();
+  const { addPluginBundle } = usePluginProvider();
   const { query } = usePlugins();
 
   const initRemotePlugins = async () => {
@@ -18,7 +18,7 @@ export const useInitPlugins = () => {
 
     for (const plugin of plugins) {
       let pluginBundle = await loadRemotePlugin(plugin);
-      addPlugins(pluginBundle, plugin.code);
+      addPluginBundle(pluginBundle, plugin.code);
     }
   };
 
@@ -34,7 +34,7 @@ export const useInitPlugins = () => {
         /* webpackExclude: /operations.graphql/ */
         `../../plugins/${plugin.pluginPath}/src/plugin.tsx`
       );
-      addPlugins(pluginBundle.default, plugin.pluginCode);
+      addPluginBundle(pluginBundle.default, plugin.pluginCode);
     }
   };
   useEffect(() => {
