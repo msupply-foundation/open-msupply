@@ -41,12 +41,6 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     ({ insuranceProviders }) => insuranceProviders?.id === insuranceId
   );
 
-  const insuranceOptions =
-    insuranceData?.nodes.map(({ insuranceProviders }) => ({
-      label: insuranceProviders?.providerName ?? '',
-      value: insuranceProviders?.id ?? '',
-    })) ?? [];
-
   useEffect(() => {
     if (!prescriptionData) return;
 
@@ -92,7 +86,12 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
           label={t('label.provider-name')}
           Input={
             <Autocomplete
-              options={insuranceOptions}
+              options={
+                insuranceData?.nodes.map(({ insuranceProviders }) => ({
+                  label: insuranceProviders?.providerName ?? '',
+                  value: insuranceProviders?.id ?? '',
+                })) ?? []
+              }
               getOptionLabel={option => option.label}
               value={{
                 label:
