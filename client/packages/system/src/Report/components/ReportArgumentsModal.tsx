@@ -4,8 +4,12 @@ import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
 import {
   JsonData,
   JsonForm,
-  ProgramSearch,
+  patientProgramSearchTester,
+  PatientProgramSearch,
   programSearchTester,
+  ProgramSearch,
+  periodSearchTester,
+  PeriodSearch,
 } from '@openmsupply-client/programs';
 import { ReportRowFragment } from '../api';
 import { useDialog, useUrlQuery } from '@common/hooks';
@@ -20,7 +24,9 @@ export type ReportArgumentsModalProps = {
 };
 
 const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
+  { tester: patientProgramSearchTester, renderer: PatientProgramSearch },
   { tester: programSearchTester, renderer: ProgramSearch },
+  { tester: periodSearchTester, renderer: PeriodSearch },
 ];
 
 export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
@@ -38,7 +44,6 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
     monthsUnderstock,
     monthsItemsExpire,
   } = store?.preferences ?? {};
-
 
   const [data, setData] = useState<JsonData>({
     monthlyConsumptionLookBackPeriod,
