@@ -16,10 +16,11 @@ impl PluginQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
+        plugin_code: String,
         filter: Option<PluginDataFilterInput>,
         sort: Option<Vec<PluginDataSortInput>>,
     ) -> Result<PluginDataResponse> {
-        plugin_data::query::get_plugin_data(ctx, &store_id, filter, sort)
+        plugin_data::query::get_plugin_data(ctx, &store_id, &plugin_code, filter, sort)
     }
 }
 
