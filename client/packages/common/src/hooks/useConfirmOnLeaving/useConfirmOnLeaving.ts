@@ -45,7 +45,6 @@ export const useBlockNavigation = () => {
   });
 
   const blockers: BlockingState[] = Array.from(blocking.values());
-  const shouldBlock = blockers.some(b => b.shouldBlock);
 
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
     for (const b of blockers) {
@@ -65,14 +64,18 @@ export const useBlockNavigation = () => {
     return false;
   });
 
+  const shouldBlockRefresh = blockers.some(
+    b => b.shouldBlock && !b.options?.allowRefresh
+  );
+
   // handle page refresh events
   useBeforeUnload(
     useCallback(
       event => {
         // Cancel the refresh
-        if (shouldBlock) event.preventDefault();
+        if (shouldBlockRefresh) event.preventDefault();
       },
-      [shouldBlock]
+      [shouldBlockRefresh]
     ),
     { capture: true }
   );
@@ -97,6 +100,10 @@ interface BlockerOptions {
    */
   customCheck?: (currentLocation: Location, nextLocation: Location) => boolean;
   customConfirmation?: (proceed: () => void) => void;
+  /**
+   * Will block when navigating away from the page, but not when refreshing
+   */
+  allowRefresh?: boolean;
 }
 
 interface BlockingState {

@@ -50,6 +50,9 @@ export const ListView = () => {
       (report?.subContext === 'HIVCareProgram' ||
         report.subContext === 'Encounters')
   );
+  const otherReports = data?.nodes?.filter(
+    report => report?.subContext === 'Other'
+  );
   const onReportClick = (report: ReportRowFragment) => {
     if (report.argumentSchema) {
       setReportWithArgs(report);
@@ -100,6 +103,13 @@ export const ListView = () => {
           reports={expiringReports}
           onReportClick={onReportClick}
           hasReports={expiringReports?.length !== 0}
+        />
+        <ReportWidget
+          title={t('heading.other')}
+          Icon={InvoiceIcon}
+          reports={otherReports}
+          onReportClick={onReportClick}
+          hasReports={otherReports?.length !== 0}
         />
         {store?.preferences?.omProgramModule && (
           <ReportWidget

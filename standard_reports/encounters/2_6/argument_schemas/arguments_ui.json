@@ -2,7 +2,7 @@
   "type": "VerticalLayout",
   "elements": [
     {
-      "type": "ProgramSearch",
+      "type": "PatientProgramSearch",
       "scope": "#/properties/programId",
       "label": "T#label.program"
     },
