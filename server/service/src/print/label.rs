@@ -32,6 +32,9 @@ pub fn print_qr_code(
     let payload = format!(
         r#"
         ^XA
+        ^FX CI command parameters:
+        ^FX - encoding (28 = UTF-8)
+        ^CI28
         ^FO50,{}
         ^BQN,2,4
         ^FDMA,{}^FS        
@@ -44,6 +47,7 @@ pub fn print_qr_code(
 }
 
 #[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PrescriptionLabelData {
     item_name: String,
     item_directions: String,
@@ -68,6 +72,10 @@ pub fn print_prescription_label(
     let payload = format!(
         r#"
 ^XA
+^FX CI command parameters:
+^FX - encoding (28 = UTF-8)
+^CI28
+
 ^A0,25
 ^FO20,10
 ^FB550,1,0,C
