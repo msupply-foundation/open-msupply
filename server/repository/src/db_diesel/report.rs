@@ -195,6 +195,9 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
         if let Some(is_custom) = is_custom {
             query = query.filter(report::is_custom.eq(is_custom));
         }
+        if let Some(is_active) = is_active {
+            query = query.filter(report::is_active.eq(is_active));
+        }
     }
 
     query
