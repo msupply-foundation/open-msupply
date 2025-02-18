@@ -55,7 +55,15 @@ export const SplitButton = <T,>({
   return (
     <>
       <Tooltip title={label}>
-        <ButtonGroup color={color} variant="outlined" aria-label={ariaLabel}>
+        <ButtonGroup
+          color={color}
+          variant="outlined"
+          aria-label={ariaLabel}
+          sx={{
+            boxShadow: theme => theme.shadows[2],
+            borderRadius: 24,
+          }}
+        >
           <ButtonWithIcon
             color={color}
             disabled={isDisabled || selectedOption.isDisabled}
@@ -89,6 +97,7 @@ export const SplitButton = <T,>({
               borderRadius: 0,
               borderStartEndRadius: '24px',
               borderEndEndRadius: '24px',
+              borderLeft: theme => `1px solid ${theme.palette.divider}`,
             }}
             label=""
             startIcon={<ChevronDownIcon />}
