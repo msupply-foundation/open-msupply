@@ -1102,6 +1102,7 @@
   "label.total-quantity": "Total quantity",
   "label.total-sell-price": "Total sell price",
   "label.total-to-be-paid": "Total to be paid",
+  "label.total-to-be-paid-by-insurance": "Total to be paid by insurance",
   "label.trace-status-done": "Done",
   "label.trace-status-pending": "Pending",
   "label.type": "Type",

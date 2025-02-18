@@ -26,7 +26,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [insuranceId, setInsuranceId] = useState<string>();
   const [discountRate, setDiscountRate] = useState(0);
-  const [totalToBePaid, setTotalToBePaid] = useState(0);
+  const [totalToBePaidByInsurance, setTotalToBePaidByInsurance] = useState(0);
 
   const {
     query: { data: prescriptionData },
@@ -56,13 +56,12 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     setDiscountRate(discountPercentage);
 
     const discountAmount = (totalAfterTax * discountPercentage) / 100;
-    const newTotalToBePaid = totalAfterTax - discountAmount;
-    setTotalToBePaid(newTotalToBePaid);
+    setTotalToBePaidByInsurance(discountAmount);
   }, [selectedInsurance]);
 
   return (
     <Modal
-      width={350}
+      width={450}
       title={t('title.payment')}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
@@ -74,6 +73,9 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
           }}
         />
       }
+      sx={{
+        '& .MuiDialogContent-root': { display: 'flex', alignItems: 'center' },
+      }}
     >
       <Stack gap={2}>
         <InputWithLabelRow
@@ -81,8 +83,8 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
           Input={
             <CurrencyInput
               value={prescriptionData?.pricing.totalAfterTax}
-              disabled
               onChangeNumber={() => {}}
+              style={{ borderRadius: 4, pointerEvents: 'none' }}
             />
           }
         />
@@ -108,16 +110,23 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
         />
         <InputWithLabelRow
           label={t('label.discount-rate')}
-          Input={<BasicTextInput disabled value={discountRate} />}
+          Input={
+            <BasicTextInput
+              value={`${discountRate}%`}
+              sx={{
+                pointerEvents: 'none',
+              }}
+            />
+          }
         />
         <InputWithLabelRow
-          label={t('label.total-to-be-paid')}
+          label={t('label.total-to-be-paid-by-insurance')}
           Input={
             <CurrencyInput
-              key={totalToBePaid}
-              disabled
-              value={totalToBePaid}
+              key={totalToBePaidByInsurance}
+              value={totalToBePaidByInsurance}
               onChangeNumber={() => {}}
+              style={{ borderRadius: 4, pointerEvents: 'none' }}
             />
           }
         />
