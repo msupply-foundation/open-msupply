@@ -101,16 +101,19 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
         alignItems="center"
       >
         <Grid
-          sx={{
+          sx={theme => ({
             alignItems: 'center',
             backgroundColor: 'background.menu',
             borderRadius: '50%',
-            display: 'flex',
+            display: 'none',
             height: '100px',
             justifyContent: 'center',
             marginRight: 2,
             width: '100px',
-          }}
+            [theme.breakpoints.up('lg')]: {
+              display: 'flex',
+            },
+          })}
         >
           <Box>
             <UserIcon fontSize="large" style={{ flex: 1 }} />
