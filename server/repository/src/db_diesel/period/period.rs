@@ -50,7 +50,8 @@ impl<'a> PeriodRepository<'a> {
     pub fn query_by_filter(
         &self,
         store_id: String,
-        program_id: String,
+        // Passed into R&R
+        program_id: Option<String>,
         filter: PeriodFilter,
     ) -> Result<Vec<Period>, RepositoryError> {
         self.query(store_id, program_id, Some(filter), None)
@@ -59,7 +60,7 @@ impl<'a> PeriodRepository<'a> {
     pub fn query(
         &self,
         store_id: String,
-        program_id: String,
+        program_id: Option<String>,
         filter: Option<PeriodFilter>,
         sort: Option<PeriodSort>,
     ) -> Result<Vec<Period>, RepositoryError> {
@@ -73,6 +74,8 @@ impl<'a> PeriodRepository<'a> {
                     apply_sort!(query, sort, period::end_date)
                 }
             }
+        } else {
+            query = query.order(period::end_date.desc());
         };
 
         let result = query.load::<PeriodJoin>(self.connection.lock().connection())?;
@@ -107,7 +110,7 @@ type BoxedPeriodQuery = IntoBoxed<
 
 fn create_filtered_query(
     store_id: String,
-    program_id: String,
+    program_id: Option<String>,
     filter: Option<PeriodFilter>,
 ) -> BoxedPeriodQuery {
     let mut query = period::table
@@ -116,7 +119,7 @@ fn create_filtered_query(
             rnr_form::table.on(rnr_form::period_id
                 .eq(period::id)
                 .and(rnr_form::store_id.eq(store_id))
-                .and(rnr_form::program_id.eq(program_id))),
+                .and(rnr_form::program_id.eq(program_id.unwrap_or_default()))),
         )
         .into_boxed();
 
