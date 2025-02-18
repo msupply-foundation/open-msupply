@@ -9,7 +9,9 @@ mod insert {
     };
 
     use crate::{
-        insurance::insert::{InsertInsurance, InsertInsuranceError},
+        insurance::insert::{
+            generate::compose_policy_number, InsertInsurance, InsertInsuranceError,
+        },
         service_provider::ServiceProvider,
     };
 
@@ -98,5 +100,60 @@ mod insert {
 
         // check policy number
         assert_eq!(result.policy_number, "123-ABC");
+    }
+
+    // Table driven test case for compose_policy_number
+    struct TestCase {
+        family: Option<String>,
+        person: Option<String>,
+        expected: String,
+    }
+
+    #[test]
+    fn test_compose_policy_number() {
+        let scenarios = vec![
+            TestCase {
+                family: Some("fam".to_string()),
+                person: Some("pers".to_string()),
+                expected: "fam-pers".to_string(),
+            },
+            TestCase {
+                family: Some("".to_string()),
+                person: Some("pers".to_string()),
+                expected: "pers".to_string(),
+            },
+            TestCase {
+                family: Some("fam".to_string()),
+                person: Some("".to_string()),
+                expected: "fam".to_string(),
+            },
+            TestCase {
+                family: Some("".to_string()),
+                person: Some("".to_string()),
+                expected: "".to_string(),
+            },
+            TestCase {
+                family: Some("fam".to_string()),
+                person: None,
+                expected: "fam".to_string(),
+            },
+            TestCase {
+                family: None,
+                person: Some("pers".to_string()),
+                expected: "pers".to_string(),
+            },
+            TestCase {
+                family: None,
+                person: None,
+                expected: "".to_string(),
+            },
+        ];
+
+        for scenario in scenarios {
+            assert_eq!(
+                scenario.expected,
+                compose_policy_number(scenario.family.clone(), scenario.person.clone())
+            );
+        }
     }
 }
