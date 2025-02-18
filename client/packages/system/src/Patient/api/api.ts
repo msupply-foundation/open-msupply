@@ -14,6 +14,8 @@ import {
   UpdateProgramPatientInput,
   FilterByWithBoolean,
   InsuranceSortFieldInput,
+  InsertInsuranceInput,
+  UpdateInsuranceInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -237,6 +239,32 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     });
 
     return result.insurances;
+  },
+
+  insertInsurance: async (input: InsertInsuranceInput) => {
+    const result = await sdk.insertInsurance({
+      storeId,
+      input,
+    });
+
+    if (result.insertInsurance.id !== undefined) {
+      return result.insertInsurance;
+    }
+
+    throw new Error('Could not insert insurance');
+  },
+
+  updateInsurance: async (input: UpdateInsuranceInput) => {
+    const result = await sdk.updateInsurance({
+      storeId,
+      input,
+    });
+
+    if (result.updateInsurance.id !== undefined) {
+      return result.updateInsurance;
+    }
+
+    throw new Error('Could not update insurance');
   },
 
   insuranceProviders: async (): Promise<InsuranceProvidersResponse> =>
