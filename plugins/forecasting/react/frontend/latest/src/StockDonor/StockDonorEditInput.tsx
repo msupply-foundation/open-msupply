@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import {
   BasicTextInput,
   InputWithLabelRow,
@@ -26,22 +26,36 @@ const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
 const StockDonorEditInput: StockDonorEditPlugin = ({ stockLine, events }) => {
   const t = useTranslation('common');
   const [donor, setDonor] = React.useState<string>('');
-  const { data: stockLineNodes } = usePluginData.data([stockLine?.id ?? '']);
-  const data = stockLineNodes?.[0];
-  const { mutate } = data?.id ? usePluginData.update() : usePluginData.insert();
+  const { data: stockLineNodes } = usePluginData.data([stockLine.id]);
+  const { mutate: insert } = usePluginData.insert();
+  const { mutate: update } = usePluginData.update();
 
-  const onSave = useCallback(async () => {
-    mutate({ id: data?.id, data: donor, stockLineId: stockLine?.id });
-  }, [donor, stockLine, mutate, data?.id]);
+  // Current donor needs to be available when mutating, which is triggered by core
+  // we can either mount new event every time donor changes on us ref like this
+  // can also use setDonor(donor => ..) to access current state, but seem hacky
+  const donorRef = useRef('');
+  donorRef.current = donor;
 
+  console.log(stockLineNodes);
   useEffect(() => {
-    const unmountEvent = events.mountEvent(onSave);
+    if (!stockLineNodes) return;
+    const initialDonor = stockLineNodes?.[0];
+
+    const unmountEvent = events.mountEvent(async () => {
+      const mutate = !!initialDonor?.id ? update : insert;
+
+      mutate({
+        id: initialDonor?.id,
+        // This will always be current value
+        data: donorRef.current,
+        stockLineId: stockLine.id,
+      });
+    });
+
+    setDonor(initialDonor?.data || '');
+
     return unmountEvent;
-  }, [onSave]);
-
-  useEffect(() => {
-    if (data !== undefined) setDonor(data?.data ?? '');
-  }, [data]);
+  }, [stockLineNodes]);
 
   return (
     <StyledInputRow

@@ -4,12 +4,14 @@ import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type PluginDataQueryVariables = Types.Exact<{
+  pluginCode: Types.Scalars['String']['input'];
   storeId: Types.Scalars['String']['input'];
   stockLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
+  dataIdentifier: Types.Scalars['String']['input'];
 }>;
 
 
-export type PluginDataQuery = { __typename: 'Queries', pluginData: { __typename: 'PluginDataConnector', nodes: Array<{ __typename: 'PluginDataNode', id: string, data: string, pluginCode: string, relatedRecordId: string }> } };
+export type PluginDataQuery = { __typename: 'Queries', pluginData: { __typename: 'PluginDataConnector', nodes: Array<{ __typename: 'PluginDataNode', id: string, data: string, stockLineId?: string | null }> } };
 
 export type InsertPluginDataMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -29,20 +31,18 @@ export type UpdatePluginDataMutation = { __typename: 'Mutations', updatePluginDa
 
 
 export const PluginDataDocument = gql`
-    query pluginData($storeId: String!, $stockLineIds: [String!]) {
+    query pluginData($pluginCode: String!, $storeId: String!, $stockLineIds: [String!], $dataIdentifier: String!) {
   pluginData(
+    pluginCode: $pluginCode
     storeId: $storeId
-    type: STOCK_LINE
-    filter: {relatedRecordId: {equalAny: $stockLineIds}}
+    filter: {dataIdentifier: {equalTo: $dataIdentifier}, relatedRecordId: {equalAny: $stockLineIds}}
   ) {
+    __typename
     ... on PluginDataConnector {
-      __typename
       nodes {
-        __typename
         id
         data
-        pluginCode
-        relatedRecordId
+        stockLineId: relatedRecordId
       }
     }
   }

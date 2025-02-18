@@ -1,20 +1,12 @@
-import { RelatedRecordNodeType, UpdatePluginDataInput } from '@common/types';
 import { getSdk } from './operations.generated';
 import { FnUtils } from '@common/utils';
+import { name as pluginCode } from '../../../package.json';
 
 export type Sdk = ReturnType<typeof getSdk>;
 
 export type PluginData = { id?: string; data: string; stockLineId: string };
 
-const pluginParsers = {
-  toUpdate: (input: PluginData): UpdatePluginDataInput => ({
-    id: input.id ?? '',
-    data: input.data,
-    pluginName: 'StockDonor',
-    relatedRecordId: input.stockLineId,
-    relatedRecordType: RelatedRecordNodeType.StockLine,
-  }),
-};
+const DATA_IDENTIFIER = 'donor';
 
 export const getPluginQueries = (sdk: Sdk, storeId: string) => ({
   get: {
@@ -22,10 +14,12 @@ export const getPluginQueries = (sdk: Sdk, storeId: string) => ({
       const result = await sdk.pluginData({
         storeId,
         stockLineIds,
+        pluginCode,
+        dataIdentifier: DATA_IDENTIFIER,
       });
 
       const { pluginData } = result;
-
+      console.log(pluginData);
       if (pluginData?.__typename === 'PluginDataConnector') {
         return pluginData.nodes;
       }
@@ -36,7 +30,14 @@ export const getPluginQueries = (sdk: Sdk, storeId: string) => ({
     const result =
       (await sdk.updatePluginData({
         storeId,
-        input: pluginParsers.toUpdate(input),
+        input: {
+          data: input.data,
+          id: input.id || '', // TODO not types safe
+          relatedRecordId: input.stockLineId,
+          storeId,
+          pluginCode,
+          dataIdentifier: DATA_IDENTIFIER,
+        },
       })) || {};
 
     const { updatePluginData } = result;
@@ -53,9 +54,10 @@ export const getPluginQueries = (sdk: Sdk, storeId: string) => ({
       input: {
         data: input.data,
         id: FnUtils.generateUUID(),
-        pluginName: 'StockDonor',
         relatedRecordId: input.stockLineId,
-        relatedRecordType: RelatedRecordNodeType.StockLine,
+        storeId,
+        pluginCode,
+        dataIdentifier: DATA_IDENTIFIER,
       },
     });
 
