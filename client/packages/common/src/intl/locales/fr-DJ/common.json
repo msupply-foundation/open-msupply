@@ -232,5 +232,22 @@
   "label.unit-variant-and-pack-size": "Variante d'unité / conditionnement",
   "label.volume-per-outer-pack": "Volume par conditionnement externe",
   "warning.cannot-create-placeholder-packs": "Il y a un total de {{allocatedQuantity}} boites disponibles. Impossible d'allouer toutes les {{requestedQuantity}} boites.",
-  "title.packaging": "Boite"
+  "title.packaging": "Boite",
+  "outbound-shipments": "Sorties de stock",
+  "messages.outbound-shipment-created-on": "Sortie de stock créée le {{date}}",
+  "error.no-outbound-items": "Aucun article n'a été ajouté à cette sortie.",
+  "error.no-create-outbound-shipment-permission": "Vous n'avez pas la permission de créer une sortie de stock depuis une réquisition",
+  "cmdk.goto-outbound": "Aller à : Sortie de stock",
+  "error.snapshot-total-mismatch": "La quantité de stock est maintenant différente de celle au début de l'inventaire, car une partie du stock a été émise dans des sorties de stock ou des prescriptions. Veuillez supprimer la ligne et réessayer.",
+  "error.stocktake-has-stock-reduced-below-zero": "L'inventaire ne peut pas être finalisé car une partie du stock est utilisée dans une nouvelle sortie de stock.",
+  "outbound-shipment": "Sorties de stock",
+  "error.reduced-below-zero": "Stock réservé dans de nouvelles sorties de stock ou prescriptions. La quantité ne peut être réduite en deça de zéro.",
+  "error.failed-to-create-outbound": "Echec lors de la création de la sortie de stock",
+  "label.outbound-shipment": "Sortie de stock",
+  "description.rnr-consumed": "La quantité d'articles distribuée durant cette période (Sorties de stock ou Prescriptions)",
+  "error.stocktake-snapshot-total-mismatch": "L'inventaire ne peut pas être finalisé. La quantité de stock est maintenant différente de celle au début de l'inventaire, car une partie du stock a été émise dans des sorties de stock ou des prescriptions. Veuillez supprimer la ligne et réessayer.",
+  "heading.create-outbound-shipment": "Créer une Sortie de stock",
+  "error.no-outbound-shipments": "Il n'y a pas de Sorties de stock à afficher.",
+  "info.automatic-shipment": "Ce bon de livraison a été automatiquement créé à la suite d'un transfert depuis un autre dépôt.",
+  "messages.create-outbound-from-requisition": "Êtes-vous sûr(e) de vouloir créer une Sortie de stock pour cette commande client ?"
 }

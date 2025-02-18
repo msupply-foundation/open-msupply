@@ -58,6 +58,19 @@ query programs(
   }
 }
 
+query periods($storeId: String!, $programId: String) {
+  periods(storeId: $storeId, programId: $programId) {
+    ... on PeriodConnector {
+      __typename
+      nodes {
+        __typename
+        ...Period
+      }
+      totalCount
+    }
+  }
+}
+
 query documentByName($name: String!, $storeId: String!) {
   document(name: $name, storeId: $storeId) {
     __typename
