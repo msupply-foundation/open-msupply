@@ -4,7 +4,8 @@
     "omSupplyPlugin": {
         "target": "backend",
         "types": [
-            "AMC"
+            "AMC",
+            "TRANSFORM_REQUISITION_LINES"
         ],
         "variant_type": "BOA_JS"
     },
