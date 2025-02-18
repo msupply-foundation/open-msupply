@@ -435,6 +435,11 @@ impl InvoiceFilter {
         self.stock_line_id = Some(stock_line_id);
         self
     }
+
+    pub fn is_cancellation(mut self, filter: bool) -> Self {
+        self.is_cancellation = Some(filter);
+        self
+    }
 }
 
 impl InvoiceStatus {
