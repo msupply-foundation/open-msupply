@@ -900,6 +900,7 @@
   "label.note": "Note",
   "label.notes": "Notes",
   "label.num-packs": "Number of packs",
+  "label.num-packs-total": "Total number of packs",
   "label.number": "Number",
   "label.number-months_few": "{{count}} Months",
   "label.number-months_many": "{{count}} Months",
