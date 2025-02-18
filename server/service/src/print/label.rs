@@ -47,7 +47,7 @@ pub fn print_qr_code(
 pub struct PrescriptionLabelData {
     item_name: String,
     item_directions: String,
-    patient_name: String,
+    patient_details: String,
     warning: Option<String>,
     details: String,
 }
@@ -59,7 +59,7 @@ pub fn print_prescription_label(
     let PrescriptionLabelData {
         item_name,
         item_directions,
-        patient_name,
+        patient_details,
         details,
         warning,
     } = label_data;
@@ -87,7 +87,7 @@ pub fn print_prescription_label(
 
         ^A0,20
         ^FO20,210
-        ^FD{patient_name}^FS
+        ^FD{patient_details}^FS
 
         ^FO20,230^GB500,1,2^FS ; Horizontal line
 
