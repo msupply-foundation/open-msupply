@@ -3,7 +3,7 @@ import React, { FC, ReactElement } from 'react';
 import { useTranslation } from '@common/intl';
 import { Autocomplete, InputWithLabelRow } from '@common/components';
 
-import { usePatient } from '../../api';
+import { usePatient } from '../../../api';
 
 interface InsuranceProvidersSelectProps {
   insuranceProviderId: string;
@@ -18,16 +18,16 @@ export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
   const { data } = usePatient.document.insuranceProviders();
   const insuranceProviders = data?.nodes ?? [];
 
-  const options = insuranceProviders.map(({ providerName }) => {
+  const options = insuranceProviders.map(({ id, providerName }) => {
     return {
       label: providerName,
-      value: providerName,
+      value: id,
     };
   });
 
-  const defaultOption =
-    insuranceProviders.find(({ id }) => id === insuranceProviderId)
-      ?.providerName ?? '';
+  const selectedInsurance = insuranceProviders.find(
+    ({ id }) => id === insuranceProviderId
+  );
 
   return (
     <InputWithLabelRow
@@ -37,8 +37,8 @@ export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
           options={options}
           getOptionLabel={option => option.label}
           value={{
-            label: defaultOption,
-            value: defaultOption,
+            label: selectedInsurance?.providerName ?? '',
+            value: selectedInsurance?.id ?? '',
           }}
           onChange={(_, option) => {
             if (option) {

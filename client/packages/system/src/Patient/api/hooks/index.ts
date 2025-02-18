@@ -21,6 +21,8 @@ export const usePatient = {
     updateProgramPatient: Document.useUpdateProgramPatient,
     latestPatientEncounter: Document.useLatestPatientEncounter,
     insurances: Document.useInsurances,
+    insertInsurance: Document.useInsertInsurance,
+    updateInsurance: Document.useUpdateInsurance,
     insuranceProviders: Document.useInsuranceProviders,
   },
 };

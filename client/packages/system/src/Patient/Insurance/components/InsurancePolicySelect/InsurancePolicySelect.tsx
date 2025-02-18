@@ -1,7 +1,7 @@
-import { Autocomplete, InputWithLabelRow } from '@common/components';
-import { useTranslation } from '@common/intl';
-import { InsurancePolicyNodeType } from '@common/types';
 import React, { FC, ReactElement } from 'react';
+import { InsurancePolicyNodeType } from '@common/types';
+import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
+import { Autocomplete, InputWithLabelRow } from '@common/components';
 
 interface InsurancePolicySelectProps {
   policyType: string;
@@ -25,16 +25,7 @@ export const InsurancePolicySelect: FC<InsurancePolicySelectProps> = ({
     },
   ];
 
-  const defaultValue = {
-    label:
-      policyType === InsurancePolicyNodeType.Personal
-        ? t('label.personal')
-        : t('label.business'),
-    value:
-      policyType === InsurancePolicyNodeType.Personal
-        ? InsurancePolicyNodeType.Personal
-        : InsurancePolicyNodeType.Business,
-  };
+  const defaultValue = getDefaultValue(policyType, t);
 
   return (
     <InputWithLabelRow
@@ -54,4 +45,21 @@ export const InsurancePolicySelect: FC<InsurancePolicySelectProps> = ({
       sx={{ '& .MuiAutocomplete-root': { flexGrow: 1, borderRadius: 1 } }}
     />
   );
+};
+
+const getDefaultValue = (policyType: string, t: TypedTFunction<LocaleKey>) => {
+  switch (policyType) {
+    case InsurancePolicyNodeType.Personal:
+      return {
+        label: t('label.personal'),
+        value: InsurancePolicyNodeType.Personal,
+      };
+    case InsurancePolicyNodeType.Business:
+      return {
+        label: t('label.business'),
+        value: InsurancePolicyNodeType.Business,
+      };
+    default:
+      return { label: '', value: '' as InsurancePolicyNodeType };
+  }
 };
