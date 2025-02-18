@@ -12,7 +12,7 @@ pub fn generate(GenerateInput { insert_input }: GenerateInput) -> NameInsuranceJ
         name_link_id,
         insurance_provider_id,
         policy_number_family,
-        policy_number_personal,
+        policy_number_person,
         policy_type,
         discount_percentage,
         expiry_date,
@@ -21,7 +21,7 @@ pub fn generate(GenerateInput { insert_input }: GenerateInput) -> NameInsuranceJ
 
     let policy_number = compose_policy_number(
         Some(policy_number_family.clone()),
-        Some(policy_number_personal.clone()),
+        Some(policy_number_person.clone()),
     );
 
     NameInsuranceJoinRow {
@@ -30,7 +30,7 @@ pub fn generate(GenerateInput { insert_input }: GenerateInput) -> NameInsuranceJ
         insurance_provider_id,
         policy_number,
         policy_number_family: Some(policy_number_family),
-        policy_number_person: Some(policy_number_personal),
+        policy_number_person: Some(policy_number_person),
         policy_type,
         discount_percentage,
         expiry_date,
@@ -41,9 +41,9 @@ pub fn generate(GenerateInput { insert_input }: GenerateInput) -> NameInsuranceJ
 
 fn compose_policy_number(
     policy_number_family: Option<String>,
-    policy_number_personal: Option<String>,
+    policy_number_person: Option<String>,
 ) -> String {
-    match (policy_number_family, policy_number_personal) {
+    match (policy_number_family, policy_number_person) {
         (Some(family), Some(personal)) if !family.is_empty() && !personal.is_empty() => {
             format!("{}-{}", family, personal)
         }
