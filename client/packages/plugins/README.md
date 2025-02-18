@@ -101,7 +101,8 @@ The querying and mutating of data follows the standard pattern used throughout o
 
 ```typescript
   const { data } = usePluginData.data(stockLine?.id ?? '');
-  const { mutate } = data?.id ? usePluginData.update() : usePluginData.insert();
+  const { mutate: insert } = usePluginData.insert();
+  const { mutate: update } = usePluginData.update();
 ```
 
 These functions can be implemented within your plugin and used to fetch and update data.
