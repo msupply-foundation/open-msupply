@@ -15,7 +15,7 @@ use service::{
 pub struct UpdatePluginDataInput {
     pub id: String,
     pub store_id: Option<String>,
-    pub plugin_name: String,
+    pub plugin_code: String,
     pub related_record_id: Option<String>,
     pub data_identifier: String,
     pub data: String,
