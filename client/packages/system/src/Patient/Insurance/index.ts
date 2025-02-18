@@ -1,2 +1,2 @@
-export * from './Components';
+export * from './components';
 export * from './ListView';
