@@ -225,6 +225,8 @@ This example adds a new field to a stock line, displaying the stored data in a n
 
 Stock Donor example fetched data for all of the columns with [StateLoader component](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorColumn.tsx#L26-L30), which expects StockRowFragment array so that only pluginData for those rows is queried, and then [shares](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorColumn.tsx#L34) this data using [zustand state](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorColumn.tsx#L15-L22), [columns can then be populated](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorColumn.tsx#L42-L44) based on the StockRowFragment id they belong to
 
+TODO about column order
+
 ### Things to note
 
 When plugins are running in 'production' mode, the standard react contexts are not available. The package `react-singleton-context` is used instead of the standard react context in order to share the context across the two app environments. It requires the use of proxy providers:
