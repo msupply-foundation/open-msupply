@@ -41,14 +41,13 @@ pub enum InsertErrorInterface {
 
 pub fn insert_printer(
     ctx: &Context<'_>,
-    store_id: String,
     input: InsertPrinterInput,
 ) -> Result<InsertPrinterResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateItems,
-            store_id: Some(store_id.to_string()),
+            resource: Resource::NoPermissionRequired,
+            store_id: None,
         },
     )?;
 
@@ -100,7 +99,7 @@ fn map_error(error: InsertPrinterError) -> Result<InsertErrorInterface> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        InsertPrinterError::DuplicatePrinterId => BadUserInput(formatted_error),
+        InsertPrinterError::PrinterAlreadyExists => BadUserInput(formatted_error),
         InsertPrinterError::DuplicatePrinterDescription => BadUserInput(formatted_error),
         InsertPrinterError::DuplicatePrinterAddress => BadUserInput(formatted_error),
         InsertPrinterError::CreatedRecordNotFound => BadUserInput(formatted_error),

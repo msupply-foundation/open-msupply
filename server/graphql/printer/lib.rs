@@ -32,18 +32,16 @@ impl PrinterMutations {
     async fn insert_printer(
         &self,
         ctx: &Context<'_>,
-        store_id: String,
         input: InsertPrinterInput,
     ) -> Result<InsertPrinterResponse> {
-        insert_printer(ctx, store_id, input)
+        insert_printer(ctx, input)
     }
 
     async fn update_printer(
         &self,
         ctx: &Context<'_>,
-        store_id: String,
         input: UpdatePrinterInput,
     ) -> Result<UpdatePrinterResponse> {
-        update_printer(ctx, store_id, input)
+        update_printer(ctx, input)
     }
 }

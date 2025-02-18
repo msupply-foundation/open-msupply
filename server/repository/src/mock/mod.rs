@@ -834,7 +834,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             options: mock_options(),
             contact_form: mock_contact_form(),
             reports: mock_reports(),
-            printer: mock_printer(),
+            printer: mock_printers(),
             ..Default::default()
         },
     );
