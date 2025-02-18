@@ -19,7 +19,7 @@ pub enum UpdatePluginDataError {
 pub struct UpdatePluginData {
     pub id: String,
     pub store_id: Option<String>,
-    pub plugin_name: String,
+    pub plugin_code: String,
     pub related_record_id: Option<String>,
     pub data_identifier: String,
     pub data: String,
@@ -60,7 +60,7 @@ fn validate(
     if input.data_identifier != plugin_data.data_identifier {
         return Err(UpdatePluginDataError::RelatedRecordTypeDoesNotMatch);
     }
-    if input.plugin_name != plugin_data.plugin_code {
+    if input.plugin_code != plugin_data.plugin_code {
         return Err(UpdatePluginDataError::PluginNameDoesNotMatch);
     }
 
@@ -89,7 +89,7 @@ fn check_plugin_data_exists(
 fn generate(
     UpdatePluginData {
         id,
-        plugin_name: _,
+        plugin_code: _,
         related_record_id: _,
         data_identifier: _,
         data,
@@ -138,7 +138,7 @@ mod test {
         fn plugin_data_donor() -> PluginDataRow {
             PluginDataRow {
                 id: "plugin_data".to_string(),
-                plugin_code: "plugin_name".to_string(),
+                plugin_code: "plugin_code".to_string(),
                 related_record_id: Some("related_record_id".to_string()),
                 data_identifier: "StockLine".to_string(),
                 store_id: Some(mock_store_a().id.clone()),
@@ -168,7 +168,7 @@ mod test {
                 UpdatePluginData {
                     id: "plugin_data".to_string(),
                     store_id: Some(mock_store_a().id.clone()),
-                    plugin_name: "plugin_name".to_string(),
+                    plugin_code: "plugin_code".to_string(),
                     related_record_id: Some("related_record_id".to_string()),
                     data_identifier: "StockLine".to_string(),
                     data: "hogwarts".to_string(),
