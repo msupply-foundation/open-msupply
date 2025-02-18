@@ -180,8 +180,9 @@ mod test {
         },
         test_db::setup_all_with_data,
         ActivityLogRowRepository, ActivityLogType, ClinicianRow, ClinicianStoreJoinRow,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
-        InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
+        EqualFilter, InvoiceFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType,
+        InvoiceRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
+        StockLineRow, StockLineRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -471,5 +472,40 @@ mod test {
             .find(|l| l.r#type == ActivityLogType::PrescriptionStatusPicked)
             .unwrap();
         assert_eq!(log.r#type, ActivityLogType::PrescriptionStatusPicked);
+
+        // Test that cancellation of prescription generates reverse invoice
+
+        // Should only be able to set Status to "Cancelled" from "Verified".
+        // This is not currently enforced on server, but doing it here to
+        // prevent future tests failing.
+        let result = service.update_prescription(
+            &context,
+            inline_init(|r: &mut UpdatePrescription| {
+                r.id = prescription().id;
+                r.status = Some(UpdatePrescriptionStatus::Verified);
+            }),
+        );
+        assert!(result.is_ok());
+        let result = service.update_prescription(
+            &context,
+            inline_init(|r: &mut UpdatePrescription| {
+                r.id = prescription().id;
+                r.status = Some(UpdatePrescriptionStatus::Cancelled);
+            }),
+        );
+        assert!(result.is_ok());
+
+        let reverse_prescription = InvoiceRepository::new(&connection)
+            .query_one(
+                InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(&prescription().id)),
+            )
+            .unwrap()
+            .unwrap()
+            .invoice_row;
+        assert_eq!(reverse_prescription.is_cancellation, true);
+
+        let reverse_lines = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id(&reverse_prescription.id);
+        assert_eq!(reverse_lines.iter().len(), 1);
     }
 }
