@@ -65,44 +65,42 @@ export const Printers = () => {
   ];
 
   return (
-    <>
-      <Grid display="flex" flexDirection="column" gap={1}>
-        <Box
-          sx={{
-            maxHeight: '280px',
-            overflowX: 'hidden',
-            marginLeft: '12px',
-          }}
-        >
-          {mockPrinters.map(data => (
-            <Typography
-              sx={{
-                fontSize: 16,
-                paddingBottom: 1,
-              }}
-              component="div"
-            >
-              {data.description}
-            </Typography>
-          ))}
-        </Box>
-        <Grid display="flex" justifyContent="flex-start" gap={1} padding={1}>
-          <ButtonWithIcon
-            Icon={<EditIcon />}
-            label={t('button.configure-printers')}
-            variant="outlined"
-            onClick={() => {}}
-            disabled={false}
-          />
-          <ButtonWithIcon
-            Icon={<PlusCircleIcon />}
-            label={t('button.add-printer')}
-            variant="outlined"
-            onClick={() => {}}
-            disabled={false}
-          />
-        </Grid>
+    <Grid display="flex" flexDirection="column" gap={1}>
+      <Box
+        sx={{
+          maxHeight: '280px',
+          overflowX: 'hidden',
+          marginLeft: '12px',
+        }}
+      >
+        {mockPrinters.map(data => (
+          <Typography
+            sx={{
+              fontSize: 16,
+              paddingBottom: 1,
+            }}
+            component="div"
+          >
+            {data.description}
+          </Typography>
+        ))}
+      </Box>
+      <Grid display="flex" justifyContent="flex-start" gap={1} padding={1}>
+        <ButtonWithIcon
+          Icon={<EditIcon />}
+          label={t('button.configure-printers')}
+          variant="outlined"
+          onClick={() => {}}
+          disabled={false}
+        />
+        <ButtonWithIcon
+          Icon={<PlusCircleIcon />}
+          label={t('button.add-printer')}
+          variant="outlined"
+          onClick={() => {}}
+          disabled={false}
+        />
       </Grid>
-    </>
+    </Grid>
   );
 };
