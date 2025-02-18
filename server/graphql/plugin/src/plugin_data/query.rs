@@ -17,7 +17,6 @@ pub enum PluginDataResponse {
 pub struct PluginDataFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
-    pub plugin_name: Option<EqualFilterStringInput>,
     pub related_record_id: Option<EqualFilterStringInput>,
     pub data_identifier: Option<EqualFilterStringInput>,
 }
@@ -41,6 +40,7 @@ pub struct PluginDataSortInput {
 pub fn get_plugin_data(
     ctx: &Context<'_>,
     store_id: &str,
+    plugin_code: &str,
     filter: Option<PluginDataFilterInput>,
     sort: Option<Vec<PluginDataSortInput>>,
 ) -> Result<PluginDataResponse> {
@@ -54,11 +54,16 @@ pub fn get_plugin_data(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
+
+    // Filter by plugin_code
+    let mut filter = filter.map(|f| f.to_domain()).unwrap_or_default();
+    filter.plugin_code = Some(EqualFilter::equal_to(plugin_code));
+
     let plugin_data = service_provider
         .plugin_data_service
         .get_plugin_data(
             &service_context,
-            filter.map(|f| f.to_domain()),
+            Some(filter),
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|s| s.to_domain()),
         )
@@ -74,7 +79,7 @@ impl PluginDataFilterInput {
         PluginDataFilter {
             id: self.id.map(EqualFilter::from),
             store_id: self.store_id.map(EqualFilter::from),
-            plugin_code: self.plugin_name.map(EqualFilter::from),
+            plugin_code: None, // This is passed in the main graphql request as a dedicated parameter
             related_record_id: self.related_record_id.map(EqualFilter::from),
             data_identifier: self.data_identifier.map(EqualFilter::from),
         }
