@@ -1,7 +1,8 @@
 use super::patient::PatientNode;
+use super::program_node::ProgramNode;
 use super::{
     ClinicianNode, CurrencyNode, DiagnosisNode, InvoiceLineConnector, NameNode, RequisitionNode,
-    UserNode,
+    StoreNode, UserNode,
 };
 use async_graphql::*;
 use chrono::{DateTime, Utc};
@@ -9,7 +10,8 @@ use dataloader::DataLoader;
 
 use graphql_core::loader::{
     ClinicianLoader, ClinicianLoaderInput, DiagnosisLoader, InvoiceByIdLoader,
-    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, PatientLoader, UserLoader,
+    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, PatientLoader, ProgramByIdLoader,
+    StoreByIdLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -395,6 +397,31 @@ impl InvoiceNode {
 
     pub async fn program_id(&self) -> &Option<String> {
         &self.row().program_id
+    }
+
+    pub async fn program(&self, ctx: &Context<'_>) -> Result<Option<ProgramNode>> {
+        let Some(program_id) = self.row().program_id.clone() else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<ProgramByIdLoader>>();
+
+        let result = loader
+            .load_one(program_id)
+            .await?
+            .map(|program| ProgramNode {
+                program_row: program,
+            });
+
+        Ok(result)
+    }
+
+    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
+        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
+        Ok(loader
+            .load_one(self.row().store_id.clone())
+            .await?
+            .map(StoreNode::from_domain))
     }
 }
 

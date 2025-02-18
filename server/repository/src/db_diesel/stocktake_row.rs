@@ -24,6 +24,7 @@ table! {
         inventory_addition_id -> Nullable<Text>,
         inventory_reduction_id -> Nullable<Text>,
         is_locked -> Bool,
+        program_id -> Nullable<Text>,
     }
 }
 
@@ -53,6 +54,7 @@ pub struct StocktakeRow {
     pub inventory_addition_id: Option<String>,
     pub inventory_reduction_id: Option<String>,
     pub is_locked: bool,
+    pub program_id: Option<String>,
 }
 
 impl Default for StocktakeStatus {
@@ -78,6 +80,7 @@ impl Default for StocktakeRow {
             inventory_addition_id: Default::default(),
             inventory_reduction_id: Default::default(),
             is_locked: Default::default(),
+            program_id: Default::default(),
         }
     }
 }
