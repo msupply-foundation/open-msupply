@@ -1,6 +1,5 @@
 use super::{
-    frontend_plugin_row::frontend_plugin::dsl as frontend_plugin_dsl, ChangeLogInsertRow,
-    ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
 };
 
 use crate::{repository_error::RepositoryError, Delete, Upsert};
@@ -89,16 +88,16 @@ impl<'a> FrontendPluginRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<FrontendPluginRow>, RepositoryError> {
-        let result = frontend_plugin_dsl::frontend_plugin
-            .filter(frontend_plugin_dsl::id.eq(id))
+        let result = frontend_plugin::table
+            .filter(frontend_plugin::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn all(&self) -> Result<Vec<FrontendPluginRow>, RepositoryError> {
-        let result = frontend_plugin_dsl::frontend_plugin
-            .order_by(frontend_plugin_dsl::id)
+        let result = frontend_plugin::table
+            .order_by(frontend_plugin::id)
             .load(self.connection.lock().connection())?;
 
         Ok(result)
@@ -106,9 +105,9 @@ impl<'a> FrontendPluginRowRepository<'a> {
 
     pub fn upsert_one(&self, row: FrontendPluginRow) -> Result<i64, RepositoryError> {
         let id = row.id.clone();
-        diesel::insert_into(frontend_plugin_dsl::frontend_plugin)
+        diesel::insert_into(frontend_plugin::table)
             .values(row.clone())
-            .on_conflict(frontend_plugin_dsl::id)
+            .on_conflict(frontend_plugin::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -136,7 +135,7 @@ impl<'a> FrontendPluginRowRepository<'a> {
             }
         };
 
-        diesel::delete(frontend_plugin_dsl::frontend_plugin.filter(frontend_plugin_dsl::id.eq(id)))
+        diesel::delete(frontend_plugin::table.filter(frontend_plugin::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }

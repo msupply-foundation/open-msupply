@@ -71,7 +71,7 @@ pub fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         PluginDataDoesNotExist
         | RelatedRecordDoesNotMatch
         | RelatedRecordTypeDoesNotMatch
-        | PluginNameDoesNotMatch => StandardGraphqlError::BadUserInput(formatted_error),
+        | PluginCodeDoesNotMatch => StandardGraphqlError::BadUserInput(formatted_error),
         DatabaseError(_) | InternalError(_) => StandardGraphqlError::InternalError(formatted_error),
     };
 
