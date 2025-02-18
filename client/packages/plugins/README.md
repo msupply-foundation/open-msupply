@@ -1,6 +1,7 @@
 # Front end plugin framework
 
 Plugins are a way of extending front end functionality without altering the base code. Some examples of possible plugin usages:
+
 - Adding a button to a toolbar of a detail view which performs an external action like looking up shipping details from an external API. The plugin is provided with details of the object being viewed (e.g. draft shipment object) and can use that data when performing actions.
 - Adding a new widget to the dashboard
 - Adding a column to a list view for particular objects, and adding editing support for that new field
@@ -34,58 +35,102 @@ In production mode the process differs:
 
 ### Plugin definitions
 
-Plugin version and plugin code are defined in package.json of the plugin, code should be unique across all plugins, so it's a good idea to have something unique in the code. 
+Plugin version and plugin code are defined in package.json of the plugin, code should be unique across all plugins, so it's a good idea to have something unique in the code.
 
 Plugin's type is derived from [interfaces](../common/src/plugins/types.ts) that it implements and exposes in plugin.tsx.
 
 ### Events
 
-Sometimes extra state needs to be shared between plugin and core component, in cases where plugin needs to update the core state or core component needs to trigger an action in plugin, [usePluginEvents](https://github.com/msupply-foundation/open-msupply/blob/1b1d8f6c1c79bcf07ab048eb1e95f666aba1d7a1/client/packages/common/src/plugins/usePluginEvents.ts#L8) hook is [bound in the core component](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/system/src/Stock/DetailView/DetailView.tsx#L37) and [passed to the plugin](https://github.com/msupply-foundation/open-msupply/blob/1b1d8f6c1c79bcf07ab048eb1e95f666aba1d7a1/client/packages/system/src/Stock/Components/StockLineForm.tsx#L172). Plugin can then [set various state](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorEditInput.tsx#L54) which can be used in [core component](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/system/src/Stock/DetailView/DetailView.tsx#L110) and plugin can [mount an event listener](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorEditInput.tsx#L38-L39) which is [triggered from within core component](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/system/src/Stock/DetailView/DetailView.tsx#L56). 
+Sometimes extra state needs to be shared between plugin and core component, in cases where plugin needs to update the core state or core component needs to trigger an action in plugin, [usePluginEvents](https://github.com/msupply-foundation/open-msupply/blob/1b1d8f6c1c79bcf07ab048eb1e95f666aba1d7a1/client/packages/common/src/plugins/usePluginEvents.ts#L8) hook is [bound in the core component](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/system/src/Stock/DetailView/DetailView.tsx#L37) and [passed to the plugin](https://github.com/msupply-foundation/open-msupply/blob/1b1d8f6c1c79bcf07ab048eb1e95f666aba1d7a1/client/packages/system/src/Stock/Components/StockLineForm.tsx#L172). Plugin can then [set various state](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorEditInput.tsx#L54) which can be used in [core component](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/system/src/Stock/DetailView/DetailView.tsx#L110) and plugin can [mount an event listener](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorEditInput.tsx#L38-L39) which is [triggered from within core component](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/system/src/Stock/DetailView/DetailView.tsx#L56).
 
 `usePluginEvents` helper can store any state and provide any type to event listener which in turn can return any type, for example if you want to set `isReady` state and trigger an event `onSave` that passes in a `string` to be validated, expecting `error` if not valid then:
 
 ```typescript
-// ### in Core 
+// In Core
 // When defining plugin interface
-events: UsePluginEvents<{ isReady: boolean }, { validateThisString: string }, 'ok' | { error: 'string' }>;
-//  Bind to component
-const pluginEvents = usePluginEvents<_, { validateThisString: string }, 'ok' | { error: 'string' }>({ isReady: false });
-// When asking for validation
-const validate = async(validateThisString: string) => {
-   let validationResult = await pluginEvents.dispatchEvent({ validateThisString: 'good'});
-   if (validationResult == 'ok') {
-      closeModal()
-   }
-   error(validationResult.error) // This is a toast
-   setError(validationResult.error)
-}
-// Checking for isReady
-<div>
-  {pluginEvents.state.isReady && {'i am ready'}}
-</div>
+events: UsePluginEvents<
+  { isReady: boolean },
+  { validateThisString: string },
+  'ok' | { error: 'string' }
+>;
 
-// ### in Plugin
-// events should come as parameters to component
-useEffect(() => {
-  const unmountEvent = events.mountEvent(({validateThisString}) => { // types should be know by typescript at this stage
-        if (validateThisString == 'good') {
-          return 'ok'
-        }
-        return { error: 'string is not good' }
+const CoreComponent = () => {
+  //  Bind to component
+  const pluginEvents = usePluginEvents<
+    _,
+    { validateThisString: string },
+    'ok' | { error: 'string' }
+  >({ isReady: false });
+  // When asking for validation
+  const validate = async (validateThisString: string) => {
+    let validationResult = await pluginEvents.dispatchEvent({
+      validateThisString: 'good',
+    });
+    if (validationResult == 'ok') {
+      closeModal();
     }
-  );
-  return unmountEvent; // mountEvent return a handler to unmountEvent
-}, []);
-// Setting isReady 
+    error(validationResult.error); // This is a toast
+    setError(validationResult.error);
+  };
 
-useEffect(() => {
-  events.setState({isReady: true})
-}, [somethingChanged])
+  ...
+
+  return (
+    <>
+      ...
+
+      // Checking for isReady
+      {pluginEvents.state.isReady && <div>I am ready</div>}
+    </>
+  );
+};
+```
+
+```typescript
+// In Plugin
+const PluginComponent = ({ events }) => {
+// events should come as a parameter to component
+  useEffect(() => {
+    const unmountEvent = events.mountEvent(({ validateThisString }) => {
+      // types should be know by typescript at this stage
+      if (validateThisString == 'good') {
+        return 'ok';
+      }
+      return { error: 'string is not good' };
+    });
+    return unmountEvent; // mountEvent return a handler to unmountEvent
+  }, []);
+
+  // Setting isReady
+  useEffect(() => {
+    events.setState({ isReady: true });
+  }, [somethingChanged]);
+
+  return <div>Plugin display content...</div>;
+}
 ```
 
 Of course in above example the types should be defined once and shared (even though typescript guarantees they are valid it's a bit verbose)
 
-TODO actually tried to share types but had typescript error when doing `const pluginEvents: SomeConcreteTypeOfUsePluginEvent = usePluginEvents>({ isReady: false });` <- said that (boolean is not false ¯\_(ツ)_/¯)
+TODO actually tried to share types but had typescript error when doing `const pluginEvents: SomeConcreteTypeOfUsePluginEvent = usePluginEvents>({ isReady: false });` <- said that (boolean is not false ¯\_(ツ)\_/¯)
+
+When mounting event it's a good idea to reduce number of dependencies of the method that is mounted and triggered, useRef() can be used for this reason to pass non reactive but up to date state to the plugin:
+
+```typescript
+const [value, setValue] = useEffect('')
+
+const valueRef = useRef('')
+const valueRef.current = value
+
+// ...
+
+useEffect(() => {
+  const unmountEvent = events.mountEvent(() => {
+  console.log(`this will be the current value ${valueRef.current} this will be stale value ${value}`)
+   
+  return unmountEvent;
+}, [/* can also just listen to value here but on every value change we are mounting event and unmounting even */])
+```
 
 ### Plugin data
 
@@ -107,19 +152,17 @@ The querying and mutating of data follows the standard pattern used throughout o
 
 These functions can be implemented within your plugin and used to fetch and update data.
 
-
 ## Creating a plugin
 
 You can watch [this video for example](https://drive.google.com/file/d/1JnmPU9hRaQD4R1hTDKbbNj78FnM2l00A/view?usp=drive_link) TODO make public
 
 The simplest way to begin is by cloning (forking for now or just copy and create new repo, until we have a template), this repository https://github.com/msupply-foundation/open-msupply-plugin, then add it as submodule to `client/packages/plugins/` using this command: `git submodule add https://github.com/andreievg/open-msupply-plugins-andrei client/packages/plugins/mynewplugin`, note the `mynewplugin` can be anything. The inner repository and core will be treated as two different repositories, changes in them will only be reflected in relative repositories (i.e. you can add the inner repository as local repository in github desktop). Make sure that you don't commit the `.gitmodule` or the single `client/packages/plugins/{your plugin name}` to the core.
 
-You would need to change [name](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/package.json#L3) in package.json, which is also the plugin code and unique identifier (every plugin should have unique code). You should also add types that are implemented, in the future those will be displayed before plugin is installed, for validation form the user, for frontend plugins they are not essential though. TODO these types can be looked up when building, both for front end and backed plugin, by running ts-node and inspecting import { plugins } from './plugins.tsx' or '.ts'. 
+You would need to change [name](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/package.json#L3) in package.json, which is also the plugin code and unique identifier (every plugin should have unique code). You should also add types that are implemented, in the future those will be displayed before plugin is installed, for validation form the user, for frontend plugins they are not essential though. TODO these types can be looked up when building, both for front end and backed plugin, by running ts-node and inspecting import { plugins } from './plugins.tsx' or '.ts'.
 
 ## Testing production build
 
 You can work on plugins as if they were part of the app (types should be shared, autocompletion and hot reload should work). If you want to test plugin in production, you can bundle it and deploy to server via:
-
 
 ```bash
 # From server directory
@@ -149,6 +192,7 @@ In order to test this plugins in front end, you will need to start front end via
 
 **ShippingStatus**
 This adds a simple toolbar button to the detail view of Inbound Shipments. The plugin demonstrates:
+
 - creating a plugin
 - receiving data from the host environment
 - using standard app components
@@ -156,6 +200,7 @@ This adds a simple toolbar button to the detail view of Inbound Shipments. The p
 
 **Dashboard**
 This example adds two widgets to the standard dashboard. It demonstrates:
+
 - creating a plugin
 - using standard app components
 - use of the app theme
@@ -165,6 +210,7 @@ This example adds two widgets to the standard dashboard. It demonstrates:
 
 **Stock Donor**
 This example adds a new field to a stock line, displaying the stored data in a new column within the list view and allowing editing of the field in the detail view. It demonstrates:
+
 - creating a plugin
 - using standard app components
 - use of the app theme
@@ -172,7 +218,7 @@ This example adds a new field to a stock line, displaying the stored data in a n
 - fetching data using the graphQL API
 - inserting and updating data using graphQL
 - utilising utility functions from the app
-- using plugin events to 
+- using plugin events to
   - trigger validation in the host page
   - save data when the host page is saving
 - store data which is specific to the plugin
