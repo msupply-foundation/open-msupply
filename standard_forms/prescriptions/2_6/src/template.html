@@ -7,19 +7,23 @@ date(format="%d/%m/%Y %H:%M:%S") }}{% endif %} {% endmacro input %}
 
 <div class="header">
   <h1>Placeholder organisation name</h1>
-  <h3>Store: {{ data.store.storeName }}</h3>
+  <h3>{{t(k="label.store", f="Store")}}: {{ data.store.storeName }}</h3>
   <h5>
-    Prescriber name: {{data.invoice.clinician.firstName | default(value='')}}
+    {{t(k="label.prescriber", f="Prescriber")}}:
+    {{data.invoice.clinician.firstName | default(value='')}}
     {{data.invoice.clinician.lastName | default(value='')}}
   </h5>
   <h5>
-    Patient name: {{data.invoice.patient.firstName}} {{
-    data.invoice.patient.lastName }}
+    {{t(k="label.patient-name", f="Patient name")}}:
+    {{data.invoice.patient.firstName}} {{ data.invoice.patient.lastName }}
   </h5>
-  <p>Invoice Number: {{data.invoice.invoiceNumber}}</p>
   <p>
-    Entered by: {{data.invoice.user.firstName | default(value='')}}
-    {{data.invoice.user.lastName | default(value='')}}
+    {{t(k="label.invoice-number", f="Invoice Number")}}:
+    {{data.invoice.invoiceNumber}}
+  </p>
+  <p>
+    {{t(k="label.entered-by", f="Entered by")}}: {{data.invoice.user.firstName |
+    default(value='')}} {{data.invoice.user.lastName | default(value='')}}
   </p>
 </div>
 
