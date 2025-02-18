@@ -31,6 +31,12 @@ type ServiceResult = BatchInboundShipmentResult;
     params(inbound_shipment_line::line::insert::InsertResponse)
 ))]
 #[graphql(concrete(
+    name = "InsertInboundShipmentLineFromInternalOrderLineResponseWithId",
+    params(
+        inbound_shipment_line::line::insert_from_internal_order::InsertFromInternalOrderResponse
+    )
+))]
+#[graphql(concrete(
     name = "UpdateInboundShipmentLineResponseWithId",
     params(inbound_shipment_line::line::update::UpdateResponse)
 ))]
@@ -50,7 +56,6 @@ type ServiceResult = BatchInboundShipmentResult;
     name = "DeleteInboundShipmentServiceLineResponseWithId",
     params(inbound_shipment_line::service_line::delete::DeleteResponse)
 ))]
-
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
     pub response: T,
@@ -60,6 +65,8 @@ type InsertShipmentsResponse =
     Option<Vec<MutationWithId<inbound_shipment::insert::InsertResponse>>>;
 type InsertShipmentLinesResponse =
     Option<Vec<MutationWithId<inbound_shipment_line::line::insert::InsertResponse>>>;
+type InsertFromInternalOrderLinesResponse =
+    Option<Vec<MutationWithId<inbound_shipment_line::line::insert_from_internal_order::InsertFromInternalOrderResponse>>>;
 type UpdateShipmentLinesResponse =
     Option<Vec<MutationWithId<inbound_shipment_line::line::update::UpdateResponse>>>;
 type DeleteShipmentLinesResponse =
@@ -80,6 +87,7 @@ type DeleteShipmentsResponse =
 pub struct BatchResponse {
     insert_inbound_shipments: InsertShipmentsResponse,
     insert_inbound_shipment_lines: InsertShipmentLinesResponse,
+    insert_from_internal_order_lines: InsertFromInternalOrderLinesResponse,
     update_inbound_shipment_lines: UpdateShipmentLinesResponse,
     delete_inbound_shipment_lines: DeleteShipmentLinesResponse,
     insert_inbound_shipment_service_lines: InsertShipmentServiceLinesResponse,
@@ -95,6 +103,9 @@ pub struct BatchInput {
     pub insert_inbound_shipments: Option<Vec<inbound_shipment::insert::InsertInput>>,
     pub insert_inbound_shipment_lines:
         Option<Vec<inbound_shipment_line::line::insert::InsertInput>>,
+    pub insert_from_internal_order_lines: Option<
+        Vec<inbound_shipment_line::line::insert_from_internal_order::InsertFromInternalOrderLine>,
+    >,
     pub update_inbound_shipment_lines:
         Option<Vec<inbound_shipment_line::line::update::UpdateInput>>,
     pub delete_inbound_shipment_lines:
@@ -134,6 +145,7 @@ impl BatchInput {
         let BatchInput {
             insert_inbound_shipments,
             insert_inbound_shipment_lines,
+            insert_from_internal_order_lines,
             update_inbound_shipment_lines,
             delete_inbound_shipment_lines,
             insert_inbound_shipment_service_lines,
@@ -148,6 +160,8 @@ impl BatchInput {
             insert_shipment: insert_inbound_shipments
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
             insert_line: insert_inbound_shipment_lines
+                .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
+            insert_from_internal_order_lines: insert_from_internal_order_lines
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
             update_line: update_inbound_shipment_lines
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
@@ -173,6 +187,7 @@ impl BatchResponse {
         ServiceResult {
             insert_shipment,
             insert_line,
+            insert_from_internal_order_lines,
             update_line,
             delete_line,
             insert_service_line,
@@ -185,6 +200,9 @@ impl BatchResponse {
         let result = BatchResponse {
             insert_inbound_shipments: map_insert_shipments(insert_shipment)?,
             insert_inbound_shipment_lines: map_insert_lines(insert_line)?,
+            insert_from_internal_order_lines: map_from_internal_order_lines(
+                insert_from_internal_order_lines,
+            )?,
             update_inbound_shipment_lines: map_update_lines(update_line)?,
             delete_inbound_shipment_lines: map_delete_lines(delete_line)?,
             insert_inbound_shipment_service_lines: map_insert_service_lines(insert_service_line)?,
@@ -258,6 +276,29 @@ fn map_insert_lines(responses: InsertLinesResult) -> Result<InsertShipmentLinesR
             };
         result.push(MutationWithId {
             id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
+
+    Ok(result.vec_or_none())
+}
+
+fn map_from_internal_order_lines(
+    responses: InsertFromInternalOrderLinesResult,
+) -> Result<InsertFromInternalOrderLinesResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response =
+            match inbound_shipment_line::line::insert_from_internal_order::map_response(
+                response.result,
+            ) {
+                Ok(response) => response,
+                Err(standard_error) => {
+                    return Err(to_standard_error(response.input, standard_error))
+                }
+            };
+        result.push(MutationWithId {
+            id: response.input.requisition_line_id.clone(),
             response: mapped_response,
         });
     }
@@ -591,6 +632,7 @@ mod test {
                     }),
                     result: Err(InsertStockInLineError::InvoiceDoesNotExist {}),
                 }],
+                insert_from_internal_order_lines: vec![],
                 update_line: vec![InputWithResult {
                     input: inline_init(|input: &mut UpdateStockInLine| {
                         input.id = "id3".to_string()
@@ -644,6 +686,7 @@ mod test {
                     }),
                     result: Err(InsertStockInLineError::InvoiceDoesNotExist {}),
                 }],
+                insert_from_internal_order_lines: vec![],
                 update_line: vec![],
                 delete_line: vec![],
                 update_shipment: vec![],
@@ -710,6 +753,7 @@ mod test {
                         input.invoice_line_row.id = "id3".to_string()
                     })),
                 }],
+                insert_from_internal_order_lines: vec![],
                 delete_line: vec![],
                 update_shipment: vec![],
                 delete_shipment: vec![],
