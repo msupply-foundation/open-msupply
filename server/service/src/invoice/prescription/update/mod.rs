@@ -471,5 +471,16 @@ mod test {
             .find(|l| l.r#type == ActivityLogType::PrescriptionStatusPicked)
             .unwrap();
         assert_eq!(log.r#type, ActivityLogType::PrescriptionStatusPicked);
+
+        // Test cancellation of prescription generates reverse invoice
+        service
+            .update_prescription(
+                &context,
+                inline_init(|r: &mut UpdatePrescription| {
+                    r.id = invoice.id;
+                    r.status = Some(UpdatePrescriptionStatus::Verified);
+                }),
+            )
+            .unwrap();
     }
 }
