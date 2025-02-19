@@ -1,6 +1,6 @@
 use repository::{
     ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, KeyType,
-    RepositoryError, TransactionError,
+    RepositoryError, StorageConnection, TransactionError,
 };
 use thiserror::Error;
 
@@ -76,7 +76,7 @@ pub(crate) fn process_records(
 
         for log in logs {
             // Try record against all of the processors
-            let result = processor.try_process_record_common(&ctx, &service_provider, &log);
+            let result = processor.try_process_record_common(&ctx, &log);
             if let Err(e) = result {
                 log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
             }
@@ -114,12 +114,11 @@ pub(super) trait Processor {
     fn try_process_record_common(
         &self,
         ctx: &ServiceContext,
-        service_provider: &ServiceProvider,
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
         let result = ctx
             .connection
-            .transaction_sync(|_| self.try_process_record(ctx, service_provider, changelog))
+            .transaction_sync(|connection| self.try_process_record(connection, changelog))
             .map_err(ProcessorError::from)?;
 
         if let Some(result) = &result {
@@ -131,8 +130,7 @@ pub(super) trait Processor {
 
     fn try_process_record(
         &self,
-        ctx: &ServiceContext,
-        service_provider: &ServiceProvider,
+        connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError>;
 }

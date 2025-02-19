@@ -2,7 +2,7 @@ use super::{plugin_data_row::plugin_data, StorageConnection};
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
-    DBType, EqualFilter, Pagination, PluginDataRow, RepositoryError, Sort,
+    DBType, EqualFilter, Pagination, PluginDataRow, RelatedRecordType, RepositoryError, Sort,
 };
 
 use diesel::prelude::*;
@@ -15,16 +15,18 @@ pub struct PluginData {
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct PluginDataFilter {
     pub id: Option<EqualFilter<String>>,
-    pub plugin_code: Option<EqualFilter<String>>,
+    pub plugin_name: Option<EqualFilter<String>>,
     pub related_record_id: Option<EqualFilter<String>>,
-    pub data_identifier: Option<EqualFilter<String>>,
+    pub related_record_type: Option<EqualFilter<RelatedRecordType>>,
     pub store_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
 pub enum PluginDataSortField {
     Id,
-    PluginCode,
+    PluginName,
+    RelatedRecordId,
+    RelatedRecordType,
 }
 
 pub type PluginDataSort = Sort<PluginDataSortField>;
@@ -65,12 +67,18 @@ impl<'a> PluginDataRepository<'a> {
                 PluginDataSortField::Id => {
                     apply_sort_no_case!(query, sort, plugin_data::id);
                 }
-                PluginDataSortField::PluginCode => {
-                    apply_sort_no_case!(query, sort, plugin_data::plugin_code);
+                PluginDataSortField::PluginName => {
+                    apply_sort_no_case!(query, sort, plugin_data::plugin_name);
+                }
+                PluginDataSortField::RelatedRecordId => {
+                    apply_sort_no_case!(query, sort, plugin_data::related_record_id);
+                }
+                PluginDataSortField::RelatedRecordType => {
+                    apply_sort_no_case!(query, sort, plugin_data::related_record_type);
                 }
             }
         } else {
-            query = query.order(plugin_data::plugin_code.asc());
+            query = query.order(plugin_data::plugin_name.asc());
         }
 
         let results = query
@@ -89,13 +97,17 @@ fn create_filtered_query(filter: Option<PluginDataFilter>) -> BoxedPluginQuery {
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, plugin_data::id);
-        apply_equal_filter!(query, filter.plugin_code, plugin_data::plugin_code);
+        apply_equal_filter!(query, filter.plugin_name, plugin_data::plugin_name);
         apply_equal_filter!(
             query,
             filter.related_record_id,
             plugin_data::related_record_id
         );
-        apply_equal_filter!(query, filter.data_identifier, plugin_data::data_identifier);
+        apply_equal_filter!(
+            query,
+            filter.related_record_type,
+            plugin_data::related_record_type
+        );
         apply_equal_filter!(query, filter.store_id, plugin_data::store_id);
     }
 
@@ -119,7 +131,7 @@ impl PluginDataFilter {
     }
 
     pub fn plugin_name(mut self, filter: EqualFilter<String>) -> Self {
-        self.plugin_code = Some(filter);
+        self.plugin_name = Some(filter);
         self
     }
 
@@ -128,8 +140,8 @@ impl PluginDataFilter {
         self
     }
 
-    pub fn data_identifier(mut self, filter: EqualFilter<String>) -> Self {
-        self.data_identifier = Some(filter);
+    pub fn related_record_type(mut self, filter: EqualFilter<RelatedRecordType>) -> Self {
+        self.related_record_type = Some(filter);
         self
     }
 }

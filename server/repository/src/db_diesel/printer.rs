@@ -9,7 +9,7 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 
 pub type Printer = PrinterRow;
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, PartialEq, Debug)]
 pub struct PrinterFilter {
     pub id: Option<EqualFilter<String>>,
     pub description: Option<StringFilter>,
@@ -45,7 +45,7 @@ impl<'a> PrinterRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<PrinterFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let query = Self::create_filtered_query(filter);
 
         Ok(query
             .count()
@@ -57,24 +57,24 @@ impl<'a> PrinterRepository<'a> {
     }
 
     pub fn query(&self, filter: Option<PrinterFilter>) -> Result<Vec<Printer>, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let query = Self::create_filtered_query(filter);
 
         let result = query.load::<Printer>(self.connection.lock().connection())?;
 
         Ok(result)
     }
-}
 
-pub fn create_filtered_query(filter: Option<PrinterFilter>) -> BoxedPrinterQuery {
-    let mut query = printer::table.into_boxed();
+    pub fn create_filtered_query(filter: Option<PrinterFilter>) -> BoxedPrinterQuery {
+        let mut query = printer::table.into_boxed();
 
-    if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, printer::id);
-        apply_string_filter!(query, filter.description, printer::description);
-        apply_equal_filter!(query, filter.address, printer::address);
+        if let Some(filter) = filter {
+            apply_equal_filter!(query, filter.id, printer::id);
+            apply_string_filter!(query, filter.description, printer::description);
+            apply_equal_filter!(query, filter.address, printer::address);
+        }
+
+        query
     }
-
-    query
 }
 
 type BoxedPrinterQuery = IntoBoxed<'static, printer::table, DBType>;

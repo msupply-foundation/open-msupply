@@ -10,16 +10,16 @@ import {
   getAllocatedQuantity,
   sumAvailableQuantity,
   usePackSizeController,
+  allocateQuantities,
 } from '../../StockOut';
-import { allocateQuantities } from '../api/hooks/utils';
-import { DraftPrescriptionLine } from '../../types';
+import { DraftStockOutLine } from '../../types';
 import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
-import { ItemRowWithDirectionsFragment } from '@openmsupply-client/system';
+import { ItemRowFragment } from '@openmsupply-client/system';
 
 interface PrescriptionLineEditProps {
-  item: ItemRowWithDirectionsFragment | null;
-  draftLines: DraftPrescriptionLine[];
-  updateLines: (lines: DraftPrescriptionLine[]) => void;
+  item: ItemRowFragment | null;
+  draftLines: DraftStockOutLine[];
+  updateLines: (lines: DraftStockOutLine[]) => void;
   setIsDirty: (dirty: boolean) => void;
   programId?: string;
 }
@@ -103,7 +103,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
       disabled={isDisabled}
       isNew={isNew}
       packSizeController={packSizeController}
-      onChangeItem={(item: ItemRowWithDirectionsFragment | null) => {
+      onChangeItem={(item: ItemRowFragment | null) => {
         setIsAutoAllocated(false);
         setCurrentItem(item);
       }}

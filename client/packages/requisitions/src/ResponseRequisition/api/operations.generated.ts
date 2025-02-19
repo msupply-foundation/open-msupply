@@ -15,13 +15,13 @@ export type UpdateResponseMutationVariables = Types.Exact<{
 
 export type UpdateResponseMutation = { __typename: 'Mutations', updateResponseRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateResponseRequisitionError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'OrderingTooManyItems', description: string, maxItemsInEmergencyOrder: number } | { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionReasonsNotProvided', description: string, errors: Array<{ __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } }> } } };
 
-export type DeleteResponseMutationVariables = Types.Exact<{
+export type DeleteRequestMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.BatchResponseRequisitionInput;
 }>;
 
 
-export type DeleteResponseMutation = { __typename: 'Mutations', batchResponseRequisition: { __typename: 'BatchResponseRequisitionResponse', deleteResponseRequisitions?: Array<{ __typename: 'DeleteResponseRequisitionResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteResponseRequisitionError', error: { __typename: 'FinalisedRequisition', description: string } | { __typename: 'LineDeleteError', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionWithShipment', description: string } | { __typename: 'TransferredRequisition', description: string } } }> | null } };
+export type DeleteRequestMutation = { __typename: 'Mutations', batchResponseRequisition: { __typename: 'BatchResponseRequisitionResponse', deleteResponseRequisitions?: Array<{ __typename: 'DeleteResponseRequisitionResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteResponseRequisitionError', error: { __typename: 'FinalisedRequisition', description: string } | { __typename: 'LineDeleteError', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionWithShipment', description: string } | { __typename: 'TransferredRequisition', description: string } } }> | null } };
 
 export type ResponseLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, remainingQuantityToSupply: number, alreadyIssued: number, comment?: string | null, averageMonthlyConsumption: number, availableStockOnHand: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, optionId?: string | null, suggestedQuantity: number, requisitionNumber: number, approvedQuantity: number, approvalComment?: string | null, itemStats: { __typename: 'ItemStatsNode', stockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, averageMonthlyConsumption: number, availableMonthsOfStockOnHand?: number | null } } | null, reason?: { __typename: 'ReasonOptionNode', id: string, type: Types.ReasonOptionNodeType, reason: string, isActive: boolean } | null };
 
@@ -79,15 +79,13 @@ export type UpdateResponseLineMutationVariables = Types.Exact<{
 
 export type UpdateResponseLineMutation = { __typename: 'Mutations', updateResponseRequisitionLine: { __typename: 'RequisitionLineNode', id: string } | { __typename: 'UpdateResponseRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } };
 
-export type CannotDeleteLineLinkedToShipmentErrorFragment = { __typename: 'CannotDeleteLineLinkedToShipment' };
-
 export type DeleteResponseLinesMutationVariables = Types.Exact<{
   ids?: Types.InputMaybe<Array<Types.DeleteResponseRequisitionLineInput> | Types.DeleteResponseRequisitionLineInput>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type DeleteResponseLinesMutation = { __typename: 'Mutations', batchResponseRequisition: { __typename: 'BatchResponseRequisitionResponse', deleteResponseRequisitionLines?: Array<{ __typename: 'DeleteResponseRequisitionLineResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteResponseRequisitionLineError', error: { __typename: 'CannotDeleteLineLinkedToShipment', description: string } | { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null } };
+export type DeleteResponseLinesMutation = { __typename: 'Mutations', batchResponseRequisition: { __typename: 'BatchResponseRequisitionResponse', deleteResponseRequisitionLines?: Array<{ __typename: 'DeleteResponseRequisitionLineResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteResponseRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null } };
 
 export type CreateOutboundFromResponseMutationVariables = Types.Exact<{
   responseId: Types.Scalars['String']['input'];
@@ -295,11 +293,6 @@ export const ResponseRowFragmentDoc = gql`
   }
 }
     `;
-export const CannotDeleteLineLinkedToShipmentErrorFragmentDoc = gql`
-    fragment CannotDeleteLineLinkedToShipmentError on CannotDeleteLineLinkedToShipment {
-  __typename
-}
-    `;
 export const CustomerProgramSettingsFragmentDoc = gql`
     fragment CustomerProgramSettings on CustomerProgramRequisitionSettingNode {
   programName
@@ -340,8 +333,8 @@ export const UpdateResponseDocument = gql`
   }
 }
     ${RequisitionReasonsNotProvidedErrorFragmentDoc}`;
-export const DeleteResponseDocument = gql`
-    mutation deleteResponse($storeId: String!, $input: BatchResponseRequisitionInput!) {
+export const DeleteRequestDocument = gql`
+    mutation deleteRequest($storeId: String!, $input: BatchResponseRequisitionInput!) {
   batchResponseRequisition(storeId: $storeId, input: $input) {
     deleteResponseRequisitions {
       id
@@ -527,20 +520,16 @@ export const DeleteResponseLinesDocument = gql`
               __typename
               description
             }
-            ... on CannotDeleteLineLinkedToShipment {
-              ...CannotDeleteLineLinkedToShipmentError
-            }
           }
         }
         ... on DeleteResponse {
-          __typename
           id
         }
       }
     }
   }
 }
-    ${CannotDeleteLineLinkedToShipmentErrorFragmentDoc}`;
+    `;
 export const CreateOutboundFromResponseDocument = gql`
     mutation createOutboundFromResponse($responseId: String!, $storeId: String!) {
   createRequisitionShipment(
@@ -693,8 +682,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     updateResponse(variables: UpdateResponseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateResponseMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateResponseMutation>(UpdateResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateResponse', 'mutation', variables);
     },
-    deleteResponse(variables: DeleteResponseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteResponseMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteResponseMutation>(DeleteResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteResponse', 'mutation', variables);
+    deleteRequest(variables: DeleteRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteRequestMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestMutation>(DeleteRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequest', 'mutation', variables);
     },
     responseByNumber(variables: ResponseByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ResponseByNumberQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ResponseByNumberQuery>(ResponseByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'responseByNumber', 'query', variables);

@@ -35,7 +35,6 @@ import merge from 'lodash/merge';
 import omitBy from 'lodash/omitBy';
 import uniqBy from 'lodash/uniqBy';
 import uniqWith from 'lodash/uniqWith';
-import mergeWith from 'lodash/mergeWith';
 
 export {
   debounce,
@@ -55,5 +54,4 @@ export {
   uniqBy,
   uniqWith,
   isString,
-  mergeWith,
 };

@@ -24,7 +24,7 @@ mutation updateResponse(
   }
 }
 
-mutation deleteResponse(
+mutation deleteRequest(
   $storeId: String!
   $input: BatchResponseRequisitionInput!
 ) {
@@ -361,10 +361,6 @@ mutation updateResponseLine(
   }
 }
 
-fragment CannotDeleteLineLinkedToShipmentError on CannotDeleteLineLinkedToShipment {
-  __typename
-}
-
 mutation deleteResponseLines(
   $ids: [DeleteResponseRequisitionLineInput!]
   $storeId: String!
@@ -388,13 +384,9 @@ mutation deleteResponseLines(
               __typename
               description
             }
-            ... on CannotDeleteLineLinkedToShipment {
-              ...CannotDeleteLineLinkedToShipmentError
-            }
           }
         }
         ... on DeleteResponse {
-          __typename
           id
         }
       }

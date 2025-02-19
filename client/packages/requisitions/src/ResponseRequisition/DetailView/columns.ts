@@ -26,15 +26,7 @@ export const useResponseColumns = () => {
   const { programName } = useResponse.document.fields(['programName']);
 
   const columnDefinitions: ColumnDescription<ResponseLineFragment>[] = [
-    [
-      GenericColumnKey.Selection,
-      {
-        getIsError: row =>
-          getLinesFromRow(row).some(
-            r => getError(r)?.__typename === 'CannotDeleteLineLinkedToShipment'
-          ),
-      },
-    ],
+    GenericColumnKey.Selection,
     getCommentPopoverColumn(),
     [
       'itemCode',

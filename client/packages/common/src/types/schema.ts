@@ -865,11 +865,6 @@ export type CannotDeleteInvoiceWithLines = DeleteCustomerReturnErrorInterface & 
   lines: InvoiceLineConnector;
 };
 
-export type CannotDeleteLineLinkedToShipment = DeleteResponseRequisitionLineErrorInterface & {
-  __typename: 'CannotDeleteLineLinkedToShipment';
-  description: Scalars['String']['output'];
-};
-
 export type CannotDeleteRequisitionWithLines = DeleteRequestRequisitionErrorInterface & {
   __typename: 'CannotDeleteRequisitionWithLines';
   description: Scalars['String']['output'];
@@ -2237,6 +2232,12 @@ export type EqualFilterReasonOptionTypeInput = {
   notEqualTo?: InputMaybe<ReasonOptionNodeType>;
 };
 
+export type EqualFilterRelatedRecordTypeInput = {
+  equalAny?: InputMaybe<Array<RelatedRecordNodeType>>;
+  equalTo?: InputMaybe<RelatedRecordNodeType>;
+  notEqualTo?: InputMaybe<RelatedRecordNodeType>;
+};
+
 export type EqualFilterReportContextInput = {
   equalAny?: InputMaybe<Array<ReportContext>>;
   equalTo?: InputMaybe<ReportContext>;
@@ -2363,12 +2364,6 @@ export type FormSchemaSortInput = {
   key: FormSchemaSortFieldInput;
 };
 
-export type FrontendPluginMetadataNode = {
-  __typename: 'FrontendPluginMetadataNode';
-  code: Scalars['String']['output'];
-  path: Scalars['String']['output'];
-};
-
 export type FullSyncStatusNode = {
   __typename: 'FullSyncStatusNode';
   error?: Maybe<SyncErrorNode>;
@@ -2427,11 +2422,6 @@ export type GeneratedCustomerReturnLineConnector = {
 export type Gs1DataElement = {
   ai: Scalars['String']['input'];
   data: Scalars['String']['input'];
-};
-
-export type IdResponse = {
-  __typename: 'IdResponse';
-  id: Scalars['String']['output'];
 };
 
 export type InboundInvoiceCounts = {
@@ -2818,20 +2808,6 @@ export type InsertInboundShipmentServiceLineResponseWithId = {
   response: InsertInboundShipmentServiceLineResponse;
 };
 
-export type InsertInsuranceInput = {
-  discountPercentage: Scalars['Float']['input'];
-  expiryDate: Scalars['NaiveDate']['input'];
-  id: Scalars['String']['input'];
-  insuranceProviderId: Scalars['String']['input'];
-  isActive: Scalars['Boolean']['input'];
-  nameId: Scalars['String']['input'];
-  policyNumberFamily: Scalars['String']['input'];
-  policyNumberPerson: Scalars['String']['input'];
-  policyType: InsurancePolicyNodeType;
-};
-
-export type InsertInsuranceResponse = IdResponse;
-
 export type InsertInventoryAdjustmentErrorInterface = {
   description: Scalars['String']['output'];
 };
@@ -2975,11 +2951,10 @@ export type InsertPatientResponse = PatientNode;
 
 export type InsertPluginDataInput = {
   data: Scalars['String']['input'];
-  dataIdentifier: Scalars['String']['input'];
   id: Scalars['String']['input'];
-  pluginCode: Scalars['String']['input'];
-  relatedRecordId?: InputMaybe<Scalars['String']['input']>;
-  storeId?: InputMaybe<Scalars['String']['input']>;
+  pluginName: Scalars['String']['input'];
+  relatedRecordId: Scalars['String']['input'];
+  relatedRecordType: RelatedRecordNodeType;
 };
 
 export type InsertPluginDataResponse = PluginDataNode;
@@ -3025,17 +3000,6 @@ export type InsertPrescriptionResponseWithId = {
   id: Scalars['String']['output'];
   response: InsertPrescriptionResponse;
 };
-
-export type InsertPrinterInput = {
-  address: Scalars['String']['input'];
-  description: Scalars['String']['input'];
-  id: Scalars['String']['input'];
-  labelHeight: Scalars['Int']['input'];
-  labelWidth: Scalars['Int']['input'];
-  port: Scalars['Int']['input'];
-};
-
-export type InsertPrinterResponse = PrinterNode;
 
 export type InsertProgramEnrolmentInput = {
   /** Program document data */
@@ -3482,6 +3446,7 @@ export type InvoiceFilterInput = {
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
+  isCancellation?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
   nameId?: InputMaybe<EqualFilterStringInput>;
@@ -3595,6 +3560,7 @@ export type InvoiceNode = {
   __typename: 'InvoiceNode';
   allocatedDatetime?: Maybe<Scalars['DateTime']['output']>;
   backdatedDatetime?: Maybe<Scalars['DateTime']['output']>;
+  cancelledDatetime?: Maybe<Scalars['DateTime']['output']>;
   clinician?: Maybe<ClinicianNode>;
   clinicianId?: Maybe<Scalars['String']['output']>;
   colour?: Maybe<Scalars['String']['output']>;
@@ -3686,7 +3652,7 @@ export enum InvoiceNodeStatus {
    * Outbound Shipment: Becomes not editable
    * Inbound Shipment: For inter store stock transfers an inbound Shipment
    * becomes editable when this status is set as a result of corresponding
-   * outbound Shipment being chagned to shipped (this is similar to New status)
+   * outbound Shipment being changed to shipped (this is similar to New status)
    */
   Shipped = 'SHIPPED',
   /**
@@ -4306,7 +4272,6 @@ export type Mutations = {
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
-  insertInsurance: InsertInsuranceResponse;
   insertLocation: InsertLocationResponse;
   insertOutboundShipment: InsertOutboundShipmentResponse;
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
@@ -4317,7 +4282,6 @@ export type Mutations = {
   insertPluginData: InsertPluginDataResponse;
   insertPrescription: InsertPrescriptionResponse;
   insertPrescriptionLine: InsertPrescriptionLineResponse;
-  insertPrinter: InsertPrinterResponse;
   /**
    * Enrols a patient into a program by adding a program document to the patient's documents.
    * Every patient can only have one program document of each program type.
@@ -4356,7 +4320,6 @@ export type Mutations = {
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
   updateIndicatorValue: UpdateIndicatorValueResponse;
-  updateInsurance: UpdateInsuranceResponse;
   updateLabelPrinterSettings: UpdateLabelPrinterSettingsResponse;
   updateLocation: UpdateLocationResponse;
   updateLogLevel: UpsertLogLevelResponse;
@@ -4371,7 +4334,6 @@ export type Mutations = {
   updatePluginData: UpdatePluginDataResponse;
   updatePrescription: UpdatePrescriptionResponse;
   updatePrescriptionLine: UpdatePrescriptionLineResponse;
-  updatePrinter: UpdatePrinterResponse;
   /** Updates an existing program document belonging to a patient. */
   updateProgramEnrolment: UpdateProgramEnrolmentResponse;
   /**
@@ -4673,12 +4635,6 @@ export type MutationsInsertInboundShipmentServiceLineArgs = {
 };
 
 
-export type MutationsInsertInsuranceArgs = {
-  input: InsertInsuranceInput;
-  storeId: Scalars['String']['input'];
-};
-
-
 export type MutationsInsertLocationArgs = {
   input: InsertLocationInput;
   storeId: Scalars['String']['input'];
@@ -4730,11 +4686,6 @@ export type MutationsInsertPrescriptionArgs = {
 export type MutationsInsertPrescriptionLineArgs = {
   input: InsertPrescriptionLineInput;
   storeId: Scalars['String']['input'];
-};
-
-
-export type MutationsInsertPrinterArgs = {
-  input: InsertPrinterInput;
 };
 
 
@@ -4899,12 +4850,6 @@ export type MutationsUpdateIndicatorValueArgs = {
 };
 
 
-export type MutationsUpdateInsuranceArgs = {
-  input: UpdateInsuranceInput;
-  storeId: Scalars['String']['input'];
-};
-
-
 export type MutationsUpdateLabelPrinterSettingsArgs = {
   input: LabelPrinterSettingsInput;
 };
@@ -4979,11 +4924,6 @@ export type MutationsUpdatePrescriptionArgs = {
 export type MutationsUpdatePrescriptionLineArgs = {
   input: UpdatePrescriptionLineInput;
   storeId: Scalars['String']['input'];
-};
-
-
-export type MutationsUpdatePrinterArgs = {
-  input: UpdatePrinterInput;
 };
 
 
@@ -5533,34 +5473,31 @@ export type PeriodSchedulesResponse = PeriodSchedulesConnector;
 
 export type PeriodsResponse = PeriodConnector;
 
-export type PluginDataConnector = {
-  __typename: 'PluginDataConnector';
-  nodes: Array<PluginDataNode>;
-  totalCount: Scalars['Int']['output'];
-};
-
 export type PluginDataFilterInput = {
-  dataIdentifier?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  pluginName?: InputMaybe<EqualFilterStringInput>;
   relatedRecordId?: InputMaybe<EqualFilterStringInput>;
+  relatedRecordType?: InputMaybe<EqualFilterRelatedRecordTypeInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type PluginDataNode = {
   __typename: 'PluginDataNode';
   data: Scalars['String']['output'];
-  dataIdentifier: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  pluginCode: Scalars['String']['output'];
-  relatedRecordId?: Maybe<Scalars['String']['output']>;
-  storeId?: Maybe<Scalars['String']['output']>;
+  pluginName: Scalars['String']['output'];
+  relatedRecordId: Scalars['String']['output'];
+  relatedRecordType: RelatedRecordNodeType;
+  storeId: Scalars['String']['output'];
 };
 
-export type PluginDataResponse = PluginDataConnector;
+export type PluginDataResponse = NodeError | PluginDataNode;
 
 export enum PluginDataSortFieldInput {
   Id = 'id',
-  PluginCode = 'pluginCode'
+  PluginName = 'pluginName',
+  RelatedRecordId = 'relatedRecordId',
+  RelatedRecordType = 'relatedRecordType'
 }
 
 export type PluginDataSortInput = {
@@ -5575,7 +5512,14 @@ export type PluginDataSortInput = {
 
 export type PluginInfoNode = {
   __typename: 'PluginInfoNode';
-  pluginInfo: Scalars['JSON']['output'];
+  backendPluginCodes: Array<Scalars['String']['output']>;
+};
+
+export type PluginNode = {
+  __typename: 'PluginNode';
+  config: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  path: Scalars['String']['output'];
 };
 
 export type PricingNode = {
@@ -5625,28 +5569,6 @@ export type PrintReportSortInput = {
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: Scalars['String']['input'];
-};
-
-export type PrinterConnector = {
-  __typename: 'PrinterConnector';
-  nodes: Array<PrinterNode>;
-  totalCount: Scalars['Int']['output'];
-};
-
-export type PrinterFilterInput = {
-  address?: InputMaybe<EqualFilterStringInput>;
-  description?: InputMaybe<StringFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-};
-
-export type PrinterNode = {
-  __typename: 'PrinterNode';
-  address: Scalars['String']['output'];
-  description: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  labelHeight: Scalars['Int']['output'];
-  labelWidth: Scalars['Int']['output'];
-  port: Scalars['Int']['output'];
 };
 
 export type ProgramConnector = {
@@ -5932,7 +5854,6 @@ export type Queries = {
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
-  frontendPluginMetadata: Array<FrontendPluginMetadataNode>;
   /**
    * Generates new customer_return lines in memory, based on supplier return line ids.
    * Optionally includes existing customer_return lines for a specific item in a return.
@@ -6000,7 +5921,7 @@ export type Queries = {
   patients: PatientResponse;
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
-  printers: PrinterConnector;
+  plugins: Array<PluginNode>;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
   programIndicators: ProgramIndicatorResponse;
@@ -6498,14 +6419,9 @@ export type QueriesPeriodsArgs = {
 
 export type QueriesPluginDataArgs = {
   filter?: InputMaybe<PluginDataFilterInput>;
-  pluginCode: Scalars['String']['input'];
   sort?: InputMaybe<Array<PluginDataSortInput>>;
   storeId: Scalars['String']['input'];
-};
-
-
-export type QueriesPrintersArgs = {
-  filter?: InputMaybe<PrinterFilterInput>;
+  type: RelatedRecordNodeType;
 };
 
 
@@ -6864,6 +6780,10 @@ export type RefreshTokenErrorInterface = {
 
 export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
 
+export enum RelatedRecordNodeType {
+  StockLine = 'STOCK_LINE'
+}
+
 export type RepackConnector = {
   __typename: 'RepackConnector';
   nodes: Array<RepackNode>;
@@ -6905,7 +6825,6 @@ export enum ReportContext {
   OutboundReturn = 'OUTBOUND_RETURN',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Patient = 'PATIENT',
-  Prescription = 'PRESCRIPTION',
   Repack = 'REPACK',
   Report = 'REPORT',
   Requisition = 'REQUISITION',
@@ -8406,17 +8325,6 @@ export type UpdateIndicatorValueInput = {
 
 export type UpdateIndicatorValueResponse = IndicatorValueNode | UpdateIndicatorValueError;
 
-export type UpdateInsuranceInput = {
-  discountPercentage?: InputMaybe<Scalars['Float']['input']>;
-  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
-  id: Scalars['String']['input'];
-  insuranceProviderId?: InputMaybe<Scalars['String']['input']>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  policyType?: InputMaybe<InsurancePolicyNodeType>;
-};
-
-export type UpdateInsuranceResponse = IdResponse;
-
 export type UpdateLabelPrinterSettingsError = {
   __typename: 'UpdateLabelPrinterSettingsError';
   error: Scalars['String']['output'];
@@ -8611,11 +8519,10 @@ export type UpdatePatientResponse = PatientNode;
 
 export type UpdatePluginDataInput = {
   data: Scalars['String']['input'];
-  dataIdentifier: Scalars['String']['input'];
   id: Scalars['String']['input'];
-  pluginCode: Scalars['String']['input'];
-  relatedRecordId?: InputMaybe<Scalars['String']['input']>;
-  storeId?: InputMaybe<Scalars['String']['input']>;
+  pluginName: Scalars['String']['input'];
+  relatedRecordId: Scalars['String']['input'];
+  relatedRecordType: RelatedRecordNodeType;
 };
 
 export type UpdatePluginDataResponse = PluginDataNode;
@@ -8680,17 +8587,6 @@ export enum UpdatePrescriptionStatusInput {
   Picked = 'PICKED',
   Verified = 'VERIFIED'
 }
-
-export type UpdatePrinterInput = {
-  address: Scalars['String']['input'];
-  description: Scalars['String']['input'];
-  id: Scalars['String']['input'];
-  labelHeight: Scalars['Int']['input'];
-  labelWidth: Scalars['Int']['input'];
-  port: Scalars['Int']['input'];
-};
-
-export type UpdatePrinterResponse = PrinterNode;
 
 export type UpdateProgramEnrolmentInput = {
   /** Program document data */

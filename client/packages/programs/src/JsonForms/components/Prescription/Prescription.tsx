@@ -27,7 +27,7 @@ import {
 } from '@openmsupply-client/invoices/src/Prescriptions';
 import { useDraftPrescriptionLines } from '@openmsupply-client/invoices/src/Prescriptions/LineEditView/hooks';
 import { StockLineTable } from './StockLineTable';
-import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
+import { DraftStockOutLine } from '@openmsupply-client/invoices/src/types';
 
 export const prescriptionTester = rankWith(10, uiTypeIs('Prescription'));
 
@@ -74,7 +74,7 @@ const UIComponent = (props: ControlProps) => {
     );
 
   const [draftPrescriptionLines, setDraftPrescriptionLines] = useState<
-    DraftPrescriptionLine[]
+    DraftStockOutLine[]
   >([]);
 
   useDraftPrescriptionLines(
@@ -96,7 +96,7 @@ const UIComponent = (props: ControlProps) => {
   // Ensures that when this component is re-mounted (e.g. in a Modal), it will
   // populate the draft line data with previously acquired state
   useEffect(() => {
-    const existing: DraftPrescriptionLine[] = formActions.getState(
+    const existing: DraftStockOutLine[] = formActions.getState(
       `${path}_stockline`
     );
     if (existing && existing[0]?.item.id === selectedItem?.id)
@@ -127,7 +127,7 @@ const UIComponent = (props: ControlProps) => {
       handleChange(prescriptionIdPath, FnUtils.generateUUID());
   };
 
-  const handleStockLineUpdate = (draftLines: DraftPrescriptionLine[]) => {
+  const handleStockLineUpdate = (draftLines: DraftStockOutLine[]) => {
     setDraftPrescriptionLines(draftLines);
     formActions.setState(`${path}_stockline`, draftLines);
     formActions.register(
@@ -143,7 +143,7 @@ const UIComponent = (props: ControlProps) => {
           const allPrescriptionLines = Object.entries(formActionState)
             .filter(([key, _]) => key.endsWith('_stockline'))
             .map(([_, value]) => value)
-            .flat() as DraftPrescriptionLine[];
+            .flat() as DraftStockOutLine[];
           // Mutation requires invoice (prescription) ID to be defined on each
           // line
           allPrescriptionLines.forEach(

@@ -4,7 +4,6 @@ use async_graphql::*;
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
 use async_graphql::{Context, Enum, Object, SimpleObject, Union};
-use serde_json::json;
 use service::{backend_plugin::plugin_provider::PluginBundle, UploadedFile, UploadedFileJsonError};
 use util::format_error;
 
@@ -82,21 +81,13 @@ pub enum UploadedPluginErrorVariant {
 
 #[Object]
 impl PluginInfoNode {
-    pub async fn plugin_info(&self) -> serde_json::Value {
-        json!({
-            "backend":
-                self.bundle
-                    .backend_plugins
-                    .iter()
-                    .map(|r| json!({ "backend_code": r.code.clone(), "types": r.types.clone() }))
-                    .collect::<HashSet<serde_json::Value>>(),
-            "frontend":
-                self.bundle
-                    .frontend_plugins
-                    .iter()
-                    .map(|r| json!({ "front_end": r.code.clone(), "types": r.types.clone() }))
-                    .collect::<HashSet<serde_json::Value>>()
-
-        })
+    pub async fn backend_plugin_codes(&self) -> Vec<String> {
+        self.bundle
+            .backend_plugins
+            .iter()
+            .map(|r| r.code.clone())
+            .collect::<HashSet<String>>()
+            .into_iter()
+            .collect()
     }
 }

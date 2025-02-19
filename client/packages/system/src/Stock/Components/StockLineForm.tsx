@@ -18,8 +18,6 @@ import {
   NumericTextInput,
   BufferedTextInput,
   DetailContainer,
-  usePluginProvider,
-  UsePluginEvents,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -31,7 +29,7 @@ interface StockLineFormProps {
   draft: StockLineRowFragment;
   loading: boolean;
   onUpdate: (patch: Partial<StockLineRowFragment>) => void;
-  pluginEvents: UsePluginEvents<{ isDirty: boolean }>;
+  plugins?: JSX.Element[];
   packEditable?: boolean;
   isInModal?: boolean;
 }
@@ -39,7 +37,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
   draft,
   loading,
   onUpdate,
-  pluginEvents,
+  plugins,
   packEditable,
   isInModal = false,
 }) => {
@@ -48,7 +46,6 @@ export const StockLineForm: FC<StockLineFormProps> = ({
   const { isConnected, isEnabled, isScanning, startScan } =
     useBarcodeScannerContext();
   const showItemVariantsInput = useIsItemVariantsEnabled();
-  const { plugins } = usePluginProvider();
 
   const supplierName = draft.supplierName
     ? draft.supplierName
@@ -168,9 +165,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
               }
             />
           )}
-          {plugins.stockEditForm?.map((Plugin, index) => (
-            <Plugin key={index} stockLine={draft} events={pluginEvents} />
-          ))}
+          {plugins}
         </Grid>
         <Grid container flex={1} flexBasis="50%" flexDirection="column" gap={1}>
           {packEditable ? (

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, usePluginProvider } from '@openmsupply-client/common';
+import { Grid, usePluginElements } from '@openmsupply-client/common';
 import {
   DistributionWidget,
   ReplenishmentWidget,
@@ -7,7 +7,9 @@ import {
 } from './widgets';
 
 const Dashboard: React.FC = () => {
-  const { plugins } = usePluginProvider();
+  const plugins = usePluginElements({
+    type: 'Dashboard',
+  });
 
   return (
     <Grid
@@ -22,7 +24,7 @@ const Dashboard: React.FC = () => {
       <ReplenishmentWidget />
       <DistributionWidget />
       <StockWidget />
-      {plugins.dashboard?.map((Plugin, index) => <Plugin key={index} />)}
+      {plugins}
     </Grid>
   );
 };

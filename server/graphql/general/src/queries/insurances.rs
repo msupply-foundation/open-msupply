@@ -8,11 +8,12 @@ use graphql_core::{
     ContextExt,
 };
 use repository::name_insurance_join_row::{
-    NameInsuranceJoinRow, NameInsuranceJoinSort, NameInsuranceJoinSortField,
+    InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinSort, NameInsuranceJoinSortField,
 };
+use serde::Serialize;
 use service::auth::{Resource, ResourceAccessRequest};
 
-use crate::types::{InsurancePolicyNodeType, InsuranceProviderNode};
+use crate::types::InsuranceProviderNode;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -28,6 +29,23 @@ pub struct InsuranceSortInput {
     /// Sort query result is sorted descending or ascending (if not provided the default is
     /// ascending)
     desc: Option<bool>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum InsurancePolicyNodeType {
+    Personal,
+    Business,
+}
+
+impl InsurancePolicyNodeType {
+    pub fn from_domain(policy_type: &InsurancePolicyType) -> InsurancePolicyNodeType {
+        use InsurancePolicyType::*;
+        match policy_type {
+            Personal => InsurancePolicyNodeType::Personal,
+            Business => InsurancePolicyNodeType::Business,
+        }
+    }
 }
 
 #[derive(PartialEq, Debug)]

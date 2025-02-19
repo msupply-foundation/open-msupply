@@ -26,7 +26,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
-  ItemRowWithDirectionsFragment,
+  ItemRowFragment,
 } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
 import { PackSizeController } from '../../StockOut';
@@ -35,7 +35,7 @@ import {
   StockOutAlerts,
   getAllocationAlerts,
 } from '../../StockOut';
-import { DraftPrescriptionLine } from '../../types';
+import { DraftStockOutLine } from '../../types';
 import { isA } from '../../utils';
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
@@ -45,21 +45,21 @@ import { useAbbreviations } from '../api/hooks/useAbbreviations';
 interface PrescriptionLineEditFormProps {
   allocatedUnits: number;
   availableUnits: number;
-  item: ItemRowWithDirectionsFragment | null;
-  onChangeItem: (newItem: ItemRowWithDirectionsFragment | null) => void;
+  item: ItemRowFragment | null;
+  onChangeItem: (newItem: ItemRowFragment | null) => void;
   onChangeQuantity: (
     quantity: number,
     packSize: number | null,
     isAutoAllocated: boolean,
     prescribedQuantity: number | null
-  ) => DraftPrescriptionLine[] | undefined;
+  ) => DraftStockOutLine[] | undefined;
   packSizeController: PackSizeController;
   disabled: boolean;
   isNew: boolean;
   canAutoAllocate: boolean;
   isAutoAllocated: boolean;
   updateNotes: (note: string) => void;
-  draftPrescriptionLines: DraftPrescriptionLine[];
+  draftPrescriptionLines: DraftStockOutLine[];
   showZeroQuantityConfirmation: boolean;
   hasOnHold: boolean;
   hasExpired: boolean;
@@ -99,7 +99,7 @@ export const PrescriptionLineEditForm: React.FC<
     null
   );
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
-  const [defaultDirection, setDefaultDirection] = useState<string>('');
+  const [defaultDirection, setDefaultDirection] = useState<string>();
   const [abbreviation, setAbbreviation] = useState<string>('');
 
   const debouncedSetAllocationAlerts = useDebounceCallback(
@@ -232,32 +232,28 @@ export const PrescriptionLineEditForm: React.FC<
   }, [item?.id, allocatedUnits]);
 
   useEffect(() => {
-    if (items.find(prescriptionItem => prescriptionItem.id === item?.id))
-      setAbbreviation('');
-    setDefaultDirection('');
-  }, [item?.id]);
-
-  useEffect(() => {
     if (!isAutoAllocated) setIssueUnitQuantity(allocatedUnits);
   }, [packSizeController.selected?.value, allocatedUnits]);
 
   const key = item?.id ?? 'new';
 
+  // //MOCK DATA FOR TESTING ABBREVIATIONS
+
+  const defaultDirections = [
+    { id: '1', item_link_id: 'a', direction: '1 per day', priority: 2 },
+    { id: '2', item_link_id: 'b', direction: '2 per day', priority: 3 },
+    { id: '3', item_link_id: 'c', direction: '3 per day', priority: 1 },
+  ];
+
+  // //END OF MOCK DATA
+
   const { data: options = [] } = useAbbreviations();
 
   const saveAbbreviation = () => {
     if (!abbreviation) return;
+
     const note = getPrescriptionDirections(abbreviation, options);
     updateNotes(note);
-    setDefaultDirection('');
-  };
-
-  const saveDefaultDirection = (direction: string) => {
-    if (!direction) return;
-    setDefaultDirection(direction);
-    const note = getPrescriptionDirections(direction, options);
-    updateNotes(note);
-    setAbbreviation('');
   };
 
   return (
@@ -392,6 +388,7 @@ export const PrescriptionLineEditForm: React.FC<
                   disabled={disabled}
                   onChange={e => {
                     setAbbreviation(e.target.value);
+                    setDefaultDirection('');
                   }}
                   onBlur={saveAbbreviation}
                   onKeyDown={e => {
@@ -413,29 +410,25 @@ export const PrescriptionLineEditForm: React.FC<
               }
               disabled={disabled}
             >
-              {item.itemDirections.length == 0 ? (
-                <DropdownMenuItem sx={{ fontSize: 14 }}>
-                  {t('message.no-directions')}
-                </DropdownMenuItem>
-              ) : (
-                item.itemDirections
-                  .sort((a, b) => a.priority - b.priority)
-                  .map(
-                    direction =>
-                      direction && (
-                        <DropdownMenuItem
-                          key={direction.id}
-                          value={defaultDirection}
-                          onClick={() => {
-                            saveDefaultDirection(direction.directions);
-                          }}
-                          sx={{ fontSize: 14 }}
-                        >
-                          {direction.directions}
-                        </DropdownMenuItem>
-                      )
-                  )
-              )}
+              {defaultDirections
+                .sort((a, b) => a.priority - b.priority)
+                .map(
+                  direction =>
+                    direction && (
+                      <DropdownMenuItem
+                        key={direction.id}
+                        value={direction.direction}
+                        onClick={() => {
+                          updateNotes(direction.direction);
+                          setDefaultDirection(direction.direction);
+                          setAbbreviation('');
+                        }}
+                        sx={{ fontSize: 14 }}
+                      >
+                        {direction.direction}
+                      </DropdownMenuItem>
+                    )
+                )}
             </DropdownMenu>
           </Grid>
           <Grid>
@@ -464,11 +457,11 @@ export const PrescriptionLineEditForm: React.FC<
 
 interface TableProps {
   canAutoAllocate: boolean;
-  currentItem: ItemRowWithDirectionsFragment | null;
+  currentItem: ItemRowFragment | null;
   isLoading: boolean;
   packSizeController: PackSizeController;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
-  draftPrescriptionLines: DraftPrescriptionLine[];
+  draftPrescriptionLines: DraftStockOutLine[];
   allocatedUnits: number;
   isDisabled: boolean;
 }
@@ -529,7 +522,7 @@ const TableWrapper: React.FC<TableProps> = ({
 };
 
 const summarise = (
-  lines: DraftPrescriptionLine[],
+  lines: DraftStockOutLine[],
   t: TypedTFunction<LocaleKey>
 ) => {
   // Count how many of each pack size

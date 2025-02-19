@@ -9,12 +9,12 @@ import {
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
-import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
-import { UnitQuantityCell } from '@openmsupply-client/invoices/src/Prescriptions/api/hooks/utils';
+import { DraftStockOutLine } from '@openmsupply-client/invoices/src/types';
+import { UnitQuantityCell } from '@openmsupply-client/invoices/src/StockOut';
 
 interface StockLineTableProps {
-  stocklines: DraftPrescriptionLine[];
-  handleStockLineUpdate: (lines: DraftPrescriptionLine[]) => void;
+  stocklines: DraftStockOutLine[];
+  handleStockLineUpdate: (lines: DraftStockOutLine[]) => void;
 }
 
 export const StockLineTable = ({
@@ -22,7 +22,7 @@ export const StockLineTable = ({
   handleStockLineUpdate,
 }: StockLineTableProps) => {
   const t = useTranslation();
-  const handleUpdateDraft = (input: Partial<DraftPrescriptionLine>) => {
+  const handleUpdateDraft = (input: Partial<DraftStockOutLine>) => {
     const updatedDraftLines = [...stocklines];
     const lineIndex = updatedDraftLines.findIndex(line => line.id === input.id);
     if (updatedDraftLines[lineIndex]) {
@@ -34,7 +34,7 @@ export const StockLineTable = ({
     }
   };
 
-  const columns = useColumns<DraftPrescriptionLine>(
+  const columns = useColumns<DraftStockOutLine>(
     [
       {
         width: 60,
@@ -75,7 +75,7 @@ export const StockLineTable = ({
           // natively exist on DraftStockOutLine. This is preferable to using
           // the `numberOfPacks` field, which would be misleading and need to be
           // overwritten with the correct packs value here.
-          const stockLine = { ...row } as Partial<DraftPrescriptionLine> & {
+          const stockLine = { ...row } as Partial<DraftStockOutLine> & {
             id: string;
             unitQuantity: number;
           };

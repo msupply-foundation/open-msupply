@@ -546,7 +546,7 @@
   "label.calculate-demand": "Включить в расчеты GAPS",
   "label.calculated-demand": "Расчетный Спрос",
   "label.cant-delete-disabled": "Возможно удаление строк только когда у строки 'Новый' статус",
-  "label.cant-delete-disabled-requisition": "Возможно удаление строк только когда у запроса на закупку 'Новый' статус",
+  "label.cant-delete-disabled-requisition": "Возможно удаление строк только когда у запроса на закупку 'Предварительный' статус",
   "label.cant-zero-quantity-disabled": "Количество в строках может быть установлено равным 0 только когда у строки 'Новый' статус",
   "label.catalogue-item": "Товар каталога",
   "label.catalogue-item-code": "Код товара по каталогу",
@@ -1847,10 +1847,5 @@
   "report.net-decrease": "Чистое сокращение",
   "report.net-increase": "Чистый прирост",
   "report.net-variance": "Чистая разница",
-  "report.status": "Статус",
-  "message.cannot-delete-line-linked-to-shipment": "Невозможно удалить строку/строки, поскольку одна или несколько строк связаны с одной или несколькими поставками",
-  "button.add-printer": "Добавить принтер",
-  "button.configure-printers": "Настроить принтеры",
-  "heading.printers": "Принтеры",
-  "messages.cannot-edit-requisition": "Невозможно отредактировать запрос."
+  "report.status": "Статус"
 }

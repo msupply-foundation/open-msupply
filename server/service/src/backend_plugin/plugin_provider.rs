@@ -4,7 +4,7 @@ use actix_web::web::Data;
 
 use base64::{prelude::BASE64_STANDARD, Engine};
 
-use repository::{BackendPluginRow, FrontendPluginRow, PluginType, PluginTypes, PluginVariantType};
+use repository::{BackendPluginRow, PluginType, PluginTypes, PluginVariantType};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
 
@@ -86,10 +86,9 @@ where
     })
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize)]
 pub struct PluginBundle {
     pub backend_plugins: Vec<BackendPluginRow>,
-    pub frontend_plugins: Vec<FrontendPluginRow>,
 }
 
 impl PluginInstance {

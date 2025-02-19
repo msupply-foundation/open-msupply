@@ -1,7 +1,6 @@
 use async_graphql::*;
 use chrono::NaiveDate;
-use repository::{name_insurance_join_row::InsurancePolicyType, InsuranceProviderRow};
-use serde::Serialize;
+use repository::InsuranceProviderRow;
 use service::{
     requisition_line::chart::{
         ConsumptionHistory, ItemChart, StockEvolution, SuggestedQuantityCalculation,
@@ -172,30 +171,6 @@ impl ItemChartNode {
             suggested_quantity_calculation: SuggestedQuantityCalculationNode {
                 suggested_quantity_calculation,
             },
-        }
-    }
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum InsurancePolicyNodeType {
-    Personal,
-    Business,
-}
-
-impl InsurancePolicyNodeType {
-    pub fn from_domain(policy_type: &InsurancePolicyType) -> InsurancePolicyNodeType {
-        use InsurancePolicyType::*;
-        match policy_type {
-            Personal => InsurancePolicyNodeType::Personal,
-            Business => InsurancePolicyNodeType::Business,
-        }
-    }
-
-    pub fn to_domain(&self) -> InsurancePolicyType {
-        match self {
-            InsurancePolicyNodeType::Personal => InsurancePolicyType::Personal,
-            InsurancePolicyNodeType::Business => InsurancePolicyType::Business,
         }
     }
 }

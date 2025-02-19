@@ -1,4 +1,4 @@
+export * from './components';
+export * from './hooks';
 export * from './types';
-export * from './pluginProvider';
-export * from './usePluginEvents';
-export * from './api/usePlugins';
+export * from './utils';

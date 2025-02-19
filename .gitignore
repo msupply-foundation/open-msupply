@@ -5,5 +5,3 @@ server/report_builder/config.yaml
 
 # Temp export files
 server/data
-
-.gitmodules

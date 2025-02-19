@@ -4,30 +4,37 @@ use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 
+use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 table! {
     plugin_data (id) {
         id -> Text,
-        store_id -> Nullable<Text>,
-        plugin_code -> Text,
-        related_record_id -> Nullable<Text>,
-        data_identifier -> Text,
+        plugin_name -> Text,
+        related_record_id -> Text,
+        related_record_type -> crate::db_diesel::plugin_data_row::RelatedRecordTypeMapping,
+        store_id -> Text,
         data -> Text,
     }
 }
 
 joinable!(plugin_data -> store (store_id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum RelatedRecordType {
+    StockLine,
+}
+
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = plugin_data)]
 pub struct PluginDataRow {
     pub id: String,
-    pub store_id: Option<String>, // Any data without a store_id will be considered global data and synced to all stores
-    pub plugin_code: String,
-    pub related_record_id: Option<String>,
-    pub data_identifier: String, // Used by the plugin to identify the data, often would be a table name
+    pub plugin_name: String,
+    pub related_record_id: String,
+    pub related_record_type: RelatedRecordType,
+    pub store_id: String,
     pub data: String,
 }
 

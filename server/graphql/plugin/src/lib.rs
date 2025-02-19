@@ -3,6 +3,7 @@ pub mod plugin_data;
 mod queries;
 pub mod types;
 
+use crate::types::RelatedRecordNodeType;
 use async_graphql::*;
 use plugin_data::query::{PluginDataFilterInput, PluginDataResponse, PluginDataSortInput};
 use queries::uploaded_info::PluginInfoNode;
@@ -16,11 +17,11 @@ impl PluginQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        plugin_code: String,
+        r#type: RelatedRecordNodeType,
         filter: Option<PluginDataFilterInput>,
         sort: Option<Vec<PluginDataSortInput>>,
     ) -> Result<PluginDataResponse> {
-        plugin_data::query::get_plugin_data(ctx, &store_id, &plugin_code, filter, sort)
+        plugin_data::query::get_plugin_data(ctx, &store_id, r#type, filter, sort)
     }
 }
 

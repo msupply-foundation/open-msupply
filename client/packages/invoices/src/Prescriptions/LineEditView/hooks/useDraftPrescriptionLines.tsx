@@ -8,13 +8,13 @@ import {
 import { useHistoricalStockLines } from '@openmsupply-client/system';
 import { usePrescription } from '../../api';
 import { DraftItem } from '../../../..';
-import { DraftPrescriptionLine } from '../../../types';
+import { DraftStockOutLine } from '../../../types';
 import {
-  createDraftPrescriptionLine,
-  createDraftPrescriptionLineFromStockLine,
-  issuePrescriptionStock,
+  createDraftStockOutLine,
+  createDraftStockOutLineFromStockLine,
+  issueStock,
   updateNotes,
-} from '../../api/hooks/utils';
+} from '../../../StockOut/utils';
 
 export interface UseDraftPrescriptionLinesControl {
   updateNotes: (note: string) => void;
@@ -24,8 +24,8 @@ export interface UseDraftPrescriptionLinesControl {
 
 export const useDraftPrescriptionLines = (
   item: DraftItem | null,
-  draftLines: DraftPrescriptionLine[],
-  updateDraftLines: (lines: DraftPrescriptionLine[]) => void,
+  draftLines: DraftStockOutLine[],
+  updateDraftLines: (lines: DraftStockOutLine[]) => void,
   date?: Date | null
 ): UseDraftPrescriptionLinesControl => {
   const {
@@ -68,14 +68,14 @@ export const useDraftPrescriptionLines = (
           ({ stockLine }) => stockLine?.id === batch.id
         );
         if (invoiceLine && invoiceId && status) {
-          return createDraftPrescriptionLine({
+          return createDraftStockOutLine({
             invoiceLine,
             invoiceId,
             stockLine: batch,
             invoiceStatus: status,
           });
         } else {
-          return createDraftPrescriptionLineFromStockLine({
+          return createDraftStockOutLineFromStockLine({
             stockLine: batch,
             invoiceId: invoiceId ?? '',
           });
@@ -97,7 +97,7 @@ export const useDraftPrescriptionLines = (
         const placeholderItem = lines?.find(l => l.item.id === item.id)?.item;
         if (!!placeholderItem) placeholder.item = placeholderItem;
         rows.push(
-          createDraftPrescriptionLine({
+          createDraftStockOutLine({
             invoiceId: invoiceId ?? '',
             invoiceLine: placeholder,
             invoiceStatus: status,
@@ -115,7 +115,7 @@ export const useDraftPrescriptionLines = (
 
   const onChangeRowQuantity = useCallback(
     (batchId: string, packs: number) => {
-      updateDraftLines(issuePrescriptionStock(draftLines, batchId, packs));
+      updateDraftLines(issueStock(draftLines, batchId, packs));
     },
     [draftLines]
   );

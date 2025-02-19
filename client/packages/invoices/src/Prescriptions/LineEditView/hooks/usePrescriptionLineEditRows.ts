@@ -1,17 +1,17 @@
 import { useEffect, useMemo } from 'react';
 import { useTableStore, SortUtils } from '@openmsupply-client/common';
 import { isA } from '../../../utils';
-import { DraftPrescriptionLine } from '../../../types';
+import { DraftStockOutLine } from '../../../types';
 
 export const usePrescriptionLineEditRows = (
-  rows: DraftPrescriptionLine[],
+  rows: DraftStockOutLine[],
   isDisabled: boolean
 ) => {
   const tableStore = useTableStore();
 
-  const isOnHold = (row: DraftPrescriptionLine) =>
+  const isOnHold = (row: DraftStockOutLine) =>
     !!row.stockLine?.onHold || !!row.location?.onHold;
-  const hasNoStock = (row: DraftPrescriptionLine) =>
+  const hasNoStock = (row: DraftStockOutLine) =>
     row.stockLine?.availableNumberOfPacks === 0;
 
   const { allocatableRows, wrongPackSizeRows, onHoldRows, noStockRows } =
@@ -20,10 +20,10 @@ export const usePrescriptionLineEditRows = (
         .filter(line => !isA.placeholderLine(line))
         .sort(SortUtils.byExpiryAsc);
 
-      const allocatableRows: DraftPrescriptionLine[] = [];
-      const onHoldRows: DraftPrescriptionLine[] = [];
-      const noStockRows: DraftPrescriptionLine[] = [];
-      const wrongPackSizeRows: DraftPrescriptionLine[] = [];
+      const allocatableRows: DraftStockOutLine[] = [];
+      const onHoldRows: DraftStockOutLine[] = [];
+      const noStockRows: DraftStockOutLine[] = [];
+      const wrongPackSizeRows: DraftStockOutLine[] = [];
 
       rowsWithoutPlaceholder.forEach(row => {
         if (isOnHold(row)) {

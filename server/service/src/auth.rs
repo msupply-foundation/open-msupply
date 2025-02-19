@@ -134,9 +134,6 @@ pub enum Resource {
     // contact form
     MutateContactForm,
     NoPermissionRequired,
-    // Plugin data
-    MutatePluginData,
-    ReadPluginData,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -600,19 +597,6 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     // contact form
     map.insert(Resource::MutateContactForm, PermissionDSL::HasStoreAccess);
-
-    // plugin data
-    map.insert(
-        Resource::MutatePluginData,
-        PermissionDSL::Any(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::ServerAdmin), // Server admins can add data without store-relationship
-        ]),
-    );
-    map.insert(
-        Resource::ReadPluginData,
-        PermissionDSL::NoPermissionRequired, // Plugin data doesn't get any special protections...
-    );
 
     map
 }

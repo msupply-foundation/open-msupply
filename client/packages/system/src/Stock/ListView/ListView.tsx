@@ -9,12 +9,12 @@ import {
   useUrlQueryParams,
   DateUtils,
   ColumnDescription,
+  usePluginColumns,
   TooltipTextCell,
   useNavigate,
   RouteBuilder,
   CurrencyCell,
   ExpiryDateCell,
-  usePluginProvider,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -55,7 +55,9 @@ const StockListComponent: FC = () => {
   const pagination = { page, first, offset };
   const t = useTranslation();
   const { data, isLoading, isError } = useStockList(queryParams);
-  const { plugins } = usePluginProvider();
+  const pluginColumns = usePluginColumns<StockLineRowFragment>({
+    type: 'Stock',
+  });
 
   const columnDefinitions: ColumnDescription<StockLineRowFragment>[] = [
     {
@@ -149,7 +151,7 @@ const StockListComponent: FC = () => {
       Cell: TooltipTextCell,
       width: 190,
     },
-    ...(plugins.stockColumn?.columns || []),
+    ...pluginColumns,
   ];
 
   const columns = useColumns<StockLineRowFragment>(
@@ -158,16 +160,13 @@ const StockListComponent: FC = () => {
       sortBy,
       onChangeSortBy: updateSortQuery,
     },
-    [sortBy, plugins.stockColumn?.columns]
+    [sortBy, pluginColumns]
   );
 
   return (
     <>
       <Toolbar filter={filter} />
       <AppBarButtons />
-      {plugins.stockColumn?.StateLoader?.map((StateLoader, index) => (
-        <StateLoader key={index} stockLines={data?.nodes ?? []} />
-      ))}
       <DataTable
         id="stock-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}

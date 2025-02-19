@@ -1,7 +1,7 @@
 use repository::{
     contact_form::{ContactForm, ContactFormFilter, ContactFormRepository},
     contact_form_row::ContactType,
-    ChangelogRow, ChangelogTableName, EqualFilter, KeyType,
+    ChangelogRow, ChangelogTableName, EqualFilter, KeyType, StorageConnection,
 };
 use tera::{Context, Tera};
 use util::constants::{FEEDBACK_EMAIL, SUPPORT_EMAIL};
@@ -12,7 +12,6 @@ use crate::{
         EmailServiceError,
     },
     processors::general_processor::{Processor, ProcessorError},
-    service_provider::{ServiceContext, ServiceProvider},
     sync::CentralServerConfig,
 };
 use nanohtml2text::html2text;
@@ -30,11 +29,9 @@ impl Processor for QueueContactEmailProcessor {
     /// Changelog will only be processed once
     fn try_process_record(
         &self,
-        ctx: &ServiceContext,
-        _: &ServiceProvider,
+        connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
-        let connection = &ctx.connection;
         let filter = ContactFormFilter::new().id(EqualFilter::equal_to(&changelog.record_id));
 
         let contact_form = ContactFormRepository::new(connection)

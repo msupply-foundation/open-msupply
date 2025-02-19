@@ -1,16 +1,16 @@
 use repository::{
     EqualFilter, PluginData, PluginDataFilter, PluginDataRepository, PluginDataRow,
-    PluginDataRowRepository, RepositoryError,
+    PluginDataRowRepository, RelatedRecordType, RepositoryError,
 };
 
-use crate::{service_provider::ServiceContext, sync::CentralServerConfig, WithDBError};
+use crate::{service_provider::ServiceContext, WithDBError};
 
 #[derive(Debug, PartialEq)]
 pub enum UpdatePluginDataError {
     PluginDataDoesNotExist,
     RelatedRecordDoesNotMatch,
     RelatedRecordTypeDoesNotMatch,
-    PluginCodeDoesNotMatch,
+    PluginNameDoesNotMatch,
     DatabaseError(RepositoryError),
     InternalError(String),
 }
@@ -18,10 +18,9 @@ pub enum UpdatePluginDataError {
 #[derive(Debug, PartialEq, Clone)]
 pub struct UpdatePluginData {
     pub id: String,
-    pub store_id: Option<String>,
-    pub plugin_code: String,
-    pub related_record_id: Option<String>,
-    pub data_identifier: String,
+    pub plugin_name: String,
+    pub related_record_id: String,
+    pub related_record_type: RelatedRecordType,
     pub data: String,
 }
 
@@ -31,8 +30,8 @@ pub fn update(
 ) -> Result<PluginData, UpdatePluginDataError> {
     ctx.connection
         .transaction_sync(|connection| {
-            let existing_row = validate(ctx, &input)?;
-            let data = generate(input.clone(), existing_row)?;
+            validate(ctx, &input)?;
+            let data = generate(ctx, input.clone())?;
 
             PluginDataRowRepository::new(connection)
                 .upsert_one(&data)
@@ -47,30 +46,21 @@ pub fn update(
     Ok(plugin_data)
 }
 
-fn validate(
-    ctx: &ServiceContext,
-    input: &UpdatePluginData,
-) -> Result<PluginDataRow, UpdatePluginDataError> {
+fn validate(ctx: &ServiceContext, input: &UpdatePluginData) -> Result<(), UpdatePluginDataError> {
     let plugin_data = check_plugin_data_exists(ctx, &input.id)?
         .ok_or(UpdatePluginDataError::PluginDataDoesNotExist)?;
 
     if input.related_record_id != plugin_data.related_record_id {
         return Err(UpdatePluginDataError::RelatedRecordDoesNotMatch);
     }
-    if input.data_identifier != plugin_data.data_identifier {
+    if input.related_record_type != plugin_data.related_record_type {
         return Err(UpdatePluginDataError::RelatedRecordTypeDoesNotMatch);
     }
-    if input.plugin_code != plugin_data.plugin_code {
-        return Err(UpdatePluginDataError::PluginCodeDoesNotMatch);
+    if input.plugin_name != plugin_data.plugin_name {
+        return Err(UpdatePluginDataError::PluginNameDoesNotMatch);
     }
 
-    if plugin_data.store_id.is_none() && !CentralServerConfig::is_central_server() {
-        return Err(UpdatePluginDataError::InternalError(
-            "Central Data can only be modified from Central Server".to_string(),
-        ));
-    }
-
-    Ok(plugin_data)
+    Ok(())
 }
 
 fn check_plugin_data_exists(
@@ -87,16 +77,19 @@ fn check_plugin_data_exists(
 }
 
 fn generate(
+    ctx: &ServiceContext,
     UpdatePluginData {
         id,
-        plugin_code: _,
+        plugin_name: _,
         related_record_id: _,
-        data_identifier: _,
+        related_record_type: _,
         data,
-        store_id: _,
     }: UpdatePluginData,
-    existing: PluginDataRow,
 ) -> Result<PluginDataRow, RepositoryError> {
+    let existing = PluginDataRowRepository::new(&ctx.connection)
+        .find_one_by_id(&id)?
+        .ok_or(RepositoryError::NotFound)?;
+
     Ok(PluginDataRow {
         id,
         data,
@@ -127,7 +120,7 @@ mod test {
     use repository::{
         mock::{mock_store_a, mock_user_account_a, MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        PluginDataRow,
+        PluginDataRow, RelatedRecordType,
     };
     use util::{inline_edit, inline_init};
 
@@ -138,10 +131,10 @@ mod test {
         fn plugin_data_donor() -> PluginDataRow {
             PluginDataRow {
                 id: "plugin_data".to_string(),
-                plugin_code: "plugin_code".to_string(),
-                related_record_id: Some("related_record_id".to_string()),
-                data_identifier: "StockLine".to_string(),
-                store_id: Some(mock_store_a().id.clone()),
+                plugin_name: "plugin_name".to_string(),
+                related_record_id: "related_record_id".to_string(),
+                related_record_type: RelatedRecordType::StockLine,
+                store_id: mock_store_a().id.clone(),
                 data: "test".to_string(),
             }
         }
@@ -167,10 +160,9 @@ mod test {
                 &context,
                 UpdatePluginData {
                     id: "plugin_data".to_string(),
-                    store_id: Some(mock_store_a().id.clone()),
-                    plugin_code: "plugin_code".to_string(),
-                    related_record_id: Some("related_record_id".to_string()),
-                    data_identifier: "StockLine".to_string(),
+                    plugin_name: "plugin_name".to_string(),
+                    related_record_id: "related_record_id".to_string(),
+                    related_record_type: RelatedRecordType::StockLine,
                     data: "hogwarts".to_string(),
                 },
             )
@@ -179,8 +171,6 @@ mod test {
         let plugin_data = service
             .get_plugin_data(&context, None, None)
             .unwrap()
-            .rows
-            .pop()
             .unwrap()
             .plugin_data;
         let donor = plugin_data_donor();

@@ -8,7 +8,7 @@ import {
   ReportContext,
   LoadingButton,
   useUrlQueryParams,
-  usePluginProvider,
+  usePluginElements,
   useAuthContext,
 } from '@openmsupply-client/common';
 import { useInbound } from '../api';
@@ -34,7 +34,10 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
   const {
     queryParams: { sortBy },
   } = useUrlQueryParams();
-  const { plugins } = usePluginProvider();
+  const pluginButtons = usePluginElements({
+    type: 'InboundShipmentAppBar',
+    data,
+  });
   const disableInternalOrderButton =
     !store?.preferences.manuallyLinkInternalOrderToInboundShipment ||
     !!data?.linkedShipment ||
@@ -64,10 +67,7 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
           disableAddFromMasterListButton={!!data?.linkedShipment}
           disableAddFromInternalOrderButton={disableInternalOrderButton}
         />
-        {data &&
-          plugins.inboundShipmentAppBar?.map((Plugin, index) => (
-            <Plugin key={index} shipment={data} />
-          ))}
+        {pluginButtons}
         <ReportSelector
           context={ReportContext.InboundShipment}
           onPrint={printReport}

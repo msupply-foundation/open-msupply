@@ -235,14 +235,6 @@ impl OrderingTooManyItems {
     }
 }
 
-pub struct CannotDeleteLineLinkedToShipment;
-#[Object]
-impl CannotDeleteLineLinkedToShipment {
-    pub async fn description(&self) -> &str {
-        "Cannot delete line linked to shipment"
-    }
-}
-
 pub struct CannotEditStocktake;
 #[Object]
 impl CannotEditStocktake {

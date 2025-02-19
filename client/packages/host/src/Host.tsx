@@ -30,8 +30,8 @@ import { Site } from './Site';
 import { ErrorAlert } from './components/ErrorAlert';
 import { Discovery } from './components/Discovery';
 import { Android } from './components/Android';
+import { useInitPlugins } from './plugins';
 import { BackButtonHandler } from './BackButtonHandler';
-import { useInitPlugins } from './useInitPlugins';
 
 const appVersion = require('../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 

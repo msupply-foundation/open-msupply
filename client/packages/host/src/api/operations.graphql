@@ -19,6 +19,14 @@ query displaySettings($input: DisplaySettingsHash!) {
   }
 }
 
+query plugins {
+  plugins {
+    config
+    name
+    path
+  }
+}
+
 query labelPrinterSettings {
   labelPrinterSettings {
     __typename
@@ -71,7 +79,7 @@ mutation configureNameProperties($input: [ConfigureNamePropertyInput!]!) {
 
 mutation insertContactForm($input: InsertContactFormInput!, $storeId: String!) {
   insertContactForm(input: $input, storeId: $storeId) {
-    ... on InsertResponse {
+    ... on InsertResponse { 
       id
     }
   }

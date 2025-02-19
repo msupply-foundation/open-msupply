@@ -16,7 +16,6 @@ import {
 } from '@openmsupply-client/common';
 import { usePrescription } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
-import { PrescriptionDetailsSection } from './PrescriptionDetailsSection';
 import { PricingSection } from './PricingSection';
 import { canCancelInvoice, canDeleteInvoice } from '../../../utils';
 import { PatientDetails } from './PatientDetails';
@@ -93,7 +92,6 @@ export const SidePanelComponent = () => {
         </>
       }
     >
-      <PrescriptionDetailsSection />
       <AdditionalInfoSection />
       <PricingSection />
       <PatientDetails />

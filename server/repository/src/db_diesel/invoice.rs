@@ -53,6 +53,7 @@ pub struct InvoiceFilter {
     pub requisition_id: Option<EqualFilter<String>>,
     pub linked_invoice_id: Option<EqualFilter<String>>,
     pub stock_line_id: Option<String>,
+    pub is_cancellation: Option<bool>,
     pub is_program_invoice: Option<bool>,
 }
 
@@ -246,6 +247,7 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
             requisition_id,
             linked_invoice_id,
             stock_line_id,
+            is_cancellation,
             is_program_invoice,
         } = f;
 
@@ -267,6 +269,9 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
 
         if let Some(value) = on_hold {
             query = query.filter(invoice::on_hold.eq(value));
+        }
+        if let Some(value) = is_cancellation {
+            query = query.filter(invoice::is_cancellation.eq(value));
         }
 
         apply_date_time_filter!(query, created_datetime, invoice::created_datetime);
@@ -434,6 +439,11 @@ impl InvoiceFilter {
 
     pub fn stock_line_id(mut self, stock_line_id: String) -> Self {
         self.stock_line_id = Some(stock_line_id);
+        self
+    }
+
+    pub fn is_cancellation(mut self, filter: bool) -> Self {
+        self.is_cancellation = Some(filter);
         self
     }
 }

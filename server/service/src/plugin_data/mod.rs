@@ -2,9 +2,7 @@ use repository::{
     Pagination, PluginData, PluginDataFilter, PluginDataRepository, PluginDataSort, RepositoryError,
 };
 
-use crate::i64_to_u32;
 use crate::service_provider::ServiceContext;
-use crate::ListResult;
 mod insert;
 pub use self::insert::*;
 mod update;
@@ -16,13 +14,10 @@ pub trait PluginDataServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         filter: Option<PluginDataFilter>,
         sort: Option<PluginDataSort>,
-    ) -> Result<ListResult<PluginData>, RepositoryError> {
-        let repository = PluginDataRepository::new(&ctx.connection);
-
-        Ok(ListResult {
-            rows: repository.query(Pagination::new(), filter.clone(), sort)?,
-            count: i64_to_u32(repository.count(filter)?),
-        })
+    ) -> Result<Option<PluginData>, RepositoryError> {
+        Ok(PluginDataRepository::new(&ctx.connection)
+            .query(Pagination::new(), filter, sort)?
+            .pop())
     }
 
     fn insert(

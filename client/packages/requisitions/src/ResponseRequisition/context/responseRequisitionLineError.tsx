@@ -1,11 +1,9 @@
 import React, { createContext, useContext, useState } from 'react';
 import { PropsWithChildrenOnly, RecordWithId } from '@common/types';
 import { RequisitionReasonNotProvidedErrorFragment } from '../../RequestRequisition/api';
-import { CannotDeleteLineLinkedToShipmentErrorFragment } from '../api';
 
 export type ResponseRequisitionLineError =
-  | RequisitionReasonNotProvidedErrorFragment
-  | CannotDeleteLineLinkedToShipmentErrorFragment;
+  RequisitionReasonNotProvidedErrorFragment;
 
 const useResponseRequisitionLineErrors = () => {
   const [errors, setErrors] = useState<{

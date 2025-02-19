@@ -105,7 +105,7 @@ describe('allocateQuantities - standard behaviour.', () => {
       placeholder,
     ];
 
-    expect(allocate(3, 1, undefined)).toEqual(expected);
+    expect(allocate(3, 1, undefined, 0)).toEqual(expected);
   });
 
   /* **********************************************************
@@ -130,7 +130,7 @@ describe('allocateQuantities - standard behaviour.', () => {
     lineTwo.numberOfPacks = 1;
 
     const expected = [lineOne, lineTwo, placeholder];
-    const allocated = allocate(2, 1, undefined);
+    const allocated = allocate(2, 1, undefined, 0);
 
     expect(allocated).toEqual(expected);
   });
@@ -157,7 +157,7 @@ describe('allocateQuantities - standard behaviour.', () => {
       placeholder,
     ];
 
-    expect(allocate(5, null, undefined)).toEqual(expected);
+    expect(allocate(5, null, undefined, 0)).toEqual(expected);
   });
 });
 
@@ -182,7 +182,7 @@ describe('Allocate quantities - placeholder row behaviour', () => {
 
     const expected = [lineOne, placeholderLine];
 
-    expect(allocate(10, 1, undefined)).toEqual(expected);
+    expect(allocate(10, 1, undefined, 0)).toEqual(expected);
   });
 
   /* **********************************************************
@@ -212,7 +212,7 @@ describe('Allocate quantities - placeholder row behaviour', () => {
 
     const expected = [lineOne, lineTwo, placeholderLine];
 
-    expect(allocate(3, 1, undefined)).toEqual(expected);
+    expect(allocate(3, 1, undefined, 0)).toEqual(expected);
   });
 
   /* **********************************************************
@@ -238,22 +238,22 @@ describe('Allocate quantities - placeholder row behaviour', () => {
     };
 
     const allocatedStatusTest = run(InvoiceNodeStatus.Allocated);
-    expect(allocatedStatusTest.allocate(10, 1, undefined)).toEqual(
+    expect(allocatedStatusTest.allocate(10, 1, undefined, 0)).toEqual(
       allocatedStatusTest.expected
     );
 
     const pickedStatusTest = run(InvoiceNodeStatus.Picked);
-    expect(pickedStatusTest.allocate(10, 1, undefined)).toEqual(
+    expect(pickedStatusTest.allocate(10, 1, undefined, 0)).toEqual(
       pickedStatusTest.expected
     );
 
     const deliveredStatusTest = run(InvoiceNodeStatus.Delivered);
-    expect(deliveredStatusTest.allocate(10, 1, undefined)).toEqual(
+    expect(deliveredStatusTest.allocate(10, 1, undefined, 0)).toEqual(
       deliveredStatusTest.expected
     );
 
     const verifiedStatusTest = run(InvoiceNodeStatus.Verified);
-    expect(verifiedStatusTest.allocate(10, 1, undefined)).toEqual(
+    expect(verifiedStatusTest.allocate(10, 1, undefined, 0)).toEqual(
       verifiedStatusTest.expected
     );
   });
@@ -286,7 +286,7 @@ describe('Allocate quantities - differing pack size behaviour', () => {
 
     const expected = [lineOne, lineTwo, placeholderLine];
 
-    expect(allocate(3, 1, undefined)).toEqual(expected);
+    expect(allocate(3, 1, undefined, 0)).toEqual(expected);
   });
 
   /* **********************************************************
@@ -317,7 +317,7 @@ describe('Allocate quantities - differing pack size behaviour', () => {
 
     const expected = [lineOne, lineTwo, placeholderLine];
 
-    expect(allocate(3, 1, undefined)).toEqual(expected);
+    expect(allocate(3, 1, undefined, 0)).toEqual(expected);
 
     allocate = allocateQuantities(InvoiceNodeStatus.New, expected);
     const lineOneAfterChange = { ...one, isUpdated: true };
@@ -332,7 +332,7 @@ describe('Allocate quantities - differing pack size behaviour', () => {
       placeholderAfterChange,
     ];
 
-    expect(allocate(3, 2, undefined)).toEqual(expectedAfterChange);
+    expect(allocate(3, 2, undefined, 0)).toEqual(expectedAfterChange);
   });
 });
 
@@ -359,7 +359,7 @@ describe('Allocating quantities - behaviour when mixing placeholders and pack si
 
     const expected = [lineOne, placeholderLine];
 
-    expect(allocate(10, 1, undefined)).toEqual(expected);
+    expect(allocate(10, 1, undefined, 0)).toEqual(expected);
   });
 
   /* **********************************************************
@@ -386,7 +386,7 @@ describe('Allocating quantities - behaviour when mixing placeholders and pack si
 
     const expected = [lineOne, placeholderLine];
 
-    expect(allocate(10, 2, undefined)).toEqual(expected);
+    expect(allocate(10, 2, undefined, 0)).toEqual(expected);
   });
 });
 
@@ -436,7 +436,7 @@ describe('Allocated quantities - expiry date behaviour', () => {
       numberOfPacks: 10,
       isUpdated: true,
     };
-    expect(allocate(10, 1, undefined)).toEqual([
+    expect(allocate(10, 1, undefined, 0)).toEqual([
       expiringLast,
       expiringFirst,
       placeholder,
@@ -474,7 +474,7 @@ describe('Allocated quantities - expiry date behaviour', () => {
       isUpdated: true,
     };
 
-    expect(allocate(15, 1, undefined)).toEqual([
+    expect(allocate(15, 1, undefined, 0)).toEqual([
       expiringLast,
       expiringFirst,
       placeholder,
@@ -530,7 +530,7 @@ describe('Allocated quantities - behaviour for expired lines', () => {
     };
     const expired = { ...expiredLine, numberOfPacks: 0 };
 
-    expect(allocate(10, 1, undefined)).toEqual([
+    expect(allocate(10, 1, undefined, 0)).toEqual([
       expiringLast,
       expired,
       placeholder,
@@ -565,7 +565,7 @@ describe('Allocated quantities - behaviour generally not possible through the UI
 
     const expected = [lineOne, placeholderLine];
 
-    expect(allocate(10, 1, undefined)).toEqual(expected);
+    expect(allocate(10, 1, undefined, 0)).toEqual(expected);
   });
 });
 
@@ -638,7 +638,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
     const line3 = { ...Line3, numberOfPacks: 0, isUpdated: false };
     const line4 = { ...Line4, numberOfPacks: 2, isUpdated: true };
 
-    expect(allocate(12, null, undefined)).toEqual([
+    expect(allocate(12, null, undefined, 0)).toEqual([
       line1,
       line2,
       line3,
@@ -678,7 +678,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
     const line3 = { ...Line3, numberOfPacks: 1, isUpdated: true };
     const line4 = { ...Line4, numberOfPacks: 0, packSize: 10 };
 
-    expect(allocate(12, null, undefined)).toEqual([
+    expect(allocate(12, null, undefined, 0)).toEqual([
       line1,
       line2,
       line3,
@@ -716,7 +716,11 @@ describe('Allocated quantities - coping with over-allocation', () => {
       isUpdated: true,
     };
 
-    expect(allocate(8, null, undefined)).toEqual([line1, line2, placeholder]);
+    expect(allocate(8, null, undefined, 0)).toEqual([
+      line1,
+      line2,
+      placeholder,
+    ]);
   });
 
   /* **********************************************************
@@ -736,7 +740,11 @@ describe('Allocated quantities - coping with over-allocation', () => {
     const line1 = { ...Line3, numberOfPacks: 1, isUpdated: true };
     const line2 = { ...Line4, numberOfPacks: 2, isUpdated: true };
 
-    expect(allocate(12, null, undefined)).toEqual([line1, line2, placeholder]);
+    expect(allocate(12, null, undefined, 0)).toEqual([
+      line1,
+      line2,
+      placeholder,
+    ]);
   });
 
   /* **********************************************************
@@ -780,12 +788,127 @@ describe('Allocated quantities - coping with over-allocation', () => {
       draftStockOutLines
     );
 
-    expect(allocate(61, null, undefined)).toEqual([
+    expect(allocate(61, null, undefined, 0)).toEqual([
       { ...line1, numberOfPacks: 5 },
       { ...line2, numberOfPacks: 1 },
       line3,
       { ...line4, isUpdated: false },
       placeholder,
+    ]);
+  });
+});
+
+describe('Allocated quantities - assign prescribed quantity', () => {
+  const Line1 = createTestLine({
+    id: '1',
+    itemId: 'item1.id',
+    numberOfPacks: 5,
+  });
+
+  const Line2 = createTestLine({
+    id: '2',
+    itemId: 'item2.id',
+    numberOfPacks: 0,
+  });
+
+  const Line3 = createTestLine({
+    id: '3',
+    itemId: 'item3.id',
+    numberOfPacks: 3,
+  });
+
+  const prescribedQuantity = 15;
+
+  const draftStockOutLines = [Line1, Line2, Line3];
+
+  it('should only save prescribedQuantity to the first allocated line', () => {
+    const allocate = allocateQuantities(
+      InvoiceNodeStatus.New,
+      draftStockOutLines
+    );
+
+    expect(allocate(5, null, false, prescribedQuantity)).toEqual([
+      { ...Line1, prescribedQuantity: 15, isUpdated: true },
+      Line2,
+      { ...Line3, numberOfPacks: 0, isUpdated: true },
+    ]);
+  });
+
+  it('should only allow one line to have prescribedQuantity', () => {
+    const allocate = allocateQuantities(
+      InvoiceNodeStatus.New,
+      draftStockOutLines
+    );
+
+    const newDraftStockOutLines = allocate(5, null, false, prescribedQuantity);
+
+    const lineWithPrescribedQuantity = newDraftStockOutLines?.filter(
+      line => line.prescribedQuantity === 15
+    );
+
+    expect(lineWithPrescribedQuantity?.length).toBe(1);
+    expect(lineWithPrescribedQuantity?.[0]?.prescribedQuantity).toEqual(15);
+  });
+
+  it('should assign prescribedQuantity to the next line if current line gets deleted', () => {
+    // Simulates the deletion of a line by setting its numberOfPacks to 0
+    // and checks if the prescribedQuantity is reassigned to the next line
+    const newLine1 = createTestLine({
+      id: '1',
+      availableNumberOfPacks: 0,
+      numberOfPacks: 0,
+      prescribedQuantity: 15,
+    });
+
+    const allocate = allocateQuantities(InvoiceNodeStatus.New, [
+      newLine1,
+      Line2,
+      Line3,
+    ]);
+
+    const newDraftStockOutLines = allocate(5, 1, false, prescribedQuantity);
+
+    const lineWithPrescribedQuantity = newDraftStockOutLines?.filter(
+      line => line.prescribedQuantity === prescribedQuantity
+    );
+
+    expect(lineWithPrescribedQuantity?.length).toBe(1);
+    expect(lineWithPrescribedQuantity?.[0]?.id).toBe('2');
+  });
+
+  it('should save to a placeholder if no stock is allocated', () => {
+    const placeholder = getPlaceholder();
+    const newLine1 = createTestLine({
+      id: '1',
+      availableNumberOfPacks: 0,
+      numberOfPacks: 0,
+    });
+    const newLine2 = createTestLine({
+      id: '2',
+      availableNumberOfPacks: 0,
+      numberOfPacks: 0,
+    });
+    const newLine3 = createTestLine({
+      id: '3',
+      availableNumberOfPacks: 0,
+      numberOfPacks: 0,
+    });
+
+    const allocate = allocateQuantities(InvoiceNodeStatus.New, [
+      newLine1,
+      newLine2,
+      newLine3,
+      placeholder,
+    ]);
+
+    const newDraftStockOutLines = allocate(5, 0, false, prescribedQuantity);
+
+    const lineWithPrescribedQuantity = newDraftStockOutLines?.filter(
+      line => line.prescribedQuantity === 15
+    );
+
+    expect(lineWithPrescribedQuantity).toEqual([
+      { ...placeholder, numberOfPacks: 5, prescribedQuantity },
     ]);
   });
 });

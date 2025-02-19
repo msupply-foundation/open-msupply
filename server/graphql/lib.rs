@@ -40,7 +40,6 @@ use graphql_location::{LocationMutations, LocationQueries};
 use graphql_plugin::{
     CentralPluginMutations, CentralPluginQueries, PluginMutations, PluginQueries,
 };
-use graphql_printer::{PrinterMutations, PrinterQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::ReportQueries;
@@ -145,7 +144,6 @@ pub struct Queries(
     pub ReportQueries,
     pub StockLineQueries,
     pub RepackQueries,
-    pub PrinterQueries,
     pub ProgramsQueries,
     pub FormSchemaQueries,
     pub ClinicianQueries,
@@ -175,7 +173,6 @@ impl Queries {
             ReportQueries,
             StockLineQueries,
             RepackQueries,
-            PrinterQueries,
             ProgramsQueries,
             FormSchemaQueries,
             ClinicianQueries,
@@ -205,7 +202,6 @@ pub struct Mutations(
     pub RequisitionLineMutations,
     pub StockLineMutations,
     pub RepackMutations,
-    pub PrinterMutations,
     pub GeneralMutations,
     pub ProgramsMutations,
     pub FormSchemaMutations,
@@ -231,7 +227,6 @@ impl Mutations {
             RequisitionLineMutations,
             StockLineMutations,
             RepackMutations,
-            PrinterMutations,
             GeneralMutations,
             ProgramsMutations,
             FormSchemaMutations,

@@ -1,5 +1,6 @@
 use super::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
+    backend_plugin_row::backend_plugin::dsl as backend_plugin_dsl, ChangeLogInsertRow,
+    ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
 };
 
 use crate::{repository_error::RepositoryError, Delete, Upsert};
@@ -71,16 +72,16 @@ impl<'a> BackendPluginRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<BackendPluginRow>, RepositoryError> {
-        let result = backend_plugin::table
-            .filter(backend_plugin::id.eq(id))
+        let result = backend_plugin_dsl::backend_plugin
+            .filter(backend_plugin_dsl::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn all(&self) -> Result<Vec<BackendPluginRow>, RepositoryError> {
-        let result = backend_plugin::table
-            .order_by(backend_plugin::id)
+        let result = backend_plugin_dsl::backend_plugin
+            .order_by(backend_plugin_dsl::id)
             .load(self.connection.lock().connection())?;
 
         Ok(result)
@@ -88,9 +89,9 @@ impl<'a> BackendPluginRowRepository<'a> {
 
     pub fn upsert_one(&self, row: BackendPluginRow) -> Result<i64, RepositoryError> {
         let id = row.id.clone();
-        diesel::insert_into(backend_plugin::table)
+        diesel::insert_into(backend_plugin_dsl::backend_plugin)
             .values(row.clone())
-            .on_conflict(backend_plugin::id)
+            .on_conflict(backend_plugin_dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -118,7 +119,7 @@ impl<'a> BackendPluginRowRepository<'a> {
             }
         };
 
-        diesel::delete(backend_plugin::table.filter(backend_plugin::id.eq(id)))
+        diesel::delete(backend_plugin_dsl::backend_plugin.filter(backend_plugin_dsl::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }

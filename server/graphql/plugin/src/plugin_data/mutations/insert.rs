@@ -1,4 +1,4 @@
-use crate::types::PluginDataNode;
+use crate::types::{PluginDataNode, RelatedRecordNodeType};
 use async_graphql::*;
 use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -6,18 +6,20 @@ use graphql_core::{
 };
 use repository::PluginData;
 use service::{
-    auth::{Resource, ResourceAccessRequest},
+    auth::ResourceAccessRequest,
     plugin_data::{InsertPluginData as ServiceInput, InsertPluginDataError as ServiceError},
 };
 
+use super::map_resource_type;
+
 #[derive(InputObject)]
 #[graphql(name = "InsertPluginDataInput")]
+
 pub struct InsertPluginDataInput {
     pub id: String,
-    pub store_id: Option<String>,
-    pub plugin_code: String,
-    pub related_record_id: Option<String>,
-    pub data_identifier: String,
+    pub plugin_name: String,
+    pub related_record_id: String,
+    pub related_record_type: RelatedRecordNodeType,
     pub data: String,
 }
 
@@ -37,10 +39,11 @@ pub fn insert_plugin_data(
     store_id: &str,
     input: InsertPluginDataInput,
 ) -> Result<InsertResponse> {
+    let resource = map_resource_type(input.related_record_type);
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutatePluginData,
+            resource,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -81,10 +84,9 @@ impl InsertPluginDataInput {
     pub fn to_domain(self) -> ServiceInput {
         ServiceInput {
             id: self.id,
-            store_id: self.store_id,
-            plugin_code: self.plugin_code,
+            plugin_name: self.plugin_name,
             related_record_id: self.related_record_id,
-            data_identifier: self.data_identifier,
+            related_record_type: RelatedRecordNodeType::to_domain(self.related_record_type),
             data: self.data,
         }
     }
