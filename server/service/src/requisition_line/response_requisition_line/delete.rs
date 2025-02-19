@@ -1,6 +1,6 @@
 use repository::{
-    requisition_row::RequisitionType, RepositoryError, RequisitionLineRowRepository,
-    RequisitionStatus, StorageConnection,
+    requisition_row::RequisitionType, EqualFilter, InvoiceLineFilter, InvoiceLineRepository,
+    RepositoryError, RequisitionLineRowRepository, RequisitionStatus, StorageConnection,
 };
 
 use crate::{
@@ -23,6 +23,8 @@ pub enum DeleteResponseRequisitionLineError {
     CannotEditRequisition,
     DatabaseError(RepositoryError),
     CannotDeleteLineFromTransferredRequisition,
+    CannotDeleteLineLinkedToShipment,
+    InvoiceDoesNotExist,
 }
 
 type OutError = DeleteResponseRequisitionLineError;
@@ -72,6 +74,16 @@ fn validate(
         return Err(OutError::CannotDeleteLineFromTransferredRequisition);
     }
 
+    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new().requisition_id(EqualFilter::equal_to(&requisition_row.id)),
+    )?;
+
+    if invoice_lines.iter().any(|invoice_line| {
+        requisition_line_row.item_link_id == invoice_line.invoice_line_row.item_link_id
+    }) {
+        return Err(OutError::CannotDeleteLineLinkedToShipment);
+    }
+
     Ok(())
 }
 
@@ -86,12 +98,13 @@ mod test {
     use repository::{
         mock::{
             mock_full_new_response_requisition_for_update_test,
-            mock_request_draft_requisition_calculation_test, mock_store_a, mock_store_b,
+            mock_request_draft_requisition_calculation_test, mock_store_a, mock_store_b, MockData,
             MockDataInserts,
         },
-        test_db::setup_all,
-        RequisitionLineRowRepository,
+        test_db::{setup_all, setup_all_with_data},
+        InvoiceLineRow, InvoiceRow, InvoiceStatus, RequisitionLineRowRepository,
     };
+    use util::inline_init;
 
     use crate::{
         requisition_line::response_requisition_line::{
@@ -100,11 +113,41 @@ mod test {
         service_provider::ServiceProvider,
     };
 
+    fn invoice_linked_to_req() -> InvoiceRow {
+        InvoiceRow {
+            id: "invoice_linked_to_req".to_owned(),
+            store_id: mock_store_a().id,
+            requisition_id: Some(
+                mock_full_new_response_requisition_for_update_test()
+                    .requisition
+                    .id,
+            ),
+            name_link_id: "name_a".to_string(),
+            status: InvoiceStatus::New,
+            ..Default::default()
+        }
+    }
+
+    fn invoice_line_linked_to_requisition_line() -> InvoiceLineRow {
+        InvoiceLineRow {
+            id: "invoice_line_linked_to_requisition_line".to_owned(),
+            invoice_id: invoice_linked_to_req().id,
+            item_link_id: mock_full_new_response_requisition_for_update_test().lines[0]
+                .item_link_id
+                .clone(),
+            ..Default::default()
+        }
+    }
+
     #[actix_rt::test]
     async fn delete_response_requisition_line_errors() {
-        let (_, _, connection_manager, _) = setup_all(
+        let (_, _, connection_manager, _) = setup_all_with_data(
             "delete_response_requisition_line_errors",
             MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![invoice_linked_to_req()];
+                r.invoice_lines = vec![invoice_line_linked_to_requisition_line()];
+            }),
         )
         .await;
 
@@ -150,6 +193,20 @@ mod test {
                 },
             ),
             Err(ServiceError::NotThisStoreRequisition)
+        );
+
+        // CannotDeleteLineLinkedToShipment
+        context.store_id = mock_store_a().id;
+        assert_eq!(
+            service.delete_response_requisition_line(
+                &context,
+                DeleteResponseRequisitionLine {
+                    id: mock_full_new_response_requisition_for_update_test().lines[0]
+                        .id
+                        .clone(),
+                },
+            ),
+            Err(ServiceError::CannotDeleteLineLinkedToShipment)
         );
     }
 

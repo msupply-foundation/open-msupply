@@ -33,9 +33,10 @@ use crate::{
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     name::{NameService, NameServiceTrait},
-    plugin::{PluginService, PluginServiceTrait},
+    plugin::{FrontendPluginCache, PluginService, PluginServiceTrait},
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     pricing::{PricingService, PricingServiceTrait},
+    printer::{PrinterService, PrinterServiceTrait},
     processors::ProcessorsTrigger,
     program::ProgramServiceTrait,
     programs::{
@@ -117,8 +118,8 @@ pub struct ServiceProvider {
     pub document_service: Box<dyn DocumentServiceTrait>,
     pub document_registry_service: Box<dyn DocumentRegistryServiceTrait>,
     pub form_schema_service: Box<dyn FormSchemaServiceTrait>,
-    pub patient_service: Box<dyn PatientServiceTrait>,
     pub insurance_service: Box<dyn InsuranceServiceTrait>,
+    pub patient_service: Box<dyn PatientServiceTrait>,
     pub program_enrolment_service: Box<dyn ProgramEnrolmentServiceTrait>,
     pub encounter_service: Box<dyn EncounterServiceTrait>,
     pub program_event_service: Box<dyn ProgramEventServiceTrait>,
@@ -158,6 +159,8 @@ pub struct ServiceProvider {
     pub vaccine_course_service: Box<dyn VaccineCourseServiceTrait>,
     // Vaccinations
     pub vaccination_service: Box<dyn VaccinationServiceTrait>,
+    // Printer Configuration
+    pub printer_service: Box<dyn PrinterServiceTrait>,
     // Programs
     pub program_service: Box<dyn ProgramServiceTrait>,
     pub pricing_service: Box<dyn PricingServiceTrait>,
@@ -169,11 +172,14 @@ pub struct ServiceProvider {
     pub email_service: Box<dyn EmailServiceTrait>,
     // Contact Form
     pub contact_form_service: Box<dyn ContactFormServiceTrait>,
+    // Cache
+    pub(crate) frontend_plugins_cache: FrontendPluginCache,
 }
 
 pub struct ServiceContext {
     pub connection: StorageConnection,
     pub(crate) processors_trigger: ProcessorsTrigger,
+    pub(crate) frontend_plugins_cache: FrontendPluginCache,
     pub user_id: String,
     pub store_id: String,
 }
@@ -266,6 +272,8 @@ impl ServiceProvider {
             contact_form_service: Box::new(ContactFormService {}),
             plugin_service: Box::new(PluginService {}),
             insurance_service: Box::new(InsuranceService {}),
+            printer_service: Box::new(PrinterService {}),
+            frontend_plugins_cache: FrontendPluginCache::new(),
         }
     }
 
@@ -276,6 +284,7 @@ impl ServiceProvider {
             processors_trigger: self.processors_trigger.clone(),
             user_id: "".to_string(),
             store_id: "".to_string(),
+            frontend_plugins_cache: self.frontend_plugins_cache.clone(),
         })
     }
 
@@ -289,6 +298,7 @@ impl ServiceProvider {
             processors_trigger: self.processors_trigger.clone(),
             user_id,
             store_id,
+            frontend_plugins_cache: self.frontend_plugins_cache.clone(),
         })
     }
 
@@ -306,6 +316,7 @@ impl ServiceContext {
             processors_trigger: ProcessorsTrigger::new_void(),
             user_id: "".to_string(),
             store_id: "".to_string(),
+            frontend_plugins_cache: FrontendPluginCache::new(),
         }
     }
 }
