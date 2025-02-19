@@ -4,3 +4,4 @@
 // Once the migration is complete, we can deprecate and remove the old pattern.
 // Please ensure any new hooks follow this new pattern to maintain consistency.
 // ***
+export * from './hooks';

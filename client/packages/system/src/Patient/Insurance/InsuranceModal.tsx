@@ -20,7 +20,7 @@ import { usePatient } from '../api';
 import { InsurancePolicySelect } from './InsurancePolicySelect';
 import { InsuranceProvidersSelect } from './InsuranceProvidersSelect';
 import { InsuranceStatusToggle } from './InsuranceStatusToggle';
-import { useInsurances } from '../apiModern/hook/useInsurances';
+import { useInsurances } from '../apiModern/hooks/useInsurances';
 
 export const InsuranceModal: FC = (): ReactElement => {
   const t = useTranslation();

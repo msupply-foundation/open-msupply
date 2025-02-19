@@ -15,7 +15,7 @@ import {
   PatientModal,
   usePatientModalStore,
 } from '@openmsupply-client/programs';
-import { useInsurances } from '../apiModern/hook/useInsurances';
+import { useInsurances } from '../apiModern/hooks/useInsurances';
 
 export const InsuranceListView = () => {
   const nameId = usePatient.utils.id();
