@@ -15,19 +15,18 @@ export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
   onChange,
 }): ReactElement => {
   const t = useTranslation();
-  const { data } = useInsuranceProviders();
-  const insuranceProviders = data?.nodes ?? [];
+  const {
+    query: { data },
+  } = useInsuranceProviders();
 
-  const options = insuranceProviders.map(({ id, providerName }) => {
+  const options = data.map(({ id, providerName }) => {
     return {
       label: providerName,
       value: id,
     };
   });
 
-  const selectedInsurance = insuranceProviders.find(
-    ({ id }) => id === insuranceProviderId
-  );
+  const selectedInsurance = data.find(({ id }) => id === insuranceProviderId);
 
   return (
     <InputWithLabelRow
