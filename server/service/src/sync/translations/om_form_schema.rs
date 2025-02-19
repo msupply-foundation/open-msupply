@@ -38,13 +38,9 @@ impl SyncTranslation for OmFormSchemaTranslation {
     ) -> bool {
         match r#type {
             ToSyncRecordTranslationType::PullFromOmSupplyCentral => {
-                println!("should translate");
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }
-            _ => {
-                println!("shouldn't translate");
-                false
-            }
+            _ => false,
         }
     }
     fn try_translate_to_upsert_sync_record(
