@@ -4,7 +4,6 @@ import {
   SupplierReturnLineFragment,
 } from './Returns';
 import { StockOutLineFragment } from './StockOut/operations.generated';
-import { PrescriptionLineFragment } from './Prescriptions';
 
 export interface DraftInboundLine extends InboundLineFragment {
   isCreated?: boolean;
@@ -13,12 +12,6 @@ export interface DraftInboundLine extends InboundLineFragment {
 }
 
 export interface DraftStockOutLine extends StockOutLineFragment {
-  isCreated?: boolean;
-  isUpdated?: boolean;
-  isDeleted?: boolean;
-}
-
-export interface DraftPrescriptionLine extends PrescriptionLineFragment {
   isCreated?: boolean;
   isUpdated?: boolean;
   isDeleted?: boolean;
