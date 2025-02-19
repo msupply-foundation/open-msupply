@@ -2217,6 +2217,6 @@
   "button.add-printer": "Добавить принтер",
   "button.configure-printers": "Настроить принтеры",
   "heading.printers": "Принтеры",
-  "messages.cannot-edit-requisition": "Невозможно отредактировать запрос."
+  "messages.cannot-edit-requisition": "Невозможно отредактировать запрос.",
   "warning.nothing-to-supply": "Больше нечего поставить!"
 }
