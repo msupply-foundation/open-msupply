@@ -5,11 +5,23 @@ import {
   createQueryParamsStore,
   createTableStore,
   DataTable,
+  NothingHere,
   TableProvider,
+  useUrlQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 
+import {
+  PatientModal,
+  usePatientModalStore,
+} from '@openmsupply-client/programs';
+import { useInsurances } from '../apiModern/hooks/useInsurances';
+
 export const InsuranceListView = () => {
+  const nameId = usePatient.utils.id();
+  const { updateQuery } = useUrlQuery();
+  const { setModal } = usePatientModalStore();
+
   const {
     updateSortQuery,
     queryParams: { sortBy },
@@ -22,11 +34,9 @@ export const InsuranceListView = () => {
     onChangeSortBy: updateSortQuery,
   });
 
-  const nameId = usePatient.utils.id();
-  const { data, isLoading } = usePatient.document.insurances({
-    nameId,
-    sortBy,
-  });
+  const {
+    query: { data, isLoading },
+  } = useInsurances(nameId);
 
   return (
     <TableProvider
@@ -38,8 +48,13 @@ export const InsuranceListView = () => {
       <DataTable
         id="insurance-list"
         columns={columns}
-        data={data?.nodes}
+        data={data}
         isLoading={isLoading}
+        onRowClick={row => {
+          updateQuery({ insuranceId: row.id });
+          setModal(PatientModal.Insurance);
+        }}
+        noDataElement={<NothingHere />}
       />
     </TableProvider>
   );

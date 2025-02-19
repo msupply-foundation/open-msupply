@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    generic_filters::EqualFilterStringInput,
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -9,7 +9,7 @@ use graphql_core::{
 use graphql_types::types::InvoiceNodeType;
 use repository::{
     ledger::{LedgerFilter, LedgerRow, LedgerSort, LedgerSortField},
-    EqualFilter,
+    DatetimeFilter, EqualFilter,
 };
 
 use service::{
@@ -42,6 +42,7 @@ pub struct LedgerSortInput {
 pub struct LedgerFilterInput {
     pub stock_line_id: Option<EqualFilterStringInput>,
     pub item_id: Option<EqualFilterStringInput>,
+    pub datetime: Option<DatetimeFilterInput>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -145,13 +146,14 @@ impl LedgerFilterInput {
         let LedgerFilterInput {
             stock_line_id,
             item_id,
+            datetime,
         } = self;
 
         LedgerFilter {
             stock_line_id: stock_line_id.map(EqualFilter::from),
             item_id: item_id.map(EqualFilter::from),
             store_id: None,
-            datetime: None,
+            datetime: datetime.map(DatetimeFilter::from),
         }
     }
 }
