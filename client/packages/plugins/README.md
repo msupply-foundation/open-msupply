@@ -156,7 +156,12 @@ These functions can be implemented within your plugin and used to fetch and upda
 
 You can watch [this video for example](https://drive.google.com/file/d/1JnmPU9hRaQD4R1hTDKbbNj78FnM2l00A/view?usp=drive_link) TODO make public
 
-The simplest way to begin is by cloning (forking for now or just copy and create new repo, until we have a template), this repository https://github.com/msupply-foundation/open-msupply-plugin, then add it as submodule to `client/packages/plugins/` using this command: `git submodule add https://github.com/andreievg/open-msupply-plugins-andrei client/packages/plugins/mynewplugin`, note the `mynewplugin` can be anything. The inner repository and core will be treated as two different repositories, changes in them will only be reflected in relative repositories (i.e. you can add the inner repository as local repository in github desktop). Make sure that you don't commit the `.gitmodule` or the single `client/packages/plugins/{your plugin name}` to the core.
+The simplest way to begin is by cloning (forking for now or just copy and create new repo, until we have a template), this repository https://github.com/msupply-foundation/open-msupply-plugins, then add it as a submodule to `client/packages/plugins/`. From the root of this repository, run: 
+
+```git submodule add [your-plugin-bundle-repo-url] client/packages/plugins/myPluginBundle```
+
+
+Note the `myPluginBundle` can be anything. The inner repository and core will be treated as two different repositories, changes in them will only be reflected in relative repositories (i.e. you can add the inner repository as local repository in github desktop). Make sure that you don't commit the `.gitmodule` or the single `client/packages/plugins/{your plugin bundle name}` to the core.
 
 You would need to change [name](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/package.json#L3) in package.json, which is also the plugin code and unique identifier (every plugin should have unique code). You should also add types that are implemented, in the future those will be displayed before plugin is installed, for validation form the user, for frontend plugins they are not essential though. TODO these types can be looked up when building, both for front end and backed plugin, by running ts-node and inspecting import { plugins } from './plugins.tsx' or '.ts'.
 
