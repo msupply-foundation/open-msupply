@@ -1,2 +1,2 @@
 export * from './useInsuranceProviders';
-// export * from './useInsurances';
+export * from './useInsurances';

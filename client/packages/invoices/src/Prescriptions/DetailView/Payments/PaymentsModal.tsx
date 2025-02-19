@@ -8,7 +8,7 @@ import { CurrencyInput, Grid } from '@openmsupply-client/common';
 import { useDialog } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { usePrescription } from '../../api';
-import { useInsurances } from 'packages/system/src/Patient/apiModern/hook/useInsurances';
+import { useInsurances } from '@openmsupply-client/system/src';
 
 interface PaymentsModalProps {
   isOpen: boolean;

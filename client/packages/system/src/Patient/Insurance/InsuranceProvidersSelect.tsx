@@ -3,7 +3,7 @@ import React, { FC, ReactElement } from 'react';
 import { useTranslation } from '@common/intl';
 import { Autocomplete, InputWithLabelRow } from '@common/components';
 
-import { useInsuranceProviders } from '../apiModern/hook';
+import { useInsuranceProviders } from '../apiModern/hooks';
 
 interface InsuranceProvidersSelectProps {
   insuranceProviderId: string;
