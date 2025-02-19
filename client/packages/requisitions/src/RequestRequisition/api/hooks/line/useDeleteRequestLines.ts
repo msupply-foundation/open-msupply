@@ -43,7 +43,7 @@ export const useDeleteRequestLines = () => {
       deleteSuccess: t('messages.deleted-lines', {
         count: selectedRows.length,
       }),
-      cantDelete: t('label.cant-delete-disabled-requisition'),
+      cantDelete: t('label.cant-delete-disabled-internal-order'),
     },
   });
 

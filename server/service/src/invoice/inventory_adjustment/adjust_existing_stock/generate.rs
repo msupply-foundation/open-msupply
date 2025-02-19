@@ -81,6 +81,7 @@ pub fn generate(
         shipped_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
+        cancelled_datetime: None,
         linked_invoice_id: None,
         requisition_id: None,
         clinician_link_id: None,
@@ -90,6 +91,7 @@ pub fn generate(
         name_insurance_join_id: None,
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
+        is_cancellation: false,
     };
 
     let StockLineRow {
