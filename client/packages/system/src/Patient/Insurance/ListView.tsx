@@ -15,6 +15,7 @@ import {
   PatientModal,
   usePatientModalStore,
 } from '@openmsupply-client/programs';
+import { useInsurances } from '../apiModern/hook/useInsurances';
 
 export const InsuranceListView = () => {
   const nameId = usePatient.utils.id();
@@ -33,10 +34,9 @@ export const InsuranceListView = () => {
     onChangeSortBy: updateSortQuery,
   });
 
-  const { data, isLoading } = usePatient.document.insurances({
-    nameId,
-    sortBy,
-  });
+  const {
+    query: { data, isLoading },
+  } = useInsurances(nameId);
 
   return (
     <TableProvider
@@ -48,7 +48,7 @@ export const InsuranceListView = () => {
       <DataTable
         id="insurance-list"
         columns={columns}
-        data={data?.nodes}
+        data={data}
         isLoading={isLoading}
         onRowClick={row => {
           updateQuery({ insuranceId: row.id });

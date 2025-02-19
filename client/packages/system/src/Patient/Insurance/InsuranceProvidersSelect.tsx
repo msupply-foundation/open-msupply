@@ -3,7 +3,7 @@ import React, { FC, ReactElement } from 'react';
 import { useTranslation } from '@common/intl';
 import { Autocomplete, InputWithLabelRow } from '@common/components';
 
-import { usePatient } from '../api';
+import { useInsuranceProviders } from '../apiModern/hook';
 
 interface InsuranceProvidersSelectProps {
   insuranceProviderId: string;
@@ -15,7 +15,7 @@ export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
   onChange,
 }): ReactElement => {
   const t = useTranslation();
-  const { data } = usePatient.document.insuranceProviders();
+  const { data } = useInsuranceProviders();
   const insuranceProviders = data?.nodes ?? [];
 
   const options = insuranceProviders.map(({ id, providerName }) => {

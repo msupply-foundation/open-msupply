@@ -1,6 +1,6 @@
-import React, { FC, ReactElement, useEffect, useState } from 'react';
+import React, { FC, ReactElement } from 'react';
 
-import { useDialog, useNotification, useUrlQuery } from '@common/hooks';
+import { useDialog, useNotification } from '@common/hooks';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
   BaseDatePickerInput,
@@ -10,12 +10,7 @@ import {
   NumericTextInput,
 } from '@common/components';
 
-import {
-  Box,
-  FnUtils,
-  InsurancePolicyNodeType,
-  Stack,
-} from '@openmsupply-client/common';
+import { Box, Stack } from '@openmsupply-client/common';
 import {
   PatientModal,
   usePatientModalStore,
@@ -25,17 +20,7 @@ import { usePatient } from '../api';
 import { InsurancePolicySelect } from './InsurancePolicySelect';
 import { InsuranceProvidersSelect } from './InsuranceProvidersSelect';
 import { InsuranceStatusToggle } from './InsuranceStatusToggle';
-
-const DEFAULT_INSURANCE = {
-  id: '',
-  policyNumberFamily: '',
-  policyNumberPerson: '',
-  insuranceProviderId: '',
-  policyType: '' as InsurancePolicyNodeType,
-  isActive: false,
-  discountPercentage: 0,
-  expiryDate: '',
-};
+import { useInsurances } from '../apiModern/hook/useInsurances';
 
 export const InsuranceModal: FC = (): ReactElement => {
   const t = useTranslation();
@@ -50,22 +35,18 @@ export const InsuranceModal: FC = (): ReactElement => {
   });
 
   const nameId = usePatient.utils.id();
-  const { data } = usePatient.document.insurances({ nameId });
-  const [insurance, setInsurance] = useState(DEFAULT_INSURANCE);
-
-  const { urlQuery } = useUrlQuery();
-  const insuranceId = urlQuery['insuranceId'];
-  const haveInsuranceId = insuranceId !== undefined;
-  const selectedInsurance = data?.nodes.find(({ id }) => id === insuranceId);
-
-  const { mutateAsync: updateInsurance } =
-    usePatient.document.updateInsurance();
+  const {
+    create: { create },
+    update: { update },
+    insuranceId,
+    haveInsuranceId,
+    draft,
+    updatePatch,
+  } = useInsurances(nameId);
 
   const handleInsuranceUpdate = async (): Promise<void> => {
-    const { policyNumberFamily, policyNumberPerson, ...insuranceInput } =
-      insurance;
     try {
-      await updateInsurance(insuranceInput);
+      await update();
       success(t('messages.insurance-saved'))();
       setModal(undefined);
     } catch (e) {
@@ -75,17 +56,10 @@ export const InsuranceModal: FC = (): ReactElement => {
     }
   };
 
-  const { mutateAsync: insertInsurance } =
-    usePatient.document.insertInsurance();
-
   const handleInsuranceInsert = async (): Promise<void> => {
     try {
-      const result = await insertInsurance({
-        ...insurance,
-        id: FnUtils.generateUUID(),
-        nameId,
-      });
-      if (result.id != null) setModal(undefined);
+      const result = await create();
+      if (result != null) setModal(undefined);
       success(t('messages.insurance-created'))();
     } catch (e) {
       error(
@@ -98,21 +72,6 @@ export const InsuranceModal: FC = (): ReactElement => {
     if (insuranceId !== undefined) await handleInsuranceUpdate();
     else await handleInsuranceInsert();
   };
-
-  useEffect(() => {
-    if (selectedInsurance) {
-      const { insuranceProviders, policyNumber, ...insuranceDetails } =
-        selectedInsurance;
-
-      setInsurance({
-        ...insuranceDetails,
-        policyNumberFamily: insuranceDetails.policyNumberFamily ?? '',
-        policyNumberPerson: insuranceDetails.policyNumberPerson ?? '',
-      });
-    } else {
-      setInsurance(DEFAULT_INSURANCE);
-    }
-  }, [selectedInsurance]);
 
   return (
     <Modal
@@ -137,10 +96,9 @@ export const InsuranceModal: FC = (): ReactElement => {
             Input={
               <BasicTextInput
                 disabled={haveInsuranceId}
-                value={insurance.policyNumberFamily}
+                value={draft.policyNumberFamily}
                 onChange={event => {
-                  setInsurance({
-                    ...insurance,
+                  updatePatch({
                     policyNumberFamily: event.target.value,
                   });
                 }}
@@ -152,10 +110,9 @@ export const InsuranceModal: FC = (): ReactElement => {
             Input={
               <BasicTextInput
                 disabled={haveInsuranceId}
-                value={insurance.policyNumberPerson}
+                value={draft.policyNumberPerson}
                 onChange={event => {
-                  setInsurance({
-                    ...insurance,
+                  updatePatch({
                     policyNumberPerson: event.target.value,
                   });
                 }}
@@ -163,17 +120,20 @@ export const InsuranceModal: FC = (): ReactElement => {
             }
           />
           <InsurancePolicySelect
-            policyType={insurance.policyType}
+            policyType={draft.policyType}
             onChange={value =>
-              setInsurance({
-                ...insurance,
-                policyType: value as InsurancePolicyNodeType,
+              updatePatch({
+                policyType: value,
               })
             }
           />
           <InsuranceStatusToggle
-            isActive={insurance.isActive}
-            onChange={isActive => setInsurance({ ...insurance, isActive })}
+            isActive={draft.isActive}
+            onChange={isActive =>
+              updatePatch({
+                isActive,
+              })
+            }
           />
         </Box>
         <Box display="flex" flexDirection="column" gap={2}>
@@ -181,11 +141,10 @@ export const InsuranceModal: FC = (): ReactElement => {
             label={t('label.expiry-date')}
             Input={
               <BaseDatePickerInput
-                value={DateUtils.getNaiveDate(insurance.expiryDate)}
+                value={DateUtils.getNaiveDate(draft.expiryDate)}
                 onChange={date => {
                   if (date)
-                    setInsurance({
-                      ...insurance,
+                    updatePatch({
                       expiryDate: formatDateTime.customDate(date, 'yyyy-MM-dd'),
                     });
                 }}
@@ -193,9 +152,11 @@ export const InsuranceModal: FC = (): ReactElement => {
             }
           />
           <InsuranceProvidersSelect
-            insuranceProviderId={insurance.insuranceProviderId}
+            insuranceProviderId={draft.insuranceProviderId}
             onChange={value => {
-              setInsurance({ ...insurance, insuranceProviderId: value });
+              updatePatch({
+                insuranceProviderId: value,
+              });
             }}
           />
           <InputWithLabelRow
@@ -204,11 +165,10 @@ export const InsuranceModal: FC = (): ReactElement => {
               <NumericTextInput
                 min={0}
                 decimalLimit={2}
-                value={insurance.discountPercentage ?? 0}
+                value={draft.discountPercentage ?? 0}
                 onChange={value => {
                   if (value) {
-                    setInsurance({
-                      ...insurance,
+                    updatePatch({
                       discountPercentage: value,
                     });
                   }

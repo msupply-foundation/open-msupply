@@ -13,9 +13,6 @@ import {
   InsertProgramPatientInput,
   UpdateProgramPatientInput,
   FilterByWithBoolean,
-  InsuranceSortFieldInput,
-  InsertInsuranceInput,
-  UpdateInsuranceInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -24,8 +21,6 @@ import {
   LinkPatientToStoreMutation,
   ProgramPatientRowFragment,
   LatestPatientEncounterQuery,
-  InsurancesQuery,
-  InsuranceProvidersQuery,
 } from './operations.generated';
 
 export type ListParams = {
@@ -48,20 +43,11 @@ export type EncounterListParams = {
   pagination?: PaginationInput;
 };
 
-export type InsuranceListParams = {
-  nameId: string;
-  sortBy?: SortBy<InsuranceSortFieldInput>;
-};
-
 export type CentralPatientSearchResponse =
   CentralPatientSearchQuery['centralPatientSearch'];
 
 export type LinkPatientToStoreResponse =
   LinkPatientToStoreMutation['linkPatientToStore'];
-
-type InsurancesResponse = InsurancesQuery['insurances'];
-
-type InsuranceProvidersResponse = InsuranceProvidersQuery['insuranceProviders'];
 
 export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
   get: {
@@ -225,48 +211,4 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
   ): Promise<LatestPatientEncounterQuery['encounters']> =>
     (await sdk.latestPatientEncounter({ storeId, patientId, encounterType }))
       .encounters,
-
-  insurances: async ({
-    nameId,
-    sortBy,
-  }: InsuranceListParams): Promise<InsurancesResponse> => {
-    const key = sortBy?.key as InsuranceSortFieldInput;
-
-    const result = await sdk.insurances({
-      storeId,
-      nameId,
-      sort: key ? { key, desc: !!sortBy?.isDesc } : undefined,
-    });
-
-    return result.insurances;
-  },
-
-  insertInsurance: async (input: InsertInsuranceInput) => {
-    const result = await sdk.insertInsurance({
-      storeId,
-      input,
-    });
-
-    if (result.insertInsurance.id !== undefined) {
-      return result.insertInsurance;
-    }
-
-    throw new Error('Could not insert insurance');
-  },
-
-  updateInsurance: async (input: UpdateInsuranceInput) => {
-    const result = await sdk.updateInsurance({
-      storeId,
-      input,
-    });
-
-    if (result.updateInsurance.id !== undefined) {
-      return result.updateInsurance;
-    }
-
-    throw new Error('Could not update insurance');
-  },
-
-  insuranceProviders: async (): Promise<InsuranceProvidersResponse> =>
-    (await sdk.insuranceProviders({ storeId })).insuranceProviders,
 });
