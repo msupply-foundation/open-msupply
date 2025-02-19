@@ -165,6 +165,8 @@ Note the `myPluginBundle` can be anything. The inner repository and core will be
 
 You would need to change [name](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/package.json#L3) in package.json, which is also the plugin code and unique identifier (every plugin should have unique code). You should also add types that are implemented, in the future those will be displayed before plugin is installed, for validation form the user, for frontend plugins they are not essential though. TODO these types can be looked up when building, both for front end and backed plugin, by running ts-node and inspecting import { plugins } from './plugins.tsx' or '.ts'.
 
+Hot reloading will be working on dev mode but frontend needs to be restarted when adding a new plugin because local plugins are only discovered when webpack starts
+
 ## Testing production build
 
 You can work on plugins as if they were part of the app (types should be shared, autocompletion and hot reload should work). If you want to test plugin in production, you can bundle it and deploy to server via:
