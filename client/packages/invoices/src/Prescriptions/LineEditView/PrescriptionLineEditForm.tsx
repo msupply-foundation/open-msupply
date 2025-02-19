@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Grid,
   BasicTextInput,
@@ -232,6 +232,12 @@ export const PrescriptionLineEditForm: React.FC<
   }, [item?.id, allocatedUnits]);
 
   useEffect(() => {
+    if (items.find(prescriptionItem => prescriptionItem.id === item?.id))
+      setAbbreviation('');
+    setDefaultDirection('');
+  }, [item?.id]);
+
+  useEffect(() => {
     if (!isAutoAllocated) setIssueUnitQuantity(allocatedUnits);
   }, [packSizeController.selected?.value, allocatedUnits]);
 
@@ -246,15 +252,13 @@ export const PrescriptionLineEditForm: React.FC<
     setDefaultDirection('');
   };
 
-  const saveDefaultDirection = useCallback(
-    (direction: string) => {
-      setDefaultDirection(direction);
-      const note = getPrescriptionDirections(direction, options);
-      updateNotes(note);
-      setAbbreviation('');
-    },
-    [defaultDirection]
-  );
+  const saveDefaultDirection = (direction: string) => {
+    if (!direction) return;
+    setDefaultDirection(direction);
+    const note = getPrescriptionDirections(direction, options);
+    updateNotes(note);
+    setAbbreviation('');
+  };
 
   return (
     <Grid
