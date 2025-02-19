@@ -8,7 +8,7 @@ import {
   useMutation,
 } from '@openmsupply-client/common';
 import { usePrescription } from './usePrescription';
-import { DraftStockOutLine } from '@openmsupply-client/invoices/src/types';
+import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { PrescriptionRowFragment } from '../operations.generated';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
@@ -38,7 +38,7 @@ export const usePrescriptionLines = (id?: string) => {
     draftPrescriptionLines,
     patch,
   }: {
-    draftPrescriptionLines: DraftStockOutLine[];
+    draftPrescriptionLines: DraftPrescriptionLine[];
     patch?: RecordPatch<PrescriptionRowFragment>;
   }) => {
     return await updateMutation({
@@ -54,7 +54,7 @@ export const usePrescriptionLines = (id?: string) => {
     error: deleteLinesError,
   } = useDeleteLines(data?.invoiceNumber ?? -1);
 
-  const deleteLines = async (rowsToDelete: DraftStockOutLine[]) => {
+  const deleteLines = async (rowsToDelete: DraftPrescriptionLine[]) => {
     const lines = rowsToDelete.map(({ id }) => ({ id }));
     await deleteMutation(lines);
   };
@@ -72,7 +72,7 @@ const useSaveLines = (id: string, invoiceNum: number) => {
     draftPrescriptionLines,
     patch,
   }: {
-    draftPrescriptionLines: DraftStockOutLine[];
+    draftPrescriptionLines: DraftPrescriptionLine[];
     patch?: RecordPatch<PrescriptionRowFragment>;
   }) => {
     if (patch && id !== '') patch.id = id;
