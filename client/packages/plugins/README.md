@@ -1,11 +1,12 @@
-# Client plugin framework
+# Front end plugin framework
 
 Plugins are a way of extending front end functionality without altering the base code. Some examples of possible plugin usages:
+
 - Adding a button to a toolbar of a detail view which performs an external action like looking up shipping details from an external API. The plugin is provided with details of the object being viewed (e.g. draft shipment object) and can use that data when performing actions.
 - Adding a new widget to the dashboard
 - Adding a column to a list view for particular objects, and adding editing support for that new field
 
-Plugins are written as [react](https://react.dev/) components and compiled to distributable packages. These are copied to the server and then are available to all clients using that server.
+Plugins are written as [react](https://react.dev/) components and compiled to distributable packages. These are copied to the server and then are available to all clients using that server. See `testing production build` below
 
 A plugin can interact with the app framework, access language translations, call the data API or use the current theme. For example, a plugin can use shared UI components and utility functions from the app framework.
 
@@ -15,11 +16,11 @@ For some working examples, see the [plugin repo](https://github.com/msupply-foun
 
 ## Plugin structure
 
-When the app is loaded, all available plugins are read (the process differs slightly between development and production mode, see more below), validated and then stored within a centrally accessible plugin provider.
+When the app is loaded, all available plugins are read (the process differs slightly between development and production mode, see more below) and stored within a centrally accessible plugin provider.
 
-A component of the site can query the provider for any plugins which are applicable for that component's environment (e.g. any plugins which relate to the Inbound Shipment detail view page) and render them. When rendered, the plugins are passed to the data object associated with the type of plugin (for the Inbound Shipment detail view plugin, this is the draft Inbound Shipment object). Errors are handled and a message is shown to the user if the plugin fails to load or render correctly.
+Plugin can implement any interfaces defined in [Plugins type](../common/src/plugins/types.ts), for examples a React component a simple function or an object, and can implement multiple instances of the same interface. Plugins are accessed by core frontend functionality with usePluginProvider hook, and any related data is passed to that plugin as props.
 
-Plugins and standard site components can interact with each other using events. The plugin provider has methods to register & remove an event listener and to dispatch an event.
+Like data an event can be provided to a plugin component, to allow event driven interaction between the core and the plugins, for example being able to set isDirty state or invoke plugin action when save button is pressed, see more on events below.
 
 Webpack module federation is used to bundle and serve the plugins.
 
@@ -28,213 +29,112 @@ When running in development mode, the required plugin files are loaded directly 
 In production mode the process differs:
 
 - the server provides an endpoint to fetch the list of available plugins
-- the client app fetches the full list on startup and populates the PluginProvider
-- this fetches only the plugin definitions. When a plugin is rendered for the first time, the component is fetched from the server and cached in the PluginProvider.
-- column definitions do not require additional loading, though if the column is using a custom component for rendering, that may require fetching
-
-### Plugin validation
-
-Plugins are signed by the developer and require validation before they are able to be run in production mode - validation is ignored when running in developer mode; an error is logged but the plugin is loaded regardless of validation failures.
-
-See the readme on [plugin validation](../../../server/service/src/plugin/plugin_validation.md) for details of how to sign plugins and the process of loading and validating plugins.
+- the client app fetches the full list on startup, then individually fetches each plugin bundle
+- Using federation module and webpack low level api the plugin is dynamically added to scope
+- When plugin and it's dependencies are resolved it's added to PluginProvider and it becomes available to be used by the core functionality
 
 ### Plugin definitions
 
-Each plugin is defined in a `plugin.json` file which has the following structure
+Plugin version and plugin code are defined in package.json of the plugin, code should be unique across all plugins, so it's a good idea to have something unique in the code.
 
-```json
-{
-  "name": "StockDonor",
-  "version": "1.0.0",
-  "components": [
-    {
-      "type": "StockEditForm",
-      "localModule": "StockDonorEditInput",
-      "module": "StockDonorEdit"
-    }
-  ],
-  "columns": [
-    {
-      "type": "Stock",
-      "module": "StockDonorColumn"
-    }
-  ],
-  "dependencies": {
-    "omSupplyVersion": "8.0.0"
-  }
-}
-```
-
-The following types of plugins are currently supported:
-
-**ColumnPlugin**
-- `Stock`
-
-**ComponentPlugin**
-- `StockEditForm`
-- `Stock`
-- `InboundShipmentAppBar`
-- `Dashboard`
-
-
-**Plugin events**
-- `onSaveStockEditForm`
-- `onChangeStockEditForm`
-
-
-The components array lists all of the components exported by the plugin, the columns array lists all of the columns. The `name` property must match the name of the directory, as this is used to link the exported js file. See the examples for how this is implemented in the `webpack.config.js` file.
-
-### Types of plugin
-
-There are two types of plugin:
-**ColumnPlugin**
-
-The column plugin exports a `ColumnDefinition` for the given data type.
-This is defined in the plugin provider by the following object shape:
-
-```typescript
-  type: ColumnPluginType;
-  column: () => Promise<ColumnDefinition<T>>;
-  module: string;
-  pluginName: string;
-```
-
-**ComponentPlugin**
-A component plugin exports a react component for the given data type. 
-This is defined in the plugin provider by the following object shape:
-
-
-```typescript
-  type: ComponentPluginType;
-  component: () => Promise<PluginModule<T>>;
-  module: string;
-  localModule?: string;
-  pluginName: string;
-
-```
-
-There is a difference in behaviour when the app is running in development or production mode. See the **Plugin structure** section for more on this.
-A `PluginProvider` stores a list of available plugins. A component within the app can retrieve a list of applicable plugins by calling the `getComponentPlugins` or `getColumnPlugins` method, passing in the type of plugin required. Even simpler, use the hook provided to fetch components like this:
-
-```typescript
-  const pluginButtons = usePluginElements({
-    type: 'InboundShipmentAppBar',
-    data,
-  });
-```
-
-which are then rendered directly:
-
-```typescript
-{pluginButtons}
-```
-
-Similarly, the columns have a hook provided as well:
-
-```typescript
-  const pluginColumns = usePluginColumns<StockLineRowFragment>({
-    type: 'Stock',
-  });
-```
-
-```typescript
-  const columnDefinitions: ColumnDescription<StockLineRowFragment>[] = [
-    [standard column definitions go here],
-    ...pluginColumns,
-  ];
-
-...
-
-  const columns = useColumns<StockLineRowFragment>(
-    columnDefinitions,
-    {
-      sortBy,
-      onChangeSortBy: updateSortQuery,
-    },
-    [sortBy, pluginColumns]
-  );
-```
-
+Plugin's type is derived from [interfaces](../common/src/plugins/types.ts) that it implements and exposes in plugin.tsx.
 
 ### Events
 
-Events can be used to interact between the app and a plugin.
-To register for an event use the `usePluginEvents` hook.
+Sometimes extra state needs to be shared between plugin and core component, in cases where plugin needs to update the core state or core component needs to trigger an action in plugin, [usePluginEvents](https://github.com/msupply-foundation/open-msupply/blob/1b1d8f6c1c79bcf07ab048eb1e95f666aba1d7a1/client/packages/common/src/plugins/usePluginEvents.ts#L8) hook is [bound in the core component](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/system/src/Stock/DetailView/DetailView.tsx#L37) and [passed to the plugin](https://github.com/msupply-foundation/open-msupply/blob/1b1d8f6c1c79bcf07ab048eb1e95f666aba1d7a1/client/packages/system/src/Stock/Components/StockLineForm.tsx#L172). Plugin can then [set various state](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorEditInput.tsx#L54) which can be used in [core component](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/system/src/Stock/DetailView/DetailView.tsx#L110) and plugin can [mount an event listener](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorEditInput.tsx#L38-L39) which is [triggered from within core component](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/system/src/Stock/DetailView/DetailView.tsx#L56).
 
-For example, here is how you can call the `onSave` method within a plugin, when the `onSaveStockEditForm` event is dispatched:
+`usePluginEvents` helper can store any state and provide any type to event listener which in turn can return any type, for example if you want to set `isReady` state and trigger an event `onSave` that passes in a `string` to be validated, expecting `error` if not valid then:
 
 ```typescript
-  const { addEventListener, removeEventListener, dispatchEvent } = usePluginEvents();
+// In Core
+// When defining plugin interface
+events: UsePluginEvents<
+  { isReady: boolean },
+  { validateThisString: string },
+  'ok' | { error: 'string' }
+>;
 
-...
+const CoreComponent = () => {
+  //  Bind to component
+  const pluginEvents = usePluginEvents<
+    _,
+    { validateThisString: string },
+    'ok' | { error: 'string' }
+  >({ isReady: false });
+  // When asking for validation
+  const validate = async (validateThisString: string) => {
+    let validationResult = await pluginEvents.dispatchEvent({
+      validateThisString: 'good',
+    });
+    if (validationResult == 'ok') {
+      closeModal();
+    }
+    error(validationResult.error); // This is a toast
+    setError(validationResult.error);
+  };
 
-   useEffect(() => {
-    const listener: PluginEventListener = {
-      eventType: 'onSaveStockEditForm', // see the event types for available options
-      listener: onSave, // provide a method here with no parameters. This method will be called when plugins dispatch onSaveStockEditFormEvent, see example below
-    };
-    addEventListener(listener);
+  ...
 
-    return () => removeEventListener(listener); // remove the event listener when the component is unmounted
-  }, [onSave, addEventListener, removeEventListener]);
+  return (
+    <>
+      ...
+
+      // Checking for isReady
+      {pluginEvents.state.isReady && <div>I am ready</div>}
+    </>
+  );
+};
 ```
 
-In the above code, the plugin is listening for an `onSave` event within the `StockEditForm` (which has a specific event type of `onSaveStockEditForm`).
-When that event is dispatched, the plugin responds by calling its `onSave` method.
-
-The corresponding code in the `StockLineEditModal` looks like this:
-
 ```typescript
-const { dispatchEvent, addEventListener, removeEventListener } = usePluginEvents();
-
-// and then, the `dispatchEvent` call is added to the save button's onClick method:
-onClick={() =>
-    getConfirmation({
-      onConfirm: async () => {
-        await onSave();
-        dispatchEvent('onSaveStockEditForm', new Event(draft.id));
-        onClose();
-      },
-    })
-  }
-```
-
-Events can be dispatched and handled in the other direction too - raised by a plugin, and responded to within the main application.
-For example, here is how an edit form can trigger the validation method when the plugin data is changed:
-
-```typescript
-  const { dispatchEvent, addEventListener, removeEventListener } = usePluginEvents();
-
-  // then the `onChange` event for the text input is updated, to call the `dispatchEvent` method
-  onChange={e => {
-    setDonor(e.target.value);
-    dispatchEvent('onChangeStockEditForm', new Event(stockLine.id));
-  }}
-```
-
-The form within the app can listen for events with the following changes:
-
-```typescript
-  const { dispatchEvent, addEventListener, removeEventListener } = usePluginEvents();
-
-...
-
+// In Plugin
+const PluginComponent = ({ events }) => {
+// events should come as a parameter to component
   useEffect(() => {
-    const listener: PluginEventListener = {
-      eventType: 'onChangeStockEditForm',
-      listener: () => setHasChanged(true) // the plugin is indicating that its data has changed, so this form will need to update its changed status
-    };
+    const unmountEvent = events.mountEvent(({ validateThisString }) => {
+      // types should be know by typescript at this stage
+      if (validateThisString == 'good') {
+        return 'ok';
+      }
+      return { error: 'string is not good' };
+    });
+    return unmountEvent; // mountEvent return a handler to unmountEvent
+  }, []);
 
-    addEventListener(listener);
+  // Setting isReady
+  useEffect(() => {
+    events.setState({ isReady: true });
+  }, [somethingChanged]);
 
-    return () => removeEventListener(listener);
-  }, [addEventListener, removeEventListener]);
+  return <div>Plugin display content...</div>;
+}
 ```
 
-In this example, the `hasChanged` variable is used to enable the `Ok` button, which needs to be enabled when data in the plugin input is changed by the user. The method `setHasChanged` is called to set `hasChanged` to true which enables the button.
+Of course in above example the types should be defined once and shared (even though typescript guarantees they are valid it's a bit verbose)
 
+TODO actually tried to share types but had typescript error when doing `const pluginEvents: SomeConcreteTypeOfUsePluginEvent = usePluginEvents>({ isReady: false });` <- said that (boolean is not false ¯\_(ツ)\_/¯)
+
+When mounting event it's a good idea to reduce number of dependencies of the method that is mounted and triggered, useRef() can be used for this reason to pass non reactive but up to date state to the plugin:
+
+```typescript
+const [value, setValue] = useEffect('')
+
+const valueRef = useRef('')
+const valueRef.current = value
+
+// ...
+
+useEffect(() => {
+  const unmountEvent = events.mountEvent(() => {
+  console.log(`this will be the current value ${valueRef.current} this will be stale value ${value}`)
+   
+  return unmountEvent;
+}, [/* can also just listen to value here but on every value change we are mounting event and unmounting even */])
+```
 
 ### Plugin data
+
+TODO update this
 
 Plugins can store data in the `plugin_data` table. The following methods are available in the graphQL API for interacting with plugin data:
 
@@ -246,18 +146,60 @@ The querying and mutating of data follows the standard pattern used throughout o
 
 ```typescript
   const { data } = usePluginData.data(stockLine?.id ?? '');
-  const { mutate } = data?.id ? usePluginData.update() : usePluginData.insert();
+  const { mutate: insert } = usePluginData.insert();
+  const { mutate: update } = usePluginData.update();
 ```
 
 These functions can be implemented within your plugin and used to fetch and update data.
 
-
 ## Creating a plugin
 
-The simplest way to begin is by copying one of the examples from the branch `feature/front-end-plugins-example`. There are three in this branch currently:
+You can watch [this video for example](https://drive.google.com/file/d/1JnmPU9hRaQD4R1hTDKbbNj78FnM2l00A/view?usp=drive_link) TODO make public
+
+The simplest way to begin is by cloning (forking for now or just copy and create new repo, until we have a template), this repository https://github.com/msupply-foundation/open-msupply-plugins, then add it as a submodule to `client/packages/plugins/`. From the root of this repository, run: 
+
+```git submodule add [your-plugin-bundle-repo-url] client/packages/plugins/myPluginBundle```
+
+
+Note the `myPluginBundle` can be anything. The inner repository and core will be treated as two different repositories, changes in them will only be reflected in relative repositories (i.e. you can add the inner repository as local repository in github desktop). Make sure that you don't commit the `.gitmodule` or the single `client/packages/plugins/{your plugin bundle name}` to the core.
+
+You would need to change [name](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/package.json#L3) in package.json, which is also the plugin code and unique identifier (every plugin should have unique code). You should also add types that are implemented, in the future those will be displayed before plugin is installed, for validation form the user, for frontend plugins they are not essential though. TODO these types can be looked up when building, both for front end and backed plugin, by running ts-node and inspecting import { plugins } from './plugins.tsx' or '.ts'.
+
+Hot reloading will be working on dev mode but frontend needs to be restarted when adding a new plugin because local plugins are only discovered when webpack starts
+
+## Testing production build
+
+You can work on plugins as if they were part of the app (types should be shared, autocompletion and hot reload should work). If you want to test plugin in production, you can bundle it and deploy to server via:
+
+```bash
+# From server directory
+cargo run --bin remote_server_cli -- generate-plugin-bundle -i ../client/packages/plugins/mynewplugin/frontend -o pluginbundle.json
+```
+
+Above will generate `pluginbundle.json` with all backend and frontend plugins in the directory specified by `-i`, this bundle includes metadata, like code and plugin types and base64 contents of all of the files in the `dist` directory which was generated with `yarn build` command that was executed in every plugin directory.
+
+This can now be uploaded to the server via
+
+```bash
+# From server directory
+cargo run --bin remote_server_cli -- install-plugin-bundle -p pluginbundle.json --url 'http://localhost:8000' --username admin --password pass
+```
+
+Note you must be uploading plugins to central server for this to work
+
+Alternatively one command can be used for both:
+
+```bash
+cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/mynewplugin/frontend' --url 'http://localhost:8000' --username admin --password pass
+```
+
+In order to test this plugins in front end, you will need to start front end via `yarn -- -- --env LOAD_REMOTE_PLUGINS` which fetched plugins from the server rather then serving them from local directory, this is how plugins will be loaded in production (and plugins will sync and be served by remote site servers)
+
+## Example plugin types
 
 **ShippingStatus**
 This adds a simple toolbar button to the detail view of Inbound Shipments. The plugin demonstrates:
+
 - creating a plugin
 - receiving data from the host environment
 - using standard app components
@@ -265,6 +207,7 @@ This adds a simple toolbar button to the detail view of Inbound Shipments. The p
 
 **Dashboard**
 This example adds two widgets to the standard dashboard. It demonstrates:
+
 - creating a plugin
 - using standard app components
 - use of the app theme
@@ -274,6 +217,7 @@ This example adds two widgets to the standard dashboard. It demonstrates:
 
 **Stock Donor**
 This example adds a new field to a stock line, displaying the stored data in a new column within the list view and allowing editing of the field in the detail view. It demonstrates:
+
 - creating a plugin
 - using standard app components
 - use of the app theme
@@ -281,54 +225,14 @@ This example adds a new field to a stock line, displaying the stored data in a n
 - fetching data using the graphQL API
 - inserting and updating data using graphQL
 - utilising utility functions from the app
-- using plugin events to 
+- using plugin events to
   - trigger validation in the host page
   - save data when the host page is saving
 - store data which is specific to the plugin
 
-Create a new directory under the `client/packages/plugins` directory. In this you will need:
+Stock Donor example fetched data for all of the columns with [StateLoader component](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorColumn.tsx#L26-L30), which expects StockRowFragment array so that only pluginData for those rows is queried, and then [shares](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorColumn.tsx#L34) this data using [zustand state](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorColumn.tsx#L15-L22), [columns can then be populated](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorColumn.tsx#L42-L44) based on the StockRowFragment id they belong to
 
-- src : containing the source files of the plugin
-- plugin.json : which defines the plugin
-- webpack.config.js : used for bundling the plugin
-- dist : build output, not committed to source control
-
-## Development process 
-
-Create a react component and update webpack.config.js, adding the component files to the `exposes` section:
-
-```json
-  plugins: [
-    new ModuleFederationPlugin({
-      name: 'StockDonor',
-      remotes: {},
-      exposes: {
-        StockDonorEdit: './src/StockDonorEdit.tsx',
-        StockDonorEditInput: './src/StockDonorEditInput.tsx',
-        StockDonorColumn: './src/StockDonorColumn.tsx',
-      },
-      shared: {
-        ...dependencies,
-        react: {
-          eager: true,
-          singleton: true,
-          requiredVersion: dependencies['react'],
-        },
-        'react-dom': {
-          eager: true,
-          singleton: true,
-          requiredVersion: dependencies['react-dom'],
-        },
-        'react-singleton-context': { singleton: true, eager: true },
-      },
-    }),
-```
-
-In development mode simply run as usual (`yarn start` or `yarn start-local`) and webpack will read any plugin files from the `client/packages/plugins` directly and include them in the bundled javascript.
-
-When you are ready, run `yarn build-plugins` from the `./client` directory. This will compile and bundle all of the plugins. The contents of the `./client/packages/plugins/[your plugin name]/dist` folder can then be copied to the `./server/app_data/plugins/[your plugin name]` - available to be read by the server.
-
-The server will read all folders under `./server/app_data/plugins` and for any folders that have a `plugin.json` file, will make that plugin available in the list.
+TODO about column order
 
 ### Things to note
 
@@ -338,3 +242,32 @@ When plugins are running in 'production' mode, the standard react contexts are n
 - QueryClientProviderProxy
 
 which are storing the provider state locally and providing that to an instance of the Provider which the child components are then accessing.
+
+When using private repository submodule you will have to be logged in as the user with adequate permissions to the repository.
+
+### Compatibility/versioning
+
+TODO explain why the folder structure is the way it is, that versioning will be linked to min version of omSupply, and when making new version previous version is copied from latest to say `2_6` (when `2_7` is the new version with feature added to API that plugin uses). And then we can checkout older version of omSupply, with current version of plugin, and only load `2_6` with exlude and include in [getLocalPlugin.js](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/host/getLocalPlugins.js#L11-L12)
+
+### Adding new plugin interface
+
+There is this video that shows extending front end plugins https://drive.google.com/file/d/1kEEvJ9Pk6wpQGpBfKP1z2UmCw5EwztzV/view?usp=drive_link
+And this commit in the fork of plugins: https://drive.google.com/file/d/1kEEvJ9Pk6wpQGpBfKP1z2UmCw5EwztzV/view?usp=drive_link and this commit in front end: https://github.com/msupply-foundation/open-msupply/commit/86b6447eb970a32cd7d4e7d8f178a34619dffa71, although front end fails compilation and has a lot of extra changes relocating API types.
+
+TODO explain more about extending front end interface
+
+TODO make video and explanation about back end plugin interface extension
+
+# Backend plugins
+
+This video touches a little bit on backend plugins: https://drive.google.com/file/d/1JnmPU9hRaQD4R1hTDKbbNj78FnM2l00A/view?usp=drive_link
+
+TODO full description about backend plugins
+
+### More about bundling
+
+TODO more about how bundle should be used in production
+
+### Signing
+
+TOD When signing is re-instated talk about the process
