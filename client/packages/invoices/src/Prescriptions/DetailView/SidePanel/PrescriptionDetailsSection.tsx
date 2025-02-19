@@ -1,4 +1,4 @@
-import React, { FC, memo, useState } from 'react';
+import React, { FC, memo, useEffect, useState } from 'react';
 import {
   Grid,
   DetailPanelSection,
@@ -23,12 +23,14 @@ import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
 
 export const PrescriptionDetailsSectionComponent: FC = () => {
   const t = useTranslation();
+
   const {
     query: { data },
     isDisabled,
     update: { update },
     rows: items,
   } = usePrescription();
+
   const {
     id,
     clinician,
@@ -37,24 +39,32 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
     programId,
     theirReference,
   } = data ?? {};
+
   const deleteAll = () => {
     const allRows = (items ?? []).map(({ lines }) => lines.flat()).flat() ?? [];
     if (allRows.length === 0) return;
     deleteLines(allRows);
   };
+
   const { data: programData } = useProgramList(true);
+
   const programs = programData?.nodes ?? [];
+
   const selectedProgram = programs.find(prog => prog.id === programId);
+
   const {
     delete: { deleteLines },
   } = usePrescriptionLines();
+
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-delete-prescription-lines'),
   });
+
   const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
     clinician ?? null
   );
+
   const [dateValue, setDateValue] = useState(
     DateUtils.getDateOrNull(prescriptionDate) ??
       DateUtils.getDateOrNull(createdDatetime) ??
@@ -123,11 +133,28 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
 
   const [theirReferenceInput, setTheirReferenceInput] =
     useState(theirReference);
+
   const debouncedUpdate = useDebouncedValueCallback(update, [
     theirReferenceInput,
   ]);
 
   if (!createdDatetime) return null;
+
+  useEffect(() => {
+    setClinicianValue(clinician ?? null);
+  }, [clinician]);
+
+  useEffect(() => {
+    setTheirReferenceInput(theirReference);
+  }, [theirReference]);
+
+  useEffect(() => {
+    setDateValue(
+      DateUtils.getDateOrNull(prescriptionDate) ??
+        DateUtils.getDateOrNull(createdDatetime) ??
+        null
+    );
+  }, [prescriptionDate]);
 
   return (
     <DetailPanelSection title={t('heading.prescription-details')}>
