@@ -135,7 +135,7 @@ pub fn create_reverse_prescription(
         line.id = uuid();
         line.invoice_id = new_invoice.id.clone();
         line.r#type = match line.r#type {
-            repository::InvoiceLineType::StockIn => repository::InvoiceLineType::StockOut,
+            repository::InvoiceLineType::StockOut => repository::InvoiceLineType::StockIn,
             _ => line.r#type,
         };
         line_repo.upsert_one(&line)?;
