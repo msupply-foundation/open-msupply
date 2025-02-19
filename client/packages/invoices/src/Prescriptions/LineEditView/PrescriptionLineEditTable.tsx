@@ -5,14 +5,14 @@ import {
   DataTable,
   useTranslation,
 } from '@openmsupply-client/common';
-import { DraftStockOutLine } from '../../types';
+import { DraftPrescriptionLine } from '../../types';
 import { DraftItem } from '../..';
 import { usePrescriptionLineEditRows } from './hooks';
 import { usePrescriptionLineEditColumns } from './columns';
 
 export interface PrescriptionLineEditTableProps {
   onChange: (key: string, value: number) => void;
-  rows: DraftStockOutLine[];
+  rows: DraftPrescriptionLine[];
   item: DraftItem | null;
   allocatedUnits: number;
   batch?: string;

@@ -341,8 +341,11 @@ impl GeneralQueries {
         last_successful_user_sync(ctx)
     }
 
-    pub async fn plugins(&self, ctx: &Context<'_>) -> Result<Vec<PluginNode>> {
-        get_plugins(ctx)
+    pub async fn frontend_plugin_metadata(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Vec<FrontendPluginMetadataNode>> {
+        frontend_plugin_metadata(ctx)
     }
 
     pub async fn currencies(
