@@ -1,14 +1,20 @@
-import React, { FC, ReactElement, useEffect, useState } from 'react';
+import React, {
+  ComponentType,
+  FC,
+  ReactElement,
+  ReactNode,
+  useEffect,
+  useState,
+} from 'react';
 import {
-  Autocomplete,
   BasicTextInput,
   DialogButton,
   InputWithLabelRow,
 } from '@common/components';
+
 import {
   CurrencyInput,
   Grid,
-  Stack,
   usePluginEvents,
   usePluginProvider,
 } from '@openmsupply-client/common';
@@ -16,6 +22,7 @@ import { useDialog } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { usePrescription } from '../../api';
 import { usePatient } from '@openmsupply-client/system/src';
+import { PrescriptionPaymentComponentProps } from 'packages/common/src/plugins/prescriptionTypes';
 
 interface PaymentsModalProps {
   isOpen: boolean;
@@ -30,7 +37,8 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
 }): ReactElement => {
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const [insuranceId, setInsuranceId] = useState<string>();
+
+  const [policyNumber, setPolicyNumber] = useState<string>();
   const [discountRate, setDiscountRate] = useState(0);
   const [totalToBePaidByInsurance, setTotalToBePaidByInsurance] = useState(0);
 
@@ -38,34 +46,42 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     query: { data: prescriptionData },
   } = usePrescription();
 
+  const nameId = prescriptionData?.patientId ?? '';
+  const { data: insuranceData } = usePatient.document.insurances({
+    nameId,
+  });
+  const selectedInsurance = insuranceData?.nodes.find(
+    insurance => insurance.policyNumber === policyNumber
+  );
+
   const { plugins } = usePluginProvider();
   const pluginEvents = usePluginEvents({
     isDirty: false,
   });
 
-  const nameId = prescriptionData?.patientId ?? '';
-  const { data: insuranceData } = usePatient.document.insurances({
-    nameId,
-  });
+  const primaryPlugins = plugins.prescriptionPaymentForm?.slice(0, 2);
+  const secondaryPlugins = plugins.prescriptionPaymentForm?.slice(2);
 
-  const selectedInsurance = insuranceData?.nodes.find(
-    ({ insuranceProviders }) => insuranceProviders?.id === insuranceId
-  );
-
-  useEffect(() => {
-    if (!prescriptionData) return;
-
-    const totalAfterTax = prescriptionData?.pricing.totalAfterTax ?? 0;
-    const discountPercentage = selectedInsurance?.discountPercentage ?? 0;
-
-    setDiscountRate(discountPercentage);
-
-    const discountAmount = (totalAfterTax * discountPercentage) / 100;
-    setTotalToBePaidByInsurance(discountAmount);
-  }, [selectedInsurance]);
+  const renderPlugins = (
+    plugins: ComponentType<PrescriptionPaymentComponentProps>[] | undefined
+  ): ReactNode => {
+    return plugins?.map((Plugin, index) =>
+      prescriptionData ? (
+        <Grid key={index} size={{ xs: 12 }}>
+          <Plugin
+            prescriptionData={prescriptionData}
+            totalToBePaidByInsurance={totalToBePaidByInsurance}
+            totalToBePaidByPatient={
+              prescriptionData.pricing.totalAfterTax - totalToBePaidByInsurance
+            }
+            events={pluginEvents}
+          />
+        </Grid>
+      ) : null
+    );
+  };
 
   const onSave = async () => {
-    // onSave logic
     if (!prescriptionData) return;
 
     await pluginEvents.dispatchEvent({ id: prescriptionData.id });
@@ -73,9 +89,19 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     onClose();
   };
 
+  useEffect(() => {
+    if (!prescriptionData) return;
+    const totalAfterTax = prescriptionData?.pricing.totalAfterTax ?? 0;
+    const discountPercentage = selectedInsurance?.discountPercentage ?? 0;
+
+    setDiscountRate(discountPercentage);
+    const discountAmount = (totalAfterTax * discountPercentage) / 100;
+    setTotalToBePaidByInsurance(discountAmount);
+  }, [selectedInsurance]);
+
   return (
     <Modal
-      width={450}
+      width={700}
       title={t('title.payment')}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={<DialogButton variant="save" onClick={onSave} />}
@@ -83,8 +109,8 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
         '& .MuiDialogContent-root': { display: 'flex', alignItems: 'center' },
       }}
     >
-      <>
-        <Stack gap={2}>
+      <Grid container spacing={4}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <InputWithLabelRow
             label={t('label.total-to-be-paid')}
             Input={
@@ -96,26 +122,25 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
             }
           />
           <InputWithLabelRow
-            label={t('label.provider-name')}
+            label={t('label.paid-by-insurance')}
             Input={
-              <Autocomplete
-                options={
-                  insuranceData?.nodes.map(({ insuranceProviders }) => ({
-                    label: insuranceProviders?.providerName ?? '',
-                    value: insuranceProviders?.id ?? '',
-                  })) ?? []
-                }
-                getOptionLabel={option => option.label}
-                value={{
-                  label:
-                    selectedInsurance?.insuranceProviders?.providerName ?? '',
-                  value: selectedInsurance?.insuranceProviders?.id ?? '',
-                }}
-                onChange={(_, option) => {
-                  if (option) {
-                    setInsuranceId(option.value);
-                  }
-                }}
+              <CurrencyInput
+                key={totalToBePaidByInsurance}
+                value={totalToBePaidByInsurance}
+                onChangeNumber={() => {}}
+                style={{ borderRadius: 4, pointerEvents: 'none' }}
+              />
+            }
+            sx={{ pt: 1 }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <InputWithLabelRow
+            label={t('label.insurance-scheme')}
+            Input={
+              <BasicTextInput
+                value={selectedInsurance?.policyNumber}
+                onChange={event => setPolicyNumber(event.target.value)}
               />
             }
             sx={{ '& .MuiAutocomplete-root': { flexGrow: 1, borderRadius: 1 } }}
@@ -130,36 +155,12 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
                 }}
               />
             }
+            sx={{ pt: 1 }}
           />
-          <InputWithLabelRow
-            label={t('label.total-to-be-paid-by-insurance')}
-            Input={
-              <CurrencyInput
-                key={totalToBePaidByInsurance}
-                value={totalToBePaidByInsurance}
-                onChangeNumber={() => {}}
-                style={{ borderRadius: 4, pointerEvents: 'none' }}
-              />
-            }
-          />
-        </Stack>
-        <Grid container spacing={3} justifyContent="center">
-          {plugins.prescriptionPaymentForm?.map((Plugin, index) =>
-            prescriptionData ? (
-              <Plugin
-                key={index}
-                prescriptionData={prescriptionData}
-                totalToBePaidByInsurance={totalToBePaidByInsurance}
-                totalToBePaidByPatient={
-                  prescriptionData.pricing.totalAfterTax -
-                  totalToBePaidByInsurance
-                }
-                events={pluginEvents}
-              />
-            ) : null
-          )}
         </Grid>
-      </>
+        {renderPlugins(primaryPlugins)}
+        {renderPlugins(secondaryPlugins)}
+      </Grid>
     </Modal>
   );
 };

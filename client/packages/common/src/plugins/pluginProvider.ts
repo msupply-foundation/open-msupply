@@ -5,34 +5,41 @@ import {
   mergeWith,
   Plugins,
 } from '@openmsupply-client/common';
-import { Environment } from '@openmsupply-client/config/src';
+import { Environment } from '@openmsupply-client/config';
 
 // PLUGIN PROVIDER
 type PluginProvider = {
   plugins: Plugins;
-  // When plugin is reloaded with the same code it will be merged with existing plugins
-  // this will allow us to remove duplicates
-  cachedPlugins: { [code: string]: Plugins };
-  addPlugins: (_: Plugins, code: string) => void;
+  cachedPluginBundles: { [code: string]: Plugins };
+  addPluginBundle: (bundle: Plugins, code: string) => void;
 };
 
 export const usePluginProvider = create<PluginProvider>(set => {
   return {
     plugins: {},
-    cachedPlugins: {},
-    addPlugins: (plugins, code) => {
+    cachedPluginBundles: {},
+    addPluginBundle: (pluginBundle, code) => {
       set(state => {
-        const newCachedPlugins = { ...state.cachedPlugins, [code]: plugins };
-        // Here can determine if version is suitable
-        const newPlugins = Object.values(newCachedPlugins).reduce(
-          (acc, plugins) =>
-            mergeWith(acc, plugins, (a, b) =>
+        // Cache plugin bundles by code, to support hot reloading
+        const cachedPluginBundles = {
+          ...state.cachedPluginBundles,
+          [code]: pluginBundle,
+        };
+
+        // TODO: Here can determine if version is suitable
+        const plugins = Object.values(cachedPluginBundles).reduce(
+          (acc, pluginBundle) =>
+            mergeWith(acc, pluginBundle, (a, b) =>
               isArray(a) ? a.concat(b) : undefined
             ),
           {}
         );
 
-        return { ...state, plugins: newPlugins };
+        return {
+          ...state,
+          plugins,
+          cachedPluginBundles,
+        };
       });
     },
   };
