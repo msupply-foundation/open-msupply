@@ -1,5 +1,7 @@
 <style>
-  {% include "style.css" %}
+  {
+    % include "style.css" %
+  }
 </style>
 
 <div class="container">
@@ -24,11 +26,11 @@
       </tr>
     </thead>
     <tbody>
-      {% for item in data.items.nodes %} {% set SOH = item.stats.stockOnHand |
-      default(value=0) | round( precision=1) %} {% set AMC =
-      item.stats.averageMonthlyConsumption | default(value=0) |
-      round(precision=1) %} {% set MOS = item.stats.availableMonthsOfStockOnHand
-      | default(value=0) | round( precision=1) %}
+      {% for item in data.items.nodes %} 
+      {% set SOH = item.stats.stockOnHand | default(value=0) | round( precision=1) %} 
+      {% set AMC =  item.stats.averageMonthlyConsumption | default(value=0) |
+      round(precision=1) %} 
+      {% set MOS = item.stats.availableMonthsOfStockOnHand | default(value=0) | round( precision=1) %}
 
       <tr>
         <td>{{item.code}}</td>
