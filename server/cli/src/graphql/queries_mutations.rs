@@ -4,7 +4,7 @@ mutation Query($fileId: String!) {
     __typename
     plugins {
       installUploadedPlugin(fileId: $fileId) {
-        backendPluginCodes
+        pluginInfo
       }
     }
   }
