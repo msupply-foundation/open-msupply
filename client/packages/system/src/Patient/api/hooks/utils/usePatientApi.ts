@@ -5,7 +5,7 @@ import {
   CentralPatientSearchInput,
   PatientSearchInput,
 } from '@openmsupply-client/common';
-import { getPatientQueries, ListParams } from '../../api';
+import { getPatientQueries, InsuranceListParams, ListParams } from '../../api';
 import { getSdk, PatientRowFragment } from '../../operations.generated';
 
 export const usePatientApi = () => {
@@ -32,6 +32,8 @@ export const usePatientApi = () => {
         patientId,
         encounterType,
       ] as const,
+    insurances: (params: InsuranceListParams) =>
+      [...keys.base(), 'insurances', params] as const,
   };
   const { client } = useGql();
   const queries = getPatientQueries(getSdk(client), storeId);
