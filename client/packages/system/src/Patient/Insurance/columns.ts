@@ -6,7 +6,7 @@ import {
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
-import { InsuranceFragment } from '../api/operations.generated';
+import { InsuranceFragment } from '../apiModern/operations.generated';
 
 type Status = 'Active' | 'Inactive';
 
