@@ -88,7 +88,9 @@ pub(super) struct GenerateAndInstallPluginBundle {
     #[clap(long)]
     password: String,
 }
-
+// THe expected package.json format is as follows:
+// Front end: https://github.com/msupply-foundation/open-msupply-plugins/blob/81b78c31e5f938dd8b30783f7e3ee97555285f70/frontend/latest/package.json#L6-L14
+// Back end: https://github.com/msupply-foundation/open-msupply-plugins/blob/81b78c31e5f938dd8b30783f7e3ee97555285f70/backend/latest/package.json#L4-L10
 #[derive(Deserialize, Debug)]
 #[serde(tag = "target")]
 enum PluginDescription {
