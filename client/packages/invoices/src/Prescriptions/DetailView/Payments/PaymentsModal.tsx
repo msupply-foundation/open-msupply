@@ -8,7 +8,7 @@ import { CurrencyInput, Grid } from '@openmsupply-client/common';
 import { useDialog } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { usePrescription } from '../../api';
-import { usePatient } from '@openmsupply-client/system/src';
+import { useInsurances } from '@openmsupply-client/system/src';
 
 interface PaymentsModalProps {
   isOpen: boolean;
@@ -32,11 +32,11 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
   } = usePrescription();
 
   const nameId = prescriptionData?.patientId ?? '';
-  const { data: insuranceData } = usePatient.document.insurances({
-    nameId,
-  });
+  const {
+    query: { data: insuranceData },
+  } = useInsurances(nameId);
 
-  const selectedInsurance = insuranceData?.nodes.find(
+  const selectedInsurance = insuranceData?.find(
     insurance => insurance.policyNumber === policyNumber
   );
 

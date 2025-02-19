@@ -4,8 +4,9 @@ import {
   ColumnFormat,
   SortBy,
   useColumns,
+  useTranslation,
 } from '@openmsupply-client/common';
-import { InsuranceFragment } from '../api/operations.generated';
+import { InsuranceFragment } from '../apiModern/operations.generated';
 
 type Status = 'Active' | 'Inactive';
 
@@ -18,6 +19,7 @@ export const useInsuranceColumns = ({
   sortBy,
   onChangeSortBy,
 }: InsuranceColumns) => {
+  const t = useTranslation();
   const columns: ColumnDescription<InsuranceFragment>[] = [
     {
       label: 'label.policy-number',
@@ -33,6 +35,7 @@ export const useInsuranceColumns = ({
     {
       label: 'label.policy-type',
       key: 'policyType',
+      accessor: ({ rowData }) => t(`policyType.${rowData.policyType}`),
       sortable: false,
     },
     {
@@ -50,7 +53,7 @@ export const useInsuranceColumns = ({
       sortable: true,
     },
     {
-      label: 'label.is-active',
+      label: 'label.status',
       key: 'isActive',
       accessor: ({ rowData }): Status => {
         const { isActive } = rowData;
