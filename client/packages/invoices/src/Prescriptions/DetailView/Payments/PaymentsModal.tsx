@@ -7,7 +7,9 @@ import {
 } from '@common/components';
 import {
   CurrencyInput,
+  Grid,
   Stack,
+  usePluginEvents,
   usePluginProvider,
 } from '@openmsupply-client/common';
 import { useDialog } from '@common/hooks';
@@ -37,6 +39,9 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
   } = usePrescription();
 
   const { plugins } = usePluginProvider();
+  const pluginEvents = usePluginEvents({
+    isDirty: false,
+  });
 
   const nameId = prescriptionData?.patientId ?? '';
   const { data: insuranceData } = usePatient.document.insurances({
@@ -59,20 +64,21 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     setTotalToBePaidByInsurance(discountAmount);
   }, [selectedInsurance]);
 
+  const onSave = async () => {
+    // onSave logic
+    if (!prescriptionData) return;
+
+    await pluginEvents.dispatchEvent({ id: prescriptionData.id });
+    handleConfirm();
+    onClose();
+  };
+
   return (
     <Modal
       width={450}
       title={t('title.payment')}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      okButton={
-        <DialogButton
-          variant="save"
-          onClick={() => {
-            handleConfirm();
-            onClose();
-          }}
-        />
-      }
+      okButton={<DialogButton variant="save" onClick={onSave} />}
       sx={{
         '& .MuiDialogContent-root': { display: 'flex', alignItems: 'center' },
       }}
@@ -138,24 +144,21 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
           />
         </Stack>
         <Grid container spacing={3} justifyContent="center">
-          {fields.map(({ label, value, disabled = false, onChange }, index) => (
-            <Grid key={index} size={4}>
-              <InputWithLabelRow
-                label={label}
-                Input={
-                  <CurrencyInput
-                    value={value}
-                    disabled={disabled}
-                    onChangeNumber={onChange}
-                  />
+          {plugins.prescriptionPaymentForm?.map((Plugin, index) =>
+            prescriptionData ? (
+              <Plugin
+                key={index}
+                prescriptionData={prescriptionData}
+                totalToBePaidByInsurance={totalToBePaidByInsurance}
+                totalToBePaidByPatient={
+                  prescriptionData.pricing.totalAfterTax -
+                  totalToBePaidByInsurance
                 }
+                events={pluginEvents}
               />
-            </Grid>
-          ))}
+            ) : null
+          )}
         </Grid>
-        {plugins.prescriptionPaymentForm?.map((Plugin, index) =>
-          data ? <Plugin key={index} prescriptionData={data} /> : null
-        )}
       </>
     </Modal>
   );
