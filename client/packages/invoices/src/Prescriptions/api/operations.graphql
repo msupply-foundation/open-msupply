@@ -5,6 +5,7 @@ fragment PrescriptionRow on InvoiceNode {
   prescriptionDate: backdatedDatetime
   pickedDatetime
   verifiedDatetime
+  cancelledDatetime
   id
   invoiceNumber
   patientId: otherPartyId
@@ -34,7 +35,7 @@ fragment PrescriptionRow on InvoiceNode {
   lines {
     __typename
     nodes {
-      ...StockOutLine
+      ...PrescriptionLine
     }
     totalCount
   }
@@ -74,6 +75,100 @@ fragment PrescriptionRow on InvoiceNode {
   }
 
   programId
+}
+
+fragment PrescriptionLine on InvoiceLineNode {
+  __typename
+  id
+  type
+  batch
+  expiryDate
+  numberOfPacks
+  prescribedQuantity
+  packSize
+  invoiceId
+  costPricePerPack
+  sellPricePerPack
+  note
+  totalBeforeTax
+  totalAfterTax
+  taxPercentage
+  note
+  itemName
+
+  item {
+    __typename
+    id
+    name
+    code
+    unitName
+    itemDirections {
+      ...ItemDirection
+    }
+  }
+
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+  }
+
+  stockLine {
+    __typename
+    id
+    itemId
+    batch
+    availableNumberOfPacks
+    totalNumberOfPacks
+    onHold
+    sellPricePerPack
+    costPricePerPack
+    packSize
+    expiryDate
+    item {
+      name
+      code
+      itemDirections {
+        ...ItemDirection
+      }
+    }
+  }
+}
+
+fragment ItemDirection on ItemDirectionNode {
+  __typename
+  directions
+  id
+  itemId
+  priority
+}
+
+fragment PartialPrescriptionLine on StockLineNode {
+  id
+  itemId
+  availableNumberOfPacks
+  totalNumberOfPacks
+  onHold
+  costPricePerPack
+  sellPricePerPack
+  packSize
+  expiryDate
+  item {
+    name
+    code
+    itemDirections {
+      ...ItemDirection
+    }
+  }
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+  }
 }
 
 query prescriptions(
@@ -404,6 +499,13 @@ fragment historicalStockLine on StockLineNode {
   id
   availableNumberOfPacks
   packSize
+  item {
+    name
+    code
+    itemDirections {
+      ...ItemDirection
+    }
+  }
 }
 
 fragment diagnosis on DiagnosisNode {

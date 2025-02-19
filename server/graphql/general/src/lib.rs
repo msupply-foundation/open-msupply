@@ -42,6 +42,7 @@ use queries::{
     currency::currencies,
     display_settings::{display_settings, DisplaySettingsHash, DisplaySettingsNode},
     initialisation_status::{initialisation_status, InitialisationStatusNode},
+    insurance_providers::{insurance_providers, InsuranceProvidersResponse},
     insurances::{insurances, InsuranceResponse, InsuranceSortInput},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
     sync_settings::{sync_settings, SyncSettingsNode},
@@ -340,8 +341,11 @@ impl GeneralQueries {
         last_successful_user_sync(ctx)
     }
 
-    pub async fn plugins(&self, ctx: &Context<'_>) -> Result<Vec<PluginNode>> {
-        get_plugins(ctx)
+    pub async fn frontend_plugin_metadata(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Vec<FrontendPluginMetadataNode>> {
+        frontend_plugin_metadata(ctx)
     }
 
     pub async fn currencies(
@@ -448,6 +452,14 @@ impl GeneralQueries {
         sort: Option<Vec<InsuranceSortInput>>,
     ) -> Result<InsuranceResponse> {
         insurances(ctx, store_id, name_id, sort)
+    }
+
+    pub async fn insurance_providers(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<InsuranceProvidersResponse> {
+        insurance_providers(ctx, store_id)
     }
 }
 
