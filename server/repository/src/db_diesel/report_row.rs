@@ -10,12 +10,6 @@ use diesel_derive_enum::DbEnum;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum ReportType {
-    OmSupply,
-}
-
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ValueEnum)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -40,7 +34,6 @@ table! {
   report (id) {
       id -> Text,
       name -> Text,
-      #[sql_name = "type"] type_ -> crate::db_diesel::report_row::ReportTypeMapping,
       template -> Text,
       context -> crate::db_diesel::report_row::ContextTypeMapping,
       comment -> Nullable<Text>,
@@ -63,9 +56,6 @@ allow_tables_to_appear_in_same_query!(report, form_schema);
 pub struct ReportRow {
     pub id: String,
     pub name: String,
-    #[diesel(column_name = type_)]
-    pub r#type: ReportType,
-    /// The template format depends on the report type
     pub template: String,
     /// Used to store the report context
     pub context: ContextType,
@@ -82,7 +72,6 @@ impl Default for ReportRow {
         Self {
             id: Default::default(),
             name: Default::default(),
-            r#type: ReportType::OmSupply,
             template: Default::default(),
             context: ContextType::InboundShipment,
             comment: Default::default(),

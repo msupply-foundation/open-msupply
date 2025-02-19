@@ -19,7 +19,6 @@ impl MigrationFragment for Migrate {
                     sub_context TEXT,
                     argument_schema_id TEXT REFERENCES form_schema(id),
                     context TEXT NOT NULL,
-                    type TEXT NOT NULL,
                     is_custom BOOLEAN NOT NULL DEFAULT true,
                     version TEXT NOT NULL DEFAULT 1.0,
                     code TEXT NOT NULL DEFAULT ''
