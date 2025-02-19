@@ -49,7 +49,7 @@ pub fn print_qr_code(
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PrescriptionLabelData {
-    item_name: String,
+    item_details: String, // usually the amount of units + the item name e.g. "10Tabs Paracetamol 500mg Tablets"
     item_directions: String,
     patient_details: String, // e.g patient name, possibly code etc.
     warning: Option<String>, // Some items come with a defined warning (OG field "Message") that should be printed on all labels regardless of directions e.g. avoid sun exposure, avoid alcohol...
@@ -61,7 +61,7 @@ pub fn print_prescription_label(
     label_data: PrescriptionLabelData,
 ) -> Result<String> {
     let PrescriptionLabelData {
-        item_name,
+        item_details,
         item_directions,
         patient_details,
         warning,
@@ -79,7 +79,7 @@ pub fn print_prescription_label(
 ^A0,25
 ^FO20,10
 ^FB550,1,0,C
-^FD{item_name}\&^FS
+^FD{item_details}\&^FS
 
 ^FO20,50
 ^GB550,2,2^FS
