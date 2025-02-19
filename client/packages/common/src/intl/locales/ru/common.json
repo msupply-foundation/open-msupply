@@ -1852,5 +1852,11 @@
   "button.add-printer": "Добавить принтер",
   "button.configure-printers": "Настроить принтеры",
   "heading.printers": "Принтеры",
-  "messages.cannot-edit-requisition": "Невозможно отредактировать запрос."
+  "messages.cannot-edit-requisition": "Невозможно отредактировать запрос.",
+  "label.paid-by-insurance": "Оплачено по страховке",
+  "label.insurance-scheme": "Программа страхования",
+  "label.copy": "Скопировать",
+  "label.price": "Цена",
+  "label.dispensing-date": "Дата выдачи",
+  "heading.prescription-details": "Детали рецепта"
 }
