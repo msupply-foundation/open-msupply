@@ -15,6 +15,12 @@ export const useInsuranceProviders = () => {
     }
   };
 
-  const query = useQuery({ queryKey: [INSURANCE_PROVIDERS], queryFn });
-  return query;
+  const { data, isLoading, isError } = useQuery({
+    queryKey: [INSURANCE_PROVIDERS],
+    queryFn,
+  });
+
+  return {
+    query: { data: data?.nodes ?? [], isLoading, isError },
+  };
 };
