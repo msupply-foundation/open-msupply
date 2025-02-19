@@ -146,6 +146,10 @@ impl InvoiceNode {
         self.row().on_hold
     }
 
+    pub async fn is_cancellation(&self) -> bool {
+        self.row().is_cancellation
+    }
+
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
@@ -183,6 +187,12 @@ impl InvoiceNode {
     pub async fn backdated_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .backdated_datetime
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    }
+
+    pub async fn cancelled_datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .cancelled_datetime
             .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
