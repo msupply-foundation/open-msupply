@@ -30,7 +30,7 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
   const t = useTranslation();
   const PatientOptionRenderer = getPatientOptionRenderer();
   const { height } = useWindowDimensions();
-  const { isLoading, patients, search, totalCount, isSuccess } =
+  const { isLoading, patients, search, totalCount, isSuccess, searchText } =
     useSearchPatient();
 
   const modalHeight = height * 0.7;
@@ -65,7 +65,11 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
           onChange={(_, name) => {
             if (name && !(name instanceof Array)) onChange(name);
           }}
-          noOptionsText={t('messages.no-patients-found')}
+          noOptionsText={
+            // We don't want to show the "Not found" alert before user has
+            // started searching
+            searchText === '' ? '' : t('messages.no-patients-found')
+          }
         />
       </Box>
       <Box padding={2}>
