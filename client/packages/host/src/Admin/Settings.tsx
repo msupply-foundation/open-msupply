@@ -21,6 +21,7 @@ import { ElectronSettings } from './ElectronSettings';
 import { DisplaySettings } from './DisplaySettings';
 import { SettingsSection } from './SettingsSection';
 import { LabelPrinterSettings } from './LabelPrinterSettings';
+import { Printers } from './Printers';
 import { ConfigurationSettings } from './ConfigurationSettings';
 import { ServerInfo } from './ServerInfo';
 
@@ -73,12 +74,21 @@ export const Settings: React.FC = () => {
         <LabelPrinterSettings />
         <ElectronSettings />
       </SettingsSection>
+      <SettingsSection
+        Icon={PrinterIcon}
+        titleKey="heading.printers"
+        expanded={activeSection === 4}
+        onChange={toggleSection(4)}
+        visible={true}
+      >
+        <Printers />
+      </SettingsSection>
       {isCentralServer && (
         <SettingsSection
           Icon={ListIcon}
           titleKey="heading.configuration"
-          expanded={activeSection === 4}
-          onChange={toggleSection(4)}
+          expanded={activeSection === 5}
+          onChange={toggleSection(5)}
           visible={userHasPermission(UserPermission.ServerAdmin)}
         >
           <ConfigurationSettings />
