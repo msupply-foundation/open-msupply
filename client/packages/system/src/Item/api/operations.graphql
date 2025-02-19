@@ -23,6 +23,9 @@ fragment StockLine on StockLineNode {
     code
     unitName
     doses
+    itemDirections {
+      ...ItemDirection
+    }
   }
   note
   onHold
@@ -42,6 +45,21 @@ fragment ItemRow on ItemNode {
   unitName
 }
 
+fragment ItemRowWithDirections on ItemNode {
+  ...ItemRow
+  itemDirections {
+    ...ItemDirection
+  }
+}
+
+fragment ItemDirection on ItemDirectionNode {
+  __typename
+  directions
+  id
+  itemId
+  priority
+}
+
 fragment ItemWithPackSize on ItemNode {
   ...ItemRow
   defaultPackSize
@@ -49,6 +67,7 @@ fragment ItemWithPackSize on ItemNode {
 fragment ItemStockOnHand on ItemNode {
   ...ItemWithPackSize
   availableStockOnHand(storeId: $storeId)
+  ...ItemRowWithDirections
 }
 fragment ItemRowWithStats on ItemNode {
   ...ItemStockOnHand
@@ -163,6 +182,9 @@ fragment Item on ItemNode {
   }
   variants {
     ...ItemVariant
+  }
+  itemDirections {
+    ...ItemDirection
   }
 }
 

@@ -76,6 +76,8 @@ pub struct RequisitionFilterInput {
     pub comment: Option<StringFilterInput>,
     pub order_type: Option<EqualFilterStringInput>,
     pub a_shipment_has_been_created: Option<bool>,
+    pub period_id: Option<EqualFilterStringInput>,
+    pub program_id: Option<EqualFilterStringInput>,
 }
 
 #[derive(Union)]
@@ -237,13 +239,13 @@ impl RequisitionFilterInput {
             colour: self.colour.map(EqualFilter::from),
             their_reference: self.their_reference.map(StringFilter::from),
             comment: self.comment.map(StringFilter::from),
-            linked_requisition_id: None,
-            store_id: None,
             order_type: self.order_type.map(EqualFilter::from),
             a_shipment_has_been_created: self.a_shipment_has_been_created,
+            period_id: self.period_id.map(EqualFilter::from),
+            program_id: self.program_id.map(EqualFilter::from),
+            linked_requisition_id: None,
+            store_id: None,
             elmis_code: None,
-            period_id: None,
-            program_id: None,
         }
     }
 }

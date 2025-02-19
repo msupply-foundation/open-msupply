@@ -212,7 +212,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     const deleteResponseRequisitions = requisitions.map(
       responseParser.toDelete
     );
-    const result = await sdk.deleteRequest({
+    const result = await sdk.deleteResponse({
       storeId,
       input: { deleteResponseRequisitions },
     });
@@ -229,18 +229,11 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     const ids = responseLines.map(responseParser.toDeleteLine);
     const result = await sdk.deleteResponseLines({ ids, storeId });
 
-    if (result.batchResponseRequisition.deleteResponseRequisitionLines) {
-      const failedLines =
-        result.batchResponseRequisition.deleteResponseRequisitionLines.filter(
-          line =>
-            line.response.__typename === 'DeleteResponseRequisitionLineError'
-        );
-      if (failedLines.length === 0) {
-        return result.batchResponseRequisition.deleteResponseRequisitionLines;
-      }
+    if (result?.batchResponseRequisition.deleteResponseRequisitionLines) {
+      return result.batchResponseRequisition.deleteResponseRequisitionLines;
     }
 
-    throw new Error('Could not delete requisition lines!');
+    throw new Error('Could not delete lines');
   },
   insertLine: async (input: InsertResponseRequisitionLineInput) => {
     const result =

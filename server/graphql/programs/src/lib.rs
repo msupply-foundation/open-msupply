@@ -20,6 +20,7 @@ use graphql_types::types::program_enrolment::ProgramEventFilterInput;
 use graphql_types::types::program_event::ProgramEventResponse;
 use graphql_types::types::program_event::ProgramEventSortInput;
 use graphql_types::types::vaccination::VaccinationNode;
+use graphql_types::types::PeriodsResponse;
 use mutations::allocate_number::allocate_program_number;
 use mutations::allocate_number::AllocateProgramNumberInput;
 use mutations::allocate_number::AllocateProgramNumberResponse;
@@ -260,6 +261,15 @@ impl ProgramsQueries {
         sort: Option<ProgramSortInput>,
     ) -> Result<ProgramsResponse> {
         programs(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn periods(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        program_id: Option<String>,
+    ) -> Result<PeriodsResponse> {
+        periods(ctx, store_id, program_id)
     }
 
     pub async fn r_and_r_forms(

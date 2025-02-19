@@ -1,5 +1,6 @@
 use repository::{
-    EqualFilter, PaginationOption, ProgramFilter, ProgramRepository, ProgramRow, ProgramSort,
+    EqualFilter, PaginationOption, PeriodFilter, PeriodRepository, PeriodRow, ProgramFilter,
+    ProgramRepository, ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramSort,
     StorageConnection,
 };
 
@@ -37,4 +38,39 @@ pub fn get_program(
     } else {
         Err(SingleRecordError::NotFound(id))
     }
+}
+
+pub fn get_periods(
+    connection: &StorageConnection,
+    store_id: String,
+    program_id: Option<String>,
+) -> Result<ListResult<PeriodRow>, ListError> {
+    let periods = if let Some(program_id) = program_id {
+        let period_schedule_ids = ProgramRequisitionSettingsRowRepository::new(connection)
+            .find_many_by_program_id(&program_id)?
+            .iter()
+            .map(|settings| settings.period_schedule_id.clone())
+            .collect::<Vec<String>>();
+
+        PeriodRepository::new(connection)
+            .query_by_filter(
+                store_id,
+                None,
+                PeriodFilter::new().period_schedule_id(EqualFilter::equal_any(period_schedule_ids)),
+            )?
+            .iter()
+            .map(|period| period.period_row.clone())
+            .collect::<Vec<PeriodRow>>()
+    } else {
+        PeriodRepository::new(connection)
+            .query_by_filter(store_id, None, PeriodFilter::new())?
+            .iter()
+            .map(|period| period.period_row.clone())
+            .collect::<Vec<PeriodRow>>()
+    };
+
+    Ok(ListResult {
+        rows: periods.clone(),
+        count: periods.len() as u32,
+    })
 }

@@ -18,6 +18,8 @@ import {
   DeleteInboundShipmentServiceLineInput,
   RequisitionSortFieldInput,
   RequisitionNodeType,
+  InsertInboundShipmentLineFromInternalOrderLineInput,
+  RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA } from '../../utils';
@@ -107,6 +109,15 @@ const inboundParsers = {
       invoiceId: line.invoiceId,
       location: setNullableInput('id', line.location),
       itemVariantId: line.itemVariantId,
+    };
+  },
+  toInsertLineFromInternalOrder: (line: {
+    invoiceId: string;
+    requisitionLineId: string;
+  }): InsertInboundShipmentLineFromInternalOrderLineInput => {
+    return {
+      invoiceId: line.invoiceId,
+      requisitionLineId: line.requisitionLineId,
     };
   },
   toUpdateLine: (line: DraftInboundLine): UpdateInboundShipmentLineInput => ({
@@ -213,6 +224,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     listInternalOrders: async (otherPartyId: string) => {
       const filter = {
         type: { equalTo: RequisitionNodeType.Request },
+        status: { equalTo: RequisitionNodeStatus.Sent },
         otherPartyId: { equalTo: otherPartyId },
       };
       const result = await sdk.requests({
@@ -224,6 +236,15 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         filter,
       });
       return result?.requisitions;
+    },
+    listInternalOrderLines: async (requisitionId: string) => {
+      const result = await sdk.request({
+        storeId,
+        id: requisitionId,
+      });
+      if (result?.requisition?.__typename === 'RequisitionNode') {
+        return result.requisition;
+      }
     },
   },
   delete: async (invoices: InboundRowFragment[]): Promise<string[]> => {
@@ -267,6 +288,20 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       input: inboundParsers.toUpdate(patch),
       storeId,
     }),
+  insertLinesFromInternalOrder: async (
+    lines: { invoiceId: string; requisitionLineId: string }[]
+  ) => {
+    const result = await sdk.insertLinesFromInternalOrder({
+      storeId,
+      input: {
+        insertFromInternalOrderLines: lines.map(
+          inboundParsers.toInsertLineFromInternalOrder
+        ),
+      },
+    });
+
+    return result;
+  },
   deleteLines: async (lines: { id: string }[]) => {
     return sdk.deleteInboundShipmentLines({
       storeId,

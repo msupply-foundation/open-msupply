@@ -233,3 +233,31 @@ query latestPatientEncounter(
     }
   }
 }
+
+fragment Insurance on InsuranceNode {
+  id
+  policyNumber
+  policyType
+  discountPercentage
+  expiryDate
+  isActive
+  insuranceProviders {
+    id
+    providerName
+  }
+}
+
+query insurances(
+  $storeId: String!
+  $nameId: String!
+  $sort: [InsuranceSortInput!]
+) {
+  insurances(storeId: $storeId, nameId: $nameId, sort: $sort) {
+    ... on InsuranceConnector {
+      __typename
+      nodes {
+        ...Insurance
+      }
+    }
+  }
+}

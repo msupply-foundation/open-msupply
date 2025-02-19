@@ -6,8 +6,8 @@ import {
   NumUtils,
   useColumns,
 } from '@openmsupply-client/common';
-import { DraftStockOutLine } from '../../types';
-import { UnitQuantityCell } from '../../StockOut';
+import { DraftPrescriptionLine } from '../../types';
+import { UnitQuantityCell } from '../api/hooks/utils';
 
 export const usePrescriptionLineEditColumns = ({
   onChange,
@@ -16,7 +16,7 @@ export const usePrescriptionLineEditColumns = ({
   unit: string;
 }) => {
   const columns: ColumnDescription<
-    DraftStockOutLine & { unitQuantity?: number }
+    DraftPrescriptionLine & { unitQuantity?: number }
   >[] = [
     [
       'expiryDate',

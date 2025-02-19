@@ -39,7 +39,6 @@ use service::{
 
 use actix_web::{web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
-use upload::config_upload;
 
 mod authentication;
 pub mod certs;
@@ -55,11 +54,14 @@ pub mod static_files;
 pub mod support;
 mod upload_fridge_tag;
 pub use self::logging::*;
+mod serve_frontend_plugins;
 mod upload;
 
 pub mod print;
 mod sync_on_central;
 
+use serve_frontend_plugins::config_server_frontend_plugins;
+use upload::config_upload;
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
 #[cfg(not(target_os = "android"))]
 mod discovery;
@@ -283,14 +285,14 @@ pub async fn start_server(
                 } else {
                     true
                 }
-            },
+            }
         };
-                if discovery_enabled {
-                    info!("Starting server DNS-SD discovery",);
-                    discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
-                }else {
-                    info!("Server DNS-SD discovery disabled",);
-                }
+        if discovery_enabled {
+            info!("Starting server DNS-SD discovery",);
+            discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
+        } else {
+            info!("Server DNS-SD discovery disabled",);
+        }
     }
 
     info!("Starting discovery graphql server",);
@@ -340,6 +342,7 @@ pub async fn start_server(
             .configure(config_static_files)
             .configure(config_cold_chain)
             .configure(config_upload_fridge_tag)
+            .configure(config_server_frontend_plugins)
             .configure(config_sync_on_central)
             .configure(config_support)
             .configure(config_print)

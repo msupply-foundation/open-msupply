@@ -45,6 +45,8 @@ import {
   Spacer,
   keyedItemArrayTester,
   KeyedItemArray,
+  ToolbarLayout,
+  toolbarLayoutTester,
 } from './components';
 import {
   AccordionGroup,
@@ -202,6 +204,7 @@ const renderers = [
   { tester: noteTester, renderer: Note },
   { tester: spacerTester, renderer: Spacer },
   { tester: headerTester, renderer: Header },
+  { tester: toolbarLayoutTester, renderer: ToolbarLayout },
   // We should be able to remove materialRenderers once we are sure we have custom components to cover all cases.
   ...materialRenderers,
 ];
@@ -258,6 +261,9 @@ export const JsonForm: FC<
           width: FORM_LABEL_COLUMN_WIDTH,
           textAlign: 'right',
           whiteSpace: 'nowrap',
+        },
+        '&:empty': {
+          display: 'none',
         },
       }}
     >

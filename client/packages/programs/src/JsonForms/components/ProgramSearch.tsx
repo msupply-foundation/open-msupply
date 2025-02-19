@@ -1,23 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
+import {
+  Autocomplete,
+  DetailInputWithLabelRow,
+} from '@openmsupply-client/common';
+import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../common';
+import { ProgramFragment, useProgramList } from '../../api';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { Box, DetailInputWithLabelRow } from '@openmsupply-client/common';
-import { DefaultFormRowSx, FORM_GAP, FORM_LABEL_WIDTH } from '../common';
-import { PatientProgramSearchInput } from '../../Components';
-import { DocumentRegistryFragment } from '../../api';
 
 export const programSearchTester = rankWith(10, uiTypeIs('ProgramSearch'));
 
 const UIComponent = (props: ControlProps) => {
   const { handleChange, label, path } = props;
+  const { data, isLoading } = useProgramList(false);
+  const [program, setProgram] = useState<ProgramFragment | null>(null);
 
-  const [program, setProgram] = React.useState<DocumentRegistryFragment | null>(
-    null
-  );
-
-  const onChangeProgram = async (program: DocumentRegistryFragment) => {
+  const onChange = async (program: ProgramFragment) => {
     setProgram(program);
-    handleChange(path, program.contextId);
+    handleChange(path, program.id);
   };
 
   return (
@@ -27,12 +27,18 @@ const UIComponent = (props: ControlProps) => {
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}
       Input={
-        <Box display="flex" alignItems="center" gap={FORM_GAP} width="100%">
-          <PatientProgramSearchInput
-            onChange={onChangeProgram}
-            value={program}
-          />
-        </Box>
+        <Autocomplete
+          fullWidth
+          loading={isLoading}
+          options={data?.nodes ?? []}
+          optionKey="name"
+          onChange={(_, newVal) =>
+            newVal && newVal.id !== program?.id && onChange(newVal)
+          }
+          value={program ? { label: program.name ?? '', ...program } : null}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
+          clearable={false}
+        />
       }
     />
   );

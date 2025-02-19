@@ -93,6 +93,7 @@ pub struct InvoiceFilterInput {
     pub colour: Option<EqualFilterStringInput>,
     pub requisition_id: Option<EqualFilterStringInput>,
     pub linked_invoice_id: Option<EqualFilterStringInput>,
+    pub is_program_invoice: Option<bool>,
 }
 
 pub fn get_invoice(
@@ -224,6 +225,7 @@ impl InvoiceFilterInput {
             colour: self.colour.map(EqualFilter::from),
             requisition_id: self.requisition_id.map(EqualFilter::from),
             linked_invoice_id: self.linked_invoice_id.map(EqualFilter::from),
+            is_program_invoice: self.is_program_invoice,
             stock_line_id: None,
         }
     }

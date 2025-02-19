@@ -31,6 +31,7 @@ const createStatusLog = (invoice: OutboundFragment) => {
     [InvoiceNodeStatus.Shipped]: null,
     [InvoiceNodeStatus.Delivered]: null,
     [InvoiceNodeStatus.Verified]: null,
+    [InvoiceNodeStatus.Cancelled]: null,
   };
 
   if (statusIdx >= 0) {

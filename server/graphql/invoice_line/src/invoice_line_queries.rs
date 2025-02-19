@@ -1,6 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{EqualFilterBigFloatingNumberInput, EqualFilterStringInput},
+    generic_filters::{
+        DatetimeFilterInput, EqualFilterBigFloatingNumberInput, EqualFilterStringInput,
+    },
     generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput},
     map_filter,
     pagination::PaginationInput,
@@ -14,7 +16,8 @@ use graphql_types::types::{
     InvoiceLineConnector, InvoiceLineNodeType, InvoiceNodeStatus, InvoiceNodeType,
 };
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineSort, InvoiceLineSortField, PaginationOption,
+    DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineSort, InvoiceLineSortField,
+    PaginationOption,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -41,6 +44,8 @@ pub struct InvoiceLineFilterInput {
     pub invoice_type: Option<EqualFilterInvoiceTypeInput>,
     pub invoice_status: Option<EqualFilterInvoiceStatusInput>,
     pub stock_line_id: Option<EqualFilterStringInput>,
+    pub inventory_adjustment_reason: Option<EqualFilterStringInput>,
+    pub verified_datetime: Option<DatetimeFilterInput>,
 }
 
 impl InvoiceLineFilterInput {
@@ -63,9 +68,10 @@ impl InvoiceLineFilterInput {
                 .invoice_status
                 .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
             stock_line_id: self.stock_line_id.map(EqualFilter::from),
+            inventory_adjustment_reason: self.inventory_adjustment_reason.map(EqualFilter::from),
+            verified_datetime: self.verified_datetime.map(DatetimeFilter::from),
             picked_datetime: None,
             delivered_datetime: None,
-            verified_datetime: None,
         }
     }
 }
@@ -90,9 +96,10 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
                 .invoice_status
                 .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
             stock_line_id: f.stock_line_id.map(EqualFilter::from),
+            verified_datetime: f.verified_datetime.map(DatetimeFilter::from),
+            inventory_adjustment_reason: f.inventory_adjustment_reason.map(EqualFilter::from),
             picked_datetime: None,
             delivered_datetime: None,
-            verified_datetime: None,
         }
     }
 }
@@ -150,7 +157,6 @@ pub enum InvoiceLinesResponse {
 pub fn invoice_lines(
     ctx: &Context<'_>,
     store_id: &str,
-    invoice_id: &str,
     page: Option<PaginationInput>,
     filter: Option<InvoiceLineFilterInput>,
     sort: Option<Vec<InvoiceLineSortInput>>,
@@ -175,7 +181,6 @@ pub fn invoice_lines(
     let invoice_lines = service.get_invoice_lines(
         &service_ctx,
         store_id,
-        invoice_id,
         page.map(PaginationOption::from),
         filter.map(InvoiceLineFilter::from),
         sort.map(|s| s.to_domain()),

@@ -12,6 +12,7 @@ import {
   AdjustmentTypeInput,
   useNavigate,
   RouteBuilder,
+  usePluginEvents,
 } from '@openmsupply-client/common';
 import { useStockLine } from '../api';
 import { StockLineForm } from './StockLineForm';
@@ -34,6 +35,9 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   const t = useTranslation();
   const navigate = useNavigate();
   const { success } = useNotification();
+  const pluginEvents = usePluginEvents({
+    isDirty: false,
+  });
 
   const { Modal } = useDialog({ isOpen, onClose });
 
@@ -114,6 +118,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
               onUpdate={updatePatch}
               packEditable
               isInModal
+              pluginEvents={pluginEvents}
             />
             <Grid width={'50%'}>
               <StyledInputRow
