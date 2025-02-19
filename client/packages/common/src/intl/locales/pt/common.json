@@ -532,7 +532,7 @@
   "label.breach": "Brecha",
   "label.breach-type": "Tipo de brecha",
   "label.cant-delete-disabled": "Só é possível excluir linhas se o status é Novo",
-  "label.cant-delete-disabled-requisition": "Só é possível excluir linhas quando a requisição está no Rascunho",
+  "label.cant-delete-disabled-requisition": "Só é possível excluir linhas quando a requisição é Nova",
   "label.catalogue-item-code": "Código do item do catálogo",
   "label.category": "Categoria",
   "label.cce": "CCE",
@@ -1843,5 +1843,8 @@
   "report.satisfaction-rate-per-program": "Taxa de satisfação por programa",
   "title.patient-retrieval-modal": "Recuperação dos dados do paciente",
   "tooltip.import-fridge-tag": "Importar registos do ficheiro do Berlinger Fridge-tag e Q-tag. Um sensor será criado, se necessário, para cada ficheiro importado.",
-  "warning.cannot-create-placeholder-units": "Há um total de {{allocatedQuantity}} unidades disponíveis. Não foi possível alocar {{requestedQuantity}} unidades."
+  "warning.cannot-create-placeholder-units": "Há um total de {{allocatedQuantity}} unidades disponíveis. Não foi possível alocar {{requestedQuantity}} unidades.",
+  "button.add-printer": "Adicionar impressora",
+  "button.configure-printers": "Configurar Impressoras",
+  "heading.printers": "Impressoras"
 }
