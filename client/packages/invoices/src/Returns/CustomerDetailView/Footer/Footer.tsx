@@ -32,6 +32,7 @@ const createStatusLog = (invoice: CustomerReturnFragment) => {
     [InvoiceNodeStatus.Verified]: null,
     // Not used for returns
     [InvoiceNodeStatus.Allocated]: null,
+    [InvoiceNodeStatus.Cancelled]: null,
   };
   if (statusIdx >= 0) {
     statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;

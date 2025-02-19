@@ -1,7 +1,12 @@
 use async_graphql::*;
 use chrono::NaiveDate;
-use service::requisition_line::chart::{
-    ConsumptionHistory, ItemChart, StockEvolution, SuggestedQuantityCalculation,
+use repository::{name_insurance_join_row::InsurancePolicyType, InsuranceProviderRow};
+use serde::Serialize;
+use service::{
+    requisition_line::chart::{
+        ConsumptionHistory, ItemChart, StockEvolution, SuggestedQuantityCalculation,
+    },
+    ListResult,
 };
 use util::last_day_of_the_month;
 
@@ -167,6 +172,96 @@ impl ItemChartNode {
             suggested_quantity_calculation: SuggestedQuantityCalculationNode {
                 suggested_quantity_calculation,
             },
+        }
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum InsurancePolicyNodeType {
+    Personal,
+    Business,
+}
+
+impl InsurancePolicyNodeType {
+    pub fn from_domain(policy_type: &InsurancePolicyType) -> InsurancePolicyNodeType {
+        use InsurancePolicyType::*;
+        match policy_type {
+            Personal => InsurancePolicyNodeType::Personal,
+            Business => InsurancePolicyNodeType::Business,
+        }
+    }
+
+    pub fn to_domain(&self) -> InsurancePolicyType {
+        match self {
+            InsurancePolicyNodeType::Personal => InsurancePolicyType::Personal,
+            InsurancePolicyNodeType::Business => InsurancePolicyType::Business,
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub struct InsuranceProviderNode {
+    insurance_provider: InsuranceProviderRow,
+}
+
+#[derive(SimpleObject)]
+pub struct InsuranceProviderConnector {
+    total_count: u32,
+    nodes: Vec<InsuranceProviderNode>,
+}
+
+#[derive(Union)]
+pub enum InsuranceProviderResponse {
+    Response(InsuranceProviderConnector),
+}
+
+#[Object]
+impl InsuranceProviderNode {
+    pub async fn id(&self) -> &str {
+        &self.row().id
+    }
+
+    pub async fn provider_name(&self) -> &str {
+        &self.row().provider_name
+    }
+
+    pub async fn is_active(&self) -> bool {
+        self.row().is_active
+    }
+
+    pub async fn prescription_validity_days(&self) -> Option<i32> {
+        self.row().prescription_validity_days
+    }
+
+    pub async fn comment(&self) -> Option<&str> {
+        self.row().comment.as_deref()
+    }
+}
+
+impl InsuranceProviderNode {
+    pub fn from_domain(insurance_provider: InsuranceProviderRow) -> InsuranceProviderNode {
+        InsuranceProviderNode { insurance_provider }
+    }
+
+    pub fn row(&self) -> &InsuranceProviderRow {
+        &self.insurance_provider
+    }
+}
+
+impl InsuranceProviderConnector {
+    pub fn from_domain(
+        insurance_providers: ListResult<InsuranceProviderRow>,
+    ) -> InsuranceProviderConnector {
+        InsuranceProviderConnector {
+            total_count: insurance_providers.count,
+            nodes: insurance_providers
+                .rows
+                .iter()
+                .map(|insurance_provider| {
+                    InsuranceProviderNode::from_domain(insurance_provider.clone())
+                })
+                .collect(),
         }
     }
 }

@@ -191,12 +191,13 @@ const useStatusChangeButton = () => {
 };
 
 export const StatusChangeButton = () => {
+  const t = useTranslation();
   const { selectedOption, getConfirmation, lines } = useStatusChangeButton();
   const isDisabled = useRequest.utils.isDisabled();
   const { userHasPermission } = useAuthContext();
-  const t = useTranslation();
-  const cantSend = lines?.totalCount === 0;
-
+  const cantSend =
+    lines?.totalCount === 0 ||
+    lines?.nodes?.every(line => line?.requestedQuantity === 0);
   const showPermissionDenied = useDisabledNotificationToast(
     t('auth.permission-denied')
   );

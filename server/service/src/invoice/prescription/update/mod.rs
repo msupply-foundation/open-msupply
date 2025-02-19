@@ -22,6 +22,7 @@ use self::generate::GenerateResult;
 pub enum UpdatePrescriptionStatus {
     Picked,
     Verified,
+    Cancelled,
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -111,6 +112,7 @@ impl UpdatePrescriptionStatus {
         match self {
             UpdatePrescriptionStatus::Picked => InvoiceStatus::Picked,
             UpdatePrescriptionStatus::Verified => InvoiceStatus::Verified,
+            UpdatePrescriptionStatus::Cancelled => InvoiceStatus::Cancelled,
         }
     }
 
@@ -326,12 +328,14 @@ mod test {
                 id: prescription().id,
                 status: None,
                 patient_id: Some(mock_patient_b().id),
-                clinician_id: Some(NullableUpdate{value:Some(clinician().id),}),
+                clinician_id: Some(NullableUpdate {
+                    value: Some(clinician().id),
+                }),
                 comment: Some("test_comment".to_string()),
                 colour: Some("test_colour".to_string()),
                 backdated_datetime: None,
                 diagnosis_id: None,
-                their_reference: None, 
+                their_reference: None,
                 program_id: None,
             }
         }

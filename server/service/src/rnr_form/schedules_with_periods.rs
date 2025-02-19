@@ -13,6 +13,7 @@ pub struct PeriodSchedule {
     pub periods: Vec<Period>,
 }
 
+// R&R form
 pub fn get_schedules_with_periods_by_program(
     ctx: &ServiceContext,
     store_id: &str,
@@ -42,7 +43,7 @@ pub fn get_schedules_with_periods_by_program(
 
             let closed_periods = period_repo.query(
                 store_id.to_string(),
-                program_id.to_string(),
+                Some(program_id.to_string()),
                 Some(period_filter),
                 Some(PeriodSort {
                     key: PeriodSortField::EndDate,

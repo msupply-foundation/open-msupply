@@ -44,6 +44,8 @@ fragment PrescriptionRow on InvoiceNode {
     id
     name
     code
+    gender
+    dateOfBirth
     isDeceased
   }
 
@@ -413,5 +415,20 @@ fragment diagnosis on DiagnosisNode {
 query diagnosesActive {
   diagnosesActive {
     ...diagnosis
+  }
+}
+
+fragment Abbreviation on AbbreviationNode {
+  __typename
+  expansion
+  id
+  text
+}
+
+query abbreviations($filter: AbbreviationFilterInput) {
+  abbreviations(filter: $filter) {
+    ... on AbbreviationNode {
+      ...Abbreviation
+    }
   }
 }
