@@ -11,7 +11,6 @@ import {
   useDisabledNotificationToast,
   useEditModal,
 } from '@openmsupply-client/common';
-import { usePatient } from '@openmsupply-client/system/src';
 import {
   getNextPrescriptionStatus,
   getStatusTranslation,
@@ -87,10 +86,6 @@ const useStatusChangeButton = () => {
     isDisabled,
   } = usePrescription();
 
-  const { data: insuranceData } = usePatient.document.insurances({
-    nameId: data?.patientId ?? '',
-  });
-
   const { status, lines } = data ?? {};
 
   const hasLinesToPrune =
@@ -99,9 +94,7 @@ const useStatusChangeButton = () => {
 
   const showPaymentWindow =
     lines != null &&
-    lines.nodes.filter(({ totalAfterTax }) => totalAfterTax > 0).length > 0 &&
-    insuranceData?.nodes != null &&
-    insuranceData.nodes.length > 0;
+    lines.nodes.filter(({ totalAfterTax }) => totalAfterTax > 0).length > 0;
 
   const isEmptyLines =
     lines?.totalCount === 0 ||
@@ -195,13 +188,11 @@ export const StatusChangeButton = () => {
         Icon={<ArrowRightIcon />}
         onClick={onStatusClick}
       />
-      {showPaymentWindow && (
-        <PaymentsModal
-          isOpen={isOpen}
-          onClose={onClose}
-          handleConfirm={onConfirmStatusChange}
-        />
-      )}
+      <PaymentsModal
+        isOpen={isOpen}
+        onClose={onClose}
+        handleConfirm={onConfirmStatusChange}
+      />
     </>
   );
 };
