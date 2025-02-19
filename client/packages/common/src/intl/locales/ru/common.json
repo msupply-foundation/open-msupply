@@ -615,7 +615,7 @@
   "label.cancelled": "Отменено",
   "label.cant-change-location": "Возможно изменение локации строк только когда у строки 'Новый' статус",
   "label.cant-delete-disabled": "Возможно удаление строк только когда у строки 'Новый' статус",
-  "label.cant-delete-disabled-requisition": "Возможно удаление строк только когда у запроса на закупку 'Новый' статус",
+  "label.cant-delete-disabled-internal-order": "Возможно удаление строк только когда у внутреннего заказа 'Предварительный' статус",
   "label.cant-delete-disabled-requisition": "Возможно удаление строк только когда у запроса на закупку 'Предварительный' статус",
   "label.cant-zero-quantity-disabled": "Количество в строках может быть установлено равным 0 только когда у строки 'Новый' статус",
   "label.cant-zero-stock-lines-disabled": "Количество в строках может быть установлено равным 0 только когда у строки 'Новый' статус",
@@ -2218,5 +2218,4 @@
   "button.configure-printers": "Настроить принтеры",
   "heading.printers": "Принтеры",
   "messages.cannot-edit-requisition": "Невозможно отредактировать запрос.",
-  "warning.nothing-to-supply": "Больше нечего поставить!"
 }
