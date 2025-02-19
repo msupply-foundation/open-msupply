@@ -23,6 +23,7 @@ use mutations::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
     },
     initialise_site::{initialise_site, InitialiseSiteResponse},
+    insert_insurance::{insert_insurance, InsertInsuranceInput, InsertInsuranceResponse},
     label_printer_settings::{
         update_label_printer_settings, LabelPrinterSettingsInput,
         UpdateLabelPrinterSettingsResponse,
@@ -30,6 +31,7 @@ use mutations::{
     log::{update_log_level, LogLevelInput, UpsertLogLevelResponse},
     manual_sync::manual_sync,
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
+    update_insurance::{update_insurance, UpdateInsuranceInput, UpdateInsuranceResponse},
     update_name_properties::{
         update_name_properties, UpdateNamePropertiesInput, UpdateNamePropertiesResponse,
     },
@@ -40,6 +42,7 @@ use queries::{
     currency::currencies,
     display_settings::{display_settings, DisplaySettingsHash, DisplaySettingsNode},
     initialisation_status::{initialisation_status, InitialisationStatusNode},
+    insurances::{insurances, InsuranceResponse, InsuranceSortInput},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
     sync_settings::{sync_settings, SyncSettingsNode},
 };
@@ -436,6 +439,16 @@ impl GeneralQueries {
     ) -> Result<Vec<AbbreviationNode>> {
         abbreviations(ctx, filter)
     }
+
+    pub async fn insurances(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        name_id: String,
+        sort: Option<Vec<InsuranceSortInput>>,
+    ) -> Result<InsuranceResponse> {
+        insurances(ctx, store_id, name_id, sort)
+    }
 }
 
 #[derive(Default, Clone)]
@@ -509,6 +522,24 @@ impl GeneralMutations {
         input: UpdateNamePropertiesInput,
     ) -> Result<UpdateNamePropertiesResponse> {
         update_name_properties(ctx, &store_id, input)
+    }
+
+    async fn insert_insurance(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertInsuranceInput,
+    ) -> Result<InsertInsuranceResponse> {
+        insert_insurance(ctx, &store_id, input)
+    }
+
+    async fn update_insurance(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateInsuranceInput,
+    ) -> Result<UpdateInsuranceResponse> {
+        update_insurance(ctx, &store_id, input)
     }
 }
 
