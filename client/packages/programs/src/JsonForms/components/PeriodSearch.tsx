@@ -36,7 +36,16 @@ const UIComponent = (props: ControlProps) => {
 
   const onChange = async (period: PeriodFragment) => {
     setPeriod(period);
-    handleChange(path, period.id);
+
+    if (path === 'periodId') {
+      handleChange(path, period.id);
+    } else {
+      // date range so we can use it if no period id is saved
+      handleChange(path, new Date(period.startDate).toISOString());
+      const endOfDay = new Date(period.endDate);
+      endOfDay.setHours(24, 59, 59, 999);
+      handleChange('before', endOfDay.toISOString());
+    }
   };
 
   return (
