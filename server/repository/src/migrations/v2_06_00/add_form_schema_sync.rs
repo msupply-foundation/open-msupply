@@ -13,7 +13,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'om_form_schema';
+                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'form_schema';
                 "#
             )?;
         }
