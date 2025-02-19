@@ -1858,5 +1858,6 @@
   "label.copy": "Скопировать",
   "label.price": "Цена",
   "label.dispensing-date": "Дата выдачи",
-  "heading.prescription-details": "Детали рецепта"
+  "heading.prescription-details": "Детали рецепта",
+  "label.total-to-be-paid-by-insurance": "Общая сумма, подлежащая оплате по страховке"
 }
