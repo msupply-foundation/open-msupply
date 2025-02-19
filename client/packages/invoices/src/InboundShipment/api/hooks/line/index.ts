@@ -4,6 +4,7 @@ import { useInboundItems } from './useInboundItems';
 import { useInboundLines } from './useInboundLines';
 import { useInboundRows } from './useInboundRows';
 import { useInboundServiceLines } from './useInboundServiceLines';
+import { useLinesFromInternalOrder } from './useLinesFromInternalOrder';
 import { useSaveInboundLines } from './useSaveInboundLines';
 import { useZeroInboundLinesQuantity } from './useZeroInboundLinesQuantity';
 
@@ -16,4 +17,5 @@ export const Lines = {
   useInboundServiceLines,
   useSaveInboundLines,
   useZeroInboundLinesQuantity,
+  useLinesFromInternalOrder,
 };
