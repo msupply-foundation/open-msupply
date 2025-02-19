@@ -21,10 +21,10 @@ import {
   usePatientModalStore,
 } from '@openmsupply-client/programs';
 
-import { usePatient } from '../../../api';
-import { InsurancePolicySelect } from '../InsurancePolicySelect';
-import { InsuranceProvidersSelect } from '../InsuranceProvidersSelect';
-import { InsuranceStatusToggle } from '../InsuranceStatusToggle';
+import { usePatient } from '../api';
+import { InsurancePolicySelect } from './InsurancePolicySelect';
+import { InsuranceProvidersSelect } from './InsuranceProvidersSelect';
+import { InsuranceStatusToggle } from './InsuranceStatusToggle';
 
 const DEFAULT_INSURANCE = {
   id: '',
