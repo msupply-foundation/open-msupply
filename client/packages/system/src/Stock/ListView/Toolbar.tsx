@@ -27,7 +27,6 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               name: t('label.code-or-name'),
               urlParameter: 'itemCodeOrName',
               placeholder: t('placeholder.enter-an-item-code-or-name'),
-              isDefault: true,
             },
             {
               type: 'text',

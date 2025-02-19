@@ -51,10 +51,6 @@ const PrescriptionListViewComponent: FC = () => {
         key: 'pickedDatetime',
         condition: 'between',
       },
-      {
-        key: 'status',
-        condition: 'equalTo',
-      },
     ],
   });
   const listParams = {

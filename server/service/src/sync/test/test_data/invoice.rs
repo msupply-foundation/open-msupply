@@ -130,7 +130,6 @@ fn transact_1_pull_record() -> TestSyncIncomingRecord {
                     + Duration::seconds(47046),
             ),
             verified_datetime: None,
-            cancelled_datetime: None,
             colour: None,
             requisition_id: None,
             linked_invoice_id: None,
@@ -145,7 +144,6 @@ fn transact_1_pull_record() -> TestSyncIncomingRecord {
             name_insurance_join_id: Some("NAME_INSURANCE_JOIN_1_ID".to_string()),
             insurance_discount_amount: Some(10.0),
             insurance_discount_percentage: Some(2.5),
-            is_cancellation: false,
         },
     )
 }
@@ -315,7 +313,6 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             shipped_datetime: None,
             delivered_datetime: None,
             verified_datetime: None,
-            cancelled_datetime: None,
             colour: None,
             requisition_id: None,
             linked_invoice_id: None,
@@ -330,7 +327,6 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
-            is_cancellation: false,
         },
     )
 }
@@ -528,7 +524,6 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
                     .and_hms_opt(14, 33, 0)
                     .unwrap(),
             ),
-            cancelled_datetime: None,
             colour: Some("SomeColour".to_string()),
             requisition_id: None,
             linked_invoice_id: None,
@@ -543,7 +538,6 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
-            is_cancellation: false,
         },
     )
 }
@@ -749,7 +743,6 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             picked_datetime: None,
             shipped_datetime: None,
             delivered_datetime: None,
-            cancelled_datetime: None,
             requisition_id: None,
             linked_invoice_id: None,
             colour: None,
@@ -763,7 +756,6 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
-            is_cancellation: false,
         },
     )
 }
@@ -951,7 +943,6 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             shipped_datetime: None,
             delivered_datetime: None,
             requisition_id: None,
-            cancelled_datetime: None,
             linked_invoice_id: None,
             colour: None,
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
@@ -964,7 +955,6 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
-            is_cancellation: false,
         },
     )
 }
@@ -1146,7 +1136,6 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             shipped_datetime: None,
             delivered_datetime: None,
             verified_datetime: None,
-            cancelled_datetime: None,
             colour: None,
             requisition_id: None,
             linked_invoice_id: None,
@@ -1161,7 +1150,6 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
-            is_cancellation: false,
         },
     )
 }
