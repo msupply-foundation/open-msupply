@@ -53,7 +53,6 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               urlParameter: 'invoiceNumber',
               isDefault: false,
             },
-
             {
               type: 'group',
               name: t('label.date'),
