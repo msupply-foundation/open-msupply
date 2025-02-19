@@ -17,7 +17,7 @@ import { PageLayout } from './PageLayout';
 import { usePrescription, usePrescriptionLines } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { PrescriptionLineEdit } from './PrescriptionLineEdit';
-import { DraftStockOutLine } from '../../types';
+import { DraftPrescriptionLine } from '../../types';
 import { Footer } from './Footer';
 import { NavBar } from './NavBar';
 
@@ -54,7 +54,7 @@ export const PrescriptionLineEditView = () => {
   const status = data?.status;
 
   const [allDraftLines, setAllDraftLines] = useState<
-    Record<string, DraftStockOutLine[]>
+    Record<string, DraftPrescriptionLine[]>
   >({});
 
   let currentItem = lines.find(line => line.item.id === itemId)?.item;
@@ -99,7 +99,7 @@ export const PrescriptionLineEditView = () => {
     }
   );
 
-  const updateAllLines = (lines: DraftStockOutLine[]) => {
+  const updateAllLines = (lines: DraftPrescriptionLine[]) => {
     if (itemId === 'new') {
       newItemId.current = lines[0]?.item.id;
     }
