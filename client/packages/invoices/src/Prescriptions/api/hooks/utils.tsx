@@ -1,22 +1,74 @@
-import { FnUtils, NumUtils, SortUtils } from '@common/utils';
-import { NumberInputCell, CellProps } from '@openmsupply-client/common';
-import { DraftStockOutLine } from '../types';
-import { InvoiceLineNodeType, InvoiceNodeStatus } from '@common/types';
 import {
-  PartialStockLineFragment,
-  StockOutLineFragment,
-} from './operations.generated';
-import { DateUtils, LocaleKey, TypedTFunction } from '@common/intl';
+  DateUtils,
+  InvoiceLineNodeType,
+  InvoiceNodeStatus,
+  InvoiceSortFieldInput,
+  RecordPatch,
+  UpdatePrescriptionStatusInput,
+  NumberInputCell,
+  CellProps,
+  FnUtils,
+  SortUtils,
+} from '@openmsupply-client/common';
+import {
+  PartialPrescriptionLineFragment,
+  PrescriptionLineFragment,
+  PrescriptionRowFragment,
+} from '../operations.generated';
 import React from 'react';
-import { getPackQuantityCellId } from '../utils';
-import { StockOutAlert } from './Components';
-import { ItemPriceFragment } from '../OutboundShipment/api/operations.generated';
 
-export const createStockOutPlaceholderRow = (
+import { getPackQuantityCellId } from '../../../utils';
+import { DraftPrescriptionLine } from '../../../types';
+import { ItemPriceFragment } from '../../../OutboundShipment/api/operations.generated';
+
+export const sortFieldMap: Record<string, InvoiceSortFieldInput> = {
+  createdDateTime: InvoiceSortFieldInput.CreatedDatetime,
+  prescriptionDatetime: InvoiceSortFieldInput.InvoiceDatetime,
+  otherPartyName: InvoiceSortFieldInput.OtherPartyName,
+  comment: InvoiceSortFieldInput.Comment,
+  invoiceNumber: InvoiceSortFieldInput.InvoiceNumber,
+  status: InvoiceSortFieldInput.Status,
+  pickedDatetime: InvoiceSortFieldInput.PickedDatetime,
+};
+
+export const mapStatus = (patch: RecordPatch<PrescriptionRowFragment>) => {
+  switch (patch.status) {
+    case InvoiceNodeStatus.Picked:
+      return UpdatePrescriptionStatusInput.Picked;
+    case InvoiceNodeStatus.Verified:
+      return UpdatePrescriptionStatusInput.Verified;
+    case InvoiceNodeStatus.Cancelled:
+      return UpdatePrescriptionStatusInput.Cancelled;
+    default:
+      return undefined;
+  }
+};
+
+export const createInputObject = (
+  line: DraftPrescriptionLine,
+  type: 'insert' | 'update' | 'delete'
+) => {
+  const { id, numberOfPacks, prescribedQuantity, stockLine, invoiceId, note } =
+    line;
+
+  const stockLineId = stockLine?.id ?? '';
+  const output = { id, numberOfPacks, stockLineId, note, prescribedQuantity };
+
+  switch (type) {
+    case 'delete':
+      return { id };
+    case 'update':
+      return output;
+    case 'insert':
+      return { ...output, invoiceId };
+  }
+};
+
+export const createPrescriptionPlaceholderRow = (
   invoiceId: string,
   itemId: string,
   id = FnUtils.generateUUID()
-): DraftStockOutLine => ({
+): DraftPrescriptionLine => ({
   __typename: 'InvoiceLineNode',
   batch: '',
   id,
@@ -32,26 +84,33 @@ export const createStockOutPlaceholderRow = (
   totalBeforeTax: 0,
   expiryDate: undefined,
   type: InvoiceLineNodeType.UnallocatedStock,
-  item: { id: itemId, code: '', name: '', __typename: 'ItemNode' },
+  item: {
+    id: itemId,
+    code: '',
+    name: '',
+    __typename: 'ItemNode',
+    itemDirections: [],
+  },
   itemName: '',
 });
 
-export interface DraftStockOutLineSeeds {
+export interface DraftPrescriptionLineSeeds {
   invoiceId: string;
-  invoiceLine: StockOutLineFragment;
+  invoiceLine: PrescriptionLineFragment;
   invoiceStatus: InvoiceNodeStatus;
-  stockLine?: PartialStockLineFragment; // If this is not provided, the stock line from the invoice line will be used
+  stockLine?: PartialPrescriptionLineFragment; // If this is not provided, the stock line from the invoice line will be used
+  // Is this needed?
 }
 
-export const createDraftStockOutLineFromStockLine = ({
+export const createDraftPrescriptionLineFromStockLine = ({
   invoiceId,
   stockLine,
   defaultPricing,
 }: {
   invoiceId: string;
-  stockLine: PartialStockLineFragment;
+  stockLine: PartialPrescriptionLineFragment;
   defaultPricing?: ItemPriceFragment;
-}): DraftStockOutLine => {
+}): DraftPrescriptionLine => {
   let sellPricePerPack = stockLine?.sellPricePerPack ?? 0;
 
   // if there's a default price, it overrides the stock line price
@@ -88,17 +147,18 @@ export const createDraftStockOutLineFromStockLine = ({
       name: stockLine?.item?.name,
       code: stockLine?.item?.code,
       __typename: 'ItemNode',
+      itemDirections: [],
     },
 
     stockLine,
   };
 };
 
-export const createDraftStockOutLine = ({
+export const createDraftPrescriptionLine = ({
   invoiceLine,
   stockLine,
   invoiceStatus,
-}: DraftStockOutLineSeeds): DraftStockOutLine => {
+}: DraftPrescriptionLineSeeds): DraftPrescriptionLine => {
   // When creating a draft stock out line from an invoice line we may need to adjust the available and total number of packs
   // This is because, once an invoice line is created (even in New Status), the available number of packs is reduced by the number of packs in the invoice line
   // After it is in picked status, the total number of packs is also reduced by the number of packs in the invoice line
@@ -121,7 +181,7 @@ export const createDraftStockOutLine = ({
       : adjustedStockLine.totalNumberOfPacks;
   }
 
-  const draftStockOutLine = {
+  const draftPrescriptionLine = {
     isCreated: !invoiceLine,
     isUpdated: false,
     ...invoiceLine,
@@ -133,68 +193,72 @@ export const createDraftStockOutLine = ({
         }
       : {}),
   };
-  return draftStockOutLine;
+  return draftPrescriptionLine;
 };
 
-export interface UseDraftStockOutLinesControl {
-  draftStockOutLines: DraftStockOutLine[];
-  updateQuantity: (batchId: string, quantity: number) => void;
-  isLoading: boolean;
-  setDraftStockOutLines: React.Dispatch<
-    React.SetStateAction<DraftStockOutLine[]>
-  >;
-}
-
-export const sumAvailableQuantity = (
-  draftStockOutLines: DraftStockOutLine[]
-) => {
-  const sum = draftStockOutLines.reduce(
-    (acc, { stockLine, packSize, location }) =>
-      !location?.onHold && !stockLine?.onHold
-        ? acc + (stockLine?.availableNumberOfPacks ?? 0) * packSize
-        : acc,
-    0
-  );
-
-  return sum;
-};
-
-export const getAllocatedQuantity = (draftStockOutLines: DraftStockOutLine[]) =>
-  NumUtils.round(
-    draftStockOutLines.reduce(
-      (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
-      0
-    ),
-    3
-  );
-
-export const issueStock = (
-  draftStockOutLines: DraftStockOutLine[],
+export const issuePrescriptionStock = (
+  draftPrescriptionLines: DraftPrescriptionLine[],
   idToIssue: string,
   packs: number
 ) => {
-  const foundRowIdx = draftStockOutLines.findIndex(
+  const foundRowIdx = draftPrescriptionLines.findIndex(
     ({ id }) => id === idToIssue
   );
-  const foundRow = draftStockOutLines[foundRowIdx];
-  if (!foundRow) return draftStockOutLines;
+  const foundRow = draftPrescriptionLines[foundRowIdx];
+  if (!foundRow) return draftPrescriptionLines;
 
-  const newDraftStockOutLines = [...draftStockOutLines];
-  newDraftStockOutLines[foundRowIdx] = {
+  const newDraftPrescriptionLines = [...draftPrescriptionLines];
+  newDraftPrescriptionLines[foundRowIdx] = {
     ...foundRow,
     numberOfPacks: packs,
     isUpdated: true,
   };
 
-  return newDraftStockOutLines;
+  return newDraftPrescriptionLines;
+};
+
+export const updateNotes = (
+  draftPrescriptionLines: DraftPrescriptionLine[],
+  note: string
+) => {
+  return draftPrescriptionLines.map(line => ({
+    ...line,
+    note,
+    isUpdated: true,
+  }));
+};
+
+export const issueStock = (
+  draftPrescriptionLines: DraftPrescriptionLine[],
+  idToIssue: string,
+  packs: number
+) => {
+  const foundRowIdx = draftPrescriptionLines.findIndex(
+    ({ id }) => id === idToIssue
+  );
+  const foundRow = draftPrescriptionLines[foundRowIdx];
+  if (!foundRow) return draftPrescriptionLines;
+
+  const newDraftPrescriptionLines = [...draftPrescriptionLines];
+  newDraftPrescriptionLines[foundRowIdx] = {
+    ...foundRow,
+    numberOfPacks: packs,
+    isUpdated: true,
+  };
+
+  return newDraftPrescriptionLines;
 };
 
 export const allocateQuantities =
-  (status: InvoiceNodeStatus, draftStockOutLines: DraftStockOutLine[]) =>
+  (
+    status: InvoiceNodeStatus,
+    draftPrescriptionLines: DraftPrescriptionLine[]
+  ) =>
   (
     newValue: number,
     issuePackSize: number | null,
-    allowPartialPacks: boolean = false
+    allowPartialPacks: boolean = false,
+    prescribedQuantity: number | null
   ) => {
     // if invalid quantity entered, don't allocate
     if (newValue < 0 || Number.isNaN(newValue)) {
@@ -203,16 +267,16 @@ export const allocateQuantities =
 
     // If there is only one batch row, then it is the placeholder.
     // Assign all of the new value and short circuit.
-    const placeholder = draftStockOutLines.find(
+    const placeholder = draftPrescriptionLines.find(
       ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
     );
     if (
       placeholder &&
-      draftStockOutLines.length === 1 &&
+      draftPrescriptionLines.length === 1 &&
       status === InvoiceNodeStatus.New
     ) {
       return issueStock(
-        draftStockOutLines,
+        draftPrescriptionLines,
         placeholder?.id ?? '',
         newValue * (issuePackSize || 1)
       );
@@ -221,13 +285,13 @@ export const allocateQuantities =
     // calculations are normalised to units
     const totalToAllocate = newValue * (issuePackSize || 1);
     let toAllocate = totalToAllocate;
-    const newDraftStockOutLines = draftStockOutLines.map(batch => ({
+    const newDraftPrescriptionLines = draftPrescriptionLines.map(batch => ({
       ...batch,
       numberOfPacks: 0,
       isUpdated: batch.numberOfPacks > 0,
     }));
 
-    const validBatches = newDraftStockOutLines
+    const validBatches = newDraftPrescriptionLines
       .filter(
         ({ expiryDate, packSize, stockLine, location }) =>
           (issuePackSize ? packSize === issuePackSize : true) &&
@@ -240,7 +304,7 @@ export const allocateQuantities =
 
     toAllocate = allocateToBatches({
       validBatches,
-      newDraftStockOutLines,
+      newDraftPrescriptionLines,
       toAllocate,
       allowPartialPacks,
     });
@@ -250,7 +314,7 @@ export const allocateQuantities =
     if (toAllocate > 0) {
       toAllocate = allocateToBatches({
         validBatches,
-        newDraftStockOutLines,
+        newDraftPrescriptionLines,
         toAllocate,
         roundUp: true,
         allowPartialPacks,
@@ -264,16 +328,26 @@ export const allocateQuantities =
       toAllocate = reduceBatchAllocation({
         toAllocate: toAllocate * -1,
         validBatches,
-        newDraftStockOutLines,
+        newDraftPrescriptionLines,
       });
     }
 
+    //  Prescribed Quantity should only be saved on the first allocated line.
+    //  Only one line should have prescribed quantity per item.
+    //  If the line with prescribed quantity is deleted or has 0 stock, save it to the next line.
+    //  Can be saved against a placeholder if no stock is allocated.
+    assignPrescribedQuantity(
+      newDraftPrescriptionLines,
+      prescribedQuantity,
+      placeholder
+    );
+
     if (status === InvoiceNodeStatus.New) {
-      const placeholderIdx = newDraftStockOutLines.findIndex(
+      const placeholderIdx = newDraftPrescriptionLines.findIndex(
         ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
       );
-      const placeholder = newDraftStockOutLines[placeholderIdx];
-      const oldPlaceholder = draftStockOutLines[placeholderIdx];
+      const placeholder = newDraftPrescriptionLines[placeholderIdx];
+      const oldPlaceholder = draftPrescriptionLines[placeholderIdx];
       // remove if the oldPlaceholder.numberOfPacks is non-zero and the new placeholder.numberOfPacks is zero
       const placeholderRemoved =
         oldPlaceholder?.numberOfPacks && placeholder?.numberOfPacks === 0;
@@ -291,7 +365,7 @@ export const allocateQuantities =
           if (shouldUpdatePlaceholder(newValue, placeholder))
             placeholder.isUpdated = true;
 
-          newDraftStockOutLines[placeholderIdx] = {
+          newDraftPrescriptionLines[placeholderIdx] = {
             ...placeholder,
             numberOfPacks: placeholder.numberOfPacks + toAllocate,
           };
@@ -299,55 +373,56 @@ export const allocateQuantities =
       }
     }
 
-    return newDraftStockOutLines;
+    return newDraftPrescriptionLines;
   };
 
 const allocateToBatches = ({
   validBatches,
-  newDraftStockOutLines,
+  newDraftPrescriptionLines,
   toAllocate,
   roundUp = false,
   allowPartialPacks,
 }: {
-  validBatches: DraftStockOutLine[];
-  newDraftStockOutLines: DraftStockOutLine[];
+  validBatches: DraftPrescriptionLine[];
+  newDraftPrescriptionLines: DraftPrescriptionLine[];
   toAllocate: number;
   roundUp?: boolean;
   allowPartialPacks: boolean;
 }) => {
   validBatches.forEach(batch => {
-    const draftStockOutLineIdx = newDraftStockOutLines.findIndex(
+    const draftPrescriptionLineIdx = newDraftPrescriptionLines.findIndex(
       ({ id }) => batch.id === id
     );
-    const draftStockOutLine = newDraftStockOutLines[draftStockOutLineIdx];
-    if (!draftStockOutLine) return null;
+    const draftPrescriptionLine =
+      newDraftPrescriptionLines[draftPrescriptionLineIdx];
+    if (!draftPrescriptionLine) return null;
     if (toAllocate <= 0) return null;
 
-    const stockLineNode = draftStockOutLine.stockLine;
+    const stockLineNode = draftPrescriptionLine.stockLine;
     // note: taking numberOfPacks into account here, because this fn is used
     // a second time to round up the allocation
     const availableUnits =
       Math.floor(
         (stockLineNode?.availableNumberOfPacks ?? 0) -
-          draftStockOutLine.numberOfPacks
-      ) * draftStockOutLine.packSize;
+          draftPrescriptionLine.numberOfPacks
+      ) * draftPrescriptionLine.packSize;
     const unitsToAllocate = Math.min(toAllocate, availableUnits);
     const numberOfPacksToAllocate =
-      unitsToAllocate / draftStockOutLine.packSize;
+      unitsToAllocate / draftPrescriptionLine.packSize;
     const allocatedNumberOfPacks = allowPartialPacks
       ? numberOfPacksToAllocate
       : roundUp
         ? Math.ceil(numberOfPacksToAllocate)
         : Math.floor(numberOfPacksToAllocate);
 
-    toAllocate -= allocatedNumberOfPacks * draftStockOutLine.packSize;
+    toAllocate -= allocatedNumberOfPacks * draftPrescriptionLine.packSize;
 
     const numberOfPacks =
-      draftStockOutLine.numberOfPacks + allocatedNumberOfPacks;
+      draftPrescriptionLine.numberOfPacks + allocatedNumberOfPacks;
     const isUpdated = numberOfPacks > 0;
 
-    newDraftStockOutLines[draftStockOutLineIdx] = {
-      ...draftStockOutLine,
+    newDraftPrescriptionLines[draftPrescriptionLineIdx] = {
+      ...draftPrescriptionLine,
       numberOfPacks,
       isUpdated,
     };
@@ -358,36 +433,37 @@ const allocateToBatches = ({
 const reduceBatchAllocation = ({
   toAllocate,
   validBatches,
-  newDraftStockOutLines,
+  newDraftPrescriptionLines,
 }: {
   toAllocate: number;
-  validBatches: DraftStockOutLine[];
-  newDraftStockOutLines: DraftStockOutLine[];
+  validBatches: DraftPrescriptionLine[];
+  newDraftPrescriptionLines: DraftPrescriptionLine[];
 }) => {
   validBatches
     .slice()
     .sort(SortUtils.byExpiryDesc)
     .forEach(batch => {
-      const draftStockOutLineIdx = newDraftStockOutLines.findIndex(
+      const draftPrescriptionLineIdx = newDraftPrescriptionLines.findIndex(
         ({ id }) => batch.id === id
       );
-      const draftStockOutLine = newDraftStockOutLines[draftStockOutLineIdx];
-      if (!draftStockOutLine) return null;
+      const draftPrescriptionLine =
+        newDraftPrescriptionLines[draftPrescriptionLineIdx];
+      if (!draftPrescriptionLine) return null;
 
-      if (draftStockOutLine.packSize > toAllocate) return null;
-      if (draftStockOutLine.numberOfPacks === 0) return null;
+      if (draftPrescriptionLine.packSize > toAllocate) return null;
+      if (draftPrescriptionLine.numberOfPacks === 0) return null;
 
       const allocatedUnits =
-        draftStockOutLine.numberOfPacks * draftStockOutLine.packSize;
+        draftPrescriptionLine.numberOfPacks * draftPrescriptionLine.packSize;
       const unitsToReduce = Math.min(toAllocate, allocatedUnits);
 
       const numberOfPacks = Math.floor(
-        (allocatedUnits - unitsToReduce) / draftStockOutLine.packSize
+        (allocatedUnits - unitsToReduce) / draftPrescriptionLine.packSize
       );
       toAllocate -= unitsToReduce;
 
-      newDraftStockOutLines[draftStockOutLineIdx] = {
-        ...draftStockOutLine,
+      newDraftPrescriptionLines[draftPrescriptionLineIdx] = {
+        ...draftPrescriptionLine,
         numberOfPacks: numberOfPacks,
         isUpdated: numberOfPacks > 0,
       };
@@ -395,22 +471,40 @@ const reduceBatchAllocation = ({
   return -toAllocate;
 };
 
+export const assignPrescribedQuantity = (
+  newDraftPrescriptionLines: DraftPrescriptionLine[],
+  prescribedQuantity: number | null,
+  placeholder: DraftPrescriptionLine | undefined
+) => {
+  let prescribedQuantityAssigned = false;
+
+  newDraftPrescriptionLines.forEach(stockOutLine => {
+    if (stockOutLine.numberOfPacks > 0 && !prescribedQuantityAssigned) {
+      stockOutLine.prescribedQuantity = prescribedQuantity;
+      prescribedQuantityAssigned = true;
+    } else {
+      stockOutLine.prescribedQuantity = 0;
+    }
+  });
+
+  // If no stock is allocated, assign it to the placeholder stock
+  if (!prescribedQuantityAssigned && placeholder) {
+    const placeholderIdx = newDraftPrescriptionLines.findIndex(
+      ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+    );
+    newDraftPrescriptionLines[placeholderIdx] = {
+      ...placeholder,
+      prescribedQuantity,
+    };
+  }
+};
+
 export const shouldUpdatePlaceholder = (
   quantity: number,
-  placeholder: DraftStockOutLine
+  placeholder: DraftPrescriptionLine
 ) => quantity > 0 && !placeholder.isCreated;
 
-export const PackQuantityCell = (props: CellProps<DraftStockOutLine>) => (
-  <NumberInputCell
-    {...props}
-    max={props.rowData.stockLine?.availableNumberOfPacks}
-    id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
-    decimalLimit={2}
-    min={0}
-  />
-);
-
-export const UnitQuantityCell = (props: CellProps<DraftStockOutLine>) => (
+export const UnitQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
   <NumberInputCell
     {...props}
     max={
@@ -420,54 +514,15 @@ export const UnitQuantityCell = (props: CellProps<DraftStockOutLine>) => (
     id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
     min={0}
     decimalLimit={2}
-    slotProps={{
-      htmlInput: {
-        sx: {
-          backgroundColor: props.isDisabled ? undefined : 'background.white',
-        },
-      },
-    }}
   />
 );
 
-export const getAllocationAlerts = (
-  requestedQuantity: number,
-  allocatedQuantity: number,
-  placeholderQuantity: number,
-  hasOnHold: boolean,
-  hasExpired: boolean,
-  format: (value: number, options?: Intl.NumberFormatOptions) => string,
-  t: TypedTFunction<LocaleKey>
-) => {
-  const alerts: StockOutAlert[] = [];
-
-  const unavailableStockWarning = `${
-    hasOnHold ? t('messages.stock-on-hold') : ''
-  } ${hasExpired ? t('messages.stock-expired') : ''}`.trim();
-
-  if (unavailableStockWarning && requestedQuantity > 0) {
-    alerts.push({
-      message: unavailableStockWarning,
-      severity: 'info',
-    });
-  }
-
-  if (allocatedQuantity !== requestedQuantity && allocatedQuantity > 0) {
-    alerts.push({
-      message: t('messages.over-allocated', {
-        quantity: format(allocatedQuantity),
-        issueQuantity: format(requestedQuantity),
-      }),
-      severity: 'warning',
-    });
-    return alerts;
-  }
-  if (placeholderQuantity > 0) {
-    alerts.push({
-      message: t('messages.placeholder-allocated', { placeholderQuantity }),
-      severity: 'info',
-    });
-  }
-
-  return alerts;
-};
+export const PackQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
+  <NumberInputCell
+    {...props}
+    max={props.rowData.stockLine?.availableNumberOfPacks}
+    id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
+    decimalLimit={2}
+    min={0}
+  />
+);

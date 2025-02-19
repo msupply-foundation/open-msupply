@@ -1234,6 +1234,7 @@
   "message.database-not-local": "Database is running on a server, so can't be downloaded here",
   "message.database-not-sqlite": "Database download is only available for SQLite databases",
   "message.failed-to-create-requisition": "Failed to create requisition!",
+  "message.no-directions": "No default directions available",
   "message.keyboard-shortcuts": "Press 'Command' (Mac) or 'Control' (Windows) + 'k' to see a list of keyboard shortcuts which are available on any page. You can use the perform actions directly from the pop up window too.",
   "message.no-supplier": "Inventory Adjustment",
   "message.nothing-to-copy": "Nothing to copy",
