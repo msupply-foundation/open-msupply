@@ -96,7 +96,6 @@ pub struct ReportsData {
 pub struct ReportData {
     pub id: String,
     pub name: String,
-    pub r#type: repository::ReportType,
     pub template: ReportDefinition,
     pub context: ContextType,
     pub sub_context: Option<String>,
