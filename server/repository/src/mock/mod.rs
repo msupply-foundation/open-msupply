@@ -30,6 +30,7 @@ mod name_tag;
 mod number;
 mod option;
 mod period_and_period_schedule;
+mod printer;
 mod program;
 pub mod program_enrolment;
 mod program_indicator;
@@ -97,6 +98,7 @@ pub use name_tag::*;
 pub use number::*;
 pub use option::*;
 pub use period_and_period_schedule::*;
+pub use printer::*;
 pub use program::*;
 pub use program_enrolment::*;
 pub use program_indicator::*;
@@ -230,6 +232,7 @@ pub struct MockData {
     pub contact_form: Vec<ContactFormRow>,
     pub reports: Vec<crate::ReportRow>,
     pub backend_plugin: Vec<BackendPluginRow>,
+    pub printer: Vec<PrinterRow>,
     pub store_preferences: Vec<StorePreferenceRow>,
 }
 
@@ -316,6 +319,7 @@ pub struct MockDataInserts {
     pub contact_form: bool,
     pub reports: bool,
     pub backend_plugin: bool,
+    pub printer: bool,
     pub store_preferences: bool,
 }
 
@@ -391,6 +395,7 @@ impl MockDataInserts {
             contact_form: true,
             reports: true,
             backend_plugin: true,
+            printer: true,
             store_preferences: true,
         }
     }
@@ -735,6 +740,11 @@ impl MockDataInserts {
         self
     }
 
+    pub fn printer(mut self) -> Self {
+        self.printer = true;
+        self
+    }
+
     pub fn store_preferences(mut self) -> Self {
         self.store_preferences = true;
         self
@@ -832,6 +842,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             options: mock_options(),
             contact_form: mock_contact_form(),
             reports: mock_reports(),
+            printer: mock_printers(),
             ..Default::default()
         },
     );
@@ -1377,6 +1388,13 @@ pub fn insert_mock_data(
                 repo.upsert_one(row.clone()).unwrap();
             }
         }
+
+        if inserts.printer {
+            let repo = PrinterRowRepository::new(connection);
+            for row in &mock_data.printer {
+                repo.upsert_one(row).unwrap();
+            }
+        }
         if inserts.store_preferences {
             let repo = StorePreferenceRowRepository::new(connection);
             for row in &mock_data.store_preferences {
@@ -1461,6 +1479,7 @@ impl MockData {
             mut contact_form,
             mut reports,
             backend_plugin: _,
+            mut printer,
             mut store_preferences,
         } = other;
 
@@ -1535,6 +1554,8 @@ impl MockData {
         self.options.append(&mut options);
         self.contact_form.append(&mut contact_form);
         self.reports.append(&mut reports);
+        self.printer.append(&mut printer);
+
         self.store_preferences.append(&mut store_preferences);
         self
     }
