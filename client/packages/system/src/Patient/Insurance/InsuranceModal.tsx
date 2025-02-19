@@ -67,6 +67,7 @@ export const InsuranceModal: FC = (): ReactElement => {
     try {
       await updateInsurance(insuranceInput);
       success(t('messages.insurance-saved'))();
+      setModal(undefined);
     } catch (e) {
       error(
         t('messages.error-saving-insurances', { error: (e as Error).message })
@@ -79,15 +80,16 @@ export const InsuranceModal: FC = (): ReactElement => {
 
   const handleInsuranceInsert = async (): Promise<void> => {
     try {
-      await insertInsurance({
+      const result = await insertInsurance({
         ...insurance,
         id: FnUtils.generateUUID(),
         nameId,
       });
+      if (result.id != null) setModal(undefined);
       success(t('messages.insurance-created'))();
     } catch (e) {
       error(
-        t('messages.error-saving-insurances', { error: (e as Error).message })
+        t('messages.missing-insurance-inputs', { error: (e as Error).message })
       )();
     }
   };
@@ -95,7 +97,6 @@ export const InsuranceModal: FC = (): ReactElement => {
   const handleSave = async (): Promise<void> => {
     if (insuranceId !== undefined) await handleInsuranceUpdate();
     else await handleInsuranceInsert();
-    setModal(undefined);
   };
 
   useEffect(() => {
