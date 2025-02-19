@@ -36,7 +36,6 @@ table! {
         shipped_datetime -> Nullable<Timestamp>,
         delivered_datetime -> Nullable<Timestamp>,
         verified_datetime -> Nullable<Timestamp>,
-        cancelled_datetime -> Nullable<Timestamp>,
         colour -> Nullable<Text>,
         requisition_id -> Nullable<Text>,
         linked_invoice_id -> Nullable<Text>,
@@ -50,8 +49,7 @@ table! {
         program_id -> Nullable<Text>,
         name_insurance_join_id -> Nullable<Text>,
         insurance_discount_amount -> Nullable<Double>,
-        insurance_discount_percentage -> Nullable<Double>,
-        is_cancellation -> Bool,
+        insurance_discount_percentage -> Nullable<Double>
     }
 }
 
@@ -118,7 +116,6 @@ pub struct InvoiceRow {
     pub shipped_datetime: Option<NaiveDateTime>,
     pub delivered_datetime: Option<NaiveDateTime>,
     pub verified_datetime: Option<NaiveDateTime>,
-    pub cancelled_datetime: Option<NaiveDateTime>,
     pub colour: Option<String>,
     pub requisition_id: Option<String>,
     pub linked_invoice_id: Option<String>,
@@ -133,7 +130,6 @@ pub struct InvoiceRow {
     pub name_insurance_join_id: Option<String>,
     pub insurance_discount_amount: Option<f64>,
     pub insurance_discount_percentage: Option<f64>,
-    pub is_cancellation: bool,
 }
 
 impl Default for InvoiceRow {
@@ -158,7 +154,6 @@ impl Default for InvoiceRow {
             shipped_datetime: Default::default(),
             delivered_datetime: Default::default(),
             verified_datetime: Default::default(),
-            cancelled_datetime: Default::default(),
             colour: Default::default(),
             requisition_id: Default::default(),
             linked_invoice_id: Default::default(),
@@ -173,7 +168,6 @@ impl Default for InvoiceRow {
             name_insurance_join_id: Default::default(),
             insurance_discount_amount: Default::default(),
             insurance_discount_percentage: Default::default(),
-            is_cancellation: Default::default(),
         }
     }
 }

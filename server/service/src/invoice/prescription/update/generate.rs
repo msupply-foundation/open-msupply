@@ -151,9 +151,6 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, status: &Option<UpdatePresc
     let status_datetime = get_invoice_status_datetime(invoice);
 
     match (&invoice.status, new_status) {
-        (InvoiceStatus::Verified, UpdatePrescriptionStatus::Cancelled) => {
-            invoice.cancelled_datetime = Some(status_datetime)
-        }
         (InvoiceStatus::Verified, _) => {}
         (InvoiceStatus::New, UpdatePrescriptionStatus::Verified) => {
             invoice.picked_datetime = Some(status_datetime);

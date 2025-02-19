@@ -42,7 +42,7 @@ interface FilterDefinitions {
 
 // CONSTANTS
 const RESET_KEYWORD = 'RESET';
-export const FILTER_WIDTH = 180;
+export const FILTER_WIDTH = 220;
 
 export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
   const t = useTranslation();

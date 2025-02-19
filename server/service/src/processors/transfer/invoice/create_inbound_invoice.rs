@@ -236,7 +236,6 @@ fn generate_inbound_invoice(
         allocated_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
-        cancelled_datetime: None,
         clinician_link_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
@@ -244,7 +243,6 @@ fn generate_inbound_invoice(
         name_insurance_join_id: None,
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
-        is_cancellation: false,
     };
 
     Ok(result)

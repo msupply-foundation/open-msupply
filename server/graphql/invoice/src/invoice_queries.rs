@@ -93,7 +93,6 @@ pub struct InvoiceFilterInput {
     pub colour: Option<EqualFilterStringInput>,
     pub requisition_id: Option<EqualFilterStringInput>,
     pub linked_invoice_id: Option<EqualFilterStringInput>,
-    pub is_cancellation: Option<bool>,
     pub is_program_invoice: Option<bool>,
 }
 
@@ -228,7 +227,6 @@ impl InvoiceFilterInput {
             linked_invoice_id: self.linked_invoice_id.map(EqualFilter::from),
             is_program_invoice: self.is_program_invoice,
             stock_line_id: None,
-            is_cancellation: self.is_cancellation,
         }
     }
 }

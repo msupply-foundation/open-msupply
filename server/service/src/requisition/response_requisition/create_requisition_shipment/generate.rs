@@ -51,7 +51,6 @@ pub fn generate(
         shipped_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
-        cancelled_datetime: None,
         colour: None,
         linked_invoice_id: None,
         tax_percentage: None,
@@ -63,7 +62,6 @@ pub fn generate(
         name_insurance_join_id: None,
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
-        is_cancellation: false,
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;

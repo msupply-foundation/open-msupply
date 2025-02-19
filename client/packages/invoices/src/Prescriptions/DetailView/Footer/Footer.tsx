@@ -47,7 +47,8 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
     statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
   }
   if (statusIdx >= 3) {
-    statusLog[InvoiceNodeStatus.Cancelled] = invoice.cancelledDatetime;
+    // TO-DO: Should use "cancelledDateTime" when available
+    statusLog[InvoiceNodeStatus.Cancelled] = invoice.verifiedDatetime;
   }
 
   return statusLog;
