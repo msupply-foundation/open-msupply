@@ -92,12 +92,10 @@ const useStatusChangeButton = () => {
     data?.status !== InvoiceNodeStatus.Verified &&
     (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
 
+  // TODO: Don't show payment window if there is no insuranceProviders in the system
   const showPaymentWindow =
     lines != null &&
     lines.nodes.filter(({ totalAfterTax }) => totalAfterTax > 0).length > 0;
-  // TODO: Don't show payment window if there is no insuranceProviders in the system
-  //   insuranceData?.nodes != null &&
-  //   insuranceData.nodes.length > 0;
 
   const isEmptyLines =
     lines?.totalCount === 0 ||
@@ -191,13 +189,11 @@ export const StatusChangeButton = () => {
         Icon={<ArrowRightIcon />}
         onClick={onStatusClick}
       />
-      {showPaymentWindow && (
-        <PaymentsModal
-          isOpen={isOpen}
-          onClose={onClose}
-          handleConfirm={onConfirmStatusChange}
-        />
-      )}
+      <PaymentsModal
+        isOpen={isOpen}
+        onClose={onClose}
+        handleConfirm={onConfirmStatusChange}
+      />
     </>
   );
 };
