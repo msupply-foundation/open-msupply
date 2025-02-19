@@ -349,6 +349,9 @@ impl SyncTranslation for InvoiceTranslation {
             shipped_datetime: mapping.shipped_datetime,
             delivered_datetime: mapping.delivered_datetime,
             verified_datetime: mapping.verified_datetime,
+            // TO-DO: Correct values for next two fields
+            cancelled_datetime: None,
+            is_cancellation: false,
             colour: mapping.colour,
 
             requisition_id: data.requisition_ID,
@@ -411,6 +414,8 @@ impl SyncTranslation for InvoiceTranslation {
                     shipped_datetime,
                     delivered_datetime,
                     verified_datetime,
+                    // TO-DO: Sync this field
+                    cancelled_datetime: _,
                     colour,
                     requisition_id,
                     linked_invoice_id,
@@ -426,6 +431,8 @@ impl SyncTranslation for InvoiceTranslation {
                     name_insurance_join_id,
                     insurance_discount_amount,
                     insurance_discount_percentage,
+                    // TO-DO: Sync this field
+                    is_cancellation: _,
                 },
             name_row,
             clinician_row,
