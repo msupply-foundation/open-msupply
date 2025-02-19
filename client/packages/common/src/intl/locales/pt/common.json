@@ -1849,5 +1849,6 @@
   "heading.printers": "Impressoras",
   "message.cannot-delete-line-linked-to-shipment": "Não é possível excluir a(a) linha(s) porque uma ou mais linhas estão associadas com um ou mais envios",
   "messages.cannot-edit-requisition": "Não é possível editar a Requisição.",
-  "messages.how-to-read-item-usage": "Descrições da coluna:\n* Stock ordenado: Soma das quantidades de Ordens Internas menos qualquer Entrada.\n* Meses de cobertura: número de meses os quais o stock atual é esperado durar. O valor é igual a 'Em stock'/ 'CMM'. Note que a CMM é calculada utilizando o número de meses fornecido pelo 'período de retrocesso CMM' mostrado no filtro de relatório, que é configurado com o 'período de retrocesso CMM' da preferência da unidade de saúde."
+  "messages.how-to-read-item-usage": "Descrições da coluna:\n* Stock ordenado: Soma das quantidades de Ordens Internas menos qualquer Entrada.\n* Meses de cobertura: número de meses os quais o stock atual é esperado durar. O valor é igual a 'Em stock'/ 'CMM'. Note que a CMM é calculada utilizando o número de meses fornecido pelo 'período de retrocesso CMM' mostrado no filtro de relatório, que é configurado com o 'período de retrocesso CMM' da preferência da unidade de saúde.",
+  "heading.prescription-details": "Detalhes da Prescrição"
 }
