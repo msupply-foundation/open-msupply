@@ -1,11 +1,10 @@
 import React, { FC, ReactElement, useEffect, useState } from 'react';
 import {
-  Autocomplete,
   BasicTextInput,
   DialogButton,
   InputWithLabelRow,
 } from '@common/components';
-import { CurrencyInput, Stack } from '@openmsupply-client/common';
+import { CurrencyInput, Grid } from '@openmsupply-client/common';
 import { useDialog } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { usePrescription } from '../../api';
@@ -24,7 +23,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
 }): ReactElement => {
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const [insuranceId, setInsuranceId] = useState<string>();
+  const [policyNumber, setPolicyNumber] = useState<string>();
   const [discountRate, setDiscountRate] = useState(0);
   const [totalToBePaidByInsurance, setTotalToBePaidByInsurance] = useState(0);
 
@@ -38,7 +37,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
   });
 
   const selectedInsurance = insuranceData?.nodes.find(
-    ({ insuranceProviders }) => insuranceProviders?.id === insuranceId
+    insurance => insurance.policyNumber === policyNumber
   );
 
   useEffect(() => {
@@ -55,7 +54,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
 
   return (
     <Modal
-      width={450}
+      width={700}
       title={t('title.payment')}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
@@ -71,65 +70,56 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
         '& .MuiDialogContent-root': { display: 'flex', alignItems: 'center' },
       }}
     >
-      <Stack gap={2}>
-        <InputWithLabelRow
-          label={t('label.total-to-be-paid')}
-          Input={
-            <CurrencyInput
-              value={prescriptionData?.pricing.totalAfterTax}
-              onChangeNumber={() => {}}
-              style={{ borderRadius: 4, pointerEvents: 'none' }}
-            />
-          }
-        />
-        <InputWithLabelRow
-          label={t('label.provider-name')}
-          Input={
-            <Autocomplete
-              options={
-                insuranceData?.nodes.map(({ insuranceProviders }) => ({
-                  label: insuranceProviders?.providerName ?? '',
-                  value: insuranceProviders?.id ?? '',
-                })) ?? []
-              }
-              getOptionLabel={option => option.label}
-              value={{
-                label:
-                  selectedInsurance?.insuranceProviders?.providerName ?? '',
-                value: selectedInsurance?.insuranceProviders?.id ?? '',
-              }}
-              onChange={(_, option) => {
-                if (option) {
-                  setInsuranceId(option.value);
-                }
-              }}
-            />
-          }
-          sx={{ '& .MuiAutocomplete-root': { flexGrow: 1, borderRadius: 1 } }}
-        />
-        <InputWithLabelRow
-          label={t('label.discount-rate')}
-          Input={
-            <BasicTextInput
-              value={`${discountRate}%`}
-              sx={{
-                pointerEvents: 'none',
-              }}
-            />
-          }
-        />
-        <InputWithLabelRow
-          label={t('label.total-to-be-paid-by-insurance')}
-          Input={
-            <CurrencyInput
-              key={totalToBePaidByInsurance}
-              value={totalToBePaidByInsurance}
-              onChangeNumber={() => {}}
-              style={{ borderRadius: 4, pointerEvents: 'none' }}
-            />
-          }
-        />
-      </Stack>
+      <Grid container spacing={4}>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <InputWithLabelRow
+            label={t('label.total-to-be-paid')}
+            Input={
+              <CurrencyInput
+                value={prescriptionData?.pricing.totalAfterTax}
+                onChangeNumber={() => {}}
+                style={{ borderRadius: 4, pointerEvents: 'none' }}
+              />
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.paid-by-insurance')}
+            Input={
+              <CurrencyInput
+                key={totalToBePaidByInsurance}
+                value={totalToBePaidByInsurance}
+                onChangeNumber={() => {}}
+                style={{ borderRadius: 4, pointerEvents: 'none' }}
+              />
+            }
+            sx={{ pt: 2 }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <InputWithLabelRow
+            label={t('label.insurance-scheme')}
+            Input={
+              <BasicTextInput
+                value={selectedInsurance?.policyNumber}
+                onChange={event => setPolicyNumber(event.target.value)}
+              />
+            }
+            sx={{ '& .MuiAutocomplete-root': { flexGrow: 1, borderRadius: 1 } }}
+          />
+          <InputWithLabelRow
+            label={t('label.discount-rate')}
+            Input={
+              <BasicTextInput
+                value={`${discountRate}%`}
+                sx={{
+                  pointerEvents: 'none',
+                }}
+              />
+            }
+            sx={{ pt: 2 }}
+          />
+        </Grid>
+      </Grid>
     </Modal>
   );
 };
