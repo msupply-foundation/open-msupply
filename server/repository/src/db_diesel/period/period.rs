@@ -74,6 +74,8 @@ impl<'a> PeriodRepository<'a> {
                     apply_sort!(query, sort, period::end_date)
                 }
             }
+        } else {
+            query = query.order(period::end_date.desc());
         };
 
         let result = query.load::<PeriodJoin>(self.connection.lock().connection())?;
