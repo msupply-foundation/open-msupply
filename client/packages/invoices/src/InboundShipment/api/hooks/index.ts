@@ -18,6 +18,7 @@ export const useInbound = {
     next: Document.useNextItem,
 
     listInternalOrders: Document.useListInternalOrders,
+    listInternalOrderLines: Document.useListInternalOrderLines,
   },
   lines: {
     list: Lines.useInboundLines,
@@ -25,6 +26,7 @@ export const useInbound = {
     rows: Lines.useInboundRows,
     serviceLines: Lines.useInboundServiceLines,
 
+    insertFromInternalOrder: Lines.useLinesFromInternalOrder,
     delete: Lines.useDeleteInboundLines,
     deleteSelected: Lines.useDeleteSelectedLines,
     save: Lines.useSaveInboundLines,

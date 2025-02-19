@@ -27,6 +27,7 @@ import {
   useDocumentDataAccessor,
   EncounterSchema,
   JsonData,
+  unrankedToolbarTester,
 } from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
@@ -260,6 +261,7 @@ export const DetailView: FC = () => {
   // confirm to mark as visited
   const { isDirty: shouldMarkVisited, setIsDirty: setShouldMarkVisited } =
     useConfirmOnLeaving('encounter', {
+      allowRefresh: true,
       customConfirmation: proceed =>
         promptToMarkVisitedOnLeaving({
           onCancel: proceed,
@@ -327,29 +329,30 @@ export const DetailView: FC = () => {
       dataStatus === EncounterNodeStatus.Pending
     : false;
 
-  // For Immunization Programs, we display as two different tabs - Vaccinations
-  // card, and the normal "Encounter" page (if defined)
-  const tabs = [];
-  if (encounter && encounter.programEnrolment?.isImmunisationProgram) {
-    tabs.push({
-      Component: (
-        <VaccinationCard
-          encounterId={encounter.id}
-          programEnrolmentId={encounter.programEnrolment.id}
-          clinician={encounter.clinician ?? undefined}
-          onOk={() => {
-            // After changes to vax card, if the encounter is still pending
-            // we should prompt to mark as visited on leaving
-            if (encounter.status === EncounterNodeStatus.Pending)
-              setShouldMarkVisited(true);
-          }}
-        />
-      ),
-      value: t('label.vaccinations'),
-    });
-    if (encounter.document.documentRegistry?.uiSchema.elements.length > 0)
-      tabs.push({ Component: JsonForm, value: t('label.details') });
-  }
+  const VaxCard = encounter?.programEnrolment?.isImmunisationProgram ? (
+    <VaccinationCard
+      encounterId={encounter.id}
+      programEnrolmentId={encounter.programEnrolment.id}
+      clinician={encounter.clinician ?? undefined}
+      onOk={() => {
+        // After changes to vax card, if the encounter is still pending
+        // we should prompt to mark as visited on leaving
+        if (encounter.status === EncounterNodeStatus.Pending)
+          setShouldMarkVisited(true);
+      }}
+    />
+  ) : null;
+
+  // Some Immunisation Program Encounters require minimal extra data
+  // and may choose to display these inputs in the toolbar rather than the full form tab
+  const { uiSchema, jsonSchema } = JsonForm.props;
+  const usingToolbarFormLayout = unrankedToolbarTester(uiSchema, jsonSchema, {
+    rootSchema: jsonSchema,
+    config: {},
+  });
+
+  // If we need to show both vax card and forms page, we need to use tabs
+  const asTabs = !!VaxCard && !usingToolbarFormLayout;
 
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
@@ -378,7 +381,20 @@ export const DetailView: FC = () => {
             />
           )}
           <Toolbar onChange={updateEncounter} encounter={encounter} />
-          {tabs.length > 0 ? <DetailTabs tabs={tabs} /> : JsonForm}
+          {asTabs ? (
+            <DetailTabs
+              tabs={[
+                { Component: VaxCard, value: t('label.vaccinations') },
+                { Component: JsonForm, value: t('label.details') },
+              ]}
+            />
+          ) : (
+            <>
+              {VaxCard}
+              {JsonForm}
+            </>
+          )}
+
           <SidePanel
             encounter={encounter}
             onChange={updateEncounter}
