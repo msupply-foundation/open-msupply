@@ -865,6 +865,11 @@ export type CannotDeleteInvoiceWithLines = DeleteCustomerReturnErrorInterface & 
   lines: InvoiceLineConnector;
 };
 
+export type CannotDeleteLineLinkedToShipment = DeleteResponseRequisitionLineErrorInterface & {
+  __typename: 'CannotDeleteLineLinkedToShipment';
+  description: Scalars['String']['output'];
+};
+
 export type CannotDeleteRequisitionWithLines = DeleteRequestRequisitionErrorInterface & {
   __typename: 'CannotDeleteRequisitionWithLines';
   description: Scalars['String']['output'];
@@ -2424,6 +2429,11 @@ export type Gs1DataElement = {
   data: Scalars['String']['input'];
 };
 
+export type IdResponse = {
+  __typename: 'IdResponse';
+  id: Scalars['String']['output'];
+};
+
 export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
@@ -2808,6 +2818,20 @@ export type InsertInboundShipmentServiceLineResponseWithId = {
   response: InsertInboundShipmentServiceLineResponse;
 };
 
+export type InsertInsuranceInput = {
+  discountPercentage: Scalars['Float']['input'];
+  expiryDate: Scalars['NaiveDate']['input'];
+  id: Scalars['String']['input'];
+  insuranceProviderId: Scalars['String']['input'];
+  isActive: Scalars['Boolean']['input'];
+  nameId: Scalars['String']['input'];
+  policyNumberFamily: Scalars['String']['input'];
+  policyNumberPerson: Scalars['String']['input'];
+  policyType: InsurancePolicyNodeType;
+};
+
+export type InsertInsuranceResponse = IdResponse;
+
 export type InsertInventoryAdjustmentErrorInterface = {
   description: Scalars['String']['output'];
 };
@@ -3001,6 +3025,17 @@ export type InsertPrescriptionResponseWithId = {
   id: Scalars['String']['output'];
   response: InsertPrescriptionResponse;
 };
+
+export type InsertPrinterInput = {
+  address: Scalars['String']['input'];
+  description: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  labelHeight: Scalars['Int']['input'];
+  labelWidth: Scalars['Int']['input'];
+  port: Scalars['Int']['input'];
+};
+
+export type InsertPrinterResponse = PrinterNode;
 
 export type InsertProgramEnrolmentInput = {
   /** Program document data */
@@ -4271,6 +4306,7 @@ export type Mutations = {
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
+  insertInsurance: InsertInsuranceResponse;
   insertLocation: InsertLocationResponse;
   insertOutboundShipment: InsertOutboundShipmentResponse;
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
@@ -4281,6 +4317,7 @@ export type Mutations = {
   insertPluginData: InsertPluginDataResponse;
   insertPrescription: InsertPrescriptionResponse;
   insertPrescriptionLine: InsertPrescriptionLineResponse;
+  insertPrinter: InsertPrinterResponse;
   /**
    * Enrols a patient into a program by adding a program document to the patient's documents.
    * Every patient can only have one program document of each program type.
@@ -4319,6 +4356,7 @@ export type Mutations = {
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
   updateIndicatorValue: UpdateIndicatorValueResponse;
+  updateInsurance: UpdateInsuranceResponse;
   updateLabelPrinterSettings: UpdateLabelPrinterSettingsResponse;
   updateLocation: UpdateLocationResponse;
   updateLogLevel: UpsertLogLevelResponse;
@@ -4333,6 +4371,7 @@ export type Mutations = {
   updatePluginData: UpdatePluginDataResponse;
   updatePrescription: UpdatePrescriptionResponse;
   updatePrescriptionLine: UpdatePrescriptionLineResponse;
+  updatePrinter: UpdatePrinterResponse;
   /** Updates an existing program document belonging to a patient. */
   updateProgramEnrolment: UpdateProgramEnrolmentResponse;
   /**
@@ -4634,6 +4673,12 @@ export type MutationsInsertInboundShipmentServiceLineArgs = {
 };
 
 
+export type MutationsInsertInsuranceArgs = {
+  input: InsertInsuranceInput;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type MutationsInsertLocationArgs = {
   input: InsertLocationInput;
   storeId: Scalars['String']['input'];
@@ -4685,6 +4730,11 @@ export type MutationsInsertPrescriptionArgs = {
 export type MutationsInsertPrescriptionLineArgs = {
   input: InsertPrescriptionLineInput;
   storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertPrinterArgs = {
+  input: InsertPrinterInput;
 };
 
 
@@ -4849,6 +4899,12 @@ export type MutationsUpdateIndicatorValueArgs = {
 };
 
 
+export type MutationsUpdateInsuranceArgs = {
+  input: UpdateInsuranceInput;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type MutationsUpdateLabelPrinterSettingsArgs = {
   input: LabelPrinterSettingsInput;
 };
@@ -4923,6 +4979,11 @@ export type MutationsUpdatePrescriptionArgs = {
 export type MutationsUpdatePrescriptionLineArgs = {
   input: UpdatePrescriptionLineInput;
   storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdatePrinterArgs = {
+  input: UpdatePrinterInput;
 };
 
 
@@ -5566,6 +5627,28 @@ export type PrintReportSortInput = {
   key: Scalars['String']['input'];
 };
 
+export type PrinterConnector = {
+  __typename: 'PrinterConnector';
+  nodes: Array<PrinterNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PrinterFilterInput = {
+  address?: InputMaybe<EqualFilterStringInput>;
+  description?: InputMaybe<StringFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type PrinterNode = {
+  __typename: 'PrinterNode';
+  address: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  labelHeight: Scalars['Int']['output'];
+  labelWidth: Scalars['Int']['output'];
+  port: Scalars['Int']['output'];
+};
+
 export type ProgramConnector = {
   __typename: 'ProgramConnector';
   nodes: Array<ProgramNode>;
@@ -5917,6 +6000,7 @@ export type Queries = {
   patients: PatientResponse;
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
+  printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
   programIndicators: ProgramIndicatorResponse;
@@ -6417,6 +6501,11 @@ export type QueriesPluginDataArgs = {
   pluginCode: Scalars['String']['input'];
   sort?: InputMaybe<Array<PluginDataSortInput>>;
   storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesPrintersArgs = {
+  filter?: InputMaybe<PrinterFilterInput>;
 };
 
 
@@ -8316,6 +8405,17 @@ export type UpdateIndicatorValueInput = {
 
 export type UpdateIndicatorValueResponse = IndicatorValueNode | UpdateIndicatorValueError;
 
+export type UpdateInsuranceInput = {
+  discountPercentage?: InputMaybe<Scalars['Float']['input']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  insuranceProviderId?: InputMaybe<Scalars['String']['input']>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  policyType?: InputMaybe<InsurancePolicyNodeType>;
+};
+
+export type UpdateInsuranceResponse = IdResponse;
+
 export type UpdateLabelPrinterSettingsError = {
   __typename: 'UpdateLabelPrinterSettingsError';
   error: Scalars['String']['output'];
@@ -8579,6 +8679,17 @@ export enum UpdatePrescriptionStatusInput {
   Picked = 'PICKED',
   Verified = 'VERIFIED'
 }
+
+export type UpdatePrinterInput = {
+  address: Scalars['String']['input'];
+  description: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  labelHeight: Scalars['Int']['input'];
+  labelWidth: Scalars['Int']['input'];
+  port: Scalars['Int']['input'];
+};
+
+export type UpdatePrinterResponse = PrinterNode;
 
 export type UpdateProgramEnrolmentInput = {
   /** Program document data */
