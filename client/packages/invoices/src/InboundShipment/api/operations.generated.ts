@@ -90,6 +90,10 @@ export type AddToInboundShipmentFromMasterListMutation = { __typename: 'Mutation
 
 export type LinkedRequestRowFragment = { __typename: 'RequisitionNode', id: string, createdDatetime: string, requisitionNumber: number, theirReference?: string | null, comment?: string | null, user?: { __typename: 'UserNode', username: string } | null, program?: { __typename: 'ProgramNode', name: string } | null };
 
+export type LinkedRequestLineFragment = { __typename: 'RequisitionLineNode', id: string, requestedQuantity: number, item: { __typename: 'ItemNode', id: string, code: string, name: string } };
+
+export type LinkedRequestWithLinesFragment = { __typename: 'RequisitionNode', id: string, createdDatetime: string, requisitionNumber: number, theirReference?: string | null, comment?: string | null, lines: { __typename: 'RequisitionLineConnector', nodes: Array<{ __typename: 'RequisitionLineNode', id: string, requestedQuantity: number, item: { __typename: 'ItemNode', id: string, code: string, name: string } }> }, user?: { __typename: 'UserNode', username: string } | null, program?: { __typename: 'ProgramNode', name: string } | null };
+
 export type RequestsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   filter?: Types.InputMaybe<Types.RequisitionFilterInput>;
@@ -98,6 +102,22 @@ export type RequestsQueryVariables = Types.Exact<{
 
 
 export type RequestsQuery = { __typename: 'Queries', requisitions: { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionNode', id: string, createdDatetime: string, requisitionNumber: number, theirReference?: string | null, comment?: string | null, user?: { __typename: 'UserNode', username: string } | null, program?: { __typename: 'ProgramNode', name: string } | null }> } };
+
+export type RequestQueryVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type RequestQuery = { __typename: 'Queries', requisition: { __typename: 'RecordNotFound' } | { __typename: 'RequisitionNode', id: string, createdDatetime: string, requisitionNumber: number, theirReference?: string | null, comment?: string | null, lines: { __typename: 'RequisitionLineConnector', nodes: Array<{ __typename: 'RequisitionLineNode', id: string, requestedQuantity: number, item: { __typename: 'ItemNode', id: string, code: string, name: string } }> }, user?: { __typename: 'UserNode', username: string } | null, program?: { __typename: 'ProgramNode', name: string } | null } };
+
+export type InsertLinesFromInternalOrderMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.BatchInboundShipmentInput;
+}>;
+
+
+export type InsertLinesFromInternalOrderMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', insertFromInternalOrderLines?: Array<{ __typename: 'InsertInboundShipmentLineFromInternalOrderLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } }> | null } };
 
 export const InboundLineFragmentDoc = gql`
     fragment InboundLine on InvoiceLineNode {
@@ -265,6 +285,7 @@ export const InboundRowFragmentDoc = gql`
     `;
 export const LinkedRequestRowFragmentDoc = gql`
     fragment LinkedRequestRow on RequisitionNode {
+  __typename
   id
   createdDatetime
   requisitionNumber
@@ -278,6 +299,29 @@ export const LinkedRequestRowFragmentDoc = gql`
   comment
 }
     `;
+export const LinkedRequestLineFragmentDoc = gql`
+    fragment LinkedRequestLine on RequisitionLineNode {
+  __typename
+  id
+  requestedQuantity
+  item {
+    id
+    code
+    name
+  }
+}
+    `;
+export const LinkedRequestWithLinesFragmentDoc = gql`
+    fragment LinkedRequestWithLines on RequisitionNode {
+  ...LinkedRequestRow
+  lines {
+    nodes {
+      ...LinkedRequestLine
+    }
+  }
+}
+    ${LinkedRequestRowFragmentDoc}
+${LinkedRequestLineFragmentDoc}`;
 export const InvoicesDocument = gql`
     query invoices($first: Int, $offset: Int, $key: InvoiceSortFieldInput!, $desc: Boolean, $filter: InvoiceFilterInput, $storeId: String!) {
   invoices(
@@ -781,6 +825,31 @@ export const RequestsDocument = gql`
   }
 }
     ${LinkedRequestRowFragmentDoc}`;
+export const RequestDocument = gql`
+    query request($id: String!, $storeId: String!) {
+  requisition(id: $id, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      ...LinkedRequestWithLines
+    }
+  }
+}
+    ${LinkedRequestWithLinesFragmentDoc}`;
+export const InsertLinesFromInternalOrderDocument = gql`
+    mutation insertLinesFromInternalOrder($storeId: String!, $input: BatchInboundShipmentInput!) {
+  batchInboundShipment(storeId: $storeId, input: $input) {
+    insertFromInternalOrderLines {
+      id
+      response {
+        ... on InvoiceLineNode {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -818,6 +887,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     requests(variables: RequestsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequestsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequestsQuery>(RequestsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requests', 'query', variables);
+    },
+    request(variables: RequestQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequestQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestQuery>(RequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'request', 'query', variables);
+    },
+    insertLinesFromInternalOrder(variables: InsertLinesFromInternalOrderMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertLinesFromInternalOrderMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertLinesFromInternalOrderMutation>(InsertLinesFromInternalOrderDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertLinesFromInternalOrder', 'mutation', variables);
     }
   };
 }

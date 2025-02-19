@@ -1,8 +1,0 @@
-{
-    "code": "amc_check",
-    "types": [
-        "AMC"
-    ],
-    "variant_type": "BOA_JS",
-    "bundle_path": "amc.js"
-}
