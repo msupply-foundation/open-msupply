@@ -1,5 +1,5 @@
 use crate::sync::test::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
-use repository::{ContextType, ReportRow, ReportType};
+use repository::{ContextType, ReportRow};
 use serde_json::json;
 
 const TABLE_NAME: &str = "om_report";
@@ -11,7 +11,6 @@ const REPORT_1: (&str, &str) = (
         "id": "76B6C424E1935C4DAF36A7A8F451FE72",
         "code": "test report code",
         "name": "Test",
-        "type": "OmSupply",
         "comment": "Test comment",
         "context": "STOCKTAKE",
         "is_custom": false,
@@ -24,7 +23,6 @@ fn report() -> ReportRow {
     ReportRow {
         id: REPORT_1.0.to_string(),
         name: "Test".to_string(),
-        r#type: ReportType::OmSupply,
         template: "template data".to_string(),
         context: ContextType::Stocktake,
         comment: Some("Test comment".to_string()),

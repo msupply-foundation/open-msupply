@@ -17,10 +17,12 @@ mod add_program_id_on_stocktake;
 mod add_program_id_to_invoice;
 mod add_report_sync;
 mod backend_plugins;
+mod drop_legacy_reports;
 mod frontend_plugins;
 mod plugin_data;
 mod prescribed_quantity_store_pref;
 mod printer_create_table;
+mod reinitialise_reports;
 mod report_add_prescription_context;
 
 pub(crate) struct V2_06_00;
@@ -55,6 +57,8 @@ impl Migration for V2_06_00 {
             Box::new(add_insurance_fields_to_invoice::Migrate),
             Box::new(add_cancelled_status_to_invoice::Migrate),
             Box::new(report_add_prescription_context::Migrate),
+            Box::new(drop_legacy_reports::Migrate),
+            Box::new(reinitialise_reports::Migrate),
             Box::new(add_report_sync::Migrate),
             Box::new(add_form_schema_sync::Migrate),
         ]
