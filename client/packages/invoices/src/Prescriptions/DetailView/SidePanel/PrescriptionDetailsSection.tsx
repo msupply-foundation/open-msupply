@@ -141,20 +141,17 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
   if (!createdDatetime) return null;
 
   useEffect(() => {
+    if (!data) return;
+    const { clinician, theirReference, prescriptionDate, createdDatetime } =
+      data;
     setClinicianValue(clinician ?? null);
-  }, [clinician]);
-
-  useEffect(() => {
     setTheirReferenceInput(theirReference);
-  }, [theirReference]);
-
-  useEffect(() => {
     setDateValue(
       DateUtils.getDateOrNull(prescriptionDate) ??
         DateUtils.getDateOrNull(createdDatetime) ??
         null
     );
-  }, [prescriptionDate]);
+  }, [data]);
 
   return (
     <DetailPanelSection title={t('heading.prescription-details')}>
