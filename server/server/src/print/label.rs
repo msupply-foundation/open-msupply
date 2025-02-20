@@ -5,7 +5,7 @@ use actix_web::{
 use repository::RepositoryError;
 use service::{
     auth_data::AuthData,
-    print::label::{host_status, print_qr_code},
+    print::label::{host_status, print_prescription_label, print_qr_code, PrescriptionLabelData},
     service_provider::ServiceProvider,
     settings::LabelPrinterSettingNode,
 };
@@ -13,7 +13,7 @@ use service::{
 use crate::authentication::validate_cookie_auth;
 
 #[derive(serde::Deserialize)]
-pub struct LabelData {
+pub struct QrLabelData {
     code: String,
     message: Option<String>,
 }
@@ -22,7 +22,7 @@ pub async fn print_label_qr(
     request: HttpRequest,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
-    data: web::Json<LabelData>,
+    data: web::Json<QrLabelData>,
 ) -> HttpResponse {
     let auth_result = validate_cookie_auth(request.clone(), &auth_data);
     match auth_result {
@@ -43,6 +43,35 @@ pub async fn print_label_qr(
 
     match print_qr_code(settings, data.code.clone(), data.message.clone()) {
         Ok(_) => HttpResponse::Ok().body("QR label printed"),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    }
+}
+
+pub async fn print_label_prescription(
+    request: HttpRequest,
+    service_provider: Data<ServiceProvider>,
+    auth_data: Data<AuthData>,
+    data: web::Json<PrescriptionLabelData>,
+) -> HttpResponse {
+    let auth_result = validate_cookie_auth(request.clone(), &auth_data);
+    match auth_result {
+        Ok(_) => (),
+        Err(error) => {
+            let formatted_error = format!("{:#?}", error);
+            return HttpResponse::Unauthorized().body(formatted_error);
+        }
+    }
+
+    let settings = match get_printer_settings(service_provider) {
+        Ok(settings) => settings,
+        Err(error) => {
+            return HttpResponse::InternalServerError()
+                .body(format!("Error getting printer settings: {}", error));
+        }
+    };
+
+    match print_prescription_label(settings, data.into_inner()) {
+        Ok(_) => HttpResponse::Ok().body("Label printed"),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
