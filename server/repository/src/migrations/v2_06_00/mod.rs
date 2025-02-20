@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_cancellation_fields_to_invoice;
 mod add_cancelled_status_to_invoice;
 mod add_create_invoice_from_requisition_permission;
 mod add_form_schema_sync;
@@ -55,6 +56,7 @@ impl Migration for V2_06_00 {
             Box::new(add_insurance_fields_to_invoice::Migrate),
             Box::new(add_cancelled_status_to_invoice::Migrate),
             Box::new(report_add_prescription_context::Migrate),
+            Box::new(add_cancellation_fields_to_invoice::Migrate),
             Box::new(add_report_sync::Migrate),
             Box::new(add_form_schema_sync::Migrate),
         ]
