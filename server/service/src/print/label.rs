@@ -77,27 +77,27 @@ pub fn print_prescription_label(
 ^CI28
 
 ^A0,25
-^FO20,10
-^FB550,1,0,C
-^FD{item_details}\&^FS
+^FO10,10
+^FB570,2,0,C
+^FD{item_details}^FS
 
-^FO20,50
-^GB550,2,2^FS
+^FO10,65
+^GB570,2,2^FS
 
 ^A0,25
-^FO20,60
-^FB550,6,0,L
+^FO10,75
+^FB570,6,0,L
 ^FD{item_directions}\&{warning}^FS
 
-^FO20,210
-^GB550,2,2^FS
+^FO10,210
+^GB570,2,2^FS
 
 ^A0,25
-^FO20,220
+^FO10,220
 ^FD{patient_details}^FS
 
 ^A0,25
-^FO20,250
+^FO10,250
 ^FD{details}^FS
 ^XZ
 "#
