@@ -183,9 +183,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
                   size="small"
                   sx={{ width: 250 }}
                   value={theirReference ?? null}
-                  onChange={event => {
-                    setTheirReference(event.target.value);
-                  }}
+                  onChange={event => setTheirReference(event.target.value)}
                 />
               }
             />
@@ -195,9 +193,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
               label={t('label.clinician')}
               Input={
                 <ClinicianSearchInput
-                  onChange={async clinician => {
-                    setClinician(clinician?.value);
-                  }}
+                  onChange={clinician => setClinician(clinician?.value)}
                   clinicianValue={clinician}
                 />
               }
@@ -209,9 +205,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
                   <ProgramSearchInput
                     programs={programs}
                     selectedProgram={program}
-                    onChange={newProgram => {
-                      if (newProgram) setProgram(newProgram);
-                    }}
+                    onChange={newProgram => setProgram(newProgram)}
                   />
                 }
               />
