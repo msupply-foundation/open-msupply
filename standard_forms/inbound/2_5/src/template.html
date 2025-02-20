@@ -36,7 +36,7 @@
     </tr>
 
     <tr> 
-        <td class="header_section_field_left">{{t(k="report.created-date",f="Created date")}}: {{ self::dateOrNA(datetime=data.invoice.createdDatetime) }}</td>
+        <td class="header_section_field_left">{{t(k="report.created-date",f="Created date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}</td>
         <td
         class="header_section_field_right">{{t(k="report.shipped-date",f="Shipped
         date")}}: {{ self::dateOrNA(datetime=data.invoice.shippedDatetime)
