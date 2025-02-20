@@ -1,15 +1,24 @@
-use std::{ffi::OsStr, fs, path::PathBuf};
+use std::{
+    ffi::OsStr,
+    fs,
+    path::{Path, PathBuf},
+    process::{Command, ExitStatus, Stdio},
+};
 
 use base64::{prelude::BASE64_STANDARD, Engine};
 use cli::{queries_mutations::INSTALL_PLUGINS, Api, ApiError};
-use log::info;
-use repository::{BackendPluginRow, PluginTypes, PluginVariantType};
+use log::{info, warn};
+use repository::{
+    BackendPluginRow, FrontendPluginFile, FrontendPluginFiles, FrontendPluginRow,
+    FrontendPluginTypes, PluginTypes, PluginVariantType,
+};
 use reqwest::Url;
 use serde::Deserialize;
 use serde_json::json;
 use service::backend_plugin::plugin_provider::PluginBundle;
 
 use thiserror::Error as ThisError;
+use util::format_error;
 #[derive(ThisError, Debug)]
 pub(super) enum Error {
     #[error("Failed to read dir {0}")]
@@ -18,8 +27,6 @@ pub(super) enum Error {
     FailedToGetFileOrDir(PathBuf, #[source] std::io::Error),
     #[error("Failed to open manifest file {0}")]
     CannotOpenManifestFile(PathBuf, #[source] std::io::Error),
-    #[error("Failed to parse manifest file {0}")]
-    CannotReadManifestFile(PathBuf, #[source] serde_json::Error),
     #[error("Path does not have parent {0}")]
     PathDoesNotHaveParent(PathBuf),
     #[error("Failed to read bundle file {0}")]
@@ -32,6 +39,12 @@ pub(super) enum Error {
     GqlError(#[from] ApiError),
     #[error("Failed to remove temp file {1}")]
     FiledToRemoveTempFile(std::io::Error, PathBuf),
+    #[error("Failed to yarn install {0}")]
+    FailedToYarnInstall(PathBuf, #[source] CommandError),
+    #[error("Failed to build plugin {0}")]
+    FailedToBuildPlugin(PathBuf, #[source] CommandError),
+    #[error("Cannot find entry in dist folder starting with code, code: {0}, plugin_path: {1}")]
+    CannotFindEntry(String, PathBuf),
 }
 
 #[derive(clap::Parser, Debug)]
@@ -75,22 +88,41 @@ pub(super) struct GenerateAndInstallPluginBundle {
     #[clap(long)]
     password: String,
 }
+// THe expected package.json format is as follows:
+// Front end: https://github.com/msupply-foundation/open-msupply-plugins/blob/81b78c31e5f938dd8b30783f7e3ee97555285f70/frontend/latest/package.json#L6-L14
+// Back end: https://github.com/msupply-foundation/open-msupply-plugins/blob/81b78c31e5f938dd8b30783f7e3ee97555285f70/backend/latest/package.json#L4-L10
+#[derive(Deserialize, Debug)]
+#[serde(tag = "target")]
+enum PluginDescription {
+    #[serde(rename = "backend")]
+    Backend {
+        types: PluginTypes,
+        variant_type: PluginVariantType,
+    },
+    #[serde(rename = "frontend")]
+    FrontEnd { types: FrontendPluginTypes },
+}
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct ManifestJson {
+    #[serde(rename = "name")]
     code: String,
-    types: PluginTypes,
-    variant_type: PluginVariantType,
-    bundle_path: PathBuf,
+    om_supply_plugin: PluginDescription,
 }
 
 pub(crate) fn generate_plugin_bundle(
     GeneratePluginBundle { in_dir, out_file }: GeneratePluginBundle,
 ) -> Result<(), Error> {
-    let ignore_paths = vec![OsStr::new("node_modules"), OsStr::new("target")];
-    let manifest_name = OsStr::new("plugin_manifest.json");
+    let ignore_paths = vec![
+        OsStr::new("node_modules"),
+        OsStr::new("dist"),
+        OsStr::new("target"),
+    ];
+    let manifest_name = OsStr::new("package.json");
 
     let mut bundle = PluginBundle {
         backend_plugins: Vec::new(),
+        frontend_plugins: Vec::new(),
     };
 
     generate_bundle_recursive(&mut bundle, &ignore_paths, manifest_name, &in_dir)?;
@@ -137,32 +169,170 @@ fn generate_bundle_recursive(
 fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Error> {
     let ManifestJson {
         code,
-        types,
-        variant_type,
-        bundle_path,
-    } = serde_json::from_reader(
+        om_supply_plugin,
+    } = match serde_json::from_reader(
         fs::File::open(path).map_err(|e| Error::CannotOpenManifestFile(path.clone(), e))?,
-    )
-    .map_err(|e| Error::CannotReadManifestFile(path.clone(), e))?;
+    ) {
+        Ok(d) => d,
+        Err(e) => {
+            warn!(
+                "Ignoring manifest file, failed to parse as manifest file {path:#?} {}",
+                format_error(&e)
+            );
+            return Ok(());
+        }
+    };
 
-    let bundle_path = path
+    let plugin_root = path
         .parent()
-        .ok_or(Error::PathDoesNotHaveParent(path.clone()))?
-        .join(bundle_path);
+        .ok_or(Error::PathDoesNotHaveParent(path.clone()))?;
 
-    let bundle_base64 = BASE64_STANDARD
-        .encode(fs::read(bundle_path).map_err(|e| Error::FailedToReadBundleFile(path.clone(), e))?);
+    info!("Building plugin: {plugin_root:#?}");
+
+    // Yarn install
+    run_command_with_error(
+        Command::new("yarn")
+            .args(["install", "--cwd"])
+            .arg(&plugin_root),
+    )
+    .map_err(|e| Error::FailedToYarnInstall(plugin_root.to_path_buf(), e))?;
+
+    // Yarn build plugin
+    run_command_with_error(
+        Command::new("yarn")
+            .arg("--cwd")
+            .arg(&plugin_root)
+            .arg("build-plugin"),
+    )
+    .map_err(|e| Error::FailedToBuildPlugin(plugin_root.to_path_buf(), e))?;
+
+    match om_supply_plugin {
+        PluginDescription::Backend {
+            types,
+            variant_type,
+        } => bundle_backend_plugin(bundle, code, types, variant_type, plugin_root)?,
+        PluginDescription::FrontEnd { types } => {
+            bundle_frontend_plugin(bundle, code, types, plugin_root)?
+        }
+    }
+
+    Ok(())
+}
+
+fn bundle_backend_plugin(
+    bundle: &mut PluginBundle,
+    code: String,
+    types: PluginTypes,
+    variant_type: PluginVariantType,
+    plugin_root: &Path,
+) -> Result<(), Error> {
+    // Backend plugin bundle will be located in {plugindir}/dist/plugin.js
+    let bundle_base64 = BASE64_STANDARD.encode(
+        fs::read(plugin_root.join("dist").join("plugin.js"))
+            .map_err(|e| Error::FailedToReadBundleFile(plugin_root.to_path_buf(), e))?,
+    );
 
     bundle.backend_plugins.push(BackendPluginRow {
         // TODO for now id = code in the future id = code + version (similar to reports)
         id: code.clone(),
-        bundle_base64,
+        bundle_base64: bundle_base64,
         variant_type,
         types,
         code,
     });
 
     Ok(())
+}
+
+fn bundle_frontend_plugin(
+    bundle: &mut PluginBundle,
+    code: String,
+    types: FrontendPluginTypes,
+    plugin_root: &Path,
+) -> Result<(), Error> {
+    // Frontend plugin bundle will be in {plugindir}/dist/ folder, consisting of one or many files
+    // with entry point starting with plugin code. Any files starting with 'main' or having 'LICENSE' in their name
+    // will be removed (main file is something generate by webpack as executable entrypoint for the application), vs module like
+    // library export that we are expecting for the plugin bundle
+    let dist_folder = plugin_root.join("dist");
+
+    let dist_files =
+        fs::read_dir(&dist_folder).map_err(|e| Error::FailedToReadDir(dist_folder.clone(), e))?;
+
+    let mut entry = None;
+    let mut files = Vec::new();
+
+    for file_or_folder in dist_files {
+        let next_path = file_or_folder
+            .map_err(|e| Error::FailedToGetFileOrDir(dist_folder.clone(), e))?
+            .path();
+
+        if !next_path.is_file() {
+            continue;
+        }
+
+        let file_name = next_path.file_name().unwrap().to_str().unwrap().to_string();
+        // Ignore 'main' entrypoint
+        if file_name.starts_with("main") {
+            continue;
+        }
+        // Ingore any licence files
+        if file_name.contains("LICENSE") {
+            continue;
+        }
+
+        let file = FrontendPluginFile {
+            file_name,
+            file_content_base64: BASE64_STANDARD.encode(
+                fs::read(&next_path)
+                    .map_err(|e| Error::FailedToReadBundleFile(next_path.clone(), e))?,
+            ),
+        };
+
+        // Set the entry if start with plugin code
+        if file.file_name.starts_with(&code) {
+            entry = Some(file.file_name.clone())
+        }
+
+        files.push(file);
+    }
+
+    let Some(entry_point) = entry else {
+        return Err(Error::CannotFindEntry(
+            code.clone(),
+            plugin_root.to_path_buf(),
+        ));
+    };
+
+    bundle.frontend_plugins.push(FrontendPluginRow {
+        id: code.clone(),
+        code,
+        entry_point,
+        files: FrontendPluginFiles(files),
+        types,
+    });
+
+    Ok(())
+}
+
+#[derive(ThisError, Debug)]
+pub(super) enum CommandError {
+    #[error(transparent)]
+    FailedToRunCommand(#[from] std::io::Error),
+    #[error("Exited with non ok status {0}")]
+    StatusNotOk(ExitStatus),
+}
+
+pub fn run_command_with_error(command: &mut Command) -> Result<(), CommandError> {
+    let status = command
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status()?;
+
+    if status.success() {
+        return Ok(());
+    }
+    return Err(CommandError::StatusNotOk(status));
 }
 
 /// username, password, url should come from config, like in reports (in the new show command)
