@@ -5,7 +5,6 @@ import {
   PanelLabel,
   PanelRow,
   useTranslation,
-  Tooltip,
   BasicTextInput,
   useDebouncedValueCallback,
   useConfirmationModal,
@@ -183,18 +182,16 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
 
         <PanelRow>
           <PanelLabel>{t('label.reference')}</PanelLabel>
-          <Tooltip title={theirReferenceInput} placement="bottom-start">
-            <BasicTextInput
-              disabled={isDisabled}
-              size="small"
-              sx={{ width: 250 }}
-              value={theirReferenceInput ?? ''}
-              onChange={event => {
-                setTheirReferenceInput(event.target.value);
-                debouncedUpdate({ theirReference: event.target.value });
-              }}
-            />
-          </Tooltip>
+          <BasicTextInput
+            disabled={isDisabled}
+            size="small"
+            sx={{ width: 250 }}
+            value={theirReferenceInput ?? ''}
+            onChange={event => {
+              setTheirReferenceInput(event.target.value);
+              debouncedUpdate({ theirReference: event.target.value });
+            }}
+          />
         </PanelRow>
 
         <PanelRow>
