@@ -42,28 +42,28 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        <ButtonWithIcon
+          disabled={isDisabled}
+          label={t('button.add-item')}
+          Icon={<PlusCircleIcon />}
+          onClick={() => onAddItem()}
+        />
+        <ButtonWithIcon
+          label={t('button.history')}
+          Icon={<InfoOutlineIcon />}
+          onClick={() => onViewHistory()}
+        />
+        <LoadingButton
+          disabled={isDisabled}
+          variant="outlined"
+          startIcon={<PrinterIcon />}
+          isLoading={isPrinting}
+          label={t('button.print-prescription-label')}
+        />
         <ReportSelector
           context={ReportContext.Prescription}
           onPrint={printReport}
         >
-          <ButtonWithIcon
-            disabled={isDisabled}
-            label={t('button.add-item')}
-            Icon={<PlusCircleIcon />}
-            onClick={() => onAddItem()}
-          />
-          <ButtonWithIcon
-            label={t('button.history')}
-            Icon={<InfoOutlineIcon />}
-            onClick={() => onViewHistory()}
-          />
-          <LoadingButton
-            disabled={isDisabled}
-            variant="outlined"
-            startIcon={<PrinterIcon />}
-            isLoading={isPrinting}
-            label={t('button.print-prescription-label')}
-          />
           <LoadingButton
             disabled={isDisabled}
             variant="outlined"
