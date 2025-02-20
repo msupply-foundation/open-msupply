@@ -28,7 +28,7 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
   const noResults =
     NoOptionsRenderer && patients.length === 0 && input !== '' && !isLoading;
 
-  const opts = noResults
+  const options = noResults
     ? // This is a bit of hack to allow us to render a component inside the
       // Autocomplete when there are no options/results. Normally, only "text"
       // can be defined for "No Options", so we create this "dummy" option to
@@ -43,7 +43,7 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
 
   return (
     <Autocomplete
-      options={opts}
+      options={options}
       disabled={disabled}
       clearable={false}
       loading={isLoading}
