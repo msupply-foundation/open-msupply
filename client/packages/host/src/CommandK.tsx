@@ -323,7 +323,7 @@ const Actions = () => {
     }
   );
 
-  if (store?.preferences.vaccineModule ?? false) {
+  if (!!store?.preferences.vaccineModule) {
     actions.push({
       id: 'navigation:coldchain-monitoring',
       name: t('cmdk.goto-cold-chain-monitoring'),
