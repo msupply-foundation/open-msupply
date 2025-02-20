@@ -5529,6 +5529,11 @@ export type PeriodConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type PeriodFilterInput = {
+  endDate?: InputMaybe<DateFilterInput>;
+  startDate?: InputMaybe<DateFilterInput>;
+};
+
 export type PeriodNode = {
   __typename: 'PeriodNode';
   endDate: Scalars['NaiveDate']['output'];
@@ -6517,6 +6522,8 @@ export type QueriesPatientsArgs = {
 
 
 export type QueriesPeriodsArgs = {
+  filter?: InputMaybe<PeriodFilterInput>;
+  page?: InputMaybe<PaginationInput>;
   programId?: InputMaybe<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };

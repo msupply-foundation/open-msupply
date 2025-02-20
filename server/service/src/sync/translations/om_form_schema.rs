@@ -1,24 +1,22 @@
-use crate::sync::translations::om_form_schema::OmFormSchemaTranslation;
-
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 use repository::{
-    ChangelogRow, ChangelogTableName, ReportRow, ReportRowDelete, ReportRowRepository,
+    ChangelogRow, ChangelogTableName, FormSchemaJson, FormSchemaRowDelete, FormSchemaRowRepository,
     StorageConnection, SyncBufferRow,
 };
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
-    Box::new(OmReportTranslator)
+    Box::new(OmFormSchemaTranslation)
 }
-pub(crate) struct OmReportTranslator;
-impl SyncTranslation for OmReportTranslator {
+pub(crate) struct OmFormSchemaTranslation;
+impl SyncTranslation for OmFormSchemaTranslation {
     fn table_name(&self) -> &str {
-        "om_report"
+        "om_form_schema" // TODO should this be just form_schema? identifier is om_form_schema
     }
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![OmFormSchemaTranslation.table_name()]
+        vec![]
     }
     fn try_translate_from_upsert_sync_record(
         &self,
@@ -26,11 +24,11 @@ impl SyncTranslation for OmReportTranslator {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(serde_json::from_str::<
-            ReportRow,
+            FormSchemaJson,
         >(&sync_record.data)?))
     }
     fn change_log_type(&self) -> Option<ChangelogTableName> {
-        Some(ChangelogTableName::Report)
+        Some(ChangelogTableName::FormSchema)
     }
     // Only translating and pulling from central server
     fn should_translate_to_sync_record(
@@ -50,10 +48,10 @@ impl SyncTranslation for OmReportTranslator {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = ReportRowRepository::new(connection)
+        let row = FormSchemaRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
-                "Om report row ({}) not found",
+                "Om form schema row ({}) not found",
                 changelog.record_id
             )))?;
         Ok(PushTranslateResult::upsert(
@@ -67,7 +65,7 @@ impl SyncTranslation for OmReportTranslator {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(ReportRowDelete(
+        Ok(PullTranslateResult::delete(FormSchemaRowDelete(
             sync_record.record_id.clone(),
         )))
     }
@@ -78,11 +76,11 @@ mod tests {
     use super::*;
     use repository::{mock::MockDataInserts, test_db::setup_all};
     #[actix_rt::test]
-    async fn test_report_translation() {
-        use crate::sync::test::test_data::om_report as test_data;
-        let translator = OmReportTranslator;
+    async fn test_om_form_schema_translation() {
+        use crate::sync::test::test_data::om_form_schema as test_data;
+        let translator = OmFormSchemaTranslation;
         let (_, connection, _, _) =
-            setup_all("test_report_translation", MockDataInserts::none()).await;
+            setup_all("test_om_form_schema_translation", MockDataInserts::none()).await;
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator

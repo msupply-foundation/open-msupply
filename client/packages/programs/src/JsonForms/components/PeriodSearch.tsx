@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { z } from 'zod';
 import {
-  Autocomplete,
+  AutocompleteWithPagination,
   DetailInputWithLabelRow,
   extractProperty,
+  Formatter,
 } from '@openmsupply-client/common';
 import {
   DefaultFormRowSx,
@@ -15,6 +16,7 @@ import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import { usePeriodList } from '../../api/hooks/usePeriodList';
 import { PeriodFragment } from '@openmsupply-client/requisitions';
 
+const RECORDS_PER_PAGE = 15;
 export const periodSearchTester = rankWith(10, uiTypeIs('PeriodSearch'));
 
 const Options = z.object({
@@ -29,10 +31,21 @@ const UIComponent = (props: ControlProps) => {
   const programId = options?.findByProgram
     ? extractProperty(core?.data, 'programId')
     : null;
-  const { data, isLoading } = usePeriodList(
+  const today = new Date();
+  const { data, isFetching, fetchNextPage } = usePeriodList(
+    RECORDS_PER_PAGE,
     programId,
-    options?.findByProgram ? !!programId : true
+    options?.findByProgram ? !!programId : true,
+    {
+      startDate: {
+        beforeOrEqualTo: Formatter.naiveDate(today),
+      },
+    }
   );
+
+  const pageNumber = data?.pages?.length
+    ? (data.pages[data.pages.length - 1]?.pageNumber ?? 0)
+    : 0;
 
   const onChange = async (period: PeriodFragment) => {
     setPeriod(period);
@@ -55,18 +68,22 @@ const UIComponent = (props: ControlProps) => {
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}
       Input={
-        <Autocomplete
-          fullWidth
-          loading={isLoading}
-          options={data?.nodes ?? []}
+        <AutocompleteWithPagination
+          width={'100%'}
+          pages={data?.pages ?? []}
+          pageNumber={pageNumber}
+          rowsPerPage={RECORDS_PER_PAGE}
+          totalRows={data?.pages?.[0]?.data.totalCount ?? 0}
+          loading={isFetching}
           optionKey="name"
-          onChange={(_, newVal) =>
-            newVal && newVal.id !== period?.id && onChange(newVal)
-          }
+          onChange={(_, value) => value && onChange(value)}
+          getOptionLabel={option => option.name}
           value={period ? { label: period.name ?? '', ...period } : null}
           isOptionEqualToValue={(option, value) => option.id === value.id}
           clearable={false}
           disabled={options?.findByProgram ? !programId : false}
+          onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
+          paginationDebounce={300}
         />
       }
     />
