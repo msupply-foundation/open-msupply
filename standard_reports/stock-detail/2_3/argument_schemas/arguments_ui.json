@@ -16,14 +16,14 @@
       "label": "T#report.sort-by",
       "options": {
         "show": [
-          ["item.name", "T#report.item-name"],
-          ["batch", "T#label.batch"],
-          ["item.code", "T#label.code"],
-          ["expiryDate", "T#report.expiry-date"],
-          ["location.code", "T#label.location"],
-          ["item.unitName", "T#label.unit"],
-          ["packSize", "T#label.pack-size"],
-          ["totalNumberOfPacks", "T#label.num-packs-total"]
+          ["item.name", "item"],
+          ["batch", "batch"],
+          ["item.code", "code"],
+          ["expiryDate", "expiry date"],
+          ["location.code", "location code"],
+          ["item.unitName", "unit name"],
+          ["packSize", "pack size"],
+          ["totalNumberOfPacks", "total number of packs"]
         ]
       }
     },
