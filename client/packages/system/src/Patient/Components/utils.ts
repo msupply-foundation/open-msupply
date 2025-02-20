@@ -33,6 +33,5 @@ export const useSearchPatient = () => {
     totalCount,
     search,
     isSuccess,
-    searchText,
   };
 };

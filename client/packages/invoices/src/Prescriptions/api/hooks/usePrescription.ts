@@ -96,7 +96,6 @@ export const usePrescription = (id?: string) => {
   };
 
   // CREATE
-
   const {
     mutateAsync: createMutation,
     isLoading: isCreating,
