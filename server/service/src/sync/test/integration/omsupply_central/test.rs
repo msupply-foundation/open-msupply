@@ -13,7 +13,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn integration_sync_omsupply_remote_sync_plugin_data() {
-        test_omsupply_central_remote_records("asset", &PluginDataRemote).await;
+        test_omsupply_central_remote_records("plugin_data", &PluginDataRemote).await;
     }
 
     #[actix_rt::test]
