@@ -1,5 +1,6 @@
 use async_graphql::*;
 
+use chrono::NaiveDateTime;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceNode;
@@ -17,6 +18,8 @@ pub struct InsertInput {
     pub diagnosis_id: Option<String>,
     pub program_id: Option<String>,
     pub their_reference: Option<String>,
+    pub clinician_id: Option<String>,
+    pub prescription_date: Option<NaiveDateTime>,
 }
 
 #[derive(Union)]
@@ -52,6 +55,8 @@ impl InsertInput {
             their_reference,
             diagnosis_id,
             program_id,
+            clinician_id,
+            prescription_date,
         } = self;
 
         ServiceInput {
@@ -60,6 +65,8 @@ impl InsertInput {
             their_reference,
             diagnosis_id,
             program_id,
+            clinician_id,
+            prescription_date,
         }
     }
 }
