@@ -21,6 +21,7 @@ pub(crate) mod diagnosis;
 pub(crate) mod document;
 pub(crate) mod document_registry;
 pub(crate) mod form_schema;
+pub(crate) mod frontend_plugin;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
 pub(crate) mod insurance_provider;
@@ -45,6 +46,7 @@ pub(crate) mod om_form_schema;
 pub(crate) mod packaging_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
+pub(crate) mod plugin_data;
 pub(crate) mod program_indicator;
 pub(crate) mod program_requisition_settings;
 pub(crate) mod property;
@@ -169,7 +171,11 @@ pub(crate) fn all_translators() -> SyncTranslators {
         packaging_variant::boxed(),
         // System log
         system_log::boxed(),
+        // Plugins
         backend_plugin::boxed(),
+        frontend_plugin::boxed(),
+        plugin_data::boxed(),
+        // Insurance
         insurance_provider::boxed(),
         name_insurance_join::boxed(),
         report::boxed(),
