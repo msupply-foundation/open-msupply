@@ -108,9 +108,7 @@ impl ConfigureCentralServer {
 
         let hardware_id = machine_uid::get().expect("Failed to query OS for hardware id");
 
-        AppDataService::new("")
-            .set_hardware_id(hardware_id.clone())
-            .unwrap();
+        AppDataService.set_hardware_id(hardware_id.clone()).unwrap();
 
         ConfigureCentralServer {
             api: SyncApiV5::new_test(&url, &site_name, &password, &hardware_id),
