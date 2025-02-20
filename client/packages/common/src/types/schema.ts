@@ -2237,12 +2237,6 @@ export type EqualFilterReasonOptionTypeInput = {
   notEqualTo?: InputMaybe<ReasonOptionNodeType>;
 };
 
-export type EqualFilterRelatedRecordTypeInput = {
-  equalAny?: InputMaybe<Array<RelatedRecordNodeType>>;
-  equalTo?: InputMaybe<RelatedRecordNodeType>;
-  notEqualTo?: InputMaybe<RelatedRecordNodeType>;
-};
-
 export type EqualFilterReportContextInput = {
   equalAny?: InputMaybe<Array<ReportContext>>;
   equalTo?: InputMaybe<ReportContext>;
@@ -2367,6 +2361,12 @@ export type FormSchemaSortInput = {
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: FormSchemaSortFieldInput;
+};
+
+export type FrontendPluginMetadataNode = {
+  __typename: 'FrontendPluginMetadataNode';
+  code: Scalars['String']['output'];
+  path: Scalars['String']['output'];
 };
 
 export type FullSyncStatusNode = {
@@ -2975,10 +2975,11 @@ export type InsertPatientResponse = PatientNode;
 
 export type InsertPluginDataInput = {
   data: Scalars['String']['input'];
+  dataIdentifier: Scalars['String']['input'];
   id: Scalars['String']['input'];
-  pluginName: Scalars['String']['input'];
-  relatedRecordId: Scalars['String']['input'];
-  relatedRecordType: RelatedRecordNodeType;
+  pluginCode: Scalars['String']['input'];
+  relatedRecordId?: InputMaybe<Scalars['String']['input']>;
+  storeId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPluginDataResponse = PluginDataNode;
@@ -5534,31 +5535,34 @@ export type PeriodSchedulesResponse = PeriodSchedulesConnector;
 
 export type PeriodsResponse = PeriodConnector;
 
+export type PluginDataConnector = {
+  __typename: 'PluginDataConnector';
+  nodes: Array<PluginDataNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type PluginDataFilterInput = {
+  dataIdentifier?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
-  pluginName?: InputMaybe<EqualFilterStringInput>;
   relatedRecordId?: InputMaybe<EqualFilterStringInput>;
-  relatedRecordType?: InputMaybe<EqualFilterRelatedRecordTypeInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type PluginDataNode = {
   __typename: 'PluginDataNode';
   data: Scalars['String']['output'];
+  dataIdentifier: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  pluginName: Scalars['String']['output'];
-  relatedRecordId: Scalars['String']['output'];
-  relatedRecordType: RelatedRecordNodeType;
-  storeId: Scalars['String']['output'];
+  pluginCode: Scalars['String']['output'];
+  relatedRecordId?: Maybe<Scalars['String']['output']>;
+  storeId?: Maybe<Scalars['String']['output']>;
 };
 
-export type PluginDataResponse = NodeError | PluginDataNode;
+export type PluginDataResponse = PluginDataConnector;
 
 export enum PluginDataSortFieldInput {
   Id = 'id',
-  PluginName = 'pluginName',
-  RelatedRecordId = 'relatedRecordId',
-  RelatedRecordType = 'relatedRecordType'
+  PluginCode = 'pluginCode'
 }
 
 export type PluginDataSortInput = {
@@ -5573,14 +5577,7 @@ export type PluginDataSortInput = {
 
 export type PluginInfoNode = {
   __typename: 'PluginInfoNode';
-  backendPluginCodes: Array<Scalars['String']['output']>;
-};
-
-export type PluginNode = {
-  __typename: 'PluginNode';
-  config: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  path: Scalars['String']['output'];
+  pluginInfo: Scalars['JSON']['output'];
 };
 
 export type PricingNode = {
@@ -5937,6 +5934,7 @@ export type Queries = {
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
+  frontendPluginMetadata: Array<FrontendPluginMetadataNode>;
   /**
    * Generates new customer_return lines in memory, based on supplier return line ids.
    * Optionally includes existing customer_return lines for a specific item in a return.
@@ -6005,7 +6003,6 @@ export type Queries = {
   patients: PatientResponse;
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
-  plugins: Array<PluginNode>;
   printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
@@ -6510,9 +6507,9 @@ export type QueriesPeriodsArgs = {
 
 export type QueriesPluginDataArgs = {
   filter?: InputMaybe<PluginDataFilterInput>;
+  pluginCode: Scalars['String']['input'];
   sort?: InputMaybe<Array<PluginDataSortInput>>;
   storeId: Scalars['String']['input'];
-  type: RelatedRecordNodeType;
 };
 
 
@@ -6876,10 +6873,6 @@ export type RefreshTokenErrorInterface = {
 
 export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
 
-export enum RelatedRecordNodeType {
-  StockLine = 'STOCK_LINE'
-}
-
 export type RepackConnector = {
   __typename: 'RepackConnector';
   nodes: Array<RepackNode>;
@@ -6921,6 +6914,7 @@ export enum ReportContext {
   OutboundReturn = 'OUTBOUND_RETURN',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Patient = 'PATIENT',
+  Prescription = 'PRESCRIPTION',
   Repack = 'REPACK',
   Report = 'REPORT',
   Requisition = 'REQUISITION',
@@ -8626,10 +8620,11 @@ export type UpdatePatientResponse = PatientNode;
 
 export type UpdatePluginDataInput = {
   data: Scalars['String']['input'];
+  dataIdentifier: Scalars['String']['input'];
   id: Scalars['String']['input'];
-  pluginName: Scalars['String']['input'];
-  relatedRecordId: Scalars['String']['input'];
-  relatedRecordType: RelatedRecordNodeType;
+  pluginCode: Scalars['String']['input'];
+  relatedRecordId?: InputMaybe<Scalars['String']['input']>;
+  storeId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdatePluginDataResponse = PluginDataNode;

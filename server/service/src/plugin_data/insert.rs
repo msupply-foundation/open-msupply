@@ -1,9 +1,9 @@
 use repository::{
     EqualFilter, PluginData, PluginDataFilter, PluginDataRepository, PluginDataRow,
-    PluginDataRowRepository, RelatedRecordType, RepositoryError,
+    PluginDataRowRepository, RepositoryError,
 };
 
-use crate::{service_provider::ServiceContext, WithDBError};
+use crate::{service_provider::ServiceContext, sync::CentralServerConfig, WithDBError};
 
 #[derive(PartialEq, Debug)]
 pub enum InsertPluginDataError {
@@ -16,9 +16,10 @@ pub enum InsertPluginDataError {
 #[derive(Clone, Debug)]
 pub struct InsertPluginData {
     pub id: String,
-    pub plugin_name: String,
-    pub related_record_id: String,
-    pub related_record_type: RelatedRecordType,
+    pub store_id: Option<String>,
+    pub plugin_code: String,
+    pub related_record_id: Option<String>,
+    pub data_identifier: String,
     pub data: String,
 }
 
@@ -29,7 +30,7 @@ pub fn insert(
     ctx.connection
         .transaction_sync(|connection| {
             validate(ctx, &input)?;
-            let data = generate(&ctx.store_id, input.clone());
+            let data = generate(input.clone());
 
             PluginDataRowRepository::new(connection)
                 .insert_one(&data)
@@ -46,21 +47,21 @@ pub fn insert(
 }
 
 fn generate(
-    store_id: &str,
     InsertPluginData {
         id,
-        plugin_name,
+        store_id,
+        plugin_code,
         related_record_id,
-        related_record_type,
+        data_identifier,
         data,
     }: InsertPluginData,
 ) -> PluginDataRow {
     PluginDataRow {
         id,
-        plugin_name,
+        store_id,
+        plugin_code,
         related_record_id,
-        related_record_type,
-        store_id: store_id.to_string(),
+        data_identifier,
         data,
     }
 }
@@ -71,6 +72,20 @@ fn validate(ctx: &ServiceContext, input: &InsertPluginData) -> Result<(), Insert
     if plugin_data.is_some() {
         return Err(InsertPluginDataError::PluginDataAlreadyExists);
     };
+
+    if input.store_id.is_none() && !CentralServerConfig::is_central_server() {
+        return Err(InsertPluginDataError::InternalError(
+            "Store ID is required unless on Central Server".to_string(),
+        ));
+    }
+
+    if let Some(store_id) = &input.store_id {
+        if &ctx.store_id != store_id {
+            return Err(InsertPluginDataError::InternalError(
+                "Store ID doesn't match logged in store_id".to_string(),
+            ));
+        }
+    }
 
     Ok(())
 }
@@ -98,7 +113,7 @@ mod test {
     use repository::{
         mock::{mock_store_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
-        PluginDataRow, RelatedRecordType,
+        PluginDataRow,
     };
 
     use crate::{plugin_data::InsertPluginData, service_provider::ServiceProvider};
@@ -120,9 +135,10 @@ mod test {
                 &context,
                 InsertPluginData {
                     id: "new_id".to_string(),
-                    plugin_name: "new_plugin_name".to_string(),
-                    related_record_id: "new_related_record_id".to_string(),
-                    related_record_type: RelatedRecordType::StockLine,
+                    store_id: Some(mock_store_a().id.to_string()),
+                    plugin_code: "test_plugin".to_string(),
+                    related_record_id: Some("new_related_record_id".to_string()),
+                    data_identifier: "StockLine".to_string(),
                     data: "hogwarts".to_string(),
                 },
             )
@@ -131,6 +147,8 @@ mod test {
         let plugin_data = service
             .get_plugin_data(&context, None, None)
             .unwrap()
+            .rows
+            .pop()
             .unwrap()
             .plugin_data;
 
@@ -138,11 +156,11 @@ mod test {
             plugin_data,
             PluginDataRow {
                 id: "new_id".to_string(),
-                plugin_name: "new_plugin_name".to_string(),
-                related_record_id: "new_related_record_id".to_string(),
-                related_record_type: RelatedRecordType::StockLine,
+                plugin_code: "test_plugin".to_string(),
+                related_record_id: Some("new_related_record_id".to_string()),
+                data_identifier: "StockLine".to_string(),
                 data: "hogwarts".to_string(),
-                store_id: mock_store_a().id.to_string(),
+                store_id: Some(mock_store_a().id.to_string()),
             }
         );
     }
