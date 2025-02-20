@@ -18,6 +18,16 @@ impl MigrationFragment for Migrate {
                 "#,
             )?;
         }
+        sql!(
+            connection,
+            r#"          
+            ALTER TABLE invoice
+            ADD COLUMN is_cancellation BOOLEAN NOT NULL DEFAULT FALSE;
+            ALTER TABLE invoice
+            ADD COLUMN cancelled_datetime {DATETIME};
+            "#,
+        )?;
+
         Ok(())
     }
 }
