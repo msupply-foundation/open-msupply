@@ -10,6 +10,7 @@ pub struct AverageMonthlyConsumptionItem {
 }
 
 #[derive(TS, Clone, Deserialize, Serialize)]
+#[ts(rename = "AverageMonthlyConsumptionInput")]
 pub struct Input {
     pub store_id: String,
     pub amc_lookback_months: f64,
