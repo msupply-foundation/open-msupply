@@ -41,7 +41,6 @@ import {
   Locale,
   FirstWeekContainsDate,
   ParseOptions,
-  lastDayOfMonth,
 } from 'date-fns';
 import { getTimezoneOffset } from 'date-fns-tz';
 
@@ -191,7 +190,6 @@ export const DateUtils = {
   getCurrentYear: () => getYear(new Date()),
   formatDuration: (date: Date | string | number): string =>
     formatIfValid(dateInputHandler(date), 'HH:mm:ss'),
-  lastDayOfMonth,
 
   /** Number of milliseconds in one second, i.e. SECOND = 1000*/
   SECOND,
