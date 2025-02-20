@@ -3,7 +3,6 @@ import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { z } from 'zod';
 import {
   AutocompleteWithPagination,
-  DateUtils,
   DetailInputWithLabelRow,
   extractProperty,
   Formatter,
@@ -33,14 +32,13 @@ const UIComponent = (props: ControlProps) => {
     ? extractProperty(core?.data, 'programId')
     : null;
   const today = new Date();
-  const lastDayOfMonth = DateUtils.lastDayOfMonth(today);
   const { data, isFetching, fetchNextPage } = usePeriodList(
     RECORDS_PER_PAGE,
     programId,
     options?.findByProgram ? !!programId : true,
     {
-      endDate: {
-        beforeOrEqualTo: Formatter.naiveDate(lastDayOfMonth),
+      startDate: {
+        beforeOrEqualTo: Formatter.naiveDate(today),
       },
     }
   );

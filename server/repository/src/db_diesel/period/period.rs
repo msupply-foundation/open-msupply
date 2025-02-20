@@ -24,6 +24,7 @@ pub struct Period {
 pub struct PeriodFilter {
     pub id: Option<EqualFilter<String>>,
     pub period_schedule_id: Option<EqualFilter<String>>,
+    pub start_date: Option<DateFilter>,
     pub end_date: Option<DateFilter>,
     pub rnr_form_program_id: Option<EqualFilter<String>>,
 }
@@ -131,12 +132,14 @@ fn create_filtered_query(
         let PeriodFilter {
             id,
             period_schedule_id,
+            start_date,
             end_date,
             rnr_form_program_id,
         } = filter;
 
         apply_equal_filter!(query, id, period::id);
         apply_equal_filter!(query, period_schedule_id, period::period_schedule_id);
+        apply_date_filter!(query, start_date, period::start_date);
         apply_date_filter!(query, end_date, period::end_date);
 
         apply_equal_filter!(query, rnr_form_program_id, rnr_form::program_id);

@@ -5449,6 +5449,7 @@ export type PeriodConnector = {
 
 export type PeriodFilterInput = {
   endDate?: InputMaybe<DateFilterInput>;
+  startDate?: InputMaybe<DateFilterInput>;
 };
 
 export type PeriodNode = {
