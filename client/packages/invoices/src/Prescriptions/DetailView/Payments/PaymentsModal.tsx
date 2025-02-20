@@ -1,18 +1,14 @@
-import React, {
-  ComponentType,
-  FC,
-  ReactElement,
-  ReactNode,
-  useEffect,
-  useState,
-} from 'react';
+import React, { FC, ReactElement, useEffect, useState } from 'react';
 import {
+  Alert,
+  Autocomplete,
   BasicTextInput,
   DialogButton,
   InputWithLabelRow,
 } from '@common/components';
 
 import {
+  Box,
   CurrencyInput,
   Grid,
   usePluginEvents,
@@ -21,7 +17,6 @@ import {
 import { useDialog } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { usePrescription } from '../../api';
-import { PrescriptionPaymentComponentProps } from 'packages/common/src/plugins/prescriptionTypes';
 import { useInsurances } from '@openmsupply-client/system/src';
 
 interface PaymentsModalProps {
@@ -38,9 +33,10 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const [policyNumber, setPolicyNumber] = useState<string>();
+  const [insuranceId, setInsuranceId] = useState<string>();
   const [discountRate, setDiscountRate] = useState(0);
   const [totalToBePaidByInsurance, setTotalToBePaidByInsurance] = useState(0);
+  const [pluginError, setPluginError] = useState<string>();
 
   const {
     query: { data: prescriptionData },
@@ -52,7 +48,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
   } = useInsurances(nameId);
 
   const selectedInsurance = insuranceData?.find(
-    insurance => insurance.policyNumber === policyNumber
+    ({ insuranceProviders }) => insuranceProviders?.id === insuranceId
   );
 
   const { plugins } = usePluginProvider();
@@ -60,35 +56,24 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     isDirty: false,
   });
 
-  const primaryPlugins = plugins.prescriptionPaymentForm?.slice(0, 2);
-  const secondaryPlugins = plugins.prescriptionPaymentForm?.slice(2);
-
-  const renderPlugins = (
-    plugins: ComponentType<PrescriptionPaymentComponentProps>[] | undefined
-  ): ReactNode => {
-    return plugins?.map((Plugin, index) =>
-      prescriptionData ? (
-        <Grid key={index} size={{ xs: 12 }}>
-          <Plugin
-            prescriptionData={prescriptionData}
-            totalToBePaidByInsurance={totalToBePaidByInsurance}
-            totalToBePaidByPatient={
-              prescriptionData.pricing.totalAfterTax - totalToBePaidByInsurance
-            }
-            events={pluginEvents}
-          />
-        </Grid>
-      ) : null
-    );
-  };
-
   const onSave = async () => {
     if (!prescriptionData) return;
 
-    await pluginEvents.dispatchEvent({ id: prescriptionData.id });
-    handleConfirm();
-    onClose();
+    try {
+      await pluginEvents.dispatchEvent({
+        id: prescriptionData.id,
+      });
+      handleConfirm();
+      onClose();
+    } catch (error) {
+      setPluginError((error as Error).message);
+    }
   };
+
+  useEffect(() => {
+    // Reset plugin error when modal is closed
+    setPluginError(undefined);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!prescriptionData) return;
@@ -110,58 +95,98 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
         '& .MuiDialogContent-root': { display: 'flex', alignItems: 'center' },
       }}
     >
-      <Grid container spacing={4}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <InputWithLabelRow
-            label={t('label.total-to-be-paid')}
-            Input={
-              <CurrencyInput
-                value={prescriptionData?.pricing.totalAfterTax}
-                onChangeNumber={() => {}}
-                style={{ borderRadius: 4, pointerEvents: 'none' }}
+      <>
+        <Grid container spacing={4}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <InputWithLabelRow
+              label={t('label.total-to-be-paid')}
+              Input={
+                <CurrencyInput
+                  value={prescriptionData?.pricing.totalAfterTax}
+                  onChangeNumber={() => {}}
+                  style={{ borderRadius: 4, pointerEvents: 'none' }}
+                />
+              }
+            />
+            <InputWithLabelRow
+              label={t('label.paid-by-insurance')}
+              Input={
+                <CurrencyInput
+                  key={totalToBePaidByInsurance}
+                  value={totalToBePaidByInsurance}
+                  onChangeNumber={() => {}}
+                  style={{ borderRadius: 4, pointerEvents: 'none' }}
+                />
+              }
+              sx={{ pt: 1 }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <InputWithLabelRow
+              label={t('label.insurance-scheme')}
+              Input={
+                <Autocomplete
+                  options={
+                    insuranceData?.map(
+                      ({ insuranceProviders, policyNumber }) => ({
+                        label: policyNumber ?? '',
+                        value: insuranceProviders?.id ?? '',
+                      })
+                    ) ?? []
+                  }
+                  getOptionLabel={option => option.label}
+                  value={{
+                    label: selectedInsurance?.policyNumber ?? '',
+                    value: selectedInsurance?.insuranceProviders?.id ?? '',
+                  }}
+                  onChange={(_, option) => {
+                    if (option) {
+                      setInsuranceId(option.value);
+                    }
+                  }}
+                  sx={{ mr: 2 }}
+                />
+              }
+              sx={{
+                '& .MuiAutocomplete-root': { flexGrow: 1, borderRadius: 1 },
+              }}
+            />
+            <InputWithLabelRow
+              label={t('label.discount-rate')}
+              Input={
+                <BasicTextInput
+                  value={`${discountRate}%`}
+                  sx={{
+                    ml: 0.5,
+                    mr: 1.5,
+                    pointerEvents: 'none',
+                  }}
+                />
+              }
+              sx={{ pt: 1 }}
+            />
+          </Grid>
+          {plugins?.prescriptionPaymentForm?.map((Plugin, index) =>
+            prescriptionData ? (
+              <Plugin
+                key={index}
+                prescriptionData={prescriptionData}
+                totalToBePaidByInsurance={totalToBePaidByInsurance}
+                totalToBePaidByPatient={
+                  prescriptionData.pricing.totalAfterTax -
+                  totalToBePaidByInsurance
+                }
+                events={pluginEvents}
               />
-            }
-          />
-          <InputWithLabelRow
-            label={t('label.paid-by-insurance')}
-            Input={
-              <CurrencyInput
-                key={totalToBePaidByInsurance}
-                value={totalToBePaidByInsurance}
-                onChangeNumber={() => {}}
-                style={{ borderRadius: 4, pointerEvents: 'none' }}
-              />
-            }
-            sx={{ pt: 1 }}
-          />
+            ) : null
+          )}
         </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <InputWithLabelRow
-            label={t('label.insurance-scheme')}
-            Input={
-              <BasicTextInput
-                value={selectedInsurance?.policyNumber}
-                onChange={event => setPolicyNumber(event.target.value)}
-              />
-            }
-            sx={{ '& .MuiAutocomplete-root': { flexGrow: 1, borderRadius: 1 } }}
-          />
-          <InputWithLabelRow
-            label={t('label.discount-rate')}
-            Input={
-              <BasicTextInput
-                value={`${discountRate}%`}
-                sx={{
-                  pointerEvents: 'none',
-                }}
-              />
-            }
-            sx={{ pt: 1 }}
-          />
-        </Grid>
-        {renderPlugins(primaryPlugins)}
-        {renderPlugins(secondaryPlugins)}
-      </Grid>
+        {pluginError && (
+          <Box sx={{ pt: 4, display: 'flex', justifyContent: 'center' }}>
+            <Alert severity="error">{pluginError}</Alert>
+          </Box>
+        )}
+      </>
     </Modal>
   );
 };
