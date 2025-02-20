@@ -17,6 +17,7 @@ mod add_program_id_to_invoice;
 mod backend_plugins;
 mod frontend_plugins;
 mod plugin_data;
+mod plugin_data_changelog;
 mod prescribed_quantity_store_pref;
 mod printer_create_table;
 mod report_add_prescription_context;
@@ -53,6 +54,7 @@ impl Migration for V2_06_00 {
             Box::new(add_insurance_fields_to_invoice::Migrate),
             Box::new(add_cancelled_status_to_invoice::Migrate),
             Box::new(report_add_prescription_context::Migrate),
+            Box::new(plugin_data_changelog::Migrate),
         ]
     }
 }
