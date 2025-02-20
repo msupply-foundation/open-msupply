@@ -534,3 +534,13 @@ query abbreviations($filter: AbbreviationFilterInput) {
     }
   }
 }
+
+query labelPrinterSettings {
+  labelPrinterSettings {
+    __typename
+    address
+    labelHeight
+    labelWidth
+    port
+  }
+}
