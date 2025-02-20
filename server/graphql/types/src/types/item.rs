@@ -196,7 +196,7 @@ impl ItemNode {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-    ) -> Result<Vec<MasterListNode>> {
+    ) -> Result<Option<Vec<MasterListNode>>> {
         let loader = ctx.get_loader::<DataLoader<MasterListByItemIdLoader>>();
         let master_list_option = loader
             .load_one(MasterListByItemIdLoaderInput::new(
@@ -205,13 +205,12 @@ impl ItemNode {
             ))
             .await?;
 
-        match master_list_option {
-            Some(master_list) => Ok(master_list
+        Ok(master_list_option.map(|master_list| {
+            master_list
                 .into_iter()
                 .map(MasterListNode::from_domain)
-                .collect()),
-            None => Ok(vec![]),
-        }
+                .collect()
+        }))
     }
 }
 
