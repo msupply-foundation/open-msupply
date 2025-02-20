@@ -23,6 +23,32 @@ pub fn insurances(
     }
 }
 
+// pub fn insurance(
+//     connection: &StorageConnection,
+//     id: &str,
+// ) -> Result<Option<NameInsuranceJoinRow>, RepositoryError> {
+//     let patient = PatientRepository::new(connection)
+//         .query_one(PatientFilter::new().id(EqualFilter::equal_to(id)), None)?;
+
+//     match patient {
+//         Some(_) => NameInsuranceJoinRowRepository::new(connection).find_one_by_id(id),
+//         None => Err(RepositoryError::NotFound),
+//     }
+// }
+
+pub fn insurance(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<NameInsuranceJoinRow, RepositoryError> {
+    let result = NameInsuranceJoinRowRepository::new(connection).find_one_by_id(id)?;
+    let row = match result {
+        Some(row) => row,
+        None => return Err(RepositoryError::NotFound),
+    };
+
+    Ok(row)
+}
+
 #[cfg(test)]
 mod query {
     use crate::service_provider::ServiceProvider;

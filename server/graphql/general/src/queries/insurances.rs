@@ -91,8 +91,59 @@ pub struct InsuranceConnector {
 }
 
 #[derive(Union)]
-pub enum InsuranceResponse {
+pub enum InsurancesResponse {
     Response(InsuranceConnector),
+}
+
+#[derive(Union)]
+pub enum InsuranceResponse {
+    Response(InsuranceNode),
+}
+
+pub fn insurance(ctx: &Context<'_>, store_id: String, id: String) -> Result<InsuranceResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryPatient,
+            store_id: Some(store_id.clone()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+
+    let result = service_provider
+        .insurance_service
+        .insurance(&service_context.connection, &id)
+        .map_err(StandardGraphqlError::from_repository_error)?;
+
+    // let row = match result {
+    //     Some(row) => row,
+    //     None => {
+    //         return Err(StandardGraphqlError::from_repository_error(
+    //             RepositoryError::NotFound,
+    //         ))
+    //         .into()
+    //     }
+    // };
+
+    // let row = NameInsuranceJoinRow {
+    //     id,
+    //     name_link_id: "".to_string(),
+    //     insurance_provider_id: "".to_string(),
+    //     policy_number_person: None,
+    //     policy_number_family: None,
+    //     policy_number: "".to_string(),
+    //     policy_type: InsurancePolicyType::Business,
+    //     discount_percentage: 1.0,
+    //     expiry_date: Utc::now().date_naive(),
+    //     is_active: true,
+    //     entered_by_id: Some("".to_string()),
+    // };
+
+    Ok(InsuranceResponse::Response(InsuranceNode {
+        insurance: result,
+    }))
 }
 
 pub fn insurances(
@@ -100,7 +151,7 @@ pub fn insurances(
     store_id: String,
     name_id: String,
     sort: Option<Vec<InsuranceSortInput>>,
-) -> Result<InsuranceResponse> {
+) -> Result<InsurancesResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -122,7 +173,7 @@ pub fn insurances(
         )
         .map_err(StandardGraphqlError::from_repository_error)?;
 
-    Ok(InsuranceResponse::Response(
+    Ok(InsurancesResponse::Response(
         InsuranceConnector::from_domain(result),
     ))
 }

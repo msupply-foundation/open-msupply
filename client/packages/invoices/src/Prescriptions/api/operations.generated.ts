@@ -67,6 +67,14 @@ export type DeletePrescriptionLinesMutationVariables = Types.Exact<{
 
 export type DeletePrescriptionLinesMutation = { __typename: 'Mutations', batchPrescription: { __typename: 'BatchPrescriptionResponse', deletePrescriptionLines?: Array<{ __typename: 'DeletePrescriptionLineResponseWithId', id: string, response: { __typename: 'DeletePrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
+export type InsuranceByIdQueryVariables = Types.Exact<{
+  insuranceId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type InsuranceByIdQuery = { __typename: 'Queries', insurance: { __typename: 'InsuranceNode', isActive: boolean, discountPercentage: number, insuranceProviders?: { __typename: 'InsuranceProviderNode', isActive: boolean, providerName: string } | null } };
+
 export type HistoricalStockLineFragment = { __typename: 'StockLineNode', id: string, availableNumberOfPacks: number, packSize: number };
 
 export type DiagnosisFragment = { __typename: 'DiagnosisNode', id: string, code: string, description: string };
@@ -485,6 +493,20 @@ export const DeletePrescriptionLinesDocument = gql`
   }
 }
     `;
+export const InsuranceByIdDocument = gql`
+    query insuranceById($insuranceId: String!, $storeId: String!) {
+  insurance(id: $insuranceId, storeId: $storeId) {
+    ... on InsuranceNode {
+      isActive
+      insuranceProviders {
+        isActive
+        providerName
+      }
+      discountPercentage
+    }
+  }
+}
+    `;
 export const DiagnosesActiveDocument = gql`
     query diagnosesActive {
   diagnosesActive {
@@ -529,6 +551,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     deletePrescriptionLines(variables: DeletePrescriptionLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeletePrescriptionLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionLinesMutation>(DeletePrescriptionLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptionLines', 'mutation', variables);
+    },
+    insuranceById(variables: InsuranceByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsuranceByIdQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsuranceByIdQuery>(InsuranceByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insuranceById', 'query', variables);
     },
     diagnosesActive(variables?: DiagnosesActiveQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DiagnosesActiveQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DiagnosesActiveQuery>(DiagnosesActiveDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'diagnosesActive', 'query', variables);

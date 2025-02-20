@@ -400,6 +400,22 @@ mutation deletePrescriptionLines(
   }
 }
 
+query insuranceById($insuranceId: String!, $storeId: String!) {
+  insurance(
+    id: $insuranceId
+    storeId: $storeId
+  ) {
+    ... on InsuranceNode {
+      isActive
+      insuranceProviders {
+        isActive
+        providerName
+      }
+      discountPercentage
+    }
+  }
+}
+
 fragment historicalStockLine on StockLineNode {
   id
   availableNumberOfPacks

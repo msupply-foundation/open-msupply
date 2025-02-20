@@ -548,6 +548,8 @@
   "items": "Items",
   "label.abbreviation": "Abbreviation",
   "label.acknowledged": "Acknowledged",
+  "label.percent-discount": "percent discount",
+  "label.insurance-provider-name": "insurance provider name",
   "label.actions": "Actions",
   "label.add-another": "Add another",
   "label.add-batch": "Add batch",
