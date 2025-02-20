@@ -496,6 +496,8 @@ mod test {
                         diagnosis_id: None,
                         program_id: None,
                         their_reference: None,
+                        clinician_id: None,
+                        prescription_date: None,
                     },
                     result: Err(InsertPrescriptionError::PatientDoesNotExist),
                 }],
