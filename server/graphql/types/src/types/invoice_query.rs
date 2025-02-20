@@ -95,6 +95,10 @@ impl InvoiceNode {
         self.invoice.other_party_name()
     }
 
+    pub async fn name_insurance_join_id(&self) -> &Option<String> {
+        &self.row().name_insurance_join_id
+    }
+
     pub async fn other_party_id(&self) -> &str {
         self.invoice.other_party_id()
     }
