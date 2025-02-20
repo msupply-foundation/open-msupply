@@ -7,6 +7,7 @@ import {
   DefaultAutocompleteItemOption,
   DialogButton,
   FnUtils,
+  Formatter,
   InputWithLabelRow,
   LoadingButton,
   SaveIcon,
@@ -71,7 +72,11 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
       if (!patient) return;
       const prescriptionNumber = await create({
         id: FnUtils.generateUUID(),
-        patientId: patient?.id,
+        patientId: patient.id,
+        theirReference,
+        clinicianId: clinician?.id,
+        programId: program?.id,
+        prescriptionDate: Formatter.toIsoString(DateUtils.endOfDayOrNull(date)),
       });
       handleClose();
       navigate(String(prescriptionNumber));
