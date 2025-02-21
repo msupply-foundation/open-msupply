@@ -2,7 +2,8 @@
 import type { AverageMonthlyConsumptionInput } from "./AverageMonthlyConsumptionInput";
 import type { AverageMonthlyConsumptionItem } from "./AverageMonthlyConsumptionItem";
 import type { Function } from "./Function";
+import type { StorePreferenceRow } from "./StorePreferenceRow";
 import type { TransformRequisitionLineInput } from "./TransformRequisitionLineInput";
 import type { TransformRequisitionLineOutput } from "./TransformRequisitionLineOutput";
 
-export type PluginTypes = { average_monthly_consumption: Function<AverageMonthlyConsumptionInput, { [key in string]?: AverageMonthlyConsumptionItem }>, transform_requisition_lines: Function<TransformRequisitionLineInput, TransformRequisitionLineOutput>, };
+export type PluginTypes = { average_monthly_consumption: Function<AverageMonthlyConsumptionInput, { [key in string]?: AverageMonthlyConsumptionItem }>, transform_requisition_lines: Function<TransformRequisitionLineInput, TransformRequisitionLineOutput>, get_store_preferences: StorePreferenceRow, };
