@@ -8,9 +8,11 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // Dropping report table to remove duplicate legacy reports.
         sql!(
             connection,
             r#"
+                DROP TABLE report;
                 CREATE TABLE report (
                     id TEXT NOT NULL PRIMARY KEY,
                     name TEXT NOT NULL,
