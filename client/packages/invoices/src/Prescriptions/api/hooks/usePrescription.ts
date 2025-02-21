@@ -9,11 +9,9 @@ import {
   useUrlQueryParams,
   usePatchState,
   setNullableInput,
+  InsertPrescriptionInput,
 } from '@openmsupply-client/common';
-import {
-  InsertPrescriptionMutationVariables,
-  PrescriptionRowFragment,
-} from '../operations.generated';
+import { PrescriptionRowFragment } from '../operations.generated';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
 import { isPrescriptionDisabled } from '@openmsupply-client/invoices/src/utils';
@@ -104,10 +102,8 @@ export const usePrescription = (id?: string) => {
     error: createError,
   } = useCreate();
 
-  const create = async (
-    invoice: Omit<InsertPrescriptionMutationVariables, 'storeId'>
-  ) => {
-    const result = await createMutation(invoice);
+  const create = async (input: InsertPrescriptionInput) => {
+    const result = await createMutation(input);
     resetDraft();
     return result;
   };
@@ -235,12 +231,11 @@ const useCreate = () => {
   const { prescriptionApi, storeId, queryClient } = usePrescriptionGraphQL();
 
   const mutationFn = async (
-    invoice: Omit<InsertPrescriptionMutationVariables, 'storeId'>
+    input: InsertPrescriptionInput
   ): Promise<number> => {
     const result =
       (await prescriptionApi.insertPrescription({
-        id: invoice.id,
-        patientId: invoice.patientId,
+        input,
         storeId,
       })) || {};
 

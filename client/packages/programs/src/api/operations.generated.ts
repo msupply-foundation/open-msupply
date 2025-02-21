@@ -25,6 +25,9 @@ export type ProgramsQuery = { __typename: 'Queries', programs: { __typename: 'Pr
 export type PeriodsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   programId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  filter?: Types.InputMaybe<Types.PeriodFilterInput>;
 }>;
 
 
@@ -610,8 +613,13 @@ export const ProgramsDocument = gql`
 }
     ${ProgramFragmentDoc}`;
 export const PeriodsDocument = gql`
-    query periods($storeId: String!, $programId: String) {
-  periods(storeId: $storeId, programId: $programId) {
+    query periods($storeId: String!, $programId: String, $first: Int, $offset: Int, $filter: PeriodFilterInput) {
+  periods(
+    storeId: $storeId
+    programId: $programId
+    page: {first: $first, offset: $offset}
+    filter: $filter
+  ) {
     ... on PeriodConnector {
       __typename
       nodes {

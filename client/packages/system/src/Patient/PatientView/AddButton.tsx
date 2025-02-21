@@ -23,11 +23,12 @@ export const AddButton: React.FC<AddButtonProps> = ({
   disableEncounterButton,
 }) => {
   const t = useTranslation();
-  const { urlQuery } = useUrlQuery();
+  const { urlQuery, updateQuery } = useUrlQuery();
   const currentUrlTab = urlQuery['tab'];
   const { setModal: selectModal, reset } = usePatientModalStore();
 
   const options: [
+    SplitButtonOption<PatientModal>,
     SplitButtonOption<PatientModal>,
     SplitButtonOption<PatientModal>,
     SplitButtonOption<PatientModal>,
@@ -47,10 +48,12 @@ export const AddButton: React.FC<AddButtonProps> = ({
         value: PatientModal.ContactTraceSearch,
         label: t('button.add-contact-trace'),
       },
+      { value: PatientModal.Insurance, label: t('button.add-insurance') },
     ],
     [disableEncounterButton, t]
   );
-  const [programOption, encounterOption, contactTraceOption] = options;
+  const [programOption, encounterOption, contactTraceOption, insuranceOption] =
+    options;
 
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<PatientModal>
@@ -68,16 +71,21 @@ export const AddButton: React.FC<AddButtonProps> = ({
       case PatientTabValue.ContactTracing:
         setSelectedOption(contactTraceOption);
         break;
+      case PatientTabValue.Insurance:
+        setSelectedOption(insuranceOption);
+        break;
     }
   }, [contactTraceOption, currentUrlTab, encounterOption, programOption]);
 
   const onSelectOption = (option: SplitButtonOption<PatientModal>) => {
+    updateQuery({ insuranceId: undefined });
     setSelectedOption(option);
     reset();
     selectModal(option?.value);
   };
 
   const onClick = () => {
+    updateQuery({ insuranceId: undefined });
     reset();
     selectModal(selectedOption?.value);
   };

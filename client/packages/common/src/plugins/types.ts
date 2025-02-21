@@ -1,12 +1,14 @@
 import { ColumnDefinition, UsePluginEvents } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '@openmsupply-client/system';
 import { InboundFragment } from '@openmsupply-client/invoices';
+import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 
 export type Plugins = {
   stockEditForm?: React.ComponentType<{
     stockLine: StockLineRowFragment;
     events: UsePluginEvents<{ isDirty: boolean }>;
   }>[];
+  prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
   dashboard?: React.ComponentType[];
   stockColumn?: {
