@@ -2985,9 +2985,11 @@ export type InsertPluginDataInput = {
 export type InsertPluginDataResponse = PluginDataNode;
 
 export type InsertPrescriptionInput = {
+  clinicianId?: InputMaybe<Scalars['String']['input']>;
   diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
+  prescriptionDate?: InputMaybe<Scalars['NaiveDateTime']['input']>;
   programId?: InputMaybe<Scalars['String']['input']>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3622,11 +3624,14 @@ export type InvoiceNode = {
   diagnosis?: Maybe<DiagnosisNode>;
   diagnosisId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
+  insuranceDiscountAmount?: Maybe<Scalars['Float']['output']>;
+  insuranceDiscountPercentage?: Maybe<Scalars['Float']['output']>;
   invoiceNumber: Scalars['Int']['output'];
   isCancellation: Scalars['Boolean']['output'];
   lines: InvoiceLineConnector;
   /** Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment */
   linkedShipment?: Maybe<InvoiceNode>;
+  nameInsuranceJoinId?: Maybe<Scalars['String']['output']>;
   onHold: Scalars['Boolean']['output'];
   /**
    * Inbound Shipment that is the origin of this Supplier Return
@@ -8665,6 +8670,9 @@ export type UpdatePrescriptionInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   diagnosisId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
+  insuranceDiscountAmount?: InputMaybe<Scalars['Float']['input']>;
+  insuranceDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
+  nameInsuranceJoinId?: InputMaybe<NullableStringUpdate>;
   patientId?: InputMaybe<Scalars['String']['input']>;
   prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
   programId?: InputMaybe<NullableStringUpdate>;
