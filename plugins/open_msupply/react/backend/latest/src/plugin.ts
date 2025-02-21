@@ -8,7 +8,6 @@ import zipObject from 'lodash/zipObject';
 // TODO Should come from settings
 const DAY_LOOKBACK = 800;
 const DAYS_IN_MONTH = 30;
-const MONTHS_LEAD_TIME = 3;
 
 const plugins: BackendPlugins = {
   average_monthly_consumption: ({ store_id, item_ids }) => {
@@ -40,18 +39,23 @@ const plugins: BackendPlugins = {
 
     sql_result.forEach(({ item_id, consumption }) => {
       response[item_id] = {
-        average_monthly_consumption: consumption / (DAY_LOOKBACK / DAYS_IN_MONTH),
+        average_monthly_consumption:
+          consumption / (DAY_LOOKBACK / DAYS_IN_MONTH),
       };
     });
 
     return response;
   },
   transform_requisition_lines: ({ lines, requisition }) => {
+    const months_lead_time = get_store_preferences(
+      requisition.store_id
+    ).months_lead_time;
+
     return {
       transformed_lines: lines.map(line => {
         const max_quantity =
           line.average_monthly_consumption *
-          (requisition.max_months_of_stock + MONTHS_LEAD_TIME);
+          (requisition.max_months_of_stock + months_lead_time);
         const difference = max_quantity - line.available_stock_on_hand;
         const suggested_quantity = difference < 0 ? 0 : difference;
         return { ...line, suggested_quantity };
