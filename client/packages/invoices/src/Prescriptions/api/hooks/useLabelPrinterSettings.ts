@@ -1,4 +1,5 @@
-import { useGql, useQuery } from 'packages/common/src';
+import { useGql, useQuery } from '@openmsupply-client/common';
+
 import { getSdk } from '../operations.generated';
 import { PRINTER_SETTINGS } from './keys';
 
