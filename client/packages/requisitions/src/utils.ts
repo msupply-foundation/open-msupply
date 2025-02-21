@@ -155,24 +155,12 @@ enum IndicatorColumnName {
   Value = 'Value',
 }
 
-export const indicatorColumnNameToLocal = (columnName: string) => {
-  switch (columnName) {
-    case IndicatorColumnName.Comment:
-      return 'label.comment';
-    case IndicatorColumnName.Value:
-      return 'label.value';
-    default:
-      return columnName;
-  }
-};
-
 export const indicatorColumnNameToLocaleKey = (
   columnName: string
 ): LocaleKey => {
   switch (columnName) {
     case IndicatorColumnName.Comment:
       return 'label.comment';
-    case IndicatorColumnName.Value:
     default:
       return 'label.value';
   }

@@ -13,7 +13,7 @@ import {
   CustomerIndicatorInfoFragment,
   IndicatorColumnFragment,
 } from '../../api';
-import { indicatorColumnNameToLocal } from '../../../utils';
+import { indicatorColumnNameToLocaleKey } from '../../../utils';
 
 interface CustomerIndicatorInfoProps {
   columns: IndicatorColumnFragment[];
@@ -40,7 +40,7 @@ const CustomerIndicatorInfo = ({
   columns.forEach(({ name, id }) => {
     columnDefinitions.push({
       key: name,
-      label: indicatorColumnNameToLocal(name),
+      label: indicatorColumnNameToLocaleKey(name),
       sortable: false,
       accessor: ({ rowData }) => {
         const indicator = rowData?.indicatorInformation?.find(
