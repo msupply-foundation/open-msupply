@@ -6,6 +6,7 @@ use super::{store_row::store, user_row::user_account};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 use util::constants::DEFAULT_AMC_LOOKBACK_MONTHS;
 
 table! {
@@ -38,13 +39,15 @@ allow_tables_to_appear_in_same_query!(store_preference, store);
 allow_tables_to_appear_in_same_query!(store_preference, user_store_join);
 allow_tables_to_appear_in_same_query!(store_preference, user_account);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum StorePreferenceType {
     StorePreferences,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, TS, Serialize, Deserialize,
+)]
 #[diesel(table_name = store_preference)]
 pub struct StorePreferenceRow {
     pub id: String, // store_id
