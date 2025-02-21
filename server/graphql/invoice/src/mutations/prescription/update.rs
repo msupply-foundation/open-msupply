@@ -31,6 +31,9 @@ pub struct UpdateInput {
     pub diagnosis_id: Option<NullableUpdateInput<String>>,
     pub program_id: Option<NullableUpdateInput<String>>,
     pub their_reference: Option<NullableUpdateInput<String>>,
+    pub name_insurance_join_id: Option<NullableUpdateInput<String>>,
+    pub insurance_discount_amount: Option<f64>,
+    pub insurance_discount_percentage: Option<f64>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -107,6 +110,9 @@ impl UpdateInput {
             diagnosis_id,
             program_id,
             their_reference,
+            name_insurance_join_id,
+            insurance_discount_amount,
+            insurance_discount_percentage,
         } = self;
 
         ServiceInput {
@@ -128,6 +134,13 @@ impl UpdateInput {
             their_reference: their_reference.map(|their_reference| NullableUpdate {
                 value: their_reference.value,
             }),
+            name_insurance_join_id: name_insurance_join_id.map(|name_insurance_join_id| {
+                NullableUpdate {
+                    value: name_insurance_join_id.value,
+                }
+            }),
+            insurance_discount_amount,
+            insurance_discount_percentage,
         }
     }
 }
@@ -390,6 +403,9 @@ mod test {
                     diagnosis_id: None,
                     program_id: None,
                     their_reference: None,
+                    name_insurance_join_id: None,
+                    insurance_discount_amount: None,
+                    insurance_discount_percentage: None
                 }
             );
             Ok(Invoice {

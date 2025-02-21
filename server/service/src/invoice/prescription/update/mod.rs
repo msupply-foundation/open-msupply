@@ -38,6 +38,9 @@ pub struct UpdatePrescription {
     pub diagnosis_id: Option<NullableUpdate<String>>,
     pub program_id: Option<NullableUpdate<String>>,
     pub their_reference: Option<NullableUpdate<String>>,
+    pub name_insurance_join_id: Option<NullableUpdate<String>>,
+    pub insurance_discount_amount: Option<f64>,
+    pub insurance_discount_percentage: Option<f64>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -375,6 +378,9 @@ mod test {
                 diagnosis_id: None,
                 their_reference: None,
                 program_id: None,
+                name_insurance_join_id: None,
+                insurance_discount_amount: None,
+                insurance_discount_percentage: None,
             }
         }
 
@@ -401,6 +407,9 @@ mod test {
                     diagnosis_id: _,
                     program_id: _,
                     their_reference: _,
+                    name_insurance_join_id: _,
+                    insurance_discount_amount: _,
+                    insurance_discount_percentage: _,
                 } = get_update();
                 u.name_link_id = patient_id.unwrap();
                 u.clinician_link_id = clinician_id.unwrap().value;

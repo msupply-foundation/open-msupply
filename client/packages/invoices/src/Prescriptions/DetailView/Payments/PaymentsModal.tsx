@@ -16,13 +16,13 @@ import {
 } from '@openmsupply-client/common';
 import { useDialog } from '@common/hooks';
 import { useTranslation } from '@common/intl';
-import { usePrescription } from '../../api';
+import { PrescriptionRowFragment, usePrescription } from '../../api';
 import { useInsurances } from '@openmsupply-client/system/src';
 
 interface PaymentsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  handleConfirm: () => void;
+  handleConfirm: (patch: Partial<PrescriptionRowFragment>) => void;
 }
 
 export const PaymentsModal: FC<PaymentsModalProps> = ({
@@ -63,7 +63,12 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
       await pluginEvents.dispatchEvent({
         id: prescriptionData.id,
       });
-      handleConfirm();
+      handleConfirm({
+        id: prescriptionData.id,
+        nameInsuranceJoinId: selectedInsurance?.id ?? '',
+        insuranceDiscountPercentage: discountRate,
+        insuranceDiscountAmount: totalToBePaidByInsurance,
+      });
       onClose();
     } catch (error) {
       setPluginError((error as Error).message);

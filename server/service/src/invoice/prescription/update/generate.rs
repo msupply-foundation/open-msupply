@@ -34,6 +34,9 @@ pub(crate) fn generate(
         diagnosis_id,
         program_id,
         their_reference,
+        name_insurance_join_id: input_name_insurance_join_id,
+        insurance_discount_amount: input_insurance_discount_amount,
+        insurance_discount_percentage: input_insurance_discount_percentage,
     }: UpdatePrescription,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdatePrescriptionError> {
@@ -74,6 +77,16 @@ pub(crate) fn generate(
     if let Some(status) = input_status.clone() {
         update_invoice.status = status.full_status()
     }
+
+    if let Some(name_insurance_join_id) = input_name_insurance_join_id {
+        update_invoice.name_insurance_join_id = name_insurance_join_id.value;
+    }
+
+    update_invoice.insurance_discount_amount =
+        input_insurance_discount_amount.or(update_invoice.insurance_discount_amount);
+
+    update_invoice.insurance_discount_percentage =
+        input_insurance_discount_percentage.or(update_invoice.insurance_discount_percentage);
 
     let batches_to_update = if should_update_batches_total_number_of_packs {
         Some(
