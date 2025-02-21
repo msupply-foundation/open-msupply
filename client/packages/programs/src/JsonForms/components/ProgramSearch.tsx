@@ -27,7 +27,9 @@ const UIComponent = (props: ControlProps) => {
   );
 
   const { handleChange, label, path } = props;
-  const { data, isLoading } = useProgramList(false);
+  const { data, isLoading } = useProgramList({
+    isImmunisation: props.uischema.options?.['programType'] === 'immunisation',
+  });
   const [program, setProgram] = useState<ProgramFragment | null>(null);
 
   const onChange = async (program: ProgramFragment) => {
