@@ -21,7 +21,7 @@ fragment StockLineRow on StockLineNode {
     code
     name
     unitName
-    masterList(storeId: $storeId) {
+    masterLists(storeId: $storeId) {
       name
     }
   }
