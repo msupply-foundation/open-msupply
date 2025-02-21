@@ -50,7 +50,7 @@ export const Toolbar: FC = () => {
       null
   );
 
-  const { data: programData } = useProgramList(true);
+  const { data: programData } = useProgramList();
   const programs = programData?.nodes ?? [];
   const selectedProgram = programs.find(prog => prog.id === programId);
 

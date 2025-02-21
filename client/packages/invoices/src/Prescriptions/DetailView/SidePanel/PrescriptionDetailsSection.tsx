@@ -46,7 +46,7 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
     deleteLines(allRows);
   };
 
-  const { data: programData } = useProgramList(true);
+  const { data: programData } = useProgramList();
 
   const programs = programData?.nodes ?? [];
 
