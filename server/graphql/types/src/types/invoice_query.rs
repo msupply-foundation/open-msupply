@@ -427,6 +427,18 @@ impl InvoiceNode {
             .await?
             .map(StoreNode::from_domain))
     }
+
+    pub async fn name_insurance_join_id(&self) -> &Option<String> {
+        &self.row().name_insurance_join_id
+    }
+
+    pub async fn insurance_discount_amount(&self) -> &Option<f64> {
+        &self.row().insurance_discount_amount
+    }
+
+    pub async fn insurance_discount_percentage(&self) -> &Option<f64> {
+        &self.row().insurance_discount_percentage
+    }
 }
 
 impl InvoiceNode {

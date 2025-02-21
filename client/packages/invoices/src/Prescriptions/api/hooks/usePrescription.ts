@@ -201,6 +201,7 @@ const useUpdate = (id: string) => {
       diagnosisId: setNullableInput('diagnosisId', patch),
       programId: setNullableInput('programId', patch),
       theirReference: setNullableInput('theirReference', patch),
+      nameInsuranceJoinId: setNullableInput('nameInsuranceJoinId', patch),
     };
     const result =
       (await prescriptionApi.upsertPrescription({

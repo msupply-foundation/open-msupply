@@ -75,6 +75,10 @@ fragment PrescriptionRow on InvoiceNode {
   }
 
   programId
+
+  nameInsuranceJoinId
+  insuranceDiscountAmount
+  insuranceDiscountPercentage
 }
 
 fragment PrescriptionLine on InvoiceLineNode {

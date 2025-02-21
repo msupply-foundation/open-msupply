@@ -70,6 +70,9 @@ pub fn generate_create_prescription(
         diagnosis_id: None,
         program_id: None,
         their_reference: None,
+        name_insurance_join_id: None,
+        insurance_discount_amount: None,
+        insurance_discount_percentage: None,
     };
 
     CreatePrescription {
