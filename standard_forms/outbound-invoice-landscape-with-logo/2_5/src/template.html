@@ -3,7 +3,7 @@
 </style>
 
 {% macro dateOrNA(datetime) %} 
-{% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
+{% if datetime %}{{ datetime | date(format="%d/%m/%Y") }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
 {% endmacro input %}
 
 <table class="header_supplied_section">
@@ -38,7 +38,7 @@
     </tr>
 
     <tr> 
-        <td class="header_section_field_left">{{t(k="report.created-date",f="Created date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}</td>
+        <td class="header_section_field_left">{{t(k="report.created-date",f="Created date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y") }}</td>
         <td class="header_section_field_right">{{t(k="report.shipped-date",f="Shipped date")}}: {{self::dateOrNA(datetime=data.invoice.shippedDatetime)}}</td>
     </tr> 
 </table>
