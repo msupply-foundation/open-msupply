@@ -15,7 +15,7 @@ import {
   IndicatorLineRowFragment,
   IndicatorLineWithColumnsFragment,
 } from '../../../RequestRequisition/api';
-import { indicatorColumnNameToLocal } from '../../../utils';
+import { indicatorColumnNameToLocaleKey } from '../../../utils';
 
 interface IndicatorLineEditProps {
   requisitionNumber: number;
@@ -92,7 +92,7 @@ const InputWithLabel = ({
     <InputWithLabelRow
       Input={inputComponent}
       labelWidth={LABEL_WIDTH}
-      label={indicatorColumnNameToLocal(data.name)}
+      label={indicatorColumnNameToLocaleKey(data.name)}
       sx={{ marginBottom: 1 }}
     />
   );
