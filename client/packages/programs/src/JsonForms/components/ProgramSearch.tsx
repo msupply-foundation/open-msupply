@@ -3,14 +3,29 @@ import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import {
   Autocomplete,
   DetailInputWithLabelRow,
+  Typography,
 } from '@openmsupply-client/common';
-import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../common';
+import {
+  DefaultFormRowSx,
+  FORM_LABEL_WIDTH,
+  useZodOptionsValidation,
+} from '../common';
 import { ProgramFragment, useProgramList } from '../../api';
 import { withJsonFormsControlProps } from '@jsonforms/react';
+import { z } from 'zod';
 
 export const programSearchTester = rankWith(10, uiTypeIs('ProgramSearch'));
 
+const PatientProgramSearchOptions = z.object({
+  programType: z.enum(['immunisation']).optional(),
+});
+
 const UIComponent = (props: ControlProps) => {
+  const { errors: zErrors } = useZodOptionsValidation(
+    PatientProgramSearchOptions,
+    props.uischema.options
+  );
+
   const { handleChange, label, path } = props;
   const { data, isLoading } = useProgramList(false);
   const [program, setProgram] = useState<ProgramFragment | null>(null);
@@ -19,6 +34,8 @@ const UIComponent = (props: ControlProps) => {
     setProgram(program);
     handleChange(path, program.id);
   };
+
+  if (zErrors) return <Typography color="error">{zErrors}</Typography>;
 
   return (
     <DetailInputWithLabelRow
