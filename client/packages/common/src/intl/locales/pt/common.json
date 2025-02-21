@@ -1857,5 +1857,6 @@
   "label.copy": "Copiar",
   "label.price": "Preço",
   "message.no-directions": "Não há direcções predefinidas disponíveis",
-  "label.dispensing-date": "Data da dispensa"
+  "label.dispensing-date": "Data da dispensa",
+  "report.snapshot-packs": "Quantidade instantânea de pacotes"
 }
