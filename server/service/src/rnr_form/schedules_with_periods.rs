@@ -2,7 +2,7 @@ use crate::service_provider::ServiceContext;
 
 use chrono::Utc;
 use repository::{
-    DateFilter, EqualFilter, Period, PeriodFilter, PeriodRepository, PeriodScheduleRow,
+    DateFilter, EqualFilter, Pagination, Period, PeriodFilter, PeriodRepository, PeriodScheduleRow,
     PeriodScheduleRowRepository, PeriodSort, PeriodSortField,
     ProgramRequisitionSettingsRowRepository, RepositoryError,
 };
@@ -44,6 +44,7 @@ pub fn get_schedules_with_periods_by_program(
             let closed_periods = period_repo.query(
                 store_id.to_string(),
                 Some(program_id.to_string()),
+                Pagination::all(),
                 Some(period_filter),
                 Some(PeriodSort {
                     key: PeriodSortField::EndDate,

@@ -2985,9 +2985,11 @@ export type InsertPluginDataInput = {
 export type InsertPluginDataResponse = PluginDataNode;
 
 export type InsertPrescriptionInput = {
+  clinicianId?: InputMaybe<Scalars['String']['input']>;
   diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
+  prescriptionDate?: InputMaybe<Scalars['NaiveDateTime']['input']>;
   programId?: InputMaybe<Scalars['String']['input']>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3375,6 +3377,21 @@ export type InsuranceProviderNode = {
   providerName: Scalars['String']['output'];
 };
 
+export type InsuranceProvidersConnector = {
+  __typename: 'InsuranceProvidersConnector';
+  nodes: Array<InsuranceProvidersNode>;
+};
+
+export type InsuranceProvidersNode = {
+  __typename: 'InsuranceProvidersNode';
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  prescriptionValidityDays?: Maybe<Scalars['Int']['output']>;
+  providerName: Scalars['String']['output'];
+};
+
+export type InsuranceProvidersResponse = InsuranceProvidersConnector;
+
 export type InsuranceResponse = InsuranceConnector;
 
 export enum InsuranceSortFieldInput {
@@ -3595,6 +3612,7 @@ export type InvoiceNode = {
   __typename: 'InvoiceNode';
   allocatedDatetime?: Maybe<Scalars['DateTime']['output']>;
   backdatedDatetime?: Maybe<Scalars['DateTime']['output']>;
+  cancelledDatetime?: Maybe<Scalars['DateTime']['output']>;
   clinician?: Maybe<ClinicianNode>;
   clinicianId?: Maybe<Scalars['String']['output']>;
   colour?: Maybe<Scalars['String']['output']>;
@@ -3607,6 +3625,7 @@ export type InvoiceNode = {
   diagnosisId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   invoiceNumber: Scalars['Int']['output'];
+  isCancellation: Scalars['Boolean']['output'];
   lines: InvoiceLineConnector;
   /** Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment */
   linkedShipment?: Maybe<InvoiceNode>;
@@ -3999,6 +4018,7 @@ export type LedgerConnector = {
 };
 
 export type LedgerFilterInput = {
+  datetime?: InputMaybe<DatetimeFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -5509,6 +5529,11 @@ export type PeriodConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type PeriodFilterInput = {
+  endDate?: InputMaybe<DateFilterInput>;
+  startDate?: InputMaybe<DateFilterInput>;
+};
+
 export type PeriodNode = {
   __typename: 'PeriodNode';
   endDate: Scalars['NaiveDate']['output'];
@@ -5963,6 +5988,7 @@ export type Queries = {
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
+  insuranceProviders: InsuranceProvidersResponse;
   insurances: InsuranceResponse;
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
@@ -6342,6 +6368,11 @@ export type QueriesInsertPrescriptionArgs = {
 };
 
 
+export type QueriesInsuranceProvidersArgs = {
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesInsurancesArgs = {
   nameId: Scalars['String']['input'];
   sort?: InputMaybe<Array<InsuranceSortInput>>;
@@ -6491,6 +6522,8 @@ export type QueriesPatientsArgs = {
 
 
 export type QueriesPeriodsArgs = {
+  filter?: InputMaybe<PeriodFilterInput>;
+  page?: InputMaybe<PaginationInput>;
   programId?: InputMaybe<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };

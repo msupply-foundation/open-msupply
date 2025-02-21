@@ -5,7 +5,6 @@ import {
   PanelLabel,
   PanelRow,
   useTranslation,
-  Tooltip,
   BasicTextInput,
   useDebouncedValueCallback,
   useConfirmationModal,
@@ -141,20 +140,17 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
   if (!createdDatetime) return null;
 
   useEffect(() => {
+    if (!data) return;
+    const { clinician, theirReference, prescriptionDate, createdDatetime } =
+      data;
     setClinicianValue(clinician ?? null);
-  }, [clinician]);
-
-  useEffect(() => {
     setTheirReferenceInput(theirReference);
-  }, [theirReference]);
-
-  useEffect(() => {
     setDateValue(
       DateUtils.getDateOrNull(prescriptionDate) ??
         DateUtils.getDateOrNull(createdDatetime) ??
         null
     );
-  }, [prescriptionDate]);
+  }, [data]);
 
   return (
     <DetailPanelSection title={t('heading.prescription-details')}>
@@ -186,18 +182,16 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
 
         <PanelRow>
           <PanelLabel>{t('label.reference')}</PanelLabel>
-          <Tooltip title={theirReferenceInput} placement="bottom-start">
-            <BasicTextInput
-              disabled={isDisabled}
-              size="small"
-              sx={{ width: 250 }}
-              value={theirReferenceInput ?? ''}
-              onChange={event => {
-                setTheirReferenceInput(event.target.value);
-                debouncedUpdate({ theirReference: event.target.value });
-              }}
-            />
-          </Tooltip>
+          <BasicTextInput
+            disabled={isDisabled}
+            size="small"
+            sx={{ width: 250 }}
+            value={theirReferenceInput ?? ''}
+            onChange={event => {
+              setTheirReferenceInput(event.target.value);
+              debouncedUpdate({ theirReference: event.target.value });
+            }}
+          />
         </PanelRow>
 
         <PanelRow>
