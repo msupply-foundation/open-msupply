@@ -78,7 +78,7 @@ const StockListComponent: FC = () => {
     //   label: 'label.master-list',
     //   Cell: ChipTableCell,
     //   width: 150,
-    //   accessor: ({ rowData }) => rowData.masterList.map(m => m.name),
+    //   accessor: ({ rowData }) => rowData.item.masterLists.map(m => m.name),
     // },
     { key: 'batch', label: 'label.batch', Cell: TooltipTextCell, width: 100 },
     {
