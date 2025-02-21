@@ -280,7 +280,7 @@
   "error.is-locked": "Stocktake is locked.",
   "error.item-not-found": "Item not found",
   "error.json-bad-format-with-examples": "Incorrect format. Use: \"{{examples}}\"",
-  "error.label-printer-not-configured": "There is no label printer configured. Please see the Admin > Devices section to configure a label printer.",
+  "error.label-printer-not-configured": "There is no label printer configured. Please see the Settings > Devices section to configure a label printer.",
   "error.login": "Invalid username or password",
   "error.login-support": "Please contact support@msupply.foundation if you are unable to login to your account",
   "error.manufacturer-model-unique": "An item already exists with this manufacturer and model",

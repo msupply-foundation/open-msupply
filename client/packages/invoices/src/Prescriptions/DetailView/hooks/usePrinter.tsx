@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLabelPrinterSettings } from '../../api/hooks/useLabelPrinterSettings';
-import { Environment } from 'packages/config/src';
+import { Environment } from '@openmsupply-client/config/src';
 import {
+  useAuthContext,
   useDisabledNotificationPopover,
   useNotification,
   useTranslation,
@@ -12,20 +13,23 @@ export const usePrintLabels = () => {
   const t = useTranslation();
   const { error, success } = useNotification();
   const { data: settings } = useLabelPrinterSettings();
+  const { store } = useAuthContext();
   const [isPrintingLabels, setIsPrintingLabels] = React.useState(false);
+  const [printerExists, setPrinterExists] = useState(false);
 
   const { show, DisabledNotification } = useDisabledNotificationPopover({
     title: t('heading.unable-to-print'),
     message: t('error.label-printer-not-configured'),
   });
 
+  //handle the popover with e, or handle the alert modal with state
   const printLabels = (
-    e: React.MouseEvent<HTMLButtonElement>,
     prescription: PrescriptionRowFragment,
-    lines: PrescriptionLineFragment[]
+    lines: PrescriptionLineFragment[],
+    e?: React.MouseEvent<HTMLButtonElement>
   ) => {
     if (settings === null) {
-      show(e);
+      e ? show(e) : setPrinterExists(true);
     } else {
       printPrescriptionLabel(prescription, lines);
     }
@@ -40,7 +44,7 @@ export const usePrintLabels = () => {
       itemDetails: `${line.numberOfPacks * line.packSize} ${line.item.unitName}: ${line.itemName}`,
       itemDirections: line.note,
       patientDetails: `${prescription.patient?.name} - ${prescription.patient?.code}`,
-      details: `${new Date(prescription.createdDatetime).toLocaleDateString()} - ${prescription.clinician?.lastName}, ${prescription.clinician?.firstName}`, // TODO: add store
+      details: `${store?.name} - ${new Date(prescription.createdDatetime).toLocaleDateString()} - ${prescription.clinician?.lastName}, ${prescription.clinician?.firstName}`,
     }));
     fetch(Environment.PRINT_LABEL_PRESCRIPTION, {
       method: 'POST',
@@ -59,10 +63,13 @@ export const usePrintLabels = () => {
         error(`${t('error.printing-label')}: ${e.message}`)();
       })
       .finally(() => setIsPrintingLabels(false));
+    setIsPrintingLabels(false);
   };
   return {
     isPrintingLabels,
     printLabels,
     DisabledNotification,
+    printerExists,
+    setPrinterExists,
   };
 };

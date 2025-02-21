@@ -14,6 +14,7 @@ import {
   Action,
   ActionsFooter,
   PrinterIcon,
+  AlertModal,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, prescriptionStatuses } from '../../../utils';
 import { StatusChangeButton } from './StatusChangeButton';
@@ -22,6 +23,7 @@ import {
   usePrescription,
   usePrescriptionLines,
 } from '../../api';
+import { usePrintLabels } from '../hooks/usePrinter';
 
 const createStatusLog = (invoice: PrescriptionRowFragment) => {
   const statusIdx = prescriptionStatuses.findIndex(s => invoice.status === s);
@@ -88,6 +90,19 @@ export const FooterComponent: FC = () => {
     },
   });
 
+  const {
+    printLabels: printPrescriptionLabels,
+    isPrintingLabels,
+    printerExists,
+    setPrinterExists,
+  } = usePrintLabels();
+
+  const handlePrintLabels = () => {
+    if (data) {
+      printPrescriptionLabels(data, selectedRows);
+    }
+  };
+
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
@@ -99,8 +114,8 @@ export const FooterComponent: FC = () => {
     {
       label: t('button.print-prescription-label'),
       icon: <PrinterIcon />,
-      onClick: () => {},
-      disabled: isDisabled,
+      onClick: handlePrintLabels,
+      disabled: isDisabled || isPrintingLabels,
       disabledToastMessage: t('heading.unable-to-print'),
     },
   ];
@@ -117,10 +132,18 @@ export const FooterComponent: FC = () => {
       Content={
         <>
           {selectedRows.length !== 0 && (
-            <ActionsFooter
-              actions={actions}
-              selectedRowCount={selectedRows.length}
-            />
+            <>
+              <ActionsFooter
+                actions={actions}
+                selectedRowCount={selectedRows.length}
+              />
+              <AlertModal
+                title={t('heading.unable-to-print')}
+                message={t('error.label-printer-not-configured')}
+                open={printerExists}
+                onOk={() => setPrinterExists(false)}
+              />
+            </>
           )}
           {data?.id && selectedRows.length === 0 && (
             <Box

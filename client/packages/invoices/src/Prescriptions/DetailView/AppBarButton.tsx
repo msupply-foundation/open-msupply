@@ -53,7 +53,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
 
   const handlePrintLabels = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (prescription) {
-      printPrescriptionLabels(e, prescription, prescription.lines.nodes);
+      printPrescriptionLabels(prescription, prescription.lines.nodes, e);
     }
   };
 
