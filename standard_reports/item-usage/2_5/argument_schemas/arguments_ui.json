@@ -30,18 +30,18 @@
       "label": "T#report.sort-by",
       "options": {
         "show": [
-          ["name", "name"],
-          ["code", "code"],
-          ["SOH", "stock on hand"],
-          ["MOS", "months cover"],
-          ["monthConsumption", "month consumption`"],
-          ["lastMonthConsumption", "last months consumption"],
-          ["twoMonthsAgoConsumption", "two months ago consumption"],
-          ["expiringInSixMonths", "expiring in 6 months"],
-          ["expiringInTwelveMonths", "expiring in 12 months"],
-          ["stockOnOrder", "stock on order"],
-          ["AMC12", "AMC12"],
-          ["AMC24", "AMC24"]
+          ["name", "T#report.item-name"],
+          ["code", "T#label.code"],
+          ["SOH", "T#report.stock-on-hand"],
+          ["MOS", "T#report.months-cover"],
+          ["monthConsumption", "T#report.consumption-month"],
+          ["lastMonthConsumption", "T#report.consumption-last-month"],
+          ["twoMonthsAgoConsumption", "T#report.consumption-two-months-ago"],
+          ["expiringInSixMonths", "T#report.expiring-6-months"],
+          ["expiringInTwelveMonths", "T#report.expiring-12-months"],
+          ["stockOnOrder", "T#report.stock-on-order"],
+          ["AMC12", "T#report.amc-12-months"],
+          ["AMC24", "T#report.amc-24-months"]
         ]
       }
     },
