@@ -19,20 +19,15 @@ export const PricingSectionComponent = () => {
   const pricing = prescriptionData?.pricing;
   if (!pricing) return null;
 
-  const insuranceId = prescriptionData?.nameInsuranceJoinId;
-  const { storeId } = usePrescriptionGraphQL();
-
-  console.log('insurance Id: ', insuranceId)
-  
-  const insuranceData = insuranceId ? useInsurance(insuranceId, storeId).query.data : null;
-
-  console.log("Insurance Data: ", insuranceData)
+  const insuranceId = prescriptionData.nameInsuranceJoinId;
+  const { storeId } = usePrescriptionGraphQL()
+  const insuranceData = useInsurance(insuranceId, storeId)?.query.data;
 
   return (
     <DetailPanelSection title={t('heading.pricing')}>
       <Grid container gap={0.5}>
         
-        {insuranceData && insuranceData.isActive && insuranceData.insuranceProviders?.isActive && (
+        {insuranceData && (
         <>
         <PanelRow>
           <PanelLabel>{t('label.insurance-provider-name')}</PanelLabel>
