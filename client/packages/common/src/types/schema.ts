@@ -2989,7 +2989,7 @@ export type InsertPrescriptionInput = {
   diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
-  prescriptionDate?: InputMaybe<Scalars['NaiveDateTime']['input']>;
+  prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
   programId?: InputMaybe<Scalars['String']['input']>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
 };
@@ -4018,7 +4018,6 @@ export type LedgerConnector = {
 };
 
 export type LedgerFilterInput = {
-  datetime?: InputMaybe<DatetimeFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -9373,6 +9372,7 @@ export type VaccineCourseDoseNode = {
   maxAgeMonths: Scalars['Float']['output'];
   minAgeMonths: Scalars['Float']['output'];
   minIntervalDays: Scalars['Int']['output'];
+  /** Will return deleted vaccine courses as well, to support display of existing vaccinations. */
   vaccineCourse: VaccineCourseNode;
 };
 
