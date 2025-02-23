@@ -606,6 +606,7 @@ export const InsuranceByIdDocument = gql`
     query insuranceById($insuranceId: String!, $storeId: String!) {
   insurance(id: $insuranceId, storeId: $storeId) {
     ... on InsuranceNode {
+      __typename
       isActive
       insuranceProviders {
         isActive
