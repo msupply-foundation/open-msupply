@@ -3608,10 +3608,13 @@ export type InvoiceNode = {
   diagnosis?: Maybe<DiagnosisNode>;
   diagnosisId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
+  insuranceDiscountAmount?: Maybe<Scalars['Float']['output']>;
+  insuranceDiscountPercentage?: Maybe<Scalars['Float']['output']>;
   invoiceNumber: Scalars['Int']['output'];
   lines: InvoiceLineConnector;
   /** Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment */
   linkedShipment?: Maybe<InvoiceNode>;
+  nameInsuranceJoinId?: Maybe<Scalars['String']['output']>;
   onHold: Scalars['Boolean']['output'];
   /**
    * Inbound Shipment that is the origin of this Supplier Return
