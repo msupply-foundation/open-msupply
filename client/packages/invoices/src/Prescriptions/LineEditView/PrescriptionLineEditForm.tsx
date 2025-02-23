@@ -210,19 +210,21 @@ export const PrescriptionLineEditForm: React.FC<
   const note = prescriptionLineWithNote?.note ?? '';
 
   useEffect(() => {
-    const selectedItem = items.find(
-      prescriptionItem => prescriptionItem.id === item?.id
-    );
+    // sets prescribed quantity on initial load
     if (preferences?.editPrescribedQuantityOnPrescription) {
-      const newPrescribedQuantity: number =
+      const selectedItem = items.find(
+        prescriptionItem => prescriptionItem.id === item?.id
+      );
+      const newPrescribedQuantity =
         selectedItem?.lines?.find(
           ({ prescribedQuantity }) =>
             prescribedQuantity != null && prescribedQuantity > 0
         )?.prescribedQuantity ?? 0;
-
       setPrescribedQuantity(newPrescribedQuantity);
     }
+  }, []);
 
+  useEffect(() => {
     const newIssueQuantity = Math.round(
       allocatedUnits / Math.abs(Number(packSizeController.selected?.value || 1))
     );
@@ -328,6 +330,13 @@ export const PrescriptionLineEditForm: React.FC<
                     min={0}
                     decimalLimit={2}
                     onBlur={() => {}}
+                    slotProps={{
+                      htmlInput: {
+                        sx: {
+                          backgroundColor: 'background.white',
+                        },
+                      },
+                    }}
                   />
                 </Grid>
               )}
@@ -345,18 +354,13 @@ export const PrescriptionLineEditForm: React.FC<
                   slotProps={{
                     htmlInput: {
                       sx: {
-                        backgroundColor: disabled
-                          ? undefined
-                          : 'background.white',
+                        backgroundColor: 'background.white',
                       },
                     },
                   }}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
-                  {t('label.unit-plural_one', {
-                    // unit-plural_one has been specified to deactivate pluralisation.
-                    // This is to handle the case where units have not been entered for the item.
-                    // see https://github.com/msupply-foundation/open-msupply/issues/5978
+                  {t('label.unit-plural', {
                     count: issueUnitQuantity,
                     unit: item?.unitName,
                   })}
