@@ -2985,9 +2985,11 @@ export type InsertPluginDataInput = {
 export type InsertPluginDataResponse = PluginDataNode;
 
 export type InsertPrescriptionInput = {
+  clinicianId?: InputMaybe<Scalars['String']['input']>;
   diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
+  prescriptionDate?: InputMaybe<Scalars['NaiveDateTime']['input']>;
   programId?: InputMaybe<Scalars['String']['input']>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
 };
@@ -4016,6 +4018,7 @@ export type LedgerConnector = {
 };
 
 export type LedgerFilterInput = {
+  datetime?: InputMaybe<DatetimeFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -5526,6 +5529,11 @@ export type PeriodConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type PeriodFilterInput = {
+  endDate?: InputMaybe<DateFilterInput>;
+  startDate?: InputMaybe<DateFilterInput>;
+};
+
 export type PeriodNode = {
   __typename: 'PeriodNode';
   endDate: Scalars['NaiveDate']['output'];
@@ -6514,6 +6522,8 @@ export type QueriesPatientsArgs = {
 
 
 export type QueriesPeriodsArgs = {
+  filter?: InputMaybe<PeriodFilterInput>;
+  page?: InputMaybe<PaginationInput>;
   programId?: InputMaybe<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };
