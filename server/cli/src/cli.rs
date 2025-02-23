@@ -191,6 +191,10 @@ enum Action {
         #[clap(short, long)]
         code: String,
 
+        /// Filter by custom status
+        #[clap(short, long)]
+        is_custom: Option<bool>,
+
         /// Set is_enabled to true
         #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="disable")]
         enable: bool,
@@ -640,11 +644,18 @@ async fn main() -> anyhow::Result<()> {
                 .status()
                 .expect(&format!("failed to open file {:?}", generated_file_path));
         },
-        Action::ToggleReport { code, enable, disable } => {
+        Action::ToggleReport { code, is_custom, enable, disable } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
 
-            let filter = ReportFilter::new().code(EqualFilter::equal_to(&code));
+            let mut filter = ReportFilter::new().code(EqualFilter::equal_to(&code));
+            match is_custom {
+                Some(value) => {
+                    filter = filter.is_custom(value);
+                },
+                None => {}
+            }
+
             let report_list = ReportRepository::new(&con).query_by_filter(filter)?;
             let row_repository = ReportRowRepository::new(&con);
 
