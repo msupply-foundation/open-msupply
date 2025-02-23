@@ -63,12 +63,17 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
       await pluginEvents.dispatchEvent({
         id: prescriptionData.id,
       });
-      handleConfirm({
-        id: prescriptionData.id,
-        nameInsuranceJoinId: selectedInsurance?.id ?? '',
-        insuranceDiscountPercentage: discountRate,
-        insuranceDiscountAmount: totalToBePaidByInsurance,
-      });
+
+      handleConfirm(
+        selectedInsurance?.id != null
+          ? {
+              id: prescriptionData.id,
+              nameInsuranceJoinId: selectedInsurance?.id,
+              insuranceDiscountPercentage: discountRate,
+              insuranceDiscountAmount: totalToBePaidByInsurance,
+            }
+          : {}
+      );
       onClose();
     } catch (error) {
       setPluginError((error as Error).message);
