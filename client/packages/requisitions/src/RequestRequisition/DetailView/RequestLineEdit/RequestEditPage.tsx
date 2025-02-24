@@ -8,7 +8,7 @@ import {
   useBreadcrumbs,
   useParams,
 } from '@openmsupply-client/common';
-import { useRequest } from '../../api';
+import { RequestFragment, useRequest } from '../../api';
 import { ListItems } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { useDraftRequisitionLine, usePreviousNextRequestLine } from './hooks';
@@ -16,15 +16,33 @@ import { PageLayout } from '../../../common/PageLayout';
 import { AppBarButtons } from './AppBarButtons';
 import { RequestLineEdit } from './RequestLineEdit';
 
+interface RequestLineEditPageInnerProps {
+  itemId: string;
+  requisition: RequestFragment;
+}
+
 export const RequestLineEditPage = () => {
-  const { requisitionNumber, itemId } = useParams();
-  const { data, isLoading: requestIsLoading } = useRequest.document.get();
+  const { itemId } = useParams();
+  const { data, isLoading } = useRequest.document.get();
+
+  if (isLoading || !itemId) return <BasicSpinner />;
+  if (!data) return <NothingHere />;
+
+  return <RequestLineEditPageInner requisition={data} itemId={itemId} />;
+};
+
+export const RequestLineEditPageInner = ({
+  itemId,
+  requisition,
+}: RequestLineEditPageInnerProps) => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { mutateAsync } = useRequest.line.insert();
-  const { lines } = useRequest.line.list();
-  const currentItem = lines?.find(l => l.item.id === itemId)?.item;
-  const { draft, save, update, isLoading } =
-    useDraftRequisitionLine(currentItem);
+
+  const lines = requisition.lines.nodes.sort((a, b) =>
+    a.item.name.localeCompare(b.item.name)
+  );
+  const currentItem = lines.find(line => line.item.id === itemId)?.item;
+  const { draft, save, update } = useDraftRequisitionLine(currentItem);
   const { hasNext, next, hasPrevious, previous } = usePreviousNextRequestLine(
     lines,
     currentItem
@@ -36,7 +54,7 @@ export const RequestLineEditPage = () => {
         .filter(line => line.requestedQuantity !== 0)
         .map(line => line.item.id)
     : [];
-  const isProgram = !!data?.programName;
+  const isProgram = !!requisition.programName;
 
   // This ref is attached to the currently selected list item, and is used to
   // "scroll into view" when the Previous/Next buttons are clicked in the NavBar
@@ -52,12 +70,9 @@ export const RequestLineEditPage = () => {
     });
   }, [currentItem]);
 
-  if (isLoading || requestIsLoading) return <BasicSpinner />;
-  if (!lines) return <NothingHere />;
-
   return (
     <>
-      <AppBarButtons requisitionNumber={Number(requisitionNumber)} />
+      <AppBarButtons requisitionNumber={requisition.requisitionNumber} />
       <DetailContainer>
         <PageLayout
           Left={
@@ -66,10 +81,10 @@ export const RequestLineEditPage = () => {
               items={lines?.map(l => l.item)}
               route={RouteBuilder.create(AppRoute.Replenishment)
                 .addPart(AppRoute.InternalOrder)
-                .addPart(String(requisitionNumber))}
+                .addPart(String(requisition.requisitionNumber))}
               enteredLineIds={enteredLineIds}
               showNew={
-                data?.status !== RequisitionNodeStatus.Sent && !isProgram
+                requisition.status !== RequisitionNodeStatus.Sent && !isProgram
               }
               scrollRef={scrollRef}
             />
@@ -89,8 +104,8 @@ export const RequestLineEditPage = () => {
               isPacks={isPacks}
               setIsPacks={setIsPacks}
               insert={mutateAsync}
-              requisitionId={data?.id ?? ''}
-              requisitionNumber={data?.requisitionNumber}
+              requisitionId={requisition?.id ?? ''}
+              requisitionNumber={requisition?.requisitionNumber}
               lines={lines}
               scrollIntoView={scrollSelectedItemIntoView}
             />
