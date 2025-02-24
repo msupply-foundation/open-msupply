@@ -12,4 +12,7 @@ export type BackendPlugins = {
 declare global {
   var sql: (_: string) => [Record<string, any>];
   var log: (_: any) => void;
+  var get_store_preferences: (
+    _: string
+  ) => PluginTypes['get_store_preferences'];
 }

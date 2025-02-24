@@ -60,6 +60,7 @@ where
     methods::log::bind_method(context)?;
     methods::sql::bind_method(context)?;
     methods::sql_type::bind_method(context)?;
+    methods::get_store_preferences::bind_method(context)?;
 
     let namespace = module.namespace(context);
     let plugins = namespace
