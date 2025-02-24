@@ -1,8 +1,10 @@
 import {
+  AutocompleteOptionRenderer,
   FilterOptionsState,
   Formatter,
   LocaleKey,
   RegexUtils,
+  SxProps,
   TypedTFunction,
 } from '@openmsupply-client/common';
 import { PatientRowFragment } from './api';
@@ -28,6 +30,8 @@ export interface NameSearchInputProps {
   width?: number;
   value: SearchInputPatient | null;
   disabled?: boolean;
+  sx?: SxProps;
+  NoOptionsRenderer?: AutocompleteOptionRenderer<SearchInputPatient>;
 }
 
 export interface PatientSearchModalProps {
