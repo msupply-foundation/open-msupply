@@ -1,6 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
-use repository::PeriodRow;
+use graphql_core::generic_filters::DateFilterInput;
+use repository::{DateFilter, PeriodFilter, PeriodRow};
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]
@@ -57,6 +58,24 @@ impl PeriodConnector {
                 .map(PeriodNode::from_domain)
                 .collect(),
             total_count: periods.count,
+        }
+    }
+}
+
+#[derive(InputObject)]
+pub struct PeriodFilterInput {
+    pub start_date: Option<DateFilterInput>,
+    pub end_date: Option<DateFilterInput>,
+}
+
+impl PeriodFilterInput {
+    pub fn to_domain(self) -> PeriodFilter {
+        PeriodFilter {
+            end_date: self.end_date.map(DateFilter::from),
+            start_date: self.start_date.map(DateFilter::from),
+            id: None,
+            period_schedule_id: None,
+            rnr_form_program_id: None,
         }
     }
 }

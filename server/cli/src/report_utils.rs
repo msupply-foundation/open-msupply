@@ -163,7 +163,6 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
     Ok(ReportData {
         id,
         name: report_name,
-        r#type: repository::ReportType::OmSupply,
         template: report_definition,
         context,
         sub_context,

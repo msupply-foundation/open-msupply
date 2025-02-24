@@ -8,7 +8,7 @@ use crate::{
     diesel_macros::{apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     repository_error::RepositoryError,
     rnr_form_row::rnr_form,
-    DBType, DateFilter, PeriodRow, RnRFormRow, StorageConnection,
+    DBType, DateFilter, Pagination, PeriodRow, RnRFormRow, StorageConnection,
 };
 
 use crate::{EqualFilter, Sort};
@@ -24,6 +24,7 @@ pub struct Period {
 pub struct PeriodFilter {
     pub id: Option<EqualFilter<String>>,
     pub period_schedule_id: Option<EqualFilter<String>>,
+    pub start_date: Option<DateFilter>,
     pub end_date: Option<DateFilter>,
     pub rnr_form_program_id: Option<EqualFilter<String>>,
 }
@@ -54,13 +55,14 @@ impl<'a> PeriodRepository<'a> {
         program_id: Option<String>,
         filter: PeriodFilter,
     ) -> Result<Vec<Period>, RepositoryError> {
-        self.query(store_id, program_id, Some(filter), None)
+        self.query(store_id, program_id, Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
         &self,
         store_id: String,
         program_id: Option<String>,
+        pagination: Pagination,
         filter: Option<PeriodFilter>,
         sort: Option<PeriodSort>,
     ) -> Result<Vec<Period>, RepositoryError> {
@@ -78,7 +80,10 @@ impl<'a> PeriodRepository<'a> {
             query = query.order(period::end_date.desc());
         };
 
-        let result = query.load::<PeriodJoin>(self.connection.lock().connection())?;
+        let result = query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<PeriodJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -127,12 +132,14 @@ fn create_filtered_query(
         let PeriodFilter {
             id,
             period_schedule_id,
+            start_date,
             end_date,
             rnr_form_program_id,
         } = filter;
 
         apply_equal_filter!(query, id, period::id);
         apply_equal_filter!(query, period_schedule_id, period::period_schedule_id);
+        apply_date_filter!(query, start_date, period::start_date);
         apply_date_filter!(query, end_date, period::end_date);
 
         apply_equal_filter!(query, rnr_form_program_id, rnr_form::program_id);

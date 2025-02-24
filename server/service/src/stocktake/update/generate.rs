@@ -560,6 +560,7 @@ pub fn generate(
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
+        cancelled_datetime: None,
         colour: None,
         requisition_id: None,
         linked_invoice_id: None,
@@ -572,6 +573,7 @@ pub fn generate(
         name_insurance_join_id: None,
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
+        is_cancellation: false,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {
