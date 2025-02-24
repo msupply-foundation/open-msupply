@@ -1,4 +1,5 @@
 pub mod amc;
+pub mod transform_requisition_lines;
 
 #[cfg(test)]
 mod generate_typescript_types {
@@ -16,6 +17,8 @@ mod generate_typescript_types {
     #[allow(unused)]
     struct PluginTypes {
         average_monthly_consumption: Function<amc::Input, amc::Output>,
+        transform_requisition_lines:
+            Function<transform_requisition_lines::Input, transform_requisition_lines::Output>,
     }
 
     #[test]

@@ -1,6 +1,6 @@
 use crate::{
-    activity_log::activity_log_entry, requisition::query::get_requisition,
-    service_provider::ServiceContext,
+    activity_log::activity_log_entry, backend_plugin::plugin_provider::PluginError,
+    requisition::query::get_requisition, service_provider::ServiceContext, PluginOrRepositoryError,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -53,6 +53,7 @@ pub enum UpdateRequestRequisitionError {
     ReasonsNotProvided(Vec<RequisitionLine>),
     // Internal
     UpdatedRequisitionDoesNotExist,
+    PluginError(PluginError),
     DatabaseError(RepositoryError),
     // Cannot be an error, names are filtered so that name linked to current store is not shown
     // OtherPartyIsThisStore
@@ -112,5 +113,16 @@ pub fn update_request_requisition(
 impl From<RepositoryError> for UpdateRequestRequisitionError {
     fn from(error: RepositoryError) -> Self {
         UpdateRequestRequisitionError::DatabaseError(error)
+    }
+}
+
+impl From<PluginOrRepositoryError> for UpdateRequestRequisitionError {
+    fn from(error: PluginOrRepositoryError) -> Self {
+        use PluginOrRepositoryError as from;
+        use UpdateRequestRequisitionError as to;
+        match error {
+            from::RepositoryError(repository_error) => repository_error.into(),
+            from::PluginError(plugin_error) => to::PluginError(plugin_error),
+        }
     }
 }
