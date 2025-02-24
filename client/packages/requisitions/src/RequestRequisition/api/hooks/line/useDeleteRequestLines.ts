@@ -11,25 +11,28 @@ import { useRequestApi } from '../utils/useRequestApi';
 import { useRequestLines } from './useRequestLines';
 
 export const useDeleteRequestLines = () => {
-  const { lines } = useRequestLines();
+  const t = useTranslation();
   const api = useRequestApi();
+  const queryClient = useQueryClient();
   const requestNumber = useRequestNumber();
   const isDisabled = useIsRequestDisabled();
-  const queryClient = useQueryClient();
+  const { lines } = useRequestLines();
   const { mutateAsync } = useMutation(api.deleteLines, {
     onSettled: () =>
       queryClient.invalidateQueries(api.keys.detail(requestNumber)),
   });
-  const t = useTranslation();
 
   const selectedRows = useTableStore(state =>
     lines.filter(({ id }) => state.rowState[id]?.isSelected)
   );
+  const { clearSelected } = useTableStore();
 
   const onDelete = async () => {
-    mutateAsync(selectedRows).catch(err => {
-      throw err;
-    });
+    mutateAsync(selectedRows)
+      .then(() => clearSelected())
+      .catch(err => {
+        throw err;
+      });
   };
 
   const confirmAndDelete = useDeleteConfirmation({
