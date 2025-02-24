@@ -15,9 +15,10 @@ import {
   getNextPrescriptionStatus,
   getStatusTranslation,
 } from '../../../utils';
-import { usePrescription } from '../../api';
+import { PrescriptionRowFragment, usePrescription } from '../../api';
 import { PaymentsModal } from '../Payments';
 import { Draft } from '../../..';
+import { useInsuranceProviders } from '@openmsupply-client/system/src';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus | undefined,
@@ -86,15 +87,21 @@ const useStatusChangeButton = () => {
     isDisabled,
   } = usePrescription();
 
+  const {
+    query: { data: insuranceProvidersData },
+  } = useInsuranceProviders();
+
   const { status, lines } = data ?? {};
 
   const hasLinesToPrune =
     data?.status !== InvoiceNodeStatus.Verified &&
     (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
 
+  // TODO: This needs to be handled in global pref
   const showPaymentWindow =
     lines != null &&
-    lines.nodes.filter(({ totalAfterTax }) => totalAfterTax > 0).length > 0;
+    lines.nodes.filter(({ totalAfterTax }) => totalAfterTax > 0).length > 0 &&
+    insuranceProvidersData.length > 0;
 
   const isEmptyLines =
     lines?.totalCount === 0 ||
@@ -112,14 +119,19 @@ const useStatusChangeButton = () => {
       getNextStatusOption(status, options)
     );
 
-  const onConfirmStatusChange = async () => {
+  const handleConfirm = async (data: Partial<PrescriptionRowFragment>) => {
     if (!selectedOption) return null;
     try {
-      await update({ status: selectedOption.value });
+      await update({ ...data, status: selectedOption.value });
       success(t('messages.prescription-saved'))();
     } catch (e) {
       error(t('messages.error-saving-prescription'))();
     }
+  };
+
+  const onConfirmStatusChange = async () => {
+    if (!selectedOption) return null;
+    handleConfirm({ status: selectedOption.value });
   };
 
   const getConfirmation = useConfirmationModal({
@@ -146,7 +158,7 @@ const useStatusChangeButton = () => {
     isEmptyLines,
     isDisabled,
     showPaymentWindow,
-    onConfirmStatusChange,
+    handleConfirm,
   };
 };
 
@@ -162,7 +174,7 @@ export const StatusChangeButton = () => {
     isEmptyLines,
     isDisabled,
     showPaymentWindow,
-    onConfirmStatusChange,
+    handleConfirm,
   } = useStatusChangeButton();
 
   const emptyLinesNotifications = useDisabledNotificationToast(
@@ -188,11 +200,13 @@ export const StatusChangeButton = () => {
         Icon={<ArrowRightIcon />}
         onClick={onStatusClick}
       />
-      <PaymentsModal
-        isOpen={isOpen}
-        onClose={onClose}
-        handleConfirm={onConfirmStatusChange}
-      />
+      {showPaymentWindow && (
+        <PaymentsModal
+          isOpen={isOpen}
+          onClose={onClose}
+          handleConfirm={handleConfirm}
+        />
+      )}
     </>
   );
 };

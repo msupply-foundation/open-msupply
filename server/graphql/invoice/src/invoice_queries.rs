@@ -227,6 +227,7 @@ impl InvoiceFilterInput {
             linked_invoice_id: self.linked_invoice_id.map(EqualFilter::from),
             is_program_invoice: self.is_program_invoice,
             stock_line_id: None,
+            is_cancellation: None,
         }
     }
 }
