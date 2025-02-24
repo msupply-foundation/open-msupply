@@ -2,9 +2,14 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { StockOutLineFragmentDoc } from '../../StockOut/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type PrescriptionRowFragment = { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyName: string, clinicianId?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, currencyRate: number, theirReference?: string | null, diagnosisId?: string | null, programId?: string | null, prescriptionDate?: string | null, patientId: string, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, prescribedQuantity?: number | null, packSize: number, invoiceId: string, costPricePerPack: number, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, costPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string } } | null }> }, patient?: { __typename: 'PatientNode', id: string, name: string, code: string, isDeceased: boolean } | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null, diagnosis?: { __typename: 'DiagnosisNode', id: string, code: string, description: string } | null };
+export type PrescriptionRowFragment = { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyName: string, clinicianId?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, currencyRate: number, theirReference?: string | null, diagnosisId?: string | null, programId?: string | null, prescriptionDate?: string | null, patientId: string, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, prescribedQuantity?: number | null, packSize: number, invoiceId: string, costPricePerPack: number, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, costPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> } } | null }> }, patient?: { __typename: 'PatientNode', id: string, name: string, code: string, gender?: Types.GenderType | null, dateOfBirth?: string | null, isDeceased: boolean } | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null, diagnosis?: { __typename: 'DiagnosisNode', id: string, code: string, description: string } | null };
+
+export type PrescriptionLineFragment = { __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, prescribedQuantity?: number | null, packSize: number, invoiceId: string, costPricePerPack: number, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, costPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> } } | null };
+
+export type ItemDirectionFragment = { __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number };
+
+export type PartialPrescriptionLineFragment = { __typename: 'StockLineNode', id: string, itemId: string, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, costPricePerPack: number, sellPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null };
 
 export type PrescriptionsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -16,7 +21,7 @@ export type PrescriptionsQueryVariables = Types.Exact<{
 }>;
 
 
-export type PrescriptionsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', theirReference?: string | null, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyName: string, clinicianId?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, currencyRate: number, diagnosisId?: string | null, programId?: string | null, prescriptionDate?: string | null, patientId: string, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, prescribedQuantity?: number | null, packSize: number, invoiceId: string, costPricePerPack: number, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, costPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string } } | null }> }, patient?: { __typename: 'PatientNode', id: string, name: string, code: string, isDeceased: boolean } | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null, diagnosis?: { __typename: 'DiagnosisNode', id: string, code: string, description: string } | null }> } };
+export type PrescriptionsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', theirReference?: string | null, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyName: string, clinicianId?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, currencyRate: number, diagnosisId?: string | null, programId?: string | null, prescriptionDate?: string | null, patientId: string, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, prescribedQuantity?: number | null, packSize: number, invoiceId: string, costPricePerPack: number, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, costPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> } } | null }> }, patient?: { __typename: 'PatientNode', id: string, name: string, code: string, gender?: Types.GenderType | null, dateOfBirth?: string | null, isDeceased: boolean } | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null, diagnosis?: { __typename: 'DiagnosisNode', id: string, code: string, description: string } | null }> } };
 
 export type PrescriptionByNumberQueryVariables = Types.Exact<{
   invoiceNumber: Types.Scalars['Int']['input'];
@@ -24,7 +29,7 @@ export type PrescriptionByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type PrescriptionByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyName: string, clinicianId?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, currencyRate: number, theirReference?: string | null, diagnosisId?: string | null, programId?: string | null, prescriptionDate?: string | null, patientId: string, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, prescribedQuantity?: number | null, packSize: number, invoiceId: string, costPricePerPack: number, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, costPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string } } | null }> }, patient?: { __typename: 'PatientNode', id: string, name: string, code: string, isDeceased: boolean } | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null, diagnosis?: { __typename: 'DiagnosisNode', id: string, code: string, description: string } | null } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+export type PrescriptionByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyName: string, clinicianId?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, currencyRate: number, theirReference?: string | null, diagnosisId?: string | null, programId?: string | null, prescriptionDate?: string | null, patientId: string, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, prescribedQuantity?: number | null, packSize: number, invoiceId: string, costPricePerPack: number, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, costPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> } } | null }> }, patient?: { __typename: 'PatientNode', id: string, name: string, code: string, gender?: Types.GenderType | null, dateOfBirth?: string | null, isDeceased: boolean } | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null, diagnosis?: { __typename: 'DiagnosisNode', id: string, code: string, description: string } | null } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type PrescriptionByIdQueryVariables = Types.Exact<{
   invoiceId: Types.Scalars['String']['input'];
@@ -32,7 +37,7 @@ export type PrescriptionByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type PrescriptionByIdQuery = { __typename: 'Queries', invoice: { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyName: string, clinicianId?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, currencyRate: number, theirReference?: string | null, diagnosisId?: string | null, programId?: string | null, prescriptionDate?: string | null, patientId: string, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, prescribedQuantity?: number | null, packSize: number, invoiceId: string, costPricePerPack: number, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, costPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string } } | null }> }, patient?: { __typename: 'PatientNode', id: string, name: string, code: string, isDeceased: boolean } | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null, diagnosis?: { __typename: 'DiagnosisNode', id: string, code: string, description: string } | null } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+export type PrescriptionByIdQuery = { __typename: 'Queries', invoice: { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyName: string, clinicianId?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, currencyRate: number, theirReference?: string | null, diagnosisId?: string | null, programId?: string | null, prescriptionDate?: string | null, patientId: string, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, prescribedQuantity?: number | null, packSize: number, invoiceId: string, costPricePerPack: number, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, costPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> } } | null }> }, patient?: { __typename: 'PatientNode', id: string, name: string, code: string, gender?: Types.GenderType | null, dateOfBirth?: string | null, isDeceased: boolean } | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null, diagnosis?: { __typename: 'DiagnosisNode', id: string, code: string, description: string } | null } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type InsertPrescriptionMutationVariables = Types.Exact<{
   id: Types.Scalars['String']['input'];
@@ -67,7 +72,7 @@ export type DeletePrescriptionLinesMutationVariables = Types.Exact<{
 
 export type DeletePrescriptionLinesMutation = { __typename: 'Mutations', batchPrescription: { __typename: 'BatchPrescriptionResponse', deletePrescriptionLines?: Array<{ __typename: 'DeletePrescriptionLineResponseWithId', id: string, response: { __typename: 'DeletePrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
-export type HistoricalStockLineFragment = { __typename: 'StockLineNode', id: string, availableNumberOfPacks: number, packSize: number };
+export type HistoricalStockLineFragment = { __typename: 'StockLineNode', id: string, availableNumberOfPacks: number, packSize: number, item: { __typename: 'ItemNode', name: string, code: string, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> } };
 
 export type DiagnosisFragment = { __typename: 'DiagnosisNode', id: string, code: string, description: string };
 
@@ -76,6 +81,82 @@ export type DiagnosesActiveQueryVariables = Types.Exact<{ [key: string]: never; 
 
 export type DiagnosesActiveQuery = { __typename: 'Queries', diagnosesActive: Array<{ __typename: 'DiagnosisNode', id: string, code: string, description: string }> };
 
+export type AbbreviationFragment = { __typename: 'AbbreviationNode', expansion: string, id: string, text: string };
+
+export type AbbreviationsQueryVariables = Types.Exact<{
+  filter?: Types.InputMaybe<Types.AbbreviationFilterInput>;
+}>;
+
+
+export type AbbreviationsQuery = { __typename: 'Queries', abbreviations: Array<{ __typename: 'AbbreviationNode', expansion: string, id: string, text: string }> };
+
+export const ItemDirectionFragmentDoc = gql`
+    fragment ItemDirection on ItemDirectionNode {
+  __typename
+  directions
+  id
+  itemId
+  priority
+}
+    `;
+export const PrescriptionLineFragmentDoc = gql`
+    fragment PrescriptionLine on InvoiceLineNode {
+  __typename
+  id
+  type
+  batch
+  expiryDate
+  numberOfPacks
+  prescribedQuantity
+  packSize
+  invoiceId
+  costPricePerPack
+  sellPricePerPack
+  note
+  totalBeforeTax
+  totalAfterTax
+  taxPercentage
+  note
+  itemName
+  item {
+    __typename
+    id
+    name
+    code
+    unitName
+    itemDirections {
+      ...ItemDirection
+    }
+  }
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+  }
+  stockLine {
+    __typename
+    id
+    itemId
+    batch
+    availableNumberOfPacks
+    totalNumberOfPacks
+    onHold
+    sellPricePerPack
+    costPricePerPack
+    packSize
+    expiryDate
+    item {
+      name
+      code
+      itemDirections {
+        ...ItemDirection
+      }
+    }
+  }
+}
+    ${ItemDirectionFragmentDoc}`;
 export const PrescriptionRowFragmentDoc = gql`
     fragment PrescriptionRow on InvoiceNode {
   __typename
@@ -111,7 +192,7 @@ export const PrescriptionRowFragmentDoc = gql`
   lines {
     __typename
     nodes {
-      ...StockOutLine
+      ...PrescriptionLine
     }
     totalCount
   }
@@ -120,6 +201,8 @@ export const PrescriptionRowFragmentDoc = gql`
     id
     name
     code
+    gender
+    dateOfBirth
     isDeceased
   }
   clinician {
@@ -143,19 +226,61 @@ export const PrescriptionRowFragmentDoc = gql`
   }
   programId
 }
-    ${StockOutLineFragmentDoc}`;
+    ${PrescriptionLineFragmentDoc}`;
+export const PartialPrescriptionLineFragmentDoc = gql`
+    fragment PartialPrescriptionLine on StockLineNode {
+  id
+  itemId
+  availableNumberOfPacks
+  totalNumberOfPacks
+  onHold
+  costPricePerPack
+  sellPricePerPack
+  packSize
+  expiryDate
+  item {
+    name
+    code
+    itemDirections {
+      ...ItemDirection
+    }
+  }
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+  }
+}
+    ${ItemDirectionFragmentDoc}`;
 export const HistoricalStockLineFragmentDoc = gql`
     fragment historicalStockLine on StockLineNode {
   id
   availableNumberOfPacks
   packSize
+  item {
+    name
+    code
+    itemDirections {
+      ...ItemDirection
+    }
+  }
 }
-    `;
+    ${ItemDirectionFragmentDoc}`;
 export const DiagnosisFragmentDoc = gql`
     fragment diagnosis on DiagnosisNode {
   id
   code
   description
+}
+    `;
+export const AbbreviationFragmentDoc = gql`
+    fragment Abbreviation on AbbreviationNode {
+  __typename
+  expansion
+  id
+  text
 }
     `;
 export const PrescriptionsDocument = gql`
@@ -473,6 +598,15 @@ export const DiagnosesActiveDocument = gql`
   }
 }
     ${DiagnosisFragmentDoc}`;
+export const AbbreviationsDocument = gql`
+    query abbreviations($filter: AbbreviationFilterInput) {
+  abbreviations(filter: $filter) {
+    ... on AbbreviationNode {
+      ...Abbreviation
+    }
+  }
+}
+    ${AbbreviationFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -504,6 +638,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     diagnosesActive(variables?: DiagnosesActiveQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DiagnosesActiveQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DiagnosesActiveQuery>(DiagnosesActiveDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'diagnosesActive', 'query', variables);
+    },
+    abbreviations(variables?: AbbreviationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AbbreviationsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AbbreviationsQuery>(AbbreviationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'abbreviations', 'query', variables);
     }
   };
 }
