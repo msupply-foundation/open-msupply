@@ -17,7 +17,6 @@ mod add_program_deleted_datetime;
 mod add_program_id_on_stocktake;
 mod add_program_id_to_invoice;
 mod add_report_sync;
-mod add_report_is_active;
 mod backend_plugins;
 mod frontend_plugins;
 mod plugin_data;
