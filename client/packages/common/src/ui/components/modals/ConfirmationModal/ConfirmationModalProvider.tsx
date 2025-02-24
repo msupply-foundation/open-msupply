@@ -45,7 +45,10 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
       setCancelButtonLabel: (cancelButtonLabel: string | undefined) =>
         setState(state => ({ ...state, cancelButtonLabel })),
       setOnConfirm: (
-        onConfirm: (() => Promise<void>) | (() => void) | undefined
+        onConfirm:
+          | ((state: ConfirmationModalState) => Promise<void>)
+          | ((state: ConfirmationModalState) => void)
+          | undefined
       ) => setState(state => ({ ...state, onConfirm })),
       setOnCancel: (
         onCancel: (() => Promise<void>) | (() => void) | undefined
@@ -66,7 +69,7 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
         info={info}
         title={title}
         onConfirm={async () => {
-          onConfirm && (await onConfirm());
+          onConfirm && (await onConfirm(confirmationModalState));
           setState(state => ({ ...state, open: false }));
         }}
         onCancel={() => {
