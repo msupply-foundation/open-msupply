@@ -19,6 +19,7 @@ import {
   useConfirmOnLeaving,
   useConfirmationModal,
   useToggle,
+  isEmpty,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -346,13 +347,14 @@ export const DetailView: FC = () => {
   // Some Immunisation Program Encounters require minimal extra data
   // and may choose to display these inputs in the toolbar rather than the full form tab
   const { uiSchema, jsonSchema } = JsonForm.props;
+  const jsonSchemaLoaded = !isEmpty(jsonSchema);
   const usingToolbarFormLayout = unrankedToolbarTester(uiSchema, jsonSchema, {
     rootSchema: jsonSchema,
     config: {},
   });
 
   // If we need to show both vax card and forms page, we need to use tabs
-  const asTabs = !!VaxCard && !usingToolbarFormLayout;
+  const asTabs = jsonSchemaLoaded && !!VaxCard && !usingToolbarFormLayout;
 
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
@@ -391,7 +393,7 @@ export const DetailView: FC = () => {
           ) : (
             <>
               {VaxCard}
-              {JsonForm}
+              {jsonSchemaLoaded && JsonForm}
             </>
           )}
 
