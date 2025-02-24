@@ -23,6 +23,7 @@
         "webpack-cli": "^5.0.1"
     },
     "dependencies": {
-        "lodash": "^4.17.21"
+        "lodash": "^4.17.21",
+        "uuidv7": "^1.0.0"
     }
 }
