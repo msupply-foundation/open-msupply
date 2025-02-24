@@ -1,17 +1,15 @@
 use super::{UpdateRequestRequisition, UpdateRequestRequisitionStatus};
 use crate::{
-    backend_plugin::{plugin_provider::PluginInstance, types::transform_requisition_lines},
     requisition::{
         common::get_lines_for_requisition,
         request_requisition::{generate_suggested_quantity, GenerateSuggestedQuantity},
     },
     store_preference::get_store_preferences,
-    PluginOrRepositoryError,
 };
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus},
-    EqualFilter, PluginType, RepositoryError, RequisitionLine, RequisitionLineFilter,
+    EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionLineRow, StorageConnection,
 };
 use util::inline_edit;
@@ -36,7 +34,7 @@ pub fn generate(
         min_months_of_stock: update_threshold_months_of_stock,
         expected_delivery_date: update_expected_delivery_date,
     }: UpdateRequestRequisition,
-) -> Result<GenerateResult, PluginOrRepositoryError> {
+) -> Result<GenerateResult, RepositoryError> {
     let keep_requisition_lines_with_zero_requested_quantity_on_finalised =
         get_store_preferences(connection, &existing.store_id)?
             .keep_requisition_lines_with_zero_requested_quantity_on_finalised;
@@ -74,7 +72,12 @@ pub fn generate(
     });
 
     let updated_requisition_lines = if should_recalculate {
-        generate_updated_lines(connection, &updated_requisition_row)?
+        generate_updated_lines(
+            connection,
+            &updated_requisition_row.id,
+            updated_requisition_row.min_months_of_stock,
+            updated_requisition_row.max_months_of_stock,
+        )?
     } else {
         vec![]
     };
@@ -94,11 +97,13 @@ pub fn generate(
 
 pub fn generate_updated_lines(
     connection: &StorageConnection,
-    requisition: &RequisitionRow,
-) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
-    let lines = get_lines_for_requisition(connection, &requisition.id)?;
+    requisition_id: &str,
+    min_months_of_stock: f64,
+    max_months_of_stock: f64,
+) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
+    let lines = get_lines_for_requisition(connection, requisition_id)?;
 
-    let lines = lines
+    let result = lines
         .into_iter()
         .map(
             |RequisitionLine {
@@ -110,27 +115,15 @@ pub fn generate_updated_lines(
                         average_monthly_consumption: requisition_line_row
                             .average_monthly_consumption,
                         available_stock_on_hand: requisition_line_row.available_stock_on_hand,
-                        min_months_of_stock: requisition.min_months_of_stock,
-                        max_months_of_stock: requisition.min_months_of_stock,
+                        min_months_of_stock,
+                        max_months_of_stock,
                     });
                 requisition_line_row
             },
         )
         .collect();
 
-    let Some(plugin) = PluginInstance::get_one(PluginType::TransformRequisitionLines) else {
-        return Ok(lines);
-    };
-
-    let result = transform_requisition_lines::Trait::call(
-        &(*plugin),
-        transform_requisition_lines::Input {
-            requisition: requisition.clone(),
-            lines,
-        },
-    )?;
-
-    Ok(result.transformed_lines)
+    Ok(result)
 }
 
 pub fn empty_lines_to_trim(

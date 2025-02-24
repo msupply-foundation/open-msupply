@@ -1,9 +1,7 @@
 use chrono::Utc;
-use repository::{PluginType, RequisitionLineRow, RequisitionRow};
+use repository::{RequisitionLineRow, RequisitionRow};
 use util::uuid::uuid;
 
-use crate::backend_plugin::plugin_provider::PluginInstance;
-use crate::backend_plugin::types::transform_requisition_lines;
 use crate::item_stats::get_item_stats;
 use crate::service_provider::ServiceContext;
 use crate::PluginOrRepositoryError;
@@ -49,7 +47,7 @@ pub fn generate_requisition_lines(
 ) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
     let item_stats_rows = get_item_stats(ctx, store_id, None, item_ids)?;
 
-    let lines = item_stats_rows
+    let result = item_stats_rows
         .into_iter()
         .map(|item_stats| {
             let average_monthly_consumption = item_stats.average_monthly_consumption;
@@ -88,17 +86,5 @@ pub fn generate_requisition_lines(
         })
         .collect();
 
-    let Some(plugin) = PluginInstance::get_one(PluginType::TransformRequisitionLines) else {
-        return Ok(lines);
-    };
-
-    let result = transform_requisition_lines::Trait::call(
-        &(*plugin),
-        transform_requisition_lines::Input {
-            requisition: requisition_row.clone(),
-            lines,
-        },
-    )?;
-
-    Ok(result.transformed_lines)
+    Ok(result)
 }

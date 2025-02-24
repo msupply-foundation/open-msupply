@@ -9,16 +9,9 @@ import {
   InfoOutlineIcon,
   LoadingButton,
   PrinterIcon,
-  ReportContext,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { Draft } from '../..';
-import {
-  ReportRowFragment,
-  ReportSelector,
-  usePrintReport,
-} from '../../../../system/src/Report';
-import { JsonData } from '@openmsupply-client/programs';
 
 interface AppBarButtonProps {
   onAddItem: (draft?: Draft) => void;
@@ -29,31 +22,18 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
   onViewHistory,
 }) => {
-  const { isDisabled, query: data } = usePrescription();
+  const { isDisabled } = usePrescription();
   const { OpenButton } = useDetailPanel();
-  const { print, isPrinting } = usePrintReport();
-  const printReport = (
-    report: ReportRowFragment,
-    args: JsonData | undefined
-  ) => {
-    print({ reportId: report.id, dataId: data?.data?.id, args });
-  };
   const t = useTranslation();
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <ReportSelector
-          context={ReportContext.Prescription}
-          onPrint={printReport}
-        >
-          <LoadingButton
-            disabled={isDisabled}
-            variant="outlined"
-            startIcon={<PrinterIcon />}
-            isLoading={isPrinting}
-            label={t('button.print')}
-          />
-        </ReportSelector>
+        <LoadingButton
+          variant="outlined"
+          startIcon={<PrinterIcon />}
+          isLoading={false}
+          label={t('button.print-prescription-label')}
+        />
         <ButtonWithIcon
           label={t('button.history')}
           Icon={<InfoOutlineIcon />}

@@ -32,7 +32,6 @@ pub enum ContextType {
     OutboundReturn,
     InboundReturn,
     Report,
-    Prescription,
 }
 
 table! {

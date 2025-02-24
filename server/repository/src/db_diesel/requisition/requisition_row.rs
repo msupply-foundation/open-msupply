@@ -14,7 +14,6 @@ use diesel::dsl::max;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 use util::Defaults;
 
 table! {
@@ -52,13 +51,13 @@ joinable!(requisition -> program (program_id));
 allow_tables_to_appear_in_same_query!(requisition, name_link);
 allow_tables_to_appear_in_same_query!(requisition, item_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RequisitionType {
     Request,
     Response,
 }
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RequisitionStatus {
@@ -67,7 +66,7 @@ pub enum RequisitionStatus {
     Sent,
     Finalised,
 }
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ApprovalStatusType {
@@ -80,9 +79,7 @@ pub enum ApprovalStatusType {
     DeniedByAnother,
 }
 
-#[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, TS, Serialize, Deserialize,
-)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = requisition)]
 pub struct RequisitionRow {
@@ -94,13 +91,9 @@ pub struct RequisitionRow {
     #[diesel(column_name = type_)]
     pub r#type: RequisitionType,
     pub status: RequisitionStatus,
-    #[ts(as = "String")]
     pub created_datetime: NaiveDateTime,
-    #[ts(as = "Option<String>")]
     pub sent_datetime: Option<NaiveDateTime>,
-    #[ts(as = "Option<String>")]
     pub finalised_datetime: Option<NaiveDateTime>,
-    #[ts(as = "Option<String>")]
     pub expected_delivery_date: Option<NaiveDate>,
     pub colour: Option<String>,
     pub comment: Option<String>,
