@@ -1,0 +1,24 @@
+<div style="font-size: 10px; padding-top: 8px; text-align: center; width: 98%;">
+    <table class="header_image_section" style="width: 98%;height: 98%;">
+        <tr>
+            <td>
+                <img style="display:block; width:25%;" src="{{data.store.logo}}" />
+            </td>
+            <td style="width: 350px;">
+                <span style="text-align: center;font-size: 9pt;font-weight: bold;font-family: Tahoma;">{{
+                    data.store.storeName }}</span><br>
+                <span style="text-align: center;font-size: 7pt;font-family: Tahoma;">{{ data.store.name.address1
+                    }}</span><br>
+                <span style="text-align: center;font-size: 6pt;font-family: Tahoma;">{{ data.store.name.address2
+                    }}</span>
+            </td>
+            <td style="padding-left: 8px;">
+                <span class="invoice_number"
+                    style="text-align: right;font-weight: bold;font-size: 7pt;float: right;margin-left: 20px;">
+                    {{t(k="report.invoice",f="Invoice")}} #: {{ data.invoice.invoiceNumber | default(value='')
+                    }}
+                </span>
+            </td>
+        </tr>
+    </table>
+</div>

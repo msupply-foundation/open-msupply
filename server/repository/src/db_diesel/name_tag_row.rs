@@ -1,6 +1,4 @@
-use super::{
-    name_link, name_oms_fields, name_tag_row::name_tag::dsl as name_tag_dsl, StorageConnection,
-};
+use super::{name_link, name_oms_fields, StorageConnection};
 
 use crate::{repository_error::RepositoryError, Upsert};
 
@@ -33,9 +31,9 @@ impl<'a> NameTagRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &NameTagRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(name_tag_dsl::name_tag)
+        diesel::insert_into(name_tag::table)
             .values(row)
-            .on_conflict(name_tag_dsl::id)
+            .on_conflict(name_tag::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -43,23 +41,23 @@ impl<'a> NameTagRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<NameTagRow>, RepositoryError> {
-        let result = name_tag_dsl::name_tag
-            .filter(name_tag_dsl::id.eq(id))
+        let result = name_tag::table
+            .filter(name_tag::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_one_by_name(&self, name: &str) -> Result<Option<NameTagRow>, RepositoryError> {
-        let result = name_tag_dsl::name_tag
-            .filter(name_tag_dsl::name.like(name))
+        let result = name_tag::table
+            .filter(name_tag::name.like(name))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(name_tag_dsl::name_tag.filter(name_tag_dsl::id.eq(id)))
+        diesel::delete(name_tag::table.filter(name_tag::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

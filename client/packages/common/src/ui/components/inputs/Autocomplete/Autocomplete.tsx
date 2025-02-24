@@ -7,15 +7,15 @@ import {
   AutocompleteInputChangeReason,
   AutocompleteProps as MuiAutocompleteProps,
   PopperProps,
-  StandardTextFieldProps,
 } from '@mui/material';
 import {
   AutocompleteOption,
   AutocompleteOnChange,
   AutocompleteOptionRenderer,
 } from './types';
-import { BasicTextInput } from '../TextInput';
+import { BasicTextInput, BasicTextInputProps } from '../TextInput';
 import { StyledPopper } from './components';
+import { useOpenStateWithKeyboard } from './utils';
 
 export interface AutocompleteProps<T>
   extends Omit<
@@ -46,7 +46,7 @@ export interface AutocompleteProps<T>
   ) => void;
   inputValue?: string;
   popperMinWidth?: number;
-  inputProps?: StandardTextFieldProps;
+  inputProps?: BasicTextInputProps;
 }
 
 export function Autocomplete<T>({
@@ -76,17 +76,25 @@ export function Autocomplete<T>({
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
-
+  const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
       {...inputProps}
       autoFocus={autoFocus}
-      InputProps={{
-        disableUnderline: false,
-        ...props.InputProps,
+      slotProps={{
+        input: {
+          disableUnderline: false,
+          sx: {
+            paddingLeft: 1,
+          },
+          ...props.InputProps,
+        },
+        inputLabel: { shrink: true },
+        htmlInput: {
+          ...props.inputProps,
+        },
       }}
-      InputLabelProps={{ shrink: true }}
       sx={{ minWidth: width }}
     />
   );
@@ -96,17 +104,19 @@ export function Autocomplete<T>({
     return (option as { label?: string }).label ?? '';
   };
 
-  const CustomPopper: React.FC<PopperProps> = props => (
+  const CustomPopper = (props: PopperProps) => (
     <StyledPopper
       {...props}
       placement="bottom-start"
       style={{ minWidth: popperMinWidth, width: 'auto' }}
     />
   );
+  const popper = popperMinWidth ? CustomPopper : StyledPopper;
 
   return (
     <MuiAutocomplete
       {...restOfAutocompleteProps}
+      {...openOverrides}
       inputValue={inputValue}
       onInputChange={onInputChange}
       disabled={disabled}
@@ -125,7 +135,19 @@ export function Autocomplete<T>({
       renderOption={renderOption}
       onChange={onChange}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
-      PopperComponent={popperMinWidth ? CustomPopper : StyledPopper}
+      slots={{
+        popper: popper,
+      }}
+      sx={{
+        ...restOfAutocompleteProps.sx,
+        background: theme =>
+          disabled
+            ? theme.palette.background.toolbar
+            : theme.palette.background.drawer,
+        borderRadius: 2,
+        paddingTop: 0.5,
+        paddingBottom: 0.5,
+      }}
     />
   );
 }

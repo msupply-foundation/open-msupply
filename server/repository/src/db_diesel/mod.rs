@@ -6,6 +6,7 @@ pub mod activity_log;
 mod activity_log_row;
 pub mod adjustment;
 pub mod assets;
+pub mod backend_plugin_row;
 pub mod barcode;
 mod barcode_row;
 pub mod category_row;
@@ -44,12 +45,14 @@ mod filter_restriction;
 mod filter_sort_pagination;
 pub mod form_schema;
 mod form_schema_row;
+mod frontend_plugin_row;
 pub mod indicator_column;
 mod indicator_column_row;
 pub mod indicator_line;
 mod indicator_line_row;
 pub mod indicator_value;
 mod indicator_value_row;
+pub mod insurance_provider_row;
 pub mod inventory_adjustment_reason;
 mod inventory_adjustment_reason_row;
 pub mod invoice;
@@ -77,6 +80,7 @@ pub mod master_list_name_join;
 mod master_list_row;
 mod migration_fragment_log;
 pub mod name;
+pub mod name_insurance_join_row;
 mod name_link_row;
 pub mod name_property;
 pub mod name_property_row;
@@ -90,6 +94,8 @@ mod patient;
 pub mod period;
 pub mod plugin_data;
 mod plugin_data_row;
+pub mod printer;
+pub mod printer_row;
 pub mod program_enrolment;
 mod program_enrolment_row;
 pub mod program_event;
@@ -155,6 +161,7 @@ pub use abbreviation_row::*;
 pub use activity_log_row::*;
 pub use adjustment::*;
 pub use assets::*;
+pub use backend_plugin_row::*;
 pub use barcode_row::*;
 pub use changelog::*;
 pub use clinician::*;
@@ -181,9 +188,11 @@ pub use encounter_row::*;
 pub use filter_sort_pagination::*;
 pub use form_schema::*;
 pub use form_schema_row::*;
+pub use frontend_plugin_row::*;
 pub use indicator_column_row::*;
 pub use indicator_line_row::*;
 pub use indicator_value_row::*;
+pub use insurance_provider_row::*;
 pub use inventory_adjustment_reason_row::*;
 pub use invoice::*;
 pub use invoice_line::*;
@@ -216,6 +225,7 @@ pub use patient::*;
 pub use period::*;
 pub use plugin_data::*;
 pub use plugin_data_row::*;
+pub use printer_row::*;
 pub use program_enrolment::*;
 pub use program_enrolment_row::*;
 pub use program_event::*;
@@ -356,7 +366,7 @@ pub struct JsonRawRow {
     #[diesel(sql_type = Text)]
     pub json_row: String,
 }
-
+// TODO should accept parameters
 pub fn raw_query(connection: &StorageConnection, query: String) -> Vec<JsonRawRow> {
     sql_query(&query)
         .get_results::<JsonRawRow>(connection.lock().connection())

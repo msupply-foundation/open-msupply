@@ -1,8 +1,6 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarButtonsPortal,
-  ButtonWithIcon,
-  PlusCircleIcon,
   Grid,
   useDetailPanel,
   useTranslation,
@@ -10,7 +8,8 @@ import {
   ReportContext,
   LoadingButton,
   useUrlQueryParams,
-  usePluginElements,
+  usePluginProvider,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { useInbound } from '../api';
 import {
@@ -18,28 +17,28 @@ import {
   ReportRowFragment,
   usePrintReport,
 } from '@openmsupply-client/system';
-import { AddFromMasterListButton } from './AddFromMasterListButton';
 import { JsonData } from '@openmsupply-client/programs';
+import { AddButton } from './AddButton';
 
 interface AppBarButtonProps {
   onAddItem: (newState: boolean) => void;
 }
 
-export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
-  onAddItem,
-}) => {
+export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
+  const t = useTranslation();
+  const { store } = useAuthContext();
   const isDisabled = useInbound.utils.isDisabled();
   const { data } = useInbound.document.get();
   const { OpenButton } = useDetailPanel();
-  const t = useTranslation();
   const { print, isPrinting } = usePrintReport();
   const {
     queryParams: { sortBy },
   } = useUrlQueryParams();
-  const pluginButtons = usePluginElements({
-    type: 'InboundShipmentAppBar',
-    data,
-  });
+  const { plugins } = usePluginProvider();
+  const disableInternalOrderButton =
+    !store?.preferences.manuallyLinkInternalOrderToInboundShipment ||
+    !!data?.linkedShipment ||
+    !data?.requisition;
 
   const printReport = (
     report: ReportRowFragment,
@@ -57,14 +56,18 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <ButtonWithIcon
-          disabled={isDisabled}
-          label={t('button.add-item')}
-          Icon={<PlusCircleIcon />}
-          onClick={() => onAddItem(true)}
+        <AddButton
+          onAddItem={onAddItem}
+          requisitionId={data?.requisition?.id ?? ''}
+          invoiceId={data?.id ?? ''}
+          disable={isDisabled}
+          disableAddFromMasterListButton={!!data?.linkedShipment}
+          disableAddFromInternalOrderButton={disableInternalOrderButton}
         />
-        <AddFromMasterListButton />
-        {pluginButtons}
+        {data &&
+          plugins.inboundShipmentAppBar?.map((Plugin, index) => (
+            <Plugin key={index} shipment={data} />
+          ))}
         <ReportSelector
           context={ReportContext.InboundShipment}
           onPrint={printReport}

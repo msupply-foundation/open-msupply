@@ -8,11 +8,12 @@ import {
   useMutation,
 } from '@openmsupply-client/common';
 import { usePrescription } from './usePrescription';
-import { DraftStockOutLine } from 'packages/invoices/src/types';
+import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { PrescriptionRowFragment } from '../operations.generated';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
 import { createInputObject, mapStatus } from './utils';
+import { HISTORICAL_STOCK_LINES } from '@openmsupply-client/system/src/Item/api/keys';
 
 // Hook to manage prescription lines. Only has "save" and "delete"
 // functionality, as the query is done as part of the full prescription query
@@ -37,7 +38,7 @@ export const usePrescriptionLines = (id?: string) => {
     draftPrescriptionLines,
     patch,
   }: {
-    draftPrescriptionLines: DraftStockOutLine[];
+    draftPrescriptionLines: DraftPrescriptionLine[];
     patch?: RecordPatch<PrescriptionRowFragment>;
   }) => {
     return await updateMutation({
@@ -53,7 +54,7 @@ export const usePrescriptionLines = (id?: string) => {
     error: deleteLinesError,
   } = useDeleteLines(data?.invoiceNumber ?? -1);
 
-  const deleteLines = async (rowsToDelete: DraftStockOutLine[]) => {
+  const deleteLines = async (rowsToDelete: DraftPrescriptionLine[]) => {
     const lines = rowsToDelete.map(({ id }) => ({ id }));
     await deleteMutation(lines);
   };
@@ -71,7 +72,7 @@ const useSaveLines = (id: string, invoiceNum: number) => {
     draftPrescriptionLines,
     patch,
   }: {
-    draftPrescriptionLines: DraftStockOutLine[];
+    draftPrescriptionLines: DraftPrescriptionLine[];
     patch?: RecordPatch<PrescriptionRowFragment>;
   }) => {
     if (patch && id !== '') patch.id = id;
@@ -89,11 +90,12 @@ const useSaveLines = (id: string, invoiceNum: number) => {
         ),
       updatePrescriptionLines: draftPrescriptionLines
         .filter(
-          ({ type, isCreated, isUpdated, numberOfPacks }) =>
+          ({ type, isCreated, isUpdated, numberOfPacks, prescribedQuantity }) =>
             !isCreated &&
             isUpdated &&
             type === InvoiceLineNodeType.StockOut &&
-            numberOfPacks > 0
+            numberOfPacks > 0 &&
+            (prescribedQuantity ?? 0) >= 0
         )
         .map(
           line =>
@@ -118,6 +120,12 @@ const useSaveLines = (id: string, invoiceNum: number) => {
               status: mapStatus(patch),
               clinicianId: setNullableInput('clinicianId', patch),
               diagnosisId: setNullableInput('diagnosisId', patch),
+              programId: setNullableInput('programId', patch),
+              theirReference: setNullableInput('theirReference', patch),
+              nameInsuranceJoinId: setNullableInput(
+                'nameInsuranceJoinId',
+                patch
+              ),
             },
           ]
         : undefined,
@@ -136,6 +144,7 @@ const useSaveLines = (id: string, invoiceNum: number) => {
         PRESCRIPTION_LINE,
         invoiceNum,
       ]);
+      queryClient.invalidateQueries([HISTORICAL_STOCK_LINES]);
     },
   });
 };
@@ -162,6 +171,7 @@ const useDeleteLines = (invoiceNum: number) => {
         PRESCRIPTION_LINE,
         invoiceNum,
       ]);
+      queryClient.invalidateQueries([HISTORICAL_STOCK_LINES]);
     },
   });
 };

@@ -2,20 +2,14 @@ import React, { FC } from 'react';
 import {
   useTranslation,
   AppBarContentPortal,
-  SearchBar,
+  FilterMenu,
   FilterController,
-  FilterRule,
+  Box,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
-import { PrescriptionRowFragment } from '../api';
 
-export const Toolbar: FC<{
-  filter: FilterController;
-}> = ({ filter }) => {
+export const Toolbar: FC<{ filter: FilterController }> = () => {
   const t = useTranslation();
-
-  const key = 'otherPartyName' as keyof PrescriptionRowFragment;
-  const filterString =
-    ((filter.filterBy?.[key] as FilterRule)?.like as string) || '';
 
   return (
     <AppBarContentPortal
@@ -26,13 +20,62 @@ export const Toolbar: FC<{
         display: 'flex',
       }}
     >
-      <SearchBar
-        placeholder={t('placeholder.search-by-name')}
-        value={filterString}
-        onChange={newValue => {
-          filter.onChangeStringFilterRule('otherPartyName', 'like', newValue);
-        }}
-      />
+      <Box display="flex" gap={1}>
+        <FilterMenu
+          filters={[
+            {
+              type: 'text',
+              name: t('label.name'),
+              urlParameter: 'otherPartyName',
+              isDefault: true,
+            },
+            {
+              type: 'enum',
+              name: t('label.status'),
+              options: [
+                { label: t('status.new'), value: InvoiceNodeStatus.New },
+                { label: t('label.picked'), value: InvoiceNodeStatus.Picked },
+                {
+                  label: t('label.verified'),
+                  value: InvoiceNodeStatus.Verified,
+                },
+                {
+                  label: t('label.cancelled'),
+                  value: InvoiceNodeStatus.Cancelled,
+                },
+              ],
+              urlParameter: 'status',
+              isDefault: false,
+            },
+            {
+              type: 'number',
+              name: t('label.invoice-number'),
+              urlParameter: 'invoiceNumber',
+              isDefault: false,
+            },
+            {
+              type: 'group',
+              name: t('label.date'),
+              elements: [
+                {
+                  type: 'date',
+                  name: t('label.from-date'),
+                  urlParameter: 'pickedDatetime',
+                  range: 'from',
+                  isDefault: true,
+                },
+                {
+                  type: 'date',
+                  name: t('label.to-date'),
+                  urlParameter: 'pickedDatetime',
+                  range: 'to',
+                  isDefault: true,
+                },
+              ],
+            },
+          ]}
+        />
+      </Box>
     </AppBarContentPortal>
   );
 };

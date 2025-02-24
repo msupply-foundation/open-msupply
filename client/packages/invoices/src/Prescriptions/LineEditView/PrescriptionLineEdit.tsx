@@ -11,18 +11,19 @@ import {
   getAllocatedQuantity,
   sumAvailableQuantity,
   usePackSizeController,
-  allocateQuantities,
 } from '../../StockOut';
-import { DraftStockOutLine } from '../../types';
+import { allocateQuantities } from '../api/hooks/utils';
+import { DraftPrescriptionLine } from '../../types';
 import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
-import { ItemRowFragment } from '@openmsupply-client/system';
+import { ItemRowWithDirectionsFragment } from '@openmsupply-client/system';
 
 interface PrescriptionLineEditProps {
-  item: ItemRowFragment | null;
-  draftLines: DraftStockOutLine[];
-  updateLines: (lines: DraftStockOutLine[]) => void;
+  item: ItemRowWithDirectionsFragment | null;
+  draftLines: DraftPrescriptionLine[];
+  updateLines: (lines: DraftPrescriptionLine[]) => void;
   setIsDirty: (dirty: boolean) => void;
   formState: FormErrors;
+  programId?: string;
 }
 
 export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
@@ -31,6 +32,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
   updateLines,
   setIsDirty,
   formState,
+  programId,
 }) => {
   const isNew = item === null;
   const [currentItem, setCurrentItem] = useBufferState(item);
@@ -42,7 +44,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
     isDisabled,
   } = usePrescription();
   const { status = InvoiceNodeStatus.New, prescriptionDate } = data ?? {};
-  const { updateQuantity, isLoading, updateNotes } = useDraftPrescriptionLines(
+  const { isLoading, updateQuantity, updateNotes } = useDraftPrescriptionLines(
     currentItem,
     draftPrescriptionLines,
     updateLines,
@@ -66,12 +68,13 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
   const onAllocate = (
     numPacks: number,
     packSize: number | null,
-    autoAllocated = false
+    autoAllocated = false,
+    prescribedQuantity: number | null
   ) => {
     const newAllocateQuantities = allocateQuantities(
       status,
       draftPrescriptionLines
-    )(numPacks, packSize, true);
+    )(numPacks, packSize, true, prescribedQuantity);
 
     // Don't make saveable (isDirty) if item is new and has no auto-allocatable
     // stock
@@ -103,7 +106,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
       disabled={isDisabled}
       isNew={isNew}
       packSizeController={packSizeController}
-      onChangeItem={(item: ItemRowFragment | null) => {
+      onChangeItem={(item: ItemRowWithDirectionsFragment | null) => {
         setIsAutoAllocated(false);
         setCurrentItem(item);
       }}
@@ -121,6 +124,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
       isLoading={isLoading}
       updateQuantity={onUpdateQuantity}
       formState={formState}
+      programId={programId}
     />
   );
 };

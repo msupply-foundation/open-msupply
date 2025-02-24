@@ -102,7 +102,12 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BasicTextInput, BasicTextInputProps } from './BasicTextInput';
-import { NumUtils, RegexUtils, UNDEFINED_STRING_VALUE } from '@common/utils';
+import {
+  merge,
+  NumUtils,
+  RegexUtils,
+  UNDEFINED_STRING_VALUE,
+} from '@common/utils';
 import { useFormatNumber, useCurrency } from '@common/intl';
 import { InputAdornment } from '@common/components';
 
@@ -182,7 +187,7 @@ export const NumericTextInput = React.forwardRef<
   (
     {
       sx,
-      InputProps,
+      slotProps,
       width = DEFAULT_NUMERIC_TEXT_INPUT_WIDTH,
       onChange = () => {},
       defaultValue,
@@ -272,22 +277,33 @@ export const NumericTextInput = React.forwardRef<
     return (
       <BasicTextInput
         ref={ref}
-        sx={{
-          '& .MuiInput-input': {
-            textAlign: 'right',
-            width: fullWidth ? undefined : `${width}px`,
-          },
-          ...sx,
-        }}
+        sx={sx}
         inputMode={inputMode ?? 'numeric'}
-        InputProps={{
-          endAdornment: endAdornment ? (
-            <InputAdornment position="end" sx={{ paddingBottom: '2px' }}>
-              {endAdornment}
-            </InputAdornment>
-          ) : undefined,
-          ...InputProps,
-        }}
+        textAlign="right"
+        slotProps={merge(
+          {
+            input: {
+              endAdornment: endAdornment ? (
+                <InputAdornment position="end" sx={{ paddingBottom: '2px' }}>
+                  {endAdornment}
+                </InputAdornment>
+              ) : undefined,
+              sx: {
+                borderRadius: 2,
+                padding: 0.5,
+                width: fullWidth ? undefined : `${width}px`,
+              },
+            },
+            htmlInput: {
+              sx: {
+                backgroundColor: props.disabled
+                  ? 'background.toolbar'
+                  : 'background.menu',
+              },
+            },
+          },
+          slotProps
+        )}
         onChange={e => {
           if (!isDirty) setIsDirty(true);
 

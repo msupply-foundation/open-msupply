@@ -53,6 +53,8 @@ pub struct InvoiceFilter {
     pub requisition_id: Option<EqualFilter<String>>,
     pub linked_invoice_id: Option<EqualFilter<String>>,
     pub stock_line_id: Option<String>,
+    pub is_program_invoice: Option<bool>,
+    pub is_cancellation: Option<bool>,
 }
 
 pub enum InvoiceSortField {
@@ -245,6 +247,8 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
             requisition_id,
             linked_invoice_id,
             stock_line_id,
+            is_program_invoice,
+            is_cancellation,
         } = f;
 
         apply_equal_filter!(query, id, invoice::id);
@@ -280,6 +284,14 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
                 .select(invoice_line::invoice_id);
 
             query = query.filter(invoice::id.eq_any(invoice_line_query));
+        }
+
+        if is_program_invoice.is_some() {
+            query = query.filter(invoice::program_id.is_not_null());
+        }
+
+        if let Some(value) = is_cancellation {
+            query = query.filter(invoice::is_cancellation.eq(value));
         }
     }
     query
@@ -430,6 +442,11 @@ impl InvoiceFilter {
         self.stock_line_id = Some(stock_line_id);
         self
     }
+
+    pub fn is_cancellation(mut self, filter: bool) -> Self {
+        self.is_cancellation = Some(filter);
+        self
+    }
 }
 
 impl InvoiceStatus {
@@ -441,6 +458,7 @@ impl InvoiceStatus {
             InvoiceStatus::Shipped => 4,
             InvoiceStatus::Delivered => 5,
             InvoiceStatus::Verified => 6,
+            InvoiceStatus::Cancelled => 7,
         }
     }
 }

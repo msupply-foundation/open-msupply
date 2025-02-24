@@ -62,7 +62,6 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
       {value.enabled && (
         <Grid container flexDirection="column" alignItems="flex-end">
           <Grid
-            item
             sx={{
               marginBottom: '5px',
               width: '100%',
@@ -75,18 +74,18 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
               maxRows={10}
               minRows={10}
               style={{ padding: '0 0 0 50px' }}
-              inputProps={{
-                sx: {
-                  borderColor: 'gray.main',
-                  borderStyle: 'solid',
-                  borderWidth: '1px',
-                  borderRadius: '5px',
-                  padding: '3px',
+              slotProps={{
+                input: {
+                  sx: {
+                    border: theme => `1px solid ${theme.palette.gray.main}`,
+                    borderRadius: '5px',
+                    padding: '3px',
+                  },
                 },
               }}
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <ButtonWithIcon
               Icon={<SaveIcon />}
               label={t('button.save')}

@@ -1,7 +1,7 @@
 use super::{
     name_link_row::name_link, name_row::name, period_row::period, program_row::program,
-    rnr_form_row::rnr_form::dsl as rnr_form_dsl, store_row::store, DBType, NameRow,
-    RepositoryError, RnRFormRow, RnRFormStatus, StorageConnection, StoreRow,
+    store_row::store, DBType, NameRow, RepositoryError, RnRFormRow, RnRFormStatus,
+    StorageConnection, StoreRow,
 };
 
 use crate::{
@@ -90,10 +90,10 @@ impl<'a> RnRFormRepository<'a> {
                     apply_sort!(query, sort, period::end_date);
                 }
                 RnRFormSortField::Status => {
-                    apply_sort!(query, sort, rnr_form_dsl::status);
+                    apply_sort!(query, sort, rnr_form::status);
                 }
                 RnRFormSortField::CreatedDatetime => {
-                    apply_sort!(query, sort, rnr_form_dsl::created_datetime);
+                    apply_sort!(query, sort, rnr_form::created_datetime);
                 }
                 RnRFormSortField::SupplierName => {
                     apply_sort_no_case!(query, sort, name::name_);
@@ -103,7 +103,7 @@ impl<'a> RnRFormRepository<'a> {
                 }
             }
         } else {
-            query = query.order(rnr_form_dsl::created_datetime.asc())
+            query = query.order(rnr_form::created_datetime.asc())
         }
 
         let result = query
@@ -143,7 +143,7 @@ type BoxedRnRFormQuery = IntoBoxed<
 >;
 
 fn create_filtered_query(filter: Option<RnRFormFilter>) -> BoxedRnRFormQuery {
-    let mut query = rnr_form_dsl::rnr_form
+    let mut query = rnr_form::table
         .inner_join(name_link::table.inner_join(name::table))
         .inner_join(store::table)
         .inner_join(period::table)
@@ -159,11 +159,11 @@ fn create_filtered_query(filter: Option<RnRFormFilter>) -> BoxedRnRFormQuery {
             period_schedule_id,
         } = f;
 
-        apply_equal_filter!(query, id, rnr_form_dsl::id);
-        apply_equal_filter!(query, store_id, rnr_form_dsl::store_id);
-        apply_equal_filter!(query, program_id, rnr_form_dsl::program_id);
+        apply_equal_filter!(query, id, rnr_form::id);
+        apply_equal_filter!(query, store_id, rnr_form::store_id);
+        apply_equal_filter!(query, program_id, rnr_form::program_id);
 
-        apply_date_time_filter!(query, created_datetime, rnr_form_dsl::created_datetime);
+        apply_date_time_filter!(query, created_datetime, rnr_form::created_datetime);
 
         apply_equal_filter!(query, period_schedule_id, period::period_schedule_id);
     }

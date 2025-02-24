@@ -29,12 +29,18 @@ pub struct UpdateInput {
     pub comment: Option<String>,
     pub colour: Option<String>,
     pub diagnosis_id: Option<NullableUpdateInput<String>>,
+    pub program_id: Option<NullableUpdateInput<String>>,
+    pub their_reference: Option<NullableUpdateInput<String>>,
+    pub name_insurance_join_id: Option<NullableUpdateInput<String>>,
+    pub insurance_discount_amount: Option<f64>,
+    pub insurance_discount_percentage: Option<f64>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum UpdatePrescriptionStatusInput {
     Picked,
     Verified,
+    Cancelled,
 }
 
 #[derive(SimpleObject)]
@@ -102,6 +108,11 @@ impl UpdateInput {
             colour,
             prescription_date,
             diagnosis_id,
+            program_id,
+            their_reference,
+            name_insurance_join_id,
+            insurance_discount_amount,
+            insurance_discount_percentage,
         } = self;
 
         ServiceInput {
@@ -117,6 +128,19 @@ impl UpdateInput {
             diagnosis_id: diagnosis_id.map(|diagnosis_id| NullableUpdate {
                 value: diagnosis_id.value,
             }),
+            program_id: program_id.map(|program_id| NullableUpdate {
+                value: program_id.value,
+            }),
+            their_reference: their_reference.map(|their_reference| NullableUpdate {
+                value: their_reference.value,
+            }),
+            name_insurance_join_id: name_insurance_join_id.map(|name_insurance_join_id| {
+                NullableUpdate {
+                    value: name_insurance_join_id.value,
+                }
+            }),
+            insurance_discount_amount,
+            insurance_discount_percentage,
         }
     }
 }
@@ -176,6 +200,7 @@ impl UpdatePrescriptionStatusInput {
         match self {
             UpdatePrescriptionStatusInput::Picked => Picked,
             UpdatePrescriptionStatusInput::Verified => Verified,
+            UpdatePrescriptionStatusInput::Cancelled => Cancelled,
         }
     }
 }
@@ -200,6 +225,7 @@ mod test {
             InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
+        NullableUpdate,
     };
 
     use crate::InvoiceMutations;
@@ -232,7 +258,7 @@ mod test {
           "input": {
             "id": "n/a",
             "patientId": "n/a",
-            "clinicianId": "n/a",
+            "clinicianId": {"value": "n/a"},
             "comment": "n/a",
             "colour": "n/a"
           }
@@ -367,12 +393,19 @@ mod test {
                 ServiceInput {
                     id: "id input".to_string(),
                     patient_id: Some("patient_a".to_string()),
-                    clinician_id: Some("some_clinician".to_string()),
+                    clinician_id: Some(NullableUpdate {
+                        value: Some("some_clinician".to_string())
+                    }),
                     status: Some(UpdatePrescriptionStatus::Picked),
                     comment: Some("comment input".to_string()),
                     colour: Some("colour input".to_string()),
                     backdated_datetime: None,
                     diagnosis_id: None,
+                    program_id: None,
+                    their_reference: None,
+                    name_insurance_join_id: None,
+                    insurance_discount_amount: None,
+                    insurance_discount_percentage: None
                 }
             );
             Ok(Invoice {
@@ -387,7 +420,7 @@ mod test {
           "input": {
             "id": "id input",
             "patientId": "patient_a",
-            "clinicianId": "some_clinician",
+            "clinicianId": {"value": "some_clinician"},
             "status": "PICKED",
             "comment": "comment input",
             "colour": "colour input"

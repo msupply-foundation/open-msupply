@@ -1,5 +1,3 @@
-use super::requisition_line_row::requisition_line::dsl as requisition_line_dsl;
-
 use crate::db_diesel::{item_link_row::item_link, requisition_row::requisition};
 use crate::repository_error::RepositoryError;
 use crate::{RequisitionRowRepository, StorageConnection};
@@ -79,9 +77,9 @@ impl<'a> RequisitionLineRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &RequisitionLineRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(requisition_line_dsl::requisition_line)
+        diesel::insert_into(requisition_line::table)
             .values(row)
-            .on_conflict(requisition_line_dsl::id)
+            .on_conflict(requisition_line::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -94,16 +92,16 @@ impl<'a> RequisitionLineRowRepository<'a> {
         item_id: &str,
         approved_quantity: f64,
     ) -> Result<(), RepositoryError> {
-        let filter = requisition_line_dsl::requisition_id
+        let filter = requisition_line::requisition_id
             .eq(requisition_id)
-            .and(requisition_line_dsl::item_link_id.eq(item_id));
+            .and(requisition_line::item_link_id.eq(item_id));
 
-        diesel::update(requisition_line_dsl::requisition_line)
+        diesel::update(requisition_line::table)
             .filter(filter)
-            .set(requisition_line_dsl::approved_quantity.eq(approved_quantity))
+            .set(requisition_line::approved_quantity.eq(approved_quantity))
             .execute(self.connection.lock().connection())?;
 
-        let rows: Vec<RequisitionLineRow> = requisition_line_dsl::requisition_line
+        let rows: Vec<RequisitionLineRow> = requisition_line::table
             .filter(filter)
             .load(self.connection.lock().connection())?;
 
@@ -149,16 +147,15 @@ impl<'a> RequisitionLineRowRepository<'a> {
         };
 
         diesel::delete(
-            requisition_line_dsl::requisition_line
-                .filter(requisition_line_dsl::id.eq(requisition_line_id)),
+            requisition_line::table.filter(requisition_line::id.eq(requisition_line_id)),
         )
         .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<RequisitionLineRow>, RepositoryError> {
-        let result = requisition_line_dsl::requisition_line
-            .filter(requisition_line_dsl::id.eq(id))
+        let result = requisition_line::table
+            .filter(requisition_line::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)

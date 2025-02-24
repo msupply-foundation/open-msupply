@@ -31,6 +31,7 @@ const createStatusLog = (invoice: SupplierReturnRowFragment) => {
     [InvoiceNodeStatus.Verified]: null,
     // Not used for Supplier return
     [InvoiceNodeStatus.Allocated]: null,
+    [InvoiceNodeStatus.Cancelled]: null,
   };
   if (statusIdx >= 0) {
     statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
@@ -67,6 +68,7 @@ export const FooterComponent: FC = () => {
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
       disabled: isDisabled,
+      disabledToastMessage: t('label.cant-delete-disabled'),
     },
   ];
 

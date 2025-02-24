@@ -1,5 +1,6 @@
 use repository::{StorageConnection, StorePreferenceRow, StorePreferenceType, SyncBufferRow};
 use serde::{Deserialize, Serialize};
+use util::constants::DEFAULT_AMC_LOOKBACK_MONTHS;
 
 use crate::sync::sync_serde::string_to_f64;
 
@@ -73,6 +74,9 @@ pub struct LegacyPrefData {
     #[serde(default)]
     #[serde(rename = "canLinkRequistionToSupplierInvoice")]
     pub manually_link_internal_order_to_inbound_shipment: bool,
+    #[serde(default)]
+    #[serde(rename = "editPrescribedQuantityOnPrescription")]
+    pub edit_prescribed_quantity_on_prescription: bool,
 }
 
 // Needs to be added to all_translators()
@@ -126,6 +130,7 @@ impl SyncTranslation for StorePreferenceTranslation {
             keep_requisition_lines_with_zero_requested_quantity_on_finalised,
             use_consumption_and_stock_from_customers_for_internal_orders,
             manually_link_internal_order_to_inbound_shipment,
+            edit_prescribed_quantity_on_prescription,
         } = data;
 
         let result = StorePreferenceRow {
@@ -137,7 +142,11 @@ impl SyncTranslation for StorePreferenceTranslation {
             om_program_module,
             vaccine_module,
             issue_in_foreign_currency,
-            monthly_consumption_look_back_period,
+            monthly_consumption_look_back_period: if monthly_consumption_look_back_period == 0.0 {
+                DEFAULT_AMC_LOOKBACK_MONTHS
+            } else {
+                monthly_consumption_look_back_period
+            },
             months_lead_time,
             months_overstock,
             months_understock,
@@ -147,6 +156,7 @@ impl SyncTranslation for StorePreferenceTranslation {
             keep_requisition_lines_with_zero_requested_quantity_on_finalised,
             use_consumption_and_stock_from_customers_for_internal_orders,
             manually_link_internal_order_to_inbound_shipment,
+            edit_prescribed_quantity_on_prescription,
         };
 
         Ok(PullTranslateResult::upsert(result))

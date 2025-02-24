@@ -45,8 +45,13 @@ export const ListView = () => {
   );
   const programReports = data?.nodes?.filter(
     report =>
-      report?.subContext === 'HIVCareProgram' &&
-      report?.context === ReportContext.Dispensary
+      report?.context === ReportContext.Dispensary &&
+      store?.preferences?.omProgramModule &&
+      (report?.subContext === 'HIVCareProgram' ||
+        report.subContext === 'Encounters')
+  );
+  const otherReports = data?.nodes?.filter(
+    report => report?.subContext === 'Other'
   );
   const onReportClick = (report: ReportRowFragment) => {
     if (report.argumentSchema) {
@@ -81,6 +86,7 @@ export const ListView = () => {
         sx={{
           backgroundColor: 'background.toolbar',
           paddingBottom: '32px',
+          width: '100%',
         }}
         justifyContent="space-evenly"
       >
@@ -97,6 +103,13 @@ export const ListView = () => {
           reports={expiringReports}
           onReportClick={onReportClick}
           hasReports={expiringReports?.length !== 0}
+        />
+        <ReportWidget
+          title={t('heading.other')}
+          Icon={InvoiceIcon}
+          reports={otherReports}
+          onReportClick={onReportClick}
+          hasReports={otherReports?.length !== 0}
         />
         {store?.preferences?.omProgramModule && (
           <ReportWidget

@@ -34,6 +34,7 @@ const createStatusLog = (invoice: InboundFragment) => {
     [InvoiceNodeStatus.Verified]: null,
     // Placeholder for typescript, not used in inbounds
     [InvoiceNodeStatus.Allocated]: null,
+    [InvoiceNodeStatus.Cancelled]: null,
   };
 
   if (statusIdx >= 0) {
@@ -78,6 +79,9 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       icon: <DeleteIcon />,
       onClick: onDelete,
       disabled: isDisabled || !isManuallyCreated,
+      disabledToastMessage: !isManuallyCreated
+        ? t('messages.cant-delete-transferred')
+        : t('messages.cant-delete-generic'),
     },
     {
       label: t('button.return-lines'),
@@ -91,6 +95,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       onClick: onZeroQuantities,
       disabled: isDisabled,
       shouldShrink: false,
+      disabledToastMessage: t('label.cant-zero-quantity-disabled'),
     },
   ];
 

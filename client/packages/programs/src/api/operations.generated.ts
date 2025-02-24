@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { PeriodFragmentDoc } from '../../../requisitions/src/RnRForms/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type DocumentRegistryFragment = { __typename: 'DocumentRegistryNode', id: string, category: Types.DocumentRegistryCategoryNode, documentType: string, contextId: string, name?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any };
 
@@ -20,6 +21,17 @@ export type ProgramsQueryVariables = Types.Exact<{
 
 
 export type ProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string }> } };
+
+export type PeriodsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  programId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  filter?: Types.InputMaybe<Types.PeriodFilterInput>;
+}>;
+
+
+export type PeriodsQuery = { __typename: 'Queries', periods: { __typename: 'PeriodConnector', totalCount: number, nodes: Array<{ __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string }> } };
 
 export type DocumentByNameQueryVariables = Types.Exact<{
   name: Types.Scalars['String']['input'];
@@ -600,6 +612,25 @@ export const ProgramsDocument = gql`
   }
 }
     ${ProgramFragmentDoc}`;
+export const PeriodsDocument = gql`
+    query periods($storeId: String!, $programId: String, $first: Int, $offset: Int, $filter: PeriodFilterInput) {
+  periods(
+    storeId: $storeId
+    programId: $programId
+    page: {first: $first, offset: $offset}
+    filter: $filter
+  ) {
+    ... on PeriodConnector {
+      __typename
+      nodes {
+        __typename
+        ...Period
+      }
+      totalCount
+    }
+  }
+}
+    ${PeriodFragmentDoc}`;
 export const DocumentByNameDocument = gql`
     query documentByName($name: String!, $storeId: String!) {
   document(name: $name, storeId: $storeId) {
@@ -1009,6 +1040,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   return {
     programs(variables: ProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query', variables);
+    },
+    periods(variables: PeriodsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PeriodsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PeriodsQuery>(PeriodsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'periods', 'query', variables);
     },
     documentByName(variables: DocumentByNameQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DocumentByNameQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DocumentByNameQuery>(DocumentByNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentByName', 'query', variables);

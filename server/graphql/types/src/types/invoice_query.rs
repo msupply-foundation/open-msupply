@@ -1,7 +1,8 @@
 use super::patient::PatientNode;
+use super::program_node::ProgramNode;
 use super::{
     ClinicianNode, CurrencyNode, DiagnosisNode, InvoiceLineConnector, NameNode, RequisitionNode,
-    UserNode,
+    StoreNode, UserNode,
 };
 use async_graphql::*;
 use chrono::{DateTime, Utc};
@@ -9,7 +10,8 @@ use dataloader::DataLoader;
 
 use graphql_core::loader::{
     ClinicianLoader, ClinicianLoaderInput, DiagnosisLoader, InvoiceByIdLoader,
-    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, PatientLoader, UserLoader,
+    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, PatientLoader, ProgramByIdLoader,
+    StoreByIdLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -69,6 +71,8 @@ pub enum InvoiceNodeStatus {
     /// Outbound Shipment: Status is updated based on corresponding inbound Shipment
     /// Inbound Shipment: Becomes not editable
     Verified,
+    // Cancelled only applies to Verified Transactions, they're treated like a customer return with a reverse transaction created to undo the original transaction in the ledger
+    Cancelled,
 }
 
 pub struct InvoiceNode {
@@ -142,6 +146,10 @@ impl InvoiceNode {
         self.row().on_hold
     }
 
+    pub async fn is_cancellation(&self) -> bool {
+        self.row().is_cancellation
+    }
+
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
@@ -179,6 +187,12 @@ impl InvoiceNode {
     pub async fn backdated_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .backdated_datetime
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    }
+
+    pub async fn cancelled_datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .cancelled_datetime
             .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
@@ -384,6 +398,47 @@ impl InvoiceNode {
             .await?
             .map(DiagnosisNode::from_domain))
     }
+
+    pub async fn program_id(&self) -> &Option<String> {
+        &self.row().program_id
+    }
+
+    pub async fn program(&self, ctx: &Context<'_>) -> Result<Option<ProgramNode>> {
+        let Some(program_id) = self.row().program_id.clone() else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<ProgramByIdLoader>>();
+
+        let result = loader
+            .load_one(program_id)
+            .await?
+            .map(|program| ProgramNode {
+                program_row: program,
+            });
+
+        Ok(result)
+    }
+
+    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
+        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
+        Ok(loader
+            .load_one(self.row().store_id.clone())
+            .await?
+            .map(StoreNode::from_domain))
+    }
+
+    pub async fn name_insurance_join_id(&self) -> &Option<String> {
+        &self.row().name_insurance_join_id
+    }
+
+    pub async fn insurance_discount_amount(&self) -> &Option<f64> {
+        &self.row().insurance_discount_amount
+    }
+
+    pub async fn insurance_discount_percentage(&self) -> &Option<f64> {
+        &self.row().insurance_discount_percentage
+    }
 }
 
 impl InvoiceNode {
@@ -509,6 +564,7 @@ impl InvoiceNodeStatus {
             Shipped => InvoiceStatus::Shipped,
             Delivered => InvoiceStatus::Delivered,
             Verified => InvoiceStatus::Verified,
+            Cancelled => InvoiceStatus::Cancelled,
         }
     }
 
@@ -521,6 +577,7 @@ impl InvoiceNodeStatus {
             Shipped => InvoiceNodeStatus::Shipped,
             Delivered => InvoiceNodeStatus::Delivered,
             Verified => InvoiceNodeStatus::Verified,
+            Cancelled => InvoiceNodeStatus::Cancelled,
         }
     }
 }

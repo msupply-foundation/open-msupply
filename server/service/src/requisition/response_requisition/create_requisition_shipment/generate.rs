@@ -51,6 +51,7 @@ pub fn generate(
         shipped_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
+        cancelled_datetime: None,
         colour: None,
         linked_invoice_id: None,
         tax_percentage: None,
@@ -58,6 +59,11 @@ pub fn generate(
         original_shipment_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
+        program_id: None,
+        name_insurance_join_id: None,
+        insurance_discount_amount: None,
+        insurance_discount_percentage: None,
+        is_cancellation: false,
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;
@@ -101,6 +107,7 @@ pub fn generate_invoice_lines(
             return_reason_id: None,
             foreign_currency_price_before_tax: None,
             item_variant_id: None,
+            prescribed_quantity: None,
         });
     }
 

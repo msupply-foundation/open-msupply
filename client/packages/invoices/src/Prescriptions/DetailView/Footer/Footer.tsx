@@ -13,6 +13,7 @@ import {
   DeleteIcon,
   Action,
   ActionsFooter,
+  PrinterIcon,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, prescriptionStatuses } from '../../../utils';
 import { StatusChangeButton } from './StatusChangeButton';
@@ -29,6 +30,7 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
     [InvoiceNodeStatus.New]: null,
     [InvoiceNodeStatus.Picked]: null,
     [InvoiceNodeStatus.Verified]: null,
+    [InvoiceNodeStatus.Cancelled]: null,
     // placeholder not used in prescriptions
     [InvoiceNodeStatus.Allocated]: null,
     [InvoiceNodeStatus.Shipped]: null,
@@ -43,6 +45,9 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
   }
   if (statusIdx >= 2) {
     statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
+  }
+  if (statusIdx >= 3) {
+    statusLog[InvoiceNodeStatus.Cancelled] = invoice.cancelledDatetime;
   }
 
   return statusLog;
@@ -89,8 +94,23 @@ export const FooterComponent: FC = () => {
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
       disabled: isDisabled,
+      disabledToastMessage: t('messages.cant-delete-generic'),
+    },
+    {
+      label: t('button.print-prescription-label'),
+      icon: <PrinterIcon />,
+      onClick: () => {},
+      disabled: isDisabled,
+      disabledToastMessage: t('heading.unable-to-print'),
     },
   ];
+
+  // Don't show "Cancelled" status unless this prescription is already cancelled
+  const statusList = prescriptionStatuses.filter(status =>
+    data?.status === InvoiceNodeStatus.Cancelled
+      ? true
+      : status !== InvoiceNodeStatus.Cancelled
+  );
 
   return (
     <AppFooterPortal
@@ -111,7 +131,7 @@ export const FooterComponent: FC = () => {
               height={64}
             >
               <StatusCrumbs
-                statuses={prescriptionStatuses}
+                statuses={statusList}
                 statusLog={createStatusLog(data)}
                 statusFormatter={getStatusTranslator(t)}
               />
@@ -125,7 +145,6 @@ export const FooterComponent: FC = () => {
                   sx={{ fontSize: '12px' }}
                   onClick={() => navigateUpOne()}
                 />
-
                 <StatusChangeButton />
               </Box>
             </Box>

@@ -36,6 +36,7 @@ table! {
         tax_percentage -> Nullable<Double>,
         #[sql_name = "type"] type_ -> crate::db_diesel::invoice_line_row::InvoiceLineTypeMapping,
         number_of_packs -> Double,
+        prescribed_quantity -> Nullable<Double>,
         note -> Nullable<Text>,
         inventory_adjustment_reason_id -> Nullable<Text>,
         return_reason_id -> Nullable<Text>,
@@ -52,6 +53,7 @@ joinable!(invoice_line -> inventory_adjustment_reason (inventory_adjustment_reas
 joinable!(invoice_line -> return_reason (return_reason_id));
 allow_tables_to_appear_in_same_query!(invoice_line, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line, name_link);
+allow_tables_to_appear_in_same_query!(invoice_line, inventory_adjustment_reason);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -87,6 +89,7 @@ pub struct InvoiceLineRow {
     #[diesel(column_name = "type_")]
     pub r#type: InvoiceLineType,
     pub number_of_packs: f64,
+    pub prescribed_quantity: Option<f64>,
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
     pub return_reason_id: Option<String>,

@@ -15,17 +15,17 @@ export type UpdateResponseMutationVariables = Types.Exact<{
 
 export type UpdateResponseMutation = { __typename: 'Mutations', updateResponseRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateResponseRequisitionError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'OrderingTooManyItems', description: string, maxItemsInEmergencyOrder: number } | { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionReasonsNotProvided', description: string, errors: Array<{ __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } }> } } };
 
-export type DeleteRequestMutationVariables = Types.Exact<{
+export type DeleteResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.BatchResponseRequisitionInput;
 }>;
 
 
-export type DeleteRequestMutation = { __typename: 'Mutations', batchResponseRequisition: { __typename: 'BatchResponseRequisitionResponse', deleteResponseRequisitions?: Array<{ __typename: 'DeleteResponseRequisitionResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteResponseRequisitionError', error: { __typename: 'FinalisedRequisition', description: string } | { __typename: 'LineDeleteError', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionWithShipment', description: string } | { __typename: 'TransferredRequisition', description: string } } }> | null } };
+export type DeleteResponseMutation = { __typename: 'Mutations', batchResponseRequisition: { __typename: 'BatchResponseRequisitionResponse', deleteResponseRequisitions?: Array<{ __typename: 'DeleteResponseRequisitionResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteResponseRequisitionError', error: { __typename: 'FinalisedRequisition', description: string } | { __typename: 'LineDeleteError', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionWithShipment', description: string } | { __typename: 'TransferredRequisition', description: string } } }> | null } };
 
 export type ResponseLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, remainingQuantityToSupply: number, alreadyIssued: number, comment?: string | null, averageMonthlyConsumption: number, availableStockOnHand: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, optionId?: string | null, suggestedQuantity: number, requisitionNumber: number, approvedQuantity: number, approvalComment?: string | null, itemStats: { __typename: 'ItemStatsNode', stockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, averageMonthlyConsumption: number, availableMonthsOfStockOnHand?: number | null } } | null, reason?: { __typename: 'ReasonOptionNode', id: string, type: Types.ReasonOptionNodeType, reason: string, isActive: boolean } | null };
 
-export type ResponseFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, linesRemainingToSupply: { __typename: 'RequisitionLineConnector', totalCount: number }, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, remainingQuantityToSupply: number, alreadyIssued: number, comment?: string | null, averageMonthlyConsumption: number, availableStockOnHand: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, optionId?: string | null, suggestedQuantity: number, requisitionNumber: number, approvedQuantity: number, approvalComment?: string | null, itemStats: { __typename: 'ItemStatsNode', stockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, averageMonthlyConsumption: number, availableMonthsOfStockOnHand?: number | null } } | null, reason?: { __typename: 'ReasonOptionNode', id: string, type: Types.ReasonOptionNodeType, reason: string, isActive: boolean } | null }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, program?: { __typename: 'ProgramNode', id: string, name: string } | null, period?: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } | null, linkedRequisition?: { __typename: 'RequisitionNode', id: string } | null };
+export type ResponseFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, isEmergency: boolean, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, linesRemainingToSupply: { __typename: 'RequisitionLineConnector', totalCount: number }, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, remainingQuantityToSupply: number, alreadyIssued: number, comment?: string | null, averageMonthlyConsumption: number, availableStockOnHand: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, optionId?: string | null, suggestedQuantity: number, requisitionNumber: number, approvedQuantity: number, approvalComment?: string | null, itemStats: { __typename: 'ItemStatsNode', stockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, averageMonthlyConsumption: number, availableMonthsOfStockOnHand?: number | null } } | null, reason?: { __typename: 'ReasonOptionNode', id: string, type: Types.ReasonOptionNodeType, reason: string, isActive: boolean } | null }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, program?: { __typename: 'ProgramNode', id: string, name: string } | null, period?: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } | null, linkedRequisition?: { __typename: 'RequisitionNode', id: string } | null };
 
 export type ResponseByNumberQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -33,7 +33,7 @@ export type ResponseByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type ResponseByNumberQuery = { __typename: 'Queries', requisitionByNumber: { __typename: 'RecordNotFound' } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, linesRemainingToSupply: { __typename: 'RequisitionLineConnector', totalCount: number }, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, remainingQuantityToSupply: number, alreadyIssued: number, comment?: string | null, averageMonthlyConsumption: number, availableStockOnHand: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, optionId?: string | null, suggestedQuantity: number, requisitionNumber: number, approvedQuantity: number, approvalComment?: string | null, itemStats: { __typename: 'ItemStatsNode', stockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, averageMonthlyConsumption: number, availableMonthsOfStockOnHand?: number | null } } | null, reason?: { __typename: 'ReasonOptionNode', id: string, type: Types.ReasonOptionNodeType, reason: string, isActive: boolean } | null }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, program?: { __typename: 'ProgramNode', id: string, name: string } | null, period?: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } | null, linkedRequisition?: { __typename: 'RequisitionNode', id: string } | null } };
+export type ResponseByNumberQuery = { __typename: 'Queries', requisitionByNumber: { __typename: 'RecordNotFound' } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, isEmergency: boolean, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, linesRemainingToSupply: { __typename: 'RequisitionLineConnector', totalCount: number }, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, remainingQuantityToSupply: number, alreadyIssued: number, comment?: string | null, averageMonthlyConsumption: number, availableStockOnHand: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, optionId?: string | null, suggestedQuantity: number, requisitionNumber: number, approvedQuantity: number, approvalComment?: string | null, itemStats: { __typename: 'ItemStatsNode', stockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, averageMonthlyConsumption: number, availableMonthsOfStockOnHand?: number | null } } | null, reason?: { __typename: 'ReasonOptionNode', id: string, type: Types.ReasonOptionNodeType, reason: string, isActive: boolean } | null }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, program?: { __typename: 'ProgramNode', id: string, name: string } | null, period?: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } | null, linkedRequisition?: { __typename: 'RequisitionNode', id: string } | null } };
 
 export type ResponseRowFragment = { __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, period?: { __typename: 'PeriodNode', name: string, startDate: string, endDate: string } | null, shipments: { __typename: 'InvoiceConnector', totalCount: number } };
 
@@ -61,7 +61,7 @@ export type InsertProgramResponseMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertProgramResponseMutation = { __typename: 'Mutations', insertProgramResponseRequisition: { __typename: 'InsertProgramResponseRequisitionError' } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
+export type InsertProgramResponseMutation = { __typename: 'Mutations', insertProgramResponseRequisition: { __typename: 'InsertProgramResponseRequisitionError', error: { __typename: 'MaxOrdersReachedForPeriod', description: string } } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
 
 export type InsertResponseLineMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -79,13 +79,15 @@ export type UpdateResponseLineMutationVariables = Types.Exact<{
 
 export type UpdateResponseLineMutation = { __typename: 'Mutations', updateResponseRequisitionLine: { __typename: 'RequisitionLineNode', id: string } | { __typename: 'UpdateResponseRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } };
 
+export type CannotDeleteLineLinkedToShipmentErrorFragment = { __typename: 'CannotDeleteLineLinkedToShipment' };
+
 export type DeleteResponseLinesMutationVariables = Types.Exact<{
   ids?: Types.InputMaybe<Array<Types.DeleteResponseRequisitionLineInput> | Types.DeleteResponseRequisitionLineInput>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type DeleteResponseLinesMutation = { __typename: 'Mutations', batchResponseRequisition: { __typename: 'BatchResponseRequisitionResponse', deleteResponseRequisitionLines?: Array<{ __typename: 'DeleteResponseRequisitionLineResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteResponseRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null } };
+export type DeleteResponseLinesMutation = { __typename: 'Mutations', batchResponseRequisition: { __typename: 'BatchResponseRequisitionResponse', deleteResponseRequisitionLines?: Array<{ __typename: 'DeleteResponseRequisitionLineResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteResponseRequisitionLineError', error: { __typename: 'CannotDeleteLineLinkedToShipment', description: string } | { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null } };
 
 export type CreateOutboundFromResponseMutationVariables = Types.Exact<{
   responseId: Types.Scalars['String']['input'];
@@ -262,6 +264,7 @@ export const ResponseFragmentDoc = gql`
     id
   }
   orderType
+  isEmergency
 }
     ${ResponseLineFragmentDoc}`;
 export const ResponseRowFragmentDoc = gql`
@@ -290,6 +293,11 @@ export const ResponseRowFragmentDoc = gql`
     __typename
     totalCount
   }
+}
+    `;
+export const CannotDeleteLineLinkedToShipmentErrorFragmentDoc = gql`
+    fragment CannotDeleteLineLinkedToShipmentError on CannotDeleteLineLinkedToShipment {
+  __typename
 }
     `;
 export const CustomerProgramSettingsFragmentDoc = gql`
@@ -332,8 +340,8 @@ export const UpdateResponseDocument = gql`
   }
 }
     ${RequisitionReasonsNotProvidedErrorFragmentDoc}`;
-export const DeleteRequestDocument = gql`
-    mutation deleteRequest($storeId: String!, $input: BatchResponseRequisitionInput!) {
+export const DeleteResponseDocument = gql`
+    mutation deleteResponse($storeId: String!, $input: BatchResponseRequisitionInput!) {
   batchResponseRequisition(storeId: $storeId, input: $input) {
     deleteResponseRequisitions {
       id
@@ -427,6 +435,16 @@ export const InsertProgramResponseDocument = gql`
       id
       requisitionNumber
     }
+    ... on InsertProgramResponseRequisitionError {
+      __typename
+      error {
+        description
+        ... on MaxOrdersReachedForPeriod {
+          __typename
+          description
+        }
+      }
+    }
   }
 }
     `;
@@ -509,16 +527,20 @@ export const DeleteResponseLinesDocument = gql`
               __typename
               description
             }
+            ... on CannotDeleteLineLinkedToShipment {
+              ...CannotDeleteLineLinkedToShipmentError
+            }
           }
         }
         ... on DeleteResponse {
+          __typename
           id
         }
       }
     }
   }
 }
-    `;
+    ${CannotDeleteLineLinkedToShipmentErrorFragmentDoc}`;
 export const CreateOutboundFromResponseDocument = gql`
     mutation createOutboundFromResponse($responseId: String!, $storeId: String!) {
   createRequisitionShipment(
@@ -671,8 +693,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     updateResponse(variables: UpdateResponseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateResponseMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateResponseMutation>(UpdateResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateResponse', 'mutation', variables);
     },
-    deleteRequest(variables: DeleteRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteRequestMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestMutation>(DeleteRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequest', 'mutation', variables);
+    deleteResponse(variables: DeleteResponseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteResponseMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteResponseMutation>(DeleteResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteResponse', 'mutation', variables);
     },
     responseByNumber(variables: ResponseByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ResponseByNumberQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ResponseByNumberQuery>(ResponseByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'responseByNumber', 'query', variables);

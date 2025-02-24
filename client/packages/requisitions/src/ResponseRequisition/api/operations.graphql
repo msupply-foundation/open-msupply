@@ -24,7 +24,7 @@ mutation updateResponse(
   }
 }
 
-mutation deleteRequest(
+mutation deleteResponse(
   $storeId: String!
   $input: BatchResponseRequisitionInput!
 ) {
@@ -191,6 +191,7 @@ fragment Response on RequisitionNode {
     id
   }
   orderType
+  isEmergency
 }
 query responseByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
@@ -285,6 +286,16 @@ mutation insertProgramResponse(
       id
       requisitionNumber
     }
+    ... on InsertProgramResponseRequisitionError {
+      __typename
+      error {
+        description
+        ... on MaxOrdersReachedForPeriod {
+          __typename
+          description
+        }
+      }
+    }
   }
 }
 
@@ -350,6 +361,10 @@ mutation updateResponseLine(
   }
 }
 
+fragment CannotDeleteLineLinkedToShipmentError on CannotDeleteLineLinkedToShipment {
+  __typename
+}
+
 mutation deleteResponseLines(
   $ids: [DeleteResponseRequisitionLineInput!]
   $storeId: String!
@@ -373,9 +388,13 @@ mutation deleteResponseLines(
               __typename
               description
             }
+            ... on CannotDeleteLineLinkedToShipment {
+              ...CannotDeleteLineLinkedToShipmentError
+            }
           }
         }
         ... on DeleteResponse {
+          __typename
           id
         }
       }

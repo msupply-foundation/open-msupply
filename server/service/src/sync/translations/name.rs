@@ -106,6 +106,14 @@ pub struct LegacyNameRow {
     #[serde(rename = "hold")]
     pub on_hold: bool,
 
+    #[serde(rename = "NEXT_OF_KIN_ID")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub next_of_kin_id: Option<String>,
+
+    #[serde(rename = "next_of_kin_relative")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub next_of_kin_name: Option<String>,
+
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub created_date: Option<NaiveDate>,
@@ -176,6 +184,8 @@ impl SyncTranslation for NameTranslation {
             is_manufacturer,
             is_donor,
             on_hold,
+            next_of_kin_id,
+            next_of_kin_name,
             created_date,
             national_health_number,
             is_deceased,
@@ -216,6 +226,8 @@ impl SyncTranslation for NameTranslation {
             is_manufacturer,
             is_donor,
             on_hold,
+            next_of_kin_id,
+            next_of_kin_name,
             is_deceased,
             national_health_number,
             gender: gender.or(if legacy_type == LegacyNameRowType::Patient {
@@ -275,6 +287,8 @@ impl SyncTranslation for NameTranslation {
             is_manufacturer,
             is_donor,
             on_hold,
+            next_of_kin_id,
+            next_of_kin_name,
             created_datetime,
             is_deceased,
             date_of_death,
@@ -329,6 +343,8 @@ impl SyncTranslation for NameTranslation {
             is_manufacturer,
             is_donor,
             on_hold,
+            next_of_kin_id,
+            next_of_kin_name,
             created_date: created_datetime.map(|datetime| datetime.date()),
             national_health_number,
             is_deceased,

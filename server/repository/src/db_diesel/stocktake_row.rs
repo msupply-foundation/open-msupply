@@ -1,6 +1,4 @@
-use super::{
-    stocktake_row::stocktake::dsl as stocktake_dsl, user_row::user_account, StorageConnection,
-};
+use super::{user_row::user_account, StorageConnection};
 
 use crate::Upsert;
 use crate::{repository_error::RepositoryError, Delete};
@@ -26,6 +24,7 @@ table! {
         inventory_addition_id -> Nullable<Text>,
         inventory_reduction_id -> Nullable<Text>,
         is_locked -> Bool,
+        program_id -> Nullable<Text>,
     }
 }
 
@@ -55,6 +54,7 @@ pub struct StocktakeRow {
     pub inventory_addition_id: Option<String>,
     pub inventory_reduction_id: Option<String>,
     pub is_locked: bool,
+    pub program_id: Option<String>,
 }
 
 impl Default for StocktakeStatus {
@@ -80,6 +80,7 @@ impl Default for StocktakeRow {
             inventory_addition_id: Default::default(),
             inventory_reduction_id: Default::default(),
             is_locked: Default::default(),
+            program_id: Default::default(),
         }
     }
 }
@@ -94,9 +95,9 @@ impl<'a> StocktakeRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &StocktakeRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(stocktake_dsl::stocktake)
+        diesel::insert_into(stocktake::table)
             .values(row)
-            .on_conflict(stocktake_dsl::id)
+            .on_conflict(stocktake::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -127,22 +128,22 @@ impl<'a> StocktakeRowRepository<'a> {
                 return Ok(None);
             }
         };
-        diesel::delete(stocktake_dsl::stocktake.filter(stocktake_dsl::id.eq(id)))
+        diesel::delete(stocktake::table.filter(stocktake::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<StocktakeRow>, RepositoryError> {
-        let result = stocktake_dsl::stocktake
-            .filter(stocktake_dsl::id.eq(id))
+        let result = stocktake::table
+            .filter(stocktake::id.eq(id))
             .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StocktakeRow>, RepositoryError> {
-        let result = stocktake_dsl::stocktake
-            .filter(stocktake_dsl::id.eq_any(ids))
+        let result = stocktake::table
+            .filter(stocktake::id.eq_any(ids))
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
@@ -151,9 +152,9 @@ impl<'a> StocktakeRowRepository<'a> {
         &self,
         store_id: &str,
     ) -> Result<Option<i64>, RepositoryError> {
-        let result = stocktake_dsl::stocktake
-            .filter(stocktake_dsl::store_id.eq(store_id))
-            .select(max(stocktake_dsl::stocktake_number))
+        let result = stocktake::table
+            .filter(stocktake::store_id.eq(store_id))
+            .select(max(stocktake::stocktake_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }

@@ -6,13 +6,14 @@ pub mod types;
 pub use self::queries::sync_status::*;
 use self::queries::*;
 
+use abbreviation::abbreviations;
 use diagnosis::diagnoses_active;
 use graphql_core::pagination::PaginationInput;
 use service::sync::CentralServerConfig;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
-    CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, DiagnosisNode,
+    AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, DiagnosisNode,
     MasterListFilterInput, StorePreferenceNode,
 };
 use mutations::{
@@ -22,6 +23,7 @@ use mutations::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
     },
     initialise_site::{initialise_site, InitialiseSiteResponse},
+    insert_insurance::{insert_insurance, InsertInsuranceInput, InsertInsuranceResponse},
     label_printer_settings::{
         update_label_printer_settings, LabelPrinterSettingsInput,
         UpdateLabelPrinterSettingsResponse,
@@ -29,15 +31,19 @@ use mutations::{
     log::{update_log_level, LogLevelInput, UpsertLogLevelResponse},
     manual_sync::manual_sync,
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
+    update_insurance::{update_insurance, UpdateInsuranceInput, UpdateInsuranceResponse},
     update_name_properties::{
         update_name_properties, UpdateNamePropertiesInput, UpdateNamePropertiesResponse,
     },
     update_user,
 };
 use queries::{
+    abbreviation::AbbreviationFilterInput,
     currency::currencies,
     display_settings::{display_settings, DisplaySettingsHash, DisplaySettingsNode},
     initialisation_status::{initialisation_status, InitialisationStatusNode},
+    insurance_providers::{insurance_providers, InsuranceProvidersResponse},
+    insurances::{insurances, InsuranceResponse, InsuranceSortInput},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
     sync_settings::{sync_settings, SyncSettingsNode},
 };
@@ -335,8 +341,11 @@ impl GeneralQueries {
         last_successful_user_sync(ctx)
     }
 
-    pub async fn plugins(&self, ctx: &Context<'_>) -> Result<Vec<PluginNode>> {
-        get_plugins(ctx)
+    pub async fn frontend_plugin_metadata(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Vec<FrontendPluginMetadataNode>> {
+        frontend_plugin_metadata(ctx)
     }
 
     pub async fn currencies(
@@ -426,6 +435,32 @@ impl GeneralQueries {
     pub async fn diagnoses_active(&self, ctx: &Context<'_>) -> Result<Vec<DiagnosisNode>> {
         diagnoses_active(ctx)
     }
+
+    pub async fn abbreviations(
+        &self,
+        ctx: &Context<'_>,
+        filter: Option<AbbreviationFilterInput>,
+    ) -> Result<Vec<AbbreviationNode>> {
+        abbreviations(ctx, filter)
+    }
+
+    pub async fn insurances(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        name_id: String,
+        sort: Option<Vec<InsuranceSortInput>>,
+    ) -> Result<InsuranceResponse> {
+        insurances(ctx, store_id, name_id, sort)
+    }
+
+    pub async fn insurance_providers(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<InsuranceProvidersResponse> {
+        insurance_providers(ctx, store_id)
+    }
 }
 
 #[derive(Default, Clone)]
@@ -499,6 +534,24 @@ impl GeneralMutations {
         input: UpdateNamePropertiesInput,
     ) -> Result<UpdateNamePropertiesResponse> {
         update_name_properties(ctx, &store_id, input)
+    }
+
+    async fn insert_insurance(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertInsuranceInput,
+    ) -> Result<InsertInsuranceResponse> {
+        insert_insurance(ctx, &store_id, input)
+    }
+
+    async fn update_insurance(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateInsuranceInput,
+    ) -> Result<UpdateInsuranceResponse> {
+        update_insurance(ctx, &store_id, input)
     }
 }
 

@@ -73,18 +73,22 @@ export const usePrescriptionColumn = ({
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
-            const noteSections = lines
-              .map(({ batch, note }) => ({
-                header: batch ?? '',
-                body: note ?? '',
-              }))
-              .filter(({ body }) => !!body);
+            if (!lines) return null;
+
+            // All the lines should have the same note, so we just take the first one
+            const lineWithNote = lines.find(({ note }) => !!note);
+            if (!lineWithNote) return null;
+
+            const noteSections = [
+              {
+                header: null,
+                body: lineWithNote.note ?? '',
+              },
+            ];
+
             return noteSections.length ? noteSections : null;
-          } else {
-            return rowData.batch && rowData.note
-              ? { header: rowData.batch, body: rowData.note }
-              : null;
           }
+          return null;
         },
       },
     ],
@@ -291,6 +295,7 @@ export const usePrescriptionColumn = ({
         }
       },
     },
+    
     {
       label: 'label.line-total',
       key: 'lineTotal',
@@ -298,24 +303,55 @@ export const usePrescriptionColumn = ({
       Cell: CurrencyCell,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
-          return Object.values(rowData.lines).reduce(
-            (sum, batch) => sum + batch.sellPricePerPack * batch.numberOfPacks,
-            0
-          );
+          // Multiple lines, so we need to calculate the average price per unit
+          let totalSellPrice = 0;
+          for (const line of rowData.lines) {
+            totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
+          }
+          return totalSellPrice;
         } else {
-          const x = rowData.sellPricePerPack * rowData.numberOfPacks;
-          return x;
+          return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
         }
       },
-      getSortValue: row => {
-        if ('lines' in row) {
-          return Object.values(row.lines).reduce(
-            (sum, batch) => sum + batch.sellPricePerPack * batch.numberOfPacks,
+      getSortValue: rowData => {
+        if ('lines' in rowData) {
+          return Object.values(rowData.lines).reduce(
+            (sum, batch) =>
+              sum + (batch.sellPricePerPack ?? 0) * batch.numberOfPacks,
             0
           );
         } else {
-          const x = row.sellPricePerPack * row.numberOfPacks;
-          return x;
+          return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
+        }
+      },
+    },
+
+    {
+      label: 'label.total-cost-price',
+      key: 'totalCostPrice',
+      align: ColumnAlign.Right,
+      Cell: CurrencyCell,
+      accessor: ({ rowData }) => {
+        if ('lines' in rowData) {
+          // Multiple lines, so we need to calculate the average price per unit
+          let totalCostPrice = 0;
+          for (const line of rowData.lines) {
+            totalCostPrice += line.costPricePerPack * line.numberOfPacks;
+          }
+          return totalCostPrice;
+        } else {
+          return (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks;
+        }
+      },
+      getSortValue: rowData => {
+        if ('lines' in rowData) {
+          return Object.values(rowData.lines).reduce(
+            (sum, batch) =>
+              sum + (batch.costPricePerPack ?? 0) * batch.numberOfPacks,
+            0
+          );
+        } else {
+          return (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks;
         }
       },
     },

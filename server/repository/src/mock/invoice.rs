@@ -451,6 +451,21 @@ pub fn mock_prescription_verified() -> InvoiceRow {
     })
 }
 
+pub fn mock_prescription_cancelled() -> InvoiceRow {
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = String::from("prescription_cancelled");
+        r.name_link_id = String::from("testId");
+        r.store_id = String::from("store_a");
+        r.invoice_number = 1;
+        r.r#type = InvoiceType::Prescription;
+        r.status = InvoiceStatus::Cancelled;
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+            .unwrap()
+            .and_hms_milli_opt(21, 30, 0, 0)
+            .unwrap();
+    })
+}
+
 pub fn mock_supplier_return_a() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("supplier_return_a");
@@ -531,6 +546,7 @@ pub fn mock_outbound_shipments() -> Vec<InvoiceRow> {
         mock_prescription_a(),
         mock_prescription_picked(),
         mock_prescription_verified(),
+        mock_prescription_cancelled(),
     ]
 }
 

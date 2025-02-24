@@ -7,7 +7,6 @@ import {
   RouteBuilder,
   useBreadcrumbs,
   useConfirmOnLeaving,
-  useDirtyCheck,
   useNavigate,
   useParams,
   useFormErrors,
@@ -18,17 +17,19 @@ import { PageLayout } from './PageLayout';
 import { usePrescription, usePrescriptionLines } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { PrescriptionLineEdit } from './PrescriptionLineEdit';
-import { DraftStockOutLine } from '../../types';
+import { DraftPrescriptionLine } from '../../types';
 import { Footer } from './Footer';
 import { NavBar } from './NavBar';
 
 export const PrescriptionLineEditView = () => {
   const { invoiceNumber, itemId } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const isDirty = useRef(false);
   const navigate = useNavigate();
 
   const {
     query: { data, loading: isLoading },
+    isDisabled,
   } = usePrescription();
 
   const {
@@ -46,7 +47,7 @@ export const PrescriptionLineEditView = () => {
     // the list before scrolling to it
     setTimeout(() => scrollRef.current?.scrollIntoView(), 100);
 
-  const { isDirty, setIsDirty } = useDirtyCheck();
+  // const { isDirty, setIsDirty } = useDirtyCheck();
 
   const formErrorState = useFormErrors();
   const { errorState, getError, setError, hasErrors } = formErrorState;
@@ -58,7 +59,7 @@ export const PrescriptionLineEditView = () => {
   const status = data?.status;
 
   const [allDraftLines, setAllDraftLines] = useState<
-    Record<string, DraftStockOutLine[]>
+    Record<string, DraftPrescriptionLine[]>
   >({});
 
   let currentItem = lines.find(line => line.item.id === itemId)?.item;
@@ -86,22 +87,24 @@ export const PrescriptionLineEditView = () => {
   }, [currentItem]);
 
   useConfirmOnLeaving(
-    isDirty,
+    'prescription-line-edit',
     // Need a custom checking method here, as we don't want to warn user when
     // switching to a different item within this page
-    (current, next) => {
-      if (!isDirty) return false;
+    {
+      customCheck: (current, next) => {
+        if (!isDirty.current) return false;
 
-      const currentPathParts = current.pathname.split('/');
-      const nextPathParts = next.pathname.split('/');
-      // Compare URLS, but don't include the last part, which is the ItemID
-      currentPathParts.pop();
-      nextPathParts.pop();
-      return !isEqual(currentPathParts, nextPathParts);
+        const currentPathParts = current.pathname.split('/');
+        const nextPathParts = next.pathname.split('/');
+        // Compare URLS, but don't include the last part, which is the ItemID
+        currentPathParts.pop();
+        nextPathParts.pop();
+        return !isEqual(currentPathParts, nextPathParts);
+      },
     }
   );
 
-  const updateAllLines = (lines: DraftStockOutLine[]) => {
+  const updateAllLines = (lines: DraftPrescriptionLine[]) => {
     if (itemId === 'new') {
       newItemId.current = lines[0]?.item.id;
     }
@@ -111,7 +114,7 @@ export const PrescriptionLineEditView = () => {
   };
 
   const onSave = async () => {
-    if (!isDirty || hasErrors) return;
+    if (!isDirty.current) return;
 
     const flattenedLines = Object.values(allDraftLines).flat();
 
@@ -148,7 +151,7 @@ export const PrescriptionLineEditView = () => {
           .build()
       );
     }
-    setIsDirty(false);
+    isDirty.current = false;
     setAllDraftLines({});
   };
 
@@ -170,8 +173,8 @@ export const PrescriptionLineEditView = () => {
               .addPart(AppRoute.Prescription)
               .addPart(String(invoiceNumber))}
             enteredLineIds={enteredLineIds}
-            showNew={status !== InvoiceNodeStatus.Verified}
-            isDirty={isDirty}
+            showNew={!isDisabled}
+            isDirty={isDirty.current}
             handleSaveNew={onSave}
             scrollRef={scrollRef}
           />
@@ -184,6 +187,10 @@ export const PrescriptionLineEditView = () => {
               updateLines={updateAllLines}
               setIsDirty={setIsDirty}
               formState={formErrorState}
+              setIsDirty={dirty => {
+                isDirty.current = dirty;
+              }}
+              programId={data?.programId ?? undefined}
             />
             <NavBar
               items={itemIdList}

@@ -2,7 +2,10 @@ use crate::{
     activity_log::activity_log_entry,
     number::next_number,
     requisition::{
-        common::{check_requisition_row_exists, default_indicator_value},
+        common::{
+            check_exceeded_max_orders_for_period, check_requisition_row_exists,
+            default_indicator_value, CheckExceededOrdersForPeriod,
+        },
         program_indicator::query::{program_indicators, ProgramIndicator},
         program_settings::get_customer_program_requisition_settings,
         query::get_requisition,
@@ -138,6 +141,20 @@ fn validate(
         return Err(OutError::MaxOrdersReachedForPeriod);
     }
 
+    if check_exceeded_max_orders_for_period(
+        connection,
+        CheckExceededOrdersForPeriod {
+            program_id: &program_setting.program_requisition_settings.program_row.id,
+            period_id: &input.period_id,
+            program_order_type_id: &input.program_order_type_id,
+            max_orders_per_period: i64::from(order_type.order_type.max_order_per_period),
+            requisition_type: RequisitionType::Response,
+            other_party_id: Some(&input.other_party_id),
+        },
+    )? {
+        return Err(OutError::MaxOrdersReachedForPeriod);
+    }
+
     Ok((
         program_setting
             .program_requisition_settings
@@ -184,6 +201,7 @@ fn generate(
         program_id: Some(program.id.clone()),
         period_id: Some(period_id.clone()),
         order_type: Some(order_type.name),
+        is_emergency: order_type.is_emergency,
         // Default
         colour: None,
         comment: None,
@@ -207,12 +225,16 @@ fn generate(
 
     let requisition_lines = generate_lines(ctx, &ctx.store_id, &requisition, program_item_ids)?;
 
-    let program_indicators = program_indicators(
-        connection,
-        Pagination::all(),
-        None,
-        Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
-    )?;
+    let program_indicators = if !order_type.is_emergency {
+        program_indicators(
+            connection,
+            Pagination::all(),
+            None,
+            Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
+        )?
+    } else {
+        vec![]
+    };
 
     let customer_store = StoreRepository::new(connection)
         .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&other_party_id)))?;

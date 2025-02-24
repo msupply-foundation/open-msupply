@@ -46,6 +46,7 @@ pub async fn patient_search_central(
         first_name,
         last_name,
         date_of_birth,
+        name: _,
         gender: _,
         identifier: _,
     } = params;

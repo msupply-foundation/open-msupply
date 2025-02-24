@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import {
   Autocomplete,
-  BasicTextInput,
   Box,
   defaultOptionMapper,
   getDefaultOptionRenderer,
@@ -20,7 +19,6 @@ export const ReturnReasonSearchInput: FC<ReturnReasonSearchInputProps> = ({
   selectedReasonId,
   onChange,
   autoFocus = false,
-  isError,
   isDisabled,
 }) => {
   const { data, isLoading } = useReturnReason.document.listAllActive();
@@ -47,18 +45,6 @@ export const ReturnReasonSearchInput: FC<ReturnReasonSearchInputProps> = ({
         onChange={(_, reason) => {
           onChange(reason?.id ?? '');
         }}
-        renderInput={props => (
-          <BasicTextInput
-            {...props}
-            autoFocus={autoFocus}
-            InputProps={{
-              disableUnderline: false,
-              style: props.disabled ? { paddingLeft: 0 } : {},
-              ...props.InputProps,
-            }}
-            error={isError}
-          />
-        )}
         options={defaultOptionMapper(reasons, 'reason')}
         renderOption={getDefaultOptionRenderer('reason')}
         isOptionEqualToValue={(option, value) => option?.id === value?.id}

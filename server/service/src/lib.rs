@@ -1,12 +1,21 @@
 // json! hits recursion limit in integration test (central_server_configurations), recursion_limit attribute must be top level
 #![cfg_attr(feature = "integration_test", recursion_limit = "256")]
+use backend_plugin::plugin_provider::PluginError;
 use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository};
 use repository::location::{LocationFilter, LocationRepository};
 use repository::{EqualFilter, Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
 use repository::{RepositoryError, StorageConnection};
+use serde::de::DeserializeOwned;
+use serde::{Deserialize, Serialize};
 use service_provider::ServiceContext;
+use settings::Settings;
+use static_files::{StaticFile, StaticFileCategory, StaticFileService};
 use std::convert::TryInto;
+use std::fs::File;
+use std::io::BufReader;
+use thiserror::Error;
 
+pub mod abbreviation;
 pub mod activity_log;
 pub mod apis;
 pub mod app_data;
@@ -14,6 +23,7 @@ pub mod app_data;
 pub mod asset;
 pub mod auth;
 pub mod auth_data;
+pub mod backend_plugin;
 pub mod barcode;
 pub mod catalogue;
 pub mod clinician;
@@ -29,6 +39,8 @@ pub mod diagnosis;
 pub mod display_settings_service;
 pub mod document;
 pub mod email;
+pub mod insurance;
+pub mod insurance_provider;
 pub mod inventory_adjustment_reason;
 pub mod invoice;
 pub mod invoice_line;
@@ -50,6 +62,7 @@ pub mod plugin;
 pub mod plugin_data;
 pub mod pricing;
 pub mod print;
+pub mod printer;
 pub mod processors;
 pub mod program;
 pub mod programs;
@@ -112,6 +125,8 @@ pub enum SingleRecordError {
     NotFound(String),
 }
 
+#[derive(Debug)]
+
 pub enum WithDBError<T> {
     DatabaseError(RepositoryError),
     Error(T),
@@ -143,6 +158,14 @@ impl From<RepositoryError> for SingleRecordError {
     fn from(error: RepositoryError) -> Self {
         SingleRecordError::DatabaseError(error)
     }
+}
+
+#[derive(Debug, Error, PartialEq)]
+pub enum PluginOrRepositoryError {
+    #[error(transparent)]
+    RepositoryError(#[from] RepositoryError),
+    #[error(transparent)]
+    PluginError(#[from] PluginError),
 }
 
 // Batch mutation helpers
@@ -321,4 +344,59 @@ fn check_item_variant_exists(
     let variant = ItemVariantRowRepository::new(connection).find_one_by_id(item_variant_id)?;
 
     return Ok(variant);
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct UploadedFile {
+    pub file_id: String,
+}
+
+#[derive(Error, Debug)]
+pub enum UploadedFileConversionError {
+    #[error("Problem while getting file")]
+    StaticFileError(#[source] anyhow::Error),
+    #[error("File not found")]
+    FileNotFound,
+}
+
+#[derive(Error, Debug)]
+pub enum UploadedFileJsonError {
+    #[error(transparent)]
+    UploadedFileConversionError(#[from] UploadedFileConversionError),
+    #[error("Error while reading file")]
+    ErrorWhileReadingFile(#[from] std::io::Error),
+    #[error("Cannot parse plugin manifest file")]
+    CannotParseFile(#[from] serde_json::Error),
+}
+
+impl UploadedFile {
+    pub fn as_static_file(
+        self,
+        settings: &Settings,
+    ) -> Result<StaticFile, UploadedFileConversionError> {
+        use UploadedFileConversionError as Error;
+
+        let base_dir = &settings.server.base_dir;
+
+        let file_service = StaticFileService::new(base_dir).map_err(Error::StaticFileError)?;
+
+        file_service
+            .find_file(&self.file_id, StaticFileCategory::Temporary)
+            .map_err(Error::StaticFileError)?
+            .ok_or(Error::FileNotFound)
+    }
+
+    pub fn as_json_file<T: DeserializeOwned>(
+        self,
+        settings: &Settings,
+    ) -> Result<T, UploadedFileJsonError> {
+        let static_file = self.as_static_file(settings)?;
+        let file = File::open(static_file.to_path_buf())?;
+        let reader = BufReader::new(file);
+
+        let json = serde_json::from_reader(reader)?;
+
+        Ok(json)
+    }
 }

@@ -1,4 +1,4 @@
-use super::{adjustment::adjustments::dsl as adjustment_dsl, StorageConnection};
+use super::StorageConnection;
 
 use crate::{
     diesel_macros::{apply_date_filter, apply_equal_filter},
@@ -69,7 +69,7 @@ impl<'a> AdjustmentRepository<'a> {
         filter: Option<AdjustmentFilter>,
     ) -> Result<Vec<AdjustmentRow>, RepositoryError> {
         // Query Adjustment
-        let mut query = adjustment_dsl::adjustments.into_boxed();
+        let mut query = adjustments::table.into_boxed();
 
         if let Some(f) = filter {
             let AdjustmentFilter {
@@ -78,9 +78,9 @@ impl<'a> AdjustmentRepository<'a> {
                 store_id,
             } = f;
 
-            apply_equal_filter!(query, item_id, adjustment_dsl::item_id);
-            apply_equal_filter!(query, store_id, adjustment_dsl::store_id);
-            apply_date_filter!(query, date, adjustment_dsl::date);
+            apply_equal_filter!(query, item_id, adjustments::item_id);
+            apply_equal_filter!(query, store_id, adjustments::store_id);
+            apply_date_filter!(query, date, adjustments::date);
         }
 
         // Debug diesel query

@@ -60,11 +60,10 @@ async fn remove_sqlite_check_stocktake() {
             status -> Text,
         }
     }
-    use stocktake::dsl as stocktake_dsl;
 
-    let stocktakes = stocktake_dsl::stocktake
-        .select((stocktake_dsl::id, stocktake_dsl::status))
-        .order_by(stocktake_dsl::id.asc())
+    let stocktakes = stocktake::table
+        .select((stocktake::id, stocktake::status))
+        .order_by(stocktake::id.asc())
         .load::<(String, String)>(connection.lock().connection())
         .unwrap();
 

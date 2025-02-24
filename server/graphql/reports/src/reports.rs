@@ -46,6 +46,7 @@ pub enum ReportContext {
     OutboundReturn,
     InboundReturn,
     Report,
+    Prescription,
 }
 
 #[derive(InputObject, Clone)]
@@ -208,7 +209,6 @@ impl ReportFilterInput {
         ReportFilter {
             id: self.id.map(EqualFilter::from),
             name: self.name.map(StringFilter::from),
-            r#type: None,
             context: self
                 .context
                 .map(|t| map_filter!(t, ReportContext::to_domain)),
@@ -247,6 +247,7 @@ impl ReportContext {
             ReportContext::OutboundReturn => ReportContextDomain::OutboundReturn,
             ReportContext::InboundReturn => ReportContextDomain::InboundReturn,
             ReportContext::Report => ReportContextDomain::Report,
+            ReportContext::Prescription => ReportContextDomain::Prescription,
         }
     }
 
@@ -264,6 +265,7 @@ impl ReportContext {
             ReportContextDomain::OutboundReturn => ReportContext::OutboundReturn,
             ReportContextDomain::InboundReturn => ReportContext::InboundReturn,
             ReportContextDomain::Report => ReportContext::Report,
+            ReportContextDomain::Prescription => ReportContext::Prescription,
         }
     }
 }

@@ -1,20 +1,14 @@
 use super::{
-    form_schema_row::form_schema, report_row::report::dsl as report_dsl, StorageConnection,
+    form_schema_row::form_schema, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    RowActionType, StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
-use crate::{Delete, Upsert};
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 use clap::ValueEnum;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 
 use serde::{Deserialize, Serialize};
-
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum ReportType {
-    OmSupply,
-}
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ValueEnum)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -34,13 +28,13 @@ pub enum ContextType {
     OutboundReturn,
     InboundReturn,
     Report,
+    Prescription,
 }
 
 table! {
   report (id) {
       id -> Text,
       name -> Text,
-      #[sql_name = "type"] type_ -> crate::db_diesel::report_row::ReportTypeMapping,
       template -> Text,
       context -> crate::db_diesel::report_row::ContextTypeMapping,
       comment -> Nullable<Text>,
@@ -56,14 +50,13 @@ joinable!(report -> form_schema (argument_schema_id));
 
 allow_tables_to_appear_in_same_query!(report, form_schema);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(
+    Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Serialize, Deserialize,
+)]
 #[diesel(table_name = report)]
 pub struct ReportRow {
     pub id: String,
     pub name: String,
-    #[diesel(column_name = type_)]
-    pub r#type: ReportType,
-    /// The template format depends on the report type
     pub template: String,
     /// Used to store the report context
     pub context: ContextType,
@@ -80,7 +73,6 @@ impl Default for ReportRow {
         Self {
             id: Default::default(),
             name: Default::default(),
-            r#type: ReportType::OmSupply,
             template: Default::default(),
             context: ContextType::InboundShipment,
             comment: Default::default(),
@@ -123,25 +115,36 @@ impl<'a> ReportRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ReportRow>, RepositoryError> {
-        let result = report_dsl::report
-            .filter(report_dsl::id.eq(id))
+        let result = report::table
+            .filter(report::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn upsert_one(&self, row: &ReportRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(report_dsl::report)
+    pub fn upsert_one(&self, row: &ReportRow) -> Result<i64, RepositoryError> {
+        diesel::insert_into(report::table)
             .values(row)
-            .on_conflict(report_dsl::id)
+            .on_conflict(report::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(&row.id, RowActionType::Upsert)
+    }
+
+    fn insert_changelog(&self, uid: &str, action: RowActionType) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::Report,
+            record_id: uid.to_string(),
+            row_action: action,
+            store_id: None,
+            name_link_id: None,
+        };
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(report_dsl::report.filter(report_dsl::id.eq(id)))
+        diesel::delete(report::table.filter(report::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -165,8 +168,8 @@ impl Delete for ReportRowDelete {
 
 impl Upsert for ReportRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ReportRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        let change_log = ReportRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log)) // Table not in Changelog
     }
 
     // Test only
@@ -177,37 +180,3 @@ impl Upsert for ReportRow {
         )
     }
 }
-
-// impl<'de> Deserialize<'de> for ContextType {
-//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-//     where
-//         D: serde::Deserializer<'de>,
-//     {
-//         match Value::deserialize(deserializer).visit_string()? {
-//             "Report" => Ok(ContextType::Report),
-//             _ => Err(serde::de::Error::custom("Expected context type")),
-//         }
-//     }
-// }
-
-// impl Serialize for ContextType {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: serde::Serializer,
-//     {
-//         serializer.serialize_str(match self {
-//             ContextType::Repack => todo!(),
-//             ContextType::Asset => todo!(),
-//             ContextType::InboundShipment => todo!(),
-//             ContextType::OutboundShipment => todo!(),
-//             ContextType::Requisition => todo!(),
-//             ContextType::Stocktake => todo!(),
-//             ContextType::Resource => todo!(),
-//             ContextType::Patient => todo!(),
-//             ContextType::Dispensary => todo!(),
-//             ContextType::OutboundReturn => todo!(),
-//             ContextType::InboundReturn => todo!(),
-//             ContextType::Report => "report",
-//         })
-//     }
-// }

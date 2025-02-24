@@ -22,7 +22,9 @@ export const createStockOutPlaceholderRow = (
   id,
   packSize: 1,
   sellPricePerPack: 0,
+  costPricePerPack: 0,
   numberOfPacks: 0,
+  prescribedQuantity: 0,
   isCreated: true,
   isUpdated: false,
   invoiceId,
@@ -68,9 +70,11 @@ export const createDraftStockOutLineFromStockLine = ({
     isUpdated: false,
     type: InvoiceLineNodeType.StockOut,
     numberOfPacks: 0,
+    prescribedQuantity: 0,
     location: stockLine?.location,
     expiryDate: stockLine?.expiryDate,
     sellPricePerPack,
+    costPricePerPack: 0,
     packSize: stockLine?.packSize ?? 0,
     id: FnUtils.generateUUID(),
     invoiceId,
@@ -103,7 +107,12 @@ export const createDraftStockOutLine = ({
 
   const adjustTotalNumberOfPacks = invoiceStatus === InvoiceNodeStatus.Picked;
 
-  let adjustedStockLine = stockLine ? stockLine : invoiceLine?.stockLine;
+  // Note to future self, the stockLine spread here is important, if not spread you'll be modifying the passed in data which can affect the tanStack Query Cache, with unintended effects!
+  let adjustedStockLine = stockLine
+    ? { ...stockLine }
+    : invoiceLine?.stockLine
+      ? { ...invoiceLine?.stockLine }
+      : undefined;
   if (!!adjustedStockLine) {
     adjustedStockLine.availableNumberOfPacks =
       adjustedStockLine.availableNumberOfPacks + invoiceLine.numberOfPacks;
@@ -140,8 +149,10 @@ export const sumAvailableQuantity = (
   draftStockOutLines: DraftStockOutLine[]
 ) => {
   const sum = draftStockOutLines.reduce(
-    (acc, { stockLine, packSize }) =>
-      acc + (stockLine?.availableNumberOfPacks ?? 0) * packSize,
+    (acc, { stockLine, packSize, location }) =>
+      !location?.onHold && !stockLine?.onHold
+        ? acc + (stockLine?.availableNumberOfPacks ?? 0) * packSize
+        : acc,
     0
   );
 
@@ -287,6 +298,7 @@ export const allocateQuantities =
         }
       }
     }
+
     return newDraftStockOutLines;
   };
 
@@ -408,15 +420,15 @@ export const UnitQuantityCell = (props: CellProps<DraftStockOutLine>) => (
     id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
     min={0}
     decimalLimit={2}
+    slotProps={{
+      htmlInput: {
+        sx: {
+          backgroundColor: props.isDisabled ? undefined : 'background.white',
+        },
+      },
+    }}
   />
 );
-
-export const updateNotes = (
-  draftStockOutLines: DraftStockOutLine[],
-  note: string
-) => {
-  return draftStockOutLines.map(line => ({ ...line, note, isUpdated: true }));
-};
 
 export const getAllocationAlerts = (
   requestedQuantity: number,

@@ -22,6 +22,7 @@ pub struct UpdateStockOutLine {
     pub r#type: Option<StockOutType>,
     pub stock_line_id: Option<String>,
     pub number_of_packs: Option<f64>,
+    pub prescribed_quantity: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax: Option<ShipmentTaxUpdate>,
     pub note: Option<String>,
@@ -135,7 +136,7 @@ mod test {
             mock_store_a, mock_store_b, mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
-        EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
         InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
         Upsert,
     };
@@ -151,7 +152,6 @@ mod test {
             },
             InsertStockOutLine,
         },
-        item_stats::ItemStatsFilter,
         service_provider::ServiceProvider,
     };
 
@@ -408,6 +408,7 @@ mod test {
                 u.number_of_packs = 2.0;
                 u.total_before_tax = 18.00;
                 u.total_after_tax = 18.00;
+                u.note = Some("new note".to_string());
                 u
             })
         );
@@ -656,15 +657,7 @@ mod test {
 
         let item_stats_service = service_provider.item_stats_service;
         let stats = item_stats_service
-            .get_item_stats(
-                &context,
-                &context.store_id,
-                None,
-                Some(
-                    ItemStatsFilter::new()
-                        .item_id(EqualFilter::equal_to(mock_item_a().id.as_str())),
-                ),
-            )
+            .get_item_stats(&context, &context.store_id, None, vec![mock_item_a().id])
             .unwrap();
         let stats = stats.first().unwrap();
         assert_eq!(
@@ -686,15 +679,7 @@ mod test {
             .unwrap();
 
         let stats = item_stats_service
-            .get_item_stats(
-                &context,
-                &context.store_id,
-                None,
-                Some(
-                    ItemStatsFilter::new()
-                        .item_id(EqualFilter::equal_to(mock_item_a().id.as_str())),
-                ),
-            )
+            .get_item_stats(&context, &context.store_id, None, vec![mock_item_a().id])
             .unwrap();
         let stats = stats.first().unwrap();
         assert_eq!(
@@ -828,5 +813,72 @@ mod test {
             .unwrap();
 
         assert!(invoice.picked_datetime.is_none());
+    }
+
+    #[actix_rt::test]
+    async fn update_stock_out_line_prescribed_quantity() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_stock_out_line_prescribed_quantity",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let invoice_line_service = service_provider.invoice_line_service;
+        let invoice_line_row_repo = InvoiceLineRowRepository::new(&connection);
+
+        // Create a prescription
+        let prescription = InvoiceRow {
+            id: "prescription_invoice-0".to_string(),
+            invoice_number: 0,
+            name_link_id: mock_name_store_a().id,
+            r#type: InvoiceType::Prescription,
+            store_id: context.store_id.clone(),
+            verified_datetime: None,
+            status: InvoiceStatus::Picked,
+            ..Default::default()
+        };
+
+        prescription.upsert(&context.connection).unwrap();
+
+        // insert a stock out line to the prescription
+        let stock_out_line = InsertStockOutLine {
+            id: "prescription_invoice-0-1".to_string(),
+            r#type: StockOutType::Prescription,
+            invoice_id: prescription.id.clone(),
+            stock_line_id: mock_stock_line_b().id.clone(),
+            number_of_packs: 1.0,
+            ..Default::default()
+        };
+
+        invoice_line_service
+            .insert_stock_out_line(&context, stock_out_line.clone())
+            .unwrap();
+
+        // update the stock out line's prescribed quantity
+        let updated_prescribed_quantity = Some(5.0);
+        invoice_line_service
+            .update_stock_out_line(
+                &context,
+                inline_init(|r: &mut UpdateStockOutLine| {
+                    r.id = "prescription_invoice-0-1".to_string();
+                    r.r#type = Some(StockOutType::Prescription);
+                    r.prescribed_quantity = updated_prescribed_quantity
+                }),
+            )
+            .unwrap();
+
+        let updated_invoice_line = invoice_line_row_repo
+            .find_one_by_id(&stock_out_line.id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            updated_invoice_line.prescribed_quantity,
+            updated_prescribed_quantity
+        );
     }
 }

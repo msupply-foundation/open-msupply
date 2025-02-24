@@ -114,6 +114,18 @@ export const ResponseLineEdit = ({
           <>
             <Box paddingLeft={4} paddingRight={7}>
               {/* Left column content */}
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    width={INPUT_WIDTH}
+                    value={data?.responseStoreStats.stockOnHand}
+                    disabled={true}
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                label={t('label.our-soh')}
+                sx={{ marginBottom: 1 }}
+              />
               {!isProgram ? (
                 <InputWithLabelRow
                   Input={
@@ -129,7 +141,7 @@ export const ResponseLineEdit = ({
                     />
                   }
                   labelWidth={LABEL_WIDTH}
-                  label={t('label.stock-on-hand')}
+                  label={t('label.customer-soh')}
                   sx={{ marginBottom: 1 }}
                 />
               ) : (
@@ -479,9 +491,12 @@ export const ResponseLineEdit = ({
                   <TextArea
                     value={draft?.comment ?? ''}
                     onChange={e => update({ comment: e.target.value })}
-                    InputProps={{
-                      sx: {
-                        backgroundColor: theme => theme.palette.background.menu,
+                    slotProps={{
+                      input: {
+                        sx: {
+                          backgroundColor: theme =>
+                            theme.palette.background.menu,
+                        },
                       },
                     }}
                     onBlur={save}
