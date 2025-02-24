@@ -23,19 +23,6 @@ pub fn insurances(
     }
 }
 
-// pub fn insurance(
-//     connection: &StorageConnection,
-//     id: &str,
-// ) -> Result<Option<NameInsuranceJoinRow>, RepositoryError> {
-//     let patient = PatientRepository::new(connection)
-//         .query_one(PatientFilter::new().id(EqualFilter::equal_to(id)), None)?;
-
-//     match patient {
-//         Some(_) => NameInsuranceJoinRowRepository::new(connection).find_one_by_id(id),
-//         None => Err(RepositoryError::NotFound),
-//     }
-// }
-
 pub fn insurance(
     connection: &StorageConnection,
     id: &str,
