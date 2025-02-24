@@ -209,7 +209,6 @@ impl ReportFilterInput {
         ReportFilter {
             id: self.id.map(EqualFilter::from),
             name: self.name.map(StringFilter::from),
-            r#type: None,
             context: self
                 .context
                 .map(|t| map_filter!(t, ReportContext::to_domain)),
