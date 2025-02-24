@@ -122,6 +122,10 @@ const useSaveLines = (id: string, invoiceNum: number) => {
               diagnosisId: setNullableInput('diagnosisId', patch),
               programId: setNullableInput('programId', patch),
               theirReference: setNullableInput('theirReference', patch),
+              nameInsuranceJoinId: setNullableInput(
+                'nameInsuranceJoinId',
+                patch
+              ),
             },
           ]
         : undefined,
