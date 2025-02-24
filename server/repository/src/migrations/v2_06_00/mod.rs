@@ -17,6 +17,7 @@ mod add_program_deleted_datetime;
 mod add_program_id_on_stocktake;
 mod add_program_id_to_invoice;
 mod add_report_sync;
+mod add_report_is_active;
 mod backend_plugins;
 mod frontend_plugins;
 mod plugin_data;
@@ -61,6 +62,7 @@ impl Migration for V2_06_00 {
             Box::new(reinitialise_reports::Migrate),
             Box::new(add_report_sync::Migrate),
             Box::new(add_form_schema_sync::Migrate),
+            Box::new(add_report_is_active::Migrate),
         ]
     }
 }
