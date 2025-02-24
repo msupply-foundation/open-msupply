@@ -12,7 +12,7 @@ module.exports = ({ distDir }) => ({
     clean: true,
   },
   resolve: {
-    extensions: ['.js', '.css', '.ts', '.tsx'],
+    extensions: ['.js', '.ts'],
     alias: {
       '@backendPlugins': path.resolve(__dirname, 'backendTypes/types.ts'),
     },

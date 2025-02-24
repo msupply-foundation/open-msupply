@@ -240,6 +240,9 @@ fn generate_inbound_invoice(
         backdated_datetime: None,
         diagnosis_id: None,
         program_id: None,
+        name_insurance_join_id: None,
+        insurance_discount_amount: None,
+        insurance_discount_percentage: None,
     };
 
     Ok(result)

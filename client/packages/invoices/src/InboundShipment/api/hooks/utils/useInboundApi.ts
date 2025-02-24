@@ -14,6 +14,8 @@ export const useInboundApi = () => {
       [...keys.list(), sortBy] as const,
     listInternalOrders: (otherPartyId: string) =>
       [...keys.base(), storeId, otherPartyId] as const,
+    listInternalOrderLines: (requisitionId: string) =>
+      [...keys.base(), storeId, requisitionId] as const,
   };
 
   const { client } = useGql();

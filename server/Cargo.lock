@@ -4041,6 +4041,7 @@ dependencies = [
  "graphql_item_variant",
  "graphql_location",
  "graphql_plugin",
+ "graphql_printer",
  "graphql_programs",
  "graphql_repack",
  "graphql_reports",
@@ -4403,6 +4404,27 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
+ "repository",
+ "serde",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_printer"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "anyhow",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
  "repository",
  "serde",
  "serde_json",

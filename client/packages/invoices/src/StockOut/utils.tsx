@@ -194,8 +194,7 @@ export const allocateQuantities =
   (
     newValue: number,
     issuePackSize: number | null,
-    allowPartialPacks: boolean = false,
-    prescribedQuantity: number | null
+    allowPartialPacks: boolean = false
   ) => {
     // if invalid quantity entered, don't allocate
     if (newValue < 0 || Number.isNaN(newValue)) {
@@ -268,16 +267,6 @@ export const allocateQuantities =
         newDraftStockOutLines,
       });
     }
-
-    //  Prescribed Quantity should only be saved on the first allocated line.
-    //  Only one line should have prescribed quantity per item.
-    //  If the line with prescribed quantity is deleted or has 0 stock, save it to the next line.
-    //  Can be saved against a placeholder if no stock is allocated.
-    assignPrescribedQuantity(
-      newDraftStockOutLines,
-      prescribedQuantity,
-      placeholder
-    );
 
     if (status === InvoiceNodeStatus.New) {
       const placeholderIdx = newDraftStockOutLines.findIndex(
@@ -406,34 +395,6 @@ const reduceBatchAllocation = ({
   return -toAllocate;
 };
 
-export const assignPrescribedQuantity = (
-  newDraftStockOutLines: DraftStockOutLine[],
-  prescribedQuantity: number | null,
-  placeholder: DraftStockOutLine | undefined
-) => {
-  let prescribedQuantityAssigned = false;
-
-  newDraftStockOutLines.forEach(stockOutLine => {
-    if (stockOutLine.numberOfPacks > 0 && !prescribedQuantityAssigned) {
-      stockOutLine.prescribedQuantity = prescribedQuantity;
-      prescribedQuantityAssigned = true;
-    } else {
-      stockOutLine.prescribedQuantity = 0;
-    }
-  });
-
-  // If no stock is allocated, assign it to the placeholder stock
-  if (!prescribedQuantityAssigned && placeholder) {
-    const placeholderIdx = newDraftStockOutLines.findIndex(
-      ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-    );
-    newDraftStockOutLines[placeholderIdx] = {
-      ...placeholder,
-      prescribedQuantity,
-    };
-  }
-};
-
 export const shouldUpdatePlaceholder = (
   quantity: number,
   placeholder: DraftStockOutLine
@@ -459,15 +420,15 @@ export const UnitQuantityCell = (props: CellProps<DraftStockOutLine>) => (
     id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
     min={0}
     decimalLimit={2}
+    slotProps={{
+      htmlInput: {
+        sx: {
+          backgroundColor: props.isDisabled ? undefined : 'background.white',
+        },
+      },
+    }}
   />
 );
-
-export const updateNotes = (
-  draftStockOutLines: DraftStockOutLine[],
-  note: string
-) => {
-  return draftStockOutLines.map(line => ({ ...line, note, isUpdated: true }));
-};
 
 export const getAllocationAlerts = (
   requestedQuantity: number,
