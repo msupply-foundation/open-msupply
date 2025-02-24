@@ -12,14 +12,14 @@ import { useOutbounds } from './useOutbounds';
 import { canDeleteInvoice } from '../../../../utils';
 
 export const useOutboundDeleteRows = () => {
+  const t = useTranslation();
   const queryClient = useQueryClient();
+  const api = useOutboundApi();
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
   });
   const { data: rows } = useOutbounds(queryParams);
-  const api = useOutboundApi();
   const { mutateAsync } = useMutation(api.delete);
-  const t = useTranslation();
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
@@ -27,10 +27,14 @@ export const useOutboundDeleteRows = () => {
       .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
       .filter(Boolean) as OutboundRowFragment[],
   }));
+  const { clearSelected } = useTableStore();
 
   const deleteAction = async () => {
     await mutateAsync(selectedRows)
-      .then(() => queryClient.invalidateQueries(api.keys.base()))
+      .then(() => {
+        queryClient.invalidateQueries(api.keys.base());
+        clearSelected();
+      })
       .catch(err => {
         throw err;
       });

@@ -9,10 +9,10 @@ import { useDeleteInboundLines } from './useDeleteInboundLines';
 import { useInboundRows } from './useInboundRows';
 
 export const useDeleteSelectedLines = (): (() => void) => {
+  const t = useTranslation();
   const { items, lines } = useInboundRows();
   const { mutateAsync } = useDeleteInboundLines();
   const isDisabled = useIsInboundDisabled();
-  const t = useTranslation();
 
   const selectedRows =
     useTableStore(state => {
@@ -35,6 +35,7 @@ export const useDeleteSelectedLines = (): (() => void) => {
               isDeleted: true,
             }));
     }) || [];
+  const { clearSelected } = useTableStore();
 
   const onDelete = async () => {
     const result = await mutateAsync(selectedRows).catch(err => {
@@ -55,7 +56,6 @@ export const useDeleteSelectedLines = (): (() => void) => {
                 itemCode: row?.item.code ?? '?',
               })
             );
-            break;
           case 'TransferredShipment':
             throw Error(t('messages.cant-delete-transferred'));
           case 'CannotEditInvoice':
@@ -68,6 +68,7 @@ export const useDeleteSelectedLines = (): (() => void) => {
         }
       }
     }
+    clearSelected();
   };
 
   const confirmAndDelete = useDeleteConfirmation({

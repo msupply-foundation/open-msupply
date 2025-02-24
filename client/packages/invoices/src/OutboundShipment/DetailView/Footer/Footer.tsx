@@ -14,6 +14,9 @@ import {
   InvoiceNodeStatus,
   useBreadcrumbs,
   useConfirmationModal,
+  useTableStore,
+  useNotification,
+  InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, outboundStatuses } from '../../../utils';
 import { useOutbound, OutboundFragment } from '../../api';
@@ -70,14 +73,13 @@ export const FooterComponent: FC<FooterComponentProps> = ({
   const isDisabled = useOutbound.utils.isDisabled();
   const onDelete = useOutbound.line.deleteSelected();
   const { onAllocate } = useOutbound.line.allocateSelected();
+  const { info } = useNotification();
 
   const selectedLines = useOutbound.utils.selectedLines();
+  const { clearSelected } = useTableStore();
 
   const selectedUnallocatedEmptyLines = selectedLines
-    .filter(
-      ({ type, numberOfPacks }) =>
-        type === 'UNALLOCATED_STOCK' && numberOfPacks === 0
-    )
+    .filter(({ type }) => type === InvoiceLineNodeType.UnallocatedStock)
     .flat()
     .map(row => row.id);
 
@@ -92,7 +94,11 @@ export const FooterComponent: FC<FooterComponentProps> = ({
   const confirmAllocate = () => {
     if (selectedUnallocatedEmptyLines.length !== 0) {
       getConfirmation();
-    } else onAllocate();
+    } else {
+      const infoSnack = info(t('label.no-unallocated-rows-selected'));
+      infoSnack();
+    }
+    clearSelected();
   };
 
   const actions: Action[] = [
