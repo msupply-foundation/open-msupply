@@ -11,14 +11,15 @@ use crate::{
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus},
-    EqualFilter, PluginType, RepositoryError, RequisitionLine, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionLineRow, StorageConnection,
+    EqualFilter, PluginDataRow, PluginType, RepositoryError, RequisitionLine,
+    RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow, StorageConnection,
 };
 use util::inline_edit;
 
 pub struct GenerateResult {
     pub(crate) updated_requisition_row: RequisitionRow,
     pub(crate) updated_requisition_lines: Vec<RequisitionLineRow>,
+    pub(crate) updated_plugin_data: Vec<PluginDataRow>,
     pub(crate) empty_lines_to_trim: Option<Vec<RequisitionLineRow>>,
 }
 
@@ -73,10 +74,10 @@ pub fn generate(
         u
     });
 
-    let updated_requisition_lines = if should_recalculate {
+    let (updated_requisition_lines, updated_plugin_data) = if should_recalculate {
         generate_updated_lines(connection, &updated_requisition_row)?
     } else {
-        vec![]
+        (vec![], vec![])
     };
 
     let empty_lines_to_trim = if keep_requisition_lines_with_zero_requested_quantity_on_finalised {
@@ -88,6 +89,7 @@ pub fn generate(
     Ok(GenerateResult {
         updated_requisition_row,
         updated_requisition_lines,
+        updated_plugin_data,
         empty_lines_to_trim,
     })
 }
@@ -95,7 +97,7 @@ pub fn generate(
 pub fn generate_updated_lines(
     connection: &StorageConnection,
     requisition: &RequisitionRow,
-) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
+) -> Result<(Vec<RequisitionLineRow>, Vec<PluginDataRow>), PluginOrRepositoryError> {
     let lines = get_lines_for_requisition(connection, &requisition.id)?;
 
     let lines = lines
@@ -119,7 +121,7 @@ pub fn generate_updated_lines(
         .collect();
 
     let Some(plugin) = PluginInstance::get_one(PluginType::TransformRequisitionLines) else {
-        return Ok(lines);
+        return Ok((lines, Vec::new()));
     };
 
     let result = transform_requisition_lines::Trait::call(
@@ -130,7 +132,10 @@ pub fn generate_updated_lines(
         },
     )?;
 
-    Ok(result.transformed_lines)
+    Ok((
+        result.transformed_lines,
+        result.plugin_data.unwrap_or_default(),
+    ))
 }
 
 pub fn empty_lines_to_trim(
