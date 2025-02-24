@@ -11,7 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                ALTER TABLE report ADD COLUMN is_active BOOL NOT NULL DEFAULT true;
+                ALTER TABLE report ADD COLUMN IF NOT EXISTS is_active BOOL NOT NULL DEFAULT true;
             "#
         )?;
 
