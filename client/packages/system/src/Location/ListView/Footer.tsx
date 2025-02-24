@@ -31,6 +31,7 @@ export const FooterComponent: FC<{ data: LocationRowFragment[] }> = ({
       .map(selectedId => data?.find(({ id }) => selectedId === id))
       .filter(Boolean) as LocationRowFragment[],
   }));
+  const { clearSelected } = useTableStore();
 
   const deleteAction = () => {
     const numberSelected = selectedRows.length;
@@ -56,6 +57,7 @@ export const FooterComponent: FC<{ data: LocationRowFragment[] }> = ({
             });
             const successSnack = success(deletedMessage);
             successSnack();
+            clearSelected();
           }
         })
         .catch(_ =>

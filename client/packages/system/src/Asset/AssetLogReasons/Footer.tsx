@@ -33,6 +33,7 @@ export const FooterComponent: FC<{ data: AssetLogReasonNode[] }> = ({
       .map(selectedId => data?.find(({ id }) => selectedId === id))
       .filter(Boolean) as AssetLogReasonNode[],
   }));
+  const { clearSelected } = useTableStore();
 
   const deleteAction = () => {
     const numberSelected = selectedRows.length;
@@ -60,6 +61,7 @@ export const FooterComponent: FC<{ data: AssetLogReasonNode[] }> = ({
             });
             const successSnack = success(deletedMessage);
             successSnack();
+            clearSelected();
           }
         })
         .catch(_ =>
