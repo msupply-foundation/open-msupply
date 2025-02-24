@@ -8679,6 +8679,9 @@ export type UpdatePrescriptionInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   diagnosisId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
+  insuranceDiscountAmount?: InputMaybe<Scalars['Float']['input']>;
+  insuranceDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
+  nameInsuranceJoinId?: InputMaybe<NullableStringUpdate>;
   patientId?: InputMaybe<Scalars['String']['input']>;
   prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
   programId?: InputMaybe<NullableStringUpdate>;
