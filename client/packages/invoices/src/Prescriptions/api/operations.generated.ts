@@ -78,7 +78,7 @@ export type InsuranceByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type InsuranceByIdQuery = { __typename: 'Queries', insurance: { __typename: 'InsuranceNode', isActive: boolean, discountPercentage: number, insuranceProviders?: { __typename: 'InsuranceProviderNode', isActive: boolean, providerName: string } | null } };
+export type InsuranceByIdQuery = { __typename: 'Queries', insurance: { __typename: 'InsuranceNode', isActive: boolean, policyNumber: string, discountPercentage: number, insuranceProviders?: { __typename: 'InsuranceProviderNode', isActive: boolean, providerName: string } | null } };
 
 export type HistoricalStockLineFragment = { __typename: 'StockLineNode', id: string, availableNumberOfPacks: number, packSize: number, item: { __typename: 'ItemNode', name: string, code: string, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> } };
 
@@ -612,6 +612,7 @@ export const InsuranceByIdDocument = gql`
         isActive
         providerName
       }
+      policyNumber
       discountPercentage
     }
   }

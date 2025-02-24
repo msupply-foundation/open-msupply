@@ -506,6 +506,7 @@ query insuranceById($insuranceId: String!, $storeId: String!) {
         isActive
         providerName
       }
+      policyNumber
       discountPercentage
     }
   }

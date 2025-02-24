@@ -37,7 +37,21 @@ export const PricingSectionComponent = () => {
         </PanelRow>
 
         <PanelRow>
-          <PanelLabel>{t('label.percent-discount')}</PanelLabel>
+          <PanelLabel>{t('label.insurance-policy-number')}</PanelLabel>
+          <PanelField>
+            {insuranceData.policyNumber}
+          </PanelField>
+        </PanelRow>
+
+        <PanelRow>
+          <PanelLabel>{t('label.insurance-discount-amount')}</PanelLabel>
+          <PanelField>
+            {prescriptionData.insuranceDiscountAmount}
+          </PanelField>
+        </PanelRow>
+
+        <PanelRow>
+          <PanelLabel>{t('label.insurance-discount-percentage')}</PanelLabel>
           <PanelField>{insuranceData.discountPercentage}% </PanelField>
         </PanelRow>
         </>
