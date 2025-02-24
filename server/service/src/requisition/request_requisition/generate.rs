@@ -1,5 +1,5 @@
 use chrono::Utc;
-use repository::{PluginType, RequisitionLineRow, RequisitionRow};
+use repository::{PluginDataRow, PluginType, RequisitionLineRow, RequisitionRow};
 use util::uuid::uuid;
 
 use crate::backend_plugin::plugin_provider::PluginInstance;
@@ -46,7 +46,7 @@ pub fn generate_requisition_lines(
     store_id: &str,
     requisition_row: &RequisitionRow,
     item_ids: Vec<String>,
-) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
+) -> Result<(Vec<RequisitionLineRow>, Vec<PluginDataRow>), PluginOrRepositoryError> {
     let item_stats_rows = get_item_stats(ctx, store_id, None, item_ids)?;
 
     let lines = item_stats_rows
@@ -89,7 +89,7 @@ pub fn generate_requisition_lines(
         .collect();
 
     let Some(plugin) = PluginInstance::get_one(PluginType::TransformRequisitionLines) else {
-        return Ok(lines);
+        return Ok((lines, Vec::new()));
     };
 
     let result = transform_requisition_lines::Trait::call(
@@ -100,5 +100,8 @@ pub fn generate_requisition_lines(
         },
     )?;
 
-    Ok(result.transformed_lines)
+    Ok((
+        result.transformed_lines,
+        result.plugin_data.unwrap_or_default(),
+    ))
 }

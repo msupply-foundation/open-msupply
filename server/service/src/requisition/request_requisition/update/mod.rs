@@ -4,8 +4,8 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
-    ActivityLogType, RepositoryError, Requisition, RequisitionLine, RequisitionLineRowRepository,
-    RequisitionRowRepository,
+    ActivityLogType, PluginDataRowRepository, RepositoryError, Requisition, RequisitionLine,
+    RequisitionLineRowRepository, RequisitionRowRepository,
 };
 
 mod generate;
@@ -72,6 +72,7 @@ pub fn update_request_requisition(
             let GenerateResult {
                 updated_requisition_row,
                 updated_requisition_lines,
+                updated_plugin_data,
                 empty_lines_to_trim,
             } = generate(connection, requisition_row, input.clone())?;
             RequisitionRowRepository::new(connection).upsert_one(&updated_requisition_row)?;
@@ -80,6 +81,12 @@ pub fn update_request_requisition(
 
             for requisition_line_row in updated_requisition_lines {
                 requisition_line_row_repository.upsert_one(&requisition_line_row)?;
+            }
+
+            let plugin_data_repository = PluginDataRowRepository::new(connection);
+
+            for plugin_data in updated_plugin_data {
+                plugin_data_repository.upsert_one(&plugin_data)?;
             }
 
             if let Some(lines) = empty_lines_to_trim {

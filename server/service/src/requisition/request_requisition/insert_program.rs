@@ -10,7 +10,6 @@ use crate::{
         program_indicator::query::{program_indicators, ProgramIndicator},
         program_settings::get_supplier_program_requisition_settings,
         query::get_requisition,
-        response_requisition::GenerateResult,
     },
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
@@ -22,9 +21,10 @@ use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
     IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
-    NumberRowType, Pagination, ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow,
-    RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
-    StorageConnection, StoreFilter, StoreRepository,
+    NumberRowType, Pagination, PluginDataRow, PluginDataRowRepository, ProgramIndicatorFilter,
+    ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError, Requisition, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection, StoreFilter,
+    StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -69,6 +69,7 @@ pub fn insert_program_request_requisition(
             let GenerateResult {
                 requisition: new_requisition,
                 requisition_lines,
+                plugin_data_rows,
                 indicator_values,
             } = generate(ctx, program, order_type, input)?;
             RequisitionRowRepository::new(connection).upsert_one(&new_requisition)?;
@@ -76,6 +77,12 @@ pub fn insert_program_request_requisition(
             let requisition_line_repo = RequisitionLineRowRepository::new(connection);
             for requisition_line in requisition_lines {
                 requisition_line_repo.upsert_one(&requisition_line)?;
+            }
+
+            let plugin_data_repository = PluginDataRowRepository::new(connection);
+
+            for plugin_data in plugin_data_rows {
+                plugin_data_repository.upsert_one(&plugin_data)?;
             }
 
             let indicator_value_repo = IndicatorValueRowRepository::new(connection);
@@ -158,6 +165,13 @@ fn validate(
     ))
 }
 
+pub(super) struct GenerateResult {
+    pub(crate) requisition: RequisitionRow,
+    pub(crate) requisition_lines: Vec<RequisitionLineRow>,
+    pub(crate) plugin_data_rows: Vec<PluginDataRow>,
+    pub(crate) indicator_values: Vec<IndicatorValueRow>,
+}
+
 fn generate(
     ctx: &ServiceContext,
     program: ProgramRow,
@@ -215,7 +229,7 @@ fn generate(
         .map(|line| line.item_id)
         .collect();
 
-    let requisition_lines =
+    let (requisition_lines, plugin_data_rows) =
         generate_requisition_lines(ctx, &ctx.store_id, &requisition, program_item_ids)?;
 
     let program_indicators = program_indicators(
@@ -247,6 +261,7 @@ fn generate(
     Ok(GenerateResult {
         requisition,
         requisition_lines,
+        plugin_data_rows,
         indicator_values,
     })
 }

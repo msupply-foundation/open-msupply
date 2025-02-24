@@ -14,8 +14,8 @@ use crate::{
 
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    RepositoryError, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository,
-    StorageConnection,
+    PluginDataRow, PluginDataRowRepository, RepositoryError, RequisitionLine, RequisitionLineRow,
+    RequisitionLineRowRepository, StorageConnection,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -54,9 +54,16 @@ pub fn insert_request_requisition_line(
         .connection
         .transaction_sync(|connection| {
             let requisition_row = validate(connection, &ctx.store_id, &input)?;
-            let new_requisition_line_row = generate(ctx, &ctx.store_id, requisition_row, input)?;
+            let (new_requisition_line_row, plugin_data_rows) =
+                generate(ctx, &ctx.store_id, requisition_row, input)?;
 
             RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;
+
+            let plugin_data_repository = PluginDataRowRepository::new(connection);
+
+            for plugin_data in plugin_data_rows {
+                plugin_data_repository.upsert_one(&plugin_data)?;
+            }
 
             get_requisition_line(ctx, &new_requisition_line_row.id)
                 .map_err(OutError::DatabaseError)?
@@ -116,15 +123,17 @@ fn generate(
         requisition_id: _,
         item_id,
     }: InsertRequestRequisitionLine,
-) -> Result<RequisitionLineRow, OutError> {
-    let mut new_requisition_line =
-        generate_requisition_lines(ctx, store_id, &requisition_row, vec![item_id])?
-            .pop()
-            .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
+) -> Result<(RequisitionLineRow, Vec<PluginDataRow>), OutError> {
+    let (mut requisition_lines, plugin_data) =
+        generate_requisition_lines(ctx, store_id, &requisition_row, vec![item_id])?;
+
+    let mut new_requisition_line = requisition_lines
+        .pop()
+        .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
 
     new_requisition_line.id = id;
 
-    Ok(new_requisition_line)
+    Ok((new_requisition_line, plugin_data))
 }
 
 impl From<RepositoryError> for InsertRequestRequisitionLineError {
