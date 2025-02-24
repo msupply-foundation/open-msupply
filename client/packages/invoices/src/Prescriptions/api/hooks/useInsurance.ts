@@ -18,9 +18,12 @@ export const useInsurance = (
     return query.insurance;
   };
 
+  // TODO remove the statement below's use of the enabled attribute by refactoring prescriptions' detail view.
+  // See issue 6624: https://github.com/msupply-foundation/open-msupply/issues/6624
   const { data, isLoading, isError } = useQuery(queryKey, queryFn, {
     enabled: !!insuranceId,
   });
+
   return {
     query: { data, isLoading, isError },
   };
