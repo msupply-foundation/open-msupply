@@ -236,6 +236,9 @@ export const PrescriptionRowFragmentDoc = gql`
     description
   }
   programId
+  nameInsuranceJoinId
+  insuranceDiscountAmount
+  insuranceDiscountPercentage
 }
     ${PrescriptionLineFragmentDoc}`;
 export const PartialPrescriptionLineFragmentDoc = gql`
