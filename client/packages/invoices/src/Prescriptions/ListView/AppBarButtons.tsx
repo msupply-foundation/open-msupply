@@ -1,5 +1,4 @@
 import React, { FC, useState } from 'react';
-import { AppRoute } from '@openmsupply-client/config';
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -8,36 +7,26 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
-  FnUtils,
   FileUtils,
   LoadingButton,
   ToggleState,
   EnvUtils,
   Platform,
-  useNavigate,
-  RouteBuilder,
   useCallbackWithPermission,
   UserPermission,
 } from '@openmsupply-client/common';
-import {
-  CreatePatientModal,
-  PatientSearchModal,
-} from '@openmsupply-client/system';
-import { ListParams, usePrescriptionList, usePrescription } from '../api';
+import { CreatePatientModal } from '@openmsupply-client/system';
+import { ListParams, usePrescriptionList } from '../api';
 import { prescriptionToCsv } from '../../utils';
+import { NewPrescriptionModal } from './NewPrescriptionModal';
 
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
   listParams: ListParams;
 }> = ({ modalController, listParams }) => {
   const t = useTranslation();
-  const navigate = useNavigate();
   const { success, error } = useNotification();
   const [patientModalOpen, setPatientModalOpen] = useState(false);
-
-  const {
-    create: { create },
-  } = usePrescription();
 
   const {
     query: { data, isLoading },
@@ -67,30 +56,9 @@ export const AppBarButtonsComponent: FC<{
           label={t('button.new-prescription')}
           onClick={modalController.toggleOn}
         />
-        <PatientSearchModal
+        <NewPrescriptionModal
           open={modalController.isOn}
           onClose={modalController.toggleOff}
-          onChange={async name => {
-            modalController.toggleOff();
-            try {
-              create({
-                id: FnUtils.generateUUID(),
-                patientId: name?.id,
-              }).then(invoiceNumber => {
-                navigate(
-                  RouteBuilder.create(AppRoute.Dispensary)
-                    .addPart(AppRoute.Prescription)
-                    .addPart(String(invoiceNumber))
-                    .build()
-                );
-              });
-            } catch (e) {
-              const errorSnack = error(
-                t('error.failed-to-create-prescription') + (e as Error).message
-              );
-              errorSnack();
-            }
-          }}
           openPatientModal={onCreatePatient}
         />
         <LoadingButton

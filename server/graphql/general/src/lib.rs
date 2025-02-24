@@ -42,6 +42,7 @@ use queries::{
     currency::currencies,
     display_settings::{display_settings, DisplaySettingsHash, DisplaySettingsNode},
     initialisation_status::{initialisation_status, InitialisationStatusNode},
+    insurance_providers::{insurance_providers, InsuranceProvidersResponse},
     insurances::{
         insurance, insurances, InsuranceResponse, InsuranceSortInput, InsurancesResponse,
     },
@@ -462,6 +463,14 @@ impl GeneralQueries {
         id: String,
     ) -> Result<InsuranceResponse> {
         insurance(ctx, store_id, id)
+    }
+
+    pub async fn insurance_providers(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<InsuranceProvidersResponse> {
+        insurance_providers(ctx, store_id)
     }
 }
 

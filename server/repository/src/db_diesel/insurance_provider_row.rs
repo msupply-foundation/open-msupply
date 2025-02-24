@@ -58,6 +58,11 @@ impl<'a> InsuranceProviderRowRepository<'a> {
             .map_err(RepositoryError::from)
     }
 
+    pub fn find_all(&self) -> Result<Vec<InsuranceProviderRow>, RepositoryError> {
+        let result = insurance_provider::table.load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
     pub fn upsert_one(&self, row: &InsuranceProviderRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(insurance_provider::table)
             .values(row)
