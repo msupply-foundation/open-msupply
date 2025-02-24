@@ -42,7 +42,7 @@
   "button.create-log-reason": "Criar um motivo para o registro",
   "button.create-new": "Criar novo(a)",
   "button.create-shipment": "Criar envio",
-  "button.dashboard": "Quadro de painéis gráficos",
+  "button.dashboard": "Página inicial",
   "button.delete": "Remover",
   "button.delete-lines": "Remover",
   "button.download": "Descarregar",
@@ -1857,5 +1857,7 @@
   "label.copy": "Copiar",
   "label.price": "Preço",
   "message.no-directions": "Não há direcções predefinidas disponíveis",
-  "label.dispensing-date": "Data da dispensa"
+  "label.dispensing-date": "Data da dispensa",
+  "report.snapshot-packs": "Quantidade instantânea de pacotes",
+  "label.feedback": "Comentários"
 }

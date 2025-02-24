@@ -13,7 +13,6 @@ import {
   InsertProgramPatientInput,
   UpdateProgramPatientInput,
   FilterByWithBoolean,
-  InsuranceSortFieldInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -22,7 +21,6 @@ import {
   LinkPatientToStoreMutation,
   ProgramPatientRowFragment,
   LatestPatientEncounterQuery,
-  InsurancesQuery,
 } from './operations.generated';
 
 export type ListParams = {
@@ -45,18 +43,11 @@ export type EncounterListParams = {
   pagination?: PaginationInput;
 };
 
-export type InsuranceListParams = {
-  nameId: string;
-  sortBy?: SortBy<InsuranceSortFieldInput>;
-};
-
 export type CentralPatientSearchResponse =
   CentralPatientSearchQuery['centralPatientSearch'];
 
 export type LinkPatientToStoreResponse =
   LinkPatientToStoreMutation['linkPatientToStore'];
-
-export type GetPatientInsuranceResponse = InsurancesQuery['insurances'];
 
 export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
   get: {
@@ -220,19 +211,4 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
   ): Promise<LatestPatientEncounterQuery['encounters']> =>
     (await sdk.latestPatientEncounter({ storeId, patientId, encounterType }))
       .encounters,
-
-  insurances: async ({
-    nameId,
-    sortBy,
-  }: InsuranceListParams): Promise<GetPatientInsuranceResponse> => {
-    const key = sortBy?.key as InsuranceSortFieldInput;
-
-    const result = await sdk.insurances({
-      storeId,
-      nameId,
-      sort: key ? { key, desc: !!sortBy?.isDesc } : undefined,
-    });
-
-    return result.insurances;
-  },
 });

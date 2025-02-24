@@ -35,14 +35,7 @@ export const EnumFilter: FC<{
     <Select
       options={options}
       placeholder={name}
-      slotProps={{
-        input: {
-          sx: {
-            width: FILTER_WIDTH,
-          },
-        },
-      }}
-      sx={FilterLabelSx}
+      sx={{ ...FilterLabelSx, width: FILTER_WIDTH }}
       label={name}
       value={value ?? ''}
       onChange={e => handleChange(e.target.value)}
