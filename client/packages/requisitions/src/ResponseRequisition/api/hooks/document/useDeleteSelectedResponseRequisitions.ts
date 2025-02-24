@@ -22,6 +22,7 @@ export const useDeleteSelectedResponseRequisitions = () => {
       .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
       .filter(Boolean) as ResponseFragment[],
   }));
+  const { clearSelected } = useTableStore();
   const deleteAction = async () => {
     let result = await mutateAsync(selectedRows).catch(err => {
       throw err;
@@ -41,6 +42,7 @@ export const useDeleteSelectedResponseRequisitions = () => {
         }
       }
     });
+    clearSelected();
   };
 
   const confirmAndDelete = useDeleteConfirmation({

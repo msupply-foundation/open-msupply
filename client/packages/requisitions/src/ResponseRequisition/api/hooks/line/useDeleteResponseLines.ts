@@ -28,6 +28,7 @@ export const useDeleteResponseLines = () => {
   const selectedRows = useTableStore(state =>
     lines.filter(({ id }) => state.rowState[id]?.isSelected)
   );
+  const { clearSelected } = useTableStore();
 
   const onDelete = async () => {
     let result = await mutateAsync(selectedRows).catch(err => {
@@ -55,6 +56,7 @@ export const useDeleteResponseLines = () => {
           noOtherVariants(error);
       }
     });
+    clearSelected();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
