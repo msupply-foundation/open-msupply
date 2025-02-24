@@ -75,6 +75,10 @@ fragment PrescriptionRow on InvoiceNode {
   }
 
   programId
+
+  nameInsuranceJoinId
+  insuranceDiscountAmount
+  insuranceDiscountPercentage
 }
 
 fragment PrescriptionLine on InvoiceLineNode {
@@ -249,14 +253,10 @@ query prescriptionById($invoiceId: String!, $storeId: String!) {
 }
 
 mutation insertPrescription(
-  $id: String!
-  $patientId: String!
+  $input: InsertPrescriptionInput!
   $storeId: String!
 ) {
-  insertPrescription(
-    storeId: $storeId
-    input: { id: $id, patientId: $patientId }
-  ) {
+  insertPrescription(storeId: $storeId, input: $input) {
     __typename
     ... on InvoiceNode {
       id
