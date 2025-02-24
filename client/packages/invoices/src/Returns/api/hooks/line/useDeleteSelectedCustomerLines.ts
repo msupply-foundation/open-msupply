@@ -43,14 +43,17 @@ export const useDeleteSelectedCustomerReturnLines = ({
       expiryDate,
       numberOfPacksReturned: 0,
     })) || [];
+  const { clearSelected } = useTableStore();
 
   const onDelete = async () => {
     await updateLines({
       customerReturnId: returnId,
       customerReturnLines: selectedRows,
-    }).catch(err => {
-      throw err;
-    });
+    })
+      .then(() => clearSelected())
+      .catch(err => {
+        throw err;
+      });
   };
 
   const confirmAndDelete = useDeleteConfirmation({

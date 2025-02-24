@@ -11,23 +11,27 @@ import { useReturnsApi } from '../utils/useReturnsApi';
 import { useCustomerReturns } from './useCustomerReturns';
 
 export const useCustomerDeleteRows = () => {
+  const t = useTranslation();
   const queryClient = useQueryClient();
+  const api = useReturnsApi();
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
   });
   const { data: rows } = useCustomerReturns(queryParams);
-  const api = useReturnsApi();
   const { mutateAsync } = useMutation(api.deleteCustomer);
-  const t = useTranslation();
 
   const selectedRows = useTableStore(
     state =>
       rows?.nodes.filter(({ id }) => state.rowState[id]?.isSelected) ?? []
   );
+  const { clearSelected } = useTableStore();
 
   const deleteAction = async () => {
     await Promise.all(selectedRows.map(row => mutateAsync(row.id)))
-      .then(() => queryClient.invalidateQueries(api.keys.base()))
+      .then(() => {
+        queryClient.invalidateQueries(api.keys.base());
+        clearSelected();
+      })
       .catch(err => {
         throw err;
       });
