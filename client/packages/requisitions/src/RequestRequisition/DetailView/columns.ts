@@ -12,6 +12,7 @@ import {
   TooltipTextCell,
   useAuthContext,
   getLinesFromRow,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { PackQuantityCell } from '@openmsupply-client/system';
@@ -48,6 +49,7 @@ export const useRequestColumns = () => {
   const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
   const { store } = useAuthContext();
   const { getError } = useRequestRequisitionLineErrorContext();
+  const { plugins } = usePluginProvider();
 
   const columnDefinitions: ColumnDescription<RequestLineFragment>[] = [
     GenericColumnKey.Selection,
@@ -253,12 +255,15 @@ export const useRequestColumns = () => {
   }
 
   const columns = useColumns<RequestLineFragment>(
-    columnDefinitions,
+    [
+      ...columnDefinitions,
+      ...(plugins.requestRequisitionColumn?.columns || []),
+    ],
     {
       onChangeSortBy: updateSortQuery,
       sortBy,
     },
-    [updateSortQuery, sortBy]
+    [updateSortQuery, sortBy, plugins.requestRequisitionColumn]
   );
 
   return { columns, sortBy, onChangeSortBy: updateSortQuery };

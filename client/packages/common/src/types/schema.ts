@@ -2989,7 +2989,7 @@ export type InsertPrescriptionInput = {
   diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
-  prescriptionDate?: InputMaybe<Scalars['NaiveDateTime']['input']>;
+  prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
   programId?: InputMaybe<Scalars['String']['input']>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
 };
@@ -4021,7 +4021,6 @@ export type LedgerConnector = {
 };
 
 export type LedgerFilterInput = {
-  datetime?: InputMaybe<DatetimeFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
 };

@@ -15,9 +15,9 @@ import { DraftRequestLine } from './../DetailView/RequestLineEdit/hooks';
 import {
   RequestRowFragment,
   RequestFragment,
-  RequestLineFragment,
   Sdk,
 } from './operations.generated';
+import { RequestLineFragment } from '.';
 
 export type ListParams = {
   first?: number;
@@ -282,9 +282,7 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to create requisition');
   },
-  insertProgram: async (
-    input: InsertProgramRequestRequisitionInput
-  ) => {
+  insertProgram: async (input: InsertProgramRequestRequisitionInput) => {
     const result = await sdk.insertProgramRequest({
       storeId,
       input,

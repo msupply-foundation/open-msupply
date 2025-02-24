@@ -1,7 +1,4 @@
-import {
-  RequestLineFragment,
-  RequestRowFragment,
-} from './RequestRequisition/api/operations.generated';
+import { RequestRowFragment } from './RequestRequisition/api/operations.generated';
 import {
   RequisitionNodeStatus,
   LocaleKey,
@@ -12,6 +9,7 @@ import {
   noOtherVariants,
 } from '@openmsupply-client/common';
 import { ResponseRowFragment } from './ResponseRequisition/api';
+import { RequestLineFragment } from './RequestRequisition/api';
 
 export const requestStatuses = [
   RequisitionNodeStatus.Draft,
