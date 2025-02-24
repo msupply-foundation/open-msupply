@@ -210,40 +210,32 @@ export const PrescriptionLineEditForm: React.FC<
   const note = prescriptionLineWithNote?.note ?? '';
 
   useEffect(() => {
-    // sets prescribed quantity on initial load
-    if (
-      preferences?.editPrescribedQuantityOnPrescription &&
-      prescribedQuantity === null
-    ) {
+    if (preferences?.editPrescribedQuantityOnPrescription) {
       const selectedItem = items.find(
         prescriptionItem => prescriptionItem.id === item?.id
       );
       const newPrescribedQuantity =
         selectedItem?.lines?.find(
-          ({ prescribedQuantity }) =>
-            prescribedQuantity != null && prescribedQuantity > 0
+          ({ prescribedQuantity }) => prescribedQuantity != null
         )?.prescribedQuantity ?? 0;
       setPrescribedQuantity(newPrescribedQuantity);
     }
 
-    if (!isAutoAllocated) {
-      setIssueUnitQuantity(allocatedUnits);
-      return;
-    }
-
-    if (items.find(prescriptionItem => prescriptionItem.id === item?.id))
-      setAbbreviation('');
-    setDefaultDirection('');
-  }, [item?.id, allocatedUnits, packSizeController.selected?.value]);
-
-  useEffect(() => {
     const newIssueQuantity = Math.round(
       allocatedUnits / Math.abs(Number(packSizeController.selected?.value || 1))
     );
     if (newIssueQuantity !== issueUnitQuantity)
       setIssueUnitQuantity(newIssueQuantity);
     setAllocationAlerts([]);
+
+    if (items.find(prescriptionItem => prescriptionItem.id === item?.id))
+      setAbbreviation('');
+    setDefaultDirection('');
   }, [item?.id]);
+
+  useEffect(() => {
+    if (!isAutoAllocated) setIssueUnitQuantity(allocatedUnits);
+  }, [packSizeController.selected?.value, allocatedUnits]);
 
   const key = item?.id ?? 'new';
 
