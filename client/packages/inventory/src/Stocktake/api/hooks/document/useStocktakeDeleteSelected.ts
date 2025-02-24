@@ -19,11 +19,14 @@ export const useStocktakeDeleteSelected = () => {
       .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
       .filter(Boolean) as StocktakeRowFragment[],
   }));
+  const { clearSelected } = useTableStore();
 
   const deleteAction = async () => {
-    await mutateAsync(selectedRows).catch(err => {
-      throw err;
-    });
+    await mutateAsync(selectedRows)
+      .then(() => clearSelected())
+      .catch(err => {
+        throw err;
+      });
   };
 
   const confirmAndDelete = useDeleteConfirmation({
