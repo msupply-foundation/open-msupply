@@ -11,23 +11,27 @@ import { useInboundApi } from '../utils/useInboundApi';
 import { useInbounds } from './useInbounds';
 
 export const useInboundDeleteRows = () => {
+  const t = useTranslation();
   const queryClient = useQueryClient();
+  const api = useInboundApi();
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
   });
   const { data: rows } = useInbounds(queryParams);
-  const api = useInboundApi();
   const { mutateAsync } = useMutation(api.delete);
-  const t = useTranslation();
 
   const selectedRows = useTableStore(
     state =>
       rows?.nodes.filter(({ id }) => state.rowState[id]?.isSelected) ?? []
   );
+  const { clearSelected } = useTableStore();
 
   const deleteAction = async () => {
     await mutateAsync(selectedRows)
-      .then(() => queryClient.invalidateQueries(api.keys.base()))
+      .then(() => {
+        queryClient.invalidateQueries(api.keys.base());
+        clearSelected();
+      })
       .catch(err => {
         throw err;
       });

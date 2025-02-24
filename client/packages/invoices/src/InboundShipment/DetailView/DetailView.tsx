@@ -32,6 +32,8 @@ import { canReturnInboundLines } from '../../utils';
 type InboundLineItem = InboundLineFragment['item'];
 
 export const DetailView: FC = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
   const { data, isLoading } = useInbound.document.get();
   const isDisabled = useInbound.utils.isDisabled();
   const { onOpen, onClose, mode, entity, isOpen } =
@@ -44,8 +46,6 @@ export const DetailView: FC = () => {
     mode: returnModalMode,
     setMode: setReturnMode,
   } = useEditModal<string[]>();
-  const navigate = useNavigate();
-  const t = useTranslation();
   const { info, error } = useNotification();
 
   const onRowClick = React.useCallback(
