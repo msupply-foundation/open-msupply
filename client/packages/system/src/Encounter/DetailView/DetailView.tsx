@@ -11,10 +11,6 @@ import {
   Breadcrumb,
   useIntlUtils,
   EncounterNodeStatus,
-  useDialog,
-  DialogButton,
-  ButtonWithIcon,
-  SaveIcon,
   DetailTabs,
   useConfirmOnLeaving,
   useConfirmationModal,
@@ -40,6 +36,7 @@ import { VaccinationCard } from '../../Vaccination/Components/VaccinationCard';
 import { ScheduleNextEncounterModal } from './ScheduleNextEncounterModal';
 import { usePatientVaccineCard } from '../../Vaccination/api/usePatientVaccineCard';
 import { getNextVaccinationEncounterDate } from './helpers';
+import { useSaveWithStatusChange } from './useSaveWithStatusChange';
 
 const getPatientBreadcrumbSuffix = (
   encounter: EncounterFragment,
@@ -57,102 +54,6 @@ const getPatientBreadcrumbSuffix = (
   if (!!encounter.patient.code2) return encounter.patient.code2;
   if (!!encounter.patient.code) return encounter.patient.code;
   return encounter.patient.id;
-};
-
-/**
-+ * Updates the status and once the status has been updated saves the encounter
-+ */
-const useSaveWithStatus = (
-  saveData: () => void,
-  encounterData: EncounterSchema | undefined,
-  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>
-): ((
-  status: EncounterNodeStatus | undefined,
-  callback?: () => void
-) => void) => {
-  const [saveStatus, setSaveStatus] = useState<{
-    status: EncounterNodeStatus;
-    callback?: () => void;
-  }>();
-
-  useEffect(() => {
-    const { status, callback } = saveStatus ?? {};
-    if (!!saveStatus && status === encounterData?.status) {
-      saveData();
-      if (status === EncounterNodeStatus.Visited) callback?.();
-    }
-  }, [saveStatus, encounterData?.status]);
-
-  return (status, callback) => {
-    if (status === undefined) {
-      // no status change
-      saveData();
-      return;
-    }
-    updateEncounter({ status });
-    setSaveStatus({ status, callback });
-  };
-};
-
-const useSaveWithStatusChange = (
-  onSave: () => void,
-  encounterData: EncounterSchema | undefined,
-  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>
-): {
-  showDialog: () => void;
-  SaveAsVisitedModal: React.FC;
-  saveWithStatusChange: (
-    status: EncounterNodeStatus,
-    callback?: () => void
-  ) => void;
-} => {
-  const { Modal, hideDialog, showDialog } = useDialog({
-    disableBackdrop: true,
-  });
-  const t = useTranslation();
-
-  const saveWithStatusChange = useSaveWithStatus(
-    onSave,
-    encounterData,
-    updateEncounter
-  );
-
-  const SaveAsVisitedModal = () => (
-    <Modal
-      title={t('messages.save-encounter-as-visited')}
-      cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
-      height={200}
-      okButton={
-        <DialogButton
-          variant="save"
-          onClick={() => {
-            onSave();
-            hideDialog();
-          }}
-        />
-      }
-      nextButton={
-        <ButtonWithIcon
-          color="secondary"
-          variant="contained"
-          onClick={() => {
-            saveWithStatusChange(EncounterNodeStatus.Visited);
-            hideDialog();
-          }}
-          Icon={<SaveIcon />}
-          label={t('button-save-as-visited')}
-        />
-      }
-    >
-      <></>
-    </Modal>
-  );
-
-  return {
-    showDialog,
-    SaveAsVisitedModal,
-    saveWithStatusChange,
-  };
 };
 
 export const DetailView: FC = () => {
