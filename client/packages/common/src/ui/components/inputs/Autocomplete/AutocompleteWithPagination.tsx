@@ -105,7 +105,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
           ...props.InputProps,
           disableUnderline: false,
           sx: {
-            paddingLeft: 1,
+            paddingY: '4px !important',
           },
           endAdornment: (
             <>
@@ -201,11 +201,6 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       onChange={onChange}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
       sx={{
-        background: theme =>
-          disabled
-            ? theme.palette.background.toolbar
-            : theme.palette.background.drawer,
-        borderRadius: 2,
         paddingTop: 0.5,
         paddingBottom: 0.5,
         width,
