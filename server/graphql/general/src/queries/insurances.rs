@@ -95,11 +95,6 @@ pub enum InsurancesResponse {
     Response(InsuranceConnector),
 }
 
-#[derive(Union)]
-pub enum InsuranceResponse {
-    Response(InsuranceNode),
-}
-
 pub fn insurance(ctx: &Context<'_>, store_id: String, id: String) -> Result<InsuranceResponse> {
     let user = validate_auth(
         ctx,
@@ -117,33 +112,14 @@ pub fn insurance(ctx: &Context<'_>, store_id: String, id: String) -> Result<Insu
         .insurance(&service_context.connection, &id)
         .map_err(StandardGraphqlError::from_repository_error)?;
 
-    // let row = match result {
-    //     Some(row) => row,
-    //     None => {
-    //         return Err(StandardGraphqlError::from_repository_error(
-    //             RepositoryError::NotFound,
-    //         ))
-    //         .into()
-    //     }
-    // };
-
-    // let row = NameInsuranceJoinRow {
-    //     id,
-    //     name_link_id: "".to_string(),
-    //     insurance_provider_id: "".to_string(),
-    //     policy_number_person: None,
-    //     policy_number_family: None,
-    //     policy_number: "".to_string(),
-    //     policy_type: InsurancePolicyType::Business,
-    //     discount_percentage: 1.0,
-    //     expiry_date: Utc::now().date_naive(),
-    //     is_active: true,
-    //     entered_by_id: Some("".to_string()),
-    // };
-
     Ok(InsuranceResponse::Response(InsuranceNode {
         insurance: result,
     }))
+}
+
+#[derive(Union)]
+pub enum InsuranceResponse {
+    Response(InsuranceNode),
 }
 
 pub fn insurances(
