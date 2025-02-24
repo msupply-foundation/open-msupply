@@ -46,7 +46,7 @@ export const PricingSectionComponent = () => {
         <PanelRow>
           <PanelLabel>{t('label.insurance-discount-amount')}</PanelLabel>
           <PanelField>
-            {prescriptionData.insuranceDiscountAmount}
+            {c(prescriptionData.insuranceDiscountAmount ?? 0)}
           </PanelField>
         </PanelRow>
 
