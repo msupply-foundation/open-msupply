@@ -42,6 +42,12 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        <ButtonWithIcon
+          disabled={isDisabled}
+          label={t('button.add-item')}
+          Icon={<PlusCircleIcon />}
+          onClick={() => onAddItem()}
+        />
         <ReportSelector
           context={ReportContext.Prescription}
           onPrint={printReport}
@@ -57,12 +63,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           label={t('button.history')}
           Icon={<InfoOutlineIcon />}
           onClick={() => onViewHistory()}
-        />
-        <ButtonWithIcon
-          disabled={isDisabled}
-          label={t('button.add-item')}
-          Icon={<PlusCircleIcon />}
-          onClick={() => onAddItem()}
         />
         {OpenButton}
       </Grid>
