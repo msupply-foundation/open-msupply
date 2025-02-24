@@ -18,7 +18,7 @@ import {
   DetailTabs,
   useConfirmOnLeaving,
   useConfirmationModal,
-  useToggle,
+  useEditModal,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -65,40 +65,46 @@ const getPatientBreadcrumbSuffix = (
 const useSaveWithStatus = (
   saveData: () => void,
   encounterData: EncounterSchema | undefined,
-  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>,
-  scheduleNextEncounter: () => void
-): ((status: EncounterNodeStatus | undefined) => void) => {
-  const [saveStatus, setSaveStatus] = useState<
-    EncounterNodeStatus | undefined
-  >();
+  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>
+): ((
+  status: EncounterNodeStatus | undefined,
+  callback?: () => void
+) => void) => {
+  const [saveStatus, setSaveStatus] = useState<{
+    status: EncounterNodeStatus;
+    callback?: () => void;
+  }>();
 
   useEffect(() => {
-    if (!!saveStatus && saveStatus === encounterData?.status) {
+    const { status, callback } = saveStatus ?? {};
+    if (!!saveStatus && status === encounterData?.status) {
       saveData();
-      if (saveStatus === EncounterNodeStatus.Visited) scheduleNextEncounter();
+      if (status === EncounterNodeStatus.Visited) callback?.();
     }
   }, [saveStatus, encounterData?.status]);
 
-  return (status: EncounterNodeStatus | undefined) => {
+  return (status, callback) => {
     if (status === undefined) {
       // no status change
       saveData();
       return;
     }
     updateEncounter({ status });
-    setSaveStatus(status);
+    setSaveStatus({ status, callback });
   };
 };
 
 const useSaveWithStatusChange = (
   onSave: () => void,
   encounterData: EncounterSchema | undefined,
-  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>,
-  scheduleNextEncounter: () => void
+  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>
 ): {
   showDialog: () => void;
   SaveAsVisitedModal: React.FC;
-  saveWithStatusChange: (status: EncounterNodeStatus) => void;
+  saveWithStatusChange: (
+    status: EncounterNodeStatus,
+    callback?: () => void
+  ) => void;
 } => {
   const { Modal, hideDialog, showDialog } = useDialog({
     disableBackdrop: true,
@@ -108,8 +114,7 @@ const useSaveWithStatusChange = (
   const saveWithStatusChange = useSaveWithStatus(
     onSave,
     encounterData,
-    updateEncounter,
-    scheduleNextEncounter
+    updateEncounter
   );
 
   const SaveAsVisitedModal = () => (
@@ -161,7 +166,7 @@ export const DetailView: FC = () => {
     undefined
   );
   const [deleteRequest, setDeleteRequest] = useState(false);
-  const nextEncounterModal = useToggle(false);
+  const nextEncounterModal = useEditModal<{ onCancel?: () => void }>();
 
   const {
     data: encounter,
@@ -244,8 +249,7 @@ export const DetailView: FC = () => {
   } = useSaveWithStatusChange(
     saveData,
     data as unknown as EncounterSchema,
-    updateEncounter,
-    nextEncounterModal.toggleOn
+    updateEncounter
   );
 
   const promptToMarkVisitedOnLeaving = useConfirmationModal({
@@ -253,7 +257,11 @@ export const DetailView: FC = () => {
     message: t('messages.mark-as-visited'),
     cancelButtonLabel: t('label.leave-as-pending'),
     buttonLabel: t('label.mark-as-visited'),
-    onConfirm: () => saveWithStatusChange(EncounterNodeStatus.Visited),
+    onConfirm: ({ onCancel }) => {
+      saveWithStatusChange(EncounterNodeStatus.Visited, () =>
+        nextEncounterModal.onOpen({ onCancel })
+      );
+    },
   });
 
   // Block navigation if the encounter is dirty and the status is pending
@@ -372,12 +380,13 @@ export const DetailView: FC = () => {
         />
       ) : (
         <>
-          {nextEncounterModal.isOn && encounter.document.documentRegistry && (
+          {nextEncounterModal.isOpen && encounter.document.documentRegistry && (
             <ScheduleNextEncounterModal
               encounterConfig={encounter.document.documentRegistry}
-              onClose={nextEncounterModal.toggleOff}
+              onClose={nextEncounterModal.onClose}
               patientId={encounter.patient.id ?? ''}
               suggestedDate={suggestedNextEncounterDate}
+              onCancel={nextEncounterModal.entity?.onCancel}
             />
           )}
           <Toolbar onChange={updateEncounter} encounter={encounter} />
@@ -412,7 +421,9 @@ export const DetailView: FC = () => {
             saveData();
           }
         }}
-        onChangeStatus={saveWithStatusChange}
+        onChangeStatus={status =>
+          saveWithStatusChange(status, () => nextEncounterModal.onOpen())
+        }
         onCancel={revert}
         isSaving={isSaving}
         isDisabled={!isDirty || !!validationError}
