@@ -61,6 +61,12 @@ export const useOutboundAllocateSelectedLines = (): {
       return;
     }
 
+    if (selectedUnallocatedLines.length === 0) {
+      const infoSnack = info(t('label.no-unallocated-rows-selected'));
+      infoSnack();
+      return;
+    }
+
     const batchResponse = await mutateAsync(selectedUnallocatedLines);
 
     if (batchResponse?.__typename === 'BatchOutboundShipmentResponse') {
