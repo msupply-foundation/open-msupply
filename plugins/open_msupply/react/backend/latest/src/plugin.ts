@@ -4,6 +4,7 @@
 import { BackendPlugins } from '@backendPlugins';
 // Tree shaking working
 import zipObject from 'lodash/zipObject';
+import { uuidv7 } from 'uuidv7';
 
 // TODO Should come from settings
 const DAY_LOOKBACK = 800;
@@ -51,6 +52,10 @@ const plugins: BackendPlugins = {
       requisition.store_id
     ).months_lead_time;
 
+    // need to share this
+    const dataIdentifier = 'AGGREGATE_AMC_REQUISITION_LINE';
+    const pluginCode = 'AGGREGATE_AMC';
+
     return {
       transformed_lines: lines.map(line => {
         const max_quantity =
@@ -60,6 +65,16 @@ const plugins: BackendPlugins = {
         const suggested_quantity = difference < 0 ? 0 : difference;
         return { ...line, suggested_quantity };
       }),
+      // Here we need to do sql query for plugin data (another reason why plugin data should be on the record)
+      plugin_data: lines.map(line => ({
+        id: uuidv7(),
+        store_id: requisition.store_id,
+        plugin_code: pluginCode,
+        related_record_id: line.id,
+        // need to share this
+        data_identifier: dataIdentifier,
+        data: String(Math.random() * 50),
+      })),
     };
   },
 };
