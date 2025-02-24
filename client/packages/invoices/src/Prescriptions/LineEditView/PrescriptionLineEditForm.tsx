@@ -234,8 +234,8 @@ export const PrescriptionLineEditForm: React.FC<
   }, [item?.id]);
 
   useEffect(() => {
-    if (!isAutoAllocated) setIssueUnitQuantity(allocatedUnits);
-  }, [packSizeController.selected?.value, allocatedUnits]);
+    setIssueUnitQuantity(allocatedUnits);
+  }, [allocatedUnits]);
 
   const key = item?.id ?? 'new';
 
