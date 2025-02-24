@@ -11,6 +11,7 @@ import {
   DeleteIcon,
   useEditModal,
   ActionsFooter,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { stocktakeStatuses, getStocktakeTranslator } from '../../../utils';
 import { StocktakeFragment, useStocktake } from '../../api';
@@ -36,6 +37,7 @@ export const Footer = () => {
   const changeLocationModal = useEditModal();
 
   const selectedRows = useStocktake.utils.selectedRows();
+  const { clearSelected } = useTableStore();
 
   const actions: Action[] = [
     {
@@ -79,12 +81,14 @@ export const Footer = () => {
                 <ReduceLinesToZeroConfirmationModal
                   isOpen={reduceModal.isOpen}
                   onCancel={reduceModal.onClose}
+                  clearSelected={clearSelected}
                 />
               )}
               {changeLocationModal.isOpen && (
                 <ChangeLocationConfirmationModal
                   isOpen={changeLocationModal.isOpen}
                   onCancel={changeLocationModal.onClose}
+                  clearSelected={clearSelected}
                 />
               )}
             </>

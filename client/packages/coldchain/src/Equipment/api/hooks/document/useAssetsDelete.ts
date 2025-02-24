@@ -10,13 +10,13 @@ import { useAssets } from './useAssets';
 import { AssetFragment } from '../../operations.generated';
 
 export const useAssetsDelete = () => {
+  const t = useTranslation();
   const queryClient = useQueryClient();
-  const { data: rows } = useAssets();
   const api = useAssetApi();
+  const { data: rows } = useAssets();
   const { mutateAsync } = useMutation(async (id: string) =>
     api.delete(id, api.storeId)
   );
-  const t = useTranslation();
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
@@ -24,10 +24,14 @@ export const useAssetsDelete = () => {
       .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
       .filter(Boolean) as AssetFragment[],
   }));
+  const { clearSelected } = useTableStore();
 
   const deleteAction = async () => {
     await Promise.all(selectedRows.map(row => mutateAsync(row.id)))
-      .then(() => queryClient.invalidateQueries(api.keys.base()))
+      .then(() => {
+        queryClient.invalidateQueries(api.keys.base());
+        clearSelected();
+      })
       .catch(err => {
         throw err;
       });
