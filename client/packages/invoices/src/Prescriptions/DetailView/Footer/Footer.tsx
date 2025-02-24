@@ -58,7 +58,7 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
 export const FooterComponent: FC = () => {
   const t = useTranslation();
   const {
-    query: { data },
+    query: { data: prescription },
     isDisabled,
     rows: items,
   } = usePrescription();
@@ -98,8 +98,8 @@ export const FooterComponent: FC = () => {
   } = usePrintLabels();
 
   const handlePrintLabels = () => {
-    if (data) {
-      printPrescriptionLabels(data, selectedRows);
+    if (prescription) {
+      printPrescriptionLabels(prescription, selectedRows);
     }
   };
 
@@ -122,7 +122,7 @@ export const FooterComponent: FC = () => {
 
   // Don't show "Cancelled" status unless this prescription is already cancelled
   const statusList = prescriptionStatuses.filter(status =>
-    data?.status === InvoiceNodeStatus.Cancelled
+    prescription?.status === InvoiceNodeStatus.Cancelled
       ? true
       : status !== InvoiceNodeStatus.Cancelled
   );
@@ -145,7 +145,7 @@ export const FooterComponent: FC = () => {
               />
             </>
           )}
-          {data?.id && selectedRows.length === 0 && (
+          {prescription?.id && selectedRows.length === 0 && (
             <Box
               gap={2}
               display="flex"
@@ -155,7 +155,7 @@ export const FooterComponent: FC = () => {
             >
               <StatusCrumbs
                 statuses={statusList}
-                statusLog={createStatusLog(data)}
+                statusLog={createStatusLog(prescription)}
                 statusFormatter={getStatusTranslator(t)}
               />
 

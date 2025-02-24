@@ -42,7 +42,7 @@ export const usePrintLabels = () => {
     setIsPrintingLabels(true);
     const labels = lines.map(line => ({
       itemDetails: `${line.numberOfPacks * line.packSize} ${line.item.unitName}: ${line.itemName}`,
-      itemDirections: line.note,
+      itemDirections: line.note ?? '',
       patientDetails: `${prescription.patient?.name} - ${prescription.patient?.code}`,
       details: `${store?.name} - ${new Date(prescription.createdDatetime).toLocaleDateString()} - ${prescription.clinician?.lastName}, ${prescription.clinician?.firstName}`,
     }));
@@ -61,8 +61,7 @@ export const usePrintLabels = () => {
       })
       .catch(e => {
         error(`${t('error.printing-label')}: ${e.message}`)();
-      })
-      .finally(() => setIsPrintingLabels(false));
+      });
     setIsPrintingLabels(false);
   };
   return {
