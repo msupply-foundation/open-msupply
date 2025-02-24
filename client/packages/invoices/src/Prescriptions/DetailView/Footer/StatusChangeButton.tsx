@@ -92,6 +92,7 @@ const useStatusChangeButton = () => {
     data?.status !== InvoiceNodeStatus.Verified &&
     (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
 
+  // TODO: Don't show payment window if there is no insuranceProviders in the system
   const showPaymentWindow =
     lines != null &&
     lines.nodes.filter(({ totalAfterTax }) => totalAfterTax > 0).length > 0;
