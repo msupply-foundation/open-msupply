@@ -53,7 +53,7 @@ const UIComponent = (props: ControlProps) => {
     [schemaOptions]
   );
 
-  const clearable = !props.config?.required;
+  const clearable = !props.required;
 
   useEffect(() => {
     if (!data && clearable) {
@@ -67,7 +67,7 @@ const UIComponent = (props: ControlProps) => {
     } else if (schemaOptions?.freeText) {
       setLocalData({ value: data, label: data });
     }
-  }, [data, options, schemaOptions]);
+  }, [data, options, schemaOptions, clearable]);
 
   if (!props.visible) {
     return null;
