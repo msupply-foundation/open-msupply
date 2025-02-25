@@ -3,8 +3,11 @@ import React, { FC, ReactElement } from 'react';
 import {
   // ErrorWrapper,
   useDialog,
-  useFormErrors,
+  useFormErrorsHook,
+  // useFormErrors,
   useNotification,
+  ErrorWrapper,
+  ErrorDisplay,
 } from '@common/hooks';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
@@ -48,11 +51,10 @@ export const InsuranceModal: FC = (): ReactElement => {
     updatePatch: updateDraft,
   } = useInsurances(nameId);
 
-  const { ErrorWrapper, checkRequired, ErrorDisplay, resetRequired } =
-    useFormErrors(draft);
+  const { checkRequiredFields, resetRequiredErrors } = useFormErrorsHook(draft);
 
   const updatePatch: (newData: Partial<unknown>) => void = newData => {
-    resetRequired();
+    resetRequiredErrors();
     updateDraft(newData);
   };
 
@@ -81,8 +83,8 @@ export const InsuranceModal: FC = (): ReactElement => {
   };
 
   const handleSave = async (): Promise<void> => {
-    if (checkRequired()) {
-      console.log('Missing required');
+    if (checkRequiredFields(draft)) {
+      console.log('Missing fields');
       return;
     }
     if (insuranceId !== undefined) await handleInsuranceUpdate();

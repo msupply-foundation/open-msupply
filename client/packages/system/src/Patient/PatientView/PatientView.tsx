@@ -17,6 +17,7 @@ import {
   RouteBuilder,
   FnUtils,
   useUrlQuery,
+  FormErrorProvider,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { usePatient } from '../api';
@@ -412,7 +413,11 @@ export const PatientView = () => {
       {current === PatientModal.ContactTraceSearch ? (
         <CreateContactTraceModal />
       ) : null}
-      {current === PatientModal.Insurance ? <InsuranceModal /> : null}
+      {current === PatientModal.Insurance ? (
+        <FormErrorProvider>
+          <InsuranceModal />
+        </FormErrorProvider>
+      ) : null}
 
       <AppBarButtons disabled={!!createNewPatient} store={store} />
       <PatientSummary />
