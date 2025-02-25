@@ -16,9 +16,11 @@ import { z } from 'zod';
 
 export const programSearchTester = rankWith(10, uiTypeIs('ProgramSearch'));
 
-const PatientProgramSearchOptions = z.object({
-  programType: z.enum(['immunisation']).optional(),
-});
+const PatientProgramSearchOptions = z
+  .object({
+    programType: z.enum(['immunisation']).optional(),
+  })
+  .optional();
 
 const UIComponent = (props: ControlProps) => {
   const { errors: zErrors } = useZodOptionsValidation(
