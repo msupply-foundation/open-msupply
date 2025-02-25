@@ -125,13 +125,13 @@ export const InsuranceModal: FC = (): ReactElement => {
             }
           />
           <InputWithLabelRow
-            label={t('label.status')}
+            label={t('label.active')}
             Input={
               <Switch
-                label={draft.isActive ? t('label.active') : t('label.inactive')}
-                labelPlacement="end"
                 onChange={() => updatePatch({ isActive: !draft.isActive })}
                 checked={draft.isActive}
+                switchSx={{ left: '-13px' }}
+                color="secondary"
               />
             }
           />
