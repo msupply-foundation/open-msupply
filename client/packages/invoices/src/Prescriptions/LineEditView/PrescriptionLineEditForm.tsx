@@ -215,16 +215,14 @@ export const PrescriptionLineEditForm: React.FC<
   const note = prescriptionLineWithNote?.note ?? '';
 
   useEffect(() => {
-    const selectedItem = items.find(
-      prescriptionItem => prescriptionItem.id === item?.id
-    );
     if (preferences?.editPrescribedQuantityOnPrescription) {
-      const newPrescribedQuantity: number =
+      const selectedItem = items.find(
+        prescriptionItem => prescriptionItem.id === item?.id
+      );
+      const newPrescribedQuantity =
         selectedItem?.lines?.find(
-          ({ prescribedQuantity }) =>
-            prescribedQuantity != null && prescribedQuantity > 0
+          ({ prescribedQuantity }) => prescribedQuantity != null
         )?.prescribedQuantity ?? 0;
-
       setPrescribedQuantity(newPrescribedQuantity);
     }
 
@@ -234,17 +232,15 @@ export const PrescriptionLineEditForm: React.FC<
     if (newIssueQuantity !== issueUnitQuantity)
       setIssueUnitQuantity(newIssueQuantity);
     setAllocationAlerts([]);
-  }, [item?.id, allocatedUnits]);
 
-  useEffect(() => {
     if (items.find(prescriptionItem => prescriptionItem.id === item?.id))
       setAbbreviation('');
     setDefaultDirection('');
   }, [item?.id]);
 
   useEffect(() => {
-    if (!isAutoAllocated) setIssueUnitQuantity(allocatedUnits);
-  }, [packSizeController.selected?.value, allocatedUnits]);
+    setIssueUnitQuantity(allocatedUnits);
+  }, [allocatedUnits]);
 
   const key = item?.id ?? 'new';
 
@@ -333,6 +329,13 @@ export const PrescriptionLineEditForm: React.FC<
                     min={0}
                     decimalLimit={2}
                     onBlur={() => {}}
+                    slotProps={{
+                      htmlInput: {
+                        sx: {
+                          backgroundColor: 'background.white',
+                        },
+                      },
+                    }}
                   />
                 </Grid>
               )}
@@ -351,9 +354,7 @@ export const PrescriptionLineEditForm: React.FC<
                   slotProps={{
                     htmlInput: {
                       sx: {
-                        backgroundColor: disabled
-                          ? undefined
-                          : 'background.white',
+                        backgroundColor: 'background.white',
                       },
                     },
                   }}
@@ -361,10 +362,7 @@ export const PrescriptionLineEditForm: React.FC<
                   // errorMessage={formState.getError('issueQuantity')}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
-                  {t('label.unit-plural_one', {
-                    // unit-plural_one has been specified to deactivate pluralisation.
-                    // This is to handle the case where units have not been entered for the item.
-                    // see https://github.com/msupply-foundation/open-msupply/issues/5978
+                  {t('label.unit-plural', {
                     count: issueUnitQuantity,
                     unit: item?.unitName,
                   })}
