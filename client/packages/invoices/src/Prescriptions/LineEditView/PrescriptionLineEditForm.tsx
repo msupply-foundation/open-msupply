@@ -106,6 +106,7 @@ export const PrescriptionLineEditForm: React.FC<
     warning => setAllocationAlerts(warning),
     []
   );
+  const isDirectionsDisabled = !issueUnitQuantity;
 
   const allocate = (
     numPacks: number,
@@ -389,7 +390,7 @@ export const PrescriptionLineEditForm: React.FC<
               Input={
                 <BasicTextInput
                   value={abbreviation}
-                  disabled={!issueUnitQuantity}
+                  disabled={isDirectionsDisabled}
                   onChange={e => {
                     setAbbreviation(e.target.value);
                   }}
@@ -411,7 +412,7 @@ export const PrescriptionLineEditForm: React.FC<
                   ? defaultDirection
                   : t('placeholder.item-directions')
               }
-              disabled={!issueUnitQuantity}
+              disabled={isDirectionsDisabled}
             >
               {item.itemDirections.length == 0 ? (
                 <DropdownMenuItem sx={{ fontSize: 14 }}>
@@ -444,7 +445,7 @@ export const PrescriptionLineEditForm: React.FC<
               Input={
                 <TextArea
                   value={note}
-                  disabled={!issueUnitQuantity}
+                  disabled={isDirectionsDisabled}
                   onChange={e => {
                     updateNotes(e.target.value);
                     setAbbreviation('');
