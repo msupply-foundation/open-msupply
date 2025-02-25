@@ -26,6 +26,7 @@ export const BasicTextInput = React.forwardRef<
       style,
       slotProps,
       error,
+      errorMessage,
       required,
       textAlign,
       focusOnRender,
@@ -40,6 +41,8 @@ export const BasicTextInput = React.forwardRef<
         inputRef?.current?.focus();
       }
     }, []);
+
+    console.log('ERROR', error, errorMessage);
 
     return (
       <Box

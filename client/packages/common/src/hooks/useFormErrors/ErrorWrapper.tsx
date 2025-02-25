@@ -4,12 +4,14 @@ import { FormErrors } from './useFormErrors';
 interface ErrorWrapperProps {
   code: string;
   formErrors: FormErrors;
+  required?: boolean;
 }
 
 export const ErrorWrapper: React.FC<PropsWithChildren<ErrorWrapperProps>> = ({
   children,
   code,
   formErrors,
+  required = false,
 }) => {
   const { errors, setError, getError, hasErrors, clearErrors, getErrorSetter } =
     formErrors;

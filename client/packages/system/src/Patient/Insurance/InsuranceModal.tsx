@@ -1,6 +1,11 @@
 import React, { FC, ReactElement } from 'react';
 
-import { useDialog, useNotification } from '@common/hooks';
+import {
+  // ErrorWrapper,
+  useDialog,
+  useFormErrors,
+  useNotification,
+} from '@common/hooks';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
   BaseDatePickerInput,
@@ -11,13 +16,11 @@ import {
   NumericTextInput,
   Typography,
 } from '@common/components';
-
 import { Box, Stack } from '@openmsupply-client/common';
 import {
   PatientModal,
   usePatientModalStore,
 } from '@openmsupply-client/programs';
-
 import { usePatient } from '../api';
 import { InsurancePolicySelect } from './InsurancePolicySelect';
 import { InsuranceProvidersSelect } from './InsuranceProvidersSelect';
@@ -42,8 +45,16 @@ export const InsuranceModal: FC = (): ReactElement => {
     insuranceId,
     haveInsuranceId,
     draft,
-    updatePatch,
+    updatePatch: updateDraft,
   } = useInsurances(nameId);
+
+  const { ErrorWrapper, checkRequired, ErrorDisplay, resetRequired } =
+    useFormErrors(draft);
+
+  const updatePatch: (newData: Partial<unknown>) => void = newData => {
+    resetRequired();
+    updateDraft(newData);
+  };
 
   const handleInsuranceUpdate = async (): Promise<void> => {
     try {
@@ -70,6 +81,10 @@ export const InsuranceModal: FC = (): ReactElement => {
   };
 
   const handleSave = async (): Promise<void> => {
+    if (checkRequired()) {
+      console.log('Missing required');
+      return;
+    }
     if (insuranceId !== undefined) await handleInsuranceUpdate();
     else await handleInsuranceInsert();
   };
@@ -90,120 +105,145 @@ export const InsuranceModal: FC = (): ReactElement => {
         '& .MuiDialogContent-root': { display: 'flex', alignItems: 'center' },
       }}
     >
-      <Stack gap={8} flexDirection="row">
-        <Box display="flex" flexDirection="column" gap={2}>
-          <InputWithLabelRow
-            label={t('label.policy-number-family')}
-            Input={
-              <BasicTextInput
-                disabled={haveInsuranceId}
-                value={draft.policyNumberFamily}
-                onChange={event => {
-                  updatePatch({
-                    policyNumberFamily: event.target.value,
-                  });
-                }}
-              />
-            }
-          />
-          <InputWithLabelRow
-            label={t('label.policy-number-person')}
-            Input={
-              <BasicTextInput
-                disabled={haveInsuranceId}
-                value={draft.policyNumberPerson}
-                onChange={event => {
-                  updatePatch({
-                    policyNumberPerson: event.target.value,
-                  });
-                }}
-              />
-            }
-          />
-          <InsurancePolicySelect
-            policyType={draft.policyType}
-            onChange={value =>
-              updatePatch({
-                policyType: value,
-              })
-            }
-          />
-          <InputWithLabelRow
-            label={t('label.status')}
-            Input={
-              <Box sx={{ gap: 2, display: 'flex', flexDirection: 'row' }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Checkbox
-                    checked={draft.isActive}
-                    onChange={() => updatePatch({ isActive: true })}
+      <>
+        <Stack gap={8} flexDirection="row">
+          <Box display="flex" flexDirection="column" gap={2}>
+            <InputWithLabelRow
+              label={t('label.policy-number-family')}
+              Input={
+                <ErrorWrapper code="policyNumberFamily" required>
+                  <BasicTextInput
+                    disabled={haveInsuranceId}
+                    value={draft.policyNumberFamily}
+                    onChange={event => {
+                      updatePatch({
+                        policyNumberFamily: event.target.value,
+                      });
+                    }}
                   />
-                  <Typography variant="body1">{t('label.active')}</Typography>
-                </Box>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Checkbox
-                    checked={!draft.isActive}
-                    onChange={() => updatePatch({ isActive: false })}
+                </ErrorWrapper>
+              }
+            />
+            <InputWithLabelRow
+              label={t('label.policy-number-person')}
+              Input={
+                <ErrorWrapper code="policyNumberPerson" required>
+                  <BasicTextInput
+                    disabled={haveInsuranceId}
+                    value={draft.policyNumberPerson}
+                    onChange={event => {
+                      updatePatch({
+                        policyNumberPerson: event.target.value,
+                      });
+                    }}
                   />
-                  <Typography variant="body1">{t('label.inactive')}</Typography>
-                </Box>
-              </Box>
-            }
-          />
-        </Box>
-        <Box display="flex" flexDirection="column" gap={2}>
-          <InputWithLabelRow
-            label={t('label.expiry-date')}
-            Input={
-              <BaseDatePickerInput
-                value={DateUtils.getNaiveDate(draft.expiryDate)}
-                onChange={date => {
-                  if (date)
-                    updatePatch({
-                      expiryDate: formatDateTime.customDate(date, 'yyyy-MM-dd'),
-                    });
-                }}
+                </ErrorWrapper>
+              }
+            />
+            <ErrorWrapper code="policyType" required>
+              <InsurancePolicySelect
+                policyType={draft.policyType}
+                onChange={value =>
+                  updatePatch({
+                    policyType: value,
+                  })
+                }
               />
-            }
-          />
-          <InsuranceProvidersSelect
-            insuranceProviderId={draft.insuranceProviderId}
-            onChange={value => {
-              updatePatch({
-                insuranceProviderId: value,
-              });
-            }}
-          />
-          <InputWithLabelRow
-            label={t('label.discount-rate')}
-            Input={
-              <NumericTextInput
-                min={0}
-                decimalLimit={2}
-                value={draft.discountPercentage ?? 0}
+            </ErrorWrapper>
+            <InputWithLabelRow
+              label={t('label.status')}
+              Input={
+                <ErrorWrapper code="isActive">
+                  <Box sx={{ gap: 2, display: 'flex', flexDirection: 'row' }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Checkbox
+                        checked={draft.isActive}
+                        onChange={() => updatePatch({ isActive: true })}
+                      />
+                      <Typography variant="body1">
+                        {t('label.active')}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Checkbox
+                        checked={!draft.isActive}
+                        onChange={() => updatePatch({ isActive: false })}
+                      />
+                      <Typography variant="body1">
+                        {t('label.inactive')}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </ErrorWrapper>
+              }
+            />
+          </Box>
+          <Box display="flex" flexDirection="column" gap={2}>
+            <InputWithLabelRow
+              label={t('label.expiry-date')}
+              Input={
+                <ErrorWrapper code="expiryDate">
+                  <BaseDatePickerInput
+                    value={DateUtils.getNaiveDate(draft.expiryDate)}
+                    onChange={date => {
+                      if (date)
+                        updatePatch({
+                          expiryDate: formatDateTime.customDate(
+                            date,
+                            'yyyy-MM-dd'
+                          ),
+                        });
+                    }}
+                  />
+                </ErrorWrapper>
+              }
+            />
+            <ErrorWrapper code="insuranceProviderId">
+              <InsuranceProvidersSelect
+                insuranceProviderId={draft.insuranceProviderId}
                 onChange={value => {
-                  if (value) {
-                    updatePatch({
-                      discountPercentage: value,
-                    });
-                  }
+                  updatePatch({
+                    insuranceProviderId: value,
+                  });
                 }}
               />
-            }
-          />
-        </Box>
-      </Stack>
+            </ErrorWrapper>
+            <InputWithLabelRow
+              label={t('label.discount-rate')}
+              Input={
+                <ErrorWrapper code="discountPercentage">
+                  <NumericTextInput
+                    min={0}
+                    max={100}
+                    decimalLimit={2}
+                    value={draft.discountPercentage ?? 0}
+                    onChange={value => {
+                      if (value) {
+                        updatePatch({
+                          discountPercentage: value,
+                        });
+                      }
+                    }}
+                  />
+                </ErrorWrapper>
+              }
+            />
+          </Box>
+        </Stack>
+        <ErrorDisplay />
+      </>
     </Modal>
   );
 };
