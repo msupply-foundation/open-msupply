@@ -17,7 +17,7 @@ import {
 } from '../../api';
 import { useDraftIndicatorValue } from './hooks';
 import { CustomerIndicatorInfoView } from './CustomerIndicatorInfo';
-import { indicatorColumnNameToLocaleKey } from '../../../utils';
+import { indicatorColumnNameToLocal } from '../../../utils';
 
 interface IndicatorLineEditProps {
   requisitionNumber: number;
@@ -95,7 +95,7 @@ const InputWithLabel = ({
     <InputWithLabelRow
       Input={inputComponent}
       labelWidth={LABEL_WIDTH}
-      label={t(indicatorColumnNameToLocaleKey(data.name))}
+      label={indicatorColumnNameToLocal(data.name, t)}
       sx={{ marginBottom: 1 }}
     />
   );
