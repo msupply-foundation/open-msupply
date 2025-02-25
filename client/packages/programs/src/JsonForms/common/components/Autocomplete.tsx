@@ -46,7 +46,7 @@ const UIComponent = (props: ControlProps) => {
     props.uischema.options
   );
 
-  const [localData, setLocalData] = useState<DisplayOption | undefined>();
+  const [localData, setLocalData] = useState<DisplayOption | null>(null);
 
   const options: DisplayOption[] = useMemo(
     () => getDisplayOptions(schemaOptions),
@@ -57,7 +57,7 @@ const UIComponent = (props: ControlProps) => {
 
   useEffect(() => {
     if (!data && clearable) {
-      setLocalData(undefined);
+      setLocalData(null);
       return;
     }
 
@@ -110,7 +110,7 @@ const UIComponent = (props: ControlProps) => {
             flexBasis: '100%',
           }}
           options={options}
-          value={localData ?? null}
+          value={localData}
           // some type problem here, freeSolo seems to have type `undefined`
           freeSolo={schemaOptions?.freeText as undefined}
           onChange={onChange}
