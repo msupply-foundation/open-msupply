@@ -74,6 +74,7 @@ export const BasicTextInput = React.forwardRef<
           variant="standard"
           size="small"
           slotProps={{
+            ...slotProps,
             input: {
               disableInjectingGlobalStyles: true,
               disableUnderline: error ? true : false,
@@ -101,6 +102,9 @@ export const BasicTextInput = React.forwardRef<
               // Ignoring below, see https://github.com/mui/material-ui/issues/45041, use mergeSlotProps when it's available in MUI-6
               // @ts-ignore
               sx: { padding: 0.5, ...slotProps?.htmlInput?.sx },
+            },
+            inputLabel: {
+              ...slotProps?.inputLabel,
             },
           }}
           {...props}
