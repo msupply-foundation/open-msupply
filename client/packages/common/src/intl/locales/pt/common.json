@@ -1840,7 +1840,6 @@
   "button.select": "Selecionar",
   "header.add-lines-from-internal-order": "Adicionar linhas de um Pedido Interno",
   "title.new-sensor": "Novo sensor adicionado",
-  "report.satisfaction-rate-per-program": "Taxa de satisfação por programa",
   "title.patient-retrieval-modal": "Recuperação dos dados do paciente",
   "tooltip.import-fridge-tag": "Importar registos do ficheiro do Berlinger Fridge-tag e Q-tag. Um sensor será criado, se necessário, para cada ficheiro importado.",
   "warning.cannot-create-placeholder-units": "Há um total de {{allocatedQuantity}} unidades disponíveis. Não foi possível alocar {{requestedQuantity}} unidades.",
