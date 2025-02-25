@@ -302,7 +302,7 @@ impl GraphqlSchema {
                 .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)));
 
         // Initialisation schema should ony need service_provider
-        let initialisiation_builder = InitialisationSchema::build(
+        let initialisation_builder = InitialisationSchema::build(
             InitialisationQueries,
             InitialisationMutations,
             EmptySubscription,
@@ -311,7 +311,7 @@ impl GraphqlSchema {
 
         GraphqlSchema {
             operational: operational_builder.finish(),
-            initialisation: initialisiation_builder.finish(),
+            initialisation: initialisation_builder.finish(),
             is_operational: RwLock::new(is_operational),
         }
     }

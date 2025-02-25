@@ -1,11 +1,9 @@
-use super::{ItemNode, LocationNode, MasterListNode};
+use super::{ItemNode, LocationNode};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    loader::{
-        ItemLoader, LocationByIdLoader, MasterListByItemIdLoader, MasterListByItemIdLoaderInput,
-    },
+    loader::{ItemLoader, LocationByIdLoader},
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -106,28 +104,6 @@ impl StockLineNode {
 
     pub async fn barcode(&self) -> Option<&str> {
         self.stock_line.barcode()
-    }
-
-    pub async fn master_list(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-    ) -> Result<Vec<MasterListNode>> {
-        let loader = ctx.get_loader::<DataLoader<MasterListByItemIdLoader>>();
-        let master_list_option = loader
-            .load_one(MasterListByItemIdLoaderInput::new(
-                &store_id,
-                &self.item_row().id,
-            ))
-            .await?;
-
-        match master_list_option {
-            Some(master_list) => Ok(master_list
-                .into_iter()
-                .map(MasterListNode::from_domain)
-                .collect()),
-            None => Ok(vec![]),
-        }
     }
 }
 

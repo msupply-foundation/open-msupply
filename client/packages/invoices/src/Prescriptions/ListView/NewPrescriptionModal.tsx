@@ -40,7 +40,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
   openPatientModal,
 }) => {
   const t = useTranslation();
-  const { data: programData } = useProgramList(true);
+  const { data: programData } = useProgramList();
   const {
     create: { create, isCreating },
   } = usePrescription();
