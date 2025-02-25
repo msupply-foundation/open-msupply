@@ -389,7 +389,7 @@ export const PrescriptionLineEditForm: React.FC<
               Input={
                 <BasicTextInput
                   value={abbreviation}
-                  disabled={disabled}
+                  disabled={!issueUnitQuantity}
                   onChange={e => {
                     setAbbreviation(e.target.value);
                   }}
@@ -411,7 +411,7 @@ export const PrescriptionLineEditForm: React.FC<
                   ? defaultDirection
                   : t('placeholder.item-directions')
               }
-              disabled={disabled}
+              disabled={!issueUnitQuantity}
             >
               {item.itemDirections.length == 0 ? (
                 <DropdownMenuItem sx={{ fontSize: 14 }}>
@@ -444,7 +444,7 @@ export const PrescriptionLineEditForm: React.FC<
               Input={
                 <TextArea
                   value={note}
-                  disabled={disabled}
+                  disabled={!issueUnitQuantity}
                   onChange={e => {
                     updateNotes(e.target.value);
                     setAbbreviation('');
