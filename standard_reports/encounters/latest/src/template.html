@@ -1,5 +1,5 @@
 {% macro formatDate(datetime) %} {% if datetime %}{{ datetime |
-date(format="%d/%m/%Y") }}{% endif %} {% endmacro input %}
+date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% endif %} {% endmacro input %}
 
 <style>
   {% include "encounters.css" %}
