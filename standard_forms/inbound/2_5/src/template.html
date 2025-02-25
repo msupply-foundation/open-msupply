@@ -19,7 +19,7 @@
 
     <tr> 
         <td class="header_section_field_left">{{ data.invoice.otherParty.address1 }}</td> 
-        <td class="header_section_field_right">{{t(k="report.confirmed-date", f="Confirmed date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y") }}</td>
+        <td class="header_section_field_right">{{t(k="report.confirmed-date", f="Confirmed date")}}: {{ self::dateOrNA(datetime=data.invoice.deliveredDatetime) }}</td>
     </tr>
 
 </table>

@@ -3,13 +3,13 @@
 </style>
 
 {% macro dateOrNA(datetime) %} 
-{% if datetime %}{{ datetime | date(format="%d/%m/%Y") }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
+{% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
 {% endmacro input %}
 
 <table class="header_supplied_section">
     <tr> 
-        <td class="header_section_field_left">{{t(k="report.supplied-to",f="Supplied to")}}:</td> 
-        <td class="header_section_field_right">{{t(k="report.status", f="Status")}}: {{ data.invoice.status }}</td>
+        <td class="header_section_field_left">{{t(k="report.received-from",f="Received from")}}:</td> 
+        <td class="header_section_field_right">{{t(k="report.status", f="Status")}}: {{data.invoice.status}}</td>
     </tr> 
 
     <tr> 
@@ -19,10 +19,7 @@
 
     <tr> 
         <td class="header_section_field_left">{{ data.invoice.otherParty.address1 }}</td> 
-        <td class="header_section_field_right">
-            {{t(k="report.confirmed-date", f="Confirmed date")}}: {{
-            self::dateOrNA(datetime=data.invoice.pickedDatetime) }}
-          </td>
+        <td class="header_section_field_right">{{t(k="report.confirmed-date", f="Confirmed date")}}:{{ self::dateOrNA(datetime=data.invoice.deliveredDatetime) }}</td>
     </tr>
 
 </table>
@@ -34,13 +31,16 @@
     </tr> 
 
     <tr> 
-        <td class="header_section_field_left">{{t(k="label.entered-by",f="Entered by")}}: {{ data.invoice.user.username}}</td>
+        <td class="header_section_field_left">{{t(k="label.entered-by",f="Entered by")}}: {{ data.invoice.user.username | default(value='') }}</td>
         <td id= "date" class="header_section_field_right">{{t(k="report.invoice-type",f="Invoice type")}}: {{ data.invoice.type }}</td>
     </tr>
 
     <tr> 
-        <td class="header_section_field_left">{{t(k="report.created-date",f="Created date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y") }}</td>
-        <td class="header_section_field_right">{{t(k="report.shipped-date",f="Shipped date")}}: {{self::dateOrNA(datetime=data.invoice.shippedDatetime)}}</td>
+        <td class="header_section_field_left">{{t(k="report.created-date",f="Created date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}</td>
+        <td
+        class="header_section_field_right">{{t(k="report.shipped-date",f="Shipped
+        date")}}: {{ self::dateOrNA(datetime=data.invoice.shippedDatetime)
+        }}</td>
     </tr> 
 </table>
 
@@ -48,28 +48,32 @@
     <table class="body_section" cellpadding="2" cellspacing="0">
         <tr class="body_column_label">
             <th class="line_number" style="width: 20px;">{{t(k="report.line", f="Line")}}</th>
-            <th class="item_code" style="width: 80px;">{{t(k="report.item-code",f="Item code")}}</th>
+            <th class="location_code" style="width: 80px;">{{t(k="label.location",f="Location")}}</th>
             <th class="item_name" style="width: 500px;">{{t(k="report.item-name", f="Item name")}}</th>
             <th class="quantity" style="width: 50px;">{{t(k="label.quantity",f="Quantity")}}</th>
             <th class="pack" style="width: 50px;">{{t(k="report.pack-size",f="Pack size")}}</th>
             <th class="batch" style="width: 50px;">{{t(k="label.batch", f="Batch")}}</th>
             <th class="expiry" style="width: 80px;">{{t(k="label.expiry",f="Expiry")}}</th>
-            <th class="sell_price" style="width: 50px;">{{t(k="label.sell-price",f="Sell Price")}}</th>
-            <th class="cost_price" style="width: 80px;">{{t(k="label.cost-price",f="Cost Price")}}</th>
+            <th class="sell_price" style="width: 50px;">{{t(k="label.cost-price",f="Cost Price")}}</th>
+            <th class="cost_price" style="width: 80px;">{{t(k="label.sell-price",f="Sell Price")}}</th>
             <th class="total_extension" style="width: 50px;">{{t(k="report.extension",f="Extension")}}</th>
         </tr>
         {% for line in data.invoiceLines.nodes -%}
         <tr class="body_value">
             <td class="line_number" style="width: 20px;">{{ loop.index }}</td>
-            <td class="item_code" style="width: 80px;">{{ line.itemCode }}</td>
+            {% if line.location.code %}
+            <td class="location_code" style="width: 80px;">{{ line.location.code }}</td>
+            {% else %}
+            <td class="location_code" style="width: 80px;"></td>
+            {% endif %}
             <td class="item_name" style="width: 350px;">{{ line.itemName }}</td>
             <td class="quantity" style="width: 50px;">{{ line.numberOfPacks }}</td>
             <td class="pack" style="width: 50px;">{{ line.packSize }}</td>
             <td class="batch" style="width: 50px;">{{ line.batch }}</td>
             <td class="expiry" style="width: 80px;">{{ line.expiryDate }}</td>
-            <td class="sell_price" style="width: 50px;">{{ line.sellPricePerPack }}</td>
-            <td class="cost_price" style="width: 80px;">{{ line.costPricePerPack   }}</td>
-            <td class="total_extension" style="width: 50px;">{{ line.numberOfPacks * line.sellPricePerPack }}</td>
+            <td class="sell_price" style="width: 50px;">{{ line.costPricePerPack }}</td>
+            <td class="cost_price" style="width: 80px;">{{ line.sellPricePerPack   }}</td>
+            <td class="total_extension" style="width: 50px;">{{ line.numberOfPacks * line.costPricePerPack }}</td>
         </tr>
         {%- endfor %}
     </table>
@@ -78,14 +82,14 @@
 <table class="body_total_section" cellpadding="2" cellspacing="0">
     <tr class="body_total_column_label">
         <th class="line_number" style="width: 20px;"></th>
-        <th class="item_code" style="width: 80px;"></th>
+        <th class="location_code" style="width: 80px;"></th>
         <th class="item_name" style="width: 350px;"></th>
         <th class="quantity" style="width: 50px;"></th>
         <th class="pack" style="width: 50px;"></th>
         <th class="batch" style="width: 50px;"></th>
         <th class="expiry" style="width: 80px;"></th>
         <th class="sell_price" style="width: 50px;"></th>
-        <th class="cost_price" style="width: 80px;">{{t(k="label.total",f="Total")}}:</th>
+        <th class="cost_price" style="width: 80px;">Total:</th>
         <th class="total_extension" style="width: 50px;">{{ data.invoice.pricing.totalAfterTax }}</th>
     </tr>
 </table>
