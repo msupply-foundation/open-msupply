@@ -60,7 +60,7 @@ export const SupplierReturnEditModal = ({
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const formErrors = useFormErrors();
+  const formErrorState = useFormErrors();
 
   const { lines, update, save } = useDraftSupplierReturnLines({
     supplierId,
@@ -131,7 +131,7 @@ export const SupplierReturnEditModal = ({
       variant="next-and-ok"
       disabled={
         currentTab !== Tabs.Reason ||
-        formErrors.hasErrors ||
+        formErrorState.hasErrors ||
         (isDisabled && !hasNextItem) ||
         (modalMode === ModalMode.Update && !hasNextItem)
       }
@@ -170,7 +170,7 @@ export const SupplierReturnEditModal = ({
               returnId={returnId}
               zeroQuantityAlert={zeroQuantityAlert}
               setZeroQuantityAlert={setZeroQuantityAlert}
-              formErrors={formErrors}
+              formErrorState={formErrorState}
             />
           )}
         </Box>

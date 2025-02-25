@@ -357,6 +357,8 @@ export const PrescriptionLineEditForm: React.FC<
                       },
                     },
                   }}
+                  // error
+                  // errorMessage={formState.getError('issueQuantity')}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
                   {t('label.unit-plural_one', {

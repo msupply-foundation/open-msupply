@@ -78,7 +78,8 @@ export const NumberInputCell = <T extends RecordWithId>({
       width={width}
       endAdornment={endAdornment}
       error={error}
-      errorMessage="This is an error"
+      errorMessage={errorMessage}
+      setError={setError}
     />
   );
 };

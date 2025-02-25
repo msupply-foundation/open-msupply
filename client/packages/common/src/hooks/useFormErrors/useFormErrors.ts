@@ -12,10 +12,6 @@ export interface FormErrors {
   getErrorSetter: (code: string) => (error: string | null) => void;
 }
 
-// export interface FormElementProps {
-//   merr
-// }
-
 export const useFormErrors = () => {
   const [errorState, setErrorState] = useState<ErrorState>({});
 
@@ -55,8 +51,6 @@ export const useFormErrors = () => {
     clearErrors,
     getErrorSetter,
   };
-
-  console.log('returnState', returnState);
 
   return returnState;
 };

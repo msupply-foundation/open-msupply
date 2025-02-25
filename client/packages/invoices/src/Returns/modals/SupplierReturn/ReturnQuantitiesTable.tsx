@@ -5,9 +5,10 @@ import {
   CellProps,
   ColumnDescription,
   FormErrors,
+  ErrorWrapper,
 } from '@openmsupply-client/common';
 
-import React, { Children, PropsWithChildren, useCallback } from 'react';
+import React from 'react';
 import { GenerateSupplierReturnLineFragment } from '../../api';
 
 export const QuantityToReturnTableComponent = ({
@@ -21,26 +22,8 @@ export const QuantityToReturnTableComponent = ({
     line: Partial<GenerateSupplierReturnLineFragment> & { id: string }
   ) => void;
   isDisabled: boolean;
-  formErrors: FormErrors;
+  formErrorState: FormErrors;
 }) => {
-  // const NumberOfPacksToReturnReturnInputCell: React.FC<
-  //   CellProps<GenerateSupplierReturnLineFragment>
-  // > = React.memo(props => {
-  //   const code = props.rowData.id;
-  //   console.log('props', props);
-  //   return (
-  //     // <ErrorWrapper formErrors={props.formErrors} code={props.rowData.id}>
-  //     <NumberInputCell
-  //       {...props}
-  //       isRequired
-  //       max={props.rowData.availableNumberOfPacks}
-  //       // code={props.rowData.id}
-  //       // errorMessage="This is an error"
-  //     />
-  //     // </ErrorWrapper>
-  //   );
-  // });
-
   const columnDescriptions: ColumnDescription<GenerateSupplierReturnLineFragment>[] =
     [
       'itemCode',
@@ -70,9 +53,6 @@ export const QuantityToReturnTableComponent = ({
           getIsDisabled: () => isDisabled,
           Cell: NumberOfPacksToReturnReturnInputCell,
           cellProps: { formErrors },
-          //  props => (
-          //   <NumberInputCell {...props} decimalLimit={2} min={0} />
-          // <NumberOfPacksToReturnReturnInputCell {...props} />
         },
       ],
     ];
@@ -93,45 +73,19 @@ export const QuantityToReturnTableComponent = ({
   );
 };
 
-// Input cells can't be defined inline, otherwise they lose focus on re-render
 const NumberOfPacksToReturnReturnInputCell: React.FC<
   CellProps<GenerateSupplierReturnLineFragment>
-> = ({ formErrors, ...props }) => {
-  const code = props.rowData.id;
-  console.log('props', formErrors);
+> = ({ formErrorState, ...props }) => {
+  console.log('formErrors', formErrorState);
   return (
-    <ErrorWrapper formErrors={formErrors} code={props.rowData.id}>
+    <ErrorWrapper formErrors={formErrorState} code={props.rowData.id}>
       <NumberInputCell
         {...props}
         isRequired
         max={props.rowData.availableNumberOfPacks}
-        // code={props.rowData.id}
-        // errorMessage="This is an error"
       />
     </ErrorWrapper>
   );
 };
 
 export const QuantityToReturnTable = React.memo(QuantityToReturnTableComponent);
-
-interface ErrorWrapperProps {
-  code: string;
-  formErrors: FormErrors;
-}
-
-const ErrorWrapper: React.FC<PropsWithChildren<ErrorWrapperProps>> = ({
-  children,
-  code,
-  formErrors,
-}) => {
-  const { errors, setError, getError, hasErrors, clearErrors, getErrorSetter } =
-    formErrors;
-
-  const errorMessage = errors[code] ?? undefined;
-  const error = !!errorMessage;
-  const setThisError = useCallback(() => getErrorSetter(code), [code]);
-
-  return Children.map(children, child =>
-    React.cloneElement(child, { error, errorMessage, setError: setThisError })
-  );
-};

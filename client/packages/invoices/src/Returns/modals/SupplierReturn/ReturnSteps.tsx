@@ -27,7 +27,7 @@ interface ReturnStepsProps {
     React.SetStateAction<AlertColor | undefined>
   >;
   returnId?: string;
-  formErrors: FormErrors;
+  formErrorState: FormErrors;
 }
 
 export const ReturnSteps = ({
@@ -37,7 +37,7 @@ export const ReturnSteps = ({
   zeroQuantityAlert,
   setZeroQuantityAlert,
   returnId,
-  formErrors,
+  formErrorState,
 }: ReturnStepsProps) => {
   const t = useTranslation();
   const isDisabled = useReturns.utils.supplierIsDisabled();
@@ -73,7 +73,7 @@ export const ReturnSteps = ({
             if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
             update(line);
           }}
-          formErrors={formErrors}
+          formErrorState={formErrorState}
         />
       </TabPanel>
       <TabPanel value={Tabs.Reason}>

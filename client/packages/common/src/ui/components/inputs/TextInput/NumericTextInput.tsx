@@ -175,7 +175,7 @@ export type NumericTextInputProps = NumericInputProps &
     onChange?: (value: number | undefined) => void;
     endAdornment?: string;
     errorMessage?: string | null;
-    setError: (error: string) => void;
+    setError?: (error: string) => void;
   };
 
 export const DEFAULT_NUMERIC_TEXT_INPUT_WIDTH = 75;
@@ -335,6 +335,10 @@ export const NumericTextInput = React.forwardRef<
           // setTextValue(
           //   noFormatting ? String(constrained) : format(constrained)
           // );
+          if (parsed > max && setError) {
+            console.log('ERROR TOO BIG');
+            setError('Too big');
+          }
           onChange(parsed);
         }}
         onKeyDown={e => {
@@ -353,7 +357,10 @@ export const NumericTextInput = React.forwardRef<
           //   min,
           //   max
           // );
-          if (newNum > max) setError('Too big');
+          if (newNum > max && setError) {
+            console.log('ERROR TOO BIG');
+            setError('Too big');
+          }
           setTextValue(formatValue(newNum));
           onChange(newNum);
         }}
@@ -371,7 +378,7 @@ export const NumericTextInput = React.forwardRef<
         onFocus={e => e.target.select()}
         fullWidth={fullWidth}
         {...props}
-        helperText={errorMessage}
+        helperText={errorMessage ?? props.helperText}
         error={error}
         value={textValue}
       />
