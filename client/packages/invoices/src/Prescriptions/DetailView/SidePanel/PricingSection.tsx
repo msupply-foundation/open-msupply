@@ -15,13 +15,17 @@ export const PricingSectionComponent = () => {
   const t = useTranslation();
   const c = useFormatCurrency();
 
-  const prescriptionData = usePrescription().query.data;
+  const {
+    query: { data: prescriptionData}
+  } = usePrescription();
   const pricing = prescriptionData?.pricing;
   if (!pricing) return null;
 
   const insuranceId = prescriptionData.nameInsuranceJoinId;
   const { storeId } = usePrescriptionGraphQL()
-  const insuranceData = useInsurance(insuranceId, storeId)?.query.data;
+  const {
+    query: {data: insuranceData}
+   } = useInsurance(insuranceId, storeId);
 
   return (
     <DetailPanelSection title={t('heading.pricing')}>
