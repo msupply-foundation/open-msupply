@@ -12,7 +12,7 @@ const BACKEND_PLUGIN: (&str, &str) = (
         "id":  "backend_plugin",
         "bundle_base64": "bundle_base64",
         "code": "code",
-        "types": ["AMC"],
+        "types": ["average_monthly_consumption"],
         "variant_type": "BOA_JS"
     }"#,
 );
@@ -22,7 +22,7 @@ fn backend_plugin() -> BackendPluginRow {
         id: BACKEND_PLUGIN.0.to_string(),
         code: "code".to_string(),
         bundle_base64: "bundle_base64".to_string(),
-        types: PluginTypes(vec![PluginType::Amc]),
+        types: PluginTypes(vec![PluginType::AverageMonthlyConsumption]),
         variant_type: PluginVariantType::BoaJs,
     }
 }

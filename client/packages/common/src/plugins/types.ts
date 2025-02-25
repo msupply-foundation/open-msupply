@@ -20,7 +20,8 @@ export type Plugins = {
   };
   requestRequisitionColumn?: {
     StateLoader: React.ComponentType<{ requestLines: RequestLineFragment[] }>[];
-    columns: ColumnDefinition<RequestLineFragment>[];
+    tableColumns: ColumnDefinition<RequestLineFragment>[];
+    editViewColumns: React.ComponentType<{ line: RequestLineFragment }>[];
   };
 };
 

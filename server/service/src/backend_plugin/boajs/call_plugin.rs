@@ -5,6 +5,7 @@ use boa_engine::{
     JsValue, Module, Source,
 };
 
+use repository::PluginType;
 use serde::{de::DeserializeOwned, Serialize};
 use thiserror::Error;
 
@@ -30,9 +31,13 @@ impl PartialEq for BoaJsPluginError {
     }
 }
 
+fn plugin_type_to_string(r#type: &PluginType) -> String {
+    serde_json::to_string(r#type).unwrap().replace("\"", "")
+}
+
 pub(crate) fn call_plugin<I, O>(
     input: I,
-    name: &str,
+    r#type: &PluginType,
     bundle: &Vec<u8>,
 ) -> Result<O, BoaJsPluginError>
 where
@@ -40,6 +45,8 @@ where
     O: DeserializeOwned,
 {
     use BoaJsPluginError as Error;
+    let r#type = plugin_type_to_string(r#type);
+
     // Initialise context with loader
     let loader = Rc::new(SimpleModuleLoader::new(Path::new("."))?);
     let mut context = &mut Context::builder().module_loader(loader.clone()).build()?;
@@ -53,7 +60,7 @@ where
     context.run_jobs();
     match promise.state() {
         PromiseState::Fulfilled(JsValue::Undefined) => {}
-        _ => return Err(Error::LoadingModule(name.to_string())),
+        _ => return Err(Error::LoadingModule(r#type.clone())),
     }
 
     // TODO should these be bound as camel case ? Also for inputs and outputs ?
@@ -61,20 +68,21 @@ where
     methods::sql::bind_method(context)?;
     methods::sql_type::bind_method(context)?;
     methods::get_store_preferences::bind_method(context)?;
+    methods::get_plugin_data::bind_method(context)?;
 
     let namespace = module.namespace(context);
     let plugins = namespace
         .get(js_string!("plugins"), context)?
         .as_object()
         .cloned()
-        .ok_or_else(|| Error::PluginNamespaceMissing(name.to_string()))?;
+        .ok_or_else(|| Error::PluginNamespaceMissing(r#type.clone()))?;
 
-    let key = js_string!(name);
+    let key = js_string!(r#type.as_str());
     let plugin = plugins
         .get(key, context)?
         .as_callable()
         .cloned()
-        .ok_or_else(|| Error::PluginMissing(name.to_string()))?;
+        .ok_or_else(|| Error::PluginMissing(r#type.clone()))?;
 
     let input: serde_json::Value = serde_json::to_value(&input)?;
     let js_input = JsValue::from_json(&input, &mut context)?;

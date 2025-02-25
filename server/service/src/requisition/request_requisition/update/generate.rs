@@ -1,6 +1,6 @@
 use super::{UpdateRequestRequisition, UpdateRequestRequisitionStatus};
 use crate::{
-    backend_plugin::{plugin_provider::PluginInstance, types::transform_requisition_lines},
+    backend_plugin::{plugin_provider::PluginInstance, types::transform_request_requisition_lines},
     requisition::{
         common::get_lines_for_requisition,
         request_requisition::{generate_suggested_quantity, GenerateSuggestedQuantity},
@@ -120,13 +120,13 @@ pub fn generate_updated_lines(
         )
         .collect();
 
-    let Some(plugin) = PluginInstance::get_one(PluginType::TransformRequisitionLines) else {
+    let Some(plugin) = PluginInstance::get_one(PluginType::TransformRequestRequisitionLines) else {
         return Ok((lines, Vec::new()));
     };
 
-    let result = transform_requisition_lines::Trait::call(
+    let result = transform_request_requisition_lines::Trait::call(
         &(*plugin),
-        transform_requisition_lines::Input {
+        transform_request_requisition_lines::Input {
             requisition: requisition.clone(),
             lines,
         },

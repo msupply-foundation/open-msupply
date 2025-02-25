@@ -4,20 +4,26 @@ use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     DBType, EqualFilter, Pagination, PluginDataRow, RepositoryError, Sort,
 };
-
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct PluginData {
     pub plugin_data: PluginDataRow,
 }
 
-#[derive(Clone, PartialEq, Debug, Default)]
+#[derive(Clone, PartialEq, Debug, Default, TS, Serialize, Deserialize)]
 pub struct PluginDataFilter {
+    #[ts(optional)]
     pub id: Option<EqualFilter<String>>,
+    #[ts(optional)]
     pub plugin_code: Option<EqualFilter<String>>,
+    #[ts(optional)]
     pub related_record_id: Option<EqualFilter<String>>,
+    #[ts(optional)]
     pub data_identifier: Option<EqualFilter<String>>,
+    #[ts(optional)]
     pub store_id: Option<EqualFilter<String>>,
 }
 

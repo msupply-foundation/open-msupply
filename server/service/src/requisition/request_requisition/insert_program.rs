@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     activity_log::activity_log_entry,
     backend_plugin::plugin_provider::PluginError,
@@ -229,8 +231,13 @@ fn generate(
         .map(|line| line.item_id)
         .collect();
 
-    let (requisition_lines, plugin_data_rows) =
-        generate_requisition_lines(ctx, &ctx.store_id, &requisition, program_item_ids)?;
+    let (requisition_lines, plugin_data_rows) = generate_requisition_lines(
+        ctx,
+        &ctx.store_id,
+        &requisition,
+        program_item_ids,
+        HashMap::new(),
+    )?;
 
     let program_indicators = program_indicators(
         connection,
