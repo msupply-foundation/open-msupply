@@ -35,6 +35,7 @@ const UIComponent = (props: ControlProps) => {
   const onChange = async (program: ProgramFragment) => {
     setProgram(program);
     handleChange(path, program.id);
+    handleChange('elmisCode', program.elmisCode);
   };
 
   if (zErrors) return <Typography color="error">{zErrors}</Typography>;

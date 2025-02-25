@@ -1,11 +1,14 @@
-use super::{ItemDirectionNode, ItemStatsNode, ItemVariantNode, StockLineConnector};
+use super::{
+    ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode, StockLineConnector,
+};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::{
     loader::{
         ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemVariantsByItemIdLoader,
         ItemsStatsForItemLoader, ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput,
-        StockLineByItemAndStoreIdLoader, StockLineByItemAndStoreIdLoaderInput,
+        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
+        StockLineByItemAndStoreIdLoaderInput,
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
@@ -187,6 +190,27 @@ impl ItemNode {
 
     pub async fn ddd(&self) -> String {
         self.legacy_string("ddd_value")
+    }
+
+    pub async fn master_lists(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<Vec<MasterListNode>>> {
+        let loader = ctx.get_loader::<DataLoader<MasterListByItemIdLoader>>();
+        let master_list_option = loader
+            .load_one(MasterListByItemIdLoaderInput::new(
+                &store_id,
+                &self.row().id,
+            ))
+            .await?;
+
+        Ok(master_list_option.map(|master_list| {
+            master_list
+                .into_iter()
+                .map(MasterListNode::from_domain)
+                .collect()
+        }))
     }
 }
 
