@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     backend_plugin::plugin_provider::PluginError,
     item::item::check_item_exists,
@@ -124,14 +126,15 @@ fn generate(
         item_id,
     }: InsertRequestRequisitionLine,
 ) -> Result<(RequisitionLineRow, Vec<PluginDataRow>), OutError> {
-    let (mut requisition_lines, plugin_data) =
-        generate_requisition_lines(ctx, store_id, &requisition_row, vec![item_id])?;
+    let mut with_id_map = HashMap::new();
+    with_id_map.insert(item_id.clone(), id);
 
-    let mut new_requisition_line = requisition_lines
+    let (mut requisition_lines, plugin_data) =
+        generate_requisition_lines(ctx, store_id, &requisition_row, vec![item_id], with_id_map)?;
+
+    let new_requisition_line = requisition_lines
         .pop()
         .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
-
-    new_requisition_line.id = id;
 
     Ok((new_requisition_line, plugin_data))
 }

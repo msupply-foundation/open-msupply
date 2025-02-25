@@ -1,5 +1,6 @@
 use crate::backend_plugin::{plugin_provider::PluginInstance, *};
 use plugin_provider::{call_plugin, PluginResult};
+use repository::PluginType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ts_rs::TS;
@@ -30,6 +31,10 @@ pub trait Trait: Send + Sync {
 // TODO as macro ? Can do types here too
 impl self::Trait for PluginInstance {
     fn call(&self, input: Input) -> PluginResult<Output> {
-        Ok(call_plugin(input, "average_monthly_consumption", self)?)
+        Ok(call_plugin(
+            input,
+            PluginType::AverageMonthlyConsumption,
+            self,
+        )?)
     }
 }

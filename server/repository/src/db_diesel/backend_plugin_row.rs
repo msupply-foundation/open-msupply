@@ -8,10 +8,10 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(rename_all = "snake_case")]
 pub enum PluginType {
-    Amc,
-    TransformRequisitionLines,
+    AverageMonthlyConsumption,
+    TransformRequestRequisitionLines,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
@@ -201,7 +201,10 @@ mod test {
         let repo = BackendPluginRowRepository::new(&connection);
         let id = "backend_plugin_row".to_string();
 
-        let types = PluginTypes(vec![PluginType::Amc, PluginType::Amc]);
+        let types = PluginTypes(vec![
+            PluginType::AverageMonthlyConsumption,
+            PluginType::AverageMonthlyConsumption,
+        ]);
         let _ = repo.upsert_one(BackendPluginRow {
             id: id.clone(),
             types: types.clone(),
@@ -216,6 +219,9 @@ mod test {
             .unwrap();
 
         // Showing that types serializes to a readable text in DB field
-        assert_eq!(result[0].types, r#"["AMC","AMC"]"#);
+        assert_eq!(
+            result[0].types,
+            r#"["average_monthly_consumption","average_monthly_consumption"]"#
+        );
     }
 }

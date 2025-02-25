@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     backend_plugin::plugin_provider::PluginError,
     requisition::common::{check_requisition_row_exists, get_lines_for_requisition},
@@ -127,6 +129,7 @@ fn generate(
         store_id,
         &requisition_row,
         items_ids_not_in_requisition,
+        HashMap::new(),
     )
 }
 

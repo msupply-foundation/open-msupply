@@ -13,9 +13,9 @@ use crate::{backend_plugin::boajs, service_provider::ServiceProvider};
 use super::boajs::BoaJsPluginError;
 
 #[derive(Debug, Error, PartialEq)]
-#[error("Error in plugin {name}")]
+#[error("Error in plugin {r#type:?}")]
 pub struct PluginError {
-    name: String,
+    r#type: PluginType,
     #[source]
     variant: PluginErrorVariant,
 }
@@ -69,21 +69,22 @@ impl PluginContext {
     }
 }
 
-pub(crate) fn call_plugin<I, O>(input: I, name: &str, plugin: &PluginInstance) -> PluginResult<O>
+pub(crate) fn call_plugin<I, O>(
+    input: I,
+    r#type: PluginType,
+    plugin: &PluginInstance,
+) -> PluginResult<O>
 where
     I: Serialize,
     O: DeserializeOwned,
 {
     let result = match plugin {
         PluginInstance::BoaJs(bundle) => {
-            boajs::call_plugin(input, name, &bundle).map_err(Into::into)
+            boajs::call_plugin(input, &r#type, &bundle).map_err(Into::into)
         }
     };
 
-    result.map_err(|variant| PluginError {
-        name: name.to_string(),
-        variant,
-    })
+    result.map_err(|variant| PluginError { r#type, variant })
 }
 
 #[derive(Serialize, Deserialize, Default)]

@@ -1,3 +1,4 @@
+pub(crate) mod get_plugin_data;
 pub(crate) mod get_store_preferences;
 pub(crate) mod log;
 pub(crate) mod sql;
