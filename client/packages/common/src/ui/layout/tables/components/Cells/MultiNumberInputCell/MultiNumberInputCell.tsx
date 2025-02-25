@@ -102,7 +102,13 @@ export const MultipleNumberInputCell = <T extends RecordWithId>({
           {...TextInputProps}
           slotProps={{
             input: {
-              sx: { '& .MuiInput-input': { textAlign: 'right' } },
+              sx: {
+                '& .MuiInput-input': { textAlign: 'right' },
+                '& .MuiInputAdornment-root': {
+                  paddingY: 0.5,
+                  paddingRight: 0.25,
+                },
+              },
               ...TextInputProps?.InputProps,
             },
           }}
