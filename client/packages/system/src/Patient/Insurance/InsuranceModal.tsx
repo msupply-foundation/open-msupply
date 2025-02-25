@@ -5,9 +5,11 @@ import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
   BaseDatePickerInput,
   BasicTextInput,
+  Checkbox,
   DialogButton,
   InputWithLabelRow,
   NumericTextInput,
+  Typography,
 } from '@common/components';
 
 import { Box, Stack } from '@openmsupply-client/common';
@@ -19,7 +21,6 @@ import {
 import { usePatient } from '../api';
 import { InsurancePolicySelect } from './InsurancePolicySelect';
 import { InsuranceProvidersSelect } from './InsuranceProvidersSelect';
-import { InsuranceStatusToggle } from './InsuranceStatusToggle';
 import { useInsurances } from '../apiModern/hooks/useInsurances';
 
 export const InsuranceModal: FC = (): ReactElement => {
@@ -127,12 +128,37 @@ export const InsuranceModal: FC = (): ReactElement => {
               })
             }
           />
-          <InsuranceStatusToggle
-            isActive={draft.isActive}
-            onChange={isActive =>
-              updatePatch({
-                isActive,
-              })
+          <InputWithLabelRow
+            label={t('label.status')}
+            Input={
+              <Box sx={{ gap: 2, display: 'flex', flexDirection: 'row' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Checkbox
+                    checked={draft.isActive}
+                    onChange={() => updatePatch({ isActive: true })}
+                  />
+                  <Typography variant="body1">{t('label.active')}</Typography>
+                </Box>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Checkbox
+                    checked={!draft.isActive}
+                    onChange={() => updatePatch({ isActive: false })}
+                  />
+                  <Typography variant="body1">{t('label.inactive')}</Typography>
+                </Box>
+              </Box>
             }
           />
         </Box>
