@@ -65,7 +65,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
       setReportWithArgs(report);
     } else {
       const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
-      // passing timezone through if report does not have arguments
+      // passing timezone through as forms do not have arguments
       onPrint(report, { timezone });
     }
   };
