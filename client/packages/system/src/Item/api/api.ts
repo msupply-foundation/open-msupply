@@ -124,8 +124,8 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         filter: {
           ...filterBy,
           isVaccine: true,
-          isActive: true, // TODO remove this test
-          isVisible: true, // TODO remove this test
+          isActive: true,
+          isVisible: true,
         },
       });
 
