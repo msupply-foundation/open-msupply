@@ -128,7 +128,7 @@ export const InsuranceModal: FC = (): ReactElement => {
             label={t('label.status')}
             Input={
               <Switch
-                label={t('label.active')}
+                label={draft.isActive ? t('label.active') : t('label.inactive')}
                 labelPlacement="end"
                 onChange={() => updatePatch({ isActive: !draft.isActive })}
                 checked={draft.isActive}
