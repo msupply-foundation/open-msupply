@@ -23,6 +23,7 @@ interface HistoryModalModalProps {
   draft: Draft | null;
   mode: ModalMode | null;
   patientId: string;
+  invoiceId: string;
 }
 
 export interface HistoryItem {
@@ -38,11 +39,13 @@ export const HistoryModal: React.FC<HistoryModalModalProps> = ({
   isOpen,
   onClose,
   patientId,
+  invoiceId,
 }) => {
   const {
     query: { data, isLoading },
   } = usePrescriptionList({
     filterBy: {
+      id: { notEqualTo: invoiceId },
       otherPartyId: { equalTo: patientId },
       status: { notEqualTo: InvoiceNodeStatus.New },
     },
