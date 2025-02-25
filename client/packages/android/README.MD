@@ -61,9 +61,11 @@ Go to Android Studio settings -> Build -> Build Settings
 
 You may also see prompts in Android Studio to sync - keep an eye out for these and run the sync as needed
 
+If you don't see the option to change Gradle JDK to `17.07.7-tem`, then open the android folder from the OMS repo in Android Studio.
+
 ## Running Android Studio
 
-You can now use `yarn build:server` from the `server/android/` directory, this builds the `libremote_server_lib.so` binaries and relocate them to `app/src/main/jniLibs`.
+You can now use `yarn build:server` from the `client/packages/android/` directory, this builds the `libremote_server_lib.so` binaries and relocate them to `app/src/main/jniLibs`.
 Please see `client/packages/android/app/src/main/java/org/openmsupply/client/RemoteServer.java` for more details of how these libs are loaded.
 It's important to note that web app is bundled in the remote server binary, and web app needs to be built from `client` directory with `yarn build` command, so it's best to use `yarn android:build:server` from client directory as it does both (builds web app and then build android remote server).
 
@@ -115,7 +117,7 @@ Debugging web app code is done by opening `chrome://inspect`, you should see the
 
 Please note that when debugging with live reload, connections to a discovered server will always go through to the webpack server (regardless of which server is being selected).
 
-It's  also a good idea to connect your local chrome browser to emulator or device, by going to chrome://inspect, this is especially helpful when needing to refresh the app, read consoles or inspect network traffic
+It's also a good idea to connect your local chrome browser to emulator or device, by going to chrome://inspect, this is especially helpful when needing to refresh the app, read consoles or inspect network traffic
 
 When running the Android app in an emulator the service discovery will not work outside of the emulator network, to test discovery you will need to run the app on a physical device.
 

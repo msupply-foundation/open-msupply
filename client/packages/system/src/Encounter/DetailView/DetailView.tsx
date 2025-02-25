@@ -11,14 +11,10 @@ import {
   Breadcrumb,
   useIntlUtils,
   EncounterNodeStatus,
-  useDialog,
-  DialogButton,
-  ButtonWithIcon,
-  SaveIcon,
   DetailTabs,
   useConfirmOnLeaving,
   useConfirmationModal,
-  useToggle,
+  useEditModal,
   isEmpty,
 } from '@openmsupply-client/common';
 import {
@@ -41,6 +37,7 @@ import { VaccinationCard } from '../../Vaccination/Components/VaccinationCard';
 import { ScheduleNextEncounterModal } from './ScheduleNextEncounterModal';
 import { usePatientVaccineCard } from '../../Vaccination/api/usePatientVaccineCard';
 import { getNextVaccinationEncounterDate } from './helpers';
+import { useSaveWithStatusChange } from './useSaveWithStatusChange';
 
 const getPatientBreadcrumbSuffix = (
   encounter: EncounterFragment,
@@ -60,97 +57,6 @@ const getPatientBreadcrumbSuffix = (
   return encounter.patient.id;
 };
 
-/**
-+ * Updates the status and once the status has been updated saves the encounter
-+ */
-const useSaveWithStatus = (
-  saveData: () => void,
-  encounterData: EncounterSchema | undefined,
-  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>,
-  scheduleNextEncounter: () => void
-): ((status: EncounterNodeStatus | undefined) => void) => {
-  const [saveStatus, setSaveStatus] = useState<
-    EncounterNodeStatus | undefined
-  >();
-
-  useEffect(() => {
-    if (!!saveStatus && saveStatus === encounterData?.status) {
-      saveData();
-      if (saveStatus === EncounterNodeStatus.Visited) scheduleNextEncounter();
-    }
-  }, [saveStatus, encounterData?.status]);
-
-  return (status: EncounterNodeStatus | undefined) => {
-    if (status === undefined) {
-      // no status change
-      saveData();
-      return;
-    }
-    updateEncounter({ status });
-    setSaveStatus(status);
-  };
-};
-
-const useSaveWithStatusChange = (
-  onSave: () => void,
-  encounterData: EncounterSchema | undefined,
-  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>,
-  scheduleNextEncounter: () => void
-): {
-  showDialog: () => void;
-  SaveAsVisitedModal: React.FC;
-  saveWithStatusChange: (status: EncounterNodeStatus) => void;
-} => {
-  const { Modal, hideDialog, showDialog } = useDialog({
-    disableBackdrop: true,
-  });
-  const t = useTranslation();
-
-  const saveWithStatusChange = useSaveWithStatus(
-    onSave,
-    encounterData,
-    updateEncounter,
-    scheduleNextEncounter
-  );
-
-  const SaveAsVisitedModal = () => (
-    <Modal
-      title={t('messages.save-encounter-as-visited')}
-      cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
-      height={200}
-      okButton={
-        <DialogButton
-          variant="save"
-          onClick={() => {
-            onSave();
-            hideDialog();
-          }}
-        />
-      }
-      nextButton={
-        <ButtonWithIcon
-          color="secondary"
-          variant="contained"
-          onClick={() => {
-            saveWithStatusChange(EncounterNodeStatus.Visited);
-            hideDialog();
-          }}
-          Icon={<SaveIcon />}
-          label={t('button-save-as-visited')}
-        />
-      }
-    >
-      <></>
-    </Modal>
-  );
-
-  return {
-    showDialog,
-    SaveAsVisitedModal,
-    saveWithStatusChange,
-  };
-};
-
 export const DetailView: FC = () => {
   const t = useTranslation();
   const id = useEncounter.utils.idFromUrl();
@@ -162,7 +68,7 @@ export const DetailView: FC = () => {
     undefined
   );
   const [deleteRequest, setDeleteRequest] = useState(false);
-  const nextEncounterModal = useToggle(false);
+  const nextEncounterModal = useEditModal<{ onCancel?: () => void }>();
 
   const {
     data: encounter,
@@ -245,8 +151,7 @@ export const DetailView: FC = () => {
   } = useSaveWithStatusChange(
     saveData,
     data as unknown as EncounterSchema,
-    updateEncounter,
-    nextEncounterModal.toggleOn
+    updateEncounter
   );
 
   const promptToMarkVisitedOnLeaving = useConfirmationModal({
@@ -254,7 +159,11 @@ export const DetailView: FC = () => {
     message: t('messages.mark-as-visited'),
     cancelButtonLabel: t('label.leave-as-pending'),
     buttonLabel: t('label.mark-as-visited'),
-    onConfirm: () => saveWithStatusChange(EncounterNodeStatus.Visited),
+    onConfirm: ({ onCancel }) => {
+      saveWithStatusChange(EncounterNodeStatus.Visited, () =>
+        nextEncounterModal.onOpen({ onCancel })
+      );
+    },
   });
 
   // Block navigation if the encounter is dirty and the status is pending
@@ -374,12 +283,13 @@ export const DetailView: FC = () => {
         />
       ) : (
         <>
-          {nextEncounterModal.isOn && encounter.document.documentRegistry && (
+          {nextEncounterModal.isOpen && encounter.document.documentRegistry && (
             <ScheduleNextEncounterModal
               encounterConfig={encounter.document.documentRegistry}
-              onClose={nextEncounterModal.toggleOff}
+              onClose={nextEncounterModal.onClose}
               patientId={encounter.patient.id ?? ''}
               suggestedDate={suggestedNextEncounterDate}
+              onCancel={nextEncounterModal.entity?.onCancel}
             />
           )}
           <Toolbar onChange={updateEncounter} encounter={encounter} />
@@ -414,7 +324,9 @@ export const DetailView: FC = () => {
             saveData();
           }
         }}
-        onChangeStatus={saveWithStatusChange}
+        onChangeStatus={status =>
+          saveWithStatusChange(status, () => nextEncounterModal.onOpen())
+        }
         onCancel={revert}
         isSaving={isSaving}
         isDisabled={!isDirty || !!validationError}
