@@ -69,7 +69,6 @@ impl StandardReports {
                 ReportRowRepository::new(con).upsert_one(&ReportRow {
                     id: report.id,
                     name: report.name,
-                    r#type: repository::ReportType::OmSupply,
                     template: serde_json::to_string_pretty(&report.template)?,
                     context: report.context,
                     sub_context: report.sub_context,
@@ -96,7 +95,6 @@ pub struct ReportsData {
 pub struct ReportData {
     pub id: String,
     pub name: String,
-    pub r#type: repository::ReportType,
     pub template: ReportDefinition,
     pub context: ContextType,
     pub sub_context: Option<String>,

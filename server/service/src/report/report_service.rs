@@ -6,8 +6,7 @@ use extism::{
 };
 use repository::{
     migrations::Version, raw_query, EqualFilter, JsonRawRow, Report, ReportFilter, ReportMetaData,
-    ReportRepository, ReportRowRepository, ReportSort, ReportType, RepositoryError,
-    StorageConnection,
+    ReportRepository, ReportRowRepository, ReportSort, RepositoryError, StorageConnection,
 };
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
@@ -364,12 +363,8 @@ fn query_reports(
     let app_version: Version = Version::from_package_json();
 
     let repo = ReportRepository::new(&ctx.connection);
-    let filter = filter
-        .unwrap_or_default()
-        .r#type(ReportType::OmSupply.equal_to());
-
     let reports_to_show_meta_data = report_filter_method(
-        repo.query_meta_data(Some(filter.clone()), None)
+        repo.query_meta_data(filter.clone(), None)
             .map_err(|err| GetReportsError::ListError(ListError::DatabaseError(err)))?,
         app_version,
     );
@@ -843,7 +838,6 @@ mod report_service_test {
 
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ContextType, ReportRow, ReportRowRepository,
-        ReportType,
     };
 
     use crate::{
@@ -915,7 +909,6 @@ mod report_service_test {
         repo.upsert_one(&ReportRow {
             id: "report_1".to_string(),
             name: "Report 1".to_string(),
-            r#type: ReportType::OmSupply,
             template: serde_json::to_string(&report_1).unwrap(),
             context: ContextType::InboundShipment,
             comment: None,
@@ -930,7 +923,6 @@ mod report_service_test {
         repo.upsert_one(&ReportRow {
             id: "report_base_1".to_string(),
             name: "Report base 1".to_string(),
-            r#type: ReportType::OmSupply,
             template: serde_json::to_string(&report_base_1).unwrap(),
             context: ContextType::Resource,
             comment: None,
