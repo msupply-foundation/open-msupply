@@ -42,7 +42,6 @@ export const PricingSectionComponent = () => {
               </PanelLabel>
             </PanelRow>
 
-
             <PanelRow sx={{ marginLeft: '10px' }}>
               <PanelLabel>{t('label.provider-name')}</PanelLabel>
               <PanelField>{insuranceData.insuranceProviders?.providerName}</PanelField>
@@ -65,7 +64,7 @@ export const PricingSectionComponent = () => {
           </>
         )}
 
-        <PanelRow>
+        <PanelRow style={{ marginTop: 12 }}>
           <PanelLabel fontWeight="bold">{t('heading.grand-total')}</PanelLabel>
           <PanelField>{c(pricing.totalAfterTax)}</PanelField>
         </PanelRow>
