@@ -1,23 +1,19 @@
 import React, { FC, ReactElement } from 'react';
-
 import { useDialog, useNotification } from '@common/hooks';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
   BaseDatePickerInput,
   BasicTextInput,
-  Checkbox,
   DialogButton,
   InputWithLabelRow,
   NumericTextInput,
-  Typography,
+  Switch,
 } from '@common/components';
-
 import { Box, Stack } from '@openmsupply-client/common';
 import {
   PatientModal,
   usePatientModalStore,
 } from '@openmsupply-client/programs';
-
 import { usePatient } from '../api';
 import { InsurancePolicySelect } from './InsurancePolicySelect';
 import { InsuranceProvidersSelect } from './InsuranceProvidersSelect';
@@ -131,34 +127,12 @@ export const InsuranceModal: FC = (): ReactElement => {
           <InputWithLabelRow
             label={t('label.status')}
             Input={
-              <Box sx={{ gap: 2, display: 'flex', flexDirection: 'row' }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Checkbox
-                    checked={draft.isActive}
-                    onChange={() => updatePatch({ isActive: true })}
-                  />
-                  <Typography variant="body1">{t('label.active')}</Typography>
-                </Box>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Checkbox
-                    checked={!draft.isActive}
-                    onChange={() => updatePatch({ isActive: false })}
-                  />
-                  <Typography variant="body1">{t('label.inactive')}</Typography>
-                </Box>
-              </Box>
+              <Switch
+                label={t('label.active')}
+                labelPlacement="end"
+                onChange={() => updatePatch({ isActive: !draft.isActive })}
+                checked={draft.isActive}
+              />
             }
           />
         </Box>
