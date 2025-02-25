@@ -173,7 +173,7 @@ You can work on plugins as if they were part of the app (types should be shared,
 
 ```bash
 # From server directory
-cargo run --bin remote_server_cli -- generate-plugin-bundle -i ../client/packages/plugins/mynewplugin/frontend -o pluginbundle.json
+cargo run --bin remote_server_cli -- generate-plugin-bundle -i ../client/packages/plugins/myPluginBundle/frontend -o pluginbundle.json
 ```
 
 Above will generate `pluginbundle.json` with all backend and frontend plugins in the directory specified by `-i`, this bundle includes metadata, like code and plugin types and base64 contents of all of the files in the `dist` directory which was generated with `yarn build` command that was executed in every plugin directory.
@@ -190,7 +190,7 @@ Note you must be uploading plugins to central server for this to work
 Alternatively one command can be used for both:
 
 ```bash
-cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/mynewplugin/frontend' --url 'http://localhost:8000' --username admin --password pass
+cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/myPluginBundle/frontend' --url 'http://localhost:8000' --username admin --password pass
 ```
 
 In order to test this plugins in front end, you will need to start front end via `yarn -- -- --env LOAD_REMOTE_PLUGINS` which fetched plugins from the server rather then serving them from local directory, this is how plugins will be loaded in production (and plugins will sync and be served by remote site servers)

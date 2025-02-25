@@ -19,6 +19,7 @@ import {
   TextArea,
   useAuthContext,
   useNavigate,
+  usePluginProvider,
   useToggle,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
@@ -71,6 +72,7 @@ export const RequestLineEdit = ({
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const { plugins } = usePluginProvider();
   const { isOn, toggle } = useToggle();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const { store } = useAuthContext();
@@ -83,6 +85,9 @@ export const RequestLineEdit = ({
     ?.sort((a, b) => a.name.name.localeCompare(b.name.name))
     .sort((a, b) => b.amcInUnits - a.amcInUnits)
     .sort((a, b) => b.stockInUnits - a.stockInUnits);
+
+  const line = lines.find(line => line.id === draft?.id);
+
   return (
     <Box display="flex" flexDirection="column" padding={2}>
       <Box display="flex" justifyContent="space-between">
@@ -213,6 +218,10 @@ export const RequestLineEdit = ({
                 label={t('label.amc')}
                 sx={{ marginBottom: 1 }}
               />
+              {line &&
+                plugins.requestRequisitionColumn?.editViewColumns?.map(
+                  (Column, index) => <Column key={index} line={line} />
+                )}
               {isProgram && useConsumptionData && (
                 <InputWithLabelRow
                   Input={
