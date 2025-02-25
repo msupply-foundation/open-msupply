@@ -1,0 +1,36 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/itemCodeOrName",
+      "label": "T#report.item-code-or-name",
+      "options": {
+        "useDebounce": false
+      }
+    },
+
+    {
+      "type": "Control",
+      "scope": "#/properties/sort",
+      "label": "T#report.sort-by",
+      "options": {
+        "show": [
+          ["item.name", "T#report.item-name"],
+          ["batch", "T#label.batch"],
+          ["item.code", "T#label.code"],
+          ["expiryDate", "T#report.expiry-date"],
+          ["location.code", "T#label.location"],
+          ["item.unitName", "T#label.unit"],
+          ["packSize", "T#label.pack-size"],
+          ["totalNumberOfPacks", "T#label.num-packs-total"]
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/dir",
+      "label": "T#report.sort-direction"
+    }
+  ]
+}
