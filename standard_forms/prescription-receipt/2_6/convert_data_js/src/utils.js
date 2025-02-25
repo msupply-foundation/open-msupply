@@ -12,12 +12,10 @@ const processPrescription = (invoice) => {
     if (!!roundedTotalBeforeTax) {
       invoiceLine.totalBeforeTax = roundedTotalBeforeTax;
     }
-    console.log(roundedTotalBeforeTax);
   });
   const roundedTotalAfterTax = roundValueTwoDp(invoice?.pricing?.totalAfterTax);
   invoice.pricing.totalAfterTax = roundedTotalAfterTax;
 
-  console.log(roundedTotalAfterTax);
   return invoice;
 };
 
