@@ -16,7 +16,8 @@ const ReplenishmentAndSyncStatus: Plugins = {
   },
   requestRequisitionColumn: {
     StateLoader: [aggregateAmc.StateLoader],
-    columns: [aggregateAmc.AggregateAmcColumn],
+    tableColumns: [aggregateAmc.AggregateAmcColumn],
+    editViewColumns: [aggregateAmc.AggregateAmcEditView],
   },
 };
 

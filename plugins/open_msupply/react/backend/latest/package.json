@@ -3,9 +3,10 @@
     "name": "amc_check",
     "omSupplyPlugin": {
         "target": "backend",
+        "//": "Fields here must match PluginTypes in backend_plugin_row repository",
         "types": [
-            "AMC",
-            "TRANSFORM_REQUISITION_LINES"
+            "average_monthly_consumption",
+            "transform_request_requisition_lines"
         ],
         "variant_type": "BOA_JS"
     },
