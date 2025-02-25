@@ -5,6 +5,8 @@ import {
   CellProps,
   ColumnDefinition,
   create,
+  InputWithLabelRow,
+  NumericTextInput,
   PluginDataStore,
   Plugins,
   QueryClientProviderProxy,
@@ -49,8 +51,10 @@ const useColumnStore = create<PluginDataStore<RequestLineFragment, string>>(
   })
 );
 
-type AggregateAcmColumn = NonNullable<
-  ArrayElement<Plugins['requestRequisitionColumn']>
+type AggregateAcmColumn = NonNullable<Plugins['requestRequisitionColumn']>;
+
+type AggregateAmcEditView = NonNullable<
+  ArrayElement<AggregateAcmColumn['editViewColumns']>
 >;
 
 export const StateLoader: ArrayElement<AggregateAcmColumn['StateLoader']> = ({
@@ -79,6 +83,23 @@ const Column = (props: CellProps<RequestLineFragment>) => (
     <ColumnInner {...props} />
   </QueryClientProviderProxy>
 );
+
+export const AggregateAmcEditView: AggregateAmcEditView = ({ line }) => {
+  const { data } = usePluginData([line.id]);
+  const value = Number(data?.pluginData.nodes?.[0]?.data);
+  if (isNaN(value)) return null;
+
+  return (
+    <InputWithLabelRow
+      Input={
+        <NumericTextInput width={100} value={value} decimalLimit={2} disabled />
+      }
+      labelWidth={'150px'}
+      label={'Aggregate Amc'}
+      sx={{ marginBottom: 1 }}
+    />
+  );
+};
 
 export const AggregateAmcColumn: ColumnDefinition<RequestLineFragment> = {
   Cell: Column,
