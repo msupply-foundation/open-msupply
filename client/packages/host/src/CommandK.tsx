@@ -304,48 +304,48 @@ const Actions = () => {
             .build()
         ),
     });
+  }
 
-    actions.push(
-      {
-        id: 'action:more-open',
-        name: `${t('cmdk.more-info-open')} (Alt/Option+M)`,
-        keywords: 'more open',
-        shortcut: ['Alt+KeyM'],
-        perform: open,
-      },
-      {
-        id: 'action:more-close',
-        name: `${t('cmdk.more-info-close')} (Alt/Option+Shift+M)`,
-        keywords: 'more close',
-        shortcut: ['Alt+Shift+KeyM'],
-        perform: close,
-      }
-    );
-
-    if (store?.preferences.vaccineModule ?? false) {
-      actions.push({
-        id: 'navigation:coldchain-monitoring',
-        name: t('cmdk.goto-cold-chain-monitoring'),
-        keywords: 'cold chain coldchain monitoring',
-        perform: () =>
-          navigate(
-            RouteBuilder.create(AppRoute.Coldchain)
-              .addPart(AppRoute.Monitoring)
-              .build()
-          ),
-      });
-      actions.push({
-        id: 'navigation:coldchain-equipment',
-        name: t('cmdk.goto-cold-chain-equipment'),
-        keywords: 'cold chain coldchain equipment',
-        perform: () =>
-          navigate(
-            RouteBuilder.create(AppRoute.Coldchain)
-              .addPart(AppRoute.Equipment)
-              .build()
-          ),
-      });
+  actions.push(
+    {
+      id: 'action:more-open',
+      name: `${t('cmdk.more-info-open')} (Alt/Option+M)`,
+      keywords: 'more open',
+      shortcut: ['Alt+KeyM'],
+      perform: open,
+    },
+    {
+      id: 'action:more-close',
+      name: `${t('cmdk.more-info-close')} (Alt/Option+Shift+M)`,
+      keywords: 'more close',
+      shortcut: ['Alt+Shift+KeyM'],
+      perform: close,
     }
+  );
+
+  if (!!store?.preferences.vaccineModule) {
+    actions.push({
+      id: 'navigation:coldchain-monitoring',
+      name: t('cmdk.goto-cold-chain-monitoring'),
+      keywords: 'cold chain coldchain monitoring',
+      perform: () =>
+        navigate(
+          RouteBuilder.create(AppRoute.Coldchain)
+            .addPart(AppRoute.Monitoring)
+            .build()
+        ),
+    });
+    actions.push({
+      id: 'navigation:coldchain-equipment',
+      name: t('cmdk.goto-cold-chain-equipment'),
+      keywords: 'cold chain coldchain equipment',
+      perform: () =>
+        navigate(
+          RouteBuilder.create(AppRoute.Coldchain)
+            .addPart(AppRoute.Equipment)
+            .build()
+        ),
+    });
   }
 
   useRegisterActions(actions.sort(actionSorter), [store, user]);
