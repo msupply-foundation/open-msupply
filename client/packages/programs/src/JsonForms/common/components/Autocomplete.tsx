@@ -52,7 +52,15 @@ const UIComponent = (props: ControlProps) => {
     () => getDisplayOptions(schemaOptions),
     [schemaOptions]
   );
+
+  const clearable = !props.config?.required;
+
   useEffect(() => {
+    if (!data && clearable) {
+      setLocalData(undefined);
+      return;
+    }
+
     const matchingOption = options.find(option => option.value === data);
     if (matchingOption) {
       setLocalData(matchingOption);
@@ -102,12 +110,12 @@ const UIComponent = (props: ControlProps) => {
             flexBasis: '100%',
           }}
           options={options}
-          value={localData ?? { value: '', label: '' }}
+          value={localData ?? null}
           // some type problem here, freeSolo seems to have type `undefined`
           freeSolo={schemaOptions?.freeText as undefined}
           onChange={onChange}
           onInputChange={onInputChange}
-          clearable={!props.config?.required}
+          clearable={clearable}
           inputProps={{
             error: !!zErrors || !!errors,
             helperText: zErrors ?? errors,
