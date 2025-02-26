@@ -4,19 +4,18 @@ use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::types::IdResponse;
+use graphql_types::types::InsurancePolicyNodeType;
 use repository::name_insurance_join_row::NameInsuranceJoinRow;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     insurance::update::{UpdateInsurance as ServiceInput, UpdateInsuranceError as ServiceError},
 };
 
-use crate::types::InsurancePolicyNodeType as UpdateInsurancePolicyNodeType;
-
 #[derive(InputObject)]
 pub struct UpdateInsuranceInput {
     pub id: String,
     pub insurance_provider_id: Option<String>,
-    pub policy_type: Option<UpdateInsurancePolicyNodeType>,
+    pub policy_type: Option<InsurancePolicyNodeType>,
     pub discount_percentage: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
     pub is_active: Option<bool>,
