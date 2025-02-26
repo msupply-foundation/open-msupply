@@ -584,7 +584,7 @@ async fn main() -> anyhow::Result<()> {
             let test_config_path = if let Some(config) = config {
                 config
             } else {
-                Path::new("reports").to_path_buf()
+                Path::new("../standard_reports").to_path_buf()
             };
 
             let test_config_file = fs::File::open(test_config_path.join("test-config.json"))
