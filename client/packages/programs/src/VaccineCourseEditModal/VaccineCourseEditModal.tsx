@@ -160,6 +160,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             fullWidth
             onChange={e => updatePatch({ name: e.target.value })}
             autoFocus
+            required
           />
         </Row>
         <Row label={t('label.target-demographic')}>
@@ -293,6 +294,7 @@ const VaccineCourseDoseTable = ({
       {
         key: 'label',
         Cell: LabelCell,
+        cellProps: { isRequired: true },
         width: 280,
         label: 'label.label',
         setter: updateDose,
