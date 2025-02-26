@@ -501,9 +501,7 @@ fn create_filtered_outgoing_sync_query(
         .filter(|table| {
             matches!(
                 table.sync_style(),
-                ChangeLogSyncStyle::Remote
-                    | ChangeLogSyncStyle::RemoteAndCentral
-                    | ChangeLogSyncStyle::RemoteToCentral
+                ChangeLogSyncStyle::Remote | ChangeLogSyncStyle::RemoteAndCentral
             )
         })
         .collect();

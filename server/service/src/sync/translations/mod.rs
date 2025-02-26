@@ -457,7 +457,7 @@ pub(crate) struct PushTranslationError {
 pub(crate) fn translate_changelogs_to_sync_records(
     connection: &StorageConnection,
     changelogs: Vec<ChangelogRow>,
-    r#type: ToSyncRecordTranslationType,
+    r#type: Vec<ToSyncRecordTranslationType>,
 ) -> Result<Vec<PushSyncRecord>, PushTranslationError> {
     let translators = all_translators();
     let mut out_records = Vec::new();
@@ -475,12 +475,15 @@ fn translate_changelog(
     connection: &StorageConnection,
     translators: &SyncTranslators,
     changelog: &ChangelogRow,
-    r#type: &ToSyncRecordTranslationType,
+    r#type: &Vec<ToSyncRecordTranslationType>,
 ) -> Result<Vec<PushSyncRecord>, anyhow::Error> {
     let mut translation_results = Vec::new();
 
     for translator in translators.iter() {
-        if !translator.should_translate_to_sync_record(changelog, r#type) {
+        if !r#type
+            .iter()
+            .any(|r| translator.should_translate_to_sync_record(changelog, &r))
+        {
             continue;
         }
 
