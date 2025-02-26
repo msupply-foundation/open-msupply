@@ -1,0 +1,59 @@
+<style>
+    {% include "style.css" %}
+</style>
+
+{% macro dateOrNA(datetime) %} 
+{% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
+{% endmacro input %}
+
+<table class="header_supplied_section">
+    <tr> 
+        <td class="header_section_field_left"></td>
+        <td id= "date" class="header_section_field_right"> {{t(k="report.printed-date",f="Printed date")}}: {{ now() | date(format="%d/%m/%Y") }}</td>
+    </tr> 
+
+    <tr> 
+        <td class="header_section_field_left">{{t(k="report.supplied-to",f="Supplied to")}}:</td> 
+        <td class="header_section_field_right">{{t(k="report.status", f="Status")}}: {{ data.invoice.status }}</td>
+    </tr> 
+
+    <tr> 
+        <td class="header_section_field_left">{{ data.invoice.otherPartyName }}</td> 
+        <td class="header_section_field_right">{{t(k="report.entered-date",f="Entered date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}</td>
+    </tr> 
+
+    <tr> 
+        <td class="header_section_field_left">{{ data.invoice.otherParty.address1 }}</td> 
+        <td class="header_section_field_right">{{t(k="report.confirmed-date",f="Confirmed Date")}}: {{ self::dateOrNA(datetime=data.invoice.pickedDatetime) }}</td>
+    </tr>
+
+</table>
+
+<table class="body_section" cellpadding="2" cellspacing="0">
+    <tr class="body_column_label">
+        <th class="line_number" style="width: 5%;">{{t(k="report.line", f="Line")}}</th>
+        <th class="location_code" style="width: 13%;">{{t(k="label.location",f="Location")}}</th>
+        <th class="item_name" style="width: 38%;">{{t(k="report.item-name", f="Item name")}}</th>
+        <th class="quantity" style="width: 8%;">{{t(k="label.quantity",f="Quantity")}}</th>
+        <th class="issued" style="width: 5%;">{{t(k="report.issued",f="Issued")}}</th>
+        <th class="pack" style="width: 8%;">{{t(k="report.pack-size",f="Pack size")}}</th>
+        <th class="batch" style="width: 8%;">{{t(k="label.batch", f="Batch")}}</th>
+        <th class="expiry" style="width: 10%;">{{t(k="label.expiry",f="Expiry")}}</th>
+    </tr>
+    {% for line in data.invoiceLines.nodes -%}
+    <tr class="body_value">
+        <td class="line_number" style="width: 20px;">{{ loop.index }}</td>
+        {% if line.location.code %}
+        <td class="location_code" style="width: 80px;">{{ line.location.code }}</td>
+        {% else %}
+        <td class="location_code" style="width: 80px;"></td>
+        {% endif %}
+        <td class="item_name" style="width: 250px;">{{ line.itemName }}</td>
+        <td class="quantity" style="width: 20px;">{{ line.numberOfPacks }}</td>
+        <td class="issued" style="width: 40px;">___________</td>
+        <td class="pack" style="width: 50px;">{{ line.packSize }}</td>
+        <td class="batch" style="width: 50px;">{{ line.batch }}</td>
+        <td class="expiry" style="width: 50px;">{{ line.expiryDate }}</td>
+    </tr>
+    {%- endfor %}
+</table>

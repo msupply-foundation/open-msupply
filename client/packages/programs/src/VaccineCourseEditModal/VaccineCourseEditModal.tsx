@@ -366,7 +366,7 @@ const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => {
   return (
     <MultipleNumberInputCell
       decimalLimit={2}
-      width={25}
+      width={60}
       {...props}
       units={[
         {

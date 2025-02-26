@@ -14,6 +14,9 @@ fragment PrescriptionRow on InvoiceNode {
   type
   status
   colour
+  nameInsuranceJoinId
+  insuranceDiscountAmount
+  insuranceDiscountPercentage
   pricing {
     __typename
     totalAfterTax
@@ -491,6 +494,21 @@ mutation deletePrescriptionLines(
           id
         }
       }
+    }
+  }
+}
+
+query insuranceById($insuranceId: String!, $storeId: String!) {
+  insurance(id: $insuranceId, storeId: $storeId) {
+    ... on InsuranceNode {
+      __typename
+      isActive
+      insuranceProviders {
+        isActive
+        providerName
+      }
+      policyNumber
+      discountPercentage
     }
   }
 }

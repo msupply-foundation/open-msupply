@@ -43,7 +43,9 @@ use queries::{
     display_settings::{display_settings, DisplaySettingsHash, DisplaySettingsNode},
     initialisation_status::{initialisation_status, InitialisationStatusNode},
     insurance_providers::{insurance_providers, InsuranceProvidersResponse},
-    insurances::{insurances, InsuranceResponse, InsuranceSortInput},
+    insurances::{
+        insurance, insurances, InsuranceResponse, InsuranceSortInput, InsurancesResponse,
+    },
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
     sync_settings::{sync_settings, SyncSettingsNode},
 };
@@ -450,8 +452,17 @@ impl GeneralQueries {
         store_id: String,
         name_id: String,
         sort: Option<Vec<InsuranceSortInput>>,
-    ) -> Result<InsuranceResponse> {
+    ) -> Result<InsurancesResponse> {
         insurances(ctx, store_id, name_id, sort)
+    }
+
+    pub async fn insurance(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<InsuranceResponse> {
+        insurance(ctx, store_id, id)
     }
 
     pub async fn insurance_providers(
