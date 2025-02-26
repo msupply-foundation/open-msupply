@@ -226,6 +226,7 @@ impl Test for LoginTest {
             username,
             password,
             login_type: LoginUserTypeV4::User,
+            site_name: None,
         };
 
         let _info = login_api
