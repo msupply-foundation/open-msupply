@@ -1,3 +1,8 @@
+.logo {
+    display: block;
+    height: 96px;
+}
+
 body { 
     font-family: Tahoma; 
   }
