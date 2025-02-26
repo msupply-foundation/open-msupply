@@ -109,7 +109,7 @@ async fn test_sync_pull_and_push() {
     });
 
     // Test ids and table names
-    pretty_assertions::assert_eq!(
+    assert_eq!(
         translated
             .iter()
             .map(|r| (r.record.record_id.clone(), r.record.table_name.clone()))
