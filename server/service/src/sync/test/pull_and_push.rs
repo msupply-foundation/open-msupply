@@ -84,20 +84,16 @@ async fn test_sync_pull_and_push() {
         .changelogs(push_cursor, 100000, None /*change_log_filter*/)
         .unwrap();
     // Translate
-    let mut translated = vec![
-        translate_changelogs_to_sync_records(
-            &connection,
-            changelogs.clone(),
+    let mut translated = vec![translate_changelogs_to_sync_records(
+        &connection,
+        changelogs.clone(),
+        vec![
             ToSyncRecordTranslationType::PushToLegacyCentral,
-        )
-        .unwrap(),
-        translate_changelogs_to_sync_records(
-            &connection,
-            changelogs.clone(),
             ToSyncRecordTranslationType::PullFromOmSupplyCentral,
-        )
-        .unwrap(),
-    ]
+            ToSyncRecordTranslationType::PushToOmSupplyCentral,
+        ],
+    )
+    .unwrap()]
     .into_iter()
     .flatten()
     .collect::<Vec<PushSyncRecord>>();
@@ -113,7 +109,7 @@ async fn test_sync_pull_and_push() {
     });
 
     // Test ids and table names
-    assert_eq!(
+    pretty_assertions::assert_eq!(
         translated
             .iter()
             .map(|r| (r.record.record_id.clone(), r.record.table_name.clone()))

@@ -167,7 +167,7 @@ impl SynchroniserV6 {
             let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
                 connection,
                 changelogs,
-                ToSyncRecordTranslationType::PushToOmSupplyCentral,
+                vec![ToSyncRecordTranslationType::PushToOmSupplyCentral],
             )?
             .into_iter()
             .map(SyncRecordV6::from)
