@@ -228,8 +228,7 @@ export const PrescriptionLineEditForm: React.FC<
       setIssueUnitQuantity(newIssueQuantity);
     setAllocationAlerts([]);
 
-    if (items.find(prescriptionItem => prescriptionItem.id === item?.id))
-      setAbbreviation('');
+    setAbbreviation('');
     setDefaultDirection('');
   }, [item?.id]);
 
