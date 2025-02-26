@@ -50,7 +50,7 @@ export const ItemVariantsTab = ({
         {itemVariants.length === 0 ? (
           <NothingHere
             body={t('messages.no-item-variants')}
-            onCreate={onOpen}
+            onCreate={() => onOpen()}
           />
         ) : (
           itemVariants.map(v => (
