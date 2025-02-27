@@ -42,16 +42,6 @@ pub struct VaccineCourseFilterInput {
     pub program_id: Option<EqualFilterStringInput>,
 }
 
-impl From<VaccineCourseFilterInput> for VaccineCourseFilter {
-    fn from(f: VaccineCourseFilterInput) -> Self {
-        VaccineCourseFilter {
-            id: f.id.map(EqualFilter::from),
-            name: f.name.map(StringFilter::from),
-            program_id: f.program_id.map(EqualFilter::from),
-        }
-    }
-}
-
 pub fn vaccine_courses(
     ctx: &Context<'_>,
     page: Option<PaginationInput>,
@@ -114,6 +104,7 @@ impl VaccineCourseFilterInput {
             id: id.map(EqualFilter::from),
             name: name.map(StringFilter::from),
             program_id: program_id.map(EqualFilter::from),
+            include_deleted: None,
         }
     }
 }

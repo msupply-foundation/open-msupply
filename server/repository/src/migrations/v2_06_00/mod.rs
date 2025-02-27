@@ -20,6 +20,7 @@ mod add_report_sync;
 mod backend_plugins;
 mod frontend_plugins;
 mod plugin_data;
+mod plugin_data_changelog;
 mod prescribed_quantity_store_pref;
 mod printer_create_table;
 mod reinitialise_reports;
@@ -63,6 +64,7 @@ impl Migration for V2_06_00 {
             Box::new(add_report_sync::Migrate),
             Box::new(add_form_schema_sync::Migrate),
             Box::new(add_report_is_active::Migrate),
+            Box::new(plugin_data_changelog::Migrate),
         ]
     }
 }

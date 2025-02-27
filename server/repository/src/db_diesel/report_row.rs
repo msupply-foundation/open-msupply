@@ -10,10 +10,12 @@ use diesel_derive_enum::DbEnum;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ValueEnum)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ValueEnum, Default)]
+#[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ContextType {
+    #[default]
     Asset,
     InboundShipment,
     OutboundShipment,
@@ -52,7 +54,7 @@ joinable!(report -> form_schema (argument_schema_id));
 allow_tables_to_appear_in_same_query!(report, form_schema);
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Serialize, Deserialize,
+    Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Serialize, Deserialize, Default,
 )]
 #[diesel(table_name = report)]
 pub struct ReportRow {
@@ -68,24 +70,6 @@ pub struct ReportRow {
     pub version: String,
     pub code: String,
     pub is_active: bool,
-}
-
-impl Default for ReportRow {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            name: Default::default(),
-            template: Default::default(),
-            context: ContextType::InboundShipment,
-            comment: Default::default(),
-            sub_context: Default::default(),
-            argument_schema_id: Default::default(),
-            is_custom: true,
-            version: Default::default(),
-            code: Default::default(),
-            is_active: true,
-        }
-    }
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Selectable)]
@@ -183,5 +167,41 @@ impl Upsert for ReportRow {
             ReportRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use strum::IntoEnumIterator;
+    use util::assert_matches;
+
+    use crate::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn report_context_enum_postgres() {
+        let (_, connection, _, _) =
+            setup_all("report_context_enum_postgres", MockDataInserts::none()).await;
+
+        let repo = ReportRowRepository::new(&connection);
+        // Try upsert all variants, confirm that diesel enums match postgres
+        for variant in ContextType::iter() {
+            let id = format!("{variant:?}");
+            let result = repo.upsert_one(&ReportRow {
+                id: id.clone(),
+                context: variant.clone(),
+                ..Default::default()
+            });
+            assert_matches!(result, Ok(_));
+
+            assert_eq!(
+                repo.find_one_by_id(&id),
+                Ok(Some(ReportRow {
+                    id,
+                    context: variant.clone(),
+                    ..Default::default()
+                }))
+            );
+        }
     }
 }

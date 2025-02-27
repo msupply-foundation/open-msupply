@@ -24,11 +24,13 @@ export const ScheduleNextEncounterModal = ({
   encounterConfig,
   onClose,
   suggestedDate,
+  onCancel,
 }: {
   patientId: string;
   encounterConfig: DocumentRegistryFragment;
   onClose: () => void;
   suggestedDate: Date | null;
+  onCancel?: () => void;
 }) => {
   const { user, storeId } = useAuthContext();
   const t = useTranslation();
@@ -53,7 +55,7 @@ export const ScheduleNextEncounterModal = ({
 
   const { Modal } = useDialog({
     isOpen: true,
-    onClose: onClose,
+    onClose,
   });
 
   const canSubmit = () =>
@@ -62,7 +64,15 @@ export const ScheduleNextEncounterModal = ({
   return (
     <Modal
       title={t('label.schedule-next-encounter')}
-      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      cancelButton={
+        <DialogButton
+          variant="cancel"
+          onClick={() => {
+            onClose();
+            onCancel?.();
+          }}
+        />
+      }
       okButton={
         <DialogButton
           variant={'save'}
@@ -79,6 +89,9 @@ export const ScheduleNextEncounterModal = ({
               error(t('error.encounter-not-created'))();
               return;
             }
+
+            onClose();
+
             navigate(
               RouteBuilder.create(AppRoute.Dispensary)
                 .addPart(AppRoute.Patients)
@@ -86,8 +99,6 @@ export const ScheduleNextEncounterModal = ({
                 .addQuery({ tab: PatientTabValue.Encounters })
                 .build()
             );
-
-            onClose();
           }}
         />
       }
