@@ -385,7 +385,7 @@ export const PrescriptionLineEditForm: React.FC<
           key={item?.id ?? 'new'}
         >
           {isDirectionsDisabled ? (
-            <Typography>{'Add a quantity to add directions'}</Typography>
+            <Typography>{t('messages.cannot-add-directions')}</Typography>
           ) : (
             <>
               <Grid container paddingBottom={1} gap={1} width={'100%'}>
