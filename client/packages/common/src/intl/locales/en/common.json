@@ -245,6 +245,7 @@
   "error.date_maxDate": "Date value is too large",
   "error.date_minDate": "Date value is too low",
   "error.dose-ages-out-of-order": "Each dose needs a higher minimum age than the previous dose",
+  "error.dose-max-lower-than-min": "Dose \"{{label}}\" must have a higher maximum age than minimum age",
   "error.duplicate-asset-number": "duplicate asset number in csv",
   "error.duplicate-item-variant-name": "Item variant with the same name already exists for this item",
   "error.duplicated-field": "{{field}} already exists in the import file",
