@@ -14,12 +14,12 @@ fragment Insurance on InsuranceNode {
   }
 }
 
-query insurances(
+query insurancePolicies(
   $storeId: String!
   $nameId: String!
   $sort: [InsuranceSortInput!]
 ) {
-  insurances(storeId: $storeId, nameId: $nameId, sort: $sort) {
+  insurancePolicies(storeId: $storeId, nameId: $nameId, sort: $sort) {
     ... on InsuranceConnector {
       __typename
       nodes {

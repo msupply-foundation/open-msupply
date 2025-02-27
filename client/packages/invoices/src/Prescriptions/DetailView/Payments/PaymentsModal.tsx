@@ -17,7 +17,7 @@ import {
 import { useDialog } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { PrescriptionRowFragment, usePrescription } from '../../api';
-import { useInsurances } from '@openmsupply-client/system/src';
+import { useInsurancePolicies } from '@openmsupply-client/system/src';
 
 interface PaymentsModalProps {
   isOpen: boolean;
@@ -45,7 +45,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
   const nameId = prescriptionData?.patientId ?? '';
   const {
     query: { data: insuranceData },
-  } = useInsurances(nameId);
+  } = useInsurancePolicies(nameId);
 
   const selectedInsurance = insuranceData?.find(
     ({ insuranceProviders }) => insuranceProviders?.id === insuranceId
@@ -133,7 +133,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <InputWithLabelRow
-              label={t('label.insurance-scheme')}
+              label={t('label.insurance-policy')}
               Input={
                 <Autocomplete
                   options={
