@@ -17,12 +17,15 @@ interface Label {
 export const groupItems = (
   lines: PrescriptionLineFragment[]
 ): ItemDetails[] => {
-  const linesByItem: Record<string, PrescriptionLineFragment[]> = {};
+  const linesByItem: { [key: string]: PrescriptionLineFragment[] } = {};
 
   // groups all batches of an item by id
   lines.forEach(line => {
     const { id } = line.item;
-    linesByItem[id] = [...(linesByItem[id] || []), line];
+    if (!linesByItem[id]) {
+      linesByItem[id] = [];
+    }
+    linesByItem[id].push(line);
   });
 
   // gets the objects from the items array
