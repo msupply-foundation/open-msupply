@@ -3524,6 +3524,19 @@ export type InvoiceIsNotEditable = UpdateErrorInterface & UpdateNameErrorInterfa
   description: Scalars['String']['output'];
 };
 
+export type InvoiceItemConnector = {
+  __typename: 'InvoiceItemConnector';
+  nodes: Array<InvoiceItemNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type InvoiceItemNode = {
+  __typename: 'InvoiceItemNode';
+  hasEnteredQuantity: Scalars['Boolean']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type InvoiceLineConnector = {
   __typename: 'InvoiceLineConnector';
   nodes: Array<InvoiceLineNode>;
@@ -3630,6 +3643,7 @@ export type InvoiceNode = {
   insuranceDiscountPercentage?: Maybe<Scalars['Float']['output']>;
   invoiceNumber: Scalars['Int']['output'];
   isCancellation: Scalars['Boolean']['output'];
+  items: InvoiceItemConnector;
   lines: InvoiceLineConnector;
   /** Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment */
   linkedShipment?: Maybe<InvoiceNode>;
@@ -7030,6 +7044,7 @@ export type RequisitionFilterInput = {
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  elmisCode?: InputMaybe<EqualFilterStringInput>;
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;

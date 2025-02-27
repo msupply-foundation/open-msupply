@@ -14,6 +14,7 @@ import {
 import { PrescriptionListView, PrescriptionDetailView } from './Prescriptions';
 import { CustomerReturnDetailView } from './Returns/CustomerDetailView';
 import { PrescriptionLineEditView } from './Prescriptions/LineEditView';
+import { PrescriptionLineEditView2 } from './Prescriptions/LineEdit2/LineEditView';
 
 const InvoiceService: FC = () => {
   const outboundShipmentsRoute = RouteBuilder.create(
@@ -39,6 +40,11 @@ const InvoiceService: FC = () => {
     .build();
 
   const prescriptionLineRoute = RouteBuilder.create(AppRoute.Prescription)
+    .addPart(':invoiceNumber')
+    .addPart(':itemId')
+    .build();
+  const prescriptionLineRoute2 = RouteBuilder.create(AppRoute.Prescription)
+    .addPart('2')
     .addPart(':invoiceNumber')
     .addPart(':itemId')
     .build();
@@ -79,6 +85,10 @@ const InvoiceService: FC = () => {
       <Route
         path={prescriptionLineRoute}
         element={<PrescriptionLineEditView />}
+      />
+      <Route
+        path={prescriptionLineRoute2}
+        element={<PrescriptionLineEditView2 />}
       />
 
       <Route path={supplierReturnsRoute} element={<SupplierReturnListView />} />

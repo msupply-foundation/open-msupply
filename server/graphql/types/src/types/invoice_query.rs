@@ -1,8 +1,8 @@
 use super::patient::PatientNode;
 use super::program_node::ProgramNode;
 use super::{
-    ClinicianNode, CurrencyNode, DiagnosisNode, InvoiceLineConnector, NameNode, RequisitionNode,
-    StoreNode, UserNode,
+    ClinicianNode, CurrencyNode, DiagnosisNode, InvoiceItemConnector, InvoiceLineConnector,
+    NameNode, RequisitionNode, StoreNode, UserNode,
 };
 use async_graphql::*;
 use chrono::{DateTime, Utc};
@@ -237,6 +237,15 @@ impl InvoiceNode {
         let result_option = loader.load_one(self.row().id.to_string()).await?;
 
         Ok(InvoiceLineConnector::from_vec(
+            result_option.unwrap_or(vec![]),
+        ))
+    }
+    // TODO own loader? or do we get caching reusing loader???
+    pub async fn items(&self, ctx: &Context<'_>) -> Result<InvoiceItemConnector> {
+        let loader = ctx.get_loader::<DataLoader<InvoiceLineByInvoiceIdLoader>>();
+        let result_option = loader.load_one(self.row().id.to_string()).await?;
+
+        Ok(InvoiceItemConnector::from_vec(
             result_option.unwrap_or(vec![]),
         ))
     }

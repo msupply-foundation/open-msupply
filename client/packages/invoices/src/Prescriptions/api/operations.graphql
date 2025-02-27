@@ -1,3 +1,9 @@
+fragment InvoiceItem on InvoiceItemNode {
+  id
+  name
+  hasEnteredQuantity
+}
+
 fragment PrescriptionRow on InvoiceNode {
   __typename
   comment
@@ -41,6 +47,12 @@ fragment PrescriptionRow on InvoiceNode {
       ...PrescriptionLine
     }
     totalCount
+  }
+
+  items {
+    nodes {
+      ...InvoiceItem
+    }
   }
 
   patient {

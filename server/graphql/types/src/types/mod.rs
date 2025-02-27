@@ -31,6 +31,9 @@ pub use self::master_list::*;
 pub mod invoice_query;
 pub use self::invoice_query::*;
 
+pub mod invoice_item;
+pub use self::invoice_item::*;
+
 pub mod invoice_line;
 pub use self::invoice_line::*;
 
