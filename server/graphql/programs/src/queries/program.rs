@@ -5,7 +5,7 @@ use graphql_core::{
     ContextExt,
 };
 
-use graphql_types::types::{PeriodConnector, PeriodsResponse};
+use graphql_types::types::{PeriodConnector, PeriodFilterInput, PeriodsResponse};
 use repository::{PaginationOption, ProgramFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -52,6 +52,8 @@ pub fn periods(
     ctx: &Context<'_>,
     store_id: String,
     program_id: Option<String>,
+    page: Option<PaginationInput>,
+    filter: Option<PeriodFilterInput>,
 ) -> Result<PeriodsResponse> {
     validate_auth(
         ctx,
@@ -63,8 +65,14 @@ pub fn periods(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let result = get_periods(&context.connection, store_id, program_id)
-        .map_err(StandardGraphqlError::from_list_error)?;
+    let result = get_periods(
+        &context.connection,
+        store_id,
+        program_id,
+        page.map(PaginationOption::from),
+        filter.map(|f| f.to_domain()),
+    )
+    .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(PeriodsResponse::Response(PeriodConnector::from_domain(
         result,

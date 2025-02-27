@@ -47,7 +47,7 @@ export const useLoginForm = (
 
   const onLogin = async () => {
     setError();
-    const { error, token } = await login(username, password);
+    const { error, token } = await login(username.trim(), password);
     setError(error);
     setPassword('');
     if (!token) return;

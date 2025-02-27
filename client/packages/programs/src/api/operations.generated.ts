@@ -8,7 +8,7 @@ export type DocumentRegistryFragment = { __typename: 'DocumentRegistryNode', id:
 
 export type DocumentFragment = { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, timestamp: string, type: string, data: any, user?: { __typename: 'UserNode', userId: string, username: string, email?: string | null } | null, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, category: Types.DocumentRegistryCategoryNode, documentType: string, contextId: string, name?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null };
 
-export type ProgramFragment = { __typename: 'ProgramNode', id: string, name: string };
+export type ProgramFragment = { __typename: 'ProgramNode', id: string, elmisCode?: string | null, name: string };
 
 export type ProgramsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -20,11 +20,14 @@ export type ProgramsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string }> } };
+export type ProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, elmisCode?: string | null, name: string }> } };
 
 export type PeriodsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   programId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  filter?: Types.InputMaybe<Types.PeriodFilterInput>;
 }>;
 
 
@@ -305,6 +308,7 @@ export type DeleteVaccineCourseMutation = { __typename: 'Mutations', centralServ
 export const ProgramFragmentDoc = gql`
     fragment Program on ProgramNode {
   id
+  elmisCode
   name
 }
     `;
@@ -610,8 +614,13 @@ export const ProgramsDocument = gql`
 }
     ${ProgramFragmentDoc}`;
 export const PeriodsDocument = gql`
-    query periods($storeId: String!, $programId: String) {
-  periods(storeId: $storeId, programId: $programId) {
+    query periods($storeId: String!, $programId: String, $first: Int, $offset: Int, $filter: PeriodFilterInput) {
+  periods(
+    storeId: $storeId
+    programId: $programId
+    page: {first: $first, offset: $offset}
+    filter: $filter
+  ) {
     ... on PeriodConnector {
       __typename
       nodes {

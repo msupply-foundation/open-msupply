@@ -84,14 +84,17 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           onPrint={printReport}
         >
           <LoadingButton
-            disabled={isDisabled}
             variant="outlined"
             startIcon={<PrinterIcon />}
             isLoading={isPrintingReceipt}
             label={t('button.print-receipt')}
           />
         </ReportSelector>
-
+        <ButtonWithIcon
+          label={t('button.history')}
+          Icon={<InfoOutlineIcon />}
+          onClick={() => onViewHistory()}
+        />
         {OpenButton}
       </Grid>
       <DisabledNotification />

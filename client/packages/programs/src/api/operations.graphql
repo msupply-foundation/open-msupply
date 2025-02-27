@@ -30,6 +30,7 @@ fragment Document on DocumentNode {
 
 fragment Program on ProgramNode {
   id
+  elmisCode
   name
 }
 
@@ -58,8 +59,19 @@ query programs(
   }
 }
 
-query periods($storeId: String!, $programId: String) {
-  periods(storeId: $storeId, programId: $programId) {
+query periods(
+  $storeId: String!
+  $programId: String
+  $first: Int
+  $offset: Int
+  $filter: PeriodFilterInput
+) {
+  periods(
+    storeId: $storeId
+    programId: $programId
+    page: { first: $first, offset: $offset }
+    filter: $filter
+  ) {
     ... on PeriodConnector {
       __typename
       nodes {

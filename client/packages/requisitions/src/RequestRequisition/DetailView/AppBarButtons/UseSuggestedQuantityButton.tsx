@@ -15,7 +15,7 @@ export const UseSuggestedQuantityButtonComponent = () => {
 
   const getConfirmation = useConfirmationModal({
     iconType: 'info',
-    onConfirm: setRequestedToSuggested,
+    onConfirm: () => setRequestedToSuggested(),
     message: t('messages.requested-to-suggested'),
     title: t('heading.requested-to-suggested'),
   });
