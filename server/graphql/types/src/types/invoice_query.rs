@@ -432,7 +432,7 @@ impl InvoiceNode {
         &self.row().name_insurance_join_id
     }
 
-    pub async fn patient_insurance(&self, ctx: &Context<'_>) -> Result<Option<InsuranceNode>> {
+    pub async fn insurance_policy(&self, ctx: &Context<'_>) -> Result<Option<InsuranceNode>> {
         let Some(name_insurance_join_id) = &self.row().name_insurance_join_id else {
             return Ok(None);
         };

@@ -7,7 +7,7 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { usePatientGraphQL } from '../usePatientGraphQL';
-import { INSURANCES } from './keys';
+import { INSURANCE_POLICIES } from './keys';
 import { InsuranceFragment } from '../operations.generated';
 
 export interface DraftInsurance extends InsuranceFragment {
@@ -22,13 +22,13 @@ const defaultDraftInsurance: DraftInsurance = {
   policyNumberPerson: '',
   insuranceProviderId: '',
   policyType: '' as InsurancePolicyNodeType,
-  isActive: false,
+  isActive: true,
   discountPercentage: 0,
   expiryDate: '',
   nameId: '',
 };
 
-export const useInsurances = (id: string) => {
+export const useInsurancePolicies = (id: string) => {
   const { data, isLoading, error } = useGet(id);
 
   const {
@@ -83,17 +83,17 @@ const useGet = (id: string) => {
   const { patientApi, storeId } = usePatientGraphQL();
 
   const queryFn = async () => {
-    const result = await patientApi.insurances({
+    const result = await patientApi.insurancePolicies({
       storeId,
       nameId: id,
     });
 
-    if (result.insurances.__typename === 'InsuranceConnector') {
-      return result.insurances;
+    if (result.insurancePolicies.__typename === 'InsuranceConnector') {
+      return result.insurancePolicies;
     }
   };
 
-  const query = useQuery({ queryKey: [INSURANCES], queryFn });
+  const query = useQuery({ queryKey: [INSURANCE_POLICIES], queryFn });
 
   return query;
 };
@@ -129,7 +129,7 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([INSURANCES]),
+    onSuccess: () => queryClient.invalidateQueries([INSURANCE_POLICIES]),
   });
 };
 
@@ -165,6 +165,6 @@ const useUpdate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([INSURANCES]),
+    onSuccess: () => queryClient.invalidateQueries([INSURANCE_POLICIES]),
   });
 };

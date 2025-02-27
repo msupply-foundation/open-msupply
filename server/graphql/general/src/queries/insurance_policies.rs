@@ -36,7 +36,11 @@ pub enum InsurancesResponse {
     Response(InsuranceConnector),
 }
 
-pub fn insurance(ctx: &Context<'_>, store_id: String, id: String) -> Result<InsuranceResponse> {
+pub fn insurance_policy(
+    ctx: &Context<'_>,
+    store_id: String,
+    id: String,
+) -> Result<InsuranceResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -63,7 +67,7 @@ pub enum InsuranceResponse {
     Response(InsuranceNode),
 }
 
-pub fn insurances(
+pub fn insurance_policies(
     ctx: &Context<'_>,
     store_id: String,
     name_id: String,

@@ -5,14 +5,14 @@ import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type InsuranceFragment = { __typename: 'InsuranceNode', id: string, insuranceProviderId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null, discountPercentage: number, expiryDate: string, isActive: boolean, insuranceProviders?: { __typename: 'InsuranceProviderNode', id: string, providerName: string } | null };
 
-export type InsurancesQueryVariables = Types.Exact<{
+export type InsurancePoliciesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   nameId: Types.Scalars['String']['input'];
   sort?: Types.InputMaybe<Array<Types.InsuranceSortInput> | Types.InsuranceSortInput>;
 }>;
 
 
-export type InsurancesQuery = { __typename: 'Queries', insurances: { __typename: 'InsuranceConnector', nodes: Array<{ __typename: 'InsuranceNode', id: string, insuranceProviderId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null, discountPercentage: number, expiryDate: string, isActive: boolean, insuranceProviders?: { __typename: 'InsuranceProviderNode', id: string, providerName: string } | null }> } };
+export type InsurancePoliciesQuery = { __typename: 'Queries', insurancePolicies: { __typename: 'InsuranceConnector', nodes: Array<{ __typename: 'InsuranceNode', id: string, insuranceProviderId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null, discountPercentage: number, expiryDate: string, isActive: boolean, insuranceProviders?: { __typename: 'InsuranceProviderNode', id: string, providerName: string } | null }> } };
 
 export type InsertInsuranceMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -64,9 +64,9 @@ export const InsuranceProvidersFragmentDoc = gql`
   prescriptionValidityDays
 }
     `;
-export const InsurancesDocument = gql`
-    query insurances($storeId: String!, $nameId: String!, $sort: [InsuranceSortInput!]) {
-  insurances(storeId: $storeId, nameId: $nameId, sort: $sort) {
+export const InsurancePoliciesDocument = gql`
+    query insurancePolicies($storeId: String!, $nameId: String!, $sort: [InsuranceSortInput!]) {
+  insurancePolicies(storeId: $storeId, nameId: $nameId, sort: $sort) {
     ... on InsuranceConnector {
       __typename
       nodes {
@@ -114,8 +114,8 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    insurances(variables: InsurancesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsurancesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsurancesQuery>(InsurancesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insurances', 'query', variables);
+    insurancePolicies(variables: InsurancePoliciesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsurancePoliciesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsurancePoliciesQuery>(InsurancePoliciesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insurancePolicies', 'query', variables);
     },
     insertInsurance(variables: InsertInsuranceMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertInsuranceMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertInsuranceMutation>(InsertInsuranceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertInsurance', 'mutation', variables);

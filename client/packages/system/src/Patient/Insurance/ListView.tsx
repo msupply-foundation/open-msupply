@@ -15,7 +15,7 @@ import {
   PatientModal,
   usePatientModalStore,
 } from '@openmsupply-client/programs';
-import { useInsurances } from '../apiModern/hooks/useInsurances';
+import { useInsurancePolicies } from '../apiModern/hooks/useInsurancesPolicies';
 
 export const InsuranceListView = () => {
   const nameId = usePatient.utils.id();
@@ -36,7 +36,7 @@ export const InsuranceListView = () => {
 
   const {
     query: { data, isLoading },
-  } = useInsurances(nameId);
+  } = useInsurancePolicies(nameId);
 
   return (
     <TableProvider

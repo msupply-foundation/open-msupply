@@ -17,7 +17,7 @@ import {
 import { usePatient } from '../api';
 import { InsurancePolicySelect } from './InsurancePolicySelect';
 import { InsuranceProvidersSelect } from './InsuranceProvidersSelect';
-import { useInsurances } from '../apiModern/hooks/useInsurances';
+import { useInsurancePolicies } from '../apiModern/hooks/useInsurancesPolicies';
 
 export const InsuranceModal: FC = (): ReactElement => {
   const t = useTranslation();
@@ -39,7 +39,7 @@ export const InsuranceModal: FC = (): ReactElement => {
     haveInsuranceId,
     draft,
     updatePatch,
-  } = useInsurances(nameId);
+  } = useInsurancePolicies(nameId);
 
   const handleInsuranceUpdate = async (): Promise<void> => {
     try {
