@@ -1,7 +1,7 @@
 use super::{
     form_schema_row::{self, form_schema},
     report_row::report,
-    ContextType, ReportMetaDataRow, ReportRow, ReportType, StorageConnection,
+    ContextType, ReportMetaDataRow, ReportRow, StorageConnection,
 };
 
 use crate::{
@@ -14,7 +14,6 @@ use crate::{EqualFilter, Sort, StringFilter};
 use crate::{diesel_macros::apply_string_filter, DBType, RepositoryError};
 
 use diesel::{dsl::IntoBoxed, helper_types::LeftJoin, prelude::*};
-use util::inline_init;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Report {
@@ -45,7 +44,6 @@ impl ReportMetaData {
 pub struct ReportFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
-    pub r#type: Option<EqualFilter<ReportType>>,
     pub context: Option<EqualFilter<ContextType>>,
     pub sub_context: Option<EqualFilter<String>>,
     pub code: Option<EqualFilter<String>>,
@@ -75,11 +73,6 @@ impl ReportFilter {
         self
     }
 
-    pub fn r#type(mut self, filter: EqualFilter<ReportType>) -> Self {
-        self.r#type = Some(filter);
-        self
-    }
-
     pub fn context(mut self, filter: EqualFilter<ContextType>) -> Self {
         self.context = Some(filter);
         self
@@ -93,20 +86,6 @@ impl ReportFilter {
     pub fn is_custom(mut self, value: bool) -> Self {
         self.is_custom = Some(value);
         self
-    }
-}
-
-impl ReportType {
-    pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
-    }
-
-    pub fn not_equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
-    }
-
-    pub fn equal_any(value: Vec<Self>) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_any = Some(value))
     }
 }
 
@@ -193,7 +172,6 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
         let ReportFilter {
             id,
             name,
-            r#type,
             context,
             sub_context,
             code,
@@ -202,7 +180,6 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
 
         apply_equal_filter!(query, id, report::id);
         apply_string_filter!(query, name, report::name);
-        apply_equal_filter!(query, r#type, report::type_);
         apply_equal_filter!(query, context, report::context);
         apply_equal_filter!(query, sub_context, report::sub_context);
         apply_equal_filter!(query, code, report::code);

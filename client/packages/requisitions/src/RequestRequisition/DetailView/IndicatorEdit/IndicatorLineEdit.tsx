@@ -95,7 +95,7 @@ const InputWithLabel = ({
     <InputWithLabelRow
       Input={inputComponent}
       labelWidth={LABEL_WIDTH}
-      label={indicatorColumnNameToLocal(data.name)}
+      label={indicatorColumnNameToLocal(data.name, t)}
       sx={{ marginBottom: 1 }}
     />
   );
