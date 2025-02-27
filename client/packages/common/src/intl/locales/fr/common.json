@@ -148,7 +148,7 @@
   "control.search.error.no-patient-contact": "Aucun contact patient correspondant n'a été trouvé",
   "control.search.matching-patients": "Nous avons trouvé des patients existants qui correspondent aux données saisies ci-dessus. Veuillez sélectionner dans cette liste si applicable",
   "control.search.no-results-label": "Aucun résultat",
-  "control.search.reset-button": "Dissocier le patient correspondant",
+  "control.search.reset-button": "Dissocier le patient apparié",
   "control.search.searching-label": "Recherche...",
   "customer-requisition": "Réquisitions clients",
   "customer-return": "Retour client",
