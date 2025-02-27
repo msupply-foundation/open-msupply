@@ -146,6 +146,10 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     }
   };
 
+  const isValid =
+    draft.name.trim() &&
+    !draft.vaccineCourseDoses?.some(dose => !dose.label.trim());
+
   const modalContent = isLoading ? (
     <BasicSpinner />
   ) : (
@@ -156,6 +160,8 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             value={draft?.name ?? ''}
             fullWidth
             onChange={e => updatePatch({ name: e.target.value })}
+            autoFocus
+            required
           />
         </Row>
         <Row label={t('label.target-demographic')}>
@@ -216,7 +222,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
         <DialogButton
-          disabled={!isDirty || !programId}
+          disabled={!isDirty || !programId || !isValid}
           variant="ok"
           onClick={save}
         />
@@ -289,6 +295,7 @@ const VaccineCourseDoseTable = ({
       {
         key: 'label',
         Cell: LabelCell,
+        cellProps: { isRequired: true },
         width: 280,
         label: 'label.label',
         setter: updateDose,
