@@ -8,6 +8,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { PrescriptionLineFragment, PrescriptionRowFragment } from '../../api';
+import { groupItems, generateLabel } from './utils';
 
 export const usePrintLabels = () => {
   const t = useTranslation();
@@ -40,12 +41,10 @@ export const usePrintLabels = () => {
     lines: PrescriptionLineFragment[]
   ) => {
     setIsPrintingLabels(true);
-    const labels = lines.map(line => ({
-      itemDetails: `${line.numberOfPacks * line.packSize} ${line.item.unitName}: ${line.itemName}`,
-      itemDirections: line.note ?? '',
-      patientDetails: `${prescription.patient?.name} - ${prescription.patient?.code}`,
-      details: `${store?.name} - ${new Date(prescription.createdDatetime).toLocaleDateString()} - ${prescription.clinician?.lastName}, ${prescription.clinician?.firstName}`,
-    }));
+
+    const storeName = store?.name ?? '';
+    const items = groupItems(lines);
+    const labels = generateLabel(items, prescription, storeName);
     fetch(Environment.PRINT_LABEL_PRESCRIPTION, {
       method: 'POST',
       body: JSON.stringify(labels),
@@ -61,8 +60,8 @@ export const usePrintLabels = () => {
       })
       .catch(e => {
         error(`${t('error.printing-label')}: ${e.message}`)();
-      });
-    setIsPrintingLabels(false);
+      })
+      .finally(() => setIsPrintingLabels(false));
   };
   return {
     isPrintingLabels,
