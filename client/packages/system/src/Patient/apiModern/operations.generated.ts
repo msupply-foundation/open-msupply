@@ -3,7 +3,7 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type InsuranceFragment = { __typename: 'InsuranceNode', id: string, insuranceProviderId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null, discountPercentage: number, expiryDate: string, isActive: boolean, insuranceProviders?: { __typename: 'InsuranceProviderNode', id: string, providerName: string } | null };
+export type InsuranceFragment = { __typename: 'InsurancePolicyNode', id: string, insuranceProviderId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null, discountPercentage: number, expiryDate: string, isActive: boolean, insuranceProviders?: { __typename: 'InsuranceProviderNode', id: string, providerName: string } | null };
 
 export type InsurancePoliciesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -12,7 +12,7 @@ export type InsurancePoliciesQueryVariables = Types.Exact<{
 }>;
 
 
-export type InsurancePoliciesQuery = { __typename: 'Queries', insurancePolicies: { __typename: 'InsuranceConnector', nodes: Array<{ __typename: 'InsuranceNode', id: string, insuranceProviderId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null, discountPercentage: number, expiryDate: string, isActive: boolean, insuranceProviders?: { __typename: 'InsuranceProviderNode', id: string, providerName: string } | null }> } };
+export type InsurancePoliciesQuery = { __typename: 'Queries', insurancePolicies: { __typename: 'InsuranceConnector', nodes: Array<{ __typename: 'InsurancePolicyNode', id: string, insuranceProviderId: string, policyType: Types.InsurancePolicyNodeType, policyNumber: string, policyNumberFamily?: string | null, policyNumberPerson?: string | null, discountPercentage: number, expiryDate: string, isActive: boolean, insuranceProviders?: { __typename: 'InsuranceProviderNode', id: string, providerName: string } | null }> } };
 
 export type InsertInsuranceMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -40,7 +40,7 @@ export type InsuranceProvidersQueryVariables = Types.Exact<{
 export type InsuranceProvidersQuery = { __typename: 'Queries', insuranceProviders: { __typename: 'InsuranceProvidersConnector', nodes: Array<{ __typename: 'InsuranceProvidersNode', id: string, providerName: string, isActive: boolean, prescriptionValidityDays?: number | null }> } };
 
 export const InsuranceFragmentDoc = gql`
-    fragment Insurance on InsuranceNode {
+    fragment Insurance on InsurancePolicyNode {
   id
   insuranceProviderId
   policyType

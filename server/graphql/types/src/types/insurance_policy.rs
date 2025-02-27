@@ -15,12 +15,12 @@ pub enum InsurancePolicyNodeType {
 }
 
 #[derive(PartialEq, Debug)]
-pub struct InsuranceNode {
+pub struct InsurancePolicyNode {
     pub insurance: NameInsuranceJoinRow,
 }
 
 #[Object]
-impl InsuranceNode {
+impl InsurancePolicyNode {
     pub async fn id(&self) -> &str {
         &self.row().id
     }
@@ -86,9 +86,9 @@ impl InsurancePolicyNodeType {
     }
 }
 
-impl InsuranceNode {
-    pub fn from_domain(insurance: NameInsuranceJoinRow) -> InsuranceNode {
-        InsuranceNode { insurance }
+impl InsurancePolicyNode {
+    pub fn from_domain(insurance: NameInsuranceJoinRow) -> InsurancePolicyNode {
+        InsurancePolicyNode { insurance }
     }
 
     pub fn row(&self) -> &NameInsuranceJoinRow {

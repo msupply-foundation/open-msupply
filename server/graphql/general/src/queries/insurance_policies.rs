@@ -4,7 +4,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::InsuranceNode;
+use graphql_types::types::InsurancePolicyNode;
 use repository::name_insurance_join_row::{
     NameInsuranceJoinRow, NameInsuranceJoinSort, NameInsuranceJoinSortField,
 };
@@ -28,7 +28,7 @@ pub struct InsuranceSortInput {
 
 #[derive(SimpleObject)]
 pub struct InsuranceConnector {
-    nodes: Vec<InsuranceNode>,
+    nodes: Vec<InsurancePolicyNode>,
 }
 
 #[derive(Union)]
@@ -57,14 +57,14 @@ pub fn insurance_policy(
         .insurance(&service_context.connection, &id)
         .map_err(StandardGraphqlError::from_repository_error)?;
 
-    Ok(InsuranceResponse::Response(InsuranceNode {
+    Ok(InsuranceResponse::Response(InsurancePolicyNode {
         insurance: result,
     }))
 }
 
 #[derive(Union)]
 pub enum InsuranceResponse {
-    Response(InsuranceNode),
+    Response(InsurancePolicyNode),
 }
 
 pub fn insurance_policies(
@@ -104,7 +104,7 @@ impl InsuranceConnector {
         InsuranceConnector {
             nodes: insurances
                 .into_iter()
-                .map(InsuranceNode::from_domain)
+                .map(InsurancePolicyNode::from_domain)
                 .collect(),
         }
     }

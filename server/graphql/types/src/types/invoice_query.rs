@@ -1,8 +1,8 @@
 use super::patient::PatientNode;
 use super::program_node::ProgramNode;
 use super::{
-    ClinicianNode, CurrencyNode, DiagnosisNode, InsuranceNode, InvoiceLineConnector, NameNode,
-    RequisitionNode, StoreNode, UserNode,
+    ClinicianNode, CurrencyNode, DiagnosisNode, InsurancePolicyNode, InvoiceLineConnector,
+    NameNode, RequisitionNode, StoreNode, UserNode,
 };
 use async_graphql::*;
 use chrono::{DateTime, Utc};
@@ -432,7 +432,7 @@ impl InvoiceNode {
         &self.row().name_insurance_join_id
     }
 
-    pub async fn insurance_policy(&self, ctx: &Context<'_>) -> Result<Option<InsuranceNode>> {
+    pub async fn insurance_policy(&self, ctx: &Context<'_>) -> Result<Option<InsurancePolicyNode>> {
         let Some(name_insurance_join_id) = &self.row().name_insurance_join_id else {
             return Ok(None);
         };
@@ -441,7 +441,7 @@ impl InvoiceNode {
         Ok(loader
             .load_one(name_insurance_join_id.to_string())
             .await?
-            .map(InsuranceNode::from_domain))
+            .map(InsurancePolicyNode::from_domain))
     }
 
     pub async fn insurance_discount_amount(&self) -> &Option<f64> {
