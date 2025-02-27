@@ -5,6 +5,8 @@ import {
   Typography,
   FlatButton,
   useNotification,
+  useTableStore,
+  MinusCircleIcon,
 } from '@openmsupply-client/common';
 
 export interface Action {
@@ -27,6 +29,7 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
 }): ReactElement => {
   const t = useTranslation();
   const { info } = useNotification();
+  const { clearSelected } = useTableStore();
 
   const showDisabledActionToastMessage = (disabledToastMessage: string) =>
     info(disabledToastMessage);
@@ -40,6 +43,12 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
       disabledToastMessage ?? `${t('messages.cannot-perform-action')}`
     );
   };
+
+  actions.push({
+    label: t('label.clear-selection'),
+    icon: <MinusCircleIcon />,
+    onClick: clearSelected,
+  });
 
   return (
     <Stack
