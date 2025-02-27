@@ -1,5 +1,4 @@
 import React, { FC, ReactElement } from 'react';
-
 import { useDialog, useNotification } from '@common/hooks';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
@@ -8,18 +7,16 @@ import {
   DialogButton,
   InputWithLabelRow,
   NumericTextInput,
+  Switch,
 } from '@common/components';
-
 import { Box, Stack } from '@openmsupply-client/common';
 import {
   PatientModal,
   usePatientModalStore,
 } from '@openmsupply-client/programs';
-
 import { usePatient } from '../api';
 import { InsurancePolicySelect } from './InsurancePolicySelect';
 import { InsuranceProvidersSelect } from './InsuranceProvidersSelect';
-import { InsuranceStatusToggle } from './InsuranceStatusToggle';
 import { useInsurances } from '../apiModern/hooks/useInsurances';
 
 export const InsuranceModal: FC = (): ReactElement => {
@@ -127,12 +124,15 @@ export const InsuranceModal: FC = (): ReactElement => {
               })
             }
           />
-          <InsuranceStatusToggle
-            isActive={draft.isActive}
-            onChange={isActive =>
-              updatePatch({
-                isActive,
-              })
+          <InputWithLabelRow
+            label={t('label.active')}
+            Input={
+              <Switch
+                onChange={() => updatePatch({ isActive: !draft.isActive })}
+                checked={draft.isActive}
+                switchSx={{ left: '-13px' }}
+                color="secondary"
+              />
             }
           />
         </Box>

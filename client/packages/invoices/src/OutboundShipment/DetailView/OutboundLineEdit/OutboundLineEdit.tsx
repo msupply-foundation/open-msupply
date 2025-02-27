@@ -102,6 +102,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const onUpdateQuantity = (batchId: string, quantity: number) => {
     updateQuantity(batchId, quantity);
     setIsAutoAllocated(false);
+    setIsDirty(true);
   };
 
   const onSave = async () => {
