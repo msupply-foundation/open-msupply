@@ -659,8 +659,11 @@ async fn main() -> anyhow::Result<()> {
             let report_list = ReportRepository::new(&con).query_by_filter(filter)?;
             let row_repository = ReportRowRepository::new(&con);
 
+            info!("Found {} reports matching code {}", report_list.len(), code);
+
             for mut report in report_list {
-                report.report_row.is_active = {
+                let initial_value = report.report_row.is_active;
+                let updated_value = {
                     if enable {
                         true
                     } else if disable{
@@ -669,9 +672,16 @@ async fn main() -> anyhow::Result<()> {
                         !report.report_row.is_active
                     }
                 };
+                report.report_row.is_active = updated_value;
                 row_repository.upsert_one(
                     &report.report_row
                 )?;
+
+                info!("{}: {} => {}",
+                    report.report_row.id,
+                    if initial_value { "ACTIVE" } else { "INACTIVE" },
+                    if updated_value { "ACTIVE" } else { "INACTIVE" }
+                );
             }
         }
     }
