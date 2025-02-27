@@ -69,14 +69,13 @@ export const FooterComponent: FC = () => {
         .map(({ lines }) => lines.flat())
         .flat();
     }) || [];
-  const { clearSelected } = useTableStore();
 
   const {
     delete: { deleteLines },
   } = usePrescriptionLines();
 
   const deleteAction = async () => {
-    await deleteLines(selectedRows).then(() => clearSelected());
+    await deleteLines(selectedRows);
   };
 
   const confirmAndDelete = useDeleteConfirmation({

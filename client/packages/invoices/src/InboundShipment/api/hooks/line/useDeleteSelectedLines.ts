@@ -35,7 +35,6 @@ export const useDeleteSelectedLines = (): (() => void) => {
               isDeleted: true,
             }));
     }) || [];
-  const { clearSelected } = useTableStore();
 
   const onDelete = async () => {
     const result = await mutateAsync(selectedRows).catch(err => {
@@ -68,7 +67,6 @@ export const useDeleteSelectedLines = (): (() => void) => {
         }
       }
     }
-    clearSelected();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
