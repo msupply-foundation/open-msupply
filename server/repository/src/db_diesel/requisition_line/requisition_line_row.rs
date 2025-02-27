@@ -56,7 +56,6 @@ pub struct RequisitionLineRow {
     pub supply_quantity: f64,
     pub available_stock_on_hand: f64,
     pub average_monthly_consumption: f64,
-    #[ts(as = "Option<String>")]
     pub snapshot_datetime: Option<NaiveDateTime>,
     pub approved_quantity: f64,
     pub approval_comment: Option<String>,

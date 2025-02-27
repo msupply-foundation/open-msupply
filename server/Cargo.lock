@@ -9284,6 +9284,7 @@ version = "10.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e640d9b0964e9d39df633548591090ab92f7a4567bc31d3891af23471a3365c6"
 dependencies = [
+ "chrono",
  "lazy_static",
  "thiserror 2.0.11",
  "ts-rs-macros",
