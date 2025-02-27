@@ -89,6 +89,11 @@ export type AbbreviationsQueryVariables = Types.Exact<{
 
 export type AbbreviationsQuery = { __typename: 'Queries', abbreviations: Array<{ __typename: 'AbbreviationNode', expansion: string, id: string, text: string }> };
 
+export type LabelPrinterSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type LabelPrinterSettingsQuery = { __typename: 'Queries', labelPrinterSettings?: { __typename: 'LabelPrinterSettingNode', address: string, labelHeight: number, labelWidth: number, port: number } | null };
+
 export const ItemDirectionFragmentDoc = gql`
     fragment ItemDirection on ItemDirectionNode {
   __typename
@@ -618,6 +623,17 @@ export const AbbreviationsDocument = gql`
   }
 }
     ${AbbreviationFragmentDoc}`;
+export const LabelPrinterSettingsDocument = gql`
+    query labelPrinterSettings {
+  labelPrinterSettings {
+    __typename
+    address
+    labelHeight
+    labelWidth
+    port
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -652,6 +668,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     abbreviations(variables?: AbbreviationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AbbreviationsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AbbreviationsQuery>(AbbreviationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'abbreviations', 'query', variables);
+    },
+    labelPrinterSettings(variables?: LabelPrinterSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LabelPrinterSettingsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<LabelPrinterSettingsQuery>(LabelPrinterSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'labelPrinterSettings', 'query', variables);
     }
   };
 }
