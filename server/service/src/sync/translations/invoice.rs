@@ -357,7 +357,7 @@ impl SyncTranslation for InvoiceTranslation {
             shipped_datetime: mapping.shipped_datetime,
             delivered_datetime: mapping.delivered_datetime,
             verified_datetime: mapping.verified_datetime,
-            // Cancelled datetime handled in 2nd translator
+            // Cancelled datetime handled in processor (To-DO)
             cancelled_datetime: data.cancelled_datetime,
             is_cancellation: data.is_cancellation,
             colour: mapping.colour,
