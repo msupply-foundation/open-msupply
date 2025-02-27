@@ -72,7 +72,7 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
 
 const getDateFromUrl = (query: string, range: RangeOption | undefined) => {
   const value = typeof query !== 'object' || !range ? query : query[range];
-  return DateUtils.getNaiveDate(value);
+  return DateUtils.getDateOrNull(value);
 };
 
 const getRangeBoundary = (
