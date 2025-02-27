@@ -24,14 +24,10 @@ export const useInboundDeleteRows = () => {
     state =>
       rows?.nodes.filter(({ id }) => state.rowState[id]?.isSelected) ?? []
   );
-  const { clearSelected } = useTableStore();
 
   const deleteAction = async () => {
     await mutateAsync(selectedRows)
-      .then(() => {
-        queryClient.invalidateQueries(api.keys.base());
-        clearSelected();
-      })
+      .then(() => queryClient.invalidateQueries(api.keys.base()))
       .catch(err => {
         throw err;
       });

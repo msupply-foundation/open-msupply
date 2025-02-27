@@ -20,14 +20,11 @@ export const useStocktakeDeleteSelectedLines = (): (() => void) => {
         .filter(Boolean) as StocktakeLineFragment[],
     };
   });
-  const { clearSelected } = useTableStore();
 
   const onDelete = async () => {
-    await mutateAsync(selectedRows)
-      .then(() => clearSelected())
-      .catch(err => {
-        throw err;
-      });
+    await mutateAsync(selectedRows).catch(err => {
+      throw err;
+    });
   };
 
   const confirmAndDelete = useDeleteConfirmation({

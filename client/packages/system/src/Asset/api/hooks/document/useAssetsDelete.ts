@@ -22,14 +22,10 @@ export const useAssetsDelete = () => {
       .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
       .filter(Boolean) as AssetCatalogueItemFragment[],
   }));
-  const { clearSelected } = useTableStore();
 
   const deleteAction = async () => {
     await Promise.all(selectedRows.map(row => mutateAsync(row.id)))
-      .then(() => {
-        queryClient.invalidateQueries(api.keys.base());
-        clearSelected();
-      })
+      .then(() => queryClient.invalidateQueries(api.keys.base()))
       .catch(err => {
         console.error(err);
         throw err;

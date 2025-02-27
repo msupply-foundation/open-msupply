@@ -27,14 +27,10 @@ export const useOutboundDeleteRows = () => {
       .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
       .filter(Boolean) as OutboundRowFragment[],
   }));
-  const { clearSelected } = useTableStore();
 
   const deleteAction = async () => {
     await mutateAsync(selectedRows)
-      .then(() => {
-        queryClient.invalidateQueries(api.keys.base());
-        clearSelected();
-      })
+      .then(() => queryClient.invalidateQueries(api.keys.base()))
       .catch(err => {
         throw err;
       });

@@ -71,7 +71,6 @@ export const usePrescriptionList = (queryParams: ListParams) => {
       .map(selectedId => data?.nodes?.find(({ id }) => selectedId === id))
       .filter(Boolean) as PrescriptionRowFragment[],
   }));
-  const { clearSelected } = useTableStore();
 
   const {
     mutateAsync: deleteMutation,
@@ -80,9 +79,7 @@ export const usePrescriptionList = (queryParams: ListParams) => {
   } = useDelete();
 
   const deletePrescriptions = async () => {
-    await deleteMutation(selectedRows).then(() => {
-      clearSelected();
-    });
+    await deleteMutation(selectedRows);
   };
 
   return {
