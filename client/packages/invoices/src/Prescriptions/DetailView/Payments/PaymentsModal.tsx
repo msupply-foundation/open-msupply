@@ -17,7 +17,7 @@ import {
 import { useDialog } from '@common/hooks';
 import { DateUtils, useTranslation } from '@common/intl';
 import { PrescriptionRowFragment, usePrescription } from '../../api';
-import { useInsurances } from '@openmsupply-client/system/src';
+import { useInsurancePolicies } from '@openmsupply-client/system/src';
 
 interface PaymentsModalProps {
   isOpen: boolean;
@@ -43,7 +43,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
   const nameId = prescriptionData?.patientId ?? '';
   const {
     query: { data },
-  } = useInsurances(nameId);
+  } = useInsurancePolicies(nameId);
 
   // Would normally add this filtering to query, but because the list is short
   // and doesn't involve any pagination, this is appropriate in this case.
@@ -132,7 +132,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <InputWithLabelRow
-              label={t('label.insurance-scheme')}
+              label={t('label.insurance-policy')}
               Input={
                 <Autocomplete
                   options={

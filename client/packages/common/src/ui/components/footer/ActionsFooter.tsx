@@ -70,9 +70,11 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
           shouldShrink,
           disabledToastMessage,
         }) => (
-          <div onClick={handleDisabledClick(disabled, disabledToastMessage)}>
+          <div
+            key={label}
+            onClick={handleDisabledClick(disabled, disabledToastMessage)}
+          >
             <FlatButton
-              key={label}
               startIcon={icon}
               label={label}
               disabled={disabled}
