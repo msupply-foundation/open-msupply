@@ -1903,5 +1903,10 @@
   "report.consumption-month": "Mois de consommation",
   "report.consumption-last-month": "Consommation du mois dernier",
   "report.consumption-two-months-ago": "Consommation des 2 mois derniers",
-  "report.days-until-expired": "Jours jusqu'à expiration"
+  "report.days-until-expired": "Jours jusqu'à expiration",
+  "label.policy-type": "Type de police",
+  "label.discount-percentage": "Pourcentage de réduction",
+  "label.discount-amount": "Montant de la réduction",
+  "heading.insurance": "Assurance",
+  "messages.insurance-description": "Informations sur l'assurance médicale associée à cette prescription"
 }
