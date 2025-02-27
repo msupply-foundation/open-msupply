@@ -114,16 +114,23 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   };
 
   const save = async () => {
-    const agesAreInOrder = (draft.vaccineCourseDoses ?? []).every(
-      (dose, index, doses) => {
-        const prevDoseAge = doses[index - 1]?.minAgeMonths ?? -0.01;
-        return dose.minAgeMonths > prevDoseAge;
-      }
-    );
+    const doses = draft.vaccineCourseDoses ?? [];
+
+    const agesAreInOrder = doses.every((dose, index, doses) => {
+      const prevDoseAge = doses[index - 1]?.minAgeMonths ?? -0.01;
+      return dose.minAgeMonths > prevDoseAge;
+    });
 
     if (!agesAreInOrder) {
       error(t('error.dose-ages-out-of-order'))();
       return;
+    }
+
+    for (const dose of doses) {
+      if (dose.minAgeMonths > dose.maxAgeMonths) {
+        error(t('error.dose-max-lower-than-min', { label: dose.label }))();
+        return;
+      }
     }
 
     try {
