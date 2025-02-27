@@ -127,6 +127,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut om_form_schema::test_pull_upsert_records());
     test_records.append(&mut frontend_plugin::test_pull_upsert_records());
     test_records.append(&mut plugin_data::test_pull_upsert_records());
+
     test_records
 }
 
@@ -233,6 +234,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut om_report::test_v6_central_push_records());
     test_records.append(&mut om_form_schema::test_v6_central_push_records());
     test_records.append(&mut frontend_plugin::test_v6_push_records());
+
     // Remote
     test_records.append(&mut asset::test_v6_records());
     test_records.append(&mut asset_log::test_v6_records());
