@@ -47,9 +47,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     query: { data: insuranceData },
   } = useInsurances(nameId);
 
-  const selectedInsurance = insuranceData?.find(
-    ({ insuranceProviders }) => insuranceProviders?.id === insuranceId
-  );
+  const selectedInsurance = insuranceData?.find(({ id }) => id === insuranceId);
 
   const { plugins } = usePluginProvider();
   const pluginEvents = usePluginEvents({
@@ -138,16 +136,16 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
                 <Autocomplete
                   options={
                     insuranceData?.map(
-                      ({ insuranceProviders, policyNumber }) => ({
-                        label: policyNumber ?? '',
-                        value: insuranceProviders?.id ?? '',
+                      ({ id, policyNumber, insuranceProviders }) => ({
+                        label: `${policyNumber} - ${insuranceProviders?.providerName}`,
+                        value: id ?? '',
                       })
                     ) ?? []
                   }
                   getOptionLabel={option => option.label}
                   value={{
                     label: selectedInsurance?.policyNumber ?? '',
-                    value: selectedInsurance?.insuranceProviders?.id ?? '',
+                    value: selectedInsurance?.id ?? '',
                   }}
                   onChange={(_, option) => {
                     if (option) {
