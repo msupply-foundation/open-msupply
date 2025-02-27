@@ -113,7 +113,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
                 <CurrencyInput
                   value={prescriptionData?.pricing.totalAfterTax}
                   onChangeNumber={() => {}}
-                  style={{ borderRadius: 4, pointerEvents: 'none' }}
+                  disabled
                 />
               }
             />
@@ -124,7 +124,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
                   key={totalToBePaidByInsurance}
                   value={totalToBePaidByInsurance}
                   onChangeNumber={() => {}}
-                  style={{ borderRadius: 4, pointerEvents: 'none' }}
+                  disabled
                 />
               }
               sx={{ pt: 1 }}
@@ -166,11 +166,11 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
               label={t('label.discount-rate')}
               Input={
                 <BasicTextInput
+                  disabled
                   value={`${discountPercentage}%`}
                   sx={{
                     ml: 0.5,
                     mr: 1.5,
-                    pointerEvents: 'none',
                   }}
                 />
               }
