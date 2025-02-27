@@ -94,13 +94,9 @@ pub struct RequisitionRow {
     #[diesel(column_name = type_)]
     pub r#type: RequisitionType,
     pub status: RequisitionStatus,
-    #[ts(as = "String")]
     pub created_datetime: NaiveDateTime,
-    #[ts(as = "Option<String>")]
     pub sent_datetime: Option<NaiveDateTime>,
-    #[ts(as = "Option<String>")]
     pub finalised_datetime: Option<NaiveDateTime>,
-    #[ts(as = "Option<String>")]
     pub expected_delivery_date: Option<NaiveDate>,
     pub colour: Option<String>,
     pub comment: Option<String>,
