@@ -147,7 +147,8 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   };
 
   const isValid =
-    draft.name && !draft.vaccineCourseDoses?.some(dose => !dose.label);
+    draft.name.trim() &&
+    !draft.vaccineCourseDoses?.some(dose => !dose.label.trim());
 
   const modalContent = isLoading ? (
     <BasicSpinner />
