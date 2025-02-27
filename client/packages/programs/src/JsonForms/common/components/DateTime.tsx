@@ -18,6 +18,7 @@ const Options = z
      *
      */
     dateOnly: z.boolean().optional(),
+    dateAsEndOfDay: z.boolean().optional(),
   })
   .strict()
   .optional();
@@ -66,6 +67,7 @@ const UIComponent = (props: ControlProps) => {
     disabled: !props.enabled,
     error: zErrors ?? error ?? customError ?? props.errors,
     actions: ['clear', 'today'] as PickersActionBarAction[],
+    dateAsEndOfDay: !!props.uischema.options?.['dateAsEndOfDay'],
   };
 
   return (
