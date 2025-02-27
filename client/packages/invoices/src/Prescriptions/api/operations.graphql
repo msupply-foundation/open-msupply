@@ -86,7 +86,6 @@ fragment PrescriptionRow on InvoiceNode {
       providerName
     }
     policyNumber
-    policyType
   }
 }
 
