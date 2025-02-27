@@ -65,7 +65,7 @@ const UIComponent = (props: ControlProps) => {
     readOnly: !!props.uischema.options?.['readonly'],
     disabled: !props.enabled,
     error: zErrors ?? error ?? customError ?? props.errors,
-    actions: ['clear', 'today'] as PickersActionBarAction[],
+    actions: ['clear', 'today', 'accept'] as PickersActionBarAction[],
   };
 
   return (
