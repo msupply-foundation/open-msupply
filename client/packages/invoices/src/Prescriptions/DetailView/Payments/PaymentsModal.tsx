@@ -33,7 +33,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const [insuranceId, setInsuranceId] = useState<string>();
+  const [insuranceId, setInsuranceId] = useState<string | null>();
   const [pluginError, setPluginError] = useState<string>();
 
   const {
@@ -151,6 +151,8 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
                   onChange={(_, option) => {
                     if (option) {
                       setInsuranceId(option.value);
+                    } else {
+                      setInsuranceId(null);
                     }
                   }}
                   sx={{ mr: 2 }}
