@@ -1615,7 +1615,7 @@
   "messages.service-charges-description": "Total amounts of service charges. The calculated tax amount is an effective tax rate using the total tax paid over the subtotal of all service charges.",
   "messages.shipment-saved": "Shipment saved 🥳",
   "messages.stock-charges-description": "Total charges for stock lines. The calculated tax amount is an effective tax rate using the total tax paid over the subtotal of all stock lines.",
-  "messages.insurance-description": "The amount that will be paid by the medical insurance",
+  "messages.insurance-description": "Information about the medical insurance associated with this prescription",
   "messages.stock-expired": "Some stock lines are expired and will not be auto-allocated.",
   "messages.stock-line-saved": "Stock line saved 🥳",
   "messages.stock-on-hold": "Some stock lines are on hold and cannot be allocated.",
