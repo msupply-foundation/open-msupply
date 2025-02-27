@@ -1,4 +1,4 @@
-import { AbbreviationNode, useGql, useQuery } from 'packages/common/src';
+import { AbbreviationNode, useGql, useQuery } from '@openmsupply-client/common';
 import { getSdk } from '../../api/operations.generated';
 import { ABBREVIATION } from './keys';
 export const useAbbreviationsGraphQl = () => {
