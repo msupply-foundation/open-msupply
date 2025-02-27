@@ -386,13 +386,13 @@ describe('generate labels from prescribed items', () => {
       itemDetails: '500 tablet Ibuprofen',
       itemDirections: 'first item note',
       patientDetails: 'Patient A - code',
-      details: 'Test Store - 27/02/2025 - lastName, firstName',
+      details: 'Test Store - {date} - lastName, firstName',
     },
     {
       itemDetails: '300 tablet Amoxicillin',
       itemDirections: 'second item note',
       patientDetails: 'Patient A - code',
-      details: 'Test Store - 27/02/2025 - lastName, firstName',
+      details: 'Test Store - {date} - lastName, firstName',
     }]
    ********************************************************** */
   it('creates a formatted label for each item', () => {
@@ -421,13 +421,13 @@ describe('generate labels from prescribed items', () => {
       itemDetails: '500 tablet Ibuprofen',
       itemDirections: 'first item note',
       patientDetails: 'Patient A - code',
-      details: 'Test Store - 27/02/2025 - lastName, firstName',
+      details: `Test Store - ${new Date(prescription.createdDatetime).toLocaleDateString()} - lastName, firstName`,
     };
     const labelTwo = {
       itemDetails: '300 tablet Amoxicillin',
       itemDirections: 'second item note',
       patientDetails: 'Patient A - code',
-      details: 'Test Store - 27/02/2025 - lastName, firstName',
+      details: `Test Store - ${new Date(prescription.createdDatetime).toLocaleDateString()} - lastName, firstName`,
     };
 
     const expected = [labelOne, labelTwo];
