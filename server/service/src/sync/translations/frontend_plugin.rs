@@ -1,6 +1,6 @@
 use repository::{
-    system_log_row::{SystemLogRow, SystemLogRowRepository},
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, FrontendPluginRow, FrontendPluginRowDelete,
+    FrontendPluginRowRepository, StorageConnection, SyncBufferRow,
 };
 
 use super::{
@@ -10,17 +10,17 @@ use super::{
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
-    Box::new(SystemLogTranslation)
+    Box::new(FrontendPluginTranslator)
 }
 
-pub(crate) struct SystemLogTranslation;
+pub(crate) struct FrontendPluginTranslator;
 
-impl SyncTranslation for SystemLogTranslation {
-    fn table_name(&self) -> &'static str {
-        "system_log"
+impl SyncTranslation for FrontendPluginTranslator {
+    fn table_name(&self) -> &str {
+        "frontend_plugin"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![]
     }
 
@@ -30,21 +30,22 @@ impl SyncTranslation for SystemLogTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(serde_json::from_str::<
-            SystemLogRow,
+            FrontendPluginRow,
         >(&sync_record.data)?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
-        Some(ChangelogTableName::SystemLog)
+        Some(ChangelogTableName::FrontendPlugin)
     }
 
+    // Only translating and pulling from central server
     fn should_translate_to_sync_record(
         &self,
         row: &ChangelogRow,
         r#type: &ToSyncRecordTranslationType,
     ) -> bool {
         match r#type {
-            ToSyncRecordTranslationType::PushToOmSupplyCentral => {
+            ToSyncRecordTranslationType::PullFromOmSupplyCentral => {
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }
             _ => false,
@@ -56,10 +57,10 @@ impl SyncTranslation for SystemLogTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = SystemLogRowRepository::new(connection)
+        let row = FrontendPluginRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
-                "SystemLog row ({}) not found",
+                "frontend_plugin row ({}) not found",
                 changelog.record_id
             )))?;
 
@@ -69,6 +70,16 @@ impl SyncTranslation for SystemLogTranslation {
             serde_json::to_value(row)?,
         ))
     }
+
+    fn try_translate_from_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(FrontendPluginRowDelete(
+            sync_record.record_id.clone(),
+        )))
+    }
 }
 
 #[cfg(test)]
@@ -77,12 +88,12 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
-    async fn test_system_log_translation() {
-        use crate::sync::test::test_data::system_log as test_data;
-        let translator = SystemLogTranslation;
+    async fn test_frontend_plugin_translation() {
+        use crate::sync::test::test_data::frontend_plugin as test_data;
+        let translator = FrontendPluginTranslator;
 
         let (_, connection, _, _) =
-            setup_all("test_system_log_translation", MockDataInserts::none()).await;
+            setup_all("test_frontend_plugin_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
