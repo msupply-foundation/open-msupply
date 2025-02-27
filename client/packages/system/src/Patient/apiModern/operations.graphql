@@ -1,4 +1,4 @@
-fragment Insurance on InsuranceNode {
+fragment Insurance on InsurancePolicyNode {
   id
   insuranceProviderId
   policyType
