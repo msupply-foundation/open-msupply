@@ -29,6 +29,6 @@ pub trait AppDataServiceTrait: Send + Sync {
     }
 }
 
-pub struct AppDataService {}
+pub struct AppDataService;
 
 impl AppDataServiceTrait for AppDataService {}

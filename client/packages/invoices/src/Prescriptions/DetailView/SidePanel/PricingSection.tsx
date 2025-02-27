@@ -7,6 +7,7 @@ import {
   PanelRow,
   useTranslation,
   useFormatCurrency,
+  InfoTooltipIcon,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../../api';
 
@@ -26,7 +27,14 @@ export const PricingSectionComponent = () => {
         {prescriptionData.insurancePolicy && (
           <>
             <PanelRow>
-              <PanelLabel>{t('label.insurance-provider-name')}</PanelLabel>
+              <InfoTooltipIcon title={t('messages.insurance-description')} />
+              <PanelLabel fontWeight="bold">
+                {t('heading.insurance')}
+              </PanelLabel>
+            </PanelRow>
+
+            <PanelRow sx={{ marginLeft: 1.25 }}>
+              <PanelLabel>{t('label.provider-name')}</PanelLabel>
               <PanelField>
                 {
                   prescriptionData.insurancePolicy.insuranceProviders
@@ -35,26 +43,24 @@ export const PricingSectionComponent = () => {
               </PanelField>
             </PanelRow>
 
-            <PanelRow>
-              <PanelLabel>{t('label.insurance-policy-number')}</PanelLabel>
+            <PanelRow sx={{ marginLeft: 1.25 }}>
+              <PanelLabel>{t('label.policy-number')}</PanelLabel>
               <PanelField>
                 {prescriptionData.insurancePolicy.policyNumber}
               </PanelField>
             </PanelRow>
 
-            <PanelRow>
-              <PanelLabel>{t('label.insurance-discount-amount')}</PanelLabel>
+            <PanelRow sx={{ marginLeft: 1.25 }}>
+              <PanelLabel>{t('label.discount-amount')}</PanelLabel>
               <PanelField>
                 {c(prescriptionData.insuranceDiscountAmount ?? 0)}
               </PanelField>
             </PanelRow>
 
-            <PanelRow>
-              <PanelLabel>
-                {t('label.insurance-discount-percentage')}
-              </PanelLabel>
+            <PanelRow sx={{ marginLeft: 1.25 }}>
+              <PanelLabel>{t('label.discount-percentage')}</PanelLabel>
               <PanelField>
-                {prescriptionData.insuranceDiscountPercentage ?? 0}%{' '}
+                {prescriptionData.insuranceDiscountPercentage ?? 0}%
               </PanelField>
             </PanelRow>
           </>
