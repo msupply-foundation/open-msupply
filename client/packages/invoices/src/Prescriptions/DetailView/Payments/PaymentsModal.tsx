@@ -15,7 +15,7 @@ import {
   usePluginProvider,
 } from '@openmsupply-client/common';
 import { useDialog } from '@common/hooks';
-import { useTranslation } from '@common/intl';
+import { DateUtils, useTranslation } from '@common/intl';
 import { PrescriptionRowFragment, usePrescription } from '../../api';
 import { useInsurances } from '@openmsupply-client/system/src';
 
@@ -44,8 +44,15 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
 
   const nameId = prescriptionData?.patientId ?? '';
   const {
-    query: { data: insuranceData },
+    query: { data },
   } = useInsurances(nameId);
+
+  // Would normally add this filtering to query, but because the list is short
+  // and doesn't involve any pagination, this is appropriate in this case.
+  const insuranceData = data?.filter(
+    insurance =>
+      insurance.isActive && !DateUtils.isExpired(insurance.expiryDate)
+  );
 
   const selectedInsurance = insuranceData?.find(
     ({ insuranceProviders }) => insuranceProviders?.id === insuranceId

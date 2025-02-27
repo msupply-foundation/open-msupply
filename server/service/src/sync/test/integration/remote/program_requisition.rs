@@ -130,6 +130,8 @@ impl SyncRecordTester for ProgramRequisitionTester {
             master_list_id: Some(master_list_row.id.clone()),
             context_id: master_list_row.id.clone(),
             is_immunisation: false,
+            elmis_code: None,
+            deleted_datetime: None,
         };
 
         let program_requisition_settings1 = ProgramRequisitionSettingsRow {
@@ -153,6 +155,8 @@ impl SyncRecordTester for ProgramRequisitionTester {
             threshold_mos: 3.0,
             max_mos: 3.0,
             max_order_per_period: 1,
+            is_emergency: false,
+            max_items_in_emergency_order: 0,
         };
 
         let order_type2 = ProgramRequisitionOrderTypeRow {
@@ -162,6 +166,8 @@ impl SyncRecordTester for ProgramRequisitionTester {
             threshold_mos: 3.0,
             max_mos: 3.0,
             max_order_per_period: 1,
+            is_emergency: false,
+            max_items_in_emergency_order: 0,
         };
 
         let order_type3 = ProgramRequisitionOrderTypeRow {
@@ -171,6 +177,8 @@ impl SyncRecordTester for ProgramRequisitionTester {
             threshold_mos: 4.0,
             max_mos: 4.0,
             max_order_per_period: 1,
+            is_emergency: false,
+            max_items_in_emergency_order: 0,
         };
 
         let master_list_row2 = MasterListRow {
@@ -216,6 +224,8 @@ impl SyncRecordTester for ProgramRequisitionTester {
             master_list_id: Some(master_list_row2.id.clone()),
             context_id: master_list_row2.id.clone(),
             is_immunisation: false,
+            elmis_code: None,
+            deleted_datetime: None,
         };
 
         let program_requisition_settings3 = ProgramRequisitionSettingsRow {
@@ -302,6 +312,8 @@ impl SyncRecordTester for ProgramRequisitionTester {
             threshold_mos: 3.0,
             max_mos: 6.0,
             max_order_per_period: 1,
+            is_emergency: false,
+            max_items_in_emergency_order: 0,
         };
 
         result.push(TestStepData {
