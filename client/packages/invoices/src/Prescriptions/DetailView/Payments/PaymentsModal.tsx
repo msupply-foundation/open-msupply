@@ -34,8 +34,6 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const [insuranceId, setInsuranceId] = useState<string>();
-  const [discountRate, setDiscountRate] = useState(0);
-  const [totalToBePaidByInsurance, setTotalToBePaidByInsurance] = useState(0);
   const [pluginError, setPluginError] = useState<string>();
 
   const {
@@ -54,6 +52,12 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     isDirty: false,
   });
 
+  const totalAfterTax = prescriptionData?.pricing.totalAfterTax ?? 0;
+  const discountPercentage = selectedInsurance?.discountPercentage ?? 0;
+  const totalToBePaidByInsurance =
+    totalAfterTax * ((selectedInsurance?.discountPercentage ?? 0) / 100);
+  const totalToBePaidByPatient = totalAfterTax - totalToBePaidByInsurance;
+
   const onSave = async () => {
     if (!prescriptionData) return;
 
@@ -67,7 +71,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
           ? {
               id: prescriptionData.id,
               nameInsuranceJoinId: selectedInsurance?.id,
-              insuranceDiscountPercentage: discountRate,
+              insuranceDiscountPercentage: discountPercentage,
               insuranceDiscountAmount: totalToBePaidByInsurance,
             }
           : {}
@@ -82,16 +86,6 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     // Reset plugin error when modal is closed
     setPluginError(undefined);
   }, [isOpen]);
-
-  useEffect(() => {
-    if (!prescriptionData) return;
-    const totalAfterTax = prescriptionData?.pricing.totalAfterTax ?? 0;
-    const discountPercentage = selectedInsurance?.discountPercentage ?? 0;
-
-    setDiscountRate(discountPercentage);
-    const discountAmount = (totalAfterTax * discountPercentage) / 100;
-    setTotalToBePaidByInsurance(discountAmount);
-  }, [selectedInsurance]);
 
   return (
     <Modal
@@ -163,7 +157,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
               label={t('label.discount-rate')}
               Input={
                 <BasicTextInput
-                  value={`${discountRate}%`}
+                  value={`${discountPercentage}%`}
                   sx={{
                     ml: 0.5,
                     mr: 1.5,
@@ -180,10 +174,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
                 key={index}
                 prescriptionData={prescriptionData}
                 totalToBePaidByInsurance={totalToBePaidByInsurance}
-                totalToBePaidByPatient={
-                  prescriptionData.pricing.totalAfterTax -
-                  totalToBePaidByInsurance
-                }
+                totalToBePaidByPatient={totalToBePaidByPatient}
                 events={pluginEvents}
               />
             ) : null
