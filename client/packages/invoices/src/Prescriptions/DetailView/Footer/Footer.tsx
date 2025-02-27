@@ -74,9 +74,13 @@ export const FooterComponent: FC = () => {
     delete: { deleteLines },
   } = usePrescriptionLines();
 
+  const deleteAction = async () => {
+    await deleteLines(selectedRows);
+  };
+
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
-    deleteAction: () => deleteLines(selectedRows),
+    deleteAction,
     canDelete: !isDisabled,
     messages: {
       confirmMessage: t('messages.confirm-delete-lines', {
