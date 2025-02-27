@@ -25,6 +25,7 @@ pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
 pub(crate) mod insurance_provider;
 pub(crate) mod invoice;
+pub(crate) mod invoice_cancellation;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
 pub(crate) mod item_direction;
@@ -119,6 +120,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         stock_line::boxed(),
         invoice::boxed(),
         invoice_line::boxed(),
+        invoice_cancellation::boxed(),
         stocktake::boxed(),
         stocktake_line::boxed(),
         requisition::boxed(),
