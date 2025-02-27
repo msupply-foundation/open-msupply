@@ -26,14 +26,9 @@ pub struct InsuranceSortInput {
     desc: Option<bool>,
 }
 
-#[derive(SimpleObject)]
-pub struct InsuranceConnector {
-    nodes: Vec<InsurancePolicyNode>,
-}
-
 #[derive(Union)]
-pub enum InsurancesResponse {
-    Response(InsuranceConnector),
+pub enum InsuranceResponse {
+    Response(InsurancePolicyNode),
 }
 
 pub fn insurance_policy(
@@ -62,9 +57,14 @@ pub fn insurance_policy(
     }))
 }
 
+#[derive(SimpleObject)]
+pub struct InsuranceConnector {
+    nodes: Vec<InsurancePolicyNode>,
+}
+
 #[derive(Union)]
-pub enum InsuranceResponse {
-    Response(InsurancePolicyNode),
+pub enum InsurancesResponse {
+    Response(InsuranceConnector),
 }
 
 pub fn insurance_policies(
