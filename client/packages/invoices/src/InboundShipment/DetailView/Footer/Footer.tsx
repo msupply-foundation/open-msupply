@@ -12,7 +12,6 @@ import {
   RewindIcon,
   Action,
   ActionsFooter,
-  useTableStore,
 } from '@openmsupply-client/common';
 
 import React, { FC } from 'react';
@@ -73,7 +72,6 @@ export const FooterComponent: FC<FooterComponentProps> = ({
   const onDelete = useInbound.lines.deleteSelected();
   const onZeroQuantities = useInbound.lines.zeroQuantities();
   const selectedLines = useInbound.utils.selectedLines();
-  const { clearSelected } = useTableStore();
 
   const actions: Action[] = [
     {
@@ -90,7 +88,6 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       icon: <ArrowLeftIcon />,
       onClick: () => {
         onReturnLines(selectedLines);
-        clearSelected();
       },
       shouldShrink: false,
     },
