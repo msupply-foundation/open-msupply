@@ -52,10 +52,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
       insurance.isActive && !DateUtils.isExpired(insurance.expiryDate)
   );
 
-  const selectedInsurance = insuranceData?.find(
-    ({ insuranceProviders }) => insuranceProviders?.id === insuranceId
-  );
-  // const selectedInsurance = insuranceData?.find(({ id }) => id === insuranceId);
+  const selectedInsurance = insuranceData?.find(({ id }) => id === insuranceId);
 
   const { plugins } = usePluginProvider();
   const pluginEvents = usePluginEvents({
