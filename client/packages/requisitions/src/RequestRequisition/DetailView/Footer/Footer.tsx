@@ -25,11 +25,11 @@ export const createStatusLog = (requisition: RequestFragment) => {
   return statusLog;
 };
 
-interface FooterProps {
-  isDisabled: boolean;
-}
+// interface FooterProps {
+//   isDisabled: boolean;
+// }
 
-export const Footer: FC<FooterProps> = ({ isDisabled }) => {
+export const Footer: FC = () => {
   const { data } = useRequest.document.get();
   const t = useTranslation();
   const { selectedRows, confirmAndDelete } = useRequest.line.delete();
@@ -39,8 +39,6 @@ export const Footer: FC<FooterProps> = ({ isDisabled }) => {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
-      disabled: isDisabled,
-      disabledToastMessage: t('label.cant-delete-disabled-internal-order'),
     },
   ];
 
