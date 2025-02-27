@@ -15,7 +15,7 @@ export interface DraftInsurance extends InsuranceFragment {
 }
 
 const defaultDraftInsurance: DraftInsurance = {
-  __typename: 'InsuranceNode',
+  __typename: 'InsurancePolicyNode',
   policyNumber: '',
   id: '',
   policyNumberFamily: '',
