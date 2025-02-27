@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -12,6 +12,7 @@ import {
   DetailTabs,
   ModalMode,
   useNotification,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
@@ -28,7 +29,7 @@ import { OutboundLineEdit } from './OutboundLineEdit';
 import { CustomerReturnEditModal } from '../../Returns';
 import { canReturnOutboundLines } from '../../utils';
 
-export const DetailView: FC = () => {
+const DetailViewInner = () => {
   const { info } = useNotification();
   const isDisabled = useOutbound.utils.isDisabled();
   const { entity, mode, onOpen, onClose, isOpen, setMode } =
@@ -55,6 +56,7 @@ export const DetailView: FC = () => {
     onOpen(draft);
     setMode(ModalMode.Create);
   };
+  const { clearSelected } = useTableStore();
 
   const onReturn = async (selectedLines: StockOutLineFragment[]) => {
     if (!data || !canReturnOutboundLines(data)) {
@@ -94,16 +96,7 @@ export const DetailView: FC = () => {
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
     >
       {data ? (
-        <TableProvider
-          createStore={createTableStore}
-          queryParamsStore={createQueryParamsStore<
-            StockOutLineFragment | StockOutItem
-          >({
-            initialSortBy: {
-              key: 'itemName',
-            },
-          })}
-        >
+        <>
           <AppBarButtons onAddItem={onAddItem} />
           {isOpen && (
             <OutboundLineEdit
@@ -122,6 +115,7 @@ export const DetailView: FC = () => {
               customerId={data.otherPartyId}
               modalMode={returnModalMode}
               outboundShipmentId={data.id}
+              onCreate={clearSelected}
               isNewReturn
             />
           )}
@@ -130,7 +124,7 @@ export const DetailView: FC = () => {
           <DetailTabs tabs={tabs} />
           <Footer onReturnLines={onReturn} />
           <SidePanel />
-        </TableProvider>
+        </>
       ) : (
         <AlertModal
           open={true}
@@ -146,5 +140,22 @@ export const DetailView: FC = () => {
         />
       )}
     </React.Suspense>
+  );
+};
+
+export const DetailView = () => {
+  return (
+    <TableProvider
+      createStore={createTableStore}
+      queryParamsStore={createQueryParamsStore<
+        StockOutLineFragment | StockOutItem
+      >({
+        initialSortBy: {
+          key: 'itemName',
+        },
+      })}
+    >
+      <DetailViewInner />
+    </TableProvider>
   );
 };

@@ -14,7 +14,6 @@ import {
   InvoiceNodeStatus,
   useBreadcrumbs,
   useConfirmationModal,
-  useTableStore,
   InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, outboundStatuses } from '../../../utils';
@@ -74,7 +73,6 @@ export const FooterComponent: FC<FooterComponentProps> = ({
   const { onAllocate } = useOutbound.line.allocateSelected();
 
   const selectedLines = useOutbound.utils.selectedLines();
-  const { clearSelected } = useTableStore();
 
   const selectedUnallocatedEmptyLines = selectedLines
     .filter(
@@ -96,8 +94,6 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     if (selectedUnallocatedEmptyLines.length !== 0) {
       getConfirmation();
     } else onAllocate();
-
-    clearSelected();
   };
 
   const actions: Action[] = [
@@ -119,10 +115,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     {
       label: t('button.return-lines'),
       icon: <ArrowLeftIcon />,
-      onClick: () => {
-        onReturnLines(selectedLines);
-        clearSelected();
-      },
+      onClick: () => onReturnLines(selectedLines),
       shouldShrink: false,
     },
   ];
