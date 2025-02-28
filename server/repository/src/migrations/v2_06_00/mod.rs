@@ -24,6 +24,7 @@ mod prescribed_quantity_store_pref;
 mod printer_create_table;
 mod reinitialise_reports;
 mod report_add_prescription_context;
+mod report_fix_prescriptions_report_code;
 
 pub(crate) struct V2_06_00;
 
