@@ -62,6 +62,7 @@ impl Migration for V2_06_00 {
             Box::new(reinitialise_reports::Migrate),
             Box::new(add_report_sync::Migrate),
             Box::new(add_form_schema_sync::Migrate),
+            Box::new(report_fix_prescriptions_report_code::Migrate),
         ]
     }
 }
