@@ -24,15 +24,19 @@ export const NavBar: React.FC<NavBarProps> = ({
   canCreateNew = false,
 }) => {
   const t = useTranslation();
+
+  const totalCount = itemIds.length;
+
+  if (canCreateNew) itemIds.push('new');
+
   const currentIndex = itemIds.findIndex(item => item === currentItemId);
   const hasPrevious = currentIndex > 0;
 
-  const totalCount = itemIds.length;
   const currentCount = currentIndex + 1;
+  const nextIsNew = currentCount === totalCount && canCreateNew;
+  const hasNext = currentCount < totalCount || nextIsNew;
 
   const creatingNew = currentItemId === 'new';
-  const hasNext =
-    currentCount < itemIds.length || (canCreateNew && !creatingNew);
 
   return (
     <Box
