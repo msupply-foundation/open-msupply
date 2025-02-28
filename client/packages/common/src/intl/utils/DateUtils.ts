@@ -149,7 +149,8 @@ export const DateUtils = {
     fromUnixTime(Math.max(...dates.map(d => getUnixTime(d as Date)))),
   isPast,
   isFuture,
-  isExpired: (expiryDate: Date): boolean => isPast(expiryDate),
+  isExpired: (expiryDate: Date | string | number): boolean =>
+    isPast(expiryDate),
   isAlmostExpired: (
     expiryDate: Date,
     threshold = MINIMUM_EXPIRY_MONTHS

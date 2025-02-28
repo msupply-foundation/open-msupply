@@ -195,7 +195,7 @@ impl RemoteDataSynchroniser {
             let records = translate_changelogs_to_sync_records(
                 connection,
                 changelogs,
-                ToSyncRecordTranslationType::PushToLegacyCentral,
+                vec![ToSyncRecordTranslationType::PushToLegacyCentral],
             )?
             .into_iter()
             .map(RemoteSyncRecordV5::from)

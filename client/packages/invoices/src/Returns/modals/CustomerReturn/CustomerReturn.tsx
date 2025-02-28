@@ -30,6 +30,7 @@ interface CustomerReturnEditModalProps {
   loadNextItem?: () => void;
   hasNextItem?: boolean;
   isNewReturn?: boolean;
+  onCreate?: () => void;
 }
 
 export const CustomerReturnEditModal = ({
@@ -44,6 +45,7 @@ export const CustomerReturnEditModal = ({
   loadNextItem,
   hasNextItem = false,
   isNewReturn = false,
+  onCreate,
 }: CustomerReturnEditModalProps) => {
   const t = useTranslation();
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
@@ -89,6 +91,7 @@ export const CustomerReturnEditModal = ({
             .build()
         )
       };
+      onCreate?.();
       onClose();
     } catch {
       // TODO: handle error display...

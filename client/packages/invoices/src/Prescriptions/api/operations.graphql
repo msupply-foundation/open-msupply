@@ -79,9 +79,14 @@ fragment PrescriptionRow on InvoiceNode {
 
   programId
 
-  nameInsuranceJoinId
   insuranceDiscountAmount
   insuranceDiscountPercentage
+  insurancePolicy {
+    insuranceProviders {
+      providerName
+    }
+    policyNumber
+  }
 }
 
 fragment PrescriptionLine on InvoiceLineNode {
@@ -498,21 +503,6 @@ mutation deletePrescriptionLines(
   }
 }
 
-query insuranceById($insuranceId: String!, $storeId: String!) {
-  insurance(id: $insuranceId, storeId: $storeId) {
-    ... on InsuranceNode {
-      __typename
-      isActive
-      insuranceProviders {
-        isActive
-        providerName
-      }
-      policyNumber
-      discountPercentage
-    }
-  }
-}
-
 fragment historicalStockLine on StockLineNode {
   id
   availableNumberOfPacks
@@ -550,5 +540,15 @@ query abbreviations($filter: AbbreviationFilterInput) {
     ... on AbbreviationNode {
       ...Abbreviation
     }
+  }
+}
+
+query labelPrinterSettings {
+  labelPrinterSettings {
+    __typename
+    address
+    labelHeight
+    labelWidth
+    port
   }
 }
