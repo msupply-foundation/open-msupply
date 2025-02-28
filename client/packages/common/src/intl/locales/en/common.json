@@ -348,6 +348,8 @@
   "error.problem-saving": "An error occurred: there was a problem saving the data.",
   "error.program-already-exists": "Immunization program already exists",
   "error.provide-reason": "A reason must be provided for any rows which have a difference in the counted number of packs.",
+  "error.provide-reason-stock-adjustment": "A reason must be provided before adjusting stock",
+  "error.provide-reason-new-stock": "A reason must be provided before adding stock",
   "error.provide-valid-reason": "Adjustment reason does not match adjustment direction",
   "error.reasons-not-provided-program-requisition": "Reasons must be provided when suggested quantity differs from requested quantity.",
   "error.record-already-exists": "A record with this id already exists",

@@ -34,7 +34,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
 }) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { success } = useNotification();
+  const { success, error } = useNotification();
   const pluginEvents = usePluginEvents({
     isDirty: false,
   });
@@ -64,7 +64,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
           .build()
       );
     } catch {
-      // todo
+      error(t('error.provide-reason-new-stock'))();
     }
   };
 
