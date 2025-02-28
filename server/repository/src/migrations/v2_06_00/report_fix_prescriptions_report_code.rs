@@ -12,8 +12,8 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-            UPDATE reports SET code = 'prescription-receipt' WHERE code = 'prescriptions';
-            UPDATE reports SET id = 'prescription-receipt_2_6_0_false' where id = 'prescriptions_2_6_0_false';
+            UPDATE report SET code = 'prescription-receipt' WHERE code = 'prescriptions';
+            UPDATE report SET id = 'prescription-receipt_2_6_0_false' where id = 'prescriptions_2_6_0_false';
             "#
         )?;
 
