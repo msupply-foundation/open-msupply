@@ -246,15 +246,15 @@ export const NumericTextInput = React.forwardRef<
     );
 
     const checkError = (value: number | undefined) => {
-      if (setError) {
-        if (value === undefined) {
-          if (error) setError(null);
-          return;
-        }
-        if (value > max && setError) setError('Too big');
-        else if (value < min && setError) setError('Too small');
-        else if (error) setError(null);
+      if (!setError) return;
+
+      if (value === undefined) {
+        if (error) setError(null);
+        return;
       }
+      if (value > max && setError) setError('Too big');
+      else if (value < min && setError) setError('Too small');
+      else if (error) setError(null);
     };
 
     useEffect(() => {
@@ -262,6 +262,7 @@ export const NumericTextInput = React.forwardRef<
         // On first render, ensure number value is set from defaultValue prop
         if (textValue && value === undefined) onChange(parse(textValue));
         isFirstRender.current = false;
+        checkError(value);
         return;
       }
 
@@ -272,6 +273,7 @@ export const NumericTextInput = React.forwardRef<
         !isInputIncomplete(textValue ?? '')
       )
         setTextValue(formatValue(value));
+      checkError(value);
     }, [
       value,
       textValue,
@@ -343,11 +345,7 @@ export const NumericTextInput = React.forwardRef<
 
           if (Number.isNaN(parsed)) return;
 
-          // const constrained = constrain(parsed, decimalLimit, min, max);
-          // setTextValue(
-          //   noFormatting ? String(constrained) : format(constrained)
-          // );
-          checkError(parsed);
+          // checkError(parsed);
 
           onChange(parsed);
         }}
@@ -360,14 +358,7 @@ export const NumericTextInput = React.forwardRef<
             (e.shiftKey ? multiplier : 1);
 
           const newNum = (value ?? 0) + change;
-
-          // const newNum = constrain(
-          //   (value ?? Math.max(min, 0)) + change,
-          //   decimalLimit,
-          //   min,
-          //   max
-          // );
-          checkError(newNum);
+          // checkError(newNum);
           setTextValue(formatValue(newNum));
           onChange(newNum);
         }}
@@ -385,7 +376,7 @@ export const NumericTextInput = React.forwardRef<
         onFocus={e => e.target.select()}
         fullWidth={fullWidth}
         {...props}
-        helperText={errorMessage ?? props.helperText}
+        helperText={props.helperText}
         error={error}
         value={textValue}
       />

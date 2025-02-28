@@ -88,6 +88,8 @@ export const InsuranceModal: FC = (): ReactElement => {
     else await handleInsuranceInsert();
   };
 
+  console.log('draft.discountPercentage', draft.discountPercentage);
+
   return (
     <Modal
       width={800}
@@ -133,6 +135,9 @@ export const InsuranceModal: FC = (): ReactElement => {
                     code: t('label.policy-number-person'),
                     value: draft.policyNumberPerson,
                     required: true,
+                    customValidation: () => draft.policyNumberPerson !== '666',
+                    customErrorMessage:
+                      'That is the devils number and is not allowed',
                   })}
                   disabled={haveInsuranceId}
                   onChange={event => {
@@ -236,6 +241,10 @@ export const InsuranceModal: FC = (): ReactElement => {
                     code: t('label.discount-rate'),
                     value: draft.discountPercentage,
                     required: true,
+                    customErrorMessage:
+                      draft.discountPercentage === 110
+                        ? 'Waaaay to big!'
+                        : undefined,
                   })}
                   min={0}
                   max={100}
