@@ -80,7 +80,6 @@ export const SupplierReturnEditModal = ({
 
   const onOk = async () => {
     try {
-      !isDisabled && (await save());
       if (isDisabled === false) {
         const invoiceNumber = await save();
         navigate(
