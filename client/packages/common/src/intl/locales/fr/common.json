@@ -276,7 +276,7 @@
   "error.is-locked": "L'inventaire est bloqué.",
   "error.item-not-found": "Article introuvable",
   "error.json-bad-format-with-examples": "Format incorrect. Utiliser : \"{{examples}}\"",
-  "error.label-printer-not-configured": "Pas d'imprimante configurée. Consultez la section Admin > Appareils pour configurer une imprimante à étiquettes.",
+  "error.label-printer-not-configured": "Pas d'imprimante configurée. Consultez la section Paramètres > Appareils pour configurer une imprimante à étiquettes.",
   "error.login": "Nom d'utilisateur ou mot de passe invalide",
   "error.login-support": "Merci de contacter support@msupply.foundation si vous ne pouvez pas vous connecter à votre compte",
   "error.manufacturer-model-unique": "Un article existe déjà pour ce fabricant et ce modèle",
@@ -710,7 +710,7 @@
   "label.difference": "Ecart",
   "label.direction": "Direction d'ajustement",
   "label.directions": "Posologie / Conseil d'utilisation",
-  "label.discount-rate": "Escompte (%)",
+  "label.discount-rate": "Taux de remise",
   "label.document-edit-history": "Historique de Modifications du Document",
   "label.documents": "Documents",
   "label.donor": "Donateur",
@@ -1483,7 +1483,7 @@
   "messages.full-screen-enabled": "Mode plein écran activé, appuyez sur ESC ou cliquez sur le bouton Quitter en haut à droite pour quitter",
   "messages.how-to-read-expiring-items": "Descriptions des colonnes :\n* Expiration dans (jours) : Nombre de jours restants avant l'expiration du lot en utilisant la période d'expiration des articles.\nJaune - lots en dessous de la période d'expiration des articles.\nVert - tout ce qui est au-dessus de la période d'expiration des articles.\nRouge - articles expirés.\n* Utilisation prévue : CMM de l'article multipliée par le nombre de mois restants avant l'expiration.\n* Stock à risque : Quantité de stock qui risque d'expirer avant d'être utilisée.\nStock Disponible - Utilisation prévue. Si le stock est expiré, cela doit afficher tout le stock disponible pour cette ligne de stock.",
   "messages.how-to-read-item-usage": "Descriptions des colonnes :\n* Stock en commande : Somme de la quantité dans les Commandes Internes moins les Livraisons entrantes liées.\n* Durée de couverture en mois : Nombre de mois pendant lesquels le stock actuel devrait suffire. La valeur est \"En stock\"/\"CMM\". Notez que la CMM est calculée a partir du nombre de mois donnés par la \"période rétrospective de CMM\" visible dans la filtre du rapport. Celui-ci est configuré avec la préférence du dépôt \"Consommation Mensuelle sur la Période Rétrospective\". Une valeur par défaut sera utilisée si aucune valeur n'est fournie dans les préférences du dépôt.",
-  "messages.how-to-read-pending-encounters": "Description des colonnes : \n* Statut : Statut du patient dans le programme sélectionné",
+  "messages.how-to-read-pending-encounters": "Jours de retard : nombre de jours écoulés depuis la date de rendez-vous prévue\nStatuts : \n - Prévu : prévu pour une date ultérieure ou aujourd'hui \n - En retard : moins de 7 jours de retard \n - Perdu de vue : en retard de plus de 7 jours",
   "messages.how-to-read-report": "Comment lire ce rapport ?",
   "messages.how-to-read-stock-detail": "Ce rapport contient les mêmes informations que la page de stock, sans aucune interactivité.",
   "messages.how-to-read-stock-status": "Descriptions des statuts :\n* Sous-stocké - La MDS est inférieure à la MDS minimale (préférence dépôt : seuil pour sous-stock)\n* En excès de stock - La MDS est supérieure à la MDS maximale (préférence dépôt : seuil pour excès de stock)\n* En rupture de stock - Le Stock disponible est à 0 et la CMM est supérieur à 0.\n* En quantité suffisante - La MDS est entre la MDS minimale et maximale\n* Pas de consommation - La CMM est à 0",
@@ -1911,5 +1911,8 @@
   "label.discount-percentage": "Pourcentage de réduction",
   "label.discount-amount": "Montant de la réduction",
   "heading.insurance": "Assurance",
-  "messages.insurance-description": "Informations sur l'assurance médicale associée à cette prescription"
+  "messages.insurance-description": "Informations sur l'assurance médicale associée à cette prescription",
+  "button.print-receipt": "Imprimer le reçu",
+  "messages.cannot-add-directions": "Ajouter une quantité pour ajouter des instructions.",
+  "error.dose-max-lower-than-min": "La dose {{doseIndex}} doit avoir un âge maximum plus élevé que l'âge minimum"
 }
