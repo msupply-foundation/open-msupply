@@ -47,6 +47,9 @@ export interface AutocompleteProps<T>
   inputValue?: string;
   popperMinWidth?: number;
   inputProps?: BasicTextInputProps;
+  error?: boolean;
+  setError?: (error: string) => void;
+  required?: boolean;
 }
 
 export function Autocomplete<T>({
@@ -73,6 +76,9 @@ export function Autocomplete<T>({
   getOptionLabel,
   popperMinWidth,
   inputProps,
+  error,
+  setError,
+  required,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
@@ -96,6 +102,8 @@ export function Autocomplete<T>({
         },
       }}
       sx={{ minWidth: width }}
+      error={error}
+      required={required}
     />
   );
   const defaultGetOptionLabel = (option: T): string => {

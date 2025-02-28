@@ -8,11 +8,17 @@ import { useInsuranceProviders } from '../apiModern/hooks';
 interface InsuranceProvidersSelectProps {
   insuranceProviderId: string;
   onChange: (value: string) => void;
+  error?: boolean;
+  setError?: (error: string) => void;
+  required?: boolean;
 }
 
 export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
   insuranceProviderId,
   onChange,
+  error,
+  setError,
+  required,
 }): ReactElement => {
   const t = useTranslation();
   const {
@@ -27,6 +33,8 @@ export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
   });
 
   const selectedInsurance = data.find(({ id }) => id === insuranceProviderId);
+
+  const errorProps = { error, setError, required };
 
   return (
     <InputWithLabelRow
@@ -44,6 +52,7 @@ export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
               onChange(option.value);
             }
           }}
+          {...errorProps}
         />
       }
       sx={{ '& .MuiAutocomplete-root': { flexGrow: 1, borderRadius: 1 } }}

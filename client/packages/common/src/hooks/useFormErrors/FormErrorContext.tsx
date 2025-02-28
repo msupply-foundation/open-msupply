@@ -1,4 +1,3 @@
-import { Alert } from '@common/components';
 import React, {
   createContext,
   ReactNode,
@@ -7,6 +6,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { Alert } from '@common/components';
+import { useTranslation } from '@common/intl';
 
 type Code = string;
 type ErrorState = Record<Code, string | null>;
@@ -48,6 +49,7 @@ interface FormErrorContextProps {
 export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
   children,
 }) => {
+  const t = useTranslation();
   const [errorState, setErrorState] = useState<ErrorState>({});
   const [requiredState, setRequiredState] = useState<RequiredState>({});
   const [includeRequiredInErrorState, setIncludeRequiredInErrorState] =
@@ -179,8 +181,6 @@ export const useFormErrorsHook = () => {
 export const ErrorDisplay: React.FC<unknown> = () => {
   const { errorState, requiredState, includeRequiredInErrorState } =
     useFormErrorsHook();
-
-  console.log('errorState', errorState);
 
   const errorsToDisplay = { ...errorState };
   if (includeRequiredInErrorState)

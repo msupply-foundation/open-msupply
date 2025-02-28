@@ -242,7 +242,7 @@ export const InsuranceModal: FC = (): ReactElement => {
                     value: draft.discountPercentage,
                     required: true,
                     customErrorMessage:
-                      draft.discountPercentage === 110
+                      draft.discountPercentage >= 110
                         ? 'Waaaay to big!'
                         : undefined,
                   })}
