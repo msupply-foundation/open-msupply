@@ -9,11 +9,14 @@ import {
   ModalMode,
   Box,
   AlertColor,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { ItemSelector } from './ItemSelector';
 import { ReturnSteps, Tabs } from './ReturnSteps';
 import { useReturns } from '../../api';
 import { useDraftCustomerReturnLines } from './useDraftCustomerReturnLines';
+import { AppRoute } from 'packages/config/src';
 
 interface CustomerReturnEditModalProps {
   isOpen: boolean;
@@ -50,6 +53,7 @@ export const CustomerReturnEditModal = ({
   );
 
   const alertRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const [zeroQuantityAlert, setZeroQuantityAlert] = useState<
     AlertColor | undefined
@@ -76,7 +80,16 @@ export const CustomerReturnEditModal = ({
 
   const onOk = async () => {
     try {
-      !isDisabled && (await save());
+      if (isDisabled === false) {
+        const res = await save();
+        const invoiceNumber = typeof res === "number" ? res : res.invoiceNumber;
+        navigate(
+          RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.SupplierReturn)
+            .addPart(invoiceNumber.toString())
+            .build()
+        )
+      };
       onClose();
     } catch {
       // TODO: handle error display...

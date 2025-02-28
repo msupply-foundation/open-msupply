@@ -363,6 +363,7 @@ mutation updateSupplierReturnLines(
     ... on InvoiceNode {
       __typename
       id
+      invoiceNumber
     }
   }
 }
@@ -414,6 +415,7 @@ mutation updateCustomerReturnLines(
     ... on InvoiceNode {
       __typename
       id
+      invoiceNumber
     }
   }
 }

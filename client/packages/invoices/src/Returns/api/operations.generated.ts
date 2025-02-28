@@ -97,7 +97,7 @@ export type UpdateSupplierReturnLinesMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateSupplierReturnLinesMutation = { __typename: 'Mutations', updateSupplierReturnLines: { __typename: 'InvoiceNode', id: string } };
+export type UpdateSupplierReturnLinesMutation = { __typename: 'Mutations', updateSupplierReturnLines: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
 
 export type InsertCustomerReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -129,7 +129,7 @@ export type UpdateCustomerReturnLinesMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateCustomerReturnLinesMutation = { __typename: 'Mutations', updateCustomerReturnLines: { __typename: 'InvoiceNode', id: string } };
+export type UpdateCustomerReturnLinesMutation = { __typename: 'Mutations', updateCustomerReturnLines: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
 
 export type DeleteCustomerReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -495,6 +495,7 @@ export const UpdateSupplierReturnLinesDocument = gql`
     ... on InvoiceNode {
       __typename
       id
+      invoiceNumber
     }
   }
 }
@@ -543,6 +544,7 @@ export const UpdateCustomerReturnLinesDocument = gql`
     ... on InvoiceNode {
       __typename
       id
+      invoiceNumber
     }
   }
 }
