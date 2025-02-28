@@ -43,8 +43,9 @@ const InvoiceService: FC = () => {
     .addPart(':invoiceNumber')
     .addPart(':itemId')
     .build();
-  const prescriptionLineRoute2 = RouteBuilder.create(AppRoute.Prescription)
-    .addPart('2')
+  const prescriptionLineRoute2 = RouteBuilder.create(
+    AppRoute.Prescription + '2'
+  )
     .addPart(':invoiceNumber')
     .addPart(':itemId')
     .build();

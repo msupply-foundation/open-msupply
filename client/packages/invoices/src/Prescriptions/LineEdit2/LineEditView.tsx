@@ -22,12 +22,9 @@ export const PrescriptionLineEditView2 = () => {
 
   const {
     query: { data, loading: isLoading },
-  } = usePrescription();
+  } = usePrescription(); // todo - smol query, just items ?
 
   const currentItem = data?.items.nodes.find(line => line.id === itemId);
-  const currentItemTODO = data?.lines.nodes.find(
-    line => line.item.id === itemId
-  )?.item;
 
   useEffect(() => {
     setCustomBreadcrumbs({
@@ -35,6 +32,7 @@ export const PrescriptionLineEditView2 = () => {
     });
   }, [currentItem]);
 
+  // todo - on line edit?
   useConfirmOnLeaving(
     'prescription-line-edit',
     // TODO: actually - should always check, until autosave
@@ -60,18 +58,14 @@ export const PrescriptionLineEditView2 = () => {
   return (
     <LineEditView
       baseRoute={RouteBuilder.create(AppRoute.Dispensary)
-        .addPart(AppRoute.Prescription)
-        .addPart('2')
+        .addPart(AppRoute.Prescription + '2')
         .addPart(String(invoiceNumber))}
       items={data.items.nodes}
       currentItemId={itemId}
       allowCreateNew={!isPrescriptionDisabled(data)}
     >
       <PrescriptionLineEdit
-        item={currentItemTODO ?? null}
-        setIsDirty={dirty => {
-          isDirty.current = dirty;
-        }}
+        itemId={itemId}
         programId={data?.programId ?? undefined}
       />
     </LineEditView>
