@@ -49,10 +49,10 @@ export const AppBarButtonsComponent = () => {
           const text = await response.text();
           throw new Error(text);
         }
-        success(t('messages.success-printing-asset-label'))();
+        success(t('messages.success-printing-label'))();
       })
       .catch(e => {
-        error(`${t('error.printing-asset-label')}: ${e.message}`)();
+        error(`${t('error.printing-label')}: ${e.message}`)();
       })
       .finally(() => setIsPrinting(false));
   };
