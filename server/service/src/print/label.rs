@@ -58,50 +58,55 @@ pub struct PrescriptionLabelData {
 
 pub fn print_prescription_label(
     settings: LabelPrinterSettingNode,
-    label_data: PrescriptionLabelData,
+    label_data: Vec<PrescriptionLabelData>,
 ) -> Result<String> {
-    let PrescriptionLabelData {
-        item_details,
-        item_directions,
-        patient_details,
-        warning,
-        details,
-    } = label_data;
-    let warning = warning.unwrap_or_default();
+    let payload = label_data
+        .into_iter()
+        .map(|d| {
+            let PrescriptionLabelData {
+                item_details,
+                item_directions,
+                patient_details,
+                warning,
+                details,
+            } = d;
+            let warning = warning.unwrap_or_default();
+            format!(
+                r#"
+                ^XA
+                ^FX CI command parameters:
+                ^FX - encoding (28 = UTF-8)
+                ^CI28
 
-    let payload = format!(
-        r#"
-^XA
-^FX CI command parameters:
-^FX - encoding (28 = UTF-8)
-^CI28
+                ^A0,25
+                ^FO10,10
+                ^FB570,2,0,C
+                ^FD{item_details}^FS
 
-^A0,25
-^FO10,10
-^FB570,2,0,C
-^FD{item_details}^FS
+                ^FO10,65
+                ^GB570,2,2^FS
 
-^FO10,65
-^GB570,2,2^FS
+                ^A0,25
+                ^FO10,75
+                ^FB570,6,0,L
+                ^FD{item_directions}\&{warning}^FS
 
-^A0,25
-^FO10,75
-^FB570,6,0,L
-^FD{item_directions}\&{warning}^FS
+                ^FO10,210
+                ^GB570,2,2^FS
 
-^FO10,210
-^GB570,2,2^FS
+                ^A0,25
+                ^FO10,220
+                ^FD{patient_details}^FS
 
-^A0,25
-^FO10,220
-^FD{patient_details}^FS
-
-^A0,25
-^FO10,250
-^FD{details}^FS
-^XZ
-"#
-    );
+                ^A0,25
+                ^FO10,250
+                ^FD{details}^FS
+                ^XZ
+                "#
+            )
+        })
+        .collect::<Vec<String>>()
+        .join("\n");
     let printer = Jetdirect::new(settings.address, settings.port);
     printer.send_string(payload, Mode::Print)
 }

@@ -27,13 +27,7 @@ const UIComponent = (props: LayoutProps) => {
     return <MaterialLayoutRenderer {...layoutProps} />;
   }
   return (
-    <Box
-      sx={{
-        paddingLeft: 2,
-        paddingRight: 2,
-        marginBottom: 2,
-      }}
-    >
+    <Box>
       <Typography
         variant="subtitle1"
         width={'100%'}

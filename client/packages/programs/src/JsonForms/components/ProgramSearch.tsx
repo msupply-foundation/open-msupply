@@ -16,9 +16,11 @@ import { z } from 'zod';
 
 export const programSearchTester = rankWith(10, uiTypeIs('ProgramSearch'));
 
-const PatientProgramSearchOptions = z.object({
-  programType: z.enum(['immunisation']).optional(),
-});
+const PatientProgramSearchOptions = z
+  .object({
+    programType: z.enum(['immunisation']).optional(),
+  })
+  .optional();
 
 const UIComponent = (props: ControlProps) => {
   const { errors: zErrors } = useZodOptionsValidation(
@@ -35,6 +37,7 @@ const UIComponent = (props: ControlProps) => {
   const onChange = async (program: ProgramFragment) => {
     setProgram(program);
     handleChange(path, program.id);
+    handleChange('elmisCode', program.elmisCode);
   };
 
   if (zErrors) return <Typography color="error">{zErrors}</Typography>;

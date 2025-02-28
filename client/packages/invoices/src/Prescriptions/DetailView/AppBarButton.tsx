@@ -19,6 +19,7 @@ import {
   usePrintReport,
 } from '../../../../system/src/Report';
 import { JsonData } from '@openmsupply-client/programs';
+import { usePrintLabels } from './hooks/usePrinter';
 
 interface AppBarButtonProps {
   onAddItem: (draft?: Draft) => void;
@@ -29,29 +30,64 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
   onViewHistory,
 }) => {
-  const { isDisabled, query: data } = usePrescription();
+  const t = useTranslation();
+  const {
+    isDisabled,
+    query: { data: prescription },
+  } = usePrescription();
   const { OpenButton } = useDetailPanel();
-  const { print, isPrinting } = usePrintReport();
+  const { print: printReceipt, isPrinting: isPrintingReceipt } =
+    usePrintReport();
+  const {
+    printLabels: printPrescriptionLabels,
+    isPrintingLabels,
+    DisabledNotification,
+  } = usePrintLabels();
+
   const printReport = (
     report: ReportRowFragment,
     args: JsonData | undefined
   ) => {
-    print({ reportId: report.id, dataId: data?.data?.id, args });
+    printReceipt({ reportId: report.id, dataId: prescription?.id, args });
   };
-  const t = useTranslation();
+
+  const handlePrintLabels = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (prescription) {
+      printPrescriptionLabels(prescription, prescription.lines.nodes, e);
+    }
+  };
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        <ButtonWithIcon
+          disabled={isDisabled}
+          label={t('button.add-item')}
+          Icon={<PlusCircleIcon />}
+          onClick={() => onAddItem()}
+        />
+        <ButtonWithIcon
+          label={t('button.history')}
+          Icon={<InfoOutlineIcon />}
+          onClick={() => onViewHistory()}
+        />
+        <LoadingButton
+          disabled={isDisabled}
+          variant="outlined"
+          startIcon={<PrinterIcon />}
+          isLoading={isPrintingLabels}
+          label={t('button.print-prescription-label')}
+          onClick={handlePrintLabels}
+        />
         <ReportSelector
           context={ReportContext.Prescription}
           onPrint={printReport}
         >
           <LoadingButton
-            disabled={isDisabled}
             variant="outlined"
             startIcon={<PrinterIcon />}
-            isLoading={isPrinting}
-            label={t('button.print')}
+            isLoading={isPrintingReceipt}
+            label={t('button.print-receipt')}
           />
         </ReportSelector>
         <ButtonWithIcon
@@ -59,14 +95,9 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           Icon={<InfoOutlineIcon />}
           onClick={() => onViewHistory()}
         />
-        <ButtonWithIcon
-          disabled={isDisabled}
-          label={t('button.add-item')}
-          Icon={<PlusCircleIcon />}
-          onClick={() => onAddItem()}
-        />
         {OpenButton}
       </Grid>
+      <DisabledNotification />
     </AppBarButtonsPortal>
   );
 };

@@ -383,7 +383,7 @@ fn get_initialisation_sync_status_tester(
                     r
                 });
 
-                pretty_assertions::assert_eq!(current_status, new_status);
+                assert_eq!(current_status, new_status);
 
                 assert_between!(
                     current_status.summary.finished.unwrap(),
