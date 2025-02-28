@@ -989,7 +989,7 @@
   "label.ratio": "Ratio",
   "label.reason": "Raison",
   "label.reason-adjustment": "Raison de l’ajustement",
-  "label.reason-for-contacting": "Motif de la prise de contact",
+  "label.reason-for-contacting": "Raison de la prise de contact",
   "label.record-stock-transaction": "Enregistrer la transaction de stock pour la vaccination précédente",
   "label.recorded-contact-differs": "Contact enregistré : {{recordedName}}",
   "label.reference": "Référence",
