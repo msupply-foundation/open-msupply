@@ -1,12 +1,9 @@
 import React, { FC, ReactElement } from 'react';
 
 import {
-  // ErrorWrapper,
   useDialog,
   useFormErrorsHook,
-  // useFormErrors,
   useNotification,
-  ErrorWrapper,
   ErrorDisplay,
 } from '@common/hooks';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
@@ -51,8 +48,7 @@ export const InsuranceModal: FC = (): ReactElement => {
     updatePatch: updateDraft,
   } = useInsurances(nameId);
 
-  const { setRequiredErrors, resetRequiredErrors, getErrorProps, hasErrors } =
-    useFormErrorsHook();
+  const { resetRequiredErrors, getErrorProps, hasErrors } = useFormErrorsHook();
 
   const updatePatch: (newData: Partial<unknown>) => void = newData => {
     resetRequiredErrors();
@@ -114,7 +110,6 @@ export const InsuranceModal: FC = (): ReactElement => {
             <InputWithLabelRow
               label={t('label.policy-number-family')}
               Input={
-                // <ErrorWrapper code="policyNumberFamily" required>
                 <BasicTextInput
                   {...getErrorProps({
                     code: t('label.policy-number-family'),
@@ -128,13 +123,11 @@ export const InsuranceModal: FC = (): ReactElement => {
                     });
                   }}
                 />
-                // </ErrorWrapper>
               }
             />
             <InputWithLabelRow
               label={t('label.policy-number-person')}
               Input={
-                // <ErrorWrapper code="policyNumberPerson" required>
                 <BasicTextInput
                   {...getErrorProps({
                     code: t('label.policy-number-person'),
@@ -148,10 +141,8 @@ export const InsuranceModal: FC = (): ReactElement => {
                     });
                   }}
                 />
-                // </ErrorWrapper>
               }
             />
-            {/* <ErrorWrapper code="policyType" required> */}
             <InsurancePolicySelect
               {...getErrorProps({
                 code: t('label.policy-type'),
@@ -165,7 +156,6 @@ export const InsuranceModal: FC = (): ReactElement => {
                 })
               }
             />
-            {/* </ErrorWrapper> */}
             <InputWithLabelRow
               label={t('label.status')}
               Input={
@@ -206,7 +196,6 @@ export const InsuranceModal: FC = (): ReactElement => {
             <InputWithLabelRow
               label={t('label.expiry-date')}
               Input={
-                // <ErrorWrapper code="expiryDate">
                 <BaseDatePickerInput
                   {...getErrorProps({
                     code: t('label.expiry-date'),
@@ -224,10 +213,8 @@ export const InsuranceModal: FC = (): ReactElement => {
                       });
                   }}
                 />
-                // </ErrorWrapper>
               }
             />
-            {/* <ErrorWrapper code="insuranceProviderId"> */}
             <InsuranceProvidersSelect
               {...getErrorProps({
                 code: t('label.provider-name'),
@@ -241,11 +228,9 @@ export const InsuranceModal: FC = (): ReactElement => {
                 });
               }}
             />
-            {/* </ErrorWrapper> */}
             <InputWithLabelRow
               label={t('label.discount-rate')}
               Input={
-                // <ErrorWrapper code="discountPercentage">
                 <NumericTextInput
                   {...getErrorProps({
                     code: t('label.discount-rate'),
@@ -264,7 +249,6 @@ export const InsuranceModal: FC = (): ReactElement => {
                     }
                   }}
                 />
-                // </ErrorWrapper>
               }
             />
           </Box>

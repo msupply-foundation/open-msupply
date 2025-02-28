@@ -175,7 +175,7 @@ export type NumericTextInputProps = NumericInputProps &
     onChange?: (value: number | undefined) => void;
     endAdornment?: string;
     errorMessage?: string | null;
-    setError?: (error: string) => void;
+    setError?: (error: string | null) => void;
   };
 
 export const DEFAULT_NUMERIC_TEXT_INPUT_WIDTH = 75;
@@ -244,6 +244,18 @@ export const NumericTextInput = React.forwardRef<
       },
       [decimal]
     );
+
+    const checkError = (value: number | undefined) => {
+      if (setError) {
+        if (value === undefined) {
+          if (error) setError(null);
+          return;
+        }
+        if (value > max && setError) setError('Too big');
+        else if (value < min && setError) setError('Too small');
+        else if (error) setError(null);
+      }
+    };
 
     useEffect(() => {
       if (isFirstRender.current) {
@@ -335,10 +347,8 @@ export const NumericTextInput = React.forwardRef<
           // setTextValue(
           //   noFormatting ? String(constrained) : format(constrained)
           // );
-          if (parsed > max && setError) {
-            console.log('ERROR TOO BIG');
-            setError('Too big');
-          }
+          checkError(parsed);
+
           onChange(parsed);
         }}
         onKeyDown={e => {
@@ -357,10 +367,7 @@ export const NumericTextInput = React.forwardRef<
           //   min,
           //   max
           // );
-          if (newNum > max && setError) {
-            console.log('ERROR TOO BIG');
-            setError('Too big');
-          }
+          checkError(newNum);
           setTextValue(formatValue(newNum));
           onChange(newNum);
         }}

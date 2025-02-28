@@ -19,7 +19,7 @@ type GetErrorPropsInput<T> = {
 
 export interface FormErrorContextState {
   errorState: ErrorState;
-  setError: (code: Code, error: string | null) => void;
+  // setError: (code: Code, error: string | null) => void;
   getError: (code: Code) => string | null;
   hasErrors: () => boolean;
   clearErrors: () => void;
@@ -50,7 +50,8 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
   const setError = (code: Code, error: string | null) => {
     setErrorState(prev => {
       const newErrorState = { ...prev };
-      newErrorState[code] = error;
+      if (error === null) delete newErrorState[code];
+      else newErrorState[code] = error;
       return newErrorState;
     });
   };
@@ -71,6 +72,16 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
     return errors.some(val => val !== null);
   };
 
+  const setRequiredErrors = () => {
+    properErrors.current = { ...errorState };
+    const newErrorState = { ...errorState };
+    Object.entries(requiredState.current).forEach(([key, value]) => {
+      if (value === false) newErrorState[key] = `required field`;
+    });
+    setErrorState(newErrorState);
+    return Object.values(newErrorState).some(val => val !== null);
+  };
+
   const resetRequiredErrors = () => {
     if (properErrors.current !== null) {
       setErrorState(properErrors.current);
@@ -78,6 +89,10 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
     }
   };
 
+  /**
+   * Returns the props for the individual form components, as well as capturing
+   * required state for use in here
+   */
   const getErrorProps = <T,>({
     code,
     value,
@@ -90,7 +105,7 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
     const errorMessage = errorState[code] ?? undefined;
     const error = !!errorMessage;
     const setThisError = useCallback(
-      (code: string) => (error: string | null) => setError(code, error),
+      (error: string | null) => setError(code, error),
       []
     );
     if (required) {
@@ -107,19 +122,9 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
     };
   };
 
-  const setRequiredErrors = () => {
-    properErrors.current = { ...errorState };
-    const newErrorState = { ...errorState };
-    Object.entries(requiredState.current).forEach(([key, value]) => {
-      if (value === false) newErrorState[key] = `required field`;
-    });
-    setErrorState(newErrorState);
-    return Object.values(newErrorState).some(val => val !== null);
-  };
-
   const returnState: FormErrorContextState = {
     errorState,
-    setError,
+    // setError,
     getError,
     hasErrors,
     clearErrors,
