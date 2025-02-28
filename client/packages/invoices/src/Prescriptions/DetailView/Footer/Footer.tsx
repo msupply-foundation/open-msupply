@@ -118,7 +118,6 @@ export const FooterComponent: FC = () => {
       icon: <PrinterIcon />,
       onClick: handlePrintLabels,
       disabled: isDisabled || isPrintingLabels,
-      disabledToastMessage: t('heading.unable-to-print'),
     },
   ];
 
