@@ -79,8 +79,7 @@ export const SupplierReturnEditModal = ({
   const onOk = async () => {
     try {
       if (isDisabled === false) {
-        const res = await save();
-        const invoiceNumber = typeof res === "number" ? res : res.invoiceNumber;
+        const invoiceNumber = await save();
         navigate(
           RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.SupplierReturn)

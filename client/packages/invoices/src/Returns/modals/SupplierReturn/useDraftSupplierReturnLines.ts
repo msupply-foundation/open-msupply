@@ -57,16 +57,17 @@ export const useDraftSupplierReturnLines = ({
       }
     );
 
-    const returnOp = returnId ? updateLines({
+    const returnOp = returnId ? await updateLines({
       supplierReturnId: returnId,
       supplierReturnLines,
-    }) : insert({
+    }) : await insert({
       id: FnUtils.generateUUID(),
       supplierId,
       inboundShipmentId,
       supplierReturnLines,
     });
-    return returnOp
+
+    return typeof returnOp === "number" ? returnOp : returnOp.invoiceNumber;
     // TODO: error handling here
     // also need to consider what we do if the error was on the first page of the wizard
   };
