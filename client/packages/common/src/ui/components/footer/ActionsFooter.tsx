@@ -96,6 +96,7 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
         label={t('label.clear-selection')}
         onClick={clearSelected}
         shouldShrink={true}
+        color="secondary"
       />
     </Stack>
   );
