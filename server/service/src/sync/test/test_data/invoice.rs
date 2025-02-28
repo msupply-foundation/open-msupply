@@ -191,6 +191,7 @@ fn transact_1_push_record() -> TestSyncOutgoingRecord {
                     + Duration::seconds(47046),
             ),
             verified_datetime: None,
+            cancelled_datetime: None,
             om_status: Some(InvoiceStatus::Delivered),
             om_type: Some(InvoiceType::InboundShipment),
             om_colour: None,
@@ -205,6 +206,7 @@ fn transact_1_push_record() -> TestSyncOutgoingRecord {
             name_insurance_join_id: Some("NAME_INSURANCE_JOIN_1_ID".to_string()),
             insurance_discount_amount: Some(10.0),
             insurance_discount_percentage: Some(2.5),
+            is_cancellation: false
         }),
     }
 }
@@ -371,6 +373,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             shipped_datetime: None,
             delivered_datetime: None,
             verified_datetime: None,
+            cancelled_datetime: None,
             om_status: Some(InvoiceStatus::Shipped),
             om_type: Some(InvoiceType::OutboundShipment),
             om_colour: None,
@@ -385,6 +388,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
+            is_cancellation: false
         }),
     }
 }
@@ -609,6 +613,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
                     .and_hms_opt(14, 33, 0)
                     .unwrap()
             ),
+            cancelled_datetime: None,
             om_status: Some(InvoiceStatus::Shipped),
             om_type: Some(InvoiceType::InventoryAddition),
             om_colour: Some("SomeColour".to_string()),
@@ -623,6 +628,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
+            is_cancellation: false
         }),
     }
 }
@@ -799,6 +805,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
             ),
+            cancelled_datetime: None,
             mode: TransactMode::Store,
             comment: Some("Stocktake 1; Added stock".to_string()),
 
@@ -824,6 +831,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
+            is_cancellation: false
         }),
     }
 }
@@ -1000,6 +1008,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
             ),
+            cancelled_datetime: None,
             mode: TransactMode::Store,
             comment: Some("Stocktake 2; Reduced stock".to_string()),
 
@@ -1025,6 +1034,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
+            is_cancellation: false
         }),
     }
 }
@@ -1207,6 +1217,7 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             shipped_datetime: None,
             delivered_datetime: None,
             verified_datetime: None,
+            cancelled_datetime: None,
             om_status: Some(InvoiceStatus::Picked),
             om_type: Some(InvoiceType::Prescription),
             om_colour: None,
@@ -1221,6 +1232,216 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
+            is_cancellation: false
+        }),
+    }
+}
+
+const CANCELLED_PRESCRIPTION: (&str, &str) = (
+    "cancelled_prescription",
+    r#"{
+      "Colour": 0,
+      "Date_order_received": "0000-00-00",
+      "Date_order_written": "2021-07-30",
+      "ID": "cancelled_prescription",
+      "amount_outstanding": 0,
+      "arrival_date_actual": "0000-00-00",
+      "arrival_date_estimated": "0000-00-00",
+      "authorisationStatus": "",
+      "budget_period_ID": "",
+      "category2_ID": "",
+      "category_ID": "",
+      "comment": "",
+      "confirm_date": "2021-07-30",
+      "confirm_time": 47046,
+      "contact_id": "",
+      "currency_ID": "AUSTRALIAN_DOLLARS",
+      "currency_rate": 1,
+      "custom_data": null,
+      "diagnosis_ID": "503E901E00534F1797DF4F29E12F907D",
+      "donor_default_id": "",
+      "encounter_id": "",
+      "entry_date": "2021-07-30",
+      "entry_time": 47046,
+      "export_batch": 0,
+      "foreign_currency_total": 0,
+      "goodsReceivedConfirmation": null,
+      "goods_received_ID": "",
+      "hold": false,
+      "insuranceDiscountAmount": 0,
+      "insuranceDiscountRate": 0,
+      "internalData": null,
+      "invoice_num": 1,
+      "invoice_printed_date": "0000-00-00",
+      "is_authorised": false,
+      "is_cancellation": false,
+      "lastModifiedAt": 1627607293,
+      "linked_goods_received_ID": "",
+      "linked_transaction_id": "",
+      "local_charge_distributed": 0,
+      "mode": "dispensary",
+      "mwks_sequence_num": 0,
+      "nameInsuranceJoinID": "",
+      "name_ID": "name_store_a",
+      "number_of_cartons": 0,
+      "optionID": "",
+      "original_PO_ID": "",
+      "paymentTypeID": "",
+      "pickslip_printed_date": "0000-00-00",
+      "prescriber_ID": "",
+      "requisition_ID": "",
+      "responsible_officer_ID": "",
+      "service_descrip": "",
+      "service_price": 0,
+      "ship_date": "0000-00-00",
+      "ship_method_ID": "",
+      "ship_method_comment": "",
+      "status": "cn",
+      "store_ID": "store_b",
+      "subtotal": 0,
+      "supplier_charge_fc": 0,
+      "tax": 0,
+      "tax_rate": 0,
+      "their_ref": "",
+      "total": 0,
+      "type": "ci",
+      "user1": "",
+      "user2": "",
+      "user3": "",
+      "user4": "",
+      "user_ID": "",
+      "wardID": "",
+      "waybill_number": "",
+      "om_allocated_datetime": "",
+      "om_picked_datetime": null,
+      "om_shipped_datetime": "",
+      "om_delivered_datetime": "",
+      "om_verified_datetime": "",
+      "om_created_datetime": "",
+      "om_cancelled_datetime": "2022-08-24T09:33:00",
+      "om_transport_reference": ""
+  }"#,
+);
+fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
+        CANCELLED_PRESCRIPTION,
+        InvoiceRow {
+            id: CANCELLED_PRESCRIPTION.0.to_string(),
+            user_id: None,
+            store_id: "store_b".to_string(),
+            name_link_id: "name_store_a".to_string(),
+            name_store_id: Some("store_a".to_string()),
+            invoice_number: 1,
+            r#type: InvoiceType::Prescription,
+            status: InvoiceStatus::Picked,
+            on_hold: false,
+            comment: None,
+            their_reference: None,
+            transport_reference: None,
+            created_datetime: NaiveDate::from_ymd_opt(2021, 7, 30)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(47046),
+            allocated_datetime: None,
+            picked_datetime: Some(
+                NaiveDate::from_ymd_opt(2021, 7, 30)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+                    + Duration::seconds(47046),
+            ),
+            shipped_datetime: None,
+            delivered_datetime: None,
+            verified_datetime: None,
+            cancelled_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 24)
+                    .unwrap()
+                    .and_hms_opt(9, 33, 0)
+                    .unwrap(),
+            ),
+            colour: None,
+            requisition_id: None,
+            linked_invoice_id: None,
+            tax_percentage: Some(0.0),
+            currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
+            currency_rate: 1.0,
+            clinician_link_id: None,
+            original_shipment_id: None,
+            backdated_datetime: None,
+            diagnosis_id: Some("503E901E00534F1797DF4F29E12F907D".to_string()),
+            program_id: None,
+            name_insurance_join_id: None,
+            insurance_discount_amount: None,
+            insurance_discount_percentage: None,
+            is_cancellation: false,
+        },
+    )
+}
+fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
+        record_id: CANCELLED_PRESCRIPTION.0.to_string(),
+        push_data: json!(LegacyTransactRow {
+            ID: CANCELLED_PRESCRIPTION.0.to_string(),
+            user_id: None,
+            name_ID: "name_store_a".to_string(),
+            store_ID: "store_b".to_string(),
+            invoice_num: 1,
+            _type: LegacyTransactType::Ci,
+            status: LegacyTransactStatus::Cn,
+            hold: false,
+            comment: None,
+            their_ref: None,
+            transport_reference: None,
+            requisition_ID: None,
+            linked_transaction_id: None,
+            entry_date: NaiveDate::from_ymd_opt(2021, 7, 30).unwrap(),
+            entry_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
+            ship_date: None,
+            arrival_date_actual: None,
+            confirm_date: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
+            confirm_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
+            mode: TransactMode::Dispensary,
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2021, 7, 30)
+                    .unwrap()
+                    .and_hms_opt(13, 4, 6)
+                    .unwrap()
+            ),
+            allocated_datetime: None,
+            picked_datetime: Some(
+                NaiveDate::from_ymd_opt(2021, 7, 30)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+                    + Duration::seconds(47046)
+            ),
+            shipped_datetime: None,
+            delivered_datetime: None,
+            verified_datetime: None,
+            cancelled_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 24)
+                    .unwrap()
+                    .and_hms_opt(9, 33, 0)
+                    .unwrap(),
+            ),
+            om_status: Some(InvoiceStatus::Picked),
+            om_type: Some(InvoiceType::Prescription),
+            om_colour: None,
+            tax_percentage: Some(0.0),
+            clinician_id: None,
+            original_shipment_id: None,
+            currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
+            currency_rate: 1.0,
+            backdated_datetime: None,
+            diagnosis_id: Some("503E901E00534F1797DF4F29E12F907D".to_string()),
+            program_id: None,
+            name_insurance_join_id: None,
+            insurance_discount_amount: None,
+            insurance_discount_percentage: None,
+            is_cancellation: false
         }),
     }
 }
@@ -1233,6 +1454,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         inventory_addition_pull_record(),
         inventory_reduction_pull_record(),
         prescription_1_pull_record(),
+        cancelled_prescription_pull_record(),
     ]
 }
 
@@ -1252,5 +1474,6 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
         inventory_addition_push_record(),
         inventory_reduction_push_record(),
         prescription_1_push_record(),
+        cancelled_prescription_push_record(),
     ]
 }

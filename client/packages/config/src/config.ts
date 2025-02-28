@@ -36,6 +36,7 @@ export const Environment = {
   UPLOAD_FRIDGE_TAG: `${apiHost}/fridge-tag`,
   PRINT_LABEL_QR: `${apiHost}/print/label-qr`,
   PRINT_LABEL_TEST: `${apiHost}/print/label-test`,
+  PRINT_LABEL_PRESCRIPTION: `${apiHost}/print/label-prescription`,
 
   // -- Feature Flags --
   // To add a new feature flag:
