@@ -47,9 +47,14 @@ impl InvoiceItemConnector {
             item.lines.push(invoice_line);
         }
 
+        let mut nodes: Vec<InvoiceItemNode> = lines_by_item_map.values().cloned().collect();
+
+        // Sort the nodes by item name
+        nodes.sort_by(|a, b| a.item_row().name.cmp(&b.item_row().name));
+
         InvoiceItemConnector {
-            total_count: usize_to_u32(lines_by_item_map.len()),
-            nodes: lines_by_item_map.values().cloned().collect(),
+            total_count: usize_to_u32(nodes.len()),
+            nodes,
         }
     }
 }

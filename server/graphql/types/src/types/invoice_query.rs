@@ -241,6 +241,7 @@ impl InvoiceNode {
         ))
     }
     // TODO own loader? or do we get caching reusing loader???
+    // TODO sort in loader?
     pub async fn items(&self, ctx: &Context<'_>) -> Result<InvoiceItemConnector> {
         let loader = ctx.get_loader::<DataLoader<InvoiceLineByInvoiceIdLoader>>();
         let result_option = loader.load_one(self.row().id.to_string()).await?;
