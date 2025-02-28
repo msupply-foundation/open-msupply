@@ -48,7 +48,7 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
       const errorSnack = error(t(result));
       errorSnack();
     } catch {
-      // TODO: handle error if no reason selected when reasons required
+      error(t('error.provide-reason-stock-adjustment'))();
     }
   };
 
