@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 
 export type BasicTextInputProps = StandardTextFieldProps & {
+  inputReference?: React.RefObject<HTMLInputElement>;
   textAlign?: 'left' | 'center' | 'right';
   focusOnRender?: boolean;
 };
@@ -29,6 +30,7 @@ export const BasicTextInput = React.forwardRef<
       required,
       textAlign,
       focusOnRender,
+      inputReference,
       ...props
     },
     ref
@@ -36,8 +38,8 @@ export const BasicTextInput = React.forwardRef<
     const inputRef = useRef<HTMLDivElement | null>(null);
     useEffect(() => {
       if (focusOnRender) {
-        inputRef?.current;
         inputRef?.current?.focus();
+        inputReference?.current?.focus();
       }
     }, []);
 
@@ -57,7 +59,7 @@ export const BasicTextInput = React.forwardRef<
       >
         <TextField
           ref={ref}
-          inputRef={inputRef}
+          inputRef={inputReference ?? inputRef}
           color="secondary"
           // Sx props can be provided as an array of SxProp objects. In this
           // case, it doesn't work to try and merge it as though it was an

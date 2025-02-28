@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import {
   Checkbox,
   Grid,
@@ -20,6 +20,7 @@ import {
   DetailContainer,
   usePluginProvider,
   UsePluginEvents,
+  useKeyboardShortcut,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -74,15 +75,10 @@ export const StockLineForm: FC<StockLineFormProps> = ({
     }
   };
 
-  useEffect(() => {
-    function handleKeyDown(this: HTMLElement, ev: KeyboardEvent) {
-      if (ev.ctrlKey && ev.key === 's') {
-        scanBarcode();
-      }
-    }
-    document.body.addEventListener('keydown', handleKeyDown);
-    return () => document.body.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  useKeyboardShortcut({
+    isKeyValid: e => e.ctrlKey && e.code === 'KeyS',
+    onKeyPressed: scanBarcode,
+  });
 
   if (loading) return null;
 

@@ -256,6 +256,8 @@ export const PrescriptionLineEditForm: React.FC<
     setAbbreviation('');
   };
 
+  const abbreviationRef = React.useRef<HTMLInputElement>(null);
+
   return (
     <Grid
       container
@@ -352,6 +354,7 @@ export const PrescriptionLineEditForm: React.FC<
                       },
                     },
                   }}
+                  onBlur={() => abbreviationRef.current?.focus()}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
                   {t('label.unit-plural', {
@@ -361,16 +364,22 @@ export const PrescriptionLineEditForm: React.FC<
                 </InputLabel>
               </Grid>
             </Grid>
-            <TableWrapper
-              canAutoAllocate={canAutoAllocate}
-              currentItem={item}
-              isLoading={isLoading}
-              packSizeController={packSizeController}
-              updateQuantity={updateQuantity}
-              draftPrescriptionLines={draftPrescriptionLines}
-              allocatedUnits={allocatedUnits}
-              isDisabled={disabled}
-            />
+            <AccordionPanelSection
+              title={t('label.batches')}
+              defaultExpanded={false}
+              key={key + '_table'}
+            >
+              <TableWrapper
+                canAutoAllocate={canAutoAllocate}
+                currentItem={item}
+                isLoading={isLoading}
+                packSizeController={packSizeController}
+                updateQuantity={updateQuantity}
+                draftPrescriptionLines={draftPrescriptionLines}
+                allocatedUnits={allocatedUnits}
+                isDisabled={disabled}
+              />
+            </AccordionPanelSection>
           </AccordionPanelSection>
         </>
       )}
@@ -390,6 +399,7 @@ export const PrescriptionLineEditForm: React.FC<
                   label={t('label.abbreviation')}
                   Input={
                     <BasicTextInput
+                      inputRef={abbreviationRef}
                       value={abbreviation}
                       onChange={e => {
                         setAbbreviation(e.target.value);
