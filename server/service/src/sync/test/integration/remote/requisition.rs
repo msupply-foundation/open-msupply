@@ -44,6 +44,7 @@ impl SyncRecordTester for RequisitionRecordTester {
             program_id: None,
             period_id: None,
             order_type: None,
+            is_emergency: false,
         };
         let requisition_row_1 = base_requisition_row.clone();
         let requisition_line_row_1 = RequisitionLineRow {

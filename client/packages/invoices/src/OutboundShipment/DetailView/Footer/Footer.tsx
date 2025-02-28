@@ -14,6 +14,7 @@ import {
   InvoiceNodeStatus,
   useBreadcrumbs,
   useConfirmationModal,
+  InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, outboundStatuses } from '../../../utils';
 import { useOutbound, OutboundFragment } from '../../api';
@@ -75,7 +76,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
   const selectedUnallocatedEmptyLines = selectedLines
     .filter(
       ({ type, numberOfPacks }) =>
-        type === 'UNALLOCATED_STOCK' && numberOfPacks === 0
+        type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks === 0
     )
     .flat()
     .map(row => row.id);
