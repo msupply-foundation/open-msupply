@@ -1,11 +1,9 @@
 import { Alert } from '@common/components';
 import React, {
-  Children,
   createContext,
-  PropsWithChildren,
   ReactNode,
+  useCallback,
   useContext,
-  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -13,21 +11,27 @@ import React, {
 type Code = string;
 type ErrorState = Record<Code, string | null>;
 
+type GetErrorPropsInput<T> = {
+  code: string;
+  value: T;
+  required?: boolean;
+};
+
 export interface FormErrorContextState {
   errorState: ErrorState;
   setError: (code: Code, error: string | null) => void;
   getError: (code: Code) => string | null;
-  hasErrors: boolean;
+  hasErrors: () => boolean;
   clearErrors: () => void;
-  getErrorSetter: (code: string) => (error: string | null) => void;
-  checkRequiredFields: (draft: Record<string, unknown>) => boolean;
+  setRequiredErrors: () => boolean;
   resetRequiredErrors: () => void;
-  setRequired: (code: string, required: boolean) => void;
-}
-
-interface ErrorWrapperProps {
-  code: string;
-  required?: boolean;
+  getErrorProps: <T>(input: GetErrorPropsInput<T>) => {
+    error: boolean;
+    errorMessage?: string;
+    setError: any;
+    required?: boolean;
+    value: T;
+  };
 }
 
 const FormErrorContext = createContext<FormErrorContextState | null>(null);
@@ -41,7 +45,7 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
 }) => {
   const [errorState, setErrorState] = useState<ErrorState>({});
   const properErrors = useRef<ErrorState | null>(null);
-  const requiredFields = useRef<Set<string>>(new Set());
+  const requiredState = useRef<Record<Code, boolean>>({});
 
   const setError = (code: Code, error: string | null) => {
     setErrorState(prev => {
@@ -61,30 +65,10 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
     setErrorState(newErrorState);
   };
 
-  const checkForErrors = () => {
+  const hasErrors = () => {
+    if (setRequiredErrors()) return true;
     const errors = Object.values(errorState);
     return errors.some(val => val !== null);
-  };
-
-  const hasErrors = checkForErrors();
-
-  const getErrorSetter = (code: string) => (error: string | null) =>
-    setError(code, error);
-
-  const checkRequiredFields = (draft: Record<string, unknown>) => {
-    if (!draft) return false;
-    properErrors.current = { ...errorState };
-    const newErrorState = { ...errorState };
-    requiredFields.current.forEach(field => {
-      if (
-        draft[field] === null ||
-        draft[field] === undefined ||
-        draft[field] === ''
-      )
-        newErrorState[field] = `required field`;
-    });
-    setErrorState(newErrorState);
-    return Object.values(newErrorState).some(val => val !== null);
   };
 
   const resetRequiredErrors = () => {
@@ -94,9 +78,43 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
     }
   };
 
-  const setRequired = (code: string, required: boolean) => {
-    if (required) requiredFields.current.add(code);
-    else requiredFields.current.delete(code);
+  const getErrorProps = <T,>({
+    code,
+    value,
+    required,
+  }: {
+    code: string;
+    value: T;
+    required?: boolean;
+  }) => {
+    const errorMessage = errorState[code] ?? undefined;
+    const error = !!errorMessage;
+    const setThisError = useCallback(
+      (code: string) => (error: string | null) => setError(code, error),
+      []
+    );
+    if (required) {
+      if (value === null || value === undefined || value === '')
+        requiredState.current[code] = false;
+      else requiredState.current[code] = true;
+    }
+    return {
+      error,
+      errorMessage,
+      setError: setThisError,
+      value,
+      required,
+    };
+  };
+
+  const setRequiredErrors = () => {
+    properErrors.current = { ...errorState };
+    const newErrorState = { ...errorState };
+    Object.entries(requiredState.current).forEach(([key, value]) => {
+      if (value === false) newErrorState[key] = `required field`;
+    });
+    setErrorState(newErrorState);
+    return Object.values(newErrorState).some(val => val !== null);
   };
 
   const returnState: FormErrorContextState = {
@@ -105,10 +123,9 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
     getError,
     hasErrors,
     clearErrors,
-    getErrorSetter,
-    checkRequiredFields,
+    setRequiredErrors,
     resetRequiredErrors,
-    setRequired,
+    getErrorProps,
   };
 
   return (
@@ -127,32 +144,6 @@ export const useFormErrorsHook = () => {
     );
 
   return context;
-};
-
-export const ErrorWrapper: React.FC<PropsWithChildren<ErrorWrapperProps>> = ({
-  children,
-  code,
-  required = false,
-}) => {
-  const { errorState, getErrorSetter, setRequired } = useFormErrorsHook();
-  const errorMessage = errorState[code] ?? undefined;
-  const error = !!errorMessage;
-  const setThisError = getErrorSetter(code);
-
-  useEffect(() => {
-    setRequired(code, required);
-  }, [required]);
-
-  return Children.map(children, child => {
-    if (React.isValidElement(child))
-      return React.cloneElement(child, {
-        error,
-        errorMessage,
-        setError: setThisError,
-        required,
-      });
-    else return child;
-  });
 };
 
 export const ErrorDisplay: React.FC<unknown> = () => {

@@ -51,7 +51,8 @@ export const InsuranceModal: FC = (): ReactElement => {
     updatePatch: updateDraft,
   } = useInsurances(nameId);
 
-  const { checkRequiredFields, resetRequiredErrors } = useFormErrorsHook(draft);
+  const { setRequiredErrors, resetRequiredErrors, getErrorProps, hasErrors } =
+    useFormErrorsHook();
 
   const updatePatch: (newData: Partial<unknown>) => void = newData => {
     resetRequiredErrors();
@@ -83,8 +84,8 @@ export const InsuranceModal: FC = (): ReactElement => {
   };
 
   const handleSave = async (): Promise<void> => {
-    if (checkRequiredFields(draft)) {
-      console.log('Missing fields');
+    if (hasErrors()) {
+      console.log("Errors, can't submit");
       return;
     }
     if (insuranceId !== undefined) await handleInsuranceUpdate();
@@ -113,82 +114,91 @@ export const InsuranceModal: FC = (): ReactElement => {
             <InputWithLabelRow
               label={t('label.policy-number-family')}
               Input={
-                <ErrorWrapper code="policyNumberFamily" required>
-                  <BasicTextInput
-                    disabled={haveInsuranceId}
-                    value={draft.policyNumberFamily}
-                    onChange={event => {
-                      updatePatch({
-                        policyNumberFamily: event.target.value,
-                      });
-                    }}
-                  />
-                </ErrorWrapper>
+                // <ErrorWrapper code="policyNumberFamily" required>
+                <BasicTextInput
+                  {...getErrorProps({
+                    code: t('label.policy-number-family'),
+                    value: draft.policyNumberFamily,
+                    required: true,
+                  })}
+                  disabled={haveInsuranceId}
+                  onChange={event => {
+                    updatePatch({
+                      policyNumberFamily: event.target.value,
+                    });
+                  }}
+                />
+                // </ErrorWrapper>
               }
             />
             <InputWithLabelRow
               label={t('label.policy-number-person')}
               Input={
-                <ErrorWrapper code="policyNumberPerson" required>
-                  <BasicTextInput
-                    disabled={haveInsuranceId}
-                    value={draft.policyNumberPerson}
-                    onChange={event => {
-                      updatePatch({
-                        policyNumberPerson: event.target.value,
-                      });
-                    }}
-                  />
-                </ErrorWrapper>
+                // <ErrorWrapper code="policyNumberPerson" required>
+                <BasicTextInput
+                  {...getErrorProps({
+                    code: t('label.policy-number-person'),
+                    value: draft.policyNumberPerson,
+                    required: true,
+                  })}
+                  disabled={haveInsuranceId}
+                  onChange={event => {
+                    updatePatch({
+                      policyNumberPerson: event.target.value,
+                    });
+                  }}
+                />
+                // </ErrorWrapper>
               }
             />
-            <ErrorWrapper code="policyType" required>
-              <InsurancePolicySelect
-                policyType={draft.policyType}
-                onChange={value =>
-                  updatePatch({
-                    policyType: value,
-                  })
-                }
-              />
-            </ErrorWrapper>
+            {/* <ErrorWrapper code="policyType" required> */}
+            <InsurancePolicySelect
+              {...getErrorProps({
+                code: t('label.policy-type'),
+                value: draft.policyType,
+                required: true,
+              })}
+              policyType={draft.policyType}
+              onChange={value =>
+                updatePatch({
+                  policyType: value,
+                })
+              }
+            />
+            {/* </ErrorWrapper> */}
             <InputWithLabelRow
               label={t('label.status')}
               Input={
-                <ErrorWrapper code="isActive">
-                  <Box sx={{ gap: 2, display: 'flex', flexDirection: 'row' }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Checkbox
-                        checked={draft.isActive}
-                        onChange={() => updatePatch({ isActive: true })}
-                      />
-                      <Typography variant="body1">
-                        {t('label.active')}
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Checkbox
-                        checked={!draft.isActive}
-                        onChange={() => updatePatch({ isActive: false })}
-                      />
-                      <Typography variant="body1">
-                        {t('label.inactive')}
-                      </Typography>
-                    </Box>
+                <Box sx={{ gap: 2, display: 'flex', flexDirection: 'row' }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Checkbox
+                      checked={draft.isActive}
+                      onChange={() => updatePatch({ isActive: true })}
+                    />
+                    <Typography variant="body1">{t('label.active')}</Typography>
                   </Box>
-                </ErrorWrapper>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Checkbox
+                      checked={!draft.isActive}
+                      onChange={() => updatePatch({ isActive: false })}
+                    />
+                    <Typography variant="body1">
+                      {t('label.inactive')}
+                    </Typography>
+                  </Box>
+                </Box>
               }
             />
           </Box>
@@ -196,50 +206,65 @@ export const InsuranceModal: FC = (): ReactElement => {
             <InputWithLabelRow
               label={t('label.expiry-date')}
               Input={
-                <ErrorWrapper code="expiryDate">
-                  <BaseDatePickerInput
-                    value={DateUtils.getNaiveDate(draft.expiryDate)}
-                    onChange={date => {
-                      if (date)
-                        updatePatch({
-                          expiryDate: formatDateTime.customDate(
-                            date,
-                            'yyyy-MM-dd'
-                          ),
-                        });
-                    }}
-                  />
-                </ErrorWrapper>
+                // <ErrorWrapper code="expiryDate">
+                <BaseDatePickerInput
+                  {...getErrorProps({
+                    code: t('label.expiry-date'),
+                    value: DateUtils.getNaiveDate(draft.expiryDate),
+                    required: true,
+                  })}
+                  value={DateUtils.getNaiveDate(draft.expiryDate)}
+                  onChange={date => {
+                    if (date)
+                      updatePatch({
+                        expiryDate: formatDateTime.customDate(
+                          date,
+                          'yyyy-MM-dd'
+                        ),
+                      });
+                  }}
+                />
+                // </ErrorWrapper>
               }
             />
-            <ErrorWrapper code="insuranceProviderId">
-              <InsuranceProvidersSelect
-                insuranceProviderId={draft.insuranceProviderId}
-                onChange={value => {
-                  updatePatch({
-                    insuranceProviderId: value,
-                  });
-                }}
-              />
-            </ErrorWrapper>
+            {/* <ErrorWrapper code="insuranceProviderId"> */}
+            <InsuranceProvidersSelect
+              {...getErrorProps({
+                code: t('label.provider-name'),
+                value: draft.insuranceProviderId,
+                required: true,
+              })}
+              insuranceProviderId={draft.insuranceProviderId}
+              onChange={value => {
+                updatePatch({
+                  insuranceProviderId: value,
+                });
+              }}
+            />
+            {/* </ErrorWrapper> */}
             <InputWithLabelRow
               label={t('label.discount-rate')}
               Input={
-                <ErrorWrapper code="discountPercentage">
-                  <NumericTextInput
-                    min={0}
-                    max={100}
-                    decimalLimit={2}
-                    value={draft.discountPercentage ?? 0}
-                    onChange={value => {
-                      if (value) {
-                        updatePatch({
-                          discountPercentage: value,
-                        });
-                      }
-                    }}
-                  />
-                </ErrorWrapper>
+                // <ErrorWrapper code="discountPercentage">
+                <NumericTextInput
+                  {...getErrorProps({
+                    code: t('label.discount-rate'),
+                    value: draft.discountPercentage,
+                    required: true,
+                  })}
+                  min={0}
+                  max={100}
+                  decimalLimit={2}
+                  value={draft.discountPercentage ?? 0}
+                  onChange={value => {
+                    if (value) {
+                      updatePatch({
+                        discountPercentage: value,
+                      });
+                    }
+                  }}
+                />
+                // </ErrorWrapper>
               }
             />
           </Box>

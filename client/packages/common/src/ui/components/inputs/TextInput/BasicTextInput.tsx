@@ -42,8 +42,6 @@ export const BasicTextInput = React.forwardRef<
       }
     }, []);
 
-    console.log('ERROR', error, errorMessage);
-
     return (
       <Box
         display="flex"
