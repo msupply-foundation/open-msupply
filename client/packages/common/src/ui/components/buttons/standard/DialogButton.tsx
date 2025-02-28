@@ -10,6 +10,7 @@ import {
   DownloadIcon,
   ArrowLeftIcon,
 } from '@common/icons';
+import { useKeyboardShortcut } from '@common/hooks';
 import { ButtonWithIcon } from './ButtonWithIcon';
 
 type DialogButtonVariant =
@@ -136,6 +137,20 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
 }) => {
   const t = useTranslation();
   const { variant: buttonVariant, icon, labelKey } = getButtonProps(variant);
+
+  const isKeyValid = (e: KeyboardEvent) => {
+    switch (variant) {
+      case 'save':
+        return e.altKey && e.code === 'KeyS';
+      default:
+        return false;
+    }
+  };
+
+  useKeyboardShortcut({
+    isKeyValid,
+    onKeyPressed: () => onClick({} as React.MouseEvent<HTMLButtonElement>),
+  });
 
   return (
     <ButtonWithIcon

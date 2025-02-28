@@ -104,8 +104,7 @@ const Actions = () => {
   const actions = [
     {
       id: 'navigation-drawer:toggle',
-      name: `${t('cmdk.drawer-toggle')} (Alt/Option+N)`,
-      shortcut: ['Alt+KeyN'],
+      name: t('cmdk.drawer-toggle'),
       keywords: 'drawer, close',
       perform: () => drawer.toggle(),
     },
@@ -275,8 +274,7 @@ const Actions = () => {
 
   actions.push({
     id: 'navigation:settings',
-    name: `${t('settings')} (Alt/Option+S)`,
-    shortcut: ['Alt+KeyS'],
+    name: t('settings'),
     keywords: 'settings',
     perform: () => navigate(RouteBuilder.create(AppRoute.Settings).build()),
   });

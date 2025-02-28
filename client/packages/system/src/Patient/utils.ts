@@ -26,6 +26,7 @@ export interface SearchInputPatient {
 }
 
 export interface NameSearchInputProps {
+  autoFocus?: boolean;
   onChange: (name: SearchInputPatient) => void;
   width?: number;
   value: SearchInputPatient | null;
