@@ -2,52 +2,47 @@ import React, { FC } from 'react';
 import {
   Box,
   AppFooterPortal,
-  DialogButton,
-  InlineSpinner,
+  LoadingButton,
+  useTranslation,
+  SaveIcon,
 } from '@openmsupply-client/common';
 
 interface FooterProps {
   isSaving: boolean;
-  isDirty: boolean;
+  disabled: boolean;
   handleSave: () => Promise<boolean | void>;
-  handleCancel: () => void;
 }
 
-export const Footer: FC<FooterProps> = ({
-  isSaving,
-  isDirty,
-  handleSave,
-  handleCancel,
-}) => {
+export const Footer: FC<FooterProps> = ({ isSaving, disabled, handleSave }) => {
+  const t = useTranslation();
   return (
     <AppFooterPortal
       Content={
-        isSaving ? (
-          <InlineSpinner />
-        ) : (
+        <Box
+          gap={2}
+          display="flex"
+          flexDirection="row"
+          alignItems="center"
+          height={64}
+        >
           <Box
-            gap={2}
+            flex={1}
             display="flex"
-            flexDirection="row"
-            alignItems="center"
-            height={64}
+            justifyContent="flex-end"
+            gap={2}
+            marginLeft="auto"
           >
-            <Box
-              flex={1}
-              display="flex"
-              justifyContent="flex-end"
-              gap={2}
-              marginLeft="auto"
-            >
-              <DialogButton variant="cancel" onClick={handleCancel} />
-              <DialogButton
-                variant={'save'}
-                disabled={!isDirty}
-                onClick={handleSave}
-              />
-            </Box>
+            <LoadingButton
+              color="secondary"
+              variant="contained"
+              startIcon={<SaveIcon />}
+              isLoading={isSaving}
+              label={t('button.save')}
+              onClick={handleSave}
+              disabled={!disabled}
+            />
           </Box>
-        )
+        </Box>
       }
     />
   );

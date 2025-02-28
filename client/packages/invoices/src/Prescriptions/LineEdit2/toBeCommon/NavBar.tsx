@@ -1,8 +1,3 @@
-/**
- * TO-DO: Make this a generic re-useable component (in "common"), and update
- * styling to match new designs
- */
-
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -14,28 +9,30 @@ import {
 import React from 'react';
 
 interface NavBarProps {
-  items: string[];
-  currentItem: string;
+  itemIds: string[];
+  currentItemId: string;
   setItem: (itemId: string) => void;
   scrollIntoView: () => void;
+  canCreateNew?: boolean;
 }
 
 export const NavBar: React.FC<NavBarProps> = ({
-  items,
-  currentItem,
+  itemIds,
+  currentItemId,
   setItem,
   scrollIntoView,
+  canCreateNew = false,
 }) => {
   const t = useTranslation();
-  const currentIndex = items.findIndex(item => item === currentItem);
+  const currentIndex = itemIds.findIndex(item => item === currentItemId);
   const hasPrevious = currentIndex > 0;
-  const hasNext = currentIndex < items.length - 1;
 
-  // To-do: generalise rather than have hard-coded "new"
-  const totalCount =
-    items.slice(-1)[0] === 'new' ? items.length - 1 : items.length;
-
+  const totalCount = itemIds.length;
   const currentCount = currentIndex + 1;
+
+  const creatingNew = currentItemId === 'new';
+  const hasNext =
+    currentCount < itemIds.length || (canCreateNew && !creatingNew);
 
   return (
     <Box
@@ -49,20 +46,17 @@ export const NavBar: React.FC<NavBarProps> = ({
         Icon={<ArrowLeftIcon />}
         disabled={!hasPrevious}
         onClick={() => {
-          setItem(items[currentIndex - 1] ?? '');
+          setItem(itemIds[currentIndex - 1] ?? '');
           scrollIntoView();
         }}
       />
-      <Typography>
-        {/* Only display when not "NEW" item */}
-        {currentCount <= totalCount && `${currentCount}/${totalCount}`}
-      </Typography>
+      <Typography>{!creatingNew && `${currentCount}/${totalCount}`}</Typography>
       <ButtonWithIcon
         label={t('button.next')}
         Icon={<ArrowRightIcon />}
         disabled={!hasNext}
         onClick={() => {
-          setItem(items[currentIndex + 1] ?? '');
+          setItem(itemIds[currentIndex + 1] ?? '');
           scrollIntoView();
         }}
       />

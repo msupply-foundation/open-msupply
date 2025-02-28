@@ -15,6 +15,7 @@ import { allocateQuantities } from '../api/hooks/utils';
 import { DraftPrescriptionLine } from '../../types';
 import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
 import { ItemRowWithDirectionsFragment } from '@openmsupply-client/system';
+import { Footer } from './Footer';
 
 interface PrescriptionLineEditProps {
   item: ItemRowWithDirectionsFragment | null;
@@ -99,28 +100,35 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
   );
 
   return (
-    <PrescriptionLineEditForm
-      disabled={isDisabled}
-      isNew={isNew}
-      packSizeController={packSizeController}
-      onChangeItem={(item: ItemRowWithDirectionsFragment | null) => {
-        setIsAutoAllocated(false);
-        setCurrentItem(item);
-      }}
-      item={currentItem}
-      allocatedUnits={getAllocatedQuantity(draftPrescriptionLines)}
-      availableUnits={sumAvailableQuantity(draftPrescriptionLines)}
-      onChangeQuantity={onAllocate}
-      canAutoAllocate={canAutoAllocate}
-      isAutoAllocated={isAutoAllocated}
-      updateNotes={onUpdateNotes}
-      draftPrescriptionLines={draftPrescriptionLines}
-      showZeroQuantityConfirmation={showZeroQuantityConfirmation}
-      hasOnHold={hasOnHold}
-      hasExpired={hasExpired}
-      isLoading={isLoading}
-      updateQuantity={onUpdateQuantity}
-      programId={programId}
-    />
+    <>
+      <PrescriptionLineEditForm
+        disabled={isDisabled}
+        isNew={isNew}
+        packSizeController={packSizeController}
+        onChangeItem={(item: ItemRowWithDirectionsFragment | null) => {
+          setIsAutoAllocated(false);
+          setCurrentItem(item);
+        }}
+        item={currentItem}
+        allocatedUnits={getAllocatedQuantity(draftPrescriptionLines)}
+        availableUnits={sumAvailableQuantity(draftPrescriptionLines)}
+        onChangeQuantity={onAllocate}
+        canAutoAllocate={canAutoAllocate}
+        isAutoAllocated={isAutoAllocated}
+        updateNotes={onUpdateNotes}
+        draftPrescriptionLines={draftPrescriptionLines}
+        showZeroQuantityConfirmation={showZeroQuantityConfirmation}
+        hasOnHold={hasOnHold}
+        hasExpired={hasExpired}
+        isLoading={isLoading}
+        updateQuantity={onUpdateQuantity}
+        programId={programId}
+      />
+      <Footer
+        isSaving={false} //TODO
+        disabled={true} // TODO
+        handleSave={async () => {}} //TODO
+      />
+    </>
   );
 };

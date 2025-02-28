@@ -1,7 +1,3 @@
-/**
- * TO-DO: Make this a common component
- * */
-
 import React from 'react';
 import { Grid } from '@openmsupply-client/common';
 
@@ -10,7 +6,7 @@ interface PageLayoutProps {
   Right: React.ReactElement;
 }
 
-export const PageLayout = ({ Left, Right }: PageLayoutProps) => {
+export const LineEditPageLayout = ({ Left, Right }: PageLayoutProps) => {
   return (
     <Grid
       container
