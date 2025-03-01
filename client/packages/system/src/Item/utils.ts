@@ -31,6 +31,8 @@ interface GenericStockItemSearchInputProps {
   openOnFocus?: boolean;
 }
 
+export type ItemSearchExtraFilter = (item: ItemStockOnHandFragment) => boolean;
+
 export interface StockItemSearchInputProps
   extends GenericStockItemSearchInputProps {
   onChange: (item: ItemStockOnHandFragment | null) => void;

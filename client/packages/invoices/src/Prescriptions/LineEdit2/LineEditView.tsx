@@ -10,7 +10,7 @@ import {
 } from '@openmsupply-client/common';
 
 import { AppRoute } from '@openmsupply-client/config';
-import { usePrescription } from '../api';
+import { InvoiceItemFragment, usePrescription } from '../api';
 import { PrescriptionLineEdit } from './PrescriptionLineEdit';
 import { LineEditView } from './toBeCommon/LineEditView';
 import { isPrescriptionDisabled } from '../../utils';
@@ -55,6 +55,8 @@ export const PrescriptionLineEditView2 = () => {
   if (isLoading || !itemId) return <BasicSpinner />;
   if (!data) return <NothingHere />;
 
+  const disabled = isPrescriptionDisabled(data);
+
   return (
     <LineEditView
       baseRoute={RouteBuilder.create(AppRoute.Dispensary)
@@ -62,12 +64,19 @@ export const PrescriptionLineEditView2 = () => {
         .addPart(String(invoiceNumber))}
       items={data.items.nodes}
       currentItemId={itemId}
-      allowCreateNew={!isPrescriptionDisabled(data)}
+      allowCreateNew={!disabled}
     >
       <PrescriptionLineEdit
         itemId={itemId}
+        currentItem={currentItem}
         programId={data?.programId ?? undefined}
+        disabled={disabled}
+        newItemFilter={excludeSelectedItems(data.items.nodes)}
       />
     </LineEditView>
   );
 };
+
+const excludeSelectedItems =
+  (items: InvoiceItemFragment[]) => (item: { id: string }) =>
+    !items.some(({ id }) => id === item.id);
