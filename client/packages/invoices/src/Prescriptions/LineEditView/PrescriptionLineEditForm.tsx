@@ -310,6 +310,7 @@ export const PrescriptionLineEditForm: React.FC<
               display="flex"
               flexDirection="row"
               gap={5}
+              paddingBottom={2}
             >
               {preferences?.editPrescribedQuantityOnPrescription && (
                 <Grid display="flex" alignItems="center" gap={1}>
@@ -368,6 +369,7 @@ export const PrescriptionLineEditForm: React.FC<
               title={t('label.batches')}
               defaultExpanded={false}
               key={key + '_table'}
+              backgroundColor="background.white"
             >
               <TableWrapper
                 canAutoAllocate={canAutoAllocate}
