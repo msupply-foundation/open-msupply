@@ -137,11 +137,14 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
 }) => {
   const t = useTranslation();
   const { variant: buttonVariant, icon, labelKey } = getButtonProps(variant);
+  const ref = React.useRef<HTMLButtonElement>(null);
 
   const isKeyValid = (e: KeyboardEvent) => {
     switch (variant) {
       case 'save':
         return e.altKey && e.code === 'KeyS';
+      case 'cancel':
+        return e.code === 'Escape';
       default:
         return false;
     }
@@ -149,7 +152,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
 
   useKeyboardShortcut({
     isKeyValid,
-    onKeyPressed: () => onClick({} as React.MouseEvent<HTMLButtonElement>),
+    onKeyPressed: () => ref.current?.click(),
   });
 
   return (
@@ -177,6 +180,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
           : {}
       }
       shouldShrink={shouldShrink}
+      ref={ref}
     />
   );
 };
