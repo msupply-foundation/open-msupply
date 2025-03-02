@@ -3346,11 +3346,11 @@ export type InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCour
 
 export type InsuranceConnector = {
   __typename: 'InsuranceConnector';
-  nodes: Array<InsuranceNode>;
+  nodes: Array<InsurancePolicyNode>;
 };
 
-export type InsuranceNode = {
-  __typename: 'InsuranceNode';
+export type InsurancePolicyNode = {
+  __typename: 'InsurancePolicyNode';
   discountPercentage: Scalars['Float']['output'];
   expiryDate: Scalars['NaiveDate']['output'];
   id: Scalars['String']['output'];
@@ -3392,7 +3392,7 @@ export type InsuranceProvidersNode = {
 
 export type InsuranceProvidersResponse = InsuranceProvidersConnector;
 
-export type InsuranceResponse = InsuranceNode;
+export type InsuranceResponse = InsurancePolicyNode;
 
 export enum InsuranceSortFieldInput {
   ExpiryDate = 'expiryDate',
@@ -3628,6 +3628,7 @@ export type InvoiceNode = {
   id: Scalars['String']['output'];
   insuranceDiscountAmount?: Maybe<Scalars['Float']['output']>;
   insuranceDiscountPercentage?: Maybe<Scalars['Float']['output']>;
+  insurancePolicy?: Maybe<InsurancePolicyNode>;
   invoiceNumber: Scalars['Int']['output'];
   isCancellation: Scalars['Boolean']['output'];
   lines: InvoiceLineConnector;
@@ -5998,9 +5999,9 @@ export type Queries = {
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
-  insurance: InsuranceResponse;
+  insurancePolicies: InsurancesResponse;
+  insurancePolicy: InsuranceResponse;
   insuranceProviders: InsuranceProvidersResponse;
-  insurances: InsurancesResponse;
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
@@ -6379,20 +6380,20 @@ export type QueriesInsertPrescriptionArgs = {
 };
 
 
-export type QueriesInsuranceArgs = {
+export type QueriesInsurancePoliciesArgs = {
+  nameId: Scalars['String']['input'];
+  sort?: InputMaybe<Array<InsuranceSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesInsurancePolicyArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
 
 export type QueriesInsuranceProvidersArgs = {
-  storeId: Scalars['String']['input'];
-};
-
-
-export type QueriesInsurancesArgs = {
-  nameId: Scalars['String']['input'];
-  sort?: InputMaybe<Array<InsuranceSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -7032,6 +7033,7 @@ export type RequisitionFilterInput = {
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  elmisCode?: InputMaybe<EqualFilterStringInput>;
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;

@@ -10,11 +10,11 @@ import { useAssets } from './useAssets';
 import { AssetCatalogueItemFragment } from '../../operations.generated';
 
 export const useAssetsDelete = () => {
-  const queryClient = useQueryClient();
-  const { data: rows } = useAssets();
-  const api = useAssetApi();
-  const { mutateAsync } = useMutation(async (id: string) => api.delete(id));
   const t = useTranslation();
+  const queryClient = useQueryClient();
+  const api = useAssetApi();
+  const { data: rows } = useAssets();
+  const { mutateAsync } = useMutation(async (id: string) => api.delete(id));
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
