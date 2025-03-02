@@ -15,7 +15,8 @@ const REPORT_1: (&str, &str) = (
         "context": "STOCKTAKE",
         "is_custom": false,
         "template": "template data",
-        "sub_context": "test sub context"
+        "sub_context": "test sub context",
+        "is_active": true
     }"#,
 );
 
@@ -31,6 +32,7 @@ fn report() -> ReportRow {
         is_custom: false,
         version: "1.0.0".to_string(),
         code: "test report code".to_string(),
+        is_active: true,
         ..Default::default()
     }
 }
