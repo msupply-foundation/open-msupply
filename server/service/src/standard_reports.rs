@@ -57,11 +57,13 @@ impl StandardReports {
     ) -> Result<(), anyhow::Error> {
         let mut num_std_reports = 0;
         for report in reports_data.reports {
-            let existing_report_count = ReportRepository::new(con).count(Some(
-                ReportFilter::new().id(EqualFilter::equal_to(&report.id)),
-            ))?;
+            let existing_report = ReportRowRepository::new(con).find_one_by_id(&report.id)?;
+            let set_active = match &existing_report {
+                Some(report) => report.is_active,
+                None => true
+            };
 
-            if existing_report_count == 0 || overwrite {
+            if existing_report.is_none() || overwrite {
                 if let Some(form_schema_json) = &report.form_schema {
                     // TODO: Look up existing json schema and use it's ID to be safe...
                     FormSchemaRowRepository::new(con).upsert_one(form_schema_json)?;
@@ -77,7 +79,7 @@ impl StandardReports {
                     is_custom: report.is_custom,
                     version: report.version,
                     code: report.code,
-                    is_active: true,
+                    is_active: set_active,
                 })?;
                 num_std_reports += 1;
             }
