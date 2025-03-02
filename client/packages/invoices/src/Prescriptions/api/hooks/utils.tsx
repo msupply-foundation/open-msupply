@@ -92,6 +92,33 @@ export const createPrescriptionPlaceholderRow = (
     itemDirections: [],
   },
   itemName: '',
+  stockLine: {
+    __typename: 'StockLineNode',
+    id: '',
+    itemId: '',
+    batch: '',
+    availableNumberOfPacks: 0,
+    totalNumberOfPacks: 0,
+    onHold: false,
+    sellPricePerPack: 0,
+    costPricePerPack: 0,
+    packSize: 0,
+    expiryDate: null,
+    item: {
+      __typename: 'ItemNode',
+      code: '',
+      name: '',
+      itemDirections: [
+        {
+          id: '',
+          itemId,
+          __typename: 'ItemDirectionNode',
+          directions: '',
+          priority: 0,
+        },
+      ],
+    },
+  },
 });
 
 export interface DraftPrescriptionLineSeeds {

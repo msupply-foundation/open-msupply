@@ -21,6 +21,12 @@ import { DraftPrescriptionLine } from '../../types';
 import { Footer } from './Footer';
 import { NavBar } from './NavBar';
 
+// TODO:
+// If there's no stock but a user has added a prescribed quantity to an item
+// Enable saving of that item with an issued quantity of zero
+// StockLine gets saved in the backend.
+// We need to support the case when there's zero stockline value
+
 export const PrescriptionLineEditView = () => {
   const { invoiceNumber, itemId } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
