@@ -1,6 +1,6 @@
 use repository::{
-    ContextType, EqualFilter, FormSchemaJson, FormSchemaRowRepository, ReportFilter,
-    ReportRepository, ReportRow, ReportRowRepository, StorageConnection,
+    ContextType, FormSchemaJson, FormSchemaRowRepository,
+    ReportRow, ReportRowRepository, StorageConnection,
 };
 use rust_embed::RustEmbed;
 use thiserror::Error;
