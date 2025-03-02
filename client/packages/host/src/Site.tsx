@@ -66,6 +66,7 @@ export const Site: FC = () => {
   const { setPageTitle } = useHostContext();
   const pageTitle = getPageTitle(location.pathname);
 
+  // TODO: own component - rerenders whole app!
   useEffect(() => {
     setPageTitle(pageTitle);
   }, [location, pageTitle, setPageTitle]);

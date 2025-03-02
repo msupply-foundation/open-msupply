@@ -15,14 +15,14 @@ import { usePrescriptionLineEditRows } from './hooks';
 import { usePrescriptionLineEditColumns } from './columns';
 
 interface PrescriptionLineEditTableProps {
-  onChange: (lineId: string, unitQuantity: number) => void;
+  updateLineQuantity: (lineId: string, unitQuantity: number) => void;
   rows: DraftPrescriptionLine[];
   item: DraftItem | null;
   isDisabled: boolean;
 }
 
 const PrescriptionLineEditTableInner = ({
-  onChange,
+  updateLineQuantity,
   rows,
   item,
   isDisabled,
@@ -31,7 +31,7 @@ const PrescriptionLineEditTableInner = ({
   const { orderedRows } = usePrescriptionLineEditRows(rows, isDisabled);
   const onEditStockLine = (key: string, value: number) => {
     const num = Number.isNaN(value) ? 0 : value;
-    onChange(key, num);
+    updateLineQuantity(key, num);
   };
   const unit = item?.unitName ?? t('label.unit');
 
@@ -66,7 +66,7 @@ const PrescriptionLineEditTableInner = ({
 };
 
 export const PrescriptionLineEditTable = ({
-  onChange,
+  updateLineQuantity,
   rows,
   isDisabled,
   item,
@@ -89,7 +89,7 @@ export const PrescriptionLineEditTable = ({
         })}
       >
         <PrescriptionLineEditTableInner
-          onChange={onChange}
+          updateLineQuantity={updateLineQuantity}
           rows={rows}
           item={item}
           isDisabled={isDisabled}

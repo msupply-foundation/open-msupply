@@ -8,27 +8,25 @@ import { DraftPrescriptionLine } from '../../types';
 import { DraftItem } from '../..';
 
 interface StockAllocationSectionProps {
-  itemId: string;
   disabled: boolean;
   isNew: boolean;
   prescriptionLines: DraftPrescriptionLine[];
   itemDetails: DraftItem | null;
+  updateLineQuantity: (lineId: string, quantity: number) => void;
 }
 
 export const StockAllocationSection = ({
-  itemId,
   disabled,
   isNew,
   prescriptionLines,
   itemDetails,
+  updateLineQuantity,
 }: StockAllocationSectionProps) => {
   const t = useTranslation();
   // const {data} = lines by item
   // state seems odd but lets roll w it
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
-
-  const updateQuantity = () => {};
 
   return (
     <>
@@ -43,11 +41,10 @@ export const StockAllocationSection = ({
         title={t('label.quantity')}
         closedSummary={summarisePrescribedStock(prescriptionLines, t)}
         defaultExpanded={isNew && !disabled}
-        key={itemId + '_quantity'}
       >
         <PrescriptionLineEditTable
           item={itemDetails}
-          onChange={updateQuantity}
+          updateLineQuantity={updateLineQuantity}
           rows={prescriptionLines}
           isDisabled={disabled}
         />

@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { Footer } from './Footer';
 import { AccordionPanelSection } from './toBeCommon/PanelSection';
 import { useTranslation } from '@common/intl';
-import { Grid, InvoiceNodeStatus } from '@openmsupply-client/common';
+import {
+  Grid,
+  InvoiceNodeStatus,
+  useBufferState,
+} from '@openmsupply-client/common';
 import { ItemSearchExtraFilter } from '@openmsupply-client/system';
 import { ItemSelectSection } from './ItemSelectSection';
 import { InvoiceItemFragment } from '../api';
@@ -31,7 +35,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
 
   const isNew = itemId === 'new';
 
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(
+  const [selectedItemId, setSelectedItemId] = useBufferState<string | null>(
     isNew ? null : itemId
   );
 
@@ -68,14 +72,10 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
             isNew={isNew}
             prescriptionId={prescriptionId}
             status={status}
+            disabled={disabled}
           />
         )}
       </Grid>
-      <Footer
-        isSaving={false} //TODO
-        disabled={true} // TODO
-        handleSave={async () => {}} //TODO
-      />
     </>
   );
 };

@@ -4,30 +4,40 @@ import { InvoiceNodeStatus } from '@common/types';
 import { useDraftPrescriptionLines } from './hooks/useDraftPrescriptionLines';
 import { DraftPrescriptionLine } from '../../types';
 import { DraftItem } from '../..';
+import { Footer } from './Footer';
+import { useItemPrescriptionLines } from './hooks/useItemPrescriptionLines';
 
 const PrescriptionItemDetailsInner = ({
-  itemId,
-  initialDraftLines,
+  initialLines,
   isNew,
   itemDetails,
   disabled,
 }: {
-  itemId: string;
   isNew: boolean;
   itemDetails: DraftItem | null;
-  initialDraftLines: DraftPrescriptionLine[];
+  initialLines: DraftPrescriptionLine[];
   disabled: boolean;
 }) => {
+  const { draftLines, updateLineQuantity } =
+    useDraftPrescriptionLines(initialLines);
+
   return (
     <>
       <StockAllocationSection
-        itemId={itemId}
         itemDetails={itemDetails}
         disabled={disabled}
         isNew={isNew}
-        prescriptionLines={initialDraftLines}
+        prescriptionLines={draftLines}
+        updateLineQuantity={updateLineQuantity}
       />
       {/* // directions */}
+
+      {/* Rendering here, idea is this would go away, autosave anyway */}
+      <Footer
+        isSaving={false} //TODO
+        disabled={true} // TODO
+        handleSave={async () => {}} //TODO
+      />
     </>
   );
 };
@@ -37,6 +47,7 @@ interface PrescriptionItemDetailsProps {
   prescriptionId: string;
   isNew: boolean;
   status: InvoiceNodeStatus;
+  disabled: boolean;
 }
 
 export const PrescriptionItemDetails = ({
@@ -44,9 +55,10 @@ export const PrescriptionItemDetails = ({
   prescriptionId,
   isNew,
   status,
+  disabled,
 }: PrescriptionItemDetailsProps) => {
   const { itemDetails, initialDraftLines, isLoading } =
-    useDraftPrescriptionLines({
+    useItemPrescriptionLines({
       itemId,
       prescriptionId,
       status,
@@ -56,15 +68,12 @@ export const PrescriptionItemDetails = ({
     return null;
   }
   return (
-    <>
-      <PrescriptionItemDetailsInner
-        itemId={itemId}
-        itemDetails={itemDetails ?? null}
-        disabled={false}
-        isNew={isNew}
-        initialDraftLines={initialDraftLines}
-      />
-      {/* // directions */}
-    </>
+    <PrescriptionItemDetailsInner
+      key={itemId + '_details'} // resets state when item changes
+      itemDetails={itemDetails ?? null}
+      disabled={disabled}
+      isNew={isNew}
+      initialLines={initialDraftLines}
+    />
   );
 };
