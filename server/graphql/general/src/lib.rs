@@ -42,10 +42,11 @@ use queries::{
     currency::currencies,
     display_settings::{display_settings, DisplaySettingsHash, DisplaySettingsNode},
     initialisation_status::{initialisation_status, InitialisationStatusNode},
-    insurance_providers::{insurance_providers, InsuranceProvidersResponse},
-    insurances::{
-        insurance, insurances, InsuranceResponse, InsuranceSortInput, InsurancesResponse,
+    insurance_policies::{
+        insurance_policies, insurance_policy, InsuranceResponse, InsuranceSortInput,
+        InsurancesResponse,
     },
+    insurance_providers::{insurance_providers, InsuranceProvidersResponse},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
     sync_settings::{sync_settings, SyncSettingsNode},
 };
@@ -446,23 +447,23 @@ impl GeneralQueries {
         abbreviations(ctx, filter)
     }
 
-    pub async fn insurances(
+    pub async fn insurance_policies(
         &self,
         ctx: &Context<'_>,
         store_id: String,
         name_id: String,
         sort: Option<Vec<InsuranceSortInput>>,
     ) -> Result<InsurancesResponse> {
-        insurances(ctx, store_id, name_id, sort)
+        insurance_policies(ctx, store_id, name_id, sort)
     }
 
-    pub async fn insurance(
+    pub async fn insurance_policy(
         &self,
         ctx: &Context<'_>,
         store_id: String,
         id: String,
     ) -> Result<InsuranceResponse> {
-        insurance(ctx, store_id, id)
+        insurance_policy(ctx, store_id, id)
     }
 
     pub async fn insurance_providers(
