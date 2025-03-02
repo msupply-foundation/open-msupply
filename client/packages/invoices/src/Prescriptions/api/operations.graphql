@@ -564,3 +564,30 @@ query abbreviations($filter: AbbreviationFilterInput) {
     }
   }
 }
+
+query prescriptionLinesByItem(
+  $invoiceId: String!
+  $itemId: String!
+  $storeId: String!
+) {
+  items(storeId: $storeId, filter: { id: { equalTo: $itemId } }) {
+    ... on ItemConnector {
+      nodes {
+        id
+        name
+        unitName
+      }
+    }
+  }
+
+  invoiceLines(
+    storeId: $storeId
+    filter: { invoiceId: { equalTo: $invoiceId }, itemId: { equalTo: $itemId } }
+  ) {
+    ... on InvoiceLineConnector {
+      nodes {
+        ...PrescriptionLine
+      }
+    }
+  }
+}

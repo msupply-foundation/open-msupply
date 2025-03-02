@@ -1,135 +1,144 @@
-import { useEffect, useCallback } from 'react';
+import { useMemo } from 'react';
 import {
   InvoiceLineNodeType,
   InvoiceNodeStatus,
   SortUtils,
   uniqBy,
 } from '@openmsupply-client/common';
-import { useHistoricalStockLines } from '@openmsupply-client/system';
-import { usePrescription } from '../../api';
-import { DraftItem } from '../../../..';
+import {
+  StockLineFragment,
+  useHistoricalStockLines,
+} from '@openmsupply-client/system';
+import { PrescriptionLineFragment } from '../../api';
 import { DraftPrescriptionLine } from '../../../types';
 import {
   createDraftPrescriptionLine,
   createDraftPrescriptionLineFromStockLine,
-  issuePrescriptionStock,
-  updateNotes,
 } from '../../api/hooks/utils';
+import { usePrescriptionLinesByItem } from '../../api/hooks/usePrescriptionLinesByItem';
+import { DraftItem } from '../../../';
 
 export interface UseDraftPrescriptionLinesControl {
-  updateNotes: (note: string) => void;
-  updateQuantity: (batchId: string, packs: number) => void;
+  // updateNotes: (note: string) => void;
+  // updateQuantity: (batchId: string, packs: number) => void;
+  initialDraftLines: DraftPrescriptionLine[];
   isLoading: boolean;
+  itemDetails?: DraftItem;
 }
 
-export const useDraftPrescriptionLines = (
-  item: DraftItem | null,
-  draftLines: DraftPrescriptionLine[],
-  updateDraftLines: (lines: DraftPrescriptionLine[]) => void,
-  date?: Date | null
-): UseDraftPrescriptionLinesControl => {
-  const {
-    query: { data: prescriptionData },
-  } = usePrescription();
-  const { id: invoiceId, status } = prescriptionData ?? {};
-
-  const lines = prescriptionData?.lines.nodes.filter(
-    line => item?.id === line.item.id
-  );
-  const { data, isLoading } = useHistoricalStockLines({
-    itemId: item?.id ?? '',
-    datetime: date ? date.toISOString() : undefined,
+export const useDraftPrescriptionLines = ({
+  itemId,
+  prescriptionId,
+  status,
+  date,
+}: {
+  prescriptionId: string;
+  itemId: string;
+  status: InvoiceNodeStatus;
+  date?: Date | null;
+}): UseDraftPrescriptionLinesControl => {
+  const { data, isLoading: invoiceLinesLoading } = usePrescriptionLinesByItem({
+    itemId,
+    prescriptionId,
   });
 
-  useEffect(() => {
-    if (!data) return;
+  const { data: stockLineData, isLoading: stockLinesLoading } =
+    useHistoricalStockLines({
+      itemId,
+      datetime: date ? date.toISOString() : undefined,
+    });
 
-    // Stock lines (data.nodes) are coming from availableStockLines from
-    // itemNode these are filtered by totalNumberOfPacks > 0 but it's possible
-    // to issue all of the packs from the batch in picked status, need to make
-    // sure these are not hidden
-    const invoiceLineStockLines = (lines ?? []).flatMap(l =>
-      l.stockLine ? [l.stockLine] : []
-    );
-    const stockLines = uniqBy(
-      [...data.nodes, ...invoiceLineStockLines],
-      'id'
-    ).filter(stockLine => !stockLine.onHold); // Filter out on hold stock lines
-
-    const noStockLines = stockLines.length == 0;
-
-    if (noStockLines || !item) {
-      return updateDraftLines([]);
-    }
-
-    const rows = stockLines
-      .map(batch => {
-        const invoiceLine = lines?.find(
-          ({ stockLine }) => stockLine?.id === batch.id
-        );
-        if (invoiceLine && invoiceId && status) {
-          return createDraftPrescriptionLine({
-            invoiceLine,
-            invoiceId,
-            stockLine: batch,
-            invoiceStatus: status,
-          });
-        } else {
-          return createDraftPrescriptionLineFromStockLine({
-            stockLine: batch,
-            invoiceId: invoiceId ?? '',
-          });
-        }
-      })
-      .filter(stockLine => !stockLine.location?.onHold)
-      .sort(SortUtils.byExpiryAsc);
-
-    if (status === InvoiceNodeStatus.New) {
-      let placeholder = lines?.find(
-        ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-      );
-      if (!placeholder) {
-        placeholder = draftLines.find(
-          ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-        );
-      }
-      if (placeholder) {
-        const placeholderItem = lines?.find(l => l.item.id === item.id)?.item;
-        if (!!placeholderItem) placeholder.item = placeholderItem;
-        rows.push(
-          createDraftPrescriptionLine({
-            invoiceId: invoiceId ?? '',
-            invoiceLine: placeholder,
-            invoiceStatus: status,
-          })
-        );
-      } else {
-        // Commented out for now until placeholders are implemented for
-        // prescriptions
-        // rows.push(createStockOutPlaceholderRow(invoiceId, item.id));
-      }
-    }
-
-    updateDraftLines(rows);
-  }, [data, item, prescriptionData]);
-
-  const onChangeRowQuantity = useCallback(
-    (batchId: string, packs: number) => {
-      updateDraftLines(issuePrescriptionStock(draftLines, batchId, packs));
-    },
-    [draftLines]
-  );
-
-  const onUpdateNote = useCallback(
-    (note: string) => {
-      updateDraftLines(updateNotes(draftLines, note));
-    },
-    [draftLines]
+  // how many renders??
+  const baseDraftRows = getDraftRows(
+    data?.invoiceLines ?? [],
+    stockLineData?.nodes ?? [],
+    prescriptionId,
+    status
   );
 
   return {
-    isLoading,
-    updateQuantity: onChangeRowQuantity,
-    updateNotes: onUpdateNote,
+    itemDetails: data?.itemDetails,
+    initialDraftLines: baseDraftRows,
+    isLoading: invoiceLinesLoading || stockLinesLoading,
   };
 };
+
+// TODO: seems unhinged, simplify
+function getDraftRows(
+  invoiceLines: PrescriptionLineFragment[],
+  stockLines: StockLineFragment[],
+  invoiceId: string,
+  status: InvoiceNodeStatus
+) {
+  // Stock lines are coming from availableStockLines from
+  // itemNode these are filtered by totalNumberOfPacks > 0 but it's possible
+  // to issue all of the packs from the batch in picked status, need to make
+  // sure these are not hidden
+  const invoiceLineStockLines = invoiceLines.flatMap(l =>
+    l.stockLine ? [l.stockLine] : []
+  );
+  const uniqueStockLines = uniqBy(
+    [...stockLines, ...invoiceLineStockLines],
+    'id'
+  ).filter(stockLine => !stockLine.onHold); // Filter out on hold stock lines
+
+  const noStockLines = uniqueStockLines.length == 0;
+
+  if (noStockLines) {
+    return [];
+  }
+
+  const rows = uniqueStockLines
+    .map(batch => {
+      const invoiceLine = invoiceLines?.find(
+        ({ stockLine }) => stockLine?.id === batch.id
+      );
+      if (invoiceLine && invoiceId && status) {
+        return createDraftPrescriptionLine({
+          invoiceLine,
+          invoiceId,
+          stockLine: batch,
+          invoiceStatus: status,
+        });
+      } else {
+        return createDraftPrescriptionLineFromStockLine({
+          stockLine: batch,
+          invoiceId,
+        });
+      }
+    })
+    .filter(stockLine => !stockLine.location?.onHold)
+    .sort(SortUtils.byExpiryAsc);
+
+  // TODO: is this possible??
+  if (status === InvoiceNodeStatus.New) {
+    const placeholder = invoiceLines?.find(
+      ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+    );
+    // TODO: understand if needed...
+
+    // if (!placeholder) {
+    //   placeholder = draftLines.find(
+    //     ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+    //   );
+    // }
+    // if (placeholder) {
+    //   const placeholderItem = lines?.find(l => l.item.id === item.id)?.item;
+    //   if (!!placeholderItem) placeholder.item = placeholderItem;
+
+    if (placeholder)
+      rows.push(
+        createDraftPrescriptionLine({
+          invoiceId,
+          invoiceLine: placeholder,
+          invoiceStatus: status,
+        })
+      );
+    // } else {
+    // Commented out for now until placeholders are implemented for
+    // prescriptions
+    // rows.push(createStockOutPlaceholderRow(invoiceId, item.id));
+    // }
+  }
+  return rows;
+}

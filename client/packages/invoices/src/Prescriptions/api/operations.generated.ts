@@ -99,6 +99,15 @@ export type AbbreviationsQueryVariables = Types.Exact<{
 
 export type AbbreviationsQuery = { __typename: 'Queries', abbreviations: Array<{ __typename: 'AbbreviationNode', expansion: string, id: string, text: string }> };
 
+export type PrescriptionLinesByItemQueryVariables = Types.Exact<{
+  invoiceId: Types.Scalars['String']['input'];
+  itemId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type PrescriptionLinesByItemQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', nodes: Array<{ __typename: 'ItemNode', id: string, name: string, unitName?: string | null }> }, invoiceLines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, prescribedQuantity?: number | null, packSize: number, invoiceId: string, costPricePerPack: number, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, costPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> } } | null }> } };
+
 export const ItemDirectionFragmentDoc = gql`
     fragment ItemDirection on ItemDirectionNode {
   __typename
@@ -652,6 +661,29 @@ export const AbbreviationsDocument = gql`
   }
 }
     ${AbbreviationFragmentDoc}`;
+export const PrescriptionLinesByItemDocument = gql`
+    query prescriptionLinesByItem($invoiceId: String!, $itemId: String!, $storeId: String!) {
+  items(storeId: $storeId, filter: {id: {equalTo: $itemId}}) {
+    ... on ItemConnector {
+      nodes {
+        id
+        name
+        unitName
+      }
+    }
+  }
+  invoiceLines(
+    storeId: $storeId
+    filter: {invoiceId: {equalTo: $invoiceId}, itemId: {equalTo: $itemId}}
+  ) {
+    ... on InvoiceLineConnector {
+      nodes {
+        ...PrescriptionLine
+      }
+    }
+  }
+}
+    ${PrescriptionLineFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -689,6 +721,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     abbreviations(variables?: AbbreviationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AbbreviationsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AbbreviationsQuery>(AbbreviationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'abbreviations', 'query', variables);
+    },
+    prescriptionLinesByItem(variables: PrescriptionLinesByItemQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PrescriptionLinesByItemQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PrescriptionLinesByItemQuery>(PrescriptionLinesByItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'prescriptionLinesByItem', 'query', variables);
     }
   };
 }

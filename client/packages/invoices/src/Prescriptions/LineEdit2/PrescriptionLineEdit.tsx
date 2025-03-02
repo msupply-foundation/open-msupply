@@ -1,30 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Footer } from './Footer';
 import { AccordionPanelSection } from './toBeCommon/PanelSection';
 import { useTranslation } from '@common/intl';
-import { Grid } from '@openmsupply-client/common';
+import { Grid, InvoiceNodeStatus } from '@openmsupply-client/common';
 import { ItemSearchExtraFilter } from '@openmsupply-client/system';
 import { ItemSelectSection } from './ItemSelectSection';
 import { InvoiceItemFragment } from '../api';
+import { PrescriptionItemDetails } from './PrescriptionItemDetails';
 
 interface PrescriptionLineEditProps {
+  prescriptionId: string;
   itemId: string;
   currentItem?: InvoiceItemFragment;
   disabled: boolean;
+  status: InvoiceNodeStatus;
   programId?: string;
   newItemFilter: ItemSearchExtraFilter;
 }
 
 export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
+  prescriptionId,
   itemId,
   currentItem,
   programId,
   disabled,
+  status,
   newItemFilter,
 }) => {
   const t = useTranslation();
 
   const isNew = itemId === 'new';
+
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(
+    isNew ? null : itemId
+  );
+
   return (
     <>
       <Grid
@@ -43,7 +53,8 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
         >
           <Grid flex={1}>
             <ItemSelectSection
-              itemId={itemId}
+              selectedItemId={selectedItemId}
+              setSelectedItemId={setSelectedItemId}
               isNew={isNew}
               disabled={disabled}
               newItemFilter={newItemFilter}
@@ -51,6 +62,14 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
             />
           </Grid>
         </AccordionPanelSection>
+        {selectedItemId && (
+          <PrescriptionItemDetails
+            itemId={selectedItemId}
+            isNew={isNew}
+            prescriptionId={prescriptionId}
+            status={status}
+          />
+        )}
       </Grid>
       <Footer
         isSaving={false} //TODO

@@ -4,24 +4,29 @@ import {
   Box,
   DataTable,
   useTranslation,
+  Typography,
+  TableProvider,
+  createTableStore,
+  createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { DraftPrescriptionLine } from '../../types';
 import { DraftItem } from '../..';
 import { usePrescriptionLineEditRows } from './hooks';
 import { usePrescriptionLineEditColumns } from './columns';
 
-export interface PrescriptionLineEditTableProps {
-  onChange: (key: string, value: number) => void;
+interface PrescriptionLineEditTableProps {
+  onChange: (lineId: string, unitQuantity: number) => void;
   rows: DraftPrescriptionLine[];
   item: DraftItem | null;
-  allocatedUnits: number;
-  batch?: string;
   isDisabled: boolean;
 }
 
-export const PrescriptionLineEditTable: React.FC<
-  PrescriptionLineEditTableProps
-> = ({ onChange, rows, item, isDisabled }) => {
+const PrescriptionLineEditTableInner = ({
+  onChange,
+  rows,
+  item,
+  isDisabled,
+}: PrescriptionLineEditTableProps) => {
   const t = useTranslation();
   const { orderedRows } = usePrescriptionLineEditRows(rows, isDisabled);
   const onEditStockLine = (key: string, value: number) => {
@@ -57,5 +62,39 @@ export const PrescriptionLineEditTable: React.FC<
         )}
       </Box>
     </Box>
+  );
+};
+
+export const PrescriptionLineEditTable = ({
+  onChange,
+  rows,
+  isDisabled,
+  item,
+}: PrescriptionLineEditTableProps) => {
+  const t = useTranslation();
+
+  if (!rows.length)
+    return (
+      <Box sx={{ margin: 'auto' }}>
+        <Typography>{t('messages.no-stock-available')}</Typography>
+      </Box>
+    );
+
+  return (
+    <>
+      <TableProvider
+        createStore={createTableStore}
+        queryParamsStore={createQueryParamsStore({
+          initialSortBy: { key: 'expiryDate' },
+        })}
+      >
+        <PrescriptionLineEditTableInner
+          onChange={onChange}
+          rows={rows}
+          item={item}
+          isDisabled={isDisabled}
+        />
+      </TableProvider>
+    </>
   );
 };

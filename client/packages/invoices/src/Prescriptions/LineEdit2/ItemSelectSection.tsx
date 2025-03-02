@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Grid } from '@openmsupply-client/common';
 import {
   ItemSearchExtraFilter,
@@ -6,7 +6,8 @@ import {
 } from '@openmsupply-client/system';
 
 interface ItemSelectSectionProps {
-  itemId: string;
+  selectedItemId: string | null;
+  setSelectedItemId: (id: string | null) => void;
   isNew: boolean;
   disabled: boolean;
   programId?: string;
@@ -15,21 +16,18 @@ interface ItemSelectSectionProps {
 
 export const ItemSelectSection = ({
   isNew,
-  itemId,
   disabled,
   programId,
   newItemFilter,
+  selectedItemId,
+  setSelectedItemId,
 }: ItemSelectSectionProps) => {
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(
-    isNew ? null : itemId
-  );
-
   return (
     <Grid flex={1}>
       <StockItemSearchInput
         autoFocus={isNew}
         openOnFocus={isNew}
-        disabled={!isNew}
+        disabled={!isNew || disabled}
         currentItemId={selectedItemId}
         onChange={item => setSelectedItemId(item?.id ?? null)}
         includeNonVisibleWithStockOnHand
