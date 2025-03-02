@@ -82,6 +82,10 @@ const PrescriptionListViewComponent: FC = () => {
             getStatusTranslator(t)(status as InvoiceNodeStatus),
         },
       ],
+      [ // TODO: remove this column
+        'theirReference',
+        { description: '', maxWidth: 110 },
+      ],
       [
         'invoiceNumber',
         { description: 'description.invoice-number', maxWidth: 110 },

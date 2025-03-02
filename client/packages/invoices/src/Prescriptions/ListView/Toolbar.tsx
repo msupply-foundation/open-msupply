@@ -30,6 +30,12 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               isDefault: true,
             },
             {
+              type: 'text',
+              name: t('label.reference'),
+              urlParameter: 'theirReference',
+              isDefault: true,
+            },
+            {
               type: 'enum',
               name: t('label.status'),
               options: [
