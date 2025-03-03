@@ -1,0 +1,27 @@
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+name: Client Lint and Typescript Compilation
+
+jobs:
+  pre-build-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Set Up Node JS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: yarn
+
+      - name: Compile for errors
+        run: cd client && yarn pre-build-lint

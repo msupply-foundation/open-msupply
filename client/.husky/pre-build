@@ -1,0 +1,11 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+SRC_PATTERN="client/"
+
+if [ -n "$CI" ] || git diff --cached --name-only | grep --quiet "$SRC_PATTERN"
+then
+  cd ./client && yarn pre-build-lint
+else 
+  echo "Skipping pre-build lint in local environment"
+fi
