@@ -101,7 +101,9 @@ export const ResponseLineEdit = ({
                     requisitionId: requisitionId,
                     itemId: newItem.id,
                   });
-                  navigate(buildItemEditRoute(requisitionNumber, newItem.id));
+                  navigate(buildItemEditRoute(requisitionNumber, newItem.id), {
+                    replace: true,
+                  });
                 }
               }}
               openOnFocus={true}
