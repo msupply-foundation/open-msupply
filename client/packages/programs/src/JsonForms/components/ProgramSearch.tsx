@@ -51,7 +51,6 @@ const UIComponent = (props: ControlProps) => {
   }
 
   if (zErrors) return <Typography color="error">{zErrors}</Typography>;
-  console.log('program', program);
 
   return (
     <DetailInputWithLabelRow
