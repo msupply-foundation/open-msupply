@@ -45,7 +45,7 @@ where
     O: DeserializeOwned,
 {
     use BoaJsPluginError as Error;
-    let r#type = plugin_type_to_string(r#type);
+    let type_string = plugin_type_to_string(r#type);
 
     // Initialise context with loader
     let loader = Rc::new(SimpleModuleLoader::new(Path::new("."))?);
@@ -60,7 +60,7 @@ where
     context.run_jobs();
     match promise.state() {
         PromiseState::Fulfilled(JsValue::Undefined) => {}
-        _ => return Err(Error::LoadingModule(r#type.clone())),
+        _ => return Err(Error::LoadingModule(type_string.clone())),
     }
 
     // TODO should these be bound as camel case ? Also for inputs and outputs ?
@@ -75,14 +75,14 @@ where
         .get(js_string!("plugins"), context)?
         .as_object()
         .cloned()
-        .ok_or_else(|| Error::PluginNamespaceMissing(r#type.clone()))?;
+        .ok_or_else(|| Error::PluginNamespaceMissing(type_string.clone()))?;
 
-    let key = js_string!(r#type.as_str());
+    let key = js_string!(type_string.as_str());
     let plugin = plugins
         .get(key, context)?
         .as_callable()
         .cloned()
-        .ok_or_else(|| Error::PluginMissing(r#type.clone()))?;
+        .ok_or_else(|| Error::PluginMissing(type_string.clone()))?;
 
     let input: serde_json::Value = serde_json::to_value(&input)?;
     let js_input = JsValue::from_json(&input, &mut context)?;
