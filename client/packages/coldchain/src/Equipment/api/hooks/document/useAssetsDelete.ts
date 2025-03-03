@@ -10,13 +10,13 @@ import { useAssets } from './useAssets';
 import { AssetFragment } from '../../operations.generated';
 
 export const useAssetsDelete = () => {
+  const t = useTranslation();
   const queryClient = useQueryClient();
-  const { data: rows } = useAssets();
   const api = useAssetApi();
+  const { data: rows } = useAssets();
   const { mutateAsync } = useMutation(async (id: string) =>
     api.delete(id, api.storeId)
   );
-  const t = useTranslation();
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)

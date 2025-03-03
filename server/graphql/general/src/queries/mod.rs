@@ -72,8 +72,8 @@ pub use self::return_reason::*;
 
 pub mod abbreviation;
 pub mod diagnosis;
+pub mod insurance_policies;
 pub mod insurance_providers;
-pub mod insurances;
 
 #[cfg(test)]
 mod tests;

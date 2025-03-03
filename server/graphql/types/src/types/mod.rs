@@ -128,6 +128,12 @@ mod requisition_item_information;
 pub mod printer;
 pub use self::printer::*;
 
+pub mod insurance_policy;
+pub use self::insurance_policy::*;
+
+pub mod insurance_provider;
+pub use self::insurance_provider::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

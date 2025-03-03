@@ -20,10 +20,12 @@ mod add_report_sync;
 mod backend_plugins;
 mod frontend_plugins;
 mod plugin_data;
+mod plugin_data_changelog;
 mod prescribed_quantity_store_pref;
 mod printer_create_table;
 mod reinitialise_reports;
 mod report_add_prescription_context;
+mod report_fix_prescriptions_report_code;
 
 pub(crate) struct V2_06_00;
 
@@ -61,6 +63,8 @@ impl Migration for V2_06_00 {
             Box::new(reinitialise_reports::Migrate),
             Box::new(add_report_sync::Migrate),
             Box::new(add_form_schema_sync::Migrate),
+            Box::new(plugin_data_changelog::Migrate),
+            Box::new(report_fix_prescriptions_report_code::Migrate),
         ]
     }
 }

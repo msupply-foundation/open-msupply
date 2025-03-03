@@ -15,11 +15,13 @@ import { useStocktake } from '../api';
 interface ChangeLocationConfirmationModalProps {
   isOpen: boolean;
   onCancel: () => void;
+  clearSelected: () => void;
 }
 
 export const ChangeLocationConfirmationModal = ({
   isOpen,
   onCancel,
+  clearSelected,
 }: ChangeLocationConfirmationModalProps) => {
   const t = useTranslation();
 
@@ -42,6 +44,7 @@ export const ChangeLocationConfirmationModal = ({
               variant="ok"
               onClick={async () => {
                 await onChangeLocation(location);
+                clearSelected();
                 onCancel();
               }}
             />
