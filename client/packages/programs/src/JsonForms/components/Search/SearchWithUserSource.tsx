@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import {
   GenderType,
+  LocaleKey,
   PatientSearchInput,
   RegexUtils,
 } from '@openmsupply-client/common';
@@ -81,7 +82,7 @@ export const SearchWithUserSource = (
         paddingBottom={1}
         paddingTop={3}
       >
-        <strong>{label}</strong>
+        <strong>{t(label as LocaleKey)}</strong>
       </Typography>
       <JsonFormsDispatch
         schema={schema}
