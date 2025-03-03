@@ -36,6 +36,7 @@ export interface TableStore {
     shouldReset?: boolean
   ) => void;
   updateRowStyles: (ids: string[], style: AppSxProp) => void;
+  clearSelected: () => void;
 }
 
 export const tableContext = createContext<UseBoundStore<StoreApi<TableStore>>>(
@@ -310,6 +311,22 @@ export const createTableStore = () =>
             (newState, id) => ({
               ...newState,
               [id]: getRowState(state, id, { isExpanded }),
+            }),
+            state.rowState
+          ),
+        };
+      });
+    },
+
+    clearSelected: () => {
+      set(state => {
+        return {
+          ...state,
+          numberSelected: 0,
+          rowState: Object.keys(state.rowState).reduce(
+            (newState, id) => ({
+              ...newState,
+              [id]: getRowState(state, id, { isSelected: false }),
             }),
             state.rowState
           ),
