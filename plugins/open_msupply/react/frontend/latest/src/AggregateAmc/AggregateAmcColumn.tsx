@@ -16,6 +16,7 @@ import {
 } from '@openmsupply-client/common';
 import { RequestLineFragment } from '@openmsupply-client/system';
 import { getSdk } from './api/operations.generated';
+import { name as pluginCode } from '../../package.json';
 
 const usePluginData = (ids: string[]) => {
   const { client } = useGql();
@@ -24,7 +25,6 @@ const usePluginData = (ids: string[]) => {
 
   // need to share this
   const dataIdentifier = 'AGGREGATE_AMC_REQUISITION_LINE';
-  const pluginCode = 'AGGREGATE_AMC';
 
   return useQuery(
     pluginCode + ids,
@@ -54,7 +54,7 @@ const useColumnStore = create<PluginDataStore<RequestLineFragment, string>>(
 type AggregateAcmColumn = NonNullable<Plugins['requestRequisitionColumn']>;
 
 type AggregateAmcEditView = NonNullable<
-  ArrayElement<AggregateAcmColumn['editViewColumns']>
+  ArrayElement<AggregateAcmColumn['editViewFields']>
 >;
 
 export const StateLoader: ArrayElement<AggregateAcmColumn['StateLoader']> = ({
