@@ -89,16 +89,16 @@ pub fn print_prescription_label(
 
                 ^A0,25
                 ^FO10,75
-                ^FB570,6,0,L
+                ^FB570,5,0,L
                 ^FD{item_directions}\&{warning}\&^FS
 
                 ^FX Line
-                ^FO10,180
+                ^FO10,210
                 ^GB570,2,2^FS
 
                 ^A0,20
-                ^FO10,195
-                ^FB570,2,0,C
+                ^FO10,220
+                ^FB570,3,0,C
                 ^FD{patient_details}\&{details}\&^FS
 
                 ^XZ
