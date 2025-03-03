@@ -74,15 +74,17 @@ export const Settings: React.FC = () => {
         <LabelPrinterSettings />
         <ElectronSettings />
       </SettingsSection>
-      <SettingsSection
-        Icon={PrinterIcon}
-        titleKey="heading.printers"
-        expanded={activeSection === 4}
-        onChange={toggleSection(4)}
-        visible={true}
-      >
-        <Printers />
-      </SettingsSection>
+      {false && (
+        <SettingsSection
+          Icon={PrinterIcon}
+          titleKey="heading.printers"
+          expanded={activeSection === 4}
+          onChange={toggleSection(4)}
+          visible={true}
+        >
+          <Printers />
+        </SettingsSection>
+      )}
       {isCentralServer && (
         <SettingsSection
           Icon={ListIcon}
