@@ -46,7 +46,7 @@ const PrescriptionListViewComponent: FC = () => {
     initialSort: { key: 'prescriptionDatetime', dir: 'desc' },
     filters: [
       { key: 'otherPartyName' },
-      { key: 'theirReference', condition: 'equalTo' },
+      { key: 'theirReference' },
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
       {
         key: 'pickedDatetime',

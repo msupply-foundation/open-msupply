@@ -41,7 +41,7 @@ pub struct InvoiceFilter {
     pub status: Option<EqualFilter<InvoiceStatus>>,
     pub on_hold: Option<bool>,
     pub comment: Option<StringFilter>,
-    pub their_reference: Option<EqualFilter<String>>,
+    pub their_reference: Option<StringFilter>,
     pub transport_reference: Option<EqualFilter<String>>,
     pub created_datetime: Option<DatetimeFilter>,
     pub allocated_datetime: Option<DatetimeFilter>,
@@ -256,7 +256,7 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
         apply_equal_filter!(query, name_id, name::id);
         apply_string_filter!(query, name, name::name_);
         apply_equal_filter!(query, store_id, invoice::store_id);
-        apply_equal_filter!(query, their_reference, invoice::their_reference);
+        apply_string_filter!(query, their_reference, invoice::their_reference);
         apply_equal_filter!(query, requisition_id, invoice::requisition_id);
         apply_string_filter!(query, comment, invoice::comment);
         apply_equal_filter!(query, linked_invoice_id, invoice::linked_invoice_id);
@@ -425,7 +425,7 @@ impl InvoiceFilter {
         self
     }
 
-    pub fn their_reference(mut self, filter: EqualFilter<String>) -> Self {
+    pub fn their_reference(mut self, filter: StringFilter) -> Self {
         self.their_reference = Some(filter);
         self
     }
