@@ -1,12 +1,7 @@
-use std::collections::HashMap;
-
 use chrono::Utc;
-use repository::{PluginDataRow, PluginType, RequisitionLineRow, RequisitionRow};
+use repository::{RequisitionLineRow, RequisitionRow};
 use util::uuid::uuid;
 
-use crate::backend_plugin::plugin_provider::PluginInstance;
-
-use crate::backend_plugin::types::transform_request_requisition_lines;
 use crate::item_stats::get_item_stats;
 use crate::service_provider::ServiceContext;
 use crate::PluginOrRepositoryError;
@@ -49,9 +44,7 @@ pub fn generate_requisition_lines(
     store_id: &str,
     requisition_row: &RequisitionRow,
     item_ids: Vec<String>,
-    // Need for plugins since sometimes we set id passed in as parameter in graphql
-    mut with_id_map: HashMap</*item_id*/ String, String /*line id*/>,
-) -> Result<(Vec<RequisitionLineRow>, Vec<PluginDataRow>), PluginOrRepositoryError> {
+) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
     let item_stats_rows = get_item_stats(ctx, store_id, None, item_ids)?;
 
     let lines = item_stats_rows
@@ -67,7 +60,7 @@ pub fn generate_requisition_lines(
             });
 
             RequisitionLineRow {
-                id: with_id_map.remove(&item_stats.item_id).unwrap_or(uuid()),
+                id: uuid(),
                 requisition_id: requisition_row.id.clone(),
                 item_link_id: item_stats.item_id,
                 item_name: item_stats.item_name,
@@ -93,20 +86,5 @@ pub fn generate_requisition_lines(
         })
         .collect();
 
-    let Some(plugin) = PluginInstance::get_one(PluginType::TransformRequestRequisitionLines) else {
-        return Ok((lines, Vec::new()));
-    };
-
-    let result = transform_request_requisition_lines::Trait::call(
-        &(*plugin),
-        transform_request_requisition_lines::Input {
-            requisition: requisition_row.clone(),
-            lines,
-        },
-    )?;
-
-    Ok((
-        result.transformed_lines,
-        result.plugin_data.unwrap_or_default(),
-    ))
+    Ok(lines)
 }

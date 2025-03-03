@@ -142,7 +142,7 @@ impl Upsert for BackendPluginRow {
 
 #[derive(Debug, Clone)]
 // Most central data will be soft deleted (via upsert), and this trait will not be implemented
-// backend_plugins don't have referencial relations to any other tables so it's ok to delete as an example
+// backend_plugins don't have referential relations to any other tables so it's ok to delete as an example
 pub struct BackendPluginRowDelete(pub String);
 impl Delete for BackendPluginRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {

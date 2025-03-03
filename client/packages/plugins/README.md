@@ -158,7 +158,9 @@ You can watch [this video for example](https://drive.google.com/file/d/1JnmPU9hR
 
 The simplest way to begin is by cloning (forking for now or just copy and create new repo, until we have a template), this repository https://github.com/msupply-foundation/open-msupply-plugins, then add it as a submodule to `client/packages/plugins/`. From the root of this repository, run: 
 
-```git submodule add [your-plugin-bundle-repo-url] client/packages/plugins/myPluginBundle```
+```
+git submodule add [your-plugin-bundle-repo-url] client/packages/plugins/myPluginBundle
+```
 
 
 Note the `myPluginBundle` can be anything. The inner repository and core will be treated as two different repositories, changes in them will only be reflected in relative repositories (i.e. you can add the inner repository as local repository in github desktop). Make sure that you don't commit the `.gitmodule` or the single `client/packages/plugins/{your plugin bundle name}` to the core.
@@ -245,9 +247,17 @@ which are storing the provider state locally and providing that to an instance o
 
 When using private repository submodule you will have to be logged in as the user with adequate permissions to the repository.
 
+When removing submodule, you will need to delete `.gitmodules` file, the plugin folder and git cache for submodule, for example:
+
+```bash
+rm -rf .gitmodules
+rm -rf client/packages/plugins/myPluginBundle/
+rm -rf .git/modules/client/packages/plugins/myPluginBundle/
+```
+
 ### Compatibility/versioning
 
-TODO explain why the folder structure is the way it is, that versioning will be linked to min version of omSupply, and when making new version previous version is copied from latest to say `2_6` (when `2_7` is the new version with feature added to API that plugin uses). And then we can checkout older version of omSupply, with current version of plugin, and only load `2_6` with exlude and include in [getLocalPlugin.js](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/host/getLocalPlugins.js#L11-L12)
+TODO explain why the folder structure is the way it is, that versioning will be linked to min version of omSupply, and when making new version previous version is copied from latest to say `2_6` (when `2_7` is the new version with feature added to API that plugin uses). And then we can checkout older version of omSupply, with current version of plugin, and only load `2_6` with exclude and include in [getLocalPlugin.js](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/host/getLocalPlugins.js#L11-L12)
 
 ### Adding new plugin interface
 

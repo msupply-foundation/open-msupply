@@ -219,7 +219,7 @@ export const RequestLineEdit = ({
                 sx={{ marginBottom: 1 }}
               />
               {line &&
-                plugins.requestRequisitionColumn?.editViewColumns?.map(
+                plugins.requestRequisitionColumn?.editViewFields?.map(
                   (Column, index) => <Column key={index} line={line} />
                 )}
               {isProgram && useConsumptionData && (

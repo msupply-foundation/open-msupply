@@ -5,6 +5,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ts_rs::TS;
 
+fn plugin_type() -> PluginType {
+    PluginType::AverageMonthlyConsumption
+}
+
 #[derive(TS, Clone, Deserialize, Serialize)]
 pub struct AverageMonthlyConsumptionItem {
     pub average_monthly_consumption: Option<f64>,
@@ -31,10 +35,6 @@ pub trait Trait: Send + Sync {
 // TODO as macro ? Can do types here too
 impl self::Trait for PluginInstance {
     fn call(&self, input: Input) -> PluginResult<Output> {
-        Ok(call_plugin(
-            input,
-            PluginType::AverageMonthlyConsumption,
-            self,
-        )?)
+        Ok(call_plugin(input, plugin_type(), self)?)
     }
 }
