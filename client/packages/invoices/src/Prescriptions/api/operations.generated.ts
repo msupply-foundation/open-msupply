@@ -106,7 +106,7 @@ export type PrescriptionLinesByItemQueryVariables = Types.Exact<{
 }>;
 
 
-export type PrescriptionLinesByItemQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', nodes: Array<{ __typename: 'ItemNode', id: string, name: string, unitName?: string | null }> }, invoiceLines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, prescribedQuantity?: number | null, packSize: number, invoiceId: string, costPricePerPack: number, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, costPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> } } | null }> } };
+export type PrescriptionLinesByItemQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', nodes: Array<{ __typename: 'ItemNode', id: string, name: string, unitName?: string | null, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> }> }, invoiceLines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, prescribedQuantity?: number | null, packSize: number, invoiceId: string, costPricePerPack: number, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, costPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string, itemDirections: Array<{ __typename: 'ItemDirectionNode', directions: string, id: string, itemId: string, priority: number }> } } | null }> } };
 
 export const ItemDirectionFragmentDoc = gql`
     fragment ItemDirection on ItemDirectionNode {
@@ -669,6 +669,9 @@ export const PrescriptionLinesByItemDocument = gql`
         id
         name
         unitName
+        itemDirections {
+          ...ItemDirection
+        }
       }
     }
   }
@@ -683,7 +686,8 @@ export const PrescriptionLinesByItemDocument = gql`
     }
   }
 }
-    ${PrescriptionLineFragmentDoc}`;
+    ${ItemDirectionFragmentDoc}
+${PrescriptionLineFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 

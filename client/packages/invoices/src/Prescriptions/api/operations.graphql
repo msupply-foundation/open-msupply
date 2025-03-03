@@ -576,6 +576,9 @@ query prescriptionLinesByItem(
         id
         name
         unitName
+        itemDirections {
+          ...ItemDirection
+        }
       }
     }
   }

@@ -10,6 +10,7 @@ export interface UseDraftPrescriptionLinesControl {
     quantity: number,
     prescribedQuantity: number | null
   ) => DraftPrescriptionLine[] | undefined;
+  updateNote: (note: string) => void;
 }
 
 export const useDraftPrescriptionLines = (
@@ -17,20 +18,6 @@ export const useDraftPrescriptionLines = (
   status: InvoiceNodeStatus
 ): UseDraftPrescriptionLinesControl => {
   const [draftLines, setDraftLines] = useState(initialLines);
-
-  const updateLineQuantity = (lineId: string, quantity: number) =>
-    setDraftLines(draftLines =>
-      draftLines.map(line => {
-        if (line.id === lineId) {
-          return {
-            ...line,
-            numberOfPacks: quantity,
-            isUpdated: true,
-          };
-        }
-        return line;
-      })
-    );
 
   const allocateQuantity = (
     quantity: number,
@@ -48,9 +35,34 @@ export const useDraftPrescriptionLines = (
     return updatedLines;
   };
 
+  const updateLineQuantity = (lineId: string, quantity: number) =>
+    setDraftLines(draftLines =>
+      draftLines.map(line => {
+        if (line.id === lineId) {
+          return {
+            ...line,
+            numberOfPacks: quantity,
+            isUpdated: true,
+          };
+        }
+        return line;
+      })
+    );
+
+  const updateNote = (note: string) => {
+    setDraftLines(draftLines =>
+      draftLines.map(line => ({
+        ...line,
+        note,
+        isUpdated: true,
+      }))
+    );
+  };
+
   return {
     draftLines,
     updateLineQuantity,
     allocateQuantity,
+    updateNote,
   };
 };

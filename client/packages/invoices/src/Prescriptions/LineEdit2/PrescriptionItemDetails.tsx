@@ -3,10 +3,11 @@ import { StockAllocationSection } from './StockAllocationSection';
 import { InvoiceNodeStatus } from '@common/types';
 import { useDraftPrescriptionLines } from './hooks/useDraftPrescriptionLines';
 import { DraftPrescriptionLine } from '../../types';
-import { DraftItem } from '../..';
 import { Footer } from './Footer';
 import { useItemPrescriptionLines } from './hooks/useItemPrescriptionLines';
 import { useSaveLines } from '../api';
+import { DirectionsSection } from './DirectionsSection';
+import { PrescriptionItem } from '../api/hooks/usePrescriptionLinesByItem';
 
 const PrescriptionItemDetailsInner = ({
   initialLines,
@@ -15,15 +16,17 @@ const PrescriptionItemDetailsInner = ({
   disabled,
   prescriptionId,
   status,
+  itemId,
 }: {
   isNew: boolean;
   prescriptionId: string;
-  itemDetails: DraftItem | null;
+  itemDetails: PrescriptionItem | null;
   initialLines: DraftPrescriptionLine[];
   disabled: boolean;
   status: InvoiceNodeStatus;
+  itemId: string;
 }) => {
-  const { draftLines, updateLineQuantity, allocateQuantity } =
+  const { draftLines, updateLineQuantity, allocateQuantity, updateNote } =
     useDraftPrescriptionLines(initialLines, status);
 
   const { mutateAsync: onSave, isLoading } = useSaveLines(
@@ -48,7 +51,14 @@ const PrescriptionItemDetailsInner = ({
         updateLineQuantity={updateLineQuantity}
         allocateQuantity={allocateQuantity}
       />
-      {/* // directions */}
+      <DirectionsSection
+        isNew={isNew}
+        disabled={disabled}
+        itemId={itemId}
+        prescriptionLines={draftLines}
+        updateNote={updateNote}
+        itemDirections={itemDetails?.itemDirections ?? []}
+      />
 
       {/* Rendering here, idea is this would go away, autosave anyway */}
       <Footer
@@ -94,6 +104,7 @@ export const PrescriptionItemDetails = ({
       initialLines={initialDraftLines}
       prescriptionId={prescriptionId}
       status={status}
+      itemId={itemId}
     />
   );
 };

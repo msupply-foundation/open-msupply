@@ -1,8 +1,15 @@
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
-import { PrescriptionLineFragment } from '../operations.generated';
+import {
+  ItemDirectionFragment,
+  PrescriptionLineFragment,
+} from '../operations.generated';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
 import { useQuery } from '@openmsupply-client/common';
 import { DraftItem } from '../../..';
+
+export interface PrescriptionItem extends DraftItem {
+  itemDirections: ItemDirectionFragment[];
+}
 
 export const usePrescriptionLinesByItem = ({
   prescriptionId,
@@ -15,7 +22,7 @@ export const usePrescriptionLinesByItem = ({
 
   const queryFn = async (): Promise<{
     invoiceLines: PrescriptionLineFragment[];
-    itemDetails?: DraftItem;
+    itemDetails?: PrescriptionItem;
   }> => {
     const result = await prescriptionApi.prescriptionLinesByItem({
       invoiceId: prescriptionId,

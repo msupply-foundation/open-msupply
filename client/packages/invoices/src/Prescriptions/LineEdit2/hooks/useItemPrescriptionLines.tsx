@@ -14,13 +14,15 @@ import {
   createDraftPrescriptionLine,
   createDraftPrescriptionLineFromStockLine,
 } from '../../api/hooks/utils';
-import { usePrescriptionLinesByItem } from '../../api/hooks/usePrescriptionLinesByItem';
-import { DraftItem } from '../../..';
+import {
+  PrescriptionItem,
+  usePrescriptionLinesByItem,
+} from '../../api/hooks/usePrescriptionLinesByItem';
 
 interface UseItemPrescriptionLines {
   initialDraftLines: DraftPrescriptionLine[];
   isLoading: boolean;
-  itemDetails?: DraftItem;
+  itemDetails?: PrescriptionItem;
 }
 
 export const useItemPrescriptionLines = ({
