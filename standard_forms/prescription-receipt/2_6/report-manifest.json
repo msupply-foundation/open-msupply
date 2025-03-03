@@ -1,0 +1,10 @@
+{
+  "is_custom": false,
+  "version": "2.6.0",
+  "code": "prescription-receipt",
+  "context": "PRESCRIPTION",
+  "name": "Prescription Receipt",
+  "queries": {
+    "gql": "query.graphql"
+  }
+}
