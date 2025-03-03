@@ -3512,7 +3512,7 @@ export type InvoiceFilterInput = {
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterInvoiceStatusInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
-  theirReference?: InputMaybe<EqualFilterStringInput>;
+  theirReference?: InputMaybe<StringFilterInput>;
   transportReference?: InputMaybe<EqualFilterStringInput>;
   type?: InputMaybe<EqualFilterInvoiceTypeInput>;
   userId?: InputMaybe<EqualFilterStringInput>;

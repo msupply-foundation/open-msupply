@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.6.0",
+  "version": "2.6.1",
   "code": "inbound",
   "context": "INBOUND_SHIPMENT",
   "sub_context": "picklist",
