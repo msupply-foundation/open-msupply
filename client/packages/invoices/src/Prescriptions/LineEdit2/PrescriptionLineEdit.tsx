@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Footer } from './Footer';
+import React from 'react';
 import { AccordionPanelSection } from './toBeCommon/PanelSection';
 import { useTranslation } from '@common/intl';
 import {
@@ -47,7 +46,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
         sx={{ minHeight: 200, display: 'flex', flexDirection: 'column' }}
       >
         <AccordionPanelSection
-          // TODO: still?
           // Key ensures component will reload when switching item, but not when
           // making other changes within item (e.g. quantity)
           key={itemId + '_item_search'}
@@ -68,7 +66,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
         </AccordionPanelSection>
         {selectedItemId && (
           <PrescriptionItemDetails
-            key={itemId + '_details'} // resets state when item changes
             itemId={selectedItemId}
             isNew={isNew}
             prescriptionId={prescriptionId}

@@ -34,7 +34,11 @@ export const useItemPrescriptionLines = ({
   status: InvoiceNodeStatus;
   date?: Date | null;
 }): UseItemPrescriptionLines => {
-  const { data, isLoading: invoiceLinesLoading } = usePrescriptionLinesByItem({
+  const {
+    data,
+    isLoading: invoiceLinesLoading,
+    isFetching,
+  } = usePrescriptionLinesByItem({
     itemId,
     prescriptionId,
   });
@@ -56,7 +60,7 @@ export const useItemPrescriptionLines = ({
   return {
     itemDetails: data?.itemDetails,
     initialDraftLines: baseDraftRows,
-    isLoading: invoiceLinesLoading || stockLinesLoading,
+    isLoading: invoiceLinesLoading || stockLinesLoading || isFetching,
   };
 };
 

@@ -14,15 +14,17 @@ const PrescriptionItemDetailsInner = ({
   itemDetails,
   disabled,
   prescriptionId,
+  status,
 }: {
   isNew: boolean;
   prescriptionId: string;
   itemDetails: DraftItem | null;
   initialLines: DraftPrescriptionLine[];
   disabled: boolean;
+  status: InvoiceNodeStatus;
 }) => {
-  const { draftLines, updateLineQuantity } =
-    useDraftPrescriptionLines(initialLines);
+  const { draftLines, updateLineQuantity, allocateQuantity } =
+    useDraftPrescriptionLines(initialLines, status);
 
   const { mutateAsync: onSave, isLoading } = useSaveLines(
     prescriptionId,
@@ -44,6 +46,7 @@ const PrescriptionItemDetailsInner = ({
         isNew={isNew}
         prescriptionLines={draftLines}
         updateLineQuantity={updateLineQuantity}
+        allocateQuantity={allocateQuantity}
       />
       {/* // directions */}
 
@@ -84,11 +87,13 @@ export const PrescriptionItemDetails = ({
   }
   return (
     <PrescriptionItemDetailsInner
+      key={itemId + '_details'} // resets state when item changes
       itemDetails={itemDetails ?? null}
       disabled={disabled}
       isNew={isNew}
       initialLines={initialDraftLines}
       prescriptionId={prescriptionId}
+      status={status}
     />
   );
 };

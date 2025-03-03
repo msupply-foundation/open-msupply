@@ -2,6 +2,7 @@ import { LocaleKey, TypedTFunction } from '@common/intl';
 import { DraftPrescriptionLine } from '../../types';
 import { NumUtils } from '@common/utils';
 import { ItemNode } from '@common/types';
+import { getAllocationAlerts } from '../../StockOut';
 
 // TODO HELPER TESTS
 
@@ -40,3 +41,53 @@ export const summarisePrescribedStock = (
 
   return summary.join('\n');
 };
+
+export function getPrescriptionAllocationAlerts(
+  allocatedLines: DraftPrescriptionLine[] | undefined,
+  allocatedQuantity: number,
+  requestedQuantity: number,
+  placeholderQuantity: number,
+  hasOnHold: boolean,
+  hasExpired: boolean,
+  format: (value: number, options?: Intl.NumberFormatOptions) => string,
+  t: TypedTFunction<LocaleKey>
+) {
+  const nearestWholePackQuantity = allocatedLines?.reduce(
+    (acc, { numberOfPacks, packSize }) =>
+      acc + Math.ceil(numberOfPacks) * packSize,
+    0
+  );
+
+  const hasRequestedOverAvailable =
+    !!allocatedLines && requestedQuantity > allocatedQuantity;
+
+  const alerts = getAllocationAlerts(
+    requestedQuantity,
+    // suppress here, custom below
+    hasRequestedOverAvailable ? 0 : allocatedQuantity,
+    placeholderQuantity,
+    hasOnHold,
+    hasExpired,
+    format,
+    t
+  );
+  if (hasRequestedOverAvailable) {
+    alerts.push({
+      message: t('warning.cannot-create-placeholder-units', {
+        allocatedQuantity: format(allocatedQuantity),
+        requestedQuantity: format(requestedQuantity),
+      }),
+      severity: 'warning',
+    });
+  }
+  if (nearestWholePackQuantity !== allocatedQuantity) {
+    alerts.push({
+      message: t('messages.partial-pack-warning', {
+        nearestAbove: nearestWholePackQuantity,
+      }),
+      severity: 'warning',
+    });
+  }
+
+  return alerts;
+}

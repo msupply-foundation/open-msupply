@@ -249,6 +249,7 @@ export const issueStock = (
   return newDraftPrescriptionLines;
 };
 
+// todo plz love on me
 export const allocateQuantities =
   (
     status: InvoiceNodeStatus,
