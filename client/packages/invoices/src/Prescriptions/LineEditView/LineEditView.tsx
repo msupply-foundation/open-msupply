@@ -143,7 +143,8 @@ export const PrescriptionLineEditView = () => {
           .addPart(AppRoute.Prescription)
           .addPart(invoiceNumber ?? '')
           .addPart(itemId)
-          .build()
+          .build(),
+        { replace: true }
       );
     }
     isDirty.current = false;
