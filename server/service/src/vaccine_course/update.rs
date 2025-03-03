@@ -206,7 +206,7 @@ fn generate(
         id: id.clone(),
         name: name.unwrap_or(old_row.name),
         program_id: old_row.program_id,
-        demographic_id: demographic_id.or(old_row.demographic_id),
+        demographic_id: demographic_id,
         coverage_rate,
         is_active,
         wastage_rate,
