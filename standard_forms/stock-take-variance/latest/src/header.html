@@ -5,3 +5,15 @@
 <div class="Report_title">
 {{t(k="report.stock-take-variance-report", f="Stock Take Variance Report")}}
 </div>
+<table class="center">
+  <tr>
+    <td class="borderline"><img class="logo" src="{{data.store.logo}}"/></td>
+    <td class="borderline">
+      <div class="name_centre">{{data.store.storeName}}
+        <br><span class="name_address"> {{data.store.name.address1}}</span>
+        <br><span class="name_address"> {{data.store.name.address2}}</span>
+      </div>
+    </td>
+    <td class="borderline"><div class="name_right"> {{t(k="report.stocktake-number",f="Stocktake Number")}} #: {{data.stocktake.stocktakeNumber}}</div></td>
+  </tr >  
+</table>
