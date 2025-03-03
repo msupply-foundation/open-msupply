@@ -115,7 +115,6 @@ export const InsuranceModal: FC = (): ReactElement => {
                     policyNumberPerson: event.target.value,
                   });
                 }}
-                sx={{}}
               />
             }
           />

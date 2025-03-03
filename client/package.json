@@ -17,9 +17,6 @@
     "compile-full": "lerna run --scope @openmsupply-client/* --parallel tsc",
     "prepare": "cd .. && husky client/.husky",
     "pre-commit-lint": "yarn compile && yarn lint-staged",
-    "lint": "eslint 'src/**/*.{js,jsx,ts,tsx}'",
-    "format": "prettier --check 'src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
-    "pre-build-lint": "yarn compile && yarn lint && yarn format",
     "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
@@ -36,7 +33,9 @@
     "i18n-unused-display": "i18n-unused display-unused",
     "i18n-unused-remove": "i18n-unused remove-unused",
     "i18n-missing": "i18n-unused display-missed",
-    "eslint": "lerna run --scope @openmsupply-client/* --parallel eslint"
+    "eslint": "lerna run --scope @openmsupply-client/* --parallel eslint",
+    "prettier": "lerna run --scope @openmsupply-client/client --parallel prettier -- --check 'src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
+    "pre-build-lint": "yarn compile && yarn eslint && yarn format"
   },
   "workspaces": {
     "packages": [
