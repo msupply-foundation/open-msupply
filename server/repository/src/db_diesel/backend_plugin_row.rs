@@ -203,7 +203,7 @@ mod test {
 
         let types = PluginTypes(vec![
             PluginType::AverageMonthlyConsumption,
-            PluginType::AverageMonthlyConsumption,
+            PluginType::TransformRequestRequisitionLines,
         ]);
         let _ = repo.upsert_one(BackendPluginRow {
             id: id.clone(),
@@ -221,7 +221,7 @@ mod test {
         // Showing that types serializes to a readable text in DB field
         assert_eq!(
             result[0].types,
-            r#"["average_monthly_consumption","average_monthly_consumption"]"#
+            r#"["average_monthly_consumption","transform_request_requisition_lines"]"#
         );
     }
 }
