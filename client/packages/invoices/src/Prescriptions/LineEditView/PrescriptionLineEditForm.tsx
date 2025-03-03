@@ -355,7 +355,13 @@ export const PrescriptionLineEditForm: React.FC<
                       },
                     },
                   }}
-                  onBlur={() => abbreviationRef.current?.focus()}
+                  onKeyDown={e => {
+                    console.log('==>', e.code, abbreviationRef);
+                    if (e.code === 'Tab') {
+                      e.preventDefault();
+                      abbreviationRef.current?.focus();
+                    }
+                  }}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
                   {t('label.unit-plural', {

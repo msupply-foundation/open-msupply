@@ -63,7 +63,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <AddButton
           disabled={isDisabled}
           label={t('button.add-item')}
-          onClick={() => onAddItem()}
+          onClick={onAddItem}
         />
         <ButtonWithIcon
           label={t('button.history')}
