@@ -5,6 +5,7 @@ import { BackendPlugins } from '@backendPlugins';
 // Tree shaking working
 import zipObject from 'lodash/zipObject';
 import { uuidv7 } from 'uuidv7';
+import { name as pluginCode } from '../package.json';
 
 // TODO Should come from settings
 const DAY_LOOKBACK = 800;
@@ -47,14 +48,25 @@ const plugins: BackendPlugins = {
 
     return response;
   },
-  transform_request_requisition_lines: ({ lines, requisition }) => {
+  transform_request_requisition_lines: ({ context, lines, requisition }) => {
+    switch (context) {
+      case 'InsertProgramRequestRequisition':
+      case 'AddFromMasterList':
+      case 'UpdateRequestRequisition':
+      case 'InsertRequestRequisitionLine':
+        // Can do for different actions or do exhaustive match here
+        break;
+      default:
+        // Can also try/catch ignore this if you only want compilation to fail but plugin to still work when new variant is added
+        assertUnreachable(context);
+    }
+
     const months_lead_time = get_store_preferences(
       requisition.store_id
     ).months_lead_time;
 
     // need to share this
     const dataIdentifier = 'AGGREGATE_AMC_REQUISITION_LINE';
-    const pluginCode = 'AGGREGATE_AMC';
 
     const pluginData = get_plugin_data({
       store_id: { equal_to: requisition.store_id },
@@ -149,5 +161,9 @@ const plugins: BackendPlugins = {
     };
   },
 };
+
+function assertUnreachable(_: never): never {
+  throw new Error("Didn't expect to get here");
+}
 
 export { plugins };

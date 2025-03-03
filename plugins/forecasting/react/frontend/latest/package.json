@@ -9,7 +9,8 @@
       "inboundShipmentAppBar",
       "dashboard",
       "stockEditForm",
-      "stockColumn"
+      "stockColumn",
+      "requestRequisitionColumn"
     ]
   },
   "version": "1.0.0",
