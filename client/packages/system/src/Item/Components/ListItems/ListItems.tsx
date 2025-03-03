@@ -19,6 +19,7 @@ interface ListItemProps {
   showNew?: boolean;
   handleSaveNew?: () => void;
   scrollRef: React.MutableRefObject<HTMLLIElement | null>;
+  tooltipDisabled?: boolean;
 }
 
 export const ListItems = ({
@@ -30,6 +31,7 @@ export const ListItems = ({
   isDirty = false,
   handleSaveNew = () => {},
   scrollRef,
+  tooltipDisabled = false,
 }: ListItemProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
@@ -50,21 +52,39 @@ export const ListItems = ({
     options.push({ id: 'new', value: t('label.new-item') });
   }
 
-  return (
-    <Tooltip title={value?.name}>
-      <Box sx={{ flexGrowY: 1, overflow: 'auto', scrollBehavior: 'smooth' }}>
-        <ListOptions
-          currentId={value?.id ?? 'new'}
-          onClick={id => {
-            if (currentItemId === 'new' && isDirty) {
-              showSaveConfirmation();
-            } else navigate(route.addPart(id).build());
-          }}
-          options={options}
-          enteredLineIds={enteredLineIds}
-          scrollRef={scrollRef}
-        />
-      </Box>
-    </Tooltip>
-  );
+  if (tooltipDisabled === true) {
+    return (
+        <Box sx={{ flexGrowY: 1, overflow: 'auto', scrollBehavior: 'smooth' }}>
+          <ListOptions
+            currentId={value?.id ?? 'new'}
+            onClick={id => {
+              if (currentItemId === 'new' && isDirty) {
+                showSaveConfirmation();
+              } else navigate(route.addPart(id).build());
+            }}
+            options={options}
+            enteredLineIds={enteredLineIds}
+            scrollRef={scrollRef}
+          />
+        </Box>
+    );
+  } else {
+    return (
+      <Tooltip title={value?.name}>
+        <Box sx={{ flexGrowY: 1, overflow: 'auto', scrollBehavior: 'smooth' }}>
+          <ListOptions
+            currentId={value?.id ?? 'new'}
+            onClick={id => {
+              if (currentItemId === 'new' && isDirty) {
+                showSaveConfirmation();
+              } else navigate(route.addPart(id).build());
+            }}
+            options={options}
+            enteredLineIds={enteredLineIds}
+            scrollRef={scrollRef}
+          />
+        </Box>
+      </Tooltip>
+    )
+  };
 };
