@@ -94,6 +94,7 @@ pub fn generate(
                     reason_id: None,
                     note: None,
                 }],
+                status: None,
             };
             let finalise_return = UpdateCustomerReturn {
                 id: create_return.id.clone(),

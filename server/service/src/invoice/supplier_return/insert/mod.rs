@@ -1,5 +1,6 @@
 use repository::{
-    ActivityLogType, Invoice, InvoiceRowRepository, RepositoryError, TransactionError,
+    ActivityLogType, Invoice, InvoiceRowRepository, InvoiceStatus, RepositoryError,
+    TransactionError,
 };
 
 use crate::{
@@ -18,12 +19,19 @@ use validate::validate;
 
 use super::SupplierReturnLineInput;
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum InsertSupplierReturnStatus {
+    New,
+    Shipped,
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct InsertSupplierReturn {
     pub id: String,
     pub other_party_id: String,
     pub inbound_shipment_id: Option<String>,
     pub supplier_return_lines: Vec<SupplierReturnLineInput>,
+    pub status: Option<InsertSupplierReturnStatus>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -120,6 +128,15 @@ impl From<TransactionError<OutError>> for OutError {
                 OutError::DatabaseError(RepositoryError::TransactionError { msg, level })
             }
             TransactionError::Inner(e) => e,
+        }
+    }
+}
+
+impl InsertSupplierReturnStatus {
+    pub fn as_invoice_row_status(&self) -> InvoiceStatus {
+        match self {
+            InsertSupplierReturnStatus::New => InvoiceStatus::New,
+            InsertSupplierReturnStatus::Shipped => InvoiceStatus::Shipped,
         }
     }
 }

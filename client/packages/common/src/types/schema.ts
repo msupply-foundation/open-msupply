@@ -1301,6 +1301,7 @@ export type CustomerReturnInput = {
   customerReturnLines: Array<CustomerReturnLineInput>;
   id: Scalars['String']['input'];
   outboundShipmentId?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<InsertCustomerReturnStatusInput>;
 };
 
 export type CustomerReturnLineInput = {
@@ -2637,6 +2638,11 @@ export type InsertCustomerReturnErrorInterface = {
 
 export type InsertCustomerReturnResponse = InsertCustomerReturnError | InvoiceNode;
 
+export enum InsertCustomerReturnStatusInput {
+  New = 'NEW',
+  Shipped = 'SHIPPED'
+}
+
 export type InsertDemographicIndicatorError = {
   __typename: 'InsertDemographicIndicatorError';
   error: InsertDemographicIndicatorErrorInterface;
@@ -3305,6 +3311,11 @@ export type InsertSupplierReturnErrorInterface = {
 
 export type InsertSupplierReturnResponse = InsertSupplierReturnError | InvoiceNode;
 
+export enum InsertSupplierReturnStatusInput {
+  New = 'NEW',
+  Shipped = 'SHIPPED'
+}
+
 export type InsertVaccinationInput = {
   clinicianId?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -3498,6 +3509,7 @@ export type InvoiceFilterInput = {
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  createdOrBackdatedDatetime?: InputMaybe<DatetimeFilterInput>;
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -7902,6 +7914,7 @@ export type SupplierProgramRequisitionSettingNode = {
 export type SupplierReturnInput = {
   id: Scalars['String']['input'];
   inboundShipmentId?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<InsertSupplierReturnStatusInput>;
   supplierId: Scalars['String']['input'];
   supplierReturnLines: Array<SupplierReturnLineInput>;
 };

@@ -22,6 +22,7 @@ pub fn generate(
         outbound_shipment_id,
         customer_return_lines,
         is_patient_return: _,
+        status,
     }: InsertCustomerReturn,
     other_party: Name,
 ) -> Result<
@@ -38,6 +39,12 @@ pub fn generate(
         .pop()
         .ok_or(RepositoryError::NotFound)?;
 
+    let status = if let Some(status) = status {
+        status.as_invoice_row_status()
+    } else {
+        InvoiceStatus::New
+    };
+
     let customer_return = InvoiceRow {
         id: invoice_id.clone(),
         user_id: Some(user_id.to_string()),
@@ -47,7 +54,7 @@ pub fn generate(
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_string(),
         created_datetime: current_datetime,
-        status: InvoiceStatus::New,
+        status: status,
         original_shipment_id: outbound_shipment_id,
         // Default
         currency_id: Some(currency.currency_row.id),
