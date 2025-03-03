@@ -1888,6 +1888,7 @@
   "paymentMethod.Cash": "Argent liquide",
   "paymentMethod.Card": "Carte",
   "paymentMethod.Cheque": "Chèque",
+  "paymentMethod.Mobile": "Paiement mobile",
   "policyType.PERSONAL": "Personnel(le)",
   "policyType.BUSINESS": "Entreprises",
   "title.edit-insurance": "Modifier la police d'assurance",
