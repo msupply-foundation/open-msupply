@@ -16,6 +16,7 @@ import {
   DetailInputWithLabelRow,
   NumericTextInput,
   Typography,
+  LocaleKey,
 } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_GAP, FORM_LABEL_WIDTH } from '../common';
 import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
@@ -77,7 +78,7 @@ const UIComponent = (props: ControlProps) => {
   return (
     <DetailInputWithLabelRow
       sx={DefaultFormRowSx}
-      label={label}
+      label={t(label as LocaleKey)}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}
       Input={

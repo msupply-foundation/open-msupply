@@ -3,6 +3,7 @@ import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   DetailInputWithLabelRow,
+  LocaleKey,
   useTranslation,
 } from '@openmsupply-client/common';
 import { z } from 'zod';
@@ -134,7 +135,7 @@ const UIComponent = (props: ControlProps) => {
   return (
     <DetailInputWithLabelRow
       sx={DefaultFormRowSx}
-      label={label}
+      label={t(label as LocaleKey)}
       inputProps={{
         value: text ?? '',
         sx: { width },
