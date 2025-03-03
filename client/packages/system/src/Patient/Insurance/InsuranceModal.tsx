@@ -8,7 +8,6 @@ import {
   InputWithLabelRow,
   NumericTextInput,
   Switch,
-  Typography,
 } from '@common/components';
 import { Box, Stack } from '@openmsupply-client/common';
 import {
@@ -143,29 +142,16 @@ export const InsuranceModal: FC = (): ReactElement => {
           <InputWithLabelRow
             label={t('label.expiry-date')}
             Input={
-              <>
-                <BaseDatePickerInput
-                  value={DateUtils.getNaiveDate(draft.expiryDate)}
-                  onChange={date => {
-                    if (date)
-                      updatePatch({
-                        expiryDate: formatDateTime.customDate(
-                          date,
-                          'yyyy-MM-dd'
-                        ),
-                      });
-                  }}
-                />
-                <Typography
-                  sx={{
-                    color: 'primary.light',
-                    fontSize: '17px',
-                    marginRight: 0.5,
-                  }}
-                >
-                  *
-                </Typography>
-              </>
+              <BaseDatePickerInput
+                required
+                value={DateUtils.getNaiveDate(draft.expiryDate)}
+                onChange={date => {
+                  if (date)
+                    updatePatch({
+                      expiryDate: formatDateTime.customDate(date, 'yyyy-MM-dd'),
+                    });
+                }}
+              />
             }
           />
           <InsuranceProvidersSelect
@@ -179,30 +165,19 @@ export const InsuranceModal: FC = (): ReactElement => {
           <InputWithLabelRow
             label={t('label.discount-rate')}
             Input={
-              <>
-                <NumericTextInput
-                  min={0}
-                  decimalLimit={2}
-                  value={draft.discountPercentage ?? 0}
-                  onChange={value => {
-                    if (value) {
-                      updatePatch({
-                        discountPercentage: value,
-                      });
-                    }
-                  }}
-                />
-                <Typography>%</Typography>
-                <Typography
-                  sx={{
-                    color: 'primary.light',
-                    fontSize: '17px',
-                    marginRight: 0.5,
-                  }}
-                >
-                  *
-                </Typography>
-              </>
+              <NumericTextInput
+                required
+                min={0}
+                decimalLimit={2}
+                value={draft.discountPercentage ?? 0}
+                onChange={value => {
+                  if (value) {
+                    updatePatch({
+                      discountPercentage: value,
+                    });
+                  }
+                }}
+              />
             }
           />
         </Box>
