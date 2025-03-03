@@ -1,7 +1,11 @@
 import React, { FC, ReactElement } from 'react';
 
 import { useTranslation } from '@common/intl';
-import { Autocomplete, InputWithLabelRow } from '@common/components';
+import {
+  Autocomplete,
+  InputWithLabelRow,
+  Typography,
+} from '@common/components';
 
 import { useInsuranceProviders } from '../apiModern/hooks';
 
@@ -32,19 +36,30 @@ export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
     <InputWithLabelRow
       label={t('label.provider-name')}
       Input={
-        <Autocomplete
-          options={options}
-          getOptionLabel={option => option.label}
-          value={{
-            label: selectedInsurance?.providerName ?? '',
-            value: selectedInsurance?.id ?? '',
-          }}
-          onChange={(_, option) => {
-            if (option) {
-              onChange(option.value);
-            }
-          }}
-        />
+        <>
+          <Autocomplete
+            options={options}
+            getOptionLabel={option => option.label}
+            value={{
+              label: selectedInsurance?.providerName ?? '',
+              value: selectedInsurance?.id ?? '',
+            }}
+            onChange={(_, option) => {
+              if (option) {
+                onChange(option.value);
+              }
+            }}
+          />
+          <Typography
+            sx={{
+              color: 'primary.light',
+              fontSize: '17px',
+              marginRight: 0.5,
+            }}
+          >
+            *
+          </Typography>
+        </>
       }
       sx={{ '& .MuiAutocomplete-root': { flexGrow: 1, borderRadius: 1 } }}
     />

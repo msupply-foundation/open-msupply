@@ -8,6 +8,7 @@ import {
   InputWithLabelRow,
   NumericTextInput,
   Switch,
+  Typography,
 } from '@common/components';
 import { Box, Stack } from '@openmsupply-client/common';
 import {
@@ -92,6 +93,7 @@ export const InsuranceModal: FC = (): ReactElement => {
             label={t('label.policy-number-family')}
             Input={
               <BasicTextInput
+                required={draft.policyNumberPerson === ''}
                 disabled={haveInsuranceId}
                 value={draft.policyNumberFamily}
                 onChange={event => {
@@ -106,6 +108,7 @@ export const InsuranceModal: FC = (): ReactElement => {
             label={t('label.policy-number-person')}
             Input={
               <BasicTextInput
+                required={draft.policyNumberFamily === ''}
                 disabled={haveInsuranceId}
                 value={draft.policyNumberPerson}
                 onChange={event => {
@@ -140,15 +143,29 @@ export const InsuranceModal: FC = (): ReactElement => {
           <InputWithLabelRow
             label={t('label.expiry-date')}
             Input={
-              <BaseDatePickerInput
-                value={DateUtils.getNaiveDate(draft.expiryDate)}
-                onChange={date => {
-                  if (date)
-                    updatePatch({
-                      expiryDate: formatDateTime.customDate(date, 'yyyy-MM-dd'),
-                    });
-                }}
-              />
+              <>
+                <BaseDatePickerInput
+                  value={DateUtils.getNaiveDate(draft.expiryDate)}
+                  onChange={date => {
+                    if (date)
+                      updatePatch({
+                        expiryDate: formatDateTime.customDate(
+                          date,
+                          'yyyy-MM-dd'
+                        ),
+                      });
+                  }}
+                />
+                <Typography
+                  sx={{
+                    color: 'primary.light',
+                    fontSize: '17px',
+                    marginRight: 0.5,
+                  }}
+                >
+                  *
+                </Typography>
+              </>
             }
           />
           <InsuranceProvidersSelect
@@ -162,18 +179,30 @@ export const InsuranceModal: FC = (): ReactElement => {
           <InputWithLabelRow
             label={t('label.discount-rate')}
             Input={
-              <NumericTextInput
-                min={0}
-                decimalLimit={2}
-                value={draft.discountPercentage ?? 0}
-                onChange={value => {
-                  if (value) {
-                    updatePatch({
-                      discountPercentage: value,
-                    });
-                  }
-                }}
-              />
+              <>
+                <NumericTextInput
+                  min={0}
+                  decimalLimit={2}
+                  value={draft.discountPercentage ?? 0}
+                  onChange={value => {
+                    if (value) {
+                      updatePatch({
+                        discountPercentage: value,
+                      });
+                    }
+                  }}
+                />
+                <Typography>%</Typography>
+                <Typography
+                  sx={{
+                    color: 'primary.light',
+                    fontSize: '17px',
+                    marginRight: 0.5,
+                  }}
+                >
+                  *
+                </Typography>
+              </>
             }
           />
         </Box>
