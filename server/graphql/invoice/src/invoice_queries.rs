@@ -90,6 +90,7 @@ pub struct InvoiceFilterInput {
     pub shipped_datetime: Option<DatetimeFilterInput>,
     pub delivered_datetime: Option<DatetimeFilterInput>,
     pub verified_datetime: Option<DatetimeFilterInput>,
+    pub created_or_backdated_datetime: Option<DatetimeFilterInput>,
     pub colour: Option<EqualFilterStringInput>,
     pub requisition_id: Option<EqualFilterStringInput>,
     pub linked_invoice_id: Option<EqualFilterStringInput>,
@@ -222,6 +223,9 @@ impl InvoiceFilterInput {
             shipped_datetime: self.shipped_datetime.map(DatetimeFilter::from),
             delivered_datetime: self.delivered_datetime.map(DatetimeFilter::from),
             verified_datetime: self.verified_datetime.map(DatetimeFilter::from),
+            created_or_backdated_datetime: self
+                .created_or_backdated_datetime
+                .map(DatetimeFilter::from),
             colour: self.colour.map(EqualFilter::from),
             requisition_id: self.requisition_id.map(EqualFilter::from),
             linked_invoice_id: self.linked_invoice_id.map(EqualFilter::from),
