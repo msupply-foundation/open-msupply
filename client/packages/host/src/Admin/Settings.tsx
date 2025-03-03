@@ -24,6 +24,7 @@ import { LabelPrinterSettings } from './LabelPrinterSettings';
 import { Printers } from './Printers';
 import { ConfigurationSettings } from './ConfigurationSettings';
 import { ServerInfo } from './ServerInfo';
+import { Environment } from 'packages/config/src';
 
 export const Settings: React.FC = () => {
   const { data: initStatus } = useInitialisationStatus();
@@ -74,7 +75,7 @@ export const Settings: React.FC = () => {
         <LabelPrinterSettings />
         <ElectronSettings />
       </SettingsSection>
-      {false && (
+      {Environment.FEATURE_PRINTER_SETTINGS && (
         <SettingsSection
           Icon={PrinterIcon}
           titleKey="heading.printers"
