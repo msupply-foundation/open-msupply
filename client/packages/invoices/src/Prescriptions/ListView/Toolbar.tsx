@@ -48,6 +48,12 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               isDefault: false,
             },
             {
+              type: 'text',
+              name: t('label.reference'),
+              urlParameter: 'theirReference',
+              isDefault: false,
+            },
+            {
               type: 'number',
               name: t('label.invoice-number'),
               urlParameter: 'invoiceNumber',
