@@ -1,6 +1,6 @@
 use repository::{
-    ContextType, FormSchemaJson, FormSchemaRowRepository,
-    ReportRow, ReportRowRepository, StorageConnection,
+    ContextType, EqualFilter, FormSchemaJson, FormSchemaRowRepository, ReportFilter,
+    ReportRepository, ReportRow, ReportRowRepository, StorageConnection,
 };
 use rust_embed::RustEmbed;
 use thiserror::Error;
@@ -57,10 +57,14 @@ impl StandardReports {
     ) -> Result<(), anyhow::Error> {
         let mut num_std_reports = 0;
         for report in reports_data.reports {
-            let existing_report = ReportRowRepository::new(con).find_one_by_id(&report.id)?;
+            let report_versions = ReportRepository::new(con).query_by_filter(
+                ReportFilter::new().code(EqualFilter::equal_to(&report.code))
+            )?;
+
+            let existing_report = report_versions.iter().find(|r| r.report_row.id == report.id);
             let set_active = match &existing_report {
-                Some(report) => report.is_active,
-                None => true
+                Some(report) => report.report_row.is_active,
+                None => report_versions.len() == 0 || report_versions.iter().any(|r| r.report_row.is_active),
             };
 
             if existing_report.is_none() || overwrite {
