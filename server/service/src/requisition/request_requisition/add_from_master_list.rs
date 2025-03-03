@@ -1,7 +1,8 @@
-use std::collections::HashMap;
-
 use crate::{
-    backend_plugin::plugin_provider::PluginError,
+    backend_plugin::{
+        plugin_provider::{PluginError, PluginInstance},
+        types::transform_request_requisition_lines::Context,
+    },
     requisition::common::{check_requisition_row_exists, get_lines_for_requisition},
     service_provider::ServiceContext,
     PluginOrRepositoryError,
@@ -9,7 +10,7 @@ use crate::{
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     MasterList, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-    MasterListRepository, PluginDataRow, PluginDataRowRepository, RepositoryError, RequisitionLine,
+    MasterListRepository, PluginDataRowRepository, RepositoryError, RequisitionLine,
     RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
     RequisitionLineRowRepository, StorageConnection,
 };
@@ -44,19 +45,24 @@ pub fn add_from_master_list(
         .connection
         .transaction_sync(|connection| {
             let requisition_row = validate(connection, &ctx.store_id, &input)?;
+            let new_requisition_line_rows = generate(ctx, &ctx.store_id, &requisition_row, &input)?;
+
             let (new_requisition_line_rows, plugin_data_rows) =
-                generate(ctx, &ctx.store_id, requisition_row, &input)?;
+                PluginInstance::transform_request_requisition_lines(
+                    Context::AddFromMasterList,
+                    new_requisition_line_rows,
+                    &requisition_row,
+                )
+                .map_err(OutError::PluginError)?;
+            let plugin_data_repository = PluginDataRowRepository::new(connection);
+            for plugin_data in plugin_data_rows {
+                plugin_data_repository.upsert_one(&plugin_data)?;
+            }
 
             let requisition_line_row_repository = RequisitionLineRowRepository::new(connection);
 
             for requisition_line_row in new_requisition_line_rows {
                 requisition_line_row_repository.upsert_one(&requisition_line_row)?;
-            }
-
-            let plugin_data_repository = PluginDataRowRepository::new(connection);
-
-            for plugin_data in plugin_data_rows {
-                plugin_data_repository.upsert_one(&plugin_data)?;
             }
 
             match RequisitionLineRepository::new(connection).query_by_filter(
@@ -100,9 +106,9 @@ fn validate(
 fn generate(
     ctx: &ServiceContext,
     store_id: &str,
-    requisition_row: RequisitionRow,
+    requisition_row: &RequisitionRow,
     input: &AddFromMasterList,
-) -> Result<(Vec<RequisitionLineRow>, Vec<PluginDataRow>), PluginOrRepositoryError> {
+) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
     let requisition_lines =
         get_lines_for_requisition(&ctx.connection, &input.request_requisition_id)?;
 
@@ -124,13 +130,7 @@ fn generate(
         .map(|master_list_line| master_list_line.item_id)
         .collect();
 
-    generate_requisition_lines(
-        ctx,
-        store_id,
-        &requisition_row,
-        items_ids_not_in_requisition,
-        HashMap::new(),
-    )
+    generate_requisition_lines(ctx, store_id, requisition_row, items_ids_not_in_requisition)
 }
 
 pub fn check_master_list_for_store(
