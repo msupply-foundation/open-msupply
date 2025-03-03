@@ -172,6 +172,7 @@ export const PrescriptionLineEditView = () => {
             isDirty={isDirty.current}
             handleSaveNew={onSave}
             scrollRef={scrollRef}
+            tooltipDisabled={true}
           />
         }
         Right={
