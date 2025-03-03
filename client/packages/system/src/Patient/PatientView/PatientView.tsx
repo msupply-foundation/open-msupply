@@ -146,6 +146,7 @@ const PatientDetailView = ({
           address1: createNewPatient.address1,
           isDeceased: createNewPatient.isDeceased,
           dateOfDeath: createNewPatient.dateOfDeath,
+          extension: {},
         },
         isCreating: true,
       };
@@ -173,6 +174,7 @@ const PatientDetailView = ({
                   name: currentPatient.nextOfKinName ?? undefined,
                 }
               : undefined,
+          extension: {},
         },
         isCreating: false,
       };
