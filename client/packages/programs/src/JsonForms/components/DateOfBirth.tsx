@@ -94,7 +94,7 @@ const UIComponent = (props: ControlProps) => {
             value={dob}
             onChange={onChangeDoB}
             format="P"
-            sx={{ width: 135 }}
+            sx={{ width: 145 }}
             disableFuture
             disabled={!props.enabled}
             onError={validationError => setCustomError(validationError)}
