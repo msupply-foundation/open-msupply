@@ -70,6 +70,8 @@ export const InsuranceModal: FC = (): ReactElement => {
     else await handleInsuranceInsert();
   };
 
+  console.log('I just find this hard');
+
   return (
     <Modal
       width={800}
