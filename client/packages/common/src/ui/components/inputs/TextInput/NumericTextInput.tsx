@@ -108,7 +108,7 @@ import {
   RegexUtils,
   UNDEFINED_STRING_VALUE,
 } from '@common/utils';
-import { useFormatNumber, useCurrency } from '@common/intl';
+import { useFormatNumber, useCurrency, useTranslation } from '@common/intl';
 import { InputAdornment } from '@common/components';
 
 export interface NumericInputProps {
@@ -174,7 +174,6 @@ export type NumericTextInputProps = NumericInputProps &
   Omit<BasicTextInputProps, 'onChange'> & {
     onChange?: (value: number | undefined) => void;
     endAdornment?: string;
-    errorMessage?: string | null;
     setError?: (error: string | null) => void;
   };
 
@@ -204,12 +203,12 @@ export const NumericTextInput = React.forwardRef<
       endAdornment,
       inputMode,
       error,
-      errorMessage,
       setError,
       ...props
     },
     ref
   ) => {
+    const t = useTranslation();
     const { format, parse } = useFormatNumber();
     const {
       options: { separator, decimal },
@@ -252,8 +251,10 @@ export const NumericTextInput = React.forwardRef<
         if (error) setError(null);
         return;
       }
-      if (value > max && setError) setError('Too big');
-      else if (value < min && setError) setError('Too small');
+      if (value > max && setError)
+        setError(t('messages.numeric-input-error-too-big'));
+      else if (value < min && setError)
+        setError(t('messages.numeric-input-error-too-small'));
       else if (error) setError(null);
     };
 

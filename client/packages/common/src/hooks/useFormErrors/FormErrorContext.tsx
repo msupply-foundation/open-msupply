@@ -6,8 +6,10 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { List, ListItem } from '@openmsupply-client/common';
 import { Alert } from '@common/components';
 import { useTranslation } from '@common/intl';
+import { AlertIcon } from '@common/icons';
 
 type Code = string;
 type ErrorState = Record<Code, string | null>;
@@ -65,7 +67,11 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
     });
   };
 
-  const updateRequired = (code: string, state: boolean) => {
+  const updateRequired = (code: string, state: boolean | null) => {
+    if (state === null) {
+      if (requiredState[code] !== undefined) delete requiredState[code];
+      return;
+    }
     if (state !== requiredState[code])
       setRequiredState(prev => ({ ...prev, [code]: state }));
   };
@@ -90,7 +96,7 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
     properErrors.current = { ...errorState };
     const newErrorState = { ...errorState };
     Object.entries(requiredState).forEach(([key, value]) => {
-      if (value === false) newErrorState[key] = `required field`;
+      if (value === false) newErrorState[key] = t('messages.required-field');
     });
     setErrorState(newErrorState);
     setIncludeRequiredInErrorState(true);
@@ -105,8 +111,8 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
   };
 
   /**
-   * Returns the props for the individual form components, as well as capturing
-   * required state for use in here
+   * Method to return the props for the individual form components, while
+   * simultaneously capturing required state for use in here
    */
   const getErrorProps = <T,>({
     code,
@@ -128,6 +134,8 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
       if (value === null || value === undefined || value === '')
         updateRequired(code, false);
       else updateRequired(code, true);
+    } else {
+      updateRequired(code, null);
     }
 
     if (failCustomValidation) {
@@ -179,13 +187,14 @@ export const useFormErrorsHook = () => {
 };
 
 export const ErrorDisplay: React.FC<unknown> = () => {
+  const t = useTranslation();
   const { errorState, requiredState, includeRequiredInErrorState } =
     useFormErrorsHook();
 
   const errorsToDisplay = { ...errorState };
   if (includeRequiredInErrorState)
     Object.entries(requiredState).forEach(([key, value]) => {
-      if (value === false) errorsToDisplay[key] = `required field`;
+      if (value === false) errorsToDisplay[key] = t('messages.required-field');
     });
 
   const errorList = Object.entries(errorsToDisplay).filter(
@@ -194,11 +203,24 @@ export const ErrorDisplay: React.FC<unknown> = () => {
   if (errorList.length === 0) return null;
 
   return (
-    <Alert severity="error" sx={{ whiteSpace: 'pre-wrap' }}>
-      Problems with form input:
-      {errorList.map(([key, value]) => {
-        return `\n${key}: ${value}`;
-      })}
+    <Alert
+      severity="error"
+      sx={{
+        whiteSpace: 'pre-wrap',
+        '& .MuiAlert-icon': { alignItems: 'center' },
+      }}
+      Icon={<AlertIcon fontSize="large" />}
+    >
+      {t('messages.alert-problem-with-form-input')}
+      <List sx={{ m: 0, p: 0 }}>
+        {errorList.map(([key, value]) => {
+          return (
+            <ListItem
+              sx={{ pt: 0, pb: 0, m: 0 }}
+            >{`- ${key}: ${value}`}</ListItem>
+          );
+        })}
+      </List>
     </Alert>
   );
 };

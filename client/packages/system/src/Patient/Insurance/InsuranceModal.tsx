@@ -116,7 +116,7 @@ export const InsuranceModal: FC = (): ReactElement => {
                   {...getErrorProps({
                     code: t('label.policy-number-family'),
                     value: draft.policyNumberFamily,
-                    required: true,
+                    required: !draft.policyNumberPerson,
                   })}
                   disabled={haveInsuranceId}
                   onChange={event => {
@@ -134,7 +134,7 @@ export const InsuranceModal: FC = (): ReactElement => {
                   {...getErrorProps({
                     code: t('label.policy-number-person'),
                     value: draft.policyNumberPerson,
-                    required: true,
+                    required: !draft.policyNumberFamily,
                     customValidation: () => draft.policyNumberPerson !== '666',
                     customErrorMessage:
                       'That is the devils number and is not allowed',
