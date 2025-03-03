@@ -66,11 +66,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           Icon={<PlusCircleIcon />}
           onClick={() => onAddItem()}
         />
-        <ButtonWithIcon
-          label={t('button.history')}
-          Icon={<InfoOutlineIcon />}
-          onClick={() => onViewHistory()}
-        />
         <LoadingButton
           disabled={isDisabled}
           variant="outlined"
