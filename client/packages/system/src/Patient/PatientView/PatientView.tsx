@@ -146,6 +146,7 @@ const PatientDetailView = ({
           address1: createNewPatient.address1,
           isDeceased: createNewPatient.isDeceased,
           dateOfDeath: createNewPatient.dateOfDeath,
+          extension: {},
         },
         isCreating: true,
       };
@@ -173,6 +174,7 @@ const PatientDetailView = ({
                   name: currentPatient.nextOfKinName ?? undefined,
                 }
               : undefined,
+          extension: {},
         },
         isCreating: false,
       };
@@ -278,14 +280,6 @@ const PatientDetailView = ({
     title: t('heading.are-you-sure'),
   });
 
-  const showCancelConfirmation = useConfirmationModal({
-    onConfirm: () => {
-      navigate(-1);
-    },
-    message: t('messages.confirm-cancel-generic'),
-    title: t('heading.are-you-sure'),
-  });
-
   if (isLoading) return <BasicSpinner />;
 
   return (
@@ -298,7 +292,6 @@ const PatientDetailView = ({
         validationError={validationError}
         inputData={inputData}
         showSaveConfirmation={showSaveConfirmation}
-        showCancelConfirmation={showCancelConfirmation}
       />
     </Box>
   );
