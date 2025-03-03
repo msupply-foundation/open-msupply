@@ -48,7 +48,7 @@ const PrescriptionListViewComponent: FC = () => {
       { key: 'otherPartyName' },
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
       {
-        key: 'pickedDatetime',
+        key: 'createdOrBackdatedDatetime',
         condition: 'between',
       },
       {

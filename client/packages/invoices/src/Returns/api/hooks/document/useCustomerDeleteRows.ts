@@ -11,14 +11,14 @@ import { useReturnsApi } from '../utils/useReturnsApi';
 import { useCustomerReturns } from './useCustomerReturns';
 
 export const useCustomerDeleteRows = () => {
+  const t = useTranslation();
   const queryClient = useQueryClient();
+  const api = useReturnsApi();
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
   });
   const { data: rows } = useCustomerReturns(queryParams);
-  const api = useReturnsApi();
   const { mutateAsync } = useMutation(api.deleteCustomer);
-  const t = useTranslation();
 
   const selectedRows = useTableStore(
     state =>
