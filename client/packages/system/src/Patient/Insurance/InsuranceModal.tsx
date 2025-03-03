@@ -25,6 +25,8 @@ export const InsuranceModal: FC = (): ReactElement => {
   const { success, error } = useNotification();
   const { current, setModal } = usePatientModalStore();
 
+  console.log('testing out github action for linter and typescript compiler');
+
   const { Modal } = useDialog({
     disableBackdrop: true,
     onClose: () => setModal(undefined),
@@ -69,8 +71,6 @@ export const InsuranceModal: FC = (): ReactElement => {
     if (insuranceId !== undefined) await handleInsuranceUpdate();
     else await handleInsuranceInsert();
   };
-
-  console.log('I just find this hard');
 
   return (
     <Modal
