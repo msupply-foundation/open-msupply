@@ -50,6 +50,8 @@ pub struct PluginContext {
 }
 
 // Needs to be bound on startup
+// Plugin context is used because some types cannot easily implement 'Trace' to be used in boajs callbacks
+// There is a repository for testing some basic use cases for this here: https://github.com/andreievg/Checking-global-static-context-in-boajs-callback
 static PLUGINS_CONTEXT: RwLock<Option<PluginContext>> = RwLock::new(None);
 impl PluginContext {
     pub fn bind(self) {
