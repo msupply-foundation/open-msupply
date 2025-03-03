@@ -65,7 +65,8 @@ export const usePrescriptionLines = (id?: string) => {
   };
 };
 
-const useSaveLines = (id: string, invoiceNum: number) => {
+// TODO: could simplify I think...
+export const useSaveLines = (id: string, invoiceNum: number) => {
   const { prescriptionApi, storeId, queryClient } = usePrescriptionGraphQL();
 
   const mutationFn = async ({

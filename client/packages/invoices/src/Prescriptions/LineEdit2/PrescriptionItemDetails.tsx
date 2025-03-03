@@ -6,20 +6,35 @@ import { DraftPrescriptionLine } from '../../types';
 import { DraftItem } from '../..';
 import { Footer } from './Footer';
 import { useItemPrescriptionLines } from './hooks/useItemPrescriptionLines';
+import { useSaveLines } from '../api';
 
 const PrescriptionItemDetailsInner = ({
   initialLines,
   isNew,
   itemDetails,
   disabled,
+  prescriptionId,
 }: {
   isNew: boolean;
+  prescriptionId: string;
   itemDetails: DraftItem | null;
   initialLines: DraftPrescriptionLine[];
   disabled: boolean;
 }) => {
   const { draftLines, updateLineQuantity } =
     useDraftPrescriptionLines(initialLines);
+
+  const { mutateAsync: onSave, isLoading } = useSaveLines(
+    prescriptionId,
+    0 /*TODO */
+  );
+
+  const handleSave = async () => {
+    // tODO; if new, go to picked
+    await onSave({
+      draftPrescriptionLines: draftLines,
+    });
+  };
 
   return (
     <>
@@ -34,9 +49,9 @@ const PrescriptionItemDetailsInner = ({
 
       {/* Rendering here, idea is this would go away, autosave anyway */}
       <Footer
-        isSaving={false} //TODO
-        disabled={true} // TODO
-        handleSave={async () => {}} //TODO
+        isSaving={isLoading}
+        disabled={disabled} // TODO dirty/complete
+        handleSave={handleSave}
       />
     </>
   );
@@ -69,11 +84,11 @@ export const PrescriptionItemDetails = ({
   }
   return (
     <PrescriptionItemDetailsInner
-      key={itemId + '_details'} // resets state when item changes
       itemDetails={itemDetails ?? null}
       disabled={disabled}
       isNew={isNew}
       initialLines={initialDraftLines}
+      prescriptionId={prescriptionId}
     />
   );
 };

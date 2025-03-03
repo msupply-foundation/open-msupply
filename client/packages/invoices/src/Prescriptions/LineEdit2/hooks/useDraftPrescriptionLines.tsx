@@ -18,6 +18,7 @@ export const useDraftPrescriptionLines = (
           return {
             ...line,
             numberOfPacks: quantity,
+            isUpdated: true,
           };
         }
         return line;

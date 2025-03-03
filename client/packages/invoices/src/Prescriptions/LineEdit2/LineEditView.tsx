@@ -70,7 +70,7 @@ export const PrescriptionLineEditView2 = () => {
         itemId={itemId}
         prescriptionId={data.id}
         currentItem={currentItem}
-        programId={data?.programId ?? undefined}
+        programId={data.programId ?? undefined}
         disabled={disabled}
         newItemFilter={excludeSelectedItems(data.items.nodes)}
         status={data.status}

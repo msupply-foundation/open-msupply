@@ -68,6 +68,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
         </AccordionPanelSection>
         {selectedItemId && (
           <PrescriptionItemDetails
+            key={itemId + '_details'} // resets state when item changes
             itemId={selectedItemId}
             isNew={isNew}
             prescriptionId={prescriptionId}

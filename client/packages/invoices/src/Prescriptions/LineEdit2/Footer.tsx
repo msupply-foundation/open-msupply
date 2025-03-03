@@ -39,7 +39,7 @@ export const Footer: FC<FooterProps> = ({ isSaving, disabled, handleSave }) => {
               isLoading={isSaving}
               label={t('button.save')}
               onClick={handleSave}
-              disabled={!disabled}
+              disabled={disabled}
             />
           </Box>
         </Box>
