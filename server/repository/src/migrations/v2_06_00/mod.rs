@@ -26,6 +26,7 @@ mod printer_create_table;
 mod reinitialise_reports;
 mod report_add_prescription_context;
 mod add_report_is_active;
+mod report_fix_prescriptions_report_code;
 
 pub(crate) struct V2_06_00;
 
@@ -65,6 +66,7 @@ impl Migration for V2_06_00 {
             Box::new(add_form_schema_sync::Migrate),
             Box::new(add_report_is_active::Migrate),
             Box::new(plugin_data_changelog::Migrate),
+            Box::new(report_fix_prescriptions_report_code::Migrate),
         ]
     }
 }
