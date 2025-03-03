@@ -25,7 +25,7 @@ export const InsuranceModal: FC = (): ReactElement => {
   const { success, error } = useNotification();
   const { current, setModal } = usePatientModalStore();
 
-  console.log('opted out using lint-staged as its not whats needed');
+  console.log('lerna not happy with one line change');
 
   const { Modal } = useDialog({
     disableBackdrop: true,
@@ -115,6 +115,7 @@ export const InsuranceModal: FC = (): ReactElement => {
                     policyNumberPerson: event.target.value,
                   });
                 }}
+                sx={{}}
               />
             }
           />
