@@ -6,18 +6,10 @@ export const useHistoryColumns = () => {
     {
       label: 'report.item-name',
       key: 'itemName',
-      // accessor: ({ rowData }) => {
-      //   const { itemName } = rowData;
-      //   return `${itemName}`;
-      // },
     },
     {
       label: 'label.quantity',
       key: 'unitQuantity',
-      // accessor: ({ rowData }) => {
-      //   const { unitQuantity } = rowData;
-      //   return `${unitQuantity}`;
-      // },
     },
     {
       label: 'label.directions',
