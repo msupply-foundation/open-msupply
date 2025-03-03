@@ -126,7 +126,7 @@ Within each area you'll see a similar pattern of this for tabular data, which is
 
 Couple of things to note:
 
-- There is a pre-build lint hook (thanks to Husky) which will run a TypeScript compilation and a linter to ensure that your changes will compile. This is enforced in the CI environment.
+- There is a pre-commit hook ( thanks husky ) which will run a typescript compilation and a linter to ensure that your changes will compile
 - When you create a PR, there is a GitHub webhook which uses the webpack bundle size analyzer plugin and will create a comment on your PR telling you the size difference introduced by your change
 - When merging to `main` there is another webhook which will deploy your change to the demo server (this is currently disabled for the `main` branch, though there is a webhook deploying the `feature/programs` branch)
 

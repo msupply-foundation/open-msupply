@@ -25,7 +25,7 @@ export const InsuranceModal: FC = (): ReactElement => {
   const { success, error } = useNotification();
   const { current, setModal } = usePatientModalStore();
 
-  console.log('testing out github action for linter and typescript compiler');
+  console.log('opted out using lint-staged as its not whats needed');
 
   const { Modal } = useDialog({
     disableBackdrop: true,
