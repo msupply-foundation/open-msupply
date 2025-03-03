@@ -42,6 +42,16 @@ const UIComponent = (props: ControlProps) => {
       },
     }
   );
+  const periodId = extractProperty(core?.data, 'periodId');
+
+  if (periodId && !period) {
+    const period = data?.pages
+      ?.find(page => page.data.nodes.some(period => period.id === periodId))
+      ?.data.nodes.find(period => period.id === periodId);
+    if (period) {
+      setPeriod(period);
+    }
+  }
 
   const pageNumber = data?.pages?.length
     ? (data.pages[data.pages.length - 1]?.pageNumber ?? 0)
