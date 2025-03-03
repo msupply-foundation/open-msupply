@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { StockOutAlert, StockOutAlerts } from '../../StockOut';
+import {
+  getAllocatedQuantity,
+  StockOutAlert,
+  StockOutAlerts,
+} from '../../StockOut';
 import { AccordionPanelSection } from './toBeCommon/PanelSection';
 import { DateUtils, useFormatNumber, useTranslation } from '@common/intl';
 import {
@@ -45,11 +49,7 @@ export const StockAllocationSection = ({
   const onAllocate = (quantity: number, prescribedQuantity: number | null) => {
     const allocatedLines = allocateQuantity(quantity, prescribedQuantity);
 
-    const allocatedQuantity =
-      allocatedLines?.reduce(
-        (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
-        0
-      ) ?? 0;
+    const allocatedQuantity = getAllocatedQuantity(allocatedLines ?? []);
 
     const someLinesExpired = prescriptionLines.some(
       ({ stockLine }) =>
@@ -75,6 +75,12 @@ export const StockAllocationSection = ({
     return allocatedQuantity;
   };
 
+  // todo - expose from backend, store on all lines?
+  const prescribedQuantity =
+    prescriptionLines.find(
+      ({ prescribedQuantity }) => prescribedQuantity ?? 0 > 0
+    )?.prescribedQuantity ?? 0;
+
   return (
     <>
       {!disabled && (
@@ -93,6 +99,8 @@ export const StockAllocationSection = ({
           disabled={disabled}
           unitName={itemDetails?.unitName ?? undefined}
           onAllocate={onAllocate}
+          allocatedQuantity={getAllocatedQuantity(prescriptionLines)}
+          initialPrescribedQuantity={prescribedQuantity}
         />
         <PrescriptionLineEditTable
           item={itemDetails}

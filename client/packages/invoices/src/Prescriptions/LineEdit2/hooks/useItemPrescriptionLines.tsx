@@ -49,7 +49,6 @@ export const useItemPrescriptionLines = ({
       datetime: date ? date.toISOString() : undefined,
     });
 
-  // how many renders??
   const baseDraftRows = getDraftRows(
     data?.invoiceLines ?? [],
     stockLineData?.nodes ?? [],

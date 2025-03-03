@@ -5,6 +5,7 @@ import {
   InputLabel,
   NumericTextInput,
   useAuthContext,
+  useBufferState,
   useDebounceCallback,
 } from '@openmsupply-client/common';
 
@@ -12,21 +13,26 @@ interface IssueQuantitiesProps {
   disabled: boolean;
   unitName?: string;
   onAllocate: (quantity: number, prescribedQuantity: number | null) => number;
+  allocatedQuantity: number;
+  initialPrescribedQuantity: number;
 }
 
 export const IssueQuantities = ({
   disabled,
   unitName,
+  allocatedQuantity,
+  initialPrescribedQuantity,
   onAllocate,
 }: IssueQuantitiesProps) => {
   const t = useTranslation();
   const { store: { preferences } = {} } = useAuthContext();
 
-  const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
-  // todo - get from lines?
-  const [prescribedQuantity, setPrescribedQuantity] = useState<number>();
+  const [issueUnitQuantity, setIssueUnitQuantity] =
+    useBufferState(allocatedQuantity);
+  const [prescribedQuantity, setPrescribedQuantity] = useState(
+    initialPrescribedQuantity
+  );
 
-  // todo - debounce
   const debouncedAllocate = useDebounceCallback(
     (quantity: number, prescribedQuantity?: number) => {
       // only trigger allocation if the quantity has changed
