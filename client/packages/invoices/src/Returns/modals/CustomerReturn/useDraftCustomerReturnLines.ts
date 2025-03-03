@@ -3,6 +3,7 @@ import {
   FnUtils,
   CustomerReturnLineInput,
   RecordPatch,
+  InsertCustomerReturnStatusInput,
 } from '@openmsupply-client/common';
 import { GenerateCustomerReturnLineFragment, useReturns } from '../../api';
 import { useItemById } from '@openmsupply-client/system';
@@ -120,6 +121,7 @@ export const useDraftCustomerReturnLines = ({
         customerId,
         outboundShipmentId,
         customerReturnLines,
+        status: InsertCustomerReturnStatusInput.Shipped,
       });
     } else {
       await updateLines({

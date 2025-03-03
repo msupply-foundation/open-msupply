@@ -3,6 +3,7 @@ import {
   FnUtils,
   SupplierReturnLineInput,
   RecordPatch,
+  InsertSupplierReturnStatusInput,
 } from '@openmsupply-client/common';
 import { GenerateSupplierReturnLineFragment, useReturns } from '../../api';
 
@@ -63,6 +64,7 @@ export const useDraftSupplierReturnLines = ({
         supplierId,
         inboundShipmentId,
         supplierReturnLines,
+        status: InsertSupplierReturnStatusInput.Shipped,
       });
     } else {
       await updateLines({
