@@ -917,6 +917,7 @@ mod report_service_test {
             is_custom: true,
             version: "1.0".to_string(),
             code: "report_1".to_string(),
+            is_active: true,
         })
         .unwrap();
 
@@ -931,6 +932,7 @@ mod report_service_test {
             is_custom: true,
             version: "1.0".to_string(),
             code: "report_base_1".to_string(),
+            is_active: true,
         })
         .unwrap();
 
