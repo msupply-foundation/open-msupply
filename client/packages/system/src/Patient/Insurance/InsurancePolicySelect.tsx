@@ -32,6 +32,8 @@ export const InsurancePolicySelect: FC<InsurancePolicySelectProps> = ({
       label={t('label.policy-type')}
       Input={
         <Autocomplete
+          clearable={false}
+          required
           options={options}
           value={defaultValue}
           onChange={(_, option) => {
@@ -60,6 +62,9 @@ const getDefaultValue = (policyType: string, t: TypedTFunction<LocaleKey>) => {
         value: InsurancePolicyNodeType.Business,
       };
     default:
-      return { label: '', value: '' as InsurancePolicyNodeType };
+      return {
+        label: t('label.personal'),
+        value: InsurancePolicyNodeType.Personal,
+      };
   }
 };

@@ -11,6 +11,8 @@ import {
   DeleteIcon,
   useEditModal,
   ActionsFooter,
+  useTableStore,
+  useNotification,
 } from '@openmsupply-client/common';
 import { stocktakeStatuses, getStocktakeTranslator } from '../../../utils';
 import { StocktakeFragment, useStocktake } from '../../api';
@@ -31,35 +33,43 @@ export const Footer = () => {
   const { data: stocktake } = useStocktake.document.get();
   const isDisabled = useStocktake.utils.isDisabled();
   const onDelete = useStocktake.line.deleteSelected();
+  const { info } = useNotification();
 
   const reduceModal = useEditModal();
   const changeLocationModal = useEditModal();
 
   const selectedRows = useStocktake.utils.selectedRows();
+  const { clearSelected } = useTableStore();
+
+  const handleChangeLocationClick = () => {
+    !!isDisabled
+      ? info(t('label.cant-change-location'))()
+      : changeLocationModal.onOpen();
+  };
+
+  const handleReduceLinesClick = () => {
+    !!isDisabled
+      ? info(t('label.cant-zero-stock-lines-disabled'))()
+      : reduceModal.onOpen();
+  };
 
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: onDelete,
-      disabled: isDisabled,
-      disabledToastMessage: t('messages.cant-delete-generic'),
     },
     {
       label: t('button.change-location'),
       icon: <ArrowRightIcon />,
-      onClick: changeLocationModal.onOpen,
-      disabled: isDisabled,
+      onClick: handleChangeLocationClick,
       shouldShrink: false,
-      disabledToastMessage: t('label.cant-change-location'),
     },
     {
       label: t('button.reduce-lines-to-zero'),
       icon: <RewindIcon />,
-      onClick: reduceModal.onOpen,
-      disabled: isDisabled,
+      onClick: handleReduceLinesClick,
       shouldShrink: false,
-      disabledToastMessage: t('label.cant-zero-stock-lines-disabled'),
     },
   ];
 
@@ -79,12 +89,14 @@ export const Footer = () => {
                 <ReduceLinesToZeroConfirmationModal
                   isOpen={reduceModal.isOpen}
                   onCancel={reduceModal.onClose}
+                  clearSelected={clearSelected}
                 />
               )}
               {changeLocationModal.isOpen && (
                 <ChangeLocationConfirmationModal
                   isOpen={changeLocationModal.isOpen}
                   onCancel={changeLocationModal.onClose}
+                  clearSelected={clearSelected}
                 />
               )}
             </>

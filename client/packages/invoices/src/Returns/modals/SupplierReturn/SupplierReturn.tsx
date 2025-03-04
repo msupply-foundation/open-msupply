@@ -19,6 +19,7 @@ interface SupplierReturnEditModalProps {
   isOpen: boolean;
   stockLineIds: string[];
   onClose: () => void;
+  onCreate?: () => void;
   supplierId: string;
   returnId?: string;
   inboundShipmentId?: string;
@@ -33,6 +34,7 @@ export const SupplierReturnEditModal = ({
   isOpen,
   stockLineIds,
   onClose,
+  onCreate,
   supplierId,
   returnId,
   initialItemId,
@@ -75,6 +77,7 @@ export const SupplierReturnEditModal = ({
   const onOk = async () => {
     try {
       !isDisabled && (await save());
+      onCreate?.();
       onClose();
     } catch {
       // TODO: handle error display...

@@ -37,6 +37,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
   const { store } = useAuthContext();
   const { urlQuery } = useUrlQuery();
   const t = useTranslation();
+  const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const {
     monthlyConsumptionLookBackPeriod,
@@ -50,6 +51,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
     monthsOverstock,
     monthsUnderstock,
     monthsItemsExpire,
+    timezone,
     ...JSON.parse((urlQuery?.['reportArgs'] ?? '{}') as string),
   });
   const [error, setError] = useState<string | false>(false);

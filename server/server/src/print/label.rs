@@ -51,7 +51,7 @@ pub async fn print_label_prescription(
     request: HttpRequest,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
-    data: web::Json<PrescriptionLabelData>,
+    data: web::Json<Vec<PrescriptionLabelData>>,
 ) -> HttpResponse {
     let auth_result = validate_cookie_auth(request.clone(), &auth_data);
     match auth_result {

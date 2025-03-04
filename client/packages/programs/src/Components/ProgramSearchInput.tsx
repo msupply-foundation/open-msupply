@@ -14,7 +14,7 @@ export const ProgramSearchInput = ({
   onChange,
   width,
 }: ProgramSearchInputProps) => {
-  const { data, isLoading } = useProgramList();
+  const { data, isLoading } = useProgramList({ isImmunisation: false });
 
   // If there is only one value, set it automatically
   useEffect(() => {

@@ -46,6 +46,7 @@ impl VaccineCourseDoseNode {
         &self.row().min_interval_days
     }
 
+    /// Will return deleted vaccine courses as well, to support display of existing vaccinations.
     pub async fn vaccine_course(&self, ctx: &Context<'_>) -> Result<VaccineCourseNode> {
         let loader = ctx.get_loader::<DataLoader<VaccineCourseLoader>>();
         let course_option = loader

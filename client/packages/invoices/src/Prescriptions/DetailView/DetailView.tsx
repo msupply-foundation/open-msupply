@@ -100,6 +100,7 @@ export const PrescriptionDetailView: FC = () => {
             isOpen={isHistoryOpen}
             onClose={onCloseHistory}
             patientId={data.patientId}
+            invoiceId={data.id}
           />
           <Toolbar />
           <DetailTabs tabs={tabs} />

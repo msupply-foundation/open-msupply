@@ -78,6 +78,7 @@ pub struct RequisitionFilterInput {
     pub a_shipment_has_been_created: Option<bool>,
     pub period_id: Option<EqualFilterStringInput>,
     pub program_id: Option<EqualFilterStringInput>,
+    pub elmis_code: Option<EqualFilterStringInput>,
 }
 
 #[derive(Union)]
@@ -243,9 +244,9 @@ impl RequisitionFilterInput {
             a_shipment_has_been_created: self.a_shipment_has_been_created,
             period_id: self.period_id.map(EqualFilter::from),
             program_id: self.program_id.map(EqualFilter::from),
+            elmis_code: self.elmis_code.map(EqualFilter::from),
             linked_requisition_id: None,
             store_id: None,
-            elmis_code: None,
         }
     }
 }

@@ -514,6 +514,13 @@ export const UnitQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
     id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
     min={0}
     decimalLimit={2}
+    slotProps={{
+      htmlInput: {
+        sx: {
+          backgroundColor: 'background.white',
+        },
+      },
+    }}
   />
 );
 

@@ -1,8 +1,8 @@
 use super::patient::PatientNode;
 use super::program_node::ProgramNode;
 use super::{
-    ClinicianNode, CurrencyNode, DiagnosisNode, InvoiceLineConnector, NameNode, RequisitionNode,
-    StoreNode, UserNode,
+    ClinicianNode, CurrencyNode, DiagnosisNode, InsurancePolicyNode, InvoiceLineConnector,
+    NameNode, RequisitionNode, StoreNode, UserNode,
 };
 use async_graphql::*;
 use chrono::{DateTime, Utc};
@@ -10,8 +10,8 @@ use dataloader::DataLoader;
 
 use graphql_core::loader::{
     ClinicianLoader, ClinicianLoaderInput, DiagnosisLoader, InvoiceByIdLoader,
-    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, PatientLoader, ProgramByIdLoader,
-    StoreByIdLoader, UserLoader,
+    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameInsuranceJoinLoader, PatientLoader,
+    ProgramByIdLoader, StoreByIdLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -430,6 +430,18 @@ impl InvoiceNode {
 
     pub async fn name_insurance_join_id(&self) -> &Option<String> {
         &self.row().name_insurance_join_id
+    }
+
+    pub async fn insurance_policy(&self, ctx: &Context<'_>) -> Result<Option<InsurancePolicyNode>> {
+        let Some(name_insurance_join_id) = &self.row().name_insurance_join_id else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<NameInsuranceJoinLoader>>();
+        Ok(loader
+            .load_one(name_insurance_join_id.to_string())
+            .await?
+            .map(InsurancePolicyNode::from_domain))
     }
 
     pub async fn insurance_discount_amount(&self) -> &Option<f64> {

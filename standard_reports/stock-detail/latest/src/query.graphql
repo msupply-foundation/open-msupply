@@ -1,0 +1,31 @@
+query StockDetail($storeId: String, $itemCodeOrName: String) {
+  stockLines(
+    storeId: $storeId
+    page: { first: 5000 }
+    filter: {
+      itemCodeOrName: { like: $itemCodeOrName }
+      hasPacksInStore: true
+      isActive: true
+    }
+  ) {
+    ... on StockLineConnector {
+      nodes {
+        batch
+        expiryDate
+        id
+        packSize
+        storeId
+        totalNumberOfPacks
+        supplierName
+        location {
+          code
+        }
+        item {
+          code
+          name
+          unitName
+        }
+      }
+    }
+  }
+}

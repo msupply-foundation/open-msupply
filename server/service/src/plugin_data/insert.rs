@@ -33,7 +33,7 @@ pub fn insert(
             let data = generate(input.clone());
 
             PluginDataRowRepository::new(connection)
-                .insert_one(&data)
+                .upsert_one(&data)
                 .map_err(InsertPluginDataError::DatabaseError)
         })
         .map_err(|error| error.to_inner_error())?;
