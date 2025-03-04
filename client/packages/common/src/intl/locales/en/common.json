@@ -649,6 +649,7 @@
   "label.client": "Client",
   "label.clinician": "Clinician",
   "label.code": "Code",
+  "label.code2": "Code 2",
   "label.code-or-name": "Code or Name",
   "label.cold-consecutive": "Cold Consecutive",
   "label.cold-cumulative": "Cold Cumulative",
