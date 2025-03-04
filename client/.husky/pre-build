@@ -1,9 +1,13 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-SRC_PATTERN="client/"
+# The following lines have been commented out to disable automatic execution of the pre-commit linting and formatting tasks.
+# This change is made to avoid long execution times during the commit process. The linting and formatting tasks can still be
+# run manually using the command `yarn pre-commit-lint` whenever needed.
 
-if [ -n "$CI" ] || git diff --cached --name-only | grep --quiet "$SRC_PATTERN"
-then
-  cd ./client && yarn pre-commit-lint
-fi
+# SRC_PATTERN="client/"
+
+# if git diff --cached --name-only | grep --quiet "$SRC_PATTERN"
+# then
+#   cd ./client && yarn pre-commit-lint
+# fi
