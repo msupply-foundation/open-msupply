@@ -20,7 +20,7 @@ import {
   DetailContainer,
   usePluginProvider,
   UsePluginEvents,
-  useKeyboardShortcut,
+  useRegisterActions,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -75,10 +75,17 @@ export const StockLineForm: FC<StockLineFormProps> = ({
     }
   };
 
-  useKeyboardShortcut({
-    isKeyValid: e => e.ctrlKey && e.code === 'KeyS',
-    onKeyPressed: scanBarcode,
-  });
+  const keyboardActions = isEnabled
+    ? [
+        {
+          id: 'scan',
+          name: `${t('button.scan')} (Ctrl+S)`,
+          shortcut: ['Control+KeyS'],
+          perform: scanBarcode,
+        },
+      ]
+    : [];
+  useRegisterActions(keyboardActions);
 
   if (loading) return null;
 
