@@ -125,7 +125,7 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
 
-  const multiline = schemaOptions?.multiline !== false;
+  const multiline = schemaOptions?.multiline;
   const rows = schemaOptions?.rows;
 
   const width = schemaOptions?.width ?? '100%';
