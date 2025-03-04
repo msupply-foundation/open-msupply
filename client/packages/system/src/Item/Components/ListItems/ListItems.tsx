@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Tooltip,
   ListOptions,
   RouteBuilder,
   useNavigate,
@@ -19,7 +18,6 @@ interface ListItemProps {
   showNew?: boolean;
   handleSaveNew?: () => void;
   scrollRef: React.MutableRefObject<HTMLLIElement | null>;
-  tooltipDisabled?: boolean;
 }
 
 export const ListItems = ({
@@ -31,7 +29,6 @@ export const ListItems = ({
   isDirty = false,
   handleSaveNew = () => {},
   scrollRef,
-  tooltipDisabled = false,
 }: ListItemProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
@@ -53,7 +50,6 @@ export const ListItems = ({
   }
 
   return (
-    <Tooltip title={tooltipDisabled ? null : value?.name}>
       <Box sx={{ flexGrowY: 1, overflow: 'auto', scrollBehavior: 'smooth' }}>
         <ListOptions
           currentId={value?.id ?? 'new'}
@@ -67,6 +63,5 @@ export const ListItems = ({
           scrollRef={scrollRef}
         />
       </Box>
-    </Tooltip>
-  )
+  );
 };
