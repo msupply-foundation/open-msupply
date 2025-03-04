@@ -395,7 +395,7 @@
   "error.unable-to-save-log": "Impossible de sauvegarder l'entree",
   "error.unable-to-save-settings": "Impossible d'enregistrer les paramètres",
   "error.unable-to-scan": "Impossible de scanner le code QR",
-  "error.unable-to-scan-barcode": "Impossible de lire le code-barre : {{error}}",
+  "error.unable-to-scan-barcode": "Impossible de scanner le code-barre : {{error}}",
   "error.unable-to-start-scanning": "Impossible de scanner : {{error}}",
   "error.unable-to-update-immunisation-program": "Impossible de mettre à jour le Programme de Vaccination",
   "error.unable-to-update-vaccine-course": "Impossible de mettre à jour le calendrier de vaccination",
@@ -1916,5 +1916,7 @@
   "messages.insurance-description": "Informations sur l'assurance médicale associée à cette prescription",
   "button.print-receipt": "Imprimer le reçu",
   "messages.cannot-add-directions": "Ajouter une quantité pour ajouter des instructions.",
-  "error.dose-max-lower-than-min": "La dose {{doseIndex}} doit avoir un âge maximum plus élevé que l'âge minimum"
+  "error.dose-max-lower-than-min": "La dose {{doseIndex}} doit avoir un âge maximum plus élevé que l'âge minimum",
+  "label.code2": "Code 2",
+  "messages.cannot-delete-linked-requisition": "Impossible de supprimer une réquisition liée"
 }
