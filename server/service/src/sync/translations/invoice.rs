@@ -175,6 +175,11 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub verified_datetime: Option<NaiveDateTime>,
 
+    #[serde(default)]
+    #[serde(rename = "om_cancelled_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub cancelled_datetime: Option<NaiveDateTime>,
+
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(default)]
     pub om_status: Option<InvoiceStatus>,
@@ -206,6 +211,9 @@ pub struct LegacyTransactRow {
     #[serde(rename = "programID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub program_id: Option<String>,
+
+    #[serde(default)]
+    pub is_cancellation: bool,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -349,9 +357,9 @@ impl SyncTranslation for InvoiceTranslation {
             shipped_datetime: mapping.shipped_datetime,
             delivered_datetime: mapping.delivered_datetime,
             verified_datetime: mapping.verified_datetime,
-            // TO-DO: Correct values for next two fields
-            cancelled_datetime: None,
-            is_cancellation: false,
+            // Cancelled datetime handled in processor (To-DO)
+            cancelled_datetime: data.cancelled_datetime,
+            is_cancellation: data.is_cancellation,
             colour: mapping.colour,
 
             requisition_id: data.requisition_ID,
@@ -414,8 +422,7 @@ impl SyncTranslation for InvoiceTranslation {
                     shipped_datetime,
                     delivered_datetime,
                     verified_datetime,
-                    // TO-DO: Sync this field
-                    cancelled_datetime: _,
+                    cancelled_datetime,
                     colour,
                     requisition_id,
                     linked_invoice_id,
@@ -431,8 +438,7 @@ impl SyncTranslation for InvoiceTranslation {
                     name_insurance_join_id,
                     insurance_discount_amount,
                     insurance_discount_percentage,
-                    // TO-DO: Sync this field
-                    is_cancellation: _,
+                    is_cancellation,
                 },
             name_row,
             clinician_row,
@@ -493,6 +499,7 @@ impl SyncTranslation for InvoiceTranslation {
             shipped_datetime,
             delivered_datetime,
             verified_datetime,
+            cancelled_datetime,
             om_status: Some(status),
             om_type: Some(r#type),
             om_colour: colour,
@@ -506,6 +513,7 @@ impl SyncTranslation for InvoiceTranslation {
             name_insurance_join_id,
             insurance_discount_amount,
             insurance_discount_percentage,
+            is_cancellation,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;

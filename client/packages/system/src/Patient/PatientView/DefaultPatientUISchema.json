@@ -6,11 +6,11 @@
       "elements": [
         {
           "type": "Group",
-          "label": "Patient Information",
+          "label": "heading.patient-details",
           "elements": [
             {
               "type": "IdGenerator",
-              "label": "Code",
+              "label": "label.code",
               "scope": "#/properties/code",
               "options": {
                 "parts": [
@@ -34,28 +34,28 @@
             },
             {
               "type": "Control",
-              "label": "Code 2",
+              "label": "label.code2",
               "scope": "#/properties/code2"
             },
             {
               "type": "Control",
               "scope": "#/properties/firstName",
-              "label": "First Name"
+              "label": "label.first-name"
             },
             {
               "type": "Control",
               "scope": "#/properties/lastName",
-              "label": "Last Name"
+              "label": "label.last-name"
             },
             {
               "type": "DateOfBirth",
-              "label": "Date of Birth",
+              "label": "label.date-of-birth",
               "scope": "#"
             },
             {
               "type": "Control",
               "scope": "#/properties/gender",
-              "label": "Gender",
+              "label": "label.gender",
               "options": {
                 "show": [
                   ["MALE", "Male"],
@@ -63,19 +63,19 @@
                   ["TRANSGENDER_MALE", "Transgender Male"],
                   ["TRANSGENDER_FEMALE", "Transgender Female"],
                   ["NON_BINARY", "Non-binary"],
-                  ["UNKOWN", "Unknown"]
+                  ["UNKNOWN", "Unknown"]
                 ]
               }
             },
             {
               "type": "Control",
               "scope": "#/properties/address1",
-              "label": "Address"
+              "label": "label.address"
             },
             {
               "type": "Control",
               "scope": "#/properties/phone",
-              "label": "Phone"
+              "label": "label.phone"
             }
           ]
         }
@@ -84,7 +84,7 @@
     {
       "type": "Search",
       "scope": "#/properties/nextOfKin",
-      "label": "Next of Kin",
+      "label": "label.next-of-kin",
       "options": {
         "source": "user",
         "searchFields": ["name"],
@@ -93,7 +93,7 @@
           {
             "type": "Control",
             "scope": "/properties/name",
-            "label": "Name"
+            "label": "label.name"
           }
         ]
       }

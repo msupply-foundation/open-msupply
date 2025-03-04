@@ -47,6 +47,7 @@ export interface AutocompleteProps<T>
   inputValue?: string;
   popperMinWidth?: number;
   inputProps?: BasicTextInputProps;
+  required?: boolean;
 }
 
 export function Autocomplete<T>({
@@ -73,12 +74,14 @@ export function Autocomplete<T>({
   getOptionLabel,
   popperMinWidth,
   inputProps,
+  required,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
+      required={required}
       {...props}
       {...inputProps}
       autoFocus={autoFocus}
@@ -86,7 +89,7 @@ export function Autocomplete<T>({
         input: {
           disableUnderline: false,
           sx: {
-            paddingLeft: 1,
+            padding: '4px !important',
           },
           ...props.InputProps,
         },
@@ -140,11 +143,6 @@ export function Autocomplete<T>({
       }}
       sx={{
         ...restOfAutocompleteProps.sx,
-        background: theme =>
-          disabled
-            ? theme.palette.background.toolbar
-            : theme.palette.background.drawer,
-        borderRadius: 2,
         paddingTop: 0.5,
         paddingBottom: 0.5,
       }}

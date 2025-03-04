@@ -68,6 +68,11 @@ impl SyncRecordTester for InvoiceRecordTester {
             tax_percentage: Some(0.0),
             original_shipment_id: None,
             backdated_datetime: None,
+            diagnosis_id: None,
+            program_id: None,
+            name_insurance_join_id: None,
+            insurance_discount_amount: None,
+            insurance_discount_percentage: None,
         };
         let base_invoice_line_row = InvoiceLineRow {
             id: uuid(),
@@ -92,6 +97,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             foreign_currency_price_before_tax: Some(0.0),
             return_reason_id: None,
             item_variant_id: None,
+            prescribed_quantity: None,
         };
         let invoice_row_1 = base_invoice_row.clone();
         let invoice_line_row_1 = base_invoice_line_row.clone();

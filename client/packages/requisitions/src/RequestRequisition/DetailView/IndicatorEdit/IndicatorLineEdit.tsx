@@ -10,6 +10,7 @@ import {
   useAuthContext,
   useNotification,
   useTranslation,
+  useWindowDimensions,
 } from '@openmsupply-client/common';
 import {
   IndicatorLineRowFragment,
@@ -95,7 +96,7 @@ const InputWithLabel = ({
     <InputWithLabelRow
       Input={inputComponent}
       labelWidth={LABEL_WIDTH}
-      label={indicatorColumnNameToLocal(data.name)}
+      label={indicatorColumnNameToLocal(data.name, t)}
       sx={{ marginBottom: 1 }}
     />
   );
@@ -119,6 +120,7 @@ export const IndicatorLineEdit = ({
   const showInfo =
     store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders &&
     !!currentLine?.customerIndicatorInfo;
+  const { width } = useWindowDimensions();
 
   return (
     <>
@@ -133,7 +135,7 @@ export const IndicatorLineEdit = ({
         ))}
       </Box>
       {showInfo && (
-        <Box paddingTop={1} maxHeight={200} width="100%" display="flex">
+        <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
           <CustomerIndicatorInfoView
             columns={columns}
             customerInfos={currentLine?.customerIndicatorInfo}

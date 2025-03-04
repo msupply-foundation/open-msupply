@@ -14,7 +14,7 @@ export const usePeriodList = (
 ) => {
   const { api, storeId } = useProgramsGraphQL();
 
-  const queryKey = [PERIOD, LIST];
+  const queryKey = [PERIOD, LIST, programId];
   const queryFn = async ({
     pageParam,
   }: {

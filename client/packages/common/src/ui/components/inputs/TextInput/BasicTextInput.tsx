@@ -74,6 +74,7 @@ export const BasicTextInput = React.forwardRef<
           variant="standard"
           size="small"
           slotProps={{
+            ...slotProps,
             input: {
               disableInjectingGlobalStyles: true,
               disableUnderline: error ? true : false,
@@ -95,10 +96,15 @@ export const BasicTextInput = React.forwardRef<
             htmlInput: {
               style: props?.disabled ? { textOverflow: 'ellipsis' } : {},
               inputMode: props?.disabled ? undefined : props.inputMode,
+              // Ignoring below, see https://github.com/mui/mui-x/issues/14684, slot props not merged from datepickers
+              ...props.inputProps,
               ...slotProps?.htmlInput,
               // Ignoring below, see https://github.com/mui/material-ui/issues/45041, use mergeSlotProps when it's available in MUI-6
               // @ts-ignore
               sx: { padding: 0.5, ...slotProps?.htmlInput?.sx },
+            },
+            inputLabel: {
+              ...slotProps?.inputLabel,
             },
           }}
           {...props}

@@ -106,6 +106,7 @@ export const PrescriptionLineEditForm: React.FC<
     warning => setAllocationAlerts(warning),
     []
   );
+  const isDirectionsDisabled = !issueUnitQuantity;
 
   const allocate = (
     numPacks: number,
@@ -210,16 +211,14 @@ export const PrescriptionLineEditForm: React.FC<
   const note = prescriptionLineWithNote?.note ?? '';
 
   useEffect(() => {
-    const selectedItem = items.find(
-      prescriptionItem => prescriptionItem.id === item?.id
-    );
     if (preferences?.editPrescribedQuantityOnPrescription) {
-      const newPrescribedQuantity: number =
+      const selectedItem = items.find(
+        prescriptionItem => prescriptionItem.id === item?.id
+      );
+      const newPrescribedQuantity =
         selectedItem?.lines?.find(
-          ({ prescribedQuantity }) =>
-            prescribedQuantity != null && prescribedQuantity > 0
+          ({ prescribedQuantity }) => prescribedQuantity != null
         )?.prescribedQuantity ?? 0;
-
       setPrescribedQuantity(newPrescribedQuantity);
     }
 
@@ -229,17 +228,14 @@ export const PrescriptionLineEditForm: React.FC<
     if (newIssueQuantity !== issueUnitQuantity)
       setIssueUnitQuantity(newIssueQuantity);
     setAllocationAlerts([]);
-  }, [item?.id, allocatedUnits]);
 
-  useEffect(() => {
-    if (items.find(prescriptionItem => prescriptionItem.id === item?.id))
-      setAbbreviation('');
+    setAbbreviation('');
     setDefaultDirection('');
   }, [item?.id]);
 
   useEffect(() => {
-    if (!isAutoAllocated) setIssueUnitQuantity(allocatedUnits);
-  }, [packSizeController.selected?.value, allocatedUnits]);
+    setIssueUnitQuantity(allocatedUnits);
+  }, [allocatedUnits]);
 
   const key = item?.id ?? 'new';
 
@@ -328,6 +324,13 @@ export const PrescriptionLineEditForm: React.FC<
                     min={0}
                     decimalLimit={2}
                     onBlur={() => {}}
+                    slotProps={{
+                      htmlInput: {
+                        sx: {
+                          backgroundColor: 'background.white',
+                        },
+                      },
+                    }}
                   />
                 </Grid>
               )}
@@ -345,18 +348,13 @@ export const PrescriptionLineEditForm: React.FC<
                   slotProps={{
                     htmlInput: {
                       sx: {
-                        backgroundColor: disabled
-                          ? undefined
-                          : 'background.white',
+                        backgroundColor: 'background.white',
                       },
                     },
                   }}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
-                  {t('label.unit-plural_one', {
-                    // unit-plural_one has been specified to deactivate pluralisation.
-                    // This is to handle the case where units have not been entered for the item.
-                    // see https://github.com/msupply-foundation/open-msupply/issues/5978
+                  {t('label.unit-plural', {
                     count: issueUnitQuantity,
                     unit: item?.unitName,
                   })}
@@ -379,82 +377,85 @@ export const PrescriptionLineEditForm: React.FC<
       {item && (
         <AccordionPanelSection
           title={t('label.directions')}
-          closedSummary={note}
+          closedSummary={isDirectionsDisabled ? '' : note}
           defaultExpanded={(isNew || !note) && !disabled}
           key={item?.id ?? 'new'}
         >
-          <Grid container paddingBottom={1} gap={1} width={'100%'}>
-            <InputWithLabelRow
-              label={t('label.abbreviation')}
-              Input={
-                <BasicTextInput
-                  value={abbreviation}
-                  disabled={disabled}
-                  onChange={e => {
-                    setAbbreviation(e.target.value);
-                  }}
-                  onBlur={saveAbbreviation}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      saveAbbreviation();
-                    }
-                  }}
-                  style={{ flex: 1 }}
+          {isDirectionsDisabled ? (
+            <Typography>{t('messages.cannot-add-directions')}</Typography>
+          ) : (
+            <>
+              <Grid container paddingBottom={1} gap={1} width={'100%'}>
+                <InputWithLabelRow
+                  label={t('label.abbreviation')}
+                  Input={
+                    <BasicTextInput
+                      value={abbreviation}
+                      onChange={e => {
+                        setAbbreviation(e.target.value);
+                      }}
+                      onBlur={saveAbbreviation}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          saveAbbreviation();
+                        }
+                      }}
+                      style={{ flex: 1 }}
+                    />
+                  }
                 />
-              }
-            />
-            <DropdownMenu
-              sx={{ flex: 1 }}
-              selectSx={{ width: '100%' }}
-              label={
-                defaultDirection
-                  ? defaultDirection
-                  : t('placeholder.item-directions')
-              }
-              disabled={disabled}
-            >
-              {item.itemDirections.length == 0 ? (
-                <DropdownMenuItem sx={{ fontSize: 14 }}>
-                  {t('message.no-directions')}
-                </DropdownMenuItem>
-              ) : (
-                item.itemDirections
-                  .sort((a, b) => a.priority - b.priority)
-                  .map(
-                    direction =>
-                      direction && (
-                        <DropdownMenuItem
-                          key={direction.id}
-                          value={defaultDirection}
-                          onClick={() => {
-                            saveDefaultDirection(direction.directions);
-                          }}
-                          sx={{ fontSize: 14 }}
-                        >
-                          {direction.directions}
-                        </DropdownMenuItem>
+                <DropdownMenu
+                  sx={{ flex: 1 }}
+                  selectSx={{ width: '100%' }}
+                  label={
+                    defaultDirection
+                      ? defaultDirection
+                      : t('placeholder.item-directions')
+                  }
+                >
+                  {item.itemDirections.length == 0 ? (
+                    <DropdownMenuItem sx={{ fontSize: 14 }}>
+                      {t('message.no-directions')}
+                    </DropdownMenuItem>
+                  ) : (
+                    item.itemDirections
+                      .sort((a, b) => a.priority - b.priority)
+                      .map(
+                        direction =>
+                          direction && (
+                            <DropdownMenuItem
+                              key={direction.id}
+                              value={defaultDirection}
+                              onClick={() => {
+                                saveDefaultDirection(direction.directions);
+                              }}
+                              sx={{ fontSize: 14 }}
+                            >
+                              {direction.directions}
+                            </DropdownMenuItem>
+                          )
                       )
-                  )
-              )}
-            </DropdownMenu>
-          </Grid>
-          <Grid>
-            <InputWithLabelRow
-              label={t('label.directions')}
-              Input={
-                <TextArea
-                  value={note}
-                  disabled={disabled}
-                  onChange={e => {
-                    updateNotes(e.target.value);
-                    setAbbreviation('');
-                    setDefaultDirection('');
-                  }}
-                  style={{ flex: 1 }}
+                  )}
+                </DropdownMenu>
+              </Grid>
+              <Grid>
+                <InputWithLabelRow
+                  label={t('label.directions')}
+                  Input={
+                    <TextArea
+                      value={note}
+                      onChange={e => {
+                        updateNotes(e.target.value);
+                        setAbbreviation('');
+                        setDefaultDirection('');
+                      }}
+                      style={{ flex: 1 }}
+                    />
+                  }
                 />
-              }
-            />
-          </Grid>
+              </Grid>
+            </>
+          )}
         </AccordionPanelSection>
       )}
       {/* {!item && <Box height={100} />} */}

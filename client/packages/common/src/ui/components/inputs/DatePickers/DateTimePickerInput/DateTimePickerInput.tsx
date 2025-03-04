@@ -29,6 +29,7 @@ export const DateTimePickerInput: FC<
     textFieldProps?: TextFieldProps;
     showTime?: boolean;
     actions?: PickersActionBarAction[];
+    dateAsEndOfDay?: boolean;
   }
 > = ({
   error,
@@ -41,6 +42,7 @@ export const DateTimePickerInput: FC<
   maxDate,
   showTime,
   actions,
+  dateAsEndOfDay,
   ...props
 }) => {
   const theme = useAppTheme();
@@ -70,7 +72,9 @@ export const DateTimePickerInput: FC<
       updateDate(maxDate);
       return;
     }
-    updateDate(date);
+
+    const dateToSave = date && dateAsEndOfDay ? DateUtils.endOfDay(date) : date;
+    updateDate(dateToSave);
   };
 
   return (
