@@ -54,7 +54,7 @@ pub fn generate(
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_string(),
         created_datetime: current_datetime,
-        status: status,
+        status,
         original_shipment_id: outbound_shipment_id,
         // Default
         currency_id: Some(currency.currency_row.id),
