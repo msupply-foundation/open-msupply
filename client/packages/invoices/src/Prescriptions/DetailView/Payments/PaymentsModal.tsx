@@ -33,9 +33,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const [insuranceId, setInsuranceId] = useState<string>();
-  const [discountRate, setDiscountRate] = useState(0);
-  const [totalToBePaidByInsurance, setTotalToBePaidByInsurance] = useState(0);
+  const [insuranceId, setInsuranceId] = useState<string | null>();
   const [pluginError, setPluginError] = useState<string>();
 
   const {
@@ -54,14 +52,18 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
       insurance.isActive && !DateUtils.isExpired(insurance.expiryDate)
   );
 
-  const selectedInsurance = insuranceData?.find(
-    ({ insuranceProviders }) => insuranceProviders?.id === insuranceId
-  );
+  const selectedInsurance = insuranceData?.find(({ id }) => id === insuranceId);
 
   const { plugins } = usePluginProvider();
   const pluginEvents = usePluginEvents({
     isDirty: false,
   });
+
+  const totalAfterTax = prescriptionData?.pricing.totalAfterTax ?? 0;
+  const discountPercentage = selectedInsurance?.discountPercentage ?? 0;
+  const totalToBePaidByInsurance =
+    totalAfterTax * ((selectedInsurance?.discountPercentage ?? 0) / 100);
+  const totalToBePaidByPatient = totalAfterTax - totalToBePaidByInsurance;
 
   const onSave = async () => {
     if (!prescriptionData) return;
@@ -76,7 +78,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
           ? {
               id: prescriptionData.id,
               nameInsuranceJoinId: selectedInsurance?.id,
-              insuranceDiscountPercentage: discountRate,
+              insuranceDiscountPercentage: discountPercentage,
               insuranceDiscountAmount: totalToBePaidByInsurance,
             }
           : {}
@@ -91,16 +93,6 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     // Reset plugin error when modal is closed
     setPluginError(undefined);
   }, [isOpen]);
-
-  useEffect(() => {
-    if (!prescriptionData) return;
-    const totalAfterTax = prescriptionData?.pricing.totalAfterTax ?? 0;
-    const discountPercentage = selectedInsurance?.discountPercentage ?? 0;
-
-    setDiscountRate(discountPercentage);
-    const discountAmount = (totalAfterTax * discountPercentage) / 100;
-    setTotalToBePaidByInsurance(discountAmount);
-  }, [selectedInsurance]);
 
   return (
     <Modal
@@ -121,7 +113,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
                 <CurrencyInput
                   value={prescriptionData?.pricing.totalAfterTax}
                   onChangeNumber={() => {}}
-                  style={{ borderRadius: 4, pointerEvents: 'none' }}
+                  disabled
                 />
               }
             />
@@ -132,7 +124,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
                   key={totalToBePaidByInsurance}
                   value={totalToBePaidByInsurance}
                   onChangeNumber={() => {}}
-                  style={{ borderRadius: 4, pointerEvents: 'none' }}
+                  disabled
                 />
               }
               sx={{ pt: 1 }}
@@ -145,20 +137,22 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
                 <Autocomplete
                   options={
                     insuranceData?.map(
-                      ({ insuranceProviders, policyNumber }) => ({
-                        label: policyNumber ?? '',
-                        value: insuranceProviders?.id ?? '',
+                      ({ id, policyNumber, insuranceProviders }) => ({
+                        label: `${policyNumber} - ${insuranceProviders?.providerName}`,
+                        value: id ?? '',
                       })
                     ) ?? []
                   }
                   getOptionLabel={option => option.label}
                   value={{
                     label: selectedInsurance?.policyNumber ?? '',
-                    value: selectedInsurance?.insuranceProviders?.id ?? '',
+                    value: selectedInsurance?.id ?? '',
                   }}
                   onChange={(_, option) => {
                     if (option) {
                       setInsuranceId(option.value);
+                    } else {
+                      setInsuranceId(null);
                     }
                   }}
                   sx={{ mr: 2 }}
@@ -172,11 +166,11 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
               label={t('label.discount-rate')}
               Input={
                 <BasicTextInput
-                  value={`${discountRate}%`}
+                  disabled
+                  value={`${discountPercentage}%`}
                   sx={{
                     ml: 0.5,
                     mr: 1.5,
-                    pointerEvents: 'none',
                   }}
                 />
               }
@@ -189,10 +183,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
                 key={index}
                 prescriptionData={prescriptionData}
                 totalToBePaidByInsurance={totalToBePaidByInsurance}
-                totalToBePaidByPatient={
-                  prescriptionData.pricing.totalAfterTax -
-                  totalToBePaidByInsurance
-                }
+                totalToBePaidByPatient={totalToBePaidByPatient}
                 events={pluginEvents}
               />
             ) : null

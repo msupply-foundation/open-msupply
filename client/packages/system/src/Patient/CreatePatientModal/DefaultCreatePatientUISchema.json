@@ -34,7 +34,7 @@
               ["TRANSGENDER_MALE", "Transgender Male"],
               ["TRANSGENDER_FEMALE", "Transgender Female"],
               ["NON_BINARY", "Non-binary"],
-              ["UNKOWN", "Unknown"]
+              ["UNKNOWN", "Unknown"]
             ]
           }
         },

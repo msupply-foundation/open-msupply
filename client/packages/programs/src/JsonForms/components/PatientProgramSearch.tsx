@@ -1,7 +1,11 @@
 import React from 'react';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
-import { withJsonFormsControlProps } from '@jsonforms/react';
-import { Box, DetailInputWithLabelRow } from '@openmsupply-client/common';
+import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
+import {
+  Box,
+  DetailInputWithLabelRow,
+  extractProperty,
+} from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_GAP, FORM_LABEL_WIDTH } from '../common';
 import { PatientProgramSearchInput } from '../../Components';
 import { DocumentRegistryFragment } from '../../api';
@@ -13,10 +17,12 @@ export const patientProgramSearchTester = rankWith(
 
 const UIComponent = (props: ControlProps) => {
   const { handleChange, label, path } = props;
+  const { core } = useJsonForms();
 
   const [program, setProgram] = React.useState<DocumentRegistryFragment | null>(
     null
   );
+  const programId = extractProperty(core?.data, 'programId');
 
   const onChangeProgram = async (program: DocumentRegistryFragment) => {
     setProgram(program);
@@ -34,6 +40,8 @@ const UIComponent = (props: ControlProps) => {
           <PatientProgramSearchInput
             onChange={onChangeProgram}
             value={program}
+            programId={programId}
+            setProgram={setProgram}
           />
         </Box>
       }
