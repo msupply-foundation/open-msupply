@@ -18,6 +18,7 @@ import {
   useFormatDateTime,
   ColumnFormat,
   CurrencyCell,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { getStatusTranslation } from '@openmsupply-client/invoices/src/utils';
 
@@ -99,12 +100,14 @@ const ItemLedgerTable = ({
         label: 'label.unit-quantity',
         sortable: false,
         description: 'description.unit-quantity',
+        accessor: ({ rowData }) => NumUtils.round(rowData.quantity, 2),
       },
 
       {
         key: 'balance',
         label: 'label.balance',
         sortable: false,
+        accessor: ({ rowData }) => NumUtils.round(rowData.balance, 2),
       },
       {
         key: 'costPricePerPack',
