@@ -9,15 +9,15 @@ import * as aggregateAmc from './AggregateAmc/AggregateAmcColumn';
 const ReplenishmentAndSyncStatus: Plugins = {
   inboundShipmentAppBar: [ShippingStatus],
   dashboard: [Replenishment, SyncStatus],
-  stockEditForm: [StockDonorEdit],
-  stockColumn: {
-    StateLoader: [stockDonor.StateLoader],
-    columns: [stockDonor.StockDonorColumn],
+  stockLine: {
+    tableStateLoader: [stockDonor.StateLoader],
+    tableColumn: [stockDonor.StockDonorColumn],
+    editViewField: [StockDonorEdit],
   },
-  requestRequisitionColumn: {
-    StateLoader: [aggregateAmc.StateLoader],
-    tableColumns: [aggregateAmc.AggregateAmcColumn],
-    editViewFields: [aggregateAmc.AggregateAmcEditView],
+  requestRequisitionLine: {
+    tableStateLoader: [aggregateAmc.StateLoader],
+    tableColumn: [aggregateAmc.AggregateAmcColumn],
+    editViewField: [aggregateAmc.AggregateAmcEditView],
   },
 };
 
