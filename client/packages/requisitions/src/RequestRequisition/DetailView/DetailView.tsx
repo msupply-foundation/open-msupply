@@ -114,7 +114,7 @@ export const DetailView: FC = () => {
 
         <DetailTabs tabs={tabs} />
 
-        <Footer isDisabled={isDisabled} />
+        <Footer />
         <SidePanel />
       </TableProvider>
     </RequestRequisitionLineErrorProvider>
