@@ -2,7 +2,7 @@ import React, { FC, ReactElement } from 'react';
 
 import {
   useDialog,
-  useFormErrorsHook,
+  useFormErrors,
   useNotification,
   ErrorDisplay,
 } from '@common/hooks';
@@ -47,7 +47,7 @@ export const InsuranceModal: FC = (): ReactElement => {
     updatePatch: updateDraft,
   } = useInsurancePolicies(nameId);
 
-  const { resetRequiredErrors, getErrorProps, hasErrors } = useFormErrorsHook();
+  const { resetRequiredErrors, getErrorProps, hasErrors } = useFormErrors();
 
   const updatePatch: (newData: Partial<unknown>) => void = newData => {
     resetRequiredErrors();

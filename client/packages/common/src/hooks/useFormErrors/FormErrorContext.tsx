@@ -175,7 +175,7 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
   );
 };
 
-export const useFormErrorsHook = () => {
+export const useFormErrors = () => {
   const context = useContext(FormErrorContext);
 
   if (!context)
@@ -189,7 +189,7 @@ export const useFormErrorsHook = () => {
 export const ErrorDisplay: React.FC<unknown> = () => {
   const t = useTranslation();
   const { errorState, requiredState, includeRequiredInErrorState } =
-    useFormErrorsHook();
+    useFormErrors();
 
   const errorsToDisplay = { ...errorState };
   if (includeRequiredInErrorState)

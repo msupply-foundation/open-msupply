@@ -346,8 +346,6 @@ export const NumericTextInput = React.forwardRef<
 
           if (Number.isNaN(parsed)) return;
 
-          // checkError(parsed);
-
           onChange(parsed);
         }}
         onKeyDown={e => {
@@ -359,7 +357,6 @@ export const NumericTextInput = React.forwardRef<
             (e.shiftKey ? multiplier : 1);
 
           const newNum = (value ?? 0) + change;
-          // checkError(newNum);
           setTextValue(formatValue(newNum));
           onChange(newNum);
         }}
