@@ -22,7 +22,7 @@ use super::CustomerReturnLineInput;
 #[derive(Clone, Debug, PartialEq)]
 pub enum InsertCustomerReturnStatus {
     New,
-    Shipped,
+    Verified,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -137,7 +137,7 @@ impl InsertCustomerReturnStatus {
     pub fn as_invoice_row_status(&self) -> InvoiceStatus {
         match self {
             InsertCustomerReturnStatus::New => InvoiceStatus::New,
-            InsertCustomerReturnStatus::Shipped => InvoiceStatus::Shipped,
+            InsertCustomerReturnStatus::Verified => InvoiceStatus::Verified,
         }
     }
 }

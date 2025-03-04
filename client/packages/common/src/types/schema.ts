@@ -2640,7 +2640,7 @@ export type InsertCustomerReturnResponse = InsertCustomerReturnError | InvoiceNo
 
 export enum InsertCustomerReturnStatusInput {
   New = 'NEW',
-  Shipped = 'SHIPPED'
+  Verified = 'VERIFIED'
 }
 
 export type InsertDemographicIndicatorError = {

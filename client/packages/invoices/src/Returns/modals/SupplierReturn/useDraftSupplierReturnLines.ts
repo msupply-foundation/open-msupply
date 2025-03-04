@@ -48,7 +48,6 @@ export const useDraftSupplierReturnLines = ({
   };
 
   const { mutateAsync: insert } = useReturns.document.insertSupplierReturn();
-  const { mutateAsync: updateLines } = useReturns.lines.updateSupplierLines();
 
   const save = async () => {
     const supplierReturnLines: SupplierReturnLineInput[] = draftLines.map(
@@ -58,20 +57,14 @@ export const useDraftSupplierReturnLines = ({
       }
     );
 
-    if (!returnId) {
-      await insert({
-        id: FnUtils.generateUUID(),
-        supplierId,
-        inboundShipmentId,
-        supplierReturnLines,
-        status: InsertSupplierReturnStatusInput.Shipped,
-      });
-    } else {
-      await updateLines({
-        supplierReturnId: returnId,
-        supplierReturnLines,
-      });
-    }
+    await insert({
+      id: FnUtils.generateUUID(),
+      supplierId,
+      inboundShipmentId,
+      supplierReturnLines,
+      status: InsertSupplierReturnStatusInput.Shipped,
+    });
+
 
     // TODO: error handling here
     // also need to consider what we do if the error was on the first page of the wizard

@@ -27,7 +27,7 @@ pub struct InsertInput {
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum InsertCustomerReturnStatusInput {
     New,
-    Shipped,
+    Verified,
 }
 
 #[derive(InputObject)]
@@ -181,7 +181,7 @@ impl InsertCustomerReturnStatusInput {
         use InsertCustomerReturnStatus::*;
         match self {
             InsertCustomerReturnStatusInput::New => New,
-            InsertCustomerReturnStatusInput::Shipped => Shipped,
+            InsertCustomerReturnStatusInput::Verified => Verified,
         }
     }
 }
