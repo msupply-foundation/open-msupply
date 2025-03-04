@@ -267,7 +267,8 @@ fn generate_program_indicator_values(
             Some(
                 NameFilter::new()
                     .supplying_store_id(EqualFilter::equal_to(store_id))
-                    .is_customer(true),
+                    .is_customer(true)
+                    .is_store(true),
             ),
             None,
         )?
@@ -310,6 +311,7 @@ fn generate_program_indicator_values(
                 let value_type = indicator_value_type(&line.line, &column);
                 let value = if store_pref
                     .use_consumption_and_stock_from_customers_for_internal_orders
+                    && store_pref.extra_fields_in_requisition
                     && value_type == &Some(IndicatorValueType::Number)
                     && !customer_name_ids.is_empty()
                 {
@@ -320,6 +322,7 @@ fn generate_program_indicator_values(
                                 && v.indicator_value_row.indicator_column_id == column.id
                         })
                         .map(|v| {
+                            println!("v: {:?}", v.indicator_value_row);
                             v.indicator_value_row
                                 .value
                                 .parse::<f64>()
@@ -330,6 +333,7 @@ fn generate_program_indicator_values(
                 } else {
                     default_indicator_value(&line.line, &column)
                 };
+                println!("value: {:?}", value);
 
                 let indicator_value = IndicatorValueRow {
                     id: uuid(),
