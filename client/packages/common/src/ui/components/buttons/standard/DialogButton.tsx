@@ -140,6 +140,8 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
   const ref = React.useRef<HTMLButtonElement>(null);
 
   const isKeyValid = (e: KeyboardEvent) => {
+    if (disabled) return false;
+
     switch (variant) {
       case 'save':
         return e.altKey && e.code === 'KeyS';
@@ -150,10 +152,13 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
     }
   };
 
-  useKeyboardShortcut({
-    isKeyValid,
-    onKeyPressed: () => ref.current?.click(),
-  });
+  useKeyboardShortcut(
+    {
+      isKeyValid,
+      onKeyPressed: () => ref.current?.click(),
+    },
+    [disabled, variant]
+  );
 
   return (
     <ButtonWithIcon

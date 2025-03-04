@@ -1,14 +1,14 @@
-import { useEffect } from 'react';
+import { DependencyList, useEffect } from 'react';
 
 interface UseKeyboardShortcutArgs {
   isKeyValid: (e: globalThis.KeyboardEvent) => boolean;
   onKeyPressed: () => void;
 }
 
-export const useKeyboardShortcut = ({
-  isKeyValid,
-  onKeyPressed,
-}: UseKeyboardShortcutArgs) => {
+export const useKeyboardShortcut = (
+  { isKeyValid, onKeyPressed }: UseKeyboardShortcutArgs,
+  depsArray: DependencyList
+) => {
   useEffect(() => {
     function keyDownHandler(e: globalThis.KeyboardEvent) {
       if (isKeyValid(e)) {
@@ -22,5 +22,5 @@ export const useKeyboardShortcut = ({
     return () => {
       document.removeEventListener('keydown', keyDownHandler);
     };
-  }, []);
+  }, depsArray);
 };
