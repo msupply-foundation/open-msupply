@@ -220,7 +220,7 @@ export const RequestLineEdit = ({
               />
               {line &&
                 plugins.requestRequisitionColumn?.editViewFields?.map(
-                  (Column, index) => <Column key={index} line={line} />
+                  (Field, index) => <Field key={index} line={line} />
                 )}
               {isProgram && useConsumptionData && (
                 <InputWithLabelRow
