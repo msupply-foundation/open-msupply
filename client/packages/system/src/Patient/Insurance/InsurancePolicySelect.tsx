@@ -32,6 +32,7 @@ export const InsurancePolicySelect: FC<InsurancePolicySelectProps> = ({
       label={t('label.policy-type')}
       Input={
         <Autocomplete
+          clearable={false}
           required
           options={options}
           value={defaultValue}
