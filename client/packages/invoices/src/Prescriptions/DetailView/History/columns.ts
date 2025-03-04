@@ -8,7 +8,7 @@ export const useHistoryColumns = () => {
       key: 'itemName',
     },
     {
-      label: 'label.quantity',
+      label: 'label.unit-quantity',
       key: 'unitQuantity',
     },
     {
