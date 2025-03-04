@@ -1,8 +1,16 @@
 <style>
   {% include "stocktake.css" %}
 </style>
-<div style="font-size: 13px; padding-top: 15px; text-align: center; width: 100%;">
-  <span class="bold">
-    {{t(k="report.stock-take-sheet",f="Stock take sheet")}}: {{ data.stocktake.description }} {{t(k="report.stock-take-number",f="Stock take number")}}: {{ data.stocktake.stocktakeNumber }}
-  </span>
-</div>
+
+<table class="header">
+    <tr>
+      <td><img class="logo" src="{{data.store.logo}}"/></td>
+      <td>
+        <div style="font-size: 13px; padding-top: 15px; text-align: center; width: 100%;">
+          <span class="bold">
+            {{t(k="report.stock-take-sheet",f="Stock take sheet")}}: {{ data.stocktake.description }} {{t(k="report.stock-take-number",f="Stock take number")}}: {{ data.stocktake.stocktakeNumber }}
+          </span>
+        </div>
+      </td>
+    </tr >  
+</table>
