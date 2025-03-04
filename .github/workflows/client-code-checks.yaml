@@ -5,10 +5,10 @@ on:
       - develop
   workflow_dispatch:
 
-name: Client Lint and Typescript Compilation
+name: Client Code Checks
 
 jobs:
-  pre-build-checks:
+  code-checks:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,5 +23,5 @@ jobs:
       - name: Install Dependencies
         run: yarn
 
-      - name: Compile for errors
-        run: cd client && yarn pre-build-lint
+      - name: Lint, Format, and Compile
+        run: cd client && yarn lint-and-format

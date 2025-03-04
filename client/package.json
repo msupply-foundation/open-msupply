@@ -34,8 +34,8 @@
     "i18n-unused-remove": "i18n-unused remove-unused",
     "i18n-missing": "i18n-unused display-missed",
     "eslint": "lerna run --scope @openmsupply-client/* --parallel eslint",
-    "prettier": "lerna run --scope @openmsupply-client/client --parallel prettier -- --check 'src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
-    "pre-build-lint": "yarn compile && yarn eslint && yarn format"
+    "prettier": "prettier --check 'packages/*/src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
+    "lint-and-format": "yarn compile && yarn prettier && yarn eslint"
   },
   "workspaces": {
     "packages": [
@@ -79,7 +79,7 @@
     "babel-jest": "^29.6.2",
     "babel-loader": "^9.1.2",
     "babel-preset-react-app": "^10.0.1",
-    "eslint": "^9.6.0",
+    "eslint": "^8.50.0",
     "eslint-config-google": "^0.14.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-jest-dom": "^5.0.1",
