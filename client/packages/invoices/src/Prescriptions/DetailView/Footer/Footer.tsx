@@ -112,15 +112,12 @@ export const FooterComponent: FC = () => {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
-      disabled: isDisabled,
-      disabledToastMessage: t('messages.cant-delete-generic'),
     },
     {
       label: t('button.print-prescription-label'),
       icon: <PrinterIcon />,
       onClick: handlePrintLabels,
       disabled: isDisabled || isPrintingLabels,
-      disabledToastMessage: t('heading.unable-to-print'),
     },
   ];
 
