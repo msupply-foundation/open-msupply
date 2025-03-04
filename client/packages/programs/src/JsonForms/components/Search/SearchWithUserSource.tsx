@@ -49,7 +49,7 @@ export const SearchWithUserSource = (
   const getOptionLabel = (data: PatientSchema) =>
     options?.optionString
       ? formatTemplateString(options?.optionString, data)
-      : `${data['code'] ? data['code'] + '-' : ''} ${data['firstName']} ${
+      : `${data['code'] ? data['code'] + ' -' : ''} ${data['firstName']} ${
           data['lastName']
         }`;
 
