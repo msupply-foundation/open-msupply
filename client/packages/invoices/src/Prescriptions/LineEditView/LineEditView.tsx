@@ -10,6 +10,8 @@ import {
   useNavigate,
   useParams,
   useFormErrors,
+  FormErrorProvider,
+  useDirtyCheck,
 } from '@openmsupply-client/common';
 import { ItemRowFragment, ListItems } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
@@ -46,11 +48,6 @@ export const PrescriptionLineEditView = () => {
     // Small time delay to allow the ref to change to the previous/next item in
     // the list before scrolling to it
     setTimeout(() => scrollRef.current?.scrollIntoView(), 100);
-
-  // const { isDirty, setIsDirty } = useDirtyCheck();
-
-  const formErrorState = useFormErrors();
-  const { errorState, getError, setError, hasErrors } = formErrorState;
 
   const lines =
     data?.lines.nodes.sort((a, b) => a.id.localeCompare(b.id)) ?? [];
@@ -185,8 +182,6 @@ export const PrescriptionLineEditView = () => {
               item={currentItem ?? null}
               draftLines={allDraftLines[itemId] ?? []}
               updateLines={updateAllLines}
-              setIsDirty={setIsDirty}
-              formState={formErrorState}
               setIsDirty={dirty => {
                 isDirty.current = dirty;
               }}
@@ -211,7 +206,7 @@ export const PrescriptionLineEditView = () => {
       />
       <Footer
         isSaving={isSavingLines}
-        canSave={isDirty && !hasErrors}
+        isDirty={isDirty.current}
         handleSave={onSave}
         handleCancel={() =>
           navigate(

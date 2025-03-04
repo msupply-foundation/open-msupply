@@ -22,7 +22,6 @@ interface PrescriptionLineEditProps {
   draftLines: DraftPrescriptionLine[];
   updateLines: (lines: DraftPrescriptionLine[]) => void;
   setIsDirty: (dirty: boolean) => void;
-  formState: FormErrors;
   programId?: string;
 }
 
@@ -31,7 +30,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
   draftLines: draftPrescriptionLines,
   updateLines,
   setIsDirty,
-  formState,
   programId,
 }) => {
   const isNew = item === null;
@@ -127,7 +125,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
       hasExpired={hasExpired}
       isLoading={isLoading}
       updateQuantity={onUpdateQuantity}
-      formState={formState}
       programId={programId}
     />
   );

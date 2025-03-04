@@ -39,7 +39,6 @@ import { DraftPrescriptionLine } from '../../types';
 import { isA } from '../../utils';
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
-import { FormErrors } from './useFormErrors';
 import { getPrescriptionDirections } from './getPrescriptionDirections';
 import { useAbbreviations } from '../api/hooks/useAbbreviations';
 
@@ -66,7 +65,6 @@ interface PrescriptionLineEditFormProps {
   hasExpired: boolean;
   isLoading: boolean;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
-  formState: FormErrors;
   programId?: string;
 }
 
@@ -89,7 +87,6 @@ export const PrescriptionLineEditForm: React.FC<
   hasExpired,
   isLoading,
   updateQuantity,
-  formState,
   programId,
 }) => {
   const t = useTranslation();
@@ -104,8 +101,6 @@ export const PrescriptionLineEditForm: React.FC<
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
   const [defaultDirection, setDefaultDirection] = useState<string>('');
   const [abbreviation, setAbbreviation] = useState<string>('');
-
-  console.log('formState', formState);
 
   const debouncedSetAllocationAlerts = useDebounceCallback(
     warning => setAllocationAlerts(warning),
