@@ -3512,7 +3512,7 @@ export type InvoiceFilterInput = {
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterInvoiceStatusInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
-  theirReference?: InputMaybe<EqualFilterStringInput>;
+  theirReference?: InputMaybe<StringFilterInput>;
   transportReference?: InputMaybe<EqualFilterStringInput>;
   type?: InputMaybe<EqualFilterInvoiceTypeInput>;
   userId?: InputMaybe<EqualFilterStringInput>;
@@ -6967,6 +6967,7 @@ export enum ReportContext {
 export type ReportFilterInput = {
   context?: InputMaybe<EqualFilterReportContextInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
   subContext?: InputMaybe<EqualFilterStringInput>;
 };
@@ -6976,6 +6977,7 @@ export type ReportNode = {
   argumentSchema?: Maybe<FormSchemaNode>;
   context: ReportContext;
   id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
   isCustom: Scalars['Boolean']['output'];
   /** Human readable name of the report */
   name: Scalars['String']['output'];

@@ -33,6 +33,8 @@ export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
       label={t('label.provider-name')}
       Input={
         <Autocomplete
+          clearable={false}
+          required
           options={options}
           getOptionLabel={option => option.label}
           value={{
