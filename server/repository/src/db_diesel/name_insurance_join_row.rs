@@ -82,6 +82,16 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_ids(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<NameInsuranceJoinRow>, RepositoryError> {
+        let result = name_insurance_join::table
+            .filter(name_insurance_join::id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
     pub fn find_many_by_name_id(
         &self,
         name_id: &str,

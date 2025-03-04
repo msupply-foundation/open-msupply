@@ -3346,11 +3346,11 @@ export type InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCour
 
 export type InsuranceConnector = {
   __typename: 'InsuranceConnector';
-  nodes: Array<InsuranceNode>;
+  nodes: Array<InsurancePolicyNode>;
 };
 
-export type InsuranceNode = {
-  __typename: 'InsuranceNode';
+export type InsurancePolicyNode = {
+  __typename: 'InsurancePolicyNode';
   discountPercentage: Scalars['Float']['output'];
   expiryDate: Scalars['NaiveDate']['output'];
   id: Scalars['String']['output'];
@@ -3392,7 +3392,7 @@ export type InsuranceProvidersNode = {
 
 export type InsuranceProvidersResponse = InsuranceProvidersConnector;
 
-export type InsuranceResponse = InsuranceConnector;
+export type InsuranceResponse = InsurancePolicyNode;
 
 export enum InsuranceSortFieldInput {
   ExpiryDate = 'expiryDate',
@@ -3408,6 +3408,8 @@ export type InsuranceSortInput = {
   /** Sort query result by `key` */
   key: InsuranceSortFieldInput;
 };
+
+export type InsurancesResponse = InsuranceConnector;
 
 export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & ScannedDataParseErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpsertBundledItemErrorInterface & UpsertItemVariantErrorInterface & {
   __typename: 'InternalError';
@@ -3510,7 +3512,7 @@ export type InvoiceFilterInput = {
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterInvoiceStatusInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
-  theirReference?: InputMaybe<EqualFilterStringInput>;
+  theirReference?: InputMaybe<StringFilterInput>;
   transportReference?: InputMaybe<EqualFilterStringInput>;
   type?: InputMaybe<EqualFilterInvoiceTypeInput>;
   userId?: InputMaybe<EqualFilterStringInput>;
@@ -3626,6 +3628,7 @@ export type InvoiceNode = {
   id: Scalars['String']['output'];
   insuranceDiscountAmount?: Maybe<Scalars['Float']['output']>;
   insuranceDiscountPercentage?: Maybe<Scalars['Float']['output']>;
+  insurancePolicy?: Maybe<InsurancePolicyNode>;
   invoiceNumber: Scalars['Int']['output'];
   isCancellation: Scalars['Boolean']['output'];
   lines: InvoiceLineConnector;
@@ -3857,6 +3860,7 @@ export type ItemNode = {
   isVaccine: Scalars['Boolean']['output'];
   itemDirections: Array<ItemDirectionNode>;
   margin: Scalars['Float']['output'];
+  masterLists?: Maybe<Array<MasterListNode>>;
   msupplyUniversalCode: Scalars['String']['output'];
   msupplyUniversalName: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -3879,6 +3883,11 @@ export type ItemNodeAvailableBatchesArgs = {
 
 
 export type ItemNodeAvailableStockOnHandArgs = {
+  storeId: Scalars['String']['input'];
+};
+
+
+export type ItemNodeMasterListsArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -5990,8 +5999,9 @@ export type Queries = {
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
+  insurancePolicies: InsurancesResponse;
+  insurancePolicy: InsuranceResponse;
   insuranceProviders: InsuranceProvidersResponse;
-  insurances: InsuranceResponse;
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
@@ -6370,14 +6380,20 @@ export type QueriesInsertPrescriptionArgs = {
 };
 
 
-export type QueriesInsuranceProvidersArgs = {
+export type QueriesInsurancePoliciesArgs = {
+  nameId: Scalars['String']['input'];
+  sort?: InputMaybe<Array<InsuranceSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
 
-export type QueriesInsurancesArgs = {
-  nameId: Scalars['String']['input'];
-  sort?: InputMaybe<Array<InsuranceSortInput>>;
+export type QueriesInsurancePolicyArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesInsuranceProvidersArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -6951,6 +6967,7 @@ export enum ReportContext {
 export type ReportFilterInput = {
   context?: InputMaybe<EqualFilterReportContextInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
   subContext?: InputMaybe<EqualFilterStringInput>;
 };
@@ -6960,6 +6977,7 @@ export type ReportNode = {
   argumentSchema?: Maybe<FormSchemaNode>;
   context: ReportContext;
   id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
   isCustom: Scalars['Boolean']['output'];
   /** Human readable name of the report */
   name: Scalars['String']['output'];
@@ -7015,6 +7033,7 @@ export type RequisitionFilterInput = {
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  elmisCode?: InputMaybe<EqualFilterStringInput>;
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
@@ -7583,7 +7602,6 @@ export type StockLineNode = {
   location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
   locationName?: Maybe<Scalars['String']['output']>;
-  masterList: Array<MasterListNode>;
   note?: Maybe<Scalars['String']['output']>;
   onHold: Scalars['Boolean']['output'];
   packSize: Scalars['Float']['output'];
@@ -7591,11 +7609,6 @@ export type StockLineNode = {
   storeId: Scalars['String']['output'];
   supplierName?: Maybe<Scalars['String']['output']>;
   totalNumberOfPacks: Scalars['Float']['output'];
-};
-
-
-export type StockLineNodeMasterListArgs = {
-  storeId: Scalars['String']['input'];
 };
 
 export type StockLineReducedBelowZero = InsertInventoryAdjustmentErrorInterface & InsertRepackErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {

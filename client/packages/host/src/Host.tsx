@@ -23,6 +23,7 @@ import {
   createBrowserRouter,
   createRoutesFromElements,
   RouterProvider,
+  initialiseI18n,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
@@ -107,6 +108,8 @@ const router = createBrowserRouter(
     />
   )
 );
+
+initialiseI18n();
 
 const Host = () => (
   <React.Suspense fallback={<div />}>

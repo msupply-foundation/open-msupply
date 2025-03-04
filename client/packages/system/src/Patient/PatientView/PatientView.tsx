@@ -147,6 +147,7 @@ const PatientDetailView = ({
           address1: createNewPatient.address1,
           isDeceased: createNewPatient.isDeceased,
           dateOfDeath: createNewPatient.dateOfDeath,
+          extension: {},
         },
         isCreating: true,
       };
@@ -174,6 +175,7 @@ const PatientDetailView = ({
                   name: currentPatient.nextOfKinName ?? undefined,
                 }
               : undefined,
+          extension: {},
         },
         isCreating: false,
       };
@@ -215,7 +217,10 @@ const PatientDetailView = ({
           const patientData = data as PatientSchema;
           const newData = Object.fromEntries(
             Object.entries(data ?? {}).filter(
-              ([key]) => key !== 'dateOfBirthIsEstimated' && key !== 'nextOfKin'
+              ([key]) =>
+                key !== 'dateOfBirthIsEstimated' &&
+                key !== 'nextOfKin' &&
+                key !== 'extension'
             )
           );
           // map nextOfKin object to individual fields
@@ -279,14 +284,6 @@ const PatientDetailView = ({
     title: t('heading.are-you-sure'),
   });
 
-  const showCancelConfirmation = useConfirmationModal({
-    onConfirm: () => {
-      navigate(-1);
-    },
-    message: t('messages.confirm-cancel-generic'),
-    title: t('heading.are-you-sure'),
-  });
-
   if (isLoading) return <BasicSpinner />;
 
   return (
@@ -299,7 +296,6 @@ const PatientDetailView = ({
         validationError={validationError}
         inputData={inputData}
         showSaveConfirmation={showSaveConfirmation}
-        showCancelConfirmation={showCancelConfirmation}
       />
     </Box>
   );

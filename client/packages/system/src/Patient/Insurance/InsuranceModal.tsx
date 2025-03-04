@@ -10,11 +10,10 @@ import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
   BaseDatePickerInput,
   BasicTextInput,
-  Checkbox,
   DialogButton,
   InputWithLabelRow,
   NumericTextInput,
-  Typography,
+  Switch,
 } from '@common/components';
 import { Box, Stack } from '@openmsupply-client/common';
 import {
@@ -24,7 +23,7 @@ import {
 import { usePatient } from '../api';
 import { InsurancePolicySelect } from './InsurancePolicySelect';
 import { InsuranceProvidersSelect } from './InsuranceProvidersSelect';
-import { useInsurances } from '../apiModern/hooks/useInsurances';
+import { useInsurancePolicies } from '../apiModern/hooks/useInsurancesPolicies';
 
 export const InsuranceModal: FC = (): ReactElement => {
   const t = useTranslation();
@@ -46,7 +45,7 @@ export const InsuranceModal: FC = (): ReactElement => {
     haveInsuranceId,
     draft,
     updatePatch: updateDraft,
-  } = useInsurances(nameId);
+  } = useInsurancePolicies(nameId);
 
   const { resetRequiredErrors, getErrorProps, hasErrors } = useFormErrorsHook();
 
@@ -106,46 +105,108 @@ export const InsuranceModal: FC = (): ReactElement => {
         '& .MuiDialogContent-root': { display: 'flex', alignItems: 'center' },
       }}
     >
-      <>
-        <Stack gap={8} flexDirection="row">
-          <Box display="flex" flexDirection="column" gap={2}>
-            <InputWithLabelRow
-              label={t('label.policy-number-family')}
-              Input={
-                <BasicTextInput
-                  {...getErrorProps({
-                    code: t('label.policy-number-family'),
-                    value: draft.policyNumberFamily,
-                    required: !draft.policyNumberPerson,
-                  })}
-                  disabled={haveInsuranceId}
-                  onChange={event => {
+      <Stack gap={8} flexDirection="row">
+        <Box display="flex" flexDirection="column" gap={2}>
+          <InputWithLabelRow
+            label={t('label.policy-number-family')}
+            Input={
+              <BasicTextInput
+              {...getErrorProps({
+                code: t('label.policy-number-family'),
+                value: draft.policyNumberFamily,
+                required: !draft.policyNumberPerson,
+              })}
+                disabled={haveInsuranceId}
+                value={draft.policyNumberFamily}
+                onChange={event => {
+                  updatePatch({
+                    policyNumberFamily: event.target.value,
+                  });
+                }}
+              />
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.policy-number-person')}
+            Input={
+              <BasicTextInput
+              {...getErrorProps({
+                code: t('label.policy-number-person'),
+                value: draft.policyNumberPerson,
+                required: !draft.policyNumberFamily,
+                customValidation: () => draft.policyNumberPerson !== '666',
+                customErrorMessage:
+                  'That is the devils number and is not allowed',
+              })}
+                disabled={haveInsuranceId}
+                value={draft.policyNumberPerson}
+                onChange={event => {
+                  updatePatch({
+                    policyNumberPerson: event.target.value,
+                  });
+                }}
+              />
+            }
+          />
+          <InsurancePolicySelect
+            policyType={draft.policyType}
+            onChange={value =>
+              updatePatch({
+                policyType: value,
+              })
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.active')}
+            Input={
+              <Switch
+                onChange={() => updatePatch({ isActive: !draft.isActive })}
+                checked={draft.isActive}
+                switchSx={{ left: '-13px' }}
+                color="secondary"
+              />
+            }
+          />
+        </Box>
+        <Box display="flex" flexDirection="column" gap={2}>
+          <InputWithLabelRow
+            label={t('label.expiry-date')}
+            Input={
+              <BaseDatePickerInput
+                required
+                value={DateUtils.getNaiveDate(draft.expiryDate)}
+                onChange={date => {
+                  if (date)
                     updatePatch({
                       policyNumberFamily: event.target.value,
                     });
-                  }}
-                />
-              }
-            />
-            <InputWithLabelRow
-              label={t('label.policy-number-person')}
-              Input={
-                <BasicTextInput
-                  {...getErrorProps({
-                    code: t('label.policy-number-person'),
-                    value: draft.policyNumberPerson,
-                    required: !draft.policyNumberFamily,
-                    customValidation: () => draft.policyNumberPerson !== '666',
-                    customErrorMessage:
-                      'That is the devils number and is not allowed',
-                  })}
-                  disabled={haveInsuranceId}
-                  onChange={event => {
+                }}
+              />
+            }
+          />
+          <InsuranceProvidersSelect
+            insuranceProviderId={draft.insuranceProviderId}
+            onChange={value => {
+              updatePatch({
+                insuranceProviderId: value,
+              });
+            }}
+          />
+          <InputWithLabelRow
+            label={t('label.discount-rate')}
+            Input={
+              <NumericTextInput
+                required
+                min={0}
+                decimalLimit={2}
+                value={draft.discountPercentage ?? 0}
+                onChange={value => {
+                  if (value) {
                     updatePatch({
                       policyNumberPerson: event.target.value,
                     });
                   }}
-                />
+                />}
               }
             />
             <InsurancePolicySelect

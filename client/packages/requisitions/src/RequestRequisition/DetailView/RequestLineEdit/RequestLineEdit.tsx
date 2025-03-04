@@ -20,6 +20,7 @@ import {
   useAuthContext,
   useNavigate,
   useToggle,
+  useWindowDimensions,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { Footer } from './Footer';
@@ -83,6 +84,8 @@ export const RequestLineEdit = ({
     ?.sort((a, b) => a.name.name.localeCompare(b.name.name))
     .sort((a, b) => b.amcInUnits - a.amcInUnits)
     .sort((a, b) => b.stockInUnits - a.stockInUnits);
+  const { width } = useWindowDimensions();
+
   return (
     <Box display="flex" flexDirection="column" padding={2}>
       <Box display="flex" justifyContent="space-between">
@@ -412,7 +415,7 @@ export const RequestLineEdit = ({
         )}
       </Box>
       {showItemInformation && (
-        <Box paddingTop={1} maxHeight={200} width="100%" display="flex">
+        <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
           <ItemInformationView
             itemInformation={itemInformationSorted}
             storeNameId={store?.nameId}
