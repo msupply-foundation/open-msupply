@@ -25,10 +25,6 @@ export const createStatusLog = (requisition: RequestFragment) => {
   return statusLog;
 };
 
-// interface FooterProps {
-//   isDisabled: boolean;
-// }
-
 export const Footer: FC = () => {
   const { data } = useRequest.document.get();
   const t = useTranslation();
