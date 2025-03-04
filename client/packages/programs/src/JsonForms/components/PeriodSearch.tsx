@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { z } from 'zod';
 import {
@@ -31,8 +31,9 @@ const UIComponent = (props: ControlProps) => {
   const programId = options?.findByProgram
     ? extractProperty(core?.data, 'programId')
     : null;
+
   const today = new Date();
-  const { data, isFetching, fetchNextPage } = usePeriodList(
+  const { data, isFetching, fetchNextPage, isRefetching } = usePeriodList(
     RECORDS_PER_PAGE,
     programId,
     options?.findByProgram ? !!programId : true,
@@ -42,16 +43,21 @@ const UIComponent = (props: ControlProps) => {
       },
     }
   );
-  const periodId = extractProperty(core?.data, 'periodId');
 
-  if (periodId && !period) {
-    const period = data?.pages
-      ?.find(page => page.data.nodes.some(period => period.id === periodId))
-      ?.data.nodes.find(period => period.id === periodId);
-    if (period) {
-      setPeriod(period);
+  const periodId = extractProperty(core?.data, 'periodId');
+  useMemo(() => {
+    if (periodId && !period) {
+      const period = data?.pages
+        ?.find(page => page.data.nodes.some(period => period.id === periodId))
+        ?.data.nodes.find(period => period.id === periodId);
+      if (period) {
+        setPeriod(period);
+      }
     }
-  }
+    if (isRefetching) {
+      setPeriod(null);
+    }
+  }, [periodId, period, data, isRefetching]);
 
   const pageNumber = data?.pages?.length
     ? (data.pages[data.pages.length - 1]?.pageNumber ?? 0)
