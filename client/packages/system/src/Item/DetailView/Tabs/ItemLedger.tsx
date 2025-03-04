@@ -45,7 +45,7 @@ const ItemLedgerTable = ({
         key: 'type',
         label: 'label.type',
         accessor: ({ rowData }) =>
-          `${t(getInvoiceLocalisationKey(rowData.invoiceType))} #${rowData.invoiceNumber}`,
+          t(getInvoiceLocalisationKey(rowData.invoiceType)),
         sortable: false,
       },
       {
