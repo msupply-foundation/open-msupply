@@ -2,7 +2,7 @@ import React from 'react';
 import { ButtonProps } from '@mui/material';
 import { ButtonWithIcon } from './ButtonWithIcon';
 import { PlusCircleIcon } from '@common/icons';
-import { useKeyboardShortcut } from '@common/hooks';
+import { useRegisterActions } from 'kbar';
 
 export interface AddButtonProps extends ButtonProps {
   onClick: () => void;
@@ -29,10 +29,14 @@ export const AddButton = React.forwardRef<HTMLButtonElement, AddButtonProps>(
     },
     ref
   ) => {
-    useKeyboardShortcut({
-      isKeyValid: e => e.altKey && e.code === 'KeyN',
-      onKeyPressed: onClick,
-    });
+    useRegisterActions([
+      {
+        id: 'add',
+        name: `${label} (Alt/Option+N)`,
+        shortcut: ['Alt+KeyN'],
+        perform: onClick,
+      },
+    ]);
 
     return (
       <ButtonWithIcon
