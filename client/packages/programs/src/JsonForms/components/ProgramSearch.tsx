@@ -3,6 +3,7 @@ import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import {
   Autocomplete,
   DetailInputWithLabelRow,
+  extractProperty,
   Typography,
 } from '@openmsupply-client/common';
 import {
@@ -11,7 +12,7 @@ import {
   useZodOptionsValidation,
 } from '../common';
 import { ProgramFragment, useProgramList } from '../../api';
-import { withJsonFormsControlProps } from '@jsonforms/react';
+import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import { z } from 'zod';
 
 export const programSearchTester = rankWith(10, uiTypeIs('ProgramSearch'));
@@ -29,16 +30,25 @@ const UIComponent = (props: ControlProps) => {
   );
 
   const { handleChange, label, path } = props;
+  const { core } = useJsonForms();
   const { data, isLoading } = useProgramList({
     isImmunisation: props.uischema.options?.['programType'] === 'immunisation',
   });
   const [program, setProgram] = useState<ProgramFragment | null>(null);
+  const programId = extractProperty(core?.data, 'programId');
 
   const onChange = async (program: ProgramFragment) => {
     setProgram(program);
     handleChange(path, program.id);
-    handleChange('elmisCode', program.elmisCode);
+    handleChange('elmisCode', program.elmisCode ?? '');
   };
+
+  if (programId && !program) {
+    const program = data?.nodes.find(program => program.id === programId);
+    if (program) {
+      setProgram(program);
+    }
+  }
 
   if (zErrors) return <Typography color="error">{zErrors}</Typography>;
 
