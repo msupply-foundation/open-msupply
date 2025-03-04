@@ -1878,6 +1878,7 @@
   "error.plugin-payment-amount-outstanding": "Le montant payé est inférieur au montant dû",
   "label.business": "Entreprises",
   "label.active": "Actif",
+  "label.insurance-active": "Active",
   "label.personal": "Personnel(le)",
   "label.payment-amount-outstanding": "Montant restant à payer",
   "message.cannot-delete-line-linked-to-shipment": "Impossible de supprimer une ou plusieurs lignes car elles sont liées à une ou plusieurs livraisons",
