@@ -21,7 +21,7 @@ const defaultDraftInsurance: DraftInsurance = {
   policyNumberFamily: '',
   policyNumberPerson: '',
   insuranceProviderId: '',
-  policyType: '' as InsurancePolicyNodeType,
+  policyType: InsurancePolicyNodeType.Personal as InsurancePolicyNodeType,
   isActive: true,
   discountPercentage: 0,
   expiryDate: '',
