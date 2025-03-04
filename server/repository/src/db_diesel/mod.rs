@@ -367,8 +367,9 @@ pub struct JsonRawRow {
     pub json_row: String,
 }
 // TODO should accept parameters
-pub fn raw_query(connection: &StorageConnection, query: String) -> Vec<JsonRawRow> {
-    sql_query(&query)
-        .get_results::<JsonRawRow>(connection.lock().connection())
-        .unwrap()
+pub fn raw_query(
+    connection: &StorageConnection,
+    query: String,
+) -> Result<Vec<JsonRawRow>, RepositoryError> {
+    Ok(sql_query(&query).get_results::<JsonRawRow>(connection.lock().connection())?)
 }

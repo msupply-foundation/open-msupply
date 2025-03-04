@@ -19,6 +19,7 @@ import {
   useRegisterActions,
   useConfirmationModal,
   useDetailPanelStore,
+  EnvUtils,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Action } from 'kbar/lib/types';
@@ -100,12 +101,12 @@ const Actions = () => {
     title: t('heading.logout-confirm'),
   });
   const { close, open } = useDetailPanelStore();
+  const altOrOptionString = EnvUtils.os === 'Mac OS' ? 'Option' : 'Alt';
 
   const actions = [
     {
       id: 'navigation-drawer:toggle',
-      name: `${t('cmdk.drawer-toggle')} (Alt/Option+N)`,
-      shortcut: ['Alt+KeyN'],
+      name: t('cmdk.drawer-toggle'),
       keywords: 'drawer, close',
       perform: () => drawer.toggle(),
     },
@@ -150,7 +151,7 @@ const Actions = () => {
     },
     {
       id: 'navigation:dashboard',
-      name: `${t('cmdk.goto-dashboard')} (Alt/Option+D)`,
+      name: `${t('cmdk.goto-dashboard')} (${altOrOptionString}+D)`,
       shortcut: ['Alt+KeyD'],
       keywords: 'dashboard',
       perform: () => navigate(RouteBuilder.create(AppRoute.Dashboard).build()),
@@ -245,28 +246,28 @@ const Actions = () => {
     },
     {
       id: 'action:logout',
-      name: `${t('logout')} (Alt/Option+Shift+L)`,
+      name: `${t('logout')} (${altOrOptionString}+Shift+L)`,
       shortcut: ['Alt+Shift+KeyL'],
       keywords: 'logout',
       perform: () => confirmLogout({}),
     },
     {
       id: 'action:easter-egg',
-      name: `${t('easter-egg')} (Alt/Option+Shift+E)`,
+      name: `${t('easter-egg')} (${altOrOptionString}+Shift+E)`,
       shortcut: ['Alt+Shift+KeyE'],
       keywords: 'easter egg game',
       perform: showEasterEgg,
     },
     {
       id: 'navigation:help',
-      name: `${t('help')} (Alt/Option+H)`,
+      name: `${t('help')} (${altOrOptionString}+H)`,
       keywords: 'help, docs, guide',
       shortcut: ['Alt+KeyH'],
       perform: () => navigate(RouteBuilder.create(AppRoute.Help).build()),
     },
     {
       id: 'action:sync',
-      name: `${t('sync')} (Alt/Option+Shift+S)`,
+      name: `${t('sync')} (${altOrOptionString}+Shift+S)`,
       keywords: 'sync',
       shortcut: ['Alt+Shift+KeyS'],
       perform: showSync,
@@ -275,8 +276,7 @@ const Actions = () => {
 
   actions.push({
     id: 'navigation:settings',
-    name: `${t('settings')} (Alt/Option+S)`,
-    shortcut: ['Alt+KeyS'],
+    name: t('settings'),
     keywords: 'settings',
     perform: () => navigate(RouteBuilder.create(AppRoute.Settings).build()),
   });
@@ -308,14 +308,14 @@ const Actions = () => {
     actions.push(
       {
         id: 'action:more-open',
-        name: `${t('cmdk.more-info-open')} (Alt/Option+M)`,
+        name: `${t('cmdk.more-info-open')} (${altOrOptionString}+M)`,
         keywords: 'more open',
         shortcut: ['Alt+KeyM'],
         perform: open,
       },
       {
         id: 'action:more-close',
-        name: `${t('cmdk.more-info-close')} (Alt/Option+Shift+M)`,
+        name: `${t('cmdk.more-info-close')} (${altOrOptionString}+Shift+M)`,
         keywords: 'more close',
         shortcut: ['Alt+Shift+KeyM'],
         perform: close,

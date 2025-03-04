@@ -162,7 +162,7 @@ export const InsuranceModal: FC = (): ReactElement => {
             }
           />
           <InputWithLabelRow
-            label={t('label.active')}
+            label={t('label.insurance-active')}
             Input={
               <Switch
                 onChange={() => updatePatch({ isActive: !draft.isActive })}
