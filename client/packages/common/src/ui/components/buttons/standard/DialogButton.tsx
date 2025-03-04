@@ -12,6 +12,7 @@ import {
 } from '@common/icons';
 import { useKeyboardShortcut } from '@common/hooks';
 import { ButtonWithIcon } from './ButtonWithIcon';
+import { useRegisterActions } from 'kbar';
 
 type DialogButtonVariant =
   | 'cancel'
@@ -152,6 +153,31 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
     }
   };
 
+  const getButtonActions = () => {
+    switch (variant) {
+      case 'save':
+        return [
+          {
+            id: 'button:save',
+            name: `${customLabel ?? t(labelKey)} (Alt/Option+S)`,
+            perform: () => ref.current?.click(),
+          },
+        ];
+      case 'cancel':
+        return [
+          {
+            id: 'button:cancel',
+            name: `${customLabel ?? t(labelKey)} (Escape)`,
+            keywords: 'cancel',
+            perform: () => ref.current?.click(),
+          },
+        ];
+      default:
+        return [];
+    }
+  };
+
+  // registers a keyboard shortcut for the button which fires even when focus is in an input
   useKeyboardShortcut(
     {
       isKeyValid,
@@ -159,6 +185,9 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
     },
     [disabled, variant]
   );
+
+  // adds the command to the cmd+K menu so that the keys are visible
+  useRegisterActions(getButtonActions(), [disabled, variant]);
 
   return (
     <ButtonWithIcon
