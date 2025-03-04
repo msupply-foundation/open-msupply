@@ -566,6 +566,7 @@
   "label.provider-name": "Provider name",
   "label.actions": "Actions",
   "label.active": "Active",
+  "label.insurance-active": "Active",
   "label.add-another": "Add another",
   "label.add-batch": "Add batch",
   "label.add-bundled-item": "Add bundled item",
