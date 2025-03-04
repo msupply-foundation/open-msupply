@@ -21,7 +21,10 @@ jobs:
           node-version: 20
 
       - name: Install Dependencies
-        run: cd client && yarn
+        run: |
+          cd client
+          rm -rf node_modules
+          yarn install --frozen-lockfile
 
       - name: Lint, Format, and Compile
         run: cd client && yarn lint-and-format
