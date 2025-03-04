@@ -4,7 +4,6 @@ import {
   useTranslation,
   Typography,
   FlatButton,
-  useNotification,
   useTableStore,
   MinusCircleIcon,
 } from '@openmsupply-client/common';
@@ -27,21 +26,7 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
   selectedRowCount,
 }): ReactElement => {
   const t = useTranslation();
-  const { info } = useNotification();
   const { clearSelected } = useTableStore();
-
-  const showDisabledActionToastMessage = (disabledToastMessage: string) =>
-    info(disabledToastMessage);
-
-  const handleDisabledClick = (
-    disabled?: boolean,
-    disabledToastMessage?: string
-  ) => {
-    if (!disabled) return undefined;
-    return showDisabledActionToastMessage(
-      disabledToastMessage ?? `${t('messages.cannot-perform-action')}`
-    );
-  };
 
   return (
     <Stack
@@ -65,30 +50,17 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
         >
           {selectedRowCount} {t('label.selected')}
         </Typography>
-        {actions.map(
-          ({
-            label,
-            icon,
-            onClick,
-            disabled,
-            shouldShrink,
-            disabledToastMessage,
-          }) => (
-            <div
-              key={label}
-              onClick={handleDisabledClick(disabled, disabledToastMessage)}
-            >
-              <FlatButton
-                startIcon={icon}
-                label={label}
-                disabled={disabled}
-                onClick={onClick}
-                // Flatbutton doesn't shrink by default but we want it to in actions footer
-                shouldShrink={shouldShrink ?? true}
-              />
-            </div>
-          )
-        )}
+        {actions.map(({ label, icon, onClick, disabled, shouldShrink }) => (
+          <FlatButton
+            key={label}
+            startIcon={icon}
+            label={label}
+            disabled={disabled}
+            onClick={onClick}
+            // Flatbutton doesn't shrink by default but we want it to in actions footer
+            shouldShrink={shouldShrink ?? true}
+          />
+        ))}
       </Stack>
       <FlatButton
         startIcon={<MinusCircleIcon />}
