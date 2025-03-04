@@ -111,11 +111,11 @@ export const InsuranceModal: FC = (): ReactElement => {
             label={t('label.policy-number-family')}
             Input={
               <BasicTextInput
-              {...getErrorProps({
-                code: t('label.policy-number-family'),
-                value: draft.policyNumberFamily,
-                required: !draft.policyNumberPerson,
-              })}
+                {...getErrorProps({
+                  code: t('label.policy-number-family'),
+                  value: draft.policyNumberFamily,
+                  required: !draft.policyNumberPerson,
+                })}
                 disabled={haveInsuranceId}
                 value={draft.policyNumberFamily}
                 onChange={event => {
@@ -130,14 +130,14 @@ export const InsuranceModal: FC = (): ReactElement => {
             label={t('label.policy-number-person')}
             Input={
               <BasicTextInput
-              {...getErrorProps({
-                code: t('label.policy-number-person'),
-                value: draft.policyNumberPerson,
-                required: !draft.policyNumberFamily,
-                customValidation: () => draft.policyNumberPerson !== '666',
-                customErrorMessage:
-                  'That is the devils number and is not allowed',
-              })}
+                {...getErrorProps({
+                  code: t('label.policy-number-person'),
+                  value: draft.policyNumberPerson,
+                  required: !draft.policyNumberFamily,
+                  customValidation: () => draft.policyNumberPerson !== '666',
+                  customErrorMessage:
+                    'That is the devils number and is not allowed',
+                })}
                 disabled={haveInsuranceId}
                 value={draft.policyNumberPerson}
                 onChange={event => {
@@ -149,6 +149,11 @@ export const InsuranceModal: FC = (): ReactElement => {
             }
           />
           <InsurancePolicySelect
+            {...getErrorProps({
+              code: t('label.policy-type'),
+              value: draft.policyType,
+              required: true,
+            })}
             policyType={draft.policyType}
             onChange={value =>
               updatePatch({
@@ -173,18 +178,27 @@ export const InsuranceModal: FC = (): ReactElement => {
             label={t('label.expiry-date')}
             Input={
               <BaseDatePickerInput
-                required
+                {...getErrorProps({
+                  code: t('label.expiry-date'),
+                  value: DateUtils.getNaiveDate(draft.expiryDate),
+                  required: true,
+                })}
                 value={DateUtils.getNaiveDate(draft.expiryDate)}
                 onChange={date => {
                   if (date)
                     updatePatch({
-                      policyNumberFamily: event.target.value,
+                      expiryDate: formatDateTime.customDate(date, 'yyyy-MM-dd'),
                     });
                 }}
               />
             }
           />
           <InsuranceProvidersSelect
+            {...getErrorProps({
+              code: t('label.provider-name'),
+              value: draft.insuranceProviderId,
+              required: true,
+            })}
             insuranceProviderId={draft.insuranceProviderId}
             onChange={value => {
               updatePatch({
@@ -196,135 +210,32 @@ export const InsuranceModal: FC = (): ReactElement => {
             label={t('label.discount-rate')}
             Input={
               <NumericTextInput
-                required
+                {...getErrorProps({
+                  code: t('label.discount-rate'),
+                  value: draft.discountPercentage,
+                  required: true,
+                  customErrorMessage:
+                    draft.discountPercentage >= 110
+                      ? 'Waaaay to big!'
+                      : undefined,
+                })}
                 min={0}
+                max={100}
                 decimalLimit={2}
                 value={draft.discountPercentage ?? 0}
                 onChange={value => {
                   if (value) {
                     updatePatch({
-                      policyNumberPerson: event.target.value,
+                      discountPercentage: value,
                     });
-                  }}
-                />}
-              }
-            />
-            <InsurancePolicySelect
-              {...getErrorProps({
-                code: t('label.policy-type'),
-                value: draft.policyType,
-                required: true,
-              })}
-              policyType={draft.policyType}
-              onChange={value =>
-                updatePatch({
-                  policyType: value,
-                })
-              }
-            />
-            <InputWithLabelRow
-              label={t('label.status')}
-              Input={
-                <Box sx={{ gap: 2, display: 'flex', flexDirection: 'row' }}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Checkbox
-                      checked={draft.isActive}
-                      onChange={() => updatePatch({ isActive: true })}
-                    />
-                    <Typography variant="body1">{t('label.active')}</Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Checkbox
-                      checked={!draft.isActive}
-                      onChange={() => updatePatch({ isActive: false })}
-                    />
-                    <Typography variant="body1">
-                      {t('label.inactive')}
-                    </Typography>
-                  </Box>
-                </Box>
-              }
-            />
-          </Box>
-          <Box display="flex" flexDirection="column" gap={2}>
-            <InputWithLabelRow
-              label={t('label.expiry-date')}
-              Input={
-                <BaseDatePickerInput
-                  {...getErrorProps({
-                    code: t('label.expiry-date'),
-                    value: DateUtils.getNaiveDate(draft.expiryDate),
-                    required: true,
-                  })}
-                  value={DateUtils.getNaiveDate(draft.expiryDate)}
-                  onChange={date => {
-                    if (date)
-                      updatePatch({
-                        expiryDate: formatDateTime.customDate(
-                          date,
-                          'yyyy-MM-dd'
-                        ),
-                      });
-                  }}
-                />
-              }
-            />
-            <InsuranceProvidersSelect
-              {...getErrorProps({
-                code: t('label.provider-name'),
-                value: draft.insuranceProviderId,
-                required: true,
-              })}
-              insuranceProviderId={draft.insuranceProviderId}
-              onChange={value => {
-                updatePatch({
-                  insuranceProviderId: value,
-                });
-              }}
-            />
-            <InputWithLabelRow
-              label={t('label.discount-rate')}
-              Input={
-                <NumericTextInput
-                  {...getErrorProps({
-                    code: t('label.discount-rate'),
-                    value: draft.discountPercentage,
-                    required: true,
-                    customErrorMessage:
-                      draft.discountPercentage >= 110
-                        ? 'Waaaay to big!'
-                        : undefined,
-                  })}
-                  min={0}
-                  max={100}
-                  decimalLimit={2}
-                  value={draft.discountPercentage ?? 0}
-                  onChange={value => {
-                    if (value) {
-                      updatePatch({
-                        discountPercentage: value,
-                      });
-                    }
-                  }}
-                />
-              }
-            />
-          </Box>
-        </Stack>
-        <ErrorDisplay />
-      </>
+                  }
+                }}
+              />
+            }
+          />
+        </Box>
+      </Stack>
+      <ErrorDisplay />
     </Modal>
   );
 };
