@@ -26,7 +26,7 @@ import {
   InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
   ItemVariantInputCell,
-  packSizeEntryCell,
+  PackSizeEntryCell,
   useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
 import {
@@ -151,7 +151,8 @@ const getInventoryAdjustmentReasonInputColumn = (
 // If this is not extracted to it's own component and used directly in Cell:
 // cell will be re rendered anytime rowData changes, which causes it to loose focus
 // if number of packs is changed and tab is pressed (in quick succession)
-const PackUnitEntryCell = packSizeEntryCell<DraftStocktakeLine>({
+// eslint-disable-next-line new-cap
+const PackUnitEntryCell = PackSizeEntryCell<DraftStocktakeLine>({
   getIsDisabled: r => !!r?.stockLine,
 });
 

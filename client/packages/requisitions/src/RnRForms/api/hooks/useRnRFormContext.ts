@@ -18,7 +18,6 @@ export const useRnRFormContext = create<RnRFormContext>(set => ({
     })),
   clearDraftLine: id =>
     set(state => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [id]: _, ...draftLines } = state.draftLines;
       return {
         ...state,

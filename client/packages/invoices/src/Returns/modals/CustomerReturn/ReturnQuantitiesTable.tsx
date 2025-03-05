@@ -16,7 +16,7 @@ import {
 } from '@openmsupply-client/system';
 import React, { useMemo } from 'react';
 import { GenerateCustomerReturnLineFragment } from '../../api';
-import { packSizeEntryCell } from '@openmsupply-client/system';
+import { PackSizeEntryCell } from '@openmsupply-client/system';
 
 export const QuantityReturnedTableComponent = ({
   lines,
@@ -130,7 +130,8 @@ export const QuantityReturnedTableComponent = ({
 export const QuantityReturnedTable = React.memo(QuantityReturnedTableComponent);
 
 // Input cells can't be defined inline, otherwise they lose focus on re-render
-const PackUnitEntryCell = packSizeEntryCell<GenerateCustomerReturnLineFragment>(
+// eslint-disable-next-line new-cap
+const PackUnitEntryCell = PackSizeEntryCell<GenerateCustomerReturnLineFragment>(
   {}
 );
 

@@ -65,6 +65,10 @@ const InputWithLabel = ({ autoFocus, data, disabled }: InputWithLabelProps) => {
     [t]
   );
 
+  if (!data?.value) {
+    return null;
+  }
+
   const sharedProps = {
     disabled,
     autoFocus,
@@ -124,18 +128,17 @@ export const IndicatorLineEdit = ({
   return (
     <>
       <Box display="flex" flexDirection="column">
-        {columns.map((column, i) => {
-          return column.value != null ? (
-            <InputWithLabel
-              key={column.value?.id}
-              data={column}
-              disabled={disabled}
-              autoFocus={i === 0}
-            />
-          ) : (
-            <></>
-          );
-        })}
+        {columns.map(
+          (column, i) =>
+            column.value != null && (
+              <InputWithLabel
+                key={column.value?.id}
+                data={column}
+                disabled={disabled}
+                autoFocus={i === 0}
+              />
+            )
+        )}
       </Box>
       {showInfo && (
         <Box paddingTop={1} maxHeight={200} width="100%" display="flex">
