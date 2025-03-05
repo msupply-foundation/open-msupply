@@ -13,14 +13,14 @@ export const useDraftSupplierReturnLines = ({
   itemId,
   returnId,
   inboundShipmentId,
-  insertStatus = InsertSupplierReturnStatusInput.New,
+  status: insertStatus = InsertSupplierReturnStatusInput.New,
 }: {
   stockLineIds: string[];
   supplierId: string;
   itemId?: string;
   returnId?: string;
   inboundShipmentId?: string;
-  insertStatus?: InsertSupplierReturnStatusInput;
+  status?: InsertSupplierReturnStatusInput;
 }) => {
   const [draftLines, setDraftLines] = React.useState<
     GenerateSupplierReturnLineFragment[]

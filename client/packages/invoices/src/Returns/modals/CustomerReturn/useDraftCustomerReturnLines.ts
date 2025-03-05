@@ -14,14 +14,14 @@ export const useDraftCustomerReturnLines = ({
   itemId,
   returnId,
   outboundShipmentId,
-  insertStatus = InsertCustomerReturnStatusInput.New,
+  status: insertStatus = InsertCustomerReturnStatusInput.New,
 }: {
   outboundShipmentLineIds: string[];
   customerId: string;
   itemId?: string;
   returnId?: string;
   outboundShipmentId?: string;
-  insertStatus?: InsertCustomerReturnStatusInput;
+  status?: InsertCustomerReturnStatusInput;
 }) => {
   const [draftLines, setDraftLines] = React.useState<
     GenerateCustomerReturnLineFragment[]

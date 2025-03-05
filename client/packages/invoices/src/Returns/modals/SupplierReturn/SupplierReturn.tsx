@@ -70,7 +70,7 @@ export const SupplierReturnEditModal = ({
     returnId,
     itemId,
     inboundShipmentId,
-    insertStatus: status,
+    status,
   });
 
   useEffect(() => {
