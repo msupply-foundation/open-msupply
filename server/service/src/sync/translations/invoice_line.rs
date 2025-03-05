@@ -84,6 +84,7 @@ pub struct LegacyTransLineRow {
     pub option_id: Option<String>,
     #[serde(rename = "foreign_currency_price")]
     pub foreign_currency_price_before_tax: Option<f64>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "om_item_variant_id")]
     pub item_variant_id: Option<String>,
 }
