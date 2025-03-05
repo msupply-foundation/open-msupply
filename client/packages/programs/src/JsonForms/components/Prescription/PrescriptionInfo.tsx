@@ -39,7 +39,12 @@ export const PrescriptionInfo = ({ prescription }: PrescriptionInfoProps) => {
 
   if (!prescription) {
     return (
-      <Alert severity="info">
+      <Alert
+        severity="info"
+        sx={{
+          marginBottom: 1,
+        }}
+      >
         <Box>{t('messages.prescription-will-be-created')}</Box>
       </Alert>
     );

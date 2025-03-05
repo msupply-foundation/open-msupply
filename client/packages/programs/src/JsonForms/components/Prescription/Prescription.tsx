@@ -7,6 +7,7 @@ import {
   FnUtils,
   InlineSpinner,
   InvoiceNodeStatus,
+  TextWithLabelRow,
   extractProperty,
   useNotification,
   useTranslation,
@@ -192,6 +193,12 @@ const UIComponent = (props: ControlProps) => {
         {selectedItem && (
           <Box sx={{ marginLeft: 5 }}>
             <PrescriptionInfo prescription={prescription} />
+            <TextWithLabelRow
+              label={t('label.item_one')}
+              text={selectedItem.name}
+              textProps={{ textAlign: 'end' }}
+            ></TextWithLabelRow>
+
             <StockLineTable
               stocklines={draftPrescriptionLines}
               handleStockLineUpdate={handleStockLineUpdate}
