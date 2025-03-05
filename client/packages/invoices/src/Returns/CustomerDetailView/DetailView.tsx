@@ -10,6 +10,7 @@ import {
   createQueryParamsStore,
   DetailTabs,
   useEditModal,
+  InsertCustomerReturnStatusInput,
 } from '@openmsupply-client/common';
 import { ContentArea } from './ContentArea';
 import { Toolbar } from './Toolbar';
@@ -88,6 +89,7 @@ const CustomerReturnsDetailViewComponent = () => {
                 }
               }}
               hasNextItem={!!nextItemId}
+              status={InsertCustomerReturnStatusInput.New}
             />
           )}
           <Toolbar />
