@@ -13,12 +13,14 @@ export const useDraftSupplierReturnLines = ({
   itemId,
   returnId,
   inboundShipmentId,
+  insertStatus = InsertSupplierReturnStatusInput.New,
 }: {
   stockLineIds: string[];
   supplierId: string;
   itemId?: string;
   returnId?: string;
   inboundShipmentId?: string;
+  insertStatus?: InsertSupplierReturnStatusInput;
 }) => {
   const [draftLines, setDraftLines] = React.useState<
     GenerateSupplierReturnLineFragment[]
@@ -48,6 +50,7 @@ export const useDraftSupplierReturnLines = ({
   };
 
   const { mutateAsync: insert } = useReturns.document.insertSupplierReturn();
+  const { mutateAsync: updateLines } = useReturns.lines.updateSupplierLines();
 
   const save = async () => {
     const supplierReturnLines: SupplierReturnLineInput[] = draftLines.map(
@@ -57,13 +60,22 @@ export const useDraftSupplierReturnLines = ({
       }
     );
 
-    await insert({
-      id: FnUtils.generateUUID(),
-      supplierId,
-      inboundShipmentId,
-      supplierReturnLines,
-      status: InsertSupplierReturnStatusInput.Shipped,
-    });
+    console.log('return id', returnId);
+
+    if (!returnId) {
+      await insert({
+        id: FnUtils.generateUUID(),
+        supplierId,
+        inboundShipmentId,
+        supplierReturnLines,
+        status: insertStatus,
+      });
+    } else {
+      await updateLines({
+        supplierReturnId: returnId,
+        supplierReturnLines,
+      });
+    }
 
 
     // TODO: error handling here

@@ -9,6 +9,7 @@ import {
   Box,
   ModalMode,
   AlertColor,
+  InsertSupplierReturnStatusInput,
 } from '@openmsupply-client/common';
 import { ItemSelector } from './ItemSelector';
 import { ReturnSteps, Tabs } from './ReturnSteps';
@@ -28,6 +29,7 @@ interface SupplierReturnEditModalProps {
   hasNextItem?: boolean;
   modalMode: ModalMode | null;
   isNewReturn?: boolean;
+  status: InsertSupplierReturnStatusInput;
 }
 
 export const SupplierReturnEditModal = ({
@@ -43,6 +45,7 @@ export const SupplierReturnEditModal = ({
   loadNextItem,
   hasNextItem = false,
   isNewReturn = false,
+  status,
 }: SupplierReturnEditModalProps) => {
   const t = useTranslation();
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
@@ -67,6 +70,7 @@ export const SupplierReturnEditModal = ({
     returnId,
     itemId,
     inboundShipmentId,
+    insertStatus: status,
   });
 
   useEffect(() => {
