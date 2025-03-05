@@ -17,7 +17,10 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
-use super::CustomerReturnLineInput;
+use super::{
+    update_customer_return, CustomerReturnLineInput, UpdateCustomerReturn,
+    UpdateCustomerReturnError, UpdateCustomerReturnStatus,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum InsertCustomerReturnStatus {
@@ -59,6 +62,9 @@ pub enum InsertCustomerReturnError {
         line_id: String,
         error: UpdateLineReturnReasonError,
     },
+    ErrorSettingNonNewStatus {
+        update_error: UpdateCustomerReturnError,
+    },
 }
 
 type OutError = InsertCustomerReturnError;
@@ -81,6 +87,8 @@ pub fn insert_customer_return(
 
             InvoiceRowRepository::new(connection).upsert_one(&customer_return)?;
 
+            println!("status {:?}", input.status);
+
             for line in insert_stock_in_lines {
                 insert_stock_in_line(ctx, line.clone()).map_err(|error| {
                     OutError::LineInsertError {
@@ -98,6 +106,27 @@ pub fn insert_customer_return(
                     }
                 })?;
             }
+
+            // Update to not new status after upserting lines
+            if let Some(status) = input.status {
+                if status == InsertCustomerReturnStatus::Verified {
+                    let _ = update_customer_return(
+                        ctx,
+                        UpdateCustomerReturn {
+                            id: customer_return.id.clone(),
+                            comment: None,
+                            status: Some(UpdateCustomerReturnStatus::Verified),
+                            colour: None,
+                            on_hold: None,
+                            their_reference: None,
+                            other_party_id: None,
+                        },
+                    )
+                    .map_err(|e| {
+                        InsertCustomerReturnError::ErrorSettingNonNewStatus { update_error: e }
+                    })?;
+                }
+            };
 
             activity_log_entry(
                 ctx,
