@@ -72,7 +72,7 @@ export const CustomerReturnEditModal = ({
     returnId,
     itemId,
     outboundShipmentId,
-    insertStatus: status,
+    status,
   });
 
   useEffect(() => {
