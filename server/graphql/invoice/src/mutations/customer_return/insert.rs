@@ -111,7 +111,8 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::CannotReturnOutboundShipment
         | ServiceError::InvoiceAlreadyExists
         | ServiceError::OtherPartyDoesNotExist
-        | ServiceError::ErrorSettingNonNewStatus { .. } => BadUserInput(formatted_error),
+        | ServiceError::ErrorSettingNonNewStatus { .. }
+        | ServiceError::ManuallyCreatedReturnMustHaveNewStatus => BadUserInput(formatted_error),
         ServiceError::NewlyCreatedInvoiceDoesNotExist
         | ServiceError::LineInsertError { .. }
         | ServiceError::LineReturnReasonUpdateError { .. }

@@ -65,6 +65,7 @@ pub enum InsertCustomerReturnError {
     ErrorSettingNonNewStatus {
         update_error: UpdateCustomerReturnError,
     },
+    ManuallyCreatedReturnMustHaveNewStatus,
 }
 
 type OutError = InsertCustomerReturnError;
@@ -86,8 +87,6 @@ pub fn insert_customer_return(
             )?;
 
             InvoiceRowRepository::new(connection).upsert_one(&customer_return)?;
-
-            println!("status {:?}", input.status);
 
             for line in insert_stock_in_lines {
                 insert_stock_in_line(ctx, line.clone()).map_err(|error| {
@@ -188,6 +187,7 @@ mod test {
     use crate::{
         invoice::customer_return::insert::{
             InsertCustomerReturn, InsertCustomerReturnError as ServiceError,
+            InsertCustomerReturnStatus,
         },
         invoice_line::{
             stock_in_line::InsertStockInLineError,
@@ -379,6 +379,28 @@ mod test {
                 error: UpdateLineReturnReasonError::ReasonDoesNotExist,
             }),
         );
+
+        // ManuallyCreatedReturnMustHaveNewStatus
+        assert_eq!(
+            service_provider.invoice_service.insert_customer_return(
+                &context,
+                InsertCustomerReturn {
+                    id: "some_new_id".to_string(),
+                    other_party_id: mock_name_customer_a().id,
+                    status: Some(InsertCustomerReturnStatus::Verified),
+                    customer_return_lines: vec![CustomerReturnLineInput {
+                        id: "new_line_id".to_string(),
+                        item_id: mock_item_a().id,
+                        number_of_packs: 1.0,
+                        pack_size: 1.0,
+                        reason_id: Some("does_not_exist".to_string()),
+                        ..Default::default()
+                    }],
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::ManuallyCreatedReturnMustHaveNewStatus),
+        )
     }
 
     #[actix_rt::test]
