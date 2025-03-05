@@ -322,7 +322,6 @@ fn generate_program_indicator_values(
                                 && v.indicator_value_row.indicator_column_id == column.id
                         })
                         .map(|v| {
-                            println!("v: {:?}", v.indicator_value_row);
                             v.indicator_value_row
                                 .value
                                 .parse::<f64>()
@@ -333,7 +332,6 @@ fn generate_program_indicator_values(
                 } else {
                     default_indicator_value(&line.line, &column)
                 };
-                println!("value: {:?}", value);
 
                 let indicator_value = IndicatorValueRow {
                     id: uuid(),
