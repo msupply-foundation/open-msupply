@@ -7,8 +7,8 @@ import {
 } from '@openmsupply-client/common';
 import StockDonorEditInput from './StockDonorEditInput';
 
-export type StockDonorEditPlugin = NonNullable<
-  ArrayElement<Plugins['stockEditForm']>
+export type StockDonorEditPlugin = ArrayElement<
+  NonNullable<Plugins['stockLine']>['editViewField']
 >;
 
 const StockDonorEdit: StockDonorEditPlugin = ({ stockLine, events }) => (
