@@ -64,6 +64,7 @@ pub enum InsertSupplierReturnError {
     ErrorSettingNonNewStatus {
         update_error: UpdateSupplierReturnError,
     },
+    ManuallyCreatedReturnMustHaveNewStatus,
 }
 
 type OutError = InsertSupplierReturnError;
@@ -184,6 +185,7 @@ mod test {
     use crate::{
         invoice::supplier_return::insert::{
             InsertSupplierReturn, InsertSupplierReturnError as ServiceError,
+            InsertSupplierReturnStatus,
         },
         invoice_line::{
             stock_out_line::InsertStockOutLineError,
@@ -373,6 +375,27 @@ mod test {
                 line_id: "new_line_id".to_string(),
                 error: UpdateLineReturnReasonError::ReasonDoesNotExist,
             }),
+        );
+
+        // ManuallyCreatedReturnMustHaveNewStatus
+        assert_eq!(
+            service_provider.invoice_service.insert_supplier_return(
+                &context,
+                InsertSupplierReturn {
+                    id: "some_new_id".to_string(),
+                    other_party_id: mock_name_a().id, // Supplier
+                    status: Some(InsertSupplierReturnStatus::Shipped),
+                    supplier_return_lines: vec![SupplierReturnLineInput {
+                        id: "new_line_id".to_string(),
+                        stock_line_id: mock_stock_line_b().id,
+                        number_of_packs: 1.0,
+                        reason_id: Some("does_not_exist".to_string()),
+                        ..Default::default()
+                    }],
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::ManuallyCreatedReturnMustHaveNewStatus),
         );
     }
 
