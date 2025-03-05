@@ -101,8 +101,6 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 OtherPartyNotASupplier,
             ))
         }
-
-        // Standard Graphql Errors
         ServiceError::InboundShipmentDoesNotExist
         | ServiceError::InboundShipmentDoesNotBelongToCurrentStore
         | ServiceError::OriginalInvoiceNotAnInboundShipment
@@ -113,6 +111,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::LineInsertError { .. }
         | ServiceError::LineReturnReasonUpdateError { .. }
         | ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::ErrorSettingNonNewStatus { .. } => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
