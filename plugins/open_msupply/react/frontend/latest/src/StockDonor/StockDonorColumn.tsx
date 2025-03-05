@@ -21,11 +21,11 @@ const useColumnStore = create<PluginDataStore<StockLineRowFragment, string>>(
   })
 );
 
-type StockDonorColumn = NonNullable<ArrayElement<Plugins['stockColumn']>>;
+type StockDonorColumn = NonNullable<ArrayElement<Plugins['stockLine']>>;
 
-export const StateLoader: ArrayElement<StockDonorColumn['StateLoader']> = ({
-  stockLines,
-}) => {
+export const StateLoader: ArrayElement<
+  StockDonorColumn['tableStateLoader']
+> = ({ stockLines }) => {
   const { set } = useColumnStore();
   const { data } = usePluginData.data(stockLines.map(({ id }) => id));
 

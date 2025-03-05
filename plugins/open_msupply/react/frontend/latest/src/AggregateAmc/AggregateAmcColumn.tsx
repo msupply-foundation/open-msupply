@@ -51,15 +51,15 @@ const useColumnStore = create<PluginDataStore<RequestLineFragment, string>>(
   })
 );
 
-type AggregateAcmColumn = NonNullable<Plugins['requestRequisitionColumn']>;
+type AggregateAcmColumn = NonNullable<Plugins['requestRequisitionLine']>;
 
 type AggregateAmcEditView = NonNullable<
-  ArrayElement<AggregateAcmColumn['editViewFields']>
+  ArrayElement<AggregateAcmColumn['editViewField']>
 >;
 
-export const StateLoader: ArrayElement<AggregateAcmColumn['StateLoader']> = ({
-  requestLines,
-}) => {
+export const StateLoader: ArrayElement<
+  AggregateAcmColumn['tableStateLoader']
+> = ({ requestLines }) => {
   const { set } = useColumnStore();
   const { data } = usePluginData(requestLines.map(({ id }) => id));
 
