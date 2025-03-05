@@ -52,7 +52,8 @@ pub struct PrescriptionLabelData {
     item_details: String, // usually the amount of units + the item name e.g. "10Tabs Paracetamol 500mg Tablets"
     item_directions: String,
     patient_details: String, // e.g patient name, possibly code etc.
-    warning: Option<String>, // Some items come with a defined warning (OG field "Message") that should be printed on all labels regardless of directions e.g. avoid sun exposure, avoid alcohol...
+    #[allow(dead_code)] // Warnings will come in the future... this API will likely change!
+    warning: Option<String>, // Some items come with a defined warning that should be printed on all labels regardless of directions e.g. avoid sun exposure, avoid alcohol...
     details: String, // General details to include e.g. store name, prescriber name, date/time...
 }
 
@@ -67,10 +68,9 @@ pub fn print_prescription_label(
                 item_details,
                 item_directions,
                 patient_details,
-                warning,
+                warning: _,
                 details,
             } = d;
-            let warning = warning.unwrap_or_default();
             format!(
                 r#"
                 ^XA
@@ -79,28 +79,28 @@ pub fn print_prescription_label(
                 ^CI28
 
                 ^A0,25
-                ^FO10,10
-                ^FB570,2,0,C
-                ^FD{item_details}^FS
+                ^FO,10
+                ^FB575,3,0,C
+                ^FD{item_details}\&^FS
 
-                ^FO10,65
-                ^GB570,2,2^FS
-
-                ^A0,25
-                ^FO10,75
-                ^FB570,6,0,L
-                ^FD{item_directions}\&{warning}^FS
-
-                ^FO10,210
-                ^GB570,2,2^FS
+                ^FX Line
+                ^FO,65
+                ^GB575,2,2^FS
 
                 ^A0,25
-                ^FO10,220
-                ^FD{patient_details}^FS
+                ^FO,75
+                ^TB,575,125
+                ^FD{item_directions}^FS
 
-                ^A0,25
-                ^FO10,250
-                ^FD{details}^FS
+                ^FX Line
+                ^FO,210
+                ^GB575,2,2^FS
+
+                ^A0,20
+                ^FO,220
+                ^FB575,3,0,C
+                ^FD{patient_details}\&{details}\&^FS
+
                 ^XZ
                 "#
             )

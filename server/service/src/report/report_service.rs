@@ -548,6 +548,7 @@ fn wasm_sql(
     let results = raw_query(&con, statement);
     Json(WasmSqlResult {
         rows: results
+            .unwrap()
             .into_iter()
             .map(|JsonRawRow { json_row }| {
                 serde_json::from_str::<serde_json::Value>(&json_row).unwrap()
@@ -917,6 +918,7 @@ mod report_service_test {
             is_custom: true,
             version: "1.0".to_string(),
             code: "report_1".to_string(),
+            is_active: true,
         })
         .unwrap();
 
@@ -931,6 +933,7 @@ mod report_service_test {
             is_custom: true,
             version: "1.0".to_string(),
             code: "report_base_1".to_string(),
+            is_active: true,
         })
         .unwrap();
 

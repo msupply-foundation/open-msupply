@@ -216,7 +216,10 @@ const PatientDetailView = ({
           const patientData = data as PatientSchema;
           const newData = Object.fromEntries(
             Object.entries(data ?? {}).filter(
-              ([key]) => key !== 'dateOfBirthIsEstimated' && key !== 'nextOfKin'
+              ([key]) =>
+                key !== 'dateOfBirthIsEstimated' &&
+                key !== 'nextOfKin' &&
+                key !== 'extension'
             )
           );
           // map nextOfKin object to individual fields

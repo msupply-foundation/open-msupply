@@ -7,12 +7,15 @@ import {
 import { useIsInboundDisabled } from '../utils/useIsInboundDisabled';
 import { useDeleteInboundLines } from './useDeleteInboundLines';
 import { useInboundRows } from './useInboundRows';
+import { useInbound } from '..';
 
 export const useDeleteSelectedLines = (): (() => void) => {
   const t = useTranslation();
   const { items, lines } = useInboundRows();
   const { mutateAsync } = useDeleteInboundLines();
   const isDisabled = useIsInboundDisabled();
+  const { data } = useInbound.document.get();
+  const isManuallyCreated = !data?.linkedShipment?.id;
 
   const selectedRows =
     useTableStore(state => {
@@ -69,10 +72,24 @@ export const useDeleteSelectedLines = (): (() => void) => {
     }
   };
 
+  interface handleCantDelete {
+    isDisabled: boolean;
+    isManuallyCreated: boolean;
+  }
+
+  const handleCantDelete = ({
+    isDisabled,
+    isManuallyCreated,
+  }: handleCantDelete) => {
+    if (isDisabled) return t('label.cant-delete-disabled');
+    if (!isManuallyCreated) return t('messages.cant-delete-transferred');
+    return (err: Error) => err.message;
+  };
+
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
     deleteAction: onDelete,
-    canDelete: !isDisabled,
+    canDelete: !isDisabled && !!isManuallyCreated,
     messages: {
       confirmMessage: t('messages.confirm-delete-shipment-lines', {
         count: selectedRows.length,
@@ -80,7 +97,7 @@ export const useDeleteSelectedLines = (): (() => void) => {
       deleteSuccess: t('messages.deleted-lines', {
         count: selectedRows.length,
       }),
-      cantDelete: (err: Error) => err.message,
+      cantDelete: handleCantDelete({ isDisabled, isManuallyCreated }),
     },
   });
 

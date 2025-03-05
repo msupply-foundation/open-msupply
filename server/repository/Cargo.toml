@@ -38,6 +38,7 @@ rust-embed = { version = "8.4.0", features = ["debug-embed"] }
 anyhow.workspace = true
 pretty_assertions = { workspace = true }
 strum = { workspace = true }
+ts-rs = { workspace = true }
 
 [dev-dependencies]
 tokio = { version = "1.38.0", features = ["time", "rt-multi-thread", "macros"] }
