@@ -36,6 +36,8 @@ export const useDraftCustomerReturnLines = ({
   );
 
   const { mutateAsync: insert } = useReturns.document.insertCustomerReturn();
+  const { mutateAsync: updateLines } = useReturns.lines.updateCustomerLines();
+
 
   useEffect(() => {
     getLines();
@@ -116,13 +118,22 @@ export const useDraftCustomerReturnLines = ({
 
     // TODO: error handling here
     // also need to consider what we do if the error was on the first page of the wizard
-    await insert({
-      id: FnUtils.generateUUID(),
-      customerId,
-      outboundShipmentId,
-      customerReturnLines,
-      status: insertStatus,
-    });
+    if (!returnId) {
+
+      await insert({
+        id: FnUtils.generateUUID(),
+        customerId,
+        outboundShipmentId,
+        customerReturnLines,
+        status: insertStatus,
+      });
+    }
+    else {
+      await updateLines({
+        customerReturnId: returnId,
+        customerReturnLines,
+      });
+    }
 
   };
 
