@@ -9,6 +9,7 @@ import {
   BasicTextInput,
   Button,
   DetailInputWithLabelRow,
+  LocaleKey,
 } from '@openmsupply-client/common';
 import {
   DefaultFormRowSx,
@@ -403,7 +404,7 @@ const UIComponent = (props: ControlProps) => {
   return (
     <DetailInputWithLabelRow
       sx={DefaultFormRowSx}
-      label={label}
+      label={t(label as LocaleKey)}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}
       Input={

@@ -1,6 +1,9 @@
 use crate::{
     activity_log::activity_log_entry,
-    backend_plugin::plugin_provider::PluginError,
+    backend_plugin::{
+        plugin_provider::{PluginError, PluginInstance},
+        types::transform_request_requisition_lines::Context,
+    },
     number::next_number,
     requisition::{
         common::{
@@ -10,7 +13,6 @@ use crate::{
         program_indicator::query::{program_indicators, ProgramIndicator},
         program_settings::get_supplier_program_requisition_settings,
         query::get_requisition,
-        response_requisition::GenerateResult,
     },
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
@@ -22,9 +24,10 @@ use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
     IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
-    NumberRowType, Pagination, ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow,
-    RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
-    StorageConnection, StoreFilter, StoreRepository,
+    NumberRowType, Pagination, PluginDataRowRepository, ProgramIndicatorFilter,
+    ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError, Requisition, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection, StoreFilter,
+    StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -72,6 +75,18 @@ pub fn insert_program_request_requisition(
                 indicator_values,
             } = generate(ctx, program, order_type, input)?;
             RequisitionRowRepository::new(connection).upsert_one(&new_requisition)?;
+
+            let (requisition_lines, plugin_data_rows) =
+                PluginInstance::transform_request_requisition_lines(
+                    Context::InsertProgramRequestRequisition,
+                    requisition_lines,
+                    &new_requisition,
+                )
+                .map_err(OutError::PluginError)?;
+            let plugin_data_repository = PluginDataRowRepository::new(connection);
+            for plugin_data in plugin_data_rows {
+                plugin_data_repository.upsert_one(&plugin_data)?;
+            }
 
             let requisition_line_repo = RequisitionLineRowRepository::new(connection);
             for requisition_line in requisition_lines {
@@ -156,6 +171,12 @@ fn validate(
             .clone(),
         order_type.order_type.clone(),
     ))
+}
+
+pub(super) struct GenerateResult {
+    pub(crate) requisition: RequisitionRow,
+    pub(crate) requisition_lines: Vec<RequisitionLineRow>,
+    pub(crate) indicator_values: Vec<IndicatorValueRow>,
 }
 
 fn generate(

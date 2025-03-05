@@ -1,20 +1,3 @@
-fragment ItemWithStats on ItemNode {
-  id
-  name
-  code
-  unitName
-  defaultPackSize
-  availableStockOnHand(storeId: $storeId)
-  stats(storeId: $storeId) {
-    averageMonthlyConsumption
-    availableStockOnHand
-    availableMonthsOfStockOnHand
-    totalConsumption
-    stockOnHand
-    monthsOfStockOnHand
-  }
-}
-
 fragment RequestRow on RequisitionNode {
   colour
   comment
@@ -43,57 +26,6 @@ fragment RequestRow on RequisitionNode {
     id
   }
   orderType
-}
-
-fragment itemInformation on RequisitionItemInformationNode {
-  id
-  adjustmentsInUnits
-  amcInUnits
-  name(storeId: $storeId) {
-    id
-    name
-  }
-  outgoingUnits
-  dateRange
-  stockInUnits
-}
-
-fragment RequestLine on RequisitionLineNode {
-  id
-  itemId
-  requestedQuantity
-  suggestedQuantity
-  comment
-  itemName
-  requisitionNumber
-  initialStockOnHandUnits
-  incomingUnits
-  outgoingUnits
-  lossInUnits
-  additionInUnits
-  expiringUnits
-  daysOutOfStock
-
-  itemStats {
-    __typename
-    availableStockOnHand
-    availableMonthsOfStockOnHand
-    averageMonthlyConsumption
-  }
-  linkedRequisitionLine {
-    approvedQuantity
-    approvalComment
-  }
-  itemInformation {
-    __typename
-    ...itemInformation
-  }
-  item {
-    ...ItemWithStats
-  }
-  reason {
-    ...ReasonOptionRow
-  }
 }
 
 fragment Request on RequisitionNode {

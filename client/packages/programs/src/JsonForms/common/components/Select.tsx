@@ -4,6 +4,8 @@ import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import {
   Autocomplete,
   DetailInputWithLabelRow,
+  LocaleKey,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
 import { z } from 'zod';
@@ -125,8 +127,8 @@ const filterOptions = (
       const rank = lowerCaseOption.startsWith(searchTerm)
         ? searchRanking.STARTS_WITH
         : lowerCaseOption.includes(searchTerm)
-        ? searchRanking.CONTAINS
-        : searchRanking.NO_MATCH;
+          ? searchRanking.CONTAINS
+          : searchRanking.NO_MATCH;
       return { ...option, rank };
     })
     .filter(({ rank }) => rank !== searchRanking.NO_MATCH)
@@ -230,6 +232,7 @@ const useFilteredItems = (
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, schema, path, uischema, enabled } = props;
+  const t = useTranslation();
   const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
     Options,
     uischema.options
@@ -262,7 +265,7 @@ const UIComponent = (props: ControlProps) => {
   return (
     <DetailInputWithLabelRow
       sx={DefaultFormRowSx}
-      label={label}
+      label={t(label as LocaleKey)}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}
       Input={

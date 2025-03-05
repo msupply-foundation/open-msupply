@@ -9,7 +9,11 @@ import {
   DateUtils,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import { PatientSearchInput } from '@openmsupply-client/system';
+import {
+  Clinician,
+  ClinicianSearchInput,
+  PatientSearchInput,
+} from '@openmsupply-client/system';
 import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 import { usePrescription } from '../api';
 
@@ -20,18 +24,16 @@ export const Toolbar: FC = () => {
     isDisabled,
     rows: items,
   } = usePrescription();
-  const {
-    id,
-    patient,
-    prescriptionDate,
-    createdDatetime,
-    // theirReference,
-  } = data ?? {};
+  const { id, patient, prescriptionDate, createdDatetime, clinician } =
+    data ?? {};
 
   const [dateValue, setDateValue] = useState(
     DateUtils.getDateOrNull(prescriptionDate) ??
       DateUtils.getDateOrNull(createdDatetime) ??
       null
+  );
+  const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
+    clinician ?? null
   );
 
   const {
@@ -45,13 +47,6 @@ export const Toolbar: FC = () => {
   };
 
   const t = useTranslation();
-
-  // const [theirReferenceInput, setTheirReferenceInput] =
-  //   useState(theirReference);
-
-  // const debouncedUpdate = useDebouncedValueCallback(update, [
-  //   theirReferenceInput,
-  // ]);
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
@@ -99,7 +94,9 @@ export const Toolbar: FC = () => {
   };
 
   return (
-    <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
+    <AppBarContentPortal
+      sx={{ display: 'flex', flex: 1, marginBottom: 1, gap: 4 }}
+    >
       <Grid container flexDirection="column" display="flex" gap={1}>
         {patient && (
           <InputWithLabelRow
@@ -127,21 +124,24 @@ export const Toolbar: FC = () => {
             />
           }
         />
-        {/* <InputWithLabelRow
-          label={t('label.reference')}
+      </Grid>
+      <Grid container flexDirection="column" display="flex" gap={1}>
+        <InputWithLabelRow
+          label={t('label.clinician')}
           Input={
-            <BasicTextInput
+            <ClinicianSearchInput
               disabled={isDisabled}
-              size="small"
-              sx={{ width: 250 }}
-              value={theirReferenceInput ?? ''}
-              onChange={event => {
-                setTheirReferenceInput(event.target.value);
-                debouncedUpdate({ theirReference: event.target.value });
+              onChange={async clinician => {
+                setClinicianValue(clinician ? clinician.value : null);
+                update({
+                  id,
+                  clinicianId: clinician?.value?.id ?? null,
+                });
               }}
+              clinicianValue={clinicianValue}
             />
           }
-        /> */}
+        />
       </Grid>
     </AppBarContentPortal>
   );
