@@ -73,8 +73,9 @@ export const Printers = () => {
           marginLeft: '12px',
         }}
       >
-        {mockPrinters.map(data => (
+        {mockPrinters.map((data, index) => (
           <Typography
+            key={index}
             sx={{
               fontSize: 16,
               paddingBottom: 1,

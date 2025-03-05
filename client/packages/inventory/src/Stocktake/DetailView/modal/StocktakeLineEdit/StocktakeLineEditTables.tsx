@@ -26,7 +26,7 @@ import {
   InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
   ItemVariantInputCell,
-  PackSizeEntryCell,
+  packSizeEntryCell,
   useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
 import {
@@ -151,7 +151,7 @@ const getInventoryAdjustmentReasonInputColumn = (
 // If this is not extracted to it's own component and used directly in Cell:
 // cell will be re rendered anytime rowData changes, which causes it to loose focus
 // if number of packs is changed and tab is pressed (in quick succession)
-const PackUnitEntryCell = PackSizeEntryCell<DraftStocktakeLine>({
+const PackUnitEntryCell = packSizeEntryCell<DraftStocktakeLine>({
   getIsDisabled: r => !!r?.stockLine,
 });
 
@@ -167,7 +167,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
 
   const errorsContext = useStocktakeLineErrorContext();
 
-  let columnDefinitions = useMemo(() => {
+  const columnDefinitions = useMemo(() => {
     const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
       getCountThisLineColumn(update, theme),
       getBatchColumn(update, theme),

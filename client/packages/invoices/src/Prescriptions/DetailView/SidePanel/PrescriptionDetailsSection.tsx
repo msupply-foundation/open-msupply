@@ -137,8 +137,6 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
     theirReferenceInput,
   ]);
 
-  if (!createdDatetime) return null;
-
   useEffect(() => {
     if (!data) return;
     const { clinician, theirReference, prescriptionDate, createdDatetime } =
@@ -151,6 +149,8 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
         null
     );
   }, [data]);
+
+  if (!createdDatetime) return null;
 
   return (
     <DetailPanelSection title={t('heading.prescription-details')}>

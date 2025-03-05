@@ -25,8 +25,6 @@ export const InsuranceModal: FC = (): ReactElement => {
   const { success, error } = useNotification();
   const { current, setModal } = usePatientModalStore();
 
-  console.log('need to trigger a package file change');
-
   const { Modal } = useDialog({
     disableBackdrop: true,
     onClose: () => setModal(undefined),

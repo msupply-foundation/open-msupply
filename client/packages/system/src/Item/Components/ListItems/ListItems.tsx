@@ -41,7 +41,7 @@ export const ListItems = ({
     title: t('heading.save-new'),
   });
 
-  let options =
+  const options =
     items?.map(({ id, name }) => ({
       id,
       value: name,

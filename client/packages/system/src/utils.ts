@@ -153,7 +153,7 @@ export const getInvoiceLocalisationKey = (type: InvoiceNodeType): LocaleKey => {
   }
 };
 
-export const getNameValue = (t: TypedTFunction<LocaleKey>, name: String) => {
+export const getNameValue = (t: TypedTFunction<LocaleKey>, name: string) => {
   if (name == 'repack') return t('label.repack');
   if (name == 'Inventory adjustments') return t('inventory-adjustment');
   return name;
