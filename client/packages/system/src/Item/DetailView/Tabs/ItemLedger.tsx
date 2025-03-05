@@ -50,6 +50,11 @@ const ItemLedgerTable = ({
         sortable: false,
       },
       {
+        key: 'invoiceNumber',
+        label: 'label.invoice-number',
+        sortable: false,
+      },
+      {
         key: 'datetime',
         label: 'label.date',
         format: ColumnFormat.Date,
