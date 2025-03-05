@@ -168,7 +168,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
               }
             />
           )}
-          {plugins.stockLine?.editViewField?.map((Plugin, index) => (
+          {plugins.stockLine?.editViewField.map((Plugin, index) => (
             <Plugin key={index} stockLine={draft} events={pluginEvents} />
           ))}
         </Grid>

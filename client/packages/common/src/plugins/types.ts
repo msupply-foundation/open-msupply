@@ -15,7 +15,7 @@ export type Plugins = {
       stockLines: StockLineRowFragment[];
     }>[];
     tableColumn: ColumnDefinition<StockLineRowFragment>[];
-    editViewField?: React.ComponentType<{
+    editViewField: React.ComponentType<{
       stockLine: StockLineRowFragment;
       events: UsePluginEvents<{ isDirty: boolean }>;
     }>[];
