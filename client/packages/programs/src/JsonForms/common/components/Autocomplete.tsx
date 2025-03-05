@@ -4,6 +4,8 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   Autocomplete as AutocompleteCommon,
   DetailInputWithLabelRow,
+  LocaleKey,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
@@ -46,6 +48,7 @@ const UIComponent = (props: ControlProps) => {
     props.uischema.options
   );
 
+  const t = useTranslation();
   const [localData, setLocalData] = useState<DisplayOption | null>(null);
 
   const options: DisplayOption[] = useMemo(
@@ -100,7 +103,7 @@ const UIComponent = (props: ControlProps) => {
   return (
     <DetailInputWithLabelRow
       sx={DefaultFormRowSx}
-      label={label}
+      label={t(label as LocaleKey)}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}
       Input={

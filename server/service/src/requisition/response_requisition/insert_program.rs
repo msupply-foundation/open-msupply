@@ -164,7 +164,7 @@ fn validate(
     ))
 }
 
-pub struct GenerateResult {
+pub(super) struct GenerateResult {
     pub(crate) requisition: RequisitionRow,
     pub(crate) requisition_lines: Vec<RequisitionLineRow>,
     pub(crate) indicator_values: Vec<IndicatorValueRow>,

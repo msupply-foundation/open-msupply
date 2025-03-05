@@ -92,6 +92,7 @@ export const InsuranceModal: FC = (): ReactElement => {
             label={t('label.policy-number-family')}
             Input={
               <BasicTextInput
+                required={draft.policyNumberPerson === ''}
                 disabled={haveInsuranceId}
                 value={draft.policyNumberFamily}
                 onChange={event => {
@@ -106,6 +107,7 @@ export const InsuranceModal: FC = (): ReactElement => {
             label={t('label.policy-number-person')}
             Input={
               <BasicTextInput
+                required={draft.policyNumberFamily === ''}
                 disabled={haveInsuranceId}
                 value={draft.policyNumberPerson}
                 onChange={event => {
@@ -125,7 +127,7 @@ export const InsuranceModal: FC = (): ReactElement => {
             }
           />
           <InputWithLabelRow
-            label={t('label.active')}
+            label={t('label.insurance-active')}
             Input={
               <Switch
                 onChange={() => updatePatch({ isActive: !draft.isActive })}
@@ -141,6 +143,7 @@ export const InsuranceModal: FC = (): ReactElement => {
             label={t('label.expiry-date')}
             Input={
               <BaseDatePickerInput
+                required
                 value={DateUtils.getNaiveDate(draft.expiryDate)}
                 onChange={date => {
                   if (date)
@@ -163,6 +166,7 @@ export const InsuranceModal: FC = (): ReactElement => {
             label={t('label.discount-rate')}
             Input={
               <NumericTextInput
+                required
                 min={0}
                 decimalLimit={2}
                 value={draft.discountPercentage ?? 0}

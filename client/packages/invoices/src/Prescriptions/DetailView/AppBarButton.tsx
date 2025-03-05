@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import {
   AppBarButtonsPortal,
   ButtonWithIcon,
-  PlusCircleIcon,
+  AddButton,
   Grid,
   useDetailPanel,
   useTranslation,
@@ -60,16 +60,10 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <ButtonWithIcon
+        <AddButton
           disabled={isDisabled}
           label={t('button.add-item')}
-          Icon={<PlusCircleIcon />}
-          onClick={() => onAddItem()}
-        />
-        <ButtonWithIcon
-          label={t('button.history')}
-          Icon={<InfoOutlineIcon />}
-          onClick={() => onViewHistory()}
+          onClick={onAddItem}
         />
         <LoadingButton
           disabled={isDisabled}
