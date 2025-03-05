@@ -33,22 +33,23 @@ interface IndicatorLineEditProps {
 const INPUT_WIDTH = 185;
 const LABEL_WIDTH = '150px';
 
-const InputWithLabel = ({
-  autoFocus,
-  data,
-  disabled,
-}: {
+interface InputWithLabelProps {
   autoFocus: boolean;
   data: IndicatorColumnNode;
   disabled: boolean;
-}) => {
-  if (!data?.value) {
-    return;
-  }
+}
 
-  const { draft, update } = useDraftIndicatorValue(data.value);
+const InputWithLabel = ({ autoFocus, data, disabled }: InputWithLabelProps) => {
   const t = useTranslation();
   const { error } = useNotification();
+
+  const { draft, update } = useDraftIndicatorValue(
+    data.value ?? {
+      __typename: 'IndicatorValueNode',
+      id: '',
+      value: '',
+    }
+  );
 
   const errorHandler = useCallback(
     (res: any) => {
@@ -123,14 +124,18 @@ export const IndicatorLineEdit = ({
   return (
     <>
       <Box display="flex" flexDirection="column">
-        {columns.map((c, i) => (
-          <InputWithLabel
-            key={c.value?.id}
-            data={c}
-            disabled={disabled}
-            autoFocus={i === 0}
-          />
-        ))}
+        {columns.map((column, i) => {
+          return column.value != null ? (
+            <InputWithLabel
+              key={column.value?.id}
+              data={column}
+              disabled={disabled}
+              autoFocus={i === 0}
+            />
+          ) : (
+            <></>
+          );
+        })}
       </Box>
       {showInfo && (
         <Box paddingTop={1} maxHeight={200} width="100%" display="flex">

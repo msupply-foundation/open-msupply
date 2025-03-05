@@ -6,7 +6,7 @@ import {
   useDebounceCallback,
 } from '@openmsupply-client/common';
 
-export const PackSizeEntryCell =
+export const packSizeEntryCell =
   <T extends RecordWithId>({
     getIsDisabled,
   }: {
