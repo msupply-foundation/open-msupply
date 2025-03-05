@@ -3,6 +3,8 @@ on:
     branches:
       - main
       - develop
+      # This pattern matches branches for release candidates (e.g., v2.6.0-RC)
+      - v*-RC
   workflow_dispatch:
 
 name: Client Code Checks
