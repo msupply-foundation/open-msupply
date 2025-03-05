@@ -113,20 +113,6 @@ export const Toolbar: FC = () => {
           />
         )}
         <InputWithLabelRow
-          label={t('label.date')}
-          Input={
-            <DateTimePickerInput
-              disabled={isDisabled}
-              value={DateUtils.getDateOrNull(dateValue) ?? new Date()}
-              format="P"
-              onChange={handleDateChange}
-              maxDate={new Date()}
-            />
-          }
-        />
-      </Grid>
-      <Grid container flexDirection="column" display="flex" gap={1}>
-        <InputWithLabelRow
           label={t('label.clinician')}
           Input={
             <ClinicianSearchInput
@@ -139,6 +125,20 @@ export const Toolbar: FC = () => {
                 });
               }}
               clinicianValue={clinicianValue}
+            />
+          }
+        />
+      </Grid>
+      <Grid container flexDirection="column" display="flex" gap={1}>
+        <InputWithLabelRow
+          label={t('label.date')}
+          Input={
+            <DateTimePickerInput
+              disabled={isDisabled}
+              value={DateUtils.getDateOrNull(dateValue) ?? new Date()}
+              format="P"
+              onChange={handleDateChange}
+              maxDate={new Date()}
             />
           }
         />
