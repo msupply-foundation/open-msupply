@@ -7,6 +7,7 @@ import {
   AutocompleteInputChangeReason,
   AutocompleteProps as MuiAutocompleteProps,
   PopperProps,
+  SxProps,
 } from '@mui/material';
 import {
   AutocompleteOption,
@@ -48,6 +49,7 @@ export interface AutocompleteProps<T>
   popperMinWidth?: number;
   inputProps?: BasicTextInputProps;
   required?: boolean;
+  textSx?: SxProps;
 }
 
 export function Autocomplete<T>({
@@ -75,6 +77,7 @@ export function Autocomplete<T>({
   popperMinWidth,
   inputProps,
   required,
+  textSx,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
@@ -90,6 +93,7 @@ export function Autocomplete<T>({
           disableUnderline: false,
           sx: {
             padding: '4px !important',
+            ...textSx != null ? textSx : {},
           },
           ...props.InputProps,
         },

@@ -151,7 +151,7 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
         null
     );
   }, [data]);
-
+ 
   return (
     <DetailPanelSection title={t('heading.prescription-details')}>
       <Grid container gap={0.5} key="prescription-details">
@@ -186,6 +186,13 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
             disabled={isDisabled}
             size="small"
             sx={{ width: 250 }}
+            slotProps={{
+              input: {
+                sx: {
+                  backgroundColor: 'white',
+                }
+              }
+            }}
             value={theirReferenceInput ?? ''}
             onChange={event => {
               setTheirReferenceInput(event.target.value);
@@ -202,6 +209,13 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
             format="P"
             onChange={handleDateChange}
             maxDate={new Date()}
+            textFieldProps={{
+              sx: {
+                '& .MuiInputBase-root': {
+                  backgroundColor: 'white',
+                },
+              }
+            }}
           />
         </PanelRow>
       </Grid>
