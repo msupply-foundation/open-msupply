@@ -6,16 +6,12 @@ import {
   useDebounceCallback,
 } from '@openmsupply-client/common';
 
-interface PackSizeEntryCellProps<T extends RecordWithId> extends CellProps<T> {
-  getIsDisabled?: (row: T) => boolean;
-}
-
-const PackSizeEntryCellComponent = <T extends RecordWithId>({
+export const PackSizeEntryCell = <T extends RecordWithId>({
   rowData,
   column,
   isDisabled,
   getIsDisabled,
-}: PackSizeEntryCellProps<T>): ReactElement => {
+}: CellProps<T> & { getIsDisabled?: (row: T) => boolean }): ReactElement => {
   const [packSize, setPackSize] = useState<number | undefined>(
     Number(column.accessor({ rowData }))
   );
@@ -42,13 +38,3 @@ const PackSizeEntryCellComponent = <T extends RecordWithId>({
     />
   );
 };
-
-export const PackSizeEntryCell =
-  <T extends RecordWithId>({
-    getIsDisabled,
-  }: {
-    getIsDisabled?: (row: T) => boolean;
-  }) =>
-  (cellProps: CellProps<T>) => (
-    <PackSizeEntryCellComponent {...cellProps} getIsDisabled={getIsDisabled} />
-  );
