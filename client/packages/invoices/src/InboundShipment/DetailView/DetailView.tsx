@@ -13,7 +13,6 @@ import {
   useNotification,
   ModalMode,
   useTableStore,
-  InsertSupplierReturnStatusInput,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -140,7 +139,7 @@ const DetailViewInner = () => {
               modalMode={returnModalMode}
               inboundShipmentId={data.id}
               isNewReturn
-              status={InsertSupplierReturnStatusInput.Shipped} />
+            />
           )}
         </>
       ) : (

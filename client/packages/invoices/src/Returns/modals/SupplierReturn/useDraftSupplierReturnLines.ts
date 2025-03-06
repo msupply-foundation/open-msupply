@@ -3,7 +3,6 @@ import {
   FnUtils,
   SupplierReturnLineInput,
   RecordPatch,
-  InsertSupplierReturnStatusInput,
 } from '@openmsupply-client/common';
 import { GenerateSupplierReturnLineFragment, useReturns } from '../../api';
 
@@ -13,14 +12,12 @@ export const useDraftSupplierReturnLines = ({
   itemId,
   returnId,
   inboundShipmentId,
-  status: insertStatus = InsertSupplierReturnStatusInput.New,
 }: {
   stockLineIds: string[];
   supplierId: string;
   itemId?: string;
   returnId?: string;
   inboundShipmentId?: string;
-  status?: InsertSupplierReturnStatusInput;
 }) => {
   const [draftLines, setDraftLines] = React.useState<
     GenerateSupplierReturnLineFragment[]
@@ -60,15 +57,12 @@ export const useDraftSupplierReturnLines = ({
       }
     );
 
-    console.log('return id', returnId);
-
     if (!returnId) {
       await insert({
         id: FnUtils.generateUUID(),
         supplierId,
         inboundShipmentId,
         supplierReturnLines,
-        status: insertStatus,
       });
     } else {
       await updateLines({

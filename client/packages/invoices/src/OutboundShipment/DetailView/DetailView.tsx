@@ -13,7 +13,6 @@ import {
   ModalMode,
   useNotification,
   useTableStore,
-  InsertCustomerReturnStatusInput,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
@@ -118,7 +117,6 @@ const DetailViewInner = () => {
               outboundShipmentId={data.id}
               onCreate={clearSelected}
               isNewReturn
-              status={InsertCustomerReturnStatusInput.Verified}
             />
           )}
 
