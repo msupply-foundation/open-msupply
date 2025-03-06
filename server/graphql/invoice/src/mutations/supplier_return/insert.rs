@@ -93,18 +93,20 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 OtherPartyNotASupplier,
             ))
         }
+
+        // Standard Graphql Errors
         ServiceError::InboundShipmentDoesNotExist
         | ServiceError::InboundShipmentDoesNotBelongToCurrentStore
         | ServiceError::OriginalInvoiceNotAnInboundShipment
         | ServiceError::CannotReturnInboundShipment
         | ServiceError::InvoiceAlreadyExists
         | ServiceError::OtherPartyDoesNotExist
-        | ServiceError::ManuallyCreatedReturnMustHaveNewStatus => BadUserInput(formatted_error),
+        | ServiceError::ManuallyCreatedReturnMustHaveNewStatus
+        | ServiceError::ErrorSettingNonNewStatus { .. } => BadUserInput(formatted_error),
         ServiceError::NewlyCreatedInvoiceDoesNotExist
         | ServiceError::LineInsertError { .. }
         | ServiceError::LineReturnReasonUpdateError { .. }
         | ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        ServiceError::ErrorSettingNonNewStatus { .. } => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
