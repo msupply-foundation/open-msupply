@@ -63,7 +63,7 @@ export const convert_data: ConvertData<Data, Arguments, Result> = ({
     dir || 'asc'
   );
 
-  log('debug log');
+  // log('debug log'); // Example log, from README.md
 
   return { data: { items: { nodes: sortedNodes } } };
 };
