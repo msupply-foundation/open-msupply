@@ -22,19 +22,17 @@ export const PrescriptionInfo = ({ prescription }: PrescriptionInfoProps) => {
   const getPrescriptionInfo = () => {
     const prescriptionLine = prescription?.lines.nodes[0];
     if (!prescriptionLine) return;
-    {
-      const issued =
-        prescriptionLine.numberOfPacks * (prescriptionLine.packSize ?? 0);
+    const issued =
+      prescriptionLine.numberOfPacks * (prescriptionLine.packSize ?? 0);
 
-      const message = t('messages.prescription-given', {
-        item: `${prescriptionLine.itemName}`,
-        amount: issued,
-        date: localisedDate(
-          prescription.createdDatetime ?? prescription.pickedDatetime
-        ),
-      });
-      return message;
-    }
+    const message = t('messages.prescription-given', {
+      item: `${prescriptionLine.itemName}`,
+      amount: issued,
+      date: localisedDate(
+        prescription.createdDatetime ?? prescription.pickedDatetime
+      ),
+    });
+    return message;
   };
 
   if (!prescription) {
