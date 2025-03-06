@@ -59,7 +59,7 @@ export const DisplayCoordinates = (): ReactElement => {
   }, []);
 
   return (
-    <Box pt={4}>
+    <Box py={4}>
       <Typography variant="h5" pb={2}>
         {t('heading.gps-coordinates')}
       </Typography>
