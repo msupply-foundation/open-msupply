@@ -13,6 +13,7 @@ import {
   useNavigate,
   RouteBuilder,
   usePluginEvents,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import { useStockLine } from '../api';
 import { StockLineForm } from './StockLineForm';
@@ -51,20 +52,39 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   const isDisabled =
     !draft.itemId || !draft.packSize || !draft.totalNumberOfPacks;
 
+  const mapStructuredErrors = (result: Awaited<ReturnType<typeof create>>) => {
+    if (result.insertStockLine.__typename === 'StockLineNode') {
+      return result.insertStockLine;
+    }
+    const { error } = result.insertStockLine;
+    switch (error.__typename) {
+      case 'AdjustmentReasonNotProvided':
+        return t('error.provide-reason-new-stock');
+      default:
+        return noOtherVariants(error.__typename);
+    }
+  };
+
   const save = async () => {
     try {
       const result = await create();
-      const successSnack = success(t('messages.stock-line-saved'));
-      successSnack();
-      onClose();
-      navigate(
-        RouteBuilder.create(AppRoute.Inventory)
-          .addPart(AppRoute.Stock)
-          .addPart(result.insertStockLine.id)
-          .build()
-      );
+      const errorOrNode = mapStructuredErrors(result);
+      if (typeof errorOrNode == 'string') {
+        error(errorOrNode)();
+      } else {
+        const successSnack = success(t('messages.stock-line-saved'));
+        successSnack();
+        onClose();
+        navigate(
+          RouteBuilder.create(AppRoute.Inventory)
+            .addPart(AppRoute.Stock)
+            .addPart(errorOrNode.id)
+            .build()
+        );
+      }
+      updatePatch(draft);
     } catch {
-      error(t('error.provide-reason-new-stock'))();
+      error(t('messages.could-not-save'))(); // generic could not save message
     }
   };
 
