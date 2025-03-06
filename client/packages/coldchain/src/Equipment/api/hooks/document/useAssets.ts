@@ -21,7 +21,7 @@ export const useAssets = () => {
       { key: 'categoryId', condition: 'equalTo' },
       { key: 'typeId', condition: 'equalTo' },
       { key: 'isNonCatalogue', condition: '=' },
-      { key: 'store' },
+      { key: 'storeCodeOrName' },
       { key: 'functionalStatus', condition: 'equalTo' },
     ],
   });
