@@ -3,8 +3,8 @@ use util::uuid::uuid;
 
 use crate::{
     invoice::customer_return::{
-        insert::{InsertCustomerReturn, InsertCustomerReturnStatus},
-        CustomerReturnLineInput, UpdateCustomerReturn, UpdateCustomerReturnStatus,
+        insert::InsertCustomerReturn, CustomerReturnLineInput, UpdateCustomerReturn,
+        UpdateCustomerReturnStatus,
     },
     vaccination::generate::{
         generate_create_prescription, get_dose_as_number_of_packs, CreatePrescription,
@@ -94,7 +94,6 @@ pub fn generate(
                     reason_id: None,
                     note: None,
                 }],
-                status: Some(InsertCustomerReturnStatus::New),
             };
             let finalise_return = UpdateCustomerReturn {
                 id: create_return.id.clone(),

@@ -3,7 +3,7 @@ use repository::{InvoiceRow, InvoiceStatus, InvoiceType, Name, StorageConnection
 use crate::invoice::{check_invoice_exists, check_invoice_type, check_store};
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 
-use super::{InsertSupplierReturn, InsertSupplierReturnError, InsertSupplierReturnStatus};
+use super::{InsertSupplierReturn, InsertSupplierReturnError};
 
 pub fn validate(
     connection: &StorageConnection,
@@ -28,10 +28,6 @@ pub fn validate(
         if !check_inbound_shipment_is_returnable(&inbound_shipment) {
             return Err(CannotReturnInboundShipment);
         }
-    } else {
-        if !check_status_for_original_return(&input.status) {
-            return Err(ManuallyCreatedReturnMustHaveNewStatus);
-        }
     }
 
     let other_party = check_other_party(
@@ -55,13 +51,4 @@ fn check_inbound_shipment_is_returnable(inbound_shipment: &InvoiceRow) -> bool {
         inbound_shipment.status,
         InvoiceStatus::Delivered | InvoiceStatus::Verified
     )
-}
-
-fn check_status_for_original_return(input_status: &Option<InsertSupplierReturnStatus>) -> bool {
-    if let Some(status) = input_status {
-        if status != &InsertSupplierReturnStatus::New {
-            return false;
-        }
-    }
-    true
 }

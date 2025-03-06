@@ -9,7 +9,6 @@ use graphql_types::types::InvoiceNode;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::supplier_return::insert::{
     InsertSupplierReturn as ServiceInput, InsertSupplierReturnError as ServiceError,
-    InsertSupplierReturnStatus,
 };
 
 use service::invoice::supplier_return::SupplierReturnLineInput as SupplierReturnLineServiceInput;
@@ -21,13 +20,6 @@ pub struct InsertInput {
     pub supplier_id: String,
     pub inbound_shipment_id: Option<String>,
     pub supplier_return_lines: Vec<SupplierReturnLineInput>,
-    pub status: Option<InsertSupplierReturnStatusInput>,
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum InsertSupplierReturnStatusInput {
-    New,
-    Shipped,
 }
 
 #[derive(InputObject)]
@@ -125,7 +117,6 @@ impl InsertInput {
             supplier_id,
             supplier_return_lines,
             inbound_shipment_id,
-            status,
         }: InsertInput = self;
 
         ServiceInput {
@@ -136,7 +127,6 @@ impl InsertInput {
                 .into_iter()
                 .map(|line| line.to_domain())
                 .collect(),
-            status: status.map(|status| status.to_domain()),
         }
     }
 }
@@ -157,16 +147,6 @@ impl SupplierReturnLineInput {
             number_of_packs: number_of_packs_to_return,
             reason_id,
             note,
-        }
-    }
-}
-
-impl InsertSupplierReturnStatusInput {
-    pub fn to_domain(&self) -> InsertSupplierReturnStatus {
-        use InsertSupplierReturnStatus::*;
-        match self {
-            InsertSupplierReturnStatusInput::New => New,
-            InsertSupplierReturnStatusInput::Shipped => Shipped,
         }
     }
 }

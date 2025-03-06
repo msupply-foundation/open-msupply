@@ -1,6 +1,5 @@
 use repository::{
-    ActivityLogType, Invoice, InvoiceRowRepository, InvoiceStatus, RepositoryError,
-    TransactionError,
+    ActivityLogType, Invoice, InvoiceRowRepository, RepositoryError, TransactionError,
 };
 
 use crate::{
@@ -22,19 +21,12 @@ use super::{
     SupplierReturnLineInput,
 };
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum InsertSupplierReturnStatus {
-    New,
-    Shipped,
-}
-
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct InsertSupplierReturn {
     pub id: String,
     pub other_party_id: String,
     pub inbound_shipment_id: Option<String>,
     pub supplier_return_lines: Vec<SupplierReturnLineInput>,
-    pub status: Option<InsertSupplierReturnStatus>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -106,24 +98,22 @@ pub fn insert_supplier_return(
             }
 
             // Update to not new status after upserting lines
-            if let Some(status) = input.status {
-                if status == InsertSupplierReturnStatus::Shipped {
-                    let _ = update_supplier_return(
-                        ctx,
-                        UpdateSupplierReturn {
-                            supplier_return_id: supplier_return.id.clone(),
-                            comment: None,
-                            status: Some(UpdateSupplierReturnStatus::Shipped),
-                            colour: None,
-                            on_hold: None,
-                            their_reference: None,
-                            transport_reference: None,
-                        },
-                    )
-                    .map_err(|e| {
-                        InsertSupplierReturnError::ErrorSettingNonNewStatus { update_error: e }
-                    })?;
-                }
+            if supplier_return.original_shipment_id.is_some() {
+                update_supplier_return(
+                    ctx,
+                    UpdateSupplierReturn {
+                        supplier_return_id: supplier_return.id.clone(),
+                        comment: None,
+                        status: Some(UpdateSupplierReturnStatus::Shipped),
+                        colour: None,
+                        on_hold: None,
+                        their_reference: None,
+                        transport_reference: None,
+                    },
+                )
+                .map_err(|e| {
+                    InsertSupplierReturnError::ErrorSettingNonNewStatus { update_error: e }
+                })?;
             };
 
             activity_log_entry(
@@ -160,15 +150,6 @@ impl From<TransactionError<OutError>> for OutError {
     }
 }
 
-impl InsertSupplierReturnStatus {
-    pub fn as_invoice_row_status(&self) -> InvoiceStatus {
-        match self {
-            InsertSupplierReturnStatus::New => InvoiceStatus::New,
-            InsertSupplierReturnStatus::Shipped => InvoiceStatus::Shipped,
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
     use repository::{
@@ -178,14 +159,14 @@ mod test {
             mock_supplier_return_a, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRowRepository, InvoiceRowRepository, NameRow, NameStoreJoinRow, ReturnReasonRow,
+        InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, NameRow, NameStoreJoinRow,
+        ReturnReasonRow,
     };
     use util::{inline_edit, inline_init};
 
     use crate::{
         invoice::supplier_return::insert::{
             InsertSupplierReturn, InsertSupplierReturnError as ServiceError,
-            InsertSupplierReturnStatus,
         },
         invoice_line::{
             stock_out_line::InsertStockOutLineError,
@@ -376,27 +357,6 @@ mod test {
                 error: UpdateLineReturnReasonError::ReasonDoesNotExist,
             }),
         );
-
-        // ManuallyCreatedReturnMustHaveNewStatus
-        assert_eq!(
-            service_provider.invoice_service.insert_supplier_return(
-                &context,
-                InsertSupplierReturn {
-                    id: "some_new_id".to_string(),
-                    other_party_id: mock_name_a().id, // Supplier
-                    status: Some(InsertSupplierReturnStatus::Shipped),
-                    supplier_return_lines: vec![SupplierReturnLineInput {
-                        id: "new_line_id".to_string(),
-                        stock_line_id: mock_stock_line_b().id,
-                        number_of_packs: 1.0,
-                        reason_id: Some("does_not_exist".to_string()),
-                        ..Default::default()
-                    }],
-                    ..Default::default()
-                },
-            ),
-            Err(ServiceError::ManuallyCreatedReturnMustHaveNewStatus),
-        );
     }
 
     #[actix_rt::test]
@@ -479,6 +439,7 @@ mod test {
                 u.name_link_id = supplier().id;
                 u.user_id = Some(mock_user_account_a().id);
                 u.original_shipment_id = Some(mock_inbound_shipment_a().id);
+                u.status = InvoiceStatus::Shipped;
                 u
             })
         );
@@ -496,6 +457,35 @@ mod test {
                 u.id = "new_supplier_return_line_id".to_string();
                 u.stock_line_id = Some(mock_stock_line_b().id);
                 u.number_of_packs = 1.0;
+                u
+            })
+        );
+
+        // Check new return without original shipment gets created with status of 'New'
+        service_provider
+            .invoice_service
+            .insert_supplier_return(
+                &context,
+                inline_init(|r: &mut InsertSupplierReturn| {
+                    r.id = "new_supplier_return_id_2".to_string();
+                    r.other_party_id = supplier().id;
+                    r.inbound_shipment_id = None;
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id("new_supplier_return_id_2")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(invoice.id, "new_supplier_return_id_2");
+        assert_eq!(
+            invoice,
+            inline_edit(&invoice, |mut u| {
+                u.name_link_id = supplier().id;
+                u.user_id = Some(mock_user_account_a().id);
+                u.status = InvoiceStatus::New;
                 u
             })
         );

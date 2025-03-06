@@ -10,7 +10,6 @@ use graphql_types::types::InvoiceNode;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::customer_return::insert::{
     InsertCustomerReturn as ServiceInput, InsertCustomerReturnError as ServiceError,
-    InsertCustomerReturnStatus,
 };
 use service::invoice::customer_return::CustomerReturnLineInput as CustomerReturnLineServiceInput;
 
@@ -21,13 +20,6 @@ pub struct InsertInput {
     pub customer_id: String,
     pub outbound_shipment_id: Option<String>,
     pub customer_return_lines: Vec<CustomerReturnLineInput>,
-    pub status: Option<InsertCustomerReturnStatusInput>,
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum InsertCustomerReturnStatusInput {
-    New,
-    Verified,
 }
 
 #[derive(InputObject)]
@@ -129,7 +121,6 @@ impl InsertInput {
             customer_id,
             outbound_shipment_id,
             customer_return_lines,
-            status,
         }: InsertInput = self;
 
         ServiceInput {
@@ -141,7 +132,6 @@ impl InsertInput {
                 .map(|line| line.to_domain())
                 .collect(),
             is_patient_return: false,
-            status: status.map(|status| status.to_domain()),
         }
     }
 }
@@ -171,16 +161,6 @@ impl CustomerReturnLineInput {
             pack_size,
             item_variant_id,
             stock_line_id: None,
-        }
-    }
-}
-
-impl InsertCustomerReturnStatusInput {
-    pub fn to_domain(&self) -> InsertCustomerReturnStatus {
-        use InsertCustomerReturnStatus::*;
-        match self {
-            InsertCustomerReturnStatusInput::New => New,
-            InsertCustomerReturnStatusInput::Verified => Verified,
         }
     }
 }
