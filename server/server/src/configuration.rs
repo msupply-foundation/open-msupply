@@ -1,3 +1,4 @@
+use clap::Args;
 use config::{Config, ConfigError, Environment, File, FileFormat, FileSourceFile};
 use repository::{KeyType, KeyValueStoreRepository, StorageConnection};
 use service::settings::{is_develop, Settings};
@@ -19,10 +20,22 @@ const CONFIGURATION_EXAMPLE_FILE_PATH: &str = "example.yaml";
 const CONFIGURATION_ENVIRONMENT_PREFIX: &str = "app";
 const CONFIGURATION_ENVIRONMENT_SEPARATOR: &str = "__";
 
+/// Config argument
+#[derive(Args)]
+pub struct ConfigArgs {
+    #[clap(long)]
+    pub config_path: Option<PathBuf>,
+}
+
 pub enum SettingsError {
     Config(ConfigError),
     Environment(VarError),
     File(IoError),
+}
+
+struct ConfigFilePaths {
+    base: File<FileSourceFile, FileFormat>,
+    app: File<FileSourceFile, FileFormat>,
 }
 
 /// Gets directory storing configuration files.
@@ -119,18 +132,35 @@ pub fn copy_example_environment_configuration_file_if_required() -> Result<(), S
 ///
 /// Individual settings properties can be also manually defined as environment variables: see
 /// `get_configuration_environment` for details.
-pub fn get_configuration() -> Result<Settings, SettingsError> {
+pub fn get_configuration(config_file: Option<PathBuf>) -> Result<Settings, SettingsError> {
     copy_example_environment_configuration_file_if_required()?;
 
+    let file_paths = derive_file_paths(config_file)?;
+
     let mut builder = Config::builder();
-    builder = builder.add_source(get_configuration_base_file()?);
-    builder = builder.add_source(get_configuration_app_file()?);
+    builder = builder.add_source(file_paths.base);
+    builder = builder.add_source(file_paths.app);
     builder = builder.add_source(get_configuration_environment());
 
     let configuration = builder.build()?;
     let settings: Settings = configuration.try_deserialize()?;
 
     Ok(settings)
+}
+
+fn derive_file_paths(config_file: Option<PathBuf>) -> Result<ConfigFilePaths, SettingsError> {
+    let file_paths: ConfigFilePaths = match config_file {
+        Some(file) => ConfigFilePaths {
+            base: File::from(file.parent().unwrap().join(CONFIGURATION_BASE_FILE_PATH)),
+            app: File::from(file),
+        },
+        None => ConfigFilePaths {
+            base: get_configuration_base_file()?,
+            app: get_configuration_app_file()?,
+        }
+    };
+
+    Ok(file_paths)
 }
 
 impl Debug for SettingsError {
