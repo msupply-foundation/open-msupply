@@ -97,6 +97,8 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 OtherPartyNotACustomer,
             ))
         }
+
+        // Standard Graphql Errors
         ServiceError::OutboundShipmentDoesNotExist
         | ServiceError::OutboundShipmentDoesNotBelongToCurrentStore
         | ServiceError::OriginalInvoiceNotAnOutboundShipment
@@ -105,6 +107,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::OtherPartyDoesNotExist
         | ServiceError::ErrorSettingNonNewStatus { .. }
         | ServiceError::ManuallyCreatedReturnMustHaveNewStatus => BadUserInput(formatted_error),
+
         ServiceError::NewlyCreatedInvoiceDoesNotExist
         | ServiceError::LineInsertError { .. }
         | ServiceError::LineReturnReasonUpdateError { .. }

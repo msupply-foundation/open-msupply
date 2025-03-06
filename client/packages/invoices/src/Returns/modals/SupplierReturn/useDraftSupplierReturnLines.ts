@@ -71,7 +71,6 @@ export const useDraftSupplierReturnLines = ({
       });
     }
 
-
     // TODO: error handling here
     // also need to consider what we do if the error was on the first page of the wizard
   };
