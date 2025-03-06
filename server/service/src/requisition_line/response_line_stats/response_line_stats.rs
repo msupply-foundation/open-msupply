@@ -126,7 +126,6 @@ pub fn response_store_stats(
         stock_on_hand,
         stock_on_order,
         incoming_stock,
-        // requested_quantity: requisition_line.requisition_line_row.requested_quantity,
         requested_quantity: current_line_quantity,
         other_requested_quantity,
     })
