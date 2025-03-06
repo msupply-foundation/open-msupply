@@ -148,14 +148,6 @@ const getInventoryAdjustmentReasonInputColumn = (
   };
 };
 
-// If this is not extracted to it's own component and used directly in Cell:
-// cell will be re rendered anytime rowData changes, which causes it to loose focus
-// if number of packs is changed and tab is pressed (in quick succession)
-// eslint-disable-next-line new-cap
-const PackUnitEntryCell = PackSizeEntryCell<DraftStocktakeLine>({
-  getIsDisabled: r => !!r?.stockLine,
-});
-
 export const BatchTable: FC<StocktakeLineEditTableProps> = ({
   batches,
   update,
@@ -186,9 +178,12 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
     }
     columnDefinitions.push(
       getColumnLookupWithOverrides('packSize', {
-        Cell: PackUnitEntryCell,
+        Cell: PackSizeEntryCell<DraftStocktakeLine>,
         setter: update,
         label: 'label.pack-size',
+        cellProps: {
+          getIsDisabled: (rowData: DraftStocktakeLine) => !!rowData?.stockLine,
+        },
       }),
       {
         key: 'snapshotNumberOfPacks',
