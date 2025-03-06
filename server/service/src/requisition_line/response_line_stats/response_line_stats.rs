@@ -1,6 +1,6 @@
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceStatus,
-    InvoiceType, RepositoryError, RequisitionLine, RequisitionLineFilter,
+    ApprovalStatusType, EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType,
+    InvoiceStatus, InvoiceType, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionStatus, RequisitionType, StockLineFilter,
     StockLineRepository, StorageConnection,
 };
@@ -89,18 +89,45 @@ pub fn response_store_stats(
             .status(RequisitionStatus::Finalised.not_equal_to()),
     )?;
 
-    let other_requested_quantity = (response_requisition_lines
-        .iter()
-        .fold(0.0, |sum, requisition_line| {
-            sum + requisition_line.requisition_line_row.requested_quantity
-        }))
-        - requisition_line.requisition_line_row.requested_quantity;
+    // Calculate line using approved amount if exists -> if denied or pending return 0 -> if doesn't need approval, use requested quantity
+    let calculate_line_quantity = |line: &RequisitionLine| -> f64 {
+        match line.requisition_row.approval_status {
+            Some(ApprovalStatusType::Approved)
+            | Some(ApprovalStatusType::ApprovedByAnother)
+            | Some(ApprovalStatusType::AutoApproved) => {
+                let quantity = if line.requisition_line_row.approved_quantity > 0.0 {
+                    line.requisition_line_row.approved_quantity
+                } else {
+                    line.requisition_line_row.requested_quantity
+                };
+                quantity
+            }
+            Some(ApprovalStatusType::Denied)
+            | Some(ApprovalStatusType::DeniedByAnother)
+            | Some(ApprovalStatusType::Pending) => 0.0,
+
+            Some(ApprovalStatusType::None) | None => {
+                let quantity = line.requisition_line_row.requested_quantity;
+                quantity
+            }
+        }
+    };
+
+    // Calculate the current line
+    let current_line_quantity = calculate_line_quantity(requisition_line);
+
+    // Calculate all lines except the current line
+    let other_requested_quantity = response_requisition_lines.iter().fold(0.0, |sum, line| {
+        let line_quantity = calculate_line_quantity(line);
+        sum + line_quantity
+    }) - current_line_quantity;
 
     Ok(ResponseStoreStats {
         stock_on_hand,
         stock_on_order,
         incoming_stock,
-        requested_quantity: requisition_line.requisition_line_row.requested_quantity,
+        // requested_quantity: requisition_line.requisition_line_row.requested_quantity,
+        requested_quantity: current_line_quantity,
         other_requested_quantity,
     })
 }
