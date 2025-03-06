@@ -3,8 +3,10 @@ on:
     branches:
       - main
       - develop
+      # This pattern matches branches for release candidates (e.g., v2.6.0-RC)
+      - v*-RC
     paths:
-      - 'server/**'
+      - "server/**"
   workflow_dispatch:
 
 name: CI
