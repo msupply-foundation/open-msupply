@@ -54,6 +54,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
         })
       )}
       sx={{ minWidth: width }}
+      textSx={{ backgroundColor: 'white' }}
       disabled={disabled}
       fullWidth={fullWidth}
     />
