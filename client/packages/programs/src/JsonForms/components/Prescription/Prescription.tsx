@@ -197,7 +197,7 @@ const UIComponent = (props: ControlProps) => {
               label={t('label.item_one')}
               text={selectedItem.name}
               textProps={{ textAlign: 'end' }}
-            ></TextWithLabelRow>
+            />
 
             <StockLineTable
               stocklines={draftPrescriptionLines}

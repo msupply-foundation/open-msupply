@@ -1,8 +1,8 @@
 import React from 'react';
 import {
   Alert,
-  ArrowRightIcon,
   Box,
+  ChevronDownIcon,
   Link,
   RouteBuilder,
   useFormatDateTime,
@@ -22,7 +22,7 @@ export const PrescriptionInfo = ({ prescription }: PrescriptionInfoProps) => {
   const getPrescriptionInfo = () => {
     const prescriptionLine = prescription?.lines.nodes[0];
     if (!prescriptionLine) return;
-    else {
+    {
       const issued =
         prescriptionLine.numberOfPacks * (prescriptionLine.packSize ?? 0);
 
@@ -62,29 +62,30 @@ export const PrescriptionInfo = ({ prescription }: PrescriptionInfoProps) => {
       }}
     >
       <Box display="flex" alignItems="center" justifyContent="space-between">
-        <Box display="flex" alignItems="center">
-          {getPrescriptionInfo()}
-        </Box>
-        <Box>
-          {prescription.id && (
-            <Link
-              style={{
-                paddingLeft: 6,
-                fontWeight: 'bold',
-                alignItems: 'center',
-                display: 'flex',
+        {getPrescriptionInfo()}
+        {prescription.id && (
+          <Link
+            style={{
+              paddingLeft: 6,
+              fontWeight: 'bold',
+              alignItems: 'center',
+              display: 'flex',
+              minWidth: '140px',
+            }}
+            to={RouteBuilder.create(AppRoute.Dispensary)
+              .addPart(AppRoute.Prescription)
+              .addPart(String(prescription?.invoiceNumber))
+              .build()}
+            target="_blank"
+          >
+            {t('button.view-prescription')}
+            <ChevronDownIcon
+              sx={{
+                transform: 'rotate(-90deg)',
               }}
-              to={RouteBuilder.create(AppRoute.Dispensary)
-                .addPart(AppRoute.Prescription)
-                .addPart(String(prescription?.invoiceNumber))
-                .build()}
-              target="_blank"
-            >
-              {t('button.view-prescription')}
-              <ArrowRightIcon />
-            </Link>
-          )}
-        </Box>
+            />
+          </Link>
+        )}
       </Box>
     </Alert>
   );
