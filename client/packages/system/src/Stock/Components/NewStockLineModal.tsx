@@ -54,7 +54,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
 
   const mapStructuredErrors = (result: Awaited<ReturnType<typeof create>>) => {
     if (result.insertStockLine.__typename === 'StockLineNode') {
-      return result.insertStockLine;
+      return;
     }
     const { error } = result.insertStockLine;
     switch (error.__typename) {
@@ -68,20 +68,26 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   const save = async () => {
     try {
       const result = await create();
-      const errorOrNode = mapStructuredErrors(result);
-      if (typeof errorOrNode == 'string') {
-        error(errorOrNode)();
-      } else {
+
+      if (result?.insertStockLine.__typename === 'InsertStockLineError') {
+        const errorMessage = mapStructuredErrors(result);
+        if (errorMessage) {
+          error(errorMessage)();
+        }
+      }
+
+      if (result?.insertStockLine.__typename === 'StockLineNode') {
         const successSnack = success(t('messages.stock-line-saved'));
         successSnack();
         onClose();
         navigate(
           RouteBuilder.create(AppRoute.Inventory)
             .addPart(AppRoute.Stock)
-            .addPart(errorOrNode.id)
+            .addPart(result?.insertStockLine.id)
             .build()
         );
       }
+
       updatePatch(draft);
     } catch {
       error(t('messages.could-not-save'))(); // generic could not save message
