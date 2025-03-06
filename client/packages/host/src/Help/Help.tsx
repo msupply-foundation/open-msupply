@@ -10,6 +10,7 @@ import { AppVersion } from '../components';
 import { SiteInfo } from '../components/SiteInfo';
 import { ContactFormSection } from './ContactFormSection';
 import { UserGuide } from './UserGuide';
+import { DisplayCoordinates } from './DisplayCoordinates';
 
 export const Help = () => {
   const { data: initStatus } = useInitialisationStatus();
@@ -24,8 +25,8 @@ export const Help = () => {
       <Typography style={{ paddingBottom: 10 }}>
         {t('message.keyboard-shortcuts')}
       </Typography>
-
       <ContactFormSection />
+      <DisplayCoordinates />
       <AppBarButtonsPortal>
         <AppVersion SiteInfo={<SiteInfo siteName={initStatus?.siteName} />} />
       </AppBarButtonsPortal>
