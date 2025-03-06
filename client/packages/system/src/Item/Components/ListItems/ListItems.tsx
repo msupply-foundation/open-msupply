@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Tooltip,
   ListOptions,
   RouteBuilder,
   useNavigate,
@@ -51,7 +50,6 @@ export const ListItems = ({
   }
 
   return (
-    <Tooltip title={value?.name}>
       <Box sx={{ flexGrowY: 1, overflow: 'auto', scrollBehavior: 'smooth' }}>
         <ListOptions
           currentId={value?.id ?? 'new'}
@@ -65,6 +63,5 @@ export const ListItems = ({
           scrollRef={scrollRef}
         />
       </Box>
-    </Tooltip>
   );
 };

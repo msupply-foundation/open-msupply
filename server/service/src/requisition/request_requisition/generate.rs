@@ -47,7 +47,7 @@ pub fn generate_requisition_lines(
 ) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
     let item_stats_rows = get_item_stats(ctx, store_id, None, item_ids)?;
 
-    let result = item_stats_rows
+    let lines = item_stats_rows
         .into_iter()
         .map(|item_stats| {
             let average_monthly_consumption = item_stats.average_monthly_consumption;
@@ -86,5 +86,5 @@ pub fn generate_requisition_lines(
         })
         .collect();
 
-    Ok(result)
+    Ok(lines)
 }

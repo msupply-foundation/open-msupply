@@ -60,7 +60,6 @@ export const FooterComponent: FC = () => {
   const { confirmAndDelete } = useReturns.lines.deleteSelectedCustomerLines({
     returnId: id,
   });
-  const isDisabled = useReturns.utils.customerIsDisabled();
   const { selectedIds } = useReturns.lines.deleteSelectedCustomerLines({
     returnId: id,
   });
@@ -72,8 +71,6 @@ export const FooterComponent: FC = () => {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
-      disabled: isDisabled,
-      disabledToastMessage: t('label.cant-delete-disabled'),
     },
   ];
 

@@ -118,6 +118,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
             label={t('label.patient')}
             Input={
               <PatientSearchInput
+                autoFocus
                 value={patient}
                 onChange={result => {
                   setPatient(result);

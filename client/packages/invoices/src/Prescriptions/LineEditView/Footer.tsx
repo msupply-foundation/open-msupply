@@ -18,37 +18,35 @@ export const Footer: FC<FooterProps> = ({
   isDirty,
   handleSave,
   handleCancel,
-}) => {
-  return (
-    <AppFooterPortal
-      Content={
-        isSaving ? (
-          <InlineSpinner />
-        ) : (
+}) => (
+  <AppFooterPortal
+    Content={
+      isSaving ? (
+        <InlineSpinner />
+      ) : (
+        <Box
+          gap={2}
+          display="flex"
+          flexDirection="row"
+          alignItems="center"
+          height={64}
+        >
           <Box
-            gap={2}
+            flex={1}
             display="flex"
-            flexDirection="row"
-            alignItems="center"
-            height={64}
+            justifyContent="flex-end"
+            gap={2}
+            marginLeft="auto"
           >
-            <Box
-              flex={1}
-              display="flex"
-              justifyContent="flex-end"
-              gap={2}
-              marginLeft="auto"
-            >
-              <DialogButton variant="cancel" onClick={handleCancel} />
-              <DialogButton
-                variant={'save'}
-                disabled={!isDirty}
-                onClick={handleSave}
-              />
-            </Box>
+            <DialogButton variant="cancel" onClick={handleCancel} />
+            <DialogButton
+              variant={'save'}
+              disabled={!isDirty}
+              onClick={handleSave}
+            />
           </Box>
-        )
-      }
-    />
-  );
-};
+        </Box>
+      )
+    }
+  />
+);

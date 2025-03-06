@@ -36,9 +36,7 @@ export const DetailView: FC = () => {
       data?.program?.id ?? '',
       !!data
     );
-  const { linkedRequisition } = useResponse.document.fields([
-    'linkedRequisition',
-  ]);
+
   const onRowClick = useCallback((line: ResponseLineFragment) => {
     navigate(buildItemEditRoute(line.requisitionNumber, line.item.id));
   }, []);
@@ -125,10 +123,7 @@ export const DetailView: FC = () => {
         <Toolbar />
         <DetailTabs tabs={tabs} />
 
-        <Footer
-          isDisabled={isDisabled}
-          hasLinkedRequisition={!!linkedRequisition}
-        />
+        <Footer />
         <SidePanel />
       </TableProvider>
     </ResponseRequisitionLineErrorProvider>

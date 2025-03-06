@@ -6,6 +6,8 @@ import {
   useFormatDateTime,
   BaseDatePickerInput,
   DateUtils,
+  LocaleKey,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
@@ -25,12 +27,15 @@ export const dateTester = rankWith(5, isDateControl);
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, uischema } = props;
+
+  const t = useTranslation();
   const formatDateTime = useFormatDateTime();
   const { errors: zErrors, options } = useZodOptionsValidation(
     Options,
     uischema.options
   );
   const { customError, setCustomError } = useJSONFormsCustomError(path, 'Date');
+
   const disableFuture = options?.disableFuture ?? false;
 
   if (!props.visible) {
@@ -46,7 +51,7 @@ const UIComponent = (props: ControlProps) => {
           width: '100%',
         },
       }}
-      label={label}
+      label={t(label as LocaleKey)}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment="start"
       Input={
