@@ -70,7 +70,7 @@ pub fn get_item_stats(
         item_ids: item_ids.clone(),
     };
 
-    let amc_by_item = match PluginInstance::get_one(PluginType::Amc) {
+    let amc_by_item = match PluginInstance::get_one(PluginType::AverageMonthlyConsumption) {
         Some(plugin) => amc::Trait::call(&(*plugin), input),
         None => amc::Trait::call(&DefaultAmc, input),
     }?;

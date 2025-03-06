@@ -115,7 +115,29 @@ const getPlatform = () => {
   }
 };
 
+const getOS = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  if (/win/i.test(userAgent)) {
+    return 'Windows';
+  }
+  if (/mac/i.test(userAgent)) {
+    return 'Mac OS';
+  }
+  if (/iphone|ipad|ipod/i.test(userAgent)) {
+    return 'iOS';
+  }
+  if (/android/i.test(userAgent)) {
+    return 'Android';
+  }
+  if (/linux/i.test(userAgent)) {
+    return 'Linux';
+  }
+  // good to have a default
+  return 'Windows';
+};
+
 const platform = getPlatform();
+const os = getOS();
 
 const isTouchScreen = 'ontouchstart' in document.documentElement;
 
@@ -125,6 +147,7 @@ export const EnvUtils = {
   isProduction: (): boolean => process.env['NODE_ENV'] === 'production',
   isTouchScreen,
   mapRoute,
+  os,
   platform,
   printFormat: PrintFormat.Html, // platform === Platform.Android ? PrintFormat.Html : PrintFormat.Pdf,
 };
