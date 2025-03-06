@@ -1,6 +1,5 @@
 use repository::{
-    ActivityLogType, Invoice, InvoiceRowRepository, InvoiceStatus, RepositoryError,
-    TransactionError,
+    ActivityLogType, Invoice, InvoiceRowRepository, RepositoryError, TransactionError,
 };
 
 use crate::{
@@ -22,12 +21,6 @@ use super::{
     UpdateCustomerReturnError, UpdateCustomerReturnStatus,
 };
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum InsertCustomerReturnStatus {
-    New,
-    Verified,
-}
-
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct InsertCustomerReturn {
     pub id: String,
@@ -35,7 +28,6 @@ pub struct InsertCustomerReturn {
     pub is_patient_return: bool,
     pub outbound_shipment_id: Option<String>,
     pub customer_return_lines: Vec<CustomerReturnLineInput>,
-    pub status: Option<InsertCustomerReturnStatus>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -107,24 +99,22 @@ pub fn insert_customer_return(
             }
 
             // Update to not new status after upserting lines
-            if let Some(status) = input.status {
-                if status == InsertCustomerReturnStatus::Verified {
-                    let _ = update_customer_return(
-                        ctx,
-                        UpdateCustomerReturn {
-                            id: customer_return.id.clone(),
-                            comment: None,
-                            status: Some(UpdateCustomerReturnStatus::Verified),
-                            colour: None,
-                            on_hold: None,
-                            their_reference: None,
-                            other_party_id: None,
-                        },
-                    )
-                    .map_err(|e| {
-                        InsertCustomerReturnError::ErrorSettingNonNewStatus { update_error: e }
-                    })?;
-                }
+            if customer_return.original_shipment_id.is_some() {
+                let _ = update_customer_return(
+                    ctx,
+                    UpdateCustomerReturn {
+                        id: customer_return.id.clone(),
+                        comment: None,
+                        status: Some(UpdateCustomerReturnStatus::Verified),
+                        colour: None,
+                        on_hold: None,
+                        their_reference: None,
+                        other_party_id: None,
+                    },
+                )
+                .map_err(|e| {
+                    InsertCustomerReturnError::ErrorSettingNonNewStatus { update_error: e }
+                })?;
             };
 
             activity_log_entry(
@@ -161,15 +151,6 @@ impl From<TransactionError<OutError>> for OutError {
     }
 }
 
-impl InsertCustomerReturnStatus {
-    pub fn as_invoice_row_status(&self) -> InvoiceStatus {
-        match self {
-            InsertCustomerReturnStatus::New => InvoiceStatus::New,
-            InsertCustomerReturnStatus::Verified => InvoiceStatus::Verified,
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
     use repository::{
@@ -187,7 +168,6 @@ mod test {
     use crate::{
         invoice::customer_return::insert::{
             InsertCustomerReturn, InsertCustomerReturnError as ServiceError,
-            InsertCustomerReturnStatus,
         },
         invoice_line::{
             stock_in_line::InsertStockInLineError,
@@ -379,28 +359,6 @@ mod test {
                 error: UpdateLineReturnReasonError::ReasonDoesNotExist,
             }),
         );
-
-        // ManuallyCreatedReturnMustHaveNewStatus
-        assert_eq!(
-            service_provider.invoice_service.insert_customer_return(
-                &context,
-                InsertCustomerReturn {
-                    id: "some_new_id".to_string(),
-                    other_party_id: mock_name_customer_a().id,
-                    status: Some(InsertCustomerReturnStatus::Verified),
-                    customer_return_lines: vec![CustomerReturnLineInput {
-                        id: "new_line_id".to_string(),
-                        item_id: mock_item_a().id,
-                        number_of_packs: 1.0,
-                        pack_size: 1.0,
-                        reason_id: Some("does_not_exist".to_string()),
-                        ..Default::default()
-                    }],
-                    ..Default::default()
-                },
-            ),
-            Err(ServiceError::ManuallyCreatedReturnMustHaveNewStatus),
-        )
     }
 
     #[actix_rt::test]
@@ -480,6 +438,7 @@ mod test {
                 u.name_link_id = mock_name_customer_a().id;
                 u.user_id = Some(mock_user_account_a().id);
                 u.original_shipment_id = Some(returnable_outbound_shipment().id);
+                u.status = InvoiceStatus::Verified;
                 u
             })
         );
@@ -497,6 +456,35 @@ mod test {
                 u.id = "new_customer_return_line_id".to_string();
                 u.item_link_id = mock_item_a().id;
                 u.number_of_packs = 1.0;
+                u
+            })
+        );
+
+        // Check new return without original shipment gets created with status of 'New'
+        service_provider
+            .invoice_service
+            .insert_customer_return(
+                &context,
+                inline_init(|r: &mut InsertCustomerReturn| {
+                    r.id = "new_customer_return_id_2".to_string();
+                    r.other_party_id = mock_name_customer_a().id;
+                    r.outbound_shipment_id = None;
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id("new_customer_return_id_2")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(invoice.id, "new_customer_return_id_2");
+        assert_eq!(
+            invoice,
+            inline_edit(&invoice, |mut u| {
+                u.name_link_id = mock_name_customer_a().id;
+                u.user_id = Some(mock_user_account_a().id);
+                u.status = InvoiceStatus::New;
                 u
             })
         );

@@ -21,7 +21,6 @@ pub fn generate(
         other_party_id,
         inbound_shipment_id,
         supplier_return_lines,
-        status: _,
     }: InsertSupplierReturn,
     other_party: Name,
 ) -> Result<

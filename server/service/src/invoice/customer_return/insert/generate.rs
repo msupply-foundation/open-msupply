@@ -22,7 +22,6 @@ pub fn generate(
         outbound_shipment_id,
         customer_return_lines,
         is_patient_return: _,
-        status: _,
     }: InsertCustomerReturn,
     other_party: Name,
 ) -> Result<
