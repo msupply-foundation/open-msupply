@@ -1,16 +1,13 @@
-import { processStockLines } from "./utils";
+import { processStockLines } from './utils';
 
-function convert_data() {
-  const res = JSON.parse(Host.inputString());
+function convert_data(res) {
   res.data.stockLines.nodes = processStockLines(
     res.data.stockLines.nodes,
     // assign default sort values
-    res?.arguments?.sort ?? "item.name",
-    res?.arguments?.dir ?? "asc"
+    res?.arguments?.sort ?? 'item.name',
+    res?.arguments?.dir ?? 'asc'
   );
-  Host.outputString(JSON.stringify(res));
+  return res;
 }
 
-module.exports = {
-  convert_data,
-};
+export { convert_data };

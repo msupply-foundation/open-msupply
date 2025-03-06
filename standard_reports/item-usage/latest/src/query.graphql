@@ -1,4 +1,4 @@
-query ItemUsage($storeId: String, $itemCode: String, $itemName: String) {
+query ItemUsage($storeId: String!, $itemCode: String, $itemName: String) {
   items(
     storeId: $storeId
     filter: {
