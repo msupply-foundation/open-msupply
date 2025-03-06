@@ -30,7 +30,8 @@ impl PartialEq for BoaJsError {
 
 pub(crate) fn call_method<I, O>(
     input: I,
-    // A path to exported method
+    // A path to exported method, plugins export { plugins: { plugin_name }}, thus we look for vec!["plugins", "plugin_name"]
+    // reports export { convert_data } thus we look for vec!["convert_data"]
     export_location: Vec<&str>,
     bundle: &Vec<u8>,
 ) -> Result<O, BoaJsError>
