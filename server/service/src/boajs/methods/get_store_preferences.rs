@@ -1,8 +1,7 @@
 use boa_engine::*;
 
 use crate::{
-    backend_plugin::{boajs::utils::*, plugin_provider::PluginContext},
-    store_preference::get_store_preferences,
+    boajs::context::BoaJsContext, boajs::utils::*, store_preference::get_store_preferences,
 };
 
 pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
@@ -14,7 +13,7 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
 
             // When using PluginContext, it's best to use 'scope' see PluginContext for a link to testing repo
             let preferences = {
-                let service_provider = PluginContext::service_provider();
+                let service_provider = BoaJsContext::service_provider();
                 let connection = service_provider
                     .connection()
                     .map_err(std_error_to_js_error)?;

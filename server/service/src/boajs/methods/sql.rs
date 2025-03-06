@@ -1,7 +1,7 @@
 use boa_engine::*;
 use repository::{raw_query, JsonRawRow};
 
-use crate::backend_plugin::{boajs::utils::*, plugin_provider::PluginContext};
+use crate::boajs::{context::BoaJsContext, utils::*};
 
 // SQL method accepts first argument as SQL string
 // TODO add the json row wrapper, so that consumer doesn't need to add "json_object" or "row_to_json"
@@ -15,7 +15,7 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
 
             // When using PluginContext, it's best to use 'scope' see PluginContext for a link to testing repo
             let results = {
-                let service_provider = PluginContext::service_provider();
+                let service_provider = BoaJsContext::service_provider();
                 let connection = service_provider
                     .connection()
                     .map_err(std_error_to_js_error)?;

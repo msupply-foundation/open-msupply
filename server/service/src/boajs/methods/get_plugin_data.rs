@@ -1,7 +1,7 @@
 use boa_engine::*;
 use repository::{PluginDataFilter, PluginDataRepository, PluginDataRow};
 
-use crate::backend_plugin::{boajs::utils::*, plugin_provider::PluginContext};
+use crate::{boajs::context::BoaJsContext, boajs::utils::*};
 
 pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
     context.register_global_callable(
@@ -12,7 +12,7 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
 
             // When using PluginContext, it's best to use 'scope' see PluginContext for a link to testing repo
             let plugin_data: Vec<PluginDataRow> = {
-                let service_provider = PluginContext::service_provider();
+                let service_provider = BoaJsContext::service_provider();
                 let connection = service_provider
                     .connection()
                     .map_err(std_error_to_js_error)?;
