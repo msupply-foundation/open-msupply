@@ -2,7 +2,7 @@ use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::generic_errors::StockLineReducedBelowZero;
-use graphql_types::types::InvoiceNode;
+use graphql_types::types::{AdjustmentReasonNotProvided, InvoiceNode};
 use service::invoice::inventory_adjustment::InsertInventoryAdjustmentError as ServiceError;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -91,6 +91,7 @@ impl CreateInventoryAdjustmentInput {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum InsertErrorInterface {
     StockLineReducedBelowZero(StockLineReducedBelowZero),
+    AdustmentReasonNotProvided(AdjustmentReasonNotProvided),
 }
 
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
@@ -104,12 +105,17 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
             ))
         }
 
+        ServiceError::AdjustmentReasonNotProvided => {
+            return Ok(InsertErrorInterface::AdustmentReasonNotProvided(
+                AdjustmentReasonNotProvided,
+            ))
+        }
+
         // Standard Graphql Errors
         ServiceError::StockLineDoesNotExist
         | ServiceError::InvalidStore
         | ServiceError::InvalidAdjustment
-        | ServiceError::AdjustmentReasonNotValid
-        | ServiceError::AdjustmentReasonNotProvided => BadUserInput(formatted_error),
+        | ServiceError::AdjustmentReasonNotValid => BadUserInput(formatted_error),
 
         ServiceError::NewlyCreatedInvoiceDoesNotExist
         | ServiceError::StockInLineInsertError(_)
