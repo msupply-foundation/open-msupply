@@ -58,6 +58,9 @@ const DATA_EXPORT_FOLDER: &str = "data";
 struct Args {
     #[clap(subcommand)]
     action: Action,
+    
+    #[clap(flatten)]
+    config_args: configuration::ConfigArgs,
 }
 
 #[derive(clap::Subcommand)]
@@ -262,7 +265,7 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     let settings: Settings =
-        configuration::get_configuration().expect("Problem loading configurations");
+        configuration::get_configuration(args.config_args.config_path).expect("Problem loading configurations");
 
     match args.action {
         Action::ExportGraphqlSchema => {

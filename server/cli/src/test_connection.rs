@@ -138,7 +138,7 @@ struct ConfigTest;
 impl Test for ConfigTest {
     async fn run(&self, test_data: &mut TestData) -> Result<String> {
         test_data.server_config = Some(
-            configuration::get_configuration()
+            configuration::get_configuration(None)
                 .map_err(|err| anyhow!("Failed to load config: {:?}", err))?,
         );
         Ok("Successfully loaded configuration".to_string())
