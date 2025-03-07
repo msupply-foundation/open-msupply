@@ -103,12 +103,8 @@ pub fn insert_supplier_return(
                     ctx,
                     UpdateSupplierReturn {
                         supplier_return_id: supplier_return.id.clone(),
-                        comment: None,
                         status: Some(UpdateSupplierReturnStatus::Shipped),
-                        colour: None,
-                        on_hold: None,
-                        their_reference: None,
-                        transport_reference: None,
+                        ..Default::default()
                     },
                 )
                 .map_err(|e| {
