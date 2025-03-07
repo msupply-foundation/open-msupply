@@ -95,21 +95,17 @@ pub fn response_store_stats(
             Some(ApprovalStatusType::Approved)
             | Some(ApprovalStatusType::ApprovedByAnother)
             | Some(ApprovalStatusType::AutoApproved) => {
-                let quantity = if line.requisition_line_row.approved_quantity > 0.0 {
+                if line.requisition_line_row.approved_quantity > 0.0 {
                     line.requisition_line_row.approved_quantity
                 } else {
                     line.requisition_line_row.requested_quantity
-                };
-                quantity
+                }
             }
             Some(ApprovalStatusType::Denied)
             | Some(ApprovalStatusType::DeniedByAnother)
             | Some(ApprovalStatusType::Pending) => 0.0,
 
-            Some(ApprovalStatusType::None) | None => {
-                let quantity = line.requisition_line_row.requested_quantity;
-                quantity
-            }
+            Some(ApprovalStatusType::None) | None => line.requisition_line_row.requested_quantity,
         }
     };
 
