@@ -104,12 +104,8 @@ pub fn insert_customer_return(
                     ctx,
                     UpdateCustomerReturn {
                         id: customer_return.id.clone(),
-                        comment: None,
                         status: Some(UpdateCustomerReturnStatus::Verified),
-                        colour: None,
-                        on_hold: None,
-                        their_reference: None,
-                        other_party_id: None,
+                        ..Default::default()
                     },
                 )
                 .map_err(|e| {
