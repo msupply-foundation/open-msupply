@@ -7,6 +7,9 @@ pub use self::update::*;
 pub mod delete;
 pub use self::delete::*;
 
+pub mod set_prescribed_quantity;
+pub use self::set_prescribed_quantity::*;
+
 pub mod batch;
 pub use self::batch::*;
 
