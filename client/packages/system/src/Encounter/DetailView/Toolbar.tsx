@@ -65,7 +65,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   const [startDatetime, setStartDatetime] = useState<string | undefined>();
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation();
-  const { localisedDate } = useFormatDateTime();
+  const { localisedDate, getDisplayAge } = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
   const [clinician, setClinician] =
     useState<ClinicianAutocompleteOption | null>();
@@ -76,6 +76,11 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
         contextId: { equalTo: encounter?.contextId },
       },
     });
+  const formatDateOfBirth = (dateOfBirth: string | null) => {
+    const dob = DateUtils.getNaiveDate(dateOfBirth);
+
+    return !dob ? '' : `${getDisplayAge(dob)}`;
+  };
 
   useEffect(() => {
     setStartDatetime(encounter.startDatetime);
@@ -134,6 +139,16 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                   <BasicTextInput
                     disabled
                     value={localisedDate(patient.dateOfBirth ?? '')}
+                  />
+                }
+              />
+              <InputWithLabelRow
+                label={t('label.age')}
+                labelWidth={'40px'}
+                Input={
+                  <BasicTextInput
+                    disabled
+                    value={formatDateOfBirth(patient.dateOfBirth ?? null)}
                   />
                 }
               />
