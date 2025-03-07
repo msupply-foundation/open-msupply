@@ -357,7 +357,10 @@ export const getClinicianQueries = (sdk: Sdk, storeId: string) => ({
         (sortBy?.key as ClinicianSortFieldInput) ??
         ClinicianSortFieldInput.LastName,
       desc: sortBy?.isDesc,
-      filter: filterBy,
+      filter: {
+        ...filterBy,
+        isActive: true,
+      }
     });
 
     if (result.clinicians.__typename === 'ClinicianConnector') {

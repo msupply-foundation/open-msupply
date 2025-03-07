@@ -1005,6 +1005,7 @@ export type ClinicianFilterInput = {
   firstName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   initials?: InputMaybe<StringFilterInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<StringFilterInput>;
   mobile?: InputMaybe<StringFilterInput>;
   phone?: InputMaybe<StringFilterInput>;
@@ -3498,6 +3499,7 @@ export type InvoiceFilterInput = {
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  createdOrBackdatedDatetime?: InputMaybe<DatetimeFilterInput>;
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
