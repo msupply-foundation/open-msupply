@@ -90,7 +90,7 @@ const ResponseLineEditPageInner = ({
           Right={
             <ResponseLineEdit
               hasLinkedRequisition={!!requisition.linkedRequisition}
-              hasApproval={requisition.approvalStatus === 'APPROVED'}
+                requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved
               draft={draft}
               update={update}
               save={save}
