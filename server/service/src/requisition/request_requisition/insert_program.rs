@@ -158,6 +158,7 @@ fn validate(
             program_order_type_id: &input.program_order_type_id,
             max_orders_per_period: i64::from(order_type.order_type.max_order_per_period),
             requisition_type: RequisitionType::Request,
+            store_id: &ctx.store_id,
             other_party_id: None,
         },
     )? {
@@ -287,7 +288,8 @@ fn generate_program_indicator_values(
             Some(
                 NameFilter::new()
                     .supplying_store_id(EqualFilter::equal_to(store_id))
-                    .is_customer(true),
+                    .is_customer(true)
+                    .is_store(true),
             ),
             None,
         )?
@@ -330,6 +332,7 @@ fn generate_program_indicator_values(
                 let value_type = indicator_value_type(&line.line, &column);
                 let value = if store_pref
                     .use_consumption_and_stock_from_customers_for_internal_orders
+                    && store_pref.extra_fields_in_requisition
                     && value_type == &Some(IndicatorValueType::Number)
                     && !customer_name_ids.is_empty()
                 {

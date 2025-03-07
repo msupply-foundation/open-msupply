@@ -18,7 +18,7 @@ import { indicatorColumnNameToLocal } from '../../../utils';
 
 interface CustomerIndicatorInfoProps {
   columns: IndicatorColumnFragment[];
-  customerInfos: CustomerIndicatorInfoFragment[];
+  customerInfos?: CustomerIndicatorInfoFragment[];
 }
 
 const CustomerIndicatorInfo = ({

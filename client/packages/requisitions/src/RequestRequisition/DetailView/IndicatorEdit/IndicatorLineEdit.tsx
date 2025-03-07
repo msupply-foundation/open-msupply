@@ -119,7 +119,8 @@ export const IndicatorLineEdit = ({
   const { store } = useAuthContext();
   const showInfo =
     store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders &&
-    !!currentLine?.customerIndicatorInfo;
+    store?.preferences?.extraFieldsInRequisition;
+  !!currentLine?.customerIndicatorInfo;
   const { width } = useWindowDimensions();
 
   return (

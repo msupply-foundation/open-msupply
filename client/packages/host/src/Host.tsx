@@ -24,6 +24,7 @@ import {
   createRoutesFromElements,
   RouterProvider,
   initialiseI18n,
+  KBarProvider,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
@@ -113,30 +114,32 @@ initialiseI18n();
 
 const Host = () => (
   <React.Suspense fallback={<div />}>
-    <IntlProvider>
-      <AppThemeProvider>
-        <React.Suspense fallback={<RandomLoader />}>
-          <ErrorBoundary Fallback={GenericErrorFallback}>
-            <QueryClientProvider client={queryClient}>
-              <GqlProvider
-                url={Environment.GRAPHQL_URL}
-                skipRequest={skipRequest}
-              >
-                <AuthProvider>
-                  <Init />
-                  <ConfirmationModalProvider>
-                    <AlertModalProvider>
-                      <RouterProvider router={router} />
-                    </AlertModalProvider>
-                  </ConfirmationModalProvider>
-                </AuthProvider>
-                {/* <ReactQueryDevtools initialIsOpen /> */}
-              </GqlProvider>
-            </QueryClientProvider>
-          </ErrorBoundary>
-        </React.Suspense>
-      </AppThemeProvider>
-    </IntlProvider>
+    <KBarProvider actions={[]}>
+      <IntlProvider>
+        <AppThemeProvider>
+          <React.Suspense fallback={<RandomLoader />}>
+            <ErrorBoundary Fallback={GenericErrorFallback}>
+              <QueryClientProvider client={queryClient}>
+                <GqlProvider
+                  url={Environment.GRAPHQL_URL}
+                  skipRequest={skipRequest}
+                >
+                  <AuthProvider>
+                    <Init />
+                    <ConfirmationModalProvider>
+                      <AlertModalProvider>
+                        <RouterProvider router={router} />
+                      </AlertModalProvider>
+                    </ConfirmationModalProvider>
+                  </AuthProvider>
+                  {/* <ReactQueryDevtools initialIsOpen /> */}
+                </GqlProvider>
+              </QueryClientProvider>
+            </ErrorBoundary>
+          </React.Suspense>
+        </AppThemeProvider>
+      </IntlProvider>
+    </KBarProvider>
   </React.Suspense>
 );
 

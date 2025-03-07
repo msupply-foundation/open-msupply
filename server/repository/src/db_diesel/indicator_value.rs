@@ -28,6 +28,7 @@ pub struct IndicatorValueFilter {
     pub indicator_column_id: Option<EqualFilter<String>>,
 }
 
+#[derive(Debug)]
 pub struct IndicatorValue {
     pub indicator_value_row: IndicatorValueRow,
     pub name_row: NameRow,
