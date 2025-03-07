@@ -97,6 +97,10 @@ const PrescriptionListViewComponent: FC = () => {
             : rowData.createdDatetime,
         sortable: true,
       },
+      [
+        'theirReference',
+        { description: '', maxWidth: 110 },
+      ],
       ['comment'],
     ],
     { onChangeSortBy: updateSortQuery, sortBy },

@@ -89,7 +89,10 @@ fn generate(
                  mut requisition_line_row,
                  ..
              }| {
-                requisition_line_row.requested_quantity = requisition_line_row.suggested_quantity;
+                if requisition_line_row.requested_quantity == 0.00 {
+                    requisition_line_row.requested_quantity =
+                        requisition_line_row.suggested_quantity;
+                }
 
                 requisition_line_row
             },
