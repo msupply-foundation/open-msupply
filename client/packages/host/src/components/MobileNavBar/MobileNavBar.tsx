@@ -91,10 +91,6 @@ export const MobileNavBar = () => {
   const { logout, userHasPermission, store } = useAuthContext();
   const navigate = useNavigate();
 
-  const handleDrawerToggle = () => {
-    drawer.toggle();
-  };
-
   const publicDocsUrl = useExternalUrl(ExternalURL.PublicDocs);
   const docsUrl = `${publicDocsUrl}${
     EnvUtils.mapRoute(location.pathname).docs
@@ -128,7 +124,7 @@ export const MobileNavBar = () => {
             color="inherit"
             aria-label="open drawer"
             edge="start"
-            onClick={handleDrawerToggle}
+            onClick={drawer.toggle}
             sx={{ mr: 1, color: 'black' }}
           >
             {drawer.isOpen ? <CloseIcon /> : <MenuIcon />}
