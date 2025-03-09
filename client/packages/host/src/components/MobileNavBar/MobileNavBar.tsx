@@ -63,12 +63,9 @@ const StyledDrawer = styled(Box, {
   display: isOpen ? 'flex' : 'none',
   flexDirection: 'column',
   height: '80%',
-  borderRadius: '0 0 8px 8px',
   width: '100%',
   overflow: 'hidden',
-  boxShadow: theme.shadows[7],
   zIndex: theme.zIndex.drawer,
-  padding: '.25em',
   '& .navLinkText': {
     display: 'inline-flex',
     flex: 1,
@@ -117,6 +114,7 @@ export const MobileNavBar = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           background: theme.palette.background.drawer,
+          boxShadow: '0',
         }}
       >
         <Toolbar>
@@ -135,7 +133,6 @@ export const MobileNavBar = () => {
           <AppDrawerIcon />
         </Box>
       </AppBar>
-      <Divider />
       <StyledDrawer isOpen={drawer.isOpen}>
         <UpperListContainer>
           <List>
