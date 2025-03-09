@@ -3,21 +3,21 @@
   "elements": [
     {
       "type": "Group",
-      "label": "Patient Information",
+      "label": "heading.patient-details",
       "elements": [
         {
           "type": "Control",
           "scope": "#/properties/firstName",
-          "label": "First Name"
+          "label": "label.first-name"
         },
         {
           "type": "Control",
           "scope": "#/properties/lastName",
-          "label": "Last Name"
+          "label": "label.last-name"
         },
         {
           "type": "Control",
-          "label": "Date of Birth",
+          "label": "label.date-of-birth",
           "scope": "#/properties/dateOfBirth",
           "options": {
             "disableFuture": true
@@ -26,7 +26,7 @@
         {
           "type": "Control",
           "scope": "#/properties/gender",
-          "label": "Gender",
+          "label": "label.gender",
           "options": {
             "show": [
               ["MALE", "Male"],
@@ -41,12 +41,12 @@
         {
           "type": "Control",
           "scope": "#/properties/address1",
-          "label": "Address"
+          "label": "label.address"
         },
         {
           "type": "Control",
           "scope": "#/properties/phone",
-          "label": "Phone"
+          "label": "label.phone"
         }
       ]
     }

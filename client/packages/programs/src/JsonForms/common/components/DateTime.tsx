@@ -5,6 +5,8 @@ import {
   DetailInputWithLabelRow,
   DateUtils,
   DateTimePickerInput,
+  LocaleKey,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
@@ -28,6 +30,7 @@ type Options = z.infer<typeof Options>;
 export const datetimeTester = rankWith(5, isDateTimeControl);
 
 const UIComponent = (props: ControlProps) => {
+  const t = useTranslation();
   const [error, setError] = React.useState<string | undefined>(undefined);
   const { data, handleChange, label, path, uischema } = props;
   const { errors: zErrors, options } = useZodOptionsValidation(
@@ -76,7 +79,7 @@ const UIComponent = (props: ControlProps) => {
         ...DefaultFormRowSx,
         gap: 2,
       }}
-      label={label}
+      label={t(label as LocaleKey)}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment="start"
       Input={
