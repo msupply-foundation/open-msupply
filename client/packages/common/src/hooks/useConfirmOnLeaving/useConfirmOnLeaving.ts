@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useBeforeUnload, useBlocker } from 'react-router-dom';
 import { create } from 'zustand';
 import { useTranslation } from '@common/intl';
@@ -10,19 +10,24 @@ import { Location, useConfirmationModal } from '@openmsupply-client/common';
  */
 export const useConfirmOnLeaving = (key: string, options?: BlockerOptions) => {
   const { blocking, setBlocking, clearKey } = useBlockNavigationState();
+  const setIsDirty = useRef<(dirty: boolean) => void>(() => {});
 
   // Register the key for blocking navigation
   useEffect(() => {
     setBlocking(key, false, options);
+
+    // Need to define this in here to ensure the returned `setIsDirty` remains
+    // stable, otherwise causes infinite re-render loop in components using
+    // `formState`
+    setIsDirty.current = (dirty: boolean) => setBlocking(key, dirty, options);
 
     // Cleanup
     return () => clearKey(key);
   }, []);
 
   const isDirty = blocking.get(key)?.shouldBlock ?? false;
-  const setIsDirty = (dirty: boolean) => setBlocking(key, dirty, options);
 
-  return { isDirty, setIsDirty };
+  return { isDirty, setIsDirty: setIsDirty.current };
 };
 
 /**

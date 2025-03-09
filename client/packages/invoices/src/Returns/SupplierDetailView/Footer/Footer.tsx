@@ -60,15 +60,12 @@ export const FooterComponent: FC = () => {
     useReturns.lines.deleteSelectedSupplierLines({
       returnId: id,
     });
-  const isDisabled = useReturns.utils.supplierIsDisabled();
 
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
-      disabled: isDisabled,
-      disabledToastMessage: t('label.cant-delete-disabled'),
     },
   ];
 

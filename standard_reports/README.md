@@ -174,7 +174,7 @@ This command is used to update standard reports to the current branch in databas
 
 ### Show Report
 
-`show-report --path <path-to-report-dir-containing-report-manifest.json> --config <optional-path-to-dir-containing-test-config.json>
+`show-report --path <path-to-report-dir-containing-report-manifest.json> --config <optional-path-to-dir-containing-test-config.json>`
 
 Show report replaces previously used print.sh and show.sh bash commands on the OMS reports repo.
 
@@ -183,6 +183,18 @@ Running this command will generate and open an html file of the report.
 This command uses a `test-config.json` file located in the reports dir containing all arguments used to generate the report.
 
 A custom test-config.json file can be used to render with specific arguments by passing a path to a dir containing a report specific `test-config.json file`
+
+### Toggle Report
+
+`toggle-report --code <report-code> --is_custom [true|false : optional] --enable (optional) --disable (optional)`
+
+Sets the `is_active` flag on a report.
+
+By default will toggle the `is_active` flag, swapping between true/false.
+
+If `--enable` or `--disable` are specified, will directly set the `is_active` flag to `true` or `false` respectively.
+
+If `--is_custom` is include, will filter the selected reports by the `is_custom` flag.
 
 ## Development
 
