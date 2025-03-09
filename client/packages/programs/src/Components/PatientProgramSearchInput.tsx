@@ -6,11 +6,15 @@ import { useDocumentRegistry } from '../api';
 type PatientProgramSearchInputProps = {
   value: DocumentRegistryFragment | null;
   onChange: (newProgram: DocumentRegistryFragment) => void;
+  setProgram: (newProgram: DocumentRegistryFragment) => void;
+  programId: string | null;
 };
 
 export const PatientProgramSearchInput = ({
   value,
   onChange,
+  setProgram,
+  programId,
 }: PatientProgramSearchInputProps) => {
   const { data, isLoading } = useDocumentRegistry.get.programRegistries();
 
@@ -20,6 +24,13 @@ export const PatientProgramSearchInput = ({
       onChange(data.nodes[0]!); // if length is 1, the first element must exist
     }
   }, [data?.nodes.length]);
+
+  if (programId && !value) {
+    const program = data?.nodes.find(program => program.id === programId);
+    if (program) {
+      setProgram(program);
+    }
+  }
 
   return (
     <Autocomplete

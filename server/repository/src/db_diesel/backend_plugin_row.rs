@@ -8,9 +8,10 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(rename_all = "snake_case")]
 pub enum PluginType {
-    Amc,
+    AverageMonthlyConsumption,
+    TransformRequestRequisitionLines,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
@@ -141,7 +142,7 @@ impl Upsert for BackendPluginRow {
 
 #[derive(Debug, Clone)]
 // Most central data will be soft deleted (via upsert), and this trait will not be implemented
-// backend_plugins don't have referencial relations to any other tables so it's ok to delete as an example
+// backend_plugins don't have referential relations to any other tables so it's ok to delete as an example
 pub struct BackendPluginRowDelete(pub String);
 impl Delete for BackendPluginRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
@@ -200,7 +201,10 @@ mod test {
         let repo = BackendPluginRowRepository::new(&connection);
         let id = "backend_plugin_row".to_string();
 
-        let types = PluginTypes(vec![PluginType::Amc, PluginType::Amc]);
+        let types = PluginTypes(vec![
+            PluginType::AverageMonthlyConsumption,
+            PluginType::TransformRequestRequisitionLines,
+        ]);
         let _ = repo.upsert_one(BackendPluginRow {
             id: id.clone(),
             types: types.clone(),
@@ -215,6 +219,9 @@ mod test {
             .unwrap();
 
         // Showing that types serializes to a readable text in DB field
-        assert_eq!(result[0].types, r#"["AMC","AMC"]"#);
+        assert_eq!(
+            result[0].types,
+            r#"["average_monthly_consumption","transform_request_requisition_lines"]"#
+        );
     }
 }

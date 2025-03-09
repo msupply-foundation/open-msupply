@@ -149,6 +149,7 @@ fn validate(
             program_order_type_id: &input.program_order_type_id,
             max_orders_per_period: i64::from(order_type.order_type.max_order_per_period),
             requisition_type: RequisitionType::Response,
+            store_id: &ctx.store_id,
             other_party_id: Some(&input.other_party_id),
         },
     )? {
@@ -164,7 +165,7 @@ fn validate(
     ))
 }
 
-pub struct GenerateResult {
+pub(super) struct GenerateResult {
     pub(crate) requisition: RequisitionRow,
     pub(crate) requisition_lines: Vec<RequisitionLineRow>,
     pub(crate) indicator_values: Vec<IndicatorValueRow>,

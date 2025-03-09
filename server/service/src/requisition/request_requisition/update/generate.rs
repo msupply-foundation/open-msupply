@@ -72,12 +72,7 @@ pub fn generate(
     });
 
     let updated_requisition_lines = if should_recalculate {
-        generate_updated_lines(
-            connection,
-            &updated_requisition_row.id,
-            updated_requisition_row.min_months_of_stock,
-            updated_requisition_row.max_months_of_stock,
-        )?
+        generate_updated_lines(connection, &updated_requisition_row)?
     } else {
         vec![]
     };
@@ -97,13 +92,11 @@ pub fn generate(
 
 pub fn generate_updated_lines(
     connection: &StorageConnection,
-    requisition_id: &str,
-    min_months_of_stock: f64,
-    max_months_of_stock: f64,
+    requisition: &RequisitionRow,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
-    let lines = get_lines_for_requisition(connection, requisition_id)?;
+    let lines = get_lines_for_requisition(connection, &requisition.id)?;
 
-    let result = lines
+    let lines = lines
         .into_iter()
         .map(
             |RequisitionLine {
@@ -115,15 +108,15 @@ pub fn generate_updated_lines(
                         average_monthly_consumption: requisition_line_row
                             .average_monthly_consumption,
                         available_stock_on_hand: requisition_line_row.available_stock_on_hand,
-                        min_months_of_stock,
-                        max_months_of_stock,
+                        min_months_of_stock: requisition.min_months_of_stock,
+                        max_months_of_stock: requisition.max_months_of_stock,
                     });
                 requisition_line_row
             },
         )
         .collect();
 
-    Ok(result)
+    Ok(lines)
 }
 
 pub fn empty_lines_to_trim(

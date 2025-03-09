@@ -256,6 +256,8 @@ export const PrescriptionLineEditForm: React.FC<
     setAbbreviation('');
   };
 
+  const abbreviationRef = React.useRef<HTMLInputElement>(null);
+
   return (
     <Grid
       container
@@ -308,6 +310,7 @@ export const PrescriptionLineEditForm: React.FC<
               display="flex"
               flexDirection="row"
               gap={5}
+              paddingBottom={2}
             >
               {preferences?.editPrescribedQuantityOnPrescription && (
                 <Grid display="flex" alignItems="center" gap={1}>
@@ -352,6 +355,13 @@ export const PrescriptionLineEditForm: React.FC<
                       },
                     },
                   }}
+                  onKeyDown={e => {
+                    console.log('==>', e.code, abbreviationRef);
+                    if (e.code === 'Tab') {
+                      e.preventDefault();
+                      abbreviationRef.current?.focus();
+                    }
+                  }}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
                   {t('label.unit-plural', {
@@ -361,16 +371,23 @@ export const PrescriptionLineEditForm: React.FC<
                 </InputLabel>
               </Grid>
             </Grid>
-            <TableWrapper
-              canAutoAllocate={canAutoAllocate}
-              currentItem={item}
-              isLoading={isLoading}
-              packSizeController={packSizeController}
-              updateQuantity={updateQuantity}
-              draftPrescriptionLines={draftPrescriptionLines}
-              allocatedUnits={allocatedUnits}
-              isDisabled={disabled}
-            />
+            <AccordionPanelSection
+              title={t('label.batches')}
+              defaultExpanded={false}
+              key={key + '_table'}
+              backgroundColor="background.white"
+            >
+              <TableWrapper
+                canAutoAllocate={canAutoAllocate}
+                currentItem={item}
+                isLoading={isLoading}
+                packSizeController={packSizeController}
+                updateQuantity={updateQuantity}
+                draftPrescriptionLines={draftPrescriptionLines}
+                allocatedUnits={allocatedUnits}
+                isDisabled={disabled}
+              />
+            </AccordionPanelSection>
           </AccordionPanelSection>
         </>
       )}
@@ -390,6 +407,7 @@ export const PrescriptionLineEditForm: React.FC<
                   label={t('label.abbreviation')}
                   Input={
                     <BasicTextInput
+                      inputRef={abbreviationRef}
                       value={abbreviation}
                       onChange={e => {
                         setAbbreviation(e.target.value);
