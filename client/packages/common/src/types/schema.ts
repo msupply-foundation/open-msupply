@@ -417,7 +417,7 @@ export type AssetFilterInput = {
   notes?: InputMaybe<StringFilterInput>;
   replacementDate?: InputMaybe<DateFilterInput>;
   serialNumber?: InputMaybe<StringFilterInput>;
-  store?: InputMaybe<StringFilterInput>;
+  storeCodeOrName?: InputMaybe<StringFilterInput>;
   typeId?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -3507,6 +3507,7 @@ export type InvoiceFilterInput = {
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  createdOrBackdatedDatetime?: InputMaybe<DatetimeFilterInput>;
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
