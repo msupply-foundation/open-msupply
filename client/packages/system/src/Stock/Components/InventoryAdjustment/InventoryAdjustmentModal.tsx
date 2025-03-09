@@ -31,7 +31,6 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
   const { draft, setDraft, create } = useInventoryAdjustment(stockLine);
 
   const packUnit = String(stockLine.packSize);
-
   const saveDisabled = draft.adjustment === 0;
 
   const save = async () => {
@@ -48,7 +47,7 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
       const errorSnack = error(t(result));
       errorSnack();
     } catch {
-      // TODO: handle error if no reason selected when reasons required
+      error(t('messages.could-not-save'))(); // generic could not save message
     }
   };
 
