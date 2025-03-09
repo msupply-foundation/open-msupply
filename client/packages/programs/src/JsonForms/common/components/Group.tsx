@@ -2,12 +2,18 @@ import React from 'react';
 import { rankWith, uiTypeIs, LayoutProps, GroupLayout } from '@jsonforms/core';
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
 import { MaterialLayoutRenderer } from '@jsonforms/material-renderers';
-import { Box, Typography } from '@openmsupply-client/common';
+import {
+  Box,
+  LocaleKey,
+  Typography,
+  useTranslation,
+} from '@openmsupply-client/common';
 
 export const groupTester = rankWith(4, uiTypeIs('Group'));
 
 const UIComponent = (props: LayoutProps) => {
   const { uischema, schema, visible, renderers, path, enabled } = props;
+  const t = useTranslation();
 
   const layoutProps = {
     elements: (uischema as GroupLayout).elements,
@@ -22,7 +28,10 @@ const UIComponent = (props: LayoutProps) => {
   if (!props.visible) {
     return null;
   }
-  if (!(uischema as GroupLayout).label) {
+
+  const label = (uischema as GroupLayout).label;
+
+  if (!label) {
     // without label just return the normal layout
     return <MaterialLayoutRenderer {...layoutProps} />;
   }
@@ -36,7 +45,7 @@ const UIComponent = (props: LayoutProps) => {
         paddingBottom={1}
         paddingTop={3}
       >
-        <strong>{(uischema as GroupLayout).label}</strong>
+        <strong>{t(label as LocaleKey)}</strong>
       </Typography>
       <MaterialLayoutRenderer {...layoutProps} />
     </Box>

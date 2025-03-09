@@ -158,7 +158,9 @@ You can watch [this video for example](https://drive.google.com/file/d/1JnmPU9hR
 
 The simplest way to begin is by cloning (forking for now or just copy and create new repo, until we have a template), this repository https://github.com/msupply-foundation/open-msupply-plugins, then add it as a submodule to `client/packages/plugins/`. From the root of this repository, run: 
 
-```git submodule add [your-plugin-bundle-repo-url] client/packages/plugins/myPluginBundle```
+```
+git submodule add [your-plugin-bundle-repo-url] client/packages/plugins/myPluginBundle
+```
 
 
 Note the `myPluginBundle` can be anything. The inner repository and core will be treated as two different repositories, changes in them will only be reflected in relative repositories (i.e. you can add the inner repository as local repository in github desktop). Make sure that you don't commit the `.gitmodule` or the single `client/packages/plugins/{your plugin bundle name}` to the core.
@@ -173,7 +175,7 @@ You can work on plugins as if they were part of the app (types should be shared,
 
 ```bash
 # From server directory
-cargo run --bin remote_server_cli -- generate-plugin-bundle -i ../client/packages/plugins/mynewplugin/frontend -o pluginbundle.json
+cargo run --bin remote_server_cli -- generate-plugin-bundle -i ../client/packages/plugins/myPluginBundle/frontend -o pluginbundle.json
 ```
 
 Above will generate `pluginbundle.json` with all backend and frontend plugins in the directory specified by `-i`, this bundle includes metadata, like code and plugin types and base64 contents of all of the files in the `dist` directory which was generated with `yarn build` command that was executed in every plugin directory.
@@ -190,7 +192,7 @@ Note you must be uploading plugins to central server for this to work
 Alternatively one command can be used for both:
 
 ```bash
-cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/mynewplugin/frontend' --url 'http://localhost:8000' --username admin --password pass
+cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/myPluginBundle/frontend' --url 'http://localhost:8000' --username admin --password pass
 ```
 
 In order to test this plugins in front end, you will need to start front end via `yarn -- -- --env LOAD_REMOTE_PLUGINS` which fetched plugins from the server rather then serving them from local directory, this is how plugins will be loaded in production (and plugins will sync and be served by remote site servers)
@@ -245,9 +247,17 @@ which are storing the provider state locally and providing that to an instance o
 
 When using private repository submodule you will have to be logged in as the user with adequate permissions to the repository.
 
+When removing submodule, you will need to delete `.gitmodules` file, the plugin folder and git cache for submodule, for example:
+
+```bash
+rm -rf .gitmodules
+rm -rf client/packages/plugins/myPluginBundle/
+rm -rf .git/modules/client/packages/plugins/myPluginBundle/
+```
+
 ### Compatibility/versioning
 
-TODO explain why the folder structure is the way it is, that versioning will be linked to min version of omSupply, and when making new version previous version is copied from latest to say `2_6` (when `2_7` is the new version with feature added to API that plugin uses). And then we can checkout older version of omSupply, with current version of plugin, and only load `2_6` with exlude and include in [getLocalPlugin.js](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/host/getLocalPlugins.js#L11-L12)
+TODO explain why the folder structure is the way it is, that versioning will be linked to min version of omSupply, and when making new version previous version is copied from latest to say `2_6` (when `2_7` is the new version with feature added to API that plugin uses). And then we can checkout older version of omSupply, with current version of plugin, and only load `2_6` with exclude and include in [getLocalPlugin.js](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/host/getLocalPlugins.js#L11-L12)
 
 ### Adding new plugin interface
 

@@ -1,6 +1,7 @@
 import React, { FC, PropsWithChildren } from 'react';
 import { ClickPopover, ClickPopoverProps } from '../../ClickPopover';
 import Paper, { PaperProps } from '@mui/material/Paper';
+import { ClickAwayListener } from '@mui/material';
 
 export interface PaperClickPopoverProps extends ClickPopoverProps {
   height?: number;
@@ -30,18 +31,20 @@ export const PaperClickPopover: FC<
       placement={placement}
       className={className}
       Content={
-        <Paper
-          sx={{
-            height: height ? `${height}px` : 'auto',
-            width: width ? `${width}px` : 'auto',
-            borderRadius: '16px',
-            boxShadow: theme => theme.shadows[7],
-            ...paperProps?.sx,
-          }}
-          {...paperProps}
-        >
-          {Content}
-        </Paper>
+        <ClickAwayListener onClickAway={hide}>
+          <Paper
+            sx={{
+              height: height ? `${height}px` : 'auto',
+              width: width ? `${width}px` : 'auto',
+              borderRadius: '16px',
+              boxShadow: theme => theme.shadows[7],
+              ...paperProps?.sx,
+            }}
+            {...paperProps}
+          >
+            {Content}
+          </Paper>
+        </ClickAwayListener>
       }
     >
       {children}
