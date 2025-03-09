@@ -8,7 +8,9 @@ use graphql_core::ContextExt;
 use graphql_types::generic_errors::{
     SnapshotCountCurrentCountMismatchLine, StockLineReducedBelowZero,
 };
-use graphql_types::types::StocktakeLineNode;
+use graphql_types::types::{
+    AdjustmentReasonNotProvided, AdjustmentReasonNotValid, StocktakeLineNode,
+};
 use repository::StocktakeLine;
 use service::NullableUpdate;
 use service::{
@@ -17,10 +19,6 @@ use service::{
         UpdateStocktakeLine as ServiceInput, UpdateStocktakeLineError as ServiceError,
     },
 };
-
-use crate::mutations::AdjustmentReasonNotValid;
-
-use super::AdjustmentReasonNotProvided;
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateStocktakeLineInput")]

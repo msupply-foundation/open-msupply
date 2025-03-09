@@ -93,3 +93,20 @@ impl InventoryAdjustmentReasonConnector {
         }
     }
 }
+
+pub struct AdjustmentReasonNotProvided;
+
+#[Object]
+impl AdjustmentReasonNotProvided {
+    pub async fn description(&self) -> &str {
+        "No adjustment reason provided"
+    }
+}
+pub struct AdjustmentReasonNotValid;
+
+#[Object]
+impl AdjustmentReasonNotValid {
+    pub async fn description(&self) -> &str {
+        "Adjustment reason is not valid for adjustment direction"
+    }
+}
