@@ -748,6 +748,7 @@ export type BatchPrescriptionInput = {
   deletePrescriptions?: InputMaybe<Array<Scalars['String']['input']>>;
   insertPrescriptionLines?: InputMaybe<Array<InsertPrescriptionLineInput>>;
   insertPrescriptions?: InputMaybe<Array<InsertPrescriptionInput>>;
+  setPrescribedQuantity?: InputMaybe<Array<SetPrescribedQuantityInput>>;
   updatePrescriptionLines?: InputMaybe<Array<UpdatePrescriptionLineInput>>;
   updatePrescriptions?: InputMaybe<Array<UpdatePrescriptionInput>>;
 };
@@ -758,6 +759,7 @@ export type BatchPrescriptionResponse = {
   deletePrescriptions?: Maybe<Array<DeletePrescriptionResponseWithId>>;
   insertPrescriptionLines?: Maybe<Array<InsertPrescriptionLineResponseWithId>>;
   insertPrescriptions?: Maybe<Array<InsertPrescriptionResponseWithId>>;
+  setPrescribedQuantity?: Maybe<Array<SetPrescribedQuantityWithId>>;
   updatePrescriptionLines?: Maybe<Array<UpdatePrescriptionLineResponseWithId>>;
   updatePrescriptions?: Maybe<Array<UpdatePrescriptionResponseWithId>>;
 };
@@ -2322,7 +2324,7 @@ export enum ForeignKey {
   StockLineId = 'stockLineId'
 }
 
-export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionLineErrorInterface & DeleteResponseRequisitionLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertPrescriptionLineErrorInterface & InsertRequestRequisitionLineErrorInterface & InsertResponseRequisitionLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
+export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionLineErrorInterface & DeleteResponseRequisitionLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertPrescriptionLineErrorInterface & InsertRequestRequisitionLineErrorInterface & InsertResponseRequisitionLineErrorInterface & SetPrescribedQuantityErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
   __typename: 'ForeignKeyError';
   description: Scalars['String']['output'];
   key: ForeignKey;
@@ -7030,6 +7032,7 @@ export type RequisitionFilterInput = {
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  elmisCode?: InputMaybe<EqualFilterStringInput>;
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
@@ -7501,6 +7504,29 @@ export type SensorSortInput = {
 };
 
 export type SensorsResponse = SensorConnector;
+
+export type SetPrescribedQuantityError = {
+  __typename: 'SetPrescribedQuantityError';
+  error: SetPrescribedQuantityErrorInterface;
+};
+
+export type SetPrescribedQuantityErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type SetPrescribedQuantityInput = {
+  invoiceId: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  prescribedQuantity: Scalars['Float']['input'];
+};
+
+export type SetPrescribedQuantityResponse = InvoiceLineNode | SetPrescribedQuantityError;
+
+export type SetPrescribedQuantityWithId = {
+  __typename: 'SetPrescribedQuantityWithId';
+  id: Scalars['String']['output'];
+  response: SetPrescribedQuantityResponse;
+};
 
 export type SnapshotCountCurrentCountMismatch = UpdateStocktakeErrorInterface & {
   __typename: 'SnapshotCountCurrentCountMismatch';

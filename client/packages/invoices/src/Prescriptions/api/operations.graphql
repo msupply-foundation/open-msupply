@@ -419,6 +419,22 @@ mutation upsertPrescription(
         }
       }
     }
+    setPrescribedQuantity {
+      id
+      response {
+        ... on SetPrescribedQuantityError {
+          __typename
+          error {
+            description
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+      }
+    }
   }
 }
 
