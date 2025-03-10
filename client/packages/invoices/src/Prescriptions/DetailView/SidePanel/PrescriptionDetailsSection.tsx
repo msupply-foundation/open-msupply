@@ -8,9 +8,6 @@ import {
   BasicTextInput,
   useDebouncedValueCallback,
   useConfirmationModal,
-  DateTimePickerInput,
-  DateUtils,
-  Formatter,
 } from '@openmsupply-client/common';
 import { usePrescription, usePrescriptionLines } from '../../api';
 import {
@@ -33,7 +30,6 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
   const {
     id,
     clinician,
-    prescriptionDate,
     createdDatetime,
     programId,
     theirReference,
@@ -64,12 +60,6 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
     clinician ?? null
   );
 
-  const [dateValue, setDateValue] = useState(
-    DateUtils.getDateOrNull(prescriptionDate) ??
-      DateUtils.getDateOrNull(createdDatetime) ??
-      null
-  );
-
   const handleProgramChange = async (
     newProgram: ProgramFragment | undefined
   ) => {
@@ -90,46 +80,6 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
     });
   };
 
-  const handleDateChange = async (newPrescriptionDate: Date | null) => {
-    const currentDateValue = dateValue; // Revert to this value if user cancels
-
-    if (!newPrescriptionDate) return;
-    setDateValue(newPrescriptionDate);
-
-    const oldPrescriptionDate = DateUtils.getDateOrNull(dateValue);
-
-    if (
-      newPrescriptionDate.toLocaleDateString() ===
-      oldPrescriptionDate?.toLocaleDateString()
-    )
-      return;
-
-    if (!items || items.length === 0) {
-      // If there are no lines, we can just update the prescription date
-      await update({
-        id,
-        prescriptionDate: Formatter.toIsoString(
-          DateUtils.endOfDayOrNull(newPrescriptionDate)
-        ),
-      });
-      return;
-    }
-
-    // Otherwise, we need to delete all the lines first
-    getConfirmation({
-      onConfirm: async () => {
-        await deleteAll();
-        await update({
-          id,
-          prescriptionDate: Formatter.toIsoString(
-            DateUtils.endOfDayOrNull(newPrescriptionDate)
-          ),
-        });
-      },
-      onCancel: () => setDateValue(currentDateValue),
-    });
-  };
-
   const [theirReferenceInput, setTheirReferenceInput] =
     useState(theirReference);
 
@@ -141,15 +91,10 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
 
   useEffect(() => {
     if (!data) return;
-    const { clinician, theirReference, prescriptionDate, createdDatetime } =
+    const { clinician, theirReference } =
       data;
     setClinicianValue(clinician ?? null);
     setTheirReferenceInput(theirReference);
-    setDateValue(
-      DateUtils.getDateOrNull(prescriptionDate) ??
-        DateUtils.getDateOrNull(createdDatetime) ??
-        null
-    );
   }, [data]);
  
   return (
@@ -201,23 +146,6 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
           />
         </PanelRow>
 
-        <PanelRow>
-          <PanelLabel>{t('label.dispensing-date')}</PanelLabel>
-          <DateTimePickerInput
-            disabled={isDisabled}
-            value={DateUtils.getDateOrNull(dateValue) ?? new Date()}
-            format="P"
-            onChange={handleDateChange}
-            maxDate={new Date()}
-            textFieldProps={{
-              sx: {
-                '& .MuiInputBase-root': {
-                  backgroundColor: 'white',
-                },
-              }
-            }}
-          />
-        </PanelRow>
       </Grid>
     </DetailPanelSection>
   );
