@@ -7,6 +7,7 @@ import {
   useNavigate,
   RouteBuilder,
   useUrlQueryParams,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -14,7 +15,11 @@ import {
   useEncounterFragmentWithStatus,
 } from '../../Encounter';
 import { useEncounterListColumns } from '../../Encounter/ListView/columns';
-import { useEncounter } from '@openmsupply-client/programs';
+import {
+  useEncounter,
+  PatientModal,
+  usePatientModalStore,
+} from '@openmsupply-client/programs';
 import { usePatient } from '../api';
 
 const EncounterListComponent: FC = () => {
@@ -34,6 +39,8 @@ const EncounterListComponent: FC = () => {
   const dataWithStatus: EncounterFragmentWithStatus[] | undefined =
     useEncounterFragmentWithStatus(data?.nodes);
   const navigate = useNavigate();
+  const t = useTranslation();
+  const { setModal: selectModal } = usePatientModalStore();
 
   const columns = useEncounterListColumns({
     onChangeSortBy: updateSortQuery,
@@ -57,7 +64,13 @@ const EncounterListComponent: FC = () => {
             .build()
         );
       }}
-      noDataElement={<NothingHere />}
+      noDataElement={
+        <NothingHere
+          onCreate={() => selectModal(PatientModal.Encounter)}
+          body={t('messages.no-encounters')}
+          buttonText={t('button.add-encounter')}
+        />
+      }
     />
   );
 };
