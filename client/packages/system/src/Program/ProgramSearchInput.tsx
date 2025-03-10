@@ -20,9 +20,8 @@ export const ProgramSearchInput: FC<ProgramSearchInputProps> = ({
   disabled,
   fullWidth,
 }) => {
-
   const theme = useTheme();
-  
+
   return (
     <Autocomplete
       value={
