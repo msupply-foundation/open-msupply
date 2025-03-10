@@ -1,4 +1,4 @@
-import { Autocomplete } from '@openmsupply-client/common';
+import { Autocomplete, useTheme } from '@openmsupply-client/common';
 import { ProgramFragment } from '@openmsupply-client/programs';
 import React from 'react';
 import { FC } from 'react';
@@ -20,6 +20,9 @@ export const ProgramSearchInput: FC<ProgramSearchInputProps> = ({
   disabled,
   fullWidth,
 }) => {
+
+  const theme = useTheme();
+  
   return (
     <Autocomplete
       value={
@@ -42,7 +45,7 @@ export const ProgramSearchInput: FC<ProgramSearchInputProps> = ({
         value: program,
       }))}
       sx={{ minWidth: width }}
-      textSx={{ backgroundColor: 'white' }}
+      textSx={{ backgroundColor: theme.palette.background.white }}
       disabled={disabled}
       fullWidth={fullWidth}
     />
