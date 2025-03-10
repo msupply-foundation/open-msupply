@@ -15,7 +15,7 @@ impl MigrationFragment for Migrate {
                     id TEXT NOT NULL PRIMARY KEY,
                     key TEXT NOT NULL,
                     value TEXT NOT NULL,
-                    store_id TEXT NOT NULL REFERENCES store(id)
+                    store_id TEXT REFERENCES store(id)
                 );
             "#
         )?;
