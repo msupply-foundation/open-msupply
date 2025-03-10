@@ -3,6 +3,7 @@ import {
   BasicSpinner,
   DetailContainer,
   NothingHere,
+  RequisitionNodeApprovalStatus,
   RequisitionNodeStatus,
   RouteBuilder,
   useBreadcrumbs,
@@ -90,7 +91,10 @@ const ResponseLineEditPageInner = ({
           Right={
             <ResponseLineEdit
               hasLinkedRequisition={!!requisition.linkedRequisition}
-                requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved
+              hasApproval={
+                requisition.approvalStatus ===
+                RequisitionNodeApprovalStatus.Approved
+              }
               draft={draft}
               update={update}
               save={save}
