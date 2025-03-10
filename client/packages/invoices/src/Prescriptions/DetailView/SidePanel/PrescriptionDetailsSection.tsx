@@ -9,13 +9,9 @@ import {
   useDebouncedValueCallback,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import { usePrescription, usePrescriptionLines } from '../../api';
-import {
-  Clinician,
-  ClinicianSearchInput,
-  ProgramSearchInput,
-} from '@openmsupply-client/system';
+import { ProgramSearchInput } from '@openmsupply-client/system';
 import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
+import { usePrescription, usePrescriptionLines } from '../../api';
 
 export const PrescriptionDetailsSectionComponent: FC = () => {
   const t = useTranslation();
@@ -27,13 +23,7 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
     rows: items,
   } = usePrescription();
 
-  const {
-    id,
-    clinician,
-    createdDatetime,
-    programId,
-    theirReference,
-  } = data ?? {};
+  const { id, createdDatetime, programId, theirReference } = data ?? {};
 
   const deleteAll = () => {
     const allRows = (items ?? []).map(({ lines }) => lines.flat()).flat() ?? [];
@@ -55,10 +45,6 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-delete-prescription-lines'),
   });
-
-  const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
-    clinician ?? null
-  );
 
   const handleProgramChange = async (
     newProgram: ProgramFragment | undefined
@@ -91,9 +77,7 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
 
   useEffect(() => {
     if (!data) return;
-    const { clinician, theirReference } =
-      data;
-    setClinicianValue(clinician ?? null);
+    const { theirReference } = data;
     setTheirReferenceInput(theirReference);
   }, [data]);
  
@@ -109,22 +93,6 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
             onChange={handleProgramChange}
           />
         </PanelRow>
-
-        <PanelRow>
-          <PanelLabel>{t('label.clinician')}</PanelLabel>
-          <ClinicianSearchInput
-            disabled={isDisabled}
-            onChange={async clinician => {
-              setClinicianValue(clinician ? clinician.value : null);
-              update({
-                id,
-                clinicianId: clinician?.value?.id ?? null,
-              });
-            }}
-            clinicianValue={clinicianValue}
-          />
-        </PanelRow>
-
         <PanelRow>
           <PanelLabel>{t('label.reference')}</PanelLabel>
           <BasicTextInput
@@ -145,7 +113,6 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
             }}
           />
         </PanelRow>
-
       </Grid>
     </DetailPanelSection>
   );
