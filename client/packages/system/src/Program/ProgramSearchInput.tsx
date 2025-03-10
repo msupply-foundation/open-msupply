@@ -42,6 +42,7 @@ export const ProgramSearchInput: FC<ProgramSearchInputProps> = ({
         value: program,
       }))}
       sx={{ minWidth: width }}
+      textSx={{ backgroundColor: 'white' }}
       disabled={disabled}
       fullWidth={fullWidth}
     />

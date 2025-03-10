@@ -80,7 +80,7 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
     const { theirReference } = data;
     setTheirReferenceInput(theirReference);
   }, [data]);
-
+ 
   return (
     <DetailPanelSection title={t('heading.prescription-details')}>
       <Grid container gap={0.5} key="prescription-details">
@@ -99,10 +99,34 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
             disabled={isDisabled}
             size="small"
             sx={{ width: 250 }}
+            slotProps={{
+              input: {
+                sx: {
+                  backgroundColor: 'white',
+                }
+              }
+            }}
             value={theirReferenceInput ?? ''}
             onChange={event => {
               setTheirReferenceInput(event.target.value);
               debouncedUpdate({ theirReference: event.target.value });
+            }}
+          />
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('label.dispensing-date')}</PanelLabel>
+          <DateTimePickerInput
+            disabled={isDisabled}
+            value={DateUtils.getDateOrNull(dateValue) ?? new Date()}
+            format="P"
+            onChange={handleDateChange}
+            maxDate={new Date()}
+            textFieldProps={{
+              sx: {
+                '& .MuiInputBase-root': {
+                  backgroundColor: 'white',
+                },
+              }
             }}
           />
         </PanelRow>
