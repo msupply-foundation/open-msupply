@@ -11,9 +11,10 @@ use repository::{
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::{cmp::Ordering, collections::HashMap, time::SystemTime};
-use util::uuid::uuid;
+use util::{format_error, uuid::uuid};
 
 use crate::{
+    boajs::{call_method, BoaJsError},
     localisations::{Localisations, TranslationError},
     service_provider::ServiceContext,
     static_files::{StaticFileCategory, StaticFileService},
@@ -23,7 +24,8 @@ use crate::{
 use super::{
     default_queries::get_default_gql_query,
     definition::{
-        GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef, SQLQuery, TeraTemplate,
+        ConvertDataType, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef,
+        SQLQuery, TeraTemplate,
     },
     html_printing::html_to_pdf,
     qr_code::qr_code_svg,
@@ -34,6 +36,12 @@ pub enum PrintFormat {
     Pdf,
     Html,
     Excel,
+}
+
+#[derive(Debug)]
+pub enum ConvertDataError {
+    Extism(anyhow::Error),
+    BoaJs(String),
 }
 
 #[derive(Debug)]
@@ -48,7 +56,7 @@ pub enum ReportError {
     DocGenerationError(String),
     HTMLToPDFError(String),
     TranslationError,
-    ConvertDataError(anyhow::Error),
+    ConvertDataError(ConvertDataError),
 }
 
 #[derive(Debug, Clone)]
@@ -60,6 +68,7 @@ pub enum ResolvedReportQuery {
 
 /// Resolved and validated report definition, i.e. its guaranteed that there is a main template and
 /// query present that can be rendered
+#[derive(Default)]
 pub struct ResolvedReportDefinition {
     pub name: String,
     /// Reference to the main template in the templates map
@@ -73,6 +82,7 @@ pub struct ResolvedReportDefinition {
     pub queries: Vec<ResolvedReportQuery>,
     pub resources: HashMap<String, serde_json::Value>,
     pub convert_data: Option<String>,
+    pub convert_data_type: ConvertDataType,
 }
 
 pub struct GeneratedReport {
@@ -515,6 +525,7 @@ fn resolve_report_definition(
         queries,
         resources,
         convert_data: fully_loaded_report.index.convert_data,
+        convert_data_type: fully_loaded_report.index.convert_data_type,
     })
 }
 
@@ -568,11 +579,35 @@ fn transform_data(
     connection: StorageConnection,
     data: ReportData,
     convert_data: Option<String>,
-) -> Result<ReportData, ReportError> {
+    convert_data_type: &ConvertDataType,
+) -> Result<ReportData, ConvertDataError> {
     let Some(convert_data) = convert_data else {
         return Ok(data);
     };
 
+    match convert_data_type {
+        // Mapping to string via format_error since it's better then debug output on error
+        ConvertDataType::BoaJs => transform_data_boajs(data, convert_data)
+            .map_err(|e| ConvertDataError::BoaJs(format_error(&e))),
+        ConvertDataType::Extism => {
+            transform_data_extism(connection, data, convert_data).map_err(ConvertDataError::Extism)
+        }
+    }
+}
+
+fn transform_data_boajs(data: ReportData, convert_data: String) -> Result<ReportData, BoaJsError> {
+    call_method(
+        data,
+        vec!["convert_data"],
+        &BASE64_STANDARD.decode(convert_data).unwrap(),
+    )
+}
+
+fn transform_data_extism(
+    connection: StorageConnection,
+    data: ReportData,
+    convert_data: String,
+) -> Result<ReportData, anyhow::Error> {
     let manifest = Manifest::new([Wasm::Data {
         data: BASE64_STANDARD.decode(convert_data).unwrap(),
         meta: WasmMetadata {
@@ -587,12 +622,9 @@ fn transform_data(
         // leading to https://github.com/bytecodealliance/wasmtime/blob/3e0b7e501beebf5d7c094b7ac751f582ba12bc95/crates/cache/src/config.rs#L195
         .with_cache_disabled()
         .with_function("sql", [PTR], [PTR], UserData::new(connection), sql)
-        .build()
-        .map_err(ReportError::ConvertDataError)?;
+        .build()?;
 
-    let data = plugin
-        .call("convert_data", data)
-        .map_err(ReportError::ConvertDataError)?;
+    let data = plugin.call("convert_data", data)?;
 
     Ok(data)
 }
@@ -606,7 +638,13 @@ fn generate_report(
     current_language: Option<String>,
 ) -> Result<GeneratedReport, ReportError> {
     let report_data = ReportData { data, arguments };
-    let report_data = transform_data(connection, report_data, report.convert_data.clone())?;
+    let report_data = transform_data(
+        connection,
+        report_data,
+        report.convert_data.clone(),
+        &report.convert_data_type,
+    )
+    .map_err(ReportError::ConvertDataError)?;
 
     let mut context = tera::Context::from_serialize(report_data).map_err(|err| {
         ReportError::DocGenerationError(format!("Tera context from data: {:?}", err))
@@ -860,8 +898,7 @@ mod report_service_test {
                 header: None,
                 footer: Some("footer.html".to_string()),
                 query: vec!["query".to_string()],
-                convert_data: None,
-                custom_wasm_function: None,
+                ..Default::default()
             },
             entries: HashMap::from([
                 (
@@ -891,8 +928,7 @@ mod report_service_test {
                 header: None,
                 footer: Some("footer.html".to_string()),
                 query: vec![],
-                convert_data: None,
-                custom_wasm_function: None,
+                ..Default::default()
             },
             entries: HashMap::from([(
                 "footer.html".to_string(),
@@ -1109,7 +1145,7 @@ mod report_generation_test {
             queries: Vec::new(),
             templates,
             resources: HashMap::new(),
-            convert_data: None,
+            ..Default::default()
         };
 
         let report_data = json!(null);

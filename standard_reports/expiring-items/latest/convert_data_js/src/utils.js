@@ -1,4 +1,4 @@
-import { cleanUpNodes, sortNodes, getNestedValue } from "../../../../utils";
+import { cleanUpNodes, sortNodes, getNestedValue } from '../../../../utils';
 
 const processStockLines = (nodes, sort, dir) => {
   nodes.forEach((line) => {
@@ -45,9 +45,7 @@ const calculateExpectedUsage = (daysUntilExpired, line) => {
   let expectedUsage = undefined;
   if (!!daysUntilExpired && !!averageMonthlyConsumption && !!totalStock) {
     if (daysUntilExpired >= 0) {
-      const usage = Math.round(
-        daysUntilExpired * (averageMonthlyConsumption / (365.25 / 12.0))
-      );
+      const usage = Math.round(daysUntilExpired * (averageMonthlyConsumption / (365.25 / 12.0)));
       expectedUsage = Math.min(usage, totalStock ?? usage);
     }
   }
@@ -66,9 +64,7 @@ const calculateStockAtRisk = (
     if (!!averageMonthlyConsumption) {
       if (daysUntilExpired >= 0) {
         stockAtRisk = Math.round(
-          totalStock - averageMonthlyConsumption * (daysUntilExpired / 
-            (365.25 / 12.0)
-          )
+          totalStock - averageMonthlyConsumption * (daysUntilExpired / (365.25 / 12.0))
         );
       } else {
         stockAtRisk = Math.round(totalStock);
@@ -94,7 +90,7 @@ const roundDaysToInteger = (daysUntilExpired) => {
   return rounded;
 };
 
-module.exports = {
+export {
   calculateExpectedUsage,
   processStockLines,
   calculateDaysUntilExpired,
