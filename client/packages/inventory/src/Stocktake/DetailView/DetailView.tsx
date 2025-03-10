@@ -58,6 +58,8 @@ const StocktakeTabs = ({
   return <DetailTabs tabs={tabs} />;
 };
 
+// TODO add custom breadcrumbs
+
 const DetailViewComponent = ({
   stocktake,
   isDisabled,
@@ -113,6 +115,9 @@ export const DetailView = () => {
         message={t('messages.click-to-return')}
       />
     );
+
+
+
 
   return (
     <StocktakeLineErrorProvider>

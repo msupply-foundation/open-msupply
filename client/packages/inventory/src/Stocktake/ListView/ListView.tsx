@@ -79,7 +79,7 @@ export const StocktakeListView: FC = () => {
         isError={isError}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(String(row.stocktakeNumber));
+          navigate(String(row.id));
         }}
         noDataElement={
           <NothingHere
