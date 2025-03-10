@@ -14,7 +14,9 @@ import {
   RouteBuilder,
 } from '@openmsupply-client/common';
 import {
+  PatientModal,
   ProgramEnrolmentRowFragment,
+  usePatientModalStore,
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
@@ -47,6 +49,7 @@ const VaccinationCardListComponent: FC = () => {
   const { localisedDate } = useFormatDateTime();
   const t = useTranslation();
   const navigate = useNavigate();
+  const { setModal: selectModal } = usePatientModalStore();
 
   const columns = useColumns<ProgramEnrolmentRowFragment>(
     [
@@ -101,6 +104,7 @@ const VaccinationCardListComponent: FC = () => {
       }
       noDataElement={
         <NothingHere
+          onCreate={() => selectModal(PatientModal.ProgramSearch)}
           body={t('messages.no-programs')}
           buttonText={t('button.add-program')}
         />
