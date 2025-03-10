@@ -2,8 +2,7 @@
 import React from 'react';
 import { useTranslation } from '@common/intl';
 import { Box, Stack, Typography, Button } from '@mui/material';
-const nothingHere = require('./nothing-here.gif');
-
+import { NothingHereIcon } from './NothingHereIcon';
 export interface NothingHereProps {
   title?: string;
   body?: string;
@@ -40,9 +39,7 @@ export const NothingHere: React.FC<NothingHereProps> = ({
 
   return (
     <Stack flex={1} justifyContent="center" alignItems="center" height="100%">
-      <Box justifyContent="center">
-        <img src={nothingHere} alt={heading} />
-      </Box>
+      <NothingHereIcon />
       <Box justifyContent="center">
         <Typography fontSize={24} fontWeight={700} sx={{ color: 'gray.light' }}>
           {heading}
