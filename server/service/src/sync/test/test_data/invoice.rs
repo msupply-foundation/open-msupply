@@ -155,7 +155,7 @@ fn transact_1_push_record() -> TestSyncOutgoingRecord {
         record_id: TRANSACT_1.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_1.0.to_string(),
-            user_id: None,
+            user_id: Some("MISSING_USER_ID".to_string()),
             name_ID: "name_store_a".to_string(),
             store_ID: "store_b".to_string(),
             invoice_num: 1,
