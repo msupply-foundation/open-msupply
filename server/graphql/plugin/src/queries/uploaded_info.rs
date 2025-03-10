@@ -95,8 +95,8 @@ impl PluginInfoNode {
                     .frontend_plugins
                     .iter()
                     .map(|r| json!({ "front_end": r.code.clone(), "types": r.types.clone() }))
-                    .collect::<HashSet<serde_json::Value>>()
-
+                    .collect::<HashSet<serde_json::Value>>(),
+            "NOTE": "Back end plugins are not currently 'stackable', i.e. only one instance of transform request requisition line plugin will be executed"
         })
     }
 }

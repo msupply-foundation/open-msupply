@@ -149,7 +149,7 @@ const StockListComponent: FC = () => {
       Cell: TooltipTextCell,
       width: 190,
     },
-    ...(plugins.stockColumn?.columns || []),
+    ...(plugins.stockLine?.tableColumn || []),
   ];
 
   const columns = useColumns<StockLineRowFragment>(
@@ -158,14 +158,14 @@ const StockListComponent: FC = () => {
       sortBy,
       onChangeSortBy: updateSortQuery,
     },
-    [sortBy, plugins.stockColumn?.columns]
+    [sortBy, plugins.stockLine?.tableColumn]
   );
 
   return (
     <>
       <Toolbar filter={filter} />
       <AppBarButtons />
-      {plugins.stockColumn?.StateLoader?.map((StateLoader, index) => (
+      {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
         <StateLoader key={index} stockLines={data?.nodes ?? []} />
       ))}
       <DataTable
