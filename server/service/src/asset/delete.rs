@@ -37,7 +37,7 @@ pub fn delete_asset(ctx: &ServiceContext, asset_id: String) -> Result<String, De
                 .delete_all_for_asset_id(&asset_id);
 
             AssetRowRepository::new(connection)
-                .delete(&asset_id)
+                .mark_deleted(&asset_id)
                 .map_err(DeleteAssetError::from)
         })
         .map_err(|error| error.to_inner_error())?;
