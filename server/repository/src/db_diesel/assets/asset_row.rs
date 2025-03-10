@@ -127,12 +127,11 @@ impl<'a> AssetRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, asset_id: &str) -> Result<(), RepositoryError> {
+    pub fn mark_deleted(&self, asset_id: &str) -> Result<i64, RepositoryError> {
         diesel::update(asset.filter(id.eq(asset_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
-        _ = self.insert_changelog(asset_id.to_owned(), RowActionType::Delete, None); // TODO: return this and enable delete sync...
-        Ok(())
+        self.insert_changelog(asset_id.to_owned(), RowActionType::Upsert, None)
     }
 }
 
