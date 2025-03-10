@@ -57,7 +57,6 @@ pub enum InsertCustomerReturnError {
     ErrorSettingNonNewStatus {
         update_error: UpdateCustomerReturnError,
     },
-    ManuallyCreatedReturnMustHaveNewStatus,
 }
 
 type OutError = InsertCustomerReturnError;
