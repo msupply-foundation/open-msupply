@@ -362,8 +362,6 @@ export const ResponseLineEdit = ({
                       <NumericTextInput
                         width={INPUT_WIDTH}
                         value={draft?.approvedQuantity}
-                        disabled={!!hasLinkedRequisition}
-                        onBlur={save}
                       />
                     }
                     labelWidth={LABEL_WIDTH}
