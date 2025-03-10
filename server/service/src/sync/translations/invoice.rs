@@ -14,6 +14,7 @@ use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
     InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceStatus, InvoiceType,
     NameRow, NameRowRepository, StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
+    UserAccountRow, UserAccountRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
@@ -373,6 +374,22 @@ impl SyncTranslation for InvoiceTranslation {
             insurance_discount_amount: data.insurance_discount_amount,
             insurance_discount_percentage: data.insurance_discount_percentage,
         };
+
+        // HACK...
+        // Inactive user aren't always synced from mSupply
+        // To avoid referential issues we'll create a blank placeholder user
+        // If the user is synced later the record will be updated to the correct data
+        if let Some(user_id) = &result.user_id {
+            if UserAccountRowRepository::new(connection)
+                .find_one_by_id(user_id)?
+                .is_none()
+            {
+                UserAccountRowRepository::new(connection).insert_one(&UserAccountRow {
+                    id: user_id.clone(),
+                    ..Default::default()
+                })?;
+            }
+        }
 
         Ok(PullTranslateResult::upsert(result))
     }
