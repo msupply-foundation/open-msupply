@@ -56,7 +56,6 @@ pub enum InsertSupplierReturnError {
     ErrorSettingNonNewStatus {
         update_error: UpdateSupplierReturnError,
     },
-    ManuallyCreatedReturnMustHaveNewStatus,
 }
 
 type OutError = InsertSupplierReturnError;
