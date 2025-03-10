@@ -1,5 +1,8 @@
 import { ColumnDefinition, UsePluginEvents } from '@openmsupply-client/common';
-import { StockLineRowFragment } from '@openmsupply-client/system';
+import {
+  RequestLineFragment,
+  StockLineRowFragment,
+} from '@openmsupply-client/system';
 import { InboundFragment } from '@openmsupply-client/invoices';
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 
@@ -15,9 +18,14 @@ export type Plugins = {
     StateLoader: React.ComponentType<{ stockLines: StockLineRowFragment[] }>[];
     columns: ColumnDefinition<StockLineRowFragment>[];
   };
+  requestRequisitionColumn?: {
+    StateLoader: React.ComponentType<{ requestLines: RequestLineFragment[] }>[];
+    tableColumns: ColumnDefinition<RequestLineFragment>[];
+    editViewFields: React.ComponentType<{ line: RequestLineFragment }>[];
+  };
 };
 
-type PluginData<D> = { relatedRecordId: string; data: D };
+type PluginData<D> = { relatedRecordId?: string | null; data: D };
 export type PluginDataStore<T, D> = {
   data: PluginData<D>[];
   set: (data: PluginData<D>[]) => void;

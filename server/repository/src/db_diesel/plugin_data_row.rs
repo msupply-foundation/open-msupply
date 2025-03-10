@@ -8,6 +8,7 @@ use crate::{repository_error::RepositoryError, Upsert};
 use diesel::prelude::*;
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 table! {
     plugin_data (id) {
@@ -22,7 +23,9 @@ table! {
 
 joinable!(plugin_data -> store (store_id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize, Deserialize, TS,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = plugin_data)]
 pub struct PluginDataRow {

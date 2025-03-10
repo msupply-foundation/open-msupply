@@ -19,7 +19,9 @@ import {
   TextArea,
   useAuthContext,
   useNavigate,
+  usePluginProvider,
   useToggle,
+  useWindowDimensions,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { Footer } from './Footer';
@@ -71,6 +73,7 @@ export const RequestLineEdit = ({
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const { plugins } = usePluginProvider();
   const { isOn, toggle } = useToggle();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const { store } = useAuthContext();
@@ -78,11 +81,18 @@ export const RequestLineEdit = ({
     store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
   const isNew = !draft?.id;
   const showItemInformation =
-    useConsumptionData && !!draft?.itemInformation && isProgram;
+    useConsumptionData &&
+    !!draft?.itemInformation &&
+    isProgram &&
+    store?.preferences?.extraFieldsInRequisition;
   const itemInformationSorted = draft?.itemInformation
     ?.sort((a, b) => a.name.name.localeCompare(b.name.name))
     .sort((a, b) => b.amcInUnits - a.amcInUnits)
     .sort((a, b) => b.stockInUnits - a.stockInUnits);
+
+  const line = lines.find(line => line.id === draft?.id);
+  const { width } = useWindowDimensions();
+
   return (
     <Box display="flex" flexDirection="column" padding={2}>
       <Box display="flex" justifyContent="space-between">
@@ -213,6 +223,10 @@ export const RequestLineEdit = ({
                 label={t('label.amc')}
                 sx={{ marginBottom: 1 }}
               />
+              {line &&
+                plugins.requestRequisitionColumn?.editViewFields?.map(
+                  (Field, index) => <Field key={index} line={line} />
+                )}
               {isProgram && useConsumptionData && (
                 <InputWithLabelRow
                   Input={
@@ -412,7 +426,7 @@ export const RequestLineEdit = ({
         )}
       </Box>
       {showItemInformation && (
-        <Box paddingTop={1} maxHeight={200} width="100%" display="flex">
+        <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
           <ItemInformationView
             itemInformation={itemInformationSorted}
             storeNameId={store?.nameId}

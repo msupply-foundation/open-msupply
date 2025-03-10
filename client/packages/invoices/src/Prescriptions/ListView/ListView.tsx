@@ -46,9 +46,10 @@ const PrescriptionListViewComponent: FC = () => {
     initialSort: { key: 'prescriptionDatetime', dir: 'desc' },
     filters: [
       { key: 'otherPartyName' },
+      { key: 'theirReference' },
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
       {
-        key: 'pickedDatetime',
+        key: 'createdOrBackdatedDatetime',
         condition: 'between',
       },
       {
@@ -96,6 +97,10 @@ const PrescriptionListViewComponent: FC = () => {
             : rowData.createdDatetime,
         sortable: true,
       },
+      [
+        'theirReference',
+        { description: '', maxWidth: 110 },
+      ],
       ['comment'],
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
