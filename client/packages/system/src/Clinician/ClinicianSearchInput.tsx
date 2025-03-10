@@ -1,4 +1,8 @@
-import { Autocomplete, useIntlUtils, useTheme } from '@openmsupply-client/common';
+import {
+  Autocomplete,
+  useIntlUtils,
+  useTheme,
+} from '@openmsupply-client/common';
 import { ClinicianFragment, useClinicians } from '@openmsupply-client/programs';
 import React from 'react';
 import { FC } from 'react';
