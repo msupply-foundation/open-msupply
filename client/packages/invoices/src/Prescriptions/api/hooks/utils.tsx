@@ -46,11 +46,19 @@ export const mapStatus = (patch: RecordPatch<PrescriptionRowFragment>) => {
 
 export const createInputObject = (
   line: DraftPrescriptionLine,
-  type: 'insert' | 'update' | 'delete'
+  type: 'insert' | 'update' | 'delete' | 'setPrescribedQuantity'
 ) => {
-  const { id, numberOfPacks, prescribedQuantity, stockLine, invoiceId, note } =
-    line;
+  const {
+    id,
+    numberOfPacks,
+    prescribedQuantity,
+    stockLine,
+    invoiceId,
+    note,
+    item,
+  } = line;
 
+  const itemId = item?.id ?? '';
   const stockLineId = stockLine?.id ?? '';
   const output = { id, numberOfPacks, stockLineId, note, prescribedQuantity };
 
@@ -61,6 +69,8 @@ export const createInputObject = (
       return output;
     case 'insert':
       return { ...output, invoiceId };
+    case 'setPrescribedQuantity':
+      return { invoiceId, itemId, prescribedQuantity };
   }
 };
 
