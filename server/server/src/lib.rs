@@ -12,7 +12,7 @@ use crate::{
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
 use actix_cors::Cors;
 use anyhow::Context;
-use extism::set_log_callback;
+// use extism::set_log_callback;
 use graphql_core::loader::{get_loaders, LoaderRegistry};
 
 use graphql::{
@@ -145,7 +145,7 @@ pub async fn start_server(
 
     // SET LOG CALLBACK FOR WASM FUNCTIONS
     info!("Setting wasm function log callback..");
-    let _ = set_log_callback(|log| info!("log {:?}", log), "info");
+    // let _ = set_log_callback(|log| info!("log {:?}", log), "info");
 
     // SET HARDWARE UUID
     info!("Getting hardware uuid..");

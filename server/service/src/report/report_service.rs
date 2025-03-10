@@ -1,9 +1,9 @@
 use base64::prelude::*;
 use chrono::{DateTime, Utc};
-use extism::{
-    convert::{encoding, Json},
-    host_fn, FromBytes, Manifest, PluginBuilder, ToBytes, UserData, Wasm, WasmMetadata, PTR,
-};
+// use extism::{
+//     convert::{encoding, Json},
+//     host_fn, FromBytes, Manifest, PluginBuilder, ToBytes, UserData, Wasm, WasmMetadata, PTR,
+// };
 use repository::{
     migrations::Version, raw_query, EqualFilter, JsonRawRow, Report, ReportFilter, ReportMetaData,
     ReportRepository, ReportRowRepository, ReportSort, ReportType, RepositoryError,
@@ -523,83 +523,83 @@ fn resolve_report_definition(
     })
 }
 
-#[derive(Serialize, Debug, Deserialize, FromBytes)]
-#[encoding(Json)]
-struct WasmSqlQuery {
-    statement: String,
-    parameters: Vec<serde_json::Value>,
-}
+// #[derive(Serialize, Debug, Deserialize, FromBytes)]
+// #[encoding(Json)]
+// struct WasmSqlQuery {
+//     statement: String,
+//     parameters: Vec<serde_json::Value>,
+// }
 
-#[derive(Serialize, Debug, Deserialize, FromBytes)]
-#[encoding(Json)]
-struct WasmSqlResult {
-    rows: Vec<serde_json::Value>,
-}
+// #[derive(Serialize, Debug, Deserialize, FromBytes)]
+// #[encoding(Json)]
+// struct WasmSqlResult {
+//     rows: Vec<serde_json::Value>,
+// }
 
-host_fn!(sql(user_data: StorageConnection; key: Json<WasmSqlQuery>) -> Json<WasmSqlResult> {
-    Ok(wasm_sql(user_data, key))
-});
+// host_fn!(sql(user_data: StorageConnection; key: Json<WasmSqlQuery>) -> Json<WasmSqlResult> {
+//     Ok(wasm_sql(user_data, key))
+// });
 
-fn wasm_sql(
-    user_data: UserData<StorageConnection>,
-    Json(WasmSqlQuery {
-        statement,
-        parameters,
-    }): Json<WasmSqlQuery>,
-) -> Json<WasmSqlResult> {
-    let _ = parameters; // Explicitly ignore parameters
-    let con_mut = user_data.get().unwrap();
-    let con = con_mut.lock().unwrap();
-    let results = raw_query(&con, statement);
-    Json(WasmSqlResult {
-        rows: results
-            .into_iter()
-            .map(|JsonRawRow { json_row }| {
-                serde_json::from_str::<serde_json::Value>(&json_row).unwrap()
-            })
-            .collect(),
-    })
-}
+// fn wasm_sql(
+//     user_data: UserData<StorageConnection>,
+//     Json(WasmSqlQuery {
+//         statement,
+//         parameters,
+//     }): Json<WasmSqlQuery>,
+// ) -> Json<WasmSqlResult> {
+//     let _ = parameters; // Explicitly ignore parameters
+//     let con_mut = user_data.get().unwrap();
+//     let con = con_mut.lock().unwrap();
+//     let results = raw_query(&con, statement);
+//     Json(WasmSqlResult {
+//         rows: results
+//             .into_iter()
+//             .map(|JsonRawRow { json_row }| {
+//                 serde_json::from_str::<serde_json::Value>(&json_row).unwrap()
+//             })
+//             .collect(),
+//     })
+// }
 
-#[derive(Serialize, Deserialize, FromBytes, ToBytes)]
-#[encoding(Json)]
+#[derive(Serialize, Deserialize)] //, FromBytes, ToBytes)]
+                                  // #[encoding(Json)]
 struct ReportData {
     data: serde_json::Value,
     arguments: Option<serde_json::Value>,
 }
 
-fn transform_data(
-    connection: StorageConnection,
-    data: ReportData,
-    convert_data: Option<String>,
-) -> Result<ReportData, ReportError> {
-    let Some(convert_data) = convert_data else {
-        return Ok(data);
-    };
+// fn transform_data(
+//     connection: StorageConnection,
+//     data: ReportData,
+//     convert_data: Option<String>,
+// ) -> Result<ReportData, ReportError> {
+//     let Some(convert_data) = convert_data else {
+//         return Ok(data);
+//     };
 
-    let manifest = Manifest::new([Wasm::Data {
-        data: BASE64_STANDARD.decode(convert_data).unwrap(),
-        meta: WasmMetadata {
-            name: Some("commander".to_string()),
-            hash: None,
-        },
-    }]);
+//     let manifest = Manifest::new([Wasm::Data {
+//         data: BASE64_STANDARD.decode(convert_data).unwrap(),
+//         meta: WasmMetadata {
+//             name: Some("commander".to_string()),
+//             hash: None,
+//         },
+//     }]);
 
-    let mut plugin = PluginBuilder::new(manifest)
-        .with_wasi(true)
-        // For android was getting error 'config file not specified and failed to get the default'
-        // leading to https://github.com/bytecodealliance/wasmtime/blob/3e0b7e501beebf5d7c094b7ac751f582ba12bc95/crates/cache/src/config.rs#L195
-        .with_cache_disabled()
-        .with_function("sql", [PTR], [PTR], UserData::new(connection), sql)
-        .build()
-        .map_err(ReportError::ConvertDataError)?;
+//     let mut plugin = PluginBuilder::new(manifest)
+//         .with_wasi(true)
+//         // For android was getting error 'config file not specified and failed to get the default'
+//         // leading to https://github.com/bytecodealliance/wasmtime/blob/3e0b7e501beebf5d7c094b7ac751f582ba12bc95/crates/cache/src/config.rs#L195
+//         .with_cache_disabled()
+//         .with_function("sql", [PTR], [PTR], UserData::new(connection), sql)
+//         .build()
+//         .map_err(ReportError::ConvertDataError)?;
 
-    let data = plugin
-        .call("convert_data", data)
-        .map_err(ReportError::ConvertDataError)?;
+//     let data = plugin
+//         .call("convert_data", data)
+//         .map_err(ReportError::ConvertDataError)?;
 
-    Ok(data)
-}
+//     Ok(data)
+// }
 
 fn generate_report(
     connection: StorageConnection,
@@ -610,7 +610,7 @@ fn generate_report(
     current_language: Option<String>,
 ) -> Result<GeneratedReport, ReportError> {
     let report_data = ReportData { data, arguments };
-    let report_data = transform_data(connection, report_data, report.convert_data.clone())?;
+    // let report_data = transform_data(connection, report_data, report.convert_data.clone())?;
 
     let mut context = tera::Context::from_serialize(report_data).map_err(|err| {
         ReportError::DocGenerationError(format!("Tera context from data: {:?}", err))
