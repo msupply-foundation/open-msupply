@@ -1,6 +1,6 @@
 use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository,
-    InvoiceLineType, RepositoryError,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
+    InvoiceLineRowRepository, InvoiceLineType, ItemRow, RepositoryError,
 };
 use util::uuid::uuid;
 
@@ -20,7 +20,7 @@ pub struct SetPrescribedQuantity {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum SetPrescribedQuantityError {
-    ItemNotFound, // check if valid item id
+    ItemNotFound,
     InvoiceDoesNotExist,
     NotAStockItem,
     NotAPrescription,
@@ -52,12 +52,14 @@ pub fn set_prescribed_quantity(
                     .invoice_id(EqualFilter::equal_to(&input.invoice_id)),
             )?;
 
+            // Check if there are multiple existing lines and if any of them have a prescribed quantity or a stock line ID.
             if existing_lines.len() > 1 {
                 let has_prescribed_quantity_or_stock_line = existing_lines.iter().any(|line| {
                     line.invoice_line_row.prescribed_quantity.is_some()
                         || line.invoice_line_row.stock_line_id.is_some()
                 });
 
+                // Remove the unallocated line if a proper allocated line exists.
                 if has_prescribed_quantity_or_stock_line {
                     if let Some(unallocated_line) = existing_lines.iter().find(|line| {
                         line.invoice_line_row.r#type == InvoiceLineType::UnallocatedStock
@@ -67,21 +69,28 @@ pub fn set_prescribed_quantity(
                 }
             }
 
-            let existing_line_with_stock = existing_lines
+            // Locate an existing line with a prescribed quantity
+            let existing_line_with_prescribed_quantity = existing_lines
                 .iter()
-                .find(|line| line.invoice_line_row.stock_line_id.is_some());
+                .find(|line| line.invoice_line_row.prescribed_quantity.is_some());
 
-            let new_line;
-            if let Some(existing_line) = existing_line_with_stock {
-                let mut updated_line = existing_line.clone();
-                updated_line.invoice_line_row.prescribed_quantity = Some(input.prescribed_quantity);
-                invoice_line_row_repo.upsert_one(&updated_line.invoice_line_row)?;
-                new_line = updated_line.invoice_line_row
-            } else {
-                let invoice_line = generate(uuid(), item_row, input.clone())?;
-                invoice_line_row_repo.upsert_one(&invoice_line)?;
-                new_line = invoice_line;
-            }
+            let new_line = match existing_line_with_prescribed_quantity {
+                // Update the line that already has a prescribed quantity
+                Some(existing_line) => {
+                    let mut updated_line = existing_line.clone();
+                    updated_line.invoice_line_row.prescribed_quantity =
+                        Some(input.prescribed_quantity);
+                    invoice_line_row_repo.upsert_one(&updated_line.invoice_line_row)?;
+                    updated_line.invoice_line_row
+                }
+                // Assign the prescribed quantity to a single line or create an unallocated line if none of them have it.
+                None => handle_no_prescribed_quantity(
+                    &existing_lines,
+                    &item_row,
+                    &input,
+                    &invoice_line_row_repo,
+                )?,
+            };
 
             get_invoice_line(ctx, &new_line.id)
                 .map_err(SetPrescribedQuantityError::DatabaseError)?
@@ -91,14 +100,41 @@ pub fn set_prescribed_quantity(
     Ok(invoice_line)
 }
 
+fn handle_no_prescribed_quantity(
+    existing_lines: &[InvoiceLine],
+    item_row: &ItemRow,
+    input: &SetPrescribedQuantity,
+    invoice_line_row_repo: &InvoiceLineRowRepository,
+) -> Result<InvoiceLineRow, SetPrescribedQuantityError> {
+    // Try to find the first line with a stock line ID
+    match existing_lines
+        .iter()
+        .find(|line| line.invoice_line_row.stock_line_id.is_some())
+    {
+        Some(existing_line_with_stock) => {
+            // Update the line that has a stock line ID with the prescribed quantity
+            let mut updated_line = existing_line_with_stock.clone();
+            updated_line.invoice_line_row.prescribed_quantity = Some(input.prescribed_quantity);
+            invoice_line_row_repo.upsert_one(&updated_line.invoice_line_row)?;
+            Ok(updated_line.invoice_line_row)
+        }
+        None => {
+            // Create a new unallocated line for the prescription if no line with a stock line ID is found
+            let new_invoice_line = generate(uuid(), item_row.clone(), input.clone())?;
+            invoice_line_row_repo.upsert_one(&new_invoice_line)?;
+            Ok(new_invoice_line)
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use repository::{
         mock::{
-            mock_item_a, mock_prescription_a_invoice_line_a, mock_prescription_picked,
-            mock_stock_line_a, mock_store_a, MockData, MockDataInserts,
+            mock_item_a, mock_prescription_picked, mock_stock_line_a, mock_store_a, MockData,
+            MockDataInserts,
         },
-        test_db::{setup_all, setup_all_with_data},
+        test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineType,
     };
 
@@ -106,7 +142,7 @@ mod test {
         invoice_line::stock_out_line::SetPrescribedQuantity, service_provider::ServiceProvider,
     };
 
-    fn mark_prescription_unallocated_invoice_line() -> InvoiceLineRow {
+    fn mock_prescription_unallocated_invoice_line() -> InvoiceLineRow {
         InvoiceLineRow {
             id: "test_invoice_line".to_string(),
             invoice_id: mock_prescription_picked().id,
@@ -116,27 +152,11 @@ mod test {
             r#type: InvoiceLineType::UnallocatedStock,
             prescribed_quantity: Some(10.0),
             stock_line_id: None,
-
-            // default values
-            pack_size: 0.0,
-            number_of_packs: 0.0,
-            total_before_tax: 0.0,
-            total_after_tax: 0.0,
-            tax_percentage: None,
-            note: None,
-            location_id: None,
-            batch: None,
-            expiry_date: None,
-            sell_price_per_pack: 0.0,
-            cost_price_per_pack: 0.0,
-            inventory_adjustment_reason_id: None,
-            return_reason_id: None,
-            foreign_currency_price_before_tax: None,
-            item_variant_id: None,
+            ..Default::default()
         }
     }
 
-    fn mock_existing_stock_invoice_line() -> InvoiceLineRow {
+    fn mock_prescription_invoice_line_a() -> InvoiceLineRow {
         InvoiceLineRow {
             id: "existing_stock_invoice_line".to_string(),
             invoice_id: mock_prescription_picked().id,
@@ -144,25 +164,35 @@ mod test {
             item_code: mock_item_a().code,
             item_link_id: mock_item_a().id,
             r#type: InvoiceLineType::StockOut,
-            prescribed_quantity: None,
+            prescribed_quantity: Some(10.0),
             stock_line_id: Some(mock_stock_line_a().id),
+            ..Default::default()
+        }
+    }
 
-            // default values
-            pack_size: 0.0,
-            number_of_packs: 0.0,
-            total_before_tax: 0.0,
-            total_after_tax: 0.0,
-            tax_percentage: None,
-            note: None,
-            location_id: None,
-            batch: None,
-            expiry_date: None,
-            sell_price_per_pack: 0.0,
-            cost_price_per_pack: 0.0,
-            inventory_adjustment_reason_id: None,
-            return_reason_id: None,
-            foreign_currency_price_before_tax: None,
-            item_variant_id: None,
+    fn mock_prescription_invoice_line_b() -> InvoiceLineRow {
+        InvoiceLineRow {
+            id: "existing_stock_invoice_line".to_string(),
+            invoice_id: mock_prescription_picked().id,
+            item_name: mock_item_a().name,
+            item_code: mock_item_a().code,
+            item_link_id: mock_item_a().id,
+            r#type: InvoiceLineType::StockOut,
+            stock_line_id: Some(mock_stock_line_a().id),
+            ..Default::default()
+        }
+    }
+
+    fn mock_prescription_invoice_line_c() -> InvoiceLineRow {
+        InvoiceLineRow {
+            id: "existing_stock_invoice_line".to_string(),
+            invoice_id: mock_prescription_picked().id,
+            item_name: mock_item_a().name,
+            item_code: mock_item_a().code,
+            item_link_id: mock_item_a().id,
+            r#type: InvoiceLineType::StockOut,
+            stock_line_id: Some(mock_stock_line_a().id),
+            ..Default::default()
         }
     }
 
@@ -172,7 +202,7 @@ mod test {
             "set_prescribed_quantity_no_item_line",
             MockDataInserts::all(),
             MockData {
-                invoice_lines: vec![mark_prescription_unallocated_invoice_line()],
+                invoice_lines: vec![mock_prescription_unallocated_invoice_line()],
                 ..Default::default()
             },
         )
@@ -187,8 +217,8 @@ mod test {
         let result = service.set_prescribed_quantity(
             &context,
             SetPrescribedQuantity {
-                invoice_id: mark_prescription_unallocated_invoice_line().invoice_id,
-                item_id: mark_prescription_unallocated_invoice_line().item_link_id,
+                invoice_id: mock_prescription_unallocated_invoice_line().invoice_id,
+                item_id: mock_prescription_unallocated_invoice_line().item_link_id,
                 prescribed_quantity: 10.0,
             },
         );
@@ -199,92 +229,36 @@ mod test {
 
         assert_eq!(
             invoice_line.invoice_line_row.invoice_id,
-            mark_prescription_unallocated_invoice_line().invoice_id
+            mock_prescription_unallocated_invoice_line().invoice_id
         );
-
         assert_eq!(
             invoice_line.invoice_line_row.item_link_id,
-            mark_prescription_unallocated_invoice_line().item_link_id
+            mock_prescription_unallocated_invoice_line().item_link_id
         );
-
         assert_eq!(
             invoice_line.invoice_line_row.item_code,
-            mark_prescription_unallocated_invoice_line().item_code
+            mock_prescription_unallocated_invoice_line().item_code
         );
-
         assert_eq!(
             invoice_line.invoice_line_row.item_name,
-            mark_prescription_unallocated_invoice_line().item_name
+            mock_prescription_unallocated_invoice_line().item_name
         );
-
         assert_eq!(
             invoice_line.invoice_line_row.prescribed_quantity,
-            mark_prescription_unallocated_invoice_line().prescribed_quantity
+            mock_prescription_unallocated_invoice_line().prescribed_quantity
         );
     }
 
     #[actix_rt::test]
-    async fn set_prescribed_quantity_existing_stock_line() {
-        let (_, _, connection_manager, _) = setup_all(
-            "set_prescribed_quantity_existing_stock_line",
-            MockDataInserts::all(),
-        )
-        .await;
-
-        let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider
-            .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let service = service_provider.invoice_line_service;
-
-        let result = service.set_prescribed_quantity(
-            &context,
-            SetPrescribedQuantity {
-                invoice_id: mock_prescription_a_invoice_line_a().invoice_id,
-                item_id: mock_prescription_a_invoice_line_a().item_link_id,
-                prescribed_quantity: 10.0,
-            },
-        );
-
-        assert!(result.is_ok());
-
-        let invoice_line = result.unwrap();
-
-        assert_eq!(
-            invoice_line.invoice_line_row.invoice_id,
-            mock_prescription_a_invoice_line_a().invoice_id
-        );
-
-        assert_eq!(
-            invoice_line.invoice_line_row.item_link_id,
-            mock_prescription_a_invoice_line_a().item_link_id
-        );
-
-        assert_eq!(
-            invoice_line.invoice_line_row.item_code,
-            mock_prescription_a_invoice_line_a().item_code
-        );
-
-        assert_eq!(
-            invoice_line.invoice_line_row.item_name,
-            mock_prescription_a_invoice_line_a().item_name
-        );
-
-        assert_eq!(
-            invoice_line.invoice_line_row.prescribed_quantity,
-            Some(10.0)
-        );
-    }
-
-    #[actix_rt::test]
-    async fn set_prescribed_quantity_multiple_lines_with_unallocated() {
+    async fn set_prescribed_quantity_existing_line_with_prescribed_quantity() {
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "set_prescribed_quantity_multiple_lines_with_unallocated",
+            "set_prescribed_quantity_existing_line_with_prescribed_quantity",
             MockDataInserts::all(),
             MockData {
                 invoice_lines: vec![
-                    mark_prescription_unallocated_invoice_line(),
-                    mock_existing_stock_invoice_line(),
+                    mock_prescription_invoice_line_a(),
+                    mock_prescription_invoice_line_b(),
+                    mock_prescription_invoice_line_c(),
                 ],
                 ..Default::default()
             },
@@ -300,8 +274,71 @@ mod test {
         let result = service.set_prescribed_quantity(
             &context,
             SetPrescribedQuantity {
-                invoice_id: mark_prescription_unallocated_invoice_line().invoice_id,
-                item_id: mark_prescription_unallocated_invoice_line().item_link_id,
+                invoice_id: mock_prescription_invoice_line_a().invoice_id,
+                item_id: mock_prescription_invoice_line_a().item_link_id,
+                prescribed_quantity: 55.0,
+            },
+        );
+
+        assert!(result.is_ok());
+
+        let invoice_line = result.unwrap();
+
+        // updates invoice line with existing prescribed quantity to updated prescribed quantity
+        assert_eq!(
+            invoice_line.invoice_line_row.invoice_id,
+            mock_prescription_invoice_line_a().invoice_id
+        );
+        assert_eq!(
+            invoice_line.invoice_line_row.item_link_id,
+            mock_prescription_invoice_line_a().item_link_id
+        );
+        assert_eq!(
+            invoice_line.invoice_line_row.item_code,
+            mock_prescription_invoice_line_a().item_code
+        );
+        assert_eq!(
+            invoice_line.invoice_line_row.item_name,
+            mock_prescription_invoice_line_a().item_name
+        );
+        assert_eq!(
+            invoice_line.invoice_line_row.prescribed_quantity,
+            Some(55.0)
+        );
+
+        // doesn't update invoice lines that doesn't have prescribed quantity initially
+        assert_eq!(mock_prescription_invoice_line_b().prescribed_quantity, None);
+        assert_eq!(mock_prescription_invoice_line_c().prescribed_quantity, None);
+    }
+
+    #[actix_rt::test]
+    async fn set_prescribed_quantity_multiple_lines_with_unallocated() {
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "set_prescribed_quantity_multiple_lines_with_unallocated",
+            MockDataInserts::all(),
+            MockData {
+                invoice_lines: vec![
+                    mock_prescription_unallocated_invoice_line(),
+                    mock_prescription_invoice_line_a(),
+                    mock_prescription_invoice_line_b(),
+                    mock_prescription_invoice_line_c(),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_line_service;
+
+        let result = service.set_prescribed_quantity(
+            &context,
+            SetPrescribedQuantity {
+                invoice_id: mock_prescription_unallocated_invoice_line().invoice_id,
+                item_id: mock_prescription_unallocated_invoice_line().item_link_id,
                 prescribed_quantity: 10.0,
             },
         );
@@ -310,29 +347,30 @@ mod test {
 
         let invoice_line = result.unwrap();
 
+        // updates invoice line
         assert_eq!(
             invoice_line.invoice_line_row.invoice_id,
-            mock_existing_stock_invoice_line().invoice_id
+            mock_prescription_invoice_line_a().invoice_id
         );
-
         assert_eq!(
             invoice_line.invoice_line_row.item_link_id,
-            mock_existing_stock_invoice_line().item_link_id
+            mock_prescription_invoice_line_a().item_link_id
         );
-
         assert_eq!(
             invoice_line.invoice_line_row.item_code,
-            mock_existing_stock_invoice_line().item_code
+            mock_prescription_invoice_line_a().item_code
         );
-
         assert_eq!(
             invoice_line.invoice_line_row.item_name,
-            mock_existing_stock_invoice_line().item_name
+            mock_prescription_invoice_line_a().item_name
         );
-
         assert_eq!(
             invoice_line.invoice_line_row.prescribed_quantity,
             Some(10.0)
         );
+
+        // doesn't update invoice lines that doesn't have prescribed quantity initially
+        assert_eq!(mock_prescription_invoice_line_b().prescribed_quantity, None);
+        assert_eq!(mock_prescription_invoice_line_c().prescribed_quantity, None);
     }
 }
