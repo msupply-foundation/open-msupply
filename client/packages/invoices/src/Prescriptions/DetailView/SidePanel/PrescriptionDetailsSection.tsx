@@ -80,7 +80,7 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
     const { theirReference } = data;
     setTheirReferenceInput(theirReference);
   }, [data]);
- 
+
   return (
     <DetailPanelSection title={t('heading.prescription-details')}>
       <Grid container gap={0.5} key="prescription-details">
@@ -103,8 +103,8 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
               input: {
                 sx: {
                   backgroundColor: theme => theme.palette.background.white,
-                }
-              }
+                },
+              },
             }}
             value={theirReferenceInput ?? ''}
             onChange={event => {
