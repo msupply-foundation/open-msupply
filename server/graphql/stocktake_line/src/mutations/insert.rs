@@ -6,7 +6,9 @@ use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::StockLineReducedBelowZero;
-use graphql_types::types::StocktakeLineNode;
+use graphql_types::types::{
+    AdjustmentReasonNotProvided, AdjustmentReasonNotValid, StocktakeLineNode,
+};
 use repository::StocktakeLine;
 use service::NullableUpdate;
 use service::{
@@ -15,8 +17,6 @@ use service::{
         InsertStocktakeLine as ServiceInput, InsertStocktakeLineError as ServiceError,
     },
 };
-
-use super::{AdjustmentReasonNotProvided, AdjustmentReasonNotValid};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertStocktakeLineInput")]
