@@ -4,14 +4,14 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "add_prefs_table"
+        "add_preference_table"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-                CREATE TABLE prefs (
+                CREATE TABLE preference (
                     id TEXT NOT NULL PRIMARY KEY,
                     key TEXT NOT NULL,
                     value TEXT NOT NULL,
@@ -25,7 +25,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'prefs';
+                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'preference';
                 "#
             )?;
         }
