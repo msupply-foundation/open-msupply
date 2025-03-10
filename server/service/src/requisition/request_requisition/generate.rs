@@ -74,7 +74,7 @@ pub fn generate_requisition_lines(
                 requested_quantity: 0.0,
                 approved_quantity: 0.0,
                 approval_comment: None,
-                initial_stock_on_hand_units: 0.0,
+                initial_stock_on_hand_units: available_stock_on_hand,
                 incoming_units: 0.0,
                 outgoing_units: 0.0,
                 loss_in_units: 0.0,
