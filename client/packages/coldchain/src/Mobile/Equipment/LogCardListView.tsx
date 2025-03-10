@@ -32,8 +32,6 @@ export const LogCardListView: FC<{ recordId: string }> = ({ recordId }) => {
     return <NothingHere body={t('error.no-items-to-display')} />;
   }
 
-  console.log(data.nodes);
-
   return (
     <Box
       sx={{
