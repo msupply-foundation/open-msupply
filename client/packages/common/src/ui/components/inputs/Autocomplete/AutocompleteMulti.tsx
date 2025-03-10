@@ -47,7 +47,7 @@ export function AutocompleteMulti<
   renderInput,
   width = 'auto',
   slotProps,
-  inputProps,
+  // inputProps,
   ...restOfAutocompleteProps
 }: PropsWithChildren<
   AutocompleteMultiProps<T, true, DisableClearable, FreeSolo, ChipComponent>

@@ -50,7 +50,7 @@ export const useDraftRequisitionLine = (item?: ItemRowFragment | null) => {
 
   const save = async () => {
     if (draft) {
-      let result = await saveAction(draft);
+      const result = await saveAction(draft);
       if (
         result.updateResponseRequisitionLine.__typename ===
         'UpdateResponseRequisitionLineError'

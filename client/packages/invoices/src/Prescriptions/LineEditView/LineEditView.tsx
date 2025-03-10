@@ -57,11 +57,11 @@ export const PrescriptionLineEditView = () => {
     Record<string, DraftPrescriptionLine[]>
   >({});
 
-  let currentItem = lines.find(line => line.item.id === itemId)?.item;
+  const currentItem = lines.find(line => line.item.id === itemId)?.item;
 
-  let items = useMemo(() => {
-    let itemSet = new Set();
-    let items: ItemRowFragment[] = [];
+  const items = useMemo(() => {
+    const itemSet = new Set();
+    const items: ItemRowFragment[] = [];
     lines.forEach(line => {
       if (!itemSet.has(line.item.id)) {
         items.push(line.item);

@@ -6,7 +6,7 @@ import { RecordWithId } from '@common/types';
 import { useDebounceCallback } from '@common/hooks';
 import {
   LocaleKey,
-  translationExistsInLocale,
+  useTranslationExistsInLocale,
   useTranslation,
 } from '@common/intl';
 import { tooltipPlacement } from '../tooltipPlacement';
@@ -67,7 +67,7 @@ export const HeaderCell = <T extends RecordWithId>({
     150
   );
 
-  const labelExistsInLocale = translationExistsInLocale(column.label);
+  const labelExistsInLocale = useTranslationExistsInLocale(column.label);
   const columnLabel = labelExistsInLocale
     ? t(column.label as LocaleKey, column.labelProps)
     : column.label;

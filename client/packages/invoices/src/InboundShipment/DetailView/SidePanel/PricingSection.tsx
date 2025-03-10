@@ -125,6 +125,7 @@ export const PricingSectionComponent = () => {
           {serviceLines
             ? serviceLines.map((line, index) => (
                 <PanelRow
+                  key={index}
                   sx={{
                     marginLeft: '10px',
                     paddingBottom: index === serviceLines.length - 1 ? 2 : 0,
