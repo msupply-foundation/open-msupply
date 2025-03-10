@@ -81,7 +81,7 @@ export type InsertSupplierReturnMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertSupplierReturnMutation = { __typename: 'Mutations', insertSupplierReturn: { __typename: 'InsertSupplierReturnError', error: { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
+export type InsertSupplierReturnMutation = { __typename: 'Mutations', insertSupplierReturn: { __typename: 'InsertSupplierReturnError', error: { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number, originalShipment?: { __typename: 'InvoiceNode', id: string } | null } };
 
 export type UpdateSupplierReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -97,7 +97,7 @@ export type UpdateSupplierReturnLinesMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateSupplierReturnLinesMutation = { __typename: 'Mutations', updateSupplierReturnLines: { __typename: 'InvoiceNode', id: string } };
+export type UpdateSupplierReturnLinesMutation = { __typename: 'Mutations', updateSupplierReturnLines: { __typename: 'InvoiceNode', id: string, originalShipment?: { __typename: 'InvoiceNode', id: string } | null } };
 
 export type InsertCustomerReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -105,7 +105,7 @@ export type InsertCustomerReturnMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertCustomerReturnMutation = { __typename: 'Mutations', insertCustomerReturn: { __typename: 'InsertCustomerReturnError', error: { __typename: 'OtherPartyNotACustomer', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
+export type InsertCustomerReturnMutation = { __typename: 'Mutations', insertCustomerReturn: { __typename: 'InsertCustomerReturnError', error: { __typename: 'OtherPartyNotACustomer', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number, originalShipment?: { __typename: 'InvoiceNode', id: string } | null } };
 
 export type DeleteSupplierReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -129,7 +129,7 @@ export type UpdateCustomerReturnLinesMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateCustomerReturnLinesMutation = { __typename: 'Mutations', updateCustomerReturnLines: { __typename: 'InvoiceNode', id: string } };
+export type UpdateCustomerReturnLinesMutation = { __typename: 'Mutations', updateCustomerReturnLines: { __typename: 'InvoiceNode', id: string, originalShipment?: { __typename: 'InvoiceNode', id: string } | null } };
 
 export type DeleteCustomerReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -467,6 +467,9 @@ export const InsertSupplierReturnDocument = gql`
       __typename
       id
       invoiceNumber
+      originalShipment {
+        id
+      }
     }
     ... on InsertSupplierReturnError {
       __typename
@@ -495,6 +498,9 @@ export const UpdateSupplierReturnLinesDocument = gql`
     ... on InvoiceNode {
       __typename
       id
+      originalShipment {
+        id
+      }
     }
   }
 }
@@ -506,6 +512,9 @@ export const InsertCustomerReturnDocument = gql`
       __typename
       id
       invoiceNumber
+      originalShipment {
+        id
+      }
     }
     ... on InsertCustomerReturnError {
       __typename
@@ -543,6 +552,9 @@ export const UpdateCustomerReturnLinesDocument = gql`
     ... on InvoiceNode {
       __typename
       id
+      originalShipment {
+        id
+      }
     }
   }
 }
