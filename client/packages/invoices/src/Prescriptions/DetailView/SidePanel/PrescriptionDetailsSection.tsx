@@ -134,7 +134,7 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
             slotProps={{
               input: {
                 sx: {
-                  backgroundColor: 'white',
+                  backgroundColor: theme => theme.palette.background.white,
                 }
               }
             }}

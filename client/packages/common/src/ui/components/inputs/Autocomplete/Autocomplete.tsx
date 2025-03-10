@@ -93,7 +93,7 @@ export function Autocomplete<T>({
           disableUnderline: false,
           sx: {
             padding: '4px !important',
-            ...textSx != null ? textSx : {},
+            ...textSx,
           },
           ...props.InputProps,
         },

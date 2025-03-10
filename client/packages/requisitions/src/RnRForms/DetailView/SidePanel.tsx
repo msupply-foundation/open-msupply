@@ -77,7 +77,7 @@ export const SidePanel = ({ rnrFormId }: { rnrFormId: string }) => {
                 value={bufferedDetails?.theirReference ?? ''}
                 slotProps={{
                   input: {
-                    sx: { backgroundColor: 'white' },
+                    sx: { backgroundColor: theme => theme.palette.background.white },
                   },
                 }}
               />
