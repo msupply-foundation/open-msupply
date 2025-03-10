@@ -5,6 +5,8 @@ use repository::{
     StockLineRepository, StorageConnection,
 };
 
+use crate::store_preference::get_store_preferences;
+
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct RequestStoreStats {
     pub stock_on_hand: f64,
@@ -89,7 +91,7 @@ pub fn response_store_stats(
             .status(RequisitionStatus::Finalised.not_equal_to()),
     )?;
 
-    // Calculate line using approved amount if exists -> if denied or pending return 0 -> if doesn't need approval, use requested quantity
+    // Calculate one line using approved amount if exists -> if denied or pending return 0 -> if doesn't need approval, use requested quantity
     let calculate_line_quantity = |line: &RequisitionLine| -> f64 {
         match line.requisition_row.approval_status {
             Some(ApprovalStatusType::Approved)
@@ -109,14 +111,29 @@ pub fn response_store_stats(
         }
     };
 
-    // Calculate the current line
-    let current_line_quantity = calculate_line_quantity(requisition_line);
+    // Sum of all lines in other requisitions
+    let calculate_other_requested_quantity = |current_line_quantity: f64| -> f64 {
+        let sum_of_lines = response_requisition_lines
+            .iter()
+            .map(|line| calculate_line_quantity(line))
+            .sum::<f64>();
 
-    // Calculate all lines except the current line
-    let other_requested_quantity = response_requisition_lines.iter().fold(0.0, |sum, line| {
-        let line_quantity = calculate_line_quantity(line);
-        sum + line_quantity
-    }) - current_line_quantity;
+        sum_of_lines - current_line_quantity
+    };
+
+    let prefs = get_store_preferences(connection, &store_id)?;
+
+    let (current_line_quantity, other_requested_quantity) = if prefs
+        .response_requisition_requires_authorisation
+    {
+        let current_line_quantity = calculate_line_quantity(requisition_line);
+        let other_requested_quantity = calculate_other_requested_quantity(current_line_quantity);
+        (current_line_quantity, other_requested_quantity)
+    } else {
+        let current_line_quantity = requisition_line.requisition_line_row.requested_quantity;
+        let other_requested_quantity = calculate_other_requested_quantity(current_line_quantity);
+        (current_line_quantity, other_requested_quantity)
+    };
 
     Ok(ResponseStoreStats {
         stock_on_hand,
