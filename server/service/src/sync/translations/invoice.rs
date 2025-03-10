@@ -867,6 +867,13 @@ mod tests {
 
             assert_eq!(translation_result, record.translated_record);
         }
+
+        // Check missing user got created
+        let user = UserAccountRowRepository::new(&connection)
+            .find_one_by_id("MISSING_USER_ID")
+            .unwrap()
+            .unwrap();
+        assert_eq!(user.id, "MISSING_USER_ID");
     }
 
     #[actix_rt::test]
