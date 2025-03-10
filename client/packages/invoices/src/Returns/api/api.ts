@@ -252,7 +252,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     const { insertSupplierReturn } = result;
 
     if (insertSupplierReturn.__typename === 'InvoiceNode') {
-      return insertSupplierReturn.invoiceNumber;
+      return insertSupplierReturn;
     }
 
     throw new Error('Could not insert supplier return');
@@ -340,7 +340,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     const { insertCustomerReturn } = result;
 
     if (insertCustomerReturn.__typename === 'InvoiceNode') {
-      return insertCustomerReturn.invoiceNumber;
+      return insertCustomerReturn;
     }
 
     throw new Error('Could not insert customer return');

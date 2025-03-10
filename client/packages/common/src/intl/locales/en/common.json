@@ -1661,6 +1661,8 @@
   "messages.zero-line-quantities_one": "The quantity of 1 line has been set to 0",
   "messages.zero-line-quantities_other": "The quantity of {{count}} lines has been set to 0",
   "messages.zero-return-quantity-will-delete-lines": "There are no return quantities specified. Click OK again to confirm and remove these lines from the return.",
+  "messages.customer-return-created-verified": "Customer Return successfully created as Verified",
+  "messages.supplier-return-created-shipped": "Supplier Return successfully created as Shipped",
   "monitoring": "Monitoring",
   "multiple": "[multiple]",
   "outbound-shipment": "Outbound Shipments",

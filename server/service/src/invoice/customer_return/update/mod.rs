@@ -86,7 +86,7 @@ pub fn update_customer_return(
     Ok(invoice)
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum UpdateCustomerReturnError {
     InvoiceDoesNotExist,
     NotACustomerReturn,
