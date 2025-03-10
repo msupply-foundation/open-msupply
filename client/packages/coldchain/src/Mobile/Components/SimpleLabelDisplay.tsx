@@ -22,7 +22,7 @@ export const SimpleLabelDisplay: FC<SimpleLabelDisplayProps> = ({
       </Typography>
       <Typography
         sx={{
-          fontSize: '1.2rem!important',
+          fontSize: '1rem!important',
           wordBreak: 'break-all',
         }}
       >
