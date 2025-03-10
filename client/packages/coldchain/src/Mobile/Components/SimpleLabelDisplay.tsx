@@ -1,30 +1,33 @@
-import React, { FC } from "react"
-import {
-  Typography,
-  Box,
-} from "@openmsupply-client/common";
+import React, { FC } from 'react';
+import { Typography, Box } from '@openmsupply-client/common';
 
-interface EleProps {
-  label: string,
-  value: string | number,
+interface SimpleLabelDisplayProps {
+  label: string;
+  value: string | number;
 }
 
-export const SimpleLabelDisplay: FC<EleProps> = ({ label, value }) => {
-
+export const SimpleLabelDisplay: FC<SimpleLabelDisplayProps> = ({
+  label,
+  value,
+}) => {
   return (
     <Box>
-      <Typography sx={{
-        fontSize: '1rem!important',
-        fontWeight: 'bold',
-      }}>
+      <Typography
+        sx={{
+          fontSize: '1rem!important',
+          fontWeight: 'bold',
+        }}
+      >
         {label}
       </Typography>
-      <Typography sx={{
-        fontSize: '1.2rem!important',
-        wordBreak: 'break-all',
-      }}>
+      <Typography
+        sx={{
+          fontSize: '1.2rem!important',
+          wordBreak: 'break-all',
+        }}
+      >
         {value}
       </Typography>
     </Box>
-  )
-}
+  );
+};
