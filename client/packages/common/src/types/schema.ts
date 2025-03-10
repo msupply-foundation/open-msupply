@@ -219,7 +219,7 @@ export type AddToShipmentFromMasterListInput = {
   shipmentId: Scalars['String']['input'];
 };
 
-export type AdjustmentReasonNotProvided = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+export type AdjustmentReasonNotProvided = InsertInventoryAdjustmentErrorInterface & InsertStockLineErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
   __typename: 'AdjustmentReasonNotProvided';
   description: Scalars['String']['output'];
 };
@@ -3222,6 +3222,15 @@ export type InsertRnRFormInput = {
 
 export type InsertRnRFormResponse = RnRFormNode;
 
+export type InsertStockLineError = {
+  __typename: 'InsertStockLineError';
+  error: InsertStockLineErrorInterface;
+};
+
+export type InsertStockLineErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type InsertStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
   barcode?: InputMaybe<Scalars['String']['input']>;
@@ -3239,7 +3248,7 @@ export type InsertStockLineInput = {
   sellPricePerPack: Scalars['Float']['input'];
 };
 
-export type InsertStockLineLineResponse = StockLineNode;
+export type InsertStockLineLineResponse = InsertStockLineError | StockLineNode;
 
 export type InsertStocktakeInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -3348,11 +3357,11 @@ export type InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCour
 
 export type InsuranceConnector = {
   __typename: 'InsuranceConnector';
-  nodes: Array<InsuranceNode>;
+  nodes: Array<InsurancePolicyNode>;
 };
 
-export type InsuranceNode = {
-  __typename: 'InsuranceNode';
+export type InsurancePolicyNode = {
+  __typename: 'InsurancePolicyNode';
   discountPercentage: Scalars['Float']['output'];
   expiryDate: Scalars['NaiveDate']['output'];
   id: Scalars['String']['output'];
@@ -3394,7 +3403,7 @@ export type InsuranceProvidersNode = {
 
 export type InsuranceProvidersResponse = InsuranceProvidersConnector;
 
-export type InsuranceResponse = InsuranceNode;
+export type InsuranceResponse = InsurancePolicyNode;
 
 export enum InsuranceSortFieldInput {
   ExpiryDate = 'expiryDate',
@@ -3500,6 +3509,7 @@ export type InvoiceFilterInput = {
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  createdOrBackdatedDatetime?: InputMaybe<DatetimeFilterInput>;
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -3514,7 +3524,7 @@ export type InvoiceFilterInput = {
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterInvoiceStatusInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
-  theirReference?: InputMaybe<EqualFilterStringInput>;
+  theirReference?: InputMaybe<StringFilterInput>;
   transportReference?: InputMaybe<EqualFilterStringInput>;
   type?: InputMaybe<EqualFilterInvoiceTypeInput>;
   userId?: InputMaybe<EqualFilterStringInput>;
@@ -3630,6 +3640,7 @@ export type InvoiceNode = {
   id: Scalars['String']['output'];
   insuranceDiscountAmount?: Maybe<Scalars['Float']['output']>;
   insuranceDiscountPercentage?: Maybe<Scalars['Float']['output']>;
+  insurancePolicy?: Maybe<InsurancePolicyNode>;
   invoiceNumber: Scalars['Int']['output'];
   isCancellation: Scalars['Boolean']['output'];
   lines: InvoiceLineConnector;
@@ -6000,9 +6011,9 @@ export type Queries = {
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
-  insurance: InsuranceResponse;
+  insurancePolicies: InsurancesResponse;
+  insurancePolicy: InsuranceResponse;
   insuranceProviders: InsuranceProvidersResponse;
-  insurances: InsurancesResponse;
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
@@ -6381,20 +6392,20 @@ export type QueriesInsertPrescriptionArgs = {
 };
 
 
-export type QueriesInsuranceArgs = {
+export type QueriesInsurancePoliciesArgs = {
+  nameId: Scalars['String']['input'];
+  sort?: InputMaybe<Array<InsuranceSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesInsurancePolicyArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
 
 export type QueriesInsuranceProvidersArgs = {
-  storeId: Scalars['String']['input'];
-};
-
-
-export type QueriesInsurancesArgs = {
-  nameId: Scalars['String']['input'];
-  sort?: InputMaybe<Array<InsuranceSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -6968,6 +6979,7 @@ export enum ReportContext {
 export type ReportFilterInput = {
   context?: InputMaybe<EqualFilterReportContextInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
   subContext?: InputMaybe<EqualFilterStringInput>;
 };
@@ -6977,6 +6989,7 @@ export type ReportNode = {
   argumentSchema?: Maybe<FormSchemaNode>;
   context: ReportContext;
   id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
   isCustom: Scalars['Boolean']['output'];
   /** Human readable name of the report */
   name: Scalars['String']['output'];

@@ -19,7 +19,8 @@
       "scope": "#/properties/before",
       "label": "T#label.to-date",
       "options": {
-        "dateOnly": true
+        "dateOnly": true,
+        "dateAsEndOfDay": true
       }
     }
   ]

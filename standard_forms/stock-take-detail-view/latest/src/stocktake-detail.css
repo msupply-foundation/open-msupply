@@ -4,6 +4,15 @@
     }
 }
 
+.logo {
+    display: block;
+    height: 96px;
+}
+
+.header {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
 .container {
     display: flex;
     align-items: center;
@@ -20,6 +29,7 @@
     align-items: center;
     justify-content: center;
     font-size: 12px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .stocktake-wrapper {
@@ -86,10 +96,10 @@
 }
 
 .stocktake-wrapper .main-table .row .col-difference {
-    width: 6%;
+    width: 6.5%;
     text-align: right;
 }
 
 .stocktake-wrapper .main-table .row .col-reason {
-    width: 6.5%;
+    width: 6%;
 }

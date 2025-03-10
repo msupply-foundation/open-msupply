@@ -11,15 +11,16 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
         JsString::from("sql"),
         0,
         NativeFunction::from_copy_closure(move |_, args, ctx| {
-            // TODO Is this actually safe ? (need to check reference counts after plugin has run)
-            let service_provider = PluginContext::service_provider();
-
             let sql = get_string_argument(args, 0)?;
 
-            let connection = service_provider
-                .connection()
-                .map_err(std_error_to_js_error)?;
-            let results = raw_query(&connection, sql);
+            // When using PluginContext, it's best to use 'scope' see PluginContext for a link to testing repo
+            let results = {
+                let service_provider = PluginContext::service_provider();
+                let connection = service_provider
+                    .connection()
+                    .map_err(std_error_to_js_error)?;
+                raw_query(&connection, sql).map_err(std_error_to_js_error)
+            }?;
 
             let as_json: Vec<serde_json::Value> = results
                 .into_iter()

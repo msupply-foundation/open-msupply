@@ -1,18 +1,14 @@
-use async_graphql::{
-    dataloader::DataLoader, Context, Enum, InputObject, Object, Result, SimpleObject, Union,
-};
-use chrono::NaiveDate;
+use async_graphql::{Context, Enum, InputObject, Result, SimpleObject, Union};
+
 use graphql_core::{
-    loader::InsuranceProviderByIdLoader,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::InsurancePolicyNode;
 use repository::name_insurance_join_row::{
     NameInsuranceJoinRow, NameInsuranceJoinSort, NameInsuranceJoinSortField,
 };
 use service::auth::{Resource, ResourceAccessRequest};
-
-use crate::types::{InsurancePolicyNodeType, InsuranceProviderNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -30,72 +26,16 @@ pub struct InsuranceSortInput {
     desc: Option<bool>,
 }
 
-#[derive(PartialEq, Debug)]
-pub struct InsuranceNode {
-    insurance: NameInsuranceJoinRow,
-}
-
-#[Object]
-impl InsuranceNode {
-    pub async fn id(&self) -> &str {
-        &self.row().id
-    }
-
-    pub async fn insurance_provider_id(&self) -> &str {
-        &self.row().insurance_provider_id
-    }
-
-    pub async fn policy_number_person(&self) -> &Option<String> {
-        &self.row().policy_number_person
-    }
-
-    pub async fn policy_number_family(&self) -> &Option<String> {
-        &self.row().policy_number_family
-    }
-
-    pub async fn policy_number(&self) -> &String {
-        &self.row().policy_number
-    }
-
-    pub async fn policy_type(&self) -> InsurancePolicyNodeType {
-        InsurancePolicyNodeType::from_domain(&self.row().policy_type)
-    }
-
-    pub async fn discount_percentage(&self) -> &f64 {
-        &self.row().discount_percentage
-    }
-
-    pub async fn expiry_date(&self) -> &NaiveDate {
-        &self.row().expiry_date
-    }
-
-    pub async fn is_active(&self) -> &bool {
-        &self.row().is_active
-    }
-
-    pub async fn insurance_providers(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Option<InsuranceProviderNode>> {
-        let insurance_provider_id = &self.row().insurance_provider_id;
-
-        let loader = ctx.get_loader::<DataLoader<InsuranceProviderByIdLoader>>();
-        let result = loader.load_one(insurance_provider_id.clone()).await?;
-        Ok(result.map(InsuranceProviderNode::from_domain))
-    }
-}
-
-#[derive(SimpleObject)]
-pub struct InsuranceConnector {
-    nodes: Vec<InsuranceNode>,
-}
-
 #[derive(Union)]
-pub enum InsurancesResponse {
-    Response(InsuranceConnector),
+pub enum InsuranceResponse {
+    Response(InsurancePolicyNode),
 }
 
-pub fn insurance(ctx: &Context<'_>, store_id: String, id: String) -> Result<InsuranceResponse> {
+pub fn insurance_policy(
+    ctx: &Context<'_>,
+    store_id: String,
+    id: String,
+) -> Result<InsuranceResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -112,17 +52,22 @@ pub fn insurance(ctx: &Context<'_>, store_id: String, id: String) -> Result<Insu
         .insurance(&service_context.connection, &id)
         .map_err(StandardGraphqlError::from_repository_error)?;
 
-    Ok(InsuranceResponse::Response(InsuranceNode {
+    Ok(InsuranceResponse::Response(InsurancePolicyNode {
         insurance: result,
     }))
 }
 
-#[derive(Union)]
-pub enum InsuranceResponse {
-    Response(InsuranceNode),
+#[derive(SimpleObject)]
+pub struct InsuranceConnector {
+    nodes: Vec<InsurancePolicyNode>,
 }
 
-pub fn insurances(
+#[derive(Union)]
+pub enum InsurancesResponse {
+    Response(InsuranceConnector),
+}
+
+pub fn insurance_policies(
     ctx: &Context<'_>,
     store_id: String,
     name_id: String,
@@ -159,19 +104,9 @@ impl InsuranceConnector {
         InsuranceConnector {
             nodes: insurances
                 .into_iter()
-                .map(InsuranceNode::from_domain)
+                .map(InsurancePolicyNode::from_domain)
                 .collect(),
         }
-    }
-}
-
-impl InsuranceNode {
-    pub fn from_domain(insurance: NameInsuranceJoinRow) -> InsuranceNode {
-        InsuranceNode { insurance }
-    }
-
-    pub fn row(&self) -> &NameInsuranceJoinRow {
-        &self.insurance
     }
 }
 
