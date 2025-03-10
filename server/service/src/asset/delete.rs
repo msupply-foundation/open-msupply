@@ -1,4 +1,5 @@
 use super::validate::check_asset_exists;
+use crate::sync::CentralServerConfig;
 use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 use repository::assets::asset_internal_location_row::AssetInternalLocationRowRepository;
 use repository::{
@@ -55,7 +56,7 @@ pub fn validate(
     };
 
     if let Some(store_id) = &asset_row.store_id {
-        if ctx_store_id != store_id {
+        if ctx_store_id != store_id && !CentralServerConfig::is_central_server() {
             return Err(DeleteAssetError::AssetDoesNotBelongToCurrentStore);
         }
     }
