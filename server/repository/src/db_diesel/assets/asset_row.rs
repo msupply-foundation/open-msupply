@@ -92,7 +92,7 @@ impl<'a> AssetRowRepository<'a> {
         self.insert_changelog(
             asset_row.id.to_owned(),
             RowActionType::Upsert,
-            Some(asset_row.clone()),
+            asset_row.store_id.clone(),
         )
     }
 
@@ -100,13 +100,13 @@ impl<'a> AssetRowRepository<'a> {
         &self,
         asset_id: String,
         action: RowActionType,
-        row: Option<AssetRow>,
+        asset_store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::Asset,
             record_id: asset_id,
             row_action: action,
-            store_id: row.map(|r| r.store_id).unwrap_or(None),
+            store_id: asset_store_id,
             ..Default::default()
         };
         ChangelogRepository::new(self.connection).insert(&row)
@@ -131,7 +131,14 @@ impl<'a> AssetRowRepository<'a> {
         diesel::update(asset.filter(id.eq(asset_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(asset_id.to_owned(), RowActionType::Upsert, None)
+
+        let asset_row = AssetRowRepository::find_one_by_id(&self, asset_id)?;
+
+        self.insert_changelog(
+            asset_id.to_owned(),
+            RowActionType::Upsert,
+            asset_row.and_then(|row| row.store_id),
+        )
     }
 }
 
