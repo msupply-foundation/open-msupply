@@ -111,7 +111,7 @@ const SupplierReturnListViewComponent: FC = () => {
           />
         }
         onRowClick={row => {
-          navigate(String(row.invoiceNumber));
+          navigate(row.id);
         }}
       />
       <Footer />

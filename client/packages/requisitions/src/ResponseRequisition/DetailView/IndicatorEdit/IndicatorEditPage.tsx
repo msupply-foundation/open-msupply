@@ -90,7 +90,7 @@ export const IndicatorEditPage = () => {
                 lines={sortedLines}
                 route={RouteBuilder.create(AppRoute.Distribution)
                   .addPart(AppRoute.CustomerRequisition)
-                  .addPart(String(response?.requisitionNumber))
+                  .addPart(String(response?.id))
                   .addPart(AppRoute.Indicators)
                   .addPart(String(programIndicatorCode))}
                 scrollRef={scrollRef}

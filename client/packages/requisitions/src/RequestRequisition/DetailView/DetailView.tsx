@@ -38,20 +38,20 @@ export const DetailView: FC = () => {
     );
 
   const onRowClick = useCallback((line: RequestLineFragment) => {
-    navigate(buildItemEditRoute(line.requisitionNumber, line.item.id));
+    navigate(buildItemEditRoute(line.id, line.item.id));
   }, []);
 
   const onProgramIndicatorClick = useCallback(
     (
-      requisitionNumber?: number,
+      requisitionId?: string,
       programIndicatorCode?: string,
       indicatorId?: string
     ) => {
-      if (!requisitionNumber || !programIndicatorCode || !indicatorId) return;
+      if (!requisitionId || !programIndicatorCode || !indicatorId) return;
 
       navigate(
         buildIndicatorEditRoute(
-          requisitionNumber,
+          requisitionId,
           programIndicatorCode,
           indicatorId
         )
@@ -63,7 +63,7 @@ export const DetailView: FC = () => {
   if (isLoading) return <DetailViewSkeleton />;
 
   const onAddItem = () => {
-    navigate(buildItemEditRoute(data?.requisitionNumber, 'new'));
+    navigate(buildItemEditRoute(data?.id, 'new'));
   };
   const tabs = [
     {

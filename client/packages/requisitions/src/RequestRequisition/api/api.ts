@@ -118,9 +118,9 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
         page: { offset, first },
         sort: sortBy
           ? {
-              key: requestParser.toSortField(sortBy),
-              desc: !!sortBy.isDesc,
-            }
+            key: requestParser.toSortField(sortBy),
+            desc: !!sortBy.isDesc,
+          }
           : undefined,
         filter,
       });
@@ -144,6 +144,18 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
       const result = await sdk.requestByNumber({
         storeId,
         requisitionNumber: Number(requisitionNumber),
+      });
+
+      if (result?.requisitionByNumber.__typename === 'RequisitionNode') {
+        return result?.requisitionByNumber;
+      }
+
+      throw new Error('Record not found');
+    },
+    byId: async (requisitionId: string): Promise<RequestFragment> => {
+      const result = await sdk.requestByNumber({
+        storeId,
+        requisitionNumber: Number(requisitionId),
       });
 
       if (result?.requisitionByNumber.__typename === 'RequisitionNode') {

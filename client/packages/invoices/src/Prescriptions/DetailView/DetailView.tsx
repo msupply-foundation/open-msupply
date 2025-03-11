@@ -44,7 +44,7 @@ export const PrescriptionDetailView: FC = () => {
       navigate(
         RouteBuilder.create(AppRoute.Dispensary)
           .addPart(AppRoute.Prescription)
-          .addPart(String(data?.invoiceNumber))
+          .addPart(String(data?.id))
           .addPart(String(item.id))
           .build()
       );
@@ -55,7 +55,7 @@ export const PrescriptionDetailView: FC = () => {
     navigate(
       RouteBuilder.create(AppRoute.Dispensary)
         .addPart(AppRoute.Prescription)
-        .addPart(String(data?.invoiceNumber))
+        .addPart(String(data?.id))
         .addPart(String('new'))
         .build()
     );

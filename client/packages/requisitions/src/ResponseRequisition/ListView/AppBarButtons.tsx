@@ -98,7 +98,7 @@ export const AppBarButtons = ({
                   navigate(
                     RouteBuilder.create(AppRoute.Distribution)
                       .addPart(AppRoute.CustomerRequisition)
-                      .addPart(String(response.requisitionNumber))
+                      .addPart(String(response.id))
                       .build()
                   );
                 }

@@ -21,7 +21,7 @@ import { CustomerIndicatorInfoView } from './CustomerIndicatorInfo';
 import { indicatorColumnNameToLocal } from '../../../utils';
 
 interface IndicatorLineEditProps {
-  requisitionNumber: number;
+  requisitionId: string;
   hasNext: boolean;
   next: IndicatorLineRowFragment | null;
   hasPrevious: boolean;
@@ -103,7 +103,7 @@ const InputWithLabel = ({
 };
 
 export const IndicatorLineEdit = ({
-  requisitionNumber,
+  requisitionId,
   hasNext,
   next,
   hasPrevious,
@@ -149,7 +149,7 @@ export const IndicatorLineEdit = ({
           next={next}
           hasPrevious={hasPrevious}
           previous={previous}
-          requisitionNumber={requisitionNumber}
+          requisitionId={requisitionId}
           scrollIntoView={scrollIntoView}
         />
       </Box>

@@ -10,6 +10,7 @@ import {
   usePatchState,
   setNullableInput,
   InsertPrescriptionInput,
+  InvoiceNode,
 } from '@openmsupply-client/common';
 import { PrescriptionRowFragment } from '../operations.generated';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
@@ -20,14 +21,13 @@ import { useDelete } from './usePrescriptionDelete';
 import { useMemo } from 'react';
 import { usePrescriptionColumn } from '../../DetailView/columns';
 
-export const usePrescriptionNumber = () => {
-  const { invoiceNumber } = useParams();
-  const asNumber = Number(invoiceNumber);
-  return Number.isNaN(asNumber) ? undefined : asNumber;
+export const usePrescriptionId = () => {
+  const { invoiceId = '' } = useParams();
+  return invoiceId;
 };
 
 export const usePrescription = (id?: string) => {
-  const invoiceNumber = usePrescriptionNumber();
+  const paramInvoiceId = usePrescriptionId();
   const {
     updateSortQuery,
     queryParams: { sortBy },
@@ -40,24 +40,15 @@ export const usePrescription = (id?: string) => {
 
   // If an id is passed in (which is the case when accessing from JSON Forms
   // Prescription component), we use that and fetch by ID. Otherwise we use the
-  // invoice number from the URL
-  const invoiceNum = !id ? invoiceNumber : undefined;
+  // invoice id from the URL
+  const invoiceId = !id ? paramInvoiceId : id;
 
-  // QUERY
   const {
-    data: dataByNum,
-    isLoading,
-    error: errorByNum,
-  } = useGetByNumber(invoiceNum);
-  const {
-    data: dataById,
-    isLoading: loadingById,
-    error: errorById,
-  } = useGetById(id);
+    data,
+    isLoading: loading,
+    error,
+  } = useGetById(invoiceId);
 
-  const data = id ? dataById : dataByNum;
-  const loading = id ? loadingById : isLoading;
-  const error = id ? errorById : errorByNum;
   const isDisabled = data ? isPrescriptionDisabled(data) : false;
 
   const rows = useMemo(() => {
@@ -134,33 +125,6 @@ export const usePrescription = (id?: string) => {
   };
 };
 
-const useGetByNumber = (invoiceNum: number | undefined) => {
-  const { prescriptionApi, storeId } = usePrescriptionGraphQL();
-
-  const queryFn = async (): Promise<PrescriptionRowFragment> => {
-    const result = await prescriptionApi.prescriptionByNumber({
-      invoiceNumber: invoiceNum ?? -1,
-      storeId,
-    });
-
-    const invoice = result?.invoiceByNumber;
-
-    if (invoice?.__typename === 'InvoiceNode') {
-      return invoice;
-    } else {
-      throw new Error('Could not find invoice');
-    }
-  };
-
-  const query = useQuery({
-    queryKey: [PRESCRIPTION, PRESCRIPTION_LINE, invoiceNum],
-    queryFn,
-    enabled: !!invoiceNum && invoiceNum > 0,
-  });
-
-  return query;
-};
-
 const useGetById = (invoiceId: string | undefined) => {
   const { prescriptionApi, storeId } = usePrescriptionGraphQL();
 
@@ -174,7 +138,10 @@ const useGetById = (invoiceId: string | undefined) => {
 
     if (invoice?.__typename === 'InvoiceNode') {
       return invoice;
+    } else {
+      throw new Error('Could not find invoice');
     }
+    // TODO check if this is throwing unweildy errors where program component has id for yet to exist presciptions.
     // Don't throw error for this one if not found -- it's mainly used by
     // Program component (Prescription), which may have stored an id for a
     // prescription that doesn't yet exist
@@ -233,7 +200,7 @@ const useCreate = () => {
 
   const mutationFn = async (
     input: InsertPrescriptionInput
-  ): Promise<number> => {
+  ): Promise<Partial<InvoiceNode>> => {
     const result =
       (await prescriptionApi.insertPrescription({
         input,
@@ -243,7 +210,8 @@ const useCreate = () => {
     const { insertPrescription } = result;
 
     if (insertPrescription?.__typename === 'InvoiceNode') {
-      return insertPrescription.invoiceNumber;
+      // todo streamline graphql
+      return insertPrescription;
     }
 
     throw new Error('Could not insert invoice');

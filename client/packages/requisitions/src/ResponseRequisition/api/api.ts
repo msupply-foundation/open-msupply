@@ -149,6 +149,18 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Record not found');
     },
+    byId: async (requisitionId: string): Promise<ResponseFragment> => {
+      const result = await sdk.responseByNumber({
+        storeId,
+        requisitionNumber: Number(requisitionId),
+      });
+
+      if (result?.requisitionByNumber.__typename === 'RequisitionNode') {
+        return result?.requisitionByNumber;
+      }
+
+      throw new Error('Record not found');
+    },
     stats: async (requisitionLineId: string) => {
       const result = await sdk.responseRequisitionStats({
         requisitionLineId,
@@ -257,7 +269,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     return result;
   },
-  createOutboundFromResponse: async (responseId: string): Promise<number> => {
+  createOutboundFromResponse: async (responseId: string): Promise<string> => {
     const result =
       (await sdk.createOutboundFromResponse({
         storeId,
@@ -265,7 +277,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
       })) || {};
 
     if (result?.createRequisitionShipment.__typename === 'InvoiceNode') {
-      return result.createRequisitionShipment.invoiceNumber;
+      return result.createRequisitionShipment.id;
     }
 
     if (
