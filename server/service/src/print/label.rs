@@ -36,7 +36,7 @@ pub fn print_2d_code(
         ^FX - encoding (28 = UTF-8)
         ^CI28
         ^FO50,{}
-        ^BXN
+        ^BXN,6,200
         ^FDMA,{}^FS        
         {}
         ^XZ"#,
