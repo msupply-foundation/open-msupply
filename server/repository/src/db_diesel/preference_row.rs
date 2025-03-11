@@ -78,6 +78,17 @@ impl<'a> PreferenceRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_one_by_id(
+        &self,
+        preference_id: &str,
+    ) -> Result<Option<PreferenceRow>, RepositoryError> {
+        let result = preference::table
+            .filter(preference::id.eq(preference_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn delete(&self, preference_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(preference.filter(preference::id.eq(preference_id)))
             .execute(self.connection.lock().connection())?;
