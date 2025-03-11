@@ -76,6 +76,7 @@ export const PrescriptionLineEditView = () => {
 
   useEffect(() => {
     setCustomBreadcrumbs({
+      1: data?.invoiceNumber.toString() ?? '',
       2: currentItem?.name || '',
     });
   }, [currentItem]);
