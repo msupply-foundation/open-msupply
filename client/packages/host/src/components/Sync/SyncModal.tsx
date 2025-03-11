@@ -56,7 +56,7 @@ const useHostSync = (enabled: boolean) => {
       keepAwake();
     } else {
       allowSleep();
-      queryClient.invalidateQueries(); //refresh the page user is on after sync finishes
+      queryClient.invalidateQueries(); // refresh the page user is on after sync finishes
     }
   }, [syncStatus?.isSyncing]);
 
