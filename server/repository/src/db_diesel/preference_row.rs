@@ -89,10 +89,18 @@ impl<'a> PreferenceRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, preference_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, preference_id: &str) -> Result<Option<i64>, RepositoryError> {
+        let old_row = self.find_one_by_id(preference_id)?;
+        let change_log_id = match old_row {
+            Some(old_row) => self.insert_changelog(old_row, RowActionType::Delete)?,
+            None => {
+                return Ok(None);
+            }
+        };
+
         diesel::delete(preference.filter(preference::id.eq(preference_id)))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        Ok(Some(change_log_id))
     }
 }
 
