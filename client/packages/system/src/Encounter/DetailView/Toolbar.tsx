@@ -76,11 +76,6 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
         contextId: { equalTo: encounter?.contextId },
       },
     });
-  const formatDateOfBirth = (dateOfBirth: string | null) => {
-    const dob = DateUtils.getNaiveDate(dateOfBirth);
-
-    return !dob ? '' : `${getDisplayAge(dob)}`;
-  };
 
   useEffect(() => {
     setStartDatetime(encounter.startDatetime);
@@ -95,6 +90,8 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   }, [encounter, getLocalisedFullName]);
 
   const { patient } = encounter;
+
+  const dateOfBirth = DateUtils.getNaiveDate(patient?.dateOfBirth);
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -148,7 +145,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                 Input={
                   <BasicTextInput
                     disabled
-                    value={formatDateOfBirth(patient.dateOfBirth ?? null)}
+                    value={getDisplayAge(dateOfBirth ?? null)}
                   />
                 }
               />
