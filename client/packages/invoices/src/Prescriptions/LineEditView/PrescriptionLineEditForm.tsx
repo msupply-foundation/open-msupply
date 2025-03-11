@@ -356,7 +356,6 @@ export const PrescriptionLineEditForm: React.FC<
                     },
                   }}
                   onKeyDown={e => {
-                    console.log('==>', e.code, abbreviationRef);
                     if (e.code === 'Tab') {
                       e.preventDefault();
                       abbreviationRef.current?.focus();
