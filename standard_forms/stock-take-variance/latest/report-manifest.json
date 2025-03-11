@@ -1,12 +1,12 @@
 {
   "is_custom": false,
-  "version": "2.5.1",
+  "version": "2.5.2",
   "code": "stock-take-variance",
   "context": "STOCKTAKE",
-  "sub_context": "picklist",
+  "sub_context": "",
   "name": "stock-take-variance",
   "queries": {
-    "gql": "StockVarianceQuery.graphql"
+    "gql": "stocktake.graphql"
   },
   "arguments": {},
   "header": "header.html"
