@@ -110,7 +110,7 @@ export const InboundListView: FC = () => {
         data={data?.nodes ?? []}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(String(row.invoiceNumber));
+          navigate(row.id);
         }}
         isError={isError}
         noDataElement={

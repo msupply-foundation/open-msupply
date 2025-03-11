@@ -196,7 +196,8 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result?.invoices;
     },
-    byId: async (id: string): Promise<InboundRowFragment> => {
+    // TODO re add types?
+    byId: async (id: string) => {
       const result = await sdk.invoice({ id, storeId });
 
       const invoice = result?.invoice;
@@ -264,7 +265,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   },
   insert: async (
     patch: Omit<InsertInboundShipmentMutationVariables, 'storeId'>
-  ): Promise<number> => {
+  ): Promise<string> => {
     const result =
       (await sdk.insertInboundShipment({
         id: patch.id,
@@ -276,7 +277,8 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     const { insertInboundShipment } = result;
 
     if (insertInboundShipment?.__typename === 'InvoiceNode') {
-      return insertInboundShipment.invoiceNumber;
+      // TODO streamline graphql return
+      return insertInboundShipment.id;
     }
 
     throw new Error(insertInboundShipment.error.description);

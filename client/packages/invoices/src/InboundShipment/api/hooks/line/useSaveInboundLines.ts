@@ -4,13 +4,13 @@ import {
   useTranslation,
   noOtherVariants,
 } from '@openmsupply-client/common';
-import { useInboundNumber } from '../document/useInbound';
+import { useInboundId } from '../document/useInbound';
 import { useInboundApi } from '../utils/useInboundApi';
 import { DraftInboundLine } from '../../../../types';
 
 export const useSaveInboundLines = () => {
   const queryClient = useQueryClient();
-  const invoiceNumber = useInboundNumber();
+  const invoiceId = useInboundId();
   const api = useInboundApi();
   const t = useTranslation();
 
@@ -54,7 +54,7 @@ export const useSaveInboundLines = () => {
     },
     {
       onSettled: () =>
-        queryClient.invalidateQueries(api.keys.detail(invoiceNumber)),
+        queryClient.invalidateQueries(api.keys.detail(invoiceId)),
     }
   );
 };

@@ -142,6 +142,32 @@ query requestByNumber($storeId: String!, $requisitionNumber: Int!) {
   }
 }
 
+query requestById($storeId: String!, $requisitionId: String!) {
+  requisition(
+    id: $requisitionId
+    storeId: $storeId
+  ) {
+    __typename
+    ... on RequisitionNode {
+      ...Request
+      otherParty(storeId: $storeId) {
+        __typename
+        ... on NameNode {
+          id
+          name
+          code
+          isCustomer
+          isSupplier
+        }
+      }
+    }
+    ... on RecordNotFound {
+      __typename
+      description
+    }
+  }
+}
+
 query requisitionLineChart($storeId: String!, $requisitionLineId: String!) {
   requisitionLineChart(
     requestRequisitionLineId: $requisitionLineId

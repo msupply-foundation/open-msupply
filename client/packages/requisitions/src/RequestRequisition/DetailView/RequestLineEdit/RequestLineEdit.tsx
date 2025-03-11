@@ -66,7 +66,6 @@ export const RequestLineEdit = ({
   isPacks,
   setIsPacks,
   lines,
-  requisitionNumber,
   requisitionId,
   insert,
   scrollIntoView,
@@ -106,7 +105,7 @@ export const RequestLineEdit = ({
                     requisitionId: requisitionId,
                     itemId: newItem.id,
                   });
-                  navigate(buildItemEditRoute(requisitionNumber, newItem.id));
+                  navigate(buildItemEditRoute(requisitionId, newItem.id));
                 }
               }}
               openOnFocus={true}
@@ -328,7 +327,7 @@ export const RequestLineEdit = ({
                         disabled={!isPacks}
                         value={NumUtils.round(
                           (draft?.requestedQuantity ?? 0) /
-                            (draft?.defaultPackSize ?? 1),
+                          (draft?.defaultPackSize ?? 1),
                           2
                         )}
                         decimalLimit={2}
@@ -439,7 +438,7 @@ export const RequestLineEdit = ({
           next={next}
           hasPrevious={hasPrevious}
           previous={previous}
-          requisitionNumber={draft?.requisitionNumber}
+          requisitionId={draft?.requisitionId}
           scrollIntoView={scrollIntoView}
         />
       </Box>

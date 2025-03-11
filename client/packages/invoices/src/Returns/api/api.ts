@@ -216,6 +216,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.generateCustomerReturnLines;
     },
+    // TODO remove supplierReturnByNumber
     supplierReturnByNumber: async (invoiceNumber: number) => {
       const result = await sdk.supplierReturnByNumber({
         invoiceNumber,
@@ -228,6 +229,19 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
         return invoice;
       }
     },
+    supplierReturnById: async (invoiceId: string) => {
+      const result = await sdk.supplierReturnById({
+        invoiceId,
+        storeId,
+      });
+
+      const invoice = result?.invoice;
+
+      if (invoice.__typename === 'InvoiceNode') {
+        return invoice;
+      }
+    },
+    // TODO remove customerReturnByNumber
     customerReturnByNumber: async (invoiceNumber: number) => {
       const result = await sdk.customerReturnByNumber({
         invoiceNumber,
@@ -235,6 +249,20 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       });
 
       const invoice = result?.invoiceByNumber;
+
+      if (invoice.__typename === 'InvoiceNode') {
+        return invoice;
+      }
+
+      throw new Error('Could not get customer return');
+    },
+    customerReturnById: async (invoiceId: string) => {
+      const result = await sdk.customerReturnById({
+        invoiceId,
+        storeId,
+      });
+
+      const invoice = result?.invoice;
 
       if (invoice.__typename === 'InvoiceNode') {
         return invoice;
@@ -252,7 +280,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     const { insertSupplierReturn } = result;
 
     if (insertSupplierReturn.__typename === 'InvoiceNode') {
-      return insertSupplierReturn.invoiceNumber;
+      return insertSupplierReturn.id;
     }
 
     throw new Error('Could not insert supplier return');
@@ -340,7 +368,8 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     const { insertCustomerReturn } = result;
 
     if (insertCustomerReturn.__typename === 'InvoiceNode') {
-      return insertCustomerReturn.invoiceNumber;
+      // TODO simplify graphql
+      return insertCustomerReturn.id;
     }
 
     throw new Error('Could not insert customer return');

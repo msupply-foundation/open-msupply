@@ -206,6 +206,18 @@ query responseByNumber($storeId: String!, $requisitionNumber: Int!) {
   }
 }
 
+query responseById($storeId: String!, $requisitionId: String!) {
+  requisition(
+    id: $requisitionId
+    storeId: $storeId
+  ) {
+    __typename
+    ... on RequisitionNode {
+      ...Response
+    }
+  }
+}
+
 fragment ResponseRow on RequisitionNode {
   colour
   comment

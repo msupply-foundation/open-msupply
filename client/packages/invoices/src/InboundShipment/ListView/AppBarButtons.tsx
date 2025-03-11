@@ -62,7 +62,7 @@ export const AppBarButtons = ({
   };
 
   const createInvoice = async (nameId: string) => {
-    const invoiceNumber = await onCreate({
+    const invoiceId = await onCreate({
       id: FnUtils.generateUUID(),
       otherPartyId: nameId,
     });
@@ -70,7 +70,7 @@ export const AppBarButtons = ({
     navigate(
       RouteBuilder.create(AppRoute.Replenishment)
         .addPart(AppRoute.InboundShipment)
-        .addPart(String(invoiceNumber))
+        .addPart(String(invoiceId))
         .build()
     );
   };
@@ -81,7 +81,7 @@ export const AppBarButtons = ({
   }, [name, data]);
 
   const onRowClick = async (row: LinkedRequestRowFragment) => {
-    const invoiceNumber = await onCreate({
+    const invoiceId = await onCreate({
       id: FnUtils.generateUUID(),
       otherPartyId: name?.id ?? '',
       requisitionId: row.id,
@@ -90,7 +90,7 @@ export const AppBarButtons = ({
     navigate(
       RouteBuilder.create(AppRoute.Replenishment)
         .addPart(AppRoute.InboundShipment)
-        .addPart(String(invoiceNumber))
+        .addPart(String(invoiceId))
         .build()
     );
   };

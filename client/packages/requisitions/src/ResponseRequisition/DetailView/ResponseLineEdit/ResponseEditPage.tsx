@@ -81,7 +81,7 @@ const ResponseLineEditPageInner = ({
               items={lines.map(line => line.item)}
               route={RouteBuilder.create(AppRoute.Distribution)
                 .addPart(AppRoute.CustomerRequisition)
-                .addPart(String(requisition.requisitionNumber))}
+                .addPart(String(requisition.id))}
               enteredLineIds={enteredLineIds}
               showNew={showNew}
               scrollRef={scrollRef}

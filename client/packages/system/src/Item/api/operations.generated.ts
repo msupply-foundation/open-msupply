@@ -155,7 +155,7 @@ export type DeleteBundledItemMutationVariables = Types.Exact<{
 
 export type DeleteBundledItemMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', bundledItem: { __typename: 'BundledItemMutations', deleteBundledItem: { __typename: 'DeleteResponse', id: string } } } };
 
-export type ItemLedgerFragment = { __typename: 'ItemLedgerNode', id: string, balance: number, batch?: string | null, costPricePerPack: number, datetime: string, expiryDate?: string | null, invoiceNumber: number, invoiceStatus: Types.InvoiceNodeStatus, invoiceType: Types.InvoiceNodeType, name: string, packSize: number, quantity: number, reason?: string | null, sellPricePerPack: number, totalBeforeTax?: number | null, numberOfPacks: number };
+export type ItemLedgerFragment = { __typename: 'ItemLedgerNode', id: string, balance: number, batch?: string | null, costPricePerPack: number, datetime: string, expiryDate?: string | null, invoiceNumber: number, invoiceId: string, invoiceStatus: Types.InvoiceNodeStatus, invoiceType: Types.InvoiceNodeType, name: string, packSize: number, quantity: number, reason?: string | null, sellPricePerPack: number, totalBeforeTax?: number | null, numberOfPacks: number };
 
 export type ItemLedgerQueryVariables = Types.Exact<{
   key: Types.LedgerSortFieldInput;
@@ -167,7 +167,7 @@ export type ItemLedgerQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemLedgerQuery = { __typename: 'Queries', itemLedger: { __typename: 'ItemLedgerConnector', totalCount: number, nodes: Array<{ __typename: 'ItemLedgerNode', id: string, balance: number, batch?: string | null, costPricePerPack: number, datetime: string, expiryDate?: string | null, invoiceNumber: number, invoiceStatus: Types.InvoiceNodeStatus, invoiceType: Types.InvoiceNodeType, name: string, packSize: number, quantity: number, reason?: string | null, sellPricePerPack: number, totalBeforeTax?: number | null, numberOfPacks: number }> } };
+export type ItemLedgerQuery = { __typename: 'Queries', itemLedger: { __typename: 'ItemLedgerConnector', totalCount: number, nodes: Array<{ __typename: 'ItemLedgerNode', id: string, balance: number, batch?: string | null, costPricePerPack: number, datetime: string, expiryDate?: string | null, invoiceNumber: number, invoiceId: string, invoiceStatus: Types.InvoiceNodeStatus, invoiceType: Types.InvoiceNodeType, name: string, packSize: number, quantity: number, reason?: string | null, sellPricePerPack: number, totalBeforeTax?: number | null, numberOfPacks: number }> } };
 
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
@@ -421,6 +421,7 @@ export const ItemLedgerFragmentDoc = gql`
   datetime
   expiryDate
   invoiceNumber
+  invoiceId
   invoiceStatus
   invoiceType
   name
@@ -662,7 +663,7 @@ export const ItemLedgerDocument = gql`
 }
     ${ItemLedgerFragmentDoc}`;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?: Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
 const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
@@ -670,46 +671,46 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     itemsWithStockLines(variables: ItemsWithStockLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemsWithStockLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStockLinesQuery>(ItemsWithStockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsWithStockLines', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStockLinesQuery>(ItemsWithStockLinesDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'itemsWithStockLines', 'query', variables);
     },
     items(variables: ItemsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemsQuery>(ItemsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'items', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemsQuery>(ItemsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'items', 'query', variables);
     },
     itemStockOnHand(variables: ItemStockOnHandQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemStockOnHandQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemStockOnHandQuery>(ItemStockOnHandDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemStockOnHand', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemStockOnHandQuery>(ItemStockOnHandDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'itemStockOnHand', 'query', variables);
     },
     itemsWithStats(variables: ItemsWithStatsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemsWithStatsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStatsQuery>(ItemsWithStatsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsWithStats', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStatsQuery>(ItemsWithStatsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'itemsWithStats', 'query', variables);
     },
     itemById(variables: ItemByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemByIdQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemByIdQuery>(ItemByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemById', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemByIdQuery>(ItemByIdDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'itemById', 'query', variables);
     },
     itemVariantsConfigured(variables: ItemVariantsConfiguredQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemVariantsConfiguredQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemVariantsConfiguredQuery>(ItemVariantsConfiguredDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemVariantsConfigured', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemVariantsConfiguredQuery>(ItemVariantsConfiguredDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'itemVariantsConfigured', 'query', variables);
     },
     itemVariants(variables: ItemVariantsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemVariantsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemVariantsQuery>(ItemVariantsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemVariants', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemVariantsQuery>(ItemVariantsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'itemVariants', 'query', variables);
     },
     getHistoricalStockLines(variables: GetHistoricalStockLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GetHistoricalStockLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetHistoricalStockLinesQuery>(GetHistoricalStockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'getHistoricalStockLines', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<GetHistoricalStockLinesQuery>(GetHistoricalStockLinesDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'getHistoricalStockLines', 'query', variables);
     },
     upsertItemVariant(variables: UpsertItemVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpsertItemVariantMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpsertItemVariantMutation>(UpsertItemVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertItemVariant', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UpsertItemVariantMutation>(UpsertItemVariantDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'upsertItemVariant', 'mutation', variables);
     },
     deleteItemVariant(variables: DeleteItemVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteItemVariantMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteItemVariantMutation>(DeleteItemVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteItemVariant', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteItemVariantMutation>(DeleteItemVariantDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'deleteItemVariant', 'mutation', variables);
     },
     coldStorageTypes(variables: ColdStorageTypesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ColdStorageTypesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ColdStorageTypesQuery>(ColdStorageTypesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'coldStorageTypes', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<ColdStorageTypesQuery>(ColdStorageTypesDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'coldStorageTypes', 'query', variables);
     },
     upsertBundledItem(variables: UpsertBundledItemMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpsertBundledItemMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpsertBundledItemMutation>(UpsertBundledItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertBundledItem', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UpsertBundledItemMutation>(UpsertBundledItemDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'upsertBundledItem', 'mutation', variables);
     },
     deleteBundledItem(variables: DeleteBundledItemMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteBundledItemMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteBundledItemMutation>(DeleteBundledItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteBundledItem', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteBundledItemMutation>(DeleteBundledItemDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'deleteBundledItem', 'mutation', variables);
     },
     itemLedger(variables: ItemLedgerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemLedgerQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemLedgerQuery>(ItemLedgerDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemLedger', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemLedgerQuery>(ItemLedgerDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'itemLedger', 'query', variables);
     }
   };
 }

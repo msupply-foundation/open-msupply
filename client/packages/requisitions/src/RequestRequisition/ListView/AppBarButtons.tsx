@@ -95,7 +95,7 @@ export const AppBarButtons: FC<{
                   navigate(
                     RouteBuilder.create(AppRoute.Replenishment)
                       .addPart(AppRoute.InternalOrder)
-                      .addPart(String(response.requisitionNumber))
+                      .addPart(String(response.id))
                       .build()
                   );
                 }

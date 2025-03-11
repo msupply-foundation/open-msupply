@@ -170,9 +170,9 @@ const PatientDetailView = ({
           nextOfKin:
             currentPatient.nextOfKinId || currentPatient.nextOfKinName
               ? {
-                  id: currentPatient.nextOfKinId ?? undefined,
-                  name: currentPatient.nextOfKinName ?? undefined,
-                }
+                id: currentPatient.nextOfKinId ?? undefined,
+                name: currentPatient.nextOfKinName ?? undefined,
+              }
               : undefined,
           extension: {},
         },
@@ -193,43 +193,43 @@ const PatientDetailView = ({
 
   const accessor: JsonFormData<SavedDocument | void> = patientRegistry
     ? {
-        loadedData: inputData?.data,
-        isLoading: false,
-        error: undefined,
-        isCreating: isCreatingPatient,
-        schema: patientRegistry,
-        save: async (data: unknown) => {
-          await handleProgramPatientSave(
-            data,
-            patientRegistry.formSchemaId,
-            currentPatient?.document?.id
-          );
-        },
-      }
+      loadedData: inputData?.data,
+      isLoading: false,
+      error: undefined,
+      isCreating: isCreatingPatient,
+      schema: patientRegistry,
+      save: async (data: unknown) => {
+        await handleProgramPatientSave(
+          data,
+          patientRegistry.formSchemaId,
+          currentPatient?.document?.id
+        );
+      },
+    }
     : {
-        loadedData: inputData?.data,
-        isLoading: false,
-        error: undefined,
-        isCreating: isCreatingPatient,
-        schema: DEFAULT_SCHEMA,
-        save: async (data: unknown) => {
-          const patientData = data as PatientSchema;
-          const newData = Object.fromEntries(
-            Object.entries(data ?? {}).filter(
-              ([key]) =>
-                key !== 'dateOfBirthIsEstimated' &&
-                key !== 'nextOfKin' &&
-                key !== 'extension'
-            )
-          );
-          // map nextOfKin object to individual fields
-          await handlePatientSave({
-            ...newData,
-            nextOfKinId: patientData?.nextOfKin?.id,
-            nextOfKinName: patientData?.nextOfKin?.name,
-          });
-        },
-      };
+      loadedData: inputData?.data,
+      isLoading: false,
+      error: undefined,
+      isCreating: isCreatingPatient,
+      schema: DEFAULT_SCHEMA,
+      save: async (data: unknown) => {
+        const patientData = data as PatientSchema;
+        const newData = Object.fromEntries(
+          Object.entries(data ?? {}).filter(
+            ([key]) =>
+              key !== 'dateOfBirthIsEstimated' &&
+              key !== 'nextOfKin' &&
+              key !== 'extension'
+          )
+        );
+        // map nextOfKin object to individual fields
+        await handlePatientSave({
+          ...newData,
+          nextOfKinId: patientData?.nextOfKin?.id,
+          nextOfKinName: patientData?.nextOfKin?.name,
+        });
+      },
+    };
 
   const { JsonForm, saveData, isSaving, isDirty, validationError } =
     useJsonFormsHandler(
@@ -254,14 +254,14 @@ const PatientDetailView = ({
     // Creates a new prescription and redirects to the prescriptions page
     // if the patient was created from there.
     if (fromPrescription) {
-      const invoiceNumber = await createPrescription({
+      const invoiceId = await createPrescription({
         id: FnUtils.generateUUID(),
         patientId,
       });
       navigate(
         RouteBuilder.create(AppRoute.Dispensary)
           .addPart(AppRoute.Prescription)
-          .addPart(String(invoiceNumber))
+          .addPart(invoiceId?.id ?? "")
           .build()
       );
     }

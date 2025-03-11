@@ -32,7 +32,7 @@ export const usePrescriptionLines = (id?: string) => {
     mutateAsync: updateMutation,
     isLoading: isSavingLines,
     error: saveLineError,
-  } = useSaveLines(data?.id ?? '', data?.invoiceNumber ?? -1);
+  } = useSaveLines(data?.id ?? '', data?.id ?? "");
 
   const saveLines = async ({
     draftPrescriptionLines,
@@ -52,7 +52,7 @@ export const usePrescriptionLines = (id?: string) => {
     mutateAsync: deleteMutation,
     isLoading: isDeletingLines,
     error: deleteLinesError,
-  } = useDeleteLines(data?.invoiceNumber ?? -1);
+  } = useDeleteLines(data?.id ?? "");
 
   const deleteLines = async (rowsToDelete: DraftPrescriptionLine[]) => {
     const lines = rowsToDelete.map(({ id }) => ({ id }));
@@ -65,7 +65,7 @@ export const usePrescriptionLines = (id?: string) => {
   };
 };
 
-const useSaveLines = (id: string, invoiceNum: number) => {
+const useSaveLines = (id: string, invoiceId: string) => {
   const { prescriptionApi, storeId, queryClient } = usePrescriptionGraphQL();
 
   const mutationFn = async ({
@@ -115,19 +115,19 @@ const useSaveLines = (id: string, invoiceNum: number) => {
         ),
       updatePrescriptions: !!patch
         ? [
-            {
-              ...patch,
-              status: mapStatus(patch),
-              clinicianId: setNullableInput('clinicianId', patch),
-              diagnosisId: setNullableInput('diagnosisId', patch),
-              programId: setNullableInput('programId', patch),
-              theirReference: setNullableInput('theirReference', patch),
-              nameInsuranceJoinId: setNullableInput(
-                'nameInsuranceJoinId',
-                patch
-              ),
-            },
-          ]
+          {
+            ...patch,
+            status: mapStatus(patch),
+            clinicianId: setNullableInput('clinicianId', patch),
+            diagnosisId: setNullableInput('diagnosisId', patch),
+            programId: setNullableInput('programId', patch),
+            theirReference: setNullableInput('theirReference', patch),
+            nameInsuranceJoinId: setNullableInput(
+              'nameInsuranceJoinId',
+              patch
+            ),
+          },
+        ]
         : undefined,
     };
 
@@ -142,14 +142,14 @@ const useSaveLines = (id: string, invoiceNum: number) => {
       queryClient.invalidateQueries([
         PRESCRIPTION,
         PRESCRIPTION_LINE,
-        invoiceNum,
+        invoiceId,
       ]);
       queryClient.invalidateQueries([HISTORICAL_STOCK_LINES]);
     },
   });
 };
 
-const useDeleteLines = (invoiceNum: number) => {
+const useDeleteLines = (invocieId: string) => {
   const { prescriptionApi, storeId, queryClient } = usePrescriptionGraphQL();
 
   const toDeleteLine = (line: { id: string }): DeletePrescriptionLineInput => ({
@@ -169,7 +169,7 @@ const useDeleteLines = (invoiceNum: number) => {
       queryClient.invalidateQueries([
         PRESCRIPTION,
         PRESCRIPTION_LINE,
-        invoiceNum,
+        invocieId,
       ]);
       queryClient.invalidateQueries([HISTORICAL_STOCK_LINES]);
     },
