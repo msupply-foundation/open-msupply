@@ -4,7 +4,7 @@ use repository::{
 
 use crate::{
     activity_log::activity_log_entry,
-    invoice::get_invoice,
+    invoice::{get_invoice, UpdateSupplierReturn},
     invoice_line::{
         stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
         update_return_reason_id::{update_return_reason_id, UpdateLineReturnReasonError},
@@ -16,7 +16,10 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
-use super::SupplierReturnLineInput;
+use super::{
+    update::{update_supplier_return, UpdateSupplierReturnError, UpdateSupplierReturnStatus},
+    SupplierReturnLineInput,
+};
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct InsertSupplierReturn {
@@ -49,6 +52,9 @@ pub enum InsertSupplierReturnError {
     LineReturnReasonUpdateError {
         line_id: String,
         error: UpdateLineReturnReasonError,
+    },
+    ErrorSettingNonNewStatus {
+        update_error: UpdateSupplierReturnError,
     },
 }
 
@@ -89,6 +95,21 @@ pub fn insert_supplier_return(
                     }
                 })?;
             }
+
+            // Update to not new status after upserting lines
+            if supplier_return.original_shipment_id.is_some() {
+                update_supplier_return(
+                    ctx,
+                    UpdateSupplierReturn {
+                        supplier_return_id: supplier_return.id.clone(),
+                        status: Some(UpdateSupplierReturnStatus::Shipped),
+                        ..Default::default()
+                    },
+                )
+                .map_err(|e| {
+                    InsertSupplierReturnError::ErrorSettingNonNewStatus { update_error: e }
+                })?;
+            };
 
             activity_log_entry(
                 ctx,
@@ -133,7 +154,8 @@ mod test {
             mock_supplier_return_a, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRowRepository, InvoiceRowRepository, NameRow, NameStoreJoinRow, ReturnReasonRow,
+        InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, NameRow, NameStoreJoinRow,
+        ReturnReasonRow,
     };
     use util::{inline_edit, inline_init};
 
@@ -412,6 +434,7 @@ mod test {
                 u.name_link_id = supplier().id;
                 u.user_id = Some(mock_user_account_a().id);
                 u.original_shipment_id = Some(mock_inbound_shipment_a().id);
+                u.status = InvoiceStatus::Shipped;
                 u
             })
         );
@@ -429,6 +452,35 @@ mod test {
                 u.id = "new_supplier_return_line_id".to_string();
                 u.stock_line_id = Some(mock_stock_line_b().id);
                 u.number_of_packs = 1.0;
+                u
+            })
+        );
+
+        // Check new return without original shipment gets created with status of 'New'
+        service_provider
+            .invoice_service
+            .insert_supplier_return(
+                &context,
+                inline_init(|r: &mut InsertSupplierReturn| {
+                    r.id = "new_supplier_return_id_2".to_string();
+                    r.other_party_id = supplier().id;
+                    r.inbound_shipment_id = None;
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id("new_supplier_return_id_2")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(invoice.id, "new_supplier_return_id_2");
+        assert_eq!(
+            invoice,
+            inline_edit(&invoice, |mut u| {
+                u.name_link_id = supplier().id;
+                u.user_id = Some(mock_user_account_a().id);
+                u.status = InvoiceStatus::New;
                 u
             })
         );

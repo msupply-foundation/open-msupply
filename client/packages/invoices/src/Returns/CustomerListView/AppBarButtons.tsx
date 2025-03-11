@@ -64,11 +64,11 @@ export const AppBarButtonsComponent: FC<{
               id: FnUtils.generateUUID(),
               customerId: name?.id,
               customerReturnLines: [],
-            }).then(invoiceId => {
+            }).then(customerReturn => {
               navigate(
                 RouteBuilder.create(AppRoute.Distribution)
                   .addPart(AppRoute.CustomerReturn)
-                  .addPart(String(invoiceId))
+                  .addPart(String(customerReturn?.invoiceNumber))
                   .build()
               );
             });
