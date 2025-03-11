@@ -1,6 +1,5 @@
 mod asset;
 mod plugin_data;
-mod report;
 mod test;
 
 use std::time::Duration;
