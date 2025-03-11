@@ -118,6 +118,7 @@ export const AutocompleteList = <T,>({
       )}
       <MuiAutocomplete
         {...openOverrides}
+        open
         disableClearable={disableClearable}
         autoSelect={false}
         loading={loading}
