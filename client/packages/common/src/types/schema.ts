@@ -3010,7 +3010,6 @@ export type InsertPrescriptionLineInput = {
   invoiceId: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacks: Scalars['Float']['input'];
-  prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
   stockLineId: Scalars['String']['input'];
 };
 
@@ -8741,7 +8740,6 @@ export type UpdatePrescriptionLineInput = {
   id: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
-  prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
 };
 

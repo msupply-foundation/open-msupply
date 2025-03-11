@@ -156,6 +156,8 @@ export const PrescriptionLineEditView = () => {
   const itemIdList = items.map(item => item.id);
   if (status !== InvoiceNodeStatus.Verified) itemIdList.push('new');
 
+  console.log('alldraftlines', allDraftLines);
+
   return (
     <>
       <AppBarButtons invoiceNumber={data?.invoiceNumber} />
