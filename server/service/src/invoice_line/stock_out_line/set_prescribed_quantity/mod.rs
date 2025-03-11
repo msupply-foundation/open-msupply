@@ -52,37 +52,34 @@ pub fn set_prescribed_quantity(
                     .invoice_id(EqualFilter::equal_to(&input.invoice_id)),
             )?;
 
-            // Check if there are multiple existing lines and if any of them have a prescribed quantity or a stock line ID.
-            if existing_lines.len() > 1 {
-                let has_prescribed_quantity_or_stock_line = existing_lines.iter().any(|line| {
-                    line.invoice_line_row.prescribed_quantity.is_some()
-                        || line.invoice_line_row.stock_line_id.is_some()
-                });
+            let has_prescribed_quantity_or_stock_line = existing_lines.iter().any(|line| {
+                line.invoice_line_row.prescribed_quantity.is_some()
+                    || line.invoice_line_row.stock_line_id.is_some()
+            });
 
-                // Remove the unallocated line if a proper allocated line exists.
-                if has_prescribed_quantity_or_stock_line {
-                    if let Some(unallocated_line) = existing_lines.iter().find(|line| {
-                        line.invoice_line_row.r#type == InvoiceLineType::UnallocatedStock
-                    }) {
-                        invoice_line_row_repo.delete(&unallocated_line.invoice_line_row.id)?;
-                    }
+            let unallocated_line = existing_lines
+                .iter()
+                .find(|line| line.invoice_line_row.r#type == InvoiceLineType::UnallocatedStock);
+
+            // Remove the unallocated line if a proper allocated line exists.
+            if existing_lines.len() > 1 && has_prescribed_quantity_or_stock_line {
+                if let Some(unallocated_line) = unallocated_line {
+                    invoice_line_row_repo.delete(&unallocated_line.invoice_line_row.id)?;
                 }
             }
 
-            // Locate an existing line with a prescribed quantity
+            // Find the line with a prescribed quantity
             let existing_line_with_prescribed_quantity = existing_lines
                 .iter()
                 .find(|line| line.invoice_line_row.prescribed_quantity.is_some());
 
             let new_line = match existing_line_with_prescribed_quantity {
                 // Update the line that already has a prescribed quantity
-                Some(existing_line) => {
-                    let mut updated_line = existing_line.clone();
-                    updated_line.invoice_line_row.prescribed_quantity =
-                        Some(input.prescribed_quantity);
-                    invoice_line_row_repo.upsert_one(&updated_line.invoice_line_row)?;
-                    updated_line.invoice_line_row
-                }
+                Some(existing_line) => update_prescribed_quantity(
+                    existing_line,
+                    input.prescribed_quantity,
+                    &invoice_line_row_repo,
+                )?,
                 // Assign the prescribed quantity to a single line or create an unallocated line if none of them have it.
                 None => handle_no_prescribed_quantity(
                     &existing_lines,
@@ -111,13 +108,11 @@ fn handle_no_prescribed_quantity(
         .iter()
         .find(|line| line.invoice_line_row.stock_line_id.is_some())
     {
-        Some(existing_line_with_stock) => {
-            // Update the line that has a stock line ID with the prescribed quantity
-            let mut updated_line = existing_line_with_stock.clone();
-            updated_line.invoice_line_row.prescribed_quantity = Some(input.prescribed_quantity);
-            invoice_line_row_repo.upsert_one(&updated_line.invoice_line_row)?;
-            Ok(updated_line.invoice_line_row)
-        }
+        Some(existing_line_with_stock) => update_prescribed_quantity(
+            existing_line_with_stock,
+            input.prescribed_quantity,
+            invoice_line_row_repo,
+        ),
         None => {
             // Create a new unallocated line for the prescription if no line with a stock line ID is found
             let new_invoice_line = generate(uuid(), item_row.clone(), input.clone())?;
@@ -125,6 +120,17 @@ fn handle_no_prescribed_quantity(
             Ok(new_invoice_line)
         }
     }
+}
+
+fn update_prescribed_quantity(
+    invoice_line: &InvoiceLine,
+    prescribed_quantity: f64,
+    invoice_line_row_repo: &InvoiceLineRowRepository,
+) -> Result<InvoiceLineRow, SetPrescribedQuantityError> {
+    let mut updated_line = invoice_line.clone();
+    updated_line.invoice_line_row.prescribed_quantity = Some(prescribed_quantity);
+    invoice_line_row_repo.upsert_one(&updated_line.invoice_line_row)?;
+    Ok(updated_line.invoice_line_row)
 }
 
 #[cfg(test)]
