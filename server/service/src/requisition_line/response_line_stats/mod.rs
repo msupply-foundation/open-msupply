@@ -75,6 +75,7 @@ mod test {
         },
         test_db::{setup_all, setup_all_with_data},
         ApprovalStatusType, RequisitionLineRow, RequisitionRow, RequisitionStatus,
+        StorePreferenceRow, StorePreferenceRowRepository,
     };
     use util::inline_init;
 
@@ -152,8 +153,7 @@ mod test {
             r.requested_quantity = 15.0;
             r.available_stock_on_hand = 10.0;
             r.average_monthly_consumption = 50.0;
-            r.suggested_quantity = 240.0;
-            r.approved_quantity = 120.0;
+            r.approved_quantity = 12.0;
         })
     }
 
@@ -329,10 +329,46 @@ mod test {
             .unwrap();
         let service = service_provider.requisition_line_service;
 
-        let stats = service
+        let stats_result = service
             .get_response_requisition_line_stats(&context, &requisition_line_one_b().id)
             .unwrap();
+
+        // Test when response requisition authorisation is not required
         let response_requisition_stats = ResponseRequisitionStats {
+            response_store_stats: ResponseStoreStats {
+                stock_on_hand: 0.0,
+                stock_on_order: request_requisition_a_line_a().requested_quantity,
+                incoming_stock: 0,
+                requested_quantity: requisition_line_one_b().requested_quantity,
+                other_requested_quantity: requisition_line_two_a().requested_quantity
+                    + requisition_line_three_a().requested_quantity
+                    + requisition_line_four_a().requested_quantity
+                    + requisition_line_five_a().requested_quantity,
+            },
+            request_store_stats: RequestStoreStats {
+                stock_on_hand: requisition_line_one_b().available_stock_on_hand,
+                amc: requisition_line_one_b().average_monthly_consumption,
+                max_months_of_stock: requisition_one().max_months_of_stock,
+                suggested_quantity: requisition_line_one_b().suggested_quantity,
+            },
+        };
+
+        assert_eq!(stats_result, response_requisition_stats);
+
+        // Test Authorisation required on response requisition
+        StorePreferenceRowRepository::new(&context.connection)
+            .upsert_one(&StorePreferenceRow {
+                id: mock_store_a().id,
+                response_requisition_requires_authorisation: true,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let stats_result = service
+            .get_response_requisition_line_stats(&context, &requisition_line_one_b().id)
+            .unwrap();
+
+        let requisition_stats = ResponseRequisitionStats {
             response_store_stats: ResponseStoreStats {
                 stock_on_hand: 0.0,
                 stock_on_order: request_requisition_a_line_a().requested_quantity,
@@ -350,6 +386,6 @@ mod test {
             },
         };
 
-        assert_eq!(stats, response_requisition_stats);
+        assert_eq!(stats_result, requisition_stats);
     }
 }
