@@ -52,7 +52,7 @@ export const gapsNameProperties: {
       name: 'Supply Interval (Months between deliveries)',
       valueType: PropertyNodeValueType.Integer,
       allowedValues: null,
-      remoteEditable: true,
+      remoteEditable: false,
     },
     {
       id: 'c5e363fc-40c9-4m1c-b29a-76d74534b077',
