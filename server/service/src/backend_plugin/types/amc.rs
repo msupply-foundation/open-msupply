@@ -1,8 +1,13 @@
 use crate::backend_plugin::{plugin_provider::PluginInstance, *};
 use plugin_provider::{call_plugin, PluginResult};
+use repository::PluginType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ts_rs::TS;
+
+fn plugin_type() -> PluginType {
+    PluginType::AverageMonthlyConsumption
+}
 
 #[derive(TS, Clone, Deserialize, Serialize)]
 pub struct AverageMonthlyConsumptionItem {
@@ -10,6 +15,7 @@ pub struct AverageMonthlyConsumptionItem {
 }
 
 #[derive(TS, Clone, Deserialize, Serialize)]
+#[ts(rename = "AverageMonthlyConsumptionInput")]
 pub struct Input {
     pub store_id: String,
     pub amc_lookback_months: f64,
@@ -29,6 +35,6 @@ pub trait Trait: Send + Sync {
 // TODO as macro ? Can do types here too
 impl self::Trait for PluginInstance {
     fn call(&self, input: Input) -> PluginResult<Output> {
-        Ok(call_plugin(input, "average_monthly_consumption", self)?)
+        Ok(call_plugin(input, plugin_type(), self)?)
     }
 }

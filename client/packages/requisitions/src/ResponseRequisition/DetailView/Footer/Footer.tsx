@@ -26,15 +26,7 @@ export const createStatusLog = (requisition: ResponseFragment) => {
   return statusLog;
 };
 
-interface FooterComponentProps {
-  isDisabled: boolean;
-  hasLinkedRequisition: boolean;
-}
-
-export const Footer: FC<FooterComponentProps> = ({
-  isDisabled,
-  hasLinkedRequisition,
-}: FooterComponentProps) => {
+export const Footer: FC = () => {
   const { data } = useResponse.document.get();
   const t = useTranslation();
   const { selectedRows, confirmAndDelete } = useResponse.line.delete();
@@ -44,8 +36,6 @@ export const Footer: FC<FooterComponentProps> = ({
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
-      disabled: isDisabled || hasLinkedRequisition,
-      disabledToastMessage: t('label.cant-delete-disabled-requisition'),
     },
   ];
 

@@ -213,9 +213,9 @@ const FormattedSyncDate = ({ date }: { date: Date | null }) => {
 
   if (!date) return UNDEFINED_STRING_VALUE;
 
-  const relativeTime = `( ${t('messages.ago', {
+  const relativeTime = `(${t('messages.ago', {
     time: localisedDistanceToNow(date),
-  })} )`;
+  })})`;
 
   return (
     <Grid display="flex" flexDirection="row" container gap={1}>

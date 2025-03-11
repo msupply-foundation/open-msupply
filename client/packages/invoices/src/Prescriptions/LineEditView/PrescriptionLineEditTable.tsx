@@ -39,12 +39,18 @@ export const PrescriptionLineEditTable: React.FC<
     <Box style={{ width: '100%' }}>
       <Divider margin={10} />
       <Box
-        style={{
-          maxHeight: 300,
+        sx={{
+          maxHeight: '300px',
           display: 'flex',
           flexDirection: 'column',
           overflowX: 'hidden',
           overflowY: 'auto',
+          '& .MuiTableRow-root': {
+            backgroundColor: 'background.toolbar',
+          },
+          '& .MuiTableRow-root:nth-of-type(even)': {
+            backgroundColor: 'background.row',
+          },
         }}
       >
         {!!orderedRows.length && (

@@ -185,6 +185,24 @@ enum Action {
         #[clap(short, long)]
         config: Option<PathBuf>,
     },
+    /// Enable or disable a report in the database.
+    ToggleReport {
+        /// Code of the report to toggle
+        #[clap(short, long)]
+        code: String,
+
+        /// Filter by custom status
+        #[clap(short, long)]
+        is_custom: Option<bool>,
+
+        /// Set is_enabled to true
+        #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="disable")]
+        enable: bool,
+
+        /// Set is_enabled to false
+        #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="enable")]
+        disable: bool,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -550,6 +568,7 @@ async fn main() -> anyhow::Result<()> {
                 is_custom: true,
                 version: "1.0".to_string(),
                 code: id,
+                is_active: true,
             })?;
 
             info!("Report upserted");
@@ -626,6 +645,46 @@ async fn main() -> anyhow::Result<()> {
                 .arg(generated_file_path.clone())
                 .status()
                 .expect(&format!("failed to open file {:?}", generated_file_path));
+        },
+        Action::ToggleReport { code, is_custom, enable, disable } => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+
+            let mut filter = ReportFilter::new().code(EqualFilter::equal_to(&code));
+            match is_custom {
+                Some(value) => {
+                    filter = filter.is_custom(value);
+                },
+                None => {}
+            }
+
+            let report_list = ReportRepository::new(&con).query_by_filter(filter)?;
+            let row_repository = ReportRowRepository::new(&con);
+
+            info!("Found {} reports matching code {}", report_list.len(), code);
+
+            for mut report in report_list {
+                let initial_value = report.report_row.is_active;
+                let updated_value = {
+                    if enable {
+                        true
+                    } else if disable{
+                        false
+                    } else {
+                        !report.report_row.is_active
+                    }
+                };
+                report.report_row.is_active = updated_value;
+                row_repository.upsert_one(
+                    &report.report_row
+                )?;
+
+                info!("{}: {} => {}",
+                    report.report_row.id,
+                    if initial_value { "ACTIVE" } else { "INACTIVE" },
+                    if updated_value { "ACTIVE" } else { "INACTIVE" }
+                );
+            }
         }
     }
 
