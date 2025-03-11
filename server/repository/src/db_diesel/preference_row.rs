@@ -13,7 +13,7 @@ table! {
         id -> Text,
         key -> Text,
         value -> Text,
-        store_id -> Text,
+        store_id -> Nullable<Text>,
     }
 }
 
@@ -29,7 +29,7 @@ pub struct PreferenceRow {
     pub id: String,
     pub key: String,
     pub value: String,
-    pub store_id: String,
+    pub store_id: Option<String>,
 }
 
 pub struct PreferenceRowRepository<'a> {
