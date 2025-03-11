@@ -7,7 +7,6 @@ import {
   useTranslation,
   BasicTextInput,
   DateUtils,
-  TimePickerInput,
   UserIcon,
   useFormatDateTime,
   ClinicianNode,
@@ -179,48 +178,6 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                           ? updateEndDatetimeFromStartDate(endDt, startDatetime)
                           : undefined,
                       });
-                    }}
-                  />
-                }
-              />
-              <InputWithLabelRow
-                label={t('label.visit-start')}
-                labelWidth="60px"
-                Input={
-                  <TimePickerInput
-                    value={DateUtils.getDateOrNull(startDatetime ?? null)}
-                    onChange={date => {
-                      const startDatetime = date
-                        ? DateUtils.formatRFC3339(date)
-                        : undefined;
-                      if (startDatetime) {
-                        setStartDatetime(startDatetime);
-                        onChange({
-                          startDatetime,
-                          endDatetime: endDatetime ?? undefined,
-                        });
-                      }
-                    }}
-                  />
-                }
-              />
-              <InputWithLabelRow
-                label={t('label.visit-end')}
-                labelWidth="60px"
-                Input={
-                  <TimePickerInput
-                    minTime={
-                      startDatetime ? new Date(startDatetime) : undefined
-                    }
-                    value={DateUtils.getDateOrNull(endDatetime ?? null)}
-                    onChange={date => {
-                      const endDatetime = date
-                        ? updateEndDatetimeFromStartDate(date, startDatetime)
-                        : undefined;
-                      if (endDatetime) {
-                        setEndDatetime(endDatetime);
-                        onChange({ endDatetime });
-                      }
                     }}
                   />
                 }
