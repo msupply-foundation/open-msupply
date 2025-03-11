@@ -13,7 +13,7 @@
     "build-plugins": "lerna run --scope @openmsupply-client/* build-plugin",
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
     "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
-    "compile": "lerna run --scope @openmsupply-client/* --parallel tsc --since HEAD -- --noEmit",
+    "re-compile": "tsc --project packages/host/tsconfig.json --noEmit",
     "compile-full": "lerna run --scope @openmsupply-client/* --parallel tsc",
     "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom",
     "storybook": "storybook dev -p 6006",
@@ -33,7 +33,7 @@
     "i18n-missing": "i18n-unused display-missed",
     "eslint": "lerna run --scope @openmsupply-client/* --parallel eslint",
     "prettier": "prettier --check 'packages/*/src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
-    "lint-and-format": "yarn compile && yarn prettier || true && yarn eslint"
+    "lint-and-format": "yarn re-compile && yarn prettier || true && yarn eslint"
   },
   "workspaces": {
     "packages": [

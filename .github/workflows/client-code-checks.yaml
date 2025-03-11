@@ -1,10 +1,8 @@
 on:
   pull_request:
-    branches:
-      - main
-      - develop
-      # This pattern matches branches for release candidates (e.g., v2.6.0-RC)
-      - v*-RC
+    types: [opened, reopened, edited]
+    paths:
+      - "client/**"
   workflow_dispatch:
 
 name: Client Code Checks
