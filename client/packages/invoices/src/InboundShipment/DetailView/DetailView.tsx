@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -13,6 +13,7 @@ import {
   useNotification,
   ModalMode,
   useTableStore,
+  useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -34,6 +35,7 @@ type InboundLineItem = InboundLineFragment['item'];
 
 const DetailViewInner = () => {
   const t = useTranslation();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const { data, isLoading } = useInbound.document.get();
   const isDisabled = useInbound.utils.isDisabled();
@@ -84,6 +86,10 @@ const DetailViewInner = () => {
     onOpenReturns(selectedStockLineIds);
     setReturnMode(ModalMode.Create);
   };
+
+  useEffect(() => {
+    setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
+  }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -10,7 +10,7 @@ import {
   useTranslation,
   DetailTabs,
   useRowHighlight,
-  // useBreadcrumbs,
+  useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { ItemRowFragment, ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -95,11 +95,15 @@ export const DetailView = () => {
   const { data: stocktake, isLoading } = useStocktake.document.get();
   const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
   const t = useTranslation();
-  // const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
 
   const navigate = useNavigate();
   const { isOpen, entity, onOpen, onClose, mode } =
     useEditModal<ItemRowFragment>();
+
+  useEffect(() => {
+    setCustomBreadcrumbs({ 1: stocktake?.stocktakeNumber.toString() ?? '' });
+  }, [setCustomBreadcrumbs, stocktake?.stocktakeNumber]);
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
@@ -119,9 +123,6 @@ export const DetailView = () => {
       />
     );
 
-  // useEffect(() => {
-  //   setCustomBreadcrumbs({ 1: stocktake?.stocktakeNumber.toString() ?? '' });
-  // }, [setCustomBreadcrumbs, stocktake?.stocktakeNumber]);
 
 
   return (

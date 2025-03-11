@@ -153,13 +153,14 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
       throw new Error('Record not found');
     },
     byId: async (requisitionId: string): Promise<RequestFragment> => {
-      const result = await sdk.requestByNumber({
+      const result = await sdk.requestById({
         storeId,
-        requisitionNumber: Number(requisitionId),
+        requisitionId,
       });
 
-      if (result?.requisitionByNumber.__typename === 'RequisitionNode') {
-        return result?.requisitionByNumber;
+
+      if (result?.requisition.__typename === 'RequisitionNode') {
+        return result?.requisition;
       }
 
       throw new Error('Record not found');

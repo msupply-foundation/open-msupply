@@ -2,8 +2,8 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { NameRowFragmentDoc } from 'packages/system/src/Name/api/operations.generated';
-import { RequestLineFragmentDoc } from 'packages/system/src/RequestRequisitionLine/operations.generated';
+import { RequestLineFragmentDoc } from '../../../../system/src/RequestRequisitionLine/operations.generated';
+import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type RequestRowFragment = { __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } | null, program?: { __typename: 'ProgramNode', id: string } | null };
 
