@@ -26,13 +26,14 @@
   </tr>
 
   {% for line in data.stocktakeLines.nodes -%}
+  {% set costPricePerPack = line.costPricePerPack | default(value=0) %}
   <tr>
     <td class="table_text">{{line.item.code}}</td>
     <td class="table_text">{{line.item.name}}</td>
     <td class="table_text">{{line.batch}}</td>
     <td class="table_number">{{line.expiryDate}}</td>
     <td class="table_number">{{line.packSize}}</td>
-    <td class="table_number">{{line.costPricePerPack | default(value=0)}}</td>
+    <td class="table_number">{{ costPricePerPack }}</td>
     <td class="table_number">{{line.snapshotNumberOfPacks | round( precision=2)}}</td>
 
     {% if line.countedNumberOfPacks %}
@@ -44,7 +45,7 @@
     <td class="table_number">{{Vnumofpackscounted}}</td>
 
     {% set Vvariance=Vnumofpackscounted - line.snapshotNumberOfPacks %}
-    {% set VvarianceValue=Vvariance * line.costPricePerPack | default(value=0) %}
+    {% set VvarianceValue=Vvariance * costPricePerPack %}
     <td class="table_number">{{Vvariance | round( precision=2)}}</td>
     <td class="table_number">{{VvarianceValue | round( precision=2)}}</td>
 
