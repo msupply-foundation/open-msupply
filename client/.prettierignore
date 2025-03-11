@@ -1,2 +1,0 @@
-# excludes graphql generated files from being affected by prettier
-**/operations.generated.ts
