@@ -196,7 +196,6 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result?.invoices;
     },
-    // TODO re add types?
     byId: async (id: string) => {
       const result = await sdk.invoice({ id, storeId });
 

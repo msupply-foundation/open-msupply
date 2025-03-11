@@ -59,8 +59,6 @@ const StocktakeTabs = ({
   return <DetailTabs tabs={tabs} />;
 };
 
-// TODO add custom breadcrums
-
 const DetailViewComponent = ({
   stocktake,
   isDisabled,

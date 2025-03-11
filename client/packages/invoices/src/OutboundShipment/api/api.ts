@@ -227,19 +227,6 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
         throw new Error('Could not find invoice');
       }
     },
-    byNumber: async (invoiceNumber: string): Promise<OutboundFragment> => {
-      const result = await sdk.outboundByNumber({
-        invoiceNumber: Number(invoiceNumber),
-        storeId,
-      });
-      const invoice = result?.invoiceByNumber;
-
-      if (invoice?.__typename === 'InvoiceNode') {
-        return invoice;
-      } else {
-        throw new Error('Could not find invoice');
-      }
-    },
   },
   insert: {
     barcode: async ({
@@ -276,7 +263,6 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
       const { insertOutboundShipment } = result;
 
       if (insertOutboundShipment?.__typename === 'InvoiceNode') {
-        // TODO streamline graphql return
         return insertOutboundShipment.id;
       }
 
