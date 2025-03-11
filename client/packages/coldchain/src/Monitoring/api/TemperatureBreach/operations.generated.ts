@@ -17,7 +17,7 @@ export type TemperatureBreachFragment = {
   location?: { __typename: 'LocationNode'; code: string; name: string } | null;
 };
 
-export type Temperature_BreachesQueryVariables = Types.Exact<{
+export type TemperatureBreachesQueryVariables = Types.Exact<{
   page?: Types.InputMaybe<Types.PaginationInput>;
   sort?: Types.InputMaybe<
     Array<Types.TemperatureBreachSortInput> | Types.TemperatureBreachSortInput
@@ -26,7 +26,7 @@ export type Temperature_BreachesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
-export type Temperature_BreachesQuery = {
+export type TemperatureBreachesQuery = {
   __typename: 'Queries';
   temperatureBreaches: {
     __typename: 'TemperatureBreachConnector';
@@ -87,8 +87,8 @@ export const TemperatureBreachFragmentDoc = gql`
     }
   }
 `;
-export const Temperature_BreachesDocument = gql`
-  query temperature_breaches(
+export const TemperatureBreachesDocument = gql`
+  query temperatureBreaches(
     $page: PaginationInput
     $sort: [TemperatureBreachSortInput!]
     $filter: TemperatureBreachFilterInput
@@ -144,18 +144,18 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
-    temperature_breaches(
-      variables: Temperature_BreachesQueryVariables,
+    temperatureBreaches(
+      variables: TemperatureBreachesQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<Temperature_BreachesQuery> {
+    ): Promise<TemperatureBreachesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<Temperature_BreachesQuery>(
-            Temperature_BreachesDocument,
+          client.request<TemperatureBreachesQuery>(
+            TemperatureBreachesDocument,
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'temperature_breaches',
+        'temperatureBreaches',
         'query',
         variables
       );
