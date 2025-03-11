@@ -40,6 +40,7 @@ module.exports = {
       {
         argsIgnorePattern: '^_',
         caughtErrorsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
       },
     ],
     'react/prop-types': 'off',
