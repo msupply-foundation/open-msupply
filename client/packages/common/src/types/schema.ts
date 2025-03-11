@@ -219,7 +219,7 @@ export type AddToShipmentFromMasterListInput = {
   shipmentId: Scalars['String']['input'];
 };
 
-export type AdjustmentReasonNotProvided = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+export type AdjustmentReasonNotProvided = InsertInventoryAdjustmentErrorInterface & InsertStockLineErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
   __typename: 'AdjustmentReasonNotProvided';
   description: Scalars['String']['output'];
 };
@@ -417,7 +417,7 @@ export type AssetFilterInput = {
   notes?: InputMaybe<StringFilterInput>;
   replacementDate?: InputMaybe<DateFilterInput>;
   serialNumber?: InputMaybe<StringFilterInput>;
-  store?: InputMaybe<StringFilterInput>;
+  storeCodeOrName?: InputMaybe<StringFilterInput>;
   typeId?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -3220,6 +3220,15 @@ export type InsertRnRFormInput = {
 
 export type InsertRnRFormResponse = RnRFormNode;
 
+export type InsertStockLineError = {
+  __typename: 'InsertStockLineError';
+  error: InsertStockLineErrorInterface;
+};
+
+export type InsertStockLineErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type InsertStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
   barcode?: InputMaybe<Scalars['String']['input']>;
@@ -3237,7 +3246,7 @@ export type InsertStockLineInput = {
   sellPricePerPack: Scalars['Float']['input'];
 };
 
-export type InsertStockLineLineResponse = StockLineNode;
+export type InsertStockLineLineResponse = InsertStockLineError | StockLineNode;
 
 export type InsertStocktakeInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -3498,6 +3507,7 @@ export type InvoiceFilterInput = {
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  createdOrBackdatedDatetime?: InputMaybe<DatetimeFilterInput>;
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
