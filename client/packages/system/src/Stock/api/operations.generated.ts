@@ -491,7 +491,9 @@ export type CreateInventoryAdjustmentMutation = {
   createInventoryAdjustment:
     | {
         __typename: 'CreateInventoryAdjustmentError';
-        error: { __typename: 'StockLineReducedBelowZero'; description: string };
+        error:
+          | { __typename: 'AdjustmentReasonNotProvided'; description: string }
+          | { __typename: 'StockLineReducedBelowZero'; description: string };
       }
     | {
         __typename: 'InvoiceNode';
@@ -517,49 +519,54 @@ export type InsertStockLineMutationVariables = Types.Exact<{
 
 export type InsertStockLineMutation = {
   __typename: 'Mutations';
-  insertStockLine: {
-    __typename: 'StockLineNode';
-    availableNumberOfPacks: number;
-    batch?: string | null;
-    costPricePerPack: number;
-    expiryDate?: string | null;
-    id: string;
-    itemId: string;
-    locationId?: string | null;
-    itemVariantId?: string | null;
-    locationName?: string | null;
-    onHold: boolean;
-    packSize: number;
-    sellPricePerPack: number;
-    storeId: string;
-    totalNumberOfPacks: number;
-    supplierName?: string | null;
-    barcode?: string | null;
-    location?: {
-      __typename: 'LocationNode';
-      id: string;
-      name: string;
-      onHold: boolean;
-      code: string;
-      coldStorageType?: {
-        __typename: 'ColdStorageTypeNode';
+  insertStockLine:
+    | {
+        __typename: 'InsertStockLineError';
+        error: { __typename: 'AdjustmentReasonNotProvided' };
+      }
+    | {
+        __typename: 'StockLineNode';
+        availableNumberOfPacks: number;
+        batch?: string | null;
+        costPricePerPack: number;
+        expiryDate?: string | null;
         id: string;
-        name: string;
-        maxTemperature: number;
-        minTemperature: number;
-      } | null;
-    } | null;
-    item: {
-      __typename: 'ItemNode';
-      code: string;
-      name: string;
-      unitName?: string | null;
-      masterLists?: Array<{
-        __typename: 'MasterListNode';
-        name: string;
-      }> | null;
-    };
-  };
+        itemId: string;
+        locationId?: string | null;
+        itemVariantId?: string | null;
+        locationName?: string | null;
+        onHold: boolean;
+        packSize: number;
+        sellPricePerPack: number;
+        storeId: string;
+        totalNumberOfPacks: number;
+        supplierName?: string | null;
+        barcode?: string | null;
+        location?: {
+          __typename: 'LocationNode';
+          id: string;
+          name: string;
+          onHold: boolean;
+          code: string;
+          coldStorageType?: {
+            __typename: 'ColdStorageTypeNode';
+            id: string;
+            name: string;
+            maxTemperature: number;
+            minTemperature: number;
+          } | null;
+        } | null;
+        item: {
+          __typename: 'ItemNode';
+          code: string;
+          name: string;
+          unitName?: string | null;
+          masterLists?: Array<{
+            __typename: 'MasterListNode';
+            name: string;
+          }> | null;
+        };
+      };
 };
 
 export const StockLineRowFragmentDoc = gql`
@@ -788,8 +795,13 @@ export const CreateInventoryAdjustmentDocument = gql`
       ... on CreateInventoryAdjustmentError {
         __typename
         error {
+          __typename
           description
           ... on StockLineReducedBelowZero {
+            __typename
+            description
+          }
+          ... on AdjustmentReasonNotProvided {
             __typename
             description
           }
@@ -805,6 +817,15 @@ export const InsertStockLineDocument = gql`
       ... on StockLineNode {
         __typename
         ...StockLineRow
+      }
+      ... on InsertStockLineError {
+        __typename
+        error {
+          __typename
+          ... on AdjustmentReasonNotProvided {
+            __typename
+          }
+        }
       }
     }
   }
