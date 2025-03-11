@@ -340,7 +340,6 @@ const GivenInfoBox = ({
               }}
               to={RouteBuilder.create(AppRoute.Dispensary)
                 .addPart(AppRoute.Prescription)
-                // TODO simplify graphql 
                 .addPart(vaccination.invoice.id)
                 .build()}
             >
