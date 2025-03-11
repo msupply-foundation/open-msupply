@@ -395,7 +395,6 @@ mutation insertRequest(
     ... on RequisitionNode {
       __typename
       id
-      requisitionNumber
     }
     ... on InsertRequestRequisitionError {
       __typename
@@ -418,7 +417,6 @@ mutation insertProgramRequest(
     ... on RequisitionNode {
       __typename
       id
-      requisitionNumber
     }
     ... on InsertProgramRequestRequisitionError {
       __typename
@@ -457,7 +455,6 @@ mutation updateRequest(
     ... on RequisitionNode {
       __typename
       id
-      requisitionNumber
     }
     ... on UpdateRequestRequisitionError {
       __typename

@@ -10,6 +10,7 @@ import {
   useTranslation,
   DetailTabs,
   useRowHighlight,
+  // useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { ItemRowFragment, ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -58,7 +59,7 @@ const StocktakeTabs = ({
   return <DetailTabs tabs={tabs} />;
 };
 
-// TODO add custom breadcrumbs
+// TODO add custom breadcrums
 
 const DetailViewComponent = ({
   stocktake,
@@ -94,6 +95,8 @@ export const DetailView = () => {
   const { data: stocktake, isLoading } = useStocktake.document.get();
   const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
   const t = useTranslation();
+  // const { setCustomBreadcrumbs } = useBreadcrumbs();
+
   const navigate = useNavigate();
   const { isOpen, entity, onOpen, onClose, mode } =
     useEditModal<ItemRowFragment>();
@@ -116,7 +119,9 @@ export const DetailView = () => {
       />
     );
 
-
+  // useEffect(() => {
+  //   setCustomBreadcrumbs({ 1: stocktake?.stocktakeNumber.toString() ?? '' });
+  // }, [setCustomBreadcrumbs, stocktake?.stocktakeNumber]);
 
 
   return (

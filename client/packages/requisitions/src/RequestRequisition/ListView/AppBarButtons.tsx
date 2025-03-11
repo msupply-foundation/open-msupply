@@ -74,12 +74,12 @@ export const AppBarButtons: FC<{
               return onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId: newRequisition.name.id,
-              }).then(({ requisitionNumber }) => {
+              }).then(({ id }) => {
                 modalController.toggleOff();
                 navigate(
                   RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InternalOrder)
-                    .addPart(String(requisitionNumber))
+                    .addPart(id)
                     .build()
                 );
               });

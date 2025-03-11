@@ -368,7 +368,6 @@ mutation insertSupplierReturn($storeId: String!, $input: SupplierReturnInput!) {
     ... on InvoiceNode {
       __typename
       id
-      invoiceNumber
     }
 
     ... on InsertSupplierReturnError {
@@ -388,7 +387,6 @@ mutation updateSupplierReturn(
     ... on InvoiceNode {
       __typename
       id
-      invoiceNumber
     }
   }
 }
@@ -410,7 +408,6 @@ mutation insertCustomerReturn($storeId: String!, $input: CustomerReturnInput!) {
     ... on InvoiceNode {
       __typename
       id
-      invoiceNumber
     }
 
     ... on InsertCustomerReturnError {

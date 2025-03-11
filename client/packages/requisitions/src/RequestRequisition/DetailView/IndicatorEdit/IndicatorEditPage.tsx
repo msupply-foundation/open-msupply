@@ -82,7 +82,7 @@ export const IndicatorEditPage = () => {
 
   return (
     <>
-      <AppBarButtons requisitionNumber={request?.requisitionNumber} />
+      <AppBarButtons requisitionId={request?.id} />
       <DetailContainer>
         <PageLayout
           Left={

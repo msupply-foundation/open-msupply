@@ -329,6 +329,10 @@ impl RequisitionLineNode {
 
         Ok(result.map(RequisitionItemInformationNode::from_vec))
     }
+
+    pub async fn requisition_id(&self) -> &String {
+        &self.requisition_row().id
+    }
 }
 
 impl RequisitionLineNode {

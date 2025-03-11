@@ -80,7 +80,7 @@ export const IndicatorEditPage = () => {
 
   return (
     <>
-      <AppBarButtons requisitionNumber={response?.requisitionNumber} />
+      <AppBarButtons requisitionId={response?.id} />
       <DetailContainer>
         <PageLayout
           Left={
@@ -105,7 +105,7 @@ export const IndicatorEditPage = () => {
                 next={next}
                 hasPrevious={hasPrevious}
                 previous={previous}
-                requisitionNumber={response?.requisitionNumber}
+                requisitionId={response?.id}
                 disabled={isDisabled}
                 scrollIntoView={scrollSelectedItemIntoView}
               />

@@ -274,7 +274,6 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
   }): Promise<{
     __typename: 'RequisitionNode';
     id: string;
-    requisitionNumber: number;
   }> => {
     const result = await sdk.insertRequest({
       storeId,

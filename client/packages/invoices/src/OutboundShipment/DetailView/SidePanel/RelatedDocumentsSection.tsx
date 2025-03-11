@@ -46,7 +46,7 @@ const RelatedDocumentsSectionComponent = () => {
                   <Link
                     to={RouteBuilder.create(AppRoute.Distribution)
                       .addPart(AppRoute.CustomerRequisition)
-                      .addPart(String(requisition?.id))
+                      .addPart(requisition?.id)
                       .build()}
                   >{`#${requisition?.requisitionNumber}`}</Link>
                 </PanelField>

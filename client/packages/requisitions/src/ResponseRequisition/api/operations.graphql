@@ -83,7 +83,7 @@ fragment ResponseLine on RequisitionLineNode {
   suggestedQuantity
   availableStockOnHand
   requisitionNumber
-
+  requisitionId
   itemStats {
     __typename
     stockOnHand
@@ -269,7 +269,6 @@ mutation insertResponse(
     ... on RequisitionNode {
       __typename
       id
-      requisitionNumber
     }
     ... on InsertResponseRequisitionError {
       __typename
@@ -296,7 +295,6 @@ mutation insertProgramResponse(
     ... on RequisitionNode {
       __typename
       id
-      requisitionNumber
     }
     ... on InsertProgramResponseRequisitionError {
       __typename
