@@ -16,7 +16,7 @@ export const useInboundFields = <KeyOfInvoice extends keyof InboundFragment>(
   const api = useInboundApi();
   return useFieldsSelector(
     api.keys.detail(invoiceId),
-    () => api.get.byNumber(invoiceId),
+    () => api.get.byId(invoiceId),
     patch => mutateAsync({ ...patch, id: data?.id ?? '' }),
     keyOrKeys
   );
