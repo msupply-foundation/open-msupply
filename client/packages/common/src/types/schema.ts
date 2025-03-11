@@ -1005,6 +1005,7 @@ export type ClinicianFilterInput = {
   firstName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   initials?: InputMaybe<StringFilterInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<StringFilterInput>;
   mobile?: InputMaybe<StringFilterInput>;
   phone?: InputMaybe<StringFilterInput>;
