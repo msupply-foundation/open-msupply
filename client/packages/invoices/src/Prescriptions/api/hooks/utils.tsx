@@ -60,7 +60,7 @@ export const createInputObject = (
 
   const itemId = item?.id ?? '';
   const stockLineId = stockLine?.id ?? '';
-  const output = { id, numberOfPacks, stockLineId, note, prescribedQuantity };
+  const output = { id, numberOfPacks, stockLineId, note };
 
   switch (type) {
     case 'delete':

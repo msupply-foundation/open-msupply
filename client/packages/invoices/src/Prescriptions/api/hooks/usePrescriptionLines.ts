@@ -132,7 +132,7 @@ const useSaveLines = (id: string, invoiceNum: number) => {
       setPrescribedQuantity: draftPrescriptionLines
         .filter(
           ({ invoiceId, item, prescribedQuantity }) =>
-            invoiceId && item && (prescribedQuantity ?? 0) >= 0
+            invoiceId && item && (prescribedQuantity ?? 0) > 0
         )
         .map(
           line =>
