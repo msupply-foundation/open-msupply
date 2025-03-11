@@ -1,7 +1,4 @@
-use super::{
-    form_schema_row::form_schema::{self, dsl as form_schema_dsl},
-    StorageConnection,
-};
+use super::{form_schema_row::form_schema, StorageConnection};
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort},
@@ -60,11 +57,11 @@ impl<'a> FormSchemaRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 FormSchemaSortField::Id => {
-                    apply_sort!(query, sort, form_schema_dsl::id)
+                    apply_sort!(query, sort, form_schema::id)
                 }
             }
         } else {
-            query = query.order(form_schema_dsl::id.asc())
+            query = query.order(form_schema::id.asc())
         }
 
         let rows = query
@@ -84,11 +81,11 @@ impl<'a> FormSchemaRepository<'a> {
 type BoxedFormSchemaQuery = IntoBoxed<'static, form_schema::table, DBType>;
 
 fn create_filtered_query(filter: Option<FormSchemaFilter>) -> BoxedFormSchemaQuery {
-    let mut query = form_schema_dsl::form_schema.into_boxed();
+    let mut query = form_schema::table.into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, form_schema_dsl::id);
-        apply_equal_filter!(query, filter.r#type, form_schema_dsl::type_);
+        apply_equal_filter!(query, filter.id, form_schema::id);
+        apply_equal_filter!(query, filter.r#type, form_schema::type_);
     }
 
     query

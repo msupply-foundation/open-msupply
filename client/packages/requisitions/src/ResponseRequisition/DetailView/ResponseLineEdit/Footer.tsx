@@ -14,6 +14,7 @@ interface FooterProps {
   hasPrevious: boolean;
   previous: ItemRowFragment | null;
   requisitionNumber?: number;
+  scrollIntoView: () => void;
 }
 
 export const Footer = ({
@@ -22,6 +23,7 @@ export const Footer = ({
   hasPrevious,
   previous,
   requisitionNumber,
+  scrollIntoView,
 }: FooterProps) => {
   const navigate = useNavigate();
 
@@ -45,16 +47,18 @@ export const Footer = ({
             <DialogButton
               variant="previous"
               disabled={!hasPrevious}
-              onClick={() =>
-                navigate(buildItemEditRoute(requisitionNumber, previous?.id))
-              }
+              onClick={() => {
+                navigate(buildItemEditRoute(requisitionNumber, previous?.id));
+                scrollIntoView();
+              }}
             />
             <DialogButton
               variant="next"
               disabled={!hasNext}
-              onClick={() =>
-                navigate(buildItemEditRoute(requisitionNumber, next?.id))
-              }
+              onClick={() => {
+                navigate(buildItemEditRoute(requisitionNumber, next?.id));
+                scrollIntoView();
+              }}
             />
           </Box>
         </Box>

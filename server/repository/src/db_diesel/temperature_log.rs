@@ -1,9 +1,7 @@
 use super::{
-    location_row::location::dsl as location_dsl,
-    sensor_row::sensor::dsl as sensor_dsl,
-    temperature_breach_row::temperature_breach::dsl as temperature_breach_dsl,
-    temperature_log_row::{temperature_log, temperature_log::dsl as temperature_log_dsl},
-    DBType, StorageConnection, TemperatureBreachRow, TemperatureLogRow,
+    location_row::location, sensor_row::sensor, temperature_breach_row::temperature_breach,
+    temperature_log_row::temperature_log, DBType, StorageConnection, TemperatureBreachRow,
+    TemperatureLogRow,
 };
 use diesel::prelude::*;
 
@@ -86,17 +84,17 @@ impl<'a> TemperatureLogRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 TemperatureLogSortField::Id => {
-                    apply_sort_no_case!(query, sort, temperature_log_dsl::id)
+                    apply_sort_no_case!(query, sort, temperature_log::id)
                 }
                 TemperatureLogSortField::Datetime => {
-                    apply_sort!(query, sort, temperature_log_dsl::datetime)
+                    apply_sort!(query, sort, temperature_log::datetime)
                 }
                 TemperatureLogSortField::Temperature => {
-                    apply_sort!(query, sort, temperature_log_dsl::temperature)
+                    apply_sort!(query, sort, temperature_log::temperature)
                 }
             }
         } else {
-            query = query.order(temperature_log_dsl::datetime.desc())
+            query = query.order(temperature_log::datetime.desc())
         }
 
         let final_query = query
@@ -115,7 +113,7 @@ impl<'a> TemperatureLogRepository<'a> {
     }
 
     pub fn create_filtered_query(filter: Option<TemperatureLogFilter>) -> BoxedTemperatureLogQuery {
-        let mut query = temperature_log_dsl::temperature_log.into_boxed();
+        let mut query = temperature_log::table.into_boxed();
 
         if let Some(f) = filter {
             let TemperatureLogFilter {
@@ -129,34 +127,32 @@ impl<'a> TemperatureLogRepository<'a> {
                 temperature_breach_id,
             } = f;
 
-            apply_equal_filter!(query, id, temperature_log_dsl::id);
-            apply_equal_filter!(query, store_id, temperature_log_dsl::store_id);
+            apply_equal_filter!(query, id, temperature_log::id);
+            apply_equal_filter!(query, store_id, temperature_log::store_id);
             apply_equal_filter!(
                 query,
                 temperature_breach_id,
-                temperature_log_dsl::temperature_breach_id
+                temperature_log::temperature_breach_id
             );
-            apply_date_time_filter!(query, datetime, temperature_log_dsl::datetime);
-            apply_number_filter!(query, temperature, temperature_log_dsl::temperature);
+            apply_date_time_filter!(query, datetime, temperature_log::datetime);
+            apply_number_filter!(query, temperature, temperature_log::temperature);
 
             if sensor.is_some() {
-                let sensor_ids =
-                    SensorRepository::create_filtered_query(sensor).select(sensor_dsl::id);
-                query = query.filter(temperature_log_dsl::sensor_id.eq_any(sensor_ids));
+                let sensor_ids = SensorRepository::create_filtered_query(sensor).select(sensor::id);
+                query = query.filter(temperature_log::sensor_id.eq_any(sensor_ids));
             }
 
             if location.is_some() {
                 let location_ids = LocationRepository::create_filtered_query(location)
-                    .select(location_dsl::id.nullable());
-                query = query.filter(temperature_log_dsl::location_id.eq_any(location_ids));
+                    .select(location::id.nullable());
+                query = query.filter(temperature_log::location_id.eq_any(location_ids));
             }
             if temperature_breach.is_some() {
                 let temperature_breach_ids =
                     TemperatureBreachRepository::create_filtered_query(temperature_breach)
-                        .select(temperature_breach_dsl::id.nullable());
-                query = query.filter(
-                    temperature_log_dsl::temperature_breach_id.eq_any(temperature_breach_ids),
-                );
+                        .select(temperature_breach::id.nullable());
+                query = query
+                    .filter(temperature_log::temperature_breach_id.eq_any(temperature_breach_ids));
             }
         }
         query

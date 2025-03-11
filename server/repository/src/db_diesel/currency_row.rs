@@ -1,4 +1,4 @@
-use super::{currency_row::currency::dsl as currency_dsl, StorageConnection};
+use super::StorageConnection;
 use crate::{Delete, Upsert};
 
 use crate::repository_error::RepositoryError;
@@ -40,9 +40,9 @@ impl<'a> CurrencyRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &CurrencyRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(currency_dsl::currency)
+        diesel::insert_into(currency::table)
             .values(row)
-            .on_conflict(currency_dsl::id)
+            .on_conflict(currency::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -69,16 +69,16 @@ impl<'a> CurrencyRowRepository<'a> {
         &self,
         currency_id: &str,
     ) -> Result<Option<CurrencyRow>, RepositoryError> {
-        let result = currency_dsl::currency
-            .filter(currency_dsl::id.eq(currency_id))
+        let result = currency::table
+            .filter(currency::id.eq(currency_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, currency_id: &str) -> Result<i64, RepositoryError> {
-        diesel::update(currency_dsl::currency.filter(currency_dsl::id.eq(currency_id)))
-            .set(currency_dsl::is_active.eq(false))
+        diesel::update(currency::table.filter(currency::id.eq(currency_id)))
+            .set(currency::is_active.eq(false))
             .execute(self.connection.lock().connection())?;
 
         self.insert_changelog(&currency_id.to_string(), RowActionType::Delete)

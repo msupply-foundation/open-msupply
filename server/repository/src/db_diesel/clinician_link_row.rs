@@ -4,7 +4,6 @@ use super::{
 };
 use crate::{name_link, repository_error::RepositoryError, Upsert};
 
-use self::clinician_link::dsl as clinician_link_dsl;
 use diesel::prelude::*;
 
 table! {
@@ -39,7 +38,7 @@ impl<'a> ClinicianLinkRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, clinician_link_row: &ClinicianLinkRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(clinician_link_dsl::clinician_link)
+        diesel::insert_into(clinician_link::table)
             .values(clinician_link_row)
             .on_conflict(clinician_link::id)
             .do_update()
@@ -52,7 +51,7 @@ impl<'a> ClinicianLinkRowRepository<'a> {
         &self,
         clinician_link_row: &ClinicianLinkRow,
     ) -> Result<(), RepositoryError> {
-        diesel::insert_into(clinician_link_dsl::clinician_link)
+        diesel::insert_into(clinician_link::table)
             .values(clinician_link_row)
             .on_conflict(clinician_link::id)
             .do_nothing()
@@ -61,7 +60,7 @@ impl<'a> ClinicianLinkRowRepository<'a> {
     }
 
     pub async fn find_all(&mut self) -> Result<Vec<ClinicianLinkRow>, RepositoryError> {
-        let result = clinician_link_dsl::clinician_link.load(self.connection.lock().connection());
+        let result = clinician_link::table.load(self.connection.lock().connection());
         Ok(result?)
     }
 
@@ -69,7 +68,7 @@ impl<'a> ClinicianLinkRowRepository<'a> {
         &self,
         clinician_link_id: &str,
     ) -> Result<Option<ClinicianLinkRow>, RepositoryError> {
-        let result = clinician_link_dsl::clinician_link
+        let result = clinician_link::table
             .filter(clinician_link::id.eq(clinician_link_id))
             .first(self.connection.lock().connection())
             .optional()?;
@@ -80,7 +79,7 @@ impl<'a> ClinicianLinkRowRepository<'a> {
         &self,
         clinician_link_ids: &[String],
     ) -> Result<Vec<ClinicianLinkRow>, RepositoryError> {
-        let result = clinician_link_dsl::clinician_link
+        let result = clinician_link::table
             .filter(clinician_link::id.eq_any(clinician_link_ids))
             .load(self.connection.lock().connection())?;
         Ok(result)
@@ -90,17 +89,15 @@ impl<'a> ClinicianLinkRowRepository<'a> {
         &self,
         clinician_id: &str,
     ) -> Result<Vec<ClinicianLinkRow>, RepositoryError> {
-        let result = clinician_link_dsl::clinician_link
+        let result = clinician_link::table
             .filter(clinician_link::clinician_id.eq(clinician_id))
             .load::<ClinicianLinkRow>(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn delete(&self, clinician_link_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(
-            clinician_link_dsl::clinician_link.filter(clinician_link::id.eq(clinician_link_id)),
-        )
-        .execute(self.connection.lock().connection())?;
+        diesel::delete(clinician_link::table.filter(clinician_link::id.eq(clinician_link_id)))
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

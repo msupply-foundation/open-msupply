@@ -1,15 +1,22 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import {
   useToggle,
   useFormatNumber,
   useTranslation,
   AutocompleteWithPagination as Autocomplete,
   defaultOptionMapper,
-  useDebounceCallback,
   useStringFilter,
+  useDebouncedValueCallback,
+  FilterOptionsState,
+  RegexUtils,
 } from '@openmsupply-client/common';
-import { useItemById, useItemStockOnHandInfinite } from '../../api';
-import { itemFilterOptions, StockItemSearchInputProps } from '../../utils';
+import {
+  ItemStockOnHandFragment,
+  StockOnHandFilter,
+  useItemById,
+  useItemStockOnHandInfinite,
+} from '../../api';
+import { StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
 const DEBOUNCE_TIMEOUT = 300;
@@ -25,12 +32,25 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   openOnFocus,
   includeNonVisibleWithStockOnHand = false,
   itemCategoryName,
+  programId,
 }) => {
-  const { filter, onFilter } = useStringFilter('name');
+  const { filter, onFilter } = useStringFilter('codeOrName');
+  const [search, setSearch] = useState('');
 
-  const fullFilter = itemCategoryName
-    ? { ...filter, categoryName: itemCategoryName }
-    : filter;
+  const [selectedCode, setSelectedCode] = useState('');
+
+  const debounceOnFilter = useDebouncedValueCallback(
+    (searchText: string) => onFilter(searchText),
+    [onFilter],
+    DEBOUNCE_TIMEOUT
+  );
+
+  const fullFilter: StockOnHandFilter = { ...filter };
+  if (itemCategoryName) fullFilter['categoryName'] = itemCategoryName;
+  // For now, we are filtering items by "master_list", as they have the same ID
+  // as their equivalent program. In the future, this may change, so we can add
+  // another filter specifically for programs if required.
+  if (programId) fullFilter['masterListId'] = { equalTo: programId };
 
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
     useItemStockOnHandInfinite({
@@ -50,11 +70,17 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const formatNumber = useFormatNumber();
   const selectControl = useToggle();
 
-  const debounceOnFilter = useDebounceCallback(
-    (searchText: string) => onFilter(searchText),
-    [onFilter],
-    DEBOUNCE_TIMEOUT
+  const filterOptions = useCallback(
+    (
+      options: ItemStockOnHandFragment[],
+      state: FilterOptionsState<ItemStockOnHandFragment>
+    ) => filterByNameAndCode(selectedCode)(options, state),
+    [selectedCode]
   );
+
+  useEffect(() => {
+    if (currentItem && search === '') setSearch(getOptionLabel(currentItem));
+  }, [currentItem]);
 
   useEffect(() => {
     // Using the Autocomplete openOnFocus prop, the popper is incorrectly
@@ -75,14 +101,19 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       disabled={disabled}
       onOpen={selectControl.toggleOn}
       onClose={selectControl.toggleOff}
-      filterOptionConfig={itemFilterOptions}
       loading={isLoading || isFetchingNextPage}
       value={
         currentItem ? { ...currentItem, label: currentItem.name ?? '' } : null
       }
       noOptionsText={t('error.no-items')}
-      onChange={(_, item) => onChange(item)}
-      getOptionLabel={option => `${option.code}     ${option.name}`}
+      filterOptions={filterOptions}
+      onChange={(_, item) => {
+        // Set the search value when selecting/clearing an option
+        setSearch(item ? getOptionLabel(item) : '');
+        setSelectedCode(item?.code ?? '');
+        onChange(item);
+      }}
+      getOptionLabel={getOptionLabel}
       renderOption={getItemOptionRenderer(
         t('label.units'),
         formatNumber.format
@@ -91,7 +122,6 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       open={selectControl.isOn}
-      onInputChange={(_, value) => debounceOnFilter(value)}
       paginationDebounce={DEBOUNCE_TIMEOUT}
       onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
       mapOptions={items =>
@@ -100,6 +130,45 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
           'name'
         ).sort((a, b) => a.label.localeCompare(b.label))
       }
+      inputValue={search}
+      inputProps={{
+        onChange: e => {
+          const { value } = e.target;
+          setSearch(value);
+          debounceOnFilter(getItemNameFilterValue(value, selectedCode));
+        },
+        onBlur: () => setSearch(currentItem ? getOptionLabel(currentItem) : ''),
+      }}
     />
   );
 };
+
+// After an item is selected, input string is `item_code item_name` e.g. `1234 Item Name`.
+// However, backend search filter only supports name OR code, not both in the same string.
+// So, when backspacing, the code should be removed to filter by name only
+// e.g. even though string shows `1234 Ite`, backend search string is `Ite`
+// Until only code value remains, then search by that
+function getItemNameFilterValue(search: string, selectedCode: string): string {
+  return selectedCode ? search.replace(`${selectedCode} `, '') : search;
+}
+
+function filterByNameAndCode(selectedCode: string) {
+  return (
+    options: ItemStockOnHandFragment[],
+    state: FilterOptionsState<ItemStockOnHandFragment>
+  ) =>
+    options.filter(option => {
+      const searchValue = RegexUtils.escapeChars(state.inputValue);
+      return (
+        RegexUtils.includes(searchValue, option.code) ||
+        RegexUtils.includes(
+          getItemNameFilterValue(searchValue, selectedCode),
+          option.name
+        )
+      );
+    });
+}
+
+function getOptionLabel(option: ItemStockOnHandFragment): string {
+  return `${option.code} ${option.name}`;
+}

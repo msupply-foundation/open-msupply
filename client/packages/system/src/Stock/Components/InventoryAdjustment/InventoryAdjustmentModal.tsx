@@ -8,7 +8,6 @@ import {
   useNotification,
   AdjustmentTypeInput,
   useDialog,
-  useKeyboardHeightAdjustment,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
 import { InventoryAdjustmentReasonSearchInput } from '../../..';
@@ -28,12 +27,10 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
   const t = useTranslation();
   const { success, error } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
-  const height = useKeyboardHeightAdjustment(575);
 
   const { draft, setDraft, create } = useInventoryAdjustment(stockLine);
 
   const packUnit = String(stockLine.packSize);
-
   const saveDisabled = draft.adjustment === 0;
 
   const save = async () => {
@@ -50,14 +47,14 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
       const errorSnack = error(t(result));
       errorSnack();
     } catch {
-      // TODO: handle error if no reason selected when reasons required
+      error(t('messages.could-not-save'))(); // generic could not save message
     }
   };
 
   return (
     <Modal
       sx={{ maxWidth: 'unset', minWidth: 700 }}
-      height={height}
+      height={575}
       slideAnimation={false}
       title={t('title.adjustment-details')}
       okButton={

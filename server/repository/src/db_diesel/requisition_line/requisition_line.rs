@@ -9,10 +9,7 @@ use diesel::{
     prelude::*,
 };
 
-use super::{
-    requisition_line_row::{requisition_line, requisition_line::dsl as requisition_line_dsl},
-    RequisitionLineFilter, RequisitionLineRow,
-};
+use super::{requisition_line_row::requisition_line, RequisitionLineFilter, RequisitionLineRow};
 
 type RequisitionLineJoin = (RequisitionLineRow, (ItemLinkRow, ItemRow), RequisitionRow);
 
@@ -59,7 +56,7 @@ impl<'a> RequisitionLineRepository<'a> {
     ) -> Result<Vec<RequisitionLine>, RepositoryError> {
         let mut query = create_filtered_query(filter)?;
 
-        query = query.order(requisition_line_dsl::id.asc());
+        query = query.order(requisition_line::id.asc());
 
         let result = query.load::<RequisitionLineJoin>(self.connection.lock().connection())?;
 
@@ -88,7 +85,7 @@ type BoxedRequisitionLineQuery = IntoBoxed<
 fn create_filtered_query(
     filter: Option<RequisitionLineFilter>,
 ) -> Result<BoxedRequisitionLineQuery, RepositoryError> {
-    let mut query = requisition_line_dsl::requisition_line
+    let mut query = requisition_line::table
         .inner_join(item_link::table.inner_join(item::table))
         .inner_join(requisition::table)
         .into_boxed();
@@ -96,15 +93,11 @@ fn create_filtered_query(
     if let Some(f) = filter {
         apply_equal_filter!(query, f.id, requisition_line::id);
         apply_equal_filter!(query, f.store_id, requisition::store_id);
-        apply_equal_filter!(
-            query,
-            f.requisition_id,
-            requisition_line_dsl::requisition_id
-        );
+        apply_equal_filter!(query, f.requisition_id, requisition_line::requisition_id);
         apply_equal_filter!(
             query,
             f.requested_quantity,
-            requisition_line_dsl::requested_quantity
+            requisition_line::requested_quantity
         );
         apply_equal_filter!(query, f.item_id, item::id);
         apply_equal_filter!(query, f.r#type, requisition::type_);

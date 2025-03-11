@@ -10,7 +10,11 @@ export const getItemOptionRenderer =
     item: ItemStockOnHandFragment
   ) => (
     <Tooltip title={`${item.code} ${item.name}`} key={item.id}>
-      <ItemOption {...props} key={item.code}>
+      <ItemOption
+        {...props}
+        sx={{ justifyContent: 'space-between !important' }}
+        key={item.code}
+      >
         <span
           style={{
             whiteSpace: 'nowrap',

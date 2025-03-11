@@ -1,4 +1,4 @@
-use super::{stock_on_hand::stock_on_hand::dsl as stock_on_hand_dsl, StorageConnection};
+use super::StorageConnection;
 
 use crate::{diesel_macros::apply_equal_filter, item_link, EqualFilter, RepositoryError};
 use diesel::prelude::*;
@@ -54,13 +54,13 @@ impl<'a> StockOnHandRepository<'a> {
         filter: Option<StockOnHandFilter>,
     ) -> Result<Vec<StockOnHandRow>, RepositoryError> {
         // Query StockOnHand
-        let mut query = stock_on_hand_dsl::stock_on_hand.into_boxed();
+        let mut query = stock_on_hand::table.into_boxed();
 
         if let Some(f) = filter {
             let StockOnHandFilter { item_id, store_id } = f;
 
-            apply_equal_filter!(query, item_id, stock_on_hand_dsl::item_id);
-            apply_equal_filter!(query, store_id, stock_on_hand_dsl::store_id);
+            apply_equal_filter!(query, item_id, stock_on_hand::item_id);
+            apply_equal_filter!(query, store_id, stock_on_hand::store_id);
         }
 
         // Debug diesel query

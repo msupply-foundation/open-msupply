@@ -62,8 +62,6 @@ pub struct RequisitionsInPeriodRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-use self::requisitions_in_period::dsl as requisitions_in_period_dsl;
-
 impl<'a> RequisitionsInPeriodRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         RequisitionsInPeriodRepository { connection }
@@ -79,13 +77,13 @@ impl<'a> RequisitionsInPeriodRepository<'a> {
             r#type,
         }: RequisitionsInPeriodFilter,
     ) -> Result<Vec<RequisitionsInPeriod>, RepositoryError> {
-        let mut query = requisitions_in_period_dsl::requisitions_in_period.into_boxed();
+        let mut query = requisitions_in_period::table.into_boxed();
 
-        apply_equal_filter!(query, program_id, requisitions_in_period_dsl::program_id);
-        apply_equal_filter!(query, period_id, requisitions_in_period_dsl::period_id);
-        apply_equal_filter!(query, store_id, requisitions_in_period_dsl::store_id);
-        apply_equal_filter!(query, r#type, requisitions_in_period_dsl::type_);
-        apply_string_filter!(query, order_type, requisitions_in_period_dsl::order_type);
+        apply_equal_filter!(query, program_id, requisitions_in_period::program_id);
+        apply_equal_filter!(query, period_id, requisitions_in_period::period_id);
+        apply_equal_filter!(query, store_id, requisitions_in_period::store_id);
+        apply_equal_filter!(query, r#type, requisitions_in_period::type_);
+        apply_string_filter!(query, order_type, requisitions_in_period::order_type);
 
         //  Debug diesel query
         // println!(

@@ -178,6 +178,7 @@ fn generate_stock_in_out_or_update(
             sell_price_per_pack: Some(sell_price_per_pack),
             total_before_tax: None,
             tax_percentage: None,
+            prescribed_quantity: None,
         })
     };
 
@@ -559,6 +560,7 @@ pub fn generate(
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
+        cancelled_datetime: None,
         colour: None,
         requisition_id: None,
         linked_invoice_id: None,
@@ -567,6 +569,11 @@ pub fn generate(
         original_shipment_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
+        program_id: None,
+        name_insurance_join_id: None,
+        insurance_discount_amount: None,
+        insurance_discount_percentage: None,
+        is_cancellation: false,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {

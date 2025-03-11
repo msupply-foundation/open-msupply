@@ -74,11 +74,11 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
             .map(|value| {
                 (
                     IndicatorValueLoaderInput::new(
-                        &value.indicator_line_id,
-                        &value.indicator_column_id,
+                        &value.indicator_value_row.indicator_line_id,
+                        &value.indicator_value_row.indicator_column_id,
                         payload.clone(),
                     ),
-                    value,
+                    value.indicator_value_row,
                 )
             })
             .collect())

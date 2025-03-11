@@ -1,13 +1,8 @@
 use super::{
-    item_link_row::item_link::dsl as item_link_dsl,
-    master_list_line_row::master_list_line::dsl as master_list_line_dsl,
-    master_list_name_join::master_list_name_join::dsl as master_list_name_join_dsl,
-    master_list_row::{master_list, master_list::dsl as master_list_dsl},
-    name_link_row::name_link::dsl as name_link_dsl,
-    name_row::name::dsl as name_dsl,
-    program_row::program::dsl as program_dsl,
-    store_row::store::dsl as store_dsl,
-    DBType, MasterListRow, StorageConnection,
+    item_link_row::item_link, master_list_line_row::master_list_line,
+    master_list_name_join::master_list_name_join, master_list_row::master_list,
+    name_link_row::name_link, name_row::name, program_row::program, store_row::store, DBType,
+    MasterListRow, StorageConnection,
 };
 
 use crate::{
@@ -71,15 +66,15 @@ impl<'a> MasterListRepository<'a> {
     }
 
     pub fn create_filtered_query(filter: Option<MasterListFilter>) -> BoxedMasterListQuery {
-        let mut query = master_list_dsl::master_list.into_boxed();
+        let mut query = master_list::table.into_boxed();
         // Filter out inactive master lists by default
-        query = query.filter(master_list_dsl::is_active.eq(true));
+        query = query.filter(master_list::is_active.eq(true));
 
         if let Some(f) = filter {
-            apply_equal_filter!(query, f.id, master_list_dsl::id);
-            apply_string_filter!(query, f.name, master_list_dsl::name);
-            apply_string_filter!(query, f.code, master_list_dsl::code);
-            apply_string_filter!(query, f.description, master_list_dsl::description);
+            apply_equal_filter!(query, f.id, master_list::id);
+            apply_string_filter!(query, f.name, master_list::name);
+            apply_string_filter!(query, f.code, master_list::code);
+            apply_string_filter!(query, f.description, master_list::description);
 
             // Result master list should be unique, which would need extra logic if we were to join
             // name table through master_list_name_join, thus use a sub query to restrict the resulting
@@ -88,67 +83,67 @@ impl<'a> MasterListRepository<'a> {
                 || f.exists_for_name_id.is_some()
                 || f.exists_for_store_id.is_some()
             {
-                let mut name_join_query = master_list_name_join_dsl::master_list_name_join
-                    .select(master_list_name_join_dsl::master_list_id)
+                let mut name_join_query = master_list_name_join::table
+                    .select(master_list_name_join::master_list_id)
                     .distinct()
                     .left_join(
-                        name_link_dsl::name_link
-                            .left_join(store_dsl::store)
-                            .left_join(name_dsl::name),
+                        name_link::table
+                            .left_join(store::table)
+                            .left_join(name::table),
                     )
                     .into_boxed();
 
-                apply_string_filter!(name_join_query, f.exists_for_name, name_dsl::name_);
-                apply_equal_filter!(name_join_query, f.exists_for_name_id, name_dsl::id);
-                apply_equal_filter!(name_join_query, f.exists_for_store_id, store_dsl::id);
+                apply_string_filter!(name_join_query, f.exists_for_name, name::name_);
+                apply_equal_filter!(name_join_query, f.exists_for_name_id, name::id);
+                apply_equal_filter!(name_join_query, f.exists_for_store_id, store::id);
 
-                query = query.filter(master_list_dsl::id.eq_any(name_join_query));
+                query = query.filter(master_list::id.eq_any(name_join_query));
             }
 
             if let Some(is_program) = f.is_program {
-                let program_join_query = program_dsl::program
-                    .select(program_dsl::master_list_id)
-                    .filter(program_dsl::master_list_id.is_not_null())
+                let program_join_query = program::table
+                    .select(program::master_list_id)
+                    .filter(program::master_list_id.is_not_null())
                     .distinct()
                     .into_boxed();
 
                 if is_program {
-                    query = query.filter(master_list_dsl::id.nullable().eq_any(program_join_query));
+                    query = query.filter(master_list::id.nullable().eq_any(program_join_query));
                 } else {
-                    query = query.filter(master_list_dsl::id.nullable().ne_all(program_join_query));
+                    query = query.filter(master_list::id.nullable().ne_all(program_join_query));
                 }
             }
 
             if let Some(is_discount_list) = f.is_discount_list {
                 if is_discount_list {
-                    query = query.filter(master_list_dsl::discount_percentage.gt(0.0));
+                    query = query.filter(master_list::discount_percentage.gt(0.0));
                 } else {
                     query = query.filter(
-                        master_list_dsl::discount_percentage
+                        master_list::discount_percentage
                             .is_null()
-                            .or(master_list_dsl::discount_percentage.eq(0.0)),
+                            .or(master_list::discount_percentage.eq(0.0)),
                     );
                 }
             }
 
             if let Some(is_default_price_list) = f.is_default_price_list {
                 if is_default_price_list {
-                    query = query.filter(master_list_dsl::is_default_price_list.eq(true));
+                    query = query.filter(master_list::is_default_price_list.eq(true));
                 } else {
-                    query = query.filter(master_list_dsl::is_default_price_list.eq(false));
+                    query = query.filter(master_list::is_default_price_list.eq(false));
                 }
             }
 
             if f.item_id.is_some() {
-                let mut master_list_line_query = master_list_line_dsl::master_list_line
-                    .select(master_list_line_dsl::master_list_id)
-                    .left_join(item_link_dsl::item_link)
+                let mut master_list_line_query = master_list_line::table
+                    .select(master_list_line::master_list_id)
+                    .left_join(item_link::table)
                     .distinct()
                     .into_boxed::<DBType>();
 
-                apply_equal_filter!(master_list_line_query, f.item_id, item_link_dsl::item_id);
+                apply_equal_filter!(master_list_line_query, f.item_id, item_link::item_id);
 
-                query = query.filter(master_list_dsl::id.eq_any(master_list_line_query));
+                query = query.filter(master_list::id.eq_any(master_list_line_query));
             }
         }
 
@@ -167,20 +162,20 @@ impl<'a> MasterListRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 MasterListSortField::Name => {
-                    apply_sort_no_case!(query, sort, master_list_dsl::name);
+                    apply_sort_no_case!(query, sort, master_list::name);
                 }
                 MasterListSortField::Code => {
-                    apply_sort_no_case!(query, sort, master_list_dsl::code);
+                    apply_sort_no_case!(query, sort, master_list::code);
                 }
                 MasterListSortField::Description => {
-                    apply_sort_no_case!(query, sort, master_list_dsl::description);
+                    apply_sort_no_case!(query, sort, master_list::description);
                 }
                 MasterListSortField::DiscountPercentage => {
-                    apply_sort!(query, sort, master_list_dsl::discount_percentage);
+                    apply_sort!(query, sort, master_list::discount_percentage);
                 }
             }
         } else {
-            query = query.order(master_list_dsl::id.asc())
+            query = query.order(master_list::id.asc())
         }
 
         // Debug diesel query

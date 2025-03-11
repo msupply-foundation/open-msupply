@@ -10,12 +10,14 @@ interface ListIndicatorLineProps {
   currentIndicatorLineId?: string | null;
   lines: IndicatorLineRowFragment[];
   route: RouteBuilder;
+  scrollRef: React.MutableRefObject<HTMLLIElement | null>;
 }
 
 export const ListIndicatorLines = ({
   currentIndicatorLineId,
   lines,
   route,
+  scrollRef,
 }: ListIndicatorLineProps) => {
   const navigate = useNavigate();
   const value = lines?.find(({ id }) => id === currentIndicatorLineId) ?? null;
@@ -34,6 +36,7 @@ export const ListIndicatorLines = ({
           value: `${name}: ${code}`,
         })) ?? []
       }
+      scrollRef={scrollRef}
     />
   );
 };

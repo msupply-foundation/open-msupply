@@ -5,7 +5,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::StockLineNode;
+use graphql_types::types::{AdjustmentReasonNotProvided, StockLineNode};
 use repository::StockLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -32,9 +32,16 @@ pub struct InsertInput {
     pub item_variant_id: Option<String>,
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "InsertStockLineError")]
+pub struct InsertError {
+    pub error: InsertErrorInterface,
+}
+
 #[derive(Union)]
 #[graphql(name = "InsertStockLineLineResponse")]
 pub enum InsertResponse {
+    Error(InsertError),
     Response(StockLineNode),
 }
 
@@ -58,12 +65,20 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
 }
 
 fn map_response(from: Result<StockLine, AddNewStockLineError>) -> Result<InsertResponse> {
-    match from {
-        Ok(stock_line) => Ok(InsertResponse::Response(StockLineNode::from_domain(
-            stock_line,
-        ))),
-        Err(error) => map_error(error),
-    }
+    let result = match from {
+        Ok(stock_line) => InsertResponse::Response(StockLineNode::from_domain(stock_line)),
+        Err(error) => InsertResponse::Error(InsertError {
+            error: map_error(error)?,
+        }),
+    };
+    Ok(result)
+}
+
+#[derive(Interface)]
+#[graphql(name = "InsertStockLineErrorInterface")]
+#[graphql(field(name = "description", ty = "&str"))]
+pub enum InsertErrorInterface {
+    AdjustmentReasonNotProvided(AdjustmentReasonNotProvided),
 }
 
 impl InsertInput {
@@ -104,14 +119,20 @@ impl InsertInput {
     }
 }
 
-fn map_error(error: AddNewStockLineError) -> Result<InsertResponse> {
+fn map_error(error: AddNewStockLineError) -> Result<InsertErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
+        // Structured Errors
+        AddNewStockLineError::AdjustmentReasonNotProvided => {
+            return Ok(InsertErrorInterface::AdjustmentReasonNotProvided(
+                AdjustmentReasonNotProvided,
+            ))
+        }
+
         // Standard Graphql Errors
         AddNewStockLineError::AdjustmentReasonNotValid
-        | AddNewStockLineError::AdjustmentReasonNotProvided
         | AddNewStockLineError::StockLineAlreadyExists => BadUserInput(formatted_error),
         AddNewStockLineError::NewlyCreatedStockLineDoesNotExist
         | AddNewStockLineError::LineInsertError(_)

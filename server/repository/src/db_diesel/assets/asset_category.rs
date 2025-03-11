@@ -1,7 +1,4 @@
-use super::asset_category_row::{
-    asset_category::{self, dsl as asset_category_dsl},
-    AssetCategoryRow,
-};
+use super::asset_category_row::{asset_category, AssetCategoryRow};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -87,11 +84,11 @@ impl<'a> AssetCategoryRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 AssetCategorySortField::Name => {
-                    apply_sort_no_case!(query, sort, asset_category_dsl::name);
+                    apply_sort_no_case!(query, sort, asset_category::name);
                 }
             }
         } else {
-            query = query.order(asset_category_dsl::id.asc())
+            query = query.order(asset_category::id.asc())
         }
 
         let final_query = query
@@ -117,14 +114,14 @@ fn to_domain(asset_category_row: AssetCategoryRow) -> AssetCategoryRow {
 type BoxedAssetCategoryQuery = IntoBoxed<'static, asset_category::table, DBType>;
 
 fn create_filtered_query(filter: Option<AssetCategoryFilter>) -> BoxedAssetCategoryQuery {
-    let mut query = asset_category_dsl::asset_category.into_boxed();
+    let mut query = asset_category::table.into_boxed();
 
     if let Some(f) = filter {
         let AssetCategoryFilter { id, name, class_id } = f;
 
-        apply_equal_filter!(query, id, asset_category_dsl::id);
-        apply_string_filter!(query, name, asset_category_dsl::name);
-        apply_equal_filter!(query, class_id, asset_category_dsl::asset_class_id);
+        apply_equal_filter!(query, id, asset_category::id);
+        apply_string_filter!(query, name, asset_category::name);
+        apply_equal_filter!(query, class_id, asset_category::asset_class_id);
     }
     query
 }

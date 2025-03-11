@@ -51,6 +51,7 @@ export const ResponseRequisitionListView: FC = () => {
     },
     filters: [
       { key: 'comment' },
+      { key: 'otherPartyName' },
       {
         key: 'status',
         condition: 'equalTo',

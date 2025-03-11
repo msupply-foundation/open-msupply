@@ -280,6 +280,7 @@ export const CreateAssetModal = ({
                     });
                   }}
                   value={draft.typeId}
+                  disabled={!draft.categoryId}
                 />
               }
             />

@@ -1,7 +1,7 @@
 use actix_web::web;
 
 mod label;
-use label::print_label_qr;
+use label::{print_label_prescription, print_label_qr};
 
 use self::label::test_printer;
 
@@ -11,6 +11,10 @@ pub fn config_print(cfg: &mut web::ServiceConfig) {
     cfg.route(
         &format!("{}/label-qr", URL_PATH),
         web::post().to(print_label_qr),
+    );
+    cfg.route(
+        &format!("{}/label-prescription", URL_PATH),
+        web::post().to(print_label_prescription),
     );
     cfg.route(
         &format!("{}/label-test", URL_PATH),

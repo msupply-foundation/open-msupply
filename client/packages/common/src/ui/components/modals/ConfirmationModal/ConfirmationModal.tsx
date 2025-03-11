@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Typography } from '@mui/material';
 import { BasicModal } from '../BasicModal';
-import { AlertIcon, HelpIcon, InfoIcon } from '@common/icons';
+import { AlertIcon, CheckIcon, HelpIcon, InfoIcon } from '@common/icons';
 import { DialogButton, LoadingButton } from '../../buttons';
 import { Alert } from '@common/components';
 import { useTranslation, Grid } from '@openmsupply-client/common';
@@ -17,6 +17,7 @@ interface ConfirmationModalProps {
   info?: string | undefined;
   iconType?: 'alert' | 'info' | 'help';
   buttonLabel?: string | undefined;
+  cancelButtonLabel?: string | undefined;
 }
 
 const iconLookup = {
@@ -36,6 +37,7 @@ export const ConfirmationModal = ({
   onCancel,
   iconType = 'alert',
   buttonLabel,
+  cancelButtonLabel,
 }: ConfirmationModalProps) => {
   const [loading, setLoading] = useState(false);
   const Icon = iconLookup[iconType];
@@ -74,6 +76,7 @@ export const ConfirmationModal = ({
           <Grid>
             <DialogButton
               variant="cancel"
+              customLabel={cancelButtonLabel}
               disabled={loading}
               onClick={onCancel}
             />
@@ -82,6 +85,7 @@ export const ConfirmationModal = ({
             <LoadingButton
               autoFocus
               color="secondary"
+              startIcon={<CheckIcon />}
               isLoading={loading}
               onClick={async () => {
                 const result = onConfirm && onConfirm();
@@ -90,7 +94,6 @@ export const ConfirmationModal = ({
                   await result;
                   setLoading(false);
                 }
-                onCancel();
               }}
               label={buttonLabel ? buttonLabel : t('button.ok')}
             />

@@ -2,6 +2,7 @@ use crate::activity_log::activity_log_entry;
 use crate::invoice::query::get_invoice;
 use crate::service_provider::ServiceContext;
 use crate::WithDBError;
+use chrono::NaiveDateTime;
 use repository::{ActivityLogType, Invoice};
 use repository::{InvoiceRowRepository, RepositoryError};
 
@@ -15,6 +16,10 @@ pub struct InsertPrescription {
     pub id: String,
     pub patient_id: String,
     pub diagnosis_id: Option<String>,
+    pub program_id: Option<String>,
+    pub their_reference: Option<String>,
+    pub clinician_id: Option<String>,
+    pub prescription_date: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, PartialEq)]

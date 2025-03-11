@@ -5,6 +5,7 @@ use graphql_core::{
     generic_filters::EqualFilterStringInput,
     loader::{
         IndicatorValueLoader, IndicatorValueLoaderInput, IndicatorValuePayload, ProgramByIdLoader,
+        RequisitionIndicatorInfoLoader, RequisitionIndicatorInfoLoaderInput,
     },
     ContextExt,
 };
@@ -14,7 +15,9 @@ use repository::{
 };
 use service::requisition::program_indicator::query::{IndicatorLine, ProgramIndicator};
 
-use super::program_node::ProgramNode;
+use super::{
+    program_node::ProgramNode, requisition_indicator_info::CustomerIndicatorInformationNode,
+};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -123,6 +126,27 @@ impl IndicatorLineNode {
         IndicatorLineRowNode::from_domain(self.line.line.clone())
     }
 
+    pub async fn customer_indicator_info(
+        &self,
+        ctx: &Context<'_>,
+        period_id: String,
+        store_id: String,
+    ) -> Result<Vec<CustomerIndicatorInformationNode>, Error> {
+        let loader = ctx.get_loader::<DataLoader<RequisitionIndicatorInfoLoader>>();
+
+        let result = loader
+            .load_one(RequisitionIndicatorInfoLoaderInput::new(
+                &self.line.line.id,
+                &store_id,
+                period_id,
+            ))
+            .await?;
+
+        Ok(result
+            .map(CustomerIndicatorInformationNode::from_vec)
+            .unwrap_or_default())
+    }
+
     pub async fn columns(&self) -> Vec<IndicatorColumnNode> {
         self.line
             .columns
@@ -180,6 +204,10 @@ pub struct IndicatorColumnNode {
 impl IndicatorColumnNode {
     pub async fn name(&self) -> &str {
         &self.column.header
+    }
+
+    pub async fn id(&self) -> &str {
+        &self.column.id
     }
 
     pub async fn value_type(&self) -> Option<IndicatorValueTypeNode> {

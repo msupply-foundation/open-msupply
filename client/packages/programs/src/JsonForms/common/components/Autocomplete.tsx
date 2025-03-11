@@ -4,6 +4,8 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   Autocomplete as AutocompleteCommon,
   DetailInputWithLabelRow,
+  LocaleKey,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
@@ -46,20 +48,29 @@ const UIComponent = (props: ControlProps) => {
     props.uischema.options
   );
 
-  const [localData, setLocalData] = useState<DisplayOption | undefined>();
+  const t = useTranslation();
+  const [localData, setLocalData] = useState<DisplayOption | null>(null);
 
   const options: DisplayOption[] = useMemo(
     () => getDisplayOptions(schemaOptions),
     [schemaOptions]
   );
+
+  const clearable = !props.required;
+
   useEffect(() => {
+    if (!data && clearable) {
+      setLocalData(null);
+      return;
+    }
+
     const matchingOption = options.find(option => option.value === data);
     if (matchingOption) {
       setLocalData(matchingOption);
     } else if (schemaOptions?.freeText) {
       setLocalData({ value: data, label: data });
     }
-  }, [data, options, schemaOptions]);
+  }, [data, options, schemaOptions, clearable]);
 
   if (!props.visible) {
     return null;
@@ -92,7 +103,7 @@ const UIComponent = (props: ControlProps) => {
   return (
     <DetailInputWithLabelRow
       sx={DefaultFormRowSx}
-      label={label}
+      label={t(label as LocaleKey)}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}
       Input={
@@ -102,12 +113,12 @@ const UIComponent = (props: ControlProps) => {
             flexBasis: '100%',
           }}
           options={options}
-          value={localData ?? { value: '', label: '' }}
+          value={localData}
           // some type problem here, freeSolo seems to have type `undefined`
           freeSolo={schemaOptions?.freeText as undefined}
           onChange={onChange}
           onInputChange={onInputChange}
-          clearable={!props.config?.required}
+          clearable={clearable}
           inputProps={{
             error: !!zErrors || !!errors,
             helperText: zErrors ?? errors,

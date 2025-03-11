@@ -19,7 +19,9 @@ import {
   TextArea,
   useAuthContext,
   useNavigate,
+  usePluginProvider,
   useToggle,
+  useWindowDimensions,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { Footer } from './Footer';
@@ -48,6 +50,7 @@ interface RequestLineEditProps {
   requisitionNumber?: number;
   requisitionId: string;
   insert: (patch: InsertRequestRequisitionLineInput) => void;
+  scrollIntoView: () => void;
 }
 
 export const RequestLineEdit = ({
@@ -66,23 +69,30 @@ export const RequestLineEdit = ({
   requisitionNumber,
   requisitionId,
   insert,
+  scrollIntoView,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const { plugins } = usePluginProvider();
   const { isOn, toggle } = useToggle();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const { store } = useAuthContext();
   const useConsumptionData =
     store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
   const isNew = !draft?.id;
-
-  const extraFields = store?.preferences?.extraFieldsInRequisition;
   const showItemInformation =
-    useConsumptionData && extraFields && !!draft?.itemInformation && isProgram;
+    useConsumptionData &&
+    !!draft?.itemInformation &&
+    isProgram &&
+    store?.preferences?.extraFieldsInRequisition;
   const itemInformationSorted = draft?.itemInformation
     ?.sort((a, b) => a.name.name.localeCompare(b.name.name))
     .sort((a, b) => b.amcInUnits - a.amcInUnits)
     .sort((a, b) => b.stockInUnits - a.stockInUnits);
+
+  const line = lines.find(line => line.id === draft?.id);
+  const { width } = useWindowDimensions();
+
   return (
     <Box display="flex" flexDirection="column" padding={2}>
       <Box display="flex" justifyContent="space-between">
@@ -96,7 +106,9 @@ export const RequestLineEdit = ({
                     requisitionId: requisitionId,
                     itemId: newItem.id,
                   });
-                  navigate(buildItemEditRoute(requisitionNumber, newItem.id));
+                  navigate(buildItemEditRoute(requisitionNumber, newItem.id), {
+                    replace: true,
+                  });
                 }
               }}
               openOnFocus={true}
@@ -115,14 +127,13 @@ export const RequestLineEdit = ({
                     width={INPUT_WIDTH}
                     value={draft?.itemStats.availableStockOnHand}
                     disabled
-                    autoFocus
                   />
                 }
                 labelWidth={LABEL_WIDTH}
-                label={t('label.stock-on-hand')}
+                label={t('label.our-soh')}
                 sx={{ marginBottom: 1 }}
               />
-              {isProgram && extraFields && (
+              {isProgram && useConsumptionData && (
                 <>
                   <InputWithLabelRow
                     Input={
@@ -214,7 +225,11 @@ export const RequestLineEdit = ({
                 label={t('label.amc')}
                 sx={{ marginBottom: 1 }}
               />
-              {isProgram && extraFields && (
+              {line &&
+                plugins.requestRequisitionColumn?.editViewFields?.map(
+                  (Field, index) => <Field key={index} line={line} />
+                )}
+              {isProgram && useConsumptionData && (
                 <InputWithLabelRow
                   Input={
                     <NumericTextInput
@@ -259,16 +274,17 @@ export const RequestLineEdit = ({
                   Input={
                     <NumericTextInput
                       width={INPUT_WIDTH}
-                      value={draft?.requestedQuantity}
+                      value={Math.ceil(draft?.requestedQuantity)}
                       disabled={isPacks}
                       onChange={value => {
-                        if (draft?.suggestedQuantity === value) {
+                        const newValue = isNaN(Number(value)) ? 0 : value;
+                        if (draft?.suggestedQuantity === newValue) {
                           update({
-                            requestedQuantity: value,
+                            requestedQuantity: newValue,
                             reason: null,
                           });
                         } else {
-                          update({ requestedQuantity: value });
+                          update({ requestedQuantity: newValue });
                         }
                       }}
                       onBlur={save}
@@ -311,7 +327,6 @@ export const RequestLineEdit = ({
                   <InputWithLabelRow
                     Input={
                       <NumericTextInput
-                        autoFocus
                         disabled={!isPacks}
                         value={NumUtils.round(
                           (draft?.requestedQuantity ?? 0) /
@@ -320,12 +335,19 @@ export const RequestLineEdit = ({
                         )}
                         decimalLimit={2}
                         width={100}
-                        onChange={quantity => {
-                          update({
-                            requestedQuantity:
-                              (quantity ?? 0) * (draft?.defaultPackSize ?? 0),
-                          });
+                        onChange={value => {
+                          const newValue =
+                            (value ?? 0) * (draft?.defaultPackSize ?? 0);
+                          if (draft?.suggestedQuantity === newValue) {
+                            update({
+                              requestedQuantity: newValue,
+                              reason: null,
+                            });
+                          } else {
+                            update({ requestedQuantity: newValue });
+                          }
                         }}
+                        onBlur={save}
                       />
                     }
                     labelWidth={LABEL_WIDTH}
@@ -352,7 +374,7 @@ export const RequestLineEdit = ({
                 Input={
                   <NumericTextInput
                     width={INPUT_WIDTH}
-                    value={draft?.suggestedQuantity}
+                    value={NumUtils.round(draft?.suggestedQuantity, 2)}
                     disabled
                   />
                 }
@@ -360,7 +382,7 @@ export const RequestLineEdit = ({
                 label={t('label.suggested-quantity')}
                 sx={{ marginBottom: 1 }}
               />
-              {isProgram && extraFields && (
+              {isProgram && useConsumptionData && (
                 <InputWithLabelRow
                   Input={
                     <ReasonOptionsSearchInput
@@ -398,7 +420,7 @@ export const RequestLineEdit = ({
                   />
                 }
                 sx={{ width: 275 }}
-                labelWidth={'75px'}
+                labelWidth={LABEL_WIDTH}
                 label={t('label.comment')}
               />
             </Box>
@@ -406,7 +428,7 @@ export const RequestLineEdit = ({
         )}
       </Box>
       {showItemInformation && (
-        <Box paddingTop={1} maxHeight={200} width="100%" display="flex">
+        <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
           <ItemInformationView
             itemInformation={itemInformationSorted}
             storeNameId={store?.nameId}
@@ -420,6 +442,7 @@ export const RequestLineEdit = ({
           hasPrevious={hasPrevious}
           previous={previous}
           requisitionNumber={draft?.requisitionNumber}
+          scrollIntoView={scrollIntoView}
         />
       </Box>
     </Box>

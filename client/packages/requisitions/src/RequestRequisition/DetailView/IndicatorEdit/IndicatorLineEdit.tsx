@@ -7,14 +7,19 @@ import {
   IndicatorValueTypeNode,
   InputWithLabelRow,
   NumericTextInput,
+  useAuthContext,
   useNotification,
   useTranslation,
+  useWindowDimensions,
 } from '@openmsupply-client/common';
 import {
   IndicatorLineRowFragment,
   IndicatorLineWithColumnsFragment,
 } from '../../api';
 import { useDraftIndicatorValue } from './hooks';
+import { CustomerIndicatorInfoView } from './CustomerIndicatorInfo';
+import { indicatorColumnNameToLocal } from '../../../utils';
+
 interface IndicatorLineEditProps {
   requisitionNumber: number;
   hasNext: boolean;
@@ -23,6 +28,7 @@ interface IndicatorLineEditProps {
   previous: IndicatorLineRowFragment | null;
   currentLine?: IndicatorLineWithColumnsFragment | null;
   disabled: boolean;
+  scrollIntoView: () => void;
 }
 
 const INPUT_WIDTH = 185;
@@ -90,7 +96,7 @@ const InputWithLabel = ({
     <InputWithLabelRow
       Input={inputComponent}
       labelWidth={LABEL_WIDTH}
-      label={data.name}
+      label={indicatorColumnNameToLocal(data.name, t)}
       sx={{ marginBottom: 1 }}
     />
   );
@@ -104,15 +110,23 @@ export const IndicatorLineEdit = ({
   previous,
   currentLine,
   disabled,
+  scrollIntoView,
 }: IndicatorLineEditProps) => {
-  const columns = currentLine?.columns
-    .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
-    .sort((a, b) => a.columnNumber - b.columnNumber);
+  const columns =
+    currentLine?.columns
+      .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
+      .sort((a, b) => a.columnNumber - b.columnNumber) || [];
+  const { store } = useAuthContext();
+  const showInfo =
+    store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders &&
+    store?.preferences?.extraFieldsInRequisition;
+  !!currentLine?.customerIndicatorInfo;
+  const { width } = useWindowDimensions();
 
   return (
     <>
       <Box display="flex" flexDirection="column">
-        {columns?.map((c, i) => (
+        {columns.map((c, i) => (
           <InputWithLabel
             key={c.value?.id}
             data={c}
@@ -121,6 +135,14 @@ export const IndicatorLineEdit = ({
           />
         ))}
       </Box>
+      {showInfo && (
+        <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
+          <CustomerIndicatorInfoView
+            columns={columns}
+            customerInfos={currentLine?.customerIndicatorInfo}
+          />
+        </Box>
+      )}
       <Box>
         <Footer
           hasNext={hasNext}
@@ -128,6 +150,7 @@ export const IndicatorLineEdit = ({
           hasPrevious={hasPrevious}
           previous={previous}
           requisitionNumber={requisitionNumber}
+          scrollIntoView={scrollIntoView}
         />
       </Box>
     </>

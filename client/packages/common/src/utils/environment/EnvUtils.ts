@@ -18,6 +18,8 @@ const mapRoute = (route: string): RouteMapping => {
   switch (true) {
     case inRoute(AppRoute.Dashboard):
       return { title: 'dashboard', docs: '/getting_started/dashboard/' };
+    case inRoute(AppRoute.Reports):
+      return { title: 'reports', docs: '/getting_started/report/' };
     case inRoute(AppRoute.OutboundShipment):
       return {
         title: 'outbound-shipments',
@@ -69,7 +71,7 @@ const mapRoute = (route: string): RouteMapping => {
     case inRoute(AppRoute.Patients):
       return { title: 'patients', docs: '/dispensary/patients/' };
     case inRoute(AppRoute.Prescription):
-      return { title: 'prescription', docs: '/dispensary/prescriptions/' };
+      return { title: 'prescriptions', docs: '/dispensary/prescriptions/' };
     case inRoute(AppRoute.Encounter):
       return {
         title: 'encounter',
@@ -113,7 +115,29 @@ const getPlatform = () => {
   }
 };
 
+const getOS = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  if (/win/i.test(userAgent)) {
+    return 'Windows';
+  }
+  if (/mac/i.test(userAgent)) {
+    return 'Mac OS';
+  }
+  if (/iphone|ipad|ipod/i.test(userAgent)) {
+    return 'iOS';
+  }
+  if (/android/i.test(userAgent)) {
+    return 'Android';
+  }
+  if (/linux/i.test(userAgent)) {
+    return 'Linux';
+  }
+  // good to have a default
+  return 'Windows';
+};
+
 const platform = getPlatform();
+const os = getOS();
 
 const isTouchScreen = 'ontouchstart' in document.documentElement;
 
@@ -123,6 +147,7 @@ export const EnvUtils = {
   isProduction: (): boolean => process.env['NODE_ENV'] === 'production',
   isTouchScreen,
   mapRoute,
+  os,
   platform,
   printFormat: PrintFormat.Html, // platform === Platform.Android ? PrintFormat.Html : PrintFormat.Pdf,
 };

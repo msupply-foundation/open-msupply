@@ -11,6 +11,7 @@ export * from './ReasonOption';
 export * from './Report';
 export * from './InventoryAdjustmentReason';
 export * from './Patient';
+export * from './Program';
 export * from './Encounter';
 export * from './Clinician';
 export * from './ContactTrace';
@@ -18,6 +19,7 @@ export * from './Log';
 export * from './ReturnReason';
 export * from './Currency';
 export * from './IndicatorsDemographics';
+export * from './RequestRequisitionLine';
 export {
   getInvoiceLocalisationKey,
   processProperties,

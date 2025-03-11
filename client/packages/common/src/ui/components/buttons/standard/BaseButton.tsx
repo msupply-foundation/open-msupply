@@ -23,6 +23,7 @@ export const StyledBaseButton = styled(MuiButton)(({
   color,
   variant,
   style,
+  disabled,
 }) => {
   const getHoverBgColor = () =>
     variant === 'contained'
@@ -48,11 +49,14 @@ export const StyledBaseButton = styled(MuiButton)(({
     '&.MuiButton-outlined': {
       backgroundColor: 'white',
       color:
-        color === 'primary'
+        color === 'primary' && !disabled
           ? theme.mixins.button?.textColor
-          : translateColor(theme, color),
+          : undefined,
       '& .MuiButton-startIcon': {
-        color: color === 'primary' ? translateColor(theme, color) : undefined,
+        color:
+          color === 'primary' && !disabled
+            ? translateColor(theme, color)
+            : undefined,
       },
     },
     border: 'none',

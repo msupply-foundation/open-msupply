@@ -120,7 +120,7 @@ pub fn get_requisition_item_information(
 
     let mut periods_for_schedule = PeriodRepository::new(connection).query_by_filter(
         store_id.to_string(),
-        program_id.to_string(),
+        None,
         PeriodFilter::new().period_schedule_id(EqualFilter::equal_to(&period.period_schedule_id)),
     )?;
     let look_back_date = period.end_date.checked_sub_signed(chrono::Duration::days(
@@ -346,7 +346,7 @@ fn get_store_information(
         id: store_name.id.clone(),
         amc_in_units: area_amc,
         stock_in_units: ledger.map_or(0.0, |l| l.balance),
-        adjustments_in_units: additions_in_units + losses_in_units + adjustments_in_units,
+        adjustments_in_units: additions_in_units - losses_in_units + adjustments_in_units,
         outgoing_units: losses_in_units,
         date_range: end_date.and_hms_opt(0, 0, 0),
     })

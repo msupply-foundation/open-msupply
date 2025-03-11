@@ -1,9 +1,4 @@
-use super::{
-    demographic_projection_row::{
-        demographic_projection, demographic_projection::dsl as demographic_projection_dsl,
-    },
-    DBType, StorageConnection,
-};
+use super::{demographic_projection_row::demographic_projection, DBType, StorageConnection};
 use diesel::prelude::*;
 
 use crate::{
@@ -66,11 +61,11 @@ impl<'a> DemographicProjectionRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 DemographicProjectionSortField::Id => {
-                    apply_sort_no_case!(query, sort, demographic_projection_dsl::id)
+                    apply_sort_no_case!(query, sort, demographic_projection::id)
                 }
             }
         } else {
-            query = query.order(demographic_projection_dsl::id.asc())
+            query = query.order(demographic_projection::id.asc())
         }
         let final_query = query
             .offset(pagination.offset as i64)
@@ -89,12 +84,8 @@ fn create_filtered_query(filter: Option<DemographicProjectionFilter>) -> BoxedLo
     let mut query = demographic_projection::table.into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, demographic_projection_dsl::id);
-        apply_equal_filter!(
-            query,
-            filter.base_year,
-            demographic_projection_dsl::base_year
-        );
+        apply_equal_filter!(query, filter.id, demographic_projection::id);
+        apply_equal_filter!(query, filter.base_year, demographic_projection::base_year);
     }
     query
 }

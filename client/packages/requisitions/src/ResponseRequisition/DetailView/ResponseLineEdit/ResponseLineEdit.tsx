@@ -45,6 +45,7 @@ interface ResponseLineEditProps {
   requisitionNumber?: number;
   requisitionId: string;
   insert: (patch: InsertResponseRequisitionLineInput) => void;
+  scrollIntoView: () => void;
 }
 
 export const ResponseLineEdit = ({
@@ -61,6 +62,7 @@ export const ResponseLineEdit = ({
   requisitionNumber,
   requisitionId,
   insert,
+  scrollIntoView,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
@@ -99,7 +101,9 @@ export const ResponseLineEdit = ({
                     requisitionId: requisitionId,
                     itemId: newItem.id,
                   });
-                  navigate(buildItemEditRoute(requisitionNumber, newItem.id));
+                  navigate(buildItemEditRoute(requisitionNumber, newItem.id), {
+                    replace: true,
+                  });
                 }
               }}
               openOnFocus={true}
@@ -112,6 +116,18 @@ export const ResponseLineEdit = ({
           <>
             <Box paddingLeft={4} paddingRight={7}>
               {/* Left column content */}
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    width={INPUT_WIDTH}
+                    value={data?.responseStoreStats.stockOnHand}
+                    disabled={true}
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                label={t('label.our-soh')}
+                sx={{ marginBottom: 1 }}
+              />
               {!isProgram ? (
                 <InputWithLabelRow
                   Input={
@@ -127,7 +143,7 @@ export const ResponseLineEdit = ({
                     />
                   }
                   labelWidth={LABEL_WIDTH}
-                  label={t('label.stock-on-hand')}
+                  label={t('label.customer-soh')}
                   sx={{ marginBottom: 1 }}
                 />
               ) : (
@@ -489,7 +505,7 @@ export const ResponseLineEdit = ({
                   />
                 }
                 sx={{ width: 275 }}
-                labelWidth={'75px'}
+                labelWidth={LABEL_WIDTH}
                 label={t('label.comment')}
               />
             </Box>
@@ -503,6 +519,7 @@ export const ResponseLineEdit = ({
           hasPrevious={hasPrevious}
           previous={previous}
           requisitionNumber={draft?.requisitionNumber}
+          scrollIntoView={scrollIntoView}
         />
       </Box>
     </Box>

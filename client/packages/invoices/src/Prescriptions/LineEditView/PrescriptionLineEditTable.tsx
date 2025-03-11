@@ -5,24 +5,25 @@ import {
   DataTable,
   useTranslation,
 } from '@openmsupply-client/common';
-import { DraftStockOutLine } from '../../types';
+import { DraftPrescriptionLine } from '../../types';
 import { DraftItem } from '../..';
 import { usePrescriptionLineEditRows } from './hooks';
 import { usePrescriptionLineEditColumns } from './columns';
 
 export interface PrescriptionLineEditTableProps {
   onChange: (key: string, value: number) => void;
-  rows: DraftStockOutLine[];
+  rows: DraftPrescriptionLine[];
   item: DraftItem | null;
   allocatedUnits: number;
   batch?: string;
+  isDisabled: boolean;
 }
 
 export const PrescriptionLineEditTable: React.FC<
   PrescriptionLineEditTableProps
-> = ({ onChange, rows, item }) => {
+> = ({ onChange, rows, item, isDisabled }) => {
   const t = useTranslation();
-  const { orderedRows } = usePrescriptionLineEditRows(rows);
+  const { orderedRows } = usePrescriptionLineEditRows(rows, isDisabled);
   const onEditStockLine = (key: string, value: number) => {
     const num = Number.isNaN(value) ? 0 : value;
     onChange(key, num);
@@ -38,12 +39,18 @@ export const PrescriptionLineEditTable: React.FC<
     <Box style={{ width: '100%' }}>
       <Divider margin={10} />
       <Box
-        style={{
-          maxHeight: 300,
+        sx={{
+          maxHeight: '300px',
           display: 'flex',
           flexDirection: 'column',
           overflowX: 'hidden',
           overflowY: 'auto',
+          '& .MuiTableRow-root': {
+            backgroundColor: 'background.toolbar',
+          },
+          '& .MuiTableRow-root:nth-of-type(even)': {
+            backgroundColor: 'background.row',
+          },
         }}
       >
         {!!orderedRows.length && (

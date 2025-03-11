@@ -1,20 +1,3 @@
-fragment ItemWithStats on ItemNode {
-  id
-  name
-  code
-  unitName
-  defaultPackSize
-  availableStockOnHand(storeId: $storeId)
-  stats(storeId: $storeId) {
-    averageMonthlyConsumption
-    availableStockOnHand
-    availableMonthsOfStockOnHand
-    totalConsumption
-    stockOnHand
-    monthsOfStockOnHand
-  }
-}
-
 fragment RequestRow on RequisitionNode {
   colour
   comment
@@ -43,57 +26,6 @@ fragment RequestRow on RequisitionNode {
     id
   }
   orderType
-}
-
-fragment itemInformation on RequisitionItemInformationNode {
-  id
-  adjustmentsInUnits
-  amcInUnits
-  name(storeId: $storeId) {
-    id
-    name
-  }
-  outgoingUnits
-  dateRange
-  stockInUnits
-}
-
-fragment RequestLine on RequisitionLineNode {
-  id
-  itemId
-  requestedQuantity
-  suggestedQuantity
-  comment
-  itemName
-  requisitionNumber
-  initialStockOnHandUnits
-  incomingUnits
-  outgoingUnits
-  lossInUnits
-  additionInUnits
-  expiringUnits
-  daysOutOfStock
-
-  itemStats {
-    __typename
-    availableStockOnHand
-    availableMonthsOfStockOnHand
-    averageMonthlyConsumption
-  }
-  linkedRequisitionLine {
-    approvedQuantity
-    approvalComment
-  }
-  itemInformation {
-    __typename
-    ...itemInformation
-  }
-  item {
-    ...ItemWithStats
-  }
-  reason {
-    ...ReasonOptionRow
-  }
 }
 
 fragment Request on RequisitionNode {
@@ -172,6 +104,7 @@ fragment Request on RequisitionNode {
     endDate
   }
   orderType
+  isEmergency
 }
 
 fragment ConsumptionHistory on ConsumptionHistoryNode {
@@ -461,6 +394,16 @@ mutation insertProgramRequest(
       id
       requisitionNumber
     }
+    ... on InsertProgramRequestRequisitionError {
+      __typename
+      error {
+        description
+        ... on MaxOrdersReachedForPeriod {
+          __typename
+          description
+        }
+      }
+    }
   }
 }
 
@@ -566,6 +509,7 @@ fragment OrderTypeRow on ProgramRequisitionOrderTypeNode {
 fragment SupplierProgramSettings on SupplierProgramRequisitionSettingNode {
   programName
   programId
+  tagName
   suppliers {
     ...NameRow
   }
@@ -595,6 +539,7 @@ fragment IndicatorLineRow on IndicatorLineRowNode {
   valueType
 }
 fragment IndicatorColumn on IndicatorColumnNode {
+  id
   columnNumber
   name
   valueType
@@ -610,6 +555,27 @@ fragment IndicatorValue on IndicatorValueNode {
   id
   value
 }
+fragment CustomerIndicatorInfo on CustomerIndicatorInformationNode {
+  __typename
+  datetime
+  id
+  customer(storeId: $storeId) {
+    __typename
+    id
+    name
+  }
+  indicatorInformation {
+    __typename
+    columnId
+    value
+  }
+}
+
+fragment CustomerColumn on IndicatorColumnNode {
+  __typename
+  columnNumber
+  name
+}
 
 fragment IndicatorLineWithColumns on IndicatorLineNode {
   columns {
@@ -617,6 +583,9 @@ fragment IndicatorLineWithColumns on IndicatorLineNode {
   }
   line {
     ...IndicatorLineRow
+  }
+  customerIndicatorInfo(periodId: $periodId, storeId: $storeId) {
+    ...CustomerIndicatorInfo
   }
 }
 

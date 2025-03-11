@@ -1,7 +1,7 @@
 use repository::{
     indicator_column::{IndicatorColumnFilter, IndicatorColumnRepository},
     indicator_line::{IndicatorLineFilter, IndicatorLineRepository},
-    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
+    indicator_value::{IndicatorValue, IndicatorValueFilter, IndicatorValueRepository},
     EqualFilter, IndicatorValueRow, IndicatorValueRowRepository, IndicatorValueType,
     RepositoryError, StorageConnection,
 };
@@ -45,7 +45,7 @@ pub fn update_indicator_value(
                 .ok_or(OutError::IndicatorValueDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
-    Ok(indicator_value)
+    Ok(indicator_value.indicator_value_row)
 }
 
 fn validate(
@@ -54,7 +54,8 @@ fn validate(
     store_id: String,
 ) -> Result<IndicatorValueRow, OutError> {
     let indicator_value_row = check_indicator_value_exists(connection, &input.id)?
-        .ok_or(OutError::IndicatorValueDoesNotExist)?;
+        .ok_or(OutError::IndicatorValueDoesNotExist)?
+        .indicator_value_row;
 
     if store_id != indicator_value_row.store_id {
         return Err(OutError::NotThisStoreValue);
@@ -88,7 +89,7 @@ fn validate(
 fn check_indicator_value_exists(
     connection: &StorageConnection,
     id: &str,
-) -> Result<Option<IndicatorValueRow>, RepositoryError> {
+) -> Result<Option<IndicatorValue>, RepositoryError> {
     IndicatorValueRepository::new(connection)
         .query_one(IndicatorValueFilter::new().id(EqualFilter::equal_to(id)))
 }

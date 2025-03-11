@@ -133,3 +133,9 @@ pub fn generate_batches_total_number_of_packs_update(
     }
     Ok(result)
 }
+
+pub(crate) fn get_invoice_status_datetime(invoice: &InvoiceRow) -> chrono::NaiveDateTime {
+    invoice
+        .backdated_datetime
+        .unwrap_or_else(|| chrono::Utc::now().naive_utc())
+}

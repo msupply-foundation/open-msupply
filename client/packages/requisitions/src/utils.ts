@@ -1,7 +1,4 @@
-import {
-  RequestLineFragment,
-  RequestRowFragment,
-} from './RequestRequisition/api/operations.generated';
+import { RequestRowFragment } from './RequestRequisition/api/operations.generated';
 import {
   RequisitionNodeStatus,
   LocaleKey,
@@ -12,6 +9,7 @@ import {
   noOtherVariants,
 } from '@openmsupply-client/common';
 import { ResponseRowFragment } from './ResponseRequisition/api';
+import { RequestLineFragment } from './RequestRequisition/api';
 
 export const requestStatuses = [
   RequisitionNodeStatus.Draft,
@@ -147,5 +145,24 @@ export const getApprovalStatusKey = (
       return 'approval-status.pending';
     default:
       return noOtherVariants(approvalStatus);
+  }
+};
+
+enum IndicatorColumnName {
+  Comment = 'Comment',
+  Value = 'Value',
+}
+
+export const indicatorColumnNameToLocal = (
+  columnName: string,
+  t: TypedTFunction<LocaleKey>
+) => {
+  switch (columnName) {
+    case IndicatorColumnName.Comment:
+      return t('label.comment');
+    case IndicatorColumnName.Value:
+      return t('label.value');
+    default:
+      return columnName;
   }
 };

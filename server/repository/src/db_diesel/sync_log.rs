@@ -1,7 +1,4 @@
-use super::{
-    sync_log_row::{sync_log, sync_log::dsl as sync_log_dsl},
-    StorageConnection,
-};
+use super::{sync_log_row::sync_log, StorageConnection};
 
 use crate::{
     diesel_macros::{
@@ -68,16 +65,16 @@ impl<'a> SyncLogRepository<'a> {
             match sort.key {
                 SyncLogSortField::StartedDatetime => {
                     // started_datetime is not nullable
-                    apply_sort!(query, sort, sync_log_dsl::started_datetime)
+                    apply_sort!(query, sort, sync_log::started_datetime)
                 }
                 SyncLogSortField::DoneDatetime => {
                     // If nulls last on desc search and nulls first on asc search is more
                     // convenient for sync log rows datetimes that are nullable (see get_initialisation_status)
-                    apply_sort_asc_nulls_first!(query, sort, sync_log_dsl::finished_datetime)
+                    apply_sort_asc_nulls_first!(query, sort, sync_log::finished_datetime)
                 }
             }
         } else {
-            query = query.order(sync_log_dsl::started_datetime.asc())
+            query = query.order(sync_log::started_datetime.asc())
         }
 
         let final_query = query
@@ -112,14 +109,14 @@ fn create_filtered_query(filter: Option<SyncLogFilter>) -> BoxedSyncLogQuery {
             finished_datetime,
             error_message,
         } = f;
-        apply_equal_filter!(query, id, sync_log_dsl::id);
+        apply_equal_filter!(query, id, sync_log::id);
         apply_date_time_filter!(
             query,
             prepare_initial_finished_datetime,
-            sync_log_dsl::prepare_initial_finished_datetime
+            sync_log::prepare_initial_finished_datetime
         );
-        apply_date_time_filter!(query, finished_datetime, sync_log_dsl::finished_datetime);
-        apply_equal_filter!(query, error_message, sync_log_dsl::error_message);
+        apply_date_time_filter!(query, finished_datetime, sync_log::finished_datetime);
+        apply_equal_filter!(query, error_message, sync_log::error_message);
     }
 
     query

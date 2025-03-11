@@ -7,5 +7,6 @@ export {
   ListView as ResponseRequisitionListView,
   DetailView as ResponseRequisitionDetailView,
 } from './ResponseRequisition';
+export * from './RnRForms/api';
 
 export { RequisitionService } from './RequisitionService';

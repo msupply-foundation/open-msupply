@@ -21,6 +21,7 @@ import type { AutocompleteProps } from './Autocomplete';
 import { StyledPopper } from './components';
 import { ArrayUtils } from '@common/utils';
 import { RecordWithId } from '@common/types';
+import { useOpenStateWithKeyboard } from '@common/components';
 
 const LOADER_HIDE_TIMEOUT = 500;
 
@@ -70,6 +71,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const [isLoading, setIsLoading] = useState(true);
   const lastOptions = useRef<T[]>([]);
+  const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
 
   const options = useMemo(() => {
     if (!pages) {
@@ -91,18 +93,19 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
     lastOptions.current = newOptions;
 
     return newOptions;
-  }, [pages]);
+  }, [pages, value]);
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
+      {...inputProps}
       autoFocus={autoFocus}
       slotProps={{
         input: {
           ...props.InputProps,
           disableUnderline: false,
           sx: {
-            paddingLeft: 1,
+            paddingY: '4px !important',
           },
           endAdornment: (
             <>
@@ -178,6 +181,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   return (
     <MuiAutocomplete
       {...restOfAutocompleteProps}
+      {...openOverrides}
       inputValue={inputValue}
       onInputChange={onInputChange}
       disabled={disabled}
@@ -197,10 +201,9 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       onChange={onChange}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
       sx={{
-        background: theme => theme.palette.background.drawer,
-        borderRadius: 2,
         paddingTop: 0.5,
         paddingBottom: 0.5,
+        width,
       }}
       slots={{
         popper: popper,

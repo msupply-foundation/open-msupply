@@ -41,21 +41,31 @@ const PrescriptionListViewComponent: FC = () => {
     updateSortQuery,
     updatePaginationQuery,
     filter,
-    queryParams: { sortBy, page, first, offset },
+    queryParams: { page, first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
-    filters: [{ key: 'otherPartyName' }],
     initialSort: { key: 'prescriptionDatetime', dir: 'desc' },
+    filters: [
+      { key: 'otherPartyName' },
+      { key: 'theirReference' },
+      { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
+      {
+        key: 'createdOrBackdatedDatetime',
+        condition: 'between',
+      },
+      {
+        key: 'status',
+        condition: 'equalTo',
+      },
+    ],
   });
-  const navigate = useNavigate();
-  const modalController = useToggle();
-
   const listParams = {
     sortBy,
     first,
     offset,
-    filterBy: filter.filterBy,
+    filterBy,
   };
-
+  const navigate = useNavigate();
+  const modalController = useToggle();
   const {
     query: { data, isError, isLoading },
   } = usePrescriptionList(listParams);
@@ -87,6 +97,10 @@ const PrescriptionListViewComponent: FC = () => {
             : rowData.createdDatetime,
         sortable: true,
       },
+      [
+        'theirReference',
+        { description: '', maxWidth: 110 },
+      ],
       ['comment'],
     ],
     { onChangeSortBy: updateSortQuery, sortBy },

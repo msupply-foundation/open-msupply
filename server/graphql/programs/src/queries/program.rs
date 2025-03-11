@@ -5,8 +5,12 @@ use graphql_core::{
     ContextExt,
 };
 
+use graphql_types::types::{PeriodConnector, PeriodFilterInput, PeriodsResponse};
 use repository::{PaginationOption, ProgramFilter};
-use service::auth::{Resource, ResourceAccessRequest};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    program::query::get_periods,
+};
 
 use crate::types::program::{
     ProgramConnector, ProgramFilterInput, ProgramSortInput, ProgramsResponse,
@@ -22,7 +26,7 @@ pub fn programs(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryProgram,
+            resource: Resource::QueryMasterList,
             store_id: Some(store_id.clone()),
         },
     )?;
@@ -41,5 +45,36 @@ pub fn programs(
 
     Ok(ProgramsResponse::Response(ProgramConnector::from_domain(
         list_result,
+    )))
+}
+
+pub fn periods(
+    ctx: &Context<'_>,
+    store_id: String,
+    program_id: Option<String>,
+    page: Option<PaginationInput>,
+    filter: Option<PeriodFilterInput>,
+) -> Result<PeriodsResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryMasterList,
+            store_id: Some(store_id.clone()),
+        },
+    )?;
+    let service_provider = ctx.service_provider();
+    let context = service_provider.basic_context()?;
+
+    let result = get_periods(
+        &context.connection,
+        store_id,
+        program_id,
+        page.map(PaginationOption::from),
+        filter.map(|f| f.to_domain()),
+    )
+    .map_err(StandardGraphqlError::from_list_error)?;
+
+    Ok(PeriodsResponse::Response(PeriodConnector::from_domain(
+        result,
     )))
 }

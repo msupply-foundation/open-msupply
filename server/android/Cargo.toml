@@ -22,7 +22,7 @@ server = { path = "../server", default-features = false, features = [
     "android",
 ] }
 tokio = { workspace = true }
-android_logger = { version = "0.13.3" }
+android_logger = { version = "0.14.1" }
 simple-log = { workspace = true }
 
 [lints]

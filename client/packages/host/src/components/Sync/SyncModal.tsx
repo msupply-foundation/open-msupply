@@ -12,6 +12,7 @@ import {
   useAuthContext,
   useFormatDateTime,
   useNativeClient,
+  useQueryClient,
   useTranslation,
   useIsScreen,
 } from '@openmsupply-client/common';
@@ -40,6 +41,7 @@ const useHostSync = (enabled: boolean) => {
 
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!syncStatus) {
@@ -54,6 +56,7 @@ const useHostSync = (enabled: boolean) => {
       keepAwake();
     } else {
       allowSleep();
+      queryClient.invalidateQueries(); //refresh the page user is on after sync finishes
     }
   }, [syncStatus?.isSyncing]);
 
@@ -96,12 +99,15 @@ export const SyncModal = ({
     isLoading,
     onManualSync,
   } = useHostSync(open);
-  const { updateUserIsLoading, updateUser } = useAuthContext();
+  const { updateUserIsLoading, updateUser, setStore, store } = useAuthContext();
   const isMobile = useIsScreen('sm');
 
   const sync = async () => {
     await updateUser();
     await onManualSync();
+    if (!!store) {
+      await setStore(store);
+    }
   };
   const durationAsDate = new Date(
     0,
@@ -142,30 +148,28 @@ export const SyncModal = ({
             },
             padding: 2,
             paddingBottom: 6,
-            minWidth: 650
+            minWidth: 650,
           })}
           flexWrap="nowrap"
         >
           <Typography variant="h5" color="primary" sx={{ paddingBottom: 1.25 }}>
             {t('heading.synchronise-status')}
           </Typography>
-          <Typography sx={theme => ({
-            [theme.breakpoints.down('sm')]: {
-              textWrap: 'wrap',
-            },
-            paddingBottom: 2,
-            fontSize: 12,
-            maxWidth: 650
-          })}
+          <Typography
+            sx={theme => ({
+              [theme.breakpoints.down('sm')]: {
+                textWrap: 'wrap',
+              },
+              paddingBottom: 2,
+              fontSize: 12,
+              maxWidth: 650,
+            })}
           >
-            {!isMobile ?
-              t('sync-info.summary')
-                .split('\n')
-                .map(line => (
-                  <div>{line}</div>
-                )) :
-              t('sync-info.summary')
-            }
+            {!isMobile
+              ? t('sync-info.summary')
+                  .split('\n')
+                  .map((line, index) => <div key={index}>{line}</div>)
+              : t('sync-info.summary')}
           </Typography>
           <Row title={t('sync-info.number-to-push')}>
             <Typography>{numberOfRecordsInPushQueue}</Typography>
@@ -191,14 +195,14 @@ export const SyncModal = ({
               shouldShrink={false}
               autoFocus
               isLoading={isLoading || updateUserIsLoading}
-              startIcon={<RadioIcon sx={{ color: "#fff!important" }} />}
+              startIcon={<RadioIcon sx={{ color: '#fff!important' }} />}
               variant="contained"
               sx={theme => ({
                 [theme.breakpoints.down('sm')]: {
                   position: 'absolute',
                   left: 0,
                   top: 0,
-                  margin: '1em'
+                  margin: '1em',
                 },
                 color: theme.palette.common.white,
                 fontSize: '12px',
@@ -214,7 +218,9 @@ export const SyncModal = ({
           </Row>
           <ServerInfo />
         </Grid>
-        {!isMobile && <SyncProgress syncStatus={syncStatus} isOperational={true} />}
+        {!isMobile && (
+          <SyncProgress syncStatus={syncStatus} isOperational={true} />
+        )}
       </Grid>
     </BasicModal>
   );
@@ -250,9 +256,9 @@ const FormattedSyncDate = ({ date }: { date: Date | null }) => {
 
   if (!date) return UNDEFINED_STRING_VALUE;
 
-  const relativeTime = `( ${t('messages.ago', {
+  const relativeTime = `(${t('messages.ago', {
     time: localisedDistanceToNow(date),
-  })} )`;
+  })})`;
 
   return (
     <Grid display="flex" flexDirection="row" container gap={1}>
@@ -282,11 +288,11 @@ const ShowStatus = ({
           position: 'absolute',
           left: 0,
           top: 0,
-          margin: '1em'
+          margin: '1em',
         },
         fontSize: 12,
         textAlign: 'center',
-        width: '115px'
+        width: '115px',
       })}
       padding={1}
     >

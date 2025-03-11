@@ -1,7 +1,6 @@
 import { ItemLike } from './types';
 import {
   ItemRowFragment,
-  ItemRowWithStatsFragment,
   ItemStockOnHandFragment,
   ItemWithPackSizeFragment,
 } from './api';
@@ -38,19 +37,10 @@ export interface StockItemSearchInputProps
   extraFilter?: (item: ItemStockOnHandFragment) => boolean;
   includeNonVisibleWithStockOnHand?: boolean;
   itemCategoryName?: string;
-}
-
-export interface StockItemSearchInputWithStatsProps
-  extends GenericStockItemSearchInputProps {
-  onChange: (item: ItemRowWithStatsFragment | null) => void;
-  extraFilter?: (item: ItemRowWithStatsFragment) => boolean;
+  programId?: string;
 }
 
 export const ItemOption = styled('li')(({ theme }) => ({
   color: theme.palette.gray.main,
   backgroundColor: theme.palette.background.toolbar,
 }));
-
-export const itemFilterOptions = {
-  stringify: (item: ItemStockOnHandFragment) => `${item.code} ${item.name}`,
-};

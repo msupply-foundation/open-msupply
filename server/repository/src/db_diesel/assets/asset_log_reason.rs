@@ -1,7 +1,4 @@
-use super::asset_log_reason_row::{
-    asset_log_reason::{self, dsl as asset_log_reason_dsl},
-    AssetLogReasonRow,
-};
+use super::asset_log_reason_row::{asset_log_reason, AssetLogReasonRow};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
@@ -88,14 +85,14 @@ impl<'a> AssetLogReasonRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 AssetLogReasonSortField::Reason => {
-                    apply_sort_no_case!(query, sort, asset_log_reason_dsl::reason);
+                    apply_sort_no_case!(query, sort, asset_log_reason::reason);
                 }
                 AssetLogReasonSortField::AssetLogStatus => {
-                    apply_sort_no_case!(query, sort, asset_log_reason_dsl::asset_log_status);
+                    apply_sort_no_case!(query, sort, asset_log_reason::asset_log_status);
                 }
             }
         } else {
-            query = query.order(asset_log_reason_dsl::id.asc())
+            query = query.order(asset_log_reason::id.asc())
         }
 
         let final_query = query
@@ -121,7 +118,7 @@ fn to_domain(asset_log_reason_row: AssetLogReasonRow) -> AssetLogReason {
 type BoxedAssetLogReasonQuery = IntoBoxed<'static, asset_log_reason::table, DBType>;
 
 fn create_filtered_query(filter: Option<AssetLogReasonFilter>) -> BoxedAssetLogReasonQuery {
-    let mut query = asset_log_reason_dsl::asset_log_reason.into_boxed();
+    let mut query = asset_log_reason::table.into_boxed();
 
     if let Some(f) = filter {
         let AssetLogReasonFilter {
@@ -130,14 +127,10 @@ fn create_filtered_query(filter: Option<AssetLogReasonFilter>) -> BoxedAssetLogR
             reason,
         } = f;
 
-        apply_equal_filter!(query, id, asset_log_reason_dsl::id);
-        apply_equal_filter!(
-            query,
-            asset_log_status,
-            asset_log_reason_dsl::asset_log_status
-        );
+        apply_equal_filter!(query, id, asset_log_reason::id);
+        apply_equal_filter!(query, asset_log_status, asset_log_reason::asset_log_status);
 
-        apply_string_filter!(query, reason, asset_log_reason_dsl::reason);
+        apply_string_filter!(query, reason, asset_log_reason::reason);
     }
-    query.filter(asset_log_reason_dsl::deleted_datetime.is_null())
+    query.filter(asset_log_reason::deleted_datetime.is_null())
 }

@@ -27,21 +27,19 @@ table! {
 #[cfg(not(feature = "postgres"))]
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     // Update changelogs for barcodes
-    use self::barcode::dsl as barcode_dsl;
-    use self::changelog::dsl as changelog_dsl;
 
-    let barcode_ids = barcode_dsl::barcode
+    let barcode_ids = barcode::table
         .select(barcode::id)
         .load::<String>(connection.lock().connection())?;
 
     // Delete all changelogs for table barcode where record_id is not found
     // in barcode table and changelog is of upsert type
-    diesel::delete(changelog_dsl::changelog)
+    diesel::delete(changelog::table)
         .filter(
-            changelog_dsl::table_name
+            changelog::table_name
                 .eq("barcode")
-                .and(changelog_dsl::row_action.eq("UPSERT"))
-                .and(changelog_dsl::record_id.ne_all(barcode_ids)),
+                .and(changelog::row_action.eq("UPSERT"))
+                .and(changelog::record_id.ne_all(barcode_ids)),
         )
         .execute(connection.lock().connection())?;
 
@@ -68,9 +66,6 @@ async fn migration_1_01_1_barcode_changelog() {
         ..Default::default()
     })
     .await;
-
-    use barcode::dsl as barcode_dsl;
-    use changelog::dsl as changelog_dsl;
 
     sql!(
         &connection,
@@ -129,18 +124,18 @@ async fn migration_1_01_1_barcode_changelog() {
 
     // This one should remove barcode_3, as per: https://www.db-fiddle.com/f/izBry7rdXHZ2S37DNpAuZ9/1
     // this replicates upsert_one logic
-    diesel::replace_into(barcode_dsl::barcode)
+    diesel::replace_into(barcode::table)
         .values((
-            barcode_dsl::id.eq("barcode_5"),
-            barcode_dsl::gtin.eq("gtin_3"),
-            barcode_dsl::item_id.eq("item"),
+            barcode::id.eq("barcode_5"),
+            barcode::gtin.eq("gtin_3"),
+            barcode::item_id.eq("item"),
         ))
         .execute(connection.lock().connection())
         .unwrap();
 
-    let barcode_ids = barcode_dsl::barcode
-        .select(barcode_dsl::id)
-        .order_by(barcode_dsl::id.asc())
+    let barcode_ids = barcode::table
+        .select(barcode::id)
+        .order_by(barcode::id.asc())
         .load::<String>(connection.lock().connection())
         .unwrap();
 
@@ -150,11 +145,11 @@ async fn migration_1_01_1_barcode_changelog() {
     );
     // But barcode_3 would be kept in changelog
     // Check data
-    let changelog_record_ids = changelog_dsl::changelog
-        .select(changelog_dsl::record_id)
+    let changelog_record_ids = changelog::table
+        .select(changelog::record_id)
         .distinct()
-        .filter(changelog_dsl::table_name.eq("barcode"))
-        .order_by(changelog_dsl::record_id.asc())
+        .filter(changelog::table_name.eq("barcode"))
+        .order_by(changelog::record_id.asc())
         .load::<String>(connection.lock().connection())
         .unwrap();
 
@@ -174,11 +169,11 @@ async fn migration_1_01_1_barcode_changelog() {
     assert_eq!(get_database_version(&connection), version);
 
     // Check data, barcode_3 should be removed from changelog
-    let changelog_record_ids = changelog_dsl::changelog
-        .select(changelog_dsl::record_id)
+    let changelog_record_ids = changelog::table
+        .select(changelog::record_id)
         .distinct()
-        .filter(changelog_dsl::table_name.eq("barcode"))
-        .order_by(changelog_dsl::record_id.asc())
+        .filter(changelog::table_name.eq("barcode"))
+        .order_by(changelog::record_id.asc())
         .load::<String>(connection.lock().connection())
         .unwrap();
 

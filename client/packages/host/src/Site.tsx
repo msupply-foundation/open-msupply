@@ -19,8 +19,15 @@ import {
   BarcodeScannerProvider,
   DetailLoadingSkeleton,
   useIsGapsStoreOnly,
+  useBlockNavigation,
 } from '@openmsupply-client/common';
-import { AppDrawer, AppBar, Footer, NotFound, MobileNavBar } from './components';
+import {
+  AppDrawer,
+  AppBar,
+  Footer,
+  NotFound,
+  MobileNavBar,
+} from './components';
 import { CommandK } from './CommandK';
 import { AppRoute } from '@openmsupply-client/config';
 import { Settings } from './Admin/Settings';
@@ -70,6 +77,8 @@ export const Site: FC = () => {
   useEffect(() => {
     setPageTitle(pageTitle);
   }, [location, pageTitle, setPageTitle]);
+
+  useBlockNavigation();
 
   return (
     <RequireAuthentication>

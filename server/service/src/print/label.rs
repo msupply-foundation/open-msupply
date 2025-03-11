@@ -32,6 +32,9 @@ pub fn print_qr_code(
     let payload = format!(
         r#"
         ^XA
+        ^FX CI command parameters:
+        ^FX - encoding (28 = UTF-8)
+        ^CI28
         ^FO50,{}
         ^BQN,2,4
         ^FDMA,{}^FS        
@@ -39,6 +42,71 @@ pub fn print_qr_code(
         ^XZ"#,
         vertical_offset, code, formatted_message
     );
+    let printer = Jetdirect::new(settings.address, settings.port);
+    printer.send_string(payload, Mode::Print)
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrescriptionLabelData {
+    item_details: String, // usually the amount of units + the item name e.g. "10Tabs Paracetamol 500mg Tablets"
+    item_directions: String,
+    patient_details: String, // e.g patient name, possibly code etc.
+    #[allow(dead_code)] // Warnings will come in the future... this API will likely change!
+    warning: Option<String>, // Some items come with a defined warning that should be printed on all labels regardless of directions e.g. avoid sun exposure, avoid alcohol...
+    details: String, // General details to include e.g. store name, prescriber name, date/time...
+}
+
+pub fn print_prescription_label(
+    settings: LabelPrinterSettingNode,
+    label_data: Vec<PrescriptionLabelData>,
+) -> Result<String> {
+    let payload = label_data
+        .into_iter()
+        .map(|d| {
+            let PrescriptionLabelData {
+                item_details,
+                item_directions,
+                patient_details,
+                warning: _,
+                details,
+            } = d;
+            format!(
+                r#"
+                ^XA
+                ^FX CI command parameters:
+                ^FX - encoding (28 = UTF-8)
+                ^CI28
+
+                ^A0,25
+                ^FO,10
+                ^FB575,3,0,C
+                ^FD{item_details}\&^FS
+
+                ^FX Line
+                ^FO,65
+                ^GB575,2,2^FS
+
+                ^A0,25
+                ^FO,75
+                ^TB,575,125
+                ^FD{item_directions}^FS
+
+                ^FX Line
+                ^FO,210
+                ^GB575,2,2^FS
+
+                ^A0,20
+                ^FO,220
+                ^FB575,3,0,C
+                ^FD{patient_details}\&{details}\&^FS
+
+                ^XZ
+                "#
+            )
+        })
+        .collect::<Vec<String>>()
+        .join("\n");
     let printer = Jetdirect::new(settings.address, settings.port);
     printer.send_string(payload, Mode::Print)
 }
