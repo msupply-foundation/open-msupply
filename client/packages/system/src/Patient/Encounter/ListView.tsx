@@ -19,6 +19,7 @@ import {
   useEncounter,
   PatientModal,
   usePatientModalStore,
+  useProgramEnrolments,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
 
@@ -41,6 +42,12 @@ const EncounterListComponent: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation();
   const { setModal: selectModal } = usePatientModalStore();
+  const { data: enrolmentData } = useProgramEnrolments.document.list({
+    filterBy: {
+      patientId: { equalTo: patientId },
+    },
+  });
+  const disableEncounterButton = enrolmentData?.nodes?.length === 0;
 
   const columns = useEncounterListColumns({
     onChangeSortBy: updateSortQuery,
@@ -66,7 +73,11 @@ const EncounterListComponent: FC = () => {
       }}
       noDataElement={
         <NothingHere
-          onCreate={() => selectModal(PatientModal.Encounter)}
+          onCreate={
+            disableEncounterButton
+              ? undefined
+              : () => selectModal(PatientModal.Encounter)
+          }
           body={t('messages.no-encounters')}
           buttonText={t('button.add-encounter')}
         />
