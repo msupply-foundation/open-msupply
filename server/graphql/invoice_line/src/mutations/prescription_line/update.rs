@@ -24,7 +24,6 @@ pub struct UpdateInput {
     pub id: String,
     pub stock_line_id: Option<String>,
     pub number_of_packs: Option<f64>,
-    pub prescribed_quantity: Option<f64>,
     pub note: Option<String>,
 }
 
@@ -91,7 +90,6 @@ impl UpdateInput {
             id,
             stock_line_id,
             number_of_packs,
-            prescribed_quantity,
             note,
         } = self;
         ServiceInput {
@@ -99,7 +97,7 @@ impl UpdateInput {
             r#type: Some(StockOutType::Prescription),
             stock_line_id,
             number_of_packs,
-            prescribed_quantity,
+            prescribed_quantity: None,
             total_before_tax: None,
             tax: None,
             note,
