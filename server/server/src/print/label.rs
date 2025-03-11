@@ -5,7 +5,7 @@ use actix_web::{
 use repository::RepositoryError;
 use service::{
     auth_data::AuthData,
-    print::label::{host_status, print_2d_code, print_prescription_label, PrescriptionLabelData},
+    print::label::{host_status, print_data_matrix_barcode, print_prescription_label, PrescriptionLabelData},
     service_provider::ServiceProvider,
     settings::LabelPrinterSettingNode,
 };
@@ -41,7 +41,7 @@ pub async fn print_label_qr(
         }
     };
 
-    match print_2d_code(settings, data.code.clone(), data.message.clone()) {
+    match print_data_matrix_barcode(settings, data.code.clone(), data.message.clone()) {
         Ok(_) => HttpResponse::Ok().body("QR label printed"),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }

@@ -6,7 +6,7 @@ use super::jetdirect::{Jetdirect, Mode};
 
 const LINE_HEIGHT_IN_DOTS: i32 = 50;
 
-pub fn print_2d_code(
+pub fn print_data_matrix_barcode(
     settings: LabelPrinterSettingNode,
     code: String,
     message: Option<String>,
