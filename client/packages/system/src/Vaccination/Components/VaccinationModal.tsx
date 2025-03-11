@@ -3,6 +3,7 @@ import {
   BasicSpinner,
   BasicTextInput,
   Box,
+  ChevronDownIcon,
   Container,
   DatePicker,
   DialogButton,
@@ -28,7 +29,6 @@ import {
   VaccinationDetailFragment,
 } from '../api/operations.generated';
 import { AppRoute } from '@openmsupply-client/config';
-import { ArrowRightIcon } from '@mui/x-date-pickers';
 import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
 import { getSwitchReason } from './getSwitchReason';
@@ -344,7 +344,11 @@ const GivenInfoBox = ({
                 .build()}
             >
               {t('button.view-prescription')}
-              <ArrowRightIcon />
+              <ChevronDownIcon
+                sx={{
+                  transform: 'rotate(-90deg)',
+                }}
+              />
             </Link>
           )}
         </Box>
