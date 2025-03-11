@@ -1,8 +1,8 @@
 on:
   pull_request:
-    types: [opened, reopened, edited]
+    types: [opened, reopened, edited, synchronize]
     paths:
-      - "client/**/*"
+      - "client/**"
   workflow_dispatch:
 
 name: Client Code Checks

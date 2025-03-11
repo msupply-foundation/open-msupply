@@ -178,7 +178,6 @@ export const PrescriptionLineEditView = () => {
         Right={
           <>
             <PrescriptionLineEdit
-              key="change"
               item={currentItem ?? null}
               draftLines={allDraftLines[itemId] ?? []}
               updateLines={updateAllLines}
