@@ -37,7 +37,7 @@ pub fn print_2d_code(
         ^CI28
         ^FO50,{}
         ^BXN,6,200
-        ^FDMA,{}^FS        
+        ^FD{}^FS        
         {}
         ^XZ"#,
         vertical_offset, code, formatted_message
