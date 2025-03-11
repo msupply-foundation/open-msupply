@@ -57,19 +57,18 @@ export const useDraftSupplierReturnLines = ({
       }
     );
 
-    if (!returnId) {
+    return !returnId ?
       await insert({
         id: FnUtils.generateUUID(),
         supplierId,
         inboundShipmentId,
         supplierReturnLines,
-      });
-    } else {
+      })
+      :
       await updateLines({
         supplierReturnId: returnId,
         supplierReturnLines,
       });
-    }
 
     // TODO: error handling here
     // also need to consider what we do if the error was on the first page of the wizard

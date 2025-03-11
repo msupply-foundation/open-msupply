@@ -19,13 +19,17 @@ const RowWithLabel = ({
   label: string;
   contents: React.ReactNode;
 }) => (
-  <Grid display="flex" flex={1} gap={1} justifyContent="flex-end">
-    <Grid justifyContent="flex-end" flex={0} display="flex">
+  <Grid
+    display="flex"
+    flex={1}
+    gap={1}
+    justifyContent="flex-end"
+    flexDirection={'row'}
+  >
+    <Grid>
       <Typography fontWeight={700}>{label}</Typography>
     </Grid>
-    <Grid flex={0} display="flex">
-      {contents}
-    </Grid>
+    <Grid>{contents}</Grid>
   </Grid>
 );
 
