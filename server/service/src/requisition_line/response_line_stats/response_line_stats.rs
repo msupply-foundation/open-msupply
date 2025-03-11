@@ -91,23 +91,31 @@ pub fn response_store_stats(
             .status(RequisitionStatus::Finalised.not_equal_to()),
     )?;
 
-    // Calculate one line using approved amount if exists -> if denied or pending return 0 -> if doesn't need approval, use requested quantity
+    let prefs = get_store_preferences(connection, &store_id)?;
+
+    // For current line check prefs, then calculate the quantity based on approved status
     let calculate_line_quantity = |line: &RequisitionLine| -> f64 {
-        match line.requisition_row.approval_status {
-            Some(ApprovalStatusType::Approved)
-            | Some(ApprovalStatusType::ApprovedByAnother)
-            | Some(ApprovalStatusType::AutoApproved) => {
-                if line.requisition_line_row.approved_quantity > 0.0 {
-                    line.requisition_line_row.approved_quantity
-                } else {
+        if !prefs.response_requisition_requires_authorisation {
+            line.requisition_line_row.requested_quantity
+        } else {
+            match line.requisition_row.approval_status {
+                Some(ApprovalStatusType::Approved)
+                | Some(ApprovalStatusType::ApprovedByAnother)
+                | Some(ApprovalStatusType::AutoApproved) => {
+                    if line.requisition_line_row.approved_quantity > 0.0 {
+                        line.requisition_line_row.approved_quantity
+                    } else {
+                        line.requisition_line_row.requested_quantity
+                    }
+                }
+                Some(ApprovalStatusType::Denied)
+                | Some(ApprovalStatusType::DeniedByAnother)
+                | Some(ApprovalStatusType::Pending) => 0.0,
+
+                Some(ApprovalStatusType::None) | None => {
                     line.requisition_line_row.requested_quantity
                 }
             }
-            Some(ApprovalStatusType::Denied)
-            | Some(ApprovalStatusType::DeniedByAnother)
-            | Some(ApprovalStatusType::Pending) => 0.0,
-
-            Some(ApprovalStatusType::None) | None => line.requisition_line_row.requested_quantity,
         }
     };
 
@@ -115,25 +123,18 @@ pub fn response_store_stats(
     let calculate_other_requested_quantity = |current_line_quantity: f64| -> f64 {
         let sum_of_lines = response_requisition_lines
             .iter()
-            .map(|line| calculate_line_quantity(line))
+            .map(|line| {
+                let line_quantity = calculate_line_quantity(line);
+                println!("Line quantity: {}", line_quantity);
+                line_quantity
+            })
             .sum::<f64>();
 
         sum_of_lines - current_line_quantity
     };
 
-    let prefs = get_store_preferences(connection, &store_id)?;
-
-    let (current_line_quantity, other_requested_quantity) = if prefs
-        .response_requisition_requires_authorisation
-    {
-        let current_line_quantity = calculate_line_quantity(requisition_line);
-        let other_requested_quantity = calculate_other_requested_quantity(current_line_quantity);
-        (current_line_quantity, other_requested_quantity)
-    } else {
-        let current_line_quantity = requisition_line.requisition_line_row.requested_quantity;
-        let other_requested_quantity = calculate_other_requested_quantity(current_line_quantity);
-        (current_line_quantity, other_requested_quantity)
-    };
+    let current_line_quantity = calculate_line_quantity(requisition_line);
+    let other_requested_quantity = calculate_other_requested_quantity(current_line_quantity);
 
     Ok(ResponseStoreStats {
         stock_on_hand,
