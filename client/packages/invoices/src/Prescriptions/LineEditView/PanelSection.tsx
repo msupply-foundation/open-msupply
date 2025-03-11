@@ -16,7 +16,6 @@ import { ChevronDownIcon } from '@common/icons';
 const BORDER_RADIUS = 10;
 
 const StyledAccordion = styled(Accordion)(({ theme }) => ({
-  backgroundColor: theme.palette.background.menu,
   boxShadow: 'none',
   '&.Mui-expanded': { marginBottom: 2, marginTop: 0 },
   '&:before': { backgroundColor: 'transparent' },
@@ -43,6 +42,7 @@ const StyledAccordion = styled(Accordion)(({ theme }) => ({
 }));
 
 export interface DetailPanelSectionProps {
+  backgroundColor?: string;
   title?: string;
   closedSummary?: string;
   defaultExpanded?: boolean;
@@ -50,10 +50,20 @@ export interface DetailPanelSectionProps {
 
 export const AccordionPanelSection: React.FC<
   PropsWithChildren<DetailPanelSectionProps>
-> = ({ children, title, closedSummary, defaultExpanded = true }) => {
+> = ({
+  children,
+  title,
+  closedSummary,
+  defaultExpanded = true,
+  backgroundColor = 'background.menu',
+}) => {
   const [open, setOpen] = useState(defaultExpanded);
   return (
-    <StyledAccordion expanded={open} onChange={() => setOpen(!open)}>
+    <StyledAccordion
+      expanded={open}
+      onChange={() => setOpen(!open)}
+      sx={{ backgroundColor }}
+    >
       <AccordionSummary expandIcon={<ChevronDownIcon />}>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Typography>

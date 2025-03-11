@@ -1,3 +1,4 @@
+export * from './AddButton';
 export * from './BaseButton';
 export * from './ButtonWithIcon';
 export * from './ShrinkableBaseButton';

@@ -24,6 +24,9 @@ export const useDeleteResponseLines = () => {
       queryClient.invalidateQueries(api.keys.detail(requestNumber)),
   });
   const errorsContext = useResponseRequisitionLineErrorContext();
+  const { linkedRequisition } = useResponse.document.fields([
+    'linkedRequisition',
+  ]);
 
   const selectedRows = useTableStore(state =>
     lines.filter(({ id }) => state.rowState[id]?.isSelected)
@@ -57,10 +60,25 @@ export const useDeleteResponseLines = () => {
     });
   };
 
+  interface handleCantDelete {
+    isDisabled: boolean;
+    hasLinkedRequisition: boolean;
+  }
+
+  const handleCantDelete = ({
+    isDisabled,
+    hasLinkedRequisition,
+  }: handleCantDelete) => {
+    if (isDisabled) return t('label.cant-delete-disabled-requisition');
+    if (hasLinkedRequisition)
+      return t('messages.cannot-delete-linked-requisition');
+    return (err: Error) => err.message;
+  };
+
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
     deleteAction: onDelete,
-    canDelete: !isDisabled,
+    canDelete: !isDisabled && !linkedRequisition,
     messages: {
       confirmMessage: t('messages.confirm-delete-requisition-lines', {
         count: selectedRows.length,
@@ -68,8 +86,10 @@ export const useDeleteResponseLines = () => {
       deleteSuccess: t('messages.deleted-lines', {
         count: selectedRows.length,
       }),
-      cantDelete: (err: Error) =>
-        err.message || t('label.cant-delete-disabled-requisition'),
+      cantDelete: handleCantDelete({
+        isDisabled,
+        hasLinkedRequisition: !!linkedRequisition,
+      }),
     },
   });
 

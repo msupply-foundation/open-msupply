@@ -56,7 +56,9 @@ export const generateLabel = (
   prescription: PrescriptionRowFragment,
   store: string
 ): Label[] => {
-  const clinicianDetails = `- ${prescription.clinician?.lastName}, ${prescription.clinician?.firstName}`;
+  const clinicianDetails = prescription.clinician
+    ? ` - ${prescription.clinician.lastName}, ${prescription.clinician.firstName}`
+    : '';
   const patientDetails = `${prescription.patient?.name} - ${prescription.patient?.code}`;
 
   return results.map((result: ItemDetails): Label => {
@@ -66,7 +68,7 @@ export const generateLabel = (
       itemDetails: itemDetails,
       itemDirections: result.itemDirections,
       patientDetails: patientDetails,
-      details: `${store} - ${new Date(prescription.createdDatetime).toLocaleDateString()} ${clinicianDetails}`,
+      details: `${store} - ${new Date(prescription.createdDatetime).toLocaleDateString()}${clinicianDetails}`,
     };
     return finishedLabel;
   });
