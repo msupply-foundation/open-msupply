@@ -100,6 +100,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             r.name_store_id = Some(store_id.clone());
             r.tax_percentage = Some(0.0);
             r.currency_id = Some(currency_row.id.clone());
+            r.currency_rate = 1.0;
         });
 
         let stock_line_row = inline_init(|r: &mut StockLineRow| {
