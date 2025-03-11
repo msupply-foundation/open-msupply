@@ -97,7 +97,7 @@ export type InsertSupplierReturnMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertSupplierReturnMutation = { __typename: 'Mutations', insertSupplierReturn: { __typename: 'InsertSupplierReturnError', error: { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string } };
+export type InsertSupplierReturnMutation = { __typename: 'Mutations', insertSupplierReturn: { __typename: 'InsertSupplierReturnError', error: { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number, originalShipment?: { __typename: 'InvoiceNode', id: string } | null } };
 
 export type UpdateSupplierReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -113,7 +113,7 @@ export type UpdateSupplierReturnLinesMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateSupplierReturnLinesMutation = { __typename: 'Mutations', updateSupplierReturnLines: { __typename: 'InvoiceNode', id: string } };
+export type UpdateSupplierReturnLinesMutation = { __typename: 'Mutations', updateSupplierReturnLines: { __typename: 'InvoiceNode', id: string, originalShipment?: { __typename: 'InvoiceNode', id: string } | null } };
 
 export type InsertCustomerReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -121,7 +121,7 @@ export type InsertCustomerReturnMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertCustomerReturnMutation = { __typename: 'Mutations', insertCustomerReturn: { __typename: 'InsertCustomerReturnError', error: { __typename: 'OtherPartyNotACustomer', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string } };
+export type InsertCustomerReturnMutation = { __typename: 'Mutations', insertCustomerReturn: { __typename: 'InsertCustomerReturnError', error: { __typename: 'OtherPartyNotACustomer', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number, originalShipment?: { __typename: 'InvoiceNode', id: string } | null } };
 
 export type DeleteSupplierReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -145,7 +145,7 @@ export type UpdateCustomerReturnLinesMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateCustomerReturnLinesMutation = { __typename: 'Mutations', updateCustomerReturnLines: { __typename: 'InvoiceNode', id: string } };
+export type UpdateCustomerReturnLinesMutation = { __typename: 'Mutations', updateCustomerReturnLines: { __typename: 'InvoiceNode', id: string, originalShipment?: { __typename: 'InvoiceNode', id: string } | null } };
 
 export type DeleteCustomerReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -517,6 +517,10 @@ export const InsertSupplierReturnDocument = gql`
     ... on InvoiceNode {
       __typename
       id
+      invoiceNumber
+      originalShipment {
+        id
+      }
     }
     ... on InsertSupplierReturnError {
       __typename
@@ -544,6 +548,9 @@ export const UpdateSupplierReturnLinesDocument = gql`
     ... on InvoiceNode {
       __typename
       id
+      originalShipment {
+        id
+      }
     }
   }
 }
@@ -554,6 +561,10 @@ export const InsertCustomerReturnDocument = gql`
     ... on InvoiceNode {
       __typename
       id
+      invoiceNumber
+      originalShipment {
+        id
+      }
     }
     ... on InsertCustomerReturnError {
       __typename
@@ -591,6 +602,9 @@ export const UpdateCustomerReturnLinesDocument = gql`
     ... on InvoiceNode {
       __typename
       id
+      originalShipment {
+        id
+      }
     }
   }
 }
@@ -638,7 +652,7 @@ export const UpdateSupplierReturnOtherPartyDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?: Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
 const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
@@ -646,55 +660,55 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     supplierReturns(variables: SupplierReturnsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SupplierReturnsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<SupplierReturnsQuery>(SupplierReturnsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'supplierReturns', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<SupplierReturnsQuery>(SupplierReturnsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'supplierReturns', 'query', variables);
     },
     customerReturns(variables: CustomerReturnsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CustomerReturnsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CustomerReturnsQuery>(CustomerReturnsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'customerReturns', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<CustomerReturnsQuery>(CustomerReturnsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'customerReturns', 'query', variables);
     },
     generateSupplierReturnLines(variables: GenerateSupplierReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GenerateSupplierReturnLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GenerateSupplierReturnLinesQuery>(GenerateSupplierReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'generateSupplierReturnLines', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<GenerateSupplierReturnLinesQuery>(GenerateSupplierReturnLinesDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'generateSupplierReturnLines', 'query', variables);
     },
     generateCustomerReturnLines(variables: GenerateCustomerReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GenerateCustomerReturnLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GenerateCustomerReturnLinesQuery>(GenerateCustomerReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'generateCustomerReturnLines', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<GenerateCustomerReturnLinesQuery>(GenerateCustomerReturnLinesDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'generateCustomerReturnLines', 'query', variables);
     },
     supplierReturnByNumber(variables: SupplierReturnByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SupplierReturnByNumberQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<SupplierReturnByNumberQuery>(SupplierReturnByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'supplierReturnByNumber', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<SupplierReturnByNumberQuery>(SupplierReturnByNumberDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'supplierReturnByNumber', 'query', variables);
     },
     supplierReturnById(variables: SupplierReturnByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SupplierReturnByIdQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<SupplierReturnByIdQuery>(SupplierReturnByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'supplierReturnById', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<SupplierReturnByIdQuery>(SupplierReturnByIdDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'supplierReturnById', 'query', variables);
     },
     customerReturnByNumber(variables: CustomerReturnByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CustomerReturnByNumberQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CustomerReturnByNumberQuery>(CustomerReturnByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'customerReturnByNumber', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<CustomerReturnByNumberQuery>(CustomerReturnByNumberDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'customerReturnByNumber', 'query', variables);
     },
     customerReturnById(variables: CustomerReturnByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CustomerReturnByIdQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CustomerReturnByIdQuery>(CustomerReturnByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'customerReturnById', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<CustomerReturnByIdQuery>(CustomerReturnByIdDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'customerReturnById', 'query', variables);
     },
     insertSupplierReturn(variables: InsertSupplierReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertSupplierReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertSupplierReturnMutation>(InsertSupplierReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertSupplierReturn', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertSupplierReturnMutation>(InsertSupplierReturnDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'insertSupplierReturn', 'mutation', variables);
     },
     updateSupplierReturn(variables: UpdateSupplierReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateSupplierReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSupplierReturnMutation>(UpdateSupplierReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateSupplierReturn', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSupplierReturnMutation>(UpdateSupplierReturnDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'updateSupplierReturn', 'mutation', variables);
     },
     updateSupplierReturnLines(variables: UpdateSupplierReturnLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateSupplierReturnLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSupplierReturnLinesMutation>(UpdateSupplierReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateSupplierReturnLines', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSupplierReturnLinesMutation>(UpdateSupplierReturnLinesDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'updateSupplierReturnLines', 'mutation', variables);
     },
     insertCustomerReturn(variables: InsertCustomerReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertCustomerReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertCustomerReturnMutation>(InsertCustomerReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertCustomerReturn', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertCustomerReturnMutation>(InsertCustomerReturnDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'insertCustomerReturn', 'mutation', variables);
     },
     deleteSupplierReturn(variables: DeleteSupplierReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteSupplierReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteSupplierReturnMutation>(DeleteSupplierReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteSupplierReturn', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteSupplierReturnMutation>(DeleteSupplierReturnDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'deleteSupplierReturn', 'mutation', variables);
     },
     updateCustomerReturn(variables: UpdateCustomerReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateCustomerReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateCustomerReturnMutation>(UpdateCustomerReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateCustomerReturn', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateCustomerReturnMutation>(UpdateCustomerReturnDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'updateCustomerReturn', 'mutation', variables);
     },
     updateCustomerReturnLines(variables: UpdateCustomerReturnLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateCustomerReturnLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateCustomerReturnLinesMutation>(UpdateCustomerReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateCustomerReturnLines', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateCustomerReturnLinesMutation>(UpdateCustomerReturnLinesDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'updateCustomerReturnLines', 'mutation', variables);
     },
     deleteCustomerReturn(variables: DeleteCustomerReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteCustomerReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteCustomerReturnMutation>(DeleteCustomerReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteCustomerReturn', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteCustomerReturnMutation>(DeleteCustomerReturnDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'deleteCustomerReturn', 'mutation', variables);
     },
     updateSupplierReturnOtherParty(variables: UpdateSupplierReturnOtherPartyMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateSupplierReturnOtherPartyMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSupplierReturnOtherPartyMutation>(UpdateSupplierReturnOtherPartyDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateSupplierReturnOtherParty', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSupplierReturnOtherPartyMutation>(UpdateSupplierReturnOtherPartyDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'updateSupplierReturnOtherParty', 'mutation', variables);
     }
   };
 }

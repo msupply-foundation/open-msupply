@@ -280,7 +280,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     const { insertSupplierReturn } = result;
 
     if (insertSupplierReturn.__typename === 'InvoiceNode') {
-      return insertSupplierReturn.id;
+      return insertSupplierReturn;
     }
 
     throw new Error('Could not insert supplier return');
@@ -368,8 +368,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     const { insertCustomerReturn } = result;
 
     if (insertCustomerReturn.__typename === 'InvoiceNode') {
-      // TODO simplify graphql
-      return insertCustomerReturn.id;
+      return insertCustomerReturn;
     }
 
     throw new Error('Could not insert customer return');
