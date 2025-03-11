@@ -14,7 +14,6 @@ use super::{
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Preference {
     pub preference_row: PreferenceRow,
-    pub store_row: StoreRow,
 }
 
 #[derive(Clone, Default)]
@@ -77,10 +76,7 @@ impl<'a> PreferenceRepository<'a> {
         let result = final_query
             .load::<PreferenceJoin>(self.connection.lock().connection())?
             .into_iter()
-            .map(|(preference_row, store_row)| Preference {
-                preference_row,
-                store_row,
-            })
+            .map(|(preference_row, _store_row)| Preference { preference_row })
             .collect();
 
         Ok(result)
