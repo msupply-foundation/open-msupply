@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -10,6 +10,7 @@ import {
   createQueryParamsStore,
   DetailTabs,
   useAuthContext,
+  useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { RequestLineFragment, useRequest } from '../api';
@@ -25,6 +26,7 @@ import { buildIndicatorEditRoute, buildItemEditRoute } from './utils';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const { data, isLoading } = useRequest.document.get();
   const { store } = useAuthContext();
@@ -59,6 +61,11 @@ export const DetailView: FC = () => {
     },
     []
   );
+
+
+  useEffect(() => {
+    setCustomBreadcrumbs({ 1: data?.requisitionNumber.toString() ?? '' });
+  }, [setCustomBreadcrumbs, data?.requisitionNumber]);
 
   if (isLoading) return <DetailViewSkeleton />;
 
