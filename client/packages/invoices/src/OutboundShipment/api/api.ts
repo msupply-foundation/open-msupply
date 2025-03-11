@@ -220,7 +220,18 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     byId: async (id: string): Promise<OutboundFragment> => {
       const result = await sdk.invoice({ id, storeId });
       const invoice = result?.invoice;
-
+      if (invoice?.__typename === 'InvoiceNode') {
+        return invoice;
+      } else {
+        throw new Error('Could not find invoice');
+      }
+    },
+    byNumber: async (invoiceNumber: string): Promise<OutboundFragment> => {
+      const result = await sdk.outboundByNumber({
+        invoiceNumber: Number(invoiceNumber),
+        storeId,
+      });
+      const invoice = result?.invoiceByNumber;
       if (invoice?.__typename === 'InvoiceNode') {
         return invoice;
       } else {
