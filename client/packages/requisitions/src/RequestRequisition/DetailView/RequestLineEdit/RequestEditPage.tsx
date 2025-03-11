@@ -72,7 +72,7 @@ export const RequestLineEditPageInner = ({
 
   return (
     <>
-      <AppBarButtons requisitionNumber={requisition.requisitionNumber} />
+      <AppBarButtons requisitionId={requisition.id} />
       <DetailContainer>
         <PageLayout
           Left={

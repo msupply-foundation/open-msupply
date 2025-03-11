@@ -183,11 +183,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
   }: {
     id: string;
     otherPartyId: string;
-  }): Promise<{
-    __typename: 'RequisitionNode';
-    id: string;
-    requisitionNumber: number;
-  }> => {
+  }): Promise<string> => {
     const result = await sdk.insertResponse({
       storeId,
       input: {
@@ -201,7 +197,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     const { insertResponseRequisition } = result || {};
 
     if (insertResponseRequisition?.__typename === 'RequisitionNode') {
-      return insertResponseRequisition;
+      return insertResponseRequisition.id;
     }
 
     throw new Error('Unable to create requisition');

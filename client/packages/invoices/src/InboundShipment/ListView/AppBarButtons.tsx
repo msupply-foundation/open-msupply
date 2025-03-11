@@ -70,7 +70,7 @@ export const AppBarButtons = ({
     navigate(
       RouteBuilder.create(AppRoute.Replenishment)
         .addPart(AppRoute.InboundShipment)
-        .addPart(String(invoiceId))
+        .addPart(invoiceId)
         .build()
     );
   };
@@ -90,7 +90,7 @@ export const AppBarButtons = ({
     navigate(
       RouteBuilder.create(AppRoute.Replenishment)
         .addPart(AppRoute.InboundShipment)
-        .addPart(String(invoiceId))
+        .addPart(invoiceId)
         .build()
     );
   };

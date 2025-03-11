@@ -72,7 +72,7 @@ const ResponseLineEditPageInner = ({
 
   return (
     <>
-      <AppBarButtons requisitionNumber={requisition.requisitionNumber} />
+      <AppBarButtons requisitionId={requisition.id} />
       <DetailContainer>
         <PageLayout
           Left={
@@ -99,7 +99,6 @@ const ResponseLineEditPageInner = ({
               previous={previous}
               isProgram={!!isProgram}
               lines={lines}
-              requisitionNumber={requisition.requisitionNumber}
               requisitionId={requisition.id}
               insert={mutateAsync}
               scrollIntoView={scrollSelectedItemIntoView}

@@ -2,8 +2,8 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { RequestLineFragmentDoc } from '../../../../system/src/RequestRequisitionLine/operations.generated';
-import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
+import { NameRowFragmentDoc } from 'packages/system/src/Name/api/operations.generated';
+import { RequestLineFragmentDoc } from 'packages/system/src/RequestRequisitionLine/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type RequestRowFragment = { __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } | null, program?: { __typename: 'ProgramNode', id: string } | null };
 
@@ -92,7 +92,7 @@ export type InsertRequestMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertRequestMutation = { __typename: 'Mutations', insertRequestRequisition: { __typename: 'InsertRequestRequisitionError', error: { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
+export type InsertRequestMutation = { __typename: 'Mutations', insertRequestRequisition: { __typename: 'InsertRequestRequisitionError', error: { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'RequisitionNode', id: string } };
 
 export type InsertProgramRequestMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -100,7 +100,7 @@ export type InsertProgramRequestMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertProgramRequestMutation = { __typename: 'Mutations', insertProgramRequestRequisition: { __typename: 'InsertProgramRequestRequisitionError', error: { __typename: 'MaxOrdersReachedForPeriod', description: string } } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
+export type InsertProgramRequestMutation = { __typename: 'Mutations', insertProgramRequestRequisition: { __typename: 'InsertProgramRequestRequisitionError', error: { __typename: 'MaxOrdersReachedForPeriod', description: string } } | { __typename: 'RequisitionNode', id: string } };
 
 export type RequisitionReasonNotProvidedErrorFragment = { __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } };
 
@@ -112,7 +112,7 @@ export type UpdateRequestMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateRequestMutation = { __typename: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string, requisitionNumber: number } | { __typename: 'UpdateRequestRequisitionError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'OrderingTooManyItems', description: string, maxItemsInEmergencyOrder: number } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionReasonsNotProvided', description: string, errors: Array<{ __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } }> } } };
+export type UpdateRequestMutation = { __typename: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string } | { __typename: 'UpdateRequestRequisitionError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'OrderingTooManyItems', description: string, maxItemsInEmergencyOrder: number } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionReasonsNotProvided', description: string, errors: Array<{ __typename: 'RequisitionReasonNotProvided', description: string, requisitionLine: { __typename: 'RequisitionLineNode', id: string } }> } } };
 
 export type DeleteRequestMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -661,7 +661,6 @@ export const InsertRequestDocument = gql`
     ... on RequisitionNode {
       __typename
       id
-      requisitionNumber
     }
     ... on InsertRequestRequisitionError {
       __typename
@@ -682,7 +681,6 @@ export const InsertProgramRequestDocument = gql`
     ... on RequisitionNode {
       __typename
       id
-      requisitionNumber
     }
     ... on InsertProgramRequestRequisitionError {
       __typename
@@ -703,7 +701,6 @@ export const UpdateRequestDocument = gql`
     ... on RequisitionNode {
       __typename
       id
-      requisitionNumber
     }
     ... on UpdateRequestRequisitionError {
       __typename
@@ -812,7 +809,7 @@ export const UpdateIndicatorValueDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?: Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
 const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
@@ -820,52 +817,52 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     requestByNumber(variables: RequestByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequestByNumberQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestByNumberQuery>(RequestByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requestByNumber', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestByNumberQuery>(RequestByNumberDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'requestByNumber', 'query', variables);
     },
     requestById(variables: RequestByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequestByIdQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestByIdQuery>(RequestByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requestById', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestByIdQuery>(RequestByIdDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'requestById', 'query', variables);
     },
     requisitionLineChart(variables: RequisitionLineChartQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequisitionLineChartQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequisitionLineChartQuery>(RequisitionLineChartDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisitionLineChart', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<RequisitionLineChartQuery>(RequisitionLineChartDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'requisitionLineChart', 'query', variables);
     },
     requests(variables: RequestsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequestsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestsQuery>(RequestsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requests', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestsQuery>(RequestsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'requests', 'query', variables);
     },
     insertRequestLine(variables: InsertRequestLineMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertRequestLineMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertRequestLineMutation>(InsertRequestLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertRequestLine', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertRequestLineMutation>(InsertRequestLineDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'insertRequestLine', 'mutation', variables);
     },
     updateRequestLine(variables: UpdateRequestLineMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateRequestLineMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateRequestLineMutation>(UpdateRequestLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateRequestLine', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateRequestLineMutation>(UpdateRequestLineDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'updateRequestLine', 'mutation', variables);
     },
     addFromMasterList(variables: AddFromMasterListMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AddFromMasterListMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AddFromMasterListMutation>(AddFromMasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'addFromMasterList', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<AddFromMasterListMutation>(AddFromMasterListDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'addFromMasterList', 'mutation', variables);
     },
     deleteRequestLines(variables: DeleteRequestLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteRequestLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestLinesMutation>(DeleteRequestLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequestLines', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestLinesMutation>(DeleteRequestLinesDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'deleteRequestLines', 'mutation', variables);
     },
     useSuggestedQuantity(variables: UseSuggestedQuantityMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UseSuggestedQuantityMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UseSuggestedQuantityMutation>(UseSuggestedQuantityDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'useSuggestedQuantity', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UseSuggestedQuantityMutation>(UseSuggestedQuantityDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'useSuggestedQuantity', 'mutation', variables);
     },
     insertRequest(variables: InsertRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertRequestMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertRequestMutation>(InsertRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertRequest', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertRequestMutation>(InsertRequestDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'insertRequest', 'mutation', variables);
     },
     insertProgramRequest(variables: InsertProgramRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertProgramRequestMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertProgramRequestMutation>(InsertProgramRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertProgramRequest', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertProgramRequestMutation>(InsertProgramRequestDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'insertProgramRequest', 'mutation', variables);
     },
     updateRequest(variables: UpdateRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateRequestMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateRequestMutation>(UpdateRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateRequest', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateRequestMutation>(UpdateRequestDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'updateRequest', 'mutation', variables);
     },
     deleteRequest(variables: DeleteRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteRequestMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestMutation>(DeleteRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequest', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestMutation>(DeleteRequestDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'deleteRequest', 'mutation', variables);
     },
     supplierProgramSettings(variables: SupplierProgramSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SupplierProgramSettingsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<SupplierProgramSettingsQuery>(SupplierProgramSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'supplierProgramSettings', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<SupplierProgramSettingsQuery>(SupplierProgramSettingsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'supplierProgramSettings', 'query', variables);
     },
     programIndicators(variables: ProgramIndicatorsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramIndicatorsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ProgramIndicatorsQuery>(ProgramIndicatorsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programIndicators', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<ProgramIndicatorsQuery>(ProgramIndicatorsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'programIndicators', 'query', variables);
     },
     updateIndicatorValue(variables: UpdateIndicatorValueMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateIndicatorValueMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateIndicatorValueMutation>(UpdateIndicatorValueDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateIndicatorValue', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateIndicatorValueMutation>(UpdateIndicatorValueDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'updateIndicatorValue', 'mutation', variables);
     }
   };
 }

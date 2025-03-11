@@ -7141,6 +7141,7 @@ export type RequisitionLineNode = {
   remainingQuantityToSupply: Scalars['Float']['output'];
   /** Quantity requested */
   requestedQuantity: Scalars['Float']['output'];
+  requisitionId: Scalars['String']['output'];
   requisitionNumber: Scalars['Int']['output'];
   /**
    * Calculated quantity

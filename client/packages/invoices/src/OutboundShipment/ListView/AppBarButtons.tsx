@@ -67,7 +67,7 @@ export const AppBarButtonsComponent: FC<{
                 navigate(
                   RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.OutboundShipment)
-                    .addPart(String(invoiceId))
+                    .addPart(invoiceId)
                     .build()
                 );
               });

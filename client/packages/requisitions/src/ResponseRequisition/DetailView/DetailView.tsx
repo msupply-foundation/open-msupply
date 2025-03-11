@@ -38,7 +38,7 @@ export const DetailView: FC = () => {
     );
 
   const onRowClick = useCallback((line: ResponseLineFragment) => {
-    navigate(buildItemEditRoute(line.requisitionNumber, line.item.id));
+    navigate(buildItemEditRoute(line.requisitionId, line.item.id));
   }, []);
 
   const onProgramIndicatorClick = useCallback(
@@ -62,7 +62,7 @@ export const DetailView: FC = () => {
   );
 
   const onAddItem = () => {
-    navigate(buildItemEditRoute(data?.requisitionNumber, 'new'));
+    navigate(buildItemEditRoute(data?.id, 'new'));
   };
 
   if (isLoading) return <DetailViewSkeleton />;
