@@ -65,7 +65,7 @@ impl<'a> PreferenceRowRepository<'a> {
             table_name: ChangelogTableName::Preference,
             record_id: row.id,
             row_action: action,
-            store_id: Some(row.store_id),
+            store_id: row.store_id.clone(),
             name_link_id: None,
         };
         ChangelogRepository::new(self.connection).insert(&row)
