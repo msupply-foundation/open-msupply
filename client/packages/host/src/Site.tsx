@@ -21,13 +21,7 @@ import {
   useIsGapsStoreOnly,
   useBlockNavigation,
 } from '@openmsupply-client/common';
-import {
-  AppDrawer,
-  AppBar,
-  Footer,
-  NotFound,
-  MobileNavBar,
-} from './components';
+import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
 import { AppRoute } from '@openmsupply-client/config';
 import { Settings } from './Admin/Settings';
@@ -48,6 +42,7 @@ import { QueryErrorHandler } from './QueryErrorHandler';
 import { EasterEggModalProvider } from './components';
 import { Help } from './Help/Help';
 import { SyncModalProvider } from './components/Sync';
+import { MobileNavBar } from './components/MobileNavBar';
 
 const NotifyOnLogin = () => {
   const { success } = useNotification();
