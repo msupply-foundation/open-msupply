@@ -41,18 +41,14 @@ impl<'a> PreferenceRowRepository<'a> {
         PreferenceRowRepository { connection }
     }
 
-    pub fn _upsert_one(&self, preference_row: &PreferenceRow) -> Result<(), RepositoryError> {
+    fn upsert_one(&self, preference_row: &PreferenceRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(preference::table)
             .values(preference_row)
             .on_conflict(id)
             .do_update()
             .set(preference_row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
 
-    pub fn upsert_one(&self, preference_row: &PreferenceRow) -> Result<i64, RepositoryError> {
-        self._upsert_one(preference_row)?;
         self.insert_changelog(preference_row.to_owned(), RowActionType::Upsert)
     }
 
