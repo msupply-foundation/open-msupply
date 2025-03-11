@@ -109,7 +109,9 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
         ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::DatabaseError(_) | ServiceError::PluginError(_) => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())

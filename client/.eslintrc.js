@@ -60,5 +60,4 @@ module.exports = {
       },
     ],
   },
-  ignorePatterns: ['**/operations.generated.ts', '**/types/schema.ts'],
 };

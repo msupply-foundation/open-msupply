@@ -1,11 +1,7 @@
 use super::{
-    name_link_row::{name_link, name_link::dsl as name_link_dsl},
-    name_row::{name, name::dsl as name_dsl},
-    period_row::{period, period::dsl as period_dsl},
-    program_row::{program, program::dsl as program_dsl},
-    rnr_form_row::rnr_form::dsl as rnr_form_dsl,
-    store_row::{store, store::dsl as store_dsl},
-    DBType, NameRow, RepositoryError, RnRFormRow, RnRFormStatus, StorageConnection, StoreRow,
+    name_link_row::name_link, name_row::name, period_row::period, program_row::program,
+    store_row::store, DBType, NameRow, RepositoryError, RnRFormRow, RnRFormStatus,
+    StorageConnection, StoreRow,
 };
 
 use crate::{
@@ -91,23 +87,23 @@ impl<'a> RnRFormRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 RnRFormSortField::Period => {
-                    apply_sort!(query, sort, period_dsl::end_date);
+                    apply_sort!(query, sort, period::end_date);
                 }
                 RnRFormSortField::Status => {
-                    apply_sort!(query, sort, rnr_form_dsl::status);
+                    apply_sort!(query, sort, rnr_form::status);
                 }
                 RnRFormSortField::CreatedDatetime => {
-                    apply_sort!(query, sort, rnr_form_dsl::created_datetime);
+                    apply_sort!(query, sort, rnr_form::created_datetime);
                 }
                 RnRFormSortField::SupplierName => {
-                    apply_sort_no_case!(query, sort, name_dsl::name_);
+                    apply_sort_no_case!(query, sort, name::name_);
                 }
                 RnRFormSortField::Program => {
-                    apply_sort_no_case!(query, sort, program_dsl::name);
+                    apply_sort_no_case!(query, sort, program::name);
                 }
             }
         } else {
-            query = query.order(rnr_form_dsl::created_datetime.asc())
+            query = query.order(rnr_form::created_datetime.asc())
         }
 
         let result = query
@@ -147,11 +143,11 @@ type BoxedRnRFormQuery = IntoBoxed<
 >;
 
 fn create_filtered_query(filter: Option<RnRFormFilter>) -> BoxedRnRFormQuery {
-    let mut query = rnr_form_dsl::rnr_form
-        .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
-        .inner_join(store_dsl::store)
-        .inner_join(period_dsl::period)
-        .inner_join(program_dsl::program)
+    let mut query = rnr_form::table
+        .inner_join(name_link::table.inner_join(name::table))
+        .inner_join(store::table)
+        .inner_join(period::table)
+        .inner_join(program::table)
         .into_boxed();
 
     if let Some(f) = filter {
@@ -163,13 +159,13 @@ fn create_filtered_query(filter: Option<RnRFormFilter>) -> BoxedRnRFormQuery {
             period_schedule_id,
         } = f;
 
-        apply_equal_filter!(query, id, rnr_form_dsl::id);
-        apply_equal_filter!(query, store_id, rnr_form_dsl::store_id);
-        apply_equal_filter!(query, program_id, rnr_form_dsl::program_id);
+        apply_equal_filter!(query, id, rnr_form::id);
+        apply_equal_filter!(query, store_id, rnr_form::store_id);
+        apply_equal_filter!(query, program_id, rnr_form::program_id);
 
-        apply_date_time_filter!(query, created_datetime, rnr_form_dsl::created_datetime);
+        apply_date_time_filter!(query, created_datetime, rnr_form::created_datetime);
 
-        apply_equal_filter!(query, period_schedule_id, period_dsl::period_schedule_id);
+        apply_equal_filter!(query, period_schedule_id, period::period_schedule_id);
     }
     query
 }

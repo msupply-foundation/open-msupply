@@ -66,6 +66,8 @@ pub struct LegacyTransLineRow {
     pub r#type: LegacyTransLineType,
     #[serde(rename = "quantity")]
     pub number_of_packs: f64,
+    #[serde(rename = "prescribedQuantity")]
+    pub prescribed_quantity: Option<f64>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub note: Option<String>,
 
@@ -82,6 +84,7 @@ pub struct LegacyTransLineRow {
     pub option_id: Option<String>,
     #[serde(rename = "foreign_currency_price")]
     pub foreign_currency_price_before_tax: Option<f64>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "om_item_variant_id")]
     pub item_variant_id: Option<String>,
 }
@@ -132,6 +135,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             sell_price_per_pack,
             r#type,
             number_of_packs,
+            prescribed_quantity,
             note,
             item_code,
             tax_percentage,
@@ -267,6 +271,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             tax_percentage,
             r#type: line_type,
             number_of_packs,
+            prescribed_quantity,
             note,
             inventory_adjustment_reason_id: match invoice.r#type {
                 InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => {
@@ -281,6 +286,8 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
         };
+
+        let result = adjust_negative_values(result);
 
         Ok(PullTranslateResult::upsert(result))
     }
@@ -327,6 +334,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     tax_percentage,
                     r#type,
                     number_of_packs,
+                    prescribed_quantity,
                     note,
                     inventory_adjustment_reason_id,
                     return_reason_id,
@@ -360,6 +368,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             sell_price_per_pack,
             r#type: to_legacy_invoice_line_type(&r#type),
             number_of_packs,
+            prescribed_quantity,
             note,
             item_code: Some(item_code),
             tax_percentage,
@@ -403,6 +412,25 @@ fn to_legacy_invoice_line_type(_type: &InvoiceLineType) -> LegacyTransLineType {
         InvoiceLineType::UnallocatedStock => LegacyTransLineType::Placeholder,
         InvoiceLineType::Service => LegacyTransLineType::Service,
     }
+}
+
+/// If you cancel invoice in mSupply it would create negative values in outbound shipment
+/// in omSupply number of packs should always be positive and r#type would determine stock movement direction
+fn adjust_negative_values(line: InvoiceLineRow) -> InvoiceLineRow {
+    if line.number_of_packs >= 0.0 {
+        return line;
+    }
+
+    return InvoiceLineRow {
+        cost_price_per_pack: line.cost_price_per_pack.abs(),
+        sell_price_per_pack: line.sell_price_per_pack.abs(),
+        total_before_tax: line.total_before_tax.abs(),
+        total_after_tax: line.total_after_tax.abs(),
+        number_of_packs: line.number_of_packs.abs(),
+        foreign_currency_price_before_tax: line.foreign_currency_price_before_tax.map(|n| n.abs()),
+        r#type: InvoiceLineType::StockIn,
+        ..line
+    };
 }
 
 #[cfg(test)]

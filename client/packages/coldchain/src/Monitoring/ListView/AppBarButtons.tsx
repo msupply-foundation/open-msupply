@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import {
   AppBarButtonsPortal,
   LoadingButton,
@@ -22,7 +22,6 @@ export const AppBarButtons = () => {
   const t = useTranslation();
   const hiddenFileInput = useRef<HTMLInputElement>(null);
   const { storeId } = useAuthContext();
-  const [isUploadingFridgeTag, setIsUploadingFridgeTag] = useState(false);
   const { success, error } = useNotification();
   const queryClient = useQueryClient();
   const sensorApi = useSensor.utils.api();
@@ -34,7 +33,8 @@ export const AppBarButtons = () => {
     title: t('title.new-sensor'),
   });
   // prevent a user reloading the page while uploading
-  useConfirmOnLeaving(isUploadingFridgeTag);
+  const { isDirty: isUploadingFridgeTag, setIsDirty: setIsUploadingFridgeTag } =
+    useConfirmOnLeaving('upload-fridge-tag');
 
   const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e?.target?.files?.[0];
@@ -110,6 +110,7 @@ export const AppBarButtons = () => {
           iconColor: 'background.white',
         }}
         label={t('button.import-fridge-tag')}
+        variant="outlined"
       />
     </AppBarButtonsPortal>
   );

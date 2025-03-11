@@ -7,6 +7,7 @@ import {
 } from '@common/components';
 import { RecordWithId } from '@common/types';
 import { useBufferState, useDebounceCallback } from '@common/hooks';
+import { merge } from '@common/utils';
 
 export const NumberInputCell = <T extends RecordWithId>({
   rowData,
@@ -28,13 +29,16 @@ export const NumberInputCell = <T extends RecordWithId>({
   width,
   endAdornment,
   error,
+  slotProps,
 }: CellProps<T> &
   NumericInputProps & {
     id?: string;
     TextInputProps?: StandardTextFieldProps;
     endAdornment?: string;
     error?: boolean;
-  }): React.ReactElement<CellProps<T>> => {
+  } & Pick<StandardTextFieldProps, 'slotProps'>): React.ReactElement<
+  CellProps<T>
+> => {
   const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
   const updater = useDebounceCallback(column.setter, [column.setter], 250);
 
@@ -46,12 +50,15 @@ export const NumberInputCell = <T extends RecordWithId>({
       disabled={isDisabled}
       autoFocus={autoFocus}
       {...TextInputProps}
-      slotProps={{
-        input: {
-          sx: { '& .MuiInput-input': { textAlign: 'right' } },
-          ...TextInputProps?.InputProps,
+      slotProps={merge(
+        {
+          input: {
+            sx: { '& .MuiInput-input': { textAlign: 'right' } },
+            ...TextInputProps?.InputProps,
+          },
         },
-      }}
+        slotProps
+      )}
       onChange={num => {
         const newValue = num === undefined ? min : num;
         if (buffer === newValue) return;

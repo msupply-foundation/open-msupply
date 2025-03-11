@@ -1,6 +1,8 @@
 pub mod build;
 pub mod print;
 
+use std::path::PathBuf;
+
 use clap::{Parser, Subcommand, ValueEnum};
 use serde::Serialize;
 
@@ -21,10 +23,10 @@ pub enum Action {
 pub struct BuildArgs {
     /// Project directory name
     #[clap(short, long)]
-    pub dir: String,
+    pub dir: PathBuf,
     /// output path
     #[clap(short, long)]
-    pub output: Option<String>,
+    pub output: Option<PathBuf>,
     /// Main template name
     #[clap(long)]
     pub template: String,
@@ -41,7 +43,7 @@ pub struct BuildArgs {
     pub query_default: Option<String>,
 
     #[clap(long)]
-    pub convert_data: Option<String>,
+    pub convert_data: Option<PathBuf>,
 
     #[clap(long)]
     pub custom_wasm_function: Option<String>,

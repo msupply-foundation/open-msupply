@@ -58,10 +58,10 @@ const STORES_QUERY: &str = r#"
 "#;
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Config {
-    url: String,
-    username: String,
-    password: String,
+pub struct Config {
+    pub url: String,
+    pub username: String,
+    pub password: String,
 }
 
 #[allow(dead_code)]
@@ -210,6 +210,17 @@ fn fetch_file(
     Ok(output_filename)
 }
 
+pub struct ReportGenerateData {
+    pub report: serde_json::Value,
+    pub config: Config,
+    pub store_id: Option<String>,
+    pub store_name: Option<String>,
+    pub output_filename: Option<String>,
+    pub format: Format,
+    pub data_id: Option<String>,
+    pub arguments: Option<serde_json::Value>,
+}
+
 pub fn generate_report(
     config_path: String,
     store_id: Option<String>,
@@ -242,6 +253,34 @@ pub fn generate_report(
         .map_err(|err| anyhow::Error::msg(format!("Failed to load config file: {}", err)))?;
     let config: Config = serde_yaml::from_str(&config_data)
         .map_err(|err| anyhow::Error::msg(format!("Failed to parse config file: {}", err)))?;
+
+    let inner_data = ReportGenerateData {
+        report,
+        config,
+        store_id,
+        store_name,
+        output_filename,
+        format,
+        data_id,
+        arguments,
+    };
+
+    generate_report_inner(inner_data)?;
+
+    Ok(())
+}
+
+pub fn generate_report_inner(input: ReportGenerateData) -> anyhow::Result<()> {
+    let ReportGenerateData {
+        report,
+        config,
+        store_id,
+        store_name,
+        output_filename,
+        format,
+        data_id,
+        arguments,
+    } = input;
 
     let base_url = Url::parse(&config.url)
         .map_err(|err| anyhow::Error::msg(format!("Invalid base url: {}", err)))?;

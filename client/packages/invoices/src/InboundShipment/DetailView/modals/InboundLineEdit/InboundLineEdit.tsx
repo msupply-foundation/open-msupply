@@ -7,12 +7,10 @@ import {
   useDialog,
   useNotification,
   ModalMode,
-  useDirtyCheck,
   useConfirmOnLeaving,
   TableProvider,
   createTableStore,
   createQueryParamsStore,
-  useKeyboardHeightAdjustment,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import { InboundLineFragment, useInbound } from '../../../api';
@@ -37,8 +35,9 @@ const useDraftInboundLines = (item: InboundLineItem | null) => {
   const { id } = useInbound.document.fields('id');
   const { mutateAsync, isLoading } = useInbound.lines.save();
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
-  const { isDirty, setIsDirty } = useDirtyCheck();
-  useConfirmOnLeaving(isDirty);
+  const { isDirty, setIsDirty } = useConfirmOnLeaving(
+    'inbound-shipment-line-edit'
+  );
 
   const defaultPackSize = item?.defaultPackSize || 1;
 
@@ -128,7 +127,6 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
     currentItem?.id ?? ''
   );
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(600);
   const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
     useDraftInboundLines(currentItem);
   const okNextDisabled =
@@ -182,7 +180,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
             }}
           />
         }
-        height={height}
+        height={600}
         width={1024}
         enableAutocomplete /* Required for previously entered batches to be remembered and suggested in future shipments */
       >

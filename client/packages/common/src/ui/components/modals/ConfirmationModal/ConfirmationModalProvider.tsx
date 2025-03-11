@@ -24,6 +24,7 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
     message,
     info,
     buttonLabel,
+    cancelButtonLabel,
     title,
     iconType,
     onConfirm,
@@ -41,8 +42,13 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
         setState(state => ({ ...state, iconType })),
       setButtonLabel: (buttonLabel: string | undefined) =>
         setState(state => ({ ...state, buttonLabel })),
+      setCancelButtonLabel: (cancelButtonLabel: string | undefined) =>
+        setState(state => ({ ...state, cancelButtonLabel })),
       setOnConfirm: (
-        onConfirm: (() => Promise<void>) | (() => void) | undefined
+        onConfirm:
+          | ((state: ConfirmationModalState) => Promise<void>)
+          | ((state: ConfirmationModalState) => void)
+          | undefined
       ) => setState(state => ({ ...state, onConfirm })),
       setOnCancel: (
         onCancel: (() => Promise<void>) | (() => void) | undefined
@@ -62,13 +68,17 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
         message={message}
         info={info}
         title={title}
-        onConfirm={onConfirm}
+        onConfirm={async () => {
+          onConfirm && (await onConfirm(confirmationModalState));
+          setState(state => ({ ...state, open: false }));
+        }}
         onCancel={() => {
           setState(state => ({ ...state, open: false }));
           onCancel && onCancel();
         }}
         iconType={iconType}
         buttonLabel={buttonLabel}
+        cancelButtonLabel={cancelButtonLabel}
       />
     </ConfirmationModalContext.Provider>
   );

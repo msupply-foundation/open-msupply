@@ -50,7 +50,9 @@ const StoreSearchComponent = ({
     filter,
   });
 
-  const pageNumber = data?.pages[data?.pages.length - 1]?.pageNumber ?? 0;
+  const pageNumber = data?.pages?.length
+    ? (data.pages[data.pages.length - 1]?.pageNumber ?? 0)
+    : 0;
 
   const debounceOnFilter = useDebounceCallback(
     (searchText: string) => {

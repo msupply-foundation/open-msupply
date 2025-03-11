@@ -5,8 +5,8 @@ use repository::{
 use util::date_now;
 
 // History = historic and current
-const MAX_NUMBER_OF_HISTORIC_PERIODS: usize = 2;
-const MAX_NUMBER_OF_FUTURE_PERIODS: usize = 2;
+const MAX_NUMBER_OF_HISTORIC_PERIODS: usize = 5;
+const MAX_NUMBER_OF_FUTURE_PERIODS: usize = 5;
 
 /// Deduce if period is available for order_type based on
 /// matching period_schedule_id and number of requisition that exists for this

@@ -1,0 +1,54 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/itemCode",
+      "label": "T#report.item-code",
+      "options": {
+        "useDebounce": false
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/itemName",
+      "label": "T#report.item-name"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/monthlyConsumptionLookBackPeriod",
+      "label": "T#report.amc-lookback",
+      "options": {
+        "readonly": true,
+        "inputAlignment": "end",
+        "paddingRight": 25
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/sort",
+      "label": "T#report.sort-by",
+      "options": {
+        "show": [
+          ["name", "T#report.item-name"],
+          ["code", "T#label.code"],
+          ["SOH", "T#report.stock-on-hand"],
+          ["MOS", "T#report.months-cover"],
+          ["monthConsumption", "T#report.consumption-month"],
+          ["lastMonthConsumption", "T#report.consumption-last-month"],
+          ["twoMonthsAgoConsumption", "T#report.consumption-two-months-ago"],
+          ["expiringInSixMonths", "T#report.expiring-6-months"],
+          ["expiringInTwelveMonths", "T#report.expiring-12-months"],
+          ["stockOnOrder", "T#report.stock-on-order"],
+          ["AMC12", "T#report.amc-12-months"],
+          ["AMC24", "T#report.amc-24-months"]
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/dir",
+      "label": "T#report.sort-direction"
+    }
+  ]
+}

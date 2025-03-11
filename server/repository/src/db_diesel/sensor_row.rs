@@ -1,7 +1,4 @@
-use super::{
-    location_row::location, sensor_row::sensor::dsl as sensor_dsl, store_row::store,
-    StorageConnection,
-};
+use super::{location_row::location, store_row::store, StorageConnection};
 
 use crate::{repository_error::RepositoryError, Upsert};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
@@ -91,9 +88,9 @@ impl<'a> SensorRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &SensorRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(sensor_dsl::sensor)
+        diesel::insert_into(sensor::table)
             .values(row)
-            .on_conflict(sensor_dsl::id)
+            .on_conflict(sensor::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -117,16 +114,16 @@ impl<'a> SensorRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SensorRow>, RepositoryError> {
-        let result = sensor_dsl::sensor
-            .filter(sensor_dsl::id.eq(id))
+        let result = sensor::table
+            .filter(sensor::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<SensorRow>, RepositoryError> {
-        Ok(sensor_dsl::sensor
-            .filter(sensor_dsl::id.eq_any(ids))
+        Ok(sensor::table
+            .filter(sensor::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
 }

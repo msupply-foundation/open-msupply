@@ -11,7 +11,11 @@ import {
 } from '@mui/material';
 import { AutocompleteOnChange, AutocompleteOptionRenderer } from './types';
 import { BasicTextInput } from '../TextInput';
-import { defaultOptionMapper, getDefaultOptionRenderer } from './utils';
+import {
+  defaultOptionMapper,
+  getDefaultOptionRenderer,
+  useOpenStateWithKeyboard,
+} from './utils';
 
 export type AutocompleteListProps<T> = {
   options: T[];
@@ -67,6 +71,8 @@ export const AutocompleteList = <T,>({
   getOptionDisabled,
   onInputChange,
 }: AutocompleteListProps<T>): JSX.Element => {
+  // Open by default
+  const openOverrides = useOpenStateWithKeyboard({ open: true });
   const createdFilterOptions = createFilterOptions(filterOptionConfig);
   const optionRenderer = optionKey
     ? getDefaultOptionRenderer<T>(optionKey)
@@ -111,6 +117,7 @@ export const AutocompleteList = <T,>({
         />
       )}
       <MuiAutocomplete
+        {...openOverrides}
         disableClearable={disableClearable}
         autoSelect={false}
         loading={loading}
@@ -130,7 +137,6 @@ export const AutocompleteList = <T,>({
         classes={{ noOptions: 'something' }}
         renderInput={renderInput || defaultRenderInput}
         filterOptions={filterOptions ?? createdFilterOptions}
-        open
         forcePopupIcon={false}
         options={mappedOptions}
         renderOption={optionRenderer}

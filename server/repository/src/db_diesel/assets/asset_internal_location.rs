@@ -4,8 +4,6 @@ use crate::{
     DBType, EqualFilter, Pagination, RepositoryError, Sort, StorageConnection,
 };
 
-use super::asset_internal_location_row::asset_internal_location::dsl as asset_internal_location_dsl;
-
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 pub type AssetInternalLocation = AssetInternalLocationRow;
@@ -86,11 +84,11 @@ impl<'a> AssetInternalLocationRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 AssetInternalLocationSortField::AssetId => {
-                    apply_sort_no_case!(query, sort, asset_internal_location_dsl::asset_id)
+                    apply_sort_no_case!(query, sort, asset_internal_location::asset_id)
                 }
             }
         } else {
-            query = query.order(asset_internal_location_dsl::id.asc())
+            query = query.order(asset_internal_location::id.asc())
         }
 
         let final_query = query
@@ -119,7 +117,7 @@ type BoxedAssetInternalLocationQuery = IntoBoxed<'static, asset_internal_locatio
 fn create_filtered_query(
     filter: Option<AssetInternalLocationFilter>,
 ) -> BoxedAssetInternalLocationQuery {
-    let mut query = asset_internal_location_dsl::asset_internal_location.into_boxed();
+    let mut query = asset_internal_location::table.into_boxed();
 
     if let Some(f) = filter {
         let AssetInternalLocationFilter {
@@ -128,9 +126,9 @@ fn create_filtered_query(
             location_id,
         } = f;
 
-        apply_equal_filter!(query, id, asset_internal_location_dsl::id);
-        apply_equal_filter!(query, asset_id, asset_internal_location_dsl::asset_id);
-        apply_equal_filter!(query, location_id, asset_internal_location_dsl::location_id);
+        apply_equal_filter!(query, id, asset_internal_location::id);
+        apply_equal_filter!(query, asset_id, asset_internal_location::asset_id);
+        apply_equal_filter!(query, location_id, asset_internal_location::location_id);
     }
     query
 }

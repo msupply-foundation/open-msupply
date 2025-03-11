@@ -1,10 +1,4 @@
-use super::{
-    name_link_row::{name_link, name_link::dsl as name_link_dsl},
-    name_row::{name, name::dsl as name_dsl},
-    name_store_join::name_store_join::dsl as name_store_join_dsl,
-    store_row::store,
-    StorageConnection,
-};
+use super::{name_link_row::name_link, name_row::name, store_row::store, StorageConnection};
 use crate::{
     diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
     NameLinkRow, NameRow,
@@ -65,9 +59,9 @@ impl<'a> NameStoreJoinRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(name_store_join_dsl::name_store_join)
+        diesel::insert_into(name_store_join::table)
             .values(row)
-            .on_conflict(name_store_join_dsl::id)
+            .on_conflict(name_store_join::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -91,8 +85,8 @@ impl<'a> NameStoreJoinRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<NameStoreJoinRow>, RepositoryError> {
-        let result = name_store_join_dsl::name_store_join
-            .filter(name_store_join_dsl::id.eq(id))
+        let result = name_store_join::table
+            .filter(name_store_join::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -106,7 +100,7 @@ impl<'a> NameStoreJoinRepository<'a> {
                 return Ok(None);
             }
         };
-        diesel::delete(name_store_join_dsl::name_store_join.filter(name_store_join_dsl::id.eq(id)))
+        diesel::delete(name_store_join::table.filter(name_store_join::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }
@@ -137,15 +131,15 @@ type BoxedNameStoreJoinQuery = IntoBoxed<
 >;
 
 fn create_filtered_query(filter: Option<NameStoreJoinFilter>) -> BoxedNameStoreJoinQuery {
-    let mut query = name_store_join_dsl::name_store_join
-        .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
+    let mut query = name_store_join::table
+        .inner_join(name_link::table.inner_join(name::table))
         .into_boxed();
 
     if let Some(f) = filter {
         let NameStoreJoinFilter { id, name_id } = f;
 
-        apply_equal_filter!(query, id, name_store_join_dsl::id);
-        apply_equal_filter!(query, name_id, name_dsl::id);
+        apply_equal_filter!(query, id, name_store_join::id);
+        apply_equal_filter!(query, name_id, name::id);
     }
 
     query

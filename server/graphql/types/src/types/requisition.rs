@@ -256,6 +256,10 @@ impl RequisitionNode {
             .map(|period| PeriodNode::from_domain(period.to_owned()))
     }
 
+    pub async fn is_emergency(&self) -> bool {
+        self.row().is_emergency
+    }
+
     // % allocated ?
     // % shipped ?
     // lead time ?

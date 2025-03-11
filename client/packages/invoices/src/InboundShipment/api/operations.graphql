@@ -317,11 +317,16 @@ mutation deleteInboundShipments(
 mutation insertInboundShipment(
   $id: String!
   $otherPartyId: String!
+  $requisitionId: String
   $storeId: String!
 ) {
   insertInboundShipment(
     storeId: $storeId
-    input: { id: $id, otherPartyId: $otherPartyId }
+    input: {
+      id: $id
+      otherPartyId: $otherPartyId
+      requisitionId: $requisitionId
+    }
   ) {
     ... on InsertInboundShipmentError {
       __typename
@@ -678,6 +683,82 @@ mutation addToInboundShipmentFromMasterList(
     ... on InvoiceLineConnector {
       __typename
       totalCount
+    }
+  }
+}
+
+fragment LinkedRequestRow on RequisitionNode {
+  __typename
+  id
+  createdDatetime
+  requisitionNumber
+  theirReference
+  user {
+    username
+  }
+  program {
+    name
+  }
+  comment
+}
+
+fragment LinkedRequestLine on RequisitionLineNode {
+  __typename
+  id
+  requestedQuantity
+  item {
+    id
+    code
+    name
+  }
+}
+
+fragment LinkedRequestWithLines on RequisitionNode {
+  ...LinkedRequestRow
+  lines {
+    nodes {
+      ...LinkedRequestLine
+    }
+  }
+}
+
+query requests(
+  $storeId: String!
+  $filter: RequisitionFilterInput
+  $sort: [RequisitionSortInput!]
+) {
+  requisitions(storeId: $storeId, filter: $filter, sort: $sort) {
+    ... on RequisitionConnector {
+      totalCount
+      nodes {
+        ...LinkedRequestRow
+      }
+    }
+  }
+}
+
+query request($id: String!, $storeId: String!) {
+  requisition(id: $id, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      ...LinkedRequestWithLines
+    }
+  }
+}
+
+mutation insertLinesFromInternalOrder(
+  $storeId: String!
+  $input: BatchInboundShipmentInput!
+) {
+  batchInboundShipment(storeId: $storeId, input: $input) {
+    insertFromInternalOrderLines {
+      id
+      response {
+        ... on InvoiceLineNode {
+          __typename
+          id
+        }
+      }
     }
   }
 }

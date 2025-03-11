@@ -80,7 +80,7 @@ impl<'a> PackagingVariantRepository<'a> {
                 }
             }
         } else {
-            query = query.order(packaging_variant::id.asc())
+            query = query.order(packaging_variant::packaging_level.asc())
         }
 
         let final_query = query

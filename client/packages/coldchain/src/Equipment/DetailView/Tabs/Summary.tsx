@@ -328,7 +328,10 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
           </Row>
           <Row isGaps={isGaps} label={t('label.last-updated')}>
             <BasicTextInput
-              value={localisedDate(draft.statusLog?.logDatetime)}
+              value={
+                draft.statusLog?.logDatetime &&
+                localisedDate(draft.statusLog?.logDatetime)
+              }
               disabled
               fullWidth
             />

@@ -1,4 +1,4 @@
-use super::{stock_movement::stock_movement::dsl as stock_movement_dsl, StorageConnection};
+use super::StorageConnection;
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter},
@@ -72,7 +72,7 @@ impl<'a> StockMovementRepository<'a> {
         filter: Option<StockMovementFilter>,
     ) -> Result<Vec<StockMovementRow>, RepositoryError> {
         // Query StockMovement
-        let mut query = stock_movement_dsl::stock_movement.into_boxed();
+        let mut query = stock_movement::table.into_boxed();
 
         if let Some(f) = filter {
             let StockMovementFilter {
@@ -82,10 +82,10 @@ impl<'a> StockMovementRepository<'a> {
                 stock_line_id,
             } = f;
 
-            apply_equal_filter!(query, item_id, stock_movement_dsl::item_id);
-            apply_equal_filter!(query, store_id, stock_movement_dsl::store_id);
-            apply_equal_filter!(query, stock_line_id, stock_movement_dsl::stock_line_id);
-            apply_date_time_filter!(query, datetime, stock_movement_dsl::datetime);
+            apply_equal_filter!(query, item_id, stock_movement::item_id);
+            apply_equal_filter!(query, store_id, stock_movement::store_id);
+            apply_equal_filter!(query, stock_line_id, stock_movement::stock_line_id);
+            apply_date_time_filter!(query, datetime, stock_movement::datetime);
         }
 
         // Debug diesel query

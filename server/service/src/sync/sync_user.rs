@@ -40,11 +40,14 @@ impl SyncUser {
             ));
         }
 
-        match LoginService::fetch_user_from_central(&LoginInput {
-            username,
-            password: password.clone(),
-            central_server_url,
-        })
+        match LoginService::fetch_user_from_central(
+            service_provider,
+            &LoginInput {
+                username,
+                password: password.clone(),
+                central_server_url,
+            },
+        )
         .await
         {
             Ok(user_info) => {

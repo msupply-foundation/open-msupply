@@ -1,0 +1,6 @@
+query frontendPluginMetadata {
+  frontendPluginMetadata {
+    code
+    path
+  }
+}

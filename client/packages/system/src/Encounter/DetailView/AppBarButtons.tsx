@@ -17,7 +17,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonsProp> = ({
 
   return (
     <AppBarButtonsPortal>
-      <Grid container gap={1}>
+      <Grid container gap={1} flexWrap="nowrap">
         {!!logicalStatus && (
           <Typography color={'secondary.main'} padding={1} fontWeight={'bold'}>
             {logicalStatus}

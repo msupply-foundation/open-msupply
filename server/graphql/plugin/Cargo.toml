@@ -11,6 +11,7 @@ path = "src/lib.rs"
 repository = { path = "../../repository" }
 service = { path = "../../service" }
 graphql_core = { path = "../core" }
+util = { path = "../../util" }
 
 
 actix-web = { workspace = true }
@@ -19,6 +20,7 @@ async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
 async-trait = { workspace = true }
 chrono = { workspace = true }
+serde_json = { workspace = true }
 
 [dev-dependencies]
 actix-rt = { workspace = true }

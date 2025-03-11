@@ -1,8 +1,7 @@
-use repository::{EqualFilter, ItemFilter, ItemRepository, RepositoryError};
+use repository::{ItemFilter, ItemRepository};
 
 use crate::{
-    item_stats::{get_item_stats, ItemStatsFilter},
-    service_provider::ServiceContext,
+    item_stats::get_item_stats, service_provider::ServiceContext, PluginOrRepositoryError,
 };
 
 pub struct ItemCounts {
@@ -21,7 +20,7 @@ pub trait ItemCountServiceTrait: Send + Sync {
         ctx: &ServiceContext,
         store_id: &str,
         low_stock_threshold: i32,
-    ) -> Result<ItemCounts, RepositoryError> {
+    ) -> Result<ItemCounts, PluginOrRepositoryError> {
         ItemServiceCount {}.get_item_counts(ctx, store_id, low_stock_threshold)
     }
 }
@@ -34,7 +33,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
         ctx: &ServiceContext,
         store_id: &str,
         low_stock_threshold: i32,
-    ) -> Result<ItemCounts, RepositoryError> {
+    ) -> Result<ItemCounts, PluginOrRepositoryError> {
         let visible_items = ItemRepository::new(&ctx.connection).query_by_filter(
             ItemFilter::new().is_visible(true).is_active(true),
             Some(store_id.to_owned()),
@@ -42,11 +41,9 @@ impl ItemCountServiceTrait for ItemServiceCount {
 
         let visible_items_count = visible_items.len() as i64;
 
-        let item_id_filter =
-            EqualFilter::equal_any(visible_items.into_iter().map(|i| i.item_row.id).collect());
-        let item_id_filter = Some(ItemStatsFilter::new().item_id(item_id_filter));
+        let item_ids = visible_items.into_iter().map(|i| i.item_row.id).collect();
 
-        let item_stats = get_item_stats(ctx, store_id, None, item_id_filter)?;
+        let item_stats = get_item_stats(ctx, store_id, None, item_ids)?;
 
         let no_stock = item_stats
             .iter()

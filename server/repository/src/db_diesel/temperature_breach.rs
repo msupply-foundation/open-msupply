@@ -1,10 +1,6 @@
 use super::{
-    location_row::location::dsl as location_dsl,
-    sensor_row::sensor::dsl as sensor_dsl,
-    temperature_breach_row::{
-        temperature_breach, temperature_breach::dsl as temperature_breach_dsl,
-    },
-    DBType, StorageConnection, TemperatureBreachRow, TemperatureBreachType,
+    location_row::location, sensor_row::sensor, temperature_breach_row::temperature_breach, DBType,
+    StorageConnection, TemperatureBreachRow, TemperatureBreachType,
 };
 use diesel::prelude::*;
 
@@ -76,17 +72,17 @@ impl<'a> TemperatureBreachRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 TemperatureBreachSortField::Id => {
-                    apply_sort_no_case!(query, sort, temperature_breach_dsl::id)
+                    apply_sort_no_case!(query, sort, temperature_breach::id)
                 }
                 TemperatureBreachSortField::StartDatetime => {
-                    apply_sort!(query, sort, temperature_breach_dsl::start_datetime)
+                    apply_sort!(query, sort, temperature_breach::start_datetime)
                 }
                 TemperatureBreachSortField::EndDatetime => {
-                    apply_sort!(query, sort, temperature_breach_dsl::end_datetime)
+                    apply_sort!(query, sort, temperature_breach::end_datetime)
                 }
             }
         } else {
-            query = query.order(temperature_breach_dsl::start_datetime.desc())
+            query = query.order(temperature_breach::start_datetime.desc())
         }
 
         let result = query
@@ -100,7 +96,7 @@ impl<'a> TemperatureBreachRepository<'a> {
     pub fn create_filtered_query(
         filter: Option<TemperatureBreachFilter>,
     ) -> BoxedTemperatureBreachQuery {
-        let mut query = temperature_breach_dsl::temperature_breach.into_boxed();
+        let mut query = temperature_breach::table.into_boxed();
 
         if let Some(f) = filter {
             let TemperatureBreachFilter {
@@ -114,30 +110,25 @@ impl<'a> TemperatureBreachRepository<'a> {
                 location,
             } = f;
 
-            apply_equal_filter!(query, id, temperature_breach_dsl::id);
-            apply_equal_filter!(query, store_id, temperature_breach_dsl::store_id);
-            apply_equal_filter!(query, r#type, temperature_breach_dsl::type_);
-            apply_date_time_filter!(
-                query,
-                start_datetime,
-                temperature_breach_dsl::start_datetime
-            );
-            apply_date_time_filter!(query, end_datetime, temperature_breach_dsl::end_datetime);
+            apply_equal_filter!(query, id, temperature_breach::id);
+            apply_equal_filter!(query, store_id, temperature_breach::store_id);
+            apply_equal_filter!(query, r#type, temperature_breach::type_);
+            apply_date_time_filter!(query, start_datetime, temperature_breach::start_datetime);
+            apply_date_time_filter!(query, end_datetime, temperature_breach::end_datetime);
 
             if let Some(value) = unacknowledged {
-                query = query.filter(temperature_breach_dsl::unacknowledged.eq(value));
+                query = query.filter(temperature_breach::unacknowledged.eq(value));
             }
 
             if sensor.is_some() {
-                let sensor_ids =
-                    SensorRepository::create_filtered_query(sensor).select(sensor_dsl::id);
-                query = query.filter(temperature_breach_dsl::sensor_id.eq_any(sensor_ids));
+                let sensor_ids = SensorRepository::create_filtered_query(sensor).select(sensor::id);
+                query = query.filter(temperature_breach::sensor_id.eq_any(sensor_ids));
             }
 
             if location.is_some() {
                 let location_ids = LocationRepository::create_filtered_query(location)
-                    .select(location_dsl::id.nullable());
-                query = query.filter(temperature_breach_dsl::location_id.eq_any(location_ids));
+                    .select(location::id.nullable());
+                query = query.filter(temperature_breach::location_id.eq_any(location_ids));
             }
         }
 

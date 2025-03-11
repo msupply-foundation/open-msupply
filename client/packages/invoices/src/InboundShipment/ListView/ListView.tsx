@@ -53,7 +53,8 @@ export const InboundListView: FC = () => {
   const queryParams = { ...filter, sortBy, first, offset };
 
   const navigate = useNavigate();
-  const modalController = useToggle();
+  const invoiceModalController = useToggle();
+  const linkRequestModalController = useToggle();
 
   const { data, isError, isLoading } = useInbound.document.list(queryParams);
   useDisableInboundRows(data?.nodes);
@@ -96,7 +97,10 @@ export const InboundListView: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons modalController={modalController} />
+      <AppBarButtons
+        invoiceModalController={invoiceModalController}
+        linkRequestModalController={linkRequestModalController}
+      />
 
       <DataTable
         id="inbound-line-list"
@@ -112,7 +116,7 @@ export const InboundListView: FC = () => {
         noDataElement={
           <NothingHere
             body={t('error.no-inbound-shipments')}
-            onCreate={modalController.toggleOn}
+            onCreate={invoiceModalController.toggleOn}
           />
         }
         enableColumnSelection

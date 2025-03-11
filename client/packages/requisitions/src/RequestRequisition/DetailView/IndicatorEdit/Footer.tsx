@@ -9,6 +9,7 @@ interface FooterProps {
   hasPrevious: boolean;
   previous: IndicatorLineRowFragment | null;
   requisitionNumber?: number;
+  scrollIntoView: () => void;
 }
 
 export const Footer = ({
@@ -17,10 +18,17 @@ export const Footer = ({
   hasPrevious,
   previous,
   requisitionNumber,
+  scrollIntoView,
 }: FooterProps) => {
   const navigateTo = useIndicatorNavigation(requisitionNumber);
-  const navigateToNext = () => navigateTo(next?.id);
-  const navigateToPrevious = () => navigateTo(previous?.id);
+  const navigateToNext = () => {
+    navigateTo(next?.id);
+    scrollIntoView();
+  };
+  const navigateToPrevious = () => {
+    navigateTo(previous?.id);
+    scrollIntoView();
+  };
 
   return (
     <AppFooterPortal

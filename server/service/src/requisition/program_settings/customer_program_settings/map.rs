@@ -19,7 +19,8 @@ pub(super) fn map_customer_program_settings(
                 .iter()
                 .filter(|(customer, _)| {
                     customer.program.id == program_setting.program_row.id
-                        || customer.program.elmis_code == program_setting.program_row.elmis_code
+                        || (customer.program.elmis_code == program_setting.program_row.elmis_code
+                            && customer.program.elmis_code.is_some())
                 })
                 .map(|(customer, requisitions_in_periods)| {
                     // Filter available periods for program settings for the customer
@@ -80,7 +81,10 @@ fn test_reduce_and_sort_periods() {
         .map(make_date)
         .collect();
 
-    let result: Vec<PeriodRow> = [-4, -2, 2, 3].iter().map(make_date).collect();
+    let result: Vec<PeriodRow> = [-10, -10, -5, -4, -2, 2, 3, 4, 10, 11]
+        .iter()
+        .map(make_date)
+        .collect();
 
     assert_eq!(reduce_and_sort_periods(periods), result)
 }

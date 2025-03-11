@@ -10,7 +10,7 @@ use repository::{
 use crate::{
     processors::Processors,
     service_provider::{ServiceContext, ServiceProvider},
-    settings::{MailSettings, ServerSettings, Settings},
+    settings::{DiscoveryMode, MailSettings, ServerSettings, Settings},
     sync::{
         file_sync_driver::FileSyncDriver,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
@@ -26,6 +26,7 @@ pub(crate) struct ServiceTestContext {
     pub(crate) connection_manager: StorageConnectionManager,
     #[allow(dead_code)]
     pub(crate) service_context: ServiceContext,
+    pub(crate) settings: Settings,
 }
 
 // TODO use this method in service tests
@@ -41,10 +42,11 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
     let settings = Settings {
         server: ServerSettings {
             port: 0,
+            discovery: DiscoveryMode::Disabled,
             danger_allow_http: false,
             debug_no_access_control: false,
             cors_origins: vec![],
-            base_dir: None,
+            base_dir: Some("test_output".to_string()),
             machine_uid: None,
         },
         database: db_settings,
@@ -83,6 +85,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         processors_task,
         connection_manager,
         service_context,
+        settings,
     }
 }
 

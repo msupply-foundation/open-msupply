@@ -13,11 +13,14 @@ import {
   AppFooterPortal,
   InvoiceNodeStatus,
   useBreadcrumbs,
+  useConfirmationModal,
+  InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, outboundStatuses } from '../../../utils';
 import { useOutbound, OutboundFragment } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
+import { StockOutLineFragment } from 'packages/invoices/src/StockOut';
 
 const createStatusLog = (invoice: OutboundFragment) => {
   const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
@@ -29,6 +32,7 @@ const createStatusLog = (invoice: OutboundFragment) => {
     [InvoiceNodeStatus.Shipped]: null,
     [InvoiceNodeStatus.Delivered]: null,
     [InvoiceNodeStatus.Verified]: null,
+    [InvoiceNodeStatus.Cancelled]: null,
   };
 
   if (statusIdx >= 0) {
@@ -54,7 +58,7 @@ const createStatusLog = (invoice: OutboundFragment) => {
 };
 
 interface FooterComponentProps {
-  onReturnLines: (stockLineIds: string[]) => void;
+  onReturnLines: (selectedLines: StockOutLineFragment[]) => void;
 }
 
 export const FooterComponent: FC<FooterComponentProps> = ({
@@ -64,29 +68,49 @@ export const FooterComponent: FC<FooterComponentProps> = ({
   const { navigateUpOne } = useBreadcrumbs();
 
   const { data } = useOutbound.document.get();
-  const isDisabled = useOutbound.utils.isDisabled();
   const onDelete = useOutbound.line.deleteSelected();
   const { onAllocate } = useOutbound.line.allocateSelected();
-  const selectedIds = useOutbound.utils.selectedIds();
+
+  const selectedLines = useOutbound.utils.selectedLines();
+
+  const selectedUnallocatedEmptyLines = selectedLines
+    .filter(
+      ({ type, numberOfPacks }) =>
+        type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks === 0
+    )
+    .flat()
+    .map(row => row.id);
+
+  const getConfirmation = useConfirmationModal({
+    onConfirm: onAllocate,
+    title: t('heading.are-you-sure'),
+    message: t('messages.empty-unallocated-lines', {
+      count: selectedUnallocatedEmptyLines.length,
+    }),
+  });
+
+  const confirmAllocate = () => {
+    if (selectedUnallocatedEmptyLines.length !== 0) {
+      getConfirmation();
+    } else onAllocate();
+  };
 
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: onDelete,
-      disabled: isDisabled,
     },
     {
       label: t('button.allocate-lines'),
       icon: <ZapIcon />,
-      onClick: onAllocate,
-      disabled: isDisabled,
+      onClick: confirmAllocate,
       shouldShrink: false,
     },
     {
       label: t('button.return-lines'),
       icon: <ArrowLeftIcon />,
-      onClick: () => onReturnLines(selectedIds),
+      onClick: () => onReturnLines(selectedLines),
       shouldShrink: false,
     },
   ];
@@ -95,13 +119,13 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     <AppFooterPortal
       Content={
         <>
-          {selectedIds.length !== 0 && (
+          {selectedLines.length !== 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={selectedIds.length}
+              selectedRowCount={selectedLines.length}
             />
           )}
-          {data && selectedIds.length === 0 && (
+          {data && selectedLines.length === 0 && (
             <Box
               gap={2}
               display="flex"

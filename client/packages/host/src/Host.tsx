@@ -23,6 +23,8 @@ import {
   createBrowserRouter,
   createRoutesFromElements,
   RouterProvider,
+  initialiseI18n,
+  KBarProvider,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
@@ -30,8 +32,8 @@ import { Site } from './Site';
 import { ErrorAlert } from './components/ErrorAlert';
 import { Discovery } from './components/Discovery';
 import { Android } from './components/Android';
-import { useInitPlugins } from './plugins';
 import { BackButtonHandler } from './BackButtonHandler';
+import { useInitPlugins } from './useInitPlugins';
 
 const appVersion = require('../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
@@ -75,62 +77,69 @@ const router = createBrowserRouter(
     <Route
       path="*"
       element={
-        <Viewport>
-          <ErrorAlert />
-          <BackButtonHandler />
-          <Box display="flex" style={{ minHeight: '100%' }}>
-            <Routes>
-              <Route
-                path={RouteBuilder.create(AppRoute.Initialise).build()}
-                element={<Initialise />}
-              />
-              <Route
-                path={RouteBuilder.create(AppRoute.Login).build()}
-                element={<Login />}
-              />
-              <Route
-                path={RouteBuilder.create(AppRoute.Discovery).build()}
-                element={<Discovery />}
-              />
-              <Route
-                path={RouteBuilder.create(AppRoute.Android).build()}
-                element={<Android />}
-              />
-              <Route path="*" element={<Site />} />
-            </Routes>
-          </Box>
-        </Viewport>
+        // Now need to apply additional error boundary inside the router
+        <ErrorBoundary Fallback={GenericErrorFallback}>
+          <Viewport>
+            <ErrorAlert />
+            <BackButtonHandler />
+            <Box display="flex" style={{ minHeight: '100%' }}>
+              <Routes>
+                <Route
+                  path={RouteBuilder.create(AppRoute.Initialise).build()}
+                  element={<Initialise />}
+                />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Login).build()}
+                  element={<Login />}
+                />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Discovery).build()}
+                  element={<Discovery />}
+                />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Android).build()}
+                  element={<Android />}
+                />
+                <Route path="*" element={<Site />} />
+              </Routes>
+            </Box>
+          </Viewport>
+        </ErrorBoundary>
       }
     />
   )
 );
 
+initialiseI18n();
+
 const Host = () => (
   <React.Suspense fallback={<div />}>
-    <IntlProvider>
-      <React.Suspense fallback={<RandomLoader />}>
-        <ErrorBoundary Fallback={GenericErrorFallback}>
-          <QueryClientProvider client={queryClient}>
-            <GqlProvider
-              url={Environment.GRAPHQL_URL}
-              skipRequest={skipRequest}
-            >
-              <AuthProvider>
-                <Init />
-                <AppThemeProvider>
-                  <ConfirmationModalProvider>
-                    <AlertModalProvider>
-                      <RouterProvider router={router} />
-                    </AlertModalProvider>
-                  </ConfirmationModalProvider>
-                </AppThemeProvider>
-              </AuthProvider>
-              {/* <ReactQueryDevtools initialIsOpen /> */}
-            </GqlProvider>
-          </QueryClientProvider>
-        </ErrorBoundary>
-      </React.Suspense>
-    </IntlProvider>
+    <KBarProvider actions={[]}>
+      <IntlProvider>
+        <AppThemeProvider>
+          <React.Suspense fallback={<RandomLoader />}>
+            <ErrorBoundary Fallback={GenericErrorFallback}>
+              <QueryClientProvider client={queryClient}>
+                <GqlProvider
+                  url={Environment.GRAPHQL_URL}
+                  skipRequest={skipRequest}
+                >
+                  <AuthProvider>
+                    <Init />
+                    <ConfirmationModalProvider>
+                      <AlertModalProvider>
+                        <RouterProvider router={router} />
+                      </AlertModalProvider>
+                    </ConfirmationModalProvider>
+                  </AuthProvider>
+                  {/* <ReactQueryDevtools initialIsOpen /> */}
+                </GqlProvider>
+              </QueryClientProvider>
+            </ErrorBoundary>
+          </React.Suspense>
+        </AppThemeProvider>
+      </IntlProvider>
+    </KBarProvider>
   </React.Suspense>
 );
 

@@ -61,9 +61,11 @@ Go to Android Studio settings -> Build -> Build Settings
 
 You may also see prompts in Android Studio to sync - keep an eye out for these and run the sync as needed
 
+If you don't see the option to change Gradle JDK to `17.07.7-tem`, then open the android folder from the OMS repo in Android Studio.
+
 ## Running Android Studio
 
-You can now use `yarn build:server` from the `server/android/` directory, this builds the `libremote_server_lib.so` binaries and relocate them to `app/src/main/jniLibs`.
+You can now use `yarn build:server` from the `client/packages/android/` directory, this builds the `libremote_server_lib.so` binaries and relocate them to `app/src/main/jniLibs`.
 Please see `client/packages/android/app/src/main/java/org/openmsupply/client/RemoteServer.java` for more details of how these libs are loaded.
 It's important to note that web app is bundled in the remote server binary, and web app needs to be built from `client` directory with `yarn build` command, so it's best to use `yarn android:build:server` from client directory as it does both (builds web app and then build android remote server).
 
@@ -111,9 +113,11 @@ Usually you will need to either set `ANDROID_SDK_ROOT` or add `sdk.dir` in `loca
 
 Debugging native Java code is straight forward, breakpoint in Android Studio and press debug.
 
-Debugging web app code is done by opening `chrome://inspect`, you should see the Web View when the app is running in emulator. When bundled is served from remote server (default setup), js bundle is minimised and this makes debugging very hard, however we can run the bundle from webpack server by commenting out the plugins section in `capacitor.config.ts` and entering your local ip in the debugUrl field and running `yarn apply-config`. Please make sure that you start front end server with `yarn start-local` from 'client' directory for this to work.
+Debugging web app code is done by opening `chrome://inspect`, you should see the Web View when the app is running in emulator. When bundled is served from remote server (default setup), js bundle is minimised and this makes debugging very hard (and doesn't allow for hot reload), however we can run the bundle from webpack server by commenting out the plugins section in `capacitor.config.ts` and entering your local ip in the debugUrl field and running `yarn apply-config`. Please make sure that you start front end server with `yarn start` from 'client' directory for this to work. For examples: `yarn && yarn start -- -- --env API_HOST='http://192.168.1.205:8000` <- your local server will also need to be running.
 
 Please note that when debugging with live reload, connections to a discovered server will always go through to the webpack server (regardless of which server is being selected).
+
+It's also a good idea to connect your local chrome browser to emulator or device, by going to chrome://inspect, this is especially helpful when needing to refresh the app, read consoles or inspect network traffic
 
 When running the Android app in an emulator the service discovery will not work outside of the emulator network, to test discovery you will need to run the app on a physical device.
 

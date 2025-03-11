@@ -54,6 +54,7 @@ const PatientListComponent: FC = () => {
       { key: 'identifier' },
       { key: 'lastName' },
       { key: 'programEnrolmentName' },
+      { key: 'nextOfKinName' },
     ],
   });
   const { store } = useAuthContext();
@@ -100,6 +101,11 @@ const PatientListComponent: FC = () => {
       label: 'label.date-of-birth',
       formatter: dateString =>
         dateString ? localisedDate((dateString as string) || '') : '',
+    },
+    {
+      key: 'nextOfKinName',
+      label: 'label.next-of-kin',
+      sortable: false,
     },
   ];
 

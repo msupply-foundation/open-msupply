@@ -6,7 +6,7 @@ use util::Defaults;
 
 use crate::RepositoryError;
 
-use super::{sync_log_row::sync_log::dsl as sync_log_dsl, StorageConnection};
+use super::StorageConnection;
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(strum::EnumIter))]
@@ -149,9 +149,9 @@ impl<'a> SyncLogRowRepository<'a> {
     }
 
     pub fn _upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(sync_log_dsl::sync_log)
+        diesel::insert_into(sync_log::table)
             .values(row)
-            .on_conflict(sync_log_dsl::id)
+            .on_conflict(sync_log::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -164,8 +164,8 @@ impl<'a> SyncLogRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncLogRow>, RepositoryError> {
-        let result = sync_log_dsl::sync_log
-            .filter(sync_log_dsl::id.eq(id))
+        let result = sync_log::table
+            .filter(sync_log::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?
             .map(SyncLogRow::or_latest_row);

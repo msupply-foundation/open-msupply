@@ -2,6 +2,10 @@ use repository::{Invoice, InvoiceLine, RepositoryError};
 
 use crate::{
     invoice_line::{
+        inbound_shipment_from_internal_order_lines::{
+            insert_from_internal_order_line, InsertFromInternalOrderLine,
+            InsertFromInternalOrderLineError,
+        },
         inbound_shipment_service_line::{
             delete_inbound_shipment_service_line, insert_inbound_shipment_service_line,
             update_inbound_shipment_service_line, DeleteInboundShipmentServiceLineError,
@@ -28,6 +32,7 @@ use super::{
 pub struct BatchInboundShipment {
     pub insert_shipment: Option<Vec<InsertInboundShipment>>,
     pub insert_line: Option<Vec<InsertStockInLine>>,
+    pub insert_from_internal_order_lines: Option<Vec<InsertFromInternalOrderLine>>,
     pub update_line: Option<Vec<UpdateStockInLine>>,
     pub delete_line: Option<Vec<DeleteStockInLine>>,
     pub insert_service_line: Option<Vec<InsertInboundShipmentServiceLine>>,
@@ -42,6 +47,12 @@ pub type InsertShipmentsResult =
     Vec<InputWithResult<InsertInboundShipment, Result<Invoice, InsertInboundShipmentError>>>;
 pub type InsertLinesResult =
     Vec<InputWithResult<InsertStockInLine, Result<InvoiceLine, InsertStockInLineError>>>;
+pub type InsertFromInternalOrderLinesResult = Vec<
+    InputWithResult<
+        InsertFromInternalOrderLine,
+        Result<InvoiceLine, InsertFromInternalOrderLineError>,
+    >,
+>;
 pub type UpdateLinesResult =
     Vec<InputWithResult<UpdateStockInLine, Result<InvoiceLine, UpdateStockInLineError>>>;
 pub type DeleteLinesResult =
@@ -69,6 +80,7 @@ pub type DeleteShipmentsResult =
 pub struct BatchInboundShipmentResult {
     pub insert_shipment: InsertShipmentsResult,
     pub insert_line: InsertLinesResult,
+    pub insert_from_internal_order_lines: InsertFromInternalOrderLinesResult,
     pub update_line: UpdateLinesResult,
     pub delete_line: DeleteLinesResult,
     pub insert_service_line: InsertServiceLinesResult,
@@ -95,6 +107,15 @@ pub fn batch_inbound_shipment(
             let (has_errors, result) = mutations_processor
                 .do_mutations_with_user_id(input.insert_shipment, insert_inbound_shipment);
             results.insert_shipment = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
+
+            let (has_errors, result) = mutations_processor.do_mutations_with_user_id(
+                input.insert_from_internal_order_lines,
+                insert_from_internal_order_line,
+            );
+            results.insert_from_internal_order_lines = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
             }
@@ -230,6 +251,7 @@ mod test {
                 input.number_of_packs = 1.0;
                 input.r#type = StockInType::InboundShipment;
             })]),
+            insert_from_internal_order_lines: None,
             update_line: None,
             delete_line: None,
             update_shipment: None,

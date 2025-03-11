@@ -1,5 +1,6 @@
 use crate::sync::test::TestSyncIncomingRecord;
 use repository::{StorePreferenceRow, StorePreferenceType};
+use util::constants::DEFAULT_AMC_LOOKBACK_MONTHS;
 
 const TABLE_NAME: &str = "pref";
 
@@ -154,7 +155,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 om_program_module: true,
                 vaccine_module: false,
                 issue_in_foreign_currency: true,
-                monthly_consumption_look_back_period: 0.0,
+                monthly_consumption_look_back_period: DEFAULT_AMC_LOOKBACK_MONTHS,
                 months_lead_time: 0.0,
                 months_overstock: 6.12,
                 months_understock: 4.42,
@@ -164,6 +165,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 keep_requisition_lines_with_zero_requested_quantity_on_finalised: true,
                 use_consumption_and_stock_from_customers_for_internal_orders: true,
                 manually_link_internal_order_to_inbound_shipment: false,
+                edit_prescribed_quantity_on_prescription: false,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -179,7 +181,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 om_program_module: false,
                 vaccine_module: true,
                 issue_in_foreign_currency: false,
-                monthly_consumption_look_back_period: 0.0,
+                monthly_consumption_look_back_period: DEFAULT_AMC_LOOKBACK_MONTHS,
                 months_lead_time: 0.0,
                 months_overstock: 6.0,
                 months_understock: 3.0,
@@ -189,6 +191,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 keep_requisition_lines_with_zero_requested_quantity_on_finalised: false,
                 use_consumption_and_stock_from_customers_for_internal_orders: false,
                 manually_link_internal_order_to_inbound_shipment: true,
+                edit_prescribed_quantity_on_prescription: false,
             },
         ),
     ]

@@ -100,7 +100,7 @@ export const usePreviousNextRequestLine = (
   lines?: RequestLineFragment[],
   currentItem?: ItemWithStatsFragment | null
 ) => {
-  if (!lines) {
+  if (!lines || !currentItem) {
     return { hasNext: false, next: null, hasPrevious: false, previous: null };
   }
 

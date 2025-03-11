@@ -1,4 +1,4 @@
-use super::changelog::changelog::dsl as changelog_dsl;
+use super::changelog::changelog;
 use diesel::prelude::*;
 use util::{inline_edit, inline_init};
 
@@ -254,7 +254,7 @@ async fn test_changelog_filter() {
     };
 
     for log in [&log1, &log2, &log3, &log4] {
-        diesel::insert_into(changelog_dsl::changelog)
+        diesel::insert_into(changelog::table)
             .values(log)
             .execute(connection.lock().connection())
             .unwrap();

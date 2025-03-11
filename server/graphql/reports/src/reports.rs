@@ -46,6 +46,7 @@ pub enum ReportContext {
     OutboundReturn,
     InboundReturn,
     Report,
+    Prescription,
 }
 
 #[derive(InputObject, Clone)]
@@ -61,6 +62,7 @@ pub struct ReportFilterInput {
     pub name: Option<StringFilterInput>,
     pub context: Option<EqualFilterReportContextInput>,
     pub sub_context: Option<EqualFilterStringInput>,
+    pub is_active: Option<bool>,
 }
 
 #[derive(Union)]
@@ -129,6 +131,10 @@ impl ReportNode {
 
     pub async fn is_custom(&self) -> bool {
         self.row.report_row.is_custom
+    }
+
+    pub async fn is_active(&self) -> bool {
+        self.row.report_row.is_active
     }
 
     pub async fn argument_schema(&self) -> Option<FormSchemaNode> {
@@ -208,13 +214,13 @@ impl ReportFilterInput {
         ReportFilter {
             id: self.id.map(EqualFilter::from),
             name: self.name.map(StringFilter::from),
-            r#type: None,
             context: self
                 .context
                 .map(|t| map_filter!(t, ReportContext::to_domain)),
             sub_context: self.sub_context.map(EqualFilter::from),
             code: None,
             is_custom: None,
+            is_active: self.is_active,
         }
     }
 }
@@ -247,6 +253,7 @@ impl ReportContext {
             ReportContext::OutboundReturn => ReportContextDomain::OutboundReturn,
             ReportContext::InboundReturn => ReportContextDomain::InboundReturn,
             ReportContext::Report => ReportContextDomain::Report,
+            ReportContext::Prescription => ReportContextDomain::Prescription,
         }
     }
 
@@ -264,6 +271,7 @@ impl ReportContext {
             ReportContextDomain::OutboundReturn => ReportContext::OutboundReturn,
             ReportContextDomain::InboundReturn => ReportContext::InboundReturn,
             ReportContextDomain::Report => ReportContext::Report,
+            ReportContextDomain::Prescription => ReportContext::Prescription,
         }
     }
 }

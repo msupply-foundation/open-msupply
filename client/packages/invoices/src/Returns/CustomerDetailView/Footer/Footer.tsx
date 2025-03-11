@@ -32,6 +32,7 @@ const createStatusLog = (invoice: CustomerReturnFragment) => {
     [InvoiceNodeStatus.Verified]: null,
     // Not used for returns
     [InvoiceNodeStatus.Allocated]: null,
+    [InvoiceNodeStatus.Cancelled]: null,
   };
   if (statusIdx >= 0) {
     statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
@@ -59,7 +60,6 @@ export const FooterComponent: FC = () => {
   const { confirmAndDelete } = useReturns.lines.deleteSelectedCustomerLines({
     returnId: id,
   });
-  const isDisabled = useReturns.utils.customerIsDisabled();
   const { selectedIds } = useReturns.lines.deleteSelectedCustomerLines({
     returnId: id,
   });
@@ -71,7 +71,6 @@ export const FooterComponent: FC = () => {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
-      disabled: isDisabled,
     },
   ];
 

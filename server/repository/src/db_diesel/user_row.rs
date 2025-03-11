@@ -1,6 +1,4 @@
-use super::{
-    name_link_row::name_link, user_row::user_account::dsl as user_account_dsl, StorageConnection,
-};
+use super::{name_link_row::name_link, StorageConnection};
 
 use crate::{lower, repository_error::RepositoryError, Upsert};
 
@@ -65,9 +63,9 @@ impl<'a> UserAccountRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(user_account_dsl::user_account)
+        diesel::insert_into(user_account::table)
             .values(row)
-            .on_conflict(user_account_dsl::id)
+            .on_conflict(user_account::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -75,7 +73,7 @@ impl<'a> UserAccountRowRepository<'a> {
     }
 
     pub fn insert_one(&self, user_account_row: &UserAccountRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(user_account_dsl::user_account)
+        diesel::insert_into(user_account::table)
             .values(user_account_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
@@ -85,8 +83,8 @@ impl<'a> UserAccountRowRepository<'a> {
         &self,
         account_id: &str,
     ) -> Result<Option<UserAccountRow>, RepositoryError> {
-        let result: Result<UserAccountRow, diesel::result::Error> = user_account_dsl::user_account
-            .filter(user_account_dsl::id.eq(account_id))
+        let result: Result<UserAccountRow, diesel::result::Error> = user_account::table
+            .filter(user_account::id.eq(account_id))
             .first(self.connection.lock().connection());
         match result {
             Ok(row) => Ok(Some(row)),
@@ -101,8 +99,8 @@ impl<'a> UserAccountRowRepository<'a> {
         &self,
         username: &str,
     ) -> Result<Option<UserAccountRow>, RepositoryError> {
-        let result: Result<UserAccountRow, diesel::result::Error> = user_account_dsl::user_account
-            .filter(lower(user_account_dsl::username).eq(lower(username)))
+        let result: Result<UserAccountRow, diesel::result::Error> = user_account::table
+            .filter(lower(user_account::username).eq(lower(username)))
             .first(self.connection.lock().connection());
 
         match result {
@@ -115,15 +113,15 @@ impl<'a> UserAccountRowRepository<'a> {
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UserAccountRow>, RepositoryError> {
-        let result = user_account_dsl::user_account
-            .filter(user_account_dsl::id.eq_any(ids))
+        let result = user_account::table
+            .filter(user_account::id.eq_any(ids))
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn delete_by_id(&self, id: &str) -> Result<usize, RepositoryError> {
-        let result = diesel::delete(user_account_dsl::user_account)
-            .filter(user_account_dsl::id.eq(id))
+        let result = diesel::delete(user_account::table)
+            .filter(user_account::id.eq(id))
             .execute(self.connection.lock().connection())?;
         Ok(result)
     }

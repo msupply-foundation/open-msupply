@@ -15,6 +15,10 @@ import {
   useAuthContext,
   BasicTextInput,
   UNDEFINED_STRING_VALUE,
+  DetailPanelAction,
+  DeleteIcon,
+  EncounterNodeStatus,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import {
   EncounterFragment,
@@ -33,9 +37,14 @@ interface SidePanelProps {
       createdBy?: { username: string; id?: string };
     }
   ) => void;
+  onDelete: () => void;
 }
 
-export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
+export const SidePanel: FC<SidePanelProps> = ({
+  encounter,
+  onChange,
+  onDelete,
+}) => {
   const [encounterNote, setEncounterNote] = useState(
     encounter.document.data?.notes?.[0]?.text ?? ''
   );
@@ -63,8 +72,30 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
     pagination: { first: NUM_RECENT_ENCOUNTERS },
   });
 
+  const getDeleteConfirmation = useConfirmationModal({
+    message: t('message.confirm-delete-encounter'),
+    title: t('title.confirm-delete-encounter'),
+  });
+
+  const onDeleteClick = () => {
+    getDeleteConfirmation({
+      onConfirm: () => {
+        onDelete();
+      },
+    });
+  };
+
   return (
-    <DetailPanelPortal>
+    <DetailPanelPortal
+      Actions={
+        <DetailPanelAction
+          onClick={onDeleteClick}
+          icon={<DeleteIcon />}
+          title={t('label.delete')}
+          disabled={encounter.status === EncounterNodeStatus.Deleted}
+        />
+      }
+    >
       <DetailPanelSection title={t('label.additional-info')}>
         <Grid container gap={0.5} key="additional-info">
           <PanelRow>
@@ -112,7 +143,7 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
                         created: encounter.startDatetime,
                         authorId: user?.id,
                         authorName: user?.name,
-                      } ?? null,
+                      },
                     ],
                   });
                 }}

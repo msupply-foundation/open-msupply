@@ -324,6 +324,7 @@ pub fn generate_lines_and_stock_lines(
             tax_percentage: _,
             r#type: _,
             number_of_packs,
+            prescribed_quantity: _,
             note,
             inventory_adjustment_reason_id: _,
             return_reason_id: _,

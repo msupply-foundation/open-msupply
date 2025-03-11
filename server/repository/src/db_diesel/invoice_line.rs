@@ -1,13 +1,8 @@
 use super::{
-    invoice_line::invoice_stats::dsl as invoice_stats_dsl,
-    invoice_line_row::invoice_line::{self, dsl as invoice_line_dsl},
-    invoice_row::invoice::{self, dsl as invoice_dsl},
-    item_link_row::item_link::{self, dsl as item_link_dsl},
-    item_row::item::{self, dsl as item_dsl},
-    location_row::location::{self, dsl as location_dsl},
-    stock_line_row::stock_line::{self, dsl as stock_line_dsl},
-    DBType, DatetimeFilter, InvoiceLineRow, InvoiceLineType, InvoiceRow, LocationRow,
-    StorageConnection,
+    inventory_adjustment_reason_row::inventory_adjustment_reason, invoice_line_row::invoice_line,
+    invoice_row::invoice, item_link_row::item_link, item_row::item, location_row::location,
+    stock_line_row::stock_line, DBType, DatetimeFilter, InventoryAdjustmentReasonRow,
+    InvoiceLineRow, InvoiceLineType, InvoiceRow, LocationRow, StorageConnection,
 };
 
 use crate::{
@@ -93,6 +88,7 @@ pub struct InvoiceLineFilter {
     pub picked_datetime: Option<DatetimeFilter>,
     pub delivered_datetime: Option<DatetimeFilter>,
     pub verified_datetime: Option<DatetimeFilter>,
+    pub inventory_adjustment_reason: Option<EqualFilter<String>>,
 }
 
 impl InvoiceLineFilter {
@@ -169,6 +165,11 @@ impl InvoiceLineFilter {
         self.delivered_datetime = Some(filter);
         self
     }
+
+    pub fn inventory_adjustment_reason(mut self, filter: EqualFilter<String>) -> Self {
+        self.inventory_adjustment_reason = Some(filter);
+        self
+    }
 }
 
 type InvoiceLineJoin = (
@@ -177,6 +178,7 @@ type InvoiceLineJoin = (
     InvoiceRow,
     Option<LocationRow>,
     Option<StockLineRow>,
+    Option<InventoryAdjustmentReasonRow>,
 );
 
 pub struct InvoiceLineRepository<'a> {
@@ -222,26 +224,26 @@ impl<'a> InvoiceLineRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 InvoiceLineSortField::ItemName => {
-                    apply_sort_no_case!(query, sort, item_dsl::name);
+                    apply_sort_no_case!(query, sort, item::name);
                 }
                 InvoiceLineSortField::ItemCode => {
-                    apply_sort_no_case!(query, sort, item_dsl::code);
+                    apply_sort_no_case!(query, sort, item::code);
                 }
                 InvoiceLineSortField::Batch => {
-                    apply_sort_no_case!(query, sort, invoice_line_dsl::batch);
+                    apply_sort_no_case!(query, sort, invoice_line::batch);
                 }
                 InvoiceLineSortField::ExpiryDate => {
-                    apply_sort_asc_nulls_last!(query, sort, invoice_line_dsl::expiry_date);
+                    apply_sort_asc_nulls_last!(query, sort, invoice_line::expiry_date);
                 }
                 InvoiceLineSortField::PackSize => {
-                    apply_sort!(query, sort, invoice_line_dsl::pack_size);
+                    apply_sort!(query, sort, invoice_line::pack_size);
                 }
                 InvoiceLineSortField::LocationName => {
-                    apply_sort_no_case!(query, sort, location_dsl::name);
+                    apply_sort_no_case!(query, sort, location::name);
                 }
             };
         } else {
-            query = query.order_by(invoice_line_dsl::id.asc());
+            query = query.order_by(invoice_line::id.asc());
         }
 
         let result = query
@@ -254,8 +256,8 @@ impl<'a> InvoiceLineRepository<'a> {
 
     /// Calculates invoice line stats for a given invoice ids
     pub fn stats(&self, invoice_ids: &[String]) -> Result<Vec<PricingRow>, RepositoryError> {
-        let results: Vec<PricingRow> = invoice_stats_dsl::invoice_stats
-            .filter(invoice_stats_dsl::invoice_id.eq_any(invoice_ids))
+        let results: Vec<PricingRow> = invoice_stats::table
+            .filter(invoice_stats::invoice_id.eq_any(invoice_ids))
             .load(self.connection.lock().connection())?;
         Ok(results)
     }
@@ -265,23 +267,27 @@ type BoxedInvoiceLineQuery = IntoBoxed<
     'static,
     LeftJoin<
         LeftJoin<
-            InnerJoin<
-                InnerJoin<invoice_line::table, InnerJoin<item_link::table, item::table>>,
-                invoice::table,
+            LeftJoin<
+                InnerJoin<
+                    InnerJoin<invoice_line::table, InnerJoin<item_link::table, item::table>>,
+                    invoice::table,
+                >,
+                location::table,
             >,
-            location::table,
+            stock_line::table,
         >,
-        stock_line::table,
+        inventory_adjustment_reason::table,
     >,
     DBType,
 >;
 
 fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQuery {
-    let mut query = invoice_line_dsl::invoice_line
-        .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
-        .inner_join(invoice_dsl::invoice)
-        .left_join(location_dsl::location)
-        .left_join(stock_line_dsl::stock_line)
+    let mut query = invoice_line::table
+        .inner_join(item_link::table.inner_join(item::table))
+        .inner_join(invoice::table)
+        .left_join(location::table)
+        .left_join(stock_line::table)
+        .left_join(inventory_adjustment_reason::table)
         .into_boxed();
 
     if let Some(f) = filter {
@@ -300,29 +306,35 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
             picked_datetime,
             delivered_datetime,
             verified_datetime,
+            inventory_adjustment_reason,
         } = f;
 
-        apply_equal_filter!(query, id, invoice_line_dsl::id);
-        apply_equal_filter!(query, store_id, invoice_dsl::store_id);
-        apply_equal_filter!(query, requisition_id, invoice_dsl::requisition_id);
-        apply_equal_filter!(query, invoice_id, invoice_line_dsl::invoice_id);
-        apply_equal_filter!(query, location_id, invoice_line_dsl::location_id);
+        apply_equal_filter!(query, id, invoice_line::id);
+        apply_equal_filter!(query, store_id, invoice::store_id);
+        apply_equal_filter!(query, requisition_id, invoice::requisition_id);
+        apply_equal_filter!(query, invoice_id, invoice_line::invoice_id);
+        apply_equal_filter!(query, location_id, invoice_line::location_id);
         apply_equal_filter!(query, item_id, item_link::item_id);
-        apply_equal_filter!(query, r#type, invoice_line_dsl::type_);
-        apply_equal_filter!(query, number_of_packs, invoice_line_dsl::number_of_packs);
-        apply_equal_filter!(query, invoice_type, invoice_dsl::type_);
-        apply_equal_filter!(query, invoice_status, invoice_dsl::status);
-        apply_equal_filter!(query, stock_line_id, stock_line_dsl::id);
-        apply_date_time_filter!(query, picked_datetime, invoice_dsl::picked_datetime);
-        apply_date_time_filter!(query, delivered_datetime, invoice_dsl::delivered_datetime);
-        apply_date_time_filter!(query, verified_datetime, invoice_dsl::verified_datetime);
+        apply_equal_filter!(query, r#type, invoice_line::type_);
+        apply_equal_filter!(query, number_of_packs, invoice_line::number_of_packs);
+        apply_equal_filter!(query, invoice_type, invoice::type_);
+        apply_equal_filter!(query, invoice_status, invoice::status);
+        apply_equal_filter!(query, stock_line_id, stock_line::id);
+        apply_equal_filter!(
+            query,
+            inventory_adjustment_reason,
+            inventory_adjustment_reason::reason
+        );
+        apply_date_time_filter!(query, picked_datetime, invoice::picked_datetime);
+        apply_date_time_filter!(query, delivered_datetime, invoice::delivered_datetime);
+        apply_date_time_filter!(query, verified_datetime, invoice::verified_datetime);
     }
 
     query
 }
 
 fn to_domain(
-    (invoice_line_row, (_, item_row), invoice_row, location_row_option, stock_line_option): InvoiceLineJoin,
+    (invoice_line_row, (_, item_row), invoice_row, location_row_option, stock_line_option, _): InvoiceLineJoin,
 ) -> InvoiceLine {
     InvoiceLine {
         invoice_line_row,

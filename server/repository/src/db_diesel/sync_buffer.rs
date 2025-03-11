@@ -65,7 +65,6 @@ pub struct SyncBufferRowRepository<'a> {
 }
 
 use serde::{Deserialize, Serialize};
-use sync_buffer::dsl as sync_buffer_dsl;
 use util::{inline_init, Defaults};
 
 impl<'a> SyncBufferRowRepository<'a> {
@@ -74,9 +73,9 @@ impl<'a> SyncBufferRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &SyncBufferRow) -> Result<(), RepositoryError> {
-        let statement = diesel::insert_into(sync_buffer_dsl::sync_buffer)
+        let statement = diesel::insert_into(sync_buffer::table)
             .values(row)
-            .on_conflict(sync_buffer_dsl::record_id)
+            .on_conflict(sync_buffer::record_id)
             .do_update()
             .set(row);
 
@@ -95,15 +94,15 @@ impl<'a> SyncBufferRowRepository<'a> {
     }
 
     pub fn get_all(&self) -> Result<Vec<SyncBufferRow>, RepositoryError> {
-        Ok(sync_buffer_dsl::sync_buffer.load(self.connection.lock().connection())?)
+        Ok(sync_buffer::table.load(self.connection.lock().connection())?)
     }
 
     pub fn find_one_by_record_id(
         &self,
         record_id: &str,
     ) -> Result<Option<SyncBufferRow>, RepositoryError> {
-        let result = sync_buffer_dsl::sync_buffer
-            .filter(sync_buffer_dsl::record_id.eq(record_id))
+        let result = sync_buffer::table
+            .filter(sync_buffer::record_id.eq(record_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -195,7 +194,7 @@ impl<'a> SyncBufferRepository<'a> {
 type BoxedSyncBufferQuery = IntoBoxed<'static, sync_buffer::table, DBType>;
 
 fn create_filtered_query(filter: Option<SyncBufferFilter>) -> BoxedSyncBufferQuery {
-    let mut query = sync_buffer_dsl::sync_buffer.into_boxed();
+    let mut query = sync_buffer::table.into_boxed();
 
     if let Some(f) = filter {
         let SyncBufferFilter {
@@ -207,16 +206,16 @@ fn create_filtered_query(filter: Option<SyncBufferFilter>) -> BoxedSyncBufferQue
             source_site_id,
         } = f;
 
-        apply_equal_filter!(query, record_id, sync_buffer_dsl::record_id);
+        apply_equal_filter!(query, record_id, sync_buffer::record_id);
         apply_date_time_filter!(
             query,
             integration_datetime,
-            sync_buffer_dsl::integration_datetime
+            sync_buffer::integration_datetime
         );
-        apply_equal_filter!(query, integration_error, sync_buffer_dsl::integration_error);
-        apply_equal_filter!(query, action, sync_buffer_dsl::action);
-        apply_equal_filter!(query, table_name, sync_buffer_dsl::table_name);
-        apply_equal_filter!(query, source_site_id, sync_buffer_dsl::source_site_id);
+        apply_equal_filter!(query, integration_error, sync_buffer::integration_error);
+        apply_equal_filter!(query, action, sync_buffer::action);
+        apply_equal_filter!(query, table_name, sync_buffer::table_name);
+        apply_equal_filter!(query, source_site_id, sync_buffer::source_site_id);
     }
 
     query

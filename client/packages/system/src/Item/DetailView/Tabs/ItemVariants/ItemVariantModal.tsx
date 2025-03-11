@@ -8,7 +8,6 @@ import {
   Box,
   useTranslation,
   useDialog,
-  useKeyboardHeightAdjustment,
   QueryParamsProvider,
   createQueryParamsStore,
   useNotification,
@@ -33,7 +32,6 @@ export const ItemVariantModal = ({
 }) => {
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen: true, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(500);
   const { success, error } = useNotification();
 
   const { draft, isComplete, updateDraft, updatePackagingVariant, save } =
@@ -74,7 +72,7 @@ export const ItemVariantModal = ({
           }}
         />
       }
-      height={height}
+      height={500}
       width={1000}
       slideAnimation={false}
     >

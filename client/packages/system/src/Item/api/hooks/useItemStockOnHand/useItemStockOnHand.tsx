@@ -1,8 +1,13 @@
 import { useInfiniteQuery } from '@openmsupply-client/common';
 import { useItemApi } from '../useItemApi';
 
+export type StockOnHandFilter = Record<
+  string,
+  { like: string } | string | { equalTo: string }
+>;
+
 type UseItemStockOnHandParams = {
-  filter: Record<string, { like: string } | string>;
+  filter: StockOnHandFilter;
   rowsPerPage: number;
   includeNonVisibleWithStockOnHand?: boolean;
 };

@@ -100,7 +100,7 @@ export const ProgramDetailModal: FC = () => {
     },
     {
       Component: history,
-      value: t('heading.history'),
+      value: t('button.history'),
     },
   ];
 

@@ -23,9 +23,12 @@ export const GenericErrorFallback: FC<ErrorBoundaryFallbackProps> = ({
         {t('error.something-wrong')}
       </Typography>
       <Grid container gap={1} justifyContent="center">
-        <BaseButton onClick={onClearError}>{t('button.try-again')}</BaseButton>
+        <BaseButton onClick={onClearError} color="secondary">
+          {t('button.try-again')}
+        </BaseButton>
         <Tooltip title={window.location.origin}>
           <BaseButton
+            color="secondary"
             onClick={() => {
               onClearError;
               window.location.href = window.location.origin;

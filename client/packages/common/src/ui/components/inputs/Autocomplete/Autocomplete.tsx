@@ -7,15 +7,15 @@ import {
   AutocompleteInputChangeReason,
   AutocompleteProps as MuiAutocompleteProps,
   PopperProps,
-  StandardTextFieldProps,
 } from '@mui/material';
 import {
   AutocompleteOption,
   AutocompleteOnChange,
   AutocompleteOptionRenderer,
 } from './types';
-import { BasicTextInput } from '../TextInput';
+import { BasicTextInput, BasicTextInputProps } from '../TextInput';
 import { StyledPopper } from './components';
+import { useOpenStateWithKeyboard } from './utils';
 
 export interface AutocompleteProps<T>
   extends Omit<
@@ -46,7 +46,8 @@ export interface AutocompleteProps<T>
   ) => void;
   inputValue?: string;
   popperMinWidth?: number;
-  inputProps?: StandardTextFieldProps;
+  inputProps?: BasicTextInputProps;
+  required?: boolean;
 }
 
 export function Autocomplete<T>({
@@ -72,19 +73,23 @@ export function Autocomplete<T>({
   autoFocus = false,
   getOptionLabel,
   popperMinWidth,
+  inputProps,
+  required,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
-
+  const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
+      required={required}
       {...props}
+      {...inputProps}
       autoFocus={autoFocus}
       slotProps={{
         input: {
           disableUnderline: false,
           sx: {
-            paddingLeft: 1,
+            padding: '4px !important',
           },
           ...props.InputProps,
         },
@@ -114,6 +119,7 @@ export function Autocomplete<T>({
   return (
     <MuiAutocomplete
       {...restOfAutocompleteProps}
+      {...openOverrides}
       inputValue={inputValue}
       onInputChange={onInputChange}
       disabled={disabled}
@@ -136,8 +142,7 @@ export function Autocomplete<T>({
         popper: popper,
       }}
       sx={{
-        background: theme => theme.palette.background.drawer,
-        borderRadius: 2,
+        ...restOfAutocompleteProps.sx,
         paddingTop: 0.5,
         paddingBottom: 0.5,
       }}

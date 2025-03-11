@@ -6,6 +6,7 @@ import {
   DialogButton,
   LoadingButton,
   useBreadcrumbs,
+  SaveIcon,
 } from '@openmsupply-client/common';
 import { FormInputData } from '@openmsupply-client/programs';
 
@@ -52,6 +53,7 @@ export const Footer: FC<FooterProps> = ({
               onClick={() =>
                 isDirty ? showCancelConfirmation() : navigateUpOne()
               }
+              shouldShrink={false}
             />
             <LoadingButton
               color="secondary"
@@ -61,6 +63,8 @@ export const Footer: FC<FooterProps> = ({
               label={
                 inputData?.isCreating ? t('button.create') : t('button.save')
               }
+              startIcon={<SaveIcon />}
+              shouldShrink={false}
             />
           </Box>
         </Box>

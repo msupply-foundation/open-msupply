@@ -1,6 +1,6 @@
 import {
-  FilterByWithBoolean,
   SortBy,
+  StockLineFilterInput,
   StockLineNode,
   StockLineSortFieldInput,
   useQuery,
@@ -13,7 +13,7 @@ export type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<StockLineRowFragment>;
-  filterBy?: FilterByWithBoolean | null;
+  filterBy?: StockLineFilterInput;
 };
 
 export const useStockList = (queryParams: ListParams) => {
@@ -39,6 +39,7 @@ export const useStockList = (queryParams: ListParams) => {
       hasPacksInStore: true,
       masterList: {
         existsForStoreId: { equalTo: storeId },
+        ...filterBy?.masterList,
       },
     };
     const query = await stockApi.stockLines({

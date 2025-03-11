@@ -1,35 +1,36 @@
-use super::{
-    plugin_data_row::{plugin_data, plugin_data::dsl as plugin_data_dsl},
-    StorageConnection,
-};
+use super::{plugin_data_row::plugin_data, StorageConnection};
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
-    DBType, EqualFilter, Pagination, PluginDataRow, RelatedRecordType, RepositoryError, Sort,
+    DBType, EqualFilter, Pagination, PluginDataRow, RepositoryError, Sort,
 };
-
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct PluginData {
     pub plugin_data: PluginDataRow,
 }
 
-#[derive(Clone, PartialEq, Debug, Default)]
+#[derive(Clone, PartialEq, Debug, Default, TS, Serialize, Deserialize)]
 pub struct PluginDataFilter {
+    #[ts(optional)]
     pub id: Option<EqualFilter<String>>,
-    pub plugin_name: Option<EqualFilter<String>>,
+    #[ts(optional)]
+    pub plugin_code: Option<EqualFilter<String>>,
+    #[ts(optional)]
     pub related_record_id: Option<EqualFilter<String>>,
-    pub related_record_type: Option<EqualFilter<RelatedRecordType>>,
+    #[ts(optional)]
+    pub data_identifier: Option<EqualFilter<String>>,
+    #[ts(optional)]
     pub store_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
 pub enum PluginDataSortField {
     Id,
-    PluginName,
-    RelatedRecordId,
-    RelatedRecordType,
+    PluginCode,
 }
 
 pub type PluginDataSort = Sort<PluginDataSortField>;
@@ -68,20 +69,14 @@ impl<'a> PluginDataRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 PluginDataSortField::Id => {
-                    apply_sort_no_case!(query, sort, plugin_data_dsl::id);
+                    apply_sort_no_case!(query, sort, plugin_data::id);
                 }
-                PluginDataSortField::PluginName => {
-                    apply_sort_no_case!(query, sort, plugin_data_dsl::plugin_name);
-                }
-                PluginDataSortField::RelatedRecordId => {
-                    apply_sort_no_case!(query, sort, plugin_data_dsl::related_record_id);
-                }
-                PluginDataSortField::RelatedRecordType => {
-                    apply_sort_no_case!(query, sort, plugin_data_dsl::related_record_type);
+                PluginDataSortField::PluginCode => {
+                    apply_sort_no_case!(query, sort, plugin_data::plugin_code);
                 }
             }
         } else {
-            query = query.order(plugin_data_dsl::plugin_name.asc());
+            query = query.order(plugin_data::plugin_code.asc());
         }
 
         let results = query
@@ -99,19 +94,15 @@ fn create_filtered_query(filter: Option<PluginDataFilter>) -> BoxedPluginQuery {
     let mut query = plugin_data::table.into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, plugin_data_dsl::id);
-        apply_equal_filter!(query, filter.plugin_name, plugin_data_dsl::plugin_name);
+        apply_equal_filter!(query, filter.id, plugin_data::id);
+        apply_equal_filter!(query, filter.plugin_code, plugin_data::plugin_code);
         apply_equal_filter!(
             query,
             filter.related_record_id,
-            plugin_data_dsl::related_record_id
+            plugin_data::related_record_id
         );
-        apply_equal_filter!(
-            query,
-            filter.related_record_type,
-            plugin_data_dsl::related_record_type
-        );
-        apply_equal_filter!(query, filter.store_id, plugin_data_dsl::store_id);
+        apply_equal_filter!(query, filter.data_identifier, plugin_data::data_identifier);
+        apply_equal_filter!(query, filter.store_id, plugin_data::store_id);
     }
 
     query
@@ -134,7 +125,7 @@ impl PluginDataFilter {
     }
 
     pub fn plugin_name(mut self, filter: EqualFilter<String>) -> Self {
-        self.plugin_name = Some(filter);
+        self.plugin_code = Some(filter);
         self
     }
 
@@ -143,8 +134,8 @@ impl PluginDataFilter {
         self
     }
 
-    pub fn related_record_type(mut self, filter: EqualFilter<RelatedRecordType>) -> Self {
-        self.related_record_type = Some(filter);
+    pub fn data_identifier(mut self, filter: EqualFilter<String>) -> Self {
+        self.data_identifier = Some(filter);
         self
     }
 }

@@ -190,13 +190,32 @@ export const ProgramRequisitionOptions = ({
   const { programs, orderTypes, suppliers, periods, createOptions } =
     useProgramRequisitionOptions(programSettings);
   const t = useTranslation();
+  const ProgramOptionRenderer = getProgramOptionRenderer();
 
   return (
-    <Grid container paddingTop={2} display="flex" direction="column">
-      <LabelAndOptions {...programs} optionKey="programName" autoFocus={true} />
+    <Grid container paddingTop={2} direction="column">
+      <LabelAndOptions
+        {...programs}
+        renderOption={ProgramOptionRenderer}
+        optionKey="programName"
+        autoFocus={true}
+      />
       <LabelAndOptions {...suppliers} optionKey="name" />
       <LabelAndOptions {...orderTypes} optionKey="name" />
-      <LabelAndOptions {...periods} optionKey="name" />
+      <Grid>
+        <Typography
+          sx={{
+            fontStyle: 'italic',
+            color: 'gray.main',
+            fontSize: '12px',
+            paddingLeft: 20,
+            marginBottom: 0,
+          }}
+        >
+          {t('message.program-period')}
+        </Typography>
+        <LabelAndOptions {...periods} optionKey="name" />
+      </Grid>
       <Grid display="flex" justifyContent="center">
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
@@ -214,3 +233,21 @@ export const ProgramRequisitionOptions = ({
     </Grid>
   );
 };
+
+const getProgramOptionRenderer =
+  (): AutocompleteOptionRenderer<SupplierProgramSettingsFragment> =>
+  (props, item) => (
+    <DefaultAutocompleteItemOption {...props} key={item.programId}>
+      <Box display="flex" flexDirection="row" gap={1} alignItems="center">
+        <Typography
+          overflow="hidden"
+          textOverflow="ellipsis"
+          sx={{
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {item.programName} ({item.tagName})
+        </Typography>
+      </Box>
+    </DefaultAutocompleteItemOption>
+  );

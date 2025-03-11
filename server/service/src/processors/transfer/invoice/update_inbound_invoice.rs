@@ -120,6 +120,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
         let updated_inbound_invoice = InvoiceRow {
             // 6.
             status: InvoiceStatus::Shipped,
+            picked_datetime: outbound_invoice_row.picked_datetime,
             shipped_datetime: outbound_invoice_row.shipped_datetime,
             their_reference: Some(formatted_ref),
             comment: Some(formatted_comment),

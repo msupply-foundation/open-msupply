@@ -159,6 +159,8 @@ pub struct LegacyRequisitionRow {
     pub periodID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub programID: Option<String>,
+    #[serde(default)]
+    pub is_emergency: bool,
 }
 
 /// When mSupply central creates transfers it copies over all of the data
@@ -309,6 +311,7 @@ impl SyncTranslation for RequisitionTranslation {
             program_id,
             period_id: data.periodID,
             order_type: data.orderType,
+            is_emergency: data.is_emergency,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -354,6 +357,7 @@ impl SyncTranslation for RequisitionTranslation {
                     program_id,
                     period_id,
                     order_type,
+                    is_emergency,
                 },
             name_row,
             ..
@@ -406,6 +410,7 @@ impl SyncTranslation for RequisitionTranslation {
             programID: program_id,
             periodID: period_id,
             orderType: order_type,
+            is_emergency,
         };
 
         Ok(PushTranslateResult::upsert(

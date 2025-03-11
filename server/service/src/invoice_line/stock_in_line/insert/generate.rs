@@ -112,6 +112,7 @@ fn generate_line(
         cost_price_per_pack,
         r#type: InvoiceLineType::StockIn,
         number_of_packs,
+        prescribed_quantity: None,
         item_name,
         item_code,
         stock_line_id,

@@ -1,6 +1,8 @@
-use super::StorageConnection;
+use super::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
+};
 
-use crate::{RepositoryError, Upsert};
+use crate::{Delete, RepositoryError, Upsert};
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -14,7 +16,7 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Deserialize)]
 #[diesel(table_name = form_schema)]
 pub struct FormSchemaRow {
     /// The json schema id
@@ -80,7 +82,7 @@ impl<'a> FormSchemaRowRepository<'a> {
         FormSchemaRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<i64, RepositoryError> {
         let row = row_from_schema(schema)?;
         diesel::insert_into(form_schema::dsl::form_schema)
             .values(&row)
@@ -88,7 +90,18 @@ impl<'a> FormSchemaRowRepository<'a> {
             .do_update()
             .set(&row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(&row.id, RowActionType::Upsert)
+    }
+
+    fn insert_changelog(&self, uid: &str, action: RowActionType) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::FormSchema,
+            record_id: uid.to_string(),
+            row_action: action,
+            store_id: None,
+            name_link_id: None,
+        };
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_one_by_id(
@@ -115,12 +128,18 @@ impl<'a> FormSchemaRowRepository<'a> {
         }
         Ok(result)
     }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(form_schema::dsl::form_schema.filter(form_schema::dsl::id.eq(id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
 }
 
 impl Upsert for FormSchemaJson {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        FormSchemaRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        let change_log = FormSchemaRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log))
     }
 
     // Test only
@@ -128,6 +147,21 @@ impl Upsert for FormSchemaJson {
         assert_eq!(
             FormSchemaRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct FormSchemaRowDelete(pub String);
+impl Delete for FormSchemaRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        FormSchemaRowRepository::new(con).delete(&self.0)?;
+        Ok(None)
+    }
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            FormSchemaRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
         )
     }
 }

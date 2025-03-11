@@ -1,7 +1,6 @@
 use super::{
     assets::asset_internal_location_row::asset_internal_location, item_link_row::item_link,
-    location_row::location::dsl as location_dsl, name_link_row::name_link, store_row::store,
-    RepositoryError, StorageConnection,
+    name_link_row::name_link, store_row::store, RepositoryError, StorageConnection,
 };
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{Delete, Upsert};
@@ -45,9 +44,9 @@ impl<'a> LocationRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &LocationRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(location_dsl::location)
+        diesel::insert_into(location::table)
             .values(row)
-            .on_conflict(location_dsl::id)
+            .on_conflict(location::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -70,8 +69,8 @@ impl<'a> LocationRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&row)
     }
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<LocationRow>, RepositoryError> {
-        match location_dsl::location
-            .filter(location_dsl::id.eq(id))
+        match location::table
+            .filter(location::id.eq(id))
             .first(self.connection.lock().connection())
         {
             Ok(row) => Ok(Some(row)),
@@ -81,8 +80,8 @@ impl<'a> LocationRowRepository<'a> {
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<LocationRow>, RepositoryError> {
-        Ok(location_dsl::location
-            .filter(location_dsl::id.eq_any(ids))
+        Ok(location::table
+            .filter(location::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
 
@@ -95,7 +94,7 @@ impl<'a> LocationRowRepository<'a> {
             }
         };
 
-        diesel::delete(location_dsl::location.filter(location_dsl::id.eq(id)))
+        diesel::delete(location::table.filter(location::id.eq(id)))
             .execute(self.connection.lock().connection())?;
 
         Ok(Some(change_log_id))

@@ -26,7 +26,15 @@ export const useResponseColumns = () => {
   const { programName } = useResponse.document.fields(['programName']);
 
   const columnDefinitions: ColumnDescription<ResponseLineFragment>[] = [
-    GenericColumnKey.Selection,
+    [
+      GenericColumnKey.Selection,
+      {
+        getIsError: row =>
+          getLinesFromRow(row).some(
+            r => getError(r)?.__typename === 'CannotDeleteLineLinkedToShipment'
+          ),
+      },
+    ],
     getCommentPopoverColumn(),
     [
       'itemCode',
@@ -61,7 +69,7 @@ export const useResponseColumns = () => {
         description: 'description.our-soh',
         sortable: false,
         Cell: PackQuantityCell,
-        accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
+        accessor: ({ rowData }) => rowData.itemStats.stockOnHand,
       },
     ],
   ];

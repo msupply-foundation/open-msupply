@@ -22,7 +22,7 @@ export const NothingHere: React.FC<NothingHereProps> = ({
   const createButtonText = buttonText || t('button.create-a-new-one');
 
   const CreateButton = !!onCreate ? (
-    <Button sx={{ textTransform: 'none' }} onClick={onCreate}>
+    <Button sx={{ textTransform: 'none' }} onClick={() => onCreate()}>
       {createButtonText}
     </Button>
   ) : undefined;

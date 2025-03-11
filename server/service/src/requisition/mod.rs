@@ -30,6 +30,7 @@ use repository::{
     requisition_row::RequisitionType, Invoice, PaginationOption, RepositoryError, Requisition,
     RequisitionFilter, RequisitionLine, RequisitionSort,
 };
+use request_requisition::{get_indicator_information, CustomerIndicatorInformation};
 use request_requisition::{get_requisition_item_information, RequisitionItemInformation};
 use response_requisition::{
     batch_response_requisition, delete_response_requisition, BatchResponseRequisition,
@@ -212,6 +213,16 @@ pub trait RequisitionServiceTrait: Sync + Send {
         get_customer_program_requisition_settings(ctx, store_id)
     }
 
+    fn get_indicator_information(
+        &self,
+        ctx: &ServiceContext,
+        line_ids: Vec<String>,
+        store_id: &str,
+        period_id: &str,
+    ) -> Result<Vec<CustomerIndicatorInformation>, RepositoryError> {
+        get_indicator_information(ctx, line_ids, store_id, period_id)
+    }
+
     fn get_requisition_item_information(
         &self,
         ctx: &ServiceContext,
@@ -224,6 +235,5 @@ pub trait RequisitionServiceTrait: Sync + Send {
         get_requisition_item_information(ctx, store_id, program_id, elmis_code, period_id, item_id)
     }
 }
-
 pub struct RequisitionService {}
 impl RequisitionServiceTrait for RequisitionService {}

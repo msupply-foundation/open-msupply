@@ -1,7 +1,4 @@
-use super::asset_type_row::{
-    asset_catalogue_type::{self, dsl as asset_type_dsl},
-    AssetTypeRow,
-};
+use super::asset_type_row::{asset_catalogue_type, AssetTypeRow};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -87,11 +84,11 @@ impl<'a> AssetTypeRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 AssetTypeSortField::Name => {
-                    apply_sort_no_case!(query, sort, asset_type_dsl::name);
+                    apply_sort_no_case!(query, sort, asset_catalogue_type::name);
                 }
             }
         } else {
-            query = query.order(asset_type_dsl::id.asc())
+            query = query.order(asset_catalogue_type::id.asc())
         }
 
         let final_query = query
@@ -117,7 +114,7 @@ fn to_domain(asset_type_row: AssetTypeRow) -> AssetTypeRow {
 type BoxedAssetTypeQuery = IntoBoxed<'static, asset_catalogue_type::table, DBType>;
 
 fn create_filtered_query(filter: Option<AssetTypeFilter>) -> BoxedAssetTypeQuery {
-    let mut query = asset_type_dsl::asset_catalogue_type.into_boxed();
+    let mut query = asset_catalogue_type::table.into_boxed();
 
     if let Some(f) = filter {
         let AssetTypeFilter {
@@ -126,9 +123,9 @@ fn create_filtered_query(filter: Option<AssetTypeFilter>) -> BoxedAssetTypeQuery
             category_id,
         } = f;
 
-        apply_equal_filter!(query, id, asset_type_dsl::id);
-        apply_string_filter!(query, name, asset_type_dsl::name);
-        apply_equal_filter!(query, category_id, asset_type_dsl::asset_category_id);
+        apply_equal_filter!(query, id, asset_catalogue_type::id);
+        apply_string_filter!(query, name, asset_catalogue_type::name);
+        apply_equal_filter!(query, category_id, asset_catalogue_type::asset_category_id);
     }
     query
 }

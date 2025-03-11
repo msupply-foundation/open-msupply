@@ -1,9 +1,6 @@
 use super::{
-    item_link_row::{item_link, item_link::dsl as item_link_dsl},
-    item_row::{item, item::dsl as item_dsl},
-    requisition_line_row::{requisition_line, requisition_line::dsl as requisition_line_dsl},
-    rnr_form_line_row::{rnr_form_line, rnr_form_line::dsl as rnr_form_line_dsl},
-    DBType, RepositoryError, StorageConnection,
+    item_link_row::item_link, item_row::item, requisition_line_row::requisition_line,
+    rnr_form_line_row::rnr_form_line, DBType, RepositoryError, StorageConnection,
 };
 
 use crate::{
@@ -81,11 +78,11 @@ impl<'a> RnRFormLineRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 RnRFormLineSortField::ItemName => {
-                    apply_sort_no_case!(query, sort, item_dsl::name);
+                    apply_sort_no_case!(query, sort, item::name);
                 }
             }
         } else {
-            query = query.order_by(item_dsl::name.asc());
+            query = query.order_by(item::name.asc());
         }
 
         let result = query
@@ -116,15 +113,15 @@ type BoxedRnRFormLineQuery = IntoBoxed<
 >;
 
 fn create_filtered_query(filter: Option<RnRFormLineFilter>) -> BoxedRnRFormLineQuery {
-    let mut query = rnr_form_line_dsl::rnr_form_line
-        .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
-        .left_join(requisition_line_dsl::requisition_line)
+    let mut query = rnr_form_line::table
+        .inner_join(item_link::table.inner_join(item::table))
+        .left_join(requisition_line::table)
         .into_boxed();
 
     if let Some(f) = filter {
         let RnRFormLineFilter { rnr_form_id } = f;
 
-        apply_equal_filter!(query, rnr_form_id, rnr_form_line_dsl::rnr_form_id);
+        apply_equal_filter!(query, rnr_form_id, rnr_form_line::rnr_form_id);
     }
     query
 }

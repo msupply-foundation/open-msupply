@@ -1,7 +1,5 @@
 use super::{
-    document_registry_row::{document_registry, document_registry::dsl as document_registry_dsl},
-    form_schema_row::{form_schema, form_schema::dsl as form_schema_dsl},
-    StorageConnection,
+    document_registry_row::document_registry, form_schema_row::form_schema, StorageConnection,
 };
 
 use crate::{
@@ -81,14 +79,14 @@ impl<'a> DocumentRegistryRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 DocumentRegistrySortField::DocumentType => {
-                    apply_sort_no_case!(query, sort, document_registry_dsl::document_type)
+                    apply_sort_no_case!(query, sort, document_registry::document_type)
                 }
                 DocumentRegistrySortField::Type => {
-                    apply_sort!(query, sort, document_registry_dsl::category)
+                    apply_sort!(query, sort, document_registry::category)
                 }
             }
         } else {
-            query = query.order(document_registry_dsl::id.asc())
+            query = query.order(document_registry::id.asc())
         }
 
         let result: Result<Vec<DocumentRegistry>, RepositoryError> = query
@@ -110,18 +108,18 @@ type BoxedDocRegistryQuery =
 
 fn create_filtered_query(filter: Option<DocumentRegistryFilter>) -> BoxedDocRegistryQuery {
     let mut query = document_registry::table
-        .inner_join(form_schema_dsl::form_schema)
+        .inner_join(form_schema::table)
         .into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, document_registry_dsl::id);
+        apply_equal_filter!(query, filter.id, document_registry::id);
         apply_equal_filter!(
             query,
             filter.document_type,
-            document_registry_dsl::document_type
+            document_registry::document_type
         );
-        apply_equal_filter!(query, filter.context_id, document_registry_dsl::context_id);
-        apply_equal_filter!(query, filter.category, document_registry_dsl::category);
+        apply_equal_filter!(query, filter.context_id, document_registry::context_id);
+        apply_equal_filter!(query, filter.category, document_registry::category);
     }
 
     query

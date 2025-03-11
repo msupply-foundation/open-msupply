@@ -140,6 +140,7 @@ fn generate(
         program_id: Some(rnr_form_row.program_id.clone()),
         period_id: Some(rnr_form_row.period_id.clone()),
         order_type: None, // Should we capture this in the RnR form?
+        is_emergency: false,
     };
 
     let rnr_form_id = rnr_form_row.id.clone();

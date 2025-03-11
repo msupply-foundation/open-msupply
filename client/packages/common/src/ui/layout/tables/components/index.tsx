@@ -1,7 +1,11 @@
 import React, { FC, PropsWithChildren, ReactElement } from 'react';
 import { CellProps, HeaderProps } from '../columns/types';
 import { RecordWithId } from '@common/types';
-import { useTranslation } from '@common/intl';
+import {
+  LocaleKey,
+  translationExistsInLocale,
+  useTranslation,
+} from '@common/intl';
 import { Box } from '@mui/material';
 
 export * from './DataRow';
@@ -45,6 +49,10 @@ export const BasicHeader = <T extends RecordWithId>({
   column,
 }: HeaderProps<T>): ReactElement => {
   const t = useTranslation();
-  const header = column.label === '' ? '' : t(column.label, column.labelProps);
+  const labelExistsInLocale = translationExistsInLocale(column.label);
+  const header = labelExistsInLocale
+    ? t(column.label as LocaleKey, column.labelProps)
+    : column.label;
+
   return <>{header}</>;
 };

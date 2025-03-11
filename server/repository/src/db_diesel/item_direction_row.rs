@@ -1,5 +1,6 @@
 use super::item_direction_row::item_direction::dsl::*;
 use super::item_link;
+use super::item_row::item;
 use crate::Delete;
 use crate::RepositoryError;
 use crate::StorageConnection;
@@ -17,7 +18,7 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
+    Clone, Default, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
 )]
 #[diesel(table_name = item_direction)]
 #[diesel(treat_none_as_null = true)]
@@ -29,6 +30,8 @@ pub struct ItemDirectionRow {
 }
 
 joinable!(item_direction -> item_link (item_link_id));
+allow_tables_to_appear_in_same_query!(item_direction, item);
+allow_tables_to_appear_in_same_query!(item_direction, item_link);
 
 pub struct ItemDirectionRowRepository<'a> {
     connection: &'a StorageConnection,
