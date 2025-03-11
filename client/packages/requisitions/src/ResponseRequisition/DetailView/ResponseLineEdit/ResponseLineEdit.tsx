@@ -33,6 +33,7 @@ const LABEL_WIDTH = '150px';
 interface ResponseLineEditProps {
   item?: ItemRowFragment | null;
   hasLinkedRequisition?: boolean | undefined;
+  hasApproval?: boolean | undefined;
   draft?: DraftResponseLine | null;
   update: (patch: Partial<DraftResponseLine>) => void;
   save?: () => void;
@@ -50,6 +51,7 @@ interface ResponseLineEditProps {
 
 export const ResponseLineEdit = ({
   hasLinkedRequisition,
+  hasApproval,
   draft,
   update,
   save,
@@ -353,6 +355,21 @@ export const ResponseLineEdit = ({
                   )}
                 </Box>
               </Box>
+              {hasApproval && (
+                <Box>
+                  <InputWithLabelRow
+                    Input={
+                      <NumericTextInput
+                        width={INPUT_WIDTH}
+                        value={draft?.approvedQuantity}
+                      />
+                    }
+                    labelWidth={LABEL_WIDTH}
+                    label={t('label.approved-quantity')}
+                    sx={{ marginBottom: 1 }}
+                  />
+                </Box>
+              )}
               {isProgram && store?.preferences.extraFieldsInRequisition && (
                 <InputWithLabelRow
                   Input={
