@@ -163,7 +163,6 @@ export const PrescriptionLineEditView = () => {
       <PageLayout
         Left={
           <ListItems
-            key="change"
             currentItemId={itemId}
             items={items}
             route={RouteBuilder.create(AppRoute.Dispensary)
@@ -179,6 +178,7 @@ export const PrescriptionLineEditView = () => {
         Right={
           <>
             <PrescriptionLineEdit
+              key="change"
               item={currentItem ?? null}
               draftLines={allDraftLines[itemId] ?? []}
               updateLines={updateAllLines}
