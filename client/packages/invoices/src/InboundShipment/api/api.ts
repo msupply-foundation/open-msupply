@@ -276,7 +276,6 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     const { insertInboundShipment } = result;
 
     if (insertInboundShipment?.__typename === 'InvoiceNode') {
-      // TODO streamline graphql return
       return insertInboundShipment.id;
     }
 

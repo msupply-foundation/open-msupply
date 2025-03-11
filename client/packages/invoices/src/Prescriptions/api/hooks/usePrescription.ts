@@ -210,7 +210,6 @@ const useCreate = () => {
     const { insertPrescription } = result;
 
     if (insertPrescription?.__typename === 'InvoiceNode') {
-      // todo streamline graphql
       return insertPrescription;
     }
 

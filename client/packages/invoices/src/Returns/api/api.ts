@@ -216,7 +216,6 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.generateCustomerReturnLines;
     },
-    // TODO remove supplierReturnByNumber
     supplierReturnByNumber: async (invoiceNumber: number) => {
       const result = await sdk.supplierReturnByNumber({
         invoiceNumber,
@@ -241,7 +240,6 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
         return invoice;
       }
     },
-    // TODO remove customerReturnByNumber
     customerReturnByNumber: async (invoiceNumber: number) => {
       const result = await sdk.customerReturnByNumber({
         invoiceNumber,
