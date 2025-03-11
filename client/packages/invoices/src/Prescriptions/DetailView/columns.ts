@@ -274,7 +274,6 @@ export const usePrescriptionColumn = ({
           let totalUnits = 0;
 
           for (const line of rowData.lines) {
-            console.log('line', line);
             totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
             totalUnits += line.numberOfPacks * line.packSize;
           }
