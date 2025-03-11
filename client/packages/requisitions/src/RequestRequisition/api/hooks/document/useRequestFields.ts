@@ -16,7 +16,7 @@ export const useRequestFields = <
   const api = useRequestApi();
   return useFieldsSelector(
     api.keys.detail(requestId),
-    () => api.get.byNumber(requestId),
+    () => api.get.byId(requestId),
 
     (patch: Partial<RequestFragment>) =>
       api.update({ ...patch, id: data?.id ?? '' }),
