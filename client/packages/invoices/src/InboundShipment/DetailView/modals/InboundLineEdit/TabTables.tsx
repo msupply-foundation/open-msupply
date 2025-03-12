@@ -79,11 +79,6 @@ const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
   />
 );
 
-// If this is not extracted to it's own component and used directly in Cell:
-// cell will be re rendered anytime rowData changes, which causes it to loose focus
-// if number of packs is changed and tab is pressed (in quick succession)
-const PackUnitEntryCell = PackSizeEntryCell<DraftInboundLine>({});
-
 export const QuantityTableComponent: FC<TableProps> = ({
   lines,
   updateDraftLine,
@@ -118,7 +113,7 @@ export const QuantityTableComponent: FC<TableProps> = ({
       },
     ],
     getColumnLookupWithOverrides('packSize', {
-      Cell: PackUnitEntryCell,
+      Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: updateDraftLine,
       label: 'label.pack-size',
     }),
