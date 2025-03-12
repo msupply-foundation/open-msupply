@@ -222,9 +222,7 @@ export const PrescriptionLineEditForm: React.FC<
         setPrescribedQuantity(newPrescribedQuantity);
       }
 
-      const newIssueQuantity = Math.round(
-        allocatedUnits / Math.abs(Number(packSizeController.selected?.value || 1))
-      );
+      const newIssueQuantity = NumUtils.round(allocatedUnits / Math.abs(Number(packSizeController.selected?.value || 1)), 2);
       if (newIssueQuantity !== issueUnitQuantity)
         setIssueUnitQuantity(newIssueQuantity);
       setAllocationAlerts([]);
@@ -559,7 +557,7 @@ const summarise = (
     } else {
       counts[packSize] = {
         unitName: (stockLine?.item as ItemNode)?.unitName ?? 'unit',
-        count: NumUtils.round(packSize * numberOfPacks),
+        count: NumUtils.round(packSize * numberOfPacks, 2),
       };
     }
   });
