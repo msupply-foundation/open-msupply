@@ -85,7 +85,7 @@ const TRANSACT_1: (&str, &str) = (
       "user2": "",
       "user3": "",
       "user4": "",
-      "user_ID": "",
+      "user_ID": "MISSING_USER_ID",
       "wardID": "",
       "waybill_number": "",
       "om_allocated_datetime": "",
@@ -103,7 +103,7 @@ fn transact_1_pull_record() -> TestSyncIncomingRecord {
         TRANSACT_1,
         InvoiceRow {
             id: TRANSACT_1.0.to_string(),
-            user_id: None,
+            user_id: Some("MISSING_USER_ID".to_string()),
             store_id: "store_b".to_string(),
             name_link_id: "name_store_a".to_string(),
             name_store_id: Some("store_a".to_string()),
@@ -155,7 +155,7 @@ fn transact_1_push_record() -> TestSyncOutgoingRecord {
         record_id: TRANSACT_1.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_1.0.to_string(),
-            user_id: None,
+            user_id: Some("MISSING_USER_ID".to_string()),
             name_ID: "name_store_a".to_string(),
             store_ID: "store_b".to_string(),
             invoice_num: 1,
