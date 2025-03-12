@@ -32,14 +32,18 @@ export const AppBarButtonsComponent = () => {
   };
 
   const printAssetLabel = () => {
+    const date = new Date().toLocaleString().split(', ')[0];
+    console.log(date);
     setIsPrinting(true);
     fetch(Environment.PRINT_LABEL_QR, {
       method: 'POST',
       body: JSON.stringify({
         code: data?.id,
-        message: `${t('label.serial')}: ${data?.serialNumber ?? ''}\n${t(
-          'label.asset-number'
-        )}: ${data?.assetNumber ?? ''}`,
+        message: `
+          ${t('label.serial')}: ${data?.serialNumber ?? ''}\n
+          ${t('label.asset-number')}: ${data?.assetNumber ?? ''}\n
+          ${t('label.date-printed')}: ${date}\n
+        `,
       }),
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
