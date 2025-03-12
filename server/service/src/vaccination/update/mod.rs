@@ -41,7 +41,7 @@ pub enum UpdateVaccinationError {
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct UpdateVaccination {
     pub id: String,
-    pub vaccination_date: Option<NaiveDate>,
+    pub vaccination_date: Option<NullableUpdate<NaiveDate>>,
     pub clinician_id: Option<NullableUpdate<String>>,
     pub comment: Option<String>,
     pub given: Option<bool>,
