@@ -24,6 +24,7 @@ import {
 import { usePatient } from '../api';
 
 const EncounterListComponent: FC = () => {
+  const t = useTranslation();
   const {
     queryParams: { sortBy, page, first, offset, filterBy },
     updatePaginationQuery,
@@ -40,7 +41,6 @@ const EncounterListComponent: FC = () => {
   const dataWithStatus: EncounterFragmentWithStatus[] | undefined =
     useEncounterFragmentWithStatus(data?.nodes);
   const navigate = useNavigate();
-  const t = useTranslation();
   const { setModal: selectModal } = usePatientModalStore();
   const { data: enrolmentData } = useProgramEnrolments.document.list({
     filterBy: {

@@ -19,10 +19,10 @@ import {
 import { useInsurancePolicies } from '../apiModern/hooks/useInsurancesPolicies';
 
 export const InsuranceListView = () => {
+  const t = useTranslation();
   const nameId = usePatient.utils.id();
   const { updateQuery } = useUrlQuery();
   const { setModal } = usePatientModalStore();
-  const t = useTranslation();
   const { setModal: selectModal } = usePatientModalStore();
 
   const {

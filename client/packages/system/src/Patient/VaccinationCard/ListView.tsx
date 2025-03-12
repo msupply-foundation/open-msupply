@@ -24,6 +24,7 @@ import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
 import { AppRoute } from '@openmsupply-client/config';
 
 const VaccinationCardListComponent: FC = () => {
+  const t = useTranslation();
   const {
     sort: { sortBy, onChangeSortBy },
   } = useQueryParamsStore();
@@ -47,7 +48,6 @@ const VaccinationCardListComponent: FC = () => {
   });
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
-  const t = useTranslation();
   const navigate = useNavigate();
   const { setModal: selectModal } = usePatientModalStore();
 

@@ -88,6 +88,7 @@ const useContactTraceListColumns = ({
 };
 
 const ContactTraceComponent: FC = () => {
+  const t = useTranslation();
   const {
     sort: { sortBy, onChangeSortBy },
     pagination: { page, first, offset, onChangePage },
@@ -107,7 +108,6 @@ const ContactTraceComponent: FC = () => {
   });
   const pagination = { page, first, offset };
   const navigate = useNavigate();
-  const t = useTranslation();
   const { setModal: selectModal } = usePatientModalStore();
 
   const columns = useContactTraceListColumns({
