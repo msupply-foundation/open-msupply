@@ -1,12 +1,14 @@
 import React, { ReactElement, useEffect, useState } from 'react';
 import {
   Alert,
-  BaseButton,
+  ButtonWithIcon,
   Box,
   InputWithLabelRow,
   ReadOnlyInput,
+  Stack,
   Typography,
   useTranslation,
+  LocationIcon,
 } from '@openmsupply-client/common';
 import { formatCoordinate } from './utils';
 
@@ -59,37 +61,35 @@ export const DisplayCoordinates = (): ReactElement => {
   }, []);
 
   return (
-    <Box py={4}>
-      <Typography variant="h5" pb={2}>
-        {t('heading.gps-coordinates')}
-      </Typography>
+    <>
+      <Typography fontWeight="bold">{t('label.gps-coordinates')}:</Typography>
       {errorMessage ? (
         <Box sx={{ pt: 4, display: 'flex', justifyContent: 'center' }}>
           <Alert severity="error">{errorMessage}</Alert>
         </Box>
       ) : (
-        <>
-          <InputWithLabelRow
-            label={t('label.latitude')}
-            Input={
-              <ReadOnlyInput value={`${latitude} / ${formattedLatitude}`} />
-            }
-            sx={{ pb: 2 }}
+        <Stack direction="row">
+          <Box sx={{ flexGrow: 1 }}>
+            <InputWithLabelRow
+              label={t('label.latitude')}
+              Input={
+                <ReadOnlyInput value={`${latitude} / ${formattedLatitude}`} />
+              }
+            />
+            <InputWithLabelRow
+              label={t('label.longitude')}
+              Input={
+                <ReadOnlyInput value={`${longitude} / ${formattedLongitude}`} />
+              }
+            />
+          </Box>
+          <ButtonWithIcon
+            onClick={() => {}}
+            Icon={<LocationIcon />}
+            label={t('label.update-live-location')}
           />
-          <InputWithLabelRow
-            label={t('label.longitude')}
-            Input={
-              <ReadOnlyInput value={`${longitude} / ${formattedLongitude}`} />
-            }
-            sx={{ pb: 2 }}
-          />
-        </>
+        </Stack>
       )}
-      <Box display="flex" justifyContent={'flex-end'}>
-        <BaseButton onClick={() => {}} size={'small'}>
-          {t('label.capture-location')}
-        </BaseButton>
-      </Box>
-    </Box>
+    </>
   );
 };
