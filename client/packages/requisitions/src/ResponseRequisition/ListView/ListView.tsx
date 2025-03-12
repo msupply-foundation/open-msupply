@@ -159,7 +159,12 @@ export const ResponseRequisitionListView: FC = () => {
         }}
         isError={isError}
         isLoading={isLoading}
-        noDataElement={<NothingHere body={t('error.no-requisitions')} />}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-requisitions')}
+            onCreate={modalController.toggleOn}
+          />
+        }
       />
 
       <Footer />
