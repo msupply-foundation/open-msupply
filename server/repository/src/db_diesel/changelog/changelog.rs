@@ -121,11 +121,12 @@ pub enum ChangelogTableName {
     Report,
     FormSchema,
     PluginData,
+    Preference,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
-    Legacy,
-    Central,
+    Legacy,  // Everything that goes to Legacy mSupply server
+    Central, // Data created on Open-mSupply central server
     Remote,
     File,
     RemoteAndCentral, // These records will sync like remote record if store_id exist, otherwise they will sync like central records
@@ -197,6 +198,7 @@ impl ChangelogTableName {
             ChangelogTableName::Report => ChangeLogSyncStyle::Central,
             ChangelogTableName::FormSchema => ChangeLogSyncStyle::Central,
             ChangelogTableName::PluginData => ChangeLogSyncStyle::RemoteAndCentral,
+            ChangelogTableName::Preference => ChangeLogSyncStyle::Central,
         }
     }
 }
