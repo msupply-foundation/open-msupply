@@ -60,7 +60,9 @@ export const CreateEncounterForm: FC<{
   const [startDateTimeError, setStartDateTimeError] = useState<string>();
 
   const setStartDatetime = (date: Date | null): void => {
-    const startDatetime = DateUtils.addCurrentTime(date)?.toISOString();
+    const startDatetime = DateUtils.formatRFC3339(
+      DateUtils.addCurrentTime(date)
+    );
     setDraft({
       ...draft,
       startDatetime,
