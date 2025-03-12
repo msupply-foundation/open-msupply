@@ -172,7 +172,9 @@ const useInsert = ({
         clinicianId: isOtherFacility ? undefined : input?.clinician?.id,
 
         given: input.given ?? false,
-        vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
+        vaccinationDate: input.given
+          ? Formatter.naiveDate(input.date ?? new Date())
+          : undefined,
         comment: input.comment,
         notGivenReason: input.notGivenReason,
         stockLineId:
