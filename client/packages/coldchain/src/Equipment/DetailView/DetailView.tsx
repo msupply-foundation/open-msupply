@@ -99,7 +99,7 @@ export const EquipmentDetailView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, setDraft]);
 
-  let locations =
+  const locations =
     locationData?.nodes.map(location => ({
       label: formatLocationLabel(location),
       value: location.id,

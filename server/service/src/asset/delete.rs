@@ -1,4 +1,5 @@
 use super::validate::check_asset_exists;
+use crate::sync::CentralServerConfig;
 use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 use repository::assets::asset_internal_location_row::AssetInternalLocationRowRepository;
 use repository::{
@@ -37,7 +38,7 @@ pub fn delete_asset(ctx: &ServiceContext, asset_id: String) -> Result<String, De
                 .delete_all_for_asset_id(&asset_id);
 
             AssetRowRepository::new(connection)
-                .delete(&asset_id)
+                .mark_deleted(&asset_id)
                 .map_err(DeleteAssetError::from)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -55,7 +56,7 @@ pub fn validate(
     };
 
     if let Some(store_id) = &asset_row.store_id {
-        if ctx_store_id != store_id {
+        if ctx_store_id != store_id && !CentralServerConfig::is_central_server() {
             return Err(DeleteAssetError::AssetDoesNotBelongToCurrentStore);
         }
     }

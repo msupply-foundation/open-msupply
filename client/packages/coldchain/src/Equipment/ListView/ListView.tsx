@@ -59,7 +59,7 @@ const AssetListComponent: FC = () => {
     columnsToCreate.push({
       key: 'store',
       label: 'label.store',
-      accessor: ({ rowData }) => rowData.store?.code,
+      accessor: ({ rowData }) => rowData.store?.storeName,
     });
 
   columnsToCreate.push(

@@ -18,7 +18,7 @@ const PopulationCell = (props: CellProps<Row>) => (
 
 export const populationColumn = (): ColumnDefinition<Row> => ({
   label: 'label.current-population',
-  accessor: ({ rowData }) => rowData[0],
+  accessor: ({ rowData }) => Math.floor(rowData[0]),
   key: '0',
   Cell: PopulationCell,
   width: 190,
