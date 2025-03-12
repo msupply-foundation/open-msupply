@@ -18,10 +18,12 @@ import { useAssets } from '../../Equipment/api';
 import { SimpleLabelDisplay } from '../Components/SimpleLabelDisplay';
 import { AddFromScannerButton } from '../../Equipment/ListView/AddFromScannerButton';
 import { CreateAssetModal } from '../../Equipment/ListView/CreateAssetModal';
+import { useIsGapsStoreOnly } from '@openmsupply-client/common';
 
 export const CardListView: FC = () => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const isGaps = useIsGapsStoreOnly();
   const { data, isError, isLoading } = useAssets.document.list();
   const modalController = useToggle();
   const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
@@ -70,7 +72,7 @@ export const CardListView: FC = () => {
         }}
       >
         <ButtonWithIcon
-          shouldShrink={false}
+          shouldShrink={!isGaps}
           label="Add Asset"
           onClick={onAdd}
           Icon={<PlusCircleIcon />}
