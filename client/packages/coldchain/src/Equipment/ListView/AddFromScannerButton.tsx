@@ -17,6 +17,7 @@ import {
   AssetLogStatusInput,
   UserPermission,
   useAuthContext,
+  useIsGapsStoreOnly,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useAssets } from '../api';
@@ -24,6 +25,7 @@ import { DraftAsset } from '../types';
 
 export const AddFromScannerButtonComponent = () => {
   const t = useTranslation();
+  const isGaps = useIsGapsStoreOnly();
   const { isConnected, isEnabled, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
   const { error, info } = useNotification();
@@ -74,7 +76,7 @@ export const AddFromScannerButtonComponent = () => {
       if (!gs1) {
         // try to fetch the asset by id, as it could be an id from our own barcode
         const { content: id } = result;
-        const asset = await fetchAsset(id).catch(() => { });
+        const asset = await fetchAsset(id).catch(() => {});
         if (asset) {
           navigate(equipmentRoute.addPart(id).build());
 
@@ -85,7 +87,7 @@ export const AddFromScannerButtonComponent = () => {
       }
 
       // send the GS1 data to backend to handle
-      const asset = await fetchFromGS1(gs1).catch(() => { });
+      const asset = await fetchFromGS1(gs1).catch(() => {});
 
       if (asset?.__typename !== 'AssetNode') {
         error(t('error.no-matching-asset', { id: result.content }))();
@@ -160,7 +162,7 @@ export const AddFromScannerButtonComponent = () => {
   return (
     <Box>
       <ButtonWithIcon
-        shouldShrink={false}
+        shouldShrink={!isGaps}
         ref={buttonRef}
         onClick={e => {
           handleClick(e);
