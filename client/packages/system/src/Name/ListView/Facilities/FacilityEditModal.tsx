@@ -15,6 +15,7 @@ import {
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
 import { NameRenderer } from '../..';
+import { DisplayCoordinates } from './DisplayCoordinates';
 
 interface FacilityEditModalProps {
   nameId: string;
@@ -101,18 +102,21 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
       }
       height={600}
       width={700}
+      fullscreen
     >
       <DetailContainer>
-        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+        <Box display="flex" flexDirection="column" gap={2}>
           <NameRenderer
             isStore={!!data.store}
             label={data.name}
             sx={{ fontWeight: 'bold', fontSize: 18 }}
           />
-
-          <Box display="flex">
-            <Typography fontWeight="bold">{t('label.code')}:</Typography>
-            <Typography paddingX={1}>{data.code}</Typography>
+          <Box display="flex" flexDirection="column">
+            <Box display="flex" flexDirection="row">
+              <Typography fontWeight="bold">{t('label.code')}:</Typography>
+              <Typography paddingX={1}>{data.code}</Typography>
+            </Box>
+            <DisplayCoordinates />
           </Box>
           <DetailSection title="">
             {!properties?.length ? (
@@ -122,35 +126,38 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
             ) : (
               <Box
                 sx={{
-                  width: '500px',
+                  width: '600px',
                   display: 'grid',
                   gap: 1,
                 }}
               >
-                {properties.map(p => (
+                {properties.map(nameProperty => (
                   <InputWithLabelRow
-                    key={p.id}
-                    label={p.property.name}
+                    key={nameProperty.id}
+                    label={nameProperty.property.name}
                     sx={{ width: '100%' }}
                     labelProps={{
                       sx: {
                         width: '250px',
                         fontSize: '16px',
                         paddingRight: 2,
-                        textAlign: 'right',
                       },
                     }}
                     Input={
                       <Box flex={1}>
                         <PropertyInput
-                          disabled={!isCentralServer && !p.remoteEditable}
-                          valueType={p.property.valueType}
-                          allowedValues={p.property.allowedValues?.split(',')}
-                          value={draftProperties[p.property.key]}
-                          onChange={v =>
+                          disabled={
+                            !isCentralServer && !nameProperty.remoteEditable
+                          }
+                          valueType={nameProperty.property.valueType}
+                          allowedValues={nameProperty.property.allowedValues?.split(
+                            ','
+                          )}
+                          value={draftProperties[nameProperty.property.key]}
+                          onChange={value =>
                             setDraftProperties({
                               ...draftProperties,
-                              [p.property.key]: v ?? null,
+                              [nameProperty.property.key]: value ?? null,
                             })
                           }
                         />

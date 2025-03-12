@@ -40,6 +40,7 @@ export { InfoOutlineIcon } from './InfoOutline';
 export { InvoiceIcon } from './Invoice';
 export { LinkIcon } from './Link';
 export { ListIcon } from './List';
+export { LocationIcon } from './Location';
 export { MaximiseIcon } from './Maximise';
 export { MailIcon } from './Mail';
 export { MSupplyGuy, AnimatedMSupplyGuy } from './MSupplyGuy';
