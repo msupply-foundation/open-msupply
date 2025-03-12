@@ -202,8 +202,13 @@ mutation createInventoryAdjustment(
     ... on CreateInventoryAdjustmentError {
       __typename
       error {
+        __typename
         description
         ... on StockLineReducedBelowZero {
+          __typename
+          description
+        }
+        ... on AdjustmentReasonNotProvided {
           __typename
           description
         }
@@ -217,6 +222,15 @@ mutation insertStockLine($input: InsertStockLineInput!, $storeId: String!) {
     ... on StockLineNode {
       __typename
       ...StockLineRow
+    }
+    ... on InsertStockLineError {
+      __typename
+      error {
+        __typename
+        ... on AdjustmentReasonNotProvided {
+          __typename
+        }
+      }
     }
   }
 }

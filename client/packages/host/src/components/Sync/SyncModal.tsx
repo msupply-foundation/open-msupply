@@ -54,7 +54,7 @@ const useHostSync = (enabled: boolean) => {
       keepAwake();
     } else {
       allowSleep();
-      queryClient.invalidateQueries(); //refresh the page user is on after sync finishes
+      queryClient.invalidateQueries(); // refresh the page user is on after sync finishes
     }
   }, [syncStatus?.isSyncing]);
 
@@ -213,9 +213,9 @@ const FormattedSyncDate = ({ date }: { date: Date | null }) => {
 
   if (!date) return UNDEFINED_STRING_VALUE;
 
-  const relativeTime = `( ${t('messages.ago', {
+  const relativeTime = `(${t('messages.ago', {
     time: localisedDistanceToNow(date),
-  })} )`;
+  })})`;
 
   return (
     <Grid display="flex" flexDirection="row" container gap={1}>
