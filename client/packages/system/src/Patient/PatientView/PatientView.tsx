@@ -101,16 +101,17 @@ export const PatientView = () => {
       value: PatientTabValue.Details,
       confirmOnLeaving: isDirtyPatient,
     },
-    // Display program tabs only if the Program module is enabled and the patient is saved
-    ...(store?.preferences.omProgramModule ? programTabs : []),
-    // Display insurance tab only if insurance providers are available and the patient is saved
-    insuranceProvidersData.length > 0
-      ? {
-          Component: <InsuranceListView />,
-          value: PatientTabValue.Insurance,
-        }
-      : ({} as TabDefinition),
   ];
+
+  // Display program tabs only if the Program module is enabled and the patient is saved
+  if (store?.preferences.omProgramModule) tabs.push(...programTabs);
+
+  // Display insurance tab only if insurance providers are available and the patient is saved
+  if (insuranceProvidersData.length > 0)
+    tabs.push({
+      Component: <InsuranceListView />,
+      value: PatientTabValue.Insurance,
+    });
 
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
