@@ -134,7 +134,7 @@ export const Toolbar = () => {
     filters.push({
       type: 'text',
       name: t('label.store'),
-      urlParameter: 'store',
+      urlParameter: 'storeCodeOrName',
       isDefault: true,
     });
 
