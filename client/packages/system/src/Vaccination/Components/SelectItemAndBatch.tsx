@@ -4,7 +4,7 @@ import {
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
-import React, { PropsWithChildren, useEffect, useMemo } from 'react';
+import React, { FC, useEffect, useMemo } from 'react';
 import { VaccinationDraft } from '../api';
 import { VaccinationCourseDoseFragment } from '../api/operations.generated';
 import { OTHER_FACILITY } from './FacilitySearchInput';
@@ -97,7 +97,7 @@ export const SelectItemAndBatch = ({
   );
 };
 
-const InfoText = ({ children }: PropsWithChildren<{}>) => (
+const InfoText: FC<{ children: string }> = ({ children }) => (
   <Typography fontStyle="italic" color="gray.dark" fontSize={'small'}>
     {children}
   </Typography>
