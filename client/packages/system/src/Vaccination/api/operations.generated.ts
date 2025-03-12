@@ -205,7 +205,15 @@ export type InsertVaccinationMutationVariables = Types.Exact<{
 
 export type InsertVaccinationMutation = {
   __typename: 'Mutations';
-  insertVaccination: { __typename: 'VaccinationNode'; id: string };
+  insertVaccination: {
+    __typename: 'VaccinationNode';
+    id: string;
+    invoice?: {
+      __typename: 'InvoiceNode';
+      id: string;
+      invoiceNumber: number;
+    } | null;
+  };
 };
 
 export type UpdateVaccinationMutationVariables = Types.Exact<{
@@ -220,7 +228,15 @@ export type UpdateVaccinationMutation = {
         __typename: 'UpdateVaccinationError';
         error: { __typename: 'NotMostRecentGivenDose'; description: string };
       }
-    | { __typename: 'VaccinationNode'; id: string };
+    | {
+        __typename: 'VaccinationNode';
+        id: string;
+        invoice?: {
+          __typename: 'InvoiceNode';
+          id: string;
+          invoiceNumber: number;
+        } | null;
+      };
 };
 
 export const VaccinationCourseDoseFragmentDoc = gql`
@@ -355,6 +371,10 @@ export const InsertVaccinationDocument = gql`
       ... on VaccinationNode {
         __typename
         id
+        invoice {
+          id
+          invoiceNumber
+        }
       }
     }
   }
@@ -369,6 +389,10 @@ export const UpdateVaccinationDocument = gql`
       ... on VaccinationNode {
         __typename
         id
+        invoice {
+          id
+          invoiceNumber
+        }
       }
       ... on UpdateVaccinationError {
         __typename

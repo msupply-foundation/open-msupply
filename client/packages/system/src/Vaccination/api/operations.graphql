@@ -111,6 +111,10 @@ mutation insertVaccination($storeId: String!, $input: InsertVaccinationInput!) {
     ... on VaccinationNode {
       __typename
       id
+      invoice {
+        id
+        invoiceNumber
+      }
     }
   }
 }
@@ -121,6 +125,10 @@ mutation updateVaccination($storeId: String!, $input: UpdateVaccinationInput!) {
     ... on VaccinationNode {
       __typename
       id
+      invoice {
+        id
+        invoiceNumber
+      }
     }
     ... on UpdateVaccinationError {
       __typename
