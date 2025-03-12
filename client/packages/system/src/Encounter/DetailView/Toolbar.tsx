@@ -64,7 +64,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   const [startDatetime, setStartDatetime] = useState<string | undefined>();
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation();
-  const { localisedDate } = useFormatDateTime();
+  const { localisedDate, getDisplayAge } = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
   const [clinician, setClinician] =
     useState<ClinicianAutocompleteOption | null>();
@@ -89,6 +89,8 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   }, [encounter, getLocalisedFullName]);
 
   const { patient } = encounter;
+
+  const dateOfBirth = DateUtils.getNaiveDate(patient?.dateOfBirth);
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -133,6 +135,16 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                   <BasicTextInput
                     disabled
                     value={localisedDate(patient.dateOfBirth ?? '')}
+                  />
+                }
+              />
+              <InputWithLabelRow
+                label={t('label.age')}
+                labelWidth={'40px'}
+                Input={
+                  <BasicTextInput
+                    disabled
+                    value={getDisplayAge(dateOfBirth ?? null)}
                   />
                 }
               />

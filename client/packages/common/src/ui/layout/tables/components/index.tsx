@@ -3,7 +3,7 @@ import { CellProps, HeaderProps } from '../columns/types';
 import { RecordWithId } from '@common/types';
 import {
   LocaleKey,
-  translationExistsInLocale,
+  useTranslationExistsInLocale,
   useTranslation,
 } from '@common/intl';
 import { Box } from '@mui/material';
@@ -49,7 +49,7 @@ export const BasicHeader = <T extends RecordWithId>({
   column,
 }: HeaderProps<T>): ReactElement => {
   const t = useTranslation();
-  const labelExistsInLocale = translationExistsInLocale(column.label);
+  const labelExistsInLocale = useTranslationExistsInLocale(column.label);
   const header = labelExistsInLocale
     ? t(column.label as LocaleKey, column.labelProps)
     : column.label;

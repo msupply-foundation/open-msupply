@@ -100,7 +100,7 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
       throw new Error('Asset not found');
     },
     byGs1Elements: async (data: Gs1Barcode) => {
-      let dataElements: Gs1DataElement[] = data.parsedCodeItems.map(item => {
+      const dataElements: Gs1DataElement[] = data.parsedCodeItems.map(item => {
         return { ai: item.ai, data: item.data.toString() };
       });
       const { assetFromGs1Data } = await sdk.assetFromGs1Data({
