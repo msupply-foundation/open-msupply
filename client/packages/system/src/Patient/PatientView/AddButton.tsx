@@ -33,7 +33,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
   const { createNewPatient } = usePatientStore();
   const { setModal: selectModal, reset } = usePatientModalStore();
   const {
-    query: { data: InsuranceProvidersData },
+    query: { data: insuranceProvidersData },
   } = useInsuranceProviders();
 
   const options: SplitButtonOption<PatientModal>[] = useMemo(() => {
@@ -58,7 +58,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
       );
     }
 
-    if (InsuranceProvidersData?.length > 0) {
+    if (insuranceProvidersData?.length > 0) {
       baseOptions.push({
         value: PatientModal.Insurance,
         label: t('button.add-insurance'),
@@ -66,7 +66,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
     }
 
     return baseOptions;
-  }, [disableEncounterButton, t, store, InsuranceProvidersData]);
+  }, [disableEncounterButton, t, store, insuranceProvidersData]);
 
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<PatientModal> | undefined
@@ -111,20 +111,16 @@ export const AddButton: React.FC<AddButtonProps> = ({
     selectModal(selectedOption?.value);
   };
 
-  return (
-    <>
-      {options.length > 0 && selectedOption && !createNewPatient && (
-        <SplitButton
-          color="primary"
-          openFrom={'bottom'}
-          isDisabled={disabled}
-          options={options}
-          selectedOption={selectedOption}
-          onSelectOption={onSelectOption}
-          Icon={<PlusCircleIcon />}
-          onClick={onClick}
-        />
-      )}
-    </>
-  );
+  return options.length > 0 && selectedOption && !createNewPatient ? (
+    <SplitButton
+      color="primary"
+      openFrom={'bottom'}
+      isDisabled={disabled}
+      options={options}
+      selectedOption={selectedOption}
+      onSelectOption={onSelectOption}
+      Icon={<PlusCircleIcon />}
+      onClick={onClick}
+    />
+  ) : null;
 };
