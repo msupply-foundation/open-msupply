@@ -14,6 +14,7 @@ import {
   useNavigate,
   ColumnDescription,
   Formatter,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -34,6 +35,7 @@ export const programEnrolmentLabelAccessor: ColumnDataAccessor<
 };
 
 const PatientListComponent: FC = () => {
+  const t = useTranslation();
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -153,7 +155,7 @@ const PatientListComponent: FC = () => {
           setDocumentName(row.document?.name);
           navigate(String(row.id));
         }}
-        noDataElement={<NothingHere />}
+        noDataElement={<NothingHere body={t('error.no-patients')} />}
       />
     </>
   );

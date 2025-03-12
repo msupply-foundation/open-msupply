@@ -319,7 +319,7 @@
   "error.no-properties-to-import": "Não há propriedades configuradas para importar para o seu local",
   "error.no-report-permission": "Você não tem permissão para ver esses relatórios",
   "error.no-reports-available": "Nenhum relatório disponível",
-  "error.no-requisition-items": "Nenhum item foi adicionado à Requisição Interna.",
+  "error.no-internal-order-items": "Nenhum item foi adicionado à Requisição Interna.",
   "error.no-requisitions": "Nenhuma Requisição para mostrar.",
   "error.no-results": "Nada aqui",
   "error.no-rnr-forms": "Não foram encontrados formulários R&R",
