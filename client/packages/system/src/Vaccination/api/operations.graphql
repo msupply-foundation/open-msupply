@@ -113,7 +113,6 @@ mutation insertVaccination($storeId: String!, $input: InsertVaccinationInput!) {
       id
       invoice {
         id
-        invoiceNumber
       }
     }
   }
@@ -127,7 +126,6 @@ mutation updateVaccination($storeId: String!, $input: UpdateVaccinationInput!) {
       id
       invoice {
         id
-        invoiceNumber
       }
     }
     ... on UpdateVaccinationError {
