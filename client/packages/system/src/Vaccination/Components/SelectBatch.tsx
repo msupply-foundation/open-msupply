@@ -35,8 +35,7 @@ export const SelectBatch = ({
     }
   }, [data]);
 
-  // Show checkbox as disabled if only one batch to choose from
-  const isCheckboxDisabled = data?.nodes?.length === 1;
+  const hasSingleBatch = data?.nodes?.length === 1;
 
   const columns = useColumns<StockLineFragment>(
     [
@@ -45,7 +44,7 @@ export const SelectBatch = ({
         key: 'select',
         Cell: ({ rowData, isDisabled }) => (
           <Checkbox
-            disabled={isDisabled || isCheckboxDisabled}
+            disabled={isDisabled || hasSingleBatch}
             checked={rowData.id === stockLine?.id}
           />
         ),
