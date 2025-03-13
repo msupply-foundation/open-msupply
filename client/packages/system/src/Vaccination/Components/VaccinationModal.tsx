@@ -79,7 +79,7 @@ export const VaccinationModal = ({
         const result = await saveVaccination(draft);
 
         if (result?.__typename === 'VaccinationNode') {
-          result?.invoice?.id && draft.createTransactions === true
+          result?.invoice?.id && draft.createTransactions
             ? success(t('messages.vaccination-saved-and-stock-recorded'))()
             : success(t('messages.vaccination-saved'))();
           onOk();
