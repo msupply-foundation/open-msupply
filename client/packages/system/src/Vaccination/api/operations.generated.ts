@@ -208,11 +208,7 @@ export type InsertVaccinationMutation = {
   insertVaccination: {
     __typename: 'VaccinationNode';
     id: string;
-    invoice?: {
-      __typename: 'InvoiceNode';
-      id: string;
-      invoiceNumber: number;
-    } | null;
+    invoice?: { __typename: 'InvoiceNode'; id: string } | null;
   };
 };
 
@@ -231,11 +227,7 @@ export type UpdateVaccinationMutation = {
     | {
         __typename: 'VaccinationNode';
         id: string;
-        invoice?: {
-          __typename: 'InvoiceNode';
-          id: string;
-          invoiceNumber: number;
-        } | null;
+        invoice?: { __typename: 'InvoiceNode'; id: string } | null;
       };
 };
 
@@ -373,7 +365,6 @@ export const InsertVaccinationDocument = gql`
         id
         invoice {
           id
-          invoiceNumber
         }
       }
     }
@@ -391,7 +382,6 @@ export const UpdateVaccinationDocument = gql`
         id
         invoice {
           id
-          invoiceNumber
         }
       }
       ... on UpdateVaccinationError {
