@@ -99,7 +99,13 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
     <Box
       display="flex"
       gap={2}
-      sx={{ alignItems: 'flex-start', flexWrap: 'wrap' }}
+      sx={theme => ({
+        [theme.breakpoints.down('sm')]: {
+          flexDirection: 'column',
+        },
+        alignItems: 'flex-start',
+        flexWrap: 'wrap',
+      })}
     >
       {/* 13px margin to make menu match the individual filter inputs */}
       <DropdownMenu label={t('label.filters')} sx={{ marginTop: '13px' }}>
@@ -146,8 +152,8 @@ const getFilterOptions = (
     .filter(fil =>
       fil.type === 'group'
         ? !fil.elements.every(innerFil =>
-            activeFilterCodes.includes(innerFil.urlParameter)
-          )
+          activeFilterCodes.includes(innerFil.urlParameter)
+        )
         : !activeFilterCodes.includes(fil.urlParameter)
     )
     .map(fil => ({
@@ -211,18 +217,16 @@ const getFilterComponent = (
     case 'dateTime':
       return (
         <DateFilter
-          key={`${filter.urlParameter}${
-            filter.range ? '_' + filter.range : ''
-          }`}
+          key={`${filter.urlParameter}${filter.range ? '_' + filter.range : ''
+            }`}
           filterDefinition={filter}
         />
       );
     case 'number':
       return (
         <NumberFilter
-          key={`${filter.urlParameter}${
-            filter.range ? '_' + filter.range : ''
-          }`}
+          key={`${filter.urlParameter}${filter.range ? '_' + filter.range : ''
+            }`}
           filterDefinition={filter}
         />
       );
@@ -248,7 +252,7 @@ export const EndAdornment: FC<{
       <IconButton
         sx={{ color: 'gray.main' }}
         label={hasValue ? t('label.clear-filter') : ''}
-        onClick={hasValue ? onClear : () => {}}
+        onClick={hasValue ? onClear : () => { }}
         icon={hasValue ? <CloseIcon /> : <SearchIcon fontSize="small" />}
       />
     </InputAdornment>
