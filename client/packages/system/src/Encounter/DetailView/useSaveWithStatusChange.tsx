@@ -63,7 +63,7 @@ export function useSaveWithStatusChange(
     if (status === EncounterNodeStatus.Visited) {
       updateEncounter({ status, endDatetime });
     } else {
-      updateEncounter({ endDatetime });
+      updateEncounter({ status });
     }
     setSaveStatus({ status, callback });
   };
