@@ -9,12 +9,10 @@ import {
 } from '@openmsupply-client/common';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
-// import { Browser } from '@capacitor/browser';
 import {
   FileOpener,
   FileOpenerOptions,
 } from '@capacitor-community/file-opener';
-// import { Share } from '@capacitor/share';
 import { FileIcon, XCircleIcon } from '@common/icons';
 import { Environment } from '@openmsupply-client/config/src';
 
@@ -70,14 +68,6 @@ export const FileList = ({
       };
 
       await FileOpener.open(fileOpenerOptions);
-
-      // Use the Share plugin which handles FileProvider under the hood
-      // console.log('Sharing...');
-      // await Share.share({
-      //   url: uriResult.uri,
-      //   dialogTitle: 'Open with...',
-      //   title: 'Open file',
-      // });
 
       console.log('File shared successfully');
     } catch (error) {

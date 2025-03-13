@@ -1293,11 +1293,6 @@
   resolved "https://registry.yarnpkg.com/@capacitor/app/-/app-6.0.0.tgz#b383c97543e2fb9462e8bd69c0f512c33bba0089"
   integrity sha512-X5UGd90Jh5p9rmoPyMqFyFWqOypdJgVJhYcM5X1YyDVJJGzmJ5MuYv1+ajj5DW9Qyh+5a3th9WYptdGby8jidA==
 
-"@capacitor/browser@6":
-  version "6.0.5"
-  resolved "https://registry.yarnpkg.com/@capacitor/browser/-/browser-6.0.5.tgz#8bd9bacb28ee3c74dff716b967b3b4221c0eb9ea"
-  integrity sha512-TjA1YCiYT7wb7CLmI6zLLoS09vm7d+h4oAKXAVWDwjOyKdbAPKh75ZtzlN+lum8+sOtO9YJ+1Zdi6rdw6dxYYw==
-
 "@capacitor/cli@^6.1.0":
   version "6.1.0"
   resolved "https://registry.yarnpkg.com/@capacitor/cli/-/cli-6.1.0.tgz#d90cf2e64afc20cc34848594d4733237f204bbef"
@@ -1343,11 +1338,6 @@
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/@capacitor/preferences/-/preferences-6.0.1.tgz#a6cccee02ea0a8bccac879235ebc18cae15d55ba"
   integrity sha512-5UvSK3O/tgPcQ1QyX0zYjb0uujFw+PQgYUSt6i2evf609jAIo7QG1IUZzGb6swEPCpk621wEc6R7Yq/Ywa3GPA==
-
-"@capacitor/share@6":
-  version "6.0.3"
-  resolved "https://registry.yarnpkg.com/@capacitor/share/-/share-6.0.3.tgz#03f613d916226e4891e6022cc89967eb1b3cd3cd"
-  integrity sha512-BkNM73Ix+yxQ7fkni8CrrGcp1kSl7u+YNoPLwWKQ1MuQ5Uav0d+CT8M67ie+3dc4jASmegnzlC6tkTmFcPTLeA==
 
 "@chromatic-com/storybook@^1.6.1":
   version "1.6.1"
