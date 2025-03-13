@@ -1,3 +1,9 @@
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import {
+  FileOpener,
+  FileOpenerOptions,
+} from '@capacitor-community/file-opener';
 import { Formatter } from '..';
 
 const exportFile = (data: string, type: string, title?: string) => {
@@ -39,8 +45,40 @@ const downloadFile = async (url: string) => {
   a.remove();
 };
 
+const openAndroidFile = async (filePath: string) => {
+  console.log('Attempting to open', filePath);
+  try {
+    // console.log('URI is', JSON.stringify(uriResult, null, 2));
+
+    if (Capacitor.getPlatform() !== 'android')
+      throw new Error('This method is specifically for Android');
+
+    // Get the full URI for the file
+    const uriResult = await Filesystem.getUri({
+      path: filePath,
+      directory: Directory.Data,
+    });
+
+    console.log('File URI', JSON.stringify(uriResult, null, 2));
+
+    const fileOpenerOptions: FileOpenerOptions = {
+      filePath: uriResult.uri,
+      // contentType: 'application/pdf',
+      openWithDefault: true,
+    };
+
+    await FileOpener.open(fileOpenerOptions);
+
+    console.log('File opened successfully');
+  } catch (error) {
+    console.error('Error opening file:', error);
+    throw error;
+  }
+};
+
 export const FileUtils = {
   exportCSV: (data: string, title: string) =>
     exportFile(data, 'text/csv', title),
   downloadFile,
+  openAndroidFile,
 };
