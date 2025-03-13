@@ -72,30 +72,23 @@ export const AddButton: React.FC<AddButtonProps> = ({
     SplitButtonOption<PatientModal> | undefined
   >(options[0]);
 
+  const optionMap: Partial<Record<PatientTabValue, PatientModal>> = {
+    [PatientTabValue.Programs]: PatientModal.ProgramSearch,
+    [PatientTabValue.Vaccinations]: PatientModal.ProgramSearch,
+    [PatientTabValue.Encounters]: PatientModal.Encounter,
+    [PatientTabValue.ContactTracing]: PatientModal.ContactTraceSearch,
+    [PatientTabValue.Insurance]: PatientModal.Insurance,
+  };
+
   useEffect(() => {
     if (options.length === 0) return;
 
-    const optionMap: {
-      [key: string]: SplitButtonOption<PatientModal> | undefined;
-    } = {
-      [PatientTabValue.Programs]: options.find(
-        option => option.value === PatientModal.ProgramSearch
-      ),
-      [PatientTabValue.Vaccinations]: options.find(
-        option => option.value === PatientModal.ProgramSearch
-      ),
-      [PatientTabValue.Encounters]: options.find(
-        option => option.value === PatientModal.Encounter
-      ),
-      [PatientTabValue.ContactTracing]: options.find(
-        option => option.value === PatientModal.ContactTraceSearch
-      ),
-      [PatientTabValue.Insurance]: options.find(
-        option => option.value === PatientModal.Insurance
-      ),
-    };
-
-    setSelectedOption(optionMap[currentUrlTab as string] || options[0]);
+    setSelectedOption(
+      options.find(
+        option => option.value === optionMap[currentUrlTab as PatientTabValue]
+      ) || options[0]
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUrlTab, options]);
 
   const onSelectOption = (option: SplitButtonOption<PatientModal>) => {
