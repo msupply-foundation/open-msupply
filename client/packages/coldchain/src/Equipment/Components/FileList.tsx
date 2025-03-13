@@ -9,7 +9,12 @@ import {
 } from '@openmsupply-client/common';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
-import { Browser } from '@capacitor/browser';
+// import { Browser } from '@capacitor/browser';
+import {
+  FileOpener,
+  FileOpenerOptions,
+} from '@capacitor-community/file-opener';
+// import { Share } from '@capacitor/share';
 import { FileIcon, XCircleIcon } from '@common/icons';
 import { Environment } from '@openmsupply-client/config/src';
 
@@ -42,35 +47,39 @@ export const FileList = ({
   const openAndroidFile = async () => {
     console.log('OPEN THIS FILE');
     try {
+      // console.log('URI is', JSON.stringify(uriResult, null, 2));
+
+      // Use different approaches based on platform
+      if (Capacitor.getPlatform() !== 'android') {
+        console.warn('This method is specifically for Android');
+        return;
+      }
+
       // Get the full URI for the file
       const uriResult = await Filesystem.getUri({
         path: 'static_files/sync_files/asset/019582e8-2da0-71ee-ba70-e2e451f8869a/01958349-95f8-7590-b420-61d05790b89b_Lorem Ipsum.pdf',
         directory: Directory.Data,
       });
 
-      console.log('URI is', JSON.stringify(uriResult, null, 2));
+      console.log('File URI', JSON.stringify(uriResult, null, 2));
 
-      // Use different approaches based on platform
-      if (Capacitor.getPlatform() === 'android') {
-        console.log('Opening on Android?');
-        // On Android, use the Browser plugin with _blank target
-        // This will prompt Android to open with the appropriate app
-        await Browser.open({
-          url: uriResult.uri,
-          windowName: '_blank',
-          presentationStyle: 'popover',
-        });
-      } else if (Capacitor.getPlatform() === 'ios') {
-        // iOS has similar handling
-        await Browser.open({
-          url: uriResult.uri,
-          windowName: '_blank',
-        });
-      } else {
-        // For web, use standard window.open
-        window.open(uriResult.uri, '_blank');
-      }
-      console.log('File opened successfully');
+      const fileOpenerOptions: FileOpenerOptions = {
+        filePath: uriResult.uri,
+        contentType: 'application/pdf',
+        openWithDefault: true,
+      };
+
+      await FileOpener.open(fileOpenerOptions);
+
+      // Use the Share plugin which handles FileProvider under the hood
+      // console.log('Sharing...');
+      // await Share.share({
+      //   url: uriResult.uri,
+      //   dialogTitle: 'Open with...',
+      //   title: 'Open file',
+      // });
+
+      console.log('File shared successfully');
     } catch (error) {
       console.error('Error opening file:', error);
       throw error;
