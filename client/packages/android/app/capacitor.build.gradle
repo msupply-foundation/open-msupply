@@ -9,8 +9,10 @@ android {
 
 apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
 dependencies {
+    implementation project(':capacitor-community-file-opener')
     implementation project(':capacitor-browser')
     implementation project(':capacitor-filesystem')
+    implementation project(':capacitor-share')
     implementation project(':bcyesil-capacitor-plugin-printer')
     implementation project(':capacitor-community-barcode-scanner')
     implementation project(':capacitor-community-keep-awake')
