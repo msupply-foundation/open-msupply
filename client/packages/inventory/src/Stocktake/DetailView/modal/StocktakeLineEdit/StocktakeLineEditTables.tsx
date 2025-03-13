@@ -164,6 +164,13 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
     const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
       getCountThisLineColumn(update, theme),
       getBatchColumn(update, theme),
+      [
+        expiryDateColumn,
+        {
+          width: 150,
+          setter: patch => update({ ...patch, countThisLine: true }),
+        },
+      ],
     ];
     if (itemVariantsEnabled) {
       columnDefinitions.push({
@@ -197,7 +204,6 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         setter: patch => update({ ...patch, countThisLine: true }),
         accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '0',
       },
-
       {
         key: 'countedNumberOfPacks',
         label: 'description.counted-num-of-packs',
@@ -220,13 +226,6 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         },
         accessor: ({ rowData }) => rowData.countedNumberOfPacks,
       },
-      [
-        expiryDateColumn,
-        {
-          width: 150,
-          setter: patch => update({ ...patch, countThisLine: true }),
-        },
-      ],
       getInventoryAdjustmentReasonInputColumn(update, errorsContext)
     );
 
