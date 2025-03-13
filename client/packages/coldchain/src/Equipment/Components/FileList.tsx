@@ -8,7 +8,7 @@ import {
   Typography,
 } from '@openmsupply-client/common';
 import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import {
   FileOpener,
   FileOpenerOptions,
@@ -41,6 +41,8 @@ export const FileList = ({
       </Typography>
     );
   }
+
+  console.log('files', files);
 
   const openAndroidFile = async () => {
     console.log('OPEN THIS FILE');
@@ -77,31 +79,29 @@ export const FileList = ({
   };
 
   console.log('THIS IS A LOG');
-  console.warn('THIS IS A WARNING');
-  console.error('THIS IS AN ERROR');
 
-  useEffect(() => {
-    Filesystem.readdir({
-      directory: Directory.Data,
-      path: 'static_files/sync_files/asset/019582e8-2da0-71ee-ba70-e2e451f8869a',
-    })
-      .then(result =>
-        console.log('Files result', JSON.stringify(result, null, 2))
-      )
-      .catch(err => console.log('File Error:', err.message));
-    Filesystem.writeFile({
-      path: 'documents.txt',
-      data: 'This is a test',
-      directory: Directory.Documents,
-      encoding: Encoding.UTF8,
-    });
-    Filesystem.writeFile({
-      path: 'data.txt',
-      data: 'This is a test',
-      directory: Directory.Data,
-      encoding: Encoding.UTF8,
-    });
-  }, []);
+  // useEffect(() => {
+  //   Filesystem.readdir({
+  //     directory: Directory.Data,
+  //     path: 'static_files/sync_files/asset/019582e8-2da0-71ee-ba70-e2e451f8869a',
+  //   })
+  //     .then(result =>
+  //       console.log('Files result', JSON.stringify(result, null, 2))
+  //     )
+  //     .catch(err => console.log('File Error:', err.message));
+  //   Filesystem.writeFile({
+  //     path: 'documents.txt',
+  //     data: 'This is a test',
+  //     directory: Directory.Documents,
+  //     encoding: Encoding.UTF8,
+  //   });
+  //   Filesystem.writeFile({
+  //     path: 'data.txt',
+  //     data: 'This is a test',
+  //     directory: Directory.Data,
+  //     encoding: Encoding.UTF8,
+  //   });
+  // }, []);
 
   return (
     <Stack
