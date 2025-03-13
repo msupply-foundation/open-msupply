@@ -43,7 +43,6 @@ interface ResponseLineEditProps {
   previous: ItemRowFragment | null;
   isProgram: boolean;
   lines: ResponseLineFragment[];
-  requisitionNumber?: number;
   requisitionId: string;
   insert: (patch: InsertResponseRequisitionLineInput) => void;
   scrollIntoView: () => void;
@@ -61,7 +60,6 @@ export const ResponseLineEdit = ({
   previous,
   isProgram,
   lines,
-  requisitionNumber,
   requisitionId,
   insert,
   scrollIntoView,
@@ -103,7 +101,7 @@ export const ResponseLineEdit = ({
                     requisitionId: requisitionId,
                     itemId: newItem.id,
                   });
-                  navigate(buildItemEditRoute(requisitionNumber, newItem.id));
+                  navigate(buildItemEditRoute(requisitionId, newItem.id));
                 }
               }}
               openOnFocus={true}
@@ -414,7 +412,7 @@ export const ResponseLineEdit = ({
                     width={INPUT_WIDTH}
                     value={Math.max(
                       (draft?.supplyQuantity ?? 0) -
-                        (draft?.alreadyIssued ?? 0),
+                      (draft?.alreadyIssued ?? 0),
                       0
                     )}
                     disabled
@@ -533,7 +531,7 @@ export const ResponseLineEdit = ({
           next={next}
           hasPrevious={hasPrevious}
           previous={previous}
-          requisitionNumber={draft?.requisitionNumber}
+          requisitionId={draft?.id}
           scrollIntoView={scrollIntoView}
         />
       </Box>

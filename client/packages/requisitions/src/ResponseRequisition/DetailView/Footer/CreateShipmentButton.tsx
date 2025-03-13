@@ -23,11 +23,11 @@ export const CreateShipmentButtonComponent = () => {
   const isDisabled = useResponse.utils.isDisabled();
   const navigate = useNavigate();
   const createOutbound = () => {
-    mutateAsync().then(invoiceNumber => {
+    mutateAsync().then(invoiceId => {
       navigate(
         RouteBuilder.create(AppRoute.Distribution)
           .addPart(AppRoute.OutboundShipment)
-          .addPart(String(invoiceNumber))
+          .addPart(invoiceId)
           .build()
       );
     });
@@ -46,7 +46,7 @@ export const CreateShipmentButtonComponent = () => {
         ? 'message.all-lines-have-no-supply-quantity'
         : 'message.all-lines-have-been-fulfilled'
     ),
-    onOk: () => {},
+    onOk: () => { },
   });
 
   const onCreateShipment = () => {

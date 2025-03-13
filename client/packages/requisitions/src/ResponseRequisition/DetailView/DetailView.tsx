@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -10,6 +10,7 @@ import {
   createQueryParamsStore,
   DetailTabs,
   IndicatorLineRowNode,
+  useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
@@ -26,6 +27,7 @@ import { ProgramIndicatorFragment } from '../../RequestRequisition/api';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const { data, isLoading } = useResponse.document.get();
   const isDisabled = useResponse.utils.isDisabled();
@@ -38,7 +40,7 @@ export const DetailView: FC = () => {
     );
 
   const onRowClick = useCallback((line: ResponseLineFragment) => {
-    navigate(buildItemEditRoute(line.requisitionNumber, line.item.id));
+    navigate(buildItemEditRoute(line.requisitionId, line.item.id));
   }, []);
 
   const onProgramIndicatorClick = useCallback(
@@ -51,7 +53,7 @@ export const DetailView: FC = () => {
       navigate(
         RouteBuilder.create(AppRoute.Distribution)
           .addPart(AppRoute.CustomerRequisition)
-          .addPart(String(response.requisitionNumber))
+          .addPart(String(response.id))
           .addPart(AppRoute.Indicators)
           .addPart(String(programIndicator?.code))
           .addPart(String(indicatorLine.id))
@@ -62,8 +64,12 @@ export const DetailView: FC = () => {
   );
 
   const onAddItem = () => {
-    navigate(buildItemEditRoute(data?.requisitionNumber, 'new'));
+    navigate(buildItemEditRoute(data?.id, 'new'));
   };
+
+  useEffect(() => {
+    setCustomBreadcrumbs({ 1: data?.requisitionNumber.toString() ?? '' });
+  }, [setCustomBreadcrumbs, data?.requisitionNumber]);
 
   if (isLoading) return <DetailViewSkeleton />;
 

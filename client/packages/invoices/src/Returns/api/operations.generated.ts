@@ -7,9 +7,9 @@ export type SupplierReturnRowFragment = { __typename: 'InvoiceNode', id: string,
 
 export type CustomerReturnRowFragment = { __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null, comment?: string | null, theirReference?: string | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null };
 
-export type SupplierReturnFragment = { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyName: string, otherPartyId: string, theirReference?: string | null, transportReference?: string | null, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, originalShipment?: { __typename: 'InvoiceNode', invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null };
+export type SupplierReturnFragment = { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyName: string, otherPartyId: string, theirReference?: string | null, transportReference?: string | null, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, originalShipment?: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null };
 
-export type CustomerReturnFragment = { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, theirReference?: string | null, transportReference?: string | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, originalShipment?: { __typename: 'InvoiceNode', invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null } };
+export type CustomerReturnFragment = { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, theirReference?: string | null, transportReference?: string | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, originalShipment?: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null } };
 
 export type SupplierReturnLineFragment = { __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, itemId: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number } };
 
@@ -65,7 +65,15 @@ export type SupplierReturnByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type SupplierReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyName: string, otherPartyId: string, theirReference?: string | null, transportReference?: string | null, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, itemId: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number } }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, originalShipment?: { __typename: 'InvoiceNode', invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null } | { __typename: 'NodeError' } };
+export type SupplierReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyName: string, otherPartyId: string, theirReference?: string | null, transportReference?: string | null, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, itemId: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number } }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, originalShipment?: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null } | { __typename: 'NodeError' } };
+
+export type SupplierReturnByIdQueryVariables = Types.Exact<{
+  invoiceId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type SupplierReturnByIdQuery = { __typename: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyName: string, otherPartyId: string, theirReference?: string | null, transportReference?: string | null, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, itemId: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number } }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, originalShipment?: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null } | { __typename: 'NodeError' } };
 
 export type CustomerReturnByNumberQueryVariables = Types.Exact<{
   invoiceNumber: Types.Scalars['Int']['input'];
@@ -73,7 +81,15 @@ export type CustomerReturnByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type CustomerReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, theirReference?: string | null, transportReference?: string | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemId: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number } }> }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, originalShipment?: { __typename: 'InvoiceNode', invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null } } | { __typename: 'NodeError' } };
+export type CustomerReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, theirReference?: string | null, transportReference?: string | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemId: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number } }> }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, originalShipment?: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null } } | { __typename: 'NodeError' } };
+
+export type CustomerReturnByIdQueryVariables = Types.Exact<{
+  invoiceId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type CustomerReturnByIdQuery = { __typename: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, theirReference?: string | null, transportReference?: string | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemId: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number } }> }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, originalShipment?: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null } } | { __typename: 'NodeError' } };
 
 export type InsertSupplierReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -89,7 +105,7 @@ export type UpdateSupplierReturnMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateSupplierReturnMutation = { __typename: 'Mutations', updateSupplierReturn: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
+export type UpdateSupplierReturnMutation = { __typename: 'Mutations', updateSupplierReturn: { __typename: 'InvoiceNode', id: string } };
 
 export type UpdateSupplierReturnLinesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -221,6 +237,7 @@ export const SupplierReturnFragmentDoc = gql`
   theirReference
   transportReference
   originalShipment {
+    id
     invoiceNumber
     createdDatetime
     user {
@@ -258,6 +275,7 @@ export const CustomerReturnFragmentDoc = gql`
   transportReference
   originalShipment {
     __typename
+    id
     invoiceNumber
     createdDatetime
     user {
@@ -439,6 +457,22 @@ export const SupplierReturnByNumberDocument = gql`
 }
     ${SupplierReturnFragmentDoc}
 ${SupplierReturnLineFragmentDoc}`;
+export const SupplierReturnByIdDocument = gql`
+    query supplierReturnById($invoiceId: String!, $storeId: String!) {
+  invoice(id: $invoiceId, storeId: $storeId) {
+    ... on InvoiceNode {
+      __typename
+      ...SupplierReturn
+      lines {
+        nodes {
+          ...SupplierReturnLine
+        }
+      }
+    }
+  }
+}
+    ${SupplierReturnFragmentDoc}
+${SupplierReturnLineFragmentDoc}`;
 export const CustomerReturnByNumberDocument = gql`
     query customerReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
   invoiceByNumber(
@@ -446,6 +480,23 @@ export const CustomerReturnByNumberDocument = gql`
     storeId: $storeId
     type: CUSTOMER_RETURN
   ) {
+    ... on InvoiceNode {
+      __typename
+      ...CustomerReturn
+      lines {
+        nodes {
+          ...CustomerReturnLine
+        }
+        totalCount
+      }
+    }
+  }
+}
+    ${CustomerReturnFragmentDoc}
+${CustomerReturnLineFragmentDoc}`;
+export const CustomerReturnByIdDocument = gql`
+    query customerReturnById($invoiceId: String!, $storeId: String!) {
+  invoice(id: $invoiceId, storeId: $storeId) {
     ... on InvoiceNode {
       __typename
       ...CustomerReturn
@@ -487,7 +538,6 @@ export const UpdateSupplierReturnDocument = gql`
     ... on InvoiceNode {
       __typename
       id
-      invoiceNumber
     }
   }
 }
@@ -602,7 +652,7 @@ export const UpdateSupplierReturnOtherPartyDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?: Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
 const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
@@ -610,49 +660,55 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     supplierReturns(variables: SupplierReturnsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SupplierReturnsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<SupplierReturnsQuery>(SupplierReturnsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'supplierReturns', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<SupplierReturnsQuery>(SupplierReturnsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'supplierReturns', 'query', variables);
     },
     customerReturns(variables: CustomerReturnsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CustomerReturnsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CustomerReturnsQuery>(CustomerReturnsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'customerReturns', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<CustomerReturnsQuery>(CustomerReturnsDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'customerReturns', 'query', variables);
     },
     generateSupplierReturnLines(variables: GenerateSupplierReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GenerateSupplierReturnLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GenerateSupplierReturnLinesQuery>(GenerateSupplierReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'generateSupplierReturnLines', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<GenerateSupplierReturnLinesQuery>(GenerateSupplierReturnLinesDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'generateSupplierReturnLines', 'query', variables);
     },
     generateCustomerReturnLines(variables: GenerateCustomerReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GenerateCustomerReturnLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GenerateCustomerReturnLinesQuery>(GenerateCustomerReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'generateCustomerReturnLines', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<GenerateCustomerReturnLinesQuery>(GenerateCustomerReturnLinesDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'generateCustomerReturnLines', 'query', variables);
     },
     supplierReturnByNumber(variables: SupplierReturnByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SupplierReturnByNumberQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<SupplierReturnByNumberQuery>(SupplierReturnByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'supplierReturnByNumber', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<SupplierReturnByNumberQuery>(SupplierReturnByNumberDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'supplierReturnByNumber', 'query', variables);
+    },
+    supplierReturnById(variables: SupplierReturnByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SupplierReturnByIdQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<SupplierReturnByIdQuery>(SupplierReturnByIdDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'supplierReturnById', 'query', variables);
     },
     customerReturnByNumber(variables: CustomerReturnByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CustomerReturnByNumberQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CustomerReturnByNumberQuery>(CustomerReturnByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'customerReturnByNumber', 'query', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<CustomerReturnByNumberQuery>(CustomerReturnByNumberDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'customerReturnByNumber', 'query', variables);
+    },
+    customerReturnById(variables: CustomerReturnByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CustomerReturnByIdQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CustomerReturnByIdQuery>(CustomerReturnByIdDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'customerReturnById', 'query', variables);
     },
     insertSupplierReturn(variables: InsertSupplierReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertSupplierReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertSupplierReturnMutation>(InsertSupplierReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertSupplierReturn', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertSupplierReturnMutation>(InsertSupplierReturnDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'insertSupplierReturn', 'mutation', variables);
     },
     updateSupplierReturn(variables: UpdateSupplierReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateSupplierReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSupplierReturnMutation>(UpdateSupplierReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateSupplierReturn', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSupplierReturnMutation>(UpdateSupplierReturnDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'updateSupplierReturn', 'mutation', variables);
     },
     updateSupplierReturnLines(variables: UpdateSupplierReturnLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateSupplierReturnLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSupplierReturnLinesMutation>(UpdateSupplierReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateSupplierReturnLines', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSupplierReturnLinesMutation>(UpdateSupplierReturnLinesDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'updateSupplierReturnLines', 'mutation', variables);
     },
     insertCustomerReturn(variables: InsertCustomerReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertCustomerReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertCustomerReturnMutation>(InsertCustomerReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertCustomerReturn', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertCustomerReturnMutation>(InsertCustomerReturnDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'insertCustomerReturn', 'mutation', variables);
     },
     deleteSupplierReturn(variables: DeleteSupplierReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteSupplierReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteSupplierReturnMutation>(DeleteSupplierReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteSupplierReturn', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteSupplierReturnMutation>(DeleteSupplierReturnDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'deleteSupplierReturn', 'mutation', variables);
     },
     updateCustomerReturn(variables: UpdateCustomerReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateCustomerReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateCustomerReturnMutation>(UpdateCustomerReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateCustomerReturn', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateCustomerReturnMutation>(UpdateCustomerReturnDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'updateCustomerReturn', 'mutation', variables);
     },
     updateCustomerReturnLines(variables: UpdateCustomerReturnLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateCustomerReturnLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateCustomerReturnLinesMutation>(UpdateCustomerReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateCustomerReturnLines', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateCustomerReturnLinesMutation>(UpdateCustomerReturnLinesDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'updateCustomerReturnLines', 'mutation', variables);
     },
     deleteCustomerReturn(variables: DeleteCustomerReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteCustomerReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteCustomerReturnMutation>(DeleteCustomerReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteCustomerReturn', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteCustomerReturnMutation>(DeleteCustomerReturnDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'deleteCustomerReturn', 'mutation', variables);
     },
     updateSupplierReturnOtherParty(variables: UpdateSupplierReturnOtherPartyMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateSupplierReturnOtherPartyMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSupplierReturnOtherPartyMutation>(UpdateSupplierReturnOtherPartyDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateSupplierReturnOtherParty', 'mutation', variables);
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSupplierReturnOtherPartyMutation>(UpdateSupplierReturnOtherPartyDocument, variables, { ...requestHeaders, ...wrappedRequestHeaders }), 'updateSupplierReturnOtherParty', 'mutation', variables);
     }
   };
 }

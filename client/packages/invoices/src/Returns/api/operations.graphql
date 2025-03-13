@@ -75,6 +75,7 @@ fragment SupplierReturn on InvoiceNode {
   transportReference
 
   originalShipment {
+    id
     invoiceNumber
     createdDatetime
     user {
@@ -116,6 +117,7 @@ fragment CustomerReturn on InvoiceNode {
 
   originalShipment {
     __typename
+    id
     invoiceNumber
     createdDatetime
     user {
@@ -306,11 +308,47 @@ query supplierReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
     }
   }
 }
+
+query supplierReturnById($invoiceId: String!, $storeId: String!) {
+  invoice(
+    id: $invoiceId
+    storeId: $storeId
+  ) {
+    ... on InvoiceNode {
+      __typename
+      ...SupplierReturn
+      lines {
+        nodes {
+          ...SupplierReturnLine
+        }
+      }
+    }
+  }
+}
+
 query customerReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
   invoiceByNumber(
     invoiceNumber: $invoiceNumber
     storeId: $storeId
     type: CUSTOMER_RETURN
+  ) {
+    ... on InvoiceNode {
+      __typename
+      ...CustomerReturn
+      lines {
+        nodes {
+          ...CustomerReturnLine
+        }
+        totalCount
+      }
+    }
+  }
+}
+
+query customerReturnById($invoiceId: String!, $storeId: String!) {
+  invoice(
+    id: $invoiceId
+    storeId: $storeId
   ) {
     ... on InvoiceNode {
       __typename
@@ -353,7 +391,6 @@ mutation updateSupplierReturn(
     ... on InvoiceNode {
       __typename
       id
-      invoiceNumber
     }
   }
 }

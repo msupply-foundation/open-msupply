@@ -133,7 +133,7 @@ const UIComponent = (props: ControlProps) => {
       async (formActionState: Record<string, unknown>) => {
         if (!prescription && prescriptionId) {
           // Create prescription
-          const prescriptionNumber = await create({
+          const prescription = await create({
             id: prescriptionId,
             patientId: config.patientId,
           });
@@ -153,7 +153,7 @@ const UIComponent = (props: ControlProps) => {
             patch: { id: prescriptionId, status: InvoiceNodeStatus.Picked },
           });
           success(
-            t('messages.prescription-created', { count: prescriptionNumber })
+            t('messages.prescription-created', { count: prescription.invoiceNumber })
           )();
         }
       },

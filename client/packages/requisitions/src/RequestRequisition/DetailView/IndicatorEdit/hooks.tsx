@@ -63,16 +63,16 @@ export const useDraftIndicatorValue = (
   return { draft, isLoading, update };
 };
 
-export const useIndicatorNavigation = (requisitionNumber?: number) => {
+export const useIndicatorNavigation = (requisitionId?: string) => {
   const navigate = useNavigate();
   const { programIndicatorCode } = useParams();
 
   return (indicatorId: string | undefined) => {
-    if (!requisitionNumber || !programIndicatorCode || !indicatorId) return;
+    if (!requisitionId || !programIndicatorCode || !indicatorId) return;
 
     navigate(
       buildIndicatorEditRoute(
-        requisitionNumber,
+        requisitionId,
         programIndicatorCode,
         indicatorId
       )

@@ -22,7 +22,7 @@ import { Footer } from './Footer';
 import { NavBar } from './NavBar';
 
 export const PrescriptionLineEditView = () => {
-  const { invoiceNumber, itemId } = useParams();
+  const { invoiceId = "", itemId } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const isDirty = useRef(false);
   const navigate = useNavigate();
@@ -50,7 +50,6 @@ export const PrescriptionLineEditView = () => {
   const lines =
     data?.lines.nodes.sort((a, b) => a.id.localeCompare(b.id)) ?? [];
 
-  const invoiceId = data?.id ?? '';
   const status = data?.status;
 
   const [allDraftLines, setAllDraftLines] = useState<
@@ -77,6 +76,7 @@ export const PrescriptionLineEditView = () => {
 
   useEffect(() => {
     setCustomBreadcrumbs({
+      1: data?.invoiceNumber.toString() ?? '',
       2: currentItem?.name || '',
     });
   }, [currentItem]);
@@ -121,12 +121,12 @@ export const PrescriptionLineEditView = () => {
 
     const patch =
       status !== InvoiceNodeStatus.Picked &&
-      flattenedLines.length >= 1 &&
-      !isOnHold
+        flattenedLines.length >= 1 &&
+        !isOnHold
         ? {
-            id: invoiceId,
-            status: InvoiceNodeStatus.Picked,
-          }
+          id: invoiceId,
+          status: InvoiceNodeStatus.Picked,
+        }
         : undefined;
 
     await saveLines({
@@ -141,7 +141,7 @@ export const PrescriptionLineEditView = () => {
       navigate(
         RouteBuilder.create(AppRoute.Dispensary)
           .addPart(AppRoute.Prescription)
-          .addPart(invoiceNumber ?? '')
+          .addPart(invoiceId)
           .addPart(itemId)
           .build()
       );
@@ -158,7 +158,7 @@ export const PrescriptionLineEditView = () => {
 
   return (
     <>
-      <AppBarButtons invoiceNumber={data?.invoiceNumber} />
+      <AppBarButtons invoiceId={data?.id} />
       <PageLayout
         Left={
           <ListItems
@@ -166,7 +166,7 @@ export const PrescriptionLineEditView = () => {
             items={items}
             route={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Prescription)
-              .addPart(String(invoiceNumber))}
+              .addPart(invoiceId)}
             enteredLineIds={enteredLineIds}
             showNew={!isDisabled}
             isDirty={isDirty.current}
@@ -192,7 +192,7 @@ export const PrescriptionLineEditView = () => {
                 navigate(
                   RouteBuilder.create(AppRoute.Dispensary)
                     .addPart(AppRoute.Prescription)
-                    .addPart(invoiceNumber ?? '')
+                    .addPart(invoiceId)
                     .addPart(itemId)
                     .build()
                 )
@@ -210,7 +210,7 @@ export const PrescriptionLineEditView = () => {
           navigate(
             RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Prescription)
-              .addPart(String(invoiceNumber))
+              .addPart(invoiceId)
               .build()
           )
         }

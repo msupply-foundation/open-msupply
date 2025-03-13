@@ -228,6 +228,18 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
         return invoice;
       }
     },
+    supplierReturnById: async (invoiceId: string) => {
+      const result = await sdk.supplierReturnById({
+        invoiceId,
+        storeId,
+      });
+
+      const invoice = result?.invoice;
+
+      if (invoice.__typename === 'InvoiceNode') {
+        return invoice;
+      }
+    },
     customerReturnByNumber: async (invoiceNumber: number) => {
       const result = await sdk.customerReturnByNumber({
         invoiceNumber,
@@ -235,6 +247,20 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       });
 
       const invoice = result?.invoiceByNumber;
+
+      if (invoice.__typename === 'InvoiceNode') {
+        return invoice;
+      }
+
+      throw new Error('Could not get customer return');
+    },
+    customerReturnById: async (invoiceId: string) => {
+      const result = await sdk.customerReturnById({
+        invoiceId,
+        storeId,
+      });
+
+      const invoice = result?.invoice;
 
       if (invoice.__typename === 'InvoiceNode') {
         return invoice;

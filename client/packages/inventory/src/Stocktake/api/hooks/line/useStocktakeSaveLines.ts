@@ -4,14 +4,14 @@ import {
   useTranslation,
   noOtherVariants,
 } from '@openmsupply-client/common';
-import { useStocktakeNumber } from '../document/useStocktake';
+import { useStocktakeId } from '../document/useStocktake';
 import { useStocktakeApi } from '../utils/useStocktakeApi';
 import { DraftStocktakeLine } from '../../../DetailView/modal/StocktakeLineEdit';
 import { UpsertStocktakeLinesMutation } from '../../operations.generated';
 import { useStocktakeLineErrorContext } from '../../../context';
 
 export const useSaveStocktakeLines = () => {
-  const stocktakeNumber = useStocktakeNumber();
+  const stocktakeId = useStocktakeId();
   const queryClient = useQueryClient();
   const api = useStocktakeApi();
   const t = useTranslation();
@@ -19,7 +19,7 @@ export const useSaveStocktakeLines = () => {
 
   const mutation = useMutation(api.updateLines, {
     onSuccess: () =>
-      queryClient.invalidateQueries(api.keys.detail(stocktakeNumber)),
+      queryClient.invalidateQueries(api.keys.detail(stocktakeId)),
   });
 
   const saveAndMapStructuredErrors = async (lines: DraftStocktakeLine[]) => {

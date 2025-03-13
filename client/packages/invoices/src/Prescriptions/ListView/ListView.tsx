@@ -130,7 +130,7 @@ const PrescriptionListViewComponent: FC = () => {
           />
         }
         onRowClick={row => {
-          navigate(String(row.invoiceNumber));
+          navigate(row.id);
         }}
       />
       <Footer listParams={listParams} />

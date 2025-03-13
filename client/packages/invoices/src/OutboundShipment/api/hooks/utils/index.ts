@@ -1,4 +1,4 @@
-import { useOutboundNumber } from './useOutboundNumber';
+import { useOutboundId } from './useOutboundId';
 import { useOutboundIsDisabled } from './useOutboundIsDisabled';
 import { useOutboundApi } from './useOutboundApi';
 import { useAddFromMasterList } from './useAddFromMasterList';
@@ -9,7 +9,7 @@ export * from './useGetItemPricing';
 
 export const Utils = {
   useAddFromMasterList,
-  useOutboundNumber,
+  useOutboundId,
   useOutboundIsDisabled,
   useOutboundApi,
   useBarcode,
