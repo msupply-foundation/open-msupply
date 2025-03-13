@@ -78,7 +78,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
     code: l.code,
   }));
 
-  if (locations.length > 0 && selectedLocation !== null) {
+  if (locations.length > 0 && selectedLocation !== undefined) {
     options.push({ value: null, label: t('label.remove') });
   }
 
