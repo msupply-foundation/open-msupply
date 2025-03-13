@@ -2,7 +2,9 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BasicSpinner,
   Box,
+  ColumnAlign,
   DataTable,
+  DotCell,
   DownloadIcon,
   FnUtils,
   GenderType,
@@ -155,6 +157,9 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     {
       key: 'isDeceased',
       label: 'label.deceased',
+      align: ColumnAlign.Center,
+      Cell: DotCell,
+      sortable: false,
     },
     {
       key: 'isOnCentral',
