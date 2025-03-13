@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from '@common/intl';
 import {
   Box,
@@ -7,6 +7,7 @@ import {
   Stack,
   Typography,
 } from '@openmsupply-client/common';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { FileIcon, XCircleIcon } from '@common/icons';
 import { Environment } from '@openmsupply-client/config/src';
 
@@ -36,6 +37,48 @@ export const FileList = ({
     );
   }
 
+  const openAndroidFile = async () => {
+    try {
+      // First, convert your file path to a Capacitor-compatible URI
+      const fileInfo = await Filesystem.getUri({
+        path: 'static_files/sync_files/asset/019582e8-2da0-71ee-ba70-e2e451f8869a/01958349-95f8-7590-b420-61d05790b89b_Lorem Ipsum.pdf',
+        directory: Directory.Data, // Or appropriate directory
+      });
+
+      // Then open the file with the appropriate app
+      window.open(fileInfo.uri, '_system');
+    } catch (error) {
+      console.error('Error opening file:', error);
+    }
+  };
+
+  console.log('THIS IS A LOG');
+  console.warn('THIS IS A WARNING');
+  console.error('THIS IS AN ERROR');
+
+  useEffect(() => {
+    Filesystem.readdir({
+      directory: Directory.Data,
+      path: 'static_files/sync_files/asset/019582e8-2da0-71ee-ba70-e2e451f8869a',
+    })
+      .then(result =>
+        console.log('Files result', JSON.stringify(result, null, 2))
+      )
+      .catch(err => console.log('File Error:', err.message));
+    Filesystem.writeFile({
+      path: 'documents.txt',
+      data: 'This is a test',
+      directory: Directory.Documents,
+      encoding: Encoding.UTF8,
+    });
+    Filesystem.writeFile({
+      path: 'data.txt',
+      data: 'This is a test',
+      directory: Directory.Data,
+      encoding: Encoding.UTF8,
+    });
+  }, []);
+
   return (
     <Stack
       justifyContent="center"
@@ -43,6 +86,7 @@ export const FileList = ({
       alignContent="center"
       paddingTop={4 * padding}
     >
+      <div onClick={() => openAndroidFile()}>CLICK ME FOR FILE</div>
       {files?.map((file, idx) => (
         <Box
           key={`${idx}_${file.name}`}

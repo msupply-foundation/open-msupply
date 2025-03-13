@@ -1319,6 +1319,11 @@
   dependencies:
     tslib "^2.1.0"
 
+"@capacitor/filesystem@6":
+  version "6.0.3"
+  resolved "https://registry.yarnpkg.com/@capacitor/filesystem/-/filesystem-6.0.3.tgz#80d8f637b2ffa5281ca6d81bbb8a8c60eef4c8a9"
+  integrity sha512-PdIP/yOGAbG1lq1wbFbSPhXQ9/5lpTpeiok2NneawJOk6UXvy9W7QZXRo7wXAP7J6FdzU7bKfOORRXpOJpgXyw==
+
 "@capacitor/keyboard@^6.0.1":
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/@capacitor/keyboard/-/keyboard-6.0.1.tgz#76add27a20239eefc3353b970fd506036d948d18"

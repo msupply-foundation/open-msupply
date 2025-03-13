@@ -1,5 +1,9 @@
 [
 	{
+		"pkg": "@capacitor/filesystem",
+		"classpath": "com.capacitorjs.plugins.filesystem.FilesystemPlugin"
+	},
+	{
 		"pkg": "@bcyesil/capacitor-plugin-printer",
 		"classpath": "com.bcyesil.capacitor.printer.PrinterPlugin"
 	},
