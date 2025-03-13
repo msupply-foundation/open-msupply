@@ -45,6 +45,15 @@ pub fn print_data_matrix_barcode_label(
         ^XZ"#,
         vertical_offset, code, formatted_message, mSupply_logo
     );
+
+    // To output QR codes rather than data matrix barcodes, replace this code in the payload variable above:
+    // ^BXN,6,200
+    // ^FD{}^FS 
+    // with this code:
+    // ^BQN,2,4
+    // ^FDMA,{}^FS
+    // for an explanation of how this works, see https://supportcommunity.zebra.com/s/article/ZPL-Command-Information-and-DetailsV2?language=en_US
+    
     let printer = Jetdirect::new(settings.address, settings.port);
     printer.send_string(payload, Mode::Print)
 }
