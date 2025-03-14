@@ -20,11 +20,12 @@ export const AppVersion: FC<AppVersionProps> = ({ SiteInfo, style }) => {
   return (
     <Grid
       style={{
-        flexGrow: 0,
+        width: '100%',
         alignSelf: 'flex-end',
         ...style,
       }}
       padding={1}
+      margin={1}
     >
       <Grid padding={1} paddingBottom={0} display="flex" flexDirection="column">
         <Grid

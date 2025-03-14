@@ -56,7 +56,12 @@ export const DiscoveredServers = ({
     return (
       <Box
         display="flex"
-        sx={{ color: 'error.main' }}
+        sx={theme => ({
+          [theme.breakpoints.down('sm')]: {
+            paddingX: '1em'
+          },
+          color: 'error.main'
+        })}
         justifyContent="center"
         alignItems="center"
         flexDirection="column"

@@ -39,8 +39,24 @@ const User = ({ user }: { user: ColdchainAssetLogFragment['user'] }) => {
   const fullName = getLocalisedFullName(user?.firstName, user?.lastName);
 
   return (
-    <Box display="flex" alignItems="flex-start">
-      <Typography sx={{ fontWeight: 'bold', fontSize: '12px' }}>
+    <Box
+      display="flex"
+      alignItems="flex-start"
+      sx={theme => ({
+        [theme.breakpoints.down('sm')]: {
+          flexDirection: 'column',
+          marginTop: '.25em'
+        },
+      })}
+    >
+      <Typography sx={theme => ({
+        [theme.breakpoints.down('sm')]: {
+          fontSize: '14px!important',
+        },
+        fontWeight: 'bold',
+        fontSize: '12px',
+      })}
+      >
         {t('label.user')}: {user?.username ?? UNDEFINED_STRING_VALUE}
       </Typography>
       {!!fullName && <Divider />}
@@ -95,15 +111,36 @@ const StatusLog = ({
       display="flex"
       flexDirection="row"
       justifyContent="space-between"
+      sx={theme => ({
+        [theme.breakpoints.down('sm')]: {
+          flexDirection: 'column',
+        },
+      })}
     >
-      <Box flex={0} display="flex" flexDirection="column" alignItems="center">
+      <Box
+        flex={0}
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        sx={theme => ({
+          [theme.breakpoints.down('sm')]: {
+            display: 'none',
+          },
+        })}
+      >
         <Connector visible={!isFirst} />
         <Icon username={log.user?.username ?? UNDEFINED_STRING_VALUE} />
         <Connector visible={!isLast} />
       </Box>
       <Paper
         elevation={3}
-        sx={{
+        sx={theme => ({
+          [theme.breakpoints.down('sm')]: {
+            flexDirection: 'column',
+            margin: 0,
+            marginLeft: 0,
+            marginBottom: 2,
+          },
           borderRadius: 4,
           flex: 1,
           margin: 2,
@@ -111,24 +148,49 @@ const StatusLog = ({
           padding: 2,
           flexWrap: 'nowrap',
           display: 'flex',
-        }}
+        })}
       >
         <Box display="flex" flex={0.7} flexDirection="column">
-          <Box display="flex" alignItems="flex-start">
-            <Typography sx={{ fontWeight: 'bold', lineHeight: 2 }}>
+          <Box
+            display="flex"
+            alignItems="flex-start"
+            gap="1em"
+            sx={theme => ({
+              [theme.breakpoints.down('sm')]: {
+                flexDirection: 'column',
+                gap: '.25em',
+              },
+            })}
+          >
+            <Typography sx={theme => ({
+              [theme.breakpoints.down('sm')]: {
+                fontSize: '14px!important',
+              },
+              fontWeight: 'bold', lineHeight: 2
+            })}>
               {localisedDate(log.logDatetime)}
             </Typography>
-            <div style={{ width: 16 }} />
             <Status status={log.status} />
           </Box>
           <User user={log.user} />
           <Box display="flex" alignItems="flex-start">
-            <Typography sx={{ fontSize: '12px' }}>
+            <Typography sx={theme => ({
+              [theme.breakpoints.down('sm')]: {
+                fontSize: '14px!important',
+              },
+              fontSize: '12px',
+            })}>
               <b>{t('label.reason')}:</b>{' '}
               {log.reason?.reason ?? UNDEFINED_STRING_VALUE}
             </Typography>
           </Box>
-          <Typography sx={{ fontSize: '12px' }}>
+          <Typography sx={theme => ({
+            [theme.breakpoints.down('sm')]: {
+              fontSize: '14px!important',
+            },
+            fontSize: '12px'
+          })}
+          >
             <b>{t('label.observations')}:</b>{' '}
             {log.comment ?? UNDEFINED_STRING_VALUE}
           </Typography>
@@ -166,6 +228,13 @@ export const StatusLogs = ({ assetId }: { assetId: string }) => {
       display="flex"
       flex={1}
       flexDirection="column"
+      sx={theme => ({
+        [theme.breakpoints.down('sm')]: {
+          paddingX: 0,
+          paddingY: 0,
+          justifyItems: 'center',
+        }
+      })}
     >
       {logs?.nodes?.map((log, index, nodes) => (
         <StatusLog
