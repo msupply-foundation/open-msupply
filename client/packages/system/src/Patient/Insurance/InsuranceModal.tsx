@@ -111,6 +111,7 @@ export const InsuranceModal: FC = (): ReactElement => {
             <InputWithLabelRow
               label={t('label.policy-number-family')}
               Input={
+                // <ErrorWrapper>
                 <BasicTextInput
                   {...getErrorProps({
                     code: t('label.policy-number-family'),
@@ -118,13 +119,14 @@ export const InsuranceModal: FC = (): ReactElement => {
                     required: !draft.policyNumberPerson,
                   })}
                   disabled={haveInsuranceId}
-                  value={draft.policyNumberFamily}
+                  // value={draft.policyNumberFamily}
                   onChange={event => {
                     updatePatch({
                       policyNumberFamily: event.target.value,
                     });
                   }}
                 />
+                // </ErrorWrapper>
               }
             />
             <InputWithLabelRow
@@ -140,7 +142,7 @@ export const InsuranceModal: FC = (): ReactElement => {
                       'That is the devils number and is not allowed',
                   })}
                   disabled={haveInsuranceId}
-                  value={draft.policyNumberPerson}
+                  // value={draft.policyNumberPerson}
                   onChange={event => {
                     updatePatch({
                       policyNumberPerson: event.target.value,

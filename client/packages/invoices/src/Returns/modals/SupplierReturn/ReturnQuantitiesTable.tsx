@@ -4,8 +4,6 @@ import {
   useColumns,
   CellProps,
   ColumnDescription,
-  FormErrors,
-  ErrorWrapper,
 } from '@openmsupply-client/common';
 
 import React from 'react';
@@ -15,14 +13,12 @@ export const QuantityToReturnTableComponent = ({
   lines,
   updateLine,
   isDisabled,
-  formErrors,
 }: {
   lines: GenerateSupplierReturnLineFragment[];
   updateLine: (
     line: Partial<GenerateSupplierReturnLineFragment> & { id: string }
   ) => void;
   isDisabled: boolean;
-  formErrorState: FormErrors;
 }) => {
   const columnDescriptions: ColumnDescription<GenerateSupplierReturnLineFragment>[] =
     [
@@ -52,7 +48,7 @@ export const QuantityToReturnTableComponent = ({
           // getIsError: () => true,
           getIsDisabled: () => isDisabled,
           Cell: NumberOfPacksToReturnReturnInputCell,
-          cellProps: { formErrors },
+          // cellProps: { formErrors },
         },
       ],
     ];
@@ -75,16 +71,13 @@ export const QuantityToReturnTableComponent = ({
 
 const NumberOfPacksToReturnReturnInputCell: React.FC<
   CellProps<GenerateSupplierReturnLineFragment>
-> = ({ formErrorState, ...props }) => {
-  console.log('formErrors', formErrorState);
+> = ({ ...props }) => {
   return (
-    <ErrorWrapper formErrors={formErrorState} code={props.rowData.id}>
-      <NumberInputCell
-        {...props}
-        isRequired
-        max={props.rowData.availableNumberOfPacks}
-      />
-    </ErrorWrapper>
+    <NumberInputCell
+      {...props}
+      isRequired
+      max={props.rowData.availableNumberOfPacks}
+    />
   );
 };
 

@@ -9,7 +9,6 @@ import {
   Box,
   ModalMode,
   AlertColor,
-  useFormErrors,
 } from '@openmsupply-client/common';
 import { ItemSelector } from './ItemSelector';
 import { ReturnSteps, Tabs } from './ReturnSteps';
@@ -61,8 +60,6 @@ export const SupplierReturnEditModal = ({
   const isDisabled = useReturns.utils.supplierIsDisabled() && !isNewReturn;
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-
-  const formErrorState = useFormErrors();
 
   const { lines, update, save } = useDraftSupplierReturnLines({
     supplierId,
@@ -134,7 +131,6 @@ export const SupplierReturnEditModal = ({
       variant="next-and-ok"
       disabled={
         currentTab !== Tabs.Reason ||
-        formErrorState.hasErrors ||
         (isDisabled && !hasNextItem) ||
         (modalMode === ModalMode.Update && !hasNextItem)
       }
@@ -173,7 +169,6 @@ export const SupplierReturnEditModal = ({
               returnId={returnId}
               zeroQuantityAlert={zeroQuantityAlert}
               setZeroQuantityAlert={setZeroQuantityAlert}
-              formErrorState={formErrorState}
             />
           )}
         </Box>
