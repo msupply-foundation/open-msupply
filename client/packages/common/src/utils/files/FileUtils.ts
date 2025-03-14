@@ -5,6 +5,7 @@ import {
   FileOpenerOptions,
 } from '@capacitor-community/file-opener';
 import { Formatter } from '..';
+import { Environment } from 'packages/config/src';
 
 const exportFile = (data: string, type: string, title?: string) => {
   let extension = 'txt';
@@ -45,13 +46,63 @@ const downloadFile = async (url: string) => {
   a.remove();
 };
 
-const openAndroidFile = async (filePath: string) => {
+// On Android, we first try and open the file from the local file system. If
+// it's not there (i.e. hasn't been synced before), we attempt to download it
+// from the server using the HTTP "File download" endpoint, save it to the local
+// file system, then open it from there.
+const openAndroidFile = async (file: {
+  id: string;
+  name: string;
+  tableName: string;
+  assetId: string;
+}) => {
+  const filePath = `${Environment.ANDROID_DATA_FILES_PATH}/${file.tableName}/${file.assetId}/${file.id}_${file.name}`;
+
   console.log('Attempting to open', filePath);
   try {
     // console.log('URI is', JSON.stringify(uriResult, null, 2));
 
     if (Capacitor.getPlatform() !== 'android')
       throw new Error('This method is specifically for Android');
+
+    // Check file exists first
+    try {
+      console.log('Checking file exists...');
+      await Filesystem.stat({ path: filePath, directory: Directory.Data });
+    } catch (e) {
+      console.error("File doesn't exist");
+      const fileUrl = `${Environment.SYNC_FILES_URL}/${file.tableName}/${file.assetId}/${file.id}`;
+      // Download file
+      const response = await fetch(fileUrl, {
+        headers: {
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
+      const blob = await response.blob();
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => {
+          resolve(reader.result as string);
+        };
+        reader.onerror = reject;
+      });
+      if (!base64Data) throw new Error('Problem parsing file data');
+
+      // Remove the data URL prefix (e.g., "data:application/pdf;base64,")
+      const base64String = base64Data.split(',')[1];
+      if (!base64String) throw new Error('Problem parsing base64 string');
+      // Save to filesystem
+      await Filesystem.writeFile({
+        path: filePath,
+        data: base64String,
+        directory: Directory.Documents,
+      });
+
+      console.log('File written');
+    }
 
     // Get the full URI for the file
     const uriResult = await Filesystem.getUri({
