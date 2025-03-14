@@ -15,7 +15,7 @@ async fn main() -> std::io::Result<()> {
     let args = Args::parse();
 
     let settings: Settings =
-        configuration::get_configuration(args.config_args.config_path).expect("Failed to parse configuration settings");
+        configuration::get_configuration(args.config_args).expect("Failed to parse configuration settings");
 
     logging_init(settings.logging.clone(), None);
     log_panics::init();

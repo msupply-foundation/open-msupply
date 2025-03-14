@@ -283,7 +283,7 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     let settings: Settings =
-        configuration::get_configuration(args.config_args.config_path).expect("Problem loading configurations");
+        configuration::get_configuration(args.config_args).expect("Problem loading configurations");
 
     match args.action {
         Action::ExportGraphqlSchema => {
