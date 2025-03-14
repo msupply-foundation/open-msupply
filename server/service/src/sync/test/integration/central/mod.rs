@@ -5,7 +5,6 @@ mod inventory_adjustment_reason;
 mod master_list;
 mod name_and_store_and_name_store_join;
 mod period_schedule_and_period;
-mod report;
 mod test;
 mod unit_and_item;
 
