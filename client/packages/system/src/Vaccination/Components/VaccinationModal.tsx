@@ -33,7 +33,7 @@ import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
 import { getSwitchReason } from './getSwitchReason';
 import { useConfirmNoStockLineSelected } from './useConfirmNoStockLineSelected';
-import { useClinicians } from 'packages/programs/src';
+import { useClinicians } from '@openmsupply-client/programs';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
