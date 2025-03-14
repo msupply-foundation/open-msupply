@@ -104,6 +104,7 @@ const BatchTable = ({
         height: 'unset',
         '& td': {
           paddingY: 0,
+          paddingLeft: '16',
         },
       }
     );
