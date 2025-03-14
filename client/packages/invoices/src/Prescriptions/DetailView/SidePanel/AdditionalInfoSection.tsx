@@ -57,6 +57,7 @@ export const AdditionalInfoSectionComponent: FC = () => {
 
         <PanelLabel>{t('heading.comment')}</PanelLabel>
         <BufferedTextArea
+          fullWidth
           disabled={isDisabled}
           onChange={e => {
             setCommentBuffer(e.target.value);
