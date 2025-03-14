@@ -133,10 +133,10 @@ pub fn copy_example_environment_configuration_file_if_required() -> Result<(), S
 ///
 /// Individual settings properties can be also manually defined as environment variables: see
 /// `get_configuration_environment` for details.
-pub fn get_configuration(config_file: Option<PathBuf>) -> Result<Settings, SettingsError> {
+pub fn get_configuration(config_args: ConfigArgs) -> Result<Settings, SettingsError> {
     copy_example_environment_configuration_file_if_required()?;
 
-    let file_paths = derive_file_paths(config_file)?;
+    let file_paths = derive_file_paths(config_args.config_path)?;
 
     let mut builder = Config::builder();
     builder = builder.add_source(file_paths.base);
