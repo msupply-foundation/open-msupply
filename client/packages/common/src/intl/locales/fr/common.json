@@ -315,7 +315,7 @@
   "error.no-properties-to-import": "Il n'y a pas de propriétés d'import configurées pour vos sites",
   "error.no-report-permission": "Aucune autorisation pour afficher les rapports",
   "error.no-reports-available": "Aucun rapport disponible",
-  "error.no-requisition-items": "Aucun article n'a été ajouté à cette commande interne.",
+  "error.no-internal-order-items": "Aucun article n'a été ajouté à cette commande interne.",
   "error.no-requisitions": "Il n'y aucune réquisition client à afficher.",
   "error.no-results": "Aucune donnée trouvée",
   "error.no-rnr-forms": "Aucun Formulaire R&R trouvé",
@@ -990,7 +990,7 @@
   "label.reason": "Raison",
   "label.reason-adjustment": "Raison de l’ajustement",
   "label.reason-for-contacting": "Raison de la prise de contact",
-  "label.record-stock-transaction": "Enregistrer la transaction de stock pour la vaccination précédente",
+  "label.record-stock-transaction": "Retirer une dose du stock pour cette vaccination passée",
   "label.recorded-contact-differs": "Contact enregistré : {{recordedName}}",
   "label.reference": "Référence",
   "label.refused": "Refusé",
@@ -1871,7 +1871,6 @@
   "label.paid-by-insurance": "Payé(e) par l'assurance",
   "label.price": "Prix",
   "messages.confirm-cancel-prescription": "L'annulation de cette prescription est irréversible",
-  "report.unusable-items": "Articles inutilisables",
   "report.stocktake-per-period": "Prise de stock par période",
   "report.prescriptions-per-period": "Prescriptions par période",
   "button.add-insurance": "Ajouter assurance",
@@ -1918,5 +1917,6 @@
   "messages.cannot-add-directions": "Ajouter une quantité pour ajouter des instructions.",
   "error.dose-max-lower-than-min": "La dose {{doseIndex}} doit avoir un âge maximum plus élevé que l'âge minimum",
   "label.code2": "Code 2",
-  "messages.cannot-delete-linked-requisition": "Impossible de supprimer une réquisition liée"
+  "messages.cannot-delete-linked-requisition": "Impossible de supprimer une réquisition liée",
+  "label.batches": "Lots"
 }

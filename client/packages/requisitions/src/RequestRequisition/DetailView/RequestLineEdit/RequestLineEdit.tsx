@@ -81,7 +81,10 @@ export const RequestLineEdit = ({
     store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
   const isNew = !draft?.id;
   const showItemInformation =
-    useConsumptionData && !!draft?.itemInformation && isProgram;
+    useConsumptionData &&
+    !!draft?.itemInformation &&
+    isProgram &&
+    store?.preferences?.extraFieldsInRequisition;
   const itemInformationSorted = draft?.itemInformation
     ?.sort((a, b) => a.name.name.localeCompare(b.name.name))
     .sort((a, b) => b.amcInUnits - a.amcInUnits)
@@ -103,7 +106,9 @@ export const RequestLineEdit = ({
                     requisitionId: requisitionId,
                     itemId: newItem.id,
                   });
-                  navigate(buildItemEditRoute(requisitionNumber, newItem.id));
+                  navigate(buildItemEditRoute(requisitionNumber, newItem.id), {
+                    replace: true,
+                  });
                 }
               }}
               openOnFocus={true}

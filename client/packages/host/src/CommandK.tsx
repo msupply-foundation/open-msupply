@@ -10,7 +10,6 @@ import {
   KBarAnimator,
   KBarResults,
   KBarSearch,
-  KBarProvider,
   KBarPositioner,
   KBarPortal,
   PropsWithChildrenOnly,
@@ -356,7 +355,11 @@ const Actions = () => {
 export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
   const t = useTranslation();
   return (
-    <KBarProvider actions={[]}>
+    // This should be inside KBar's own <KbarProvider>, and it is, but we're now
+    // rendering that at the top level of <Host> as it needs to be defined in
+    // order to be used within certain dialogs/modals which MUI renders outside
+    // the main DOM content.
+    <>
       <Actions />
       <KBarPortal>
         <KBarPositioner style={{ zIndex: 1001 }}>
@@ -367,6 +370,6 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
         </KBarPositioner>
       </KBarPortal>
       {children}
-    </KBarProvider>
+    </>
   );
 };
