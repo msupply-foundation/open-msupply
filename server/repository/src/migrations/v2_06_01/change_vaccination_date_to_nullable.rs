@@ -8,10 +8,18 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        if !cfg!(feature = "postgres") {
+        if cfg!(feature = "postgres") {
             sql!(
                 connection,
                 r#"
+                    ALTER TABLE vaccination ALTER COLUMN vaccination_date DROP NOT NULL;
+                "#,
+            )?;
+        } else {
+            sql!(
+                connection,
+                r#"
+                PRAGMA foreign_keys = OFF;
                 ALTER TABLE vaccination RENAME TO vaccination_old;
                 CREATE TABLE vaccination (
                     id TEXT NOT NULL PRIMARY KEY,
@@ -33,13 +41,7 @@ impl MigrationFragment for Migrate {
                 );
                 INSERT INTO vaccination SELECT * FROM vaccination_old;
                 DROP TABLE vaccination_old;
-            "#
-            )?;
-        } else {
-            sql!(
-                connection,
-                r#"
-                    ALTER TABLE vaccination ALTER COLUMN vaccination_date DROP NOT NULL;
+                PRAGMA foreign_keys = ON;
                 "#,
             )?;
         };
