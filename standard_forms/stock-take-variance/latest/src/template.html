@@ -11,31 +11,31 @@
 
 <table class="center">
   <thead>
-    <tr>
-      <td width="60" class="borderline"> <span class="table_header">{{t(k="report.item-code",f="Item code")}}</span></td>
-      <td class="borderline"><span class="table_header">{{t(k="report.item-name",f="Item name")}}</span></td>
-      <td class="borderline"><span class="table_header">{{t(k="label.batch",f="Batch")}}</span></td>
-      <td width="60" class="borderline"><span class="table_header">{{t(k="label.expiry",f="Expiry")}}</span></td>
-      <td width="50" class="borderline"><span class="table_header">{{t(k="report.pack-size",f="Pack size")}}</span></td>
-      <td width="60" class="borderline"><span class="table_header">{{t(k="report.cost-price-per-pack",f="Cost price (per pack)")}}</span></td>
-      <td width="60" class="borderline"><span class="table_header">{{t(k="report.snapshot-packs",f="Snapshot Packs")}}</span></td>
-      <td width="60" class="borderline"><span class="table_header">{{t(k="label.counted-num-of-packs",f="Counted Packs")}}</span></td>
-      <td width="60" class="borderline"><span class="table_header">{{t(k="report.variance-packs",f="Variance (packs)")}}</span></td>
-      <td width="60" class="borderline"><span class="table_header">{{t(k="report.variance-value",f="Variance (Value)")}}</span></td>
-      <td width="100"class="borderline"><span class="table_header">{{t(k="label.reason",f="Reason")}}</span></td>
-      <td width="100"class="borderline"><span class="table_header">{{t(k="label.comment",f="Comment")}}</span></td>
+    <tr class="borderline">
+      <th class="col-item-code">{{t(k="report.item-code",f="Item code")}}</th>
+      <th class="col-item-name">{{t(k="report.item-name",f="Item name")}}</th>
+      <th class="col-batch">{{t(k="label.batch",f="Batch")}}</th>
+      <th class="col-expiry-date">{{t(k="label.expiry",f="Expiry")}}</th>
+      <th class="col-packsize">{{t(k="report.pack-size",f="Pack size")}}</th>
+      <th class="col-cost-price">{{t(k="report.cost-price-per-pack",f="Cost price (per pack)")}}</th>
+      <th class="col-snapshot-packs">{{t(k="report.snapshot-packs",f="Snapshot Packs")}}</th>
+      <th class="col-counted-packs">{{t(k="label.counted-num-of-packs",f="Counted Packs")}}</th>
+      <th class="col-variance-packs">{{t(k="report.variance-packs",f="Variance (packs)")}}</th>
+      <th class="col-variance-values">{{t(k="report.variance-value",f="Variance (Value)")}}</th>
+      <th class="col-reason">{{t(k="label.reason",f="Reason")}}</th>
+      <th class="col-comment">{{t(k="label.comment",f="Comment")}}</th>
     </tr>
   </thead>
 
   {% for line in data.stocktakeLines.nodes -%}
   <tr>
-    <td class="table_text">{{line.item.code}}</td>
-    <td class="table_text">{{line.item.name}}</td>
-    <td class="table_text">{{line.batch}}</td>
-    <td class="table_number">{{line.expiryDate}}</td>
-    <td class="table_number">{{line.packSize}}</td>
-    <td class="table_number">{{line.costPricePerPack | default(value=0)}}</td>
-    <td class="table_number">{{line.snapshotNumberOfPacks | round( precision=2)}}</td>
+    <td class="col-item-code">{{line.item.code}}</td>
+    <td class="col-item-name">{{line.item.name}}</td>
+    <td class="col-batch">{{line.batch}}</td>
+    <td class="col-expiry-date">{{line.expiryDate}}</td>
+    <td class="col-packsize">{{line.packSize}}</td>
+    <td class="col-cost-price">{{line.costPricePerPack | default(value=0)}}</td>
+    <td class="col-snapshot-packs">{{line.snapshotNumberOfPacks | round( precision=2)}}</td>
 
     {% if line.countedNumberOfPacks %}
     {% set_global Vnumofpackscounted=line.countedNumberOfPacks %}
@@ -43,19 +43,19 @@
     {% set_global Vnumofpackscounted=0 %}
     {% endif %}
 
-    <td class="table_number">{{Vnumofpackscounted}}</td>
+    <td class="col-counted-packs">{{Vnumofpackscounted}}</td>
 
     {% set Vvariance=Vnumofpackscounted - line.snapshotNumberOfPacks %}
     {% set VvarianceValue=Vvariance * line.costPricePerPack | default(value=0) %}
-    <td class="table_number">{{Vvariance | round( precision=2)}}</td>
-    <td class="table_number">{{VvarianceValue | round( precision=2)}}</td>
+    <td class="col-variance-packs">{{Vvariance | round( precision=2)}}</td>
+    <td class="col-variance-values">{{VvarianceValue | round( precision=2)}}</td>
 
     {% if line.inventoryAdjustmentReasonId %}
-    <td  class="table_text">{{line.inventoryAdjustmentReason.reason}}</td>
+    <td  class="col-reason">{{line.inventoryAdjustmentReason.reason}}</td>
     {% else %}
-    <td  class="table_text">N/A</td>
+    <td  class="col-reason">N/A</td>
     {% endif %}
-    <td  class="table_text">{{line.comment}}</td>
+    <td  class="col-comment">{{line.comment}}</td>
 
     {% if VvarianceValue > 0 %}
     {% set_global VvalueIncrease=VvalueIncrease + VvarianceValue  %}
