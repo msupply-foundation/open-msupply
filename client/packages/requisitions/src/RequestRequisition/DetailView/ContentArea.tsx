@@ -58,7 +58,7 @@ export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
             body={t(
               isFiltered
                 ? 'error.no-items-filter-on'
-                : 'error.no-requisition-items'
+                : 'error.no-internal-order-items'
             )}
             onCreate={isDisabled ? undefined : onAddItem}
             buttonText={t('button.add-item')}
