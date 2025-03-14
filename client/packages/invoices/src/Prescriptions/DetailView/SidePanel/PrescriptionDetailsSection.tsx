@@ -98,7 +98,7 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
           <BasicTextInput
             disabled={isDisabled}
             size="small"
-            sx={{ width: 250 }}
+            fullWidth
             slotProps={{
               input: {
                 sx: {
