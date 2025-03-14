@@ -93,19 +93,19 @@ export const useEncounterListColumns = ({
       accessor: ({ rowData }) => rowData?.patient?.name,
     });
   columnList.push({
-    label: 'label.additional-info',
-    key: 'events',
-    sortable: false,
-    accessor: additionalInfoAccessor,
-    Cell: ChipTableCell,
-    minWidth: 400,
-  });
-  columnList.push({
     key: 'effectiveStatus',
     label: 'label.status',
     sortable: false,
     align: ColumnAlign.Right,
     width: 175,
+  });
+  columnList.push({
+    label: 'label.additional-info',
+    key: 'events',
+    sortable: false,
+    accessor: additionalInfoAccessor,
+    Cell: ChipTableCell,
+    minWidth: 300,
   });
 
   const columns = useColumns<EncounterRowFragment>(
