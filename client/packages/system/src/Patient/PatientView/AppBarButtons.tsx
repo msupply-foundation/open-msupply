@@ -36,26 +36,26 @@ export const AppBarButtons: FC<{
     },
   });
   const disableEncounterButton = enrolmentData?.nodes?.length === 0;
-  if (!store?.preferences.omProgramModule) return null;
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        <AddButton
+          disabled={disabled}
+          disableEncounterButton={disableEncounterButton}
+          store={store}
+        />
         {store?.preferences.omProgramModule && (
-          <AddButton
-            disabled={disabled}
-            disableEncounterButton={disableEncounterButton}
-          />
+          <ReportSelector context={ReportContext.Patient} onPrint={printReport}>
+            <LoadingButton
+              disabled={disabled}
+              variant="outlined"
+              startIcon={<PrinterIcon />}
+              isLoading={isPrinting}
+              label={t('button.print')}
+            />
+          </ReportSelector>
         )}
-        <ReportSelector context={ReportContext.Patient} onPrint={printReport}>
-          <LoadingButton
-            disabled={disabled}
-            variant="outlined"
-            startIcon={<PrinterIcon />}
-            isLoading={isPrinting}
-            label={t('button.print')}
-          />
-        </ReportSelector>
       </Grid>
     </AppBarButtonsPortal>
   );
