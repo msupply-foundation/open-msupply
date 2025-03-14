@@ -33,6 +33,7 @@ import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
 import { getSwitchReason } from './getSwitchReason';
 import { useConfirmNoStockLineSelected } from './useConfirmNoStockLineSelected';
+import { useClinicians } from '@openmsupply-client/programs';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
@@ -148,6 +149,9 @@ const VaccinationForm = ({
 }) => {
   const t = useTranslation();
 
+  const { data: clinicians } = useClinicians.document.list({});
+  const hasClinicians = clinicians?.nodes.length !== 0;
+
   if (!dose) {
     return null;
   }
@@ -216,7 +220,7 @@ const VaccinationForm = ({
           </Grid>
         }
       />
-      {!isOtherFacility && (
+      {hasClinicians && !isOtherFacility && (
         <InputWithLabelRow
           label={t('label.clinician')}
           Input={

@@ -7,7 +7,11 @@ import {
   Tooltip,
 } from '@openmsupply-client/common';
 import { DateUtils, useTranslation } from '@common/intl';
-import { NoteSchema, EncounterSchema } from '@openmsupply-client/programs';
+import {
+  NoteSchema,
+  EncounterSchema,
+  useClinicians,
+} from '@openmsupply-client/programs';
 import {
   ClinicianAutocompleteOption,
   ClinicianSearchInput,
@@ -71,6 +75,9 @@ export const CreateEncounterForm: FC<{
     setHasFormError(false);
   };
 
+  const { data: clinicians } = useClinicians.document.list({});
+  const hasClinicians = clinicians?.nodes.length !== 0;
+
   const setClinician = (option: ClinicianAutocompleteOption | null): void => {
     if (option === null) {
       setDraft({ ...draft, clinician: undefined });
@@ -109,17 +116,19 @@ export const CreateEncounterForm: FC<{
           />
         }
       />
-      <InputWithLabelRow
-        labelProps={{ sx: { flex: LABEL_FLEX } }}
-        label={t('label.clinician')}
-        Input={
-          <ClinicianSearchInput
-            fullWidth
-            onChange={setClinician}
-            clinicianValue={draft?.clinician}
-          />
-        }
-      />
+      {hasClinicians && (
+        <InputWithLabelRow
+          labelProps={{ sx: { flex: LABEL_FLEX } }}
+          label={t('label.clinician')}
+          Input={
+            <ClinicianSearchInput
+              fullWidth
+              onChange={setClinician}
+              clinicianValue={draft?.clinician}
+            />
+          }
+        />
+      )}
       <InputWithLabelRow
         labelProps={{ sx: { flex: LABEL_FLEX } }}
         label={t('label.visit-notes')}

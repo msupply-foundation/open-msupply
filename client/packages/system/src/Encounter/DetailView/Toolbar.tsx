@@ -17,6 +17,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   EncounterFragment,
+  useClinicians,
   useDocumentRegistry,
 } from '@openmsupply-client/programs';
 import {
@@ -75,6 +76,9 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
         contextId: { equalTo: encounter?.contextId },
       },
     });
+
+  const { data: clinicians } = useClinicians.document.list({});
+  const hasClinicians = clinicians?.nodes.length !== 0;
 
   useEffect(() => {
     setStartDatetime(encounter.startDatetime);
@@ -159,20 +163,22 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                   />
                 }
               />
-              <Row
-                label={t('label.clinician')}
-                Input={
-                  <ClinicianSearchInput
-                    onChange={clinician => {
-                      setClinician(clinician);
-                      onChange({
-                        clinician: clinician?.value as ClinicianNode,
-                      });
-                    }}
-                    clinicianValue={clinician?.value}
-                  />
-                }
-              />
+              {hasClinicians && (
+                <Row
+                  label={t('label.clinician')}
+                  Input={
+                    <ClinicianSearchInput
+                      onChange={clinician => {
+                        setClinician(clinician);
+                        onChange({
+                          clinician: clinician?.value as ClinicianNode,
+                        });
+                      }}
+                      clinicianValue={clinician?.value}
+                    />
+                  }
+                />
+              )}
             </Box>
             <Box display="flex" gap={1}>
               <Row
