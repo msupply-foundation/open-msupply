@@ -37,7 +37,7 @@ export const getTemperatureBreachQueries = (sdk: Sdk, storeId: string) => ({
           }
         }
 
-        const result = await sdk.temperature_breaches({
+        const result = await sdk.temperatureBreaches({
           storeId,
           page: { offset, first },
           sort: {

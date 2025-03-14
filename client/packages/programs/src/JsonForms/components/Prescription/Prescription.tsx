@@ -7,9 +7,7 @@ import {
   FnUtils,
   InlineSpinner,
   InvoiceNodeStatus,
-  Link,
-  RouteBuilder,
-  Typography,
+  TextWithLabelRow,
   extractProperty,
   useNotification,
   useTranslation,
@@ -18,7 +16,6 @@ import {
   ItemStockOnHandFragment,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
-import { AppRoute } from '@openmsupply-client/config';
 import { DefaultFormRowSx, useZodOptionsValidation } from '../../common';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import {
@@ -28,6 +25,7 @@ import {
 import { useDraftPrescriptionLines } from '@openmsupply-client/invoices/src/Prescriptions/LineEditView/hooks';
 import { StockLineTable } from './StockLineTable';
 import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
+import { PrescriptionInfo } from './PrescriptionInfo';
 
 export const prescriptionTester = rankWith(10, uiTypeIs('Prescription'));
 
@@ -184,45 +182,33 @@ const UIComponent = (props: ControlProps) => {
           sx={DefaultFormRowSx}
           label={t('label.create-prescription')}
           inputAlignment={'start'}
-          Input={null}
+          Input={
+            <StockItemSearchInput
+              onChange={selected => handleItemSelect(selected)}
+              currentItemId={selectedItem?.id}
+              itemCategoryName={categoryName}
+            />
+          }
         />
-        <Box sx={{ maxWidth: 550, marginLeft: 5 }}>
-          <Typography sx={{ fontSize: '90%' }}>
-            <em>{t('messages.prescription-will-be-created')}</em>
-          </Typography>
-          <StockItemSearchInput
-            onChange={selected => handleItemSelect(selected)}
-            currentItemId={selectedItem?.id}
-            itemCategoryName={categoryName}
-          />
-          {selectedItem && (
+        {selectedItem && (
+          <Box sx={{ marginLeft: 5 }}>
+            <PrescriptionInfo prescription={prescription} />
+            <TextWithLabelRow
+              label={t('label.item_one')}
+              text={selectedItem.name}
+              textProps={{ textAlign: 'end' }}
+            />
+
             <StockLineTable
               stocklines={draftPrescriptionLines}
               handleStockLineUpdate={handleStockLineUpdate}
             />
-          )}
-        </Box>
+          </Box>
+        )}
       </Box>
     );
 
-  return (
-    <DetailInputWithLabelRow
-      sx={DefaultFormRowSx}
-      label={label}
-      inputAlignment={'start'}
-      Input={
-        <Link
-          to={RouteBuilder.create(AppRoute.Dispensary)
-            .addPart(AppRoute.Prescription)
-            .addPart(String(prescription?.invoiceNumber))
-            .build()}
-          target="_blank"
-        >
-          {t('label.click-to-view')}
-        </Link>
-      }
-    />
-  );
+  return <PrescriptionInfo prescription={prescription} />;
 };
 
 export const Prescription = withJsonFormsControlProps(UIComponent);

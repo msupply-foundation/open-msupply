@@ -31,22 +31,24 @@ interface IndicatorLineEditProps {
 const INPUT_WIDTH = 185;
 const LABEL_WIDTH = '150px';
 
-const InputWithLabel = ({
-  autoFocus,
-  data,
-  disabled,
-}: {
+interface InputWithLabelProps {
   autoFocus: boolean;
   data: IndicatorColumnNode;
   disabled: boolean;
-}) => {
-  if (!data?.value) {
-    return;
-  }
+}
 
-  const { draft, update } = useDraftIndicatorValue(data.value);
+const InputWithLabel = ({ autoFocus, data, disabled }: InputWithLabelProps) => {
   const t = useTranslation();
   const { error } = useNotification();
+
+  const { draft, update } = useDraftIndicatorValue(
+    data.value ?? {
+      __typename: 'IndicatorValueNode',
+      id: '',
+      value: '',
+    }
+  );
+
   const errorHandler = useCallback(
     (res: any) => {
       // probably shouldn't be any, but UpdateIndicatorValueResponse doesn't have res.error.__typename
@@ -60,6 +62,10 @@ const InputWithLabel = ({
     },
     [t]
   );
+
+  if (!data?.value) {
+    return null;
+  }
 
   const sharedProps = {
     disabled,
@@ -115,11 +121,11 @@ export const IndicatorLineEdit = ({
   return (
     <>
       <Box display="flex" flexDirection="column">
-        {columns?.map((c, i) => {
+        {columns?.map((column, i) => {
           return (
             <InputWithLabel
-              key={c.value?.id}
-              data={c}
+              key={column.value?.id}
+              data={column}
               disabled={disabled}
               autoFocus={i === 0}
             />

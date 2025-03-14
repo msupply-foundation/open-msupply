@@ -1,5 +1,6 @@
 overwrite: true
-schema: ['../server/schema.graphql']
+schema: [
+  '../server/schema.graphql']
 generates:
   ./packages/common/src/types/schema.ts:
     plugins:
@@ -13,6 +14,7 @@ generates:
   packages/:
     documents:
       - ./**/*.graphql
+      - '!/**/node_modules/**'
     preset: near-operation-file
     presetConfig:
       extension: .generated.ts
@@ -25,3 +27,7 @@ generates:
       scalars:
         DateTime: string
         NaiveDate: string
+        NaiveDateTime: string
+hooks:
+  afterAllFileWrite:
+    - prettier --write

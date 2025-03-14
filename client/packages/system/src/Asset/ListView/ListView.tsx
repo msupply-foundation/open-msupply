@@ -108,7 +108,7 @@ const AssetListComponent: FC = () => {
         data={data?.nodes}
         isError={isError}
         isLoading={isLoading}
-        noDataElement={<NothingHere body={t('error.no-items')} />}
+        noDataElement={<NothingHere body={t('error.no-assets')} />}
         enableColumnSelection
       />
       <Footer />

@@ -89,7 +89,10 @@ fn generate(
                  mut requisition_line_row,
                  ..
              }| {
-                requisition_line_row.requested_quantity = requisition_line_row.suggested_quantity;
+                if requisition_line_row.requested_quantity == 0.00 {
+                    requisition_line_row.requested_quantity =
+                        requisition_line_row.suggested_quantity;
+                }
 
                 requisition_line_row
             },
@@ -219,10 +222,12 @@ mod test {
         assert_eq!(result, lines);
 
         for requisition_line in lines {
-            assert_eq!(
-                requisition_line.requisition_line_row.requested_quantity,
-                requisition_line.requisition_line_row.suggested_quantity
-            )
+            if requisition_line.requisition_line_row.requested_quantity == 0.00 {
+                assert_eq!(
+                    requisition_line.requisition_line_row.requested_quantity,
+                    requisition_line.requisition_line_row.suggested_quantity
+                )
+            }
         }
     }
 }

@@ -23,7 +23,7 @@ export const useDeleteSelectedResponseRequisitions = () => {
       .filter(Boolean) as ResponseFragment[],
   }));
   const deleteAction = async () => {
-    let result = await mutateAsync(selectedRows).catch(err => {
+    const result = await mutateAsync(selectedRows).catch(err => {
       throw err;
     });
     // check for errors

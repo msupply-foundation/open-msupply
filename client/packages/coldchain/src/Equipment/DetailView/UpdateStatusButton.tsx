@@ -16,6 +16,7 @@ import {
   ClickableStepper,
   UserPermission,
   useAuthContext,
+  useIsGapsStoreOnly,
 } from '@openmsupply-client/common';
 import { StatusTab } from './StatusTab';
 import { UploadTab } from './UploadTab';
@@ -51,6 +52,7 @@ export const UpdateStatusButtonComponent = ({
 
   const permission = UserPermission.AssetMutate;
   const { userHasPermission } = useAuthContext();
+  const isGaps = useIsGapsStoreOnly();
 
   const onUpdateStatus = () => {
     if (userHasPermission(permission)) {
@@ -197,6 +199,7 @@ export const UpdateStatusButtonComponent = ({
         </DetailContainer>
       </Modal>
       <ButtonWithIcon
+        shouldShrink={!isGaps}
         Icon={<PlusCircleIcon />}
         label={t('button.update-status')}
         onClick={onUpdateStatus}
