@@ -9134,7 +9134,7 @@ export type UpdateVaccinationInput = {
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
   stockLineId?: InputMaybe<NullableStringUpdate>;
   updateTransactions?: InputMaybe<Scalars['Boolean']['input']>;
-  vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  vaccinationDate?: InputMaybe<NullableDateUpdate>;
 };
 
 export type UpdateVaccinationResponse = UpdateVaccinationError | VaccinationNode;
@@ -9408,7 +9408,7 @@ export type VaccinationNode = {
   invoiceId?: Maybe<Scalars['String']['output']>;
   notGivenReason?: Maybe<Scalars['String']['output']>;
   stockLine?: Maybe<StockLineNode>;
-  vaccinationDate: Scalars['NaiveDate']['output'];
+  vaccinationDate?: Maybe<Scalars['NaiveDate']['output']>;
 };
 
 export type VaccineCourseConnector = {

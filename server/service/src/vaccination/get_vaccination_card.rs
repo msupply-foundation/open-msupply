@@ -84,7 +84,11 @@ pub fn get_suggested_date(
     course_rows: Vec<VaccinationCardRow>,
 ) -> Option<NaiveDate> {
     let suggested_date_by_age = patient_dob
-        .map(|dob| dob.checked_add_signed(Duration::days((row.min_age * NUMBER_OF_DAYS_IN_A_MONTH) as i64)))
+        .map(|dob| {
+            dob.checked_add_signed(Duration::days(
+                (row.min_age * NUMBER_OF_DAYS_IN_A_MONTH) as i64,
+            ))
+        })
         .flatten();
 
     // If the dose was already given, no need to suggest date
