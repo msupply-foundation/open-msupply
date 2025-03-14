@@ -24,6 +24,7 @@ const CONFIGURATION_ENVIRONMENT_SEPARATOR: &str = "__";
 #[derive(Args)]
 pub struct ConfigArgs {
     #[clap(long)]
+    /// File path for .yaml config file - expects base.yaml file to exist in same directory
     pub config_path: Option<PathBuf>,
 }
 
