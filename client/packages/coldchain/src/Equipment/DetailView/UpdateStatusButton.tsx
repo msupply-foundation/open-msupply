@@ -6,23 +6,16 @@ import {
   useDialog,
   DialogButton,
   useNotification,
-  TabContext,
   Box,
-  useTabs,
-  useDebounceCallback,
   DetailContainer,
   InsertAssetLogInput,
   FnUtils,
-  ClickableStepper,
 } from '@openmsupply-client/common';
 import { Draft, Statusform } from './StatusForm';
 import { useAssets } from '../api';
 import { Environment } from '@openmsupply-client/config/src';
 
-enum Tabs {
-  Status = 'Status',
-  Upload = 'UploadFiles',
-}
+
 
 const getEmptyAssetLog = (assetId: string) => ({
   id: FnUtils.generateUUID(),
@@ -36,18 +29,12 @@ export const UpdateStatusButtonComponent = ({
 }) => {
   const onClose = () => {
     setDraft(getEmptyAssetLog(assetId ?? 'closed'));
-    onChangeTab(Tabs.Status);
   };
-  const { currentTab, onChangeTab } = useTabs(Tabs.Status);
   const t = useTranslation();
   const { Modal, hideDialog, showDialog } = useDialog({ onClose });
   const { error, success } = useNotification();
   const [draft, setDraft] = useState<Partial<Draft>>(getEmptyAssetLog(''));
   const { insertLog, invalidateQueries } = useAssets.log.insert();
-
-  const onNext = useDebounceCallback(() => {
-    onChangeTab(Tabs.Upload);
-  }, []);
 
   const onOk = async () => {
     await insertLog(draft)
@@ -79,41 +66,9 @@ export const UpdateStatusButtonComponent = ({
       .catch(e => error(`${t('error.unable-to-save-log')}: ${e.message}`)());
   };
 
-  const logSteps = [
-    {
-      description: '',
-      label: t('label.status'),
-      tab: Tabs.Status,
-      clickable: true,
-    },
-    {
-      description: '',
-      label: t('label.upload-files'),
-      tab: Tabs.Upload,
-    },
-  ];
-
-  const getActiveStep = () => {
-    const step = logSteps.find(step => step.tab === currentTab);
-    return step ? logSteps.indexOf(step) : 0;
-  };
-
-  const isInvalid = () => !draft?.id || !draft?.assetId || !draft?.status;
-
   const onChange = (patch: Partial<InsertAssetLogInput>) => {
     if (!draft) return;
     setDraft({ ...draft, ...patch });
-  };
-
-  const onClickStep = (tabName: string) => {
-    switch (tabName) {
-      case Tabs.Upload:
-        onChangeTab(tabName as Tabs);
-        break;
-      case Tabs.Status:
-        onChangeTab(tabName as Tabs);
-        break;
-    }
   };
 
   useEffect(() => {
@@ -136,18 +91,9 @@ export const UpdateStatusButtonComponent = ({
           />
         }
         okButton={
-          currentTab === Tabs.Upload ? (
-            <DialogButton variant="ok" onClick={onOk} />
-          ) : undefined
-        }
-        nextButton={
-          currentTab === Tabs.Status ? (
-            <DialogButton
-              variant="next-and-ok"
-              onClick={onNext}
-              disabled={isInvalid()}
-            />
-          ) : undefined
+
+          <DialogButton variant="ok" onClick={onOk} />
+
         }
       >
         <DetailContainer paddingTop={1}>
@@ -163,18 +109,12 @@ export const UpdateStatusButtonComponent = ({
               },
             }}
           >
-            <ClickableStepper
-              activeStep={getActiveStep()}
-              steps={logSteps}
-              onClickStep={onClickStep}
-            />
-            <TabContext value={currentTab}>
-              <Statusform
-                draft={draft}
-                onChange={onChange}
-              />
 
-            </TabContext>
+            <Statusform
+              draft={draft}
+              onChange={onChange}
+            />
+
           </Box>
         </DetailContainer>
       </Modal>
