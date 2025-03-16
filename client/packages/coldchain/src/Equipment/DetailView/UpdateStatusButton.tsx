@@ -15,10 +15,8 @@ import {
   FnUtils,
   ClickableStepper,
 } from '@openmsupply-client/common';
-import { StatusTab } from './StatusTab';
-import { UploadTab } from './UploadTab';
+import { Draft, Statusform } from './StatusForm';
 import { useAssets } from '../api';
-import { Draft } from '../Components';
 import { Environment } from '@openmsupply-client/config/src';
 
 enum Tabs {
@@ -171,16 +169,11 @@ export const UpdateStatusButtonComponent = ({
               onClickStep={onClickStep}
             />
             <TabContext value={currentTab}>
-              <StatusTab
+              <Statusform
                 draft={draft}
-                value={Tabs.Status}
                 onChange={onChange}
               />
-              <UploadTab
-                draft={draft}
-                value={Tabs.Upload}
-                onChange={onChange}
-              />
+
             </TabContext>
           </Box>
         </DetailContainer>

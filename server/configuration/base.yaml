@@ -13,7 +13,7 @@ database:
   port: 5432
   username: "postgres"
   password: "password"
-  database_name: "omsupply-database"
+  database_name: "central_test"
 logging:
   #   one of: All | Console | File
   mode: File

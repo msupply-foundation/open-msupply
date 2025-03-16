@@ -3,6 +3,7 @@ import {
   Autocomplete,
   BasicTextInput,
   InputWithLabelRow,
+  Upload,
 } from '@common/components';
 import { LocaleKey, useTranslation } from '@common/intl';
 import {
@@ -10,11 +11,29 @@ import {
   Box,
   InsertAssetLogInput,
   StatusType,
+  styled,
   useDebounceCallback,
 } from '@openmsupply-client/common';
-import { AssetLogPanel } from '../Components';
+import { FileList } from '../Components';
 import { parseLogStatus } from '../utils';
 import { useAssetData } from '@openmsupply-client/system';
+
+const StyledContainer = styled(Box)(({ theme }) => ({
+  borderColor: theme.palette.divider,
+  flexDirection: 'column',
+  display: 'flex',
+  alignItems: 'center',
+  height: '100%',
+  width: '100%',
+}));
+
+interface StatusForm {
+  draft: Partial<Draft>;
+  onChange: (patch: Partial<Draft>) => void;
+}
+
+export type Draft = InsertAssetLogInput & { files?: File[] };
+
 
 const Row = ({
   children,
@@ -39,7 +58,7 @@ const Row = ({
   </Box>
 );
 
-export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
+export const Statusform = ({ draft, onChange }: StatusForm) => {
   const t = useTranslation();
   const debouncedOnChange = useDebounceCallback(
     (patch: Partial<InsertAssetLogInput>) => onChange(patch),
@@ -65,8 +84,8 @@ export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
   const { data } = useAssetData.log.listReasons(
     draft.status
       ? {
-          assetLogStatus: { equalTo: draft.status },
-        }
+        assetLogStatus: { equalTo: draft.status },
+      }
       : undefined
   );
 
@@ -78,9 +97,18 @@ export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
       };
     }) ?? [];
 
+  const removeFile = (name: string) => {
+    onChange({ files: draft.files?.filter(file => file.name !== name) });
+  };
+
+  const onUpload = (files: File[]) => {
+    onChange({ files });
+  };
+
+
   return (
-    <AssetLogPanel value={value} draft={draft} onChange={onChange}>
-      <Box display="flex" flexDirection="column" sx={{ width: '100%' }}>
+    <StyledContainer>
+      <Box display="flex" flexDirection="column" sx={{ width: '100%' }} >
         <Row label={t('label.new-functional-status')}>
           <Autocomplete
             isOptionEqualToValue={option => option?.value === draft.status}
@@ -114,7 +142,18 @@ export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
             onChange={e => debouncedOnChange({ comment: e.target.value })}
           />
         </Row>
+        <Box padding={2}>
+          <Upload onUpload={onUpload} />
+        </Box>
+        <Box display="flex" sx={{ width: '300px' }}>
+          <FileList
+            assetId={draft.id ?? ''}
+            files={draft.files}
+            padding={0.5}
+            removeFile={removeFile}
+          />
+        </Box>
       </Box>
-    </AssetLogPanel>
+    </StyledContainer >
   );
 };
