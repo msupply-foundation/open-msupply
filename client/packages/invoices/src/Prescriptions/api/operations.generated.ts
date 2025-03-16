@@ -891,6 +891,20 @@ export type UpsertPrescriptionMutation = {
               | { __typename: 'RecordNotFound'; description: string };
           };
     }> | null;
+    setPrescribedQuantity?: Array<{
+      __typename: 'SetPrescribedQuantityWithId';
+      id: string;
+      response:
+        | { __typename: 'InvoiceLineNode' }
+        | {
+            __typename: 'SetPrescribedQuantityError';
+            error: {
+              __typename: 'ForeignKeyError';
+              description: string;
+              key: Types.ForeignKey;
+            };
+          };
+    }> | null;
   };
 };
 
@@ -1485,6 +1499,22 @@ export const UpsertPrescriptionDocument = gql`
             __typename
             error {
               description
+            }
+          }
+        }
+      }
+      setPrescribedQuantity {
+        id
+        response {
+          ... on SetPrescribedQuantityError {
+            __typename
+            error {
+              description
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
             }
           }
         }

@@ -33,7 +33,7 @@ pub struct UpdateSupplierReturn {
     pub transport_reference: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum UpdateSupplierReturnError {
     ReturnDoesNotExist,
     ReturnDoesNotBelongToCurrentStore,

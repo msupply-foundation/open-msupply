@@ -44,7 +44,7 @@ export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
 
   return (
     <>
-      {plugins.requestRequisitionColumn?.StateLoader?.map(
+      {plugins.requestRequisitionLine?.tableStateLoader?.map(
         (StateLoader, index) => <StateLoader key={index} requestLines={lines} />
       )}
       <DataTable

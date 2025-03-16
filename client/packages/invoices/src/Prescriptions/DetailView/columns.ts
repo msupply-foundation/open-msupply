@@ -278,6 +278,7 @@ export const usePrescriptionColumn = ({
             totalUnits += line.numberOfPacks * line.packSize;
           }
 
+          if (totalSellPrice === 0 && totalUnits === 0) return 0;
           return totalSellPrice / totalUnits;
         } else {
           return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
@@ -295,7 +296,7 @@ export const usePrescriptionColumn = ({
         }
       },
     },
-    
+
     {
       label: 'label.line-total',
       key: 'lineTotal',
