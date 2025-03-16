@@ -7,7 +7,7 @@ use repository::{
 };
 
 use serde::{Deserialize, Serialize};
-use util::constants::{MISSING_PROGRAM, NUMBER_OF_DAYS_IN_A_MONTH};
+use util::constants::{MISSING_PROGRAM, MSUPPLY_NUMBER_OF_DAYS_IN_A_MONTH};
 
 use crate::sync::{
     sync_serde::{
@@ -269,7 +269,7 @@ impl SyncTranslation for RequisitionTranslation {
                 date_and_time_to_datetime(data.date_entered, 0),
                 from_legacy_sent_datetime(data.last_modified_at, &r#type),
                 from_legacy_finalised_datetime(data.last_modified_at, &r#type),
-                data.daysToSupply as f64 / NUMBER_OF_DAYS_IN_A_MONTH,
+                data.daysToSupply as f64 / MSUPPLY_NUMBER_OF_DAYS_IN_A_MONTH,
                 from_legacy_status(&data.r#type, &data.status).ok_or(anyhow::Error::msg(
                     format!("Unsupported requisition status: {:?}", data.status),
                 ))?,
@@ -402,7 +402,7 @@ impl SyncTranslation for RequisitionTranslation {
             requester_reference: their_reference,
             linked_requisition_id,
             thresholdMOS: min_months_of_stock,
-            daysToSupply: (NUMBER_OF_DAYS_IN_A_MONTH * max_months_of_stock) as i64,
+            daysToSupply: (MSUPPLY_NUMBER_OF_DAYS_IN_A_MONTH * max_months_of_stock) as i64,
             max_months_of_stock: Some(max_months_of_stock),
             om_colour: colour.clone(),
             comment,
