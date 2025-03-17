@@ -15,7 +15,8 @@ use crate::authentication::validate_cookie_auth;
 #[derive(serde::Deserialize)]
 pub struct QrLabelData {
     code: String,
-    message: Option<String>,
+    assetNumber: Option<String>,
+    datePrinted: Option<String>
 }
 
 pub async fn print_label_qr(
@@ -41,8 +42,8 @@ pub async fn print_label_qr(
         }
     };
 
-    match print_data_matrix_barcode_label(settings, data.code.clone(), data.message.clone()) {
-        Ok(_) => HttpResponse::Ok().body("QR label printed"),
+    match print_data_matrix_barcode_label(settings, data.code.clone(), data.assetNumber.clone(), data.datePrinted.clone()) {
+        Ok(_) => HttpResponse::Ok().body("Asset label printed"),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
