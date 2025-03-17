@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from '@common/intl';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import {
+  BasicTextInput,
   Box,
   FileUtils,
   IconButton,
   Link,
   Stack,
   Typography,
+  useNotification,
 } from '@openmsupply-client/common';
 import { Capacitor } from '@capacitor/core';
 import { FileIcon, XCircleIcon } from '@common/icons';
@@ -30,6 +33,10 @@ export const FileList = ({
   removeFile?: (filename: string, id?: string) => void;
 }) => {
   const t = useTranslation();
+  const { error } = useNotification();
+
+  const [fileString, setFileString] = useState('');
+
   if (files === undefined || files.length === 0) {
     return noFilesMessage === undefined ? null : (
       <Typography sx={{ color: 'gray.main', paddingLeft: 2 }}>
@@ -52,6 +59,10 @@ export const FileList = ({
     reader.readAsDataURL(blob);
   };
 
+  const onError = (err: string) => {
+    error(`Error: ${err}`)();
+  };
+
   return (
     <Stack
       justifyContent="center"
@@ -59,6 +70,26 @@ export const FileList = ({
       alignContent="center"
       paddingTop={4 * padding}
     >
+      <BasicTextInput
+        value={fileString}
+        onChange={e => setFileString(e.target.value)}
+      />
+      <Typography
+        onClick={async () => {
+          try {
+            console.log('fileString', fileString);
+            const result = await Filesystem.stat({
+              path: fileString,
+              directory: Directory.Data,
+            });
+            console.log('Stat', JSON.stringify(result));
+          } catch (err) {
+            onError((err as Error).message);
+          }
+        }}
+      >
+        Click to stat
+      </Typography>
       {files?.map((file, idx) => (
         <Box
           key={`${idx}_${file.name}`}
@@ -73,14 +104,18 @@ export const FileList = ({
             {file.id ? (
               isAndroid ? (
                 <span
-                  onClick={() =>
-                    FileUtils.openAndroidFile({
-                      id: file.id as string,
-                      name: file.name,
-                      tableName,
-                      assetId,
-                    })
-                  }
+                  onClick={async () => {
+                    try {
+                      await FileUtils.openAndroidFile({
+                        id: file.id as string,
+                        name: file.name,
+                        tableName,
+                        assetId,
+                      });
+                    } catch (err) {
+                      onError((err as Error).message);
+                    }
+                  }}
                 >
                   {file.name}
                 </span>

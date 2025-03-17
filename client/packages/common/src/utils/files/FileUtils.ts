@@ -59,6 +59,9 @@ const openAndroidFile = async (file: {
   const filePath = `${Environment.ANDROID_DATA_FILES_PATH}/${file.tableName}/${file.assetId}/${file.id}_${file.name}`;
 
   console.log('Attempting to open', filePath);
+
+  let uri: string;
+
   try {
     // console.log('URI is', JSON.stringify(uriResult, null, 2));
 
@@ -68,9 +71,14 @@ const openAndroidFile = async (file: {
     // Check file exists first
     try {
       console.log('Checking file exists...');
-      await Filesystem.stat({ path: filePath, directory: Directory.Data });
+      const result = await Filesystem.stat({
+        path: filePath,
+        directory: Directory.Data,
+      });
+      console.log('Stat', JSON.stringify(result, null, 2));
+      uri = result.uri;
     } catch (e) {
-      console.error("File doesn't exist");
+      console.error("File doesn't exist", e);
       const fileUrl = `${Environment.SYNC_FILES_URL}/${file.tableName}/${file.assetId}/${file.id}`;
       // Download file
       const response = await fetch(fileUrl, {
@@ -101,19 +109,35 @@ const openAndroidFile = async (file: {
         directory: Directory.Documents,
       });
 
+      const uriResult = await Filesystem.getUri({
+        path: filePath,
+        directory: Directory.Data,
+      });
       console.log('File written');
+
+      uri = uriResult.uri;
     }
 
     // Get the full URI for the file
-    const uriResult = await Filesystem.getUri({
-      path: filePath,
-      directory: Directory.Data,
-    });
 
-    console.log('File URI', JSON.stringify(uriResult, null, 2));
+    // console.log('File URI', JSON.stringify(uriResult, null, 2));
+
+    // try {
+    //   console.log('About to call stat');
+    //   const result = await Filesystem.stat({
+    //     path: filePath,
+    //     directory: Directory.Data,
+    //   });
+
+    //   console.log('Stat result', JSON.stringify(result, null, 2));
+    // } catch (error) {
+    //   console.error('Error in stat:', error);
+    // }
+
+    console.log('Continuing...');
 
     const fileOpenerOptions: FileOpenerOptions = {
-      filePath: uriResult.uri,
+      filePath: uri,
       // contentType: 'application/pdf',
       openWithDefault: true,
     };
@@ -124,6 +148,8 @@ const openAndroidFile = async (file: {
   } catch (error) {
     console.error('Error opening file:', error);
     throw error;
+  } finally {
+    console.log('DONE');
   }
 };
 
