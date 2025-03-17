@@ -162,7 +162,7 @@
   "customer-return": "Retour du client",
   "customer-returns": "Retours du client",
   "label.inbound-shipment": "Bon de livraison",
-  "error.no-requisition-items": "Aucun article n'a été ajouté à ce Bon de Commande.",
+  "error.no-internal-order-items": "Aucun article n'a été ajouté à ce Bon de Commande.",
   "filename.requests": "bons-de-commande",
   "inbound-shipment": "Bons de livraison",
   "internal-order": "Bons de commande",
@@ -266,5 +266,6 @@
   "label.facility": "Dépôt",
   "label.encounter": "Visite",
   "label.gender": "Sexe",
-  "report.pending-encounters": "Rapport des visites"
+  "report.pending-encounters": "Rapport des visites",
+  "label.next-of-kin": "Parent"
 }

@@ -200,6 +200,14 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
     ) -> Result<InvoiceLine, UpdateLineReturnReasonError> {
         update_return_reason_id(ctx, input)
     }
+
+    fn set_prescribed_quantity(
+        &self,
+        ctx: &ServiceContext,
+        input: SetPrescribedQuantity,
+    ) -> Result<InvoiceLine, SetPrescribedQuantityError> {
+        set_prescribed_quantity(ctx, input)
+    }
 }
 
 pub struct InvoiceLineService {}

@@ -12,6 +12,7 @@ import android.webkit.WebView;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.getcapacitor.Bridge;
 import com.getcapacitor.JSArray;
@@ -132,9 +133,6 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         // /android loader or not
         if (!webView.getUrl().matches(DEFAULT_URL))
             return;
-        // Initial load, display splash screen and wait for the server to start
-        webView.post(() -> webView.loadData(SplashPage.encodedHtml, "text/html", "base64"));
-        // advertiseService();
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -163,6 +161,14 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                     retryCount--;
                     sleep(1000);
                 }
+
+                final Handler handler = new Handler(Looper.getMainLooper());
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        AppState.getInstance().setServerReady(true);
+                    }
+                }, 250);
 
                 // .post to run on UI thread in the two calls below
                 if (isServerRunning) {

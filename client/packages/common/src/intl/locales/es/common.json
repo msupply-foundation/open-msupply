@@ -308,7 +308,7 @@
   "error.no-properties-to-import": "No hay propiedades configuradas para importar a tu almacén",
   "error.no-report-permission": "No tienes permiso para ver informes",
   "error.no-reports-available": "No hay reportes disponibles",
-  "error.no-requisition-items": "No se han agregado elementos a esta Orden Interna.",
+  "error.no-internal-order-items": "No se han agregado elementos a esta Orden Interna.",
   "error.no-requisitions": "No hay requisiciones para mostrar.",
   "error.no-results": "Nada aquí",
   "error.no-rnr-forms": "No se encontraron formularios R&R",

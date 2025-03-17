@@ -50,7 +50,7 @@ export const useEncounterListColumns = ({
   sortBy,
   includePatient = false,
 }: useEncounterListColumnsProps) => {
-  const { localisedDate, localisedTime } = useFormatDateTime();
+  const { localisedDate } = useFormatDateTime();
   const { data: enrolmentRegistries } =
     useDocumentRegistry.get.documentRegistries({
       filter: {
@@ -83,20 +83,6 @@ export const useEncounterListColumns = ({
       accessor: ({ rowData }) => rowData?.startDatetime,
       formatter: dateString =>
         dateString ? localisedDate((dateString as string) || '') : '',
-    },
-    {
-      key: 'startTime',
-      label: 'label.encounter-start',
-      sortable: false,
-      accessor: ({ rowData }) => rowData?.startDatetime,
-      formatter: dateString =>
-        dateString ? localisedTime((dateString as string) || '') : '',
-    },
-    {
-      key: 'endDatetime',
-      label: 'label.encounter-end',
-      formatter: dateString =>
-        dateString ? localisedTime((dateString as string) || '') : '',
     },
   ];
 

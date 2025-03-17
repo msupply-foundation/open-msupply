@@ -319,7 +319,7 @@
   "error.no-properties-to-import": "Для ваших объектов нет настроенных свойств для импорта",
   "error.no-report-permission": "Нет разрешения на просмотр отчетов",
   "error.no-reports-available": "Отчеты отсутствуют",
-  "error.no-requisition-items": "К этому внутреннему заказу не добавлено ни одного товара.",
+  "error.no-internal-order-items": "К этому внутреннему заказу не добавлено ни одного товара.",
   "error.no-requisitions": "Нет запросов на закупку для отображения.",
   "error.no-results": "Здесь ничего нет",
   "error.no-rnr-forms": "О&З формы не найдены",
