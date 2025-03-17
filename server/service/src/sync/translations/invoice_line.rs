@@ -223,7 +223,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             Some(ref stock_line_id) => StockLineRowRepository::new(connection)
                 .find_one_by_id(stock_line_id)?
                 .is_some(),
-            None => true,
+            None => false,
         };
 
         if !is_stock_line_valid {
@@ -421,7 +421,7 @@ fn adjust_negative_values(line: InvoiceLineRow) -> InvoiceLineRow {
         return line;
     }
 
-    return InvoiceLineRow {
+    InvoiceLineRow {
         cost_price_per_pack: line.cost_price_per_pack.abs(),
         sell_price_per_pack: line.sell_price_per_pack.abs(),
         total_before_tax: line.total_before_tax.abs(),
@@ -430,7 +430,7 @@ fn adjust_negative_values(line: InvoiceLineRow) -> InvoiceLineRow {
         foreign_currency_price_before_tax: line.foreign_currency_price_before_tax.map(|n| n.abs()),
         r#type: InvoiceLineType::StockIn,
         ..line
-    };
+    }
 }
 
 #[cfg(test)]
