@@ -4,6 +4,7 @@ import {
   BasicTextInput,
   InputWithLabelRow,
   Typography,
+  Upload
 } from '@common/components';
 import { LocaleKey, useTranslation } from '@common/intl';
 import {
@@ -12,11 +13,28 @@ import {
   InsertAssetLogInput,
   StatusType,
   useDebounceCallback,
+  styled,
 } from '@openmsupply-client/common';
-import { AssetLogPanel } from '../Components';
+import { FileList } from '../Components';
 import { parseLogStatus } from '../utils';
 import { useAssetData } from '@openmsupply-client/system';
 import { useIsGapsStoreOnly } from '@openmsupply-client/common';
+
+const StyledContainer = styled(Box)(({ theme }) => ({
+  borderColor: theme.palette.divider,
+  flexDirection: 'column',
+  display: 'flex',
+  alignItems: 'center',
+  height: '100%',
+  width: '100%',
+}));
+
+interface StatusForm {
+  draft: Partial<Draft>;
+  onChange: (patch: Partial<Draft>) => void;
+}
+
+export type Draft = InsertAssetLogInput & { files?: File[] };
 
 const Row = ({
   children,
@@ -63,7 +81,7 @@ const Row = ({
   )
 };
 
-export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
+export const StatusForm = ({ draft, onChange }: StatusForm) => {
   const t = useTranslation();
   const isGaps = useIsGapsStoreOnly();
   const debouncedOnChange = useDebounceCallback(
@@ -95,6 +113,14 @@ export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
       : undefined
   );
 
+  const removeFile = (name: string) => {
+    onChange({ files: draft.files?.filter(file => file.name !== name) });
+  };
+
+  const onUpload = (files: File[]) => {
+    onChange({ files });
+  };
+
   const reasons =
     data?.nodes?.map(value => {
       return {
@@ -104,7 +130,7 @@ export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
     }) ?? [];
 
   return (
-    <AssetLogPanel value={value} draft={draft} onChange={onChange}>
+    <StyledContainer>
       <Box display="flex" flexDirection="column" sx={{ width: '100%' }}>
         <Row label={t('label.new-functional-status')} isGaps={isGaps}>
           <Autocomplete
@@ -139,7 +165,18 @@ export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
             onChange={e => debouncedOnChange({ comment: e.target.value })}
           />
         </Row>
+        <Box padding={2}>
+          <Upload onUpload={onUpload} />
+        </Box>
+        <Box display="flex" sx={{ width: '300px' }}>
+          <FileList
+            assetId={draft.id ?? ''}
+            files={draft.files}
+            padding={0.5}
+            removeFile={removeFile}
+          />
+        </Box>
       </Box>
-    </AssetLogPanel>
+    </StyledContainer >
   );
 };
