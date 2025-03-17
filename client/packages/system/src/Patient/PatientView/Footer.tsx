@@ -53,7 +53,7 @@ export const Footer: FC<FooterProps> = ({
           <ButtonWithIcon
             Icon={<ClockIcon />}
             color="secondary"
-            label={'History'}
+            label={t('label.history')}
             disabled={documentName === undefined}
             onClick={showDialog}
           />
