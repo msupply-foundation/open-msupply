@@ -136,81 +136,79 @@ export const Statusform = ({ draft, onChange }: StatusForm) => {
       ? {
         assetLogStatus: { equalTo: draft.status },
       }
-        assetLogStatus: { equalTo: draft.status },
-      }
       : undefined
   );
 
-const reasons =
-  data?.nodes?.map(value => {
-    return {
-      label: value.reason,
-      value: value.id,
-    };
-  }) ?? [];
+  const reasons =
+    data?.nodes?.map(value => {
+      return {
+        label: value.reason,
+        value: value.id,
+      };
+    }) ?? [];
 
-const removeFile = (name: string) => {
-  onChange({ files: draft.files?.filter(file => file.name !== name) });
-};
+  const removeFile = (name: string) => {
+    onChange({ files: draft.files?.filter(file => file.name !== name) });
+  };
 
-const onUpload = (files: File[]) => {
-  onChange({ files });
-};
+  const onUpload = (files: File[]) => {
+    onChange({ files });
+  };
 
 
-return (
-  <StyledContainer>
-    <Box display="flex" flexDirection="column" sx={{ width: '100%' }} >
-      <Row label={t('label.new-functional-status')} isGaps={isGaps}>
-        <Autocomplete
-          isOptionEqualToValue={option => option?.value === draft.status}
-          onChange={(_e, selected) =>
-            onChange({
-              status: selected?.value as AssetLogStatusInput,
-              reasonId: undefined,
-            })
-          }
-          options={statuses}
-          width="100%"
-        />
-      </Row>
-      <Row label={t('label.reason')} isGaps={isGaps}>
-        <Autocomplete
-          disabled={reasons.length === 0}
-          options={reasons}
-          width="100%"
-          isOptionEqualToValue={option => option?.value === draft.reasonId}
-          onChange={(_e, selected) =>
-            onChange({ reasonId: selected?.value as string })
-          }
-          value={reasons.find(r => r?.value === draft.reasonId) ?? null}
-        />
-      </Row>
-      <Row label={t('label.observations')} isGaps={isGaps}>
-        <BasicTextInput
-          multiline
-          rows={4}
-          fullWidth
-          onChange={e => debouncedOnChange({ comment: e.target.value })}
-        />
-      </Row>
-      <Box padding={2}>
-        <Upload onUpload={onUpload} />
+  return (
+    <StyledContainer>
+      <Box display="flex" flexDirection="column" sx={{ width: '100%' }} >
+        <Row label={t('label.new-functional-status')} isGaps={isGaps}>
+          <Autocomplete
+            isOptionEqualToValue={option => option?.value === draft.status}
+            onChange={(_e, selected) =>
+              onChange({
+                status: selected?.value as AssetLogStatusInput,
+                reasonId: undefined,
+              })
+            }
+            options={statuses}
+            width="100%"
+          />
+        </Row>
+        <Row label={t('label.reason')} isGaps={isGaps}>
+          <Autocomplete
+            disabled={reasons.length === 0}
+            options={reasons}
+            width="100%"
+            isOptionEqualToValue={option => option?.value === draft.reasonId}
+            onChange={(_e, selected) =>
+              onChange({ reasonId: selected?.value as string })
+            }
+            value={reasons.find(r => r?.value === draft.reasonId) ?? null}
+          />
+        </Row>
+        <Row label={t('label.observations')} isGaps={isGaps}>
+          <BasicTextInput
+            multiline
+            rows={4}
+            fullWidth
+            onChange={e => debouncedOnChange({ comment: e.target.value })}
+          />
+        </Row>
+        <Box padding={2}>
+          <Upload onUpload={onUpload} />
+        </Box>
+        <Box display="flex" sx={{ width: '300px' }}>
+          <FileList
+            assetId={draft.id ?? ''}
+            files={draft.files}
+            padding={0.5}
+            removeFile={removeFile}
+          />
+        </Box>
       </Box>
-      <Box display="flex" sx={{ width: '300px' }}>
-        <FileList
-          assetId={draft.id ?? ''}
-          files={draft.files}
-          padding={0.5}
-          removeFile={removeFile}
-        />
-      </Box>
-    </Box>
-    <ButtonWithIcon
-      Icon={<PlusCircleIcon />}
-      label={t('button.take-photo')}
-      onClick={takePicture}
-    />
-  </StyledContainer >
-);
+      <ButtonWithIcon
+        Icon={<PlusCircleIcon />}
+        label={t('button.take-photo')}
+        onClick={takePicture}
+      />
+    </StyledContainer >
+  );
 };
