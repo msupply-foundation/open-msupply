@@ -9,6 +9,13 @@
     }
   } */
 
+@page {
+    font-family: Tahoma;
+    font-size: 8pt;
+    counter-increment: page;
+    content: "Page " counter(page);
+}
+
 .logo {
     display: block;
     height: 96px;
@@ -56,7 +63,7 @@
     font-size: 8pt;
 }
 
-.line_number, .quantity, .pack, .expiry, .sell_price, .cost_price, .total_quantity, .total_extension {
+.line_number, .quantity, .pack, .expiry, .cost_price, .total_quantity, .total_extension {
     text-align: right;
     font-family: Tahoma;
     font-size: 8pt;
@@ -87,9 +94,9 @@ hr {
     border: 0.1px solid black;
 }
 
-.pageNumber::after {
+/* .pageNumber::after {
     font-family: Tahoma;
     font-size: 8pt;
     counter-increment: page;
     content: "Page " counter(page);
-}
+} */
