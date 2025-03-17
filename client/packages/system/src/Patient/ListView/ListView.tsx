@@ -13,10 +13,10 @@ import {
   useAuthContext,
   useNavigate,
   ColumnDescription,
-  Formatter,
-  useTranslation,
   useCallbackWithPermission,
   UserPermission,
+  useTranslation,
+  GenderType,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -24,6 +24,7 @@ import { Toolbar } from './Toolbar';
 import { usePatientStore } from '@openmsupply-client/programs';
 import { ChipTableCell } from '../Components';
 import { CreatePatientModal } from '../CreatePatientModal';
+import { getGenderTranslationKey } from '../PatientView/utils';
 
 export const programEnrolmentLabelAccessor: ColumnDataAccessor<
   PatientRowFragment,
@@ -105,7 +106,7 @@ const PatientListComponent: FC = () => {
     {
       key: 'gender',
       label: 'label.gender',
-      formatter: gender => Formatter.enumCase((gender as string) ?? ''),
+      formatter: gender => t(getGenderTranslationKey(gender as GenderType)),
     },
     {
       key: 'dateOfBirth',

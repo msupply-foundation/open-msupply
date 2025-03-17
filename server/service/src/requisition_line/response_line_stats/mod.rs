@@ -74,7 +74,8 @@ mod test {
             mock_store_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        RequisitionLineRow, RequisitionRow, RequisitionStatus,
+        ApprovalStatusType, RequisitionLineRow, RequisitionRow, RequisitionStatus,
+        StorePreferenceRow, StorePreferenceRowRepository,
     };
     use util::inline_init;
 
@@ -128,6 +129,7 @@ mod test {
             r.name_link_id = "name_a".to_string();
             r.r#type = RequisitionType::Response;
             r.status = RequisitionStatus::New;
+            r.approval_status = Some(ApprovalStatusType::Approved);
             r.created_datetime = Utc::now().naive_utc();
             r.max_months_of_stock = 3.0;
         })
@@ -139,6 +141,7 @@ mod test {
             r.requisition_id = "requisition_one".to_string();
             r.item_link_id = "item_d".to_string();
             r.requested_quantity = 20.0;
+            r.approved_quantity = 12.0;
         })
     }
 
@@ -150,7 +153,7 @@ mod test {
             r.requested_quantity = 15.0;
             r.available_stock_on_hand = 10.0;
             r.average_monthly_consumption = 50.0;
-            r.suggested_quantity = 240.0;
+            r.approved_quantity = 12.0;
         })
     }
 
@@ -162,6 +165,7 @@ mod test {
             r.name_link_id = "name_b".to_string();
             r.r#type = RequisitionType::Response;
             r.status = RequisitionStatus::New;
+            r.approval_status = Some(ApprovalStatusType::Approved);
             r.created_datetime = Utc::now().naive_utc();
             r.max_months_of_stock = 6.0;
         })
@@ -173,6 +177,76 @@ mod test {
             r.requisition_id = "requisition_two".to_string();
             r.item_link_id = "item_e".to_string();
             r.requested_quantity = 20.0;
+            r.approved_quantity = 10.0;
+        })
+    }
+
+    fn requisition_three() -> RequisitionRow {
+        inline_init(|r: &mut RequisitionRow| {
+            r.id = "requisition_three".to_string();
+            r.requisition_number = 4;
+            r.store_id = mock_store_a().id;
+            r.name_link_id = "name_b".to_string();
+            r.r#type = RequisitionType::Response;
+            r.status = RequisitionStatus::New;
+            r.approval_status = Some(ApprovalStatusType::Approved);
+            r.created_datetime = Utc::now().naive_utc();
+            r.max_months_of_stock = 6.0;
+        })
+    }
+
+    fn requisition_line_three_a() -> RequisitionLineRow {
+        inline_init(|r: &mut RequisitionLineRow| {
+            r.id = "requisition_line_three_a".to_string();
+            r.requisition_id = "requisition_three".to_string();
+            r.item_link_id = "item_e".to_string();
+            r.requested_quantity = 25.0;
+            r.approved_quantity = 18.0;
+        })
+    }
+
+    fn requisition_four() -> RequisitionRow {
+        inline_init(|r: &mut RequisitionRow| {
+            r.id = "requisition_four".to_string();
+            r.requisition_number = 5;
+            r.store_id = mock_store_a().id;
+            r.name_link_id = "name_b".to_string();
+            r.r#type = RequisitionType::Response;
+            r.status = RequisitionStatus::New;
+            r.approval_status = Some(ApprovalStatusType::Denied);
+            r.created_datetime = Utc::now().naive_utc();
+            r.max_months_of_stock = 6.0;
+        })
+    }
+
+    fn requisition_line_four_a() -> RequisitionLineRow {
+        inline_init(|r: &mut RequisitionLineRow| {
+            r.id = "requisition_line_four_a".to_string();
+            r.requisition_id = "requisition_four".to_string();
+            r.item_link_id = "item_e".to_string();
+            r.requested_quantity = 10.0;
+        })
+    }
+
+    fn requisition_five() -> RequisitionRow {
+        inline_init(|r: &mut RequisitionRow| {
+            r.id = "requisition_five".to_string();
+            r.requisition_number = 5;
+            r.store_id = mock_store_a().id;
+            r.name_link_id = "name_b".to_string();
+            r.r#type = RequisitionType::Response;
+            r.status = RequisitionStatus::New;
+            r.created_datetime = Utc::now().naive_utc();
+            r.max_months_of_stock = 6.0;
+        })
+    }
+
+    fn requisition_line_five_a() -> RequisitionLineRow {
+        inline_init(|r: &mut RequisitionLineRow| {
+            r.id = "requisition_line_five_a".to_string();
+            r.requisition_id = "requisition_five".to_string();
+            r.item_link_id = "item_e".to_string();
+            r.requested_quantity = 6.0;
         })
     }
 
@@ -229,6 +303,9 @@ mod test {
                 r.requisitions = vec![
                     requisition_one(),
                     requisition_two(),
+                    requisition_three(),
+                    requisition_four(),
+                    requisition_five(),
                     request_requisition_a(),
                     request_requisition_b(),
                 ];
@@ -236,6 +313,9 @@ mod test {
                     requisition_line_one_a(),
                     requisition_line_one_b(),
                     requisition_line_two_a(),
+                    requisition_line_three_a(),
+                    requisition_line_four_a(),
+                    requisition_line_five_a(),
                     request_requisition_a_line_a(),
                     request_requisition_b_line_a(),
                 ]
@@ -249,16 +329,21 @@ mod test {
             .unwrap();
         let service = service_provider.requisition_line_service;
 
-        let stats = service
+        let stats_result = service
             .get_response_requisition_line_stats(&context, &requisition_line_one_b().id)
             .unwrap();
+
+        // Test when response requisition authorisation is not required
         let response_requisition_stats = ResponseRequisitionStats {
             response_store_stats: ResponseStoreStats {
                 stock_on_hand: 0.0,
                 stock_on_order: request_requisition_a_line_a().requested_quantity,
                 incoming_stock: 0,
                 requested_quantity: requisition_line_one_b().requested_quantity,
-                other_requested_quantity: requisition_line_one_a().requested_quantity,
+                other_requested_quantity: requisition_line_two_a().requested_quantity
+                    + requisition_line_three_a().requested_quantity
+                    + requisition_line_four_a().requested_quantity
+                    + requisition_line_five_a().requested_quantity,
             },
             request_store_stats: RequestStoreStats {
                 stock_on_hand: requisition_line_one_b().available_stock_on_hand,
@@ -268,6 +353,39 @@ mod test {
             },
         };
 
-        assert_eq!(stats, response_requisition_stats);
+        assert_eq!(stats_result, response_requisition_stats);
+
+        // Test Authorisation required on response requisition
+        StorePreferenceRowRepository::new(&context.connection)
+            .upsert_one(&StorePreferenceRow {
+                id: mock_store_a().id,
+                response_requisition_requires_authorisation: true,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let stats_result = service
+            .get_response_requisition_line_stats(&context, &requisition_line_one_b().id)
+            .unwrap();
+
+        let requisition_stats = ResponseRequisitionStats {
+            response_store_stats: ResponseStoreStats {
+                stock_on_hand: 0.0,
+                stock_on_order: request_requisition_a_line_a().requested_quantity,
+                incoming_stock: 0,
+                requested_quantity: requisition_line_one_b().approved_quantity,
+                other_requested_quantity: requisition_line_two_a().approved_quantity
+                    + requisition_line_three_a().approved_quantity
+                    + requisition_line_five_a().requested_quantity,
+            },
+            request_store_stats: RequestStoreStats {
+                stock_on_hand: requisition_line_one_b().available_stock_on_hand,
+                amc: requisition_line_one_b().average_monthly_consumption,
+                max_months_of_stock: requisition_one().max_months_of_stock,
+                suggested_quantity: requisition_line_one_b().suggested_quantity,
+            },
+        };
+
+        assert_eq!(stats_result, requisition_stats);
     }
 }
