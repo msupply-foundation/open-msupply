@@ -789,6 +789,7 @@
   "label.fc-line-total": "FC Line Total",
   "label.fc-sell-price": "FC Sell Price",
   "label.feedback": "Feedback",
+  "label.fetching-coordinates": "Fetching coordinates...",
   "label.filters": "Filters",
   "label.finalise": "Finalise",
   "label.finalised": "Finalised",
