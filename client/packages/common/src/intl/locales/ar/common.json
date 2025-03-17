@@ -308,7 +308,7 @@
   "error.no-properties-to-import": "لا توجد خصائص مهيأة لاستيرادها لمؤسستك",
   "error.no-report-permission": "لا يوجد إذن لعرض التقارير",
   "error.no-reports-available": "لا توجد تقارير متاحة",
-  "error.no-requisition-items": "لم تتم إضافة أي عناصر إلى هذا الطلب الداخلي.",
+  "error.no-internal-order-items": "لم تتم إضافة أي عناصر إلى هذا الطلب الداخلي.",
   "error.no-requisitions": "لا توجد طلبات للعرض.",
   "error.no-results": "لا يوجد شيء هنا",
   "error.no-rnr-forms": "لم يتم العثور على نماذج التقارير والطلبات",

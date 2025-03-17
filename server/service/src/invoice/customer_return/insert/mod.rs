@@ -16,7 +16,10 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
-use super::CustomerReturnLineInput;
+use super::{
+    update_customer_return, CustomerReturnLineInput, UpdateCustomerReturn,
+    UpdateCustomerReturnError, UpdateCustomerReturnStatus,
+};
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct InsertCustomerReturn {
@@ -50,6 +53,9 @@ pub enum InsertCustomerReturnError {
     LineReturnReasonUpdateError {
         line_id: String,
         error: UpdateLineReturnReasonError,
+    },
+    ErrorSettingNonNewStatus {
+        update_error: UpdateCustomerReturnError,
     },
 }
 
@@ -90,6 +96,21 @@ pub fn insert_customer_return(
                     }
                 })?;
             }
+
+            // Update to not new status after upserting lines
+            if customer_return.original_shipment_id.is_some() {
+                let _ = update_customer_return(
+                    ctx,
+                    UpdateCustomerReturn {
+                        id: customer_return.id.clone(),
+                        status: Some(UpdateCustomerReturnStatus::Verified),
+                        ..Default::default()
+                    },
+                )
+                .map_err(|e| {
+                    InsertCustomerReturnError::ErrorSettingNonNewStatus { update_error: e }
+                })?;
+            };
 
             activity_log_entry(
                 ctx,
@@ -412,6 +433,7 @@ mod test {
                 u.name_link_id = mock_name_customer_a().id;
                 u.user_id = Some(mock_user_account_a().id);
                 u.original_shipment_id = Some(returnable_outbound_shipment().id);
+                u.status = InvoiceStatus::Verified;
                 u
             })
         );
@@ -429,6 +451,35 @@ mod test {
                 u.id = "new_customer_return_line_id".to_string();
                 u.item_link_id = mock_item_a().id;
                 u.number_of_packs = 1.0;
+                u
+            })
+        );
+
+        // Check new return without original shipment gets created with status of 'New'
+        service_provider
+            .invoice_service
+            .insert_customer_return(
+                &context,
+                inline_init(|r: &mut InsertCustomerReturn| {
+                    r.id = "new_customer_return_id_2".to_string();
+                    r.other_party_id = mock_name_customer_a().id;
+                    r.outbound_shipment_id = None;
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id("new_customer_return_id_2")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(invoice.id, "new_customer_return_id_2");
+        assert_eq!(
+            invoice,
+            inline_edit(&invoice, |mut u| {
+                u.name_link_id = mock_name_customer_a().id;
+                u.user_id = Some(mock_user_account_a().id);
+                u.status = InvoiceStatus::New;
                 u
             })
         );

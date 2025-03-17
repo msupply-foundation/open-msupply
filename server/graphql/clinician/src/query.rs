@@ -41,7 +41,6 @@ pub struct ClinicianSortInput {
 #[derive(InputObject, Clone)]
 pub struct ClinicianFilterInput {
     pub id: Option<EqualFilterStringInput>,
-
     pub code: Option<StringFilterInput>,
     pub first_name: Option<StringFilterInput>,
     pub last_name: Option<StringFilterInput>,
@@ -51,6 +50,7 @@ pub struct ClinicianFilterInput {
     pub phone: Option<StringFilterInput>,
     pub mobile: Option<StringFilterInput>,
     pub email: Option<StringFilterInput>,
+    pub is_active: Option<bool>,
 }
 
 #[derive(SimpleObject)]
@@ -113,6 +113,7 @@ impl ClinicianFilterInput {
             phone,
             mobile,
             email,
+            is_active,
         } = self;
 
         ClinicianFilter {
@@ -126,6 +127,7 @@ impl ClinicianFilterInput {
             phone: phone.map(StringFilter::from),
             mobile: mobile.map(StringFilter::from),
             email: email.map(StringFilter::from),
+            is_active,
         }
     }
 }
