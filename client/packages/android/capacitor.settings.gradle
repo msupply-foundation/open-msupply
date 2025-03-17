@@ -2,12 +2,6 @@
 include ':capacitor-android'
 project(':capacitor-android').projectDir = new File('../../node_modules/@capacitor/android/capacitor')
 
-include ':capacitor-community-file-opener'
-project(':capacitor-community-file-opener').projectDir = new File('../../node_modules/@capacitor-community/file-opener/android')
-
-include ':capacitor-filesystem'
-project(':capacitor-filesystem').projectDir = new File('../../node_modules/@capacitor/filesystem/android')
-
 include ':bcyesil-capacitor-plugin-printer'
 project(':bcyesil-capacitor-plugin-printer').projectDir = new File('../../node_modules/@bcyesil/capacitor-plugin-printer/android')
 
@@ -25,3 +19,9 @@ project(':capacitor-keyboard').projectDir = new File('../../node_modules/@capaci
 
 include ':capacitor-preferences'
 project(':capacitor-preferences').projectDir = new File('../../node_modules/@capacitor/preferences/android')
+
+include ':capacitor-community-file-opener'
+project(':capacitor-community-file-opener').projectDir = new File('../../node_modules/@capacitor-community/file-opener/android')
+
+include ':capacitor-filesystem'
+project(':capacitor-filesystem').projectDir = new File('../../node_modules/@capacitor/filesystem/android')
