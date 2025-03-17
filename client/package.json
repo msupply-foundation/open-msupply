@@ -104,6 +104,8 @@
   },
   "dependencies": {
     "@bugsnag/js": "^7.25.0",
+    "@capacitor/camera": "4",
+    "@ionic/pwa-elements": "^3.3.0",
     "@mui/x-date-pickers": "^7.23.6",
     "@types/react-dom": "^18.0.1",
     "graphql": "^16.3.0",

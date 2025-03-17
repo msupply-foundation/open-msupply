@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@capacitor/android": "^6.1.0",
+    "@capacitor/camera": "4",
     "@capacitor/core": "^6.1.0"
   }
 }

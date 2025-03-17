@@ -1288,6 +1288,11 @@
   resolved "https://registry.yarnpkg.com/@capacitor/app/-/app-6.0.0.tgz#b383c97543e2fb9462e8bd69c0f512c33bba0089"
   integrity sha512-X5UGd90Jh5p9rmoPyMqFyFWqOypdJgVJhYcM5X1YyDVJJGzmJ5MuYv1+ajj5DW9Qyh+5a3th9WYptdGby8jidA==
 
+"@capacitor/camera@4":
+  version "4.1.5"
+  resolved "https://registry.yarnpkg.com/@capacitor/camera/-/camera-4.1.5.tgz#ec092426ea802da3deeb8fa2bf86ed9bf779748a"
+  integrity sha512-E00IRsJiIr1kP3EkJa0OWp//TDFXOx3ifDfmLOmIkPxKt1FfuNheE0ipWBo5b44pKsx9pO64Rm9MkfUhgH5Rfg==
+
 "@capacitor/cli@^6.1.0":
   version "6.1.0"
   resolved "https://registry.yarnpkg.com/@capacitor/cli/-/cli-6.1.0.tgz#d90cf2e64afc20cc34848594d4733237f204bbef"
@@ -2681,6 +2686,11 @@
     "@ionic/utils-terminal" "2.3.5"
     debug "^4.0.0"
     tslib "^2.0.1"
+
+"@ionic/pwa-elements@^3.3.0":
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/@ionic/pwa-elements/-/pwa-elements-3.3.0.tgz#971c806ebe410c677740f9e4b32bbf26ac29bb93"
+  integrity sha512-vbykpxd2nGRlA67AnqDwsiVf8PUmInLyi6lQdnPDjeiML1WZa0CPe6r632nGDV9PTi+sWNde9Xexg9SD6Pwyqw==
 
 "@ionic/utils-array@2.1.5":
   version "2.1.5"

@@ -1,5 +1,9 @@
 [
 	{
+		"pkg": "@capacitor/camera",
+		"classpath": "com.capacitorjs.plugins.camera.CameraPlugin"
+	},
+	{
 		"pkg": "@bcyesil/capacitor-plugin-printer",
 		"classpath": "com.bcyesil.capacitor.printer.PrinterPlugin"
 	},

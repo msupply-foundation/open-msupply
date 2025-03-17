@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Autocomplete,
   BasicTextInput,
+  ButtonWithIcon,
   InputWithLabelRow,
   Typography,
   Upload
@@ -14,11 +15,14 @@ import {
   StatusType,
   useDebounceCallback,
   styled,
+  PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { FileList } from '../Components';
 import { parseLogStatus } from '../utils';
 import { useAssetData } from '@openmsupply-client/system';
 import { useIsGapsStoreOnly } from '@openmsupply-client/common';
+import { Camera, CameraResultType } from '@capacitor/camera';
+import { defineCustomElements } from '@ionic/pwa-elements/loader';
 
 const StyledContainer = styled(Box)(({ theme }) => ({
   borderColor: theme.palette.divider,
@@ -83,6 +87,8 @@ const Row = ({
 
 export const StatusForm = ({ draft, onChange }: StatusForm) => {
   const t = useTranslation();
+  defineCustomElements(window);
+  const [imageElement, setImageElement] = useState<any>({ src: undefined })
   const isGaps = useIsGapsStoreOnly();
   const debouncedOnChange = useDebounceCallback(
     (patch: Partial<InsertAssetLogInput>) => onChange(patch),
@@ -93,6 +99,24 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
     label,
     value: value ?? label,
   });
+
+  const takePicture = async () => {
+    const image = await Camera.getPhoto({
+      quality: 90,
+      allowEditing: true,
+      resultType: CameraResultType.Uri
+    });
+
+    // image.webPath will contain a path that can be set as an image src.
+    // You can access the original file using image.path, which can be
+    // passed to the Filesystem API to read the raw data of the image,
+    // if desired (or pass resultType: CameraResultType.Base64 to getPhoto)
+    var imageUrl = image.webPath;
+
+    // Can be set to the src of an image now
+    setImageElement({ ...imageElement, src: imageUrl })
+
+  };
 
   const getOptionsFromEnum = (
     enumObject: Record<string, string>,
@@ -167,16 +191,22 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
         </Row>
         <Box padding={2}>
           <Upload onUpload={onUpload} />
-        </Box>
-        <Box display="flex" sx={{ width: '300px' }}>
-          <FileList
-            assetId={draft.id ?? ''}
-            files={draft.files}
-            padding={0.5}
-            removeFile={removeFile}
+          <ButtonWithIcon
+            Icon={<PlusCircleIcon />}
+            label={t('button.take-photo')}
+            onClick={takePicture}
           />
+          <Box display="flex" sx={{ width: '300px' }}>
+            <FileList
+              assetId={draft.id ?? ''}
+              files={draft.files}
+              padding={0.5}
+              removeFile={removeFile}
+            />
+          </Box>
         </Box>
       </Box>
+
     </StyledContainer >
   );
 };
