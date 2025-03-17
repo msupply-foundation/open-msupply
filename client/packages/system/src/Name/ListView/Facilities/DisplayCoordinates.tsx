@@ -9,14 +9,12 @@ import {
   Typography,
   useTranslation,
   LocationIcon,
-  getNativeAPI,
 } from '@openmsupply-client/common';
 import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
 
 export const DisplayCoordinates = (): ReactElement => {
   const t = useTranslation();
-  const nativeApi = getNativeAPI();
 
   const [loading, setLoading] = useState(false);
   const [latitude, setLatitude] = useState<number>();
@@ -48,12 +46,17 @@ export const DisplayCoordinates = (): ReactElement => {
   const fetchCoordinates = async () => {
     setLoading(true);
     try {
+      const isNativePlatform = Capacitor.isNativePlatform();
       const isGeolocationAvailable = Capacitor.isPluginAvailable('Geolocation');
-      const geolocationPermission = await Geolocation.checkPermissions();
 
       // Sets coordinates for Android devices
-      if (isGeolocationAvailable && nativeApi) {
-        if (geolocationPermission.location !== 'granted') {
+      if (isGeolocationAvailable && isNativePlatform) {
+        const geolocationPermission = await Geolocation.checkPermissions();
+
+        if (
+          geolocationPermission.location !== 'granted' ||
+          geolocationPermission.coarseLocation !== 'granted'
+        ) {
           await Geolocation.requestPermissions();
         }
 
@@ -65,7 +68,7 @@ export const DisplayCoordinates = (): ReactElement => {
       }
 
       // Sets coordinates for browsers
-      if ('geolocation' in navigator && !nativeApi) {
+      if ('geolocation' in navigator && !isNativePlatform) {
         navigator.geolocation.getCurrentPosition(
           (position: GeolocationPosition) =>
             updateCoordinates(
