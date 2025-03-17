@@ -71,12 +71,14 @@ const openAndroidFile = async (file: {
     // Check file exists first
     try {
       console.log('Checking file exists...');
-      const result = await Filesystem.stat({
-        path: filePath,
-        directory: Directory.Data,
-      });
+      const result = await statWithTimeout(filePath);
+
+      // Filesystem.stat({
+      //   path: filePath,
+      //   directory: Directory.Data,
+      // });
       console.log('Stat', JSON.stringify(result, null, 2));
-      uri = result.uri;
+      uri = (result as any).uri;
     } catch (e) {
       console.error("File doesn't exist", e);
       const fileUrl = `${Environment.SYNC_FILES_URL}/${file.tableName}/${file.assetId}/${file.id}`;
@@ -158,4 +160,16 @@ export const FileUtils = {
     exportFile(data, 'text/csv', title),
   downloadFile,
   openAndroidFile,
+};
+
+const statWithTimeout = async (filePath: string, timeout = 5000) => {
+  return Promise.race([
+    Filesystem.stat({
+      path: filePath,
+      directory: Directory.Data,
+    }),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Stat operation timed out')), timeout)
+    ),
+  ]);
 };
