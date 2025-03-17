@@ -1319,6 +1319,11 @@
   dependencies:
     tslib "^2.1.0"
 
+"@capacitor/geolocation@^6.0.1":
+  version "6.1.0"
+  resolved "https://registry.yarnpkg.com/@capacitor/geolocation/-/geolocation-6.1.0.tgz#cce926a19730a4bccdf2cecb49da1adabc876a00"
+  integrity sha512-jEY5DcZirxX1gOBuOvf/FL7FlPMOKcsnF8PlfYxu7OFwRDD7HRwehEPWtJXR6wSYLgsCujm7yRqKrjtyN+f14g==
+
 "@capacitor/keyboard@^6.0.1":
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/@capacitor/keyboard/-/keyboard-6.0.1.tgz#76add27a20239eefc3353b970fd506036d948d18"

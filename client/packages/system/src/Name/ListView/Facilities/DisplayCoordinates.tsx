@@ -9,26 +9,23 @@ import {
   Typography,
   useTranslation,
   LocationIcon,
+  getNativeAPI,
 } from '@openmsupply-client/common';
-import { formatCoordinate } from './utils';
+import { Geolocation } from '@capacitor/geolocation';
+import { Capacitor } from '@capacitor/core';
 
 export const DisplayCoordinates = (): ReactElement => {
   const t = useTranslation();
-  const [latitude, setLatitude] = useState<string>();
-  const [longitude, setLongitude] = useState<string>();
-  const [formattedLatitude, setFormattedLatitude] = useState<string>();
-  const [formattedLongitude, setFormattedLongitude] = useState<string>();
+  const nativeApi = getNativeAPI();
+
+  const [loading, setLoading] = useState(false);
+  const [latitude, setLatitude] = useState<number>();
+  const [longitude, setLongitude] = useState<number>();
   const [errorMessage, setErrorMessage] = useState<string>();
 
-  const getWebCoordinates = (position: GeolocationPosition) => {
-    const coords: GeolocationCoordinates = position.coords;
-    const lat = coords.latitude;
-    const lon = coords.longitude;
-
-    setLatitude(lat.toString());
-    setLongitude(lon.toString());
-    setFormattedLatitude(formatCoordinate(lat, true));
-    setFormattedLongitude(formatCoordinate(lon, false));
+  const updateCoordinates = (latitude: number, longitude: number): void => {
+    setLatitude(parseFloat(latitude.toFixed(6)));
+    setLongitude(parseFloat(longitude.toFixed(6)));
   };
 
   const handleGeolocationWebError = (error: GeolocationPositionError) => {
@@ -48,23 +45,86 @@ export const DisplayCoordinates = (): ReactElement => {
     }
   };
 
-  useEffect(() => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position: GeolocationPosition) => getWebCoordinates(position),
-        (error: GeolocationPositionError) => handleGeolocationWebError(error)
-      );
-    } else {
+  const fetchCoordinates = async () => {
+    setLoading(true);
+    try {
+      const isGeolocationAvailable = Capacitor.isPluginAvailable('Geolocation');
+      const geolocationPermission = await Geolocation.checkPermissions();
+
+      // Sets coordinates for Android devices
+      if (isGeolocationAvailable && nativeApi) {
+        if (geolocationPermission.location !== 'granted') {
+          await Geolocation.requestPermissions();
+        }
+
+        const position = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+        });
+        updateCoordinates(position.coords.latitude, position.coords.longitude);
+        return;
+      }
+
+      // Sets coordinates for browsers
+      if ('geolocation' in navigator && !nativeApi) {
+        navigator.geolocation.getCurrentPosition(
+          (position: GeolocationPosition) =>
+            updateCoordinates(
+              position.coords.latitude,
+              position.coords.longitude
+            ),
+          (error: GeolocationPositionError) => handleGeolocationWebError(error)
+        );
+        return;
+      }
+
       setErrorMessage(t('error.geolocation-not-supported'));
+      return;
+    } catch (error) {
+      setErrorMessage(t('error.unknown-geolocation-error'));
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchCoordinates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const formatCoordinate = (
+    coordinate?: number,
+    isLatitude?: boolean
+  ): string => {
+    if (!coordinate) return '';
+
+    const direction = isLatitude
+      ? coordinate >= 0
+        ? 'N'
+        : 'S'
+      : coordinate >= 0
+        ? 'E'
+        : 'W';
+
+    const absolute = Math.abs(coordinate);
+    const degrees = Math.floor(absolute);
+    const minutes = Math.floor((absolute - degrees) * 60);
+    const seconds = ((absolute * 3600) % 60).toFixed(3);
+    return `${direction} ${degrees}° ${minutes}' ${seconds}"`;
+  };
+
+  const isLatitude = true;
+  const formattedLatitude = formatCoordinate(latitude, isLatitude);
+  const formattedLongitude = formatCoordinate(longitude, !isLatitude);
 
   return (
     <>
       <Typography fontWeight="bold">{t('label.gps-coordinates')}:</Typography>
-      {errorMessage ? (
-        <Box sx={{ pt: 4, display: 'flex', justifyContent: 'center' }}>
+      {loading ? (
+        <Box sx={{ pb: 2, display: 'flex', justifyContent: 'center' }}>
+          <Typography>{t('label.fetching-coordinates')}</Typography>
+        </Box>
+      ) : errorMessage ? (
+        <Box sx={{ pb: 2, display: 'flex', justifyContent: 'center' }}>
           <Alert severity="error">{errorMessage}</Alert>
         </Box>
       ) : (
@@ -84,6 +144,7 @@ export const DisplayCoordinates = (): ReactElement => {
             />
           </Box>
           <ButtonWithIcon
+            disabled
             onClick={() => {}}
             Icon={<LocationIcon />}
             label={t('label.update-live-location')}
