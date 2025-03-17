@@ -15,8 +15,6 @@ import { Draft, Statusform } from './StatusForm';
 import { useAssets } from '../api';
 import { Environment } from '@openmsupply-client/config/src';
 
-
-
 const getEmptyAssetLog = (assetId: string) => ({
   id: FnUtils.generateUUID(),
   assetId,
@@ -109,12 +107,10 @@ export const UpdateStatusButtonComponent = ({
               },
             }}
           >
-
             <Statusform
               draft={draft}
               onChange={onChange}
             />
-
           </Box>
         </DetailContainer>
       </Modal>

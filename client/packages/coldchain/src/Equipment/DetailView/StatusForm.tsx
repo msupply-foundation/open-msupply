@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Autocomplete,
   BasicTextInput,
+  ButtonWithIcon,
   InputWithLabelRow,
   Upload,
 } from '@common/components';
@@ -10,6 +11,7 @@ import {
   AssetLogStatusInput,
   Box,
   InsertAssetLogInput,
+  PlusCircleIcon,
   StatusType,
   styled,
   useDebounceCallback,
@@ -17,6 +19,8 @@ import {
 import { FileList } from '../Components';
 import { parseLogStatus } from '../utils';
 import { useAssetData } from '@openmsupply-client/system';
+import { Camera, CameraResultType } from '@capacitor/camera';
+
 
 const StyledContainer = styled(Box)(({ theme }) => ({
   borderColor: theme.palette.divider,
@@ -60,6 +64,26 @@ const Row = ({
 
 export const Statusform = ({ draft, onChange }: StatusForm) => {
   const t = useTranslation();
+  const [imageElement, setImageElement] = useState<any>({ src: undefined })
+
+  const takePicture = async () => {
+    const image = await Camera.getPhoto({
+      quality: 90,
+      allowEditing: true,
+      resultType: CameraResultType.Uri
+    });
+
+    // image.webPath will contain a path that can be set as an image src.
+    // You can access the original file using image.path, which can be
+    // passed to the Filesystem API to read the raw data of the image,
+    // if desired (or pass resultType: CameraResultType.Base64 to getPhoto)
+    var imageUrl = image.webPath;
+
+    // Can be set to the src of an image now
+    setImageElement({ ...imageElement, src: imageUrl })
+
+  };
+
   const debouncedOnChange = useDebounceCallback(
     (patch: Partial<InsertAssetLogInput>) => onChange(patch),
     [onChange],
@@ -69,6 +93,7 @@ export const Statusform = ({ draft, onChange }: StatusForm) => {
     label,
     value: value ?? label,
   });
+
 
   const getOptionsFromEnum = (
     enumObject: Record<string, string>,
@@ -154,6 +179,11 @@ export const Statusform = ({ draft, onChange }: StatusForm) => {
           />
         </Box>
       </Box>
+      <ButtonWithIcon
+        Icon={<PlusCircleIcon />}
+        label={t('button.take-photo')}
+        onClick={takePicture}
+      />
     </StyledContainer >
   );
 };
