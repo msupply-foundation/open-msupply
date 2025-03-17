@@ -13,6 +13,8 @@ fn plugin_type() -> PluginType {
 pub struct Input {
     pub requisition: RequisitionRow,
     pub lines: Vec<RequisitionLineRow>,
+    // Adding js/ts doc comment here rather then on the type makes it show up when hovering ofer transform_request_requisition_line input (in plugin code)
+    #[doc = "The variants in this list may not represent all of the areas where request requisition line is upserted"]
     pub context: Context,
 }
 

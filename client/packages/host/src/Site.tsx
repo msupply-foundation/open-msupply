@@ -18,6 +18,7 @@ import {
   SnackbarProvider,
   BarcodeScannerProvider,
   DetailLoadingSkeleton,
+  useIsGapsStoreOnly,
   useBlockNavigation,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
@@ -41,6 +42,7 @@ import { QueryErrorHandler } from './QueryErrorHandler';
 import { EasterEggModalProvider } from './components';
 import { Help } from './Help/Help';
 import { SyncModalProvider } from './components/Sync';
+import { MobileNavBar } from './components/MobileNavBar';
 
 const NotifyOnLogin = () => {
   const { success } = useNotification();
@@ -65,6 +67,7 @@ export const Site: FC = () => {
   const getPageTitle = useGetPageTitle();
   const { setPageTitle } = useHostContext();
   const pageTitle = getPageTitle(location.pathname);
+  const isGapsStore = useIsGapsStoreOnly();
 
   useEffect(() => {
     setPageTitle(pageTitle);
@@ -79,14 +82,15 @@ export const Site: FC = () => {
           <CommandK>
             <SnackbarProvider maxSnack={3}>
               <BarcodeScannerProvider>
-                <AppDrawer />
+                {!isGapsStore && <AppDrawer />}
                 <Box
                   flex={1}
                   display="flex"
                   flexDirection="column"
                   overflow="hidden"
                 >
-                  <AppBar />
+                  {isGapsStore && <MobileNavBar />}
+                  {!isGapsStore && <AppBar />}
                   <NotifyOnLogin />
                   <Box display="flex" flex={1} overflow="auto">
                     <Routes>

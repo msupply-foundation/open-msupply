@@ -12,6 +12,8 @@ import {
   InputWithLabelRow,
   ObjUtils,
   useIsCentralServerApi,
+  useIsGapsStoreOnly,
+  PropertyNodeValueType,
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
 import { NameRenderer } from '../..';
@@ -63,6 +65,7 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
   );
 
   const nextId = useName.utils.nextFacilityId(nameId);
+  const isGapsStore = useIsGapsStoreOnly();
 
   const save = async () => {
     mutateAsync({
@@ -125,44 +128,33 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
               </Typography>
             ) : (
               <Box
-                sx={{
+                sx={theme => ({
+                  [theme.breakpoints.down('sm')]: {
+                    width: '95%',
+                    minWidth: '340px',
+                    paddingX: '2em',
+                  },
                   width: '600px',
                   display: 'grid',
                   gap: 1,
-                }}
+                })}
               >
-                {properties.map(nameProperty => (
-                  <InputWithLabelRow
-                    key={nameProperty.id}
-                    label={nameProperty.property.name}
-                    sx={{ width: '100%' }}
-                    labelProps={{
-                      sx: {
-                        width: '250px',
-                        fontSize: '16px',
-                        paddingRight: 2,
-                      },
+                {properties.map(p => (
+                  <Row
+                    key={p.id}
+                    label={p.property.name}
+                    isGapsStore={isGapsStore}
+                    inputProperties={{
+                      disabled: !isCentralServer && !p.remoteEditable,
+                      valueType: p.property.valueType,
+                      allowedValues: p.property.allowedValues?.split(','),
+                      value: draftProperties[p.property.key],
+                      onChange: v =>
+                        setDraftProperties({
+                          ...draftProperties,
+                          [p.property.key]: v ?? null,
+                        }),
                     }}
-                    Input={
-                      <Box flex={1}>
-                        <PropertyInput
-                          disabled={
-                            !isCentralServer && !nameProperty.remoteEditable
-                          }
-                          valueType={nameProperty.property.valueType}
-                          allowedValues={nameProperty.property.allowedValues?.split(
-                            ','
-                          )}
-                          value={draftProperties[nameProperty.property.key]}
-                          onChange={value =>
-                            setDraftProperties({
-                              ...draftProperties,
-                              [nameProperty.property.key]: value ?? null,
-                            })
-                          }
-                        />
-                      </Box>
-                    }
                   />
                 ))}
               </Box>
@@ -172,4 +164,60 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
       </DetailContainer>
     </Modal>
   ) : null;
+};
+
+type PropertyValue = string | number | boolean | undefined;
+type PropertyInput = {
+  valueType: PropertyNodeValueType;
+  allowedValues?: string[];
+  value: PropertyValue | null;
+  onChange: (value: PropertyValue) => void;
+  disabled?: boolean;
+};
+
+const Row = ({
+  key,
+  label,
+  isGapsStore,
+  inputProperties,
+}: {
+  key: string;
+  label: string;
+  isGapsStore: boolean;
+  inputProperties: PropertyInput;
+}) => {
+  if (!isGapsStore)
+    return (
+      <InputWithLabelRow
+        key={key}
+        label={label}
+        sx={{ width: '100%' }}
+        labelProps={{
+          sx: {
+            width: '250px',
+            fontSize: '16px',
+            paddingRight: 2,
+          },
+        }}
+        Input={
+          <Box flex={1}>
+            <PropertyInput {...inputProperties} />
+          </Box>
+        }
+      />
+    );
+
+  return (
+    <Box paddingTop={1.5}>
+      <Typography
+        sx={{
+          fontSize: '1rem!important',
+          fontWeight: 'bold',
+        }}
+      >
+        {label}
+      </Typography>
+      <PropertyInput {...inputProperties} />
+    </Box>
+  );
 };
